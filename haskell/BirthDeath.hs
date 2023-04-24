@@ -150,14 +150,18 @@ edgesBeforeEdge edge = let source = sourceNode edge
 
 edgesAfterEdge = fmap reverseEdge . edgesBeforeEdge . reverseEdge
 
+undirected_edges tree = [ Edge node ToRoot | Right node <- nodes tree ]
 
 root tree = Left tree
+numBranches tree = length $ undirected_edges tree
 
 node_time node (Left (Start1 t _)) = t
 node_time node (Left (Start2 t _ _)) = t
 node_time node (Right (Next t _ _)) = t
 
 branch_duration edge = abs (node_time (sourceNode edge) - node_time (targetNode edge))
+
+branch_length edge = branch_duration edge
 
 nodes node@(Left (Start1 _ next)) = node:nodes (Right next)
 nodes node@(Left (Start2 _ next1 next2)) = node:nodes (Right next1) ++ nodes (Right next2)
@@ -166,83 +170,13 @@ nodes node@(Right (Next _ (Sample next) _)) = node:nodes (Right next)
 nodes node@(Right (Next _ Finish _)) = [node]
 nodes node@(Right (Next _ Death _)) = [node]
 
-numLeaves tree = sum [ if is_leaf_node node then 1 else 0 | node <- nodes tree]
+leaf_nodes t = filter is_leaf_node (nodes t)
+internal_nodes t = filter is_internal_node (nodes t)
 
-{-
+numLeaves tree = length $ leaf_nodes tree
 
+tree_length tree = sum [ branch_length b | b <- undirected_edges tree ]
 
--- findNode :: t -> Node -> Array Int Edge
-   --  where Edge knows its source, target, reverse_edge, and label
-   --
-   -- getNodesSet :: t -> IntSet
-   nodes :: tree -> node
-   edgesTowardNode :: tree -> node -> [edge]
+allEdgesAfterEdge b = b:concatMap allEdgesAfterEdge (edgesAfterEdge b)
+allEdgesFromNode n = concatMap allEdgesAfterEdge (edgesOutOfNode n)
 
-   sourceNode :: edge -> node
-   targetNode :: edge -> node
-   sourceIndex :: edge -> Int
-   reverse_edge :: edge -> edge
-   edge_name :: e -> Int
-
-   reverseEdge :: Edge t ->  Edge t
-   edgeForNodes :: t -> (Node t, Node t) -> Edge t
-   nodeDegree :: t -> Node t -> Int
-   neighbors :: t -> Node -> [Node]
-   edgesBeforeEdge :: t -> Edge t -> [Edge t]
-   edgesAfterEdge :: t -> Edge t -> [Edge t]
-   is_leaf_node :: t -> Node t -> Bool
-   is_internal_node :: t -> Node t -> bool
-   is_internal_branch 
--}
-
--- OK, so for a tree, we need to get unique names for each node.
--- The problem is that we want to decouple name generation for
--- left and right subtrees of a Birth node, but its not clear how.
--- * If we used pointer addresses, that would work, but we don't have that.
--- * We could generate random integers, and then afterward go fix up.
--- * We could use IO to get unique names, sharing a unique-name source.
--- * We could pass a unique integer generator to the left subtree first,
---   and then to the right subtree.
-
--- instance Tree Event where
-{-
-    findNode    :: t -> Int -> Node
-    findEdge    :: t -> Int -> Edge
-    getNodesSet :: t -> IntSet
-    getEdgesSet :: t -> IntSet
--}
-
-{-
-Can we generalize to avoid requiring integer names?
-For the birth-death trees here, it seems like we could just reference the nodes directly.   
-Currently, Tree.hs uses equality for a few things:
-  * in edgeForNodes t (n1,n2), we walk all branches out of n1 and check if the target is n2
-  * in tree_from_edges, we walk the list of (b',(n1,n2)) to find the entry with b' == b
-  * in add_root, we need to check if a node is the root.
-
-But we don't need to ADD a root to BirthDeath trees, and we can check what the root is without
-checking a stored name for the root.
-
-We also probably won't make birth-death trees from a list of edges?
-
-And, to find an edge from two nodes (n1,n2), we probably just refer to the edge by
-the bottom node, plus whether the edge points up or down?
-
-So, this requires generalizing the Node and Edge types.
-I guess we wouldn't NEED an IntMap IntEdge.
-
-data Node = Root Time Tree | NonRoot Tree
-
-parent (Root _ _) = Nothing
-parent node@(NonRoot (Tree _ _ prev)) = case prev of Right node2 -> node2
-                                                     Left time -> Root time node
-
-PROBLEM: currently I've put IntSet into the definition of Tree.
-
-class Tree t where
-   type Node t
-   type Edge t
-   nodes :: t -> [Node] -- or IntSet?
-   neighbors :: t -> Node -> [Node] -- or Array Node?
-   outEdges :: t -> Node -> [Edge] 
--}
