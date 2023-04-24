@@ -5,11 +5,13 @@
 #include <vector>
 #include "haskell/core.H"
 #include "haskell/coretype.H"
+#include "parser/location.hh"
 
 struct InstanceInfo
 {
     // forall tvs. constraints => class_con args.
 
+    yy::location loc;
     std::vector<TypeVar> tvs;
     std::vector<Type> constraints;
     TypeCon class_con;
@@ -22,6 +24,7 @@ struct EqInstanceInfo
 {
     // forall tvs. lhs ~ rhs
 
+    yy::location loc;
     std::vector<TypeVar> tvs;
 
     // TypeCon lhs_tyfam_tycon;

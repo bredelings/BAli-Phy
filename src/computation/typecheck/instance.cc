@@ -22,6 +22,8 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 
     for(auto& [loc,decl]: C.default_method_decls)
     {
+        if (loc) push_source_span( *loc );
+
         auto FD = decl.as_<Hs::FunDecl>();
         auto dm = class_info.default_methods.at( unloc(FD.v) );
         unloc(FD.v) = dm;
@@ -29,6 +31,8 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         auto sig_type = this_mod().lookup_resolved_symbol( unloc(FD.v).name )->type;
         auto decl2 = infer_type_for_single_fundecl_with_sig(FD, sig_type);
         decls_out.push_back({loc,decl2});
+
+        if (loc) pop_source_span();
     }
 
 //    std::cerr<<"Default method ops:\n";
@@ -55,7 +59,8 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 {
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
     auto tf_con = desugar(inst.con);
-    push_source_span( *(inst.con.loc * range(inst.args) * inst.rhs.loc) );
+    auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
+    push_source_span( inst_loc );
 
     // 1. Check that the type family exists.
     if (not type_con_is_type_fam( tf_con ) )
@@ -199,8 +204,8 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{eqn.free_tvs, lhs, eqn.rhs} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -306,7 +311,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     assert(class_con);
 
     auto S = symbol_info(dfun.name, instance_dfun_symbol, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{tvs, constraints, *class_con, args} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{*inst_loc, tvs, constraints, *class_con, args} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -633,6 +638,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
             if (auto subst = maybe_match(instance_head, target_pred))
             {
+                push_source_span( info.loc );
+
                 auto preds = apply_subst(*subst, info.constraints);
 
                 auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
@@ -642,6 +649,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
                 auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
+
+                pop_source_span();
             }
         }
     }
@@ -655,6 +664,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
         if (auto subst = maybe_match(instance_head, target_pred))
         {
+            push_source_span( info.loc );
+
             auto preds = apply_subst(*subst, info.constraints);
 
             auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
@@ -664,6 +675,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
             auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
             matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
+
+            pop_source_span();
         }
     }
 
