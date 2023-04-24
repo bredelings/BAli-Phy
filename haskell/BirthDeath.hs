@@ -71,12 +71,21 @@ fmapish f prev (Next y event _) = let p = Next (f y) (go p event) prev in p
           go p (Sample n1)   = Sample (fmapish f (Right p) n1)
           go p Death         = Death
           go p Finish        = Finish
-                                                  
+
 instance Functor Tree where
     fmap f tree@(Start1 x n1)    = let start = Start1 (f x) (fmapish f (Left start) n1) in start
     fmap f tree@(Start2 x n1 n2) = let start = Start2 (f x) (fmapish f (Left start) n1) (fmapish f (Left start) n2) in start
 
 
+toListish (Next x event _) = x:go event where
+    go (Birth n1 n2) = toListish n1 ++ toListish n2
+    go (Sample n1) = toListish n1
+    go Death = []
+    go Finish = []
+
+instance Foldable Tree where
+    toList (Start1 x n1) = x:toListish n1
+    toList (Start2 x n1 n2) = x:(toListish n1++toListish n2)
 
 {-
   -- findNode :: t -> Node -> Array Int Edge
