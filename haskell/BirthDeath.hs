@@ -103,6 +103,8 @@ node_out_edges (Right n1@(Next _ (Sample n2) _)) = listArray' [Edge n1 ToRoot, E
 node_out_edges (Right n@(Next _ Finish _)) = listArray' [Edge n ToRoot]
 node_out_edges (Right n@(Next _ Death _)) = listArray' [Edge n ToRoot]
 
+edgesOutOfNode = node_out_edges
+
 sourceNode :: Edge a -> Node a
 sourceNode (Edge node ToRoot) = Right node
 sourceNode (Edge (Next _ _ parent) FromRoot) = parent
@@ -111,9 +113,9 @@ targetNode :: Edge a -> Node a
 targetNode (Edge node FromRoot) = Right node
 targetNode (Edge (Next _ _ parent) ToRoot) = parent
 
-reverse_edge :: Edge a -> Edge a
-reverse_edge (Edge node FromRoot) = Edge node ToRoot
-reverse_edge (Edge node ToRoot) = Edge node FromRoot
+reverseEdge :: Edge a -> Edge a
+reverseEdge (Edge node FromRoot) = Edge node ToRoot
+reverseEdge (Edge node ToRoot) = Edge node FromRoot
 
 is_leaf_node (Right (Next _ Finish _)) = True
 is_leaf_node (Right (Next _ Death  _)) = True
@@ -134,6 +136,26 @@ parentBranch (Left _) = Nothing
 parentBranch (Right node) = Just $ Edge node ToRoot
 
 parentNode node = fmap targetNode $ parentBranch node
+
+edgesTowardNode node = fmap reverseEdge $ edgesOutOfNode node
+
+-- edgeForNodes == ???
+
+nodeDegree = length . edgesOutOfNode
+neighbors = fmap targetNode . edgesOutOfNode
+sourceIndex edge = 0 -- FIXME!!
+edgesBeforeEdge edge = let source = sourceNode edge
+                           index = sourceIndex edge
+                       in fmap reverseEdge $ removeElement index $ edgesOutOfNode source
+
+edgesAfterEdge = fmap reverseEdge . edgesBeforeEdge . reverseEdge
+
+
+root tree = Left tree
+
+node_time node (Left (Start1 t _)) = t
+node_time node (Left (Start2 t _ _)) = t
+node_time node (Right (Next t _ _)) = t
 
 
 {-
