@@ -63,6 +63,10 @@ void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
     auto& [loc, binds] = lbinds;
     if (loc) push_source_span(*loc);
 
+    // FIXME - we're stripping locations off of the signatures here!
+    // But when we create given constraints in infer_type_for_single_fundecl_with_sig => skolemize
+    //  then we create given constraints with now location.
+
     global_value_env sigs;
     signature_env sigs2;
     for(auto& [lvar,type]: binds.signatures)
@@ -133,8 +137,10 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
     {
         Note ec;
         ec<<"In recursive group:\n";
+        std::optional<yy::location> decls_loc;
         for(auto& [loc,decl]: group)
         {
+            decls_loc = decls_loc * loc;
             if (auto fd = decl.to<Hs::FunDecl>())
                 ec<<"    "<<fd->v.print()<<"\n";
             else if (auto pd = decl.to<Hs::PatDecl>())
@@ -143,9 +149,11 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
                 std::abort();
         }
         push_note(ec);
+        if (decls_loc) push_source_span(*decls_loc);
 
         auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
+        if (decls_loc) pop_source_span();
         pop_note();
         
         for(auto& decl: group_decls)
@@ -839,6 +847,8 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
         auto& [loc0, decl0] = decls[0];
         auto& FD = decl0.as_<Hs::FunDecl>();
 
+        // push location loc0?
+        // also, does the sigtype have a location?
         auto decl = infer_type_for_single_fundecl_with_sig(FD, *sigtype);
 
         return Hs::Decls({{loc0, decl}});
