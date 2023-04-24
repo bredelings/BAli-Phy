@@ -125,6 +125,16 @@ is_internal_branch b = is_internal_node (sourceNode b) && is_internal_node (targ
 
 is_leaf_branch b = not $ is_internal_branch b
 
+away_from_root (Edge _ FromRoot) = True
+away_from_root _                 = False
+
+toward_root = not . away_from_root
+
+parentBranch (Left _) = Nothing
+parentBranch (Right node) = Just $ Edge node ToRoot
+
+parentNode node = fmap targetNode $ parentBranch node
+
 
 {-
 
