@@ -4,6 +4,7 @@ module BirthDeath where
 -- See also Probability/Distribution/Tree/BirthDeath.hs
 
 import Probability
+import Data.Array
 
 type Time = Double
 
@@ -62,7 +63,11 @@ bd2 lambda mu t1 t2 = do
 
 type Node a = Either (Tree a) (Next a)
 
-data Edge a = Edge (Node a) Bool
+-- If Direction is ToRoot, we have (node, parent_node)
+-- If Direction is FromROot, we have (parent_node, node)
+data Direction = ToRoot | FromRoot
+
+data Edge a = Edge (Next a) Direction
 
 --- Hmm... in both of these cases, we walk the tree and sum an integer for each node.
 
@@ -87,8 +92,27 @@ instance Foldable Tree where
     toList (Start1 x n1) = x:toListish n1
     toList (Start2 x n1 n2) = x:(toListish n1++toListish n2)
 
+
+-- PROBLEM: we need to access the whole node in order to count the number of leaves, branches, etc.
+
+node_out_edges :: Node a -> Array Int (Edge a)
+node_out_edges (Left (Start1 _ node)) = listArray' [Edge node FromRoot]
+node_out_edges (Left (Start2 _ node1 node2)) = listArray' [Edge node1 FromRoot, Edge node2 FromRoot]
+node_out_edges (Right n1@(Next _ (Birth n2 n3) _)) = listArray' [Edge n1 ToRoot, Edge n2 FromRoot, Edge n3 FromRoot]
+node_out_edges (Right n1@(Next _ (Sample n2) _)) = listArray' [Edge n1 ToRoot, Edge n2 FromRoot]
+node_out_edges (Right n@(Next _ Finish _)) = listArray' [Edge n ToRoot]
+node_out_edges (Right n@(Next _ Death _)) = listArray' [Edge n ToRoot]
+
+e_source_node (Edge node ToRoot) = Right node
+e_source_node (Edge (Next _ _ parent) FromRoot) = parent
+
+e_target_node (Edge node FromRoot) = Right node
+e_target_node (Edge (Next _ _ parent) ToRoot) = parent
+
 {-
-  -- findNode :: t -> Node -> Array Int Edge
+
+
+-- findNode :: t -> Node -> Array Int Edge
    --  where Edge knows its source, target, reverse_edge, and label
    --
    -- getNodesSet :: t -> IntSet
