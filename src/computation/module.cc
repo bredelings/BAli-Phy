@@ -739,12 +739,13 @@ void Module::perform_exports()
                         {
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
-                                if (is_haskell_conid(name) and not d->constructors.count( qualify_local_name(name) ))
+                                auto qualified_name = get_module_name(t->name) + "." + name;
+                                if (is_haskell_conid(name) and not d->constructors.count( qualified_name ))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count( qualify_local_name(name) ))
+                                if (is_haskell_varid(name) and not d->fields.count( qualified_name) )
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
                                     continue;
