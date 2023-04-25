@@ -1,34 +1,40 @@
-module Prelude (module Prelude,
-                module Data.Bool,
-                module Data.Eq,
-                module Data.Either,
-                module Data.Tuple,
-                module Data.Maybe,
-                module Data.List,
-                module Data.Function,
-                module Data.Functor,
-                module Data.Foldable,
-                module Data.Ord,
-                module Text.Show,
-                module Text.Read,
-                module Foreign.Pair,
-                module Foreign.Vector,
-                module Foreign.String,
-                module Control.Applicative,
-                module Control.Monad,
-                module Compiler.Base,
-                module Compiler.Error,
-                module Compiler.Floating,
-                module Compiler.Fractional,
-                module Compiler.IO,
-                module Compiler.Integral,
-                module Compiler.ST,
-                module Compiler.Num,
-                module Compiler.Real,
-                module Compiler.RealFrac,
-                module Compiler.Enum,
-                module Compiler.Classes)
-    where
+module Prelude (
+        module Prelude,
+
+        Bool(False,True), (&&), (||), not, otherwise,
+
+        Maybe(Nothing, Just), maybe,
+             
+        module Data.Eq,
+        module Data.Either,
+        module Data.Tuple,
+        module Data.List,
+        module Data.Function,
+
+        Functor(fmap, (<$)), (<$>),
+
+        module Data.Foldable,
+        module Data.Ord,
+        module Text.Show,
+        module Text.Read,
+        module Foreign.Pair,
+        module Foreign.Vector,
+        module Foreign.String,
+        module Control.Applicative,
+        module Control.Monad,
+        module Compiler.Base,
+        module Compiler.Error,
+        module Compiler.Floating,
+        module Compiler.Fractional,
+        module Compiler.IO,
+        module Compiler.Integral,
+        module Compiler.ST,
+        module Compiler.Num,
+        module Compiler.Real,
+        module Compiler.RealFrac,
+        module Compiler.Enum,
+        module Compiler.Classes
+  ) where
 
 import Compiler.Error
 import Compiler.Floating

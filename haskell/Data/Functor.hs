@@ -2,6 +2,7 @@
 module Data.Functor where
 
 import Data.Function
+import Data.Tuple (fst, snd)
 
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
@@ -17,6 +18,10 @@ f <$> x = fmap f x
 
 void x = () <$ x
 
+unzip :: Functor f => f (a, b) -> (f a, f b)
+unzip xs = (fst <$> xs, snd <$> xs)
+
 instance Functor [] where
     fmap f [] = []
     fmap f (x:xs) = (f x):(fmap f xs)
+

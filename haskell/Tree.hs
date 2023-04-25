@@ -4,6 +4,7 @@ import Data.Foldable
 import Data.Array
 import Data.List (lookup)
 
+import Data.Maybe (fromJust)
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.IntSet (IntSet)

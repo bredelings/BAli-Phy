@@ -3,6 +3,7 @@ module Probability.Dist (module Probability.Dist,
                         ) where
 
 import Numeric.LogDouble
+import Data.Maybe (fromJust)
 
 class Dist d where
     type Result d
