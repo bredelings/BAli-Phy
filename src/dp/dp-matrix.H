@@ -87,6 +87,7 @@ public:
 
     int size1() const {return s1;}
     int size2() const {return s2;}
+    int size3() const {return s3;}
     int n_states() const {return s3-2;}
 
     Cell cell(int i,int j)
