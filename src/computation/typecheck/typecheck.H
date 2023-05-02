@@ -270,7 +270,7 @@ public:
     // The pure unifier
     bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, bsubstitution_t& s) const;
 
-    bool maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, bsubstitution_t& s) const;
+    bool maybe_unify_var_(bool both_ways, const unification_env& env, const std::variant<TypeVar,MetaTypeVar>& btv1, const Type& t2, bsubstitution_t& s) const;
 
     std::optional<bsubstitution_t> maybe_unify(const Type& t1, const Type& t2) const;
 

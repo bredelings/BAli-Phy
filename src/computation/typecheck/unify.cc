@@ -1,4 +1,5 @@
 #include "typecheck.H"
+#include "util/variant.H"
 
 using std::vector;
 
@@ -166,12 +167,12 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
         unify_defer(origin, t1, t2);
 }
 
-bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, bsubstitution_t& s) const
+bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const std::variant<TypeVar,MetaTypeVar>& btv1, const Type& t2, bsubstitution_t& s) const
 {
     // translate using env
 
     // Handle if tv1 is bound
-    if (auto type1 = s.find(tv1))
+    if (auto type1 = s.find(btv1))
     {
         if (both_ways)
             return maybe_unify_(both_ways, env, *type1, t2, s);
@@ -180,27 +181,48 @@ bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, c
     }
 
     if (auto s2 = expand_type_synonym(t2))
-        return maybe_unify_var_(both_ways, env, tv1, *s2, s);
+        return maybe_unify_var_(both_ways, env, btv1, *s2, s);
 
-    if (auto tv2 = t2.to<TypeVar>())
+    if (auto tv1 = to<TypeVar>(btv1))
     {
-        assert(not env.mapping2.count(*tv2));
+        if (auto tv2 = t2.to<TypeVar>())
+        {
+            assert(not env.mapping2.count(*tv2));
 
-        if (tv1 == *tv2) return true;
+            if (*tv1 == *tv2) return true;
 
-        if (auto type2 = s.find(*tv2))
-            return maybe_unify_var_(both_ways, env, tv1, *type2, s);
+            if (auto type2 = s.find(*tv2))
+                return maybe_unify_var_(both_ways, env, *tv1, *type2, s);
+        }
+
+        assert(not s.count(*tv1));
+
+        // avoid unifying (forall a. b) ~ (forall a. [a])
+        // we cannot unify b := [a] because a is local
+
+        if (occurs_check(*tv1, t2)) return false;
     }
 
-    assert(not s.count(tv1));
+    if (auto mtv1 = to<MetaTypeVar>(btv1))
+    {
+        if (auto mtv2 = t2.to<MetaTypeVar>())
+        {
+            if (*mtv1 == *mtv2) return true;
 
-    // avoid unifying (forall a. b) ~ (forall a. [a])
-    // we cannot unify b := [a] because a is local
+            if (auto type2 = s.find(*mtv2))
+                return maybe_unify_var_(both_ways, env, *mtv1, *type2, s);
+        }
 
-    if (occurs_check(tv1, t2)) return false;
+        assert(not s.count(*mtv1));
+
+        // avoid unifying (forall a. b) ~ (forall a. [a])
+        // we cannot unify b := [a] because a is local
+
+        if (occurs_check(*mtv1, t2)) return false;
+    }
 
     // ghc does not occurs check when matching
-    s = s.insert({tv1,t2});
+    s = s.insert({btv1,t2});
 
     return true;
 }
@@ -235,9 +257,12 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
     else if (auto s2 = expand_type_synonym(t2))
         return maybe_unify_(both_ways, env,  t1, *s2, s);
 
-    else if (auto tv1 = t1.to<MetaTypeVar>())
+    else if (auto mtv1 = t1.to<MetaTypeVar>())
     {
-        return same_type_no_syns(t1,t2);
+        if (auto tv2 = t2.to<TypeVar>(); tv2 and *tv1 == *tv2)
+            return true;
+
+        return maybe_unify_var_(both_ways, env, *mtv1, t2, s);
     }
     else if (auto tv1 = t1.to<TypeVar>())
     {

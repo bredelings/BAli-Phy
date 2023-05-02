@@ -318,19 +318,24 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
 
     if (auto tt = filled_meta_type_var(t))
         return check_apply_subst(s,  *tt);
-    else if (auto tv = t.to<MetaTypeVar>())
+    else if (auto mtv = t.to<MetaTypeVar>())
     {
-        if (auto t2 = s.find(*tv))
+        if (auto t2 = s.find(*mtv))
         {
-            if (tv->filled())
-                throw myexception()<<"Trying to substitution for filled unification variable "<<unloc(tv->name);
+            if (mtv->filled())
+                throw myexception()<<"Trying to substitute for filled unification variable "<<unloc(mtv->name);
             return apply_subst(s,*t2);
         }
         else
             return {};
     }
-    else if (t.is_a<TypeVar>())
-        return {};
+    else if (auto tv = t.to<TypeVar>())
+    {
+        if (auto t2 = s.find(*tv))
+            return apply_subst(s,*t2);
+        else
+            return {};
+    }
     else if (t.is_a<TypeCon>())
         return {};
     else if (auto p_app = t.to<TypeApp>())
