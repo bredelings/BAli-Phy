@@ -13,5 +13,5 @@ instance FloatConvert Integer Double where
 instance FloatConvert Int     Double where
     toFloating = intToDouble
 
-instance FloatConvert a       a where
+instance {-# INCOHERENT #-} FloatConvert a       a where
     toFloating x = x
