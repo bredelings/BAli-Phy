@@ -16,11 +16,13 @@ map<string,LangExt> ext_to_bit =
     {"GADTSyntax",                  {LangExt::GADTSyntax}},
     {"GADTs",                       {LangExt::GADTs}},
     {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
+    {"Incoherent Instances",        {LangExt::IncoherentInstances}},  // DEPRECATED
     {"KindSignatures",              {LangExt::KindSignatures}},
     {"LexicalNegation",             {LangExt::LexicalNegation}},
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
+    {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
     {"RankNTypes",                  {LangExt::RankNTypes}},
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
