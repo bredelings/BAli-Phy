@@ -1603,7 +1603,7 @@ YY_RULE_SETUP
 #line 169 "lexer.l"
 loc.lines(1); loc.step (); yy_push_state(bol);
 	YY_BREAK
-/* known pragmas */
+/* line pragmas */
 /* <line_prag1> single-line line pragmas: # <line> "<file>" <extra-stuff> \n */
 /* <line_prag2> Haskell-style line pragms, of the form
      {-# LINE <line> "<file>" #-} */
@@ -3030,12 +3030,15 @@ std::string clean_pragma(std::string prag)
     return join(words, ' ');
 }
 
-std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc) const
+std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc)
 {
     auto prag = clean_pragma(yytext);
     auto it = pragmas.find(prag);
     if (it == pragmas.end())
+    {
+        push_warning_message(loc, "Unknown pragma");
         return {};
+    }
     else
         return it->second(loc);
 }

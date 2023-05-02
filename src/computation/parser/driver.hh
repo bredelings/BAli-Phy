@@ -56,8 +56,9 @@ public:
     yy::parser::symbol_type varid(const yy::parser::location_type& loc) const;
     yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
     yy::parser::symbol_type consym(const yy::parser::location_type& loc) const;
-    std::optional<yy::parser::symbol_type> prag(const yy::parser::location_type& loc) const;
+    std::optional<yy::parser::symbol_type> prag(const yy::parser::location_type& loc);
 
+    void push_warning_message(const location_type& loc, const std::string& err);
     void push_error_message(const location_type& loc, const std::string& err);
     void pop_error_message();
 

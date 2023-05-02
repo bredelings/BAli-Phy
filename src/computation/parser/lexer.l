@@ -299,12 +299,15 @@ std::string clean_pragma(std::string prag)
     return join(words, ' ');
 }
 
-std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc) const
+std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc)
 {
     auto prag = clean_pragma(yytext);
     auto it = pragmas.find(prag);
     if (it == pragmas.end())
+    {
+        push_warning_message(loc, "Unknown pragma");
         return {};
+    }
     else
         return it->second(loc);
 }
