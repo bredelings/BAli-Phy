@@ -648,7 +648,6 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "default" "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($3)}; }
 |        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($4, {@5,$5}, $7)};}
 /*
-|        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
 |        "{-# WARNING" warnings "#-}"
 |        "{-# RULES" rules "#-}"
