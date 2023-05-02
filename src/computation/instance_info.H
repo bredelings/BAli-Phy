@@ -17,6 +17,10 @@ struct InstanceInfo
     TypeCon class_con;
     std::vector<Type> args;
 
+    bool incoherent = false;
+    bool overlappable = false;
+    bool overlapping = false;
+
     Type type() const;
 };
 

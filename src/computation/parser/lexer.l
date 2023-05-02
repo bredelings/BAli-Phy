@@ -167,8 +167,7 @@ signed       {negative}?
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(bol);
 
-  /* known pragmas */
-"{-#"{whitechar}*{pragmachar}+
+  /* line pragmas */
 
   /* <line_prag1> single-line line pragmas: # <line> "<file>" <extra-stuff> \n */
 
@@ -180,11 +179,11 @@ signed       {negative}?
   /* <column_prag> */
 
   /* two-word pragmas */
-<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment);
   /* one-word pragmas */
-<INITIAL,option_prags>"{-"${whitechar}*{pragmachar}+
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment);
   /* end pragma */
-<INITIAL,option_prags>"#-}"
+<INITIAL,option_prags>"#-}"                                                    return yy::parser::make_CLOSE_PRAG(loc);
 
   /* unboxed tuples: (# and #) */
 
@@ -258,6 +257,57 @@ driver::scan_end ()
 }
 
 using namespace yy;
+
+std::map<std::string, std::function<yy::parser::symbol_type(const yy::parser::location_type&)>> pragmas = {
+    {"incoherent", yy::parser::make_INCOHERENT_PRAG},
+    {"inline"      , yy::parser::make_INLINE_PRAG},
+    {"overlappable", yy::parser::make_OVERLAPPABLE_PRAG},
+    {"overlapping", yy::parser::make_OVERLAPPING_PRAG},
+    {"overlaps", yy::parser::make_OVERLAPS_PRAG},
+    {"specialize", yy::parser::make_SPECIALIZE_PRAG}
+};
+    
+std::string clean_pragma(std::string prag)
+{
+    // 1. Remove pragma prefix
+    if (prag.starts_with("{-#"))
+        prag = prag.substr(3);
+
+    // 2. Lower-case all the characters
+    for(auto& c: prag)
+        c = std::tolower(c);
+
+    // 3. Split into words
+    std::vector<std::string> words;
+    bool inword = false;
+    for(auto c: prag)
+    {
+        if (std::isspace(c))
+            inword = false;
+        else
+        {
+            if (not inword)
+            {
+                words.push_back({});
+                inword=true;
+            }
+            words.back() += c;
+        }
+    }
+    
+    // 4. Connect the words with ' '
+    return join(words, ' ');
+}
+
+std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc) const
+{
+    auto prag = clean_pragma(yytext);
+    auto it = pragmas.find(prag);
+    if (it == pragmas.end())
+        return {};
+    else
+        return it->second(loc);
+}
 
 yy::parser::symbol_type driver::varid(const yy::parser::location_type& loc) const
 {

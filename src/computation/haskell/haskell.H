@@ -621,6 +621,8 @@ struct InstanceDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
+    std::optional<std::string> overlap_pragma;
+
     // This should be something like Eq a => Eq [a]
     // Right now it could be either ForallType or ConstrainedType
     Context context;
@@ -632,11 +634,13 @@ struct InstanceDecl: public Object
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
     std::string print() const;
 
-    InstanceDecl(const Context& c,
+    InstanceDecl(const std::optional<std::string>& o,
+                 const Context& c,
                  const LType& t,
                  const std::vector<TypeFamilyInstanceDecl>& tids,
                  const Decls& ds)
-        :context(c),
+        :overlap_pragma(o),
+         context(c),
          constraint(t),
          type_inst_decls(tids),
          method_decls(ds)

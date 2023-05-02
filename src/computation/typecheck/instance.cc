@@ -204,7 +204,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}, false, false, false} );
     S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
@@ -310,8 +310,19 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto class_con = head.to<TypeCon>();
     assert(class_con);
 
+    bool incoherent = this_mod().language_extensions.has_extension(LangExt::IncoherentInstances) or
+        (inst_decl.overlap_pragma == "INCOHERENT");
+    bool overlappable = this_mod().language_extensions.has_extension(LangExt::OverlappingInstances) or
+        inst_decl.overlap_pragma == "OVERLAPPABLE" or
+        inst_decl.overlap_pragma == "OVERLAPS" or
+        incoherent;
+    bool overlapping = this_mod().language_extensions.has_extension(LangExt::OverlappingInstances) or
+        inst_decl.overlap_pragma == "OVERLAPPING" or
+        inst_decl.overlap_pragma == "OVERLAPS" or
+        incoherent;
+
     auto S = symbol_info(dfun.name, instance_dfun_symbol, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{*inst_loc, tvs, constraints, *class_con, args} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{*inst_loc, tvs, constraints, *class_con, args, incoherent, overlappable, overlapping} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -621,7 +632,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 {
     vector<tuple<pair<Core::Exp, LIE>,Type,Type>> matching_instances;
 
-    vector<tuple<Type,Type>> unifying_instances;
+    vector<InstanceInfo> unifying_instances;
 
     TypeCon target_class = get_class_for_constraint(target_pred);
 
@@ -658,7 +669,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
             }
             else if (auto subst = maybe_unify(instance_head, target_pred))
             {
-                unifying_instances.push_back({instance_head, target_pred});
+                unifying_instances.push_back(info);
             }
             pop_source_span();
         }
@@ -700,11 +711,12 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
     // We are also supposed to search in-scope given constraints.
     // These are actually OK if they are all top-level instances (not given constraints, I presume) that are marked incoherent.
-    if (unifying_instances.size())
+    for(auto& unifying_instance: unifying_instances)
     {
-        auto n = Note()<<"Predicate "<<target_pred<<" unifies, but does not match with instances:\n";
-        for(auto& [type1,type2]: unifying_instances)
-            n<<"  "<<remove_top_gen(type1)<<"\n";
+        if (unifying_instance.incoherent) continue;
+
+        auto n = Note()<<"Predicate "<<target_pred<<" unifies, but does not match with instance "
+                       <<remove_top_gen(unifying_instance.type());
         record_error(n);
     }
 

@@ -13,6 +13,7 @@
   # include <iostream>
   # include <vector>
   # include <tuple>
+  # include <optional>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/operations.H"
@@ -22,6 +23,7 @@
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
   # include "computation/haskell/Integer.H"
+  # include "util/string/join.H"
 
   class driver;
 
@@ -29,7 +31,7 @@
 
   Hs::Kind type_to_kind(const Hs::LType& kind);
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
-  Hs::InstanceDecl make_instance_decl(const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
+  Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
                                       const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
@@ -259,8 +261,8 @@
 
 %type <std::vector<Hs::LTypeCon>> sks_vars
 
+%type <std::optional<std::string>> overlap_pragma
  /*
-%type <void> overlap_pragma
 %type <void> deriv_strategy_no_via
 %type <void> deriv_strategy_via
  */
@@ -670,16 +672,16 @@ sks_vars: sks_vars "," oqtycon                                             {$$ =
 |         oqtycon                                                          {$$ = {{@1,Hs::TypeCon($1)}}; }
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
-inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = {@$,make_instance_decl($3,$4)};}
+inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = {@$,make_instance_decl($2,$3,$4)};}
 |          "type" "instance" ty_fam_inst_eqn                               {$$ = {@$,Hs::TypeFamilyInstanceDecl($3)};}
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
 
-overlap_pragma: "{-# OVERLAPPABLE" "#-}"
-|               "{-# OVERLAPPING" "#-}"
-|               "{-# OVERLAPS" "#-}"
-|               "{-# INCOHERENT" "#-}"
-|               %empty
+overlap_pragma: "{-# OVERLAPPABLE" "#-}"       { $$ = "OVERLAPPABLE"; }
+|               "{-# OVERLAPPING" "#-}"        { $$ = "OVERLAPPING"; }
+|               "{-# OVERLAPS" "#-}"           { $$ = "OVERLAPS"; }
+|               "{-# INCOHERENT" "#-}"         { $$ = "INCOHERENT"; }
+|               %empty                         {}
    
 deriv_strategy_no_via: "stock"
 |                      "anyclass"
@@ -1707,7 +1709,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
         return {d_or_n, name, check_all_type_vars(type_args), context, k, *constrs};
 }
 
-Hs::InstanceDecl make_instance_decl(const Hs::LType& ltype_orig, const optional<Located<Hs::Decls>>& decls)
+Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& ltype_orig, const optional<Located<Hs::Decls>>& decls)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
@@ -1735,7 +1737,7 @@ Hs::InstanceDecl make_instance_decl(const Hs::LType& ltype_orig, const optional<
             else
                 throw myexception()<<"In declaration of instance "<<unloc(ltype_orig).print()<<", I don't recognize declaration:\n   "<<decl.print();
         }
-    return {context, ltype, type_inst_decls, method_decls};
+    return {oprag, context, ltype, type_inst_decls, method_decls};
 }
 
 Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const optional<Located<Hs::Decls>>& decls)

@@ -51,6 +51,7 @@
   # include <iostream>
   # include <vector>
   # include <tuple>
+  # include <optional>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/operations.H"
@@ -60,6 +61,7 @@
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
   # include "computation/haskell/Integer.H"
+  # include "util/string/join.H"
 
   class driver;
 
@@ -67,7 +69,7 @@
 
   Hs::Kind type_to_kind(const Hs::LType& kind);
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
-  Hs::InstanceDecl make_instance_decl(const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
+  Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
                                       const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
@@ -81,7 +83,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 85 "parser.hh"
+#line 87 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -221,7 +223,7 @@
 #endif
 
 namespace yy {
-#line 225 "parser.hh"
+#line 227 "parser.hh"
 
 
 
@@ -634,20 +636,23 @@ namespace yy {
       // prec
       char dummy45[sizeof (std::optional<int>)];
 
+      // overlap_pragma
+      char dummy46[sizeof (std::optional<std::string>)];
+
       // maybeexports
-      char dummy46[sizeof (std::optional<std::vector<Hs::LExport>>)];
+      char dummy47[sizeof (std::optional<std::vector<Hs::LExport>>)];
 
       // where_type_family
-      char dummy47[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
+      char dummy48[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
 
       // tycl_hdr
-      char dummy48[sizeof (std::pair<Hs::Context,Hs::LType>)];
+      char dummy49[sizeof (std::pair<Hs::Context,Hs::LType>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy49[sizeof (std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>)];
+      char dummy50[sizeof (std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -702,47 +707,47 @@ namespace yy {
       // conid
       // qconsym
       // consym
-      char dummy50[sizeof (std::string)];
+      char dummy51[sizeof (std::string)];
 
       // fielddecls
       // fielddecls1
-      char dummy51[sizeof (std::vector<Hs::FieldDecl>)];
+      char dummy52[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy52[sizeof (std::vector<Hs::GuardedRHS>)];
+      char dummy53[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // exportlist
       // exportlist1
-      char dummy53[sizeof (std::vector<Hs::LExport>)];
+      char dummy54[sizeof (std::vector<Hs::LExport>)];
 
       // importdecls
       // importdecls_semi
-      char dummy54[sizeof (std::vector<Hs::LImpDecl>)];
+      char dummy55[sizeof (std::vector<Hs::LImpDecl>)];
 
       // sigtypes1
       // btype_no_ops
       // comma_types0
       // comma_types1
-      char dummy55[sizeof (std::vector<Hs::LType>)];
+      char dummy56[sizeof (std::vector<Hs::LType>)];
 
       // sks_vars
-      char dummy56[sizeof (std::vector<Hs::LTypeCon>)];
+      char dummy57[sizeof (std::vector<Hs::LTypeCon>)];
 
       // tv_bndrs
       // forall
-      char dummy57[sizeof (std::vector<Hs::LTypeVar>)];
+      char dummy58[sizeof (std::vector<Hs::LTypeVar>)];
 
       // sig_vars
-      char dummy58[sizeof (std::vector<Hs::LVar>)];
+      char dummy59[sizeof (std::vector<Hs::LVar>)];
 
       // ty_fam_inst_eqn_list
       // ty_fam_inst_eqns
-      char dummy59[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
+      char dummy60[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
 
       // alts
       // alts1
-      char dummy60[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy61[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // decls
       // tup_exprs
@@ -752,13 +757,13 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy61[sizeof (std::vector<Located<expression_ref>>)];
+      char dummy62[sizeof (std::vector<Located<expression_ref>>)];
 
       // qcnames
       // qcnames1
       // ops
       // con_list
-      char dummy62[sizeof (std::vector<Located<std::string>>)];
+      char dummy63[sizeof (std::vector<Located<std::string>>)];
     };
 
     /// The size of the largest semantic type.
@@ -1592,6 +1597,10 @@ namespace yy {
         value.move< std::optional<int> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_overlap_pragma: // overlap_pragma
+        value.move< std::optional<std::string> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_maybeexports: // maybeexports
         value.move< std::optional<std::vector<Hs::LExport>> > (std::move (that.value));
         break;
@@ -2389,6 +2398,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<std::string>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<std::string>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<std::vector<Hs::LExport>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2887,6 +2910,10 @@ switch (yykind)
 
       case symbol_kind::S_prec: // prec
         value.template destroy< std::optional<int> > ();
+        break;
+
+      case symbol_kind::S_overlap_pragma: // overlap_pragma
+        value.template destroy< std::optional<std::string> > ();
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
@@ -6040,6 +6067,10 @@ switch (yykind)
         value.copy< std::optional<int> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_overlap_pragma: // overlap_pragma
+        value.copy< std::optional<std::string> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_maybeexports: // maybeexports
         value.copy< std::optional<std::vector<Hs::LExport>> > (YY_MOVE (that.value));
         break;
@@ -6453,6 +6484,10 @@ switch (yykind)
         value.move< std::optional<int> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_overlap_pragma: // overlap_pragma
+        value.move< std::optional<std::string> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_maybeexports: // maybeexports
         value.move< std::optional<std::vector<Hs::LExport>> > (YY_MOVE (s.value));
         break;
@@ -6662,7 +6697,7 @@ switch (yykind)
 
 
 } // yy
-#line 6666 "parser.hh"
+#line 6701 "parser.hh"
 
 
 
