@@ -621,25 +621,31 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 {
     vector<tuple<pair<Core::Exp, LIE>,Type,Type>> matching_instances;
 
+    vector<tuple<Type,Type>> unifying_instances;
+
     TypeCon target_class = get_class_for_constraint(target_pred);
 
     // If all arguments are variables, then we can't match an instance.
     if (not possible_instance_for(target_pred)) return {};
 
+    vector<const Module*> modules({&this_mod()});
     for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+        modules.push_back(mod.get());
+
+    for(auto& module: modules)
     {
-        for(auto& [dfun, info_]: mod->local_instances)
+        for(auto& [dfun, info_]: module->local_instances)
         {
             if (info_.class_con != target_class) continue;
 
             auto info = freshen(info_);
 
+            push_source_span( info.loc );
+
             auto instance_head = type_apply(info.class_con, info.args);
 
             if (auto subst = maybe_match(instance_head, target_pred))
             {
-                push_source_span( info.loc );
-
                 auto preds = apply_subst(*subst, info.constraints);
 
                 auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
@@ -649,33 +655,11 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
                 auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
-
-                pop_source_span();
             }
-        }
-    }
-    for(auto& [dfun, info_]: this_mod().local_instances)
-    {
-        if (info_.class_con != target_class) continue;
-
-        auto info = freshen(info_);
-
-        auto instance_head = type_apply(info.class_con, info.args);
-
-        if (auto subst = maybe_match(instance_head, target_pred))
-        {
-            push_source_span( info.loc );
-
-            auto preds = apply_subst(*subst, info.constraints);
-
-            auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
-
-            auto type = apply_subst(*subst, instance_head);
-
-            auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
-
-            matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
-
+            else if (auto subst = maybe_unify(instance_head, target_pred))
+            {
+                unifying_instances.push_back({instance_head, target_pred});
+            }
             pop_source_span();
         }
     }
@@ -710,6 +694,16 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     {
         auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
         for(auto& [_,type1,type2]: surviving_instances)
+            n<<"  "<<remove_top_gen(type1)<<"\n";
+        record_error(n);
+    }
+
+    // We are also supposed to search in-scope given constraints.
+    // These are actually OK if they are all top-level instances (not given constraints, I presume) that are marked incoherent.
+    if (unifying_instances.size())
+    {
+        auto n = Note()<<"Predicate "<<target_pred<<" unifies, but does not match with instances:\n";
+        for(auto& [type1,type2]: unifying_instances)
             n<<"  "<<remove_top_gen(type1)<<"\n";
         record_error(n);
     }
