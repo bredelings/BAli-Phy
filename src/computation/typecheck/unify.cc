@@ -166,7 +166,7 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
         unify_defer(origin, t1, t2);
 }
 
-bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, substitution_t& s) const
+bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, bsubstitution_t& s) const
 {
     // translate using env
 
@@ -206,7 +206,7 @@ bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, c
 }
 
 // Is there a better way to implement this?
-bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, substitution_t& s) const
+bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, bsubstitution_t& s) const
 {
     // Translate rigid type variables
     if (auto tv1 = t1.to<TypeVar>(); tv1 and env.mapping1.count(*tv1))

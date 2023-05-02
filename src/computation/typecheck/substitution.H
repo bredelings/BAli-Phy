@@ -9,6 +9,7 @@
 
 typedef immer::map<TypeVar, Type> substitution_t;
 typedef immer::map<MetaTypeVar, Type> usubstitution_t;
+typedef immer::map<std::variant<TypeVar,MetaTypeVar>, Type> bsubstitution_t;
 
 std::string print(const substitution_t& s);
 // TODO
@@ -23,5 +24,10 @@ std::vector<Type> apply_subst(const substitution_t& s, const std::vector<Type>& 
 std::optional<Context> check_apply_subst(const usubstitution_t& s, Context C);
 std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t);
 Type apply_subst(const usubstitution_t& s, const Type& t);
+
+std::optional<Context> check_apply_subst(const bsubstitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t);
+std::vector<Type> apply_subst(const bsubstitution_t& s, const std::vector<Type>& t);
+Type apply_subst(const bsubstitution_t& s, const Type& t);
 
 #endif 

@@ -268,15 +268,17 @@ public:
     std::tuple<Type, Type, Type> unify_two_arg_function(const Type& t);
 
     // The pure unifier
-    bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, substitution_t& s) const;
+    bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, bsubstitution_t& s) const;
 
-    bool maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, substitution_t& s) const;
+    bool maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, bsubstitution_t& s) const;
 
-    std::optional<substitution_t> maybe_match(const Type& t1, const Type& t2) const;
+    std::optional<bsubstitution_t> maybe_unify(const Type& t1, const Type& t2) const;
 
-    substitution_t match(const Type& t1, const Type& t2, const myexception& e) const;
+    std::optional<bsubstitution_t> maybe_match(const Type& t1, const Type& t2) const;
 
-    substitution_t match(const Type& t1, const Type& t2) const;
+    bsubstitution_t match(const Type& t1, const Type& t2, const myexception& e) const;
+
+    bsubstitution_t match(const Type& t1, const Type& t2) const;
     // end pure unifier.
     
     DataConInfo constructor_info(const Hs::Con&);

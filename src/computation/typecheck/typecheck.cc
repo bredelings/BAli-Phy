@@ -1093,17 +1093,27 @@ void TypeChecker::unify(const Type& t1, const Type& t2, const ConstraintOrigin& 
     unify_solve_(orig, t1, t2);
 }
 
-optional<substitution_t> TypeChecker::maybe_match(const Type& t1, const Type& t2) const
+optional<bsubstitution_t> TypeChecker::maybe_unify(const Type& t1, const Type& t2) const
 {
     unification_env env;
-    substitution_t s;
+    bsubstitution_t s;
+    if (maybe_unify_(true, env, t1, t2, s))
+        return s;
+    else
+        return {};
+}
+
+optional<bsubstitution_t> TypeChecker::maybe_match(const Type& t1, const Type& t2) const
+{
+    unification_env env;
+    bsubstitution_t s;
     if (maybe_unify_(false, env, t1, t2, s))
         return s;
     else
         return {};
 }
 
-substitution_t TypeChecker::match(const Type& t1, const Type& t2, const myexception& e) const
+bsubstitution_t TypeChecker::match(const Type& t1, const Type& t2, const myexception& e) const
 {
     auto subst = maybe_match(t1,t2);
     if (not subst)
@@ -1112,7 +1122,7 @@ substitution_t TypeChecker::match(const Type& t1, const Type& t2, const myexcept
         return *subst;
 }
 
-substitution_t TypeChecker::match(const Type& t1, const Type& t2) const
+bsubstitution_t TypeChecker::match(const Type& t1, const Type& t2) const
 {
     auto e = myexception()<<"match failed: "<<t1<<" !~ "<<t2;
     return match(t1,t2,e);
