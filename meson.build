@@ -179,7 +179,8 @@ install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
 # Print a summary of the configuration
 
-summary({'host': host_machine.system()
+summary({'arch': host_machine.cpu_family(),
+         'host': host_machine.system(),
         }, section: 'Architecture')
 
 summary({'Eigen': used_eigen,
