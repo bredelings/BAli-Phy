@@ -49,7 +49,7 @@ vector<string> get_path(fs::path p)
 {
     vector<string> v;
     assert(p.is_relative());
-    for(auto& pentry: p)
+    for(const auto& pentry: p)
 	v.push_back(pentry.string());
     if (v.size() and v.back().find('.') != string::npos)
 	v.back() = v.back().substr(0,v.back().rfind('.'));

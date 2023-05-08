@@ -109,7 +109,7 @@ fs::path pretty_module_path(const fs::path& filepath)
 {
     fs::path hpath;
     // if there's a path element called "haskell", split after that.
-    for(auto& p: filepath)
+    for(const auto& p: filepath)
     {
         hpath /= p;
         if (p == "haskell")
