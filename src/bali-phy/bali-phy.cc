@@ -346,7 +346,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
 {
     std::ostringstream program_file;
 
-    program_file<<"-- Use the program `brittany` (or `hindent`) to indent this file for readability\n";
+    program_file<<"-- Use the program `ormolu` (or `brittany` or `hindent`) to indent this file for readability\n";
     set<string> imports;
     imports.insert("Probability.Random");     // for run_lazy
     imports.insert("Bio.Alphabet");               // for dna
