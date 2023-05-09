@@ -50,7 +50,7 @@ instance Sampleable Gamma where
 -- do we need a "shifted" gamma so that slice sampling doesn't crash?
 -- do we need it so that changing the "shift" parameter doesn't affect variables sampled from it?
                               
-gamma_bounds = between 0 1
+gamma_bounds = above 0
 gamma_effect x = add_move $ slice_sample_real_random_variable x gamma_bounds
 
 gamma a b = Gamma a b
