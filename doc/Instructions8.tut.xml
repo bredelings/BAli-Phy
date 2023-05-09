@@ -99,9 +99,9 @@ Which alignment (or alignments) is most likely?  Why?
 
 <section><info><title>MAFFT and HoT and Seaview</title></info>
 % cp ferns/cleaned.fasta ferns.fasta                                          // make a copy of a file
-% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                // try a simple sequence alignment 
+% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                             // try a simple sequence alignment 
 % fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
-% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             // take a look at the two good alignments
+% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;   // take a look at the two good alignments
 % compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
 % firefox ferns-compare.html                                                  // load in firefox, then shrink the font
 </section>
@@ -109,15 +109,19 @@ Which alignment (or alignments) is most likely?  Why?
 <section><info><title>Alignment with MUSCLE (v5)</title></info>
 Look at the time to perform different numbers of iterations with MAFFT:
 % cd ~/alignment_files/examples
-% muscle -align ferns.fasta -output ferns-muscle.fasta
-% aliview ferns-muscle.fasta &amp;
-% alignment-info ferns-muscle.fasta | grep columns                                       // How long is the alignment?
-
-% muscle -align ferns.fasta -output ferns-muscle.efa -diversified -replicates=10
-% muscle -letterconf ferns-muscle.efa -ref ferns-muscle.fasta -output letterconf.afa -html ferns-muscle.html
-% firefox ferns-muscle.html
+% muscle -align ferns.fasta -output ferns-muscle.fasta                        // compute a MUSCLE alignment
+% aliview ferns-muscle.fasta &amp;                                            // compare with the MAFFT alignment
+% alignment-info ferns-muscle.fasta | grep columns                            // How long is the alignment?
 % compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
 % firefox ferns-compare-muscle-mafft.html
+
+% muscle -align ferns.fasta -output ferns-muscle.efa -diversified -replicates=10
+% muscle -efa_explode ferns-muscle.efa
+% aliview abc.1 &amp;
+% aliview acb.2 &amp;
+
+% muscle -letterconf ferns-muscle.efa -ref ferns-muscle.fasta -output letterconf.afa -html ferns-muscle.html
+% firefox ferns-muscle.html
 </section>
 
 </section>
