@@ -180,20 +180,20 @@ align = ferns.fasta:865-948   # exon 3
 align = ferns.fasta:953-1312  # intron 3
 align = ferns.fasta:1329-1393 # exon 4
 
-smodel = gtr+Rates.gamma+inv  # substitution model
+smodel = gtr +> Rates.gamma +> inv  # substitution model
 
 name = ferns-intron-exon      # determines name for output directory
 </programlisting>
-<para>It should be possible to copy and paste this text into the nano editor below
+<para>It should be possible to copy and paste this text into the nano editor when running nano.  Note the instructions on the bottom of the terminal when running nano: <userinput>^X</userinput> means <userinput>Control-X</userinput>.
 % cd ~/alignment_files/examples
-% nano ferns-config1.txt           // Note the instructions on the bottom of the terminal: <userinput>^X</userinput> means <userinput>Control-X</userinput>
+% nano ferns-config1.txt
 % cat ferns-config1.txt
 % bali-phy -c ferns-config1.txt --test | less
 </para>
 </section>
 <section><info><title>Command line options</title></info>
 <para>A script file can be turned into a command-line by replacing commands like <userinput>command = value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>align=file</userinput> commands, you can just write the filename by itself:
-% bali-phy ferns.fasta:{5-8,12-444,454-596,609-844,865-948,953-1312,1329-1393} --smodel gtr+Rates.gamma+inv --name=ferns-intron-exon --test
+% bali-phy ferns.fasta:{5-8,12-444,454-596,609-844,865-948,953-1312,1329-1393} --smodel 'gtr +> Rates.gamma +> inv' --name=ferns-intron-exon --test
 However, with partitioned analyses the command-line can become kind of long.  Raw command lines are more useful with a simple unpartitioned analysis:
 % bali-phy ferns.fasta --test
 </para>
@@ -277,7 +277,7 @@ that a substitution model applies to.</listitem>
 
 <listitem>Lets use the "free rates" model instead of site-rate heterogeneity.
 This means that the rate for each bin is allowed to vary independently.
-So we drop the "+inv" part of the model
+So we drop the "+> inv" part of the model
 </listitem>
 
 <listitem>Lets fix the alignment for the exons.
@@ -295,8 +295,8 @@ align = ferns.fasta:865-948     # exon 3
 align = ferns.fasta:953-1312    # intron 3
 align = ferns.fasta:1329-1393   # exon 4
 
-smodel = 1,3,5,7:gtr+Rates.free # substitution model
-smodel = 2,4,6:gtr+Rates.free   # substitution model
+smodel = 1,3,5,7:gtr +> Rates.free # substitution model
+smodel = 2,4,6:gtr +> Rates.free   # substitution model
 
 imodel = 1,3,5,7:none           # insertion-deletion model
 imodel = 2,4,6:rs07             # insertion-deletion model
@@ -349,11 +349,11 @@ align = ferns.fasta:12-444    # intron 1
 align = ferns.fasta:609-844   # intron 2
 align = ferns.fasta:953-1312  # intron 3
 
-smodel = 1:gy94[pi=f1x4]
+smodel = 1:gy94(pi=f1x4)
 #smodel = 1:m3
-#smodel = 1:gtr+x3+dNdS+mut_sel_aa
-#smodel = 1:function[w,gtr+x3+dNdS[omega=w]+mut_sel_aa]+m3
-smodel = 2,3,4:gtr+Rates.free
+#smodel = 1:gtr + > x3 +> dNdS +> mut_sel_aa
+#smodel = 1:function(w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa) +> m3
+smodel = 2,3,4:gtr +> Rates.free
 
 imodel = 1:none
 imodel = 2,3,4:rs07
