@@ -6,7 +6,7 @@ outfile = args[2]
 pdf(file=outfile,height=10,width=7) 
 
 # read file
-LOD = read.table(filename,header=F)
+LOD = as.matrix(read.table(filename,header=F))
 N = ncol(LOD)
 L = nrow(LOD)
 

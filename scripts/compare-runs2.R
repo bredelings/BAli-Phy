@@ -5,7 +5,7 @@ outfile1 = args[2]
 outfile2 = args[3]
 
 # read file
-LOD = read.table(filename,header=F)
+LOD = as.matrix(read.table(filename,header=F))
 N = ncol(LOD)   # number of runs + 1
 L = nrow(LOD)   # number of splits
 
