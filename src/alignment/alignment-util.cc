@@ -116,6 +116,29 @@ alignment add_internal(alignment A,const SequenceTree& T)
 
 
 /// Construct a mapping of letters to columns for each leaf sequence
+vector< vector<int> > column_lookup(const matrix<int>& M)
+{
+    int nleaves = M.size2();
+
+    vector< vector<int> > result(nleaves);
+
+    for(int i=0;i<nleaves;i++) {
+	vector<int>& columns = result[i];
+	columns.reserve(M.size2());
+	for(int column=0;column<M.size1();column++)
+        {
+	    if (M(column, i) >= 0)
+            {
+                assert(M(column,i) == columns.size());
+		columns.push_back(column);
+            }
+	}
+    }
+
+    return result;
+}
+
+/// Construct a mapping of letters to columns for each leaf sequence
 vector< vector<int> > column_lookup(const alignment& A,int nleaves) 
 {
     if (nleaves == -1)

@@ -141,6 +141,61 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
+matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
+{
+    assert(M1.size2() == M2.size2());
+
+    const int N = M1.size2();
+
+    // lookup and cache the column each feature is in for M2.
+    vector< vector< int> > column_indices2 = column_lookup(M2);
+
+    // allocate the output matrix
+    matrix<int> M3(M1.size1() + M2.size1(), M1.size2());
+
+    // Initialize it to contain only gaps
+    for(int c1=0;c1<M3.size1();c1++)
+        for(int i=0; i<N; i++)
+            M3(c1, i)  = alphabet::gap;
+
+    int c3_next = 0;
+
+    for(int c1=0; c1<M1.size1(); c1++)
+    {
+        std::map<int,int> cmap;
+        for(int i=0; i<N; i++)
+        {
+            // which character?
+            int k = M1(c1,i);
+
+            // not a character
+            if (k < 0) continue;
+
+            // which column in M2?
+            int c2 = column_indices2[i][k];
+
+            // look up the column in M3;
+            auto iter = cmap.find(c2);
+
+            // if we haven't seen c2 before, allocate a new column in c3 for it.
+            if (iter == cmap.end())
+            {
+                cmap.insert({c2,c3_next++});
+                iter = cmap.find(c2);
+                assert (iter != cmap.end());
+            }
+
+            // find the column in M3
+            int c3 = iter->second;
+
+            // Put character k there.
+            M3(c3,i) = k;
+        }
+    }
+
+    return M3;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -186,59 +241,75 @@ int main(int argc,char* argv[])
         if (cutoff_strict < 0 and cutoff < 0)
             cutoff = 0.75;
 
-        //--------- Get list of supported pairs ---------//
-        Edges E(L);
+        alignment consensus;
 
-        for(int s1=0;s1<N;s1++)
-            for(int s2=0;s2<s1;s2++)
-                add_edges(E,Ms,s1,s2,L[s1],L[s2],
-                          min(abs(cutoff),abs(cutoff_strict))
-                    );
+        if (cutoff_strict == 1.0 or cutoff == 1.0)
+        {
+            auto M2 = Ms.front();
 
+            for(auto& M: Ms)
+                M2 = split_alignment(M2,M);
 
-        E.build_index();
+            alignment consensus = get_alignment(M2,alignments[0]);
 
-        //-------- Build a beginning alignment --------//
-        index_matrix M = unaligned_matrix(L);
-
-        map<unsigned,pair<unsigned,unsigned> > graph;
-
-        if (cutoff_strict > 0) 
-            graph = M.merge2(E,cutoff_strict,true);
-
-        if (cutoff > 0) 
-            graph = M.merge2(E,cutoff,false);
-
-        //-------- Construct Build a beginning alignment --------//
-
-        matrix<int> M2 = get_ordered_matrix(M);
-
-        alignment consensus = get_alignment(M2,alignments[0]);
-
-        std::cout<<consensus<<std::endl;
-
-
-        if (args.count("uncertainty")) {
-
-            string filename = args["uncertainty"].as<string>();
-            ofstream graph_file(filename);
-
-            int total_seq_length=0;
-            for(int length: L)
-                total_seq_length += length;
-
-            double scale1 = double(N)/total_seq_length;
-            double scale2 = 1.0/total_seq_length;
-
-            for(const auto& [count,x]: graph)
-            {
-                double LOD = log10(statistics::odds(count,Ms.size(),1));
-                auto& [columns, unknowns] = x;
-                graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
-            }
-            graph_file.close();
+            std::cout<<consensus<<std::endl;
         }
+        else
+        {
 
+            //--------- Get list of supported pairs ---------//
+            Edges E(L);
+
+            for(int s1=0;s1<N;s1++)
+                for(int s2=0;s2<s1;s2++)
+                    add_edges(E,Ms,s1,s2,L[s1],L[s2],
+                              min(abs(cutoff),abs(cutoff_strict))
+                        );
+
+
+            E.build_index();
+
+            //-------- Build a beginning alignment --------//
+            index_matrix M = unaligned_matrix(L);
+
+            map<unsigned,pair<unsigned,unsigned> > graph;
+
+            if (cutoff_strict > 0) 
+                graph = M.merge2(E,cutoff_strict,true);
+
+            if (cutoff > 0) 
+                graph = M.merge2(E,cutoff,false);
+
+            //-------- Construct Build a beginning alignment --------//
+
+            matrix<int> M2 = get_ordered_matrix(M);
+
+            consensus = get_alignment(M2,alignments[0]);
+
+            std::cout<<consensus<<std::endl;
+
+
+            if (args.count("uncertainty")) {
+
+                string filename = args["uncertainty"].as<string>();
+                ofstream graph_file(filename);
+
+                int total_seq_length=0;
+                for(int length: L)
+                    total_seq_length += length;
+
+                double scale1 = double(N)/total_seq_length;
+                double scale2 = 1.0/total_seq_length;
+
+                for(const auto& [count,x]: graph)
+                {
+                    double LOD = log10(statistics::odds(count,Ms.size(),1));
+                    auto& [columns, unknowns] = x;
+                    graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
+                }
+                graph_file.close();
+            }
+        }
     }
     catch (std::exception& e) {
         std::cerr<<"alignment-consensus: Error! "<<e.what()<<endl;

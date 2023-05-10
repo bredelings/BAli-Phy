@@ -51,6 +51,7 @@ alignment add_internal(alignment A,const SequenceTree& T);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
+std::vector< std::vector<int> > column_lookup(const matrix<int>& M);
 
 /// Replace each letter with its position in its sequence
 matrix<int> M(const alignment& A1);
