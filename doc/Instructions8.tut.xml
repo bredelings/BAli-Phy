@@ -94,7 +94,7 @@ Which alignment (or alignments) is most likely?  Why?
 
 % chmod +x compare-alignments			 // make the file executable
 % cp compare-alignments ~/bin			 // copy the file to ~/bin
-% which compare-alignments ~/bin         	 // check to make sure its in your PATH
+% which compare-alignments              	 // check to make sure its in your PATH
 </section>
 
 <section><info><title>MAFFT and HoT and Seaview</title></info>
@@ -115,7 +115,7 @@ Look at the time to perform different numbers of iterations with MAFFT:
 % compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
 % firefox ferns-compare-muscle-mafft.html
 
-% muscle -align ferns.fasta -output ferns-muscle.efa -diversified -replicates=10
+% muscle -align ferns.fasta -output ferns-muscle.efa -diversified -replicates 10
 % muscle -efa_explode ferns-muscle.efa
 % aliview abc.1 &amp;
 % aliview acb.2 &amp;
