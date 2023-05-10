@@ -305,7 +305,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     }
 
     json scales = json::array();
-    for(int i=0;i<P.n_branch_scales();i++)
+    for(int i=0;i<ScaleModels.size();i++)
     {
         out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show()<<endl<<endl;
         scales.push_back(ScaleModels[i].pretty_model());
