@@ -1379,6 +1379,12 @@ std::string generate_atmodel_program(int n_sequences,
     vector<expression_ref> scales;
     if (n_branches > 0)
     {
+        // define tree_length
+        var tree_length_var("tlength");
+        program.let(tree_length_var, {var("tree_length"),tree_var});
+        // log |T|
+        program_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
+
         for(int i=0; i<scaleMs.size(); i++)
         {
             // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
@@ -1394,7 +1400,10 @@ std::string generate_atmodel_program(int n_sequences,
 
             scales.push_back(scale_var);
 
+            // log scale[i]
             program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
+            // log scale[i]*|T|
+            program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
         }
     }
 

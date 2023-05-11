@@ -172,16 +172,6 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 
             add_children(j, "P"+convertToString(i+1), partition_j);
 	}
-
-	// Add fields Scale<s>*|T|
-	for(int i=0;i<P->n_branch_scales();i++)
-	{
-	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
-
-            add_value(j, name, P->get_branch_scale(i)*tree_length(P->t()));
-	}
-
-	add_value(j, "|T|", tree_length(P->t()));
     }
 
     add_children(j, "parameters", M.get_logged_parameters());
@@ -248,18 +238,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	    if (auto C = dynamic_pointer_cast<const Codons>(a))
 		TL->add_field(prefix+"#substs(aa)", [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	}
-
-	// Add fields Scale<s>*|T|
-	for(int i=0;i<P->n_branch_scales();i++)
-	{
-	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
-
-	    auto f = [i](const Parameters& P) {return convertToString( P.get_branch_scale(i)*tree_length(P.t()));};
-
-	    TL->add_field(name, f);
-	}
-
-	TL->add_field("|T|", Get_Tree_Length_Function() );
     }
 
     {
