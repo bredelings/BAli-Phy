@@ -1393,9 +1393,9 @@ std::string generate_atmodel_program(int n_sequences,
             auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
             scales.push_back(scale_var);
+
+            program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
         }
-        if (auto l = logger("scale", get_list(scales), List()) )
-            program_loggers.push_back( l );
     }
 
     // M7. Substitution models
