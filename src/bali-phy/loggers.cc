@@ -42,8 +42,8 @@ map<string,set<string>> extract_signature(const map<string,map<string,int>>& ext
 set<string> extract_signature(const map<string,int>& extensions)
 {
     set<string> labels;
-    for(auto& label: extensions)
-	labels.insert(label.first);
+    for(auto& [label,_]: extensions)
+	labels.insert(label);
     return labels;
 }
 
@@ -64,16 +64,11 @@ vector<vector<vector<int>>> get_un_identifiable_indices(const vector<string>& na
 		throw myexception()<<"Signature's don't match!";  // FIXME - how to display this?
 
 	// groups[prefix][label] = index
-	for(auto& x: z)
+	for(auto& [prefix,label_mapping]: z)
 	{
-	    auto& prefix = x.first;
-	    auto& label_mapping = x.second;
-
 	    auto& group = groups[prefix];
-	    for(auto& y: label_mapping)
+	    for(auto& [label, index]: label_mapping)
 	    {
-		auto& label = y.first;
-		int index = y.second;
 		group[label].push_back(index);
 	    }
 	}
