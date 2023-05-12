@@ -415,6 +415,60 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     return constructor("()",0);
 }
 
+// slice_sample_real_random_variable x context state
+extern "C" closure builtin_function_scale_means_only_slice(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    if (log_verbose >= 3) std::cerr<<"\n\n[scale_means_only_slice2]\n";
+
+    auto& M = Args.memory();
+
+    // 2. context index = int
+    int context_index = Args.evaluate(2).as_int();
+    context_ref C(M,context_index);
+
+    // 0. scales
+    auto scales = context_ptr(C, Args.reg_for_slot(0)).list_elements();
+
+    // 1. branch_lengths
+    auto branch_lengths = context_ptr(C, Args.reg_for_slot(1)).list_elements();
+
+    vector<int> r_scales;
+    for(auto scale: scales)
+    {
+        if (auto m = scale.modifiable())
+            r_scales.push_back(m->get_reg());
+        else
+            return constructor("()",0);
+    }
+
+    vector<int> r_branch_lengths;
+    for(auto branch_length: branch_lengths)
+    {
+        if (auto m = branch_length.modifiable())
+            r_branch_lengths.push_back(m->get_reg());
+        else
+            return constructor("()",0);
+    }
+
+
+    scale_means_only_slice_function2 logp(C, r_scales, r_branch_lengths);
+
+    // Tuning this would be better.
+    // However, we now find slice boundaries by doubling instead of stepping out.
+    // Therefore the cost of not being tuned is more limited.
+    double w = 1.0;
+
+    // NOTE: Although this function returns a value, we are expecting the
+    //       slice_sample routine to set the variables to the final value.
+    slice_sample(logp, w, 50);
+
+    if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
+
+    return constructor("()",0);
+}
+
 void sample_tri_one(context_ref& /*C1*/, TreeInterface& /*t*/, int /*b*/)
 {
 }
