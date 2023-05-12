@@ -1,21 +1,21 @@
 <!DOCTYPE book [
-<!ENTITY  version        "4.0-beta3"         >
+<!ENTITY  version        "4.0-beta4"         >
 
-<!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
+<!ENTITY  source.file    "&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
 <!ENTITY  win32.file     "bali-phy-&version;-win32.tar.gz"         >
 <!ENTITY  win64.file     "bali-phy-&version;-win64.tar.gz"         >
 <!ENTITY  mac64.file     "bali-phy-&version;-mac64.tar.gz"         >
 
-<!ENTITY  source.url     "http://www.bali-phy.org/files/&source.file;"         >
-<!ENTITY  linux64.url     "http://www.bali-phy.org/files/&linux64.file;"         >
-<!ENTITY  win32.url     "http://www.bali-phy.org/files/&win32.file;"         >
-<!ENTITY  win64.url     "http://www.bali-phy.org/files/&win64.file;"         >
-<!ENTITY  mac64.url     "http://www.bali-phy.org/files/&mac64.file;"         >
+<!ENTITY  repo.url       "https://github.com/bredelings/BAli-Phy" >
+<!ENTITY  source.url     "&repo.url;/archive/refs/tags/&source.file;" >
+<!ENTITY  linux64.url    "&repo.url;/releases/download/&version;/&linux64.file;" >
+<!ENTITY  win64.url      "&repo.url;/releases/download/&version;/&win64.file;" >
+<!ENTITY  mac64.url      "&repo.url;/releases/download/&version;/&mac64.file;" >
 
-<!ENTITY  install.prefix     "~/Applications"         >
+<!ENTITY  install.prefix   "~/Applications"         >
 <!ENTITY  install.path     "&install.prefix;/bali-phy-&version;"         >
-<!ENTITY  exe.path     "&install.path;/bin/bali-phy"         >
+<!ENTITY  exe.path         "&install.path;/bin/bali-phy"         >
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
 
@@ -123,7 +123,7 @@ If you install with homebrew, you don't need to do anything extra to put bali-ph
       Open a windows in the Terminal app to access the UNIX command line.  Then download and extract the executables:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>curl -O &mac64.url;</userinput>
+<prompt>%</prompt> <userinput>curl -LO &mac64.url;</userinput>
 <prompt>%</prompt> <userinput>tar -zxf &mac64.file;</userinput></screen>
       Check that the executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
