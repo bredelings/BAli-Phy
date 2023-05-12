@@ -1,5 +1,17 @@
-* 4.0-beta4 (unrelease)
-- Fix compile issue on Macs.
+* 4.0-beta5 (unreleased)
+- 
+
+* 4.0-beta4 (May 12, 2023)
+- Bug fixes:
+  + compile issue on Macs.
+  + fix R script bug.
+  + gamma / exponential variables weren't updating in MCMC
+- Add strict consensus to alignment-consensus
+- Mention the CPU architecture at the end of meson setup.
+- Haskell;
+  + properly complain about overlapping instances.
+  + properly export imported constructors.
+
 
 * 4.0-beta3 (Apr 21, 2023)
 - Changes
