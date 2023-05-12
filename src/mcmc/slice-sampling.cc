@@ -306,6 +306,83 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 #endif
 }
 
+/*
+ * Joint scaling of branch lengths and scales so that the T*R=D remains constant.
+ */
+
+void scale_means_only_slice_function2::set_value(double t)
+{
+    log_current_factor = t;
+    double scale = exp(log_current_factor);
+
+    // Scale the branch-scaling factor for each partition.
+    for(int i=0; i<initial_scales.size(); i++)
+	C.set_modifiable_value(r_scales[i], initial_scales[i]*scale);
+
+    // Scale the branch lengths in the opposite direction
+    for(int b=0; b<initial_branch_lengths.size(); b++)
+	C.set_modifiable_value(r_branch_lengths[b], initial_branch_lengths[b]/scale);
+}
+
+double scale_means_only_slice_function2::log_average_scale() const
+{
+    return log(initial_average_scale) + log_current_factor;
+}
+
+double scale_means_only_slice_function2::operator()()
+{
+    // return pi * (\sum_i \mu_i)^(n-B)
+    return context_slice_function::operator()() + log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
+}
+
+double scale_means_only_slice_function2::current_value() const
+{
+    return log_current_factor;
+}
+
+scale_means_only_slice_function2::scale_means_only_slice_function2(context_ref& C, const std::vector<int>& ss, const std::vector<int>& ls)
+    :context_slice_function(C),
+     r_scales(ss),
+     r_branch_lengths(ls)
+{ 
+    // 1. Set up initial scales
+    if (n_scales() == 0)
+        throw myexception()<<"Can't do scale_means_only_slice function if there are no scales!";
+
+    initial_average_scale = 0;
+    initial_scales.resize(n_scales());
+    for(int i=0;i<initial_scales.size();i++)
+    {
+        initial_scales[i] = C.get_modifiable_value(r_scales[i]).as_double();
+        initial_average_scale += initial_scales[i];
+    }
+    initial_average_scale /= initial_scales.size();
+
+    // FIXME: We should be able to assert that all of the scales are modifiable.
+
+    // 3. Set up initial branch_lengths
+    initial_branch_lengths.resize(n_branch_lengths());
+    for(int b=0; b<initial_branch_lengths.size(); b++)
+        initial_branch_lengths[b] = C.get_modifiable_value(r_branch_lengths[b]).as_double();
+
+    // FIXME: We should be able to assert that all of the branch lengths are modifiable.
+
+    // 4. Set bounds on the scale factor to avoid numeric overflow/underflow.
+    bounds<double>& b = *this;
+
+    // We want to require that
+    //     log(average_scale)                              \in [-40,40]
+    //     log(initial_average_scale) + log_current_factor \in [-40,40]
+    //                                  log_current_factor \in [-40 - log(initial_average_scale), 40 - log(initial_average_scale)]
+    double shift = -log(initial_average_scale);
+
+    b = between<double>(-40+shift,40+shift);
+
+#ifndef NDEBUG
+    std::clog<<"bounds on t are "<<b<<std::endl;
+#endif
+}
+
 void constant_sum_modifiable_slice_function::set_value(double t)
 {
     auto& P = static_cast<Parameters&>(C);
