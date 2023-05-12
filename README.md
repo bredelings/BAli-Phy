@@ -22,7 +22,7 @@ sudo apt-get install g++ libcairo2-dev meson libboost-all-dev
 
 On Mac (or Linux, actually) you can use homebrew:
 ```bash
-brew install cairo meson boost
+brew install cairo meson boost pkg-config
 ```
 
 On miniconda, you can use:

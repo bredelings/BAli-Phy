@@ -222,7 +222,7 @@ Lets look inside one of these directories:
 
 <section><info><title>Monitoring an analysis</title></info>
 You can monitor an analysis in two ways.  One way is to use the program <userinput>tracer</userinput>.
-% tracer ferns-intron-exon-1/C1.log ferns/intron-exon-2/C1.log   // you may need to double-click on Tracer and load log files via the menu.
+% tracer ferns-intron-exon-1/C1.log ferns-intron-exon-2/C1.log   // you may need to double-click on Tracer and load log files via the menu.
 We would like to see that the likelihood and posterior probability have stabilized.  Another method of monitoring is just to
 generate the summary report.
 </section>
@@ -244,7 +244,7 @@ For more information on parameter names, see <link xmlns:xlink="http://www.w3.or
 % bp-analyze ferns-intron-exon-1 ferns-intron-exon-2
 % firefox Results/index.html
 Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
-% alignment-cat Results/P{1..7}-max.fasta > ferns-bali-phy.fasta
+% alignment-cat Results/P{1..7}.max.fasta > ferns-bali-phy.fasta
 Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-analyze</userinput>.
 </section>
 <section><info><title>Comparing to MAFFT, FSA, and PRANK</title></info>
