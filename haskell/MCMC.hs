@@ -97,6 +97,9 @@ accept_MH c1 c2 ratio  = makeIO $ builtin_accept_MH c1 c2 ratio
 --       So... we need some kind of ContextPtr object that holds a reference to the context
 --       until the ContextPtr is destroyed?
 
+foreign import bpcall "MCMC:scale_means_only_slice" builtin_scale_means_only_slice :: [Double] -> [Double] -> ContextIndex -> RealWorld -> ()
+scale_means_only_slice scales lengths c = makeIO $ builtin_scale_means_only_slice scales lengths c
+
 
 metropolis_hastings :: Proposal -> ContextIndex -> IO Bool
 metropolis_hastings proposal c1 = do
