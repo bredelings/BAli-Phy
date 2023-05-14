@@ -458,7 +458,7 @@ extern "C" closure builtin_function_scale_means_only_slice(OperationArgs& Args)
     // Tuning this would be better.
     // However, we now find slice boundaries by doubling instead of stepping out.
     // Therefore the cost of not being tuned is more limited.
-    double w = 1.0;
+    double w = 0.6;
 
     // NOTE: Although this function returns a value, we are expecting the
     //       slice_sample routine to set the variables to the final value.

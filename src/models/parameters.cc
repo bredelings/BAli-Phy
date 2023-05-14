@@ -1407,7 +1407,7 @@ std::string generate_atmodel_program(int n_sequences,
             program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
         }
 
-        program.perform({var("PerformTKEffect"),{var("add_move"),{var("scale_means_only_slice"), get_list(scales), branch_lengths}}});
+        program.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
     }
 
     // M7. Substitution models
