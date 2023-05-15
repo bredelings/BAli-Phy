@@ -100,6 +100,10 @@ accept_MH c1 c2 ratio  = makeIO $ builtin_accept_MH c1 c2 ratio
 foreign import bpcall "MCMC:scale_means_only_slice" builtin_scale_means_only_slice :: [Double] -> [Double] -> ContextIndex -> RealWorld -> ()
 scale_means_only_slice scales lengths c = makeIO $ builtin_scale_means_only_slice scales lengths c
 
+foreign import bpcall "MCMC:scale_means_only_proposal" builtin_scale_means_only_proposal :: [Double] -> [Double] -> ContextIndex -> RealWorld -> LogDouble
+scale_means_only_proposal scales lengths c = makeIO $ builtin_scale_means_only_proposal scales lengths c
+
+scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
 
 metropolis_hastings :: Proposal -> ContextIndex -> IO Bool
 metropolis_hastings proposal c1 = do
@@ -109,4 +113,3 @@ metropolis_hastings proposal c1 = do
   if accept then switch_to_context c1 c2 else return ()
   release_context c2
   return accept
-

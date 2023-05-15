@@ -469,6 +469,65 @@ extern "C" closure builtin_function_scale_means_only_slice(OperationArgs& Args)
     return constructor("()",0);
 }
 
+extern "C" closure builtin_function_scale_means_only_proposal(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    if (log_verbose >= 3) std::cerr<<"\n\n[scale_means_only_proposal]\n";
+
+    auto& M = Args.memory();
+
+    // 2. context index = int
+    int context_index = Args.evaluate(2).as_int();
+    context_ref C(M,context_index);
+
+    // 0. scales
+    auto scales = context_ptr(C, Args.reg_for_slot(0)).list_elements();
+
+    // 1. branch_lengths
+    auto branch_lengths = context_ptr(C, Args.reg_for_slot(1)).list_elements();
+
+    bool ok = true;
+    for(auto& scale: scales)
+    {
+        if (not scale.move_to_modifiable())
+            ok = false;
+    }
+
+    for(auto branch_length: branch_lengths)
+    {
+        if (not branch_length.move_to_modifiable())
+            ok = false;
+    }
+
+    log_double_t ratio = 1;
+
+    if (ok)
+    {
+        // Could we parameterize by the proposal distribution on factor?
+        // What should we do if this is asymmetric?  How does that modify the ratio?
+        double sigma = 0.5;
+        double factor = gaussian(0,sigma);
+        factor = exp(factor);
+        if (log_verbose >= 3) std::cerr<<"\n\n  factor = "<<log(factor)<<"\n";
+
+        for(auto& scale: scales)
+            scale.set_value( scale.value().as_double() * factor );
+
+        for(auto& branch_length: branch_lengths)
+            branch_length.set_value( branch_length.value().as_double() / factor );
+
+        ratio = pow(log_double_t(factor), (int)scales.size() - (int)branch_lengths.size() );
+    }
+
+    if (log_verbose >= 3) std::cerr<<"\n\n  ratio = "<<log(ratio)<<"\n";
+
+    return { ratio };
+}
+
+
+
+
 void sample_tri_one(context_ref& /*C1*/, TreeInterface& /*t*/, int /*b*/)
 {
 }
