@@ -1,4 +1,3 @@
-option('eigen', type : 'combo', value : 'auto', choices: ['auto','system','internal'], description: 'Which Eigen headers to use?.')
 option('json', type : 'combo', value : 'auto', choices: ['auto','system','internal'],  description: 'Which nlohmann/json.hpp to use?')
 
 option('with-mpi', type : 'boolean', value : false, description: 'Compile with MPI')

@@ -86,23 +86,7 @@ endif
 boost = dependency('boost', modules : boost_modules)
 
 ## Handle auto / system / internal method of finding/building EIGEN
-used_eigen = get_option('eigen')
-if get_option('eigen') == 'auto'
-  eigen = dependency('eigen3', required: false).as_system()
-  if not eigen.found()
-    used_eigen = 'internal'
-    message('Using internal copy of eigen.')
-    eigen = include_directories('external/eigen3', is_system: true)
-    eigen = declare_dependency(include_directories: eigen)
-  else
-    used_eigen = 'system'
-  endif
-elif get_option('eigen') == 'system'
-  eigen = dependency('eigen3').as_system()
-else
-  eigen = include_directories('external/eigen3', is_system: true)
-  eigen = declare_dependency(include_directories: eigen)
-endif
+eigen = dependency('eigen3').as_system()
 
 ## Handle auto / system / internal method of finding  <nlohmann/json.hpp>
 used_json = get_option('json')
@@ -183,7 +167,7 @@ summary({'arch': host_machine.cpu_family(),
          'host': host_machine.system(),
         }, section: 'Architecture')
 
-summary({'Eigen': used_eigen,
+summary({'Eigen': true,   # how do we tell if this is from a subproject?
          'nlohmann::json': used_json,
          'range v3': used_librange,
          'cairo': used_cairo
