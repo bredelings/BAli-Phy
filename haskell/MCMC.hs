@@ -5,6 +5,7 @@ import Range
 import Effect
 import Tree
 import Numeric.LogDouble
+import Probability.Dist
 
 type ContextIndex = Int
 
@@ -107,3 +108,25 @@ metropolis_hastings proposal c1 = do
   release_context c2
   return accept
 
+--- This stuff is completely untested!
+---   Check the code paths for set_call_op that end in std::abort().
+---   To prevent possible crashes, we may need a better option than force_simple_set_path_to_PPET....
+
+foreign import bpcall "MCMC:read_modifiable" builtin_read_modifiable :: ContextIndex -> a -> RealWorld -> a
+read_modifiable x c = makeIO $ builtin_read_modifiable x c
+
+foreign import bpcall "MCMC:write_modifiable" builtin_write_modifiable :: ContextIndex -> a -> a -> RealWorld -> ()
+write_modifiable x v c = makeIO $ builtin_write_modifiable x v c
+
+-- This runs on the HOST, and so should have a type like Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
+-- The problem is that we need magic translation from a (in the machine) to Modifiable a (in the host).
+-- Right now that's basically done inside read_modifiable, which complains if x isn't actually (Modifiable a).
+
+dist_proposal :: (Dist d, Result d ~ a, IOSampleable d, HasPdf d) => a -> (a -> d) -> ContextIndex -> IO LogDouble
+dist_proposal x f c = do
+  x1 <- read_modifiable c x
+  let f1 = f x1
+  x2 <- sampleIO $ f1
+  let f2 = f x2
+  write_modifiable c x x2
+  return (pdf f1 x2 / pdf f2 x1)
