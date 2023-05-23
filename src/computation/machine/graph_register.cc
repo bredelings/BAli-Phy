@@ -11,6 +11,7 @@
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
+#include "computation/expression/index_var.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
@@ -777,7 +778,15 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
                 auto value = closure_at(call);
                 assert(value.exp.is_atomic());
 
-                reg_values.push_back(set_op{r, value});
+                if (steps[s].created_regs.size() > 0 and regs[call].created_by.first == s)
+                    reg_values.push_back(set_op{r, value});
+                else
+                {
+                    // If these aren't reachable, weird things could happen!
+                    // We should fix this.
+                    reg_values.push_back(set_call_op{r, call});
+                    std::abort();
+                }
             }
             else if (is_interchangeable(expression_at(r)))
             {
@@ -808,6 +817,12 @@ void reg_heap::check_force_counts()
     }
 }
 
+// If we allow setting modifiables to regs and not just values, this could result in calls to
+// regs that were allocated on the NON-simple-set-path.  When those regs are destroyed, we would
+// get a crash.  So we may need a better option than force_simple_set_path_to_PPET....
+
+// Perhaps we could simpley disallow set_reg_call( ) unless we on a simple_set_path_from_PPET?
+
 int reg_heap::force_simple_set_path_to_PPET(int c)
 {
     // 1. Reroot to the PPET
@@ -828,6 +843,12 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
             {
                 auto [reg,value] = std::get<set_op>(op);
                 set_reg_value_in_context(reg, std::move(value), c);
+            }
+            else if (std::holds_alternative<set_call_op>(op))
+            {
+                auto [reg,call] = std::get<set_op>(op);
+                set_reg_value_in_context(reg, {index_var(0),{call}}, c);
+                std::abort();
             }
             else if (std::holds_alternative<interchange_op>(op))
             {

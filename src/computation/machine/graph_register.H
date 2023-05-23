@@ -162,13 +162,19 @@ struct set_op
     closure value;
 };
 
+struct set_call_op
+{
+    int reg;
+    int call;
+};
+
 struct interchange_op
 {
     int r1;
     int r2;
 };
 
-typedef std::variant<set_op, interchange_op> set_interchange_op;
+typedef std::variant<set_op, set_call_op, interchange_op> set_interchange_op;
 
 // These bits are used in evaluation as well as unsharing.
 
