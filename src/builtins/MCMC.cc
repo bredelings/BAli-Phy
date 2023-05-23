@@ -26,6 +26,49 @@ using std::optional;
 using std::vector;
 using std::shared_ptr;
 
+extern "C" closure builtin_function_write_modifiable(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+
+    context_ref C(M, c);
+
+    if (auto x_mod = context_ptr(C, Args.reg_for_slot(1)).modifiable())
+    {
+        closure indirect{index_var(0),{Args.reg_for_slot(2)}};
+        C.set_reg_value(x_mod->get_reg(), std::move(indirect));
+    }
+    else
+        throw myexception()<<"write_modifiable: the variable is not modifiable!";
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_read_modifiable(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+
+    context_ref C(M, c);
+
+    int value_reg = -1;
+    if (auto x_mod = context_ptr(C, Args.reg_for_slot(1)).modifiable())
+    {
+        x_mod->move_to_result();
+        value_reg = x_mod->get_reg();
+    }
+    else
+        throw myexception()<<"read_modifiable: the variable is not modifiable!";
+
+    return {index_var(0), {value_reg}};
+}
+
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
     double rate = Args.evaluate(0).as_double();
