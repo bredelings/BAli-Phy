@@ -169,7 +169,7 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 }
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost, vector<object_ptr<const ParsimonyCacheBranch>>& cache, int& total)
+peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost, vector<object_ptr<const ParsimonyCacheBranch>>& cache)
 {
     auto a = P.get_alphabet();
     int n_letters = a->size();
@@ -224,13 +224,11 @@ peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cos
 	if (i0 != alphabet::gap)
 	{
 	    assert(i1 == alphabet::gap);
-	    total += n_muts0.min(i0);
             n_muts.other_subst += n_muts0.min(i0);
 	}
 	else if (i1 != alphabet::gap)
 	{
 	    assert(i0 == alphabet::gap);
-	    total += n_muts1.min(i1);
             n_muts.other_subst += n_muts1.min(i1);
 	}
     }
@@ -254,7 +252,7 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 
     matrix<int> index = get_indices_from_bitpath_w(a01, {0,1}, 1<<0);
 
-    int total = 0;
+    int total = n_muts.other_subst;
     for(int i=0;i<index.size1();i++)
     {
 	int i0 = index(i,0);
@@ -288,8 +286,6 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 
 int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 {
-    int total = 0;
-  
     int root = 0;
     auto t = P.t();
 
@@ -303,15 +299,13 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 	if (t.is_leaf_node(t.source(b)))
 	    cache[b] = peel_muts_leaf_branch(b, P, cost);
 	else
-	    cache[b] = peel_muts_internal_branch(b, P, cost, cache, total);
+	    cache[b] = peel_muts_internal_branch(b, P, cost, cache);
     }
 
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    total += accumulate_root_leaf(branches.back(), P, cost, *cache[b_root]);
-
-    return total;
+    return accumulate_root_leaf(branches.back(), P, cost, *cache[b_root]);
 }
 
 
