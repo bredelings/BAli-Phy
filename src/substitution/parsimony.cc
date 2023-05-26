@@ -225,19 +225,13 @@ peel_muts_internal_branch(const alphabet& a,
     return result;
 }
 
-int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost, const ParsimonyCacheBranch& n_muts)
+int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwise_alignment_t& A, const matrix<int>& cost, const ParsimonyCacheBranch& n_muts)
 {
-    int root = P.t().target(b);
-    assert(P.t().is_leaf_node(root));
-    const auto letters_ptr = P.get_sequence(root);
-    const auto& letters = *letters_ptr;
-
-    auto a = P.get_alphabet();
-    int n_letters = a->size();
+    int n_letters = a.size();
 
     int max_cost = max_element(cost)+1;
 
-    auto a01 = convert_to_bits(P.get_pairwise_alignment(b), 0, 1);
+    auto a01 = convert_to_bits(A, 0, 1);
 
     matrix<int> index = get_indices_from_bitpath_w(a01, {0,1}, 1<<0);
 
@@ -253,19 +247,19 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 	}
 
 	int l1 = letters[i1].as_int();
-	if (a->is_letter(l1))
+	if (a.is_letter(l1))
 	{
 	    int c = cost(l1,0) + n_muts(i0, 0);
 	    for(int l2=1; l2<n_letters; l2++)
 		c = std::min(c, cost(l1,l2) + n_muts(i0, l2));
 	    total += c;
 	}
-	else if (a->is_letter_class(l1))
+	else if (a.is_letter_class(l1))
 	{
 	    int c = max_cost + n_muts.max(i0);
 	    for(int l2=0; l2<n_letters; l2++)
 		for(int l=0; l<n_letters; l++)
-		    if (a->matches(l,l1))
+		    if (a.matches(l,l1))
 			c = std::min(c, cost(l,l2) + n_muts(i0, l2));
 	    total += c;
 	}
@@ -310,7 +304,9 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    return accumulate_root_leaf(branches.back(), P, cost, *cache[b_root]);
+    auto letters_ptr = P.get_sequence(root);
+    auto& A = P.get_pairwise_alignment(b_root);
+    return accumulate_root_leaf(*a, *letters_ptr, A, cost, *cache[b_root]);
 }
 
 
