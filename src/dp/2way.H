@@ -47,6 +47,7 @@ public:
     int count_match() const {return count(A2::states::M);};
     int count_insert() const {return count(A2::states::G1);};
     int count_delete() const {return count(A2::states::G2);};
+    int count_indels() const;
 
     int size() const {return states_.size();};
     void resize(int s) {states_.resize(s);};

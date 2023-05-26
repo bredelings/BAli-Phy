@@ -140,9 +140,6 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 	if (P->variable_alignment())
         {
 	    add_value(j, "prior_A", log(P->prior_alignment()));
-            add_value(j, "|A|", alignment_length(*P));
-	    add_value(j, "#indels", n_indels(*P));
-	    add_value(j, "|indels|", n_indels(*P));
 	}
 	add_value(j, "#substs", n_substs(*P));
 
@@ -155,9 +152,6 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 	    if ((*P)[i].variable_alignment())
 	    {
 		add_value(partition_j, "prior_A", log(part.prior_alignment()));
-		add_value(partition_j, "|A|", alignment_length(part));
-		add_value(partition_j, "#indels", n_indels(part));
-		add_value(partition_j, "|indels|", total_length_indels(part));
 	    }
 
 	    auto a = (*P)[i].get_alphabet();
@@ -213,9 +207,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     {
 	if (P->variable_alignment()) {
 	    TL->add_field("prior_A", [](const Parameters& P) {return convertToString(log(P.prior_alignment()));});
-	    TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
-	    TL->add_field("#indels", Get_Total_Num_Indels_Function() );
-	    TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
 	}
 	TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
 	for(int i=0;i<P->n_data_partitions();i++)
@@ -225,9 +216,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	    if ((*P)[i].variable_alignment())
 	    {
 		TL->add_field(prefix+"prior_A", [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
-		TL->add_field(prefix+"|A|", [i](const Parameters& P){return convertToString(alignment_length(P[i]));});
-		TL->add_field(prefix+"#indels", [i](const Parameters& P){return convertToString(n_indels(P[i]));});
-		TL->add_field(prefix+"|indels|", [i](const Parameters& P){return convertToString(total_length_indels(P[i]));});
 	    }
 	    auto a = (*P)[i].get_alphabet();
 	    TL->add_field(prefix+"#substs", [i,cost = unit_cost_matrix(*a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});

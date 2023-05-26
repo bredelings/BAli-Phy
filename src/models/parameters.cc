@@ -1471,6 +1471,10 @@ std::string generate_atmodel_program(int n_sequences,
     }
     program.empty_stmt();
 
+    vector<expression_ref> alignment_lengths;
+    vector<expression_ref> total_num_indels;
+    vector<expression_ref> total_length_indels;
+
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
@@ -1504,6 +1508,26 @@ std::string generate_atmodel_program(int n_sequences,
             expression_ref alphabet = {var("getAlphabet"),smodel};
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
             program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+
+            if (n_branches > 0)
+            {
+                vector<expression_ref> sub_loggers;
+                var alignment_length("alignment_length"+part_suffix);
+                program.let(alignment_length, {var("alignment_on_tree_length"), alignment_on_tree} );
+                alignment_lengths.push_back(alignment_length);
+                var num_indels("num_indels"+part_suffix);
+                program.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );
+                total_num_indels.push_back(num_indels);
+                var length_indels("total_length_indels"+part_suffix);
+                program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
+                total_length_indels.push_back(length_indels);
+
+                sub_loggers.push_back({var("%=%"), String("|A|"), alignment_length });
+                sub_loggers.push_back({var("%=%"), String("#indels"), num_indels });
+                sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
+                
+                program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
+            }
         }
 
         // Model.Partition.3. Observe the sequence data from the distribution
@@ -1516,7 +1540,14 @@ std::string generate_atmodel_program(int n_sequences,
 
         program.empty_stmt();
     }
-
+    if (not alignment_lengths.empty())
+        program_loggers.push_back( {var("%=%"), String("A"), {var("sum"),get_list(alignment_lengths) }} );
+    if (not total_num_indels.empty())
+        program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
+    if (not total_length_indels.empty())
+        program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_length_indels) }} );
+        
+    
     var loggers_var("loggers");
     program.let(loggers_var, get_list(program_loggers));
     program.empty_stmt();

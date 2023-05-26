@@ -12,11 +12,15 @@ foreign import bpcall "Alignment:" pairwise_alignment_probability_from_counts ::
 
 data PairwiseAlignment = PairwiseAlignment
 
-foreign import bpcall "Alignment:numInsert" numInsert :: PairwiseAlignment -> Int
+foreign import bpcall "Alignment:" numInsert :: PairwiseAlignment -> Int
 
-foreign import bpcall "Alignment:numMatch" numMatch :: PairwiseAlignment -> Int
+foreign import bpcall "Alignment:" numMatch :: PairwiseAlignment -> Int
 
-foreign import bpcall "Alignment:numDelete" numDelete :: PairwiseAlignment -> Int
+foreign import bpcall "Alignment:" numDelete :: PairwiseAlignment -> Int
+
+foreign import bpcall "Alignment:" numIndels :: PairwiseAlignment -> Int
+
+foreign import bpcall "Alignment:" lengthIndels :: PairwiseAlignment -> Int
 
 foreign import bpcall "Alignment:pairwise_alignment_length1" pairwise_alignment_length1 :: PairwiseAlignment -> Int
 

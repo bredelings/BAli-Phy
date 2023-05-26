@@ -90,6 +90,17 @@ extern "C" closure builtin_function_numDelete(OperationArgs& Args)
     return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_delete()};
 }
 
+extern "C" closure builtin_function_numIndels(OperationArgs& Args)
+{
+    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_indels()};
+}
+
+extern "C" closure builtin_function_lengthIndels(OperationArgs& Args)
+{
+    auto& a = Args.evaluate(0).as_<Box<pairwise_alignment_t>>();
+    return {a.count_delete() + a.count_insert()};
+}
+
 extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
 {
     return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().length1()};

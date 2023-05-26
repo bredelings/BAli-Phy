@@ -527,6 +527,22 @@ int total_length_indels(const pairwise_alignment_t& a)
     return a.count_insert() + a.count_delete();
 }
 
+int pairwise_alignment_t::count_indels() const
+{
+    using namespace A2;
+
+    int n_indels = 0;
+
+    int last_state = states::M;
+    for(int current_state: states_)
+    {
+        if (current_state != last_state and ((current_state == states::G1) or (current_state == states::G2)))
+            n_indels++;
+    }
+
+    return n_indels;
+}
+
 pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
 {
     pairwise_alignment_t pi;
