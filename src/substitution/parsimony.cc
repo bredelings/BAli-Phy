@@ -5,7 +5,7 @@
 using std::vector;
 using boost::dynamic_bitset;
 
-struct parsimony_cache_SEV: public Object
+struct ParsimonyCacheBranch: public Object
 {
     int n_letters;
     boost::dynamic_bitset<> bits;
@@ -13,7 +13,7 @@ struct parsimony_cache_SEV: public Object
     int alignment_length;
     std::vector<int> n_muts;
 
-    parsimony_cache_SEV* clone() const {return new parsimony_cache_SEV(*this);}
+    ParsimonyCacheBranch* clone() const {return new ParsimonyCacheBranch(*this);}
 
           int& operator[](int i)       {return n_muts[i];}
     const int& operator[](int i) const {return n_muts[i];}
@@ -37,7 +37,7 @@ struct parsimony_cache_SEV: public Object
         return x;
     }
 
-    parsimony_cache_SEV(int n, int l1, int l2)
+    ParsimonyCacheBranch(int n, int l1, int l2)
         :n_letters(n),
          bits(l2),
          sequence_length(l1),
@@ -45,7 +45,7 @@ struct parsimony_cache_SEV: public Object
          n_muts(n_letters*sequence_length)
         { }
 
-    parsimony_cache_SEV(int n, const dynamic_bitset<>& bits1, const dynamic_bitset<>& bits2)
+    ParsimonyCacheBranch(int n, const dynamic_bitset<>& bits1, const dynamic_bitset<>& bits2)
         :n_letters(n),
          bits(bits1 | bits2),
          sequence_length(bits.count()),
@@ -318,7 +318,7 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 
 
 
-object_ptr<const parsimony_cache_SEV>
+object_ptr<const ParsimonyCacheBranch>
 peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>& cost)
 {
     int max_cost = max_element(cost)+1;
@@ -326,7 +326,7 @@ peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>&
     auto& a = A.get_alphabet();
     int n_letters = a.size();
 
-    auto n_muts_ptr = object_ptr<parsimony_cache_SEV>(new parsimony_cache_SEV(n_letters, A.seqlength(source), A.length()));
+    auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, A.seqlength(source), A.length()));
     auto& n_muts = *n_muts_ptr;
 
     int i=0;
@@ -360,11 +360,11 @@ peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>&
     return n_muts_ptr;
 }
 
-object_ptr<const parsimony_cache_SEV> peel_muts_internal_branch_fixed_A(const parsimony_cache_SEV& n_muts0, const parsimony_cache_SEV& n_muts1, const alphabet& a, const matrix<int>& cost)
+object_ptr<const ParsimonyCacheBranch> peel_muts_internal_branch_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const alphabet& a, const matrix<int>& cost)
 {
     int n_letters = a.size();
 
-    auto n_muts_ptr = object_ptr<parsimony_cache_SEV>(new parsimony_cache_SEV(n_letters, n_muts0.bits, n_muts1.bits));
+    auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, n_muts0.bits, n_muts1.bits));
     auto& n_muts = *n_muts_ptr;
 
     int L = n_muts0.alignment_length;
@@ -396,7 +396,7 @@ object_ptr<const parsimony_cache_SEV> peel_muts_internal_branch_fixed_A(const pa
     return n_muts_ptr;
 }
 
-int accumulate_root_leaf_fixed_A(int root, const alignment& A, const parsimony_cache_SEV& n_muts, const alphabet& a, const matrix<int>& cost)
+int accumulate_root_leaf_fixed_A(int root, const alignment& A, const ParsimonyCacheBranch& n_muts, const alphabet& a, const matrix<int>& cost)
 {
     int n_letters = a.size();
 
@@ -457,7 +457,7 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
 
     auto A = P.ancestral_sequence_alignment().as_<Box<alignment>>();
 
-    vector<object_ptr<const parsimony_cache_SEV>> cache(t.n_branches() * 2, nullptr);
+    vector<object_ptr<const ParsimonyCacheBranch>> cache(t.n_branches() * 2, nullptr);
 
     int root = 0;
     const auto branches = t.all_branches_toward_node(root);
