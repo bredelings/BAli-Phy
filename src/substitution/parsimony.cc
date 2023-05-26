@@ -1,6 +1,7 @@
 #include "substitution/parsimony.H"
 #include "dp/hmm.H"
 #include "dp/2way.H"
+#include "util/range.H"
 
 using std::vector;
 using boost::dynamic_bitset;
@@ -166,7 +167,8 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 
 object_ptr<ParsimonyCacheBranch>
 peel_muts_internal_branch(const alphabet& a,
-                          const pairwise_alignment_t& A0, const pairwise_alignment_t& A1,
+                          const pairwise_alignment_t& A0,
+                          const pairwise_alignment_t& A1,
                           const ParsimonyCacheBranch n_muts0,
                           const ParsimonyCacheBranch n_muts1,
                           const matrix<int>& cost)
@@ -225,6 +227,99 @@ peel_muts_internal_branch(const alphabet& a,
     return result;
 }
 
+int muts_root(const alphabet& a,
+              const pairwise_alignment_t& A0,
+              const pairwise_alignment_t& A1,
+              const pairwise_alignment_t& A2,
+              const ParsimonyCacheBranch& n_muts1,
+              const ParsimonyCacheBranch& n_muts2,
+              const ParsimonyCacheBranch& n_muts3,
+              const matrix<int>& cost)
+{
+    int n_letters = a.size();
+
+    int total = n_muts1.other_subst + n_muts2.other_subst + n_muts3.other_subst;
+    int s0=0, s1=0, s2=0, s3=0;
+    const int AL0 = A0.size();
+    const int AL1 = A1.size();
+    const int AL2 = A2.size();
+    assert(A0.length2() == A1.length2());
+    assert(A0.length2() == A2.length2());
+
+    vector<int> S(n_letters);
+    
+    // i<j> are indices into the pairwise alignments, while s<j> are indices into the A<i>.length1().
+    for(int i0=0,i1=0,i2=0;;)
+    {
+        while(i0 < AL0 and not A0.has_character2(i0))
+        {
+            assert(A0.has_character1(i0));
+            total += n_muts1.min(s0);
+            i0++;
+            s0++;
+        }
+        while (i1 < AL1 and not A1.has_character2(i1))
+        {
+            assert(A1.has_character1(i1));
+            total += n_muts2.min(s1);
+            i1++;
+            s1++;
+        }
+        while (i2 < AL2 and not A2.has_character2(i2))
+        {
+            assert(A2.has_character1(i2));
+            total += n_muts3.min(s2);
+            i2++;
+            s2++;
+        }
+
+        if (i2 >= AL2)
+        {
+            assert(i0 == AL0);
+            assert(i1 == AL1);
+            break;
+        }
+        else
+        {
+            assert(i0 < AL0 and i1 < AL1 and i2 < AL2);
+            assert(A0.has_character2(i0) and A1.has_character2(i1) and A2.has_character2(i2));
+        }
+
+        bool not_gap0 = A0.has_character1(i0);
+        bool not_gap1 = A1.has_character1(i1);
+        bool not_gap2 = A2.has_character1(i2);
+        i0++;
+        i1++;
+        i2++;
+
+        for(auto& s: S)
+            s = 0;
+
+        int mi=0;
+        if (not_gap0)
+        {
+            peel_muts(&n_muts1(s0,0), &S[0], n_letters, cost);
+            s0++;
+        }
+        if (not_gap1)
+        {
+            peel_muts(&n_muts2(s1,0), &S[0], n_letters, cost);
+            s1++;
+        }
+        if (not_gap2)
+        {
+            peel_muts(&n_muts3(s2,0), &S[0], n_letters, cost);
+            s2++;
+        }
+
+        total += min(S);
+        
+        s3++;
+    }
+
+    return total;
+}
+
 int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwise_alignment_t& A, const matrix<int>& cost, const ParsimonyCacheBranch& n_muts)
 {
     int n_letters = a.size();
@@ -269,10 +364,17 @@ int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwi
 
 int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 {
-    int root = 0;
     auto t = P.t();
 
     if (t.n_nodes() < 2) return 0;
+
+    int root = 0;
+    for(int n=0;n < t.n_nodes(); n++)
+        if (t.degree(root) != 3 and t.degree(n) == 3)
+        {
+            root = n;
+            break;
+        }
 
     vector<object_ptr<const ParsimonyCacheBranch>> cache(t.n_branches() * 2);
 
@@ -304,9 +406,28 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    auto letters_ptr = P.get_sequence(root);
-    auto& A = P.get_pairwise_alignment(b_root);
-    return accumulate_root_leaf(*a, *letters_ptr, A, cost, *cache[b_root]);
+    if (t.degree(root) == 1)
+    {
+        auto letters_ptr = P.get_sequence(root);
+        auto& A = P.get_pairwise_alignment(b_root);
+        return accumulate_root_leaf(*a, *letters_ptr, A, cost, *cache[b_root]);
+    }
+    else if (t.degree(root) == 3)
+    {
+        vector<int> B = t.branches_in(root);
+
+        auto& A0 = P.get_pairwise_alignment(B[0]);
+        auto& A1 = P.get_pairwise_alignment(B[1]);
+        auto& A2 = P.get_pairwise_alignment(B[2]);
+
+        auto& n_muts1 = *cache[B[0]];
+        auto& n_muts2 = *cache[B[1]];
+        auto& n_muts3 = *cache[B[2]];
+
+        return muts_root(*a, A0, A1, A2, n_muts1, n_muts2, n_muts3, cost);
+    }
+    else
+        std::abort();
 }
 
 
