@@ -13,6 +13,8 @@ struct ParsimonyCacheBranch: public Object
     int alignment_length;
     std::vector<int> n_muts;
 
+    int other_subst = 0;
+
     ParsimonyCacheBranch* clone() const {return new ParsimonyCacheBranch(*this);}
 
           int& operator[](int i)       {return n_muts[i];}
@@ -37,13 +39,25 @@ struct ParsimonyCacheBranch: public Object
         return x;
     }
 
+    ParsimonyCacheBranch(int n, int l1)
+        :n_letters(n),
+         sequence_length(l1),
+         n_muts(n_letters*sequence_length)
+        {
+            assert(n > 0);
+        }
+
     ParsimonyCacheBranch(int n, int l1, int l2)
         :n_letters(n),
          bits(l2),
          sequence_length(l1),
          alignment_length(l2),
          n_muts(n_letters*sequence_length)
-        { }
+        {
+            assert(n > 0);
+            assert(l1 >= 0);
+            assert(l2 >= 0);
+        }
 
     ParsimonyCacheBranch(int n, const dynamic_bitset<>& bits1, const dynamic_bitset<>& bits2)
         :n_letters(n),
@@ -52,6 +66,7 @@ struct ParsimonyCacheBranch: public Object
          alignment_length(bits1.size()),
          n_muts(n_letters*sequence_length)
         {
+            assert(n > 0);
             assert(bits1.size() == bits2.size());
         }
 };
@@ -101,23 +116,7 @@ int letter_class2_cost(const alphabet& a, int l1, int l2, const matrix<int>& cos
     return c;
 }
 
-inline int min(int* x, int size)
-{
-    int c = x[0];
-    for(int i=1;i<size;i++)
-	c = std::min(c,x[i]);
-    return c;
-}
-
-inline int max(int* x, int size)
-{
-    int c = x[0];
-    for(int i=1;i<size;i++)
-	c = std::max(c,x[i]);
-    return c;
-}
-
-int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& cost)
+object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& cost)
 {
     int max_cost = max_element(cost)+1;
 
@@ -129,7 +128,8 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
     auto& letters = *letters_ptr;
     int L = P.seqlength(source);
 
-    auto n_muts = new int[L * n_letters];
+    auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
+    auto& n_muts = *result;
     assert(letters.size() == L);
 
     for(int i=0;i<L;i++)
@@ -142,19 +142,19 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
 		for(int l=0;l<n_letters;l++)
 		    if (a->matches(l,l1))
 			c = std::min(c, cost(l,l2));
-		n_muts[n_letters*i + l2] = c;
+		n_muts(i, l2) = c;
 	    }
 	else if (a->is_letter(l1))
 	    for(int l2=0;l2<n_letters;l2++)
-		n_muts[n_letters*i + l2] = cost(l1,l2);
+		n_muts(i, l2) = cost(l1,l2);
 	else  // wildcard
 	{
 	    assert(l1 == alphabet::not_gap);
 	    for(int l2=0;l2<n_letters;l2++)
-		n_muts[n_letters*i + l2] = 0;
+		n_muts(i, l2) = 0;
 	}
     }
-    return n_muts;
+    return result;
 }
 
 void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int>& cost)
@@ -168,8 +168,8 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
     }
 }
 
-int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost,
-			       vector<int*>& cache, int& total)
+object_ptr<ParsimonyCacheBranch>
+peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost, vector<object_ptr<const ParsimonyCacheBranch>>& cache, int& total)
 {
     auto a = P.get_alphabet();
     int n_letters = a->size();
@@ -178,7 +178,8 @@ int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>
     int source = t.source(b);
     int L = P.seqlength(source);
 
-    auto n_muts = new int[L * n_letters];
+    auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
+    auto& n_muts = *result;
 
     // find the names of the (two) branches behind b
     vector<int> B = t.branches_before(b);
@@ -191,8 +192,8 @@ int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>
     matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
     assert(index.size1() == L);
       
-    auto n_muts0 = cache[B[0]];
-    auto n_muts1 = cache[B[1]];
+    auto& n_muts0 = *cache[B[0]];
+    auto& n_muts1 = *cache[B[1]];
 
     /*-------------------- Do the peeling part------------- --------------------*/
     for(int i=0;i<L;i++)
@@ -202,17 +203,18 @@ int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>
 
 	int i0 = index(i,0);
 	if (i0 != alphabet::gap)
-	    peel_muts(n_muts0 + i0*n_letters, n_muts + i*n_letters, n_letters, cost);
+	    peel_muts(&n_muts0[i0*n_letters], &n_muts[i*n_letters], n_letters, cost);
 
 	int i1 = index(i,1);
 	if (i1 != alphabet::gap)
-	    peel_muts(n_muts1 + i1*n_letters, n_muts + i*n_letters, n_letters, cost);
+	    peel_muts(&n_muts1[i1*n_letters], &n_muts[i*n_letters], n_letters, cost);
     }
 
     /*-------------------- Do the other_subst collection part -------------------*/
     // min_i (min_j (cost(i,j) + n_muts[j])) <= min_i ( 0 + n_muts[i] )
     // min_i (min_j (cost(i,j) + n_muts[j])) >= min_i ( min_j ( n_muts[j] ) )
     // min_i (min_j (cost(i,j) + n_muts[j])) == min_i ( n_muts[i] )
+    n_muts.other_subst = n_muts0.other_subst + n_muts1.other_subst;
     matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
     for(int i=0;i<index_collect.size1();i++)
     {
@@ -222,22 +224,21 @@ int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>
 	if (i0 != alphabet::gap)
 	{
 	    assert(i1 == alphabet::gap);
-	    total += min(n_muts0 + i0*n_letters, n_letters);
+	    total += n_muts0.min(i0);
+            n_muts.other_subst += n_muts0.min(i0);
 	}
 	else if (i1 != alphabet::gap)
 	{
 	    assert(i0 == alphabet::gap);
-	    total += min(n_muts1 + i1*n_letters, n_letters);
+	    total += n_muts1.min(i1);
+            n_muts.other_subst += n_muts1.min(i1);
 	}
     }
 
-    delete [] cache[B[0]]; cache[B[0]] = nullptr;
-    delete [] cache[B[1]]; cache[B[1]] = nullptr;
-
-    return n_muts;
+    return result;
 }
 
-int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost, int* n_muts)
+int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost, const ParsimonyCacheBranch& n_muts)
 {
     int root = P.t().target(b);
     assert(P.t().is_leaf_node(root));
@@ -260,25 +261,25 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 	int i1 = index(i,1);
 	if (i1 == alphabet::gap or i1 == alphabet::not_gap)
 	{
-	    total += min(n_muts + i0*n_letters, n_letters);
+	    total += n_muts.min(i0);
 	    continue;
 	}
 
 	int l1 = letters[i1].as_int();
 	if (a->is_letter(l1))
 	{
-	    int c = cost(l1,0) + n_muts[i0*n_letters + 0];
+	    int c = cost(l1,0) + n_muts(i0, 0);
 	    for(int l2=1; l2<n_letters; l2++)
-		c = std::min(c, cost(l1,l2) + n_muts[i0*n_letters + l2]);
+		c = std::min(c, cost(l1,l2) + n_muts(i0, l2));
 	    total += c;
 	}
 	else if (a->is_letter_class(l1))
 	{
-	    int c = max_cost + max(n_muts + i0*n_letters, n_letters);
+	    int c = max_cost + n_muts.max(i0);
 	    for(int l2=0; l2<n_letters; l2++)
 		for(int l=0; l<n_letters; l++)
 		    if (a->matches(l,l1))
-			c = std::min(c, cost(l,l2) + n_muts[i0*n_letters + l2]);
+			c = std::min(c, cost(l,l2) + n_muts(i0, l2));
 	    total += c;
 	}
     }
@@ -294,7 +295,7 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 
     if (t.n_nodes() < 2) return 0;
 
-    vector<int*> cache(t.n_branches() * 2);
+    vector<object_ptr<const ParsimonyCacheBranch>> cache(t.n_branches() * 2);
 
     const auto branches = t.all_branches_toward_node(root);
     for(int b: branches)
@@ -308,10 +309,7 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    total += accumulate_root_leaf(branches.back(), P, cost, cache[b_root]);
-
-    for(auto p: cache)
-	delete[] p;
+    total += accumulate_root_leaf(branches.back(), P, cost, *cache[b_root]);
 
     return total;
 }
