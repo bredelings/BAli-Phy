@@ -116,17 +116,13 @@ int letter_class2_cost(const alphabet& a, int l1, int l2, const matrix<int>& cos
     return c;
 }
 
-object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& cost)
+object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(const alphabet& a, const EVector& letters, const matrix<int>& cost)
 {
     int max_cost = max_element(cost)+1;
 
-    auto a = P.get_alphabet();
-    int n_letters = a->size();
+    int n_letters = a.size();
 
-    int source = P.t().source(b);
-    auto letters_ptr = P.get_sequence(source);
-    auto& letters = *letters_ptr;
-    int L = P.seqlength(source);
+    int L = letters.size();
 
     auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
     auto& n_muts = *result;
@@ -135,16 +131,16 @@ object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(int b, const data_p
     for(int i=0;i<L;i++)
     {
 	int l1 = letters[i].as_int();
-	if (a->is_letter_class(l1))
+	if (a.is_letter_class(l1))
 	    for(int l2=0;l2<n_letters;l2++)
 	    {
 		int c = max_cost;
 		for(int l=0;l<n_letters;l++)
-		    if (a->matches(l,l1))
+		    if (a.matches(l,l1))
 			c = std::min(c, cost(l,l2));
 		n_muts(i, l2) = c;
 	    }
-	else if (a->is_letter(l1))
+	else if (a.is_letter(l1))
 	    for(int l2=0;l2<n_letters;l2++)
 		n_muts(i, l2) = cost(l1,l2);
 	else  // wildcard
@@ -169,31 +165,24 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 }
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost, vector<object_ptr<const ParsimonyCacheBranch>>& cache)
+peel_muts_internal_branch(const alphabet& a,
+                          const pairwise_alignment_t& A0, const pairwise_alignment_t& A1,
+                          const ParsimonyCacheBranch n_muts0,
+                          const ParsimonyCacheBranch n_muts1,
+                          const matrix<int>& cost)
 {
-    auto a = P.get_alphabet();
-    int n_letters = a->size();
+    int n_letters = a.size();
 
-    auto t = P.t();
-    int source = t.source(b);
-    int L = P.seqlength(source);
-
-    auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
-    auto& n_muts = *result;
-
-    // find the names of the (two) branches behind b
-    vector<int> B = t.branches_before(b);
-      
-    auto a0 = convert_to_bits(P.get_pairwise_alignment(B[0]), 0, 2);
-    auto a1 = convert_to_bits(P.get_pairwise_alignment(B[1]), 1, 2);
+    auto a0 = convert_to_bits(A0, 0, 2);
+    auto a1 = convert_to_bits(A1, 1, 2);
     auto a012 = Glue_A(a0, a1);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
-    assert(index.size1() == L);
+    int L = index.size1();
       
-    auto& n_muts0 = *cache[B[0]];
-    auto& n_muts1 = *cache[B[1]];
+    auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
+    auto& n_muts = *result;
 
     /*-------------------- Do the peeling part------------- --------------------*/
     for(int i=0;i<L;i++)
@@ -294,12 +283,28 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
     vector<object_ptr<const ParsimonyCacheBranch>> cache(t.n_branches() * 2);
 
     const auto branches = t.all_branches_toward_node(root);
+    auto a = P.get_alphabet();
     for(int b: branches)
     {
-	if (t.is_leaf_node(t.source(b)))
-	    cache[b] = peel_muts_leaf_branch(b, P, cost);
+        int source = t.source(b);
+
+	if (t.is_leaf_node(source))
+        {
+            auto letters_ptr = P.get_sequence(source);
+            auto& letters = *letters_ptr;
+	    cache[b] = peel_muts_leaf_branch(*a, letters, cost);
+        }
 	else
-	    cache[b] = peel_muts_internal_branch(b, P, cost, cache);
+        {
+            vector<int> B = t.branches_before(b);
+            auto& A0 = P.get_pairwise_alignment(B[0]);
+            auto& A1 = P.get_pairwise_alignment(B[1]);
+
+            auto& n_muts0 = *cache[B[0]];
+            auto& n_muts1 = *cache[B[1]];
+
+	    cache[b] = peel_muts_internal_branch(*a, A0, A1, n_muts0, n_muts1, cost);
+        }
     }
 
     int b_root = branches.back();
