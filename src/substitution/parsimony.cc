@@ -166,14 +166,14 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 }
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts_internal_branch(const alphabet& a,
-                          const pairwise_alignment_t& A0,
+peel_muts_internal_branch(const pairwise_alignment_t& A0,
                           const pairwise_alignment_t& A1,
                           const ParsimonyCacheBranch n_muts0,
                           const ParsimonyCacheBranch n_muts1,
                           const matrix<int>& cost)
 {
-    int n_letters = a.size();
+    assert(n_muts0.n_letters == n_muts1.n_letters);
+    int n_letters = n_muts0.n_letters;
 
     auto a0 = convert_to_bits(A0, 0, 2);
     auto a1 = convert_to_bits(A1, 1, 2);
@@ -227,8 +227,7 @@ peel_muts_internal_branch(const alphabet& a,
     return result;
 }
 
-int muts_root(const alphabet& a,
-              const pairwise_alignment_t& A0,
+int muts_root(const pairwise_alignment_t& A0,
               const pairwise_alignment_t& A1,
               const pairwise_alignment_t& A2,
               const ParsimonyCacheBranch& n_muts1,
@@ -236,7 +235,9 @@ int muts_root(const alphabet& a,
               const ParsimonyCacheBranch& n_muts3,
               const matrix<int>& cost)
 {
-    int n_letters = a.size();
+    assert(n_muts1.n_letters == n_muts2.n_letters);
+    assert(n_muts1.n_letters == n_muts3.n_letters);
+    int n_letters = n_muts1.n_letters;
 
     int total = n_muts1.other_subst + n_muts2.other_subst + n_muts3.other_subst;
     int s0=0, s1=0, s2=0, s3=0;
@@ -399,7 +400,7 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
             auto& n_muts0 = *cache[B[0]];
             auto& n_muts1 = *cache[B[1]];
 
-	    cache[b] = peel_muts_internal_branch(*a, A0, A1, n_muts0, n_muts1, cost);
+	    cache[b] = peel_muts_internal_branch(A0, A1, n_muts0, n_muts1, cost);
         }
     }
 
@@ -424,7 +425,7 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
         auto& n_muts2 = *cache[B[1]];
         auto& n_muts3 = *cache[B[2]];
 
-        return muts_root(*a, A0, A1, A2, n_muts1, n_muts2, n_muts3, cost);
+        return muts_root(A0, A1, A2, n_muts1, n_muts2, n_muts3, cost);
     }
     else
         std::abort();
