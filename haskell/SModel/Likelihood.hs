@@ -47,8 +47,9 @@ foreign import bpcall "SModel:" sample_deg2_sequence_SEV :: VectorPairIntInt -> 
 foreign import bpcall "SModel:" sample_leaf_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> CondLikes -> Alphabet -> EVector Int -> EVector Int -> VectorPairIntInt
 
 
+
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
-                                                               lcf b = let p = ps!(undirectedName t b)
+                                                               lcf b = let p = ps IntMap.! b
                                                                            edges = edgesBeforeEdge t b
                                                                            b1 = edges!0
                                                                            b2 = edges!1
@@ -75,7 +76,7 @@ sample_ancestral_sequences :: Tree t =>
                               IntMap (EVector Int) ->
                               IntMap PairwiseAlignment ->
                               Alphabet ->
-                              Array Int (EVector (Matrix Double)) ->
+                              IntMap (EVector (Matrix Double)) ->
                               Matrix Double ->
                               Array Int CondLikes ->
                               EVector Int ->
@@ -91,7 +92,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
-                                                ps_for_b0 = ps!(undirectedName t b0)
+                                                ps_for_b0 = ps IntMap.! b0
                                                 a0 = as IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
