@@ -24,8 +24,8 @@ import qualified Data.IntMap as IntMap
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
-      prop_cond_likes :: Array Int CondLikes,
-      prop_anc_seqs :: EVector VectorPairIntInt,
+      prop_cond_likes :: IntMap CondLikes,
+      prop_anc_seqs :: IntMap VectorPairIntInt,
       prop_likelihood :: LogDouble,
       prop_taxa :: IntMap (CMaybe CPPString),
       prop_get_weighted_frequency_matrix :: Matrix Double,
@@ -90,9 +90,9 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                                         [b1, b2] = getEdges tree
                                     in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! b1) (transition_ps IntMap.! b1) f
       ancestral_sequences = case n_nodes of
-                              1 -> list_to_vector $ []
-                              2 -> list_to_vector $ []
-                              _ -> array_to_vector $ sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+                              1 -> IntMap.empty
+                              2 -> IntMap.empty
+                              _ -> sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
   in_edge "tree" tree
   in_edge "alignment" alignment
