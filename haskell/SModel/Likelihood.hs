@@ -119,7 +119,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 
 cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
     let lc    = mkArray (2*numBranches t) lcf
-        lcf b = let p = ps!(undirectedName t b)
+        lcf b = let p = ps IntMap.! b
                     edges = edgesBeforeEdge t b
                     b1 = edges!0
                     b2 = edges!1
@@ -151,7 +151,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
-                                                ps_for_b0 = ps!(undirectedName t b0)
+                                                ps_for_b0 = ps IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
                                                 b2 = edges!1

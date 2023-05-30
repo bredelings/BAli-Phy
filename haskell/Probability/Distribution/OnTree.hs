@@ -39,7 +39,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
 
 data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_subst_root :: Int,
-      prop_fa_transition_ps :: Array Int (EVector (Matrix Double)),
+      prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fa_cond_likes :: Array Int CondLikes,
       prop_fa_anc_seqs :: AlignmentMatrix,
       prop_fa_likelihood :: LogDouble,
@@ -133,7 +133,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
-      transition_ps = transition_p_index smodel_on_tree
+      transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
               tree
@@ -144,7 +144,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               smap
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
                  | n_nodes == 1   = peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
-                 | n_nodes == 2   = peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
+                 | n_nodes == 2   = let [n1,n2] = getNodes tree
+                                    in peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps IntMap.! n1) f column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
