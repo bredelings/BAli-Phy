@@ -40,7 +40,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
 data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_subst_root :: Int,
       prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
-      prop_fa_cond_likes :: Array Int CondLikes,
+      prop_fa_cond_likes :: IntMap CondLikes,
       prop_fa_anc_seqs :: AlignmentMatrix,
       prop_fa_likelihood :: LogDouble,
       prop_fa_taxa :: IntMap (CMaybe CPPString),
@@ -151,7 +151,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       ancestral_sequences = case n_nodes of
                               1 -> a0
                               2 -> a0
-                              _ -> let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
+                              _ -> let ancestral_states = sample_ancestral_sequences_SEV
                                          tree
                                          subst_root
                                          node_sequences
@@ -161,7 +161,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          cls
                                          smap
                                          mapping
-                                   in ancestral_sequence_alignment a0 ancestral_states smap
+                                   in ancestral_sequence_alignment tree a0 ancestral_states smap
   in_edge "tree" tree
   in_edge "smodel" smodel
 

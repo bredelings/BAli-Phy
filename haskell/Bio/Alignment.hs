@@ -85,7 +85,24 @@ uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mappi
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
 
 foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
-ancestral_sequence_alignment a0 states smap = builtin_ancestral_sequence_alignment a0 states smap
+ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap
+    where states' = list_to_vector [ states IntMap.! node  | node <- sort $ getNodes tree]
+{-
+  OK, so what do we use the original alignment matrix for?
+  * the alphabet
+  * the original sequences.
+
+  Right now, I think the node names still correspond to the input alignment names.
+  But when the node names stop being [0..n_sequences-1], we will need a way to
+  1. construct the alignment from a list of Sequence objects
+  2. get a list (leaf_nodes ++ internal_nodes)
+  3. for each node, get the leaf label
+  4. use smap to project the state to an alphabet letter.
+  5. turn the list of Sequence objects into an alignment.
+Maybe we want a map from String -> EVector Int.
+
+That would lose the comments on the fastas though.
+-}
 
 foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
 select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (list_to_vector sites)
