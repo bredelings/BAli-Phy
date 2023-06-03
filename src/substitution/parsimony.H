@@ -25,6 +25,72 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/parameters.H"
 #include "tools/parsimony.H"
 
+struct ParsimonyCacheBranch: public Object
+{
+    int n_letters;
+    boost::dynamic_bitset<> bits;
+    int sequence_length;
+    int alignment_length;
+    std::vector<int> n_muts;
+
+    int other_subst = 0;
+
+    ParsimonyCacheBranch* clone() const {return new ParsimonyCacheBranch(*this);}
+
+          int& operator[](int i)       {return n_muts[i];}
+    const int& operator[](int i) const {return n_muts[i];}
+
+          int& operator()(int c,int l)       {return n_muts[c*n_letters+l];}
+    const int& operator()(int c,int l) const {return n_muts[c*n_letters+l];}
+
+    int min(int c) const
+    {
+        int x = (*this)(c,0);
+        for(int i=1;i<n_letters;i++)
+            x = std::min(x, (*this)(c,i));
+        return x;
+    }
+
+    int max(int c) const
+    {
+        int x = (*this)(c,0);
+        for(int i=1;i<n_letters;i++)
+            x = std::max(x, (*this)(c,i));
+        return x;
+    }
+
+    ParsimonyCacheBranch(int n, int l1)
+        :n_letters(n),
+         sequence_length(l1),
+         n_muts(n_letters*sequence_length)
+        {
+            assert(n > 0);
+        }
+
+    ParsimonyCacheBranch(int n, int l1, int l2)
+        :n_letters(n),
+         bits(l2),
+         sequence_length(l1),
+         alignment_length(l2),
+         n_muts(n_letters*sequence_length)
+        {
+            assert(n > 0);
+            assert(l1 >= 0);
+            assert(l2 >= 0);
+        }
+
+    ParsimonyCacheBranch(int n, const boost::dynamic_bitset<>& bits1, const boost::dynamic_bitset<>& bits2)
+        :n_letters(n),
+         bits(bits1 | bits2),
+         sequence_length(bits.count()),
+         alignment_length(bits1.size()),
+         n_muts(n_letters*sequence_length)
+        {
+            assert(n > 0);
+            assert(bits1.size() == bits2.size());
+        }
+};
+
 int n_mutations(const data_partition& P, const matrix<int>& cost);
 
 int n_mutations(const data_partition& P);
