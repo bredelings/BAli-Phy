@@ -143,6 +143,37 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     return {index_var(0), {r_effect}};
 }
 
+extern "C" closure builtin_function_getProperties(OperationArgs& Args)
+{
+    auto& M = Args.memory();
+
+    // 1. Get the reg for the observed/sampled variable
+    int r_var = Args.reg_for_slot(0);
+
+    // 2. Find the distribution from which it was sampled / observed
+    auto it1 = M.out_edges_to_var.find(r_var);
+    if (it1 == M.out_edges_to_var.end())
+        throw myexception()<<"This reg is not a random variable!";
+    auto& to_var = it1->second;
+    if (to_var.size() > 1)
+        throw myexception()<<"This data has been observed more than once!";
+
+    int s_dist = *to_var.begin();
+
+    // 3. Get the properties from the distribution
+    auto& dist_properties = M.dist_properties;
+
+    auto it = dist_properties.find(s_dist);
+    if (it == dist_properties.end())
+        throw myexception()<<"No properties for distribution!";
+
+    // 4. Get the "properties" property.
+    int r_properties_effect = it->second.at("properties");
+    int r_properties = M.closure_at(r_properties_effect).Env[0];
+
+    return {index_var(0), {r_properties}};
+}
+
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     int r_value = Args.reg_for_slot(0);
