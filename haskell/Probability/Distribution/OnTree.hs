@@ -34,7 +34,8 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_alphabet :: Alphabet,
       prop_as :: IntMap PairwiseAlignment,
       prop_n_states :: Int,
-      prop_n_base_models :: Int
+      prop_n_base_models :: Int,
+      prop_n_muts :: Int
     }
 
 data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
@@ -52,6 +53,16 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_n_base_models :: Int
     }
 
+find_sequence label sequences = find (\s -> sequence_name s == label) sequences
+
+getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
+    sequence_for_node node = case get_label tree node of
+                               Nothing ->  error $ "No label for node " ++ show node
+                               Just label ->
+                                   case find_sequence label sequence_data of
+                                     Just sequence -> sequence
+                                     Nothing -> error $ "No such sequence " ++ Text.unpack label
+
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
@@ -61,13 +72,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
-      find_sequence label = find (\s -> sequence_name s == label) sequences
-      node_sequences = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
-                                                                     Nothing ->  error "No label"
-                                                                     Just label ->
-                                                                         case find_sequence label of
-                                                                           Just sequence -> sequence_to_indices alphabet sequence
-                                                                           Nothing -> error $ "No such sequence " ++ Text.unpack label)
+      node_sequences = fmap (sequence_to_indices alphabet) $ getSequencesOnTree sequences tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -94,11 +99,13 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                               2 -> IntMap.empty
                               _ -> sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
+      n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
+
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return [likelihood]
 
@@ -115,6 +122,14 @@ instance (LabelledTree t,BranchLengthTree t, SimpleSModel s) => HasAnnotatedPdf 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
 
 ----------------------------------------
+getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntMap.fromSet sequence_for_node
+    where sequence_for_node node = case get_label tree node of
+                                     Nothing ->  error "No label"
+                                     Just label ->
+                                         case lookup label compressed_sequences of
+                                           Just indices -> indices
+                                           Nothing -> error $ "No such sequence " ++ Text.unpack label
+
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
 
@@ -124,12 +139,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
-      node_sequences = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
-                                                                     Nothing ->  error "No label"
-                                                                     Just label ->
-                                                                         case lookup label compressed_sequences of
-                                                                             Just indices -> indices
-                                                                             Nothing -> error $ "No such sequence " ++ Text.unpack label)
+      node_sequences = getCompressedSequencesOnTree compressed_sequences tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
