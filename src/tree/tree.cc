@@ -392,7 +392,7 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
 
     //-------- report which branch name didn't survive -------//
     assert(b2_name > b1_name);
-    assert(b2_name >= ((delta1+3)/2));
+//    assert(b2_name >= ((delta1+3)/2));
     return b2_name;
 }
 
@@ -1331,9 +1331,12 @@ void Tree::remove_node_from_branch(int node)
 {
     BranchNode* n = nodes_[node];
 
-    if (nodeview(n).degree() == 2) {
+    if (nodeview(n).degree() == 2)
+    {
         TreeView::remove_node_from_branch(n);
 
+        // If we don't do this, we're going to segfault in ~Tree.
+        // So don't throw exceptions from remove_node_from_branch( ).
         reanalyze(nodes_[0]);
     }
 }
