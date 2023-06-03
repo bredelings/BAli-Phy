@@ -66,7 +66,10 @@ object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(const alphabet& a, 
     for(int i=0;i<L;i++)
     {
 	int l1 = letters[i].as_int();
-	if (a.is_letter_class(l1))
+	if (a.is_letter(l1))
+	    for(int l2=0;l2<n_letters;l2++)
+		n_muts(i, l2) = cost(l1,l2);
+	else if (a.is_letter_class(l1))
 	    for(int l2=0;l2<n_letters;l2++)
 	    {
 		int c = max_cost;
@@ -75,9 +78,6 @@ object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(const alphabet& a, 
 			c = std::min(c, cost(l,l2));
 		n_muts(i, l2) = c;
 	    }
-	else if (a.is_letter(l1))
-	    for(int l2=0;l2<n_letters;l2++)
-		n_muts(i, l2) = cost(l1,l2);
 	else  // wildcard
 	{
 	    assert(l1 == alphabet::not_gap);
@@ -387,14 +387,13 @@ peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>&
 
 	int l2 = A(c, source);
 
-	if (a.is_letter_class(l2))
-	    for(int l1=0;l1<n_letters;l1++)
-		n_muts(i,l1) = letter_class2_cost(a,l1,l2,cost,max_cost);
-
-	else if (a.is_letter(l2))
+	if (a.is_letter(l2))
 	    for(int l1=0;l1<n_letters;l1++)
 		n_muts(i,l1) = cost(l1,l2);
 
+	else if (a.is_letter_class(l2))
+	    for(int l1=0;l1<n_letters;l1++)
+		n_muts(i,l1) = letter_class2_cost(a,l1,l2,cost,max_cost);
 	else  // wildcard
 	{
 	    assert(l2 == alphabet::not_gap);
