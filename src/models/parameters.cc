@@ -1291,6 +1291,7 @@ std::string generate_atmodel_program(int n_sequences,
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                       // for ATModel
+    imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Probability.Distribution.OnTree");   // for ctmc_on_tree{,fixed_A}
     for(auto& m: SMs)
@@ -1481,6 +1482,7 @@ std::string generate_atmodel_program(int n_sequences,
     vector<expression_ref> alignment_lengths;
     vector<expression_ref> total_num_indels;
     vector<expression_ref> total_length_indels;
+    vector<expression_ref> total_substs;
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1506,6 +1508,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment" + part_suffix);
+        vector<expression_ref> sub_loggers;
         if (imodel_index)
         {
             assert(like_calcs[i] == 0);
@@ -1518,7 +1521,6 @@ std::string generate_atmodel_program(int n_sequences,
 
             if (n_branches > 0)
             {
-                vector<expression_ref> sub_loggers;
                 var alignment_length("alignment_length"+part_suffix);
                 program.let(alignment_length, {var("alignment_on_tree_length"), alignment_on_tree} );
                 alignment_lengths.push_back(alignment_length);
@@ -1529,13 +1531,33 @@ std::string generate_atmodel_program(int n_sequences,
                 program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
 
+                var properties("properties"+part_suffix);
+                program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
+
+                var substs("substs"+part_suffix);
+                program.let(substs, {var("prop_n_muts"), properties});
+                total_substs.push_back(substs);
+
                 sub_loggers.push_back({var("%=%"), String("|A|"), alignment_length });
                 sub_loggers.push_back({var("%=%"), String("#indels"), num_indels });
                 sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
+                sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 
-                program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
             }
         }
+        else
+        {
+            if (n_branches > 0)
+            {
+                vector<expression_ref> sub_loggers;
+                var substs("substs"+part_suffix);
+                program.let(substs, Hs::TypedExp({noloc,0},{noloc,Hs::TypeCon("Int")}));
+                sub_loggers.push_back({var("%=%"), String("#substs"), substs });
+                total_substs.push_back(substs);
+            }
+        }
+
+        program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
 
         // Model.Partition.3. Observe the sequence data from the distribution
         expression_ref distribution;
@@ -1553,6 +1575,8 @@ std::string generate_atmodel_program(int n_sequences,
         program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
     if (not total_length_indels.empty())
         program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_length_indels) }} );
+    if (not total_substs.empty())
+        program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
         
     
     var loggers_var("loggers");
