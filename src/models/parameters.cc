@@ -1519,6 +1519,9 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
             program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
 
+            var properties("properties"+part_suffix);
+            program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
+
             if (n_branches > 0)
             {
                 var alignment_length("alignment_length"+part_suffix);
@@ -1531,9 +1534,6 @@ std::string generate_atmodel_program(int n_sequences,
                 program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
 
-                var properties("properties"+part_suffix);
-                program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
-
                 var substs("substs"+part_suffix);
                 program.let(substs, {var("prop_n_muts"), properties});
                 total_substs.push_back(substs);
@@ -1542,11 +1542,14 @@ std::string generate_atmodel_program(int n_sequences,
                 sub_loggers.push_back({var("%=%"), String("#indels"), num_indels });
                 sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
-                
             }
+            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
         }
         else
         {
+            var properties("properties"+part_suffix);
+            program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeFixedAProperties")}));
+
             if (n_branches > 0)
             {
                 vector<expression_ref> sub_loggers;
@@ -1555,6 +1558,7 @@ std::string generate_atmodel_program(int n_sequences,
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
             }
+            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_fa_likelihood"),properties}}});
         }
 
         program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
