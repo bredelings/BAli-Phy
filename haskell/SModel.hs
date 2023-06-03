@@ -4,6 +4,7 @@ module SModel (module SModel,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood,
+               module SModel.Parsimony,
                module SModel.Simple,
                module SModel.Rate,
                module SModel.MixtureModel,
@@ -25,6 +26,7 @@ import SModel.Doublets
 import SModel.Codons
 import SModel.ReversibleMarkov
 import SModel.Likelihood
+import SModel.Parsimony
 import SModel.Simple
 import SModel.Rate
 import SModel.MixtureModel
