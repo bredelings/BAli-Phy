@@ -141,22 +141,18 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
         {
 	    add_value(j, "prior_A", log(P->prior_alignment()));
 	}
-	add_value(j, "#substs", n_substs(*P));
 
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
             auto part = (*P)[i];
             json partition_j;
 
-	    add_value(partition_j, "likelihood", log(part.likelihood()));
 	    if ((*P)[i].variable_alignment())
 	    {
 		add_value(partition_j, "prior_A", log(part.prior_alignment()));
 	    }
 
 	    auto a = (*P)[i].get_alphabet();
-	    add_value(partition_j, "#substs", n_mutations(part, unit_cost_matrix(*a)));
-
 	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
 		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Do)));
 	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
@@ -208,17 +204,14 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	if (P->variable_alignment()) {
 	    TL->add_field("prior_A", [](const Parameters& P) {return convertToString(log(P.prior_alignment()));});
 	}
-	TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
 	    string prefix = "P"+convertToString(i+1)+"/";
-	    TL->add_field(prefix + "likelihood", [i](const Parameters& P) {return convertToString(log(P[i].likelihood()));});
 	    if ((*P)[i].variable_alignment())
 	    {
 		TL->add_field(prefix+"prior_A", [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
 	    }
 	    auto a = (*P)[i].get_alphabet();
-	    TL->add_field(prefix+"#substs", [i,cost = unit_cost_matrix(*a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
 		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
