@@ -148,7 +148,14 @@ extern "C" closure builtin_function_getProperties(OperationArgs& Args)
     auto& M = Args.memory();
 
     // 1. Get the reg for the observed/sampled variable
-    int r_var = Args.reg_for_slot(0);
+
+    // NOTE: If we are getting properties for e.g. (data !! 2), then we might need to perform
+    //       some computation to find the reg that is annotated as being observed.
+
+    // QUESTION: If this is a SAMPLED (not observed) variable, will this find the modifiable or the value?
+    //           We want the modifiable.
+
+    int r_var = Args.evaluate_slot_force(0);
 
     // 2. Find the distribution from which it was sampled / observed
     auto it1 = M.out_edges_to_var.find(r_var);
