@@ -1405,12 +1405,14 @@ std::string generate_atmodel_program(int n_sequences,
             auto code = scaleMs[i].code;
             expression_ref E = var(scaleM_function_for_index[i]);
 
-            auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
+            // This should still log sub-loggers of the scales, I think.
+            auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
             scales.push_back(scale_var);
 
             // log scale[i]
             program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
+
             // log scale[i]*|T|
             program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
         }
