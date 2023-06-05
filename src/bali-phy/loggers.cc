@@ -137,20 +137,10 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 
     if (auto P = dynamic_cast<const Parameters*>(&M); P and P->t().n_nodes() > 1)
     {
-	if (P->variable_alignment())
-        {
-	    add_value(j, "prior_A", log(P->prior_alignment()));
-	}
-
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
             auto part = (*P)[i];
             json partition_j;
-
-	    if ((*P)[i].variable_alignment())
-	    {
-		add_value(partition_j, "prior_A", log(part.prior_alignment()));
-	    }
 
 	    auto a = (*P)[i].get_alphabet();
 	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
@@ -201,16 +191,10 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
   
     if (P and P->t().n_nodes() > 1)
     {
-	if (P->variable_alignment()) {
-	    TL->add_field("prior_A", [](const Parameters& P) {return convertToString(log(P.prior_alignment()));});
-	}
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
 	    string prefix = "P"+convertToString(i+1)+"/";
-	    if ((*P)[i].variable_alignment())
-	    {
-		TL->add_field(prefix+"prior_A", [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
-	    }
+
 	    auto a = (*P)[i].get_alphabet();
 	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
 		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
