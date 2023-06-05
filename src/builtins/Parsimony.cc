@@ -12,6 +12,7 @@
 #include "util/range.H"
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
+#include "tools/parsimony.H"
 
 using std::vector;
 using std::pair;
@@ -25,17 +26,27 @@ using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
 
+// the only one we're not using is `amino_acid_cost_matrix(*C)`.
+
 extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
 {
-    int N = Args.evaluate(0).as_int();
+    auto arg0 = Args.evaluate(0);
+    const alphabet& a = *arg0.as_<Alphabet>();
 
+    int N = a.size();
     auto U = new Box<matrix<int>>(N, N, 1);
-    auto& u = *U;
-    for(int i=0; i<N; i++)
-        u(i,i) = 0;
+
+    if (auto T = arg0.poly_cast<alphabet,Triplets>())
+	*U = nucleotide_cost_matrix(*T);
+    else if (auto D = arg0.poly_cast<alphabet,Doublets>())
+	*U = nucleotide_cost_matrix(*D);
+    else
+        *U = unit_cost_matrix(a);
 
     return U;
 }
+
+
 
 // peel_muts_leaf_branch :: EVector Int -> Alphabet -> MutCosts -> CondPars
 object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(const alphabet& a, const EVector& letters, const matrix<int>& cost);

@@ -17,8 +17,7 @@ data CondPars
 
 type MutCosts = Matrix Int
 
-foreign import bpcall "Parsimony:unitCostMatrix" unitCostMatrix' :: Int -> MutCosts
-unitCostMatrix a = unitCostMatrix' $ length $ letters $ a
+foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet -> MutCosts
 
 foreign import bpcall "Parsimony:" peel_muts_leaf_branch :: EVector Int -> Alphabet -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" peel_muts_internal_branch :: CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> CondPars
@@ -58,3 +57,32 @@ parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alph
                                      root = head $ getNodes t
                                  in peel_muts t pc as root seqs alpha cost
 ----
+{-
+
+
+cached_conditional_muts_SEV t seqs alpha cost alignment smap =
+    let pc    = IntMap.fromSet pcf $ getEdgesSet t
+        pcf b = let edges = edgesBeforeEdge t b
+                    b1 = edges!0
+                    b2 = edges!1
+                in case numElements edges of
+                     0 -> peel_muts_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha cost (bitmask_from_alignment alignment $ sourceNode t b) smap
+                     1 -> peel_muts_deg2_branch_SEV (pc IntMap.! b1) cost
+                     2 -> peel_muts_internal_branch_SEV (pc IntMap.! b1) (pc IntMap.! b2) cost
+    in pc
+
+peel_muts_SEV t cp root seqs alpha cost counts = let branches_in = fmap (reverseEdge t) (edgesOutOfNode t root)
+                                                     b1 = branches_in!0
+                                                     b2 = branches_in!1
+                                                     b3 = branches_in!2
+                                                 in case numElements branches_in of
+                                                      3 -> calc_root_probability_SEV (cl IntMap.! b1) (cl IntMap.! b2) (cl IntMap.! b3) counts
+                                                      2 -> calc_root_deg2_probability_SEV (cl IntMap.! b1) (cl IntMap.! b2) counts
+                                                      1 -> let n = targetNode t b1
+                                                           in calc_leaef_muts_SEV alpha (seqs IntMap.! n) (cl IntMap.! b1) counts
+
+parsimony_SEV :: Tree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
+parsimony_SEV t seqs as alpha cost = let pc = cached_conditional_muts_SEV t seqs as alpha cost
+                                        root = head $ getNodes t
+                                     in peel_muts_SEV t pc as root seqs alpha cost
+-}
