@@ -1485,6 +1485,7 @@ std::string generate_atmodel_program(int n_sequences,
     vector<expression_ref> total_num_indels;
     vector<expression_ref> total_length_indels;
     vector<expression_ref> total_substs;
+    vector<expression_ref> total_prior_A;
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1524,6 +1525,11 @@ std::string generate_atmodel_program(int n_sequences,
             var properties("properties"+part_suffix);
             program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
 
+            var properties_A("properties_A"+part_suffix);
+            program.let(properties_A,Hs::TypedExp({noloc,{var("getProperties"), alignment_on_tree}},{noloc,Hs::TypeCon("RandomAlignmentProperties")}));
+            var prior_A("prior_A" + part_suffix);
+            program.let(prior_A, {var("probability"),properties_A});
+
             if (n_branches > 0)
             {
                 var alignment_length("alignment_length"+part_suffix);
@@ -1545,6 +1551,7 @@ std::string generate_atmodel_program(int n_sequences,
                 sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
             }
+            sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
             sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
         }
         else
@@ -1583,7 +1590,9 @@ std::string generate_atmodel_program(int n_sequences,
         program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_length_indels) }} );
     if (not total_substs.empty())
         program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
-        
+    if (not total_prior_A.empty())
+        program_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
+
     
     var loggers_var("loggers");
     program.let(loggers_var, get_list(program_loggers));
