@@ -1583,7 +1583,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
     if (not alignment_lengths.empty())
-        program_loggers.push_back( {var("%=%"), String("A"), {var("sum"),get_list(alignment_lengths) }} );
+        program_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
     if (not total_num_indels.empty())
         program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
     if (not total_length_indels.empty())
