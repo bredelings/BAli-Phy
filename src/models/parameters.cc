@@ -1573,18 +1573,20 @@ std::string generate_atmodel_program(int n_sequences,
             var properties("properties"+part_suffix);
             program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeFixedAProperties")}));
 
+            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_fa_likelihood"),properties}}});
+
             if (n_branches > 0)
             {
-                vector<expression_ref> sub_loggers;
                 var substs("substs"+part_suffix);
                 program.let(substs, Hs::TypedExp({noloc,0},{noloc,Hs::TypeCon("Int")}));
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
             }
-            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_fa_likelihood"),properties}}});
         }
 
-        program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
+        var part_loggers("p"+part+"_loggers");
+        program.let(part_loggers,get_list(sub_loggers));
+        program_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
         program.empty_stmt();
     }
     if (not alignment_lengths.empty())
