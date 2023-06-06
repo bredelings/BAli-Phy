@@ -135,25 +135,6 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
     add_value(j, "likelihood", log(M.likelihood()));
     add_value(j, "posterior", log(M.probability()));
 
-    if (auto P = dynamic_cast<const Parameters*>(&M); P and P->t().n_nodes() > 1)
-    {
-	for(int i=0;i<P->n_data_partitions();i++)
-	{
-            auto part = (*P)[i];
-            json partition_j;
-
-	    auto a = (*P)[i].get_alphabet();
-	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
-		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Do)));
-	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
-		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Tr)));
-	    if (auto C = dynamic_pointer_cast<const Codons>(a))
-		add_value(partition_j, "#substs(aa)", n_mutations(part, amino_acid_cost_matrix(*C)));
-
-            add_children(j, "P"+convertToString(i+1), partition_j);
-	}
-    }
-
     add_children(j, "parameters", M.get_logged_parameters());
 
     return j;
@@ -189,22 +170,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     TL->add_field("likelihood", [](const Model& M, long) {return convertToString(log(M.likelihood()));});
     TL->add_field("posterior", [](const Model& M, long) {return convertToString(log(M.probability()));});
   
-    if (P and P->t().n_nodes() > 1)
-    {
-	for(int i=0;i<P->n_data_partitions();i++)
-	{
-	    string prefix = "P"+convertToString(i+1)+"/";
-
-	    auto a = (*P)[i].get_alphabet();
-	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
-		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
-		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	    if (auto C = dynamic_pointer_cast<const Codons>(a))
-		TL->add_field(prefix+"#substs(aa)", [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	}
-    }
-
     {
 	json log = M->get_logged_parameters();
 	vector<string> names = parameter_names(log);
