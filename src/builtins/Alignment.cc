@@ -335,28 +335,6 @@ extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
     return {P};
 }
 
-extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
-{
-    using boost::dynamic_bitset;
-
-    auto arg0 = Args.evaluate(0);
-    const auto& A = arg0. as_<Box<alignment>>().value();
-
-    int seq = Args.evaluate(1).as_int();
-
-    int L = A.length();
-    
-    object_ptr<Box<dynamic_bitset<>>> mask_(new Box<dynamic_bitset<>>(L));
-    auto& mask = *mask_;
-
-    for(int i=0;i<L;i++)
-	if (A.character(i,seq))
-	    mask.flip(i);
-
-    return mask_;
-}
-
-
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -518,8 +496,8 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
     {
 	EVector seq;
 	for(int col=0;col<A.length();col++)
-	    if (auto l = A(col,i); a.is_feature(l))
-		seq.push_back(l);
+	    seq.push_back( A(col,i) );
+
 	sequences.push_back(std::move(seq));
     }
 

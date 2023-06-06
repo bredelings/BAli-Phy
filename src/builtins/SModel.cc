@@ -1647,6 +1647,52 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
 #include "dp/hmm.H"
 using boost::dynamic_bitset;
 
+extern "C" closure builtin_function_bitmask_from_sequence(OperationArgs& Args)
+{
+    using boost::dynamic_bitset;
+
+    auto arg0 = Args.evaluate(0);
+    const auto& seq = arg0. as_<EVector>();
+
+    int L = seq.size();
+
+    object_ptr<Box<dynamic_bitset<>>> mask_(new Box<dynamic_bitset<>>(L));
+    auto& mask = *mask_;
+
+    for(int i=0;i<L;i++)
+    {
+        int c = seq[i].as_int();
+	if (c != alphabet::gap and c != alphabet::unknown)
+	    mask.flip(i);
+    }
+
+    return mask_;
+}
+
+
+extern "C" closure builtin_function_strip_gaps(OperationArgs& Args)
+{
+    using boost::dynamic_bitset;
+
+    auto arg0 = Args.evaluate(0);
+    const auto& seq1 = arg0. as_<EVector>();
+
+    int L = seq1.size();
+
+    object_ptr<EVector> Seq2(new EVector);
+    auto& seq2 = *Seq2;
+
+    for(int i=0;i<L;i++)
+    {
+        int c = seq1[i].as_int();
+        if (c != alphabet::gap and c != alphabet::unknown)
+            seq2.push_back(c);
+    }
+
+    return Seq2;
+}
+
+
 namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap);

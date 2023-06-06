@@ -135,10 +135,11 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
-      compressed_sequences = isequences_from_alignment compressed_alignment
-      node_sequences = getCompressedSequencesOnTree compressed_sequences tree
-      -- we need to get the bitmasks here!
-      -- we should stop going through Alignment
+      compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq))
+                                   | (name,seq) <- isequences_from_alignment compressed_alignment]
+      node_seqs_bits = getCompressedSequencesOnTree compressed_sequences tree
+      node_sequences = fmap fst node_seqs_bits
+      -- stop going through Alignment
 
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
@@ -149,10 +150,9 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
               tree
-              node_sequences
+              node_seqs_bits
               alphabet
               transition_ps
-              compressed_alignment
               smap
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
                  | n_nodes == 1   = peel_likelihood_1_SEV compressed_alignment alphabet f column_counts

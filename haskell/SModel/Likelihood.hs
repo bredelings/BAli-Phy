@@ -30,7 +30,8 @@ foreign import bpcall "SModel:" sample_internal_sequence :: VectorPairIntInt -> 
 foreign import bpcall "SModel:" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "Alignment:" bitmask_from_alignment :: AlignmentMatrix -> Int -> CBitVector
+foreign import bpcall "SModel:" bitmask_from_sequence :: EVector Int -> CBitVector
+foreign import bpcall "SModel:" strip_gaps :: EVector Int -> EVector Int
 foreign import bpcall "SModel:" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
 foreign import bpcall "SModel:" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "SModel:" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
@@ -121,7 +122,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                           f
     in ancestor_seqs
 
-cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
+cached_conditional_likelihoods_SEV t seqs alpha ps smap =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
         lcf b = let p = ps IntMap.! b
                     edges = edgesBeforeEdge t b
@@ -129,8 +130,8 @@ cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
                     b2 = edges!1
                 in case numElements edges of
                      0 -> let node = sourceNode t b
-                              node_seq = seqs IntMap.! node
-                          in peel_leaf_branch_SEV node_seq alpha p (bitmask_from_alignment a node) smap
+                              (node_seq, bitmask) = seqs IntMap.! node
+                          in peel_leaf_branch_SEV node_seq alpha p bitmask smap
                      1 -> peel_deg2_branch_SEV (lc IntMap.! b1) p
                      2 -> peel_internal_branch_SEV (lc IntMap.! b1) (lc IntMap.! b2) p
     in lc
