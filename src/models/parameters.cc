@@ -1587,7 +1587,7 @@ std::string generate_atmodel_program(int n_sequences,
     if (not total_num_indels.empty())
         program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
     if (not total_length_indels.empty())
-        program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_length_indels) }} );
+        program_loggers.push_back( {var("%=%"), String("|indels|"), {var("sum"),get_list(total_length_indels) }} );
     if (not total_substs.empty())
         program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
     if (not total_prior_A.empty())
