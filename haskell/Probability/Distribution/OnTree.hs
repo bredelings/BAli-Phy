@@ -136,10 +136,12 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
       compressed_sequences = isequences_from_alignment compressed_alignment
+      node_sequences = getCompressedSequencesOnTree compressed_sequences tree
+      -- we need to get the bitmasks here!
+      -- we should stop going through Alignment
 
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
-      node_sequences = getCompressedSequencesOnTree compressed_sequences tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
