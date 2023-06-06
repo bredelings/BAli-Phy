@@ -1521,7 +1521,21 @@ std::string generate_atmodel_program(int n_sequences,
             expression_ref alphabet = {var("getAlphabet"),smodel};
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
             program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+        }
 
+        // Model.Partition.3. Observe the sequence data from the distribution
+        expression_ref distribution;
+        if (like_calcs[i] == 0)
+            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
+        else
+            distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
+        program.perform({var("observe"),sequence_data_var,distribution});
+
+        program.empty_stmt();
+
+        // Model.Partition.4 Logging.
+        if (imodel_index)
+        {
             var properties("properties"+part_suffix);
             program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
 
@@ -1571,15 +1585,6 @@ std::string generate_atmodel_program(int n_sequences,
         }
 
         program_loggers.push_back( {var("%>%"), String("P"+part), get_list(sub_loggers) } );
-
-        // Model.Partition.3. Observe the sequence data from the distribution
-        expression_ref distribution;
-        if (like_calcs[i] == 0)
-            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
-        else
-            distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
-        program.perform({var("observe"),sequence_data_var,distribution});
-
         program.empty_stmt();
     }
     if (not alignment_lengths.empty())
