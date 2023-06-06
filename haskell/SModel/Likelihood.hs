@@ -128,7 +128,9 @@ cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
                     b1 = edges!0
                     b2 = edges!1
                 in case numElements edges of
-                     0 -> peel_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha p (bitmask_from_alignment a $ sourceNode t b) smap
+                     0 -> let node = sourceNode t b
+                              node_seq = seqs IntMap.! node
+                          in peel_leaf_branch_SEV node_seq alpha p (bitmask_from_alignment a node) smap
                      1 -> peel_deg2_branch_SEV (lc IntMap.! b1) p
                      2 -> peel_internal_branch_SEV (lc IntMap.! b1) (lc IntMap.! b2) p
     in lc
