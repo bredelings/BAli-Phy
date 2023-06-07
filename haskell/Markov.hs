@@ -7,7 +7,7 @@ foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int 
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
-foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
+foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:compute_stationary_freqs" builtin_get_pi :: Matrix Double -> EVector Double
 
