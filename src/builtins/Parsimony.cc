@@ -63,7 +63,7 @@ extern "C" closure builtin_function_peel_muts_leaf_branch(OperationArgs& Args)
 }
 
 // peel_muts_internal_branch :: CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> CondPars
-object_ptr<ParsimonyCacheBranch>
+object_ptr<const ParsimonyCacheBranch>
 peel_muts_internal_branch(const pairwise_alignment_t& A0,
                           const pairwise_alignment_t& A1,
                           const ParsimonyCacheBranch n_muts0,
@@ -136,5 +136,4 @@ extern "C" closure builtin_function_calc_leaf_muts(OperationArgs& Args)
 
     return {muts};
 }
-
 
