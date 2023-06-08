@@ -368,24 +368,20 @@ int n_mutations_variable_A(const data_partition& P, const matrix<int>& cost)
 
 
 object_ptr<const ParsimonyCacheBranch>
-peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>& cost)
+peel_muts_leaf_branch_fixed_A(const alphabet& a, const EVector& seq, const dynamic_bitset<>& mask, const matrix<int>& cost)
 {
     int max_cost = max_element(cost)+1;
 
-    auto& a = A.get_alphabet();
     int n_letters = a.size();
 
-    auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, A.seqlength(source), A.length()));
+    auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, seq.size(), mask.size()));
     auto& n_muts = *n_muts_ptr;
 
-    int i=0;
-    for(int c=0; c< A.length(); c++)
+    n_muts.bits = mask;
+
+    for(int i=0; i< seq.size(); i++)
     {
-        if (not A.character(c, source)) continue;
-
-        n_muts.bits.set(c);
-
-	int l2 = A(c, source);
+	int l2 = seq[i].as_int();
 
 	if (a.is_letter(l2))
 	    for(int l1=0;l1<n_letters;l1++)
@@ -400,10 +396,7 @@ peel_muts_leaf_branch_fixed_A(int source, const alignment& A, const matrix<int>&
 	    for(int l1=0;l1<n_letters;l1++)
 		n_muts(i,l1) = 0;
 	}
-
-        i++;
     }
-    assert(n_muts.sequence_length == i);
 
     return n_muts_ptr;
 }
@@ -444,7 +437,7 @@ object_ptr<const ParsimonyCacheBranch> peel_muts_internal_branch_fixed_A(const P
     return n_muts_ptr;
 }
 
-int accumulate_root_leaf_fixed_A(int root, const alignment& A, const ParsimonyCacheBranch& n_muts, const alphabet& a, const matrix<int>& cost)
+int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, const dynamic_bitset<>& root_mask, const ParsimonyCacheBranch& n_muts, const matrix<int>& cost)
 {
     int n_letters = a.size();
 
@@ -454,9 +447,10 @@ int accumulate_root_leaf_fixed_A(int root, const alignment& A, const ParsimonyCa
 
     int i0 = 0;
     int i1 = 0;
+
     for(int c=0; c<n_muts.alignment_length; c++)
     {
-        bool root_gap = not A.character(c,root);
+        bool root_gap = not root_mask[c];
         bool node_gap = not n_muts.bits.test(c);
 
         if (root_gap and node_gap)
@@ -468,7 +462,8 @@ int accumulate_root_leaf_fixed_A(int root, const alignment& A, const ParsimonyCa
 	}
         else
         {
-            int l1 = A(c,root);
+            int l1 = root_seq[i1].as_int();
+
             if (a.is_letter(l1))
             {
                 int c = cost(l1,0) + n_muts(i0,0);
@@ -493,7 +488,7 @@ int accumulate_root_leaf_fixed_A(int root, const alignment& A, const ParsimonyCa
             i1++;
     }
     assert(i0 == n_muts.bits.count());
-    assert(i1 == A.seqlength(root));
+    assert(i1 == root_seq.size());
     return total;
 }
 
@@ -516,7 +511,20 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
         {
             int source = P.t().source(b);
 
-	    cache[b] = peel_muts_leaf_branch_fixed_A(source, A, cost);
+            EVector seq;
+
+            dynamic_bitset<> mask(A.length());
+
+            for(int c=0; c< A.length(); c++)
+            {
+                if (A.character(c, source))
+                {
+                    seq.push_back(A(c,source));
+                    mask.set(c);
+                }
+            }
+
+	    cache[b] = peel_muts_leaf_branch_fixed_A(A.get_alphabet(), seq, mask,cost);
         }
 	else
         {
@@ -536,7 +544,20 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    return accumulate_root_leaf_fixed_A(root, A, *cache[b_root], *P.get_alphabet(), cost);
+    EVector root_seq;
+
+    dynamic_bitset<> root_mask(A.length());
+
+    for(int c=0; c< A.length(); c++)
+    {
+        if (A.character(c, root))
+        {
+            root_seq.push_back(A(c,root));
+            root_mask.set(c);
+        }
+    }
+
+    return accumulate_root_leaf_fixed_A(A.get_alphabet(), root_seq, root_mask, *cache[b_root], cost);
 }
 
 int n_mutations(const data_partition& P, const matrix<int>& cost)
