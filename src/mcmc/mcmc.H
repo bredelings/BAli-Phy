@@ -345,18 +345,6 @@ namespace MCMC {
 	Dirichlet_Modifiable_Slice_Move(const std::string&, const std::vector<int>&, int);
     };
 
-    class Scale_Means_Only_Slice_Move: public Slice_Move
-    {
-    public:
-	Scale_Means_Only_Slice_Move* clone() const {return new Scale_Means_Only_Slice_Move(*this);}
- 
-	void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
-
-	void iterate(owned_ptr<Model>& P,MoveStats&,int);
-
-	Scale_Means_Only_Slice_Move(const std::string&, double);
-    };
-
     /// A move which takes an integer argument from a supplied list
     class MoveArg: public Move {
 	/// The ordered list of args to operate on this round

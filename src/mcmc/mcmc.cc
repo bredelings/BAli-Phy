@@ -522,35 +522,6 @@ namespace MCMC {
 	:Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
     { }
 
-    void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Model>& P, MoveStats& Stats,int)
-    {
-	if (log_verbose >= 3) clog<<" [scale means only slice] move"<<endl;
-
-	Parameters& PP = *P.as<Parameters>();
-	// If any of the branch means are fixed, this won't work.
-
-	double v1 = 0;
-	try
-	{
-	    scale_means_only_slice_function slice_levels_function(PP);
-
-	    double v2 = sample(PP,slice_levels_function, v1);
-
-	    //---------- Record Statistics --------------//
-	    Result result(2);
-	    result.totals[0] = std::abs(v2);
-	    result.totals[1] = slice_levels_function.count;
-
-	    Stats.inc(name,result);
-	}
-	catch (...) {}
-    }
-
-    Scale_Means_Only_Slice_Move::Scale_Means_Only_Slice_Move(const string& s, double W_)
-	:Slice_Move(s,W_)
-    { }
-
-
     int MoveArg::reset(double l) 
     {
 	vector<int> numbers(args.size());
