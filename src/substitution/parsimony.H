@@ -37,11 +37,11 @@ struct ParsimonyCacheBranch: public Object
 
     ParsimonyCacheBranch* clone() const {return new ParsimonyCacheBranch(*this);}
 
-          int& operator[](int i)       {return n_muts[i];}
-    const int& operator[](int i) const {return n_muts[i];}
+          int& operator[](int i)       {assert(0 <= i and i<n_muts.size()); return n_muts[i];}
+    const int& operator[](int i) const {assert(0 <= i and i<n_muts.size()); return n_muts[i];}
 
-          int& operator()(int c,int l)       {return n_muts[c*n_letters+l];}
-    const int& operator()(int c,int l) const {return n_muts[c*n_letters+l];}
+          int& operator()(int c,int l)       {assert(0 <= c and c < sequence_length); return n_muts[c*n_letters+l];}
+    const int& operator()(int c,int l) const {assert(0 <= c and c < sequence_length); return n_muts[c*n_letters+l];}
 
     int min(int c) const
     {

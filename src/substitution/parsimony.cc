@@ -374,6 +374,7 @@ peel_muts_leaf_branch_fixed_A(const alphabet& a, const EVector& seq, const dynam
 
     int n_letters = a.size();
 
+    assert(seq.size() == mask.count());
     auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, seq.size(), mask.size()));
     auto& n_muts = *n_muts_ptr;
 
@@ -519,6 +520,10 @@ int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, con
 	{
 	    cost = n_muts.min(i0);
 	}
+        else if (node_gap)
+        {
+            cost = 0;
+        }
         else
         {
             int l1 = root_seq[i1].as_int();
