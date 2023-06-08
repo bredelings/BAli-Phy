@@ -50,7 +50,8 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_leaf_sequences :: IntMap (EVector Int),
       prop_fa_alphabet :: Alphabet,
       prop_fa_n_states :: Int,
-      prop_fa_n_base_models :: Int
+      prop_fa_n_base_models :: Int,
+      prop_fa_n_muts :: Int
     }
 
 find_sequence label sequences = find (\s -> sequence_name s == label) sequences
@@ -174,11 +175,14 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          smap
                                          mapping
                                    in ancestral_sequence_alignment tree a0 ancestral_states smap
+
+      n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
+
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return [likelihood]
 

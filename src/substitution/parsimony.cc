@@ -401,9 +401,10 @@ peel_muts_leaf_branch_fixed_A(const alphabet& a, const EVector& seq, const dynam
     return n_muts_ptr;
 }
 
-object_ptr<const ParsimonyCacheBranch> peel_muts_internal_branch_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const alphabet& a, const matrix<int>& cost)
+object_ptr<const ParsimonyCacheBranch> peel_muts_internal_branch_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const matrix<int>& cost)
 {
-    int n_letters = a.size();
+    int n_letters = n_muts0.n_letters;
+    assert(n_muts1.n_letters == n_letters);
 
     auto n_muts_ptr = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, n_muts0.bits, n_muts1.bits));
     auto& n_muts = *n_muts_ptr;
@@ -437,11 +438,65 @@ object_ptr<const ParsimonyCacheBranch> peel_muts_internal_branch_fixed_A(const P
     return n_muts_ptr;
 }
 
-int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, const dynamic_bitset<>& root_mask, const ParsimonyCacheBranch& n_muts, const matrix<int>& cost)
+int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const ParsimonyCacheBranch& n_muts2,
+                      const matrix<int>& costs, const EVector& counts)
+{
+
+    int n_letters = n_muts0.n_letters;
+    assert(n_muts1.n_letters == n_letters);
+    assert(n_muts2.n_letters == n_letters);
+
+    int L = n_muts0.alignment_length;
+    assert(n_muts1.alignment_length == L);
+    assert(n_muts2.alignment_length == L);
+
+    assert(counts.size() == L);
+
+    /*-------------------- Do the peeling part------------- --------------------*/
+    int total = 0;
+
+    int i0=0;
+    int i1=0;
+    int i2=0;
+
+    vector<int> S(n_letters);
+
+    for(int c=0;c<L;c++)
+    {
+        if (not n_muts0.bits.test(c) and not n_muts1.bits.test(c) and not n_muts2.bits.test(c))
+            continue;
+
+        for(auto& s: S)
+            s = 0;
+
+	if (n_muts0.bits.test(c))
+	    peel_muts(&n_muts0[i0*n_letters], &S[0], n_letters, costs);
+
+	if (n_muts1.bits.test(c))
+	    peel_muts(&n_muts1[i1*n_letters], &S[0], n_letters, costs);
+
+	if (n_muts2.bits.test(c))
+	    peel_muts(&n_muts2[i2*n_letters], &S[0], n_letters, costs);
+
+        if (n_muts0.bits.test(c)) i0++;
+        if (n_muts1.bits.test(c)) i1++;
+        if (n_muts2.bits.test(c)) i2++;
+
+        int count = counts[c].as_int();
+        assert(count > 0);
+
+        total += count * min(S);
+    }
+
+    return total;
+}
+
+int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, const dynamic_bitset<>& root_mask, const ParsimonyCacheBranch& n_muts,
+                                 const matrix<int>& costs, const EVector& counts)
 {
     int n_letters = a.size();
 
-    int max_cost = max_element(cost)+1;
+    int max_cost = max_element(costs)+1;
 
     int total = 0;
 
@@ -456,9 +511,13 @@ int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, con
         if (root_gap and node_gap)
             continue;
 
+        int cost = 0;
+        int count = counts[c].as_int();
+        assert(count > 0);
+
         if (root_gap)
 	{
-	    total += n_muts.min(i0);
+	    cost = n_muts.min(i0);
 	}
         else
         {
@@ -466,21 +525,23 @@ int accumulate_root_leaf_fixed_A(const alphabet& a, const EVector& root_seq, con
 
             if (a.is_letter(l1))
             {
-                int c = cost(l1,0) + n_muts(i0,0);
+                int c = costs(l1,0) + n_muts(i0,0);
                 for(int l2=1; l2<n_letters; l2++)
-                    c = std::min(c, cost(l1,l2) + n_muts(i0,l2));
-                total += c;
+                    c = std::min(c, costs(l1,l2) + n_muts(i0,l2));
+                cost = c;
             }
             else if (a.is_letter_class(l1))
             {
                 int c = max_cost + n_muts.max(i0);
                 for(int l2=0; l2<n_letters; l2++)
-                    c = std::min(c, letter_class1_cost(a,l1,l2,cost,max_cost) + n_muts(i0,l2));
-                total += c;
+                    c = std::min(c, letter_class1_cost(a, l1, l2, costs, max_cost) + n_muts(i0,l2));
+                cost = c;
             }
             else
-                total += n_muts.min(i0);
+                cost = n_muts.min(i0);
         }
+
+        total += count * cost;
 
         if (not node_gap)
             i0++;
@@ -534,7 +595,7 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
             auto& n_muts0 = *cache[B[0]];
             auto& n_muts1 = *cache[B[1]];
 
-	    cache[b] = peel_muts_internal_branch_fixed_A(n_muts0, n_muts1, *P.get_alphabet(), cost);
+	    cache[b] = peel_muts_internal_branch_fixed_A(n_muts0, n_muts1, cost);
 
             cache[B[0]] = nullptr;
             cache[B[1]] = nullptr;
@@ -557,7 +618,8 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
         }
     }
 
-    return accumulate_root_leaf_fixed_A(A.get_alphabet(), root_seq, root_mask, *cache[b_root], cost);
+    EVector counts;
+    return accumulate_root_leaf_fixed_A(A.get_alphabet(), root_seq, root_mask, *cache[b_root], cost, counts);
 }
 
 int n_mutations(const data_partition& P, const matrix<int>& cost)

@@ -1578,7 +1578,7 @@ std::string generate_atmodel_program(int n_sequences,
             if (n_branches > 0)
             {
                 var substs("substs"+part_suffix);
-                program.let(substs, Hs::TypedExp({noloc,0},{noloc,Hs::TypeCon("Int")}));
+                program.let(substs, {var("prop_fa_n_muts"), properties});
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
             }
