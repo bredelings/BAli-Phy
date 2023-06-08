@@ -34,7 +34,7 @@ jobs:
 
     - name: Install singularity
       run: |
-        apt-get install singularity-container
+        sudo apt-get install singularity-container
 
     - name: Get version
       id: get_version
