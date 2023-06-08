@@ -296,28 +296,48 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
         cout<<std::endl;
     }
 
-    // 5a. Check for empty paths
-    if (L->plugins_path.empty())
-        throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+    myexception e;
+    e<<"Can't find associated files -- bali-phy is not correctly installed!  \n";
 
-    // 5b. Check for Prelude.so
+    // 5a. Check for Prelude.so
+    bool found_prelude = true;
     try
     {
         L->find_plugin("Prelude");
+        e<<"   + Found "<<fs::path("Prelude"+plugin_extension)<<".\n";
     }
     catch (...)
     {
-        throw myexception()<<"Can't find Prelude plugin.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+        // NB - We should specify what the lookup rules are.
+        // If all the user-specified paths are empty, we should probably say so.
+        // We shouldn't expect to find the Prelude plugin in the user lib path.
+        e<<"   + Can't find "<<fs::path("Prelude"+plugin_extension)<<".\n";
+        found_prelude = false;
     }
 
-    // 5c. Check for Prelude.hs
+    // 5b. Check for Prelude.hs
     try
     {
         L->find_module("Prelude");
+        e<<"   + Found "<<fs::path("modules") / "Prelude.hs"<<".\n";
     }
     catch (...)
     {
-        throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
+        e<<"   + Can't find "<<fs::path("modules") / "Prelude.hs"<<".\n";
+        found_prelude = false;
+    }
+
+    // 5c. Check for empty paths
+    e<<" * These are usually in the directory "<< fs::path("..") / "lib" / "bali-phy" <<" relative to the executable.\n";
+    if (L->plugins_path.empty())
+    {
+        e<<" * But that directory does not exist.\n";
+        e<<" * Did you move the executable?";
+    }
+
+    if (not found_prelude)
+    {
+        throw e;
     }
 
     L->pre_inline_unconditionally = args["pre-inline"].as<bool>();
