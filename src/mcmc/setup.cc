@@ -84,65 +84,6 @@ optional<int> scale_is_modifiable(const context_ref& M, int s)
     return P.branch_scale(s).is_modifiable(M);
 }
 
-bool all_scales_modifiable(const context_ref& M)
-{
-    auto& P = dynamic_cast<const Parameters&>(M);
-
-    for(int s=0;s<P.n_branch_scales();s++)
-	if (not scale_is_modifiable(M,s))
-	    return false;
-
-    return true;
-}
-
-void add_alignment_and_parameter_moves(MCMC::MoveAll& /*moves*/, context_ref& M, double /*weight*/ = 1.0, double /*enabled*/ = true)
-{
-    if (not dynamic_cast<const Parameters*>(&M)) return;
-    /* 
-    int n = dynamic_cast<const Parameters&>(M).n_imodels();
-
-    // FIXME -- reintroduce realigning everything while proposing e.g. rs07:log_rate or rs07:mean_length
-
-    for(int i=0; i<n; i++)
-    {
-	string prefix = "I"+convertToString(i+1);
-
-	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_imodel(i);
-
-	string pname1 = model_path({prefix,"rs07:log_rate"});
-	if (auto index = M.maybe_find_parameter(pname1))
-	{
-	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
-
-	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname1), enabled);
-	}
-
-	string pname2 = model_path({prefix,"rs07:mean_length"});
-	if (auto index = M.maybe_find_parameter(pname2))
-	{
-	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
-
-	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname2), enabled);
-	}
-    }
-
-    int n_scales = dynamic_cast<const Parameters&>(M).n_branch_scales();
-    for(int s=0; s<n_scales; s++)
-    {
-	string pname = "Scale["+std::to_string(s+1)+"]";
-	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_scale(s);
-	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale(s).is_modifiable(M))
-	{
-	    auto proposal = [r,partitions](context_ref& P){
-		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;
-	    };
-
-	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname), enabled);
-	}
-    }
-    */
-}
-
 //FIXME - how to make a number of variants with certain things fixed, for burn-in?
 // 0. Get an initial tree estimate using NJ or something? (as an option...)
 // 1. First estimate tree and parameters with alignment fixed.
@@ -165,7 +106,7 @@ MCMC::MoveAll get_parameter_MH_moves(context_ref& M)
 	    }
 
     // Add these moves disabled
-    add_alignment_and_parameter_moves(MH_moves, M, 1.0, false);
+    // add_alignment_and_parameter_moves(MH_moves, M, 1.0, false);
 
     return MH_moves;
 }
@@ -481,7 +422,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
 	pre_burnin.add(2,get_parameter_slice_moves(*P));
 	pre_burnin.add(1,SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
-	add_alignment_and_parameter_moves(pre_burnin, *P);
+	// add_alignment_and_parameter_moves(pre_burnin, *P);
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
