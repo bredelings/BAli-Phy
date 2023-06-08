@@ -10,12 +10,15 @@ type FilePath = String
 
 data Handle
 
+data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+
 {-
 
 -- input, output, or both
 -- open, closed, or semi-closed
 -- seekable or not
 -- buffering is enabled, disabled, enabled by line, enabled by block
+-- buffer size if its block buffered?
 -- a buffer
 
 stdin :: Handle
@@ -27,9 +30,17 @@ stderr :: Handle
 withFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
 
 openFile :: FilePath -> IOMode -> IO Handle
+-}
 
-data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+foreign import bpcall "File:" rawOpenFile :: FilePath -> Int -> RealWorld -> Handle
+rawOpenFile' path ReadMode      = rawOpenFile path 0
+rawOpenFile' path WriteMode     = rawOpenFile path 1
+rawOpenFile' path AppendMode    = rawOpenFile path 2
+rawOpenFile' path ReadWriteMode = rawOpenFile path 3
 
+openFile path mode = makeIO (rawOpenFile' path mode)
+
+{-
 -- deriving Eq, Show, Read, Ord, Enum
 
 hClose :: Handle -> IO ()

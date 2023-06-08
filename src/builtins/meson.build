@@ -3,7 +3,7 @@ source_inc = include_directories('../..')
 builtins = ['Array','Data','Prelude','Alphabet','Pair','Modifiables','Alignment',
 	    'PopGen','Distribution','Range','SModel','MCMC','Vector','Environment',
             'SMC','Real','Bits','Foreign','Text','Char', 'Num', 'IntMap', 'IntSet',
-            'Parsimony', 'Matrix', 'Likelihood']
+            'Parsimony', 'Matrix', 'Likelihood', 'File']
 
 implibs = []
 if host_machine.system() == 'windows' or host_machine.system() == 'cygwin'
