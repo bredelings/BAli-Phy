@@ -31,9 +31,10 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.8
-    - uses: eWaterCycle/setup-singularity@v7
-      with:
-        singularity-version: 3.8.3
+
+    - name: Install singularity
+      run: |
+        apt-get install singularity-container
 
     - name: Get version
       id: get_version
