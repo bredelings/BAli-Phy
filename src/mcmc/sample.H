@@ -112,7 +112,6 @@ void sample_SPR_A_search_all(owned_ptr<Model>&, MCMC::MoveStats&);
 void sample_SPR_flat(owned_ptr<Model>&, MCMC::MoveStats&);
 void sample_SPR_nodes(owned_ptr<Model>&, MCMC::MoveStats&);
 void slide_node_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
-void scale_means_only(owned_ptr<Model>&,MCMC::MoveStats&);
 void change_branch_length_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void change_branch_length_multi_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(owned_ptr<Model>&, MCMC::MoveStats&, int);

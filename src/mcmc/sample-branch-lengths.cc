@@ -379,52 +379,6 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
     }
 }
 
-void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
-{
-    Parameters* PP = P.as<Parameters>();
-    // If any of the partition rates are fixed, then we're out of luck
-    // FIXME - techincally, we could recompute likelihoods in just THOSE partitions :P
-    //       - also, I suppose, if they are fixed, then there is no mixing problem.
-
-    MCMC::Result result(2);
-
-    //------------ Propose scaling ratio ------------//
-    const double sigma = P->load_value("log_branch_mean_sigma",0.6);
-
-    for(int b=0;b<PP->t().n_branches();b++) {
-	if (not PP->t().can_set_branch_length(b))
-	    return;
-    }
-
-    double scale = gaussian(0,sigma);
-    scale = exp(scale);
-
-    //-------- Change branch lengths and mean -------//
-    owned_ptr<Parameters> P2 = PP;
-
-    for(int b=0;b<P2->t().n_branches();b++) {
-	const double length = P2->t().branch_length(b);
-	P2->setlength_unsafe(b, length/scale);
-    }
-
-    for(int i=0;i<PP->n_branch_scales();i++) 
-	P2->set_branch_scale(i, P2->get_branch_scale(i) * scale);
-  
-    //--------- Compute proposal ratio ---------//
-    // Previously this was n_data_partitions(), but that seems wrong...
-    log_double_t ratio = pow(log_double_t(scale),P2->n_branch_scales()-P2->t().n_branches());
-
-    // We used to try and avoid computing the likelihood here, since it should not change,
-    // but its hard to do that when we need to evaluate the whole program.
-    if (perform_MH(*P, *P2, ratio))
-    {
-	result.totals[0] = 1;
-	result.totals[1] = abs(log(scale));
-    }
-
-    Stats.inc("branch-means-only",result);
-}
-
 /// Propose three neighboring branch lengths all anti-correlated
 void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n) 
 {

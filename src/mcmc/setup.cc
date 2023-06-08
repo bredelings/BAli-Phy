@@ -478,8 +478,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
 	pre_burnin.add(2,get_parameter_slice_moves(*P));
 	pre_burnin.add(1,SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
@@ -503,8 +501,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(2,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(2,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
@@ -522,8 +518,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
 
 	// enable and disable moves
@@ -542,8 +536,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
 	pre_burnin.add(2,get_parameter_slice_moves(*P));
 
@@ -563,8 +555,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(2,SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
 	pre_burnin.add(1,get_parameter_slice_moves(*P));
 
@@ -584,8 +574,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
     {
 	MoveAll pre_burnin("pre-burnin");
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_Scales_only","scale"));
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","tree:lengths"));
 	pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all", "tree:topology:lengths"));
 
@@ -605,8 +593,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(2,SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
 	pre_burnin.add(1,get_parameter_slice_moves(*P));
 
@@ -626,8 +612,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
     {
 	MoveAll pre_burnin("pre-burnin+A");
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
-	if (all_scales_modifiable(*P))
-	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only", "mean"));
 	pre_burnin.add(2, SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
 	// FIXME - add a fixed-topology version of realign_from_tips
 	pre_burnin.add(1, SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
