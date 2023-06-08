@@ -270,11 +270,15 @@ int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwi
     {
 	int i0 = index(i,0);
 	int i1 = index(i,1);
-	if (i1 == alphabet::gap or i1 == alphabet::not_gap)
+	if (i1 == alphabet::gap)
 	{
 	    total += n_muts.min(i0);
 	    continue;
 	}
+        else if (i0 == alphabet::gap)
+        {
+            continue;
+        }
 
 	int l1 = letters[i1].as_int();
 	if (a.is_letter(l1))
