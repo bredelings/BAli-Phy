@@ -5,30 +5,31 @@ module System.IO (module System.IO,
 
 import Compiler.Base -- for String
 import Compiler.IO -- for String
+import Data.Bool
 import Data.Maybe
 import Foreign.String
 import Text.Show -- for Show
+import Text.Read -- for Read
 import Control.Monad -- for >>
 import Data.Functor -- for fmap
 import Data.Function -- for $
 
+import Data.Exception
+
 type FilePath = String
 
 data Handle
-
-data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
--- deriving Eq, Show, Read, Ord, Enum
-
 {-
-
 -- input, output, or both
 -- open, closed, or semi-closed
 -- seekable or not
--- buffering is enabled, disabled, enabled by line, enabled by block
--- buffer size if its block buffered?
+-- buffering is enabled, disabled, enabled by line, enabled by block (with block size)
 -- a buffer
-
 -}
+
+
+data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+-- deriving Eq, Show, Read, Ord, Enum
 
 foreign import bpcall "File:" getStdin :: () -> Handle
 
@@ -65,23 +66,43 @@ foreign import bpcall "File:" hCloseRaw :: Handle -> RealWorld -> ()
 hClose :: Handle -> IO ()
 hClose handle = makeIO $ hCloseRaw handle
 
-{-
 readFile :: FilePath -> IO String
+readFile path = do handle <- openFile path ReadMode
+                   text <- hGetContents handle
+                   hClose handle
+                   return text
 
 -- strict
 readFile' :: FilePath -> IO String
+readFile' path = do handle <- openFile path ReadMode
+                    text <- hGetContents' handle
+                    hClose handle
+                    return text
+
+writeFile :: FilePath -> String -> IO ()
+writeFile path text = do handle <- openFile path WriteMode
+                         putStr text
+                         hClose handle
 
 appendFile :: FilePath -> String -> IO ()
+appendFile path text = do handle <- openFile path AppendMode
+                          putStr text
+                          hClose handle
 
+foreign import bpcall "File:" hFileSizeRaw :: Handle -> RealWorld -> Integer
 hFileSize :: Handle -> IO Integer
+hFileSize h = makeIO $ hFileSizeRaw h
 
+{-
 hSetFileSize :: Handle -> Integer -> IO ()
-
-hIsEOF :: Handle -> IO Bool
-
-isEOF = IO Bool
-isEOF = hIsEOF stdin
 -}
+
+foreign import bpcall "File:" hIsEOFRaw :: Handle -> RealWorld -> Bool
+hIsEOF :: Handle -> IO Bool
+hIsEOF h = makeIO $ hIsEOFRaw h
+
+isEOF :: IO Bool
+isEOF = hIsEOF stdin
 
 data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 
@@ -142,12 +163,15 @@ hGetLine h = fmap unpack_cpp_string $ makeIO $ hGetLineRaw h
 
 {-
 hLookAhead :: Handle -> IO Char
+-}
 
+foreign import bpcall "File:" hGetContentsRaw :: Handle -> RealWorld -> CPPString
 hGetContents :: Handle -> IO String
+hGetContents h = unsafeInterleaveIO $ hGetContents' h
 
 -- strict
 hGetContents' :: Handle -> IO String
--}
+hGetContents' h = fmap unpack_cpp_string $ makeIO $ hGetContentsRaw h
 
 foreign import bpcall "File:" hPutCharRaw :: Handle -> Char -> RealWorld -> ()
 hPutChar :: Handle -> Char -> IO ()
@@ -163,11 +187,10 @@ hPutStrLn h s = hPutStr h s >> hPutChar h '\n'
 hPrint :: Show a => Handle -> a -> IO ()
 hPrint h x = hPutStr h (show x)
 
-{-
+
 interact :: (String -> String) -> IO ()
 interact f = do contents <- getContents
                 putStr (f contents)
--}
 
 putChar :: Char -> IO ()
 putChar c = hPutChar stdout c
@@ -187,7 +210,6 @@ getChar = hGetChar stdin
 getLine :: IO String
 getLine = hGetLine stdin
 
-{-
 getContents :: IO String
 getContents = hGetContents stdin
 
@@ -195,11 +217,13 @@ getContents' :: IO String -- strict
 getContents' = hGetContents' stdin
 
 readIO :: Read a => String -> IO a
+readIO s = catch (return $ read s) (\e -> fail "readIO failed")
 -- catches exceptions and calls fail in the IO monad
 
 readLn :: Read a => IO a
 readLn = getLine >>= readIO
 
+{-
 withBinaryFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
 
 openBinaryFile :: FilePath -> IOMode -> IO Handle

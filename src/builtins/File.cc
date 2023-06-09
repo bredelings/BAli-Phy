@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include "util/io.H"   // for portable_getline( ).
+#include "computation/haskell/Integer.H" // for Integer
 
 namespace fs = std::filesystem;
 using std::fstream;
@@ -33,6 +34,9 @@ extern "C" closure builtin_function_rawOpenFile(OperationArgs& Args)
         std::abort();
     
     Handle handle = std::make_shared<std::fstream>(filename, mode);
+
+    if (not *handle)
+        throw myexception()<<"readFile: can't open file "<<filename;
 
     return handle;
 }
@@ -70,6 +74,19 @@ extern "C" closure builtin_function_hCloseRaw(OperationArgs& Args)
         fhandle->close();
 
     return constructor("()",0);
+}
+
+
+// Handle -> RealWorld -> Bool
+extern "C" closure builtin_function_hIsEOFRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    if (handle->eof())
+        return bool_true;
+    else
+        return bool_false;
+
 }
 
 // Handle -> Char -> RealWorld -> ()
@@ -116,4 +133,33 @@ extern "C" closure builtin_function_hGetLineRaw(OperationArgs& Args)
     portable_getline(*handle, *result);
 
     return result;
+}
+
+// Handle -> RealWorld -> CPPString
+extern "C" closure builtin_function_hGetContentsRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    handle->seekg(0, std::ios::end);
+    auto length = handle->tellg();
+    handle->seekg(0, std::ios::beg);
+
+    object_ptr<String> contents = new String;
+    contents->resize(length);
+    handle->read(&(*contents)[0], length);
+
+    return contents;
+}
+
+// Handle -> RealWorld -> Integer
+extern "C" closure builtin_function_hFileSizeRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    auto old_pos = handle->tellg();
+    handle->seekg(0, std::ios::end);
+    unsigned long length = handle->tellg();
+    handle->seekg(old_pos, std::ios::beg);
+
+    return Integer(length);
 }
