@@ -611,3 +611,40 @@ extern "C" closure builtin_function_cFromJust(OperationArgs& Args)
     return { *maybe };
 }
 
+struct HaskellException
+{
+    int r;
+};
+
+extern "C" closure builtin_function_throw(OperationArgs& Args)
+{
+    int r = Args.reg_for_slot(0);
+
+    throw HaskellException(r);
+
+    return constructor("()",0);
+}
+
+int get_n_lambdas(const expression_ref& E);
+expression_ref peel_n_lambdas(const expression_ref& E, int n);
+
+extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
+{
+    try
+    {
+        Args.evaluate(0);
+        int r = Args.reg_for_slot(0);
+        return {index_var(0),{r}};
+    }
+    catch (HaskellException& H)
+    {
+        closure C = Args.evaluate_slot_to_closure(1);
+
+        C.exp = peel_n_lambdas(C.exp, 1);
+        C.Env.push_back(H.r);
+
+        // If we have only 1 arg, we can always apply it.
+        return C;
+    }
+}
+

@@ -29,13 +29,16 @@ data ArithException
 
 data ArrayExeption
 
-{-
-throw :: forall a e. Exception e -> e -> a
 
+--throw :: forall a e. Exception e => e -> a
+foreign import bpcall "Prelude:" throw :: IOException -> b
+
+{-
 throwIO :: Exception e => e -> IO a
 -}
 
 --catch :: Exception e => IO a -> (e -> IO a) -> IO a
+foreign import bpcall "Prelude:" catchRaw :: a -> (IOException -> a) -> a
 catch :: IO a -> (IOException -> IO a) -> IO a
 catch thing handle = thing
 
