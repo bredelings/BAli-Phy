@@ -611,7 +611,7 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
 {
     int r = Args.reg_for_slot(0);
 
-    throw HaskellException(r);
+    throw HaskellException{r};
 
     return constructor("()",0);
 }
