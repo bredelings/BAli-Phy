@@ -7,6 +7,10 @@ import Compiler.Base -- for String
 import Compiler.IO -- for String
 import Data.Maybe
 import Foreign.String
+import Text.Show -- for Show
+import Control.Monad -- for >>
+import Data.Functor -- for fmap
+import Data.Function -- for $
 
 type FilePath = String
 
@@ -53,13 +57,13 @@ rawOpenFile' path AppendMode    = rawOpenFile path 2
 rawOpenFile' path ReadWriteMode = rawOpenFile path 3
 
 openFile :: FilePath -> IOMode -> IO Handle
-openFile path mode = makeIO (rawOpenFile' (list_to_string path) mode)
+openFile path mode = makeIO $ rawOpenFile' (list_to_string path) mode
 
 
 foreign import bpcall "File:" hCloseRaw :: Handle -> RealWorld -> ()
 
 hClose :: Handle -> IO ()
-hClose handle = makeIO (hCloseRaw handle)
+hClose handle = makeIO $ hCloseRaw handle
 
 {-
 readFile :: FilePath -> IO String
@@ -126,28 +130,44 @@ hShow :: Handle -> IO String
 hWaitForInput :: Handle -> Int -> IO Bool
 
 hReady :: Handle -> IO Bool
+-}
 
+foreign import bpcall "File:" hGetCharRaw :: Handle -> RealWorld -> Char
 hGetChar :: Handle -> IO Char
+hGetChar h = makeIO $ hGetCharRaw h
 
+foreign import bpcall "File:" hGetLineRaw :: Handle -> RealWorld -> CPPString
 hGetLine :: Handle -> IO String
+hGetLine h = fmap unpack_cpp_string $ makeIO $ hGetLineRaw h
 
+{-
 hLookAhead :: Handle -> IO Char
 
 hGetContents :: Handle -> IO String
 
 -- strict
 hGetContents' :: Handle -> IO String
+-}
 
+foreign import bpcall "File:" hPutCharRaw :: Handle -> Char -> RealWorld -> ()
 hPutChar :: Handle -> Char -> IO ()
+hPutChar h c = makeIO $ hPutCharRaw h c
 
+foreign import bpcall "File:" hPutStrRaw :: Handle -> CPPString -> RealWorld -> ()
 hPutStr :: Handle -> String -> IO ()
+hPutStr h s = makeIO $ hPutStrRaw h $ list_to_string s
 
 hPutStrLn :: Handle -> String -> IO ()
+hPutStrLn h s = hPutStr h s >> hPutChar h '\n'
 
 hPrint :: Show a => Handle -> a -> IO ()
-hPrint x = hPutStr (show x)
+hPrint h x = hPutStr h (show x)
 
+{-
 interact :: (String -> String) -> IO ()
+interact f = do contents <- getContents
+                putStr (f contents)
+-}
 
 putChar :: Char -> IO ()
 putChar c = hPutChar stdout c
@@ -167,6 +187,7 @@ getChar = hGetChar stdin
 getLine :: IO String
 getLine = hGetLine stdin
 
+{-
 getContents :: IO String
 getContents = hGetContents stdin
 
