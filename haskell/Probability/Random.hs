@@ -17,6 +17,9 @@ import Data.Array (Array)
 import Numeric.LogDouble
 import Numeric.Prob
 
+import           System.IO
+import qualified Data.Text.IO as TIO
+
 import Probability.Dist
 
 data AnnotatedDensity a where
@@ -325,3 +328,19 @@ balanced_product xs = foldt (*) 1 xs
 mapn n f xs = go 0 where
     go i | i==n      = []
          | otherwise = f (xs!!i):go (i+1)
+
+data JSONLogger = JSONLogger Handle
+
+class Logger a where
+    type LogValue a
+    logAppend :: a -> Int -> LogValue a -> IO ()
+
+instance Logger JSONLogger where
+    type LogValue JSONLogger = [(J.Key,J.JSON)]
+    logAppend (JSONLogger handle) iter ljson = TIO.hPutStrLn handle (jsonToText $ Object ["iter" %=% iter, "parameters" %>% ljson])
+
+jsonLogger filename = do
+  handle <- openFile "C1.log.json" WriteMode
+  hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
+  return (JSONLogger handle)
+
