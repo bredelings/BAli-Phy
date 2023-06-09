@@ -16,7 +16,7 @@ typedef Box<std::shared_ptr<std::iostream>> Handle;
 typedef Box<std::shared_ptr<std::fstream>> FHandle;
 
 // FilePath -> Int -> RealWorld -> Handle
-extern "C" closure builtin_function_rawOpenFile(OperationArgs& Args)
+extern "C" closure builtin_function_openFileRaw(OperationArgs& Args)
 {
     fs::path filename = Args.evaluate(0).as_<String>().value();
     int io_mode = Args.evaluate(1).as_int();
@@ -34,6 +34,32 @@ extern "C" closure builtin_function_rawOpenFile(OperationArgs& Args)
         std::abort();
     
     Handle handle = std::make_shared<std::fstream>(filename, mode);
+
+    if (not *handle)
+        throw myexception()<<"readFile: can't open file "<<filename;
+
+    return handle;
+}
+
+// FilePath -> Int -> RealWorld -> Handle
+extern "C" closure builtin_function_openBinaryFileRaw(OperationArgs& Args)
+{
+    fs::path filename = Args.evaluate(0).as_<String>().value();
+    int io_mode = Args.evaluate(1).as_int();
+
+    std::ios_base::openmode mode;
+    if (io_mode == 0)
+        mode = fstream::in;
+    else if (io_mode == 1)
+        mode = fstream::out;
+    else if (io_mode == 2)
+        mode = fstream::out | fstream::app;
+    else if (io_mode == 3)
+        mode = fstream::in | fstream::out;
+    else
+        std::abort();
+
+    Handle handle = std::make_shared<std::fstream>(filename, mode | fstream::binary);
 
     if (not *handle)
         throw myexception()<<"readFile: can't open file "<<filename;
@@ -162,4 +188,76 @@ extern "C" closure builtin_function_hFileSizeRaw(OperationArgs& Args)
     handle->seekg(old_pos, std::ios::beg);
 
     return Integer(length);
+}
+
+// Handle -> RealWorld -> Integer
+extern "C" closure builtin_function_hFlushRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    handle->flush();
+
+    return constructor("()",0);
+}
+
+// Handle -> Int -> Integer -> RealWorld -> ()
+extern "C" closure builtin_function_hSeekRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+    int seekmode = Args.evaluate(1).as_int();
+    long int pos = (long int)Args.evaluate(2).as_<Integer>();
+
+    if (seekmode == 0)
+    {
+        handle->seekg(pos, std::ios::beg);
+        handle->seekp(pos, std::ios::beg);
+    }
+    else if (seekmode == 1)
+    {
+        handle->seekg(pos, std::ios::cur);
+        handle->seekp(pos, std::ios::cur);
+    }
+    else if (seekmode == 2)
+    {
+        handle->seekg(pos, std::ios::end);
+        handle->seekp(pos, std::ios::end);
+    }
+
+    return constructor("()",0);
+}
+
+// Handle -> RealWorld -> Integer
+extern "C" closure builtin_function_hTellRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    unsigned long pos_read = handle->tellg();
+    unsigned long pos_write = handle->tellp();
+
+    return Integer( std::max(pos_read, pos_write) );
+}
+
+// Handle -> RealWorld -> Bool
+extern "C" closure builtin_function_hIsOpenRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    if (auto fhandle = std::dynamic_pointer_cast<std::fstream>(handle))
+    {
+        if (fhandle->is_open())
+            return bool_true;
+        else
+            return bool_false;
+    }
+    else
+        return bool_true;
+}
+
+extern "C" closure builtin_function_hLookAheadRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    char c = handle->peek();
+
+    return {c};
 }

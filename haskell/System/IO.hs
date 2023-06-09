@@ -13,6 +13,7 @@ import Text.Read -- for Read
 import Control.Monad -- for >>
 import Data.Functor -- for fmap
 import Data.Function -- for $
+import Compiler.Enum
 
 import Data.Exception
 
@@ -30,6 +31,11 @@ data Handle
 
 data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
 -- deriving Eq, Show, Read, Ord, Enum
+
+intFromIOMode ReadMode = 0
+intFromIOMode WriteMode = 1
+intFromIOMode AppendMode = 2
+intFromIOMode ReadWriteMode = 3
 
 foreign import bpcall "File:" getStdin :: () -> Handle
 
@@ -51,14 +57,9 @@ withFile path mode action = do
   handle <- openFile path mode
   action handle
 
-foreign import bpcall "File:" rawOpenFile :: CPPString -> Int -> RealWorld -> Handle
-rawOpenFile' path ReadMode      = rawOpenFile path 0
-rawOpenFile' path WriteMode     = rawOpenFile path 1
-rawOpenFile' path AppendMode    = rawOpenFile path 2
-rawOpenFile' path ReadWriteMode = rawOpenFile path 3
-
+foreign import bpcall "File:" openFileRaw :: CPPString -> Int -> RealWorld -> Handle
 openFile :: FilePath -> IOMode -> IO Handle
-openFile path mode = makeIO $ rawOpenFile' (list_to_string path) mode
+openFile path mode = makeIO $ openFileRaw (list_to_string path) (intFromIOMode mode)
 
 
 foreign import bpcall "File:" hCloseRaw :: Handle -> RealWorld -> ()
@@ -89,6 +90,9 @@ appendFile path text = do handle <- openFile path AppendMode
                           putStr text
                           hClose handle
 
+-- These are apparently for when we know the file that the handle is attached to.
+-- But what if the file has been unliked from the filesystem?
+-- Then we'd have to own the dentry or something...
 foreign import bpcall "File:" hFileSizeRaw :: Handle -> RealWorld -> Integer
 hFileSize :: Handle -> IO Integer
 hFileSize h = makeIO $ hFileSizeRaw h
@@ -109,9 +113,13 @@ data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 {-
 
 hSetBuffering :: Handle -> BufferMode -> IO ()
+-}
 
+foreign import bpcall "File:" hFlushRaw :: Handle -> RealWorld -> ()
 hFlush :: Handle -> IO ()
+hFlush h = makeIO $ hFlushRaw h
 
+{-
 hGetPosn :: Handle -> IO HandlePosn
 
 hSetPosn :: HandlePsn -> IO ()
@@ -119,19 +127,30 @@ hSetPosn :: HandlePsn -> IO ()
 
 data HandlePosn
 
-{-
+data SeekMode = AbsoluteSeek | RelativeSeek | SeekFromEnd
+intFromSeekMode AbsoluteSeek = 0
+intFromSeekMode RelativeSeek = 1
+intFromSeekMode SeekFromEnd  = 2
+
+foreign import bpcall "File:" hSeekRaw :: Handle -> Int -> Integer -> RealWorld -> ()
 hSeek :: Handle -> SeekMode -> Integer -> IO ()
+hSeek h mode pos = makeIO $ hSeekRaw h (intFromSeekMode mode) pos
+
+{-
+C++ streams can have different read and write positions: tellg() vs tellp()
+Not sure what to do here.
+
+hTell :: Handle -> IO Integer
 -}
 
-data SeekMode = AbsoluteSeek | RelativeSeek | SeekFromEnd
-
-{-
-hTell :: Handle -> IO Integer
-
+foreign import bpcall "File:" hIsOpenRaw :: Handle -> RealWorld -> Bool
 hIsOpen :: Handle -> IO Bool
+hIsOpen h = makeIO $ hIsOpenRaw h
 
 hIsClosed :: Handle -> IO Bool
+hIsClosed h = fmap not $ hIsOpen h
 
+{-
 hIsReadable :: Handle -> IO Bool
 
 hIsWriteable :: Handle -> IO Bool
@@ -161,9 +180,9 @@ foreign import bpcall "File:" hGetLineRaw :: Handle -> RealWorld -> CPPString
 hGetLine :: Handle -> IO String
 hGetLine h = fmap unpack_cpp_string $ makeIO $ hGetLineRaw h
 
-{-
+foreign import bpcall "File:" hLookAheadRaw :: Handle -> RealWorld -> Char
 hLookAhead :: Handle -> IO Char
--}
+hLookAhead h = makeIO $ hLookAheadRaw h
 
 foreign import bpcall "File:" hGetContentsRaw :: Handle -> RealWorld -> CPPString
 hGetContents :: Handle -> IO String
@@ -223,11 +242,17 @@ readIO s = catch (return $ read s) (\e -> fail "readIO failed")
 readLn :: Read a => IO a
 readLn = getLine >>= readIO
 
-{-
+
 withBinaryFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
+withBinaryFile path mode action = do
+  handle <- openBinaryFile path mode
+  action handle
 
+foreign import bpcall "File:" openBinaryFileRaw :: CPPString -> Int -> RealWorld -> Handle
 openBinaryFile :: FilePath -> IOMode -> IO Handle
+openBinaryFile path mode = makeIO $ openBinaryFileRaw (list_to_string path) (intFromIOMode mode)
 
+{-
 hSetBinaryMode :: Handle -> Bool -> IO ()
 
 data Ptr a
