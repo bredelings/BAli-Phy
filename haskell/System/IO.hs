@@ -1,8 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module System.IO (module System.IO,
-                  module Compiler.IO)
+                  module Compiler.IO,
+                  FilePath)
     where
 
+import System.FilePath (FilePath)
 import Compiler.Base -- for String
 import Compiler.IO -- for String
 import Data.Bool
@@ -16,8 +18,6 @@ import Data.Function -- for $
 import Compiler.Enum
 
 import Data.Exception
-
-type FilePath = String
 
 data Handle
 {-

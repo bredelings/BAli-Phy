@@ -1,14 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Text.IO where
 
-import Compiler.Base  -- for String
-import Compiler.IO    -- for IO
-import Control.Monad  -- for IO
-import Foreign.String -- for CPPString
-import Data.Text      -- for Text
-import Data.Functor   -- for fmap
-import Data.Function  -- for $
-import System.IO (FilePath, Handle, IOMode(..), stdin, stdout, openFile, hPutChar, hClose)
+import Compiler.Base   -- for String
+import Compiler.IO     -- for IO
+import Control.Monad   -- for IO
+import Foreign.String  -- for CPPString
+import Data.Text       -- for Text
+import Data.Functor    -- for fmap
+import Data.Function   -- for $
+import System.FilePath -- for FilePath
+import System.IO (Handle, IOMode(..), stdin, stdout, openFile, hPutChar, hClose)
 
 readFile :: FilePath -> IO Text
 readFile path = do handle <- openFile path ReadMode
