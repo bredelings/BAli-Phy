@@ -40,5 +40,5 @@ throwIO :: Exception e => e -> IO a
 --catch :: Exception e => IO a -> (e -> IO a) -> IO a
 foreign import bpcall "Prelude:" catchRaw :: a -> (IOException -> a) -> a
 catch :: IO a -> (IOException -> IO a) -> IO a
-catch thing handle = thing
+catch action handler = IO (\s -> catchRaw (runIO action s) (\e -> runIO (handler e) s))
 
