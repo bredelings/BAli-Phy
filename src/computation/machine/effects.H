@@ -54,7 +54,7 @@ struct RegisterInterchangeable: public effect
     bool operator==(const RegisterInterchangeable&) const;
     bool operator==(const Object& O) const override;
 
-    std::string print () const;
+    std::string print () const override;
 
     RegisterInterchangeable(int,int);
 };
