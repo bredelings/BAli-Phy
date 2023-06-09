@@ -117,3 +117,10 @@ extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
     auto j = Args.evaluate(0);
     return { EPair(5, 0) };
 }
+
+extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_<Box<json>>();
+    String s = j.dump();
+    return s;
+}
