@@ -102,7 +102,7 @@ extern "C" closure builtin_function_ejson_number(OperationArgs& Args)
 
 extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_double();
+    auto j = Args.evaluate(0);
     return { EPair(3, j) };
 }
 
