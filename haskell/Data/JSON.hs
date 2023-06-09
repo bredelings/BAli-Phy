@@ -15,14 +15,15 @@ instance Show Key where
     show (Key t) = show t
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
-data JSON = Array [JSON] | Object [(Key,JSON)] | Number Double | Bool Bool | String Text | Null
+data JSON = Array [JSON] | Object [(Key,JSON)] | INumber Int | FNumber Double | Bool Bool | String Text | Null
 
 -- BUG: No instance for 'Prelude.Show Compiler.Base.String' -- this is a mistake, because of type synonyms...
 -- Probably we need to check_type( ) on constructor argument types...
 
 instance Show JSON where
     show Null = "null"
-    show (Number x) = show x
+    show (INumber x) = show x
+    show (FNumber x) = show x
     show (Bool x) = show x
     show (String x) = show $ T.unpack x
     show (Array x) = "["++intercalate "," (map show x) ++ "]"
@@ -64,10 +65,10 @@ instance ToJSON Bool where
     toJSON x = Bool x
 
 instance ToJSON Double where
-    toJSON x = Number x
+    toJSON x = FNumber x
 
 instance ToJSON Int where
-    toJSON x = Number (fromIntegral x)
+    toJSON x = INumber x
 
 instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x
@@ -95,12 +96,13 @@ to_json = toJSON
 foreign import bpcall "Foreign:c_json" builtin_c_json :: EJSON -> CJSON
 c_json = builtin_c_json . deep_eval_json
 
-foreign import bpcall "Foreign:" ejson_array  :: EVector EJSON -> EJSON
-foreign import bpcall "Foreign:" ejson_object :: EVector (EPair CPPString EJSON) -> EJSON
-foreign import bpcall "Foreign:" ejson_number :: Double -> EJSON
-foreign import bpcall "Foreign:" ejson_string :: CPPString -> EJSON
-foreign import bpcall "Foreign:" ejson_bool   :: Bool -> EJSON
-foreign import bpcall "Foreign:" ejson_null   :: () -> EJSON
+foreign import bpcall "Foreign:" ejson_array   :: EVector EJSON -> EJSON
+foreign import bpcall "Foreign:" ejson_object  :: EVector (EPair CPPString EJSON) -> EJSON
+foreign import bpcall "Foreign:" ejson_inumber :: Int -> EJSON
+foreign import bpcall "Foreign:" ejson_fnumber :: Double -> EJSON
+foreign import bpcall "Foreign:" ejson_string  :: CPPString -> EJSON
+foreign import bpcall "Foreign:" ejson_bool    :: Bool -> EJSON
+foreign import bpcall "Foreign:" ejson_null    :: () -> EJSON
 
 foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 
@@ -110,7 +112,8 @@ jsonToText = Text . cjson_to_bytestring . c_json
 deep_eval_json :: JSON -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ list_to_vector $ map deep_eval_json xs
 deep_eval_json (Object xs) = ejson_object $ list_to_vector [c_pair key (deep_eval_json value) | (Key (Text key), value) <- xs]
-deep_eval_json (Number n)  = ejson_number n
+deep_eval_json (INumber i)  = ejson_inumber i
+deep_eval_json (FNumber f)  = ejson_fnumber f
 deep_eval_json (Bool b)    = ejson_bool b
 deep_eval_json (String (Text s))  = ejson_string s
 deep_eval_json Null        = ejson_null ()

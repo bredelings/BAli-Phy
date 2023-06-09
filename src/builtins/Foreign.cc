@@ -21,13 +21,13 @@ json c_json(const expression_ref& E)
     auto& J = E.as_<EPair>().second;
     
     // Null
-    if (type == 5)
+    if (type == 6)
         return {};
     // String
-    else if (type == 4)
+    else if (type == 5)
         return (string)J.as_<String>();
     // Bool
-    else if (type == 3)
+    else if (type == 4)
     {
         if (is_bool_true(J))
             return true;
@@ -36,13 +36,16 @@ json c_json(const expression_ref& E)
         else
             throw myexception()<<"Foreign:cjson: I don't understand bool '"<<J<<"'";
     }
-    // Number
+    // Integer
     else if (type == 2)
+    {
+        return J.as_int();
+    }
+    // Double
+    else if (type == 3)
     {
 	if (J.is_double())
 	    return J.as_double();
-	else if (J.is_int())
-	    return J.as_int();
 	else if (J.is_log_double())
 	    return (double)J.as_log_double();
         else
@@ -94,28 +97,34 @@ extern "C" closure builtin_function_ejson_object(OperationArgs& Args)
     return { EPair(1, j) };
 }
 
-extern "C" closure builtin_function_ejson_number(OperationArgs& Args)
+extern "C" closure builtin_function_ejson_inumber(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_int();
+    return { EPair(2, j) };
+}
+
+extern "C" closure builtin_function_ejson_fnumber(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_double();
-    return { EPair(2, j) };
+    return { EPair(3, j) };
 }
 
 extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
 {
     auto j = Args.evaluate(0);
-    return { EPair(3, j) };
+    return { EPair(4, j) };
 }
 
 extern "C" closure builtin_function_ejson_string(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_<String>();
-    return { EPair(4, j) };
+    return { EPair(5, j) };
 }
 
 extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 {
     auto j = Args.evaluate(0);
-    return { EPair(5, 0) };
+    return { EPair(6, 0) };
 }
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
