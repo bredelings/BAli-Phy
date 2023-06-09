@@ -18,6 +18,7 @@
 #include "link-partitions.H"                        // for shared_items, get...
 #include "models/TreeInterface.H"                   // for TreeInterface
 #include "models/parameters.H"                      // for Parameters, param...
+#include "models/A-T-prog.H"                        // for gen_atmodel_program
 #include "models/rules.H"                           // for Rules
 #include "models/setup.H"                           // for model_t, get_model
 #include "sequence/alphabet.H"                      // for alphabet
