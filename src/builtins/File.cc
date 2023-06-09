@@ -9,11 +9,16 @@
 namespace fs = std::filesystem;
 using std::fstream;
 
-// FilePath -> IOMode -> IO Handle
+typedef Box<std::shared_ptr<std::iostream>> Handle;
+
+typedef Box<std::shared_ptr<std::fstream>> FHandle;
+
+// FilePath -> Int -> RealWorld -> Handle
 extern "C" closure builtin_function_rawOpenFile(OperationArgs& Args)
 {
     fs::path filename = Args.evaluate(0).as_<String>().value();
     int io_mode = Args.evaluate(1).as_int();
+
     std::ios_base::openmode mode;
     if (io_mode == 0)
         mode = fstream::in;
@@ -26,8 +31,43 @@ extern "C" closure builtin_function_rawOpenFile(OperationArgs& Args)
     else
         std::abort();
     
-    PtrBox<std::iostream> handle = std::make_shared<std::fstream>(filename, mode);
+    Handle handle = std::make_shared<std::fstream>(filename, mode);
 
     return handle;
+}
+
+extern "C" closure builtin_function_getStdin(OperationArgs& Args)
+{
+    Handle handle = std::make_shared<std::iostream>( std::cin.rdbuf() );
+
+    return handle;
+}
+
+
+extern "C" closure builtin_function_getStdout(OperationArgs& Args)
+{
+    Handle handle = std::make_shared<std::iostream>( std::cout.rdbuf() );
+
+    return handle;
+}
+
+
+extern "C" closure builtin_function_getStderr(OperationArgs& Args)
+{
+    Handle handle = std::make_shared<std::iostream>( std::cerr.rdbuf() );
+
+    return handle;
+}
+
+
+// FilePath -> IOMode -> IO Handle
+extern "C" closure builtin_function_hCloseRaw(OperationArgs& Args)
+{
+    auto handle = Args.evaluate(0).as_<Handle>();
+
+    if (auto fhandle = std::dynamic_pointer_cast<std::fstream>(handle))
+        fhandle->close();
+
+    return constructor("()",0);
 }
 

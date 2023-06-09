@@ -5,12 +5,15 @@ module System.IO (module System.IO,
 
 import Compiler.Base -- for String
 import Compiler.IO -- for String
+import Data.Maybe
+import Foreign.String
 
 type FilePath = String
 
 data Handle
 
 data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+-- deriving Eq, Show, Read, Ord, Enum
 
 {-
 
@@ -21,30 +24,44 @@ data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
 -- buffer size if its block buffered?
 -- a buffer
 
-stdin :: Handle
-
-stdout :: Handle
-
-stderr :: Handle
-
-withFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
-
-openFile :: FilePath -> IOMode -> IO Handle
 -}
 
-foreign import bpcall "File:" rawOpenFile :: FilePath -> Int -> RealWorld -> Handle
+foreign import bpcall "File:" getStdin :: () -> Handle
+
+foreign import bpcall "File:" getStdout :: () -> Handle
+
+foreign import bpcall "File:" getStderr :: () -> Handle
+
+stdin :: Handle
+stdin = getStdin ()
+
+stdout :: Handle
+stdout = getStdout ()
+
+stderr :: Handle
+stderr = getStderr ()
+
+withFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
+withFile path mode action = do
+  handle <- openFile path mode
+  action handle
+
+foreign import bpcall "File:" rawOpenFile :: CPPString -> Int -> RealWorld -> Handle
 rawOpenFile' path ReadMode      = rawOpenFile path 0
 rawOpenFile' path WriteMode     = rawOpenFile path 1
 rawOpenFile' path AppendMode    = rawOpenFile path 2
 rawOpenFile' path ReadWriteMode = rawOpenFile path 3
 
-openFile path mode = makeIO (rawOpenFile' path mode)
+openFile :: FilePath -> IOMode -> IO Handle
+openFile path mode = makeIO (rawOpenFile' (list_to_string path) mode)
 
-{-
--- deriving Eq, Show, Read, Ord, Enum
+
+foreign import bpcall "File:" hCloseRaw :: Handle -> RealWorld -> ()
 
 hClose :: Handle -> IO ()
+hClose handle = makeIO (hCloseRaw handle)
 
+{-
 readFile :: FilePath -> IO String
 
 -- strict
@@ -60,8 +77,11 @@ hIsEOF :: Handle -> IO Bool
 
 isEOF = IO Bool
 isEOF = hIsEOF stdin
+-}
 
 data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
+
+{-
 
 hSetBuffering :: Handle -> BufferMode -> IO ()
 
@@ -70,13 +90,17 @@ hFlush :: Handle -> IO ()
 hGetPosn :: Handle -> IO HandlePosn
 
 hSetPosn :: HandlePsn -> IO ()
+-}
 
 data HandlePosn
 
+{-
 hSeek :: Handle -> SeekMode -> Integer -> IO ()
+-}
 
 data SeekMode = AbsoluteSeek | RelativeSeek | SeekFromEnd
 
+{-
 hTell :: Handle -> IO Integer
 
 hIsOpen :: Handle -> IO Bool
@@ -185,7 +209,11 @@ hSetEncoding :: Handle -> TextEncoding -> IO ()
 
 hGetEncoding :: Handle -> IO (Maybe TextEncoding)
 
+-}
+
 data TextEncoding
+
+{-
 
 latin1 :: TextEncoding
 
@@ -211,12 +239,17 @@ mkTextEncoding :: String -> IO TextEncoding
 
 hSetNewlineMode :: Handle -> NewlineMode -> IO ()
 
+-}
+
 data Newline = LF | CRLF
 
+{-
 nativeNewline :: Newline -- LF on Unix, CRLF on Windows
+-}
 
 data NewlineMode = NewlineMode { inputNL, outputNL :: Newline }
 
+{-
 noNewlineTranslation :: NewlineMode
 noNewlineTranslation = NewlineMode { inputNL = LF, outputNL = LF }
                         
