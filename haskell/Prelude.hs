@@ -67,12 +67,8 @@ import Control.Monad
 import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
-import System.IO ({- putChar, putStr, putStrLn, print, getChar, getLine, getContents, interact, -}
-                  FilePath {- readFile, writeFile, appendFile, readIO, readLn -}
-    )
-
-foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> ()
-putStrLn line = makeIO $ builtin_putStrLn (list_to_string line)
+import System.IO (putChar, putStr, putStrLn, print, getChar, getLine, getContents, interact,
+                  FilePath,readFile, writeFile, appendFile, readIO, readLn)
 
 undefined = error "Prelude.undefined"
 
@@ -81,7 +77,3 @@ zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
 zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
-
-
-foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> RealWorld -> CPPString
-readFile filename = makeIO $ builtin_readFile (list_to_string $ filename)

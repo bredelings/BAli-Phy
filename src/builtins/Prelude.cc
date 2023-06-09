@@ -559,15 +559,6 @@ extern "C" closure builtin_function_error(OperationArgs& Args)
     throw error_exception(message);
 }
 
-extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
-{
-    string message = Args.evaluate(0).as_<String>();
-
-    std::cout<<message<<std::endl;
-
-    return constructor("()",0);
-}
-
 extern "C" closure builtin_function_read_int(OperationArgs& Args)
 {
     string s = Args.evaluate(0).as_<String>();
