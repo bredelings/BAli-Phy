@@ -12,6 +12,10 @@ import Compiler.Error -- for error
 import Data.Ord       -- for <=
 import Data.Bool      -- for otherwise
 
+class Bounded a where
+    minBound :: a
+    maxBound :: a
+
 class Enum a where
     succ :: a -> a
     pred :: a -> a
@@ -22,12 +26,14 @@ class Enum a where
     enumFromTo   :: a -> a -> [a]
     enumFromThenTo :: a -> a -> a -> [a]
 
+    -- This may wrap instead of throwing an exception on succ maxBound, pred minBound.
+    succ x = toEnum (fromEnum x + 1)
+    pred x = toEnum (fromEnum x - 1)
+
     enumFrom n = n:enumFrom (succ n)
 
 
 instance Enum Char where
-    succ n = n + 1
-    pred n = n - 1
     toEnum n = intToChar n
     fromEnum n = charToInt n
 
@@ -39,8 +45,6 @@ instance Enum Char where
     enumFromThenTo from next to = enumByToFrom (next - from) to from
 
 instance Enum Int where
-    succ n = n + 1
-    pred n = n - 1
     toEnum n = n
     fromEnum n = n
 
@@ -52,8 +56,6 @@ instance Enum Int where
     enumFromThenTo from next to = enumByToFrom (next - from) to from
 
 instance Enum Integer where
-    succ n = n + 1
-    pred n = n - 1
     toEnum n = intToInteger n
     fromEnum n = integerToInt n
 
@@ -65,8 +67,6 @@ instance Enum Integer where
     enumFromThenTo from next to = enumByToFrom (next - from) to from
 
 instance Enum Double where
-    succ x = x + 1
-    pred x = x - 1
     toEnum n = intToDouble n
     fromEnum x = error "fromEnum: Double"
 

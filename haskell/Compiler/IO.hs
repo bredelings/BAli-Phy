@@ -16,7 +16,7 @@ type RealWorld = Int
 -- Then accessing the value would force the state as well.
 -- And accessing the value should force the state.
 
-data IO a = IO { runIO :: RealWorld -> (RealWorld,a)}
+data IO a = IO { runIO :: RealWorld -> (RealWorld,a) }
 
 instance Functor IO where
     fmap f x = IO (\state1 -> let (state2,   result) = runIO x state1
