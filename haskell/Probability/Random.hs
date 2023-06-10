@@ -16,6 +16,7 @@ import Data.IntMap (IntMap)
 import Data.Array (Array)
 import Numeric.LogDouble
 import Numeric.Prob
+import Control.Monad.Fix
 
 import           System.IO
 import qualified Data.Text.IO as TIO
@@ -134,6 +135,8 @@ instance Applicative Random where
 
 instance Monad Random where
     f >>= g  = RanBind f g
+
+instance MonadFix Random where
     mfix f   = RanMFix f
 
 observe datum dist = liftIO $ do

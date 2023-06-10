@@ -3,6 +3,7 @@ module Control.Applicative where
 
 import Data.Functor
 import Data.Function
+import Data.Maybe
 
 infixl 4 <*>, <*, *>
 
@@ -38,3 +39,9 @@ class Applicative f => Alternative f where
 instance Applicative [] where
     pure x = [x]
     fs <*> xs = [f x | f <- fs, x <- xs]
+
+instance Applicative Maybe where
+    pure x = Just x
+
+    (Just f) <*> (Just x) = Just (f x)
+    _        <*> _        = Nothing

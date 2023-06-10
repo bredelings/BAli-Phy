@@ -3,6 +3,7 @@ module Data.Functor where
 
 import Data.Function
 import Data.Tuple (fst, snd)
+import Data.Maybe
 
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
@@ -25,3 +26,6 @@ instance Functor [] where
     fmap f [] = []
     fmap f (x:xs) = (f x):(fmap f xs)
 
+instance Functor Maybe where
+    fmap f (Just x) = Just (f x)
+    fmap f Nothing = Nothing

@@ -3,7 +3,6 @@ module Data.Maybe where
 
 import Data.Bool
 import Data.Eq
-import Data.Functor
 
 data Maybe a = Just a | Nothing
 
@@ -42,7 +41,3 @@ instance Eq a => Eq (Maybe a) where
     Just x  == Just y   =  x==y
     _       == _        =  False
 
-
-instance Functor Maybe where
-    fmap f Nothing = Nothing
-    fmap f (Just x) = Just (f x)

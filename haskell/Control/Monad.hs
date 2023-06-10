@@ -4,6 +4,7 @@ module Control.Monad where
 import Compiler.Base
 import Compiler.Error  -- for error
 import Data.Function   -- for id
+import Data.Maybe
 import Data.OldList
 import Data.Functor
 import Data.Ord
@@ -18,23 +19,20 @@ class Applicative m => Monad m where
     (>>=)  :: m a -> (a -> m b) -> m b
     (>>)   :: m a -> m b -> m b
     fail   :: String -> m a
-    mfix   :: (a -> m a) -> m a
     unsafeInterleaveIO :: m a -> m a
 
 
     return = pure
     f >> g = f >>= (\x -> g)
     fail s = error s
-    mfix = error "no mfix for this class"
     unsafeInterleaveIO = error "no unsafeInterleaveIO for this class"
-
 
 instance Monad [] where
     xs >>= f = concatMap f xs
-    mfix f = case fix (f . head) of
-               []    -> []
-               (x:_) -> x : mfix (tail . f)
 
+instance Monad Maybe where
+    (Just x) >>= f = f x
+    Nothing >>=  f = Nothing
 
 mapM f = sequence . map f
 
