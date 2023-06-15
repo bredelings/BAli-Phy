@@ -4,8 +4,7 @@ import Probability.Random
 import Control.Monad.IO.Class
 import MCMC
 
-foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: Double -> RealWorld -> Int
-sample_bernoulli p = makeIO $ builtin_sample_bernoulli p
+foreign import bpcall "Distribution:" sample_bernoulli :: Double -> IO Int
 
 -- Could we allow this to return Int, Integer, Bool, etc?
 

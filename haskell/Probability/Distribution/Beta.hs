@@ -4,11 +4,10 @@ import Probability.Random
 import Control.Monad.IO.Class
 import MCMC
 
-foreign import bpcall "Distribution:beta_density"  beta_density        :: Double -> Double -> Double -> LogDouble
-foreign import bpcall "Distribution:beta_cdf"      beta_cdf            :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:beta_quantile" beta_quantile       :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:sample_beta"   builtin_sample_beta :: Double -> Double -> RealWorld -> Double
-sample_beta a b = makeIO $ builtin_sample_beta a b
+foreign import bpcall "Distribution:"  beta_density   :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:"  beta_cdf       :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:"  beta_quantile  :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:"  sample_beta    :: Double -> Double -> IO Double
 
 data Beta = Beta Double Double
 
