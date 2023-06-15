@@ -1,7 +1,6 @@
 module Probability.Distribution.Bernoulli where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" sample_bernoulli :: Double -> IO Int
@@ -52,7 +51,7 @@ instance HasAnnotatedPdf Bernoulli where
 instance Sampleable Bernoulli where
     sample dist = RanDistribution2 dist bernoulli_effect
 
-bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
+bernoulli_effect x = add_move $ discrete_uniform_avoid_mh x 0 1
 
 bernoulli :: Double -> Bernoulli
 bernoulli p = Bernoulli (toFloating p)

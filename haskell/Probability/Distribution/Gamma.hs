@@ -1,7 +1,6 @@
 module Probability.Distribution.Gamma where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" gamma_density  :: Double -> Double -> Double -> LogDouble

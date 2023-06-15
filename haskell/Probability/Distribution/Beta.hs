@@ -1,8 +1,7 @@
 module Probability.Distribution.Beta where
 
 import Probability.Random
-import Control.Monad.IO.Class
-import MCMC
+import MCMC (slice_sample_real_random_variable)
 
 foreign import bpcall "Distribution:"  beta_density   :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:"  beta_cdf       :: Double -> Double -> Double -> Double

@@ -1,7 +1,6 @@
 module Probability.Distribution.Uniform where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> LogDouble

@@ -3,12 +3,11 @@ module Probability.Distribution.Categorical where
 import Probability.Random
 import Data.Array
 import Data.Foldable
-import Control.Monad.IO.Class
 import MCMC
 
 import Foreign.Vector
 
-categorical_effect n x = add_move (\c -> gibbs_sample_categorical x n c)
+categorical_effect n x = add_move $ gibbs_sample_categorical x n
 foreign import bpcall "Distribution:sample_categorical" builtin_sample_categorical :: EVector Double -> IO Int
 sample_categorical ps = builtin_sample_categorical (array_to_vector ps)
 

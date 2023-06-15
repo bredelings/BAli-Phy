@@ -1,7 +1,6 @@
 module Probability.Distribution.Binomial where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" binomial_density :: Int -> Double -> Int -> LogDouble

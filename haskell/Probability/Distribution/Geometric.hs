@@ -1,9 +1,7 @@
 module Probability.Distribution.Geometric where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
-import Range
 
 --foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> LogDouble
 foreign import bpcall "Distribution:" sample_geometric :: Double -> IO Int

@@ -1,7 +1,6 @@
 module Probability.Distribution.Normal where
 
 import Probability.Random
-import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> LogDouble
