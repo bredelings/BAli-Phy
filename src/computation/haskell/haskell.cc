@@ -307,21 +307,6 @@ string ForeignDecl::print() const
     return join(v," ");
 }
 
-int ForeignDecl::n_args() const
-{
-    auto t = type;
-    int n = 0;
-
-    while(auto p = is_gen_function_type(t))
-    {
-        n++;
-        auto& [from,to] = *p;
-        t = to;
-    }
-
-    return n;
-}
-
 ForeignDecl::ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t)
     : function(f), type(t)
 {

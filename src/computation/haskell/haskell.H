@@ -251,8 +251,6 @@ struct ForeignDecl: public Object
     Hs::LVar function;
     LType type;
 
-    int n_args() const;
-
     ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
