@@ -227,36 +227,9 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
     //-------------------- tree (tree_moves) --------------------//
     MoveAll tree_moves("tree");
     MoveAll topology_move("topology");
-    MoveEach NNI_move("NNI");
     MoveAll SPR_move("SPR");
 
     bool has_imodel = P.variable_alignment();
-
-    if (has_imodel)
-	NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
-				     three_way_topology_sample,
-				     internal_branches)
-	    );
-    else
-	NNI_move.add(1,MoveArgSingle("three_way_NNI","topology",
-				     three_way_topology_sample,
-				     internal_branches)
-	    );
-
-    NNI_move.add(1,MoveArgSingle("two_way_NNI","alignment:nodes:topology",
-				 two_way_topology_sample,
-				 internal_branches)
-		 ,false
-	);
-
-    //FIXME - doesn't yet deal with gaps=star
-    if (has_imodel)
-	NNI_move.add(0.001,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
-					 three_way_topology_and_alignment_sample,
-					 internal_branches)
-		     ,false
-	    );
-
 
     if (has_imodel)
     {
@@ -273,29 +246,14 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 	SPR_move.add(1,SingleMove(sample_SPR_all,"SPR_all", "topology:lengths"));
     }
 
-    topology_move.add(1,NNI_move,false);
     topology_move.add(1,SPR_move);
     if (P.t().n_leaves() >3)
 	tree_moves.add(1,topology_move);
   
     //-------------- tree::lengths (length_moves) -------------//
     MoveAll length_moves("lengths");
-    MoveEach length_moves1("lengths1");
 
-    length_moves1.add(1,MoveArgSingle("change_branch_length","lengths",
-				      change_branch_length_move,
-				      branches)
-	);
-    length_moves1.add(1,MoveArgSingle("change_branch_length_multi","lengths",
-				      change_branch_length_multi_move,
-				      branches)
-	);
 
-    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T","lengths:nodes:topology",
-					 change_branch_length_and_T,
-					 internal_branches)
-	);
-    length_moves.add(1,length_moves1,false);
     // FIXME - Do we really want to do this, under slice sampling?
     length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
 				  "walk_tree_sample_branch_lengths","lengths")
