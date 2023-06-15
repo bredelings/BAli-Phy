@@ -4,9 +4,8 @@ import Probability.Random
 import Control.Monad.IO.Class
 import MCMC
 
-foreign import bpcall "Distribution:negative_binomial_density" negative_binomial_density :: Int -> Double -> Int -> LogDouble
-foreign import bpcall "Distribution:sample_negative_binomial" builtin_sample_negative_binomial :: Int -> Double -> RealWorld -> Int
-sample_negative_binomial r p = makeIO $ builtin_sample_negative_binomial r p
+foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Int -> LogDouble
+foreign import bpcall "Distribution:" sample_negative_binomial :: Int -> Double -> IO Int
 
 data NegativeBinomial = NegativeBinomial Int Prob
 

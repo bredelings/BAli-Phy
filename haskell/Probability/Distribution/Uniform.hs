@@ -5,8 +5,7 @@ import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> LogDouble
-foreign import bpcall "Distribution:sample_uniform" builtin_sample_uniform :: Double -> Double -> Int -> Double
-sample_uniform l u = makeIO $ builtin_sample_uniform l u
+foreign import bpcall "Distribution:" sample_uniform :: Double -> Double -> IO Double
 
 data Uniform = Uniform Double Double
 
@@ -55,9 +54,8 @@ uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
 
 ------------------------------------
-foreign import bpcall "Distribution:uniform_int_density" uniform_int_density :: Int -> Int -> Int -> LogDouble
-foreign import bpcall "Distribution:sample_uniform_int" builtin_sample_uniform_int :: Int -> Int -> Int -> Int
-sample_uniform_int l u = makeIO $ builtin_sample_uniform_int l u
+foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> LogDouble
+foreign import bpcall "Distribution:" sample_uniform_int :: Int -> Int -> IO Int
 
 data UniformInt = UniformInt Int Int
 

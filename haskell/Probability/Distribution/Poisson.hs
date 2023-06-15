@@ -6,9 +6,8 @@ import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform
 
-foreign import bpcall "Distribution:poisson_density" poisson_density :: Double -> Int -> LogDouble
-foreign import bpcall "Distribution:sample_poisson" builtin_sample_poisson :: Double -> RealWorld -> Int
-sample_poisson mu = makeIO $ builtin_sample_poisson mu
+foreign import bpcall "Distribution:" poisson_density :: Double -> Int -> LogDouble
+foreign import bpcall "Distribution:" sample_poisson :: Double -> IO Int
 
 data Poisson = Poisson Double
 

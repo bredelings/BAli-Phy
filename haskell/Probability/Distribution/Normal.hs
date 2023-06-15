@@ -7,8 +7,7 @@ import MCMC
 foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:" normal_cdf :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" normal_quantile :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:sample_normal" builtin_sample_normal :: Double -> Double -> RealWorld -> Double
-sample_normal m s = makeIO $ builtin_sample_normal m s
+foreign import bpcall "Distribution:" sample_normal :: Double -> Double -> IO Double
 
 data Normal = Normal Double Double
 
