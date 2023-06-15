@@ -92,7 +92,7 @@ extern "C" closure builtin_function_getStderr(OperationArgs& Args)
 
 
 // FilePath -> IOMode -> IO Handle
-extern "C" closure builtin_function_hCloseRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hClose(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -104,7 +104,7 @@ extern "C" closure builtin_function_hCloseRaw(OperationArgs& Args)
 
 
 // Handle -> RealWorld -> Bool
-extern "C" closure builtin_function_hIsEOFRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hIsEOF(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -116,7 +116,7 @@ extern "C" closure builtin_function_hIsEOFRaw(OperationArgs& Args)
 }
 
 // Handle -> Char -> RealWorld -> ()
-extern "C" closure builtin_function_hPutCharRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hPutChar(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -140,7 +140,7 @@ extern "C" closure builtin_function_hPutStrRaw(OperationArgs& Args)
 }
 
 // Handle -> RealWorld -> Char
-extern "C" closure builtin_function_hGetCharRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hGetChar(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -178,7 +178,7 @@ extern "C" closure builtin_function_hGetContentsRaw(OperationArgs& Args)
 }
 
 // Handle -> RealWorld -> Integer
-extern "C" closure builtin_function_hFileSizeRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hFileSize(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -191,7 +191,7 @@ extern "C" closure builtin_function_hFileSizeRaw(OperationArgs& Args)
 }
 
 // Handle -> RealWorld -> Integer
-extern "C" closure builtin_function_hFlushRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hFlush(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -238,7 +238,7 @@ extern "C" closure builtin_function_hTellRaw(OperationArgs& Args)
 }
 
 // Handle -> RealWorld -> Bool
-extern "C" closure builtin_function_hIsOpenRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hIsOpen(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
@@ -253,7 +253,7 @@ extern "C" closure builtin_function_hIsOpenRaw(OperationArgs& Args)
         return bool_true;
 }
 
-extern "C" closure builtin_function_hLookAheadRaw(OperationArgs& Args)
+extern "C" closure builtin_function_hLookAhead(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 

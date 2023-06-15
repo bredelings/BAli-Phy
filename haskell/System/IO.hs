@@ -57,15 +57,12 @@ withFile path mode action = do
   handle <- openFile path mode
   action handle
 
-foreign import bpcall "File:" openFileRaw :: CPPString -> Int -> RealWorld -> Handle
+foreign import bpcall "File:" openFileRaw :: CPPString -> Int -> IO Handle
 openFile :: FilePath -> IOMode -> IO Handle
-openFile path mode = makeIO $ openFileRaw (list_to_string path) (intFromIOMode mode)
+openFile path mode = openFileRaw (list_to_string path) (intFromIOMode mode)
 
 
-foreign import bpcall "File:" hCloseRaw :: Handle -> RealWorld -> ()
-
-hClose :: Handle -> IO ()
-hClose handle = makeIO $ hCloseRaw handle
+foreign import bpcall "File:" hClose :: Handle -> IO ()
 
 readFile :: FilePath -> IO String
 readFile path = do handle <- openFile path ReadMode
@@ -93,17 +90,13 @@ appendFile path text = do handle <- openFile path AppendMode
 -- These are apparently for when we know the file that the handle is attached to.
 -- But what if the file has been unliked from the filesystem?
 -- Then we'd have to own the dentry or something...
-foreign import bpcall "File:" hFileSizeRaw :: Handle -> RealWorld -> Integer
-hFileSize :: Handle -> IO Integer
-hFileSize h = makeIO $ hFileSizeRaw h
+foreign import bpcall "File:" hFileSize :: Handle -> IO Integer
 
 {-
 hSetFileSize :: Handle -> Integer -> IO ()
 -}
 
-foreign import bpcall "File:" hIsEOFRaw :: Handle -> RealWorld -> Bool
-hIsEOF :: Handle -> IO Bool
-hIsEOF h = makeIO $ hIsEOFRaw h
+foreign import bpcall "File:" hIsEOF :: Handle -> IO Bool
 
 isEOF :: IO Bool
 isEOF = hIsEOF stdin
@@ -111,13 +104,10 @@ isEOF = hIsEOF stdin
 data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 
 {-
-
 hSetBuffering :: Handle -> BufferMode -> IO ()
 -}
 
-foreign import bpcall "File:" hFlushRaw :: Handle -> RealWorld -> ()
-hFlush :: Handle -> IO ()
-hFlush h = makeIO $ hFlushRaw h
+foreign import bpcall "File:" hFlush :: Handle -> IO ()
 
 {-
 hGetPosn :: Handle -> IO HandlePosn
@@ -132,9 +122,9 @@ intFromSeekMode AbsoluteSeek = 0
 intFromSeekMode RelativeSeek = 1
 intFromSeekMode SeekFromEnd  = 2
 
-foreign import bpcall "File:" hSeekRaw :: Handle -> Int -> Integer -> RealWorld -> ()
+foreign import bpcall "File:" hSeekRaw :: Handle -> Int -> Integer -> IO ()
 hSeek :: Handle -> SeekMode -> Integer -> IO ()
-hSeek h mode pos = makeIO $ hSeekRaw h (intFromSeekMode mode) pos
+hSeek h mode pos = hSeekRaw h (intFromSeekMode mode) pos
 
 {-
 C++ streams can have different read and write positions: tellg() vs tellp()
@@ -143,9 +133,7 @@ Not sure what to do here.
 hTell :: Handle -> IO Integer
 -}
 
-foreign import bpcall "File:" hIsOpenRaw :: Handle -> RealWorld -> Bool
-hIsOpen :: Handle -> IO Bool
-hIsOpen h = makeIO $ hIsOpenRaw h
+foreign import bpcall "File:" hIsOpen :: Handle -> IO Bool
 
 hIsClosed :: Handle -> IO Bool
 hIsClosed h = fmap not $ hIsOpen h
@@ -172,33 +160,27 @@ hWaitForInput :: Handle -> Int -> IO Bool
 hReady :: Handle -> IO Bool
 -}
 
-foreign import bpcall "File:" hGetCharRaw :: Handle -> RealWorld -> Char
-hGetChar :: Handle -> IO Char
-hGetChar h = makeIO $ hGetCharRaw h
+foreign import bpcall "File:" hGetChar :: Handle -> IO Char
 
-foreign import bpcall "File:" hGetLineRaw :: Handle -> RealWorld -> CPPString
+foreign import bpcall "File:" hGetLineRaw :: Handle -> IO CPPString
 hGetLine :: Handle -> IO String
-hGetLine h = fmap unpack_cpp_string $ makeIO $ hGetLineRaw h
+hGetLine h = fmap unpack_cpp_string $ hGetLineRaw h
 
-foreign import bpcall "File:" hLookAheadRaw :: Handle -> RealWorld -> Char
-hLookAhead :: Handle -> IO Char
-hLookAhead h = makeIO $ hLookAheadRaw h
+foreign import bpcall "File:" hLookAhead :: Handle -> IO Char
 
-foreign import bpcall "File:" hGetContentsRaw :: Handle -> RealWorld -> CPPString
+foreign import bpcall "File:" hGetContentsRaw :: Handle -> IO CPPString
 hGetContents :: Handle -> IO String
 hGetContents h = unsafeInterleaveIO $ hGetContents' h
 
 -- strict
 hGetContents' :: Handle -> IO String
-hGetContents' h = fmap unpack_cpp_string $ makeIO $ hGetContentsRaw h
+hGetContents' h = fmap unpack_cpp_string $ hGetContentsRaw h
 
-foreign import bpcall "File:" hPutCharRaw :: Handle -> Char -> RealWorld -> ()
-hPutChar :: Handle -> Char -> IO ()
-hPutChar h c = makeIO $ hPutCharRaw h c
+foreign import bpcall "File:" hPutChar :: Handle -> Char -> IO ()
 
-foreign import bpcall "File:" hPutStrRaw :: Handle -> CPPString -> RealWorld -> ()
+foreign import bpcall "File:" hPutStrRaw :: Handle -> CPPString -> IO ()
 hPutStr :: Handle -> String -> IO ()
-hPutStr h s = makeIO $ hPutStrRaw h $ list_to_string s
+hPutStr h s = hPutStrRaw h $ list_to_string s
 
 hPutStrLn :: Handle -> String -> IO ()
 hPutStrLn h s = hPutStr h s >> hPutChar h '\n'
@@ -248,9 +230,9 @@ withBinaryFile path mode action = do
   handle <- openBinaryFile path mode
   action handle
 
-foreign import bpcall "File:" openBinaryFileRaw :: CPPString -> Int -> RealWorld -> Handle
+foreign import bpcall "File:" openBinaryFileRaw :: CPPString -> Int -> IO Handle
 openBinaryFile :: FilePath -> IOMode -> IO Handle
-openBinaryFile path mode = makeIO $ openBinaryFileRaw (list_to_string path) (intFromIOMode mode)
+openBinaryFile path mode = openBinaryFileRaw (list_to_string path) (intFromIOMode mode)
 
 {-
 hSetBinaryMode :: Handle -> Bool -> IO ()
