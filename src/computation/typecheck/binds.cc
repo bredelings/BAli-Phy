@@ -54,7 +54,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     {
         auto type = check_type( desugar(f.type) );
         auto FI = this_mod().lookup_local_symbol(unloc(f.function).name);
-        FI->type = type;
+        FI->type = expand_all_type_synonyms(type);
     }
 }
 
