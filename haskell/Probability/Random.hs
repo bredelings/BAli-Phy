@@ -246,11 +246,9 @@ sample_effect rate dist tk_effect x = do
 
 
 
-foreign import bpcall "MCMC:getInterchangeableId" builtin_getInterchangeableId :: RealWorld -> Int
-getInterchangeableId = makeIO $ builtin_getInterchangeableId
+foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
 
-foreign import bpcall "MCMC:interchange_entries" builtin_interchange_entries :: Int -> ContextIndex -> RealWorld -> ()
-interchange_entries id c = makeIO $ builtin_interchange_entries id c
+foreign import bpcall "MCMC:" interchange_entries :: Int -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
 
