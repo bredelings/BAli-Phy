@@ -1,6 +1,6 @@
 module System.Environment where
 
-foreign import bpcall "Environment:getArgs" builtin_getArgs :: RealWorld -> EVector CPPString
+foreign import bpcall "Environment:getArgs" builtin_getArgs :: IO (EVector CPPString)
 
-getArgs = makeIO (\s -> map listFromString $ list_from_vector $ builtin_getArgs s)
+getArgs s = map listFromString $ list_from_vector $ builtin_getArgs s
 

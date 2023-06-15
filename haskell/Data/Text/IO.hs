@@ -27,19 +27,19 @@ appendFile path text = do handle <- openFile path AppendMode
                           putStr text
                           hClose handle
 
-foreign import bpcall "File:" hGetContentsRaw :: Handle -> RealWorld -> CPPString
+foreign import bpcall "File:" hGetContentsRaw :: Handle -> IO CPPString
 hGetContents :: Handle -> IO Text
-hGetContents h = fmap Text $ makeIO $ hGetContentsRaw h
+hGetContents h = fmap Text $ hGetContentsRaw h
 
 -- hGetChunk :: Handle -> IO Text
 
-foreign import bpcall "File:" hGetLineRaw :: Handle -> RealWorld -> CPPString
+foreign import bpcall "File:" hGetLineRaw :: Handle -> IO CPPString
 hGetLine :: Handle -> IO Text
-hGetLine h = fmap Text $ makeIO $ hGetLineRaw h
+hGetLine h = fmap Text $ hGetLineRaw h
 
-foreign import bpcall "File:" hPutStrRaw :: Handle -> CPPString -> RealWorld -> ()
+foreign import bpcall "File:" hPutStrRaw :: Handle -> CPPString -> IO ()
 hPutStr :: Handle -> Text -> IO ()
-hPutStr h (Text s) = makeIO $ hPutStrRaw h s
+hPutStr h (Text s) = hPutStrRaw h s
 
 hPutStrLn :: Handle -> Text -> IO ()
 hPutStrLn h s = hPutStr h s >> hPutChar h '\n'
