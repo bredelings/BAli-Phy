@@ -6,8 +6,7 @@ import MCMC
 import Range
 
 --foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> LogDouble
-foreign import bpcall "Distribution:sample_geometric" builtin_sample_geometric :: Double -> RealWorld -> Int
-sample_geometric p_success = makeIO $ builtin_sample_geometric p_success
+foreign import bpcall "Distribution:" sample_geometric :: Double -> IO Int
 
 data Geometric = Geometric Prob
 

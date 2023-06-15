@@ -7,8 +7,7 @@ import MCMC
 foreign import bpcall "Distribution:" gamma_density  :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:" gamma_cdf      :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" gamma_quantile :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:sample_gamma" builtin_sample_gamma :: Double -> Double -> RealWorld -> Double
-sample_gamma a b = makeIO $ builtin_sample_gamma a b
+foreign import bpcall "Distribution:" sample_gamma   :: Double -> Double -> IO Double
 
 data Gamma = Gamma Double Double
 

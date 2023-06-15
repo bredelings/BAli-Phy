@@ -6,10 +6,9 @@ import MCMC
 
 ---- cauchy
 
-foreign import bpcall "Distribution:cauchy_density" cauchy_density :: Double -> Double -> Double -> LogDouble
-foreign import bpcall "Distribution:cauchy_quantile" cauchy_quantile :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy :: Double -> Double -> RealWorld -> Double
-sample_cauchy m s = makeIO $ builtin_sample_cauchy m s
+foreign import bpcall "Distribution:" cauchy_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" cauchy_quantile :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:" sample_cauchy :: Double -> Double -> IO Double
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds

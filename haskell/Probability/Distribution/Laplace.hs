@@ -4,9 +4,8 @@ import Probability.Random
 import Control.Monad.IO.Class
 import MCMC
 
-foreign import bpcall "Distribution:laplace_density" laplace_density :: Double -> Double -> Double -> LogDouble
-foreign import bpcall "Distribution:sample_laplace" builtin_sample_laplace :: Double -> Double -> RealWorld -> Double
-sample_laplace m s = makeIO $ builtin_sample_laplace m s
+foreign import bpcall "Distribution:" laplace_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" sample_laplace  :: Double -> Double -> IO Double
 
 data Laplace = Laplace Double Double
 

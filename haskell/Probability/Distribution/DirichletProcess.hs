@@ -89,8 +89,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
 
 foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> EVector Int -> LogDouble
 crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
-foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> RealWorld -> EVector Int
-sample_crp alpha n d = do v <- makeIO $ sample_crp_vector alpha n d
+foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> IO (EVector Int)
+sample_crp alpha n d = do v <- sample_crp_vector alpha n d
                           return $ list_from_vector_of_size v n
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
