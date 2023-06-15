@@ -1158,7 +1158,26 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
 
         int n_args = gen_type_arity(S->type);
 
-        auto body = parse_builtin(decl, n_args, L);
+        auto [_,result_type] = gen_arg_result_types(S->type);
+
+        expression_ref body;
+
+        if (is_IO_type(result_type))
+        {
+            // Change IO a to RealWorld -> a
+            body = parse_builtin(decl, n_args+1, L);
+
+            for(int i=0;i<n_args;i++)
+                body = {body,var(i)};
+
+            body = {var("Compiler.IO.makeIO"), body};
+
+            for(int i=n_args-1;i>=0;i--)
+                body = lambda_quantify(i,body);
+            // (\x0 x1 ... x<n-1> -> makeIO ((\x0 x1 .. x<n> -> builtinOp x0 x1 .. x<n>) x0 x1 .. x<n-1>))
+        }
+        else
+            body = parse_builtin(decl, n_args, L);
 
         cdecls.push_back( { var(function_name), body} );
     }
