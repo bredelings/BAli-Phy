@@ -780,6 +780,30 @@ std::optional<Type> TypeChecker::expand_type_synonym(const Type& type) const
     return {};
 }
 
+Type TypeChecker::expand_all_type_synonyms(Type type) const
+{
+    while(auto type2 = expand_type_synonym(type))
+        type = *type2;
+
+    if (auto t2 = filled_meta_type_var(type))
+        return expand_all_type_synonyms(*t2);
+
+    if (auto tapp = type.to<TypeApp>())
+    {
+        auto head = expand_type_synonym(tapp->head);
+        auto arg  = expand_type_synonym(tapp->arg);
+
+        if (head and arg)
+            type = TypeApp(*head, *arg);
+        else if (head)
+            type = TypeApp(*head, tapp->arg);
+        else if (arg)
+            type = TypeApp(tapp->head, *arg);
+    }
+
+    return type;
+}
+
 Type TypeChecker::look_thru(const Type& t) const
 {
     if (auto mtv = t.to<MetaTypeVar>())

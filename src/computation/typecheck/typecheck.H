@@ -221,6 +221,8 @@ public:
 
     std::optional<Type> expand_type_synonym(const Type& type) const;
 
+    Type expand_all_type_synonyms(Type type) const;
+
     Type check_type(const Type&) const;
 
     Type check_type(const Type&, kindchecker_state& K) const;
