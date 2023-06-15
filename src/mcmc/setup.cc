@@ -160,29 +160,6 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 
     //----------------------- alignment -------------------------//
     MoveAll alignment_moves("alignment");
-
-    //--------------- alignment::alignment_branch ---------------//
-    MoveEach alignment_branch_moves("alignment_branch_master");
-    alignment_branch_moves.add(1.0,
-			       MoveArgSingle("sample_alignments","alignment:alignment_branch",
-					     sample_alignments_one,
-					     branches)
-	);
-    if (P.t().n_leaves() >2) {
-	alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
-						      sample_tri_one,
-						      branches)
-	    );
-	alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch","alignment:nodes:length",
-						     sample_tri_branch_one,
-						     branches)
-				   ,false);
-	alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch_aligned","alignment:nodes:length",
-						     sample_tri_branch_type_one,
-						     branches)
-				   ,false);
-    }
-    alignment_moves.add(1, alignment_branch_moves, false);
     alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
     alignment_moves.add(0.1, SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
 
