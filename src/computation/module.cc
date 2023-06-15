@@ -1137,24 +1137,28 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
     return rename_top_level(cdecls, name);
 }
 
-pair<string,expression_ref> parse_builtin(const Haskell::ForeignDecl& B, const module_loader& L)
+expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
     const string builtin_prefix = "builtin_function_";
 
     string operation_name = B.plugin_name+":"+B.symbol_name;
 
-    auto body = load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, B.n_args(), operation_name);
-
-    return {unloc(B.function).name, body};
+    return load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, n_args, operation_name);
 }
 
 CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
 {
     for(const auto& decl: foreign_decls)
     {
-        auto [function_name, body] = parse_builtin(decl, L);
+        auto function_name = unloc(decl.function).name;
 
-        function_name = lookup_symbol(function_name)->name;
+        auto S = lookup_symbol(function_name);
+
+        function_name = S->name;
+
+        int n_args = gen_type_arity(S->type);
+
+        auto body = parse_builtin(decl, n_args, L);
 
         cdecls.push_back( { var(function_name), body} );
     }
