@@ -3,6 +3,7 @@ import           Probability
 import           Tree
 import           Tree.Newick
 import qualified Data.Text as Text
+import           Control.Monad.Fix -- should be unneeded
 
 n_leaves = 3
 

@@ -1,6 +1,7 @@
 import           Probability
 import           Tree
 import           Tree.Newick
+import           Control.Monad.Fix
 
 model = do
     tree <- sample $ uniform_topology 5

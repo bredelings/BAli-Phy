@@ -2,6 +2,7 @@
 import           Probability
 import           Tree
 import           Tree.Newick
+import           Control.Monad.Fix -- should be unneeded
 
 model = do
     tree <- prior $ uniform_topology 5
