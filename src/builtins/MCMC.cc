@@ -299,7 +299,7 @@ template <typename T>
 using Bounds = Box<bounds<T>>;
 
 // inc_dec_mh x bounds context state
-extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
+extern "C" closure builtin_function_inc_dec_mh_raw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -330,7 +330,7 @@ extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
 }
 
 // slice_sample_real_random_variable x context state
-extern "C" closure builtin_function_slice_sample_real_random_variable(OperationArgs& Args)
+extern "C" closure builtin_function_slice_sample_real_random_variable_raw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -374,7 +374,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
 }
 
 // slice_sample_integer_random_variable x context state
-extern "C" closure builtin_function_slice_sample_integer_random_variable(OperationArgs& Args)
+extern "C" closure builtin_function_slice_sample_integer_random_variable_raw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -812,7 +812,7 @@ extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
     return v;
 }
 
-extern "C" closure builtin_function_FNPR_unsafe(OperationArgs& Args)
+extern "C" closure builtin_function_fnpr_unsafe_proposal(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -832,7 +832,7 @@ extern "C" closure builtin_function_FNPR_unsafe(OperationArgs& Args)
     return {log_double_t(1.0)};
 }
 
-extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
+extern "C" closure builtin_function_nni_on_branch_unsafe(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -852,7 +852,7 @@ extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_TT_NNI_on_branch_unsafe(OperationArgs& Args)
+extern "C" closure builtin_function_tnni_on_branch_unsafe(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
