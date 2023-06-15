@@ -393,6 +393,20 @@ optional<Type> is_list_type(Type t)
         return {};
 }
 
+std::optional<Type> is_IO_type(Type t)
+{
+    if (auto tcapp = is_type_con_app(t))
+    {
+        auto& [tc, args] = *tcapp;
+
+        if (args.size() == 1 and unloc(tc.name) == "Compiler.IO.IO")
+            return args[0];
+        else
+            return {};
+    }
+    else
+        return {};
+}
 
 optional<vector<Type>> is_tuple_type(Type t)
 {

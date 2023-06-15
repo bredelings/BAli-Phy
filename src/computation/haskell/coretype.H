@@ -320,6 +320,8 @@ bool is_tau_type(Type type);
 // no foralls at top level
 bool is_rho_type(Type type);
 
+std::optional<Type> is_IO_type(Type t);
+
 int max_level(Type t);
 int max_level(const std::vector<Type>& t);
 
