@@ -32,8 +32,7 @@ register_dist_observe name = builtin_register_dist (list_to_string name) 1
 
 foreign import bpcall "Modifiables:changeable_apply" ($?) :: (a -> b) -> a -> b
 
--- Add an extra argument to prevent floating.
 -- Make into an IO operation to prevent  floating.
-foreign import bpcall "Modifiables:" modifiable_apply :: (a -> b) -> a -> c -> b
-modifiableIO action = makeIO $ modifiable_apply unsafePerformIO action
+foreign import bpcall "Modifiables:" modifiable_apply :: (a -> b) -> a -> IO b
+modifiableIO action = modifiable_apply unsafePerformIO action
 
