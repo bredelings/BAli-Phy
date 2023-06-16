@@ -25,6 +25,7 @@ instance HasPdf Geometric where
 
 instance Dist1D Geometric where
     cdf (Geometric p_success) n = undefined
+    lower_bound dist = Just 0
 
 instance MaybeMean Geometric where
     maybeMean (Geometric p) = Just $ toFloating $ (1-p)/p

@@ -22,6 +22,7 @@ instance HasPdf Poisson where
 
 instance Dist1D Poisson where
     cdf (Poisson mu) = undefined
+    lower_bound _ = Just 0
 
 instance MaybeMean Poisson where
     maybeMean (Poisson mu) = Just mu

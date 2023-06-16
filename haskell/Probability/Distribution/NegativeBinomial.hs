@@ -19,6 +19,7 @@ instance HasPdf NegativeBinomial where
 
 instance Dist1D NegativeBinomial where
     cdf (NegativeBinomial r p) = undefined
+    lower_bound _ = Just 0
 
 instance MaybeMean NegativeBinomial where
     maybeMean (NegativeBinomial r p) = Just $ r * toFloating $ (1-p)/p

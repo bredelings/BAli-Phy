@@ -21,6 +21,8 @@ instance (HasPdf d, Result d ~ Double) => HasPdf (ExpTransform d) where
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (ExpTransform d) where
     cdf (ExpTransform dist) x = cdf dist (log x)
+    lower_bound (ExpTransform dist) = fmap exp $ lower_bound dist
+    upper_bound (ExpTransform dist) = fmap exp $ upper_bound dist
 
 instance (ContDist1D d, Result d ~ Double) => ContDist1D (ExpTransform d) where
     quantile (ExpTransform dist) p = exp $ quantile dist p

@@ -22,6 +22,8 @@ instance HasPdf Beta where
 
 instance Dist1D Beta where
     cdf (Beta a b) p = beta_cdf a b p
+    lower_bound _ = Just 0
+    upper_bound _ = Just 1
 
 instance ContDist1D Beta where
     quantile (Beta a b) p = beta_quantile a b p

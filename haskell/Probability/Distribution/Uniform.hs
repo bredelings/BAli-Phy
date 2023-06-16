@@ -22,6 +22,8 @@ instance Dist1D Uniform where
     cdf (Uniform l u) x | x < l     = 0
                         | x < u     = (x-l)/(u-l)
                         | otherwise = 1
+    lower_bound (Uniform l r) = Just l
+    upper_bound (Uniform l r) = Just r
 
 
 instance ContDist1D Uniform where
@@ -61,6 +63,14 @@ data UniformInt = UniformInt Int Int
 instance Dist UniformInt where
     type Result UniformInt = Int
     dist_name _ = "uniform_int"
+
+instance Dist1D UniformInt where
+    cdf (UniformInt l u) x | floor x < l   = 0
+                           | floor x < u   = fromIntegral (floor x-l+1)/ fromIntegral (u-l+1)
+                           | otherwise     = 1
+
+    lower_bound (UniformInt l u) = Just l
+    upper_bound (UniformInt l u) = Just u
 
 instance IOSampleable UniformInt where
     sampleIO (UniformInt l u) = sample_uniform_int l u

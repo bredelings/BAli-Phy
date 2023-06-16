@@ -22,6 +22,7 @@ instance HasPdf Gamma where
 
 instance Dist1D Gamma where
     cdf (Gamma a b) p = gamma_cdf a b p
+    lower_bound _ = Just 0
 
 instance ContDist1D Gamma where
     quantile (Gamma a b) p = gamma_quantile a b p

@@ -20,6 +20,8 @@ instance HasPdf Binomial where
 
 instance Dist1D Binomial where
     cdf (Binomial n p) x  = undefined
+    lower_bound (Binomial n p) = Just 0
+    upper_bound (Binomial n p) = Just n
 
 instance MaybeMean Binomial where
     maybeMean (Binomial n p) = Just $ fromIntegral n * (toFloating p)

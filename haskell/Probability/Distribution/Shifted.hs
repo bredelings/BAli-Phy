@@ -16,6 +16,8 @@ instance (HasPdf d, Num (Result d)) => HasPdf (Shifted d) where
 
 instance (Dist1D d, Result (Shifted d) ~ Double) => Dist1D (Shifted d) where
     cdf (Shifted dist delta) x = cdf dist (x - delta)
+    lower_bound (Shifted dist delta) = fmap (+ delta) (lower_bound dist)
+    upper_bound (Shifted dist delta) = fmap (+ delta) (upper_bound dist)
 
 instance (ContDist1D d, Result (Shifted d) ~ Double) => ContDist1D (Shifted d) where
     quantile (Shifted dist delta) p = quantile dist p + delta

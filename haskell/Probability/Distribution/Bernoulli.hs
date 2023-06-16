@@ -32,6 +32,8 @@ instance Dist1D Bernoulli where
     cdf (Bernoulli p) n | n < 0     = 0
                         | n == 1    = toFloating $ 1-p
                         | otherwise = 1
+    lower_bound _ = Just 0
+    upper_bound _ = Just 1
 
 instance MaybeMean Bernoulli where
     maybeMean (Bernoulli p) = Just $ toFloating p
