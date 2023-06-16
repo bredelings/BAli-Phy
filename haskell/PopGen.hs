@@ -11,9 +11,9 @@ foreign import bpcall "PopGen:read_phase2_file" builtin_read_phase2_file :: CPPS
 foreign import bpcall "PopGen:remove_2nd_allele" remove_2nd_allele :: EVector a -> EVector a
 foreign import bpcall "PopGen:allele_frequency_spectrum" allele_frequency_spectrum :: EVector Int -> EVector Int
 
-read_phase_file filename = fmap (map list_from_vector $ list_from_vector) $ builtin_read_phase_file (list_to_string filename)
+read_phase_file filename = fmap (map list_from_vector . list_from_vector) $ builtin_read_phase_file (list_to_string filename)
 
-read_phase2_file filename = fmap (map list_from_vector $ list_from_vector) $ builtin_read_phase2_file (list_to_string filename)
+read_phase2_file filename = fmap (map list_from_vector . list_from_vector) $ builtin_read_phase2_file (list_to_string filename)
 
 ----------------------------------
 foreign import bpcall "PopGen:ewens_sampling_probability" ewens_sampling_probability :: Double -> EVector Int -> LogDouble
