@@ -42,9 +42,6 @@ class Model;
 
 void avoid_zero_likelihood(owned_ptr<Model>& P,std::ostream&, std::ostream&);
 
-void do_pre_burnin(const boost::program_options::variables_map& args,
-		   owned_ptr<Model>& P,std::ostream&, std::ostream&);
-
 void do_sampling(const boost::program_options::variables_map& args,
 		 owned_ptr<Model>& P,
 		 long int max_iterations,
