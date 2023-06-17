@@ -603,6 +603,8 @@ double TreeInterface::node_time(int n) const
 
 bool TreeInterface::can_set_node_time(int n) const
 {
+    assert(has_node_times());
+
     int times_reg = *node_times_reg();
 
     auto times = context_ptr{get_const_context(), times_reg};

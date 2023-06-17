@@ -1245,11 +1245,11 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
             }
 
             int branch = 0;
-            if (T.can_set_branch_length(branch))
+            if (T.has_branch_lengths() and T.can_set_branch_length(branch))
                 T.set_branch_length(branch,1.0);
 
             int node = 0;
-            if (T.can_set_node_time(node))
+            if (T.has_node_times() and T.can_set_node_time(node))
                 T.set_node_time(node,0.0);
         };
 
