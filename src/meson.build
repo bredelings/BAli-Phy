@@ -74,7 +74,6 @@ libbaliphy_sources = [
   'mcmc/mcmc.cc',
   'mcmc/proposals.cc',
   'mcmc/slice-sampling.cc',
-  'mcmc/AIS.cc',
   'mcmc/logger.cc',
   'mcmc/moves.cc',
   'mcmc/sample-branch-lengths.cc',

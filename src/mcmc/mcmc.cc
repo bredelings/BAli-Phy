@@ -21,10 +21,6 @@
 /// \file   mcmc.C
 /// \brief  Provides classes for constructing MCMC samplers.
 ///
-/// This file provides classes for constructing MCMC samplers.  The
-/// class Sampler is used to run the main loop of the sampler for
-/// bali-phy.
-///
 /// \author Benjamin Redelings
 /// 
 
@@ -893,70 +889,6 @@ namespace MCMC {
 	P.set_beta(P.all_betas[P.beta_index]);
     }
 #endif
-
-
-    void mcmc_log(long iterations, long /* max_iter*/, int /*subsample*/, Model& P, ostream& s_out, 
-		  const MoveStats& /* S */, vector<Logger>& loggers)
-    {
-	s_out<<"iterations = "<<iterations<<"\n";
-	clog<<"iterations = "<<iterations<<"\n";
-
-	for(auto& logger: loggers)
-	    logger(P,iterations);
-
-	/*
-	  if (iterations%20 == 0 or iterations < 20 or iterations >= max_iter) {
-	  std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
-	  std::cout<<S<<endl;
-	  std::cout<<endl;
-	  std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
-	  }
-	*/
-    }
-
-    template <typename T>
-    void add_at_end(vector<T>& v1, const vector<T>& v2)
-    {
-	v1.insert(v1.end(), v2.begin(), v2.end());
-    }
-
-    void Sampler::add_logger(const Logger& L)
-    {
-	loggers.push_back(L);
-    }
-
-    void Sampler::run_loggers(const Model& M, long t) const
-    {
-	for(auto& logger: loggers)
-	    logger(M, t);
-    }
-
-    void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& s_out)
-    {
-#ifdef NDEBUG
-	P->compile();
-#endif
-	//---------------- Run the MCMC chain -------------------//
-	for(int iterations=0; iterations < max_iter; iterations++) 
-	{
-            // PP->set_beta( PP->PC->beta_series[iterations] );
-
-	    //------------------ record statistics ---------------------//
-	    mcmc_log(iterations, max_iter, subsample, *P, s_out, *this, loggers);
-
-	    //------------------- move to new position -----------------//
-            P->run_transition_kernels();
-
-	    //------------------ Exchange Temperatures -----------------//
-	    //exchange_random_pairs(iterations,P,*this);
-
-            //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
-	}
-
-	mcmc_log(max_iter, max_iter, subsample, *P, s_out, *this, loggers);
-
-	s_out<<"total samples = "<<max_iter<<endl;
-    }
 }
 
 std::ostream& operator<<(std::ostream& o, const MCMC::MoveStats& Stats) 

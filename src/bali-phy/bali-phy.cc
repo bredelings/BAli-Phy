@@ -744,10 +744,41 @@ int main(int argc,char* argv[])
             out_screen.flush();
 
             //-------- Start the MCMC  -----------//
-            MCMC::Sampler sampler("sampler");
-            for(int i=0;i<loggers.size();i++)
-                sampler.add_logger(loggers[i]);
-            sampler.go(M, subsample, max_iterations, *files[0]);
+#ifdef NDEBUG
+            M->compile();
+#endif
+
+
+            auto& s_out = *files[0];
+
+            //---------------- Run the MCMC chain -------------------//
+            for(int iterations=0; iterations < max_iterations; iterations++)
+            {
+                // PP->set_beta( PP->PC->beta_series[iterations] );
+
+                //------------------ record statistics ---------------------//
+                s_out<<"iterations = "<<iterations<<"\n";
+                clog<<"iterations = "<<iterations<<"\n";
+
+                for(auto& logger: loggers)
+                    logger(*M, iterations);
+
+                //------------------- move to new position -----------------//
+                M->run_transition_kernels();
+
+                //------------------ Exchange Temperatures -----------------//
+                //exchange_random_pairs(iterations,P,*this);
+
+                //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
+            }
+
+            s_out<<"iterations = "<<max_iterations<<"\n";
+            clog<<"iterations = "<<max_iterations<<"\n";
+
+            for(auto& logger: loggers)
+                logger(*M, max_iterations);
+
+            s_out<<"total samples = "<<max_iterations<<endl;
 
             // Close all the streams, and write a notification that we finished all the iterations.
             // close_files(files);

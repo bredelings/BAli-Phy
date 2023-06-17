@@ -422,26 +422,6 @@ namespace MCMC {
 
 	~MoveArgSingle() {}
     };
-
-    /// A Sampler: based on a collection of moves to run every iteration
-    class Sampler: public MoveAll, public MoveStats 
-    {
-	std::vector<Logger> loggers;
-
-    public:
-	/// Run the sampler for 'max' iterations
-	void go(owned_ptr<Model>& P, int subsample, int max, std::ostream&);
-
-	int n_loggers() const {return loggers.size();}
-
-	void add_logger(const Logger&);
-
-	void run_loggers(const Model& M, long) const;
-
-	Sampler(const std::string& s)
-	    :MoveAll(s) {}
-    };
-
 }
 
 std::ostream& operator <<(std::ostream& o, const MCMC::MoveStats& Stats);
