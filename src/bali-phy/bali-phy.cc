@@ -610,14 +610,6 @@ int main(int argc,char* argv[])
         {
             Rules R(get_package_paths(argv[0], args));
             M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id, output_dir);
-
-            if (args.count("tree") and M.as<Parameters>())
-            {
-                auto P = M.as<Parameters>();
-                for(int i=0;i<P->n_branch_scales();i++)
-                    if (P->branch_scale(i).is_modifiable(*P))
-                        P->set_branch_scale(i, 1.0);
-            }
         }
         else
         {

@@ -835,7 +835,12 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     {
         auto scale_model = scale_names_mapping.unique(i);
         if (scale_model.empty())
-            scale_model = "~gamma(0.5, 2)";
+        {
+            if (args.count("tree"))
+                scale_model = "1";
+            else
+                scale_model = "~gamma(0.5, 2)";
+        }
         full_scale_models[i] = get_model(R, "Double", scale_model, "scale model " + std::to_string(i+1));
     }
 
