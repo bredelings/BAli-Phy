@@ -61,7 +61,6 @@ namespace mpi = boost::mpi;
 #include "mcmc/logger.H"
 #include "math/pow2.H"
 #include "version.H"
-#include "mcmc/setup.H"
 #include "computation/module.H"
 #include "computation/program.H"
 
@@ -716,7 +715,7 @@ int main(int argc,char* argv[])
 
             //------ Redirect output to files -------//
 
-            avoid_zero_likelihood(M, *files[0], out_both);
+            // avoid_zero_likelihood(M, *files[0], out_both);
 
             out_screen<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
             if (not args.count("iterations"))
@@ -745,7 +744,10 @@ int main(int argc,char* argv[])
             out_screen.flush();
 
             //-------- Start the MCMC  -----------//
-            do_sampling(args, M, max_iterations, *files[0], loggers);
+            MCMC::Sampler sampler("sampler");
+            for(int i=0;i<loggers.size();i++)
+                sampler.add_logger(loggers[i]);
+            sampler.go(M, subsample, max_iterations, *files[0]);
 
             // Close all the streams, and write a notification that we finished all the iterations.
             // close_files(files);

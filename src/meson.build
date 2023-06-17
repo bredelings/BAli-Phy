@@ -85,7 +85,6 @@ libbaliphy_sources = [
   'mcmc/sample-node.cc',
   'mcmc/sample-cube.cc',
   'mcmc/sample-tri.cc',
-  'mcmc/setup.cc',
 
   'substitution/substitution.cc',
   'substitution/parsimony.cc',
