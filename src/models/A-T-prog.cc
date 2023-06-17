@@ -224,6 +224,8 @@ std::string generate_atmodel_program(int n_sequences,
     auto tree_var = var("tree'");
     program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
 
+    program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
+
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
         add(used_states, SMs[i].code.used_states);
