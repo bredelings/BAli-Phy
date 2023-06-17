@@ -948,47 +948,18 @@ namespace MCMC {
 	//---------------- Run the MCMC chain -------------------//
 	for(int iterations=0; iterations < max_iter; iterations++) 
 	{
-	    if (owned_ptr<Parameters> PP = P.as<Parameters>())
-	    {
-		// Change the temperature according to the pattern suggested
-		if (iterations < PP->PC->beta_series.size())
-		    PP->set_beta( PP->PC->beta_series[iterations] );
-
-		// Start learning step sizes at iteration 5
-		if (iterations == 5)
-		    start_learning(100);
-	    }
-	    else
-	    {
-		if (iterations == 0)
-		    start_learning(100);
-	    }
-
-	    // Stop learning step sizes at iteration 500
-	    if (iterations == 500)
-		stop_learning(0);
+            // PP->set_beta( PP->PC->beta_series[iterations] );
 
 	    //------------------ record statistics ---------------------//
 	    mcmc_log(iterations, max_iter, subsample, *P, s_out, *this, loggers);
 
 	    //------------------- move to new position -----------------//
-	    iterate(P,*this);
-
             P->run_transition_kernels();
 
-#ifdef HAVE_MPI
 	    //------------------ Exchange Temperatures -----------------//
-
-	    // FIXME: How am I going to allow larger proposals for different temperatures?
-
-	    // This move doesn't respect up/down at the moment
 	    //exchange_random_pairs(iterations,P,*this);
 
-	    if (P.as<Parameters>())
-		exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
-#endif
-            if (log_verbose and iterations%100 == 0)
-                s_out<<(const MoveStats&)(*this);
+            //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
 	}
 
 	s_out<<(const MoveStats&)(*this);
