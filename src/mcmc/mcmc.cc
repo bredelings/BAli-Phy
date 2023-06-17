@@ -936,15 +936,6 @@ namespace MCMC {
 #ifdef NDEBUG
 	P->compile();
 #endif
-
-	if (owned_ptr<Parameters> PP = P.as<Parameters>())
-	{
-	    auto t = PP->t();
-
-	    //--------- Determine some values for this chain -----------//
-	    if (subsample <= 0) subsample = 2*int(log(t.n_leaves()))+1;
-	}
-
 	//---------------- Run the MCMC chain -------------------//
 	for(int iterations=0; iterations < max_iter; iterations++) 
 	{
@@ -961,8 +952,6 @@ namespace MCMC {
 
             //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
 	}
-
-	s_out<<(const MoveStats&)(*this);
 
 	mcmc_log(max_iter, max_iter, subsample, *P, s_out, *this, loggers);
 
