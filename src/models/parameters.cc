@@ -1059,32 +1059,6 @@ int get_num_models(const vector<optional<int>>& mapping)
     return n;
 }
 
-parameters_constants::parameters_constants()
-{
-}
-
-parameters_constants::parameters_constants(int n_partitions, const SequenceTree& t,
-                                           const vector<optional<int>>& s_mapping,
-                                           const vector<optional<int>>& i_mapping,
-                                           const vector<optional<int>>& scale_mapping)
-{
-    // check that smodel mapping has correct size.
-    if (s_mapping.size() != n_partitions)
-        throw myexception()<<"There are "<<n_partitions
-                           <<" data partitions, but you mapped smodels onto "
-                           <<s_mapping.size();
-
-    int n_smodels = get_num_models(s_mapping);
-
-    // check that we only map existing smodels to data partitions
-    for(int i=0;i<s_mapping.size();i++) {
-        int m = *s_mapping[i];
-        if (m >= n_smodels)
-            throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
-                               <<" because there are only "<<n_smodels<<" smodels.";
-    }
-}
-
 /* OK, so we should in theory be able to do two different things:
    * construct a giant model and then run gen_model_no_alphabet on it.
      - we would need to run set_alphabet in front of each of the substitution models
@@ -1170,13 +1144,28 @@ Parameters::Parameters(const Program& prog,
                        const vector<pair<string,string>>& filename_ranges,
                        const SequenceTree& ttt,
                        const vector<optional<int>>& s_mapping,
-                       const vector<optional<int>>& i_mapping,
-                       const vector<optional<int>>& scale_mapping)
+                       const vector<optional<int>>& i_mapping)
 :Model(prog, keys),
- PC(new parameters_constants(filename_ranges.size(), ttt, s_mapping, i_mapping, scale_mapping)),
+ PC(new parameters_constants()),
  variable_alignment_( false ),
  updown(-1)
 {
+    // check that smodel mapping has correct size.
+    if (s_mapping.size() != filename_ranges.size())
+        throw myexception()<<"There are "<<filename_ranges.size()
+                           <<" data partitions, but you mapped smodels onto "
+                           <<s_mapping.size();
+
+    int n_smodels = get_num_models(s_mapping);
+
+    // check that we only map existing smodels to data partitions
+    for(int i=0;i<s_mapping.size();i++) {
+        int m = *s_mapping[i];
+        if (m >= n_smodels)
+            throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+                               <<" because there are only "<<n_smodels<<" smodels.";
+    }
+
     const int n_partitions = filename_ranges.size();
     int result_head = *memory()->program_result_head;
     param atmodel_plus_partitions = result_head;

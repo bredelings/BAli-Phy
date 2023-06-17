@@ -904,7 +904,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                     branch_length_model,
                                     likelihood_calculators);
 
-    Parameters P(prog, keys, A, filename_ranges, T, smodel_mapping, imodel_mapping, scale_mapping);
+    Parameters P(prog, keys, A, filename_ranges, T, smodel_mapping, imodel_mapping);
 
     P.evaluate_program();
     //-------- Set the alignments for variable partitions ---------//

@@ -188,13 +188,6 @@ struct parameters_constants: public Object
     std::vector<data_partition_constants> DPC;
 
     parameters_constants* clone() const {return new parameters_constants(*this);}
-
-    parameters_constants();
-
-    parameters_constants(int n_partitions, const SequenceTree&, 
-			 const std::vector<std::optional<int>>&,
-			 const std::vector<std::optional<int>>&,
-			 const std::vector<std::optional<int>>&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -292,7 +285,6 @@ public:
 	       const std::vector<alignment>& A,
 	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                const SequenceTree&,
-	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&);
 
