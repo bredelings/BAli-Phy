@@ -1288,8 +1288,13 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
                 ::NNI(T, branches[0], branches[2]);
             }
 
-            if (T.can_set_branch_length(0))
-                T.set_branch_length(0,1.0);
+            int branch = 0;
+            if (T.can_set_branch_length(branch))
+                T.set_branch_length(branch,1.0);
+
+            int node = 0;
+            if (T.can_set_node_time(node))
+                T.set_node_time(node,0.0);
         };
 
         auto downstream_sampling_events = find_affected_sampling_events(tweak_tree);
