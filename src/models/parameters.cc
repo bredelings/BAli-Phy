@@ -1003,11 +1003,6 @@ void Parameters::set_branch_category(int b, int c)
     PC->branch_categories[b].set_value(*this,c);
 }
 
-double Parameters::get_branch_scale(int s) const
-{
-    return branch_scale(s).get_value(*this).as_double();
-}
-
 void Parameters::setlength_unsafe(int b,double l) 
 {
     t().set_branch_length(b, l);
@@ -1025,21 +1020,6 @@ double Parameters::branch_mean() const
     return 1.0/t().n_branches();
 }
 
-
-const param& Parameters::branch_scale(int i) const
-{
-    assert(0 <= i and i < n_branch_scales());
-
-    return PC->branch_scales_[i];
-}
-
-void Parameters::set_branch_scale(int s, double x)
-{
-    if (auto R = branch_scale(s).is_modifiable(*this))
-        return set_modifiable_value(*R, x);
-    else
-        throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";
-}
 
 expression_ref Parameters::my_tree() const
 {
@@ -1087,7 +1067,6 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
-    :n_scales( t.n_branches() ? num_distinct(scale_mapping) : 0)
 {
     // check that smodel mapping has correct size.
     if (s_mapping.size() != n_partitions)
@@ -1265,11 +1244,6 @@ Parameters::Parameters(const Program& prog,
     t().read_tree(tt);
 
     /* --------------------------------------------------------------- */
-
-    param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
-
-    // R2. Register individual scales
-    PC->branch_scales_ = get_params_from_list(*this, scales_list.ref(*this));
 
     // R5. Register branch categories
     auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );

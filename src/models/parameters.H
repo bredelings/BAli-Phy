@@ -181,10 +181,6 @@ struct parameters_constants: public Object
 
     std::vector<param> branch_categories;
 
-    // Scale for partition
-    int n_scales = 0;
-    std::vector<param> branch_scales_;
-
     std::vector<double> beta_series;
 
     std::vector<double> all_betas;
@@ -255,9 +251,6 @@ public:
 
     void cache_likelihood_branches() const;
 
-    /// How many substitution models?
-    int n_branch_scales() const {return PC->n_scales;}
-
     /// Set branch 'b' to have length 'l', and compute the transition matrices
     void setlength_unsafe(int b, double l);
     void setlength(int b,double l); 
@@ -281,11 +274,6 @@ public:
     // int
     int  get_branch_category(int b) const;
     void set_branch_category(int b, int cat);
-
-    // double
-    const param& branch_scale(int i) const;
-    double get_branch_scale(int i) const;
-    void set_branch_scale(int i,double);
 
     double branch_mean() const;
 

@@ -463,7 +463,7 @@ std::string generate_atmodel_program(int n_sequences,
     program.empty_stmt();
 
     var atmodel_var("atmodel");
-    program.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), maybe_branch_categories});
+    program.let(atmodel_var, {var("ATModel"), tree_var, maybe_branch_categories});
     program.empty_stmt();
 
     expression_ref sequence_data_list = var("sequence_data");
