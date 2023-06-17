@@ -436,7 +436,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
+data_partition_constants::data_partition_constants(context_ref& C, int r_data)
 {
     // -------------- Extract method indices from dist properties -----------------//
     auto to_var = C.out_edges_to_var(r_data);
@@ -1115,9 +1115,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 Parameters::Parameters(const Program& prog,
                        const key_map_t& keys,
                        const vector<alignment>& A,
-                       const SequenceTree& ttt,
-                       const vector<optional<int>>& s_mapping,
-                       const vector<optional<int>>& i_mapping)
+                       const SequenceTree& ttt)
 :Model(prog, keys),
  PC(new parameters_constants()),
  variable_alignment_( false ),
@@ -1197,7 +1195,7 @@ Parameters::Parameters(const Program& prog,
 
     // create data partitions
     for(auto partition: sequence_data)
-        PC->DPC.emplace_back(*this, t(), partition.get_reg());
+        PC->DPC.emplace_back(*this, partition.get_reg());
 
     // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
@@ -1279,7 +1277,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
 
     // create data partitions
     for(int partition_reg: partition_regs)
-        PC->DPC.emplace_back(*this, t(), partition_reg);
+        PC->DPC.emplace_back(*this, partition_reg);
 
     // set variable_alignment_
     for(int i=0;i<n_data_partitions();i++)

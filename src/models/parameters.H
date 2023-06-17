@@ -67,7 +67,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(context_ref& C, const TreeInterface& t, int r_data);
+    data_partition_constants(context_ref& C, int r_data);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
@@ -283,9 +283,7 @@ public:
     Parameters(const Program& P,
 	       const key_map_t&,
 	       const std::vector<alignment>& A,
-               const SequenceTree&,
-	       const std::vector<std::optional<int>>&,
-	       const std::vector<std::optional<int>>&);
+               const SequenceTree&);
 
     // Can we  create a Parameters from a context and a tree_reg?
     Parameters(const context_ref& C, int tree_reg);
