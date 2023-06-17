@@ -1033,32 +1033,6 @@ expression_ref Parameters::my_atmodel() const
     return PC->atmodel.ref(*this);
 }
 
-int num_distinct(const vector<optional<int>>& v)
-{
-    int m = -1;
-    for(auto& x: v)
-        if (x)
-            m = std::max(m,*x);
-    return m+1;
-}
-
-int get_num_models(const vector<optional<int>>& mapping)
-{
-    int m = -1;
-    set<int> models;
-    for(auto& model: mapping)
-        if (model)
-        {
-            assert(*model >= 0);
-            m = std::max(m,*model);
-            models.insert(*model);
-        }
-
-    int n = models.size();
-    assert(m+1 == n);
-    return n;
-}
-
 /* OK, so we should in theory be able to do two different things:
    * construct a giant model and then run gen_model_no_alphabet on it.
      - we would need to run set_alphabet in front of each of the substitution models
@@ -1141,7 +1115,6 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 Parameters::Parameters(const Program& prog,
                        const key_map_t& keys,
                        const vector<alignment>& A,
-                       const vector<pair<string,string>>& filename_ranges,
                        const SequenceTree& ttt,
                        const vector<optional<int>>& s_mapping,
                        const vector<optional<int>>& i_mapping)
@@ -1150,23 +1123,6 @@ Parameters::Parameters(const Program& prog,
  variable_alignment_( false ),
  updown(-1)
 {
-    // check that smodel mapping has correct size.
-    if (s_mapping.size() != filename_ranges.size())
-        throw myexception()<<"There are "<<filename_ranges.size()
-                           <<" data partitions, but you mapped smodels onto "
-                           <<s_mapping.size();
-
-    int n_smodels = get_num_models(s_mapping);
-
-    // check that we only map existing smodels to data partitions
-    for(int i=0;i<s_mapping.size();i++) {
-        int m = *s_mapping[i];
-        if (m >= n_smodels)
-            throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
-                               <<" because there are only "<<n_smodels<<" smodels.";
-    }
-
-    const int n_partitions = filename_ranges.size();
     int result_head = *memory()->program_result_head;
     param atmodel_plus_partitions = result_head;
     PC->atmodel = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
@@ -1240,8 +1196,8 @@ Parameters::Parameters(const Program& prog,
         PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
 
     // create data partitions
-    for(int i=0;i<n_partitions;i++)
-        PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
+    for(auto partition: sequence_data)
+        PC->DPC.emplace_back(*this, t(), partition.get_reg());
 
     // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
@@ -1256,7 +1212,7 @@ Parameters::Parameters(const Program& prog,
     if (some_branch_lengths_not_set)
         std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 
-    for(int i=0;i<n_partitions;i++)
+    for(int i=0;i<n_data_partitions();i++)
         if (get_data_partition(i).has_pairwise_alignments())
         {
             variable_alignment_ = true;
@@ -1299,6 +1255,8 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
 
         auto downstream_sampling_events = find_affected_sampling_events(tweak_tree);
 
+        /* OK, so is there a problem here if we observe the same thing twice? */
+        
         for(auto se: downstream_sampling_events)
         {
             // Under what circumstances would se get unregistered?

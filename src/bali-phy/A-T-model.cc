@@ -62,6 +62,7 @@ using std::vector;
 using std::pair;
 using std::optional;
 using std::map;
+using std::set;
 
 /// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
@@ -541,6 +542,32 @@ model_t get_smodel(const Rules& R, const std::string& model, const string& what)
 }
 
 
+int num_distinct(const vector<optional<int>>& v)
+{
+    int m = -1;
+    for(auto& x: v)
+        if (x)
+            m = std::max(m,*x);
+    return m+1;
+}
+
+int get_num_models(const vector<optional<int>>& mapping)
+{
+    int m = -1;
+    set<int> models;
+    for(auto& model: mapping)
+        if (model)
+        {
+            assert(*model >= 0);
+            m = std::max(m,*model);
+            models.insert(*model);
+        }
+
+    int n = models.size();
+    assert(m+1 == n);
+    return n;
+}
+
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                       ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
                                       int proc_id, const fs::path& dir)
@@ -904,7 +931,23 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                     branch_length_model,
                                     likelihood_calculators);
 
-    Parameters P(prog, keys, A, filename_ranges, T, smodel_mapping, imodel_mapping);
+    // check that smodel mapping has correct size.
+    if (smodel_mapping.size() != filename_ranges.size())
+        throw myexception()<<"There are "<<filename_ranges.size()
+                           <<" data partitions, but you mapped smodels onto "
+                           <<smodel_mapping.size();
+
+    int n_smodels = get_num_models(smodel_mapping);
+
+    // check that we only map existing smodels to data partitions
+    for(int i=0;i<smodel_mapping.size();i++) {
+        int m = *smodel_mapping[i];
+        if (m >= n_smodels)
+            throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+                               <<" because there are only "<<n_smodels<<" smodels.";
+    }
+
+    Parameters P(prog, keys, A, T, smodel_mapping, imodel_mapping);
 
     P.evaluate_program();
     //-------- Set the alignments for variable partitions ---------//

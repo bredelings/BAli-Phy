@@ -283,7 +283,6 @@ public:
     Parameters(const Program& P,
 	       const key_map_t&,
 	       const std::vector<alignment>& A,
-	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                const SequenceTree&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&);
