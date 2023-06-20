@@ -1148,7 +1148,6 @@ Parameters::Parameters(const Program& prog,
     }
 
     /* ---------------- Set up the tree ------------------------------ */
-    branches_from_affected_node.resize(ttt.n_nodes());
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     context_ptr taxa_ptr(*this, *r_prop0);
@@ -1173,6 +1172,7 @@ Parameters::Parameters(const Program& prog,
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
     TC = new tree_constants(*this, labels, get_expression(tree_index));
+    branches_from_affected_node.resize(t().n_nodes());
 
     // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.
     // FIXME: We need ALL the nodes to have the right label_string <-> node-number mapping in
