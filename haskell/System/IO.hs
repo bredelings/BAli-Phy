@@ -203,7 +203,7 @@ putStrLn :: String -> IO ()
 putStrLn s = hPutStrLn stdout s
 
 print :: Show a => a -> IO ()
-print x = putStr (show x)
+print x = putStrLn (show x)
 
 getChar :: IO Char
 getChar = hGetChar stdin
