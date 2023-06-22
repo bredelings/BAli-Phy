@@ -17,6 +17,7 @@ module Prelude (
 
         module Data.Foldable,
         module Data.Ord,
+        module Data.IORef,
         module Text.Show,
         module Text.Read,
         module Foreign.Pair,
@@ -60,6 +61,7 @@ import Data.Foldable hiding (fold, foldMap', toList, foldl', foldr')
 import Data.Function
 import Data.Functor
 import Data.Ord
+import Data.IORef
 import Text.Show
 import Text.Read
 import Control.Applicative

@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Compiler.IO where
+module Compiler.IO (module Compiler.IO, module Control.Monad) where
 
 import Compiler.Base
 import Data.Tuple     -- for snd

@@ -639,3 +639,107 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
     }
 }
 
+//*****************************************************//
+extern "C" closure builtin_function_newIORef(OperationArgs& Args)
+{
+    // 1. Initial value
+    int r = Args.reg_for_slot(0);
+
+    expression_ref E(constructor("Data.IORef.IORef",1),{index_var(0)});
+
+    int r_ioref = Args.allocate(closure{E,{r}});
+
+    return {index_var(0), {r_ioref}};
+}
+
+extern "C" closure builtin_function_readIORef(OperationArgs& Args)
+{
+    // 1. IORef
+    auto C = Args.evaluate_slot_to_closure(0);
+    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(C.Env.size() == 1);
+
+    return {index_var(0), {C.Env[0]}};
+}
+
+extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
+{
+    // 1. IORef
+    int r_ioref = Args.evaluate_slot_unchangeable(0);
+    auto C = Args.evaluate_slot_to_closure(0);
+    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(C.Env.size() == 1);
+
+    // 2. New value
+    int r_value = Args.reg_for_slot(1);
+
+    // 3. Write the IORef
+    auto& M = Args.memory();
+    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    C.Env[0] = r_value;
+    M.set_C(r_ioref, std::move(C));
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
+{
+    // 1. IORef
+    int r_ioref = Args.evaluate_slot_unchangeable(0);
+    auto C = Args.evaluate_slot_to_closure(0);
+    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(C.Env.size() == 1);
+    int r_value = C.Env[0];
+
+    // 2. Function
+    int r_func = Args.reg_for_slot(1);
+
+    // 3. Allocate new value
+    expression_ref fE = index_var(1);
+    expression_ref argE = index_var(0);
+    expression_ref apply_exp = {fE, argE};
+
+    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+
+    // 4. Write the IORef
+    auto& M = Args.memory();
+    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    C.Env[0] = r_apply;
+    M.set_C(r_ioref, std::move(C));
+
+    return constructor("()",0);
+}
+
+
+extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
+{
+    // 1. IORef
+    int r_ioref = Args.evaluate_slot_unchangeable(0);
+    auto C = Args.evaluate_slot_to_closure(0);
+    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(C.Env.size() == 1);
+    int r_value = C.Env[0];
+
+    // 2. Function
+    int r_func = Args.reg_for_slot(1);
+
+    // 3. Allocate new value
+    expression_ref fE = index_var(1);
+    expression_ref argE = index_var(0);
+    expression_ref apply_exp = {fE, argE};
+
+    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+
+    // 4. Write the IORef
+    auto& M = Args.memory();
+    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    C.Env[0] = r_apply;
+    M.set_C(r_ioref, std::move(C));
+
+    // Force
+    r_apply = Args.evaluate_reg_force(r_apply);
+
+    return constructor("()",0);
+}
+
+
