@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Compiler.Enum (Enum,
+module Compiler.Enum (Enum(..),
                       enumFrom,
                       enumFromThen,
                       enumFromTo,
