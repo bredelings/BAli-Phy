@@ -13,12 +13,13 @@ module Data.IORef (IORef,
 import Compiler.IO
 import Compiler.Prim
 
-data IORef a = IORef a
+data IORef a
 
 foreign import bpcall "Prelude:" newIORef :: a -> IO (IORef a)
 
--- foreign import bpcall "Prelude:" readIORef :: IORef a -> IO a
-readIORef (IORef x) = return x
+foreign import bpcall "Prelude:" readIORef :: IORef a -> IO a
+-- We need to use the builtin here in order to avoid inlining IORefs.
+-- IORefs can change value, which breaks the assumptions of inlining.
 
 foreign import bpcall "Prelude:" writeIORef :: IORef a -> a -> IO ()
 
