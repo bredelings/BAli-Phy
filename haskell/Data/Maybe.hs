@@ -27,9 +27,9 @@ maybeToList (Just x) = [x]
 listToMaybe [] = Nothing
 listToMaybe (x:_) = Just x
 -- listToMaybe = foldr (const . Just) Nothing
--- GHC uses this to fused via the foldr/build rule.
+-- GHC uses this to fuse via the foldr/build rule.
 
--- catMaybes ls = [ x | Just x <- ls]
+catMaybes ls = [ x | Just x <- ls]
 
 mapMaybes _     [] = []
 mapMaybes f (x:xs) = let rs = mapMaybes f xs
