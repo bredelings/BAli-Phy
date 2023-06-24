@@ -9,6 +9,7 @@ import Data.Matrix
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
+import Bio.Sequence (bitmask_from_sequence, strip_gaps)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -30,8 +31,6 @@ foreign import bpcall "Likelihood:" sample_internal_sequence :: VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
-foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int
 foreign import bpcall "Likelihood:" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
 foreign import bpcall "Likelihood:" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "Likelihood:" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes

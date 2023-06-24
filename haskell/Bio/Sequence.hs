@@ -3,6 +3,7 @@ module Bio.Sequence where
 import Data.Map as Map
 import Bio.Alphabet
 import Data.Text (Text(..))
+import Data.BitVector
 
 -- Dummy type that stands for the c++ `sequence` type
 data Sequence = Sequence
@@ -30,3 +31,6 @@ reorder_sequences names sequences | length names /= length sequences  = error "S
 sequence_length a sequence = vector_size $ sequence_to_indices a sequence
 
 get_sequence_lengths a sequences = Map.fromList [ (sequence_name sequence, sequence_length a sequence) | sequence <- sequences]
+
+foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
+foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int
