@@ -34,3 +34,7 @@ get_sequence_lengths a sequences = Map.fromList [ (sequence_name sequence, seque
 
 foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
 foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int
+foreign import bpcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
+
+bitmask_from_sequence' s = BitVector $ bitmask_from_sequence s
+maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence

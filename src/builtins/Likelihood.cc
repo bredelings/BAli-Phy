@@ -719,3 +719,30 @@ extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
     }
     return {Pr};
 }
+
+// maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
+extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
+
+    auto arg1 = Args.evaluate(1);
+    auto sequence = arg1.as_<EVector>();
+
+    assert(mask.size() == sequence.size());
+    for(int i=0;i<sequence.size();i++)
+    {
+        auto& C = sequence[i];
+        int c = C.as_int();
+        assert(i >= alphabet::unknown);
+        if (mask.test(i))
+        {
+            if (c == alphabet::gap or c == alphabet::unknown)
+                C = alphabet::not_gap;
+        }
+        else
+            C = alphabet::gap;
+    }
+
+    return sequence;
+}
