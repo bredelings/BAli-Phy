@@ -489,7 +489,6 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
 {
     auto arg0 = Args.evaluate(0);
     auto& A = arg0.as_<Box<alignment>>().value();
-    auto &a = A.get_alphabet();
 
     EVector sequences;
     for(int i=0;i<A.n_sequences();i++)
