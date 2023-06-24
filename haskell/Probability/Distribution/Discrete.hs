@@ -8,11 +8,19 @@ mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete 
 
 certainly x = Discrete [(x, 1)]
 
+unit_mixture m = certainly m
+
 extendDiscrete d p x = mix [p, 1-p] [certainly x, d]
+
+extend_mixture ms (x,p) = mix [p, 1-p] [certainly x, ms]
 
 uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
 uniformDiscretize dist n = fmap (quantile dist) (uniformGrid n)
+
+nComponents (Discrete ds) = length ds
+
+component (Discrete ds) i = fst (ds !! i)
 
 -- See https://dennybritz.com/posts/probability-monads-from-scratch/
 

@@ -29,7 +29,7 @@ modulated_markov models rates_between level_probs = reversible_markov a smap q p
     pi = modulated_markov_pi pis level_probs
     smap = modulated_markov_smap smaps
 
-markov_modulate_mixture nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
+markov_modulate_mixture nu dist = modulated_markov models rates_between level_probs where
     (models, level_probs) = unzip $ unpackDiscrete dist
     rates_between = Markov.equ (length models) nu
 
@@ -42,11 +42,10 @@ tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0 q, q] rates_betw
 
 tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 
-huelsenbeck_02 s01 s10 model = MixtureModel $ fmap (tuffley_steel_98_unscaled s01 s10) dist
-    where MixtureModel dist = rescale 1 model
+huelsenbeck_02 s01 s10 model = fmap (tuffley_steel_98_unscaled s01 s10) (rescale 1 model)
 
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
-    MixtureModel dist = rescale 1 model
+    dist = rescale 1 model
     (models, level_probs) = unzip $ unpackDiscrete dist
     n_levels = length models
     -- This is really a generic gtr...  We should be able to get this with f81
@@ -60,7 +59,7 @@ wssr07 s01 s10 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, p
 
 -- Instead of passing rates_between+level_probs, could we just pass a q matrix?
 covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between level_probs where
-    MixtureModel (Discrete dist) = rescale 1 model
+    Discrete dist = rescale 1 model
     (models, level_probs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     rates_between = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector level_probs)
@@ -69,7 +68,7 @@ covarion_gtr nu exchange pi model = parameter_mixture_unit (Discrete [(0,1-pi), 
 
 covarion_gtr_sym :: Matrix Double -> MixtureModel -> ReversibleMarkov
 covarion_gtr_sym sym model = modulated_markov models rates_between level_probs where
-    MixtureModel dist = rescale 1 model
+    dist = rescale 1 model
     (models, level_probs) = unzip $ unpackDiscrete dist
     rates_between = sym %*% (plus_f_matrix $ list_to_vector level_probs)
 

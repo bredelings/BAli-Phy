@@ -2,7 +2,7 @@
     "name": "Covarion.gtr",
     "title":"The General Reversity Covarion Model",
     "result_type": "MixtureModel[a]",
-    "call": "covarion_gtr_sym[gtr_sym_from_numbers[length[unwrapMM[@submodel]],@sym],@submodel]",
+    "call": "covarion_gtr_sym[gtr_sym_from_numbers[nComponents[@submodel],@sym],@submodel]",
     "import": ["SModel"],
     "args": [
         {
