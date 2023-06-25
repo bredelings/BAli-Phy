@@ -6,8 +6,11 @@
 
 #include "computation/machine/gcobject.H"
 #include "immer/set.hpp"
+#include <map>
 
 typedef Box<immer::set<int>> IntSet;
+
+typedef Box<std::map<int,expression_ref>> EIntMap;
 
 extern "C" closure builtin_function_empty(OperationArgs& Args)
 {
@@ -374,3 +377,40 @@ extern "C" closure builtin_function_keysSet(OperationArgs& Args)
     return keys;
 }
 
+extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& map1 = arg0.as_<IntMap>();
+
+    auto result = object_ptr<EIntMap>(new EIntMap);
+    auto& map2 = *result;
+
+    for(auto& [key,r_value]: map1)
+    {
+        auto value = Args.evaluate_reg_to_object(r_value);
+        map2.insert({key, value});
+    }
+
+    return result;
+}
+
+extern "C" closure builtin_function_esubscript(OperationArgs& Args)
+{
+    int key = Args.evaluate(1).as_int();
+
+    auto& m = Args.evaluate(0).as_<EIntMap>();
+
+    return m.at(key);
+}
+
+extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
+{
+    auto& m = Args.evaluate(0).as_<EIntMap>();
+
+    IntSet keys;
+
+    for(auto& [k,v]: m)
+        keys = keys.insert(k);
+
+    return keys;
+}
