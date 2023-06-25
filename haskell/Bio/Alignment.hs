@@ -87,6 +87,10 @@ leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_count
 foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
 ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap
     where states' = list_to_vector [ states IntMap.! node  | node <- sort $ getNodes tree]
+
+foreign import bpcall "Alignment:" get_sequence_from_states :: VectorPairIntInt -> EVector Int
+
+
 {-
   OK, so what do we use the original alignment matrix for?
   * the alphabet
