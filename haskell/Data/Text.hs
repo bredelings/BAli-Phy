@@ -105,7 +105,10 @@ intercalate t ts = foldl (\x y -> append x $ append t y) empty ts
 
 -- foldr1 :: (Char -> Char -> Char) -> Text -> Char
 
--- concat :: [Text] -> Text
+foreign import bpcall "Text:" concatRaw :: EVector CPPString -> CPPString
+
+concat :: [Text] -> Text
+concat texts = Text $ concatRaw $ list_to_vector $ map (\(Text s) -> s) texts
 
 -- concatMap :: (Char -> Text) -> Text -> Text
 

@@ -148,3 +148,15 @@ extern "C" closure builtin_function_less_than(OperationArgs& Args)
     return {s1.size() < s2.size()};
 }
 
+extern "C" closure builtin_function_concatRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& strings = arg0.as_<EVector>();
+
+    String result;
+    for(auto& string: strings)
+        result += string.as_<String>();
+
+    return result;
+}
+
