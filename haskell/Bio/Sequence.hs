@@ -12,7 +12,9 @@ foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: Sequenc
 sequence_name :: Sequence -> Text
 sequence_name = Text . builtin_sequence_name
 
-foreign import bpcall "Alignment:sequence_to_indices" sequence_to_indices :: Alphabet -> Sequence -> EVector Int
+foreign import bpcall "Alignment:" sequence_to_indices :: Alphabet -> Sequence -> EVector Int
+foreign import bpcall "Alignment:" sequenceToAlignedIndices :: Alphabet -> Sequence -> EVector Int
+
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
