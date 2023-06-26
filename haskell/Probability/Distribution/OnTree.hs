@@ -54,6 +54,10 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_n_muts :: Int
     }
 
+add_ancestral_label node labels = case (labels IntMap.! node) of
+                                    Just l -> l
+                                    Nothing -> Text.append (Text.singleton 'A') (Text.pack (show node))
+
 find_sequence label sequences = find (\s -> sequence_name s == label) sequences
 
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
@@ -62,6 +66,15 @@ getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequen
                                Just label ->
                                    case find_sequence label sequence_data of
                                      Just sequence -> sequence
+                                     Nothing -> error $ "No such sequence " ++ Text.unpack label
+
+getSequencesOnTree2 :: LabelledTree t => [Sequence] -> t -> IntMap (Maybe Sequence)
+getSequencesOnTree2 sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
+    sequence_for_node node = case get_label tree node of
+                               Nothing ->  Nothing
+                               Just label ->
+                                   case find_sequence label sequence_data of
+                                     Just sequence -> Just sequence
                                      Nothing -> error $ "No such sequence " ++ Text.unpack label
 
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
@@ -131,6 +144,11 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
                                            Just indices -> indices
                                            Nothing -> error $ "No such sequence " ++ Text.unpack label
 
+{-
+ok, so how do we pass IntMaps to C++ functions?
+well, we could turn each IntMap into an EIntMap
+for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
+   -}
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
 
@@ -141,6 +159,19 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       node_seqs_bits = getCompressedSequencesOnTree compressed_sequences tree
       node_sequences = fmap fst node_seqs_bits
       -- stop going through Alignment
+
+      node_sequences0 :: IntMap (Maybe (EVector Int))
+      node_sequences0 = fmap (fmap $ sequence_to_indices alphabet) $ getSequencesOnTree2 sequences tree
+      sequences0 = fmap (sequence_to_indices alphabet) sequences
+      -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
+      -- OK, so how are we going to do this?
+      -- * turn the sequences into an EIntMap (EVector Int)
+      -- * run the pattern compression on the EIntMap (EVector Int)
+      -- * return the compressed EIntMap (EVector Int), an EVector Int for the orig->compress mapping, and an EVector Int for the column counts).
+      -- * convert the EIntMap (EVector Int) back to an IntMap EVector Int for the compressed sequences.
+
+      -- OK, so now we need to get the ancestral sequences as an IntMap (EVector Int)
+      -- So... actually it looks like we already HAVE a minimally_connect_leaf_characters function!!!
 
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
