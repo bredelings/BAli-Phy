@@ -467,6 +467,14 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
     return new String(s.name);
 }
 
+extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& s = arg0.as_checked<Box<sequence>>();
+
+    return new String(s);
+}
+
 // This is the no-gaps version...
 extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
 {

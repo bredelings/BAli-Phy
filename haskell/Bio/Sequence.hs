@@ -11,6 +11,8 @@ data Sequence = Sequence
 foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: Sequence -> CPPString
 sequence_name :: Sequence -> Text
 sequence_name = Text . builtin_sequence_name
+foreign import bpcall "Alignment:" sequenceDataRaw :: Sequence -> CPPString
+sequenceData = Text . sequenceDataRaw
 
 foreign import bpcall "Alignment:" sequence_to_indices :: Alphabet -> Sequence -> EVector Int
 foreign import bpcall "Alignment:" sequenceToAlignedIndices :: Alphabet -> Sequence -> EVector Int
