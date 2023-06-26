@@ -387,11 +387,7 @@ namespace MCMC {
 
         if (not P[p].has_IModel())
         {
-            auto A = P[p].ancestral_sequence_alignment().as_<Box<alignment>>();
-            minimally_connect_leaf_characters(A, P.t());
-	    A.print_fasta_to_stream(output);
-	    output<<endl;
-	    return output.str();
+            return P[p].ancestral_sequence_alignment().as_<String>();
         }
 
         alignment A = P[p].A();

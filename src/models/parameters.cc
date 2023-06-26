@@ -347,7 +347,7 @@ EVector data_partition::ancestral_sequences() const
 
 expression_ref data_partition::ancestral_sequence_alignment() const
 {
-    return property(3).value();
+    return property(3)[0].value();
 }
 
 log_double_t data_partition::heated_likelihood() const 

@@ -42,7 +42,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_subst_root :: Int,
       prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fa_cond_likes :: IntMap CondLikes,
-      prop_fa_anc_seqs :: AlignmentMatrix,
+      prop_fa_anc_seqs :: Text,
       prop_fa_likelihood :: LogDouble,
       prop_fa_taxa :: IntMap (CMaybe CPPString),
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
@@ -144,6 +144,8 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
                                            Just indices -> indices
                                            Nothing -> error $ "No such sequence " ++ Text.unpack label
 
+fastaSeq label seq = Text.concat [Text.singleton '>', label, Text.singleton '\n', seq, Text.singleton '\n']
+
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
@@ -161,8 +163,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       -- stop going through Alignment
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = fmap (fmap $ sequence_to_indices alphabet) $ getSequencesOnTree2 sequences tree
-      sequences0 = fmap (sequence_to_indices alphabet) sequences
+      node_sequences0 = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree2 sequences tree
+
       -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
       -- OK, so how are we going to do this?
       -- * turn the sequences into an EIntMap (EVector Int)
@@ -193,9 +195,10 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
-                              1 -> a0
-                              2 -> a0
-                              _ -> let ancestral_states = sample_ancestral_sequences_SEV
+                              1 -> Text.concat [fastaSeq (sequence_name s) (sequenceData s) | s <- sequences]
+                              2 -> Text.concat [fastaSeq (sequence_name s) (sequenceData s) | s <- sequences]
+                              _ -> let ancestral_states :: IntMap VectorPairIntInt
+                                       ancestral_states = sample_ancestral_sequences_SEV
                                          tree
                                          subst_root
                                          node_sequences
@@ -205,7 +208,18 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          cls
                                          smap
                                          mapping
-                                   in ancestral_sequence_alignment tree a0 ancestral_states smap
+                                       ancestral_sequences :: IntMap (EVector Int)
+                                       ancestral_sequences = fmap get_sequence_from_states ancestral_states
+                                       ancestral_sequences' = minimally_connect_characters
+                                                                        node_sequences0
+                                                                        tree
+                                                                        ancestral_sequences
+                                       ancestral_sequences'' = fmap (sequenceToText alphabet) ancestral_sequences'
+                                       orderedNodes = leaf_nodes tree ++ internal_nodes tree
+                                       fasta = Text.concat [fastaSeq label sequence | n <- orderedNodes,
+                                                                                      let label = add_ancestral_label n (get_labels tree),
+                                                                                      let sequence = ancestral_sequences'' IntMap.! n]
+                                   in fasta
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
 
