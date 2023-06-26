@@ -16,6 +16,9 @@ foreign import bpcall "Alignment:sequence_to_indices" sequence_to_indices :: Alp
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
+foreign import bpcall "Alignment:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
+sequenceToText a s = Text $ sequenceToTextRaw a s
+
 foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> IO (EVector Sequence)
 load_sequences :: String -> IO [Sequence]
 load_sequences filename = fmap list_from_vector $ builtin_load_sequences (list_to_string filename)

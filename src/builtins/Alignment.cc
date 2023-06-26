@@ -485,6 +485,23 @@ extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
     return new EVector(letters2);
 }
 
+extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& a = *arg0.as_checked<Alphabet>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sequence = arg1.as_<EVector>();
+
+    auto result = object_ptr<String>(new String);
+    auto& text = *result;
+
+    for(auto& letter: sequence)
+        text += a.lookup(letter.as_int());
+
+    return result;
+}
+
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
