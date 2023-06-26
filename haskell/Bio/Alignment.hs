@@ -29,23 +29,12 @@ branch_hmms (model,_) distances n_branches = IntSet.fromList [0..n_branches-1] &
 seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
     b = edgesOutOfNode tree node!0
 
-
-minimally_connect_characters a t = mkArray (numNodes t) node_to_bits where
-    pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
-    node_to_bits n = if is_leaf_node t n then
-                         alignment_row_to_bitvector a n
-                     else
-                         foldl1 (.|.) $ [(character_behind_branch_array!b1) .&. (character_behind_branch_array!b2) | (b1,b2) <- pairs $ toList $ edgesTowardNode t n]
-    character_behind_branch b = let edges = edgesBeforeEdge t b
-                                in if null edges
-                                   then alignment_row_to_bitvector a (sourceNode t b)
-                                   else foldl1 (.|.) $ fmap (character_behind_branch_array!) edges
-    character_behind_branch_array = mkArray (2*numBranches t) character_behind_branch
-
+{-
 pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
                                                                                            let bits1 = bits ! sourceNode tree b,
                                                                                            let bits2 = bits ! targetNode tree b]
     where bits = minimally_connect_characters a tree
+-}
 
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
 data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
