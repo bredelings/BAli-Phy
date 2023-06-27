@@ -265,6 +265,14 @@ add_root r t = rt
            rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 make_rooted tree = add_root (numNodes tree - 1) tree
+-- These two functions shouldn't go here -- but where should they go?
+addInternalLabels tree = LabelledTree tree newLabels where
+    oldLabels = get_labels tree
+    newLabels = getNodesSet tree & IntMap.fromSet newLabel
+
+    newLabel node = case (oldLabels IntMap.! node) of
+                      Just label -> Just label
+                      Nothing -> Just $ Text.append (Text.singleton 'A') (Text.pack (show node))
 
 add_ancestral_label node labels = case (labels IntMap.! node) of
                                     Just l -> l
