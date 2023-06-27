@@ -148,7 +148,8 @@ std::string generate_atmodel_program(int n_sequences,
     imports.insert("BAliPhy.ATModel");                       // for ATModel
     imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
-    imports.insert("Probability.Distribution.OnTree");   // for ctmc_on_tree{,fixed_A}
+    imports.insert("Probability.Distribution.OnTree");       // for ctmc_on_tree{,fixed_A}
+    imports.insert("Tree.Newick");                           // for write_newick
     for(auto& m: SMs)
         add(imports, m.imports);
     for(auto& m: IMs)
@@ -223,6 +224,7 @@ std::string generate_atmodel_program(int n_sequences,
     // M4. Branch-length tree
     auto tree_var = var("tree'");
     program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("make_rooted"), {var("addInternalLabels"),tree_var}}}} );
 
     program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
 
