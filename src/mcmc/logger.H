@@ -83,14 +83,6 @@ namespace MCMC {
 	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
     };
 
-    class AlignmentFunction
-    {
-	int p;
-    public:
-	std::string operator()(const Model& M, long t);
-	AlignmentFunction(int i):p(i) {}
-    };
-
     template <typename T>
     class TableFunction
     {

@@ -262,16 +262,6 @@ namespace MCMC {
 	return output.str();
     }
 
-
-
-    string AlignmentFunction::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	std::ostringstream output;
-	output<<P[p].A()<<"\n";
-	return output.str();
-    }
-
     string Subsample_Function::operator()(const Model& M, long t)
     {
 	if (t%subsample == 0) 

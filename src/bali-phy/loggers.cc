@@ -254,7 +254,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 	if (P->t().n_nodes() > 1)
 	    for(int i=0;i<P->n_data_partitions();i++)
 		if ((*P)[i].variable_alignment())
-		    F<<AlignmentFunction(i)<<"\n\n";
+		    F<<Ancestral_Sequences_Function(i, false)<<"\n\n";
 	F<<TreeFunction()<<"\n\n";
 	loggers.push_back( append_to_file(base + ".MAP", MAP_Function(F)) );
     }
