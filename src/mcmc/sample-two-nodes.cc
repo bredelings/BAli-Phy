@@ -177,7 +177,9 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
                 {
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
                     ok = false;
-                    break;
+
+                    // Make sure to set all the Matrices[i][j] to something non-NULL.
+                    continue;
                 }
 
                 Pr[i] /= sampling_pr;

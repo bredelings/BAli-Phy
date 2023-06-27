@@ -333,7 +333,9 @@ void sample_A3_multi_calculation::run_dp()
                 {
 		    std::cerr<<"sample-tri: Pr = 0   i = "<<i<<"   j="<<j<<" \n";
                     ok = false;
-                    break;
+
+                    // Make sure to set all the Matrices[i][j] to something non-NULL.
+                    continue;
                 }
 
                 Pr[i] /= sampling_pr;
