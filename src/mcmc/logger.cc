@@ -295,68 +295,10 @@ namespace MCMC {
 
     string Ancestral_Sequences_Function::operator()(const Model& M, long)
     {
-	std::ostringstream output;
-
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-	auto a = P[p].get_alphabet();
-
-        if (not P[p].has_IModel())
-        {
-            return P[p].ancestral_sequence_alignment().as_<String>();
-        }
-
-        alignment A = P[p].A();
-
-        // FIXME! Handle inferring N/X in leaf sequences for 1 or 2 sequences.
-	if (P.t().n_leaves() <= 2)
-	{
-	    A.print_fasta_to_stream(output);
-	    output<<endl;
-	    return output.str();
-	}
-
-	auto smap = P[p].state_letters();
-
-        auto states = P[p].ancestral_sequences();
-    
-	for(int i=0;i<A.n_sequences();i++)
-	{
-            auto& node_states = states[i].as_<Vector<pair<int,int>>>();
-
-	    vector<int> columns = A.get_columns_for_characters(i);
-	    assert(columns.size() == node_states.size());
-
-	    auto& seq = A.seq(i);
-	    // The length of the observed sequence should be equal to the length of the sampled sequence.
-	    assert(seq.size() == 0 or seq.size() == node_states.size());
-
-	    // Technically we could have 0-length observed sequences -- but they would have no letters.
-	    bool observed = seq.size() > 0;
-	    // We normally don't want to overwrite an ambiguous observation with an inferred letter...
-	    bool overwrite = infer_ambiguous_observed or not observed;
-
-	    for(int j=0;j<columns.size();j++)
-	    {
-		int state = node_states[j].second;
-		int letter = (*smap)[state].as_int();;
-
-		int c = columns[j];
-		assert(A.character(c,i));
-
-		if (a->is_letter(A(c,i)))
-		    assert( A(c,i) == letter );
-		else if (not overwrite)
-		    assert( a->matches(letter, A(c,i)) );
-		else
-		    A.set_value(c,i, letter);
-	    }
-	}
-
-	A.print_fasta_to_stream(output);
-	output<<endl;
-
-	return output.str();
+        // Should we overwrite leaf sequences with the observed character?
+        return P[p].ancestral_sequence_alignment();
     }
 
     string ConcatFunction::operator()(const Model& M, long t)

@@ -28,7 +28,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_cond_likes :: IntMap CondLikes,
-      prop_anc_seqs :: IntMap VectorPairIntInt,
+      prop_anc_seqs :: Text,
       prop_likelihood :: LogDouble,
       prop_taxa :: IntMap (CMaybe CPPString),
       prop_get_weighted_frequency_matrix :: Matrix Double,
@@ -127,10 +127,17 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                  | n_nodes == 2   = let [n1, n2] = getNodes tree
                                         [b1, b2] = getEdges tree
                                     in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! b1) (transition_ps IntMap.! b1) f
-      ancestral_sequences = case n_nodes of
-                              1 -> IntMap.empty
-                              2 -> IntMap.empty
-                              _ -> sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+
+      ancestral_states = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+
+      ancestral_sequences = case n_nodes of 1 -> node_sequences
+                                            2 -> node_sequences
+                                            _ -> fmap get_sequence_from_states ancestral_states
+
+      fasta = let positionSequences = constructPositionSequences alignment
+                  letterSequences = getNodesSet tree & IntMap.fromSet letterSequenceForNode
+                  letterSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
+              in fastaTree tree (fmap (sequenceToText alphabet) letterSequences)
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -138,7 +145,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return [likelihood]
 
