@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Foreign.Pair where
 
-data EPair a b = EPair a b
+data EPair a b
 
 foreign import bpcall "Pair:c_fst" c_fst :: EPair a b -> a
 
