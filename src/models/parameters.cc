@@ -333,18 +333,6 @@ log_double_t data_partition::likelihood() const
     return property(4).value().as_log_double();
 }
 
-EVector data_partition::ancestral_sequences() const
-{
-    auto sequences = property(3);
-
-    int N = t().n_nodes();
-    EVector sequences_vec;
-    for(int i=0;i<N;i++)
-        sequences_vec.push_back(sequences[i].value());
-
-    return sequences_vec;
-}
-
 string data_partition::ancestral_sequence_alignment() const
 {
     return property(3)[0].value().as_<String>();

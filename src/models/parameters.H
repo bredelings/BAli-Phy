@@ -150,8 +150,6 @@ public:
 
     bool pairwise_alignment_is_unset(int b) const;
 
-    EVector ancestral_sequences() const;
-
     std::string ancestral_sequence_alignment() const;
 
     // The prior, likelihood, and probability

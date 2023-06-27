@@ -90,8 +90,4 @@ struct ParsimonyCacheBranch: public Object
             assert(bits1.size() == bits2.size());
         }
 };
-
-int n_mutations(const data_partition& P, const matrix<int>& cost);
-
-int n_mutations(const data_partition& P);
 #endif
