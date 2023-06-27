@@ -5,7 +5,8 @@ module Data.Text where
 -- The number of code points can be larger than the number of graphemes.
 -- Does (length) return the number of code points?  Probably.
 
-import Prelude as P hiding (null, head, tail, init, length, empty, intercalate)
+import Prelude as P hiding (null, head, tail, init, length, empty, intercalate, intersperse, concat)
+import qualified Prelude as P
 import Data.Char
 import Data.Ord
 import Data.Eq
@@ -69,7 +70,7 @@ length (Text s) = builtin_length s
 -- map :: (Char -> Char) -> Text -> Text
 
 intercalate :: Text -> [Text] -> Text
-intercalate t ts = foldl (\x y -> append x $ append t y) empty ts
+intercalate i ts = concat $ P.intersperse i ts
 
 -- intersperse :: Char -> Text -> Text
 
@@ -244,3 +245,6 @@ instance Eq Text where
 
 instance Ord Text where
     (Text s1) < (Text s2) = builtin_less_than s1 s2
+
+foreign import bpcall "Prelude:show_double" doubleToTextRaw :: Double -> CPPString
+doubleToText d = Text $ doubleToTextRaw d
