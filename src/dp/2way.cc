@@ -387,8 +387,8 @@ struct Construct
 #endif
 	}
 };
-    
-    
+
+
 
 // Read a state and optionally pass it down to our children.
 void Construct::write_match(int node0)
@@ -403,7 +403,7 @@ void Construct::write_match(int node0)
 	pos[node0]++;
     }
     assert(S == states::M or S == states::G2 or S == states::E);
-  
+
     // Call down to children with a down-tick
     if (S == states::M or S == states::E)
     {
@@ -452,6 +452,189 @@ matrix<int> construct(const TreeInterface& t, const vector<pairwise_alignment_t>
 
     return C.M;
 }
+
+const EVector& childAlignments(const expression_ref& a)
+{
+    return a.sub()[2].as_<EVector>();
+}
+
+void getNodes(const expression_ref& a, set<int>& nodes)
+{
+    nodes.insert(a.sub()[0].as_int());
+
+    for(auto& childAlignment: childAlignments(a))
+        getNodes(childAlignment, nodes);
+}
+
+set<int> getNodes(const expression_ref& a)
+{
+    set<int> nodes;
+
+    getNodes(a, nodes);
+
+    return nodes;
+}
+
+int getLength(const expression_ref& a)
+{
+    int L = a.sub()[1].as_<Box<pairwise_alignment_t>>().count_insert();
+    for(auto& childAlignment: childAlignments(a))
+        L += getLength(childAlignment);
+    return L;
+}
+
+void getBranches(int source, const expression_ref& a, set<std::tuple<int,int>>& branches)
+{
+    int node = a.sub()[0].as_int();
+    branches.insert({source, node});
+
+    for(auto& childAlignment: childAlignments(a))
+        getBranches(node, childAlignment, branches);
+}
+
+set<std::tuple<int,int>> getBranches(const expression_ref& a)
+{
+    set<std::tuple<int,int>> branches;
+
+    int node = a.sub()[0].as_int();
+    for(auto& childAlignment: childAlignments(a))
+        getBranches(node, childAlignment, branches);
+
+    return branches;
+}
+
+typedef std::map<int,object_ptr<EVector>> AEVectors;
+
+struct BranchAlignment
+{
+    int node;
+    const pairwise_alignment_t& pairwise_alignment;
+    std::vector<std::shared_ptr<BranchAlignment>> children;
+
+    int pos = 0; // Not used at top level -- goes with pairwise alignment.
+    int L = 0;
+    EVector& A;
+    BranchAlignment(const expression_ref& a, AEVectors& AA)
+        :node(a.sub()[0].as_int()),
+         pairwise_alignment(a.sub()[1].as_<Box<pairwise_alignment_t>>()),
+         A(*AA.at(node))
+    {
+        for(auto& c: a.sub()[2].as_<EVector>())
+            children.push_back(std::make_shared<BranchAlignment>(c, AA));
+    }
+};
+
+int write_insertions(int& c, BranchAlignment& n0);
+void write_match(int& c, BranchAlignment& n0);
+
+// Read a state and optionally pass it down to our children.
+void write_match(int& c, BranchAlignment& a)
+{
+    using namespace A2;
+
+    auto& pa = a.pairwise_alignment;
+    auto& pos = a.pos;
+
+    // Read something,
+    int S = states::E;
+
+    if (pos < pa.size())
+    {
+	S = pa.get_state(pos);
+        pos++;
+    }
+    assert(S == states::M or S == states::G2 or S == states::E);
+  
+    // Call down to children with a down-tick
+    if (S == states::M or S == states::E)
+    {
+	for(const auto& child: a.children)
+	    write_match(c, *child);
+    }
+
+    // If we read a match, write a character, and make our children read something
+    if (S == states::M)
+	a.A[c] = a.L++;
+}
+
+// Write out the columns of this pairwise alignment until the first in-tick (M, I, or E)
+// But first write out the columns of all insertions in children that occur before this column.
+int write_insertions(int& c, BranchAlignment& a)
+{
+    using namespace A2;
+
+    auto& pa = a.pairwise_alignment;
+
+    auto& pos = a.pos;
+
+    while (true)
+    {
+	// Add child insertions that come before this column
+	for(const auto& child: a.children)
+	    write_insertions(c, *child);
+
+	// Find the next state
+	if (pos >= pa.size()) return states::E;
+
+	int S = pa.get_state(pos);
+
+	if (S != states::G1) return S;
+
+	// Emit the current column
+	for(const auto& child: a.children)
+	    write_match(c, *child);
+
+	a.A[c] = a.L++;
+	c++;
+	pos++;
+    };
+}
+
+typedef Box<std::map<int,expression_ref>> EIntMap;
+
+object_ptr<EIntMap> construct2(const expression_ref& a)
+{
+    // 1. Extract the node names
+    auto nodes = getNodes(a);
+    assert(nodes.size() > 1);
+
+    // 2. Find the total alignment length
+    int AL = getLength(a);
+
+    // 3. Create the EVectors for the alignment rows
+    AEVectors A;
+    for(auto& node: nodes)
+        A.insert({node, object_ptr<EVector>(new EVector(AL, -1))});
+
+    // 4. Create a tree-alignment structure with modifiable state.
+    BranchAlignment na(a, A);
+
+    using namespace A2;
+
+    // 5. Fill in the non-gap elements
+    int c = 0;
+    write_insertions(c, na);
+    assert(c == AL);
+
+    // 6. Check that the resulting rows yield the correct pairwise alignments
+#ifndef NDEBUG
+    /*
+    for(auto [source, target]: getBranches(a))
+    {
+        pairwise_alignment_t a2 = A2::get_pairwise_alignment(M.at(source), M.at(target));
+        assert(a[b] == a2);
+    }
+    */
+#endif
+
+    // 7. Construct the immutable EIntMap from the mutable AEVectors.
+    object_ptr<EIntMap> A2(new EIntMap);
+    for(auto& [node, row]: A)
+        A2->insert({node,row});
+
+    return A2;
+}
+
 
 alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const matrix<int>& M)
 {
