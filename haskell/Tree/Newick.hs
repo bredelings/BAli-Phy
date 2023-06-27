@@ -66,8 +66,8 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
     write_branches_and_node tree branches node branch = write_branches tree branches `T.append` get_node_label tree node `T.append` get_branch_label tree branch
 
     write_branches tree branches | null branches = T.empty
-    write_branches tree branches | otherwise     = (T.pack "(") `T.append` text `T.append` (T.pack ")") where
-        text = intercalate2 (T.pack ",") $ fmap (write_branch tree) $ branches
+    write_branches tree branches | otherwise     = (T.singleton '(') `T.append` text `T.append` (T.singleton ')') where
+        text = intercalate2 (T.singleton ',') $ fmap (write_branch tree) $ branches
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
