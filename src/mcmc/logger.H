@@ -58,42 +58,6 @@ namespace MCMC {
 
     int alignment_length(const Parameters& P);
 
-    int n_indels(const data_partition& P);
-
-    int n_indels(const Parameters& P);
-
-    int n_substs(const Parameters& P);
-
-    int total_length_indels(const data_partition& P);
-
-    int total_length_indels(const Parameters& P);
-
-    struct Get_Total_Alignment_Length_Function
-    {
-    public:
-	std::string operator()(const Model& M, long t);
-    };
-
-    struct Get_Total_Num_Substitutions_Function
-    {
-    public:
-	std::string operator()(const Model& M, long t);
-    };
-
-    struct Get_Total_Num_Indels_Function
-    {
-	int p;
-    public:
-	std::string operator()(const Model& M, long t);
-    };
-
-    struct Get_Total_Total_Length_Indels_Function
-    {
-	int p;
-    public:
-	std::string operator()(const Model& M, long t);
-    };
-
     struct Get_Rao_Blackwellized_Parameter_Function
     {
 	int node;
@@ -101,11 +65,6 @@ namespace MCMC {
 
 	std::string operator()(const Model& M, long t);
 	Get_Rao_Blackwellized_Parameter_Function(int n, const std::vector<expression_ref>& v);
-    };
-
-    struct Get_Tree_Length_Function
-    {
-	std::string operator()(const Model& M, long t);
     };
 
     std::string write_newick(const Parameters& P);

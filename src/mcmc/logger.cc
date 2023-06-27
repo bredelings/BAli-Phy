@@ -175,89 +175,12 @@ namespace MCMC {
 	return total;
     }
 
-    int n_indels(const data_partition& P)
-    {
-        if (not P.has_pairwise_alignments()) return 0;
-
-	auto branches = P.t().all_branches_from_node(0);
-
-	int total = 0;
-	for(int b: branches)
-	    total += n_indels( P.get_pairwise_alignment(b) );
-	return total;
-    }
-
-    int total_length_indels(const data_partition& P)
-    {
-        if (not P.has_pairwise_alignments()) return 0;
-
-	auto branches = P.t().all_branches_from_node(0);
-
-	int total = 0;
-	for(int b: branches)
-	    total += total_length_indels( P.get_pairwise_alignment(b) );
-	return total;
-    }
-
     int alignment_length(const Parameters& P)
     {
 	int total = 0;
 	for(int p=0;p<P.n_data_partitions();p++)
             total += alignment_length(P[p]);
 	return total;
-    }
-
-    string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
-	return convertToString(alignment_length(P));
-    }
-
-    int n_substs(const Parameters& P)
-    {
-	int total = 0;
-	for(int p=0;p<P.n_data_partitions();p++)
-	    total += n_mutations(P[p]);
-        return total;
-    }
-
-    string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-        return convertToString(n_substs(P));
-    }
-
-    int n_indels(const Parameters& P)
-    {
-	int total = 0;
-	for(int p=0;p<P.n_data_partitions();p++)
-	    total += n_indels(P[p]);
-        return total;
-    }
-        
-    string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	return convertToString(n_indels(P));
-    }
-
-    string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
-	int total = 0;
-	for(int p=0;p<P.n_data_partitions();p++)
-	    total += total_length_indels(P[p]);
-	return convertToString(total);
-    }
-
-    vector<int> sequence_lengths(const data_partition& P)
-    {
-	vector<int> L(P.t().n_leaves());
-	for(int i=0;i<L.size();i++)
-	    L[i] = P.seqlength(i);
-	return L;
     }
 
     string Get_Rao_Blackwellized_Parameter_Function::operator()(const Model& M, long)
@@ -314,13 +237,6 @@ namespace MCMC {
     Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int n, const vector<expression_ref>& v)
 	:node(n), values(v)
     { }
-
-    string Get_Tree_Length_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
-	return convertToString( tree_length(P.t()) );
-    }
 
     string TreeFunction::operator()(const Model& M, long)
     {
