@@ -266,3 +266,7 @@ add_root r t = rt
 
 make_rooted tree = add_root (numNodes tree - 1) tree
 
+add_ancestral_label node labels = case (labels IntMap.! node) of
+                                    Just l -> l
+                                    Nothing -> Text.append (Text.singleton 'A') (Text.pack (show node))
+

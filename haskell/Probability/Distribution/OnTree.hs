@@ -54,10 +54,6 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_n_muts :: Int
     }
 
-add_ancestral_label node labels = case (labels IntMap.! node) of
-                                    Just l -> l
-                                    Nothing -> Text.append (Text.singleton 'A') (Text.pack (show node))
-
 find_sequence label sequences = find (\s -> sequence_name s == label) sequences
 
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
