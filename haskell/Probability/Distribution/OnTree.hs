@@ -142,6 +142,11 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
 
 fastaSeq label seq = Text.concat [Text.singleton '>', label, Text.singleton '\n', seq, Text.singleton '\n']
 
+fastaTree tree sequences =  Text.concat [fastaSeq label sequence | n <- orderedNodes,
+                                                                   let label = add_ancestral_label n (get_labels tree),
+                                                                   let sequence = sequences IntMap.! n]
+    where orderedNodes = leaf_nodes tree ++ internal_nodes tree
+
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
@@ -211,11 +216,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                                                         tree
                                                                         ancestral_sequences
                                        ancestral_sequences'' = fmap (sequenceToText alphabet) ancestral_sequences'
-                                       orderedNodes = leaf_nodes tree ++ internal_nodes tree
-                                       fasta = Text.concat [fastaSeq label sequence | n <- orderedNodes,
-                                                                                      let label = add_ancestral_label n (get_labels tree),
-                                                                                      let sequence = ancestral_sequences'' IntMap.! n]
-                                   in fasta
+                                   in fastaTree tree ancestral_sequences''
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
 
