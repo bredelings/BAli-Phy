@@ -264,7 +264,9 @@ add_root r t = rt
            nb = numBranches t * 2
            rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
-make_rooted tree = add_root (numNodes tree - 1) tree
+make_rooted tree = add_root root tree
+    where root = head $ (internal_nodes tree ++ leaf_nodes tree)
+
 -- These two functions shouldn't go here -- but where should they go?
 addInternalLabels tree = LabelledTree tree newLabels where
     oldLabels = get_labels tree
