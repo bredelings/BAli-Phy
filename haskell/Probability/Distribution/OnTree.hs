@@ -17,6 +17,9 @@ import qualified Data.Text as Text
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
+import Foreign.IntMap (EIntMap)
+import qualified Foreign.IntMap as FIM
+
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
 --        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
@@ -75,6 +78,26 @@ getSequencesOnTree2 sequence_data tree = getNodesSet tree & IntMap.fromSet seque
 
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
+
+-- Ideally we'd like to do
+--    type NodeAlignment = EPair Int BranchAlignments
+-- but this creates recursive type synonyms, which are not allowed.
+
+-- We hack around this by removing the definition of NodeAlignment.
+-- Then NodeAlignment needs a foreign import to construct it.
+
+data NodeAlignment -- NodeAlignment SourceNode Int (EVector BranchAlignment)
+foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector BranchAlignment -> NodeAlignment
+data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
+foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
+foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
+constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw $ exportAlignmentOnTree a
+foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
+
+exportAlignmentOnTree :: Tree t => AlignmentOnTree t -> NodeAlignment
+exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNode tree root)
+    where root = head $ getNodes tree
+          branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdge tree e) | e <- toList $ edges]
 
 annotated_subst_like_on_tree tree alignment smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)

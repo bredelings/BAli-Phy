@@ -691,3 +691,57 @@ extern "C" closure builtin_function_get_sequence_from_states(OperationArgs& Args
     return sequence;
 }
 
+extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
+{
+    int source_node = Args.evaluate(0).as_int();
+    int root_length = Args.evaluate(1).as_int();
+    expression_ref branch_alignments = Args.evaluate(2);
+
+    object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
+
+    expression_ref nodeAlignment(constructor("NodeAlignment",3),{source_node, pairwise_alignment, branch_alignments});
+    return nodeAlignment;
+}
+
+extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
+{
+    int target_node = Args.evaluate(0).as_int();
+    expression_ref pairwise_alignment = Args.evaluate(1);
+    expression_ref branch_alignments = Args.evaluate(2);
+
+    expression_ref branchAlignment(constructor("BranchAlignment",3),{target_node, pairwise_alignment, branch_alignments});
+    return branchAlignment;
+}
+
+extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)
+{
+    auto nodeAlignment = Args.evaluate(0);
+
+    return construct2(nodeAlignment);
+}
+
+extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& letters = arg0.as_<EVector>();
+
+    auto arg1 = Args.evaluate(1);
+
+    object_ptr<EVector> result(new EVector(arg1.as_<EVector>()));
+    auto& row = *result;
+
+    int j=0;
+    for(int i=0;i<row.size();i++)
+    {
+        int pos = row[i].as_int();
+        if (pos >=0 or pos == alphabet::not_gap)
+        {
+            assert(j < letters.size());
+            row[i] = letters[j++];
+        }
+    }
+
+    assert(j == letters.size());
+
+    return result;
+}
