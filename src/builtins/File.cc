@@ -166,13 +166,7 @@ extern "C" closure builtin_function_hGetContentsRaw(OperationArgs& Args)
 {
     auto handle = Args.evaluate(0).as_<Handle>();
 
-    handle->seekg(0, std::ios::end);
-    auto length = handle->tellg();
-    handle->seekg(0, std::ios::beg);
-
-    object_ptr<String> contents = new String;
-    contents->resize(length);
-    handle->read(&(*contents)[0], length);
+    object_ptr<String> contents = new String(std::istreambuf_iterator<char>(*handle), std::istreambuf_iterator<char>());
 
     return contents;
 }
