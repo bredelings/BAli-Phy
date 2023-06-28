@@ -71,7 +71,7 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
-data Newick = Newick (Maybe String) (Maybe Double) [Newick]
+data Newick = Newick [Newick] (Maybe String) (Maybe Double)
 
 -- '' escapes to ' inside a quoted string
 quoted_char = (string "''" >> return '\'')
@@ -104,7 +104,7 @@ subtree = do children <- option [] descendant_list
              node_label <- optionMaybe node_label
              spaces
              branch_length <- branch_length_p
-             return (Newick node_label branch_length children)
+             return (Newick children node_label branch_length)
 
 descendant_list = do
   spaces
@@ -121,7 +121,7 @@ tree_parser = do spaces
 
 print_newick tree = print_newick_sub tree ++ ";"
 
-print_newick_sub (Newick node branch children) = children_string ++  node_string ++ branch_string
+print_newick_sub (Newick children node branch) = children_string ++  node_string ++ branch_string
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
