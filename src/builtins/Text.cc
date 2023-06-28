@@ -160,3 +160,12 @@ extern "C" closure builtin_function_concatRaw(OperationArgs& Args)
     return result;
 }
 
+// defined in tree/tree.cc
+std::string escape_for_newick(const std::string& s);
+
+extern "C" closure builtin_function_quoteLabelRaw(OperationArgs& Args)
+{
+    String label = Args.evaluate(0).as_<String>();
+    label = escape_for_newick(label);
+    return label;
+}

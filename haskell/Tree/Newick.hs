@@ -41,8 +41,11 @@ instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     node_info (RootedTree tree _ _) = node_info tree
     branch_info (RootedTree tree _ _) = branch_info tree
 
+foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
+quoteLabel (Text s) = Text $ quoteLabelRaw s
+
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_info   tree node                         = get_label tree node
+    node_info   tree node                         = fmap quoteLabel (get_label tree node)
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
