@@ -179,6 +179,10 @@ span p xs@(x:xs')
 break p = span (not . p)
 
 -- stripPrefix
+stripPrefix [] s = Just s
+stripPrefix _  [] = Nothing
+stripPrefix (p:ps) (s:ss) = if p /= s then Nothing else stripPrefix ps ss
+
 
 -- group
 
@@ -190,6 +194,7 @@ tails []     = []
 --
 
 -- isPrefixOf
+isPrefixOf prefix s = case stripPrefix prefix s of Just _ -> True; Nothing -> False;
 
 -- isSuffixOf
 
