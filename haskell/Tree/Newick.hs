@@ -15,6 +15,7 @@ import Data.Text (Text(..))
 import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
+import Data.Maybe (catMaybes)
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
@@ -71,7 +72,18 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
-data Newick = Newick [Newick] (Maybe String) (Maybe Double)
+data Newick = Newick [Newick] (Maybe Text) (Maybe Double)
+
+comment = do
+  char '['
+  result <- many $ satisfy (\c -> c /= ']')
+  char ']'
+  if (head result == '&') then
+      return (Just (tail result))
+  else
+      return Nothing
+
+newickSpaces = fmap catMaybes $ many $ (comment <|> (oneOf " \t\n\r" >> return Nothing))
 
 -- '' escapes to ' inside a quoted string
 quoted_char = (string "''" >> return '\'')
@@ -93,30 +105,30 @@ quoted_label = do string "'"
 unquoted_label = some unquoted_char
 
 -- lex: label
-node_label = quoted_label <|> unquoted_label
+node_label = fmap T.pack $ quoted_label <|> unquoted_label
 
 
 -- I don't want to REQUIRE a branch length
-branch_length_p = ( string ":" >> spaces >> optionMaybe (token parse_double) ) <|> return Nothing
+branch_length_p = ( string ":" >> newickSpaces >> optionMaybe (token parse_double) ) <|> return Nothing
 
 subtree = do children <- option [] descendant_list
-             spaces
+             newickSpaces
              node_label <- optionMaybe node_label
-             spaces
+             newickSpaces
              branch_length <- branch_length_p
              return (Newick children node_label branch_length)
 
 descendant_list = do
-  spaces
+  newickSpaces
   string "("
   children <- sepBy1 subtree (string ",")
   string ")"
   return children
 
-tree_parser = do spaces
+tree_parser = do newickSpaces
                  t <- subtree
                  string ";"
-                 spaces
+                 newickSpaces
                  return t
 
 print_newick tree = print_newick_sub tree ++ ";"
@@ -125,9 +137,9 @@ print_newick_sub (Newick children node branch) = children_string ++  node_string
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
-      node_string = case node of Just name -> "'"++name++"'"
+      node_string = case node of Just name -> "'"++(T.unpack name)++"'"
                                  Nothing   -> ""
       branch_string = case branch of Just length -> ":" ++ show length
                                      Nothing -> ""
 
-parse_newick text = runParser (do { spaces ; tree <- tree_parser ; spaces ; return tree }) text
+parse_newick text = runParser (do { newickSpaces ; tree <- tree_parser ; newickSpaces ; return tree }) text
