@@ -531,13 +531,15 @@ extern "C" closure builtin_function_show_integer(OperationArgs& Args)
     return v;
 }
 
+//defined in expression_ref.cc
+string double_to_string(double d);
 
 extern "C" closure builtin_function_show_double(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_double();
 
-    object_ptr<String> v (new String);
-    *v = std::to_string(x);
+    object_ptr<String> v (new String(double_to_string(x)));
+
     return v;
 }
 
