@@ -22,6 +22,7 @@ import Compiler.Num
 import Foreign.Vector
 import Data.Functor
 import Data.Foldable
+import Text.Show
 
 data Array a b
 
@@ -89,3 +90,7 @@ elemIndexArray val array = go 0 where
     n = numElements array
 
 mapnA n f arr = mkArray n (\i -> f $ arr!i)
+
+
+instance Show i => Show (Array Int i) where
+    show a = show (toList a)
