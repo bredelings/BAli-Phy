@@ -120,12 +120,10 @@ quoted_char = (string "''" >> return '\'')
               <|>
               satisfy (\c -> (isPrint c) && (c /= '\'') )
 
-needs_quotes = " ()[]':;,"
-
 -- unquoted strings can't contain punctuation, and _ changes to space
 unquoted_char = (char '_' >> return ' ')
                 <|>
-                satisfy (\c -> isPrint c && not (c `elem` needs_quotes))
+                satisfy (\c -> isPrint c && not (c `elem`  " ()[]':;,"))
 
 -- lex: quoted label
 quoted_label = do string "'"
@@ -180,7 +178,7 @@ replace from to string = case stripPrefix from string of
                            Nothing   -> head string : replace from to (tail string)
 
 quoteName :: String -> String
-quoteName name = if any (\l -> elem l needs_quotes) name then
+quoteName name = if any (\l -> elem l  "()[]':;,") name then
                      "'"++(replace "'" "''" name)++"'"
                  else
                      replace " " "_" name
