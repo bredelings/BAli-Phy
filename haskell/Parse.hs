@@ -86,7 +86,7 @@ token p = do { a <- p; spaces ; return a}
 
 reserved s = token (string s)
 
-spaces = many $ oneOf " \n\r"
+spaces = many $ satisfy isSpace
 
 digit = satisfy isDigit
 
