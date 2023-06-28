@@ -44,7 +44,6 @@ std::string convertToString(T t)
     std::ostringstream o;
     o.precision(15);
     o<<std::boolalpha;
-    o.flags(o.flags() | std::ios::fixed);
   
     o << t;
     return o.str();
