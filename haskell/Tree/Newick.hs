@@ -77,8 +77,9 @@ split c s  = case break (== c) s of
                (l, s') -> [l] ++ case s' of []    -> []
                                             _:s'' -> lines s''
 
-
 data Comments = Comments [(Text,Maybe Text)]
+
+(Comments cs1) +:+ (Comments cs2) = Comments (cs1 ++ cs2)
 
 instance Show Comments where
     show (Comments []) = ""
@@ -107,7 +108,7 @@ comment = do
   else
       return Nothing
 
-newickSpaces = fmap catMaybes $ many $ (comment <|> (oneOf " \t\n\r" >> return Nothing))
+newickSpaces = fmap makeComments $ fmap catMaybes $ many $ (comment <|> (oneOf " \t\n\r" >> return Nothing))
 
 -- '' escapes to ' inside a quoted string
 quoted_char = (string "''" >> return '\'')
@@ -138,18 +139,18 @@ branch_length_p = do
   comments1 <- newickSpaces
   result <- optionMaybe (token parse_double)
   comments2 <- newickSpaces
-  return (result, comments1 ++  comments2)
+  return (result, comments1 +:+ comments2)
 
 subtree = do children <- option [] descendant_list
              nodeComments1 <- newickSpaces
              node_label <- optionMaybe node_label
              nodeComments2 <- newickSpaces
-             (branchLength, branchComments) <- (branch_length_p <|> return (Nothing,[]))
+             (branchLength, branchComments) <- (branch_length_p <|> return (Nothing, Comments []))
              return (NewickNode children
                                 node_label
-                                (makeComments $ nodeComments1 ++ nodeComments2)
+                                (nodeComments1 +:+ nodeComments2)
                                 branchLength
-                                (makeComments branchComments))
+                                branchComments)
 
 descendant_list = do
   newickSpaces
@@ -159,19 +160,35 @@ descendant_list = do
   return children
 
 treeParser = do comments <- newickSpaces
-                t <- subtree
+                node <- subtree
                 string ";"
                 many $ oneOf " \t\n\r"
-                return $ NewickTree (makeComments $ comments) t
+                return $ NewickTree comments node
 
 print_newick (NewickTree comments node) = show comments ++ " " ++ print_newick_sub node ++ ";"
+
+startsWith [] s = Just s
+startsWith _  [] = Nothing
+startsWith (p:ps) (s:ss) = if p /= s then Nothing else startsWith ps ss
+
+replace from to []     = []
+replace from to string = case startsWith from string of
+                           Just rest -> to ++ replace from to rest
+                           Nothing   -> head string : replace from to (tail string)
+
+quoteName :: String -> String
+quoteName name = if any (\l -> elem l "()[]':;,") name then
+                     "'"++(replace "'" "''" name)++"'"
+                 else
+                     replace " " "_" name
+
 
 print_newick_sub (NewickNode children node nodeComments branch branchComments) =
     children_string ++  node_string ++ (show nodeComments) ++ branch_string ++ (show branchComments)
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
-      node_string = case node of Just name -> "'"++(T.unpack name)++"'"
+      node_string = case node of Just name -> quoteName (T.unpack name)
                                  Nothing   -> ""
       branch_string = case branch of Just length -> ":" ++ show length
                                      Nothing -> ""
