@@ -67,14 +67,12 @@ foreign import bpcall "File:" hClose :: Handle -> IO ()
 readFile :: FilePath -> IO String
 readFile path = do handle <- openFile path ReadMode
                    text <- hGetContents handle
-                   hClose handle
                    return text
 
 -- strict
 readFile' :: FilePath -> IO String
 readFile' path = do handle <- openFile path ReadMode
                     text <- hGetContents' handle
-                    hClose handle
                     return text
 
 writeFile :: FilePath -> String -> IO ()
