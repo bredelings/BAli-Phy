@@ -72,11 +72,35 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
-data Newick = Newick [Newick] (Maybe Text) [String] (Maybe Double) [String]
+split c "" = []
+split c s  = case break (== c) s of
+               (l, s') -> [l] ++ case s' of []    -> []
+                                            _:s'' -> lines s''
+
+
+data Comments = Comments [(Text,Maybe Text)]
+
+instance Show Comments where
+    show (Comments []) = ""
+    show (Comments cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
+                       go (k, Nothing) = T.unpack k
+                       go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
+
+makeComments comments = Comments $ concatMap go comments where
+    go comment = if take 5 comment == "&NHX:"
+                 then fmap go' (split ':' (drop 5 comment))
+                 else fmap go' (split ',' comment)
+    go' comment = case break (== '=') comment of
+                    (key,[]) -> (T.pack key,Nothing)
+                    (key,_:value) -> (T.pack key, Just $ T.pack value)
+
+data NewickNode = NewickNode [NewickNode] (Maybe Text) Comments (Maybe Double) Comments
+
+data NewickTree = NewickTree Comments NewickNode
 
 comment = do
   char '['
-  result <- many $ satisfy (\c -> c /= ']')
+  result <- many $ satisfy (/= ']')
   char ']'
   if (head result == '&') then
       return (Just (tail result))
@@ -121,7 +145,11 @@ subtree = do children <- option [] descendant_list
              node_label <- optionMaybe node_label
              nodeComments2 <- newickSpaces
              (branchLength, branchComments) <- (branch_length_p <|> return (Nothing,[]))
-             return (Newick children node_label (nodeComments1 ++ nodeComments2) branchLength branchComments)
+             return (NewickNode children
+                                node_label
+                                (makeComments $ nodeComments1 ++ nodeComments2)
+                                branchLength
+                                (makeComments branchComments))
 
 descendant_list = do
   newickSpaces
@@ -130,15 +158,16 @@ descendant_list = do
   string ")"
   return children
 
-tree_parser = do newickSpaces
-                 t <- subtree
-                 string ";"
-                 newickSpaces
-                 return t
+treeParser = do comments <- newickSpaces
+                t <- subtree
+                string ";"
+                many $ oneOf " \t\n\r"
+                return $ NewickTree (makeComments $ comments) t
 
-print_newick tree = print_newick_sub tree ++ ";"
+print_newick (NewickTree comments node) = show comments ++ " " ++ print_newick_sub node ++ ";"
 
-print_newick_sub (Newick children node nodeComments branch branchComments) = children_string ++  node_string ++ nodeCommentsOut ++ branch_string ++ branchCommentsOut
+print_newick_sub (NewickNode children node nodeComments branch branchComments) =
+    children_string ++  node_string ++ (show nodeComments) ++ branch_string ++ (show branchComments)
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
@@ -146,11 +175,5 @@ print_newick_sub (Newick children node nodeComments branch branchComments) = chi
                                  Nothing   -> ""
       branch_string = case branch of Just length -> ":" ++ show length
                                      Nothing -> ""
-      nodeCommentsOut = if null nodeComments
-                        then ""
-                        else concat ["[&" ++ comment ++ "]" | comment <- nodeComments]
-      branchCommentsOut = if null branchComments
-                        then ""
-                        else concat ["[&" ++ comment ++ "]" | comment <- branchComments]
 
-parse_newick text = runParser (do { newickSpaces ; tree <- tree_parser ; newickSpaces ; return tree }) text
+parse_newick text = runParser treeParser text
