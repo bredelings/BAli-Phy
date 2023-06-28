@@ -247,3 +247,13 @@ newickToTree (NewickTree treeComments node) = do
       edgeComments = IntMap.fromList (i_edgeComments info)
 
   return (tree, rootId, labels, lengths, nodeComments, edgeComments, treeComments)
+
+newickToBranchLengthTree newick = do
+  (tree, rootId, labels, lengths, nodeComments, edgeComments, treeComments) <- newickToTree newick
+  let lengths2 = fmap (fromMaybe 0) lengths
+      bltree = (LabelledTree (BranchLengthTree (add_root rootId tree) lengths2) labels)
+  return (bltree, nodeComments, edgeComments, treeComments)
+
+readBranchLengthTree filename = do
+  text <- readFile filename
+  newickToBranchLengthTree (parse_newick text)
