@@ -30,6 +30,7 @@ using std::unique_ptr;
 
 using boost::dynamic_pointer_cast;
 
+/// 16.31281376 -> "16.312813760000001"
 string double_to_string(double d)
 {
     string s = convertToString(d);
