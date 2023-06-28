@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
 import Data.Maybe (catMaybes)
+import Data.List (stripPrefix)
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
@@ -116,9 +117,9 @@ quoted_char = (string "''" >> return '\'')
               satisfy (\c -> (isPrint c) && (c /= '\'') )
 
 -- unquoted strings can't contain punctuation, and _ changes to space
-unquoted_char = satisfy (\c -> isPrint c && not (c `elem` " ()[]':;,"))
+unquoted_char = (char '_' >> return ' ')
                 <|>
-                (char '_' >> return ' ')
+                satisfy (\c -> isPrint c && not (c `elem`  " ()[]':;,"))
 
 -- lex: quoted label
 quoted_label = do string "'"
@@ -162,22 +163,18 @@ descendant_list = do
 treeParser = do comments <- newickSpaces
                 node <- subtree
                 string ";"
-                many $ oneOf " \t\n\r"
+                spaces
                 return $ NewickTree comments node
 
 print_newick (NewickTree comments node) = show comments ++ " " ++ print_newick_sub node ++ ";"
 
-startsWith [] s = Just s
-startsWith _  [] = Nothing
-startsWith (p:ps) (s:ss) = if p /= s then Nothing else startsWith ps ss
-
 replace from to []     = []
-replace from to string = case startsWith from string of
+replace from to string = case stripPrefix from string of
                            Just rest -> to ++ replace from to rest
                            Nothing   -> head string : replace from to (tail string)
 
 quoteName :: String -> String
-quoteName name = if any (\l -> elem l "()[]':;,") name then
+quoteName name = if any (\l -> elem l  "()[]':;,") name then
                      "'"++(replace "'" "''" name)++"'"
                  else
                      replace " " "_" name
