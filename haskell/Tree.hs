@@ -54,9 +54,15 @@ class Tree t => LabelledTree t where
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
+instance Show Node where
+    show (Node name out_edges) = "Node{node_name = " ++ show name ++ ", node_out_edges = " ++ show out_edges ++ "}"
+
 -- ideally e_source_node and e_target_node would be of type Node,
 --   and e_reverse would be of type Edge
 data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge_name :: Int }
+
+instance Show Edge where
+    show (Edge source index target reverse name) = "Edge{e_source_node = " ++ show source ++ ", e_source_index = " ++ show index ++ ", e_target_node = " ++ show target ++ ", e_reverse = " ++ show reverse ++ ", edge_name = " ++ show name ++ "}"
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge)
 
