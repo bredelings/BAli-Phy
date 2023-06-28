@@ -185,6 +185,7 @@ stripPrefix (p:ps) (s:ss) = if p /= s then Nothing else stripPrefix ps ss
 
 
 -- group
+group xs = groupBy (==) xs
 
 -- inits
 
@@ -312,7 +313,13 @@ nubBy eq [] = []
 -- intersectBy
 
 -- groupBy
-
+groupBy p [] = [[]]
+groupBy p (x:xs) = case groupBy p xs of
+                     [] -> [[x]]
+                     (ys:yss) -> case ys of [] -> error "can't happen!"
+                                            (z:zs) -> if p x z
+                                                      then ((x:ys):yss)
+                                                      else [x]:ys:yss
 -- sortBy
 
 -- insertBy
