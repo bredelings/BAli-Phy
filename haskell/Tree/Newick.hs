@@ -18,6 +18,10 @@ import Data.Foldable
 import Data.Maybe (catMaybes)
 import Data.List (stripPrefix)
 
+import Data.Unique.Id
+import qualified Data.IntMap as IntMap
+import Data.Array
+
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 class Tree t => WriteNewickNode t where
@@ -191,3 +195,52 @@ print_newick_sub (NewickNode children node nodeComments branch branchComments) =
                                      Nothing -> ""
 
 parse_newick text = runParser treeParser text
+
+
+-- edge comments come from the child
+data Info = Info { i_nodes :: [Node],
+                   i_edges :: [Edge],
+                   i_labels :: [(Int,Maybe Text)],
+                   i_lengths :: [(Int,Maybe Double)],
+                   i_nodeComments :: [(Int,Comments)],
+                   i_edgeComments :: [(Int,Comments)]
+                 }
+
+combineInfo (Info ns1 es1 ls1 bls1 ncs1 ecs1) (Info ns2 es2 ls2 bls2 ncs2 ecs2) =
+    Info (ns1++ns2) (es1++es2) (ls1++ls2) (bls1++bls2) (ncs1++ncs2) (ecs1++ecs2)
+
+getEdge ids node@(NewickNode _ _ _ branchLength branchComments) nodeId index = (edgeId, edgeInfo `combineInfo` childInfo) where
+    edgeId = hashedId $ idFromSupply ids
+    (ids',childIds) = splitIdSupply ids
+    reverseEdgeId = hashedId $ idFromSupply ids'
+    edgeInfo = Info [] [eToChild,eFromChild] [] [(edgeId,branchLength),(reverseEdgeId,branchLength)] [] [(edgeId,branchComments),(reverseEdgeId,branchComments)]
+    eToChild = Edge nodeId index targetId reverseEdgeId edgeId
+    eFromChild = Edge targetId 0 nodeId edgeId reverseEdgeId
+    (targetId, childInfo) = getNode childIds node (Just reverseEdgeId)
+
+getNode ids (NewickNode children nodeLabel nodeComments _ _) parentEdge = (nodeId,foldr combineInfo nodeInfo childInfo)
+    where nodeInfo = Info [node] [] [(nodeId,nodeLabel)] [] [(nodeId,nodeComments)] []
+          node = Node nodeId outEdges
+          nodeId = hashedId $ idFromSupply ids
+          outEdges = listArray' edgeIds
+          edgeIds = case parentEdge of Just e -> (e:childEdgeIds) ; Nothing -> childEdgeIds
+          firstChildIndex = case parentEdge of Nothing -> 0; _ -> 1
+          childIndices = [firstChildIndex .. ]
+          (childEdgeIds, childInfo) = unzip [getEdge childIds childNewick nodeId index
+                                                 | (childNewick, childIds, index) <- zip3 children (splitIdSupplyL ids) childIndices]
+
+
+newickToTree (NewickTree treeComments node) = do
+  ids <- initIdSupply 'n'
+
+  let (rootId, info) = getNode ids node Nothing
+      nodes = IntMap.fromList [(node_name node, node) | node <- i_nodes info]
+      edges = IntMap.fromList [(edge_name edge, edge) | edge <- i_edges info]
+      tree = Tree nodes edges
+      -- These SHOULD have all the nodes / edges... but maybe we should use (getNodesSet tree & fromSet _) to make sure.
+      labels = IntMap.fromList (i_labels info) -- this is IntMap (Maybe Double)
+      lengths = IntMap.fromList (i_lengths info)
+      nodeComments = IntMap.fromList (i_nodeComments info)
+      edgeComments = IntMap.fromList (i_edgeComments info)
+
+  return (tree, rootId, labels, lengths, nodeComments, edgeComments, treeComments)
