@@ -72,7 +72,7 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
-data Newick = Newick [Newick] (Maybe Text) (Maybe Double)
+data Newick = Newick [Newick] (Maybe Text) [String] (Maybe Double) [String]
 
 comment = do
   char '['
@@ -112,11 +112,11 @@ node_label = fmap T.pack $ quoted_label <|> unquoted_label
 branch_length_p = ( string ":" >> newickSpaces >> optionMaybe (token parse_double) ) <|> return Nothing
 
 subtree = do children <- option [] descendant_list
-             newickSpaces
+             nodeComments1 <- newickSpaces
              node_label <- optionMaybe node_label
-             newickSpaces
+             nodeComments2 <- newickSpaces
              branch_length <- branch_length_p
-             return (Newick children node_label branch_length)
+             return (Newick children node_label (nodeComments1 ++ nodeComments2) branch_length [])
 
 descendant_list = do
   newickSpaces
@@ -133,7 +133,7 @@ tree_parser = do newickSpaces
 
 print_newick tree = print_newick_sub tree ++ ";"
 
-print_newick_sub (Newick children node branch) = children_string ++  node_string ++ branch_string
+print_newick_sub (Newick children node nodeComments branch branch_comments) = children_string ++  node_string ++ nodeCommentsOut ++ branch_string
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
@@ -141,5 +141,8 @@ print_newick_sub (Newick children node branch) = children_string ++  node_string
                                  Nothing   -> ""
       branch_string = case branch of Just length -> ":" ++ show length
                                      Nothing -> ""
+      nodeCommentsOut = if null nodeComments
+                        then ""
+                        else concat ["[&" ++ comment ++ "]" | comment <- nodeComments]
 
 parse_newick text = runParser (do { newickSpaces ; tree <- tree_parser ; newickSpaces ; return tree }) text
