@@ -203,16 +203,16 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     {
         auto L = *l;
 
-        auto pat_type = expTypeToType(exp_type);
+        auto exp_pat_type = expTypeToType(exp_type);
 
         // This should be able to extract forall a.a->a from [forall a. a-> a]
         Type element_type;
-        if (auto elem_type = is_list_type( pat_type ))
+        if (auto elem_type = is_list_type( exp_pat_type ))
             element_type = *elem_type;
         else
         {
             element_type = fresh_meta_type_var( kind_type() );
-            unify( pat_type, list_type(element_type) );
+            unify( exp_pat_type, list_type(element_type) );
         }
 
         tcPats(penv, L.elements, vector<Expected>(L.elements.size(), Check(element_type)), sigs, a);
@@ -224,16 +224,17 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     {
         auto T = *t;
 
-        auto pat_type = expTypeToType(exp_type);
+        auto exp_pat_type = expTypeToType(exp_type);
 
         vector<Type> element_types;
-        if (auto elem_types = is_tuple_type( pat_type ))
+        // We want to extract forall types from fields of the expected type if its the right sized tuple.
+        if (auto elem_types = is_tuple_type( exp_pat_type ); elem_types and elem_types->size() == T.elements.size())
             element_types = *elem_types;
         else
         {
             for(int i=0;i<T.elements.size();i++)
                 element_types.push_back( fresh_meta_type_var( kind_type() ) );
-            unify( pat_type, tuple_type(element_types) );
+            unify( exp_pat_type, tuple_type(element_types) );
         }
 
         tcPats(penv, T.elements, check_types(element_types), sigs, a);
