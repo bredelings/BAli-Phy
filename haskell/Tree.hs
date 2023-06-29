@@ -10,7 +10,7 @@ import qualified Data.IntMap as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.Text (Text)
-import qualified Data.Text as Text
+import qualified Data.Text as T
 
 data Attributes = Attributes [(Text,Maybe Text)]
 
@@ -19,8 +19,8 @@ data Attributes = Attributes [(Text,Maybe Text)]
 instance Show Attributes where
     show (Attributes []) = ""
     show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
-                       go (k, Nothing) = Text.unpack k
-                       go (k, Just v)  = Text.unpack k ++ "=" ++ Text.unpack v
+                       go (k, Nothing) = T.unpack k
+                       go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
 
 class Tree t where
     findNode    :: t -> Int -> Node
@@ -323,9 +323,9 @@ addInternalLabels tree = LabelledTree tree newLabels where
 
     newLabel node = case (oldLabels IntMap.! node) of
                       Just label -> Just label
-                      Nothing -> Just $ Text.append (Text.singleton 'A') (Text.pack (show node))
+                      Nothing -> Just $ T.append (T.singleton 'A') (T.pack (show node))
 
 add_ancestral_label node labels = case (labels IntMap.! node) of
                                     Just l -> l
-                                    Nothing -> Text.append (Text.singleton 'A') (Text.pack (show node))
+                                    Nothing -> T.append (T.singleton 'A') (T.pack (show node))
 
