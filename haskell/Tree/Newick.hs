@@ -241,14 +241,23 @@ newickToTree (NewickTree treeAttributes node) = do
       nodeAttributes = IntMap.fromList (i_nodeAttributes info)
       edgeAttributes = IntMap.fromList (i_edgeAttributes info)
       tree = Tree nodes edges nodeAttributes edgeAttributes treeAttributes
+      rooted_tree = add_root rootId tree
+      labelled_tree = LabelledTree rooted_tree labels
 
-  return (tree, rootId, labels, lengths)
+  return (labelled_tree, lengths)
 
 newickToBranchLengthTree newick = do
-  (tree, rootId, labels, lengths) <- newickToTree newick
+  (tree, lengths) <- newickToTree newick
   let lengths2 = fmap (fromMaybe 0) lengths
-  return (LabelledTree (BranchLengthTree (add_root rootId tree) lengths2) labels)
+  return (BranchLengthTree tree lengths2)
+
+readTreeTopology filename = do
+  text <- readFile filename
+  (topology, lengths) <- newickToTree (parse_newick text)
+  return topology
 
 readBranchLengthTree filename = do
   text <- readFile filename
   newickToBranchLengthTree (parse_newick text)
+
+
