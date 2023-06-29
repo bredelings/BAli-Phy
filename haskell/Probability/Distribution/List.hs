@@ -16,6 +16,33 @@ independent_pdf _  _          = 0
 
 plate n dist_f = independent $ map dist_f [0..n-1]
 
+{-
+ Can we generalize this to something that works for IntMap a as well as List a?
+
+type Range :: Type -> Type
+type family Range m
+type instance Range [] = Int
+type instance Range IntMap = IntSet
+
+data IID m d = IID (Range m) d
+
+instance Dist d => dist (IID m d) where
+    type Result (IID m d) = m (Result d)
+
+instance IOSampleable d => (IOSampleable (IID m d)) where
+   sampleIO (IID range dist) = fmap (
+
+instance IOSampleable d => (IOSampleable (IID [] d)) where
+   sampleIO (IID Int dist) = take n <$> (sequence $ repeat $ sampleIO dist)
+   sampleIO (IID Int dist) = sequence $ take n $ repeat $ sampleIO dist)
+
+instance IOSampleable d => (IOSampleable (IID IntMap d)) where
+   sampleIO (IID rangeSet dist) = sequence $ fromSet (\d -> sampleIO dist) range
+-}
+
+
+
+
 -- Its possible to construct something like IID n 
 data IID d = IID Int d
 
