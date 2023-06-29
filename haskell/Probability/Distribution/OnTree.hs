@@ -100,7 +100,7 @@ exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls 
           branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdge tree e) | e <- toList $ edges]
 
 annotated_subst_like_on_tree tree alignment smodel sequences = do
-  let subst_root = modifiable (numNodes tree - 1)
+  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
@@ -183,7 +183,7 @@ well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
-  let subst_root = modifiable (numNodes tree - 1)
+  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
