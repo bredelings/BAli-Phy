@@ -85,16 +85,6 @@ split c s  = case break (== c) s of
                (l, s') -> [l] ++ case s' of []    -> []
                                             _:s'' -> lines s''
 
-data Attributes = Attributes [(Text,Maybe Text)]
-
-(Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
-
-instance Show Attributes where
-    show (Attributes []) = ""
-    show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
-                       go (k, Nothing) = T.unpack k
-                       go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
-
 makeAttributes comments = Attributes $ concatMap go comments where
     go comment = if take 5 comment == "&NHX:"
                  then fmap go' (split ':' (drop 5 comment))
