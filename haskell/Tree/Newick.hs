@@ -15,7 +15,7 @@ import Data.Text (Text(..))
 import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
-import Data.Maybe (catMaybes)
+import Data.Maybe
 import Data.List (stripPrefix)
 
 import Data.Unique.Id
