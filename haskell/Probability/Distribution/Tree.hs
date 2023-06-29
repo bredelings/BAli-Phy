@@ -37,7 +37,7 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (IntMap.empty)
+sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (IntMap.empty) (IntMap.empty) (IntMap.empty) (Attributes [])
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
@@ -50,7 +50,7 @@ sample_uniform_topology n = do
 -- 3        4      3
 -- 4        6      5
 modifiable_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_tree modf tree@(Tree nodes0 branches0) = Tree nodesMap branches where
+modifiable_tree modf tree@(Tree nodes0 branches0 na ea ta) = (Tree nodesMap branches na ea ta) where
     nodesMap = fmap (\(Node node branches_out) -> Node node (fmap modf branches_out)) nodes0
     branches = fmap (\(Edge s i t r b) -> Edge (modf s) (modf i) (modf t) r b ) branches0
 
