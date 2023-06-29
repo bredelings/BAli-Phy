@@ -60,6 +60,9 @@ extern "C" closure builtin_function_subscript(OperationArgs& Args)
 
     auto& m = Args.evaluate(0).as_<IntMap>();
 
+    if (not m.has_key(key))
+        throw myexception()<<"IntMap.!: key "<<key<<" not found in map of size "<<m.size();
+
     int result_reg = m[key];
 
     return {index_var(0), {result_reg}};
