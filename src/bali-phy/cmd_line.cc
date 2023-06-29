@@ -199,7 +199,8 @@ po::options_description model_options(int level)
 	("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
 	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
-	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.");
+	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
+        ("fix,F",value<vector<string>>()->composing(),"Fix topology,tree,alignment");
     if (level >= 1)
 	model.add_options()
 	("branch-lengths,B",value<string>(),"Prior on branch lengths.");
