@@ -229,20 +229,19 @@ newickToTree (NewickTree treeAttributes node) = do
   let (rootId, info) = getNode ids node Nothing
       nodes = IntMap.fromList [(node_name node, node) | node <- i_nodes info]
       edges = IntMap.fromList [(edge_name edge, edge) | edge <- i_edges info]
-      tree = Tree nodes edges
       -- These SHOULD have all the nodes / edges... but maybe we should use (getNodesSet tree & fromSet _) to make sure.
       labels = IntMap.fromList (i_labels info) -- this is IntMap (Maybe Double)
       lengths = IntMap.fromList (i_lengths info)
       nodeAttributes = IntMap.fromList (i_nodeAttributes info)
       edgeAttributes = IntMap.fromList (i_edgeAttributes info)
+      tree = Tree nodes edges nodeAttributes edgeAttributes treeAttributes
 
-  return (tree, rootId, labels, lengths, nodeAttributes, edgeAttributes, treeAttributes)
+  return (tree, rootId, labels, lengths)
 
 newickToBranchLengthTree newick = do
-  (tree, rootId, labels, lengths, nodeAttributes, edgeAttributes, treeAttributes) <- newickToTree newick
+  (tree, rootId, labels, lengths) <- newickToTree newick
   let lengths2 = fmap (fromMaybe 0) lengths
-      bltree = (LabelledTree (BranchLengthTree (add_root rootId tree) lengths2) labels)
-  return (bltree, nodeAttributes, edgeAttributes, treeAttributes)
+  return (LabelledTree (BranchLengthTree (add_root rootId tree) lengths2) labels)
 
 readBranchLengthTree filename = do
   text <- readFile filename

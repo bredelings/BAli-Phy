@@ -73,7 +73,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     assert(has_constructor(tree.head(),"Tree.Tree"));
-    assert(tree.size() == 2);
+    assert(tree.size() == 5);
 
     auto edges_out_of_node = tree[0];
     auto nodes_for_edge    = tree[1];
