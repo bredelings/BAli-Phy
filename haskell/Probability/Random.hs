@@ -114,30 +114,45 @@ instance Monad TKEffects where
     f >>= g  = TKBind f g
 
 data Random a where
+    RanOp :: ((forall b.Random b -> IO b) -> IO a) -> Random a
+    RanBind :: Random b -> (b -> Random a) -> Random a
     Lazy :: Random a -> Random a
     WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
     PerformTKEffect :: TKEffects a -> Random a
-    RanLiftIO :: IO a -> Random a
-    RanReturn :: a -> Random a
-    RanBind :: Random b -> (b -> Random a) -> Random a
-    RanMFix :: (a -> Random a) -> Random a
     RanDistribution2 :: (IOSampleable d, HasAnnotatedPdf d) => d -> (Result d -> TKEffects b) -> Random (Result d)
     RanDistribution3 :: HasAnnotatedPdf d => d -> ((Result d)->TKEffects b) -> ((Result d) -> ((Result d) -> IO ()) -> (Result d)) -> Random (Result d) -> Random (Result d)
     RanSamplingRate :: Double -> Random a -> Random a
     RanInterchangeable :: Random b -> Random (Random b)
+{-
+We need the non-RanOp constructors because they behave differently in the different interpreters.
+- RanOp: does the same thing in all interpreters.
+- RanBind: adds unsafeInterleaveIO in the lazy interpreters, but not the strict ones.
+- Lazy: doesn't just add unsafeInterleaveIO --> also forwards to a different interpreter.
+- WithTKEffect: ignores the effect in the simple interpreters, runs the effect in the MCMC interpreters.
+- PerformTKEffect: runs the effect at rate 1.0 in the simple interpreters, but at rate `rate` in the MCMC interpreters.
+- RanDistribution2 just runs sampleIO in the simple interpreters, but creates a modifiable that runs sampleIO in the MCMC interpreters.
+- RanDistribution3 just runs the sampling action in the simple interpreters, but creates a random structure and
+   runs the associate tk_effects in the mcmc interpreter.
+- RanSamplingRate: does nothing in the simple interpreters, but affects the rate of TKs in the MCMC interpreters
+- RanInterchangeable: errors out in the strict interpeters, does nothing in the lazy simple interpreter, and
+  creates an interchangable random dist in the lazy MCMC interpreter.
+-}
+
 
 instance Functor Random where
     fmap f r = RanBind r (return . f)
 
 instance Applicative Random where
-    pure  x = RanReturn x
+    pure  x = RanOp (\interp -> return x)
     f <*> x = RanBind x (\x' -> RanBind f (\f' -> pure (f' x')))
 
 instance Monad Random where
     f >>= g  = RanBind f g
+--    f >>= g  = RanOp (\i -> (i f) >>= (i . g))
+--    ^^ This doesn't work for the lazy interpreters because its strict.
 
 instance MonadFix Random where
-    mfix f   = RanMFix f
+    mfix f   = RanOp (\interp -> mfix $ interp . f)
 
 observe datum dist = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
@@ -148,7 +163,7 @@ observe datum dist = liftIO $ do
 infix 0 `observe`
 
 instance MonadIO Random where
-    liftIO = RanLiftIO
+    liftIO io = RanOp (\interp -> io)
 
 lazy = Lazy
 interchangeable = RanInterchangeable
@@ -161,18 +176,16 @@ run_strict :: Random a -> IO a
 run_strict (RanBind f g) = do
   x <- run_strict f
   run_strict $ g x
-run_strict (RanReturn v) = return v
-run_strict (RanLiftIO a) = a
 run_strict (RanSamplingRate _ a) = run_strict a
 run_strict (RanInterchangeable r) = return r
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution2 _ _) = run_lazy dist
 run_strict dist@(RanDistribution3 _ _ _ _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
-run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 run_strict (RanInterchangeable _) = error "run_strict: RanInterchangeable"
 run_strict (PerformTKEffect _) = error "run_strict: PerformTKEffect"
+run_strict (RanOp op) = op run_strict
 
 add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
 
@@ -190,9 +203,6 @@ run_lazy :: Random a -> IO a
 run_lazy (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy f
   run_lazy $ g x
-run_lazy (RanReturn v) = return v
-run_lazy (RanLiftIO a) = a
-run_lazy (RanMFix f) = mfix (run_lazy.f)
 run_lazy (RanSamplingRate _ a) = run_lazy a
 -- Problem: distributions aren't part of the Random monad!
 run_lazy (RanDistribution2 dist _) = unsafeInterleaveIO $ sampleIO dist
@@ -201,6 +211,7 @@ run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
 run_lazy (RanInterchangeable a) = return a
+run_lazy (RanOp op) = op run_lazy
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
@@ -208,8 +219,6 @@ run_strict' :: Double -> Random a -> IO a
 run_strict' rate (RanBind f g) = do
   x <- run_strict' rate f
   run_strict' rate $ g x
-run_strict' rate (RanReturn v) = return v
-run_strict' rate (RanLiftIO io) = io
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
@@ -217,8 +226,8 @@ run_strict' rate ix@(RanInterchangeable r) = run_lazy' rate ix
 run_strict' rate dist@(RanDistribution2 _ _) = run_lazy' rate dist
 run_strict' rate dist@(RanDistribution3 _ _ _ _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
-run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
+run_strict' rate (RanOp op) = op (run_strict' rate)
 
 -- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
 --       SOMETHING `seq` result.  And this means that we need to frequently
@@ -274,11 +283,9 @@ interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
 --         unsafeInterleaveIO $ run_lazy', so we get an unsafeInterleaveIO from there.
 --
 run_lazy' :: Double -> Random a -> IO a
-run_lazy' rate (RanLiftIO a) = a
 run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
-run_lazy' rate (RanReturn v) = return v
 run_lazy' rate (RanDistribution2 dist tk_effect) = do
   x <- modifiableIO $ sampleIO dist
   effect <- sample_effect rate dist tk_effect x
@@ -287,7 +294,6 @@ run_lazy' rate (RanDistribution3 dist tk_effect structure do_sample) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   return $ structure value (sample_effect rate dist tk_effect)
-run_lazy' rate (RanMFix f) = mfix ((run_lazy' rate).f)
 run_lazy' rate (RanSamplingRate rate2 a) = run_lazy' (rate*rate2) a
 run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
@@ -298,6 +304,7 @@ run_lazy' rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId
   register_transition_kernel rate $ interchange_entries id
   return $ liftIO $ IO (\s -> (s, interchangeableIO id (run_lazy' rate r) s))
+run_lazy' rate (RanOp op) = op (run_lazy' rate)
 
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
