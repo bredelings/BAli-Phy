@@ -85,17 +85,17 @@ split c s  = case break (== c) s of
                (l, s') -> [l] ++ case s' of []    -> []
                                             _:s'' -> lines s''
 
-data Comments = Comments [(Text,Maybe Text)]
+data Attributes = Attributes [(Text,Maybe Text)]
 
-(Comments cs1) +:+ (Comments cs2) = Comments (cs1 ++ cs2)
+(Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
 
-instance Show Comments where
-    show (Comments []) = ""
-    show (Comments cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
+instance Show Attributes where
+    show (Attributes []) = ""
+    show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
                        go (k, Nothing) = T.unpack k
                        go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
 
-makeComments comments = Comments $ concatMap go comments where
+makeAttributes comments = Attributes $ concatMap go comments where
     go comment = if take 5 comment == "&NHX:"
                  then fmap go' (split ':' (drop 5 comment))
                  else fmap go' (split ',' comment)
@@ -103,9 +103,9 @@ makeComments comments = Comments $ concatMap go comments where
                     (key,[]) -> (T.pack key,Nothing)
                     (key,_:value) -> (T.pack key, Just $ T.pack value)
 
-data NewickNode = NewickNode [NewickNode] (Maybe Text) Comments (Maybe Double) Comments
+data NewickNode = NewickNode [NewickNode] (Maybe Text) Attributes (Maybe Double) Attributes
 
-data NewickTree = NewickTree Comments NewickNode
+data NewickTree = NewickTree Attributes NewickNode
 
 comment = do
   char '['
@@ -116,7 +116,7 @@ comment = do
   else
       return Nothing
 
-newickSpaces = fmap makeComments $ fmap catMaybes $ many $ (comment <|> (oneOf " \t\n\r" >> return Nothing))
+newickSpaces = fmap makeAttributes $ fmap catMaybes $ many $ (comment <|> (satisfy isSpace >> return Nothing))
 
 -- '' escapes to ' inside a quoted string
 quoted_char = (string "''" >> return '\'')
@@ -144,24 +144,24 @@ node_label = fmap T.pack $ quoted_label <|> unquoted_label
 -- I don't want to REQUIRE a branch length
 branch_length_p = do
   string ":"
-  comments1 <- newickSpaces
+  attributes1 <- newickSpaces
   result <- optionMaybe (token parse_double)
-  comments2 <- newickSpaces
-  return (result, comments1 +:+ comments2)
+  attributes2 <- newickSpaces
+  return (result, attributes1 +:+ attributes2)
 
-subtree = do children <- option [] descendant_list
-             nodeComments1 <- newickSpaces
+subtree = do nodeAttributes1 <- newickSpaces
+             children <- option [] descendant_list
+             nodeAttributes2 <- newickSpaces
              node_label <- optionMaybe node_label
-             nodeComments2 <- newickSpaces
-             (branchLength, branchComments) <- (branch_length_p <|> return (Nothing, Comments []))
+             nodeAttributes3 <- newickSpaces
+             (branchLength, branchAttributes) <- (branch_length_p <|> return (Nothing, Attributes []))
              return (NewickNode children
                                 node_label
-                                (nodeComments1 +:+ nodeComments2)
+                                (nodeAttributes1 +:+ nodeAttributes2 +:+ nodeAttributes3)
                                 branchLength
-                                branchComments)
+                                branchAttributes)
 
 descendant_list = do
-  newickSpaces
   string "("
   children <- sepBy1 subtree (string ",")
   string ")"
@@ -187,8 +187,8 @@ quoteName name = if any (\l -> elem l  "()[]':;,") name then
                      replace " " "_" name
 
 
-print_newick_sub (NewickNode children node nodeComments branch branchComments) =
-    children_string ++  node_string ++ (show nodeComments) ++ branch_string ++ (show branchComments)
+print_newick_sub (NewickNode children node nodeAttributes branch branchAttributes) =
+    children_string ++  node_string ++ (show nodeAttributes) ++ branch_string ++ (show branchAttributes)
     where
       children_string | null children = ""
                       | otherwise     = "("++ intercalate "," (map print_newick_sub children) ++ ")"
@@ -205,24 +205,24 @@ data Info = Info { i_nodes :: [Node],
                    i_edges :: [Edge],
                    i_labels :: [(Int,Maybe Text)],
                    i_lengths :: [(Int,Maybe Double)],
-                   i_nodeComments :: [(Int,Comments)],
-                   i_edgeComments :: [(Int,Comments)]
+                   i_nodeAttributes :: [(Int,Attributes)],
+                   i_edgeAttributes :: [(Int,Attributes)]
                  }
 
 combineInfo (Info ns1 es1 ls1 bls1 ncs1 ecs1) (Info ns2 es2 ls2 bls2 ncs2 ecs2) =
     Info (ns1++ns2) (es1++es2) (ls1++ls2) (bls1++bls2) (ncs1++ncs2) (ecs1++ecs2)
 
-getEdge ids node@(NewickNode _ _ _ branchLength branchComments) nodeId index = (edgeId, edgeInfo `combineInfo` childInfo) where
+getEdge ids node@(NewickNode _ _ _ branchLength branchAttributes) nodeId index = (edgeId, edgeInfo `combineInfo` childInfo) where
     edgeId = hashedId $ idFromSupply ids
     (ids',childIds) = splitIdSupply ids
     reverseEdgeId = hashedId $ idFromSupply ids'
-    edgeInfo = Info [] [eToChild,eFromChild] [] [(edgeId,branchLength),(reverseEdgeId,branchLength)] [] [(edgeId,branchComments),(reverseEdgeId,branchComments)]
+    edgeInfo = Info [] [eToChild,eFromChild] [] [(edgeId,branchLength),(reverseEdgeId,branchLength)] [] [(edgeId,branchAttributes),(reverseEdgeId,branchAttributes)]
     eToChild = Edge nodeId index targetId reverseEdgeId edgeId
     eFromChild = Edge targetId 0 nodeId edgeId reverseEdgeId
     (targetId, childInfo) = getNode childIds node (Just reverseEdgeId)
 
-getNode ids (NewickNode children nodeLabel nodeComments _ _) parentEdge = (nodeId,foldr combineInfo nodeInfo childInfo)
-    where nodeInfo = Info [node] [] [(nodeId,nodeLabel)] [] [(nodeId,nodeComments)] []
+getNode ids (NewickNode children nodeLabel nodeAttributes _ _) parentEdge = (nodeId,foldr combineInfo nodeInfo childInfo)
+    where nodeInfo = Info [node] [] [(nodeId,nodeLabel)] [] [(nodeId,nodeAttributes)] []
           node = Node nodeId outEdges
           nodeId = hashedId $ idFromSupply ids
           outEdges = listArray' edgeIds
@@ -233,7 +233,7 @@ getNode ids (NewickNode children nodeLabel nodeComments _ _) parentEdge = (nodeI
                                                  | (childNewick, childIds, index) <- zip3 children (splitIdSupplyL ids) childIndices]
 
 
-newickToTree (NewickTree treeComments node) = do
+newickToTree (NewickTree treeAttributes node) = do
   ids <- initIdSupply 'n'
 
   let (rootId, info) = getNode ids node Nothing
@@ -243,16 +243,16 @@ newickToTree (NewickTree treeComments node) = do
       -- These SHOULD have all the nodes / edges... but maybe we should use (getNodesSet tree & fromSet _) to make sure.
       labels = IntMap.fromList (i_labels info) -- this is IntMap (Maybe Double)
       lengths = IntMap.fromList (i_lengths info)
-      nodeComments = IntMap.fromList (i_nodeComments info)
-      edgeComments = IntMap.fromList (i_edgeComments info)
+      nodeAttributes = IntMap.fromList (i_nodeAttributes info)
+      edgeAttributes = IntMap.fromList (i_edgeAttributes info)
 
-  return (tree, rootId, labels, lengths, nodeComments, edgeComments, treeComments)
+  return (tree, rootId, labels, lengths, nodeAttributes, edgeAttributes, treeAttributes)
 
 newickToBranchLengthTree newick = do
-  (tree, rootId, labels, lengths, nodeComments, edgeComments, treeComments) <- newickToTree newick
+  (tree, rootId, labels, lengths, nodeAttributes, edgeAttributes, treeAttributes) <- newickToTree newick
   let lengths2 = fmap (fromMaybe 0) lengths
       bltree = (LabelledTree (BranchLengthTree (add_root rootId tree) lengths2) labels)
-  return (bltree, nodeComments, edgeComments, treeComments)
+  return (bltree, nodeAttributes, edgeAttributes, treeAttributes)
 
 readBranchLengthTree filename = do
   text <- readFile filename
