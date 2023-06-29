@@ -12,6 +12,16 @@ import qualified Data.IntSet as IntSet
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+data Attributes = Attributes [(Text,Maybe Text)]
+
+(Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
+
+instance Show Attributes where
+    show (Attributes []) = ""
+    show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
+                       go (k, Nothing) = Text.unpack k
+                       go (k, Just v)  = Text.unpack k ++ "=" ++ Text.unpack v
+
 class Tree t where
     findNode    :: t -> Int -> Node
     findEdge    :: t -> Int -> Edge
@@ -51,6 +61,9 @@ class Tree t => LabelledTree t where
     -- TODO: make the C++ code handle this...
     
     get_labels :: t -> IntMap (Maybe Text)
+
+-- OK, so should we store attributes inside the tree?
+-- 
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
