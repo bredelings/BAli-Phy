@@ -37,7 +37,7 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (IntMap.empty) (IntMap.empty) (IntMap.empty) (Attributes [])
+sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.singleton 0 noAttributes) (Attributes [])
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]

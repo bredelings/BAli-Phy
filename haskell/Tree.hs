@@ -276,7 +276,10 @@ remove_element _ []     = [] -- no such element
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges nodes edges = Tree nodesMap branchesMap IntMap.empty IntMap.empty (Attributes []) where
+noAttributes = Attributes []
+noAttributesOn set = set & IntMap.fromSet (\n -> noAttributes)
+
+tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
 
     num_nodes = length nodes
 
