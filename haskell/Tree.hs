@@ -22,6 +22,11 @@ instance Show Attributes where
                        go (k, Nothing) = T.unpack k
                        go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
 
+attributesText (Attributes []) = T.empty
+attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.singleton ',') (fmap go cs) ++ [ T.pack "]" ]
+    where go (k, Nothing) = k
+          go (k, Just v)  = T.concat [k, T.singleton '=',v]
+
 class Tree t where
     findNode    :: t -> Int -> Node
     findEdge    :: t -> Int -> Edge

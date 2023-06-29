@@ -25,17 +25,18 @@ import Data.Array
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 class Tree t => WriteNewickNode t where
-    node_info :: t -> Int -> Maybe Text
-    branch_info :: t -> (Maybe Int) -> Maybe Text
+    node_info :: t -> Int -> Text
+    branch_info :: t -> (Maybe Int) -> Text
 
-    node_info _ _ = Nothing
-    branch_info _ _ = Nothing
+    node_info _ _ = T.empty
+    branch_info _ _ = T.empty
 
-get_node_label   t node = case node_info t node of Just lab -> lab ; Nothing -> T.empty
-get_branch_label t branch = case branch_info t branch of Just lab -> ':' `T.cons` lab; Nothing -> T.empty
+get_node_label   t node = T.append (node_info t node) (attributesText $ getNodeAttributes t node)
+get_branch_label t branch@(Just edge) = T.append (branch_info t branch) (attributesText $ getEdgeAttributes t edge)
+get_branch_label t Nothing = T.empty
 
 instance WriteNewickNode TreeImp where
-    node_info tree node = Just $ T.pack $ show node
+    node_info tree node = T.pack $ show node
 
 instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     node_info (RootedTree tree _ _) = node_info tree
@@ -45,28 +46,33 @@ foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel (Text s) = Text $ quoteLabelRaw s
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_info   tree node                         = fmap quoteLabel (get_label tree node)
+    node_info   tree node                         = case get_label tree node of Just label -> quoteLabel label
+                                                                                Nothing -> T.empty
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
     node_info (BranchLengthTree tree lengths) node = node_info tree node
 
-    branch_info blt (Just b) = Just $ T.doubleToText (branch_length blt b)
-    branch_info _   Nothing  = Nothing
+    branch_info blt (Just b) = T.doubleToText (branch_length blt b)
+    branch_info _   Nothing  = T.empty
 
 instance (RootedTree t, WriteNewickNode t) => WriteNewickNode (TimeTreeImp t) where
     node_info (TimeTree tree _) node = node_info tree node
 
-    branch_info nht (Just b) = Just $ T.doubleToText (branch_length nht b)
-    branch_info _   Nothing  = Nothing
+    branch_info nht (Just b) = T.doubleToText (branch_length nht b)
+    branch_info _   Nothing  = T.empty
 
 instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) where
     node_info (RateTimeTree tree _) node = node_info tree node
 
-    branch_info rtt (Just b) = Just $ T.doubleToText (branch_length rtt b)
-    branch_info _    Nothing  = Nothing
+    branch_info rtt (Just b) = T.doubleToText (branch_length rtt b)
+    branch_info _    Nothing  = T.empty
 
-write_newick tree = write_newick_node tree (root tree)
+write_newick tree = let nodes = write_newick_node tree (root tree)
+                        attributes = attributesText $ getTreeAttributes tree
+                    in if T.null attributes
+                       then nodes
+                       else T.concat [attributes,T.singleton ' ',nodes]
 
 intercalate2 t ts = foldl1 (\x y -> x `T.append` t `T.append` y) ts
 
