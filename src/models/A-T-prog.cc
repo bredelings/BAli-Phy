@@ -125,9 +125,11 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
-std::string generate_atmodel_program(int n_sequences,
+std::string generate_atmodel_program(const set<string>& fixed,
+                                     int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
+                                     const optional<fs::path>& tree_filename,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
                                      const vector<model_t>& IMs,
@@ -560,7 +562,9 @@ std::string generate_atmodel_program(int n_sequences,
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t&,
+                            const set<string>& fixed,
                             const fs::path& program_filename,
+                            const std::optional<fs::path>& tree_filename,
                             const vector<expression_ref>& alphabet_exps,
                             const vector<pair<string,string>>& filename_ranges,
                             int n_leaves,
@@ -576,9 +580,11 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
-        program_file<<generate_atmodel_program(n_leaves,
+        program_file<<generate_atmodel_program(fixed,
+                                               n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
+                                               tree_filename,
                                                SMs, s_mapping,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,

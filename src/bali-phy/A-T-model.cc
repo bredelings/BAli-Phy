@@ -725,9 +725,11 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     //----------- Load tree and link to alignments ---------//
     SequenceTree T;
+    optional<fs::path> tree_filename;
 
     if (args.count("tree"))
     {
+        tree_filename = args.at("tree").as<string>();
         T = load_T(args);
     }
     else
@@ -923,7 +925,14 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     for(int i=0;i<n_partitions;i++)
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 
-    auto prog = gen_atmodel_program(L, keys, program_filename,
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
+    auto prog = gen_atmodel_program(L, keys, fixed,
+                                    program_filename,
+                                    tree_filename,
                                     alphabet_exps, filename_ranges, T.n_leaves(),
                                     full_smodels, smodel_mapping,
                                     full_imodels, imodel_mapping,
