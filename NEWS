@@ -1,5 +1,34 @@
-* 4.0-beta5 (unreleased)
-- 
+* 4.0-beta6 (unreleased)
+- Model language:
+  - Read / print trees in Newick format.
+  - Correctly parse Newick comments.
+  - Read, query, and write node-, edge-, and tree-level attributes.
+  - Correctly read and write quoted Newick labels.
+- Bug fixes:
+  - Fix typechecking bug where we allowed e.g (x,y) <- return (x,y,z)
+
+* 4.0-beta5 (Jun 27, 2023)
+- Bug fixes:
+  + Fix problem with Covarion models (affected RNA-editting model).
+  + Don't treat JSON integers as if they were floating point.
++ New Singularity executable to run on clusters with old software.
+- Move MCMC logging into the model language:
+  - Warning: Temporarily remove pre-burnin.
+  - Warning: If --tree is specified then scales default to a constant 1.0 so that the likelihood tests work
+  - Print trees and alignments efficiently from Haskell.
+  - Compute parsimony score in Haskell.
+- Move MCMC move setup into the model language:
+  - Move slice-sampling and MH moves from C++ into Haskell.
+  - Stop running C++ MCMC moves -- just run Haskell moves.
+- Implement Haskell functionality
+  - Implement Haskell File IO.
+  - Add Data.IORef for mutable values.
+  - Add Data.Unique and Data.Unique.Id.
+  - Make it a lot easier to define new IO operations.
+- Cleanups
+  - Remove eigen sources from git, automatically download if not installed.
+  - Stop exporting the scale from Haskell to C++.
+
 
 * 4.0-beta4 (May 12, 2023)
 - Bug fixes:
