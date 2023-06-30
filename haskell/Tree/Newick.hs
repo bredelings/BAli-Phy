@@ -32,7 +32,8 @@ class Tree t => WriteNewickNode t where
     branch_info _ _ = T.empty
 
 get_node_label   t node = T.append (node_info t node) (attributesText $ getNodeAttributes t node)
-get_branch_label t branch@(Just edge) = T.append (branch_info t branch) (attributesText $ getEdgeAttributes t edge)
+get_branch_label t branch@(Just edge) = let text = (branch_info t branch) `T.append` (attributesText $ getEdgeAttributes t edge)
+                                        in if T.null text then text else T.singleton ':' `T.append` text
 get_branch_label t Nothing = T.empty
 
 instance WriteNewickNode TreeImp where
