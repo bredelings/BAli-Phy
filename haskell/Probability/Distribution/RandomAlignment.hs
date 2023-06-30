@@ -37,7 +37,7 @@ median xs = ys !! n where
     n = length xs `div` 2
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
-left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranches tree - 1] ]
+left_aligned_alignments_on_tree tree ls = [ make_A b | b <- getEdges tree ]
   where
     internal_sequence_length = median $ Map.elems $ ls
     -- FIXME: can we assume that the leaf nodes are [0..n_leaves-1]?
@@ -79,7 +79,7 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
 alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internal_nodes tree)
-alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
+alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) (getUEdges tree)
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls IntMap.! 0) model]
                                                              | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
