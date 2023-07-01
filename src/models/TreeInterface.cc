@@ -76,32 +76,31 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     assert(tree.size() == 5);
 
     auto edges_out_of_node = tree[0];
-    auto nodes_for_edge    = tree[1];
-    int n_nodes            = tree[0].value().as_<IntMap>().size();
-    int n_branches         = n_nodes - 1;
-
-    for(int n=0; n < n_nodes; n++)
+    expression_ref tmp = edges_out_of_node.value();
+    for(auto [node, _]: tmp.as_<IntMap>())
     {
-        auto neighbor_branches = edges_out_of_node[n][1];
+        auto neighbor_branches = edges_out_of_node[node][1];
 
         vector<param> m_edges;
         for(int i=0;i<neighbor_branches.size();i++)
             m_edges.push_back( neighbor_branches[i] );
 
-        parameters_for_tree_node.push_back ( m_edges );
+        parameters_for_tree_node.insert({node, m_edges});
 
         if (m_edges.size() < 2) n_leaves++;
     }
 
-    for(int b=0; b < 2*n_branches; b++)
+    auto nodes_for_edge    = tree[1];
+    tmp = nodes_for_edge.value();
+    for(auto [edge, _]: tmp.as_<IntMap>())
     {
-        auto info = nodes_for_edge[b];
+        auto info = nodes_for_edge[edge];
 
         param m_source = info[0];
         param m_source_index = info[1];
         param m_target = info[2];
 
-        parameters_for_tree_branch.push_back( {m_source, m_source_index, m_target} );
+        parameters_for_tree_branch.insert({edge, {m_source, m_source_index, m_target} });
     }
 }
 
@@ -189,7 +188,7 @@ int TreeInterface::degree(int n) const {
     if (branches_from_affected_node(n))
 	return branches_from_affected_node(n)->size();
     else
-	return get_tree_constants().parameters_for_tree_node[n].size();
+	return get_tree_constants().parameters_for_tree_node.at(n).size();
 }
 
 int TreeInterface::branch_out(int n, int i) const
@@ -197,7 +196,7 @@ int TreeInterface::branch_out(int n, int i) const
     if (branches_from_affected_node(n))
 	return (*branches_from_affected_node(n))[i];
   
-    return get_tree_constants().parameters_for_tree_node[n][i].get_value(get_const_context()).as_int();
+    return get_tree_constants().parameters_for_tree_node.at(n)[i].get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -391,15 +390,15 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::source_index(int b) const {
-    return std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return std::get<2>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::undirected(int b) const {
@@ -888,7 +887,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n);
  */
 void TreeInterface::read_tree_node(const Tree& T, int n)
 {
-    assert(get_tree_constants().parameters_for_tree_node[n].size() == T.node(n).degree());
+    assert(get_tree_constants().parameters_for_tree_node.at(n).size() == T.node(n).degree());
 
     // These are the edges we seek to impose.
     vector<int> edges = edges_connecting_to_node(T,n);
@@ -898,8 +897,8 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
     for(int i=0;i<edges.size();i++)
     {
 	int b = edges[i];
-	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
-	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
+	get_tree_constants().parameters_for_tree_node.at(n)[i].set_value(get_context(), b);
+	std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).set_value(get_context(), i);
     }
 }
 
@@ -910,8 +909,8 @@ void TreeInterface::read_tree(const Tree& T)
 
     for(int b=0; b < 2*T.n_branches(); b++)
     {
-        std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).source());
-        std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).target());
+        std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).set_value(get_context(), (int)T.directed_branch(b).source());
+        std::get<2>(get_tree_constants().parameters_for_tree_branch.at(b)).set_value(get_context(), (int)T.directed_branch(b).target());
     }
 }
 
@@ -941,8 +940,8 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     branches_from_affected_node(t2)->push_back(b2);
 
     // Update branch source and target nodes
-    std::get<2>(get_tree_constants().parameters_for_tree_branch[b1]).set_value(get_context(), t2);
-    std::get<0>(get_tree_constants().parameters_for_tree_branch[b2]).set_value(get_context(), t2);
+    std::get<2>(get_tree_constants().parameters_for_tree_branch.at(b1)).set_value(get_context(), t2);
+    std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b2)).set_value(get_context(), t2);
 }
 
 void TreeInterface::begin_modify_topology()
@@ -957,17 +956,17 @@ void TreeInterface::begin_modify_topology()
 void TreeInterface::end_modify_node(int n)
 {
     assert(branches_from_affected_node(n));
-    assert(get_tree_constants().parameters_for_tree_node[n].size() == branches_from_affected_node(n)->size());
+    assert(get_tree_constants().parameters_for_tree_node.at(n).size() == branches_from_affected_node(n)->size());
 
     // These are the current edges.
     const auto& branches = *branches_from_affected_node(n);
 
-    assert(branches.size() == get_tree_constants().parameters_for_tree_node[n].size());
+    assert(branches.size() == get_tree_constants().parameters_for_tree_node.at(n).size());
     for(int i=0;i<branches.size();i++)
     {
 	int b = branches[i];
-	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
-	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
+	get_tree_constants().parameters_for_tree_node.at(n)[i].set_value(get_context(), b);
+	std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).set_value(get_context(), i);
     }
 
     delete branches_from_affected_node(n);
