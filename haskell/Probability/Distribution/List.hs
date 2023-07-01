@@ -5,6 +5,10 @@ import Probability.Distribution.Gamma
 import Data.Array
 import Effect
 import MCMC
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IS
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
@@ -75,23 +79,29 @@ iid n dist = IID n dist
 -- that DOES make sense...
 
 -- So we can do this...  but then we only get access to the "dist" part.
-data Independent d = Independent [d]
+data Independent f d = Independent (f d)
 
-instance Dist d => Dist (Independent d) where
-    type Result (Independent d) = [Result d]
+instance Dist d => Dist (Independent f d) where
+    type Result (Independent f d) = f (Result d)
     dist_name dist = "independent"
 
-instance IOSampleable d => IOSampleable (Independent d) where
-    sampleIO (Independent dists) = sequence $ map sampleIO dists
+instance (Functor f, IOSampleable d) => IOSampleable (Independent f d) where
+    sampleIO (Independent dists) = return $ fmap (unsafePerformIO . sampleIO) dists
 
-instance HasPdf d => HasPdf (Independent d) where
+instance HasPdf d => HasPdf (Independent [] d) where
     pdf (Independent ds) xs = independent_pdf ds xs
 
-instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent d) where
+instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d) where
     annotated_densities (Independent dists) = make_densities' $ independent_densities dists
 
-instance Sampleable d => Sampleable (Independent d) where
-    sample (Independent dists) = lazy $ sequence $ map sample dists
+--instance Sampleable d => Sampleable (Independent [] d) where
+--    sample (Independent dists) = lazy $ sequence $ map sample dists
+
+--instance Sampleable d => Sampleable (Independent IntMap d) where
+--    sample (Independent dists) = RanOp (\interp -> return $ fmap (unsafePerformIO . interp . sample) dists)
+
+instance (Functor f, Sampleable d) => Sampleable (Independent f d) where
+    sample (Independent dists) = RanOp (\interp -> return $ fmap (unsafePerformIO . interp . sample) dists)
 
 
 independent dists = Independent dists
