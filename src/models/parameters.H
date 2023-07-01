@@ -218,7 +218,7 @@ public:
 
     ParametersTreeInterface t() const;
 
-    std::vector<std::string> get_labels() const;
+    std::map<int,std::string> get_labels() const;
   
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);
