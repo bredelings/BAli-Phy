@@ -28,7 +28,7 @@ struct tree_constants: public Object
     std::optional<int> away_from_root_reg;
 
     // Node labels
-    std::vector<std::string> node_labels;
+    std::map<int,std::string> node_labels;
 
     // Branch lengths
     std::optional<int> branch_durations_reg;
@@ -40,7 +40,7 @@ struct tree_constants: public Object
 
     tree_constants(context_ref&, int tree_reg);
     tree_constants(context_ref&, const expression_ref&);
-    tree_constants(context_ref&, const std::vector<std::string>&, const expression_ref&);
+    tree_constants(context_ref&, const std::map<int,std::string>&, const expression_ref&);
 };
 
 class TreeInterface
@@ -139,6 +139,7 @@ public:
     std::optional<int> parent_of_node(int n) const;
     std::vector<int> children_of_node(int n) const;
 
+    std::map<int,double> branch_lengths() const;
     bool has_branch_lengths() const;
     double branch_length(int b) const;
     bool can_set_branch_length(int b) const;
@@ -209,9 +210,9 @@ std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
 unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2);
 
 /// Return a Newick string representation of the tree 'T' with names 'names' and branch lengths L.
-std::string write(const TreeInterface& T, const std::vector<double>& L, const std::vector<std::string>& names);
+std::string write(const TreeInterface& T, const std::map<int,double>& L, const std::vector<std::string>& names);
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
-std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths=true); 
+std::string write(const TreeInterface& T, std::map<int,std::string>, bool print_lengths=true);
 
 void check_tree(const Tree&, const TreeInterface&);
 

@@ -523,7 +523,7 @@ ParametersTreeInterface Parameters::t() const
     return {this};
 }
 
-vector<string> Parameters::get_labels() const
+map<int,string> Parameters::get_labels() const
 {
     return TC->node_labels;
 }
@@ -700,9 +700,15 @@ void mutable_data_partition::set_alignment(const alignment& A)
     auto T = t();
 
     auto labels = P->get_labels();
+    vector<string> labels_v(labels.size());
+    for(auto [index,name]: labels)
+    {
+        assert(index >=0 and index < labels_v.size());
+        labels_v[index] = name;
+    }
 
     // 2. Reorder and maybe extend the alignment
-    auto AA = link_A(A, labels, T);
+    auto AA = link_A(A, labels_v, T);
 
     // 3. Check that the alignment doesn't disagree with existing leaf sequences lengths!
     for(auto node: T.leaf_nodes())
@@ -1141,11 +1147,15 @@ Parameters::Parameters(const Program& prog,
     context_ptr taxa_ptr(*this, *r_prop0);
     taxa_ptr = taxa_ptr[5];
     vector<string> labels;
+    map<int,string> labels_map;
     int n_nodes = taxa_ptr.value().as_<IntMap>().size();
     for(int node = 0; node < n_nodes; node++)
     {
         if (auto name = taxa_ptr[node].value().as_<EMaybe>())
+        {
+            labels_map.insert({node, name->as_<String>()});
             labels.push_back(name->as_<String>());
+        }
     }
     auto leaf_labels = labels;
 
@@ -1153,13 +1163,16 @@ Parameters::Parameters(const Program& prog,
     for(int node = 0; node < n_nodes; node++)
     {
         if (not taxa_ptr[node].value().as_<EMaybe>())
+        {
             labels.push_back("A"+std::to_string(node));
+            labels_map.insert({node,"A"+std::to_string(node)});
+        }
     }
 
     // 2. Set up the TreeInterface mapping to the tree inside the machine
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-    TC = new tree_constants(*this, labels, get_expression(tree_index));
+    TC = new tree_constants(*this, labels_map, get_expression(tree_index));
     branches_from_affected_node.resize(t().n_nodes());
 
     // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.

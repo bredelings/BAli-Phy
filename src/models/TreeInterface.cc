@@ -13,6 +13,7 @@
 
 using std::vector;
 using std::string;
+using std::map;
 using boost::dynamic_bitset;
 
 // We use the context_ptr class to avoid pointing to index_var regs, which
@@ -104,7 +105,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 }
 
-tree_constants::tree_constants(context_ref& C, const vector<string>& labels, const expression_ref& E)
+tree_constants::tree_constants(context_ref& C, const map<int,string>& labels, const expression_ref& E)
     :tree_constants(C, E)
 {
     node_labels = labels;
@@ -538,6 +539,20 @@ bool TreeInterface::has_branch_lengths() const
         return false;
 }
 
+map<int,double> TreeInterface::branch_lengths() const
+{
+    assert(has_branch_lengths());
+
+    auto branch_to_reg = context_ptr{get_const_context(), branch_durations_reg().value()};
+
+    auto length_regs = branch_to_reg.value();
+
+    map<int,double> lengths;
+    for(auto& [b,r]: length_regs.as_<IntMap>())
+        lengths.insert({b, branch_to_reg[r].value().as_double()});
+    return lengths;
+}
+
 double TreeInterface::branch_length(int b) const
 {
     assert(has_branch_lengths());
@@ -811,9 +826,9 @@ double tree_length(const TreeInterface& t)
     return total;
 }
 
-string write_branch(const TreeInterface& T, int b, const vector<string>& names);
+string write_branch(const TreeInterface& T, int b, const map<int,string>& names);
 
-string write_branches_and_node(const TreeInterface& T, const vector<int>& branches, int node, const vector<string>& names)
+string write_branches_and_node(const TreeInterface& T, const vector<int>& branches, int node, const map<int,string>& names)
 {
     string output;
   
@@ -829,55 +844,50 @@ string write_branches_and_node(const TreeInterface& T, const vector<int>& branch
     }
 
     // Print the name (it might be empty)
-    if (names[node].size())
-	output += names[node];
+    if (names.at(node).size())
+	output += names.at(node);
 
     return output;
 }
 
-string write_branch(const TreeInterface& T, int b, const vector<string>& names)
+string write_branch(const TreeInterface& T, int b, const map<int,string>& names)
 {
     // If this is an internal node, then print the subtrees
     return write_branches_and_node(T, T.branches_after(b), T.target(b), names);
 }
 
-string write(const TreeInterface& T, int root, const vector<string>& names)
+string write(const TreeInterface& T, int root, const map<int,string>& names)
 {
     return write_branches_and_node(T, T.branches_out(root), root, names) + ";";
 }
 
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
-std::string write(const TreeInterface& T, int root, const std::vector<double>& L, const std::vector<std::string>& names)
+std::string write(const TreeInterface& T, int root, const map<int,double>& L, const map<int,string>& names)
 {
     vector<int> branches = T.all_branches_from_node(root);
-    vector<string> names2 = names;
+    auto names2 = names;
     for(int b: branches)
     {
 	int n = T.target(b);
-	names2[n] = names2[n] +":" + std::to_string(L[T.undirected(b)]);
+	names2.at(n) = names2.at(n) +":" + std::to_string(L.at(T.undirected(b)));
     }
     return write(T, root, names2);
 }
 
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
-std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths)
+std::string write(const TreeInterface& T, map<int,string> names, bool print_lengths)
 {
     int root = 0;
     if (T.n_nodes() > 2)
 	root = T.target(0);
 
-    vector<string> names2;
-    for(auto& name: names)
-	names2.push_back(escape_for_newick(name));
+    for(auto& [b,name]: names)
+	name = escape_for_newick(name);
+
     if (print_lengths)
-    {
-	vector<double> L;
-	for(int i=0;i<T.n_branches();i++)
-	    L.push_back(T.branch_length(i));
-	return write(T, root, L, names2);
-    }
+	return write(T, root, T.branch_lengths(), names);
     else
-	return write(T, root, names2);
+	return write(T, root, names);
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n);
