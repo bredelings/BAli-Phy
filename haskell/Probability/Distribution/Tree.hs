@@ -89,17 +89,16 @@ add_SPR_moves tree = do
 
 add_topology_moves tree = do
   SamplingRate 1 $ add_SPR_moves tree
-
+  SamplingRate 1 $ add_move $ walk_tree_sample_NNI_and_branch_lengths tree
+  SamplingRate 2.0 $ add_move $ walk_tree_sample_NNI tree  -- if alignment is fixed this is really cheap -- increase weight?
+  SamplingRate 0.5 $ add_move $ walk_tree_sample_NNI_and_A tree
 
 add_length_moves tree = do
   SamplingRate 1 $ add_move $ walk_tree_sample_branch_lengths tree
 
 add_tree_moves tree = do
-  SamplingRate 1 $ add_SPR_moves tree
+  SamplingRate 1 $ add_topology_moves tree
   SamplingRate 1 $ add_length_moves tree
-  SamplingRate 1 $ add_move $ walk_tree_sample_NNI_and_branch_lengths tree
-  SamplingRate 2.0 $ add_move $ walk_tree_sample_NNI tree  -- if alignment is fixed this is really cheap -- increase weight?
-  SamplingRate 0.5 $ add_move $ walk_tree_sample_NNI_and_A tree
 
 add_tree_alignment_moves tree = do
   SamplingRate 2 $ add_tree_moves tree
