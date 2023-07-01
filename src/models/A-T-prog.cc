@@ -25,6 +25,7 @@ using std::endl;
 using std::ostream;
 using std::map;
 using std::tuple;
+using std::optional;
 
 using std::optional;
 namespace fs = std::filesystem;
@@ -180,11 +181,15 @@ std::string generate_atmodel_program(const set<string>& fixed,
         scaleM_function_for_index = print_models("sample_scale", scaleMs, program_file);
 
         // F4. Branch lengths
-        program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
+        if (not fixed.count("tree"))
+        {
+            program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
+        }
     }
 
     // F5. Topology
-    program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
+    if (not fixed.count("topology") and not fixed.count("tree"))
+        program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -215,10 +220,11 @@ std::string generate_atmodel_program(const set<string>& fixed,
 
     // M2. Topology
     auto topology_var = var("topology");
-    program.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
+    if (not fixed.count("topology") and not fixed.count("tree"))
+        program.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
 
     // M3. Branch lengths
-    if (n_branches > 0)
+    if (n_branches > 0 and not fixed.count("tree"))
     {
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
@@ -228,11 +234,16 @@ std::string generate_atmodel_program(const set<string>& fixed,
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
     }
     // M4. Branch-length tree
-    program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    if (not fixed.count("tree"))
+        program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    else
+        program.let(tree_var, {var("tree")});
     branch_lengths = {var("IntMap.elems"),branch_lengths};
-    program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("make_rooted"), {var("addInternalLabels"),tree_var}}}} );
+    if (not fixed.count("tree"))
+        program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("make_rooted"), {var("addInternalLabels"),tree_var}}}} );
 
     program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
+
 
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
@@ -282,8 +293,11 @@ std::string generate_atmodel_program(const set<string>& fixed,
             program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
         }
 
-        program.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
-        program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_MH"), get_list(scales), branch_lengths}}}});
+        if (not fixed.count("tree"))
+        {
+            program.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
+            program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_MH"), get_list(scales), branch_lengths}}}});
+        }
     }
 
     // M7. Substitution models
@@ -487,11 +501,20 @@ std::string generate_atmodel_program(const set<string>& fixed,
             )
         );
 
-    program_file<<"\nmodel sequence_data = "<<program.get_expression().print()<<"\n";
+    auto model = var("model");
+    auto sequence_data = var("sequence_data");
+    auto topology = var("topology");
+    auto tree = var("tree");
+    expression_ref model_fn = {model,sequence_data};
+    if (fixed.count("tree"))
+        model_fn = {model_fn,tree};
+    else if (fixed.count("topology"))
+        model_fn = {model_fn, topology};
+    program_file<<"\n";
+    program_file<<model_fn<<" = "<<program.get_expression().print()<<"\n";
 
     do_block main;
 
-    var sequence_data_var("sequence_data");
     if (n_partitions == 1)
     {
         auto [filename, range] = filename_ranges[0];
@@ -500,7 +523,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
             E = {var("<$>"), {var("select_range"),String(range)}, E};
         main.empty_stmt();
 
-        main.perform(sequence_data_var, E);
+        main.perform(sequence_data, E);
     }
     else
     {
@@ -524,7 +547,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
         }
 
         if (index_for_filename.size() == n_partitions and not any_ranges)
-            main.perform(sequence_data_var,{var("mapM"), var("load_sequences"), filenames_var});
+            main.perform(sequence_data,{var("mapM"), var("load_sequences"), filenames_var});
         else
         {
             // Main.2: Emit let filenames_to_seqs = ...
@@ -535,29 +558,42 @@ std::string generate_atmodel_program(const set<string>& fixed,
             main.empty_stmt();
 
             // Main.3. Emit let sequence_data<n> = 
-            vector<expression_ref> sequence_data;
+            vector<expression_ref> partition_sequence_data;
             for(int i=0;i<n_partitions;i++)
             {
                 string part = std::to_string(i+1);
-                var sequence_data_var("sequence_data"+part);
+                var partition_sequence_data_var("sequence_data"+part);
                 int index = index_for_filename.at( filename_ranges[i].first );
                 expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
                 if (not filename_ranges[i].second.empty())
                     loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-                main.let(sequence_data_var, loaded_sequences);
-                sequence_data.push_back(sequence_data_var);
+                main.let(partition_sequence_data_var, loaded_sequences);
+                partition_sequence_data.push_back(partition_sequence_data_var);
                 main.empty_stmt();
             }
 
             // Main.4. Emit let sequence_data = ...
-            var sequence_data_var("sequence_data");
-            main.let(sequence_data_var, get_list(sequence_data));
+            main.let(sequence_data, get_list(partition_sequence_data));
             main.empty_stmt();
         }
     }
 
+    if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
+    {
+        throw myexception()<<"The tree is fixed, but no tree file is given. (Use --tree)";
+    }
+
+    if (fixed.count("tree"))
+    {
+        main.perform(tree, {var("readBranchLengthTree"),String(*tree_filename)});
+    }
+    else if (fixed.count("topology"))
+    {
+        main.perform(topology, {var("readTreeTopology"),String(*tree_filename)});
+    }
+
     // Main.5. Emit mcmc $ model sequence_data
-    main.perform({var("$"),var("mcmc"),{var("model"),sequence_data_var}});
+    main.perform({var("$"),var("mcmc"),model_fn});
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
