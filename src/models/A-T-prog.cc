@@ -165,6 +165,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
     program_file<<"module Main where";
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
+    program_file<<"\nimport qualified Data.IntMap as IntMap";
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -208,12 +209,15 @@ std::string generate_atmodel_program(const set<string>& fixed,
         program.empty_stmt();
     }
 
+    // We could fix the whole tree or just the topology.
+    auto tree_var = var("tree'");
+    expression_ref branch_lengths = var("IntMap.empty");
+
     // M2. Topology
     auto topology_var = var("topology");
     program.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
 
     // M3. Branch lengths
-    expression_ref branch_lengths = List();
     if (n_branches > 0)
     {
         string var_name = "branch_lengths";
@@ -224,8 +228,8 @@ std::string generate_atmodel_program(const set<string>& fixed,
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
     }
     // M4. Branch-length tree
-    auto tree_var = var("tree'");
     program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    branch_lengths = {var("IntMap.elems"),branch_lengths};
     program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("make_rooted"), {var("addInternalLabels"),tree_var}}}} );
 
     program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
