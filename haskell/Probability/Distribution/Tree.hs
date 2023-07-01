@@ -108,8 +108,9 @@ uniform_labelled_tree taxa branch_lengths_dist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
   topology <- RanSamplingRate 0.0 $ uniform_labelled_topology taxa
   -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
-  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
-  let tree = branch_length_tree topology branch_lengths
+--  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
+  branch_lengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branch_lengths_dist topology))
+  let tree = BranchLengthTree topology branch_lengths
   return tree `with_tk_effect` add_tree_alignment_moves
 
 ----
