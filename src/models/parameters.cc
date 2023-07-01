@@ -1179,7 +1179,7 @@ Parameters::Parameters(const Program& prog,
     // R5. Register branch categories
     auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );
     if (has_constructor(maybe_branch_cats,"Data.Maybe.Just"))
-        PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
+        PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, t().n_branches());
 
     // create data partitions
     for(auto partition: sequence_data)
