@@ -72,6 +72,8 @@ instance Sampleable d => Sampleable (IID d) where
 
 iid n dist = IID n dist
 
+iidMap set dist = independent $ IM.fromSet (const dist) set
+
 -- OK, so part of the issue here is that we want iid n sampling_action to work,
 -- but we want iid_dist n dist to require dist to be something with a pdf.
 -- So... we want only (iid n (normal 0 1)) and iidDist n (normalDist 0 1), I guess?

@@ -1,0 +1,13 @@
+{
+    "name": "branches",
+    "result_type": "IntSet",
+    "no_log": true,
+    "call": "getUEdgesSet[@t]",
+    "import": ["Tree"],
+    "args": [
+        {
+            "arg_name": "t",
+            "arg_type": "Tree"
+        }
+    ]
+}

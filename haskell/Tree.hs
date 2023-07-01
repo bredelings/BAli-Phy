@@ -172,8 +172,7 @@ instance TimeTree t => TimeTree (RateTimeTreeImp t) where
 instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
     branch_rate (RateTimeTree _ rs) node = rs IntMap.! node
 
-branch_length_tree topology lengths = BranchLengthTree topology lengths' where
-    lengths' = IntMap.fromList $ zip [0..] lengths
+branch_length_tree topology lengths = BranchLengthTree topology lengths
 
 branch_lengths (BranchLengthTree _ ds) = ds
 

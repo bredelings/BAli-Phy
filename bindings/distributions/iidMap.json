@@ -1,0 +1,20 @@
+{
+    "name": "iidMap",
+    "result_type": "Distribution[IntMap[a]]",
+    "call": "iidMap[@set,@dist]",
+    "import": ["Probability"],
+    "args": [
+        {
+            "arg_name": "set",
+            "arg_type": "IntSet",
+	    "description": "The number of samples"
+        },
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[a]",
+	    "description": "The distribution to sample from"
+        }
+    ],
+    "title": "The Independent and Identically Distributed (i.i.d.) distribution",
+    "examples": ["~iidMap(branches(tree), normal(0,1))    // A list of 10 normal(0,1) random variables"]
+}
