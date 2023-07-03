@@ -20,6 +20,8 @@ import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
+import qualified Data.Text as Text (unpack)
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
@@ -103,3 +105,15 @@ select_alignment_columns alignment sites = builtin_select_alignment_columns alig
 foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignment_pairs :: AlignmentMatrix -> EVector (EPair Int Int) -> Alphabet -> AlignmentMatrix
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
     where sites' = list_to_vector $ map (\(x,y) -> c_pair x y) sites
+
+find_sequence label sequences = find (\s -> sequence_name s == label) sequences
+
+getSequencesOnTree :: LabelledTree t => [Sequence] -> t -> IntMap (Maybe Sequence)
+getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
+    sequence_for_node node = case get_label tree node of
+                               Nothing ->  Nothing
+                               Just label ->
+                                   case find_sequence label sequence_data of
+                                     Just sequence -> Just sequence
+                                     Nothing -> error $ "No such sequence " ++ Text.unpack label
+

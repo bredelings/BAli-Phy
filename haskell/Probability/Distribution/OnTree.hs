@@ -20,6 +20,7 @@ import qualified Data.IntMap as IntMap
 import Foreign.IntMap (EIntMap)
 import qualified Foreign.IntMap as FIM
 
+import Data.Maybe (fromJust)
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
 --        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
@@ -57,25 +58,6 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_n_muts :: Int
     }
 
-find_sequence label sequences = find (\s -> sequence_name s == label) sequences
-
-getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
-    sequence_for_node node = case get_label tree node of
-                               Nothing ->  error $ "No label for node " ++ show node
-                               Just label ->
-                                   case find_sequence label sequence_data of
-                                     Just sequence -> sequence
-                                     Nothing -> error $ "No such sequence " ++ Text.unpack label
-
-getSequencesOnTree2 :: LabelledTree t => [Sequence] -> t -> IntMap (Maybe Sequence)
-getSequencesOnTree2 sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
-    sequence_for_node node = case get_label tree node of
-                               Nothing ->  Nothing
-                               Just label ->
-                                   case find_sequence label sequence_data of
-                                     Just sequence -> Just sequence
-                                     Nothing -> error $ "No such sequence " ++ Text.unpack label
-
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
@@ -105,7 +87,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
-      node_sequences = fmap (sequence_to_indices alphabet) $ getSequencesOnTree sequences tree
+      node_sequences = fmap (sequence_to_indices alphabet) $ fmap fromJust $ getSequencesOnTree sequences tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -194,7 +176,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       -- stop going through Alignment
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree2 sequences tree
+      node_sequences0 = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree sequences tree
 
       -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
       -- OK, so how are we going to do this?
