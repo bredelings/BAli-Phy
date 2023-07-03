@@ -549,7 +549,7 @@ map<int,double> TreeInterface::branch_lengths() const
 
     map<int,double> lengths;
     for(auto& [b,r]: length_regs.as_<IntMap>())
-        lengths.insert({b, branch_to_reg[r].value().as_double()});
+        lengths.insert({b, branch_to_reg[b].value().as_double()});
     return lengths;
 }
 
