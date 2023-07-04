@@ -217,19 +217,21 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
                  std::vector<std::optional<int>>& smodel_index_for_partition,
                  std::vector<std::optional<int>>& imodel_index_for_partition,
                  std::vector<std::optional<int>>& scale_index_for_partition,
-                 const Parameters& P,const variables_map& args)
+                 int n_branches, int n_data_partitions,
+                 const vector<string>& alphabet_names,
+                 const variables_map& args)
 {
     json info;
     json partitions;
 
     json tree;
-    if (P.t().n_branches() > 1)
+    if (n_branches > 1)
     {
         out_both<<"T:topology ~ uniform on tree topologies\n";
         tree["topology"] = "uniform";
     }
 
-    if (P.t().n_branches() > 0)
+    if (n_branches > 0)
     {
         out_both<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
         tree["lengths"] = branch_length_model.show(false);
@@ -239,7 +241,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     auto filename_ranges = args["align"].as<vector<string> >();
     auto alignment_files = split_on_last(':',filename_ranges);
 
-    for(int i=0;i<P.n_data_partitions();i++)
+    for(int i=0;i<n_data_partitions;i++)
     {
         json partition;
 
@@ -255,7 +257,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
         partition["range"] = range;
 
         // 2. alphabet
-        string a_name = P[i].get_alphabet()->name;
+        string a_name = alphabet_names[i];
         out_screen<<"    alphabet = "<<bold(a_name)<<"\n";
         out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
         partition["alphabet"] = a_name;
@@ -942,9 +944,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
 
-    Parameters P(prog, keys);
+    Parameters M(prog, keys);
 
-    P.evaluate_program();
+    M.evaluate_program();
 
     //------------- Write out a tree with branch numbers as branch lengths------------- //
     write_branch_numbers(out_cache, T);
@@ -953,12 +955,14 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     info.update( log_summary(out_cache, out_screen, out_both,
                              full_imodels, full_smodels, full_scale_models, branch_length_model,
                              smodel_mapping, imodel_mapping, scale_mapping,
-                             P,args) );
+                             T.n_branches(), filename_ranges.size(),
+                             alphabet_names,
+                             args) );
 
     //------------------- Handle heating ---------------------//
-    setup_heating(proc_id,args,P);
+    setup_heating(proc_id, args, M);
 
-    return P;
+    return M;
 }
 
 void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)
