@@ -28,6 +28,8 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
           go (k, Just v)  = T.concat [k, T.singleton '=',v]
 
 class Tree t where
+    type family Unrooted t
+
     findNode    :: t -> Int -> Node
     findEdge    :: t -> Int -> Edge
     getNodesSet :: t -> IntSet
@@ -36,6 +38,8 @@ class Tree t where
     getNodeAttributes :: t -> Int -> Attributes
     getEdgeAttributes :: t -> Int -> Attributes
     getTreeAttributes :: t -> Attributes
+
+    unroot :: t -> Unrooted t
 
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
@@ -101,6 +105,8 @@ data TimeTreeImp t  = TimeTree t (IntMap Double)
 data RateTimeTreeImp t = RateTimeTree t (IntMap Double)
 
 instance Tree TreeImp where
+    type instance Unrooted TreeImp = TreeImp
+
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
@@ -111,11 +117,14 @@ instance Tree TreeImp where
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
     getTreeAttributes (Tree _ _ _ _ a)              = a
 
+    unroot t = t
+
 getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeAttributes tree node)
 getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
 getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getTreeAttributes tree)
                                                       
 instance Tree t => Tree (RootedTreeImp t) where
+    type Unrooted (RootedTreeImp t) = Unrooted t
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
     findNode    (RootedTree t _ _) node            = findNode t node
@@ -124,7 +133,10 @@ instance Tree t => Tree (RootedTreeImp t) where
     getEdgeAttributes (RootedTree t _ _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
 
+    unroot (RootedTree t _ _) = unroot t
+
 instance Tree t => Tree (LabelledTreeImp t) where
+    type Unrooted (LabelledTreeImp t) = LabelledTreeImp (Unrooted t)
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
     findNode    (LabelledTree t _) node            = findNode t node
@@ -133,7 +145,11 @@ instance Tree t => Tree (LabelledTreeImp t) where
     getEdgeAttributes (LabelledTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
 
+    unroot (LabelledTree t labels) = LabelledTree (unroot t) labels
+
+
 instance Tree t => Tree (BranchLengthTreeImp t) where
+    type Unrooted (BranchLengthTreeImp t) = BranchLengthTreeImp (Unrooted t)
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
     getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
     findNode    (BranchLengthTree t _) node        = findNode t node
@@ -142,7 +158,10 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
     getEdgeAttributes (BranchLengthTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
 
-instance Tree t => Tree (TimeTreeImp t) where
+    unroot (BranchLengthTree t labels) = BranchLengthTree (unroot t) labels
+
+instance RootedTree t => Tree (TimeTreeImp t) where
+    type Unrooted (TimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
     findNode    (TimeTree t _) node                = findNode t node
@@ -151,7 +170,10 @@ instance Tree t => Tree (TimeTreeImp t) where
     getEdgeAttributes (TimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (TimeTree t _)              = getTreeAttributes t
 
-instance Tree t => Tree (RateTimeTreeImp t) where
+    unroot tt@(TimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+
+instance TimeTree t => Tree (RateTimeTreeImp t) where
+    type Unrooted (RateTimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
     getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
     findNode    (RateTimeTree t _) node            = findNode t node
@@ -159,6 +181,8 @@ instance Tree t => Tree (RateTimeTreeImp t) where
     getNodeAttributes (RateTimeTree t _) node         = getNodeAttributes t node
     getEdgeAttributes (RateTimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RateTimeTree t _)              = getTreeAttributes t
+
+    unroot tt@(RateTimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
 
 instance RootedTree t => TimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
@@ -215,7 +239,7 @@ instance RootedTree t => RootedTree (TimeTreeImp t) where
     root (TimeTree t _)     = root t
     away_from_root (TimeTree   t _        ) b = away_from_root t b
 
-instance RootedTree t => RootedTree (RateTimeTreeImp t) where
+instance TimeTree t => RootedTree (RateTimeTreeImp t) where
     root (RateTimeTree t _) = root t
     away_from_root (RateTimeTree tree _  ) b = away_from_root tree b
 
@@ -236,11 +260,11 @@ instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
     get_label  (BranchLengthTree t _) node = get_label t node
     get_labels (BranchLengthTree t _) = get_labels t
 
-instance LabelledTree t => LabelledTree (TimeTreeImp t) where
+instance (RootedTree t, LabelledTree t) => LabelledTree (TimeTreeImp t) where
     get_label (TimeTree t _) node          = get_label t node
     get_labels (TimeTree t _) = get_labels t
 
-instance LabelledTree t => LabelledTree (RateTimeTreeImp t) where
+instance (TimeTree t, LabelledTree t) => LabelledTree (RateTimeTreeImp t) where
     get_label (RateTimeTree t _) node      = get_label t node
     get_labels (RateTimeTree t _) = get_labels t
 
@@ -332,4 +356,3 @@ addInternalLabels tree = LabelledTree tree newLabels where
 add_ancestral_label node labels = case (labels IntMap.! node) of
                                     Just l -> l
                                     Nothing -> T.append (T.singleton 'A') (T.pack (show node))
-
