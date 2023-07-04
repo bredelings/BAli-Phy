@@ -51,6 +51,9 @@ class ToJSON a where
 
     toJSONList x = Array $ map toJSON x
 
+instance ToJSON JSON where
+    toJSON = id
+
 instance ToJSON () where
     toJSON () = Null
 
