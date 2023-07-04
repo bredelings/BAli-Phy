@@ -37,15 +37,16 @@ extern "C" closure builtin_function_size(OperationArgs& Args)
     return {s};
 }
 
-extern "C" closure builtin_function_has_key(OperationArgs& Args)
+extern "C" closure builtin_function_member(OperationArgs& Args)
 {
     int e= Args.evaluate(0).as_int();
 
     auto& S = Args.evaluate(1).as_<IntSet>();
 
-    int result = S.find(e)?1:0;
-
-    return {result};
+    if (S.find(e))
+        return bool_true;
+    else
+        return bool_false;
 }
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
@@ -134,20 +135,24 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
     auto& S2 = Args.evaluate(1).as_<IntSet>();
 
     // Loop over the smaller map
-    expression_ref E = 1;
+    bool disjoint = true;
     if (S1.size() < S2.size())
     {
         for(auto& k: S1)
             if (S2.find(k))
-                E = 0;
+                disjoint = false;
     }
     else
     {
         for(auto& k: S2)
             if (S1.find(k))
-                E = 0;
+                disjoint = false;
     }
-    return E;
+
+    if (disjoint)
+        return bool_true;
+    else
+        return bool_false;
 }
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
