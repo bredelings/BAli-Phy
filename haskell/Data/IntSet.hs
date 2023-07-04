@@ -3,6 +3,7 @@ module Data.IntSet where
 import Prelude hiding (map,empty,elems)
 import Data.Functor
 import Foreign.Vector
+import Data.Foldable (foldr)
 
 data IntSet
 
@@ -13,17 +14,16 @@ empty = _empty ()
 
 foreign import bpcall "IntSet:" singleton :: Key -> IntSet
 
--- fromSet :: (Key -> a) -> IntSet -> IntSet
-
+-- Should this be more efficient? With immer it might be OK, but maybe we should
+-- convert to an EVector Int, and then convert that to an IntSet
 fromList []     = empty
 fromList (k:ks) = insert k $ fromList ks
 
-foreign import bpcall "IntSet:insert" insert :: Key -> IntSet -> IntSet
+foreign import bpcall "IntSet:" insert :: Key -> IntSet -> IntSet
 
-foreign import bpcall "IntSet:delete" delete :: Key -> IntSet -> IntSet
+foreign import bpcall "IntSet:" delete :: Key -> IntSet -> IntSet
 
-foreign import bpcall "IntSet:has_key" builtin_member :: Int -> IntSet -> Int
-member key m = case builtin_member key m of 1 -> True ; _ -> False
+foreign import bpcall "IntSet:" member :: Int -> IntSet -> Bool
 
 notMember k = not . member k
 
@@ -38,18 +38,20 @@ foreign import bpcall "IntSet:" size :: IntSet -> Int
 
 foreign import bpcall "IntSet:" union :: IntSet -> IntSet -> IntSet
 
--- unions :: Foldable f => f (IntSet) -> IntSet
+unions :: Foldable f => f (IntSet) -> IntSet
+unions sets = foldr union empty sets
 
 foreign import bpcall "IntSet:" difference :: IntSet -> IntSet -> IntSet
 
 (\\) = difference
 
+-- isSubsetOf :: IntSet -> IntSet -> Bool
+
+-- isProperSubsetOf :: IntSet -> IntSet -> Bool 
+
 foreign import bpcall "IntSet:" intersection :: IntSet -> IntSet -> IntSet
 
-foreign import bpcall "IntSet:disjoint" _disjoint :: IntSet -> IntSet -> Int
-disjoint m1 m2 = case _disjoint m1 m2 of
-                   0 -> False
-                   _ -> True
+foreign import bpcall "IntSet:" disjoint :: IntSet -> IntSet -> Int
 
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 
@@ -62,32 +64,29 @@ toAscList m = toList m
 
 toDescList m = toList m
 
--- filter :: (a -> bool) -> IntSet -> IntSet
--- filterWithKey :: (Key -> a -> Bool) -> IntSet -> IntSet
--- restrictKeys :: IntSet -> IntSet -> IntSet
--- withoutKeys :: IntSet -> IntSet -> IntSet
--- partition :: (a -> Bool) -> IntSet -> (IntSet, IntSet)
--- partitionWithKey :: (Key -> a -> Bool) -> IntSet -> (IntSet, IntSet)
--- mapMaybe :: (a -> Maybe b) -> IntSet -> IntSet b
--- mapMaybeWithKey :: (Key -> a -> Maybe b) -> IntSet -> IntSet b
--- mapEither :: (a -> Either b c) -> IntSet -> (IntSet b, IntSet c)
--- mapEitherWithKey :: (Key -> a -> Either b c) -> IntSet -> (IntSet b, IntSet c)
+-- filter :: (Key -> bool) -> IntSet -> IntSet
+-- partition :: (Key -> Bool) -> IntSet -> (IntSet, IntSet)
 -- split :: Key -> IntSet -> (IntSet, IntSet)
--- splitLookup :: Key -> IntSet -> (IntSet, Maybe a, IntSet)
+-- splitMember :: Key -> IntSet -> (IntSet, Bool, IntSet)
 -- splitRoot :: IntSet -> [IntSet]
+
+map :: (Key -> Key) -> IntSet -> IntSet
+map f set = fromList [ f key | key <- toList set]
+-- mapMonotonic :: (Key -> Key) -> IntSet -> IntSet
 
 -- isSubmapOf :: Eq a => IntSet -> IntSet -> Bool
 -- isSubmapOfBy :: (a -> b -> Bool) -> IntSet -> IntSet b -> Bool
 -- isProperSubmapOf :: Eq a => IntSet -> IntSet -> Bool
 -- isProperSubmapOfBy :: (a -> b -> Bool) -> IntSet -> IntSet b -> Bool
 
--- lookupMin :: IntSet -> Maybe (Key, a)
--- lookupMax :: IntSet -> Maybe (Key, a)
--- findMin :: IntSet -> (Key, a)
--- findMax :: IntSet -> (Key, a)
+-- findMin :: IntSet -> Key
+-- findMax :: IntSet -> Key
 -- deleteMin :: IntSet -> IntSet
 -- deleteMax :: IntSet -> IntSet
-
+-- deleteFindMin :: IntSet -> (Key, IntSet)
+-- deleteFindMax :: IntSet -> (Key, IntSet)
+-- maxView :: IntSet -> Maybe (Key, IntSet)
+-- minView :: IntSet -> Maybe (Key, IntSet) 
 
 instance Show (IntSet) where
     show m = show $ toList m
