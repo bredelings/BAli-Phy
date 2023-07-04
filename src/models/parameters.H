@@ -277,8 +277,7 @@ public:
     Parameters(Parameters&&) = default;
 
     Parameters(const Program& P,
-	       const key_map_t&,
-               const SequenceTree&);
+	       const key_map_t&);
 
     // Can we  create a Parameters from a context and a tree_reg?
     Parameters(const context_ref& C, int tree_reg);
