@@ -167,6 +167,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
     program_file<<"\nimport qualified Data.IntMap as IntMap";
+    program_file<<"\nimport qualified Data.JSON as J";
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -358,6 +359,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
     }
     program.empty_stmt();
 
+    vector<expression_ref> alignments;
     vector<expression_ref> alignment_lengths;
     vector<expression_ref> total_num_indels;
     vector<expression_ref> total_length_indels;
@@ -418,6 +420,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
         program.empty_stmt();
 
         // Model.Partition.4 Logging.
+        expression_ref alignment_exp = var("J.Null");
         if (imodel_index)
         {
             var properties("properties"+part_suffix);
@@ -434,6 +437,9 @@ std::string generate_atmodel_program(const set<string>& fixed,
                 var length_indels("total_length_indels"+part_suffix);
                 program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
+                var anc_alignment("anc_alignment"+part_suffix);
+                program.let(anc_alignment, {var("prop_anc_seqs"), properties} );
+                alignment_exp = anc_alignment;
 
                 var substs("substs"+part_suffix);
                 program.let(substs, {var("prop_n_muts"), properties});
@@ -469,6 +475,10 @@ std::string generate_atmodel_program(const set<string>& fixed,
                 program.let(substs, {var("prop_fa_n_muts"), properties});
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
+
+                var anc_alignment("anc_alignment"+part_suffix);
+                program.let(anc_alignment, {var("prop_fa_anc_seqs"), properties} );
+                alignment_exp = anc_alignment;
             }
         }
 
@@ -476,6 +486,8 @@ std::string generate_atmodel_program(const set<string>& fixed,
         program.let(part_loggers,get_list(sub_loggers));
         program_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
         program.empty_stmt();
+
+        alignments.push_back(alignment_exp);
     }
     if (not alignment_lengths.empty())
         program_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
@@ -487,6 +499,8 @@ std::string generate_atmodel_program(const set<string>& fixed,
         program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
     if (not total_prior_A.empty())
         program_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
+    if (not alignments.empty())
+        program_loggers.push_back( {var("%=%"), String("alignments"), {get_list(alignments) }} );
 
     
     var loggers_var("loggers");
