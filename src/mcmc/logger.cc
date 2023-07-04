@@ -240,9 +240,7 @@ namespace MCMC {
 
     string TreeFunction::operator()(const Model& M, long)
     {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
-	return write_newick(P,true);
+	return M.get_logged_parameters()["tree"];
     }
 
     string MAP_Function::operator()(const Model& M, long t)
