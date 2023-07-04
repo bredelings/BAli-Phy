@@ -3,7 +3,8 @@ module Probability.Random (module Probability.Random,
                            module Numeric.LogDouble,
                            module Numeric.Prob,
                            module Probability.Dist,
-                           modifiable)
+                           modifiable,
+                           liftIO)
     where
 
 import Range
