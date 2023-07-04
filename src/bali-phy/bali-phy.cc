@@ -686,7 +686,7 @@ int main(int argc,char* argv[])
             if (not args.count("test")) {
                 info["subdirectory"] = output_dir.string();
                 files = init_files(proc_id, output_dir, argc, argv);
-                loggers = construct_loggers(args, M, subsample, Rao_Blackwellize, proc_id, output_dir);
+                loggers = construct_loggers(args, info, M, subsample, Rao_Blackwellize, proc_id, output_dir);
 
                 if (args.count("align"))
                     write_initial_alignments(args, proc_id, output_dir);

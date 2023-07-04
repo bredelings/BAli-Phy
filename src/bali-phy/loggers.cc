@@ -213,6 +213,7 @@ set<string> get_log_formats(const boost::program_options::variables_map& args, b
 }
 
 vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_map& args,
+                                       const json& jinfo,
                                        owned_ptr<Model>& M, int subsample,
                                        const vector<string>& Rao_Blackwellize,
                                        int proc_id,
@@ -223,7 +224,14 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     using namespace MCMC;
     vector<Logger> loggers;
 
-    owned_ptr<Parameters> P = M.as<Parameters>();
+    bool is_A_T_model = args.count("align");
+
+    int n_partitions = 0;
+    if (is_A_T_model)
+    {
+        n_partitions = args.at("align").as<vector<string>>().size();
+        assert(jinfo.at("partitions").size() == n_partitions);
+    }
 
     auto base = (dir_name / ("C" + convertToString(proc_id+1))).string();
 
@@ -231,7 +239,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     auto TF3 = &logged_params_and_some_computed_stuff_with_header;
 
-    auto log_formats = get_log_formats(args, (bool)P);
+    auto log_formats = get_log_formats(args, args.count("align"));
 
     // Write out scalar numerical variables (and functions of them) to C<>.log
     if (log_formats.count("tsv"))
@@ -241,48 +249,48 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     if (log_formats.count("json"))
         loggers.push_back( append_to_file(base + ".log.json", &logged_params_and_some_computed_stuff_with_header) );
 
-    if (not P) return loggers;
+    if (not is_A_T_model) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
-    if (P->t().n_nodes() > 1)
-	loggers.push_back( append_line_to_file(base + ".trees", Subsample_Function(TreeFunction(), subsample) ) );
+    loggers.push_back( append_line_to_file(base + ".trees", Subsample_Function(TreeFunction(), subsample) ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
+    // FIXME -- we need to log the alignments!
+    /*
     {
 	ConcatFunction F; 
 	F<<TF3<<"\n";
-	if (P->t().n_nodes() > 1)
-	    for(int i=0;i<P->n_data_partitions();i++)
-		if ((*P)[i].variable_alignment())
-		    F<<Ancestral_Sequences_Function(i, false)<<"\n\n";
+        for(int i=0;i<n_partitions;i++)
+            if (not jinfo.at("partitions")[i].at("imodel").is_null())
+                F<<Ancestral_Sequences_Function(i, false)<<"\n\n";
 	F<<TreeFunction()<<"\n\n";
 	loggers.push_back( append_to_file(base + ".MAP", MAP_Function(F)) );
     }
+    */
 
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
-    if (P->contains_key("log-categories"))
-	for(int i=0;i<P->n_data_partitions();i++)
+    if (M->contains_key("log-categories"))
+	for(int i=0;i<n_partitions;i++)
 	    loggers.push_back( append_to_file(base + ".P" + convertToString(i+1)+".CAT", 
                                               Subsample_Function(Mixture_Components_Function(i),subsample) ) );
-
+/*
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
-    int alignment_extra_subsample = P->load_value("alignment-extra-subsample",10);
+    int alignment_extra_subsample = M->load_value("alignment-extra-subsample",10);
     int alignment_subsample = alignment_extra_subsample*subsample;
-    if (P->t().n_nodes() > 1)
-	for(int i=0;i<P->n_data_partitions();i++)
-	    if ((*P)[i].variable_alignment() or P->load_value("write-fixed-alignments",false)) 
-	    {
-		string filename = base + ".P" + convertToString(i+1)+".fastas";
+    for(int i=0;i<n_partitions;i++)
+        if (not jinfo.at("partitions")[i].at("imodel").is_null() or M->load_value("write-fixed-alignments",false))
+        {
+            string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
-		ConcatFunction F;
-		auto iterations = [](const Model&, long t) {return convertToString(t);};
-		F<<"iterations = "<<iterations<<"\n\n";
-		auto infer_ambiguous_observed = P->load_value("infer-ambiguous-observed",false);
-		F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
+            ConcatFunction F;
+            auto iterations = [](const Model&, long t) {return convertToString(t);};
+            F<<"iterations = "<<iterations<<"\n\n";
+            auto infer_ambiguous_observed = M->load_value("infer-ambiguous-observed",false);
+            F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
 		
-		loggers.push_back( append_to_file(filename, Subsample_Function(F, alignment_subsample) ) );
-	    }
-
+            loggers.push_back( append_to_file(filename, Subsample_Function(F, alignment_subsample) ) );
+        }
+*/
     return loggers;
 }
 
