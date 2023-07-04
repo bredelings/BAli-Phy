@@ -1138,50 +1138,11 @@ Parameters::Parameters(const Program& prog,
     }
 
     /* ---------------- Set up the tree ------------------------------ */
-
-    // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
-    context_ptr taxa_ptr(*this, *r_prop0);
-    taxa_ptr = taxa_ptr[5];
-    vector<string> labels;
-    map<int,string> labels_map;
-    int n_nodes = taxa_ptr.value().as_<IntMap>().size();
-    for(int node = 0; node < n_nodes; node++)
-    {
-        if (auto name = taxa_ptr[node].value().as_<EMaybe>())
-        {
-            labels_map.insert({node, name->as_<String>()});
-            labels.push_back(name->as_<String>());
-        }
-    }
-    auto leaf_labels = labels;
-
-    // FIXME: maybe do this inside the program?
-    for(int node = 0; node < n_nodes; node++)
-    {
-        if (not taxa_ptr[node].value().as_<EMaybe>())
-        {
-            labels.push_back("A"+std::to_string(node));
-            labels_map.insert({node,"A"+std::to_string(node)});
-        }
-    }
-
     // 2. Set up the TreeInterface mapping to the tree inside the machine
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-    TC = new tree_constants(*this, labels_map, get_expression(tree_index));
+    TC = new tree_constants(*this, get_expression(tree_index));
     branches_from_affected_node.resize(t().n_nodes());
-
-    // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.
-    // FIXME: We need ALL the nodes to have the right label_string <-> node-number mapping in
-    //           order to handle alignments with internal-node sequences.
-    auto tt = ttt;
-    assert(tt.n_leaves() == leaf_labels.size());
-    remap_T_leaf_indices(tt, leaf_labels);
-    for(auto node: tt.leaf_nodes())
-        assert(tt.get_label(node) == labels[node]);
-
-    // 4. We need to do this so that we can compute the likelihood of specified trees.
-    t().read_tree(tt);
 
     /* --------------------------------------------------------------- */
 
@@ -1193,19 +1154,6 @@ Parameters::Parameters(const Program& prog,
     // create data partitions
     for(auto partition: sequence_data)
         PC->DPC.emplace_back(*this, partition.get_reg());
-
-    // Load the specified tree BRANCH LENGTHS into the machine.
-    bool some_branch_lengths_not_set = false;
-    for(int b=0;b<tt.n_branches();b++)
-        if (tt.branch(b).has_length())
-        {
-            if (t().can_set_branch_length(b))
-                t().set_branch_length(b, tt.branch(b).length());
-            else
-                some_branch_lengths_not_set = true;
-        }
-    if (some_branch_lengths_not_set)
-        std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 
     for(int i=0;i<n_data_partitions();i++)
         if (get_data_partition(i).has_pairwise_alignments())
