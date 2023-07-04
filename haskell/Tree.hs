@@ -151,7 +151,16 @@ instance Tree TreeImp where
 getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeAttributes tree node)
 getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
 getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getTreeAttributes tree)
-                                                      
+
+edgeAttributes :: Tree t => t -> Text -> ((Maybe (Maybe Text)) -> a) -> IntMap a
+edgeAttributes tree key transform = fmap transform (getEdgesSet tree & IntMap.fromSet (\edge -> getEdgeAttribute tree edge key))
+
+getAttribute key Nothing = error $ "No attribute '" ++ (T.unpack key) ++ "'"
+getAttribute key (Just Nothing) = error $ "Attribute '" ++ T.unpack key ++ "' has no value"
+getAttribute _   (Just (Just text)) = read (T.unpack text)
+
+simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
+
 instance Tree t => Tree (RootedTreeImp t) where
     type Unrooted (RootedTreeImp t) = Unrooted t
 

@@ -380,24 +380,6 @@ void check_alignment_values(const alignment& A,const pair<string,string>& filena
     }
 }
 
-/// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
-void set_foreground_branches(Parameters& P, const SequenceTree& T)
-{
-    if (auto attribute_index = T.maybe_find_undirected_branch_attribute_index_by_name("foreground"))
-    {
-        for(int b=0;b<T.n_branches();b++)
-        {
-            boost::any value = T.branch(b).undirected_attribute(*attribute_index);
-            if (value.empty()) continue;
-
-            int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
-
-            P.set_branch_category(b, foreground_level);
-            std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
-        }
-    }
-}
-
 void write_branch_numbers(ostream& o, SequenceTree T)
 {
     // Write out a tree 
@@ -968,9 +950,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         if (unalign and P.get_data_partition(i).has_IModel())
             P.get_data_partition(i).set_alignment(unalign_A(A[i]));
     P.evaluate_program();
-
-    // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
-    set_foreground_branches(P, T);
 
     //------------- Write out a tree with branch numbers as branch lengths------------- //
     write_branch_numbers(out_cache, T);
