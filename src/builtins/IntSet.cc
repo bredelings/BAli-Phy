@@ -129,6 +129,21 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
     }
 }
 
+extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S2 = arg1.as_<IntSet>();
+
+    for(auto k: S1)
+        if (not S2.find(k))
+            return bool_false;
+
+    return bool_true;
+}
+
+
 extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 {
     auto& S1 = Args.evaluate(0).as_<IntSet>();

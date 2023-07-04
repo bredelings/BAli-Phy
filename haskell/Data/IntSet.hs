@@ -1,7 +1,8 @@
 module Data.IntSet where
 
-import Prelude hiding (map,empty,elems)
+import Prelude hiding (map,empty,elems,filter)
 import Data.Functor
+import qualified Data.List as L
 import Foreign.Vector
 import Data.Foldable (foldr)
 
@@ -45,9 +46,10 @@ foreign import bpcall "IntSet:" difference :: IntSet -> IntSet -> IntSet
 
 (\\) = difference
 
--- isSubsetOf :: IntSet -> IntSet -> Bool
+foreign import bpcall "IntSet:" isSubsetOf :: IntSet -> IntSet -> Bool
 
--- isProperSubsetOf :: IntSet -> IntSet -> Bool 
+isProperSubsetOf :: IntSet -> IntSet -> Bool
+isProperSubsetOf s1 s2 = (s1 `isSubsetOf` s2) && (size s1 < size s2)
 
 foreign import bpcall "IntSet:" intersection :: IntSet -> IntSet -> IntSet
 
@@ -64,20 +66,17 @@ toAscList m = toList m
 
 toDescList m = toList m
 
--- filter :: (Key -> bool) -> IntSet -> IntSet
+filter :: (Key -> Bool) -> IntSet -> IntSet
+filter p set = fromList $ L.filter p $ toList set
+
 -- partition :: (Key -> Bool) -> IntSet -> (IntSet, IntSet)
 -- split :: Key -> IntSet -> (IntSet, IntSet)
 -- splitMember :: Key -> IntSet -> (IntSet, Bool, IntSet)
 -- splitRoot :: IntSet -> [IntSet]
 
 map :: (Key -> Key) -> IntSet -> IntSet
-map f set = fromList [ f key | key <- toList set]
+map f set = fromList $ L.map f $ toList set
 -- mapMonotonic :: (Key -> Key) -> IntSet -> IntSet
-
--- isSubmapOf :: Eq a => IntSet -> IntSet -> Bool
--- isSubmapOfBy :: (a -> b -> Bool) -> IntSet -> IntSet b -> Bool
--- isProperSubmapOf :: Eq a => IntSet -> IntSet -> Bool
--- isProperSubmapOfBy :: (a -> b -> Bool) -> IntSet -> IntSet b -> Bool
 
 -- findMin :: IntSet -> Key
 -- findMax :: IntSet -> Key
