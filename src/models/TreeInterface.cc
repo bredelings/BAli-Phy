@@ -57,6 +57,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         assert(tree.size() == 2);
         // FIXME - set labels!
 
+        labels_reg = tree[1].get_reg();
         tree = tree[0];
     }
 
@@ -103,14 +104,6 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
         parameters_for_tree_branch.insert({edge, {m_source, m_source_index, m_target} });
     }
-}
-
-tree_constants::tree_constants(context_ref& C, const map<int,string>& labels, const expression_ref& E)
-    :tree_constants(C, E)
-{
-    node_labels = labels;
-    int n_nodes = parameters_for_tree_node.size();
-    assert(node_labels.size() == n_nodes);
 }
 
 std::optional<int> TreeInterface::branch_durations_reg() const
@@ -179,6 +172,45 @@ vector<int> TreeInterface::leaf_branches() const
         branches.push_back(b);
     }
     return branches;
+}
+
+map<int,string> TreeInterface::labels() const
+{
+    assert(get_tree_constants().labels_reg);
+
+    auto labels_ref = context_ptr(get_const_context(), *get_tree_constants().labels_reg);
+
+    expression_ref labels_map = labels_ref.value();
+    assert(labels_map.is_a<IntMap>());
+    
+    map<int,string> labels;
+    for(auto& [node,_]: labels_map.as_<IntMap>())
+    {
+        auto l = label(node);
+        assert(l);
+        labels.insert({node,*l});
+    }
+    return labels;
+}
+
+std::optional<string> TreeInterface::label(int n) const
+{
+    if (not get_tree_constants().labels_reg) return {};
+
+    auto labels_ref = context_ptr(get_const_context(), *get_tree_constants().labels_reg);
+
+    assert(labels_ref.value().is_a<IntMap>());
+
+    auto label = labels_ref[n]; // Maybe Text
+
+    if (label.size() == 0)        // Nothing
+        return "A"+std::to_string(n);
+
+    assert(label.size() == 1);    // Just Text
+    label = label[0];             // Text
+    assert(label.size() == 1);     // Text CPPString
+    label = label[0];
+    return label.value().as_<String>();
 }
 
 int TreeInterface::n_branches() const {
