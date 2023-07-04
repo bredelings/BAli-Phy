@@ -74,6 +74,7 @@ class Tree t => LabelledTree t where
     -- TODO: make the C++ code handle this...
     
     get_labels :: t -> IntMap (Maybe Text)
+    relabel :: IntMap (Maybe Text) -> t -> t
 
 -- OK, so should we store attributes inside the tree?
 -- 
@@ -153,6 +154,7 @@ getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getTreeAttrib
                                                       
 instance Tree t => Tree (RootedTreeImp t) where
     type Unrooted (RootedTreeImp t) = Unrooted t
+
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
     findNode    (RootedTree t _ _) node            = findNode t node
@@ -165,6 +167,7 @@ instance Tree t => Tree (RootedTreeImp t) where
 
 instance Tree t => Tree (LabelledTreeImp t) where
     type Unrooted (LabelledTreeImp t) = LabelledTreeImp (Unrooted t)
+
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
     findNode    (LabelledTree t _) node            = findNode t node
@@ -178,6 +181,7 @@ instance Tree t => Tree (LabelledTreeImp t) where
 
 instance Tree t => Tree (BranchLengthTreeImp t) where
     type Unrooted (BranchLengthTreeImp t) = BranchLengthTreeImp (Unrooted t)
+
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
     getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
     findNode    (BranchLengthTree t _) node        = findNode t node
@@ -186,10 +190,12 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
     getEdgeAttributes (BranchLengthTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
 
-    unroot (BranchLengthTree t labels) = BranchLengthTree (unroot t) labels
+    unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
+
 
 instance RootedTree t => Tree (TimeTreeImp t) where
     type Unrooted (TimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
+
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
     findNode    (TimeTree t _) node                = findNode t node
@@ -200,8 +206,10 @@ instance RootedTree t => Tree (TimeTreeImp t) where
 
     unroot tt@(TimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
 
+
 instance TimeTree t => Tree (RateTimeTreeImp t) where
     type Unrooted (RateTimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
+
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
     getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
     findNode    (RateTimeTree t _) node            = findNode t node
@@ -211,6 +219,7 @@ instance TimeTree t => Tree (RateTimeTreeImp t) where
     getTreeAttributes (RateTimeTree t _)              = getTreeAttributes t
 
     unroot tt@(RateTimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+
 
 instance RootedTree t => TimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
@@ -283,18 +292,22 @@ remove_root (RootedTree t _ _) = t
 instance Tree t => LabelledTree (LabelledTreeImp t) where
     get_label  (LabelledTree _ labels) node = labels IntMap.! node
     get_labels (LabelledTree _ labels) = labels
+    relabel newLabels (LabelledTree t _) = LabelledTree t newLabels
 
 instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
     get_label  (BranchLengthTree t _) node = get_label t node
     get_labels (BranchLengthTree t _) = get_labels t
+    relabel newLabels (BranchLengthTree t lengths) = BranchLengthTree (relabel newLabels t) lengths
 
 instance (RootedTree t, LabelledTree t) => LabelledTree (TimeTreeImp t) where
     get_label (TimeTree t _) node          = get_label t node
     get_labels (TimeTree t _) = get_labels t
+    relabel newLabels (TimeTree t nodeHeights) = TimeTree (relabel newLabels t) nodeHeights
 
 instance (TimeTree t, LabelledTree t) => LabelledTree (RateTimeTreeImp t) where
     get_label (RateTimeTree t _) node      = get_label t node
     get_labels (RateTimeTree t _) = get_labels t
+    relabel newLabels (RateTimeTree t branchRates) = RateTimeTree (relabel newLabels t) branchRates
 
 
 toward_root rt b = not $ away_from_root rt b
@@ -384,3 +397,8 @@ addInternalLabels tree = LabelledTree tree newLabels where
 add_ancestral_label node labels = case (labels IntMap.! node) of
                                     Just l -> l
                                     Nothing -> T.append (T.singleton 'A') (T.pack (show node))
+
+
+dropInternalLabels t = relabel newLabels t where
+    labels = get_labels t
+    newLabels = getNodesSet t & IntMap.fromSet (\node -> if nodeDegree t node == 1 then labels IntMap.! node else Nothing)
