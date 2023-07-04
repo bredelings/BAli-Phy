@@ -56,6 +56,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fr
                                                                        in case numElements edges of
                                                                             0 -> let n=sourceNode t b in peel_leaf_branch (seqs IntMap.! n) alpha p smap
                                                                             2 -> peel_internal_branch (lc IntMap.! b1) (lc IntMap.! b2) (as IntMap.! b1) (as IntMap.! b2) p f
+                                                                            _ -> error $ "bad number of edges: " ++ show (numElements edges)
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = IntMap.fromSet peel_likelihood' $ getNodesSet t
@@ -119,6 +120,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                           (as IntMap.! b1)
                                                           (as IntMap.! b2)
                                                           f
+                                                 _ -> error $ "bad number of edges: " ++ show (numElements edges)
     in ancestor_seqs
 
 cached_conditional_likelihoods_SEV t seqs alpha ps smap =
