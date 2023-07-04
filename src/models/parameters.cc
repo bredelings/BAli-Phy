@@ -1104,8 +1104,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 // 
 
 Parameters::Parameters(const Program& prog,
-                       const key_map_t& keys,
-                       const SequenceTree& ttt)
+                       const key_map_t& keys)
 :Model(prog, keys),
  PC(new parameters_constants()),
  variable_alignment_( false ),
