@@ -21,9 +21,6 @@ import Foreign.IntMap (EIntMap)
 import qualified Foreign.IntMap as FIM
 
 import Data.Maybe (fromJust)
--- FIXME: need polymorphism.
---        This needs to be after weighted_frequency_matrix.
---        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
 
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
