@@ -396,10 +396,17 @@ std::string generate_atmodel_program(const set<string>& fixed,
             assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
 
-            var leaf_sequence_lengths("sequence_lengths" + part_suffix);
             expression_ref alphabet = {var("getAlphabet"),smodel};
-            program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
-            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+            if (fixed.count("alignment"))
+            {
+                program.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var, alphabet});
+            }
+            else
+            {
+                var leaf_sequence_lengths("sequence_lengths" + part_suffix);
+                program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
+                program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+            }
         }
 
         // Model.Partition.3. Observe the sequence data from the distribution
@@ -417,11 +424,6 @@ std::string generate_atmodel_program(const set<string>& fixed,
         {
             var properties("properties"+part_suffix);
             program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
-
-            var properties_A("properties_A"+part_suffix);
-            program.let(properties_A,Hs::TypedExp({noloc,{var("getProperties"), alignment_on_tree}},{noloc,Hs::TypeCon("RandomAlignmentProperties")}));
-            var prior_A("prior_A" + part_suffix);
-            program.let(prior_A, {var("probability"),properties_A});
 
             if (n_branches > 0)
             {
@@ -444,7 +446,16 @@ std::string generate_atmodel_program(const set<string>& fixed,
                 sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
             }
-            sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
+
+            if (not fixed.count("alignment"))
+            {
+                var properties_A("properties_A"+part_suffix);
+                program.let(properties_A,Hs::TypedExp({noloc,{var("getProperties"), alignment_on_tree}},{noloc,Hs::TypeCon("RandomAlignmentProperties")}));
+                var prior_A("prior_A" + part_suffix);
+                program.let(prior_A, {var("probability"),properties_A});
+                sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
+            }
+
             sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
         }
         else

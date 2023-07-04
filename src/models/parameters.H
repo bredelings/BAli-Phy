@@ -280,7 +280,6 @@ public:
 
     Parameters(const Program& P,
 	       const key_map_t&,
-	       const std::vector<alignment>& A,
                const SequenceTree&);
 
     // Can we  create a Parameters from a context and a tree_reg?

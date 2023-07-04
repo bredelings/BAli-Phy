@@ -956,7 +956,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
 
-    Parameters P(prog, keys, A, T);
+    Parameters P(prog, keys, T);
 
     P.evaluate_program();
     //-------- Set the alignments for variable partitions ---------//

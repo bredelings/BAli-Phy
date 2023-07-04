@@ -447,10 +447,12 @@ data_partition_constants::data_partition_constants(context_ref& C, int r_data)
         auto alignment_on_tree = reg_var( r_alignment );
 
         // Add method indices for calculating branch HMMs and alignment prior
-        int s_alignment = *C.out_edges_to_var( r_alignment )->begin();
-
-        auto A_properties = C.dist_properties(s_alignment);
-        alignment_properties_reg = A_properties->get("properties");
+        if (auto out_edges = C.out_edges_to_var( r_alignment ))
+        {
+            int s_alignment = *out_edges->begin();
+            auto A_properties = C.dist_properties(s_alignment);
+            alignment_properties_reg = A_properties->get("properties");
+        }
     }
     else if (dist_type == "ctmc_on_tree_fixed_A")
     {
@@ -1108,7 +1110,6 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 
 Parameters::Parameters(const Program& prog,
                        const key_map_t& keys,
-                       const vector<alignment>& A,
                        const SequenceTree& ttt)
 :Model(prog, keys),
  PC(new parameters_constants()),
@@ -1215,7 +1216,6 @@ Parameters::Parameters(const Program& prog,
         if (get_data_partition(i).has_pairwise_alignments())
         {
             variable_alignment_ = true;
-            get_data_partition(i).set_alignment(A[i]);
         }
 }
 
