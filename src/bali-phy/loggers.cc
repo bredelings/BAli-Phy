@@ -256,7 +256,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     // FIXME -- we need to log the alignments!
-    /*
     {
 	ConcatFunction F; 
 	F<<TF3<<"\n";
@@ -266,14 +265,13 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 	F<<TreeFunction()<<"\n\n";
 	loggers.push_back( append_to_file(base + ".MAP", MAP_Function(F)) );
     }
-    */
 
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (M->contains_key("log-categories"))
 	for(int i=0;i<n_partitions;i++)
 	    loggers.push_back( append_to_file(base + ".P" + convertToString(i+1)+".CAT", 
                                               Subsample_Function(Mixture_Components_Function(i),subsample) ) );
-/*
+
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     int alignment_extra_subsample = M->load_value("alignment-extra-subsample",10);
     int alignment_subsample = alignment_extra_subsample*subsample;
@@ -290,7 +288,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 		
             loggers.push_back( append_to_file(filename, Subsample_Function(F, alignment_subsample) ) );
         }
-*/
+
     return loggers;
 }
 
