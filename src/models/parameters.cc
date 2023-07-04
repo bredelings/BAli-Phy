@@ -1090,62 +1090,6 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
         return t;
 }
 
-// scaleMs
-// 
-
-Parameters::Parameters(const Program& prog,
-                       const key_map_t& keys)
-:Model(prog, keys),
- PC(new parameters_constants()),
- variable_alignment_( false ),
- updown(-1)
-{
-    int result_head = *memory()->program_result_head;
-    param atmodel_plus_partitions = result_head;
-    PC->atmodel = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
-    
-    context_ptr program_result(*this, memory()->reg_for_head(result_head));
-    auto sequence_data = program_result[1].list_elements();
-
-    vector<int> partition_sampling_events;
-    optional<int> r_prop0;
-    for(int i=0;i<sequence_data.size();i++)
-    {
-        auto& sequences = sequence_data[i];
-        int r = sequences.get_reg();
-
-        auto& to_var = memory()->out_edges_to_var.at(r);
-        if (to_var.size() > 1)
-            throw myexception()<<"Some partitions are identical!";
-
-        int s_sequences = *to_var.begin();
-        auto properties = dist_properties(s_sequences);
-        if (i==0)
-        {
-            r_prop0 = properties->get("properties");
-        }
-    }
-
-    /* ---------------- Set up the tree ------------------------------ */
-    // 2. Set up the TreeInterface mapping to the tree inside the machine
-
-    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-    TC = new tree_constants(*this, get_expression(tree_index));
-    branches_from_affected_node.resize(t().n_nodes());
-
-    /* --------------------------------------------------------------- */
-
-    // create data partitions
-    for(auto partition: sequence_data)
-        PC->DPC.emplace_back(*this, partition.get_reg());
-
-    for(int i=0;i<n_data_partitions();i++)
-        if (get_data_partition(i).has_pairwise_alignments())
-        {
-            variable_alignment_ = true;
-        }
-}
-
 Parameters::Parameters(const context_ref& C, int tree_reg)
     :Model(C)
 {
