@@ -205,7 +205,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
                  | n_nodes == 1   = peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
                  | n_nodes == 2   = let [n1,n2] = getNodes tree
-                                    in peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps IntMap.! n1) f column_counts
+                                        [b1,b2] = getEdges tree
+                                    in peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps IntMap.! b1) f column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
