@@ -596,11 +596,11 @@ std::string generate_atmodel_program(const set<string>& fixed,
 
     if (fixed.count("tree"))
     {
-        main.perform(tree, {var("readBranchLengthTree"),String(tree_filename->string())});
+        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename->string())}});
     }
     else if (fixed.count("topology"))
     {
-        main.perform(topology, {var("readTreeTopology"),String(tree_filename->string())});
+        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
     }
 
     // Main.5. Emit mcmc $ model sequence_data
