@@ -230,7 +230,6 @@ int muts_root(const pairwise_alignment_t& A0,
         for(auto& s: S)
             s = 0;
 
-        int mi=0;
         if (not_gap0)
         {
             peel_muts(&n_muts1(s0,0), &S[0], n_letters, cost);
