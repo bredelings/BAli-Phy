@@ -283,10 +283,7 @@ namespace MCMC {
 
     string Ancestral_Sequences_Function::operator()(const Model& M, long)
     {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
-        // Should we overwrite leaf sequences with the observed character?
-        return P[p].ancestral_sequence_alignment();
+	return M.get_logged_parameters().at("alignments")[p];
     }
 
     string ConcatFunction::operator()(const Model& M, long t)
