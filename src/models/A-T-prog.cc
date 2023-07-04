@@ -148,7 +148,6 @@ std::string generate_atmodel_program(const set<string>& fixed,
     set<string> imports;
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
-    imports.insert("BAliPhy.ATModel");                       // for ATModel
     imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Probability.Distribution.OnTree");       // for ctmc_on_tree{,fixed_A}
@@ -507,22 +506,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
     program.let(loggers_var, get_list(program_loggers));
     program.empty_stmt();
 
-    var atmodel_var("atmodel");
-    program.let(atmodel_var, {var("ATModel"), tree_var});
-    program.empty_stmt();
-
-    expression_ref sequence_data_list = var("sequence_data");
-    if (n_partitions == 1)
-        sequence_data_list = List(sequence_data_list);
-    program.finish_return(
-        Tuple(
-            Tuple(
-                var("atmodel"),
-                sequence_data_list
-                ),
-            var("loggers")
-            )
-        );
+    program.finish_return( loggers_var );
 
     auto model = var("model");
     auto sequence_data = var("sequence_data");
@@ -655,7 +639,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                                                like_calcs);
     }
 
-    Program P(L, Program::exe_type::log_pair);
+    Program P(L, Program::exe_type::log_list);
     auto m = P.get_module_loader()->load_module_from_file(program_filename);
     P.add(m);
     P.main = "Main.main";
