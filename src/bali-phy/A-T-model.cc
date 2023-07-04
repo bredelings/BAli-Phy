@@ -945,11 +945,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     Parameters P(prog, keys);
 
     P.evaluate_program();
-    //-------- Set the alignments for variable partitions ---------//
-    for(int i=0;i<P.n_data_partitions();i++)
-        if (unalign and P.get_data_partition(i).has_IModel())
-            P.get_data_partition(i).set_alignment(unalign_A(A[i]));
-    P.evaluate_program();
 
     //------------- Write out a tree with branch numbers as branch lengths------------- //
     write_branch_numbers(out_cache, T);
