@@ -131,3 +131,11 @@ minimally_connect_characters leaf_sequences tree all_sequences =
     nodes & IntMap.fromSet (\n -> maskSequence (node_masks IntMap.! n) (all_sequences IntMap.! n))
         where node_masks = getConnectedStates leaf_sequences tree
               nodes = tree & getNodesSet
+
+minimally_connect_characters' :: Tree t => IntMap (Maybe (EVector Int)) -> t -> IntMap (EVector Int)
+minimally_connect_characters' leafSequences tree = minimally_connect_characters leafSequences tree all_sequences
+    where missingSequence = list_to_vector $ replicate alignmentLength (-2) -- (-2) is N/X
+          alignmentLength = vector_size $ head $ catMaybes $ IntMap.elems leafSequences
+          getS (Just sequence) = sequence
+          getS Nothing         = missingSequence
+          all_sequences = fmap getS leafSequences
