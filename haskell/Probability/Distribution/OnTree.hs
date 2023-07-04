@@ -109,6 +109,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                  | n_nodes == 2   = let [n1, n2] = getNodes tree
                                         [b1, b2] = getEdges tree
                                     in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! b1) (transition_ps IntMap.! b1) f
+                 | otherwise      = error $ "likelihood: n_nodes = " ++ show n_nodes
 
       ancestral_states = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
