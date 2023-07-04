@@ -516,13 +516,21 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    auto& sequence = arg1.as_<EVector>();
+    auto& smap = arg1.as_<EVector>();
+
+    auto arg2 = Args.evaluate(2);
+    auto& sequence = arg2.as_<EVector>();
 
     auto result = object_ptr<String>(new String);
     auto& text = *result;
 
-    for(auto& letter: sequence)
-        text += a.lookup(letter.as_int());
+    for(auto& state: sequence)
+    {
+        int s = state.as_int();
+        if (s >= 0)
+            s = smap[s].as_int();
+        text += a.lookup(s);
+    }
 
     return result;
 }

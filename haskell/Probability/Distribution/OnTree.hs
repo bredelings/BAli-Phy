@@ -116,7 +116,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       fasta = let positionSequences = constructPositionSequences alignment
                   letterSequences = getNodesSet tree & IntMap.fromSet letterSequenceForNode
                   letterSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
-              in fastaTree tree (fmap (sequenceToText alphabet) letterSequences)
+              in fastaTree tree (fmap (sequenceToText alphabet smap) letterSequences)
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -225,7 +225,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                                                         node_sequences0
                                                                         tree
                                                                         ancestral_sequences
-                                       ancestral_sequences'' = fmap (sequenceToText alphabet) ancestral_sequences'
+                                       ancestral_sequences'' = fmap (sequenceToText alphabet smap) ancestral_sequences'
                                    in fastaTree tree ancestral_sequences''
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
