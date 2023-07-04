@@ -525,14 +525,9 @@ ParametersTreeInterface Parameters::t() const
     return {this};
 }
 
-map<int,string> Parameters::get_labels() const
-{
-    return TC->node_labels;
-}
-
 string write_newick(const Parameters& P, bool print_lengths)
 {
-    return write(P.t(), P.get_labels(), print_lengths);
+    return write(P.t(), P.t().labels(), print_lengths);
 }
 
 void Parameters::prune_subtree(const tree_edge& b_subtree)
@@ -701,7 +696,7 @@ void mutable_data_partition::set_alignment(const alignment& A)
 
     auto T = t();
 
-    auto labels = P->get_labels();
+    auto labels = T.labels();
     vector<string> labels_v(labels.size());
     for(auto [index,name]: labels)
     {

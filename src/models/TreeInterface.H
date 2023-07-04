@@ -28,7 +28,7 @@ struct tree_constants: public Object
     std::optional<int> away_from_root_reg;
 
     // Node labels
-    std::map<int,std::string> node_labels;
+    std::optional<int> labels_reg;
 
     // Branch lengths
     std::optional<int> branch_durations_reg;
@@ -40,7 +40,6 @@ struct tree_constants: public Object
 
     tree_constants(context_ref&, int tree_reg);
     tree_constants(context_ref&, const expression_ref&);
-    tree_constants(context_ref&, const std::map<int,std::string>&, const expression_ref&);
 };
 
 class TreeInterface
@@ -81,6 +80,8 @@ public:
     int n_leaf_branches() const;
     std::vector<int> leaf_branches() const;
     std::vector<int> leaf_nodes() const;
+    std::map<int,std::string> labels() const;
+    std::optional<std::string> label(int n) const;
 
     int degree(int n) const;
     int branch_out(int n, int i) const;
