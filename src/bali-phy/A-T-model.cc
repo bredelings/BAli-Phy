@@ -120,7 +120,7 @@ vector<double> get_geometric_heating_levels(const string& s)
     }
 }
 
-
+/*
 void setup_heating(int proc_id, const variables_map& args, Parameters& P) 
 {
     if (args.count("beta")) 
@@ -159,6 +159,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     for(double b:P.PC->beta_series)
         std::cout<<b<<"\n";
 }
+*/
 
 vector<model_t>
 get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, const SequenceTree&)
@@ -554,7 +555,7 @@ int get_num_models(const vector<optional<int>>& mapping)
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                       ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
-                                      int proc_id, const fs::path& dir)
+                                      int /* proc_id */, const fs::path& dir)
 {
     //------ Determine number of partitions ------//
     auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
@@ -944,7 +945,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
 
-    Parameters M(prog, keys);
+    Model M(prog, keys);
 
     M.evaluate_program();
 
@@ -960,7 +961,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                              args) );
 
     //------------------- Handle heating ---------------------//
-    setup_heating(proc_id, args, M);
+    // setup_heating(proc_id, args, M);
 
     return M;
 }
