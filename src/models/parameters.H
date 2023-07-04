@@ -177,8 +177,6 @@ struct parameters_constants: public Object
 {
     param atmodel;
 
-    std::vector<param> branch_categories;
-
     std::vector<double> beta_series;
 
     std::vector<double> all_betas;
@@ -259,10 +257,6 @@ public:
     void set_root(int n) const;
     int subst_root(int i) const;
     int subst_root() const;
-
-    // int
-    int  get_branch_category(int b) const;
-    void set_branch_category(int b, int cat);
 
     double branch_mean() const;
 

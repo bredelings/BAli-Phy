@@ -528,6 +528,7 @@ Proposal2M::Proposal2M(const proposal_fn& p,const vector<int>& s, const vector<d
      parameters(v)
 { }
 
+/*
 log_double_t move_subst_type_branch(context_ref& P)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
@@ -557,6 +558,7 @@ log_double_t move_subst_type_branch(context_ref& P)
 
     return 1.0;
 }
+*/
 
 #include "mcmc/sample.H"
 

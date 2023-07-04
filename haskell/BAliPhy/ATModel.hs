@@ -9,8 +9,7 @@ import SModel
 
 data IndelModel = IndelModel
 data ATModel t = ATModel {
-      tree:: t,
-      branch_categories :: Maybe [Int]
+      tree:: t
     }
 
 data ConditionalLikelihoodVector

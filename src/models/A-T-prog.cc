@@ -250,7 +250,6 @@ std::string generate_atmodel_program(const set<string>& fixed,
         add(used_states, SMs[i].code.used_states);
 
     // M5. Branch categories
-    expression_ref maybe_branch_categories = var("Nothing");
     expression_ref branch_categories;
     if (used_states.count("branch_categories"))
     {
@@ -495,7 +494,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
     program.empty_stmt();
 
     var atmodel_var("atmodel");
-    program.let(atmodel_var, {var("ATModel"), tree_var, maybe_branch_categories});
+    program.let(atmodel_var, {var("ATModel"), tree_var});
     program.empty_stmt();
 
     expression_ref sequence_data_list = var("sequence_data");

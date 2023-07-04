@@ -984,16 +984,6 @@ int Parameters::subst_root() const
     return subst_root(0);
 }
 
-int Parameters::get_branch_category(int b) const
-{
-    return PC->branch_categories[b].get_value(*this).as_int();
-}
-
-void Parameters::set_branch_category(int b, int c)
-{
-    PC->branch_categories[b].set_value(*this,c);
-}
-
 void Parameters::setlength_unsafe(int b,double l) 
 {
     t().set_branch_length(b, l);
@@ -1144,11 +1134,6 @@ Parameters::Parameters(const Program& prog,
     branches_from_affected_node.resize(t().n_nodes());
 
     /* --------------------------------------------------------------- */
-
-    // R5. Register branch categories
-    auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );
-    if (has_constructor(maybe_branch_cats,"Data.Maybe.Just"))
-        PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, t().n_branches());
 
     // create data partitions
     for(auto partition: sequence_data)
