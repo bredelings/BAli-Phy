@@ -78,6 +78,34 @@ class Tree t => LabelledTree t where
 -- OK, so should we store attributes inside the tree?
 -- 
 
+{-
+  WAIT... wasn't this partly about edgesBeforeEdge?  We didn't want to go through the whole list and
+  check if each entry was us -- we just wanted to remove the current entry.
+
+  What is the benefit of using an Array Int Int for node_out_edges?
+  Using an Array means that when we delete an out-edge, we have to shift the array entries
+    down if they are above the index of the deleted edge.  And we have to modify the Edge
+    object for edges whose index has changed.
+
+  By using an array of modifiables, we are able to change the out edges without changing
+  the out-edges array.  Instead we can change a single out-edge, so that calculations that depend
+  only on the non-changed edges are not invalidated.
+
+  Does this really happen though?  For example, in NNI across branch b1=(n1,n2), if we interchange
+  branches b3 and b4 that point to n1 and n2 respectively, then the calculations depend on n1 and n2
+  are going to be re-done anyway... right?
+
+  So, one possibility would be to index the out-edges by their edge name.  We could store an IntSet,
+  which just lists the edge name.  Or we could have an IntMap Edge, which points to the Edge directly.
+
+  Alternatively, we could to IntMap Int, and use some kind of unique key that is NOT the edge name to
+  point to modifiable indices.  Then we could add/remove edges more easily, but also change an out-edge
+  to a new index without changing the node_out_edges struct itself.
+
+  OK, so if we change node_out_edges to be IntSet, then what do we need to change to accomodate that?
+  Weren't we using the index somehow in SPR?
+-}
+
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
 instance Show Node where
