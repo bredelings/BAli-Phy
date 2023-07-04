@@ -255,9 +255,8 @@ std::string generate_atmodel_program(const set<string>& fixed,
     if (used_states.count("branch_categories"))
     {
         var branch_categories_var("branch_categories");
-        program.let(branch_categories_var, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+        program.let(branch_categories_var, { var("foregroundBranches"), tree_var, String("foreground")});
         branch_categories = branch_categories_var;
-        maybe_branch_categories = {var("Just"),branch_categories_var};
     }
 
     // M6. Scales
