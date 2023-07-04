@@ -930,6 +930,10 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         for(auto& f: args.at("fix").as<vector<string>>())
             fixed.insert(f);
 
+    for(auto& f: fixed)
+        if (f != "topology" and f != "tree" and f != "alignment")
+            throw myexception()<<"--fix: parameter '"<<f<<"' not recognized";
+
     auto prog = gen_atmodel_program(L, keys, fixed,
                                     program_filename,
                                     tree_filename,
