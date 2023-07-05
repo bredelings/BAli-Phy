@@ -1350,6 +1350,12 @@ optional<int> reg_heap::find_modifiable_reg(int R)
     return find_update_modifiable_reg(R);
 }
 
+optional<int> reg_heap::find_precomputed_const_or_modifiable_reg_in_context(int r, int c)
+{
+    reroot_at_context(c);
+    return find_precomputed_const_or_modifiable_reg(r);
+}
+
 // This is an evaluation loop that follows calls instead of results
 // so that it doesn't jump over modifiables.
 optional<int> reg_heap::find_precomputed_const_or_modifiable_reg(int r)
@@ -1480,9 +1486,29 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
         if (not call_for_reg(*mod_reg))
             mod_reg = {};
     }
-    
+
     // 6. Return the result.
     return mod_reg;
+}
+
+// We used to perform this execution in a new context, and then
+// roll it back.  However, this meant that when doing random samples
+// during proposals, a random sample could be lost and re-sampled during
+// evaluation of another argument in the same context.
+
+int reg_heap::find_const_or_modifiable_reg_in_context(int R, int c1)
+{
+    // 1. Evaluate R in context c2, and get the first changeable reg on the path.
+    auto [r, _] = incremental_evaluate_in_context(R, c1);
+
+    // 2. Walk the call chain to find the modifiable, if any.
+    auto r2 = find_precomputed_const_or_modifiable_reg_in_context(r, c1);
+
+    // 3. The reg should be evaluated.
+    assert(r2);
+
+    // 4. Return the result.
+    return r2.value();
 }
 
 int reg_heap::step_index_for_reg(int r) const 

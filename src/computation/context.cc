@@ -470,6 +470,9 @@ std::optional<int> context_ref::out_edges_from_dist(int r) const
 const std::set<int>* context_ref::out_edges_to_var(int r) const
 {
     evaluate_program();
+
+    r = memory()->find_const_or_modifiable_reg_in_context(r,context_index);
+
     auto& to_var = memory()->out_edges_to_var;
     auto it = to_var.find(r);
     if (it == to_var.end())
