@@ -442,6 +442,7 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     {
 	double sum = dists1.dot(i, weighted_frequencies);
 	assert(sum <= 1.000000001);
+        sum = std::min(sum,1.0);
 	if (sum != 0)
 	{
 	    dists1.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
@@ -457,6 +458,7 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 
 	double sum = dists2.sum(i);
 	assert(sum <= 1.000000001);
+        sum = std::min(sum,1.0);
 	if (sum != 0)
 	{
 	    dists2.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
