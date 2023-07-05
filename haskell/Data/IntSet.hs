@@ -5,6 +5,7 @@ import Data.Functor
 import qualified Data.List as L
 import Foreign.Vector
 import Data.Foldable (foldr)
+import Data.Array (vectorToArray)
 
 data IntSet
 
@@ -61,6 +62,8 @@ foreign import bpcall "IntSet:keys" _keys :: IntSet -> EVector Key
 elems m = vector_to_list $ _keys m
 
 toList m = elems m
+
+toArray s = vectorToArray $ _keys s
 
 toAscList m = toList m
 
