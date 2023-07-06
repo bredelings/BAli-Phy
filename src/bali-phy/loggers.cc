@@ -160,8 +160,6 @@ string logged_params_and_some_computed_stuff_with_header(const Model& M, long t)
 
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>&)
 {
-    owned_ptr<Parameters> P = M.as<Parameters>();
-
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   

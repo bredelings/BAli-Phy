@@ -726,13 +726,13 @@ int main(int argc,char* argv[])
             out_screen<<"\nBeginning MCMC computations."<<endl;
             out_screen<<"   - Future screen output sent to "<< output_dir / "C1.out" <<endl;
             out_screen<<"   - Future debugging output sent to "<< output_dir / "C1.err" <<endl;
-            if (M.as<Parameters>())
+            if (args.count("align"))
             {
                 out_screen<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
                 out_screen<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
                 out_screen<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
             }
-            auto log_formats = get_log_formats(args,(bool)M.as<Parameters>());
+            auto log_formats = get_log_formats(args, args.count("align"));
             if (log_formats.count("json"))
                 out_screen<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
             if (log_formats.count("tsv"))
