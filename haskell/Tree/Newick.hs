@@ -179,7 +179,7 @@ replace from to string = case stripPrefix from string of
                            Nothing   -> head string : replace from to (tail string)
 
 quoteName :: String -> String
-quoteName name = if any (\l -> elem l  "()[]':;,") name then
+quoteName name = if any (\l -> elem l  "_()[]':;,") name then
                      "'"++(replace "'" "''" name)++"'"
                  else
                      replace " " "_" name
