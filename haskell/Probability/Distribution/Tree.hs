@@ -43,20 +43,36 @@ sample_uniform_topology n = do
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
     return $ tree_from_edges [0..num_nodes-1] edges
 
+{- Note: What the modifiable structure assumes.
 
--- leaves   nodes  branches
--- 1        1      0
--- 2        2      1
--- 3        4      3
--- 4        6      5
+   Our current modifiable tree structure requires that
+   1. the name for the reverse edge doesn't change.
+   2. the nodes and edges in the tree don't change.
+
+   We could add `modf` in front of `r` to change (1).
+
+   We could add `modf` in from of nodesMap and branchesMap to change (2).
+   But we'd have to handle changes in the keysSet of node attributes (`na`) and edge attributes (`ea`).
+
+   In both cases, adding more `modf` leads to:
+   A. a slowdown
+   B. a error saying that something isn't a modifiable value.
+-}
+
 modifiable_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_tree modf tree@(Tree nodes0 branches0 na ea ta) = (Tree nodesMap branches na ea ta) where
+modifiable_tree modf tree@(Tree nodes0 branches0 na ea ta) = (Tree nodesMap branchesMap na ea ta) where
     nodesMap = fmap (\(Node node branches_out) -> Node node (modf branches_out)) nodes0
-    branches = fmap (\(Edge s t r b) -> Edge (modf s) (modf t) r b ) branches0
+    branchesMap = fmap (\(Edge s t r b) -> Edge (modf s) (modf t) r b ) branches0
 
--- our current modifiable tree structure requires the node to have a constrant degree.
-
-
+{-
+   leaves   nodes  branches
+   1        1      0
+   2        2      1
+   3        4      3
+   4        6      5
+   5        8      7
+   ..       ..     ..
+-}
 uniform_topology_pr 1 = 1
 uniform_topology_pr 2 = 1
 uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
