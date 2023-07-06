@@ -227,3 +227,15 @@ extern "C" closure builtin_function_interchangeable(OperationArgs& Args)
 
     return {mod_exp, {f_reg, x_reg}};
 }
+
+
+// See: builtins/Prelude.cc - builtin_function_seq( )
+// See: computation/operations.{H,cc} - struct Seq, seq_op(OperationArgs&)
+extern "C" closure builtin_function_withEffect(OperationArgs& Args)
+{
+    Args.evaluate_slot_force(0);
+
+    int R = Args.current_closure().reg_for_slot(1);
+
+    return {index_var(0),{R}};
+}

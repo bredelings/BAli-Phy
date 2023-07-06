@@ -89,7 +89,7 @@ alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1
 triggered_modifiable_alignment value effect = triggered_a where
     raw_a       = modifiable_alignment value
     effect'     = unsafePerformIO $ effect raw_a
-    triggered_a = effect' `seq` raw_a
+    triggered_a = withEffect effect' raw_a
 
 
 data RandomAlignmentProperties = RandomAlignmentProperties 

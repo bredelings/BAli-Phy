@@ -4,7 +4,8 @@ module Probability.Random (module Probability.Random,
                            module Numeric.Prob,
                            module Probability.Dist,
                            modifiable,
-                           liftIO)
+                           liftIO,
+                           withEffect)
     where
 
 import Range
@@ -238,7 +239,7 @@ triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO
 triggered_modifiable_structure mod_structure value effect = triggered_x
     where raw_x       = mod_structure modifiable value
           effect'     = unsafePerformIO $ effect raw_x
-          triggered_x = mod_structure (effect' `seq`) raw_x
+          triggered_x = mod_structure (withEffect effect') raw_x
 
 apply_modifier :: (forall a.a -> a) -> b -> b
 apply_modifier x y = x y
@@ -290,7 +291,7 @@ run_lazy' rate (RanBind f g) = do
 run_lazy' rate (RanDistribution2 dist tk_effect) = do
   x <- modifiableIO $ sampleIO dist
   effect <- sample_effect rate dist tk_effect x
-  return (effect `seq` x)
+  return (withEffect effect x)
 run_lazy' rate (RanDistribution3 dist tk_effect structure do_sample) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
@@ -299,8 +300,8 @@ run_lazy' rate (RanSamplingRate rate2 a) = run_lazy' (rate*rate2) a
 run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
-  run_tk_effects rate $ tk_effect result
-  return result
+  effect <- unsafeInterleaveIO $ run_tk_effects rate $ tk_effect result
+  return (withEffect effect result)
 run_lazy' rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId
   register_transition_kernel rate $ interchange_entries id
