@@ -261,7 +261,7 @@ jobs:
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
         git checkout no-root-knuckle
-        rm -rf test/likelihood/one-sequence
+        rm -rf tests/likelihood/one-sequence
 
         echo ::group::testiphy variable A
         ./testiphy ${BALIPHY} --seed=$seed --fix=alignment --fix=tree
