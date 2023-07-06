@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <boost/dynamic_bitset.hpp>
+#include "util/assert.hh"   // Avoid dynamic_bitset.hpp overwriting our assert definition.
 #include "computation/message.H"
 
 enum class LangExt
