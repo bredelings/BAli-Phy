@@ -657,7 +657,7 @@ int main(int argc,char* argv[])
         {
             auto TL = construct_table_function(M, Rao_Blackwellize);
 
-            auto log_formats = get_log_formats(args,(bool)M.as<Parameters>());
+            auto log_formats = get_log_formats(args, args.count("align"));
             if (log_formats.count("tsv"))
                 std::cout<<table_logger_line(*TL, *M, 0)<<"\n";
             if (log_formats.count("json"))
