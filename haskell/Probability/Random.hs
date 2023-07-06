@@ -172,6 +172,8 @@ interchangeable = RanInterchangeable
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
+addLogger subsample logger = liftIO $ register_logger subsample logger
+
 do_nothing _ = return ()
 
 run_strict :: Random a -> IO a
