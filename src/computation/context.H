@@ -191,10 +191,12 @@ public:
     void show_graph_for_root_token() const;
 
     void run_transition_kernels();
-
-    void perform_transition_kernel(int i);
-
+    void perform_transition_kernel(int s);
     int n_transition_kernels() const;
+
+    void run_loggers(long iteration);
+    void perform_logger(int s, long iteration);
+    int n_loggers() const;
 
     expression_ref evaluate_program() const;
 

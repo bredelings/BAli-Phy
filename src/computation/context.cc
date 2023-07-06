@@ -358,6 +358,43 @@ int context_ref::n_transition_kernels() const
     return memory()->transition_kernels().size();
 }
 
+void context_ref::run_loggers(long iteration)
+{
+    // 1.unmap any transition kernels that are not currently used.
+    evaluate_program();
+
+    for(int s: memory()->loggers())
+    {
+        // Run the T.K.
+        perform_logger(s, iteration);
+
+        // Handle differences here.
+        evaluate_program();
+
+        // The logger may not unregister itself.
+        assert(memory()->loggers().count(s));
+    }
+}
+
+void context_ref::perform_logger(int s, long iteration)
+{
+    auto& e = memory()->get_effect(s);
+
+    int subsample = e.exp.sub()[0].as_int();
+    if (iteration % subsample == 0)
+    {
+        int r = e.reg_for_slot(1);
+        assert(memory()->reg_is_constant(r));
+        expression_ref E = {reg_var(r), (int)iteration};
+        perform_expression(E);
+    }
+}
+
+int context_ref::n_loggers() const
+{
+    return memory()->loggers().size();
+}
+
 optional<int> context_ref::compute_expression_is_modifiable_reg(int index) const
 {
     return memory()->compute_expression_is_modifiable_reg(index);
