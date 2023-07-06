@@ -103,8 +103,9 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
         param m_source = info[0];
         param m_target = info[1];
+        param m_reverse = info[2];
 
-        parameters_for_tree_branch.insert({edge, {m_source, m_target} });
+        parameters_for_tree_branch.insert({edge, {m_source, m_target, m_reverse} });
     }
 }
 
@@ -260,12 +261,6 @@ vector<int> TreeInterface::branches_in(int n) const {
     for(int i=0;i<branches.size();i++)
 	branches[i] = reverse(branch_out(n, i));
     return branches;
-}
-
-int TreeInterface::reverse(int b) const
-{
-    int B = n_branches();
-    return (b + B) % (2*B);
 }
 
 void TreeInterface::append_branches_before(int b, vector<int>& branches) const
@@ -431,8 +426,13 @@ int TreeInterface::target(int b) const {
     return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
 }
 
+int TreeInterface::reverse(int b) const
+{
+    return std::get<2>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
+}
+
 int TreeInterface::undirected(int b) const {
-    return (b % n_branches());
+    return std::min(b, reverse(b));
 }
 
 bool TreeInterface::is_connected(int n1, int n2) const
