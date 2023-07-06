@@ -761,6 +761,8 @@ int main(int argc,char* argv[])
                 for(auto& logger: loggers)
                     logger(*M, jlog, iterations);
 
+                M->run_loggers(iterations);
+
                 //------------------- move to new position -----------------//
                 M->run_transition_kernels();
 
