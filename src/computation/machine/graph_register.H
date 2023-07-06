@@ -403,6 +403,14 @@ public:
     void   register_transition_kernel(int r, int s);
     void unregister_transition_kernel(int r, int s);
 
+    // the list of transition kernels
+    std::unordered_set<int> loggers_;
+
+    const std::unordered_set<int>& loggers() const;
+
+    void   register_logger(int r, int s);
+    void unregister_logger(int r, int s);
+
     // Since there is only one out-edges, should we remove this?
     // No, if we observe the same data twice, we still need separate sampling events.
     std::map<int, std::string> dist_type;

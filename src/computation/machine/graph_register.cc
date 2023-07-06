@@ -18,6 +18,7 @@
 #include "effect.H"
 #include "effects.H"
 
+
 using std::string;
 using std::vector;
 using std::pair;
@@ -441,6 +442,14 @@ void reg_heap::_register_effect_at_reg(int r, int s)
                 std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: REGISTER!\n";
             register_transition_kernel(r, s);
         }
+        else if (has_constructor(E, "Effect.Logger"))
+        {
+            int subsample = expression_at(r).sub()[0].as_int();
+            int r_logger = closure_at(r).reg_for_slot(1);
+            if (log_verbose >= 5)
+                std::cerr<<"register_logger[subsample="<<subsample<<",logger="<<r_logger<<"]: REGISTER!\n";
+            register_logger(r, s);
+        }
         else if (has_constructor(E, "Effect.InEdge"))
         {
             if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
@@ -501,6 +510,14 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             if (log_verbose >= 5)
                 std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: UNREGISTER!\n";
             unregister_transition_kernel(r, s);
+        }
+        else if (has_constructor(E, "Effect.Logger"))
+        {
+            int subsample = expression_at(r).sub()[0].as_int();
+            int r_logger = closure_at(r).reg_for_slot(1);
+            if (log_verbose >= 5)
+                std::cerr<<"register_logger[subsamplee="<<subsample<<",logger="<<r_logger<<"]: UNREGISTER!\n";
+            unregister_logger(r, s);
         }
         else if (has_constructor(E, "Effect.InEdge"))
         {
@@ -1098,7 +1115,7 @@ void reg_heap::unregister_prior(const register_prob& E, int s)
         handler(E, s);
 }
 
-void reg_heap::register_interchangeable(const RegisterInterchangeable& I, int s)
+void reg_heap::register_interchangeable(const RegisterInterchangeable& I, int /*s*/)
 {
     if (not interchangeables.count(I.id))
         interchangeables.insert({I.id, {}});
@@ -1110,7 +1127,7 @@ void reg_heap::register_interchangeable(const RegisterInterchangeable& I, int s)
     i_regs.insert(I.r_interchangeable);
 }
 
-void reg_heap::unregister_interchangeable(const RegisterInterchangeable& I, int s)
+void reg_heap::unregister_interchangeable(const RegisterInterchangeable& I, int /*s*/)
 {
     auto& i_regs = interchangeables.at(I.id);
 
@@ -1164,6 +1181,42 @@ void reg_heap::unregister_transition_kernel(int r, int s)
 const std::unordered_set<int>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
+}
+
+void reg_heap::register_logger(int r, int s)
+{
+    assert(not steps.is_free(s));
+
+    int subsample = expression_at(r).sub()[0].as_int();
+    int r_logger = closure_at(r).reg_for_slot(1);
+
+    assert(reg_is_constant(r_logger));
+
+    // Multiple steps from different contexts COULD register the same transition kernel.
+    assert(not loggers_.count(s));
+
+    if (subsample > 0)
+        loggers_.insert(s);
+}
+
+void reg_heap::unregister_logger(int r, int s)
+{
+    int subsample = expression_at(r).sub()[0].as_int();
+    int r_logger = closure_at(r).reg_for_slot(1);
+
+    if (subsample > 0)
+    {
+        if (not loggers_.count(s))
+            throw myexception()<<"unregister_logger: logger <r="<<r_logger<<",s="<<s<<"> not found!";
+
+        loggers_.erase(s);
+    }
+    assert(not loggers_.count(s));
+}
+
+const std::unordered_set<int>& reg_heap::loggers() const
+{
+    return loggers_;
 }
 
 optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
