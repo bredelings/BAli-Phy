@@ -51,7 +51,8 @@ numBranches t = length $ getUEdges t
 
 undirectedName t e = min e (reverseEdge t e)
 
-edgesOutOfNode t node_index = findNode t node_index & node_out_edges
+edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
+edgesOutOfNode tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 
 class Tree t => BranchLengthTree t where
     branch_length :: t -> Int -> Double
@@ -107,17 +108,17 @@ class Tree t => LabelledTree t where
   Weren't we using the index somehow in SPR?
 -}
 
-data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
+data Node = Node { node_name :: Int, node_out_edges:: IntSet}
 
 instance Show Node where
     show (Node name out_edges) = "Node{node_name = " ++ show name ++ ", node_out_edges = " ++ show out_edges ++ "}"
 
 -- ideally e_source_node and e_target_node would be of type Node,
 --   and e_reverse would be of type Edge
-data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge_name :: Int }
+data Edge = Edge { e_source_node, e_target_node, e_reverse, edge_name :: Int }
 
 instance Show Edge where
-    show (Edge source index target reverse name) = "Edge{e_source_node = " ++ show source ++ ", e_source_index = " ++ show index ++ ", e_target_node = " ++ show target ++ ", e_reverse = " ++ show reverse ++ ", edge_name = " ++ show name ++ "}"
+    show (Edge source target reverse name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", e_reverse = " ++ show reverse ++ ", edge_name = " ++ show name ++ "}"
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
@@ -139,8 +140,8 @@ instance Tree TreeImp where
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
-    findNode    (Tree nodesMap _ _ _ _) node        = nodesMap IntMap.! node
-    findEdge    (Tree _ edgesMap _ _ _) edgeIndex   = edgesMap IntMap.! edgeIndex
+    findNode    (Tree nodesMap _ _ _ _) node   = nodesMap IntMap.! node
+    findEdge    (Tree _ edgesMap _ _ _) edge   = edgesMap IntMap.! edge
 
     getNodeAttributes (Tree _ _ a _ _) node         = a IntMap.! node
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
@@ -329,17 +330,15 @@ parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
 edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node
 sourceNode  tree b = e_source_node  $ findEdge tree b
-sourceIndex tree b = e_source_index $ findEdge tree b
 targetNode  tree b = e_target_node  $ findEdge tree b
 reverseEdge tree b = e_reverse      $ findEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
-nodeDegree t n = length (edgesOutOfNode t n)
+nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = let e = findEdge t b
-                          source = e_source_node $ e
-                          index = e_source_index $ e
-                      in fmap (reverseEdge t) $ removeElement index $ edgesOutOfNode t source
-edgesAfterEdge t b  = fmap (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
+edgesBeforeEdge t b = fmap (reverseEdge t) $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
+    where node = sourceNode t b
+edgesAfterEdge t b = IntSet.toArray $ IntSet.delete (reverseEdge t b) (edgesOutOfNodeSet t node)
+    where node = targetNode t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
 is_internal_node t n = not $ is_leaf_node t n
@@ -372,12 +371,11 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) forward_backward_edges
 
     nodesSet = IntSet.fromList nodes
-    nodesMap = IntMap.fromSet (\n ->  Node n (listArray' [b | (b,(x,y)) <- forward_backward_edges, x==n]) ) nodesSet
+    nodesMap = IntMap.fromSet (\n ->  Node n (IntSet.fromList [b | (b,(x,y)) <- forward_backward_edges, x==n]) ) nodesSet
 
     branchesSet = IntSet.fromList [0..2*num_branches-1]
     branchesMap = IntMap.fromSet (\b -> let Just (s,t) = find_branch b
-                                            Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
-                                        in Edge s i t (reverse b) b) branchesSet
+                                        in Edge s t (reverse b) b) branchesSet
 
 tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 

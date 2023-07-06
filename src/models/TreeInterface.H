@@ -19,8 +19,8 @@ struct tree_constants: public Object
 {
     // The tree
     expression_ref tree_exp;
-    std::map<int,std::vector<param>> parameters_for_tree_node;
-    std::map<int,std::tuple<param,param,param>> parameters_for_tree_branch;
+    std::map<int,param> parameters_for_tree_node;
+    std::map<int,std::tuple<param,param>> parameters_for_tree_branch;
     int n_leaves;
 
     // Root info
@@ -44,9 +44,6 @@ struct tree_constants: public Object
 
 class TreeInterface
 {
-    void read_tree_node(const Tree&, int n);
-    void end_modify_node(int n);
-
     std::optional<int> branch_durations_reg() const;
 
     std::optional<int> root_reg() const;
@@ -59,20 +56,6 @@ class TreeInterface
     virtual const context_ref& get_const_context() const = 0;
     virtual       context_ref& get_context() = 0;
 
-    virtual       std::vector<int>& affected_nodes() = 0;
-    virtual const std::vector<int>& affected_nodes() const = 0;
-
-    virtual       std::vector<std::vector<int>*>& branches_from_affected_nodes() = 0;
-    virtual const std::vector<std::vector<int>*>& branches_from_affected_nodes() const = 0;
-
-    std::vector<int>*& branches_from_affected_node(int n)
-    {
-        return branches_from_affected_nodes()[n];
-    }
-    std::vector<int>* branches_from_affected_node(int n) const
-    {
-        return branches_from_affected_nodes()[n];
-    }
 public:
     int n_nodes() const;
     int n_branches() const;
@@ -104,7 +87,6 @@ public:
     std::vector<int> all_branches_toward_node(int n) const;
 
     int source(int b) const;
-    int source_index(int b) const;
     int target(int b) const;
     int reverse(int b) const;
   
@@ -151,8 +133,6 @@ public:
     bool can_set_node_time(int n) const;
     void set_node_time(int n, double t);
 
-    void read_tree(const Tree&);
-
     void begin_modify_topology();
     void reconnect_branch(int s1, int t1, int t2);
     void end_modify_topology();
@@ -168,12 +148,6 @@ class ParametersTreeInterface: public TreeInterface
     const context_ref& get_const_context() const;
           context_ref& get_context();
 
-          std::vector<int>& affected_nodes();
-    const std::vector<int>& affected_nodes() const;
-
-          std::vector<std::vector<int>*>& branches_from_affected_nodes();
-    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
-
 public:
     const Parameters* P;
 
@@ -186,16 +160,8 @@ class ModifiablesTreeInterface: public TreeInterface
     const context_ref& get_const_context() const;
           context_ref& get_context();
 
-          std::vector<int>& affected_nodes();
-    const std::vector<int>& affected_nodes() const;
-
-          std::vector<std::vector<int>*>& branches_from_affected_nodes();
-    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
-
     const context_ref& C;
     const tree_constants* TC;
-    std::vector<int> affected_nodes_;
-    std::vector<std::vector<int>*> branches_from_affected_nodes_;
 public:
 
     ModifiablesTreeInterface(context_ref& c, int tree_head_);

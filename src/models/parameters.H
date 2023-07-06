@@ -197,13 +197,6 @@ public:
 
     bool variable_alignment_;
 
-private:
-
-    std::vector<int> affected_nodes;
-    std::vector<std::vector<int>*> branches_from_affected_node;
-
-public:
-
             data_partition get_data_partition(int i) const;
 
     mutable_data_partition get_data_partition(int i);
