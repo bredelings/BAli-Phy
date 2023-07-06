@@ -63,9 +63,9 @@ namespace MCMC {
     using std::ostream;
 
 
-    vector<json> json_to_table_function::operator()(const Model& M, long)
+    vector<json> json_to_table_function::operator()(const Model&, const json& jlog, long)
     {
-	auto values = parameter_values( M.get_logged_parameters() );
+	auto values = parameter_values( jlog );
 
 	// Check the number of fields.
 	if (values.size() != n_fields())
@@ -119,9 +119,9 @@ namespace MCMC {
 	return v2;
     }
 
-    vector<json> SortedTableFunction::operator()(const Model& M, long t)
+    vector<json> SortedTableFunction::operator()(const Model& M, const json& jlog, long t)
     {
-	auto v = (*F)(M,t);
+	auto v = (*F)(M, jlog, t);
 
 	for(int i=0;i<indices.size();i++)
 	    v = make_identifiable(v, indices[i]);
@@ -142,10 +142,10 @@ namespace MCMC {
 		}
     }
 
-    string TableViewerFunction::operator()(const Model& M, long t)
+    string TableViewerFunction::operator()(const Model& M, const json& jlog, long t)
     {
 	vector<string> fields = function->field_names();
-	vector<string> values = (*function)(M,t);
+	vector<string> values = (*function)(M,jlog,t);
 	std::stringstream output;
 
 	for(int i=0;i<values.size();i++)
@@ -183,67 +183,12 @@ namespace MCMC {
 	return total;
     }
 
-    string Get_Rao_Blackwellized_Parameter_Function::operator()(const Model& M, long)
+    string TreeFunction::operator()(const Model&, const json& jlog, long)
     {
-	if (node == -1) std::abort();
-
-	owned_ptr<Model> M2 = M;
-	vector<log_double_t> Prs;
-	log_double_t total = 0;
-
-	auto cur_value = M.get_modifiable_value(node);
-
-        // Record probabilities
-	for(const auto& value: values)
-	{
-	    if (value.type() != cur_value.type())
-		throw myexception()<<"Rao-Blackwellization: Trying to set parameter with value '"<<cur_value<<"' to '"<<value<<"'";
-	    M2->set_modifiable_value(node, value);
-	    log_double_t Pr = M2->probability();
-	    total += Pr;
-	    Prs.push_back(Pr);
-	}
-
-	// Rescale probabilities
-	for(auto& Pr: Prs)
-	    Pr /= total;
-
-	// Compute expectation
-	log_double_t result = 0;
-	for(int i=0;i<values.size();i++)
-	{
-	    const auto& v = values[i];
-	    log_double_t Pr = Prs[i];
-	    log_double_t value = 0;
-	    if (v.head().is_a<constructor>())
-	    {
-		auto& b = v.head().as_<constructor>();
-		if (is_bool_true(b))
-		    value = 1;
-		else if (is_bool_false(b))
-		    value = 0;
-	    }
-	    else if (v.is_int())
-		value = v.as_int();
-	    else if (v.is_double())
-		value = v.as_double();
-
-	    result += Pr*value;
-	}
-
-	return convertToString( result );
+	return jlog["tree"];
     }
 
-    Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int n, const vector<expression_ref>& v)
-	:node(n), values(v)
-    { }
-
-    string TreeFunction::operator()(const Model& M, long)
-    {
-	return M.get_logged_parameters()["tree"];
-    }
-
-    string MAP_Function::operator()(const Model& M, long t)
+    string MAP_Function::operator()(const Model& M, const json& jlog, long t)
     {
 	std::ostringstream output;
 
@@ -254,21 +199,21 @@ namespace MCMC {
 	MAP_score = Pr;
 
 	output<<"iterations = "<<t<<"       MAP = "<<MAP_score<<"\n";
-	output<<(*F)(M,t)<<"\n";
+	output<<(*F)(M,jlog,t)<<"\n";
   
     out:
 	return output.str();
     }
 
-    string Subsample_Function::operator()(const Model& M, long t)
+    string Subsample_Function::operator()(const Model& M, const json& jlog, long t)
     {
 	if (t%subsample == 0) 
-	    return (*function)(M,t);
+	    return (*function)(M,jlog,t);
 	else
 	    return "";
     }
 
-    string Mixture_Components_Function::operator()(const Model& M, long)
+    string Mixture_Components_Function::operator()(const Model& M, const json&, long)
     {
 	std::ostringstream output;
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
@@ -281,17 +226,17 @@ namespace MCMC {
 	return output.str();
     }
 
-    string Ancestral_Sequences_Function::operator()(const Model& M, long)
+    string Ancestral_Sequences_Function::operator()(const Model&, const json& jlog, long)
     {
-	return M.get_logged_parameters().at("alignments")[p];
+	return jlog["alignments"][p];
     }
 
-    string ConcatFunction::operator()(const Model& M, long t)
+    string ConcatFunction::operator()(const Model& M, const json& jlog, long t)
     {
 	string output;
 
 	for(int i=0;i<functions.size();i++)
-	    output += (functions[i])(M,t);
+	    output += (functions[i])(M,jlog,t);
 
 	return output;
     }

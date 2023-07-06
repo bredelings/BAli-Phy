@@ -48,8 +48,6 @@ struct slice_function;
 
 namespace MCMC {
 
-    typedef std::function<void(const Model& M, long)> Logger;
-
     //---------------------- Move Stats ---------------------//
     /// \brief Stores counts, totals, and averages for an MCMC transition kernel
     /// 

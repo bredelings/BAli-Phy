@@ -49,29 +49,20 @@ struct slice_function;
 
 namespace MCMC {
 
-    template <typename T>
-    using logger_function = std::function<T (const Model&, long)>;
+    typedef std::function<void(const Model& M, const json&, long)> Logger;
 
-    expression_ref get_computation(const Model& M, int index);
+    template <typename T>
+    using logger_function = std::function<T (const Model&, const json&, long)>;
 
     int alignment_length(const data_partition& P);
 
     int alignment_length(const Parameters& P);
 
-    struct Get_Rao_Blackwellized_Parameter_Function
-    {
-	int node;
-	std::vector<expression_ref> values;
-
-	std::string operator()(const Model& M, long t);
-	Get_Rao_Blackwellized_Parameter_Function(int n, const std::vector<expression_ref>& v);
-    };
-
     std::string write_newick(const Parameters& P);
 
     struct TreeFunction
     {
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
     };
 
     class MAP_Function
@@ -79,7 +70,7 @@ namespace MCMC {
 	log_double_t MAP_score;
 	std::shared_ptr<logger_function<std::string> > F;
     public:
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
 	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
     };
 
@@ -90,7 +81,7 @@ namespace MCMC {
 	virtual TableFunction* clone() const =0;
 	virtual std::vector<std::string> field_names() const =0;
 	virtual int n_fields() const {return field_names().size();}
-	virtual std::vector<T> operator()(const Model&,long)=0;
+	virtual std::vector<T> operator()(const Model&,const json&,long)=0;
 	virtual ~TableFunction() {};
     };
 
@@ -100,7 +91,7 @@ namespace MCMC {
     public:
 	virtual json_to_table_function* clone() const {return new json_to_table_function(*this);}
 	virtual std::vector<std::string> field_names() const {return field_names_;}
-	virtual std::vector<json> operator()(const Model&,long);
+	virtual std::vector<json> operator()(const Model&,const json&,long);
 	json_to_table_function(const std::vector<std::string>& fn):field_names_(fn) {}
     };
 
@@ -108,21 +99,21 @@ namespace MCMC {
     class UnitTableFunction: public TableFunction<T>
     {
 	std::string field_name;
-	std::shared_ptr<std::function<T (const Model&,long)>> F;
+	std::shared_ptr<std::function<T (const Model&,const json&,long)>> F;
     public:
 	virtual UnitTableFunction<T>* clone() const {return new UnitTableFunction<T>(*this);}
 
 	int n_fields() const {return 1;}
 	std::vector<std::string> field_names() const {return std::vector<std::string>(1,field_name);}
 
-	std::vector<T> operator()(const Model& M, long t)
+	std::vector<T> operator()(const Model& M, const json& jlog, long t)
 	    {
-		T output = (*F)(M,t);
+		T output = (*F)(M,jlog,t);
 		return std::vector<T>(1,output);
 	    }
 
-	UnitTableFunction(const std::string& name, const std::function<T(const Model&,long)>& f)
-	    :field_name(name),F(std::make_shared<std::function<T (const Model&,long)>>(f))
+	UnitTableFunction(const std::string& name, const std::function<T(const Model&,const json&,long)>& f)
+	    :field_name(name),F(std::make_shared<std::function<T (const Model&,const json&,long)>>(f))
 	    { }
     };
 
@@ -136,7 +127,7 @@ namespace MCMC {
 
 	std::vector<std::string> field_names() const;
 
-	std::vector<json> operator()(const Model& M, long t);
+	std::vector<json> operator()(const Model& M, const json& j, long t);
 
 	SortedTableFunction(const TableFunction<json>&, const std::vector< std::vector< std::vector< int> > >& );
     };
@@ -176,24 +167,18 @@ namespace MCMC {
 		functions.push_back(f);
 	    }
 
-	void add_field(const std::string& name, const std::function<T(const Model&,long)>& f)
+	void add_field(const std::string& name, const std::function<T(const Model&,const json& jlog,long)>& f)
 	    {
 		functions.push_back(UnitTableFunction<T>(name,f));
 	    }
 
-	void add_field(const std::string& name, const std::function<T(const Parameters&)>& f)
-	    {
-		auto f2 = [f](const Model& M,long) { return f(dynamic_cast<const Parameters&>(M));};
-		add_field(name,f2);
-	    }
-
-	std::vector<T> operator()(const Model& M, long t)
+	std::vector<T> operator()(const Model& M, const json& jlog, long t)
 	    {
 		std::vector<T> values;
       
 		for(int i=0;i<functions.size();i++)
 		{
-		    std::vector<T> values_i = (*functions[i])(M,t);
+		    std::vector<T> values_i = (*functions[i])(M,jlog,t);
 		    values.insert(values.end(),values_i.begin(), values_i.end());
 		}
       
@@ -210,9 +195,9 @@ namespace MCMC {
 
 	std::vector<std::string> field_names() const {return F->field_names();}
 
-	std::vector<std::string> operator()(const Model& M, long t)
+	std::vector<std::string> operator()(const Model& M, const json& jlog, long t)
 	    {
-		auto values = (*F)(M,t);
+		auto values = (*F)(M,jlog,t);
 
 		std::vector<std::string> output(values.size());
 		for(int i=0;i<values.size();i++)
@@ -233,7 +218,7 @@ namespace MCMC {
     public:
 	TableLogger* clone() const {return new TableLogger<T>(*this);}
 
-	std::string operator()(const Model& M, long t)
+	std::string operator()(const Model& M, const json& jlog, long t)
 	    {
 		using namespace std;
 		ostringstream output;
@@ -241,7 +226,7 @@ namespace MCMC {
 		if (t==0)
 		    output<<join(TF->field_names(),'\t')<<endl;
       
-		vector<T> values = (*TF)(M,t);
+		vector<T> values = (*TF)(M,jlog,t);
 		output<<join(values,separator);
 		return output.str();
 	    }
@@ -256,7 +241,7 @@ namespace MCMC {
 	std::shared_ptr<logger_function<std::string> > function;
 	int subsample;
     public:
-	std::string operator()(const Model&, long t);
+	std::string operator()(const Model&, const json&, long t);
 	Subsample_Function(const logger_function<std::string>& f, int i)
 	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
     };
@@ -265,7 +250,7 @@ namespace MCMC {
     {
 	int p;
     public:
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
 	Mixture_Components_Function(int i):p(i) {}
     };
 
@@ -276,7 +261,7 @@ namespace MCMC {
 	// Do we want to overwrite ambiguous letters like W in observed sequences?
 	bool infer_ambiguous_observed;
     public:
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
 
 	Ancestral_Sequences_Function(int i, bool b)
 	    :p(i),infer_ambiguous_observed(b)
@@ -287,7 +272,7 @@ namespace MCMC {
     {
 	std::string s;
     public:
-	std::string operator()(const Model&, long) {return s;}
+	std::string operator()(const Model&, const json&, long) {return s;}
 	String_Function(const std::string& s_):s(s_) {}
     };
 
@@ -295,7 +280,7 @@ namespace MCMC {
     {
 	owned_ptr<TableFunction<std::string> > function;
     public:
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
 	TableViewerFunction(const TableFunction<std::string>&);
     };
 
@@ -305,9 +290,9 @@ namespace MCMC {
 	std::shared_ptr<std::ostream> log_file;
 	F function;
     public:
-	void operator()(const Model& M, long t)
+	void operator()(const Model& M, const json& jlog, long t)
         {
-            (*log_file)<<function(M,t)<<'\n';
+            (*log_file)<<function(M,jlog,t)<<'\n';
             log_file->flush();
         }
 
@@ -322,9 +307,9 @@ namespace MCMC {
 	std::shared_ptr<std::ostream> log_file;
 	F function;
     public:
-	void operator()(const Model& M, long t)
+	void operator()(const Model& M, const json& jlog, long t)
         {
-            (*log_file)<<function(M,t);
+            (*log_file)<<function(M,jlog,t);
             log_file->flush();
         }
 
@@ -342,7 +327,7 @@ namespace MCMC {
 	{
 	    functions.push_back(func);
 	}
-	std::string operator()(const Model& M, long t);
+	std::string operator()(const Model& M, const json& j, long t);
 	ConcatFunction() {}
 	ConcatFunction(const std::string& s):separator(s) {}
     };

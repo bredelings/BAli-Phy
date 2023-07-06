@@ -649,19 +649,16 @@ int main(int argc,char* argv[])
         if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
         //---------------Do something------------------//
-        vector<string> Rao_Blackwellize;
-        if (args.count("Rao-Blackwellize"))
-            Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
-
         if (args.count("test"))
         {
-            auto TL = construct_table_function(M, Rao_Blackwellize);
+            auto TL = construct_table_function(M);
 
             auto log_formats = get_log_formats(args, args.count("align"));
+            auto jlog = M->get_logged_parameters();
             if (log_formats.count("tsv"))
-                std::cout<<table_logger_line(*TL, *M, 0)<<"\n";
+                std::cout<<table_logger_line(*TL, *M, jlog, 0)<<"\n";
             if (log_formats.count("json"))
-                std::cout<<logged_params_and_some_computed_stuff(*M, 0)<<"\n";
+                std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";
 
             if (args.count("verbose"))
             {
@@ -686,7 +683,7 @@ int main(int argc,char* argv[])
             if (not args.count("test")) {
                 info["subdirectory"] = output_dir.string();
                 files = init_files(proc_id, output_dir, argc, argv);
-                loggers = construct_loggers(args, info, M, subsample, Rao_Blackwellize, proc_id, output_dir);
+                loggers = construct_loggers(args, info, M, subsample, proc_id, output_dir);
 
                 if (args.count("align"))
                     write_initial_alignments(args, proc_id, output_dir);
@@ -760,8 +757,9 @@ int main(int argc,char* argv[])
                 s_out<<"iterations = "<<iterations<<"\n";
                 clog<<"iterations = "<<iterations<<"\n";
 
+                json jlog = M->get_logged_parameters();
                 for(auto& logger: loggers)
-                    logger(*M, iterations);
+                    logger(*M, jlog, iterations);
 
                 //------------------- move to new position -----------------//
                 M->run_transition_kernels();
@@ -775,8 +773,9 @@ int main(int argc,char* argv[])
             s_out<<"iterations = "<<max_iterations<<"\n";
             clog<<"iterations = "<<max_iterations<<"\n";
 
+            json jlog = M->get_logged_parameters();
             for(auto& logger: loggers)
-                logger(*M, max_iterations);
+                logger(*M, jlog, max_iterations);
 
             s_out<<"total samples = "<<max_iterations<<endl;
 

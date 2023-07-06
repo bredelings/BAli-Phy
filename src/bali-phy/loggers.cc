@@ -124,7 +124,7 @@ void add_children(json& j, const K& key, const json& value)
     j[string(key)+'/'] = value;
 }
 
-json logged_params_and_some_computed_stuff(const Model& M, long t)
+json logged_params_and_some_computed_stuff(const Model& M, const json& jlog, long t)
 {
     using namespace MCMC;
 
@@ -135,14 +135,14 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
     add_value(j, "likelihood", log(M.likelihood()));
     add_value(j, "posterior", log(M.probability()));
 
-    add_children(j, "parameters", M.get_logged_parameters());
+    add_children(j, "parameters", jlog);
 
     return j;
 }
 
-string logged_params_and_some_computed_stuff_with_header(const Model& M, long t)
+string logged_params_and_some_computed_stuff_with_header(const Model& M, const json& jlog, long t)
 {
-    json j = logged_params_and_some_computed_stuff(M,t);
+    json j = logged_params_and_some_computed_stuff(M,jlog,t);
 
     string line = j.dump()+"\n";
 
@@ -158,15 +158,14 @@ string logged_params_and_some_computed_stuff_with_header(const Model& M, long t)
 }
 
 
-owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>&)
+owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M)
 {
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
-    TL->add_field("iter", [](const Model&, long t) {return convertToString(t);});
-    TL->add_field("prior", [](const Model& M, long) {return convertToString(log(M.prior()));});
-    TL->add_field("likelihood", [](const Model& M, long) {return convertToString(log(M.likelihood()));});
-    TL->add_field("posterior", [](const Model& M, long) {return convertToString(log(M.probability()));});
+    TL->add_field("iter", [](const Model&, const json&, long t) {return convertToString(t);});
+    TL->add_field("prior", [](const Model& M, const json&, long) {return convertToString(log(M.prior()));});
+    TL->add_field("likelihood", [](const Model& M, const json&, long) {return convertToString(log(M.likelihood()));}); TL->add_field("posterior", [](const Model& M, const json&, long) {return convertToString(log(M.probability()));});
   
     {
 	json log = M->get_logged_parameters();
@@ -184,10 +183,10 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 }
 
 
-string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t)
+string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, const json& jlog, long t)
 {
     std::ostringstream o;
-    auto values = TF(M,t);
+    auto values = TF(M,jlog,t);
     auto names = TF.field_names();
 
     for(int i=0;i<TF.n_fields();i++) {
@@ -213,7 +212,6 @@ set<string> get_log_formats(const boost::program_options::variables_map& args, b
 vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_map& args,
                                        const json& jinfo,
                                        owned_ptr<Model>& M, int subsample,
-                                       const vector<string>& Rao_Blackwellize,
                                        int proc_id,
                                        const fs::path& dir_name)
 {
@@ -233,7 +231,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     auto base = (dir_name / ("C" + convertToString(proc_id+1))).string();
 
-    auto TL = construct_table_function(M, Rao_Blackwellize);
+    auto TL = construct_table_function(M);
 
     auto TF3 = &logged_params_and_some_computed_stuff_with_header;
 
@@ -279,7 +277,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
             string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
             ConcatFunction F;
-            auto iterations = [](const Model&, long t) {return convertToString(t);};
+            auto iterations = [](const Model&, const json&, long t) {return convertToString(t);};
             F<<"iterations = "<<iterations<<"\n\n";
             auto infer_ambiguous_observed = M->load_value("infer-ambiguous-observed",false);
             F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
