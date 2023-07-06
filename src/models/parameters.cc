@@ -912,7 +912,7 @@ void Parameters::show_h_tree() const
     for(int b=0; b < 2*t().n_branches(); b++)
     {
         auto source = get<0>(TC->parameters_for_tree_branch[b]).get_value(*this);
-        auto target = get<2>(TC->parameters_for_tree_branch[b]).get_value(*this);
+        auto target = get<1>(TC->parameters_for_tree_branch[b]).get_value(*this);
         std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
     }
 }
@@ -1094,7 +1094,6 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
     :Model(C)
 {
     TC = new tree_constants(*this, tree_reg);
-    branches_from_affected_node.resize(t().n_nodes());
 
     // Find the downstream partitions.
     vector<int> partition_regs;

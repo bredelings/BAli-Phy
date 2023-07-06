@@ -20,6 +20,7 @@ import Data.List (stripPrefix)
 
 import Data.Unique.Id
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import Data.Array
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
@@ -209,25 +210,23 @@ data Info = Info { i_nodes :: [Node],
 combineInfo (Info ns1 es1 ls1 bls1 ncs1 ecs1) (Info ns2 es2 ls2 bls2 ncs2 ecs2) =
     Info (ns1++ns2) (es1++es2) (ls1++ls2) (bls1++bls2) (ncs1++ncs2) (ecs1++ecs2)
 
-getEdge ids node@(NewickNode _ _ _ branchLength branchAttributes) nodeId index = (edgeId, edgeInfo `combineInfo` childInfo) where
+getEdge ids node@(NewickNode _ _ _ branchLength branchAttributes) nodeId = (edgeId, edgeInfo `combineInfo` childInfo) where
     edgeId = hashedId $ idFromSupply ids
     (ids',childIds) = splitIdSupply ids
     reverseEdgeId = hashedId $ idFromSupply ids'
     edgeInfo = Info [] [eToChild,eFromChild] [] [(edgeId,branchLength),(reverseEdgeId,branchLength)] [] [(edgeId,branchAttributes),(reverseEdgeId,branchAttributes)]
-    eToChild = Edge nodeId index targetId reverseEdgeId edgeId
-    eFromChild = Edge targetId 0 nodeId edgeId reverseEdgeId
+    eToChild = Edge nodeId targetId reverseEdgeId edgeId
+    eFromChild = Edge targetId nodeId edgeId reverseEdgeId
     (targetId, childInfo) = getNode childIds node (Just reverseEdgeId)
 
 getNode ids (NewickNode children nodeLabel nodeAttributes _ _) parentEdge = (nodeId,foldr combineInfo nodeInfo childInfo)
     where nodeInfo = Info [node] [] [(nodeId,nodeLabel)] [] [(nodeId,nodeAttributes)] []
           node = Node nodeId outEdges
           nodeId = hashedId $ idFromSupply ids
-          outEdges = listArray' edgeIds
+          outEdges = IntSet.fromList edgeIds
           edgeIds = case parentEdge of Just e -> (e:childEdgeIds) ; Nothing -> childEdgeIds
-          firstChildIndex = case parentEdge of Nothing -> 0; _ -> 1
-          childIndices = [firstChildIndex .. ]
-          (childEdgeIds, childInfo) = unzip [getEdge childIds childNewick nodeId index
-                                                 | (childNewick, childIds, index) <- zip3 children (splitIdSupplyL ids) childIndices]
+          (childEdgeIds, childInfo) = unzip [getEdge childIds childNewick nodeId
+                                                 | (childNewick, childIds) <- zip children (splitIdSupplyL ids)]
 
 
 newickToTree (NewickTree treeAttributes node) = do
