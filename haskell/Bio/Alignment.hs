@@ -121,7 +121,7 @@ alignmentOnTreeFromSequences tree sequences alphabet = AlignmentOnTree tree numS
 
 find_sequence label sequences = find (\s -> sequence_name s == label) sequences
 
-getSequencesOnTree :: LabelledTree t => [Sequence] -> t -> IntMap (Maybe Sequence)
+getSequencesOnTree :: HasLabels t => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
     sequence_for_node node = case get_label tree node of
                                Nothing ->  Nothing

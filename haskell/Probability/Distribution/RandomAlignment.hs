@@ -116,7 +116,7 @@ annotated_alignment_prs tree hmms model alignment = do
 
 
 
-data RandomAlignment t = (LabelledTree t, Tree t) => RandomAlignment (BranchLengthTreeImp t) IModel (Map.Map Text Int) (IntMap PairHMM)
+data RandomAlignment t = (HasLabels t, Tree t) => RandomAlignment (BranchLengthTreeImp t) IModel (Map.Map Text Int) (IntMap PairHMM)
 
 instance Dist (RandomAlignment t) where
     type Result (RandomAlignment t) = AlignmentOnTree (BranchLengthTreeImp t)

@@ -25,7 +25,7 @@ class SimpleSModel m where
     stateLetters :: m -> EVector Int
     getAlphabet :: m -> Alphabet
 
-    branch_transition_p :: BranchLengthTree t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
+    branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]
     weighted_frequency_matrix :: m -> Matrix Double
     frequency_matrix :: m -> Matrix Double

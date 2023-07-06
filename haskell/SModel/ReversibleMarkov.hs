@@ -110,7 +110,7 @@ instance RateModel ReversibleMarkov where
 instance Show ReversibleMarkov where
     show q = show $ get_q q
 
-instance BranchLengthTree t => LikelihoodMixtureModel (ReversibleMarkov,t) where
+instance HasBranchLengths t => LikelihoodMixtureModel (ReversibleMarkov,t) where
     alphabet (m,_) = getAlphabet m
     numObservedStates m = length $ letters $ alphabet m
     componentProbabilities (m,_) = [1.0]

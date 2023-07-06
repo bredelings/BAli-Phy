@@ -54,20 +54,20 @@ undirectedName t e = min e (reverseEdge t e)
 edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 
-class Tree t => BranchLengthTree t where
+class Tree t => HasBranchLengths t where
     branch_length :: t -> Int -> Double
 
-class Tree t => RootedTree t where
+class Tree t => HasRoot t where
     root :: t -> Int
     away_from_root :: t -> Int -> Bool
 
-class RootedTree t => TimeTree t where
+class HasRoot t => IsTimeTree t where
     node_time :: t -> Int -> Double
 
-class TimeTree t => RateTimeTree t where
+class IsTimeTree t => IsRateTimeTree t where
     branch_rate :: t -> Int -> Double
 
-class Tree t => LabelledTree t where
+class Tree t => HasLabels t where
     get_label :: t -> Int -> Maybe Text
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
@@ -79,34 +79,6 @@ class Tree t => LabelledTree t where
 
 -- OK, so should we store attributes inside the tree?
 -- 
-
-{-
-  WAIT... wasn't this partly about edgesBeforeEdge?  We didn't want to go through the whole list and
-  check if each entry was us -- we just wanted to remove the current entry.
-
-  What is the benefit of using an Array Int Int for node_out_edges?
-  Using an Array means that when we delete an out-edge, we have to shift the array entries
-    down if they are above the index of the deleted edge.  And we have to modify the Edge
-    object for edges whose index has changed.
-
-  By using an array of modifiables, we are able to change the out edges without changing
-  the out-edges array.  Instead we can change a single out-edge, so that calculations that depend
-  only on the non-changed edges are not invalidated.
-
-  Does this really happen though?  For example, in NNI across branch b1=(n1,n2), if we interchange
-  branches b3 and b4 that point to n1 and n2 respectively, then the calculations depend on n1 and n2
-  are going to be re-done anyway... right?
-
-  So, one possibility would be to index the out-edges by their edge name.  We could store an IntSet,
-  which just lists the edge name.  Or we could have an IntMap Edge, which points to the Edge directly.
-
-  Alternatively, we could to IntMap Int, and use some kind of unique key that is NOT the edge name to
-  point to modifiable indices.  Then we could add/remove edges more easily, but also change an out-edge
-  to a new index without changing the node_out_edges struct itself.
-
-  OK, so if we change node_out_edges to be IntSet, then what do we need to change to accomodate that?
-  Weren't we using the index somehow in SPR?
--}
 
 data Node = Node { node_name :: Int, node_out_edges:: IntSet}
 
@@ -203,7 +175,7 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
     unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
 
 
-instance RootedTree t => Tree (TimeTreeImp t) where
+instance HasRoot t => Tree (TimeTreeImp t) where
     type Unrooted (TimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
 
     getNodesSet (TimeTree t _)                     = getNodesSet t
@@ -217,7 +189,7 @@ instance RootedTree t => Tree (TimeTreeImp t) where
     unroot tt@(TimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
 
 
-instance TimeTree t => Tree (RateTimeTreeImp t) where
+instance IsTimeTree t => Tree (RateTimeTreeImp t) where
     type Unrooted (RateTimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
 
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
@@ -231,16 +203,16 @@ instance TimeTree t => Tree (RateTimeTreeImp t) where
     unroot tt@(RateTimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
 
 
-instance RootedTree t => TimeTree (TimeTreeImp t) where
+instance HasRoot t => IsTimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
 
-instance TimeTree t => TimeTree (LabelledTreeImp t) where
+instance IsTimeTree t => IsTimeTree (LabelledTreeImp t) where
     node_time (LabelledTree tt _) node = node_time tt node
 
-instance TimeTree t => TimeTree (RateTimeTreeImp t) where
+instance IsTimeTree t => IsTimeTree (RateTimeTreeImp t) where
     node_time (RateTimeTree tt _) node = node_time tt node
 
-instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
+instance IsTimeTree t => IsRateTimeTree (RateTimeTreeImp t) where
     branch_rate (RateTimeTree _ rs) node = rs IntMap.! node
 
 branch_length_tree topology lengths = BranchLengthTree topology lengths
@@ -255,16 +227,16 @@ branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
           target = targetNode t b
 
-instance Tree t => BranchLengthTree (BranchLengthTreeImp t) where
+instance Tree t => HasBranchLengths (BranchLengthTreeImp t) where
     branch_length (BranchLengthTree tree ds) b = ds IntMap.! b' where b' = min b (reverseEdge tree b)
 
-instance TimeTree t => BranchLengthTree (RateTimeTreeImp t) where
+instance IsTimeTree t => HasBranchLengths (RateTimeTreeImp t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
-instance RootedTree t => BranchLengthTree (TimeTreeImp t) where
+instance HasRoot t => HasBranchLengths (TimeTreeImp t) where
     branch_length tree b = branch_duration tree b
 
-instance BranchLengthTree t => BranchLengthTree (LabelledTreeImp t) where
+instance HasBranchLengths t => HasBranchLengths (LabelledTreeImp t) where
     branch_length (LabelledTree tree _) b = branch_length tree b
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
@@ -274,23 +246,23 @@ scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
 numLeaves t = length $ leaf_nodes t
 
 
-instance Tree t => RootedTree (RootedTreeImp t) where
+instance Tree t => HasRoot (RootedTreeImp t) where
     root (RootedTree _ r _) = r
     away_from_root (RootedTree t r arr    ) b = arr IntMap.! b
 
-instance RootedTree t => RootedTree (LabelledTreeImp t) where
+instance HasRoot t => HasRoot (LabelledTreeImp t) where
     root (LabelledTree t _) = root t
     away_from_root (LabelledTree t _      ) b = away_from_root t b
 
-instance RootedTree t => RootedTree (TimeTreeImp t) where
+instance HasRoot t => HasRoot (TimeTreeImp t) where
     root (TimeTree t _)     = root t
     away_from_root (TimeTree   t _        ) b = away_from_root t b
 
-instance TimeTree t => RootedTree (RateTimeTreeImp t) where
+instance IsTimeTree t => HasRoot (RateTimeTreeImp t) where
     root (RateTimeTree t _) = root t
     away_from_root (RateTimeTree tree _  ) b = away_from_root tree b
 
-instance RootedTree t => RootedTree (BranchLengthTreeImp t) where
+instance HasRoot t => HasRoot (BranchLengthTreeImp t) where
     root (BranchLengthTree tree _) = root tree
     away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
 
@@ -299,22 +271,22 @@ instance RootedTree t => RootedTree (BranchLengthTreeImp t) where
 remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
-instance Tree t => LabelledTree (LabelledTreeImp t) where
+instance Tree t => HasLabels (LabelledTreeImp t) where
     get_label  (LabelledTree _ labels) node = labels IntMap.! node
     get_labels (LabelledTree _ labels) = labels
     relabel newLabels (LabelledTree t _) = LabelledTree t newLabels
 
-instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
+instance HasLabels t => HasLabels (BranchLengthTreeImp t) where
     get_label  (BranchLengthTree t _) node = get_label t node
     get_labels (BranchLengthTree t _) = get_labels t
     relabel newLabels (BranchLengthTree t lengths) = BranchLengthTree (relabel newLabels t) lengths
 
-instance (RootedTree t, LabelledTree t) => LabelledTree (TimeTreeImp t) where
+instance (HasRoot t, HasLabels t) => HasLabels (TimeTreeImp t) where
     get_label (TimeTree t _) node          = get_label t node
     get_labels (TimeTree t _) = get_labels t
     relabel newLabels (TimeTree t nodeHeights) = TimeTree (relabel newLabels t) nodeHeights
 
-instance (TimeTree t, LabelledTree t) => LabelledTree (RateTimeTreeImp t) where
+instance (IsTimeTree t, HasLabels t) => HasLabels (RateTimeTreeImp t) where
     get_label (RateTimeTree t _) node      = get_label t node
     get_labels (RateTimeTree t _) = get_labels t
     relabel newLabels (RateTimeTree t branchRates) = RateTimeTree (relabel newLabels t) branchRates
