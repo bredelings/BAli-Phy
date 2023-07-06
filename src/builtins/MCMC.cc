@@ -41,6 +41,21 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
     return {index_var(0), {r_effect}};
 }
 
+extern "C" closure builtin_function_register_logger(OperationArgs& Args)
+{
+    int subsample = Args.evaluate(0).as_int();
+
+    int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(1));
+
+    expression_ref E(constructor("Effect.Logger",2),{subsample, index_var(0)});
+
+    int r_effect = Args.allocate(closure{E,{r_logger}});
+
+    Args.set_effect(r_effect);
+
+    return {index_var(0), {r_effect}};
+}
+
 log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 {
     // So, why is this sum allowed?

@@ -10,9 +10,13 @@ type ContextIndex = Int
 
 type TransitionKernel a = ContextIndex -> IO a
 
+type LoggerAction = Int -> IO ()
+
 type Proposal = ContextIndex -> IO LogDouble
 
 foreign import bpcall "MCMC:" register_transition_kernel :: Double -> TransitionKernel a -> IO Effect
+
+foreign import bpcall "MCMC:" register_logger :: Int -> LoggerAction -> IO Effect
 
 -- Transition kernel: Perform gibbs sampling on modifiable x, which takes values [0..n-1], in context c
 foreign import bpcall "MCMC:" gibbs_sample_categorical :: Int -> Int -> ContextIndex -> IO ()
