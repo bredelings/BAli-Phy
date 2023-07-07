@@ -172,7 +172,7 @@ interchangeable = RanInterchangeable
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
-addLogger subsample logger = liftIO $ register_logger subsample logger
+addLogger logger = liftIO $ register_logger logger
 
 do_nothing _ = return ()
 
