@@ -43,11 +43,9 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
 extern "C" closure builtin_function_register_logger(OperationArgs& Args)
 {
-    int subsample = Args.evaluate(0).as_int();
+    int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(0));
 
-    int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(1));
-
-    expression_ref E(constructor("Effect.Logger",2),{subsample, index_var(0)});
+    expression_ref E(constructor("Effect.Logger",2),{index_var(0)});
 
     int r_effect = Args.allocate(closure{E,{r_logger}});
 
