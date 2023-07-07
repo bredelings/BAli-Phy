@@ -444,10 +444,9 @@ void reg_heap::_register_effect_at_reg(int r, int s)
         }
         else if (has_constructor(E, "Effect.Logger"))
         {
-            int subsample = expression_at(r).sub()[0].as_int();
-            int r_logger = closure_at(r).reg_for_slot(1);
+            int r_logger = closure_at(r).reg_for_slot(0);
             if (log_verbose >= 5)
-                std::cerr<<"register_logger[subsample="<<subsample<<",logger="<<r_logger<<"]: REGISTER!\n";
+                std::cerr<<"register_logger[logger="<<r_logger<<"]: REGISTER!\n";
             register_logger(r, s);
         }
         else if (has_constructor(E, "Effect.InEdge"))
@@ -513,10 +512,9 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
         }
         else if (has_constructor(E, "Effect.Logger"))
         {
-            int subsample = expression_at(r).sub()[0].as_int();
-            int r_logger = closure_at(r).reg_for_slot(1);
+            int r_logger = closure_at(r).reg_for_slot(0);
             if (log_verbose >= 5)
-                std::cerr<<"register_logger[subsamplee="<<subsample<<",logger="<<r_logger<<"]: UNREGISTER!\n";
+                std::cerr<<"register_logger[logger="<<r_logger<<"]: UNREGISTER!\n";
             unregister_logger(r, s);
         }
         else if (has_constructor(E, "Effect.InEdge"))
@@ -1187,30 +1185,25 @@ void reg_heap::register_logger(int r, int s)
 {
     assert(not steps.is_free(s));
 
-    int subsample = expression_at(r).sub()[0].as_int();
-    int r_logger = closure_at(r).reg_for_slot(1);
+    int r_logger = closure_at(r).reg_for_slot(0);
 
     assert(reg_is_constant(r_logger));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
     assert(not loggers_.count(s));
 
-    if (subsample > 0)
-        loggers_.insert(s);
+    loggers_.insert(s);
 }
 
 void reg_heap::unregister_logger(int r, int s)
 {
-    int subsample = expression_at(r).sub()[0].as_int();
-    int r_logger = closure_at(r).reg_for_slot(1);
+    int r_logger = closure_at(r).reg_for_slot(0);
 
-    if (subsample > 0)
-    {
-        if (not loggers_.count(s))
-            throw myexception()<<"unregister_logger: logger <r="<<r_logger<<",s="<<s<<"> not found!";
+    if (not loggers_.count(s))
+        throw myexception()<<"unregister_logger: logger <r="<<r_logger<<",s="<<s<<"> not found!";
 
-        loggers_.erase(s);
-    }
+    loggers_.erase(s);
+
     assert(not loggers_.count(s));
 }
 
