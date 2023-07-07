@@ -1002,18 +1002,6 @@ double Parameters::branch_mean() const
 }
 
 
-expression_ref Parameters::my_tree() const
-{
-    assert(TC);
-    return TC->tree_exp;
-}
-
-expression_ref Parameters::my_atmodel() const
-{
-    assert(PC);
-    return PC->atmodel.ref(*this);
-}
-
 /*
  * OK, so the idea is that under some tree change, some prior or likelihood term gets invalidated.
  * We look in that term to see if it contains an alignment.

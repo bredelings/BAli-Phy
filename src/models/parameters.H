@@ -175,12 +175,6 @@ struct mutable_data_partition: public data_partition
 
 struct parameters_constants: public Object
 {
-    param atmodel;
-
-    std::vector<double> beta_series;
-
-    std::vector<double> all_betas;
-
     std::vector<data_partition_constants> DPC;
 
     parameters_constants* clone() const {return new parameters_constants(*this);}
@@ -235,12 +229,6 @@ public:
     void setlength_unsafe(int b, double l);
     void setlength(int b,double l); 
   
-    // void
-    expression_ref my_tree() const;
-    // void
-    expression_ref my_atmodel() const;
-    expression_ref my_atmodel_export() const;
-
     // bool
     bool variable_alignment() const;
 
