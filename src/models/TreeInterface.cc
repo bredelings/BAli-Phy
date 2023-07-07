@@ -941,15 +941,6 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b2)).set_value(get_context(), t2);
 }
 
-void TreeInterface::begin_modify_topology()
-{
-}
-
-
-void TreeInterface::end_modify_topology()
-{
-}
-
 // This could create loops it we don't check that the subtrees are disjoint.
 // br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
 void NNI(TreeInterface& T, int br1, int br2)
@@ -966,8 +957,6 @@ void NNI(TreeInterface& T, int br1, int br2)
     //  assert(not t().subtree_contains(br1,s2));
     //  assert(not t().subtree_contains(br2,s1));
 
-    T.begin_modify_topology();
     T.reconnect_branch(s1,t1,t2);
     T.reconnect_branch(s2,t2,t1);
-    T.end_modify_topology();
 }

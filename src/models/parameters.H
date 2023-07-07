@@ -206,8 +206,6 @@ public:
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);
     void regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target);
-    void begin_modify_topology();
-    void end_modify_topology();
 
 private:
     void exchange_subtrees(int b1, int b2);

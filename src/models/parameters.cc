@@ -546,10 +546,8 @@ void Parameters::prune_subtree(const tree_edge& b_subtree)
     if (t().is_leaf_node(b)) std::swap(a,b);
     assert(not t().is_leaf_node(b));
 
-    begin_modify_topology();
     reconnect_branch(a,y,b);
     reconnect_branch(y,b,y);
-    end_modify_topology();
 
     t().set_branch_length(t().find_branch(a,b), L);
     t().set_branch_length(t().find_branch(y,y), 0.0);
@@ -566,25 +564,13 @@ void Parameters::regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_
     if (t().is_leaf_node(b)) std::swap(a,b);
     assert(not t().is_leaf_node(b));
 
-    begin_modify_topology();
     reconnect_branch(y,y,b);
     reconnect_branch(a,b,y);
-    end_modify_topology();
 }
 
 void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
     t().reconnect_branch(s1, t1, t2);
-}
-
-void Parameters::begin_modify_topology()
-{
-    t().begin_modify_topology();
-}
-
-void Parameters::end_modify_topology()
-{
-    t().end_modify_topology();
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.

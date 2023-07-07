@@ -139,9 +139,7 @@ public:
     bool can_set_node_time(int n) const;
     void set_node_time(int n, double t);
 
-    void begin_modify_topology();
     void reconnect_branch(int s1, int t1, int t2);
-    void end_modify_topology();
 
     virtual ~TreeInterface() = default;
 };

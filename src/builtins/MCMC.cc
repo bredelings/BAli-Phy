@@ -787,11 +787,9 @@ void FNPR_move(context_ref& c, int tree_reg, int n)
         int n2 = T.target(b);
         int p2 = T.source(b);
 
-        T.begin_modify_topology();
         T.reconnect_branch(gp, p, n);
         T.reconnect_branch(p, n, n2);
         T.reconnect_branch(p2, n2, p);
-        T.end_modify_topology();
     }
 }
 
