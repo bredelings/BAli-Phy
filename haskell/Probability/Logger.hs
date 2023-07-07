@@ -39,15 +39,19 @@ every n logger iter | iter `mod` n == 0  = logger iter
 jsonLogger filename = do
   handle <- openFile "C1.log.json" WriteMode
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
-  return handle
+  return $ writeJSON handle
 
-treeLogger filename = openFile filename WriteMode
+treeLogger filename = do handle <- openFile filename WriteMode
+                         return $ writeTree handle
 
-alignmentLogger filename = openFile filename WriteMode
+alignmentLogger filename = do handle <- openFile filename WriteMode
+                              return $ writeAlignment handle
 
 
 writeAlignment file alignment iter = do hPutStrLn file $ "iterations = " ++ show iter
+                                        hPutStrLn file ""
                                         T.hPutStrLn file alignment
+                                        hPutStrLn file ""
                                         hPutStrLn file ""
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
