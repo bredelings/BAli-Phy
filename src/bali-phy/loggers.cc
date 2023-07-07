@@ -233,8 +233,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     auto TL = construct_table_function(M);
 
-    auto TF3 = &logged_params_and_some_computed_stuff_with_header;
-
     auto log_formats = get_log_formats(args, args.count("align"));
 
     // Write out scalar numerical variables (and functions of them) to C<>.log
