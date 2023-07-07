@@ -1014,70 +1014,12 @@ expression_ref Parameters::my_atmodel() const
     return PC->atmodel.ref(*this);
 }
 
-/* OK, so we should in theory be able to do two different things:
-   * construct a giant model and then run gen_model_no_alphabet on it.
-     - we would need to run set_alphabet in front of each of the substitution models
-     - this would be in the model monad.
-     - each model yields (I think) a pair of (value, loggers) when performed.
-     - So, the code looks like
-
-          (s1, s1_loggers) <- smodel1_action
-          (s2, s2_loggers) <- smodel2_action
-          (i1, i1_loggers) <- imodel1_action
-          (scale1, scale1_loggers) <- scale1_action
-          (topology, topology_loggers) <- topology_action
-          (a1, a1_loggers) <- alignment1_action
-          (a2, a2_loggers) <- alignment2_action
-          (a3, a3_loggers) <- alignment3_action
-          (branch_lengths, branch_lengths_loggers) <- branch_lengths_action topology
-          observe dist1 partition1_data
-          observe dist2 partition2_data
-          observe dist3 partition3_data
-          let model = ATModel [s1,s2] [i1] [scale1,scale2] [a1,a2,a3] branch_lengths topology
-          let loggers = [("S1", (Nothing, s1_loggers)),
-                         ("S2", (Nothing, s2_loggers)),
-                         ("I1", (Nothing, i1_loggers)),
-                         ("T" , (Nothing, branch_length_loggers)),
-                         ("Scale[1]", (Just scale1, scale1_loggers))]
-*/
-
 /*
-  The other option is to construct a giant expression in the cmd-line language:
-- let[S1=with_alphabet[alph1,smodel1],
-  let[S2=with_alphabet[alph2,smodel2],
-  let[I1=imodel1,
-  let[Scale=List[scale1,scale2],
-  let[T=branch_lengths,
-  let[A1=a1,
-  let[A2=a2,
-  let[A3=a3,
-  ATModel[smodels=[S1,S2],imodels=[I1],scales=Scale,alignments=[a1,a2,a3]]
-
-This second option has the nice feature that it would automatically allow 
-defining other variables as let-variables.  However, it would duplicately log
-things.  We could probably add a flag to ATModel so that it doesn't log anything.
-
-The other thing we could do is something like
-
-ATModel[S=[with_alphabet[alph1,smodel1],with_alphabet[alph2,smodel2]],
-        I=[imodel1],
-        Scale=[scale1,scale2],
-        A=[a1,a2,a3]
-        topology=topology,
-        T=branch_lengths]
-
-We could then add a flag to avoid prefixing things with ATModel:
-
-One thing that both approaches have in common is that they both require
-an ATModel object that can be returned.
-
-The main problems with this approach are:
-- error messages. I think we could solve this by (i) parsing everything separately - given the lets.
-- we may need to set initial values for the tree.  I think this is OK?
-- we need to be able to generate alignments.
-  + do we want to generate these conditional on the sequences?  That's what we are currently doing.
-  + do we want to initially generate an empty alignment?  yeah.
-  + alternatively, we could do a sample_with_initial_value.
+ * OK, so the idea is that under some tree change, some prior or likelihood term gets invalidated.
+ * We look in that term to see if it contains an alignment.
+ * Then we can try and (for example) sum out alignments under that tree change.
+ *
+ * Here, we don't do a specific change, but still try to find the terms that depend on the tree.
  */
 
 Parameters::Parameters(const context_ref& C, int tree_reg)
@@ -1092,9 +1034,8 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
         {
             ModifiablesTreeInterface T(C, tree_reg);
             optional<int> internal_branch;
-            for(int b=0;b<T.n_branches();b++)
-                if (T.is_internal_branch(b))
-                    internal_branch=b;
+            for(int b: T.internal_branches())
+                internal_branch=b;
             if (internal_branch)
             {
                 vector<int> branches;
@@ -1103,13 +1044,13 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
                 ::NNI(T, branches[0], branches[2]);
             }
 
-            int branch = 0;
+            int branch = T.branches()[0];
             if (T.has_branch_lengths() and T.can_set_branch_length(branch))
                 T.set_branch_length(branch,1.0);
 
-            int node = 0;
+            int node = T.nodes()[0];
             if (T.has_node_times() and T.can_set_node_time(node))
-                T.set_node_time(node,0.0);
+                T.set_node_time(node, 0.0);
         };
 
         auto downstream_sampling_events = find_affected_sampling_events(tweak_tree);
