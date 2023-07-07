@@ -126,7 +126,8 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
-std::string generate_atmodel_program(const set<string>& fixed,
+std::string generate_atmodel_program(const fs::path& output_directory,
+                                     const set<string>& fixed,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
@@ -608,6 +609,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
 }
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+                            const fs::path& output_directory,
                             const Model::key_map_t&,
                             const set<string>& fixed,
                             const fs::path& program_filename,
@@ -627,7 +629,8 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
-        program_file<<generate_atmodel_program(fixed,
+        program_file<<generate_atmodel_program(output_directory,
+                                               fixed,
                                                n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
