@@ -247,9 +247,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     if (not is_A_T_model) return loggers;
 
-    // Write out the (scaled) tree each iteration to C<>.trees
-    loggers.push_back( append_line_to_file(base + ".trees", Subsample_Function(TreeFunction(), subsample) ) );
-  
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (M->contains_key("log-categories"))
 	for(int i=0;i<n_partitions;i++)

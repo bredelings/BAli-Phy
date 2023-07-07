@@ -183,24 +183,6 @@ namespace MCMC {
 	return total;
     }
 
-
-    string MAP_Function::operator()(const Model& M, const json& jlog, long t)
-    {
-	std::ostringstream output;
-
-	log_double_t Pr = M.probability();
-	if (Pr < MAP_score)
-	    goto out;
-
-	MAP_score = Pr;
-
-	output<<"iterations = "<<t<<"       MAP = "<<MAP_score<<"\n";
-	output<<(*F)(M,jlog,t)<<"\n";
-  
-    out:
-	return output.str();
-    }
-
     string Subsample_Function::operator()(const Model& M, const json& jlog, long t)
     {
 	if (t%subsample == 0) 

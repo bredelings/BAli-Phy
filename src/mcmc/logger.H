@@ -60,11 +60,6 @@ namespace MCMC {
 
     std::string write_newick(const Parameters& P);
 
-    struct TreeFunction
-    {
-	std::string operator()(const Model& M, const json& j, long t);
-    };
-
     template <typename T>
     class TableFunction
     {
