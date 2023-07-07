@@ -386,7 +386,7 @@ void context_ref::perform_logger(int s, long iteration)
         int r = e.reg_for_slot(1);
         assert(memory()->reg_is_constant(r));
         expression_ref E = {reg_var(r), (int)iteration};
-        perform_expression(E);
+        perform_expression(E, true);
     }
 }
 
