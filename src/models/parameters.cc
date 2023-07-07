@@ -1080,16 +1080,6 @@ The main problems with this approach are:
   + alternatively, we could do a sample_with_initial_value.
  */
 
-template<typename T>
-T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
-{
-    auto loc = keys.find(key);
-    if (loc != keys.end())
-        return loc->second;
-    else
-        return t;
-}
-
 Parameters::Parameters(const context_ref& C, int tree_reg)
     :Model(C)
 {

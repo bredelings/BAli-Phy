@@ -113,4 +113,15 @@ std::string show_probability_expression(const expression_ref&);
 std::vector< std::string > show_probability_expressions(const context& C);
 
 void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
+
+template<typename T>
+T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
+{
+    auto loc = keys.find(key);
+    if (loc != keys.end())
+        return loc->second;
+    else
+        return t;
+}
+
 #endif
