@@ -380,14 +380,10 @@ void context_ref::perform_logger(int s, long iteration)
 {
     auto& e = memory()->get_effect(s);
 
-    int subsample = e.exp.sub()[0].as_int();
-    if (iteration % subsample == 0)
-    {
-        int r = e.reg_for_slot(1);
-        assert(memory()->reg_is_constant(r));
-        expression_ref E = {reg_var(r), (int)iteration};
-        perform_expression(E, true);
-    }
+    int r = e.reg_for_slot(0);
+    assert(memory()->reg_is_constant(r));
+    expression_ref E = {reg_var(r), (int)iteration};
+    perform_expression(E, true);
 }
 
 int context_ref::n_loggers() const
