@@ -63,6 +63,11 @@ public:
     int n_leaf_branches() const;
     std::vector<int> leaf_branches() const;
     std::vector<int> leaf_nodes() const;
+    std::vector<int> internal_nodes() const;
+
+    std::vector<int> branches() const;
+    std::vector<int> directed_branches() const;
+    std::vector<int> nodes() const;
     std::map<int,std::string> labels() const;
     std::optional<std::string> label(int n) const;
 
@@ -180,8 +185,6 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2);
 std::string write(const TreeInterface& T, const std::map<int,double>& L, const std::vector<std::string>& names);
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const TreeInterface& T, std::map<int,std::string>, bool print_lengths=true);
-
-void check_tree(const Tree&, const TreeInterface&);
 
 void NNI(TreeInterface& T, int b1, int b2);
 #endif

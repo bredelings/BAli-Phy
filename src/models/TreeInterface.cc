@@ -143,21 +143,34 @@ int TreeInterface::n_leaf_branches() const {
 
 vector<int> TreeInterface::leaf_nodes() const
 {
-    vector<int> nodes;
+    vector<int> lnodes;
 
-    for(int node=0; node<n_nodes(); node++)
+    for(int node: nodes())
     {
         if (is_leaf_node(node))
-            nodes.push_back(node);
+            lnodes.push_back(node);
     }
 
-    return nodes;
+    return lnodes;
+}
+
+vector<int> TreeInterface::internal_nodes() const
+{
+    vector<int> inodes;
+
+    for(int node: nodes())
+    {
+        if (is_internal_node(node))
+            inodes.push_back(node);
+    }
+
+    return inodes;
 }
 
 vector<int> TreeInterface::leaf_branches() const
 {
     vector<int> branches;
-    for(int node=0; node<n_nodes(); node++)
+    for(int node: nodes())
     {
         if (degree(node) == 0) continue;
 
@@ -175,6 +188,33 @@ vector<int> TreeInterface::leaf_branches() const
         branches.push_back(b);
     }
     return branches;
+}
+
+std::vector<int> TreeInterface::branches() const
+{
+    vector<int> branches;
+    for(auto& [b,_]: get_tree_constants().parameters_for_tree_branch)
+    {
+        if (b == undirected(b))
+            branches.push_back(b);
+    }
+    return branches;
+}
+
+std::vector<int> TreeInterface::directed_branches() const
+{
+    vector<int> branches;
+    for(auto& [b,_]: get_tree_constants().parameters_for_tree_branch)
+        branches.push_back(b);
+    return branches;
+}
+
+std::vector<int> TreeInterface::nodes() const
+{
+    vector<int> nodes;
+    for(auto& [n,_]: get_tree_constants().parameters_for_tree_node)
+        nodes.push_back(n);
+    return nodes;
 }
 
 map<int,string> TreeInterface::labels() const
@@ -719,32 +759,32 @@ vector<int> branches_from_leaves(const TreeInterface& t)
     vector<int> branch_list = t.leaf_branches();
 
     // Mark the leaf branches visited
-    vector<bool> visited(2*t.n_branches(),false);
+    std::set<int> visited;
     for(auto& b: branch_list)
-	visited[b] = true;
+        visited.insert(b);
 
     for(int i=0;i<branch_list.size();i++) 
     {
 	int b = branch_list[i];
 
 	// because we are on the list, we are 'visited'
-	assert(visited[b]);
+	assert(visited.contains(b));
 
 	// check branches-after to see if any are ready
 	for(int b2: t.branches_after(b))
 	{
 	    // if we are already valid, then ignore
-	    if (visited[b2]) continue;
+	    if (visited.contains(b2)) continue;
 
 	    // check if all branches-before are valid
 	    bool ready = true;
 	    for(int k: t.branches_before(b2))
-		if (not visited[k]) ready = false;
+		if (not visited.contains(k)) ready = false;
 
 	    // if so, then 
 	    if (ready) {
 		branch_list.push_back(b2);
-		visited[b2] = true;
+		visited.insert(b2);
 	    }
 	}
     }
@@ -809,7 +849,7 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2)
 double tree_length(const TreeInterface& t)
 {
     double total = 0;
-    for(int b=0; b < t.n_branches(); b++)
+    for(auto b: t.branches())
 	total += t.branch_length(b);
     return total;
 }
@@ -865,9 +905,11 @@ std::string write(const TreeInterface& T, int root, const map<int,double>& L, co
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const TreeInterface& T, map<int,string> names, bool print_lengths)
 {
-    int root = 0;
+    int root = -1;
     if (T.n_nodes() > 2)
-	root = T.target(0);
+	root = T.internal_nodes()[0];
+    else
+        root = T.nodes()[0];
 
     for(auto& [b,name]: names)
 	name = escape_for_newick(name);
@@ -912,40 +954,6 @@ void TreeInterface::begin_modify_topology()
 void TreeInterface::end_modify_topology()
 {
 }
-
-#ifndef NDEBUG
-void check_tree(const Tree& T, const TreeInterface& t)
-{
-    for(int b=0; b < 2*T.n_branches(); b++)
-    {
-	assert(T.directed_branch(b).source() == t.source(b));
-	assert(T.directed_branch(b).target() == t.target(b));
-    }
-
-    for(int n=0; n < T.n_nodes(); n++)
-    {
-	if (T.node(n).is_leaf_node()) continue;
-    
-	vector<int> VV = t.branches_out(n);
-
-	vector<const_branchview> v = sorted_neighbors(T.node(n));
-	vector<int> vv;
-	for(const auto& bv: v)
-	    vv.push_back(bv);
-
-	assert(VV.size() == v.size());
-	for(int elem: v)
-	    assert(includes(VV,elem));
-	for(int elem: VV)
-	    assert(includes(vv,elem));
-    }
-}
-#else
-void check_tree(const Tree&, const TreeInterface&)
-{
-}
-#endif
-
 
 // This could create loops it we don't check that the subtrees are disjoint.
 // br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.

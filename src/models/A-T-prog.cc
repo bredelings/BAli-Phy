@@ -641,7 +641,6 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         string filename = "C1.P"+std::to_string(i+1)+".fastas";
         main.perform(logger,{var("alignmentLogger"),String( (output_directory / filename).string() )});
     }
-    
 
     // Main.5. Emit mcmc $ model sequence_data
     main.empty_stmt();
