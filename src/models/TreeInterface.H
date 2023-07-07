@@ -62,6 +62,7 @@ public:
     int n_leaves() const;
     int n_leaf_branches() const;
     std::vector<int> leaf_branches() const;
+    std::vector<int> internal_branches() const;
     std::vector<int> leaf_nodes() const;
     std::vector<int> internal_nodes() const;
 

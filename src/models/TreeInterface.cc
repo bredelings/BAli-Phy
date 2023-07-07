@@ -169,25 +169,20 @@ vector<int> TreeInterface::internal_nodes() const
 
 vector<int> TreeInterface::leaf_branches() const
 {
-    vector<int> branches;
-    for(int node: nodes())
-    {
-        if (degree(node) == 0) continue;
+    vector<int> lbranches;
+    for(int b: branches())
+        if (is_leaf_branch(b))
+            lbranches.push_back(b);
+    return lbranches;
+}
 
-        int b = branch_out(node, 0);
-
-        if (not is_leaf_branch(b)) continue;
-
-        if (is_leaf_node(target(b)))
-        {
-            // both directions are leaf branches, just return one.
-            if (source(b) > target(b))
-                continue;
-        }
-
-        branches.push_back(b);
-    }
-    return branches;
+vector<int> TreeInterface::internal_branches() const
+{
+    vector<int> ibranches;
+    for(int b: branches())
+        if (is_internal_branch(b))
+            ibranches.push_back(b);
+    return ibranches;
 }
 
 std::vector<int> TreeInterface::branches() const
