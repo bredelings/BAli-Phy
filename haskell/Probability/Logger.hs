@@ -36,10 +36,11 @@ instance Logger JSONLogger where
 jsonLogger filename = do
   handle <- openFile "C1.log.json" WriteMode
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
+  return handle
 
-treeLogger filename = openFile "C1.log.json" WriteMode
+treeLogger filename = openFile filename WriteMode
 
-alignmentLogger filename = openFile "C1.log.json" WriteMode
+alignmentLogger filename = openFile filename WriteMode
 
 
 writeAlignment file alignment iter = do hPutStrLn file $ "iterations = " ++ show iter
@@ -48,7 +49,7 @@ writeAlignment file alignment iter = do hPutStrLn file $ "iterations = " ++ show
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
-writeJSON file loggers iter = do T.hPutStrLn file (J.jsonToText $ J.Object ["iter" %=% iter,
+writeJSON file ljson iter = do T.hPutStrLn file (J.jsonToText $ J.Object ["iter" %=% iter,
                                                                          -- prior
                                                                          -- likelihood
                                                                          -- posterior 
