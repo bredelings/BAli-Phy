@@ -245,31 +245,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     if (log_formats.count("json"))
         loggers.push_back( append_to_file(base + ".log.json", &logged_params_and_some_computed_stuff_with_header) );
 
-    if (not is_A_T_model) return loggers;
-
-    // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
-    if (M->contains_key("log-categories"))
-	for(int i=0;i<n_partitions;i++)
-	    loggers.push_back( append_to_file(base + ".P" + convertToString(i+1)+".CAT", 
-                                              Subsample_Function(Mixture_Components_Function(i),subsample) ) );
-
-    // Write out the alignments for each (variable) partition to C<>.P<>.fastas
-    int alignment_extra_subsample = M->load_value("alignment-extra-subsample",10);
-    int alignment_subsample = alignment_extra_subsample*subsample;
-    for(int i=0;i<n_partitions;i++)
-        if (not jinfo.at("partitions")[i].at("imodel").is_null() or M->load_value("write-fixed-alignments",false))
-        {
-            string filename = base + ".P" + convertToString(i+1)+".fastas";
-		
-            ConcatFunction F;
-            auto iterations = [](const Model&, const json&, long t) {return convertToString(t);};
-            F<<"iterations = "<<iterations<<"\n\n";
-            auto infer_ambiguous_observed = M->load_value("infer-ambiguous-observed",false);
-            F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
-		
-            loggers.push_back( append_to_file(filename, Subsample_Function(F, alignment_subsample) ) );
-        }
-
     return loggers;
 }
 
