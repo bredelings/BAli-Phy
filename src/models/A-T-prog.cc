@@ -168,6 +168,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         program_file<<"\nimport "<<mod;
     program_file<<"\nimport qualified Data.IntMap as IntMap";
     program_file<<"\nimport qualified Data.JSON as J";
+    program_file<<"\nimport Probability.Logger";
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -240,8 +241,6 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     else
         program.let(tree_var, {var("tree")});
     branch_lengths = {var("IntMap.elems"),branch_lengths};
-    if (not fixed.count("tree"))
-        program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("addInternalLabels"),tree_var}}} );
 
     program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
 
@@ -503,21 +502,30 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         program_loggers.push_back( {var("%=%"), String("alignments"), {get_list(alignments) }} );
 
     
-    var loggers_var("loggers");
-    program.let(loggers_var, get_list(program_loggers));
-    program.empty_stmt();
-
-    program.finish_return( loggers_var );
-
     auto model = var("model");
     auto sequence_data = var("sequence_data");
     auto topology = var("topology");
     auto tree = var("tree");
+    auto treeLogger = var("logTree");
     expression_ref model_fn = {model,sequence_data};
     if (fixed.count("tree"))
         model_fn = {model_fn,tree};
     else if (fixed.count("topology"))
         model_fn = {model_fn, topology};
+    if (not fixed.count("tree"))
+        model_fn = {model_fn, treeLogger};
+
+    var loggers_var("loggers");
+    program.let(loggers_var, get_list(program_loggers));
+    program.empty_stmt();
+
+    if (not fixed.count("tree"))
+    {
+        program.perform({var("$"),var("addLogger"),{treeLogger,tree_var}});
+        program.empty_stmt();
+    }
+
+    program.finish_return( loggers_var );
     program_file<<"\n";
     program_file<<model_fn<<" = "<<program.get_expression().print()<<"\n";
 
@@ -598,6 +606,12 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     else if (fixed.count("topology"))
     {
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
+    }
+
+    if (not fixed.count("tree"))
+    {
+        main.perform(treeLogger,{var("treeLogger"),String( (output_directory / "C1.trees").string() )});
+        main.empty_stmt();
     }
 
     // Main.5. Emit mcmc $ model sequence_data
