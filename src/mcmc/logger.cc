@@ -183,10 +183,6 @@ namespace MCMC {
 	return total;
     }
 
-    string TreeFunction::operator()(const Model&, const json& jlog, long)
-    {
-	return jlog["tree"];
-    }
 
     string MAP_Function::operator()(const Model& M, const json& jlog, long t)
     {

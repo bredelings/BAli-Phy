@@ -250,18 +250,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     // Write out the (scaled) tree each iteration to C<>.trees
     loggers.push_back( append_line_to_file(base + ".trees", Subsample_Function(TreeFunction(), subsample) ) );
   
-    // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
-    // FIXME -- we need to log the alignments!
-    {
-	ConcatFunction F; 
-	F<<TF3<<"\n";
-        for(int i=0;i<n_partitions;i++)
-            if (not jinfo.at("partitions")[i].at("imodel").is_null())
-                F<<Ancestral_Sequences_Function(i, false)<<"\n\n";
-	F<<TreeFunction()<<"\n\n";
-	loggers.push_back( append_to_file(base + ".MAP", MAP_Function(F)) );
-    }
-
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (M->contains_key("log-categories"))
 	for(int i=0;i<n_partitions;i++)

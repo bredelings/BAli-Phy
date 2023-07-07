@@ -65,15 +65,6 @@ namespace MCMC {
 	std::string operator()(const Model& M, const json& j, long t);
     };
 
-    class MAP_Function
-    {
-	log_double_t MAP_score;
-	std::shared_ptr<logger_function<std::string> > F;
-    public:
-	std::string operator()(const Model& M, const json& j, long t);
-	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
-    };
-
     template <typename T>
     class TableFunction
     {
