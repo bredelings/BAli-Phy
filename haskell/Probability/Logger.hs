@@ -41,6 +41,7 @@ jsonLogger filename = do
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
   return $ writeJSON handle
 
+-- treeLogger :: FilePath -> IO ( forall t. (HasRoot (Rooted t), WriteNewickNode (Rooted t), Tree t) => t -> Int -> IO ())
 treeLogger filename = do handle <- openFile filename WriteMode
                          return $ writeTree handle
 
@@ -62,4 +63,5 @@ writeJSON file ljson iter = do T.hPutStrLn file (J.jsonToText $ J.Object ["iter"
                                                                          -- posterior 
                                                                          "parameters" %>% ljson])
 
-writeTree file tree iter = T.hPutStrLn file $ write_newick $ addInternalLabels tree
+-- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
+writeTree file tree iter = T.hPutStrLn file $ write_newick tree

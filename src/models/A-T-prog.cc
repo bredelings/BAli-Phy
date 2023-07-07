@@ -501,7 +501,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     if (not alignments.empty())
         program_loggers.push_back( {var("%=%"), String("alignments"), {get_list(alignments) }} );
 
-    
+
     auto model = var("model");
     auto sequence_data = var("sequence_data");
     auto topology = var("topology");
@@ -521,7 +521,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
     if (not fixed.count("tree"))
     {
-        program.perform({var("$"),var("addLogger"),{treeLogger,tree_var}});
+        program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
         program.empty_stmt();
     }
 
