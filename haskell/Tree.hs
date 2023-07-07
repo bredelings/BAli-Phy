@@ -29,6 +29,7 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
 
 class Tree t where
     type family Unrooted t
+    type family Rooted t
 
     findNode    :: t -> Int -> Node
     findEdge    :: t -> Int -> Edge
@@ -40,6 +41,7 @@ class Tree t where
     getTreeAttributes :: t -> Attributes
 
     unroot :: t -> Unrooted t
+    makeRooted :: t -> Rooted t
 
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
@@ -108,6 +110,7 @@ data RateTimeTreeImp t = RateTimeTree t (IntMap Double)
 
 instance Tree TreeImp where
     type instance Unrooted TreeImp = TreeImp
+    type instance Rooted TreeImp = RootedTreeImp TreeImp
 
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
@@ -120,6 +123,7 @@ instance Tree TreeImp where
     getTreeAttributes (Tree _ _ _ _ a)              = a
 
     unroot t = t
+    makeRooted t = add_root root t where root = head $ (internal_nodes t ++ leaf_nodes t)
 
 getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeAttributes tree node)
 getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
@@ -136,6 +140,7 @@ simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
 instance Tree t => Tree (RootedTreeImp t) where
     type Unrooted (RootedTreeImp t) = Unrooted t
+    type Rooted   (RootedTreeImp t) = RootedTreeImp t
 
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
@@ -146,9 +151,11 @@ instance Tree t => Tree (RootedTreeImp t) where
     getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
 
     unroot (RootedTree t _ _) = unroot t
+    makeRooted t = t
 
 instance Tree t => Tree (LabelledTreeImp t) where
     type Unrooted (LabelledTreeImp t) = LabelledTreeImp (Unrooted t)
+    type Rooted (LabelledTreeImp t) = LabelledTreeImp (Rooted t)
 
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
@@ -159,10 +166,12 @@ instance Tree t => Tree (LabelledTreeImp t) where
     getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
 
     unroot (LabelledTree t labels) = LabelledTree (unroot t) labels
+    makeRooted (LabelledTree t labels) = LabelledTree (makeRooted t) labels
 
 
 instance Tree t => Tree (BranchLengthTreeImp t) where
     type Unrooted (BranchLengthTreeImp t) = BranchLengthTreeImp (Unrooted t)
+    type Rooted (BranchLengthTreeImp t) = BranchLengthTreeImp (Rooted t)
 
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
     getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
@@ -173,10 +182,12 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
     getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
 
     unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
+    makeRooted (BranchLengthTree t lengths) = BranchLengthTree (makeRooted t) lengths
 
 
 instance HasRoot t => Tree (TimeTreeImp t) where
     type Unrooted (TimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
+    type Rooted   (TimeTreeImp t) = TimeTreeImp (Rooted t)
 
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
@@ -187,10 +198,12 @@ instance HasRoot t => Tree (TimeTreeImp t) where
     getTreeAttributes (TimeTree t _)              = getTreeAttributes t
 
     unroot tt@(TimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    makeRooted (TimeTree t node_heights) = TimeTree (makeRooted t) node_heights
 
 
 instance IsTimeTree t => Tree (RateTimeTreeImp t) where
     type Unrooted (RateTimeTreeImp t) = BranchLengthTreeImp (Unrooted t)
+    type Rooted (RateTimeTreeImp t) = RateTimeTreeImp (Rooted t)
 
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
     getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
@@ -200,7 +213,8 @@ instance IsTimeTree t => Tree (RateTimeTreeImp t) where
     getEdgeAttributes (RateTimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RateTimeTree t _)              = getTreeAttributes t
 
-    unroot tt@(RateTimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    unroot tt@(RateTimeTree t _) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    makeRooted (RateTimeTree t branchRates) = RateTimeTree (makeRooted t) branchRates
 
 
 instance HasRoot t => IsTimeTree (TimeTreeImp t) where
@@ -360,9 +374,6 @@ add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
            rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
-
-make_rooted tree = add_root root tree
-    where root = head $ (internal_nodes tree ++ leaf_nodes tree)
 
 -- These two functions shouldn't go here -- but where should they go?
 addInternalLabels tree = LabelledTree tree newLabels where

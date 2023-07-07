@@ -42,7 +42,7 @@ model seq_data = do
     observe seq_data $ ctmc_on_tree_fixed_A tree tn93_model
 
     return
-        [ "tree" %=% write_newick (make_rooted tree)
+        [ "tree" %=% write_newick tree
         , "scale" %=% scale
         , "zero_p" %=% zero_p
         , "kappa1" %=% kappa1

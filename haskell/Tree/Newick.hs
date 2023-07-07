@@ -70,11 +70,13 @@ instance (IsTimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t
     branch_info rtt (Just b) = T.doubleToText (branch_length rtt b)
     branch_info _    Nothing  = T.empty
 
-write_newick tree = let nodes = write_newick_node tree (root tree)
-                        attributes = attributesText $ getTreeAttributes tree
-                    in if T.null attributes
-                       then nodes
-                       else T.concat [attributes,T.singleton ' ',nodes]
+write_newick_rooted tree = let nodes = write_newick_node tree (root tree)
+                               attributes = attributesText $ getTreeAttributes tree
+                           in if T.null attributes
+                              then nodes
+                              else T.concat [attributes,T.singleton ' ',nodes]
+
+write_newick tree = write_newick_rooted (makeRooted tree)
 
 intercalate2 t ts = foldl1 (\x y -> x `T.append` t `T.append` y) ts
 

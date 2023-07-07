@@ -22,7 +22,7 @@ model seq_data = do
 
     observe seq_data $ ctmc_on_tree_fixed_A tree tn93_model
 
-    return ["tree" %=% write_newick (make_rooted tree),
+    return ["tree" %=% write_newick tree,
             "age" %=% age,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,

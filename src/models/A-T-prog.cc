@@ -240,7 +240,7 @@ std::string generate_atmodel_program(const set<string>& fixed,
         program.let(tree_var, {var("tree")});
     branch_lengths = {var("IntMap.elems"),branch_lengths};
     if (not fixed.count("tree"))
-        program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("make_rooted"), {var("addInternalLabels"),tree_var}}}} );
+        program_loggers.push_back( {var("%=%"), String("tree"), {var("write_newick"), {var("addInternalLabels"),tree_var}}} );
 
     program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
 

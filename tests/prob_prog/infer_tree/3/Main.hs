@@ -39,7 +39,7 @@ model seq_data = do
 
     (smodel, sloggers    ) <- smodel_prior (codons dna standard_code)
 
-    let loggers = ["tree" %=% write_newick (make_rooted tree), "scale" %=% scale, "S1" %>% sloggers]
+    let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
 
     observe seq_data $ ctmc_on_tree_fixed_A tree smodel
 
