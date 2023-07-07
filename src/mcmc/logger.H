@@ -232,28 +232,6 @@ namespace MCMC {
 	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
     };
 
-    class Mixture_Components_Function
-    {
-	int p;
-    public:
-	std::string operator()(const Model& M, const json& j, long t);
-	Mixture_Components_Function(int i):p(i) {}
-    };
-
-    class Ancestral_Sequences_Function
-    {
-	int p;
-
-	// Do we want to overwrite ambiguous letters like W in observed sequences?
-	bool infer_ambiguous_observed;
-    public:
-	std::string operator()(const Model& M, const json& j, long t);
-
-	Ancestral_Sequences_Function(int i, bool b)
-	    :p(i),infer_ambiguous_observed(b)
-	    {}
-    };
-
     class String_Function
     {
 	std::string s;

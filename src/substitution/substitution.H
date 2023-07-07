@@ -44,10 +44,6 @@ namespace substitution {
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-    std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);
-
-    std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);
-
     extern int total_peel_leaf_branches;
     extern int total_peel_internal_branches;
     extern int total_peel_branches;

@@ -191,24 +191,6 @@ namespace MCMC {
 	    return "";
     }
 
-    string Mixture_Components_Function::operator()(const Model& M, const json&, long)
-    {
-	std::ostringstream output;
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	vector<vector<double> > model_pr = substitution::get_model_probabilities_by_alignment_column(P[p]);
-	for(int i=0;i<model_pr.size();i++)
-	    output<<join(model_pr[i],' ')<<"\n";
-
-	output<<endl;
-
-	return output.str();
-    }
-
-    string Ancestral_Sequences_Function::operator()(const Model&, const json& jlog, long)
-    {
-	return jlog["alignments"][p];
-    }
-
     string ConcatFunction::operator()(const Model& M, const json& jlog, long t)
     {
 	string output;
