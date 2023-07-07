@@ -630,14 +630,17 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     if (not fixed.count("tree"))
     {
         main.empty_stmt();
-        main.perform(treeLogger,{var("treeLogger"),String( output_directory / "C1.trees" )});
+        main.perform(treeLogger,{var("treeLogger"),String( (output_directory / "C1.trees").string() )});
     }
 
     if (not alignments.empty())
         main.empty_stmt();
     // Create alignment loggers.
     for(auto& [i,a,logger]: alignments)
-        main.perform(logger,{var("alignmentLogger"),String( output_directory / ("C1.P"+std::to_string(i+1)+".fastas") )});
+    {
+        string filename = "C1.P"+std::to_string(i+1)+".fastas";
+        main.perform(logger,{var("alignmentLogger"),String( (output_directory / filename).string() )});
+    }
     
 
     // Main.5. Emit mcmc $ model sequence_data
