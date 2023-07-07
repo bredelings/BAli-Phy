@@ -127,6 +127,7 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
 }
 
 std::string generate_atmodel_program(const fs::path& output_directory,
+                                     const Model::key_map_t& keys,
                                      const set<string>& fixed,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
@@ -358,7 +359,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     }
     program.empty_stmt();
 
-    vector<expression_ref> alignments;
+    vector<tuple<int,expression_ref,expression_ref>> alignments; // partition, alignment var, alignment logger
     vector<expression_ref> alignment_lengths;
     vector<expression_ref> total_num_indels;
     vector<expression_ref> total_length_indels;
@@ -419,7 +420,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         program.empty_stmt();
 
         // Model.Partition.4 Logging.
-        expression_ref alignment_exp = var("J.Null");
+        expression_ref alignment_exp;
         if (imodel_index)
         {
             var properties("properties"+part_suffix);
@@ -475,9 +476,15 @@ std::string generate_atmodel_program(const fs::path& output_directory,
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
 
-                var anc_alignment("anc_alignment"+part_suffix);
-                program.let(anc_alignment, {var("prop_fa_anc_seqs"), properties} );
-                alignment_exp = anc_alignment;
+                if (load_value(keys,"write-fixed-alignments",false))
+                {
+                    // This should affect whether we allow modifying leaf sequences.
+                    // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
+
+                    var anc_alignment("anc_alignment"+part_suffix);
+                    program.let(anc_alignment, {var("prop_fa_anc_seqs"), properties} );
+                    alignment_exp = anc_alignment;
+                }
             }
         }
 
@@ -486,7 +493,8 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         program_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
         program.empty_stmt();
 
-        alignments.push_back(alignment_exp);
+        if (alignment_exp)
+            alignments.push_back({i,alignment_exp,var("logA"+part_suffix)});
     }
     if (not alignment_lengths.empty())
         program_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
@@ -498,9 +506,10 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
     if (not total_prior_A.empty())
         program_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
-    if (not alignments.empty())
-        program_loggers.push_back( {var("%=%"), String("alignments"), {get_list(alignments) }} );
 
+    vector<expression_ref> alignment_loggers;
+    for(auto& [i,a,l]: alignments)
+        alignment_loggers.push_back(l);
 
     auto model = var("model");
     auto sequence_data = var("sequence_data");
@@ -514,6 +523,8 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         model_fn = {model_fn, topology};
     if (not fixed.count("tree"))
         model_fn = {model_fn, treeLogger};
+    if (not alignment_loggers.empty())
+        model_fn = {model_fn, get_list(alignment_loggers)};
 
     var loggers_var("loggers");
     program.let(loggers_var, get_list(program_loggers));
@@ -521,10 +532,16 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
     if (not fixed.count("tree"))
     {
-        program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
         program.empty_stmt();
+        program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
     }
 
+    if (not alignments.empty())
+        program.empty_stmt();
+    for(auto& [i,a,l]: alignments)
+        program.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
+    
+    program.empty_stmt();
     program.finish_return( loggers_var );
     program_file<<"\n";
     program_file<<model_fn<<" = "<<program.get_expression().print()<<"\n";
@@ -601,20 +618,30 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
     if (fixed.count("tree"))
     {
+        main.empty_stmt();
         main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename->string())}});
     }
     else if (fixed.count("topology"))
     {
+        main.empty_stmt();
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
     }
 
     if (not fixed.count("tree"))
     {
-        main.perform(treeLogger,{var("treeLogger"),String( (output_directory / "C1.trees").string() )});
         main.empty_stmt();
+        main.perform(treeLogger,{var("treeLogger"),String( output_directory / "C1.trees" )});
     }
 
+    if (not alignments.empty())
+        main.empty_stmt();
+    // Create alignment loggers.
+    for(auto& [i,a,logger]: alignments)
+        main.perform(logger,{var("alignmentLogger"),String( output_directory / ("C1.P"+std::to_string(i+1)+".fastas") )});
+    
+
     // Main.5. Emit mcmc $ model sequence_data
+    main.empty_stmt();
     main.perform({var("$"),var("mcmc"),model_fn});
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
@@ -624,7 +651,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const fs::path& output_directory,
-                            const Model::key_map_t&,
+                            const Model::key_map_t& keys,
                             const set<string>& fixed,
                             const fs::path& program_filename,
                             const std::optional<fs::path>& tree_filename,
@@ -644,6 +671,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     {
         checked_ofstream program_file(program_filename);
         program_file<<generate_atmodel_program(output_directory,
+                                               keys,
                                                fixed,
                                                n_leaves,
                                                alphabet_exps,
