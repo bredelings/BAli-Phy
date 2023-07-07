@@ -31,6 +31,9 @@ instance Logger JSONLogger where
     logAppend (JSONLogger handle) ljson iter = writeJSON handle ljson iter
 
 
+every n logger iter | iter `mod` n == 0  = logger iter
+                    | otherwise          = return ()
+
 ----
 
 jsonLogger filename = do
