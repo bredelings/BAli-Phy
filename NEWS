@@ -1,18 +1,40 @@
 * 4.0-beta6 (unreleased)
+- Warning: MAP point is no longer printed.
+- Warning: MCMC begins with sequences completely unaligned.
 - Model language:
-  - Read / print trees in Newick format.
-  - Correctly parse Newick comments.
-  - Read, query, and write node-, edge-, and tree-level attributes.
-  - Correctly read and write quoted Newick labels.
+  + We no longer need a different kind of model for "bali-phy file.fasta".
+  - Create iidMap and use it to sample branch lengths.
+  - Allow reading fixed trees and alignments.
+  - Stop setting alignments from the Parameters constructor.
+  - Logging
+    - Allow the model to register logging actions.
+    - Log trees from the model.
+    - Log alignments from the model.
+    - Start removing C++ logging infrastructure.
+  - Tree
+    - Read / print trees in Newick format.
+    - Correctly parse Newick comments.
+    - Trees can have have node-, edge-, and tree-level attributes.
+    - Get foreground branch categories from the tree we read in.
+  - Refactor Tree
+    - Allow the degree of a node to change dynamically.
+    - Allow node and branch names to be anything.
+    - Add functions to switch between rooted / unrooted trees.
+    - Make write_newick work on unrooted trees.
+    - TreeInterface
+      - drop {begin,end}_modify_topology() from TreeInterface.
+      - get the reverse edge name from the machine.
 - Bug fixes:
   - Fix typechecking bug where we allowed e.g (x,y) <- return (x,y,z)
+  - Fix SEV likelihood on 2-taxon trees.
+  - Don't re-execute side-effects in incremental_evaluate1( ).
 
 * 4.0-beta5 (Jun 27, 2023)
 - Bug fixes:
   + Fix problem with Covarion models (affected RNA-editting model).
   + Don't treat JSON integers as if they were floating point.
 + New Singularity executable to run on clusters with old software.
-- Move MCMC logging into the model language:
+- Compute values for MCMC logging in the model language:
   - Warning: Temporarily remove pre-burnin.
   - Warning: If --tree is specified then scales default to a constant 1.0 so that the likelihood tests work
   - Print trees and alignments efficiently from Haskell.
