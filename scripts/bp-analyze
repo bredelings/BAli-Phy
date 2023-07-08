@@ -464,7 +464,6 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         self.input_files = self.find_input_file_names_for_outfile(self.out_file)
         self.trees_file = check_file_exists( self.get_dir() / 'C1.trees')
         self.alignments_files = self.get_alignment_files()
-        self.MAP_file = check_file_exists( self.get_dir() /'C1.MAP')
         self.command = self.find_header_attribute("command")
         self.version = self.find_header_attribute("VERSION").split('\s+')[0]
         self.find_tree_prior()
