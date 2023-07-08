@@ -22,17 +22,19 @@ should match, instead of unifying.
 
 class Logger a where
     type LogValue a
-    logAppend :: a -> LogValue a -> Int -> IO ()
+    logAppend :: a -> LogValue a -> Int -> LogDouble -> LogDouble -> LogDouble -> IO ()
 
 data JSONLogger = JSONLogger Handle
 
+{-
 instance Logger JSONLogger where
     type LogValue JSONLogger = [(J.Key,J.JSON)]
     logAppend (JSONLogger handle) ljson iter = writeJSON handle ljson iter
+-}
 
 
-every n logger iter | iter `mod` n == 0  = logger iter
-                    | otherwise          = return ()
+every n logger iter prior likelihood probability | iter `mod` n == 0  = logger iter prior likelihood probability
+                                                 | otherwise          = return ()
 
 ----
 
@@ -49,19 +51,21 @@ alignmentLogger filename = do handle <- openFile filename WriteMode
                               return $ writeAlignment handle
 
 
-writeAlignment file alignment iter = do hPutStrLn file $ "iterations = " ++ show iter
-                                        hPutStrLn file ""
-                                        T.hPutStrLn file alignment
-                                        hPutStrLn file ""
-                                        hPutStrLn file ""
+writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " ++ show iter
+                                               hPutStrLn file ""
+                                               T.hPutStrLn file alignment
+                                               hPutStrLn file ""
+                                               hPutStrLn file ""
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
-writeJSON file ljson iter = do T.hPutStrLn file (J.jsonToText $ J.Object ["iter" %=% iter,
-                                                                         -- prior
-                                                                         -- likelihood
-                                                                         -- posterior 
-                                                                         "parameters" %>% ljson])
+writeJSON file ljson iter prior likelihood posterior = T.hPutStrLn file $
+                                                       J.jsonToText $
+                                                       J.Object ["iter" %=% iter,
+                                                                 "prior" %=% prior,
+                                                                 "likelihood" %=% likelihood,
+                                                                 "posterior" %=% posterior,
+                                                                 "parameters" %>% ljson]
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
-writeTree file tree iter = T.hPutStrLn file $ write_newick tree
+writeTree file tree iter _ _ _ = T.hPutStrLn file $ write_newick tree

@@ -382,7 +382,7 @@ void context_ref::perform_logger(int s, long iteration)
 
     int r = e.reg_for_slot(0);
     assert(memory()->reg_is_constant(r));
-    expression_ref E = {reg_var(r), (int)iteration};
+    expression_ref E = {reg_var(r), (int)iteration, prior().log(), likelihood().log(), probability().log()};
     perform_expression(E, true);
 }
 

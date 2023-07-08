@@ -10,7 +10,7 @@ type ContextIndex = Int
 
 type TransitionKernel a = ContextIndex -> IO a
 
-type LoggerAction = Int -> IO ()
+type LoggerAction = Int -> Double -> Double -> Double -> IO ()
 
 type Proposal = ContextIndex -> IO LogDouble
 
