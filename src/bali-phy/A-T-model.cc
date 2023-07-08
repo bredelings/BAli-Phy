@@ -40,6 +40,7 @@
 #include "util/string/join.H"                       // for join
 #include "util/string/split.H"                      // for split, split_on_last
 #include "util/text.H"                              // for bold, bold_blue
+#include "loggers.H"                                // for get_log_formats
 class module_loader;
 
 
@@ -919,8 +920,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         if (f != "topology" and f != "tree" and f != "alignment")
             throw myexception()<<"--fix: parameter '"<<f<<"' not recognized";
 
+    auto log_formats = get_log_formats(args, args.count("align"));
     auto prog = gen_atmodel_program(L, dir,
-                                    keys, fixed,
+                                    keys, log_formats, fixed,
                                     program_filename,
                                     tree_filename,
                                     alphabet_exps, filename_ranges, T.n_leaves(),

@@ -18,6 +18,7 @@ class module_loader;
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const std::filesystem::path& output_directory,
                             const Model::key_map_t& k,
+                            const std::set<std::string>& log_formats,
                             const std::set<std::string>& fixed,
                             const std::filesystem::path& program_filename,
                             const std::optional<std::filesystem::path>& tree_filename,
