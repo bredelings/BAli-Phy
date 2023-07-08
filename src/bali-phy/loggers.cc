@@ -238,10 +238,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     // Write out scalar numerical variables (and functions of them) to C<>.log
     if (log_formats.count("tsv"))
         loggers.push_back( append_line_to_file(base + ".log", Subsample_Function(TableLogger<string>(*TL), subsample)) );
-  
-    // FIXME: output all the extra stuff from construction_table_function( ).
-    if (log_formats.count("json"))
-        loggers.push_back( append_to_file(base + ".log.json", &logged_params_and_some_computed_stuff_with_header) );
 
     return loggers;
 }

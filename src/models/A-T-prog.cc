@@ -515,8 +515,11 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     auto sequence_data = var("sequence_data");
     auto topology = var("topology");
     auto tree = var("tree");
+    var paramLogger("logParams");
     auto treeLogger = var("logTree");
     expression_ref model_fn = {model,sequence_data};
+    var loggers_var("loggers");
+    model_fn = {model_fn, paramLogger};
     if (fixed.count("tree"))
         model_fn = {model_fn,tree};
     else if (fixed.count("topology"))
@@ -526,16 +529,21 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     if (not alignment_loggers.empty())
         model_fn = {model_fn, get_list(alignment_loggers)};
 
-    var loggers_var("loggers");
     program.let(loggers_var, get_list(program_loggers));
     program.empty_stmt();
 
+    // Add the logger for scalar parameters
+    program.empty_stmt();
+    program.perform({var("$"),var("addLogger"),{paramLogger,loggers_var}});
+
+    // Add the tree logger
     if (not fixed.count("tree"))
     {
         program.empty_stmt();
         program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
     }
 
+    // Add the alignment loggers.
     if (not alignments.empty())
         program.empty_stmt();
     for(auto& [i,a,l]: alignments)
@@ -627,12 +635,18 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
     }
 
+    // Initialize the parameters logger
+    main.empty_stmt();
+    main.perform(paramLogger,{var("jsonLogger"),String( (output_directory / "C1.log.json").string() )});
+
+    // Initialize the tree logger
     if (not fixed.count("tree"))
     {
         main.empty_stmt();
         main.perform(treeLogger,{var("treeLogger"),String( (output_directory / "C1.trees").string() )});
     }
 
+    // Initialize the alignment loggers
     if (not alignments.empty())
         main.empty_stmt();
     // Create alignment loggers.
