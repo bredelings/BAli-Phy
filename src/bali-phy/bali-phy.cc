@@ -656,8 +656,7 @@ int main(int argc,char* argv[])
             auto jlog = M->get_logged_parameters();
             if (log_formats.count("tsv"))
             {
-                auto TL = construct_table_function(M);
-                std::cout<<table_logger_line(*TL, *M, jlog, 0)<<"\n";
+                std::cout<<table_logger_line(*M)<<"\n";
             }
             if (log_formats.count("json"))
                 std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";

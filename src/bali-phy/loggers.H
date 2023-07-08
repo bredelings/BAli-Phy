@@ -15,9 +15,7 @@ namespace MCMC { template <typename T> class TableFunction; }
 #include <boost/program_options.hpp>
 
 // only used to print the TSV output for --test in bali-phy.cc
-owned_ptr<MCMC::TableFunction<std::string>> construct_table_function(owned_ptr<Model>& M);
-// only used to print the TSV output for --test in bali-phy.cc
-std::string table_logger_line(MCMC::TableFunction<std::string>& TF, const Model& M, const json& jlog, long t);
+std::string table_logger_line(const Model& M);
 
 // only used to print JSON output for --test in bali-phy.cc
 json logged_params_and_some_computed_stuff(const Model& M, const json& jlog, long t);

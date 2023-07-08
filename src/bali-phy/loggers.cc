@@ -140,7 +140,7 @@ json logged_params_and_some_computed_stuff(const Model& M, const json& jlog, lon
     return j;
 }
 
-owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M)
+string table_logger_line(const Model& M)
 {
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
@@ -150,7 +150,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     TL->add_field("likelihood", [](const Model& M, const json&, long) {return convertToString(log(M.likelihood()));}); TL->add_field("posterior", [](const Model& M, const json&, long) {return convertToString(log(M.probability()));});
   
     {
-	json log = M->get_logged_parameters();
+	json log = M.get_logged_parameters();
 	vector<string> names = parameter_names(log);
 	names = short_parameter_names(names);
 
@@ -161,16 +161,13 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	TL->add_fields( ConvertTableToStringFunction<json>( T2 ) );
     }
 
-    return TL;
-}
-
-
-string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, const json& jlog, long t)
-{
-    std::ostringstream o;
+    auto& TF = *TL;
+    auto jlog = M.get_logged_parameters();
+    int t = 0;
     auto values = TF(M,jlog,t);
     auto names = TF.field_names();
 
+    std::ostringstream o;
     for(int i=0;i<TF.n_fields();i++) {
 	string name = names[i];
 	if (log_verbose <= 0 and name.size() > 1 and name[0] == '*') continue;
