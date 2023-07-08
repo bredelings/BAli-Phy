@@ -14,18 +14,17 @@ namespace MCMC { template <typename T> class TableFunction; }
 
 #include <boost/program_options.hpp>
 
+// only used to print the TSV output for --test in bali-phy.cc
+owned_ptr<MCMC::TableFunction<std::string>> construct_table_function(owned_ptr<Model>& M);
+// only used to print the TSV output for --test in bali-phy.cc
 std::string table_logger_line(MCMC::TableFunction<std::string>& TF, const Model& M, const json& jlog, long t);
 
+// only used to print JSON output for --test in bali-phy.cc
 json logged_params_and_some_computed_stuff(const Model& M, const json& jlog, long t);
 
+// used to (i) determine what to print for --test in bali-phy.cc
+//        (ii) describe log file name in bali-phy.cc
+//       (iii) determine what log files to create in A-T-model.cc
 std::set<std::string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model);
 
-std::vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_map& args,
-                                            const json& jinfo,
-                                            owned_ptr<Model>& M,
-                                            int subsample,
-                                            int proc_id,
-                                            const std::filesystem::path& dir_name);
-
-owned_ptr<MCMC::TableFunction<std::string>> construct_table_function(owned_ptr<Model>& M);
 #endif

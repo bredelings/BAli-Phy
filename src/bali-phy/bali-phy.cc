@@ -649,14 +649,16 @@ int main(int argc,char* argv[])
         if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
         //---------------Do something------------------//
+        auto log_formats = get_log_formats(args, args.count("align"));
         if (args.count("test"))
         {
-            auto TL = construct_table_function(M);
 
-            auto log_formats = get_log_formats(args, args.count("align"));
             auto jlog = M->get_logged_parameters();
             if (log_formats.count("tsv"))
+            {
+                auto TL = construct_table_function(M);
                 std::cout<<table_logger_line(*TL, *M, jlog, 0)<<"\n";
+            }
             if (log_formats.count("json"))
                 std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";
 
@@ -678,12 +680,9 @@ int main(int argc,char* argv[])
             int subsample = args["subsample"].as<int>();
       
             //---------- Open output files -----------//
-            vector<MCMC::Logger> loggers;
-
             if (not args.count("test")) {
                 info["subdirectory"] = output_dir.string();
                 files = init_files(proc_id, output_dir, argc, argv);
-                loggers = construct_loggers(args, info, M, subsample, proc_id, output_dir);
 
                 if (args.count("align"))
                     write_initial_alignments(args, proc_id, output_dir);
@@ -729,7 +728,6 @@ int main(int argc,char* argv[])
                 out_screen<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
                 out_screen<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
             }
-            auto log_formats = get_log_formats(args, args.count("align"));
             if (log_formats.count("json"))
                 out_screen<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
             if (log_formats.count("tsv"))
@@ -757,10 +755,6 @@ int main(int argc,char* argv[])
                 s_out<<"iterations = "<<iterations<<"\n";
                 clog<<"iterations = "<<iterations<<"\n";
 
-                json jlog = M->get_logged_parameters();
-                for(auto& logger: loggers)
-                    logger(*M, jlog, iterations);
-
                 M->run_loggers(iterations);
 
                 //------------------- move to new position -----------------//
@@ -776,9 +770,6 @@ int main(int argc,char* argv[])
             clog<<"iterations = "<<max_iterations<<"\n";
 
             M->run_loggers(max_iterations);
-            json jlog = M->get_logged_parameters();
-            for(auto& logger: loggers)
-                logger(*M, jlog, max_iterations);
 
             s_out<<"total samples = "<<max_iterations<<endl;
 

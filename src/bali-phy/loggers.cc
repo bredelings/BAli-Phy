@@ -140,24 +140,6 @@ json logged_params_and_some_computed_stuff(const Model& M, const json& jlog, lon
     return j;
 }
 
-string logged_params_and_some_computed_stuff_with_header(const Model& M, const json& jlog, long t)
-{
-    json j = logged_params_and_some_computed_stuff(M,jlog,t);
-
-    string line = j.dump()+"\n";
-
-    if (t == 0)
-    {
-        json header;
-        header["version"] = "0.1";
-        header["fields"] = {"iter","prior","likelihood","posterior"};
-        header["nested"] = true;
-        line = header.dump()+"\n"+line;
-    }
-    return line;
-}
-
-
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M)
 {
     using namespace MCMC;
@@ -208,37 +190,3 @@ set<string> get_log_formats(const boost::program_options::variables_map& args, b
         log_formats.insert(format);
     return log_formats;
 }
-
-vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_map& args,
-                                       const json& jinfo,
-                                       owned_ptr<Model>& M, int subsample,
-                                       int proc_id,
-                                       const fs::path& dir_name)
-{
-    // FIXME - avoid the need to manually SubSampleFunction to every logger?
-
-    using namespace MCMC;
-    vector<Logger> loggers;
-
-    bool is_A_T_model = args.count("align");
-
-    int n_partitions = 0;
-    if (is_A_T_model)
-    {
-        n_partitions = args.at("align").as<vector<string>>().size();
-        assert(jinfo.at("partitions").size() == n_partitions);
-    }
-
-    auto base = (dir_name / ("C" + convertToString(proc_id+1))).string();
-
-    auto TL = construct_table_function(M);
-
-    auto log_formats = get_log_formats(args, args.count("align"));
-
-    // Write out scalar numerical variables (and functions of them) to C<>.log
-    if (log_formats.count("tsv"))
-        loggers.push_back( append_line_to_file(base + ".log", Subsample_Function(TableLogger<string>(*TL), subsample)) );
-
-    return loggers;
-}
-
