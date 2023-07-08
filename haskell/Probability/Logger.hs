@@ -39,7 +39,7 @@ every n logger iter prior likelihood probability | iter `mod` n == 0  = logger i
 ----
 
 jsonLogger filename = do
-  handle <- openFile "C1.log.json" WriteMode
+  handle <- openFile filename WriteMode
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
   return $ writeJSON handle
 
