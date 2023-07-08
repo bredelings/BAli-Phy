@@ -775,6 +775,7 @@ int main(int argc,char* argv[])
             s_out<<"iterations = "<<max_iterations<<"\n";
             clog<<"iterations = "<<max_iterations<<"\n";
 
+            M->run_loggers(max_iterations);
             json jlog = M->get_logged_parameters();
             for(auto& logger: loggers)
                 logger(*M, jlog, max_iterations);
