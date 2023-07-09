@@ -12,7 +12,7 @@ data ESequence = ESequence
 foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: ESequence -> CPPString
 foreign import bpcall "Alignment:" sequenceDataRaw :: ESequence -> CPPString
 
-data Sequence = Sequence { sequence_name, sequenceData :: Text }
+data Sequence = Sequence { sequenceName, sequenceData :: Text }
 mkSequence :: ESequence -> Sequence
 mkSequence s = Sequence (Text $ builtin_sequence_name s) (Text $ sequenceDataRaw s)
 
@@ -41,11 +41,11 @@ select_range range sequences = let maxLength = maximum [ T.length $ sequenceData
 
 reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
-    where sequences_map = Map.fromList [ (sequence_name sequence, sequence) | sequence <- sequences ]
+    where sequences_map = Map.fromList [ (sequenceName sequence, sequence) | sequence <- sequences ]
 
 sequence_length a sequence = vector_size $ sequence_to_indices a sequence
 
-get_sequence_lengths a sequences = Map.fromList [ (sequence_name sequence, sequence_length a sequence) | sequence <- sequences]
+get_sequence_lengths a sequences = Map.fromList [ (sequenceName sequence, sequence_length a sequence) | sequence <- sequences]
 
 foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
 foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int

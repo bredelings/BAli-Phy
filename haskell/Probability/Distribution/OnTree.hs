@@ -206,8 +206,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
-                              1 -> Text.concat [fastaSeq (sequence_name s) (sequenceData s) | s <- sequences]
-                              2 -> Text.concat [fastaSeq (sequence_name s) (sequenceData s) | s <- sequences]
+                              1 -> Text.concat [fastaSeq (sequenceName s) (sequenceData s) | s <- sequences]
+                              2 -> Text.concat [fastaSeq (sequenceName s) (sequenceData s) | s <- sequences]
                               _ -> let ancestral_states :: IntMap VectorPairIntInt
                                        ancestral_states = sample_ancestral_sequences_SEV
                                          tree

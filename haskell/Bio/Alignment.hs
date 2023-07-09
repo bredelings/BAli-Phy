@@ -119,7 +119,7 @@ alignmentOnTreeFromSequences tree sequences alphabet = AlignmentOnTree tree numS
           pairwiseAs = getEdgesSet tree & IntMap.fromSet alignmentForBranch
 
 
-find_sequence label sequences = find (\s -> sequence_name s == label) sequences
+find_sequence label sequences = find (\s -> sequenceName s == label) sequences
 
 getSequencesOnTree :: HasLabels t => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where

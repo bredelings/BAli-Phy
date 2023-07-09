@@ -214,7 +214,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         expression_ref sequence_data1 = var("sequence_data");
         if (n_partitions > 1)
             sequence_data1 = {var("!!"),sequence_data1,0};
-        program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data1});
+        program.let(taxon_names_var, {var("map"),var("sequenceName"),sequence_data1});
         program.empty_stmt();
     }
 
