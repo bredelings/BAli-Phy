@@ -50,18 +50,16 @@ LayoutContext driver::get_offside(const yy::parser::location_type& loc)
 	return {1,false};
 }
 
-void driver::push_warning_message(const location_type& loc, const std::string& err)
+void driver::push_warning_message(const location_type& loc, const Note& w)
 {
 //    std::cerr<<"Pushing warning message '"<<e.second<<"' at "<<e.first<<"\n";
-    auto ee = Note()<<err;
-    messages.push_back(Message{WarningMsg, loc, {ee}});
+    messages.push_back(Message{WarningMsg, loc, {w}});
 }
 
-void driver::push_error_message(const location_type& loc, const std::string& err)
+void driver::push_error_message(const location_type& loc, const Note& e)
 {
 //    std::cerr<<"Pushing error message '"<<e.second<<"' at "<<e.first<<"\n";
-    auto ee = Note()<<err;
-    messages.push_back(Message{ErrorMsg, loc, {ee}});
+    messages.push_back(Message{ErrorMsg, loc, {e}});
 }
 
 void driver::pop_error_message()
