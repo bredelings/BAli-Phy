@@ -30,8 +30,8 @@ yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
 
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_char(const yy::parser::location_type& loc);
-yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
+yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv);
+yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv);
 
 %}
 
@@ -94,7 +94,11 @@ octal        {octit}({numspc}{octit})*
 hexadecimal  {hexit}({numspc}{hexit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
-escape	     \\[abfnrtv\"\']
+escape	     \\{escapechar}
+escapechar   [abfnrtv\"\'\\]
+/* We want to parse incorrect escapes as char/string so that we can give better error messages.
+   If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
+escapish     \\({escapechar}|" "|{graphic})
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
@@ -229,8 +233,9 @@ signed       {negative}?
   /* negative literals depend on an extension */
 <INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(loc);
 
-<INITIAL>\'({graphicnonq}|" "|{escape})\'         drv.set_closing_token(); return make_char(loc);
-<INITIAL>[\"]({graphicnonqq}|" "|{escape})*[\"]   drv.set_closing_token(); return make_string(loc);
+  /* Its important that we only allow escaped quotes inside char or string literals */
+<INITIAL>\'({graphicnonq}|" "|{escapish})\'         drv.set_closing_token(); return make_char(loc, drv);
+<INITIAL>[\"]({graphicnonqq}|" "|{escapish})*[\"]   drv.set_closing_token(); return make_string(loc, drv);
 
 <*>.          {
              throw yy::parser::syntax_error
@@ -266,7 +271,7 @@ std::map<std::string, std::function<yy::parser::symbol_type(const yy::parser::lo
     {"overlaps", yy::parser::make_OVERLAPS_PRAG},
     {"specialize", yy::parser::make_SPECIALIZE_PRAG}
 };
-    
+
 std::string clean_pragma(std::string prag)
 {
     // 1. Remove pragma prefix
@@ -431,7 +436,7 @@ yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
     return yy::parser::make_RATIONAL(d,loc);
 }
 
-char get_char(const char* s, int& i)
+std::optional<char> get_char(const char* s, int& i)
 {
     char c = s[i];
     if (c == '\\')
@@ -453,30 +458,81 @@ char get_char(const char* s, int& i)
 	else if (c == 'v')
 	    c = '\v';
 	else if (c == '"')
-	    ;
+	    c = '"';
 	else if (c == '\'')
-	    ;
+	    c = '\'';
+	else if (c == '\\')
+	    c = '\\';
 	else
-	    std::abort();
+            return {};
     }
     return c;
 }
 
-yy::parser::symbol_type make_char(const yy::parser::location_type& loc)
+yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv)
 {
     int i=1;
-    char c = get_char(yytext, i);
-    return yy::parser::make_CHAR(c,loc);
+    auto c = get_char(yytext, i);
+
+    // Check for unconsumed "\" right before the final "'"
+    if (i == yyleng - 1)
+    {
+        assert(yyleng > 2 and yytext[yyleng-2] == '\\');
+        yy::parser::location_type loc2(loc.begin+(yyleng-2));
+        loc2 += 2;
+        auto msg = Note()<<"invalid escape of ending quote";
+        drv.push_error_message(loc2, msg);
+
+        return yy::parser::make_CHAR('?',loc);
+    }
+
+    if (c)
+        return yy::parser::make_CHAR(*c,loc);
+    else
+    {
+        yy::parser::location_type loc2(loc.begin+1);
+        loc2 += 2;
+        auto msg = Note()<<"invalid escape sequence '"<<yytext[1]<<yytext[2]<<"'";
+        drv.push_error_message(loc2, msg);
+
+        return yy::parser::make_CHAR('?',loc);
+    }
+            
 }
 
-yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
+yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv)
 {
     std::string s;
     s.resize(yyleng);
     int j=0;
     for(int i=1;i<yyleng-1;i++)
-	s[j++] = get_char(yytext,i);
+    {
+        if (auto c = get_char(yytext, i))
+            s[j++] = *c;
+        else
+        {
+            yy::parser::location_type loc2(loc.begin+(i-1));
+            loc2 += 2;
+            auto msg = Note()<<"invalid escape sequence '"<<yytext[i-1]<<yytext[i]<<"'";
+            drv.push_error_message(loc2, msg);
+
+            s[j++] = '?';
+        }
+
+        // Check for unconsumed "\" right before the final "'"
+        if (i == yyleng - 1)
+        {
+            assert(yyleng > 2 and yytext[yyleng-2] == '\\');
+            yy::parser::location_type loc2(loc.begin+(yyleng-2));
+            loc2 += 2;
+            auto msg = Note()<<"invalid escape of ending quote";
+            drv.push_error_message(loc2, msg);
+
+            s[j-1] = '?';
+        }
+    }
     s.resize(j);
+
     return yy::parser::make_STRING(s,loc);
 }
 
