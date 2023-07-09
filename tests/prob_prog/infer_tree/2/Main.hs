@@ -11,7 +11,7 @@ branch_length_dist topology b = gamma 0.5 (2 / fromIntegral n) where n = numBran
 
 model seq_data = do
 
-    let taxa = map sequence_name seq_data
+    let taxa = map sequenceName seq_data
 
     scale1  <- prior $ gamma 0.5 2
 
