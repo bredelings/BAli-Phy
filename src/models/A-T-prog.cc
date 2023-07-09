@@ -132,7 +132,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
                                      const set<string>& fixed,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
-                                     const vector<pair<string,string>>& filename_ranges,
+                                     const vector<pair<fs::path,string>>& filename_ranges,
                                      const optional<fs::path>& tree_filename,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
@@ -560,7 +560,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     if (n_partitions == 1)
     {
         auto [filename, range] = filename_ranges[0];
-        expression_ref E = {var("load_sequences"),String(filename)};
+        expression_ref E = {var("load_sequences"),String(filename.string())};
         if (not range.empty())
             E = {var("<$>"), {var("select_range"),String(range)}, E};
         main.empty_stmt();
@@ -572,7 +572,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
         // Main.1: Emit let filenames = ...
         var filenames_var("filenames");
         bool any_ranges = false;
-        map<string,int> index_for_filename;
+        map<fs::path,int> index_for_filename;
         {
             vector<expression_ref> filenames_;
             for(auto& [filename,range]: filename_ranges)
@@ -580,7 +580,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
                 if (not index_for_filename.count(filename))
                 {
                     index_for_filename.insert({filename,filenames_.size()});
-                    filenames_.push_back(String(filename));
+                    filenames_.push_back(String(filename.string()));
                 }
                 if (not range.empty())
                     any_ranges = true;
@@ -674,7 +674,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const fs::path& program_filename,
                             const std::optional<fs::path>& tree_filename,
                             const vector<expression_ref>& alphabet_exps,
-                            const vector<pair<string,string>>& filename_ranges,
+                            const vector<pair<fs::path,string>>& filename_ranges,
                             int n_leaves,
                             const vector<model_t>& SMs,
                             const vector<optional<int>>& s_mapping,

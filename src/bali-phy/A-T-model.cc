@@ -241,7 +241,10 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
     //-------- Log some stuff -----------//
     auto filename_ranges = args["align"].as<vector<string> >();
-    auto alignment_files = split_on_last(':',filename_ranges);
+
+    vector<pair<fs::path,string>> alignment_files;
+    for(auto& [filename,range]: split_on_last(':',filename_ranges))
+        alignment_files.push_back( {fs::path(filename), range} );
 
     for(int i=0;i<n_data_partitions;i++)
     {
@@ -251,11 +254,11 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
         // 1. filename 
         out_cache<<"data"<<i+1<<" = "<<filename_ranges[i]<<endl;
         auto [filename,range] = alignment_files[i];
-        string file = bold(filename);
+        string file = bold(filename.string());
         if (range.size())
             file += ":"+range;
         out_screen<<"    file = "<<bold(file)<<endl;
-        partition["filename"] = filename;
+        partition["filename"] = filename.string();
         partition["range"] = range;
 
         // 2. alphabet
@@ -365,7 +368,7 @@ void warn_if_newick_chars_in_alignment_names(const alignment& A)
         std::cerr<<"WARNING: Some phylogenetics software may not correctly read Newick trees with these sequence names."<<std::endl<<std::endl;
 }
 
-void check_alignment_values(const alignment& A,const pair<string,string>& filename_range)
+void check_alignment_values(const alignment& A,const pair<fs::path,string>& filename_range)
 {
     const alphabet& a = A.get_alphabet();
 
@@ -376,7 +379,8 @@ void check_alignment_values(const alignment& A,const pair<string,string>& filena
         for(int j=0;j<A.length();j++) 
             if (A.unknown(j,i))
             {
-                auto [filename, range] = filename_range;
+                auto [filepath, range] = filename_range;
+                string filename = filepath.string();
                 if (range.size())
                     filename = filename + ":" + range;
                 throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter()<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
@@ -559,7 +563,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                       int /* proc_id */, const fs::path& dir)
 {
     //------ Determine number of partitions ------//
-    auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
+    vector<pair<fs::path,string>> filename_ranges;
+    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
+        filename_ranges.push_back( {fs::path(filename), range});
 
     const int n_partitions = filename_ranges.size();
 
@@ -678,7 +684,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
     {
-        map<string,vector<sequence>> sequences_for_filename;
+        map<fs::path,vector<sequence>> sequences_for_filename;
         for(auto& [filename, range]: filename_ranges)
             if (not sequences_for_filename.count(filename))
                 sequences_for_filename[filename] = sequence_format::load_from_file(filename);
@@ -693,9 +699,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             catch (myexception& e)
             {
                 if (range.empty())
-                    e.prepend("In file '"+filename+"': ");
+                    e.prepend("In file '"+filename.string()+"': ");
                 else
-                    e.prepend("In file '"+filename+"' columns "+range+": ");
+                    e.prepend("In file '"+filename.string()+"' columns "+range+": ");
                 throw;
             }
 
