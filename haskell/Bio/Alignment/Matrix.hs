@@ -3,7 +3,7 @@ module Bio.Alignment.Matrix where
 import Bio.Sequence
 import Bio.Alphabet
 import Data.BitVector
-import Data.Text (Text)
+import Data.Text (Text(..))
 import qualified Data.Text as Text
 
 import Tree
@@ -23,10 +23,10 @@ foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alpha
 load_alignment :: Alphabet -> String -> IO AlignmentMatrix
 load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
 
-foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
+foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet -> EVector (EPair CPPString CPPString) -> AlignmentMatrix
 
 alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
-alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector seqs)
+alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector $ fmap (\(Sequence (Text n) (Text s)) -> c_pair n s) seqs)
 
 
 foreign import bpcall "Alignment:sequence_names" builtin_sequence_names :: AlignmentMatrix -> EVector CPPString

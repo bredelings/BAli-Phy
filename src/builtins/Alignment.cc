@@ -408,36 +408,39 @@ extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
     return sequences;
 }
 
-extern "C" closure builtin_function_select_range(OperationArgs& Args)
+extern "C" closure builtin_function_getRange(OperationArgs& Args)
 {
     string range = Args.evaluate(0).as_checked<String>();
-
-    auto arg1 = Args.evaluate(1);
-    auto& sequences = arg1.as_<EVector>();
-
-    // 1. Get maximum length
-    int L = 0;
-    for(auto& s: sequences)
-	L = std::max<int>(L, s.as_<Box<sequence>>().size());
+    int L = Args.evaluate(1).as_int();
 
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
 
-    EVector sequences2;
-    for(auto& e: sequences)
+    expression_ref columns2( new EVector(columns) );
+
+    return columns2;
+}
+
+extern "C" closure builtin_function_select_range(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& columns = arg0.as_<EVector>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sequence = arg1.as_<String>();
+
+    // unshare
+    object_ptr<String> sequence2 = new String;
+    // make empty
+    sequence2->string::operator=("");
+    for(auto& c : columns)
     {
-        auto& s = e.as_<Box<sequence>>();
-        // unshare
-        auto s2 = new Box<sequence>(s);
-        // make empty
-        s2->string::operator=("");
-	for(int col : columns)
-            if (col < s.size())
-                (*s2) += s[col];
-        sequences2.push_back(s2);
+        int col = c.as_int();
+        if (col < sequence.size())
+            (*sequence2) += sequence[col];
     }
 
-    return sequences2;
+    return sequence2;
 }
 
 extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
@@ -450,7 +453,13 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
 
     vector<sequence> sequences;
     for(auto& s: sequences_)
-        sequences.push_back(s.as_<Box<sequence>>());
+    {
+        const string& name = s.as_<EPair>().first.as_<String>();
+        const string& letters = s.as_<EPair>().second.as_<String>();
+        sequence S(name,"");
+        S.string::operator=(letters);
+        sequences.push_back(S);
+    }
 
     object_ptr<Box<alignment>> A(new Box<alignment>(a));
 
@@ -482,7 +491,7 @@ extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    auto& s = arg1.as_checked<Box<sequence>>();
+    auto& s = arg1.as_checked<String>();
 
     auto letters = a(s);
     vector<int> letters2;
@@ -500,7 +509,7 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    auto& s = arg1.as_checked<Box<sequence>>();
+    auto& s = arg1.as_checked<String>();
 
     auto letters = a(s);
     vector<int> letters2;

@@ -1,21 +1,25 @@
 module Bio.Sequence where
 
-import Data.Map as Map
+import Data.Map as Map hiding (map)
 import Bio.Alphabet
 import Data.Text (Text(..))
+import qualified Data.Text as T
 import Data.BitVector
 
 -- Dummy type that stands for the c++ `sequence` type
-data Sequence = Sequence
+-- Can we eliminate this?
+data ESequence = ESequence
+foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: ESequence -> CPPString
+foreign import bpcall "Alignment:" sequenceDataRaw :: ESequence -> CPPString
 
-foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: Sequence -> CPPString
-sequence_name :: Sequence -> Text
-sequence_name = Text . builtin_sequence_name
-foreign import bpcall "Alignment:" sequenceDataRaw :: Sequence -> CPPString
-sequenceData = Text . sequenceDataRaw
+data Sequence = Sequence { sequence_name, sequenceData :: Text }
+mkSequence :: ESequence -> Sequence
+mkSequence s = Sequence (Text $ builtin_sequence_name s) (Text $ sequenceDataRaw s)
 
-foreign import bpcall "Alignment:" sequence_to_indices :: Alphabet -> Sequence -> EVector Int
-foreign import bpcall "Alignment:" sequenceToAlignedIndices :: Alphabet -> Sequence -> EVector Int
+foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
+foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
+sequence_to_indices a (Sequence _ (Text s)) = builtin_sequence_to_indices a s
+sequenceToAlignedIndices a (Sequence _ (Text s)) = builtin_sequenceToAlignedIndices a s
 
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
@@ -23,13 +27,17 @@ foreign import bpcall "Alignment:" sequenceToAlignedIndices :: Alphabet -> Seque
 foreign import bpcall "Alignment:" sequenceToTextRaw :: Alphabet -> EVector Int -> EVector Int -> CPPString
 sequenceToText a smap s = Text $ sequenceToTextRaw a smap s
 
-foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> IO (EVector Sequence)
+foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> IO (EVector ESequence)
 load_sequences :: String -> IO [Sequence]
-load_sequences filename = fmap list_from_vector $ builtin_load_sequences (list_to_string filename)
+load_sequences filename = fmap (fmap mkSequence . list_from_vector) $ builtin_load_sequences (list_to_string filename)
 
-foreign import bpcall "Alignment:select_range" builtin_select_range :: CPPString -> EVector Sequence -> EVector Sequence
+foreign import bpcall "Alignment:getRange" builtin_getRange :: CPPString -> Int -> EVector Int
+foreign import bpcall "Alignment:select_range" builtin_select_range :: EVector Int -> CPPString -> CPPString
 select_range :: String -> [Sequence] -> [Sequence]
-select_range range sequences = list_from_vector $ builtin_select_range (list_to_string range) (list_to_vector sequences)
+select_range range sequences = let maxLength = maximum [ T.length $ sequenceData s | s <- sequences ]
+                                   range' = builtin_getRange (list_to_string range) maxLength
+                                   select (Sequence name (Text chars)) = Sequence name (Text $ builtin_select_range range' chars)
+                               in fmap select sequences
 
 reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
