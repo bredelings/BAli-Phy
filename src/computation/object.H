@@ -96,11 +96,7 @@ using PtrBox = Box<std::shared_ptr<const T>>;
 
 typedef Box<std::string> String;
 
-template<> 
-inline std::string Box<std::string>::print() const
-{
-    return "\""+(*this)+"\"";
-}
+template<> std::string Box<std::string>::print() const;
 
 #include "util/matrix.H"
 

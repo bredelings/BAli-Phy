@@ -1,6 +1,8 @@
 #include "computation/object.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
+#include <iomanip> // for std::quoted
+#include <sstream>
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);
@@ -17,5 +19,12 @@ template<> std::string Box<Matrix>::print() const
 	rows.push_back( "[ " + join(row, ", ") + "]" );
     }
     return "[ " + join(rows, ", \n") + "]";
+}
+
+template<>  std::string Box<std::string>::print() const
+{
+    std::ostringstream s;
+    s << std::quoted(value());
+    return s.str();
 }
 
