@@ -23,6 +23,7 @@ struct Note
     }
 
     Note() = default;
+    Note(const std::string& s): ctx(s) {}
 };
 
 struct FileContents
