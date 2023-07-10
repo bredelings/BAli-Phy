@@ -11,6 +11,8 @@
 #include "dp/2way.H"
 #include "models/site-compression.H"
 #include "util/cmdline.H"
+#include "util/range.H"
+#include "util/rng.H"
 
 using std::string;
 using std::vector;
@@ -759,6 +761,145 @@ extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
     }
 
     assert(j == letters.size());
+
+    return result;
+}
+
+vector<int> insertion(const vector<int>& sequence, int pos, int length)
+{
+    int j=0;
+    vector<int> sequence2(sequence.size() + length);
+
+    for(int i=0;i<pos;i++)
+        sequence2[j++] = sequence[i];
+
+    for(int i=0;i<length;i++)
+        sequence2[j++] = -1;
+
+    for(int i=pos;i<sequence.size();i++)
+        sequence2[j++] = sequence[i];
+
+    assert(j == sequence2.size());
+
+    return sequence2;
+}
+
+vector<int> deletion(const vector<int>& sequence, int pos, int length)
+{
+    int j=0;
+    vector<int> sequence2(pos + std::max(0, int(sequence.size()) - (pos+length)));
+
+    // OK, so we keep positions [0..pos).
+    // Then skip positions [pos,pos+length)
+    // Then we keep positions [pos+length, sequences.size())
+    for(int i=0;i<pos;i++)
+        sequence2[j++] = sequence[i];
+
+    for(int i=pos+length;i<sequence.size();i++)
+        sequence2[j++] = sequence[i];
+
+    assert(j == sequence2.size());
+
+    return sequence2;
+}
+
+// limited to a maximum of N.
+int indelLengthGeometric(double mean_length, int N)
+{
+    // mean = 1 + [(1-p)/p]  -- because the geometric starts at 1.
+    // p* mean = p + (1-p)
+    // p*mean  = 1
+    // p = 1/mean
+    //
+    // If the length is one, then the success (exit) probability should be 1.
+    return std::min<int>(N, 1 + geometric(1/mean_length));
+}
+
+pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& sequence, int L0)
+{
+    pairwise_alignment_t alignment;
+
+    int emitted=0;
+    for(int id: sequence)
+    {
+        if (id == -1)
+            alignment.push_back_insert();
+        else
+        {
+            assert(id >=0 and id < L0);
+
+            // Original characters before `id` didn't survive
+            for(int i=emitted;i<id;i++)
+                alignment.push_back_delete();
+
+            // But original character `id` survived.
+            alignment.push_back_match();
+
+            // We've now emitted original characters up to and including `id`.
+            emitted = id+1;
+        }
+    }
+    for(;emitted<L0;emitted++)
+        alignment.push_back_delete();
+
+    return alignment;
+}
+
+extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& Args)
+{
+    int L0 = Args.evaluate(0).as_int();
+    double insertionRate = Args.evaluate(1).as_double();
+    double deletionRate = Args.evaluate(2).as_double();
+    double total_time = Args.evaluate(3).as_double();
+    double mean_length = Args.evaluate(4).as_double();
+
+    auto sequence = iota<int>(L0);
+
+    // OK, we should do some math to allow indels to start to the left and right of the current
+    // CUrrently, we allow deletions to start up to N characters to the left of the sequence.
+    constexpr int N = 50;
+
+    double t = 0;
+    while(true)
+    {
+        // Insertions can occur before every position (|sequence|) and after the last position (1).
+        double totalIRate = insertionRate * (sequence.size() + 1);
+        // Deletions can start before any position (|sequence|) and before positions -1 to -(N-1).
+        double totalDRate = deletionRate * (sequence.size() + (N-1));
+
+        double tNextEvent = exponential(1.0/(totalIRate + totalDRate));
+
+        if (tNextEvent > total_time) break;
+
+        int length = indelLengthGeometric(mean_length, N);
+
+        if (uniform() < insertionRate/(insertionRate+deletionRate))
+        {
+            // An insertion BEFORE position pos.
+            int pos = uniform_int(0, sequence.size());
+            assert(length > 0);
+
+            sequence = insertion(sequence, pos, length);
+        }
+        else
+        {
+            // A deletion BEFORE position pos.
+            int pos = uniform_int(-(N-1), sequence.size());
+            if (pos < 0)
+            {
+                length -= pos;
+                pos = 0;
+            }
+            if (length > 0)
+                sequence = deletion(sequence, pos, length);
+        }
+    }
+
+    // Construct the pairwise alignment from the surviving characters.
+    object_ptr<Box<pairwise_alignment_t>> result;
+    result = new Box<pairwise_alignment_t>(pairwise_alignment_from_characters(sequence, L0));
+
+    assert(result->length1() == L0);
 
     return result;
 }

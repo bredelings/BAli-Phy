@@ -6,10 +6,12 @@ import Tree
 import Bio.Alignment.Pairwise -- for PairHMM
 import qualified Data.IntMap as IntMap
 
-foreign import bpcall "Alignment:rs05_branch_HMM" rs05_branch_HMM :: Double -> Double -> Double -> Double -> Bool -> PairHMM
+foreign import bpcall "Alignment:" rs05_branch_HMM :: Double -> Double -> Double -> Double -> Bool -> PairHMM
 foreign import bpcall "Alignment:rs05_lengthp" builtin_rs05_lengthp :: PairHMM -> Int -> Double
-foreign import bpcall "Alignment:rs07_branch_HMM" rs07_branch_HMM :: Double -> Double -> Double -> Bool -> PairHMM
+foreign import bpcall "Alignment:" rs07_branch_HMM :: Double -> Double -> Double -> Bool -> PairHMM
 foreign import bpcall "Alignment:rs07_lengthp" builtin_rs07_lengthp :: Double -> Int -> Double
+
+foreign import bpcall "Alignment:" simulateLongIndelsGeometric :: Int -> Double -> Double -> Double -> Double -> IO PairwiseAlignment
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l)
 
