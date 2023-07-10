@@ -167,12 +167,19 @@ vector<int> TreeInterface::internal_nodes() const
     return inodes;
 }
 
+// Leaf branches, pointing away from the leaves.
 vector<int> TreeInterface::leaf_branches() const
 {
     vector<int> lbranches;
     for(int b: branches())
         if (is_leaf_branch(b))
+        {
+            // Point away from leaves.
+            if (not is_leaf_node(source(b)))
+                b = reverse(b);
+
             lbranches.push_back(b);
+        }
     return lbranches;
 }
 
