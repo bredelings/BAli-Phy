@@ -804,7 +804,7 @@ vector<int> deletion(const vector<int>& sequence, int pos, int length)
 }
 
 // limited to a maximum of N.
-int indelLengthGeometric(double mean_length, int N)
+int indelLengthGeometric(double mean_length)
 {
     // mean = 1 + [(1-p)/p]  -- because the geometric starts at 1.
     // p* mean = p + (1-p)
@@ -812,7 +812,7 @@ int indelLengthGeometric(double mean_length, int N)
     // p = 1/mean
     //
     // If the length is one, then the success (exit) probability should be 1.
-    return std::min<int>(N, 1 + geometric(1/mean_length));
+    return 1 + geometric(1/mean_length);
 }
 
 pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& sequence, int L0)
@@ -845,53 +845,117 @@ pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& seque
     return alignment;
 }
 
+/*
+ * Long Indels with Geometric lengths
+ *
+ * Lengths follow geometric with FAILURE probability r.
+ *
+ * 1. Probability of a deletion of length k at a particular position is
+ *
+ *    mu[k] = mu * (1-r)^2 * r^(k-1)
+ *
+ *    The total rate of deletion events at a particular position is mu * (1-r).
+ *    The total rate of deleting a particular residue is mu.
+ *
+ * 2. If we assume an equilibrium, then
+ *
+ *    nu(l+k) * Pr(seq|l+k) * mu[k] = nu(l) * Pr(seq|l) * lambda[k] * Pr(insertion|k)
+ *
+ *    nu(l+k) * mu[k] = nu(l) * lambda[k]
+ *
+ *    nu(l+k)/nu(l) = mu[k]/lambda[k] = gamma^k
+ *
+ *    So nu(l) = (1-gamma) * gamma^l
+ *
+ * 3. Then we have that
+ *
+ *    lambda[k] = mu[k] * gamma^k
+ *
+ *              = mu * (1-r)^2 * r^(k-1) * gamma^k
+ *
+ *              = gamma * mu * (1-r)^2 * (r * gamma) ^ (k-1)
+ *
+ *
+ *    The total insertion rate at a given position is mu * gamma * (1 - r)^2 / (1 - gamma * r).
+ *
+ */
+
+
+
+/*
+ * The probability of a deletion event occurring that includes the first letter is
+ *
+ *    del_rate * (Pr(L>=1) + Pr(L>=2) + Pr(L>=3) + Pr(L>=4) + ...)
+ *
+ *    = del_rate * (E L)
+ *
+ * The probability of a deletion event including the first letter but not starting at position 0 is:
+ *
+ *    del_rate * (Pr(L>=2) + Pr(L>=3) + Pr(L>=4) + ...)
+ *
+ *    = del_rate * [(E L) - Pr(L>=1)] = del_rate * [(E L) - 1]
+ *
+ * Therefore the rate of deletions that include the first letter is del_rate * mean_length.
+ *
+ * Since the distribution is geometric, its memoryless, and we can ignore where such deletions actually
+ * start.
+ *
+ */
+
 extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& Args)
 {
     int L0 = Args.evaluate(0).as_int();
-    double insertionRate = Args.evaluate(1).as_double();
-    double deletionRate = Args.evaluate(2).as_double();
+    double ins_rate = Args.evaluate(1).as_double();
+    double del_rate = Args.evaluate(2).as_double();
     double total_time = Args.evaluate(3).as_double();
     double mean_length = Args.evaluate(4).as_double();
 
-    auto sequence = iota<int>(L0);
+    if (mean_length < 1)
+        throw myexception()<<"simulateLongIndelsGeometric: mean_length = "<<mean_length<<", but should be at least 1";
 
-    // OK, we should do some math to allow indels to start to the left and right of the current
-    // CUrrently, we allow deletions to start up to N characters to the left of the sequence.
-    constexpr int N = 50;
+    auto sequence = iota<int>(L0);
 
     double t = 0;
     while(true)
     {
-        // Insertions can occur before every position (|sequence|) and after the last position (1).
-        double totalIRate = insertionRate * (sequence.size() + 1);
-        // Deletions can start before any position (|sequence|) and before positions -1 to -(N-1).
-        double totalDRate = deletionRate * (sequence.size() + (N-1));
+        int N = sequence.size();
 
-        double tNextEvent = exponential(1.0/(totalIRate + totalDRate));
+        // Insertions can occur before every position (N) or after the last position (1).
+        double total_ins_rate = ins_rate * (N + 1);
+        // Deletions can start before every position (N) or to the left of that (mean_length - 1).
+        double total_del_rate = del_rate * (N + (mean_length-1));
 
-        if (tNextEvent > total_time) break;
+        double total_rate = total_ins_rate + total_del_rate;
 
-        int length = indelLengthGeometric(mean_length, N);
+        double waiting_time = exponential(1/total_rate);
 
-        if (uniform() < insertionRate/(insertionRate+deletionRate))
+        t += waiting_time;
+
+        if (t > total_time) break;
+
+        int length = indelLengthGeometric(mean_length);
+        assert(length > 0);
+
+        // An insertion
+        if (uniform() < total_ins_rate/total_rate)
         {
             // An insertion BEFORE position pos.
-            int pos = uniform_int(0, sequence.size());
-            assert(length > 0);
+            int pos = uniform_int(0, N);
 
             sequence = insertion(sequence, pos, length);
         }
+        // A deletion
         else
         {
-            // A deletion BEFORE position pos.
-            int pos = uniform_int(-(N-1), sequence.size());
-            if (pos < 0)
-            {
-                length -= pos;
+            int pos= -1;
+            // Deletion starts in left flanking sequence.
+            if (uniform() < (mean_length-1)/(N+(mean_length-1)))
                 pos = 0;
-            }
-            if (length > 0)
-                sequence = deletion(sequence, pos, length);
+            // Deletion starts to the left of an existing character.
+            else
+                pos = uniform_int(0, N-1);
+
+            sequence = deletion(sequence, pos, length);
         }
     }
 
