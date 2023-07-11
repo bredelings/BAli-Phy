@@ -20,7 +20,7 @@ module Probability (module Probability,
 
                     module Probability.Distribution.Uniform,
                     module Probability.Distribution.Discrete,
-                    module Probability.Distribution.ExpTransform,
+                    module Probability.Distribution.Transform,
 
                     module Probability.Distribution.List,
                     module Probability.Distribution.Markov,
@@ -55,7 +55,7 @@ import Probability.Distribution.DirichletProcess
 
 import Probability.Distribution.Uniform
 import Probability.Distribution.Discrete
-import Probability.Distribution.ExpTransform
+import Probability.Distribution.Transform
 
 import Probability.Distribution.List
 import Probability.Distribution.Markov

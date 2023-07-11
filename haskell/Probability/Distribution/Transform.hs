@@ -1,4 +1,4 @@
-module Probability.Distribution.ExpTransform where
+module Probability.Distribution.Transform where
 import Probability.Random
 
 import Probability.Distribution.Normal
