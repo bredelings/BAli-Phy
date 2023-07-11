@@ -904,11 +904,11 @@ pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& seque
 
 extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& Args)
 {
-    int L0 = Args.evaluate(0).as_int();
+    double del_rate = Args.evaluate(0).as_double();
     double ins_rate = Args.evaluate(1).as_double();
-    double del_rate = Args.evaluate(2).as_double();
+    double mean_length = Args.evaluate(2).as_double();
     double total_time = Args.evaluate(3).as_double();
-    double mean_length = Args.evaluate(4).as_double();
+    int L0 = Args.evaluate(4).as_int();
 
     if (mean_length < 1)
         throw myexception()<<"simulateLongIndelsGeometric: mean_length = "<<mean_length<<", but should be at least 1";
