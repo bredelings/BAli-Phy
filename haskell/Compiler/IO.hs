@@ -49,3 +49,7 @@ makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C
                      in (x `seq` s, x))   -- This ensures that getting the new state forces f to run.
                                           -- But if the pair is strict in the state, then just getting the pair
                                           -- forces f to run...
+
+lazySequence :: Functor f => f (IO a) -> IO (f a)
+lazySequence obj = return $ fmap unsafePerformIO obj
+

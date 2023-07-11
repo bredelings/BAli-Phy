@@ -28,9 +28,6 @@ instance Dist d => Dist (IndelsOnTree t d) where
     type Result (IndelsOnTree t d) = AlignmentOnTree t
     dist_name _ = "IndelsOnTree"
 
-lazySequence :: Functor f => f (IO a) -> IO (f a)
-lazySequence obj = return $ fmap unsafePerformIO obj
-
 {- Note: Indentation handling is not working with this rec statement! -}
 
 instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t) => IOSampleable (IndelsOnTree t d) where
