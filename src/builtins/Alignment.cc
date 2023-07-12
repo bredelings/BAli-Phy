@@ -815,32 +815,54 @@ int indelLengthGeometric(double mean_length)
     return 1 + geometric(1/mean_length);
 }
 
-pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& sequence, int L0)
+pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& sequence, int L1)
 {
     pairwise_alignment_t alignment;
 
-    int emitted=0;
+    // The next id to emit from the ancestral sequence.
+    int next_id = 0;
+
+    // Loop over ids in the descendent sequence.
     for(int id: sequence)
     {
+        // Insertion
         if (id == -1)
             alignment.push_back_insert();
+        // Match
         else
         {
-            assert(id >=0 and id < L0);
+            // Characters from the original sequence should be in [0,L-1]
+            assert(id >=0 and id < L1);
+
+            // The character ids should be increasing.
+            assert(next_id <= id);
 
             // Original characters before `id` didn't survive
-            for(int i=emitted;i<id;i++)
+            while(next_id < id)
+            {
                 alignment.push_back_delete();
+                next_id++;
+            }
+            assert(next_id == id);
 
             // But original character `id` survived.
             alignment.push_back_match();
+            next_id++;
 
             // We've now emitted original characters up to and including `id`.
-            emitted = id+1;
+            assert(next_id == id+1);
         }
     }
-    for(;emitted<L0;emitted++)
+
+    // End
+    while(next_id < L1)
+    {
         alignment.push_back_delete();
+        next_id++;
+    }
+
+    // Check that we've emitted the entire sequence1.
+    assert(next_id == L1);
 
     return alignment;
 }
