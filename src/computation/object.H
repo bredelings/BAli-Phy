@@ -102,6 +102,8 @@ template<> std::string Box<std::string>::print() const;
 
 template<> std::string Box<Matrix>::print() const;
 
+template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
+
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
 {

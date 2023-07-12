@@ -3,6 +3,7 @@
 #include "util/string/convert.H"
 #include <iomanip> // for std::quoted
 #include <sstream>
+#include "computation/expression/expression_ref.H"
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);
@@ -28,3 +29,10 @@ template<>  std::string Box<std::string>::print() const
     return s.str();
 }
 
+template<> std::string Box<std::vector<std::pair<int,int>>>::print() const
+{
+    EVector V;
+    for(auto& [x,y]: *this)
+        V.push_back(EPair(x,y));
+    return V.print();
+}

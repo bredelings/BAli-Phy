@@ -131,3 +131,8 @@ getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequen
                                      Just sequence -> Just sequence
                                      Nothing -> error $ "No such sequence " ++ Text.unpack label
 
+foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
+instance Show VectorPairIntInt where
+    show = unpack_cpp_string . showVectorPairIntInt
+
+
