@@ -194,11 +194,6 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
                                            Just indices -> indices
                                            Nothing -> error $ "No such sequence " ++ Text.unpack label
 
-fastaTree tree sequences =  Text.concat [fastaSeq (Sequence label sequence) | n <- orderedNodes,
-                                                                   let label = add_ancestral_label n (get_labels tree),
-                                                                   let sequence = sequences IntMap.! n]
-    where orderedNodes = leaf_nodes tree ++ internal_nodes tree
-
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap

@@ -21,7 +21,7 @@ import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
-import qualified Data.Text as Text (unpack)
+import qualified Data.Text as Text
 import Data.Text (Text)
 
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
@@ -143,3 +143,9 @@ getLabelledThings tree things f = catMaybes $ fmap go $ IntMap.toList things whe
     go (node, thing) = case get_label tree node of
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
+
+fastaTree tree sequences =  Text.concat [fastaSeq (Sequence label sequence) | n <- orderedNodes,
+                                                                   let label = add_ancestral_label n (get_labels tree),
+                                                                   let sequence = sequences IntMap.! n]
+    where orderedNodes = leaf_nodes tree ++ internal_nodes tree
+
