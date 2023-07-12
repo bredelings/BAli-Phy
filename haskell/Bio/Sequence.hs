@@ -54,5 +54,5 @@ foreign import bpcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int
 bitmask_from_sequence' s = BitVector $ bitmask_from_sequence s
 maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
 
-fastaSeq label seq = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
+fastaSeq (Sequence label seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
 

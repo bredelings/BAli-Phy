@@ -149,7 +149,7 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
                                            Just indices -> indices
                                            Nothing -> error $ "No such sequence " ++ Text.unpack label
 
-fastaTree tree sequences =  Text.concat [fastaSeq label sequence | n <- orderedNodes,
+fastaTree tree sequences =  Text.concat [fastaSeq (Sequence label sequence) | n <- orderedNodes,
                                                                    let label = add_ancestral_label n (get_labels tree),
                                                                    let sequence = sequences IntMap.! n]
     where orderedNodes = leaf_nodes tree ++ internal_nodes tree
@@ -204,8 +204,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
-                              1 -> Text.concat [fastaSeq (sequenceName s) (sequenceData s) | s <- sequences]
-                              2 -> Text.concat [fastaSeq (sequenceName s) (sequenceData s) | s <- sequences]
+                              1 -> Text.concat [fastaSeq s | s <- sequences]
+                              2 -> Text.concat [fastaSeq s | s <- sequences]
                               _ -> let ancestral_states :: IntMap VectorPairIntInt
                                        ancestral_states = sample_ancestral_sequences_SEV
                                          tree
