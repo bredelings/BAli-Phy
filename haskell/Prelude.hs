@@ -80,8 +80,8 @@ zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
+foreign import bpcall "Vector:showObject" showVector :: EVector a -> CPPString
 instance Show (EVector a) where
     show = unpack_cpp_string . showVector
 
-foreign import bpcall "Vector:" showVector :: EVector a -> CPPString
 

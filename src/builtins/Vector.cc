@@ -135,10 +135,9 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
     return M;
 }
 
-extern "C" closure builtin_function_showVector(OperationArgs& Args)
+extern "C" closure builtin_function_showObject(OperationArgs& Args)
 {
     auto arg = Args.evaluate(0);
-    auto& V = arg.as_<EVector>();
-    String result = V.print();
+    String result = arg.print();
     return result;
 }
