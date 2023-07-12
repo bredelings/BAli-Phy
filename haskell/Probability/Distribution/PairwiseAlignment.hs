@@ -42,7 +42,7 @@ instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLeng
           ; return $ AlignmentOnTree rtree (numNodes rtree) lengths as}
 
 
-{- Note: sampling from an IntMap dist instead of an IntMap (IO PairwiseAlignment)
+{- Note: Could we sample from an IntMap dist instead of an IntMap (IO PairwiseAlignment) ?
 
 Ideally we would sample the alignments from an IntMap dist.  Then instead of using lazySequence,
 we could do something like:
