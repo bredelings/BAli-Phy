@@ -9,12 +9,16 @@ class Functor f where
     fmap :: (a -> b) -> f a -> f b
     (<$) :: a -> f b -> f a
 
+    infixl 4 <$
     (<$) = fmap . const
 
+infixl 4 $>
 ($>) = flip (<$)
 
+infixl 4 <$>
 f <$> x = fmap f x
 
+infixl 1 <&>
 (<&>) = flip fmap
 
 void x = () <$ x
@@ -29,3 +33,6 @@ instance Functor [] where
 instance Functor Maybe where
     fmap f (Just x) = Just (f x)
     fmap f Nothing = Nothing
+
+instance Functor ((->) r) where
+  fmap = (.)
