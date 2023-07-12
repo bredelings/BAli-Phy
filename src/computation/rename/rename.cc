@@ -243,7 +243,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 
     set<string> free_vars;
 
-    // Extract sigs for foreign imports
+    // 3. Extract sigs for foreign imports
     for(auto& foreign_decl: M.foreign_decls)
     {
         Rn.qualify_name(unloc(foreign_decl.function).name );
@@ -253,9 +253,10 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         bound_names.insert( {unloc(foreign_decl.function).name} );
     }
 
+    // 4. Rename value decls.
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
-    // Replace ids with dummies
+    // 5. Replace ids with dummies
     for(auto& [_,decl]: M.type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
@@ -296,8 +297,10 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         }
     }
 
+    // 6. Show warning and error messages.
     show_messages(m.file, std::cerr, Rn.messages);
 
+    // 7. Quit if there were error messages.
     exit_on_error(Rn.messages);
 
     return M;
