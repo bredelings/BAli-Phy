@@ -21,6 +21,9 @@ import qualified Foreign.IntMap as FIM
 
 import Data.Maybe (fromJust)
 
+import Control.Monad.Fix -- for rec
+import Probability.Distribution.List -- for independent
+
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
@@ -64,8 +67,10 @@ transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_trans
 -- We hack around this by removing the definition of NodeAlignment.
 -- Then NodeAlignment needs a foreign import to construct it.
 
+-- This constructs an all-insert alignment.
 data NodeAlignment -- NodeAlignment SourceNode Int (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector BranchAlignment -> NodeAlignment
+
 data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
@@ -139,6 +144,46 @@ instance (HasLabels t, HasBranchLengths t, SimpleSModel s) => HasAnnotatedPdf (C
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
+
+-- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
+
+-- Uh... how do we get from a [Sequence] and an AlignmentOnTree to a FASTA file?
+-- Can we have an IsAlignment class that allows us to get a FASTA from it?
+--  + alignmentLength can be implemented for both AlignmentMatrix and AlignmentOnTree
+--  + could we change AlignmentOnTree to be data AlignmentOnTree t = OneSequence { tree :: t, length :: Int } | ManySequences { tree :: t, paiwise_alignments :: IntMap PairwiseAlignment} ?
+--    one issue is that we can check EITHER the tree OR the alignment constructor to determin of there's only one sequence.
+--    We could to AlignmentOnTree { tree :: t, singleLength :: Maybe Int, pairwise_alignments :: IntMap PairwiseAlignment }
+--    In that case, if there's a single length, we still have an (empty) IntMap for the pairwise alignments.
+
+foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
+foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
+
+sampleStates rtree alignment smodel =  do
+  let as = pairwise_alignments alignment
+      ls = sequence_lengths alignment
+      ps = transition_ps_map (SingleBranchLengthModel rtree smodel)
+      f = (weighted_frequency_matrix smodel)
+
+  rec let simulateSequenceForNode node = case branchToParent rtree node of
+                                   Nothing -> simulateRootSequence (ls IntMap.! node) f
+                                   Just b' -> let b = reverseEdge rtree b'
+                                                  parent = sourceNode rtree b
+                                             in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
+      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
+  return stateSequences
+
+
+instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t s) where
+    sampleIO (CTMCOnTree tree alignment smodel) = do
+      let alphabet = getAlphabet smodel
+          smap = stateLetters smodel
+
+      stateSequences <- sampleStates (makeRooted tree) alignment smodel
+
+      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet smap $ get_sequence_from_states stateSequence)
+
+      return $ getLabelledThings tree stateSequences sequenceForNode
+
 
 ----------------------------------------
 getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntMap.fromSet sequence_for_node

@@ -746,3 +746,58 @@ extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
 
     return sequence;
 }
+
+pair<int,int> sample(const Matrix& M);
+
+extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
+{
+    int L = Args.evaluate(0).as_int();
+    auto arg1 = Args.evaluate(1);
+    auto& F = arg1.as_<Box<Matrix>>();
+
+    Vector<pair<int,int>> sequence(L);
+    for(int i=0;i<L;i++)
+        sequence[i] = sample(F);
+    return sequence;
+}
+
+namespace substitution
+{
+
+void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps);
+};
+
+extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& alignment = arg1.as_<Box<pairwise_alignment_t>>();
+
+    auto& arg2 = Args.evaluate(2);
+    auto& transition_ps = arg2.as_<EVector>();
+
+    auto arg3 = Args.evaluate(3);
+    auto& F = arg3.as_<Box<Matrix>>();
+
+    Vector<pair<int,int>> sequence;
+    auto S = F;
+    for(int i=0,j=0;i<alignment.size();i++)
+    {
+        pair<int,int> parent_model_state(-2,-2);
+        if (alignment.is_delete(i))
+            continue;
+        else if (alignment.is_match(i))
+            parent_model_state = parentSequence[j++];
+        else if (alignment.is_insert(i))
+            parent_model_state = sample(F);
+
+        substitution::calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
+
+        sequence.push_back(sample(S));
+    }
+
+    return sequence;
+}
+
