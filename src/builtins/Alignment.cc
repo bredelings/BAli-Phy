@@ -967,3 +967,30 @@ extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& A
 
     return result;
 }
+
+extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A = arg0.as_<Box<pairwise_alignment_t>>();
+
+    String s;
+    for(int i=0;i<A.size();i++)
+    {
+        char c = ' ';
+        if (A.is_match(i))
+            c = 'M';
+        else if (A.is_delete(i))
+            c = 'D';
+        else if (A.is_insert(i))
+            c = 'I';
+        else if (A.get_state(c) == A2::states::E)
+            c = 'E';
+        else if (A.get_state(c) == A2::states::S)
+            c = 'S';
+        else
+            throw myexception()<<"showPairwiseAlignmentRaw: I don't recognize state "<<int(c)<<" at position "<<i<<"/"<<A.size();
+        s += c;
+    }
+
+    return s;
+}

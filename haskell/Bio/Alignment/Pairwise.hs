@@ -40,3 +40,8 @@ foreign import bpcall "Alignment:flip_alignment" flip_alignment :: PairwiseAlign
 instance NFData PairHMM
 
 instance NFData PairwiseAlignment
+
+foreign import bpcall "Alignment:" showPairwiseAlignmentRaw :: PairwiseAlignment -> CPPString
+
+instance Show PairwiseAlignment where
+    show = unpack_cpp_string . showPairwiseAlignmentRaw
