@@ -43,6 +43,7 @@ data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlig
 n_sequences         (AlignmentOnTree _ n _  _) = n
 sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
+sequenceLength a node = sequence_lengths a IntMap.! node
 
 -- not using this right now
 -- get_sequence_lengths leaf_seqs_array = mkArray (length leaf_seqs_array) (\node -> vector_size (leaf_seqs_array!node))
