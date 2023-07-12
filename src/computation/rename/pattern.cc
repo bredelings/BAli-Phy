@@ -83,8 +83,12 @@ Hs::LPat unapply(Hs::LExp LE)
         P = Hs::VarPattern(*v);
     else if (E.is_a<Hs::WildcardPattern>())
         P = Hs::WildcardPattern();
-    else
-        std::abort();
+    else {
+        // Can we return a real error message?
+        throw myexception()<<"unapply: '"<<unloc(LE).print()<<"' does not seem to be a pattern.";
+        P = Hs::WildcardPattern();
+    }
+
     return LP;
 }
 
