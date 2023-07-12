@@ -149,8 +149,6 @@ getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntM
                                            Just indices -> indices
                                            Nothing -> error $ "No such sequence " ++ Text.unpack label
 
-fastaSeq label seq = Text.concat [Text.singleton '>', label, Text.singleton '\n', seq, Text.singleton '\n']
-
 fastaTree tree sequences =  Text.concat [fastaSeq label sequence | n <- orderedNodes,
                                                                    let label = add_ancestral_label n (get_labels tree),
                                                                    let sequence = sequences IntMap.! n]
