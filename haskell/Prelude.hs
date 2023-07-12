@@ -79,3 +79,9 @@ zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
 zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
+
+instance Show (EVector a) where
+    show = unpack_cpp_string . showVector
+
+foreign import bpcall "Vector:" showVector :: EVector a -> CPPString
+
