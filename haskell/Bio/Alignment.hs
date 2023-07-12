@@ -7,6 +7,7 @@ import Tree
 import Data.BitVector
 import Data.Foldable
 import Data.Array
+import Data.Maybe (catMaybes)
 import Parameters
 import Foreign.Vector
 import Foreign.Pair
@@ -21,6 +22,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
 import qualified Data.Text as Text (unpack)
+import Data.Text (Text)
 
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
@@ -136,3 +138,8 @@ instance Show VectorPairIntInt where
     show = unpack_cpp_string . showVectorPairIntInt
 
 
+getLabelledThings :: HasLabels t => t -> IntMap a -> (Text -> a -> b) -> [b]
+getLabelledThings tree things f = catMaybes $ fmap go $ IntMap.toList things where
+    go (node, thing) = case get_label tree node of
+                         Just label -> Just $ f label thing
+                         Nothing -> Nothing
