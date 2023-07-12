@@ -85,7 +85,7 @@ sample_ancestral_sequences :: Tree t =>
 sample_ancestral_sequences t root seqs as alpha ps f cl smap =
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
-        ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
+        ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
         ancestor_for_branch n Nothing = sample_root_sequence (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2)
                                                              (as IntMap.! b0) (as IntMap.! b1) (as IntMap.! b2)
                                                              f
@@ -148,7 +148,7 @@ peel_likelihood_SEV t cl f root counts = let branches_in = fmap (reverseEdge t) 
 sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
-        ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
+        ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
         ancestor_for_branch n Nothing = let edges = edgesTowardNode t n
                                             b0 = edges!0
                                             b1 = edges!1

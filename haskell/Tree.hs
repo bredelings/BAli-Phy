@@ -308,10 +308,11 @@ instance (IsTimeTree t, HasLabels t) => HasLabels (RateTimeTreeImp t) where
 
 toward_root rt b = not $ away_from_root rt b
 
-parentBranch rooted_tree n = find (toward_root rooted_tree) (edgesOutOfNode rooted_tree n)
+branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
+branchFromParent rtree node = reverseEdge rtree <$> branchToParent rtree node
 
-parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
-                                                              Nothing -> Nothing
+parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
+                                                                Nothing -> Nothing
 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
 edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node

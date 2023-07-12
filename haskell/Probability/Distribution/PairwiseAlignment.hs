@@ -33,7 +33,7 @@ instance Dist d => Dist (IndelsOnTree t d) where
 instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLengths t) => IOSampleable (IndelsOnTree t d) where
     sampleIO (IndelsOnTree rtree distFn startLength) =
         do { rec let lengths = getNodesSet rtree & IM.fromSet lengthForNode
-                     lengthForNode node  = case parentBranch rtree node of
+                     lengthForNode node  = case branchFromParent rtree node of
                                              Nothing -> startLength
                                              Just b -> pairwise_alignment_length2 (as IM.! b)
                      alignmentForBranch b | toward_root rtree b = return $ flip_alignment $ as IM.! (reverseEdge rtree b)
