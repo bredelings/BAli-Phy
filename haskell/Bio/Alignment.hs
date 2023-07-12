@@ -24,6 +24,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
 import Data.Text (Text)
 
+import Foreign.IntMap (EIntMap)
+import qualified Foreign.IntMap as FIM
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
@@ -148,4 +151,26 @@ fastaTree tree sequences =  Text.concat [fastaSeq (Sequence label sequence) | n 
                                                                    let label = add_ancestral_label n (get_labels tree),
                                                                    let sequence = sequences IntMap.! n]
     where orderedNodes = leaf_nodes tree ++ internal_nodes tree
+
+-- Ideally we'd like to do
+--    type NodeAlignment = EPair Int BranchAlignments
+-- but this creates recursive type synonyms, which are not allowed.
+
+-- We hack around this by removing the definition of NodeAlignment.
+-- Then NodeAlignment needs a foreign import to construct it.
+
+-- This constructs an all-insert alignment.
+data NodeAlignment -- NodeAlignment SourceNode Int (EVector BranchAlignment)
+foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector BranchAlignment -> NodeAlignment
+
+data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
+foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
+foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
+constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw $ exportAlignmentOnTree a
+foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
+
+exportAlignmentOnTree :: Tree t => AlignmentOnTree t -> NodeAlignment
+exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNode tree root)
+    where root = head $ getNodes tree
+          branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdge tree e) | e <- toList $ edges]
 
