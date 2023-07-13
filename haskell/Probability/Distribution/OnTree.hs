@@ -93,9 +93,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                                             2 -> node_sequences
                                             _ -> fmap extractStates ancestralComponentStateSequences
 
-      fasta = let positionSequences = constructPositionSequences alignment
-                  stateSequences = getNodesSet tree & IntMap.fromSet stateSequenceForNode
-                  stateSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
+      fasta = let stateSequences = alignedSequences alignment ancestral_sequences
               in fastaTree tree (fmap (sequenceToText alphabet .  statesToLetters smap) stateSequences)
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)

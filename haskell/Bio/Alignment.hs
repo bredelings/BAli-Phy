@@ -165,12 +165,17 @@ foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector Bran
 
 data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
-foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
-constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw $ exportAlignmentOnTree a
-foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
 
 exportAlignmentOnTree :: Tree t => AlignmentOnTree t -> NodeAlignment
 exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNode tree root)
     where root = head $ getNodes tree
           branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdge tree e) | e <- toList $ edges]
 
+foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
+
+foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
+constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw $ exportAlignmentOnTree a
+
+alignedSequences alignment@(AlignmentOnTree tree _ _ _) sequences = getNodesSet tree & IntMap.fromSet stateSequenceForNode
+    where positionSequences = constructPositionSequences alignment
+          stateSequenceForNode n = substituteLetters (sequences IntMap.! n) (positionSequences IntMap.! n)
