@@ -133,7 +133,7 @@ ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
 foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
-sampleStates rtree alignment smodel =  do
+sampleComponentStates rtree alignment smodel =  do
   let as = pairwise_alignments alignment
       ls = sequence_lengths alignment
       ps = transition_ps_map (SingleBranchLengthModel rtree smodel)
@@ -153,7 +153,7 @@ instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), 
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleStates (makeRooted tree) alignment smodel
+      stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel
 
       let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
 
