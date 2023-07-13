@@ -142,8 +142,8 @@ instance Show VectorPairIntInt where
     show = unpack_cpp_string . showVectorPairIntInt
 
 
-getLabelledThings :: HasLabels t => t -> IntMap a -> (Text -> a -> b) -> [b]
-getLabelledThings tree things f = catMaybes $ fmap go $ IntMap.toList things where
+getLabelled :: HasLabels t => t -> (Text -> a -> b) -> IntMap a -> [b]
+getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
     go (node, thing) = case get_label tree node of
                          Just label -> Just $ f label thing
                          Nothing -> Nothing

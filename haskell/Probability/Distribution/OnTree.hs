@@ -157,7 +157,7 @@ instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), 
 
       let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
 
-      return $ getLabelledThings tree stateSequences sequenceForNode
+      return $ getLabelled tree sequenceForNode stateSequences
 
 
 ----------------------------------------
