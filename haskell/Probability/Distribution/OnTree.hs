@@ -230,13 +230,13 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          cls
                                          smap
                                          mapping
-                                       ancestral_sequences :: IntMap (EVector Int)
-                                       ancestral_sequences = fmap extractStates ancestralComponentStateSequences
-                                       ancestral_sequences' = minimally_connect_characters
+                                       ancestralStateSequences :: IntMap (EVector Int)
+                                       ancestralStateSequences = fmap extractStates ancestralComponentStateSequences
+                                       ancestralStateSequences' = minimally_connect_characters
                                                                         node_sequences0
                                                                         tree
-                                                                        ancestral_sequences
-                                       ancestralLetterSequences = fmap (sequenceToText alphabet . statesToLetters smap) ancestral_sequences'
+                                                                        ancestralStateSequences
+                                       ancestralLetterSequences = fmap (sequenceToText alphabet . statesToLetters smap) ancestralStateSequences'
                                    in fastaTree tree ancestralLetterSequences
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
