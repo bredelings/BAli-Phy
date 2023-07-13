@@ -87,16 +87,16 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                                     in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! b1) (transition_ps IntMap.! b1) f
                  | otherwise      = error $ "likelihood: n_nodes = " ++ show n_nodes
 
-      ancestral_states = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
       ancestral_sequences = case n_nodes of 1 -> node_sequences
                                             2 -> node_sequences
-                                            _ -> fmap extractStates ancestral_states
+                                            _ -> fmap extractStates ancestralComponentStateSequences
 
       fasta = let positionSequences = constructPositionSequences alignment
-                  letterSequences = getNodesSet tree & IntMap.fromSet letterSequenceForNode
-                  letterSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
-              in fastaTree tree (fmap (sequenceToText alphabet smap) letterSequences)
+                  stateSequences = getNodesSet tree & IntMap.fromSet stateSequenceForNode
+                  stateSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
+              in fastaTree tree (fmap (sequenceToText alphabet smap) stateSequences)
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -221,8 +221,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       ancestral_sequences = case n_nodes of
                               1 -> Text.concat [fastaSeq s | s <- sequences]
                               2 -> Text.concat [fastaSeq s | s <- sequences]
-                              _ -> let ancestral_states :: IntMap VectorPairIntInt
-                                       ancestral_states = sample_ancestral_sequences_SEV
+                              _ -> let ancestralComponentStateSequences :: IntMap VectorPairIntInt
+                                       ancestralComponentStateSequences = sample_ancestral_sequences_SEV
                                          tree
                                          subst_root
                                          node_sequences
@@ -233,7 +233,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          smap
                                          mapping
                                        ancestral_sequences :: IntMap (EVector Int)
-                                       ancestral_sequences = fmap extractStates ancestral_states
+                                       ancestral_sequences = fmap extractStates ancestralComponentStateSequences
                                        ancestral_sequences' = minimally_connect_characters
                                                                         node_sequences0
                                                                         tree
