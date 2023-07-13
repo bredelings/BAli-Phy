@@ -544,26 +544,6 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
     return result;
 }
 
-extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto& a = *arg0.as_checked<Alphabet>();
-
-    auto arg1 = Args.evaluate(1);
-    auto& letter_sequence = arg1.as_<EVector>();
-
-    auto result = object_ptr<String>(new String);
-    auto& text = *result;
-
-    for(auto& letter: letter_sequence)
-    {
-        int l = letter.as_int();
-        text += a.lookup(l);
-    }
-
-    return result;
-}
-
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
