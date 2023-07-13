@@ -238,8 +238,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                                                         node_sequences0
                                                                         tree
                                                                         ancestral_sequences
-                                       ancestral_sequences'' = fmap (sequenceToText alphabet smap) ancestral_sequences'
-                                   in fastaTree tree ancestral_sequences''
+                                       ancestralLetterSequences = fmap (sequenceToText alphabet smap) ancestral_sequences'
+                                   in fastaTree tree ancestralLetterSequences
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
 
