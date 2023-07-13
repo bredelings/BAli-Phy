@@ -91,7 +91,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
       ancestral_sequences = case n_nodes of 1 -> node_sequences
                                             2 -> node_sequences
-                                            _ -> fmap get_sequence_from_states ancestral_states
+                                            _ -> fmap extractStates ancestral_states
 
       fasta = let positionSequences = constructPositionSequences alignment
                   letterSequences = getNodesSet tree & IntMap.fromSet letterSequenceForNode
@@ -155,7 +155,7 @@ instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), 
 
       stateSequences <- sampleStates (makeRooted tree) alignment smodel
 
-      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet smap $ get_sequence_from_states stateSequence)
+      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet smap $ extractStates stateSequence)
 
       return $ getLabelledThings tree stateSequences sequenceForNode
 
@@ -233,7 +233,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                          smap
                                          mapping
                                        ancestral_sequences :: IntMap (EVector Int)
-                                       ancestral_sequences = fmap get_sequence_from_states ancestral_states
+                                       ancestral_sequences = fmap extractStates ancestral_states
                                        ancestral_sequences' = minimally_connect_characters
                                                                         node_sequences0
                                                                         tree

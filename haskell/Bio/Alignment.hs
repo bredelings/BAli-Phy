@@ -85,7 +85,8 @@ foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral
 ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap
     where states' = list_to_vector [ states IntMap.! node  | node <- sort $ getNodes tree]
 
-foreign import bpcall "Alignment:" get_sequence_from_states :: VectorPairIntInt -> EVector Int
+-- Extract (component,state) -> state.
+foreign import bpcall "Alignment:" extractStates :: VectorPairIntInt -> EVector Int
 
 
 {-

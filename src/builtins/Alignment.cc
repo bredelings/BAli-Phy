@@ -698,7 +698,7 @@ extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& 
     return A_;
 }
 
-extern "C" closure builtin_function_get_sequence_from_states(OperationArgs& Args)
+extern "C" closure builtin_function_extractStates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& states = arg0.as_<Vector<pair<int,int>>>();
