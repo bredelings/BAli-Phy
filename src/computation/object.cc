@@ -4,8 +4,6 @@
 #include <iomanip> // for std::quoted
 #include <sstream>
 #include "computation/expression/expression_ref.H"
-#include <vector>
-#include <utility>
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);

@@ -5,6 +5,8 @@
 #include <memory>
 #include <iostream>
 #include <concepts>
+#include <utility>
+#include <vector>
 
 #include "util/ref_counted.H"
 #include "util/math/log-double.H"
@@ -101,8 +103,6 @@ template<> std::string Box<std::string>::print() const;
 #include "util/matrix.H"
 
 template<> std::string Box<Matrix>::print() const;
-
-template class std::vector<std::pair<int,int>>;
 
 template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
 
