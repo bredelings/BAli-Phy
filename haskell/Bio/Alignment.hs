@@ -148,10 +148,9 @@ getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
 
-fastaTree tree sequences =  Text.concat [fastaSeq (Sequence label sequence) | n <- orderedNodes,
+fastaTree tree sequences =  fastaSeqs [Sequence label sequence | n <- leaf_nodes tree ++ internal_nodes tree,
                                                                    let label = add_ancestral_label n (get_labels tree),
                                                                    let sequence = sequences IntMap.! n]
-    where orderedNodes = leaf_nodes tree ++ internal_nodes tree
 
 -- Ideally we'd like to do
 --    type NodeAlignment = EPair Int BranchAlignments
