@@ -55,3 +55,5 @@ maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
 
 fastaSeq (Sequence label seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
 
+fastaSeqs sequences = T.concat [fastaSeq s | s <- sequences]
+
