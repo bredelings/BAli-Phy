@@ -24,8 +24,10 @@ sequenceToAlignedIndices a (Sequence _ (Text s)) = builtin_sequenceToAlignedIndi
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
-foreign import bpcall "Alignment:" sequenceToTextRaw :: Alphabet -> EVector Int -> EVector Int -> CPPString
-sequenceToText a smap s = Text $ sequenceToTextRaw a smap s
+foreign import bpcall "Alignment:" statesToLetters :: EVector Int -> EVector Int -> EVector Int
+
+foreign import bpcall "Alignment:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
+sequenceToText a s = Text $ sequenceToTextRaw a s
 
 foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> IO (EVector ESequence)
 load_sequences :: String -> IO [Sequence]

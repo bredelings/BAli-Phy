@@ -521,26 +521,44 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     return new EVector(letters2);
 }
 
+extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& smap = arg0.as_<EVector>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& state_sequence = arg1.as_<EVector>();
+
+    auto result = object_ptr<EVector>(new EVector(state_sequence.size()));
+    auto& letter_sequence = *result;
+
+    for(int i=0; i < state_sequence.size(); i++)
+    {
+        int s = state_sequence[i].as_int();
+        if (s >= 0)
+            letter_sequence[i] = smap[s].as_int();
+        else
+            letter_sequence[i] = s;
+    }
+
+    return result;
+}
+
 extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    auto& smap = arg1.as_<EVector>();
-
-    auto arg2 = Args.evaluate(2);
-    auto& sequence = arg2.as_<EVector>();
+    auto& letter_sequence = arg1.as_<EVector>();
 
     auto result = object_ptr<String>(new String);
     auto& text = *result;
 
-    for(auto& state: sequence)
+    for(auto& letter: letter_sequence)
     {
-        int s = state.as_int();
-        if (s >= 0)
-            s = smap[s].as_int();
-        text += a.lookup(s);
+        int l = letter.as_int();
+        text += a.lookup(l);
     }
 
     return result;

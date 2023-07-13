@@ -96,7 +96,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       fasta = let positionSequences = constructPositionSequences alignment
                   stateSequences = getNodesSet tree & IntMap.fromSet stateSequenceForNode
                   stateSequenceForNode n = substituteLetters (ancestral_sequences IntMap.! n) (positionSequences IntMap.! n)
-              in fastaTree tree (fmap (sequenceToText alphabet smap) stateSequences)
+              in fastaTree tree (fmap (sequenceToText alphabet .  statesToLetters smap) stateSequences)
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -155,7 +155,7 @@ instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), 
 
       stateSequences <- sampleStates (makeRooted tree) alignment smodel
 
-      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet smap $ extractStates stateSequence)
+      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
 
       return $ getLabelledThings tree stateSequences sequenceForNode
 
@@ -238,7 +238,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                                                         node_sequences0
                                                                         tree
                                                                         ancestral_sequences
-                                       ancestralLetterSequences = fmap (sequenceToText alphabet smap) ancestral_sequences'
+                                       ancestralLetterSequences = fmap (sequenceToText alphabet . statesToLetters smap) ancestral_sequences'
                                    in fastaTree tree ancestralLetterSequences
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
