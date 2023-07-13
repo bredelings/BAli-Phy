@@ -102,6 +102,8 @@ template<> std::string Box<std::string>::print() const;
 
 template<> std::string Box<Matrix>::print() const;
 
+template class std::vector<std::pair<int,int>>;
+
 template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
 
 template <typename T>
