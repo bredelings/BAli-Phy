@@ -64,7 +64,7 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
     ls       = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
                                                              Just label -> tip_lengths Map.! label
                                                              Nothing -> seqlength as tree node )
-    as       = unaligned_alignments_on_tree tree tip_lengths
+    as       = left_aligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
 
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
