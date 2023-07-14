@@ -41,6 +41,7 @@ every n logger iter prior likelihood probability | iter `mod` n == 0  = logger i
 jsonLogger filename = do
   handle <- openFile filename WriteMode
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"version\":\"0.1\"}"
+  hFlush handle
   return $ writeJSON handle
 
 -- treeLogger :: FilePath -> IO ( forall t. (HasRoot (Rooted t), WriteNewickNode (Rooted t), Tree t) => t -> Int -> IO ())
@@ -56,16 +57,19 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
                                                T.hPutStrLn file alignment
                                                hPutStrLn file ""
                                                hPutStrLn file ""
+                                               hFlush file
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
-writeJSON file ljson iter prior likelihood posterior = T.hPutStrLn file $
-                                                       J.jsonToText $
-                                                       J.Object ["iter" %=% iter,
-                                                                 "prior" %=% prior,
-                                                                 "likelihood" %=% likelihood,
-                                                                 "posterior" %=% posterior,
-                                                                 "parameters" %>% ljson]
+writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $
+                                                           J.jsonToText $
+                                                           J.Object ["iter" %=% iter,
+                                                                     "prior" %=% prior,
+                                                                     "likelihood" %=% likelihood,
+                                                                     "posterior" %=% posterior,
+                                                                     "parameters" %>% ljson]
+                                                          hFlush file
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
-writeTree file tree iter _ _ _ = T.hPutStrLn file $ write_newick tree
+writeTree file tree iter _ _ _ = do T.hPutStrLn file $ write_newick tree
+                                    hFlush file
