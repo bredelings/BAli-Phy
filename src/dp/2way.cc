@@ -721,6 +721,7 @@ int pairwise_alignment_t::count_indels() const
     {
         if (current_state != last_state and ((current_state == states::G1) or (current_state == states::G2)))
             n_indels++;
+        last_state = current_state;
     }
 
     return n_indels;
