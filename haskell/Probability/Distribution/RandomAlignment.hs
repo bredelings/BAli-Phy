@@ -26,34 +26,35 @@ unaligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
     length_for_node node = case get_label tree node of
                              Just label -> ls Map.! label
                              Nothing    -> 0
-    make_a' b = let b' = reverseEdge tree b in if (b > b') then flip_alignment $ make_a b' else make_a b
-    make_a b =
-        let l1 = length_for_node $ sourceNode tree b
-            l2 = length_for_node $ targetNode tree b
-        in  unaligned_pairwise_alignment l1 l2
+
+    make_a' b | b > b2     = flip_alignment $ make_a b2
+              | otherwise  = make_a b
+              where b2 = reverseEdge tree b
+
+    make_a b = unaligned_pairwise_alignment l1 l2
+        where l1 = length_for_node $ sourceNode tree b
+              l2 = length_for_node $ targetNode tree b
 
 median xs = ys !! n where
     ys = sort xs
     n = length xs `div` 2
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
-left_aligned_alignments_on_tree tree ls = [ make_A b | b <- getEdges tree ]
+left_aligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
   where
     internal_sequence_length = median $ Map.elems $ ls
-    -- FIXME: can we assume that the leaf nodes are [0..n_leaves-1]?
-    -- If we check leaf nodes instead, then what if the root node was an unnamed leaf?
+
     length_for_node node = case get_label tree node of
                              Just label -> ls Map.! label
                              Nothing    -> internal_sequence_length
-    make_A b = let b2 = reverseEdge tree b in
-               if (b > b2) then
-                   flip_alignment $ make_A' b2
-               else
-                   make_A' b
-    make_A' branch =
-        let l1 = length_for_node $ sourceNode tree branch
-            l2 = length_for_node $ targetNode tree branch
-        in  left_aligned_pairwise_alignment l1 l2
+
+    make_a' b | b > b2     = flip_alignment $ make_a b2
+              | otherwise  = make_a b
+              where b2 = reverseEdge tree b
+
+    make_a branch = left_aligned_pairwise_alignment l1 l2
+        where l1 = length_for_node $ sourceNode tree branch
+              l2 = length_for_node $ targetNode tree branch
 
 
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
