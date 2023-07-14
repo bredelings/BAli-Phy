@@ -1,6 +1,10 @@
 * 4.0-beta6 (unreleased)
 - Warning: MAP point is no longer printed.
-- Warning: MCMC begins with sequences completely unaligned.
+- Warning: MCMC begins with all sequences left-aligned (in partitions where the alignment is being estimated).
++ Initial implemention of sequence simulation.
+  - Command-line language not yet available.
+  - Indels simulated from a continuous-time indel model with geometric length indels.
+  - Substitutions simulated from any substitution model.
 - Model language:
   + We no longer need a different kind of model for "bali-phy file.fasta".
   - Create iidMap and use it to sample branch lengths.
