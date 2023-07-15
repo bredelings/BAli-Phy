@@ -255,3 +255,13 @@ extern "C" closure builtin_function_hLookAhead(OperationArgs& Args)
 
     return {c};
 }
+
+extern "C" closure builtin_function_combine(OperationArgs& Args)
+{
+    fs::path path1 = Args.evaluate(0).as_<String>().value();
+    fs::path path2 = Args.evaluate(1).as_<String>().value();
+
+    auto path3 = path1 / path2;
+
+    return String( path3.string() );
+}
