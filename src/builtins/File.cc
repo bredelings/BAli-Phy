@@ -67,7 +67,7 @@ extern "C" closure builtin_function_openBinaryFileRaw(OperationArgs& Args)
     return handle;
 }
 
-extern "C" closure builtin_function_getStdin(OperationArgs& Args)
+extern "C" closure builtin_function_getStdin(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cin.rdbuf() );
 
@@ -75,7 +75,7 @@ extern "C" closure builtin_function_getStdin(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_getStdout(OperationArgs& Args)
+extern "C" closure builtin_function_getStdout(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cout.rdbuf() );
 
@@ -83,7 +83,7 @@ extern "C" closure builtin_function_getStdout(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_getStderr(OperationArgs& Args)
+extern "C" closure builtin_function_getStderr(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cerr.rdbuf() );
 
