@@ -126,9 +126,8 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
-std::string generate_atmodel_program(const fs::path& output_directory,
-                                     const Model::key_map_t& keys,
-                                     const set<string>& log_formats,
+std::string generate_atmodel_program(const Model::key_map_t& keys,
+                                     const set<string>& /* log_formats */,
                                      const set<string>& fixed,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
@@ -171,6 +170,8 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     program_file<<"\nimport qualified Data.IntMap as IntMap";
     program_file<<"\nimport qualified Data.JSON as J";
     program_file<<"\nimport Probability.Logger";
+    program_file<<"\nimport System.Environment";
+    program_file<<"\nimport System.FilePath";
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -557,6 +558,10 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
     do_block main;
 
+    expression_ref directory = var("directory");
+    vector<expression_ref> args = {directory};
+    main.perform(get_list(args), var("getArgs"));
+
     if (n_partitions == 1)
     {
         auto [filename, range] = filename_ranges[0];
@@ -638,13 +643,13 @@ std::string generate_atmodel_program(const fs::path& output_directory,
 
     // Initialize the parameters logger
     main.empty_stmt();
-    main.perform(paramLogger,{var("jsonLogger"),String( (output_directory / "C1.log.json").string() )});
+    main.perform(paramLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
 
     // Initialize the tree logger
     if (not fixed.count("tree"))
     {
         main.empty_stmt();
-        main.perform(treeLogger,{var("treeLogger"),String( (output_directory / "C1.trees").string() )});
+        main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
     }
 
     // Initialize the alignment loggers
@@ -654,7 +659,7 @@ std::string generate_atmodel_program(const fs::path& output_directory,
     for(auto& [i,a,logger]: alignments)
     {
         string filename = "C1.P"+std::to_string(i+1)+".fastas";
-        main.perform(logger,{var("alignmentLogger"),String( (output_directory / filename).string() )});
+        main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
     }
 
     // Main.5. Emit mcmc $ model sequence_data
@@ -688,8 +693,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
-        program_file<<generate_atmodel_program(output_directory,
-                                               keys,
+        program_file<<generate_atmodel_program(keys,
                                                log_formats,
                                                fixed,
                                                n_leaves,
@@ -707,6 +711,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     auto m = P.get_module_loader()->load_module_from_file(program_filename);
     P.add(m);
     P.main = "Main.main";
+    L->args = {output_directory.string()};
     return P;
 }
 
