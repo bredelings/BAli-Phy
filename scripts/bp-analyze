@@ -441,6 +441,7 @@ class LogFileRun(MCMCRun):
             exit(1)
         return n
 
+
 class TreeFileRun(MCMCRun):
     def __init__(self, mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
@@ -637,6 +638,27 @@ class BAliPhy3Run(BAliPhyRun):
     def find_models(self, name1, name2):
         return [make_extracted(model) for model in self.run_json[name2]]
 
+
+## Possibly the BAliPhy4Run should handle log files being in different formats.
+## In which case perhaps we should just merge this with BAliPhy3Run?
+
+class BAliPhy4Run(BAliPhyRun):
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
+        self.log_file = check_file_exists( self.get_dir() / 'C1.log.json' )
+        self.run_file = self.get_dir() / 'C1.run.json'
+        if not path.exists(self.run_file):
+            self.run_file = None
+        self.run_json = get_json_from_file(self.run_file)
+        self.version = self.run_json["program"]["version"]
+        self.smodels = self.find_models("subst models", "smodels")
+        self.imodels = self.find_models("indel models", "imodels")
+        self.scale_models = self.find_models("scale model", "scales")
+        logging.debug(f"BAliPhy4Run: {mcmc_output}")
+
+    def find_models(self, name1, name2):
+        return [make_extracted(model) for model in self.run_json[name2]]
+
 class TreeLogFileRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
@@ -667,6 +689,20 @@ class BEASTRun(MCMCRun):
             check_file_exists(tree_file)
             self.prefix = get_file_prefix(tree_file)
             self.log_file = check_file_exists(f"{prefix}.log")
+
+def get_bali_phy4_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for mcmc_dir in mcmc_args:
+        if mcmc_dir.exists() and Path( mcmc_dir , 'C1.out').exists() and Path( mcmc_dir , 'C1.log.json' ).exists():
+            runs.append(BAliPhy4Run(mcmc_dir))
+            good.append(mcmc_dir)
+        else:
+            bad.append(mcmc_dir)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be BAli-Phy 4 runs, but {bad} do not!")
+    return runs
 
 def get_bali_phy3_runs(mcmc_args):
     runs = []
@@ -766,6 +802,8 @@ def construct_runs(mcmc_outputs):
             exit(1)
 
     run_groups = []
+    run_groups.append( get_bali_phy4_runs(mcmc_outputs) )
+
     run_groups.append( get_bali_phy3_runs(mcmc_outputs) )
 
     run_groups.append( get_bali_phy2_3_runs(mcmc_outputs) )
