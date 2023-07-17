@@ -1,5 +1,6 @@
 #include "graph_register.H"
 #include "gcobject.H"
+#include "util/log-level.H"
 
 using std::vector;
 
@@ -25,16 +26,20 @@ void reg_heap::collect_garbage()
 	vector<Token> new_tokens = tokens;
 	std::swap(new_tokens, tokens);
     }
+    if (log_verbose >= 2)
+        std::cerr<<"***********Garbage Collection******************"<<std::endl;
+
 #ifdef DEBUG_MACHINE
-    std::cerr<<"***********Garbage Collection******************"<<std::endl;
     check_used_regs();
 #endif
     assert(regs.size() == regs.n_used() + regs.n_free() + regs.n_null());
 
     trace_and_reclaim_unreachable();
 
+    if (log_verbose >= 2)
+        std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
+
 #ifdef DEBUG_MACHINE
-    std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
     check_used_regs();
 #endif
 }

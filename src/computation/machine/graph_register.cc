@@ -2320,9 +2320,13 @@ void reg_heap::pop_temp_head()
 
 void reg_heap::resize(int s)
 {
+    // This is a called from pool<reg>::expand_memory( )
     assert(regs.size() == s);
 
     auto old_size = prog_steps.size();
+    if (log_verbose)
+        std::cerr<<"Expanding VM heap from "<<old_size<<" -> "<<s<<".\n";
+
     // Extend program.  Use regs.size() instead of size()
     prog_steps.resize(regs.size());
     prog_results.resize(regs.size());
