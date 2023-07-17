@@ -59,6 +59,9 @@ edgesOutOfNode tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeInde
 class Tree t => HasBranchLengths t where
     branch_length :: t -> Int -> Double
 
+class HasBranchLengths t => CanModifyBranchLengths t where
+    modifyBranchLengths :: (Int -> Double) -> t -> t
+
 class Tree t => HasRoot t where
     root :: t -> Int
     away_from_root :: t -> Int -> Bool
@@ -244,6 +247,9 @@ branch_duration t b = abs (node_time t source - node_time t target)
 instance Tree t => HasBranchLengths (BranchLengthTreeImp t) where
     branch_length (BranchLengthTree tree ds) b = ds IntMap.! b' where b' = min b (reverseEdge tree b)
 
+instance Tree t => CanModifyBranchLengths (BranchLengthTreeImp t) where
+    modifyBranchLengths f t@(BranchLengthTree tree ds) = BranchLengthTree tree (IntMap.fromSet f (IntMap.keysSet ds))
+
 instance IsTimeTree t => HasBranchLengths (RateTimeTreeImp t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
@@ -252,6 +258,9 @@ instance HasRoot t => HasBranchLengths (TimeTreeImp t) where
 
 instance HasBranchLengths t => HasBranchLengths (LabelledTreeImp t) where
     branch_length (LabelledTree tree _) b = branch_length tree b
+
+instance CanModifyBranchLengths t => CanModifyBranchLengths (LabelledTreeImp t) where
+    modifyBranchLengths f (LabelledTree tree labels) = LabelledTree (modifyBranchLengths f tree) labels
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
     where ds' = fmap (factor*) ds
