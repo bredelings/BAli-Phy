@@ -107,6 +107,12 @@ instance Scalable ReversibleMarkov where
 instance RateModel ReversibleMarkov where
     rate (ReversibleMarkov _ _ _ r) = r
 
+-- A markov model needs a map from state -> letter in order to have a rate!
+-- For codon models, we basically use smap = id for nucleotides (then divide by three)
+--   and amino acids.
+-- If we had a covarion model on codons, then we'd need to first collaps the state to
+-- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
+
 instance Show ReversibleMarkov where
     show q = show $ get_q q
 
