@@ -44,12 +44,7 @@ json c_json(const expression_ref& E)
     // Double
     else if (type == 3)
     {
-	if (J.is_double())
-	    return J.as_double();
-	else if (J.is_log_double())
-	    return (double)J.as_log_double();
-        else
-            throw myexception()<<"Foreign:cjson: I don't understand number '"<<J<<"'";
+        return J.as_double();
     }
     // Object
     else if (type == 1)
