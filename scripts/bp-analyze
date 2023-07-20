@@ -356,8 +356,8 @@ class MCMCRun(object):
     def n_iterations(self):
         return None
 
-    def compute_initial_alignments(self):
-        return []
+#    def compute_initial_alignments(self):
+#        return []
 
     def get_smodels(self):
         return None
@@ -582,20 +582,6 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def find_alphabets(self):
         return self.find_partition_values('alphabet')
-
-    # FIXME: move to Analysis class
-    def compute_initial_alignments(self,outdir):
-        print("Computing initial alignments: ",end='',flush=True)
-        alignment_names = []
-        for i in range(self.n_partitions()):
-            name = f"P{i+1}.initial"
-            source = Path(self.dir , f"C1.{name}.fasta")
-            dest= Path(outdir, "Work", name+"-unordered.fasta")
-            if not more_recent_than(dest,source):
-                shutil.copyfile(source,dest)
-            alignment_names.append(name)
-        print(" done.")
-        return alignment_names
 
 class BAliPhy2_3Run(BAliPhyRun):
     def __init__(self,mcmc_output, **kwargs):
@@ -1522,9 +1508,21 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 </html>""",file=x3d_file)
 
     def compute_initial_alignments(self):
-        names = self.run(0).compute_initial_alignments(self.outdir)
-        for i in range(len(names)):
-            name = names[i]
+        print("Computing initial alignments: ",end='',flush=True)
+        alignment_names = []
+        for i in range(self.run(0).n_partitions()):
+            name = f"P{i+1}.initial"
+            source = Path(self.run(0).dir , f"C1.{name}.fasta")
+            dest= Path(self.outdir, "Work", name+"-unordered.fasta")
+            if not more_recent_than(dest,source):
+                # strip empty columns
+                cmd = ['alignment-cat', '-e', source]
+                self.exec_show(cmd, outfile=dest)
+            alignment_names.append(name)
+        print(" done.")
+
+        for i in range(len(alignment_names)):
+            name = alignment_names[i]
             self.alignments.append((name, self.get_alphabets()[i], "Initial"))
             self.make_ordered_alignment(name)
 
