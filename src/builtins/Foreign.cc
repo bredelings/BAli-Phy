@@ -44,6 +44,9 @@ json c_json(const expression_ref& E)
     // Double
     else if (type == 3)
     {
+        // I think we'd like to serialize Inf as 1e999999
+        // and -Inf as -1e999999. But here we return JSON,
+        // not a string, so that doesn't work.
         return J.as_double();
     }
     // Object
