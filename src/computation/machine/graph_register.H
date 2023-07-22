@@ -544,6 +544,7 @@ public:
 
     /// How many tokens are there, maximum?
     int get_n_tokens() const {return tokens.size();}
+    int get_n_active_tokens() const {return tokens.size() - unused_tokens.size();}
 
     const Token& get_token(int t) const {return tokens[t];}
 
@@ -592,7 +593,9 @@ public:
 
     std::vector<int> token_for_context_;
 
-    int get_n_contexts() const;
+    int get_n_contexts() const { return token_for_context_.size(); }
+
+    int get_n_active_contexts() const { return get_n_contexts() - unused_contexts.size(); }
 
 private:
     std::pair<int,std::optional<int>> unset_token_for_context_no_release_tips_(int c);

@@ -500,11 +500,6 @@ int reg_heap::switch_to_child_token(int c, token_type type)
     return t2;
 }
 
-int reg_heap::get_n_contexts() const
-{
-    return token_for_context_.size();
-}
-
 int reg_heap::token_for_context(int c) const
 {
     assert(c >= 0);
