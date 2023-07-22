@@ -71,6 +71,17 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 	remap[r] = r;
 }
 
+void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
+{
+    insert_at_end(scan, stack); // inc_heads = yes
+    insert_at_end(scan, temp); // yes
+    insert_at_end(scan, heads); // yes
+
+    if (keep_identifiers)
+        for(const auto& [name,reg]: identifiers) // no
+            scan.push_back(reg);
+}
+
 void reg_heap::trace(vector<int>& remap)
 {
     // 1. Set up lists for used/marked regs, steps, and results.
@@ -85,7 +96,7 @@ void reg_heap::trace(vector<int>& remap)
 	}
     };
 
-    // 2. Get the list of root regs
+    // 2. Get the list of root regs -- stack, temp, heads, and maybe identifiers.
     vector<int>& roots = get_scratch_list();
     get_roots(roots);
 

@@ -2152,17 +2152,6 @@ void insert_at_end(vector<int>& v, const T& t)
     v.insert(v.end(), t.begin(), t.end());
 }
 
-void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
-{
-    insert_at_end(scan, stack); // inc_heads = yes
-    insert_at_end(scan, temp); // yes
-    insert_at_end(scan, heads); // yes
-
-    if (keep_identifiers)
-        for(const auto& [name,reg]: identifiers) // no
-            scan.push_back(reg);
-}
-
 /// Add an expression that may be replaced by its reduced form
 int reg_heap::add_compute_expression(const expression_ref& E)
 {
