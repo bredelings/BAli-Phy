@@ -13,6 +13,10 @@ import Data.Eq
 
 import Foreign.String
 
+
+-- We need to change this to Text CPPString Int {- offset -} Int {- length -}
+-- Ideally we'd have the strictness annotations ! as well.
+--
 data Text = Text CPPString
 
 foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
