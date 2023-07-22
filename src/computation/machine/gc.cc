@@ -37,7 +37,10 @@ void reg_heap::collect_garbage()
     trace_and_reclaim_unreachable();
 
     if (log_verbose >= 2)
+    {
         std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
+        std::cerr<<"Steps: "<<steps.n_used()<<"/"<<steps.size()<<std::endl;
+    }
 
 #ifdef DEBUG_MACHINE
     check_used_regs();
