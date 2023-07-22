@@ -2146,12 +2146,6 @@ void reg_heap::reclaim_used(int r)
     regs.reclaim_used(r);
 }
 
-template <typename T>
-void insert_at_end(vector<int>& v, const T& t)
-{
-    v.insert(v.end(), t.begin(), t.end());
-}
-
 /// Add an expression that may be replaced by its reduced form
 int reg_heap::add_compute_expression(const expression_ref& E)
 {

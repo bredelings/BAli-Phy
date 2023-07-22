@@ -71,6 +71,12 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 	remap[r] = r;
 }
 
+template <typename T>
+void insert_at_end(vector<int>& v, const T& t)
+{
+    v.insert(v.end(), t.begin(), t.end());
+}
+
 void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
     insert_at_end(scan, stack); // inc_heads = yes
