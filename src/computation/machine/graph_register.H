@@ -241,6 +241,7 @@ public:
     void check_used_regs() const;
 
     void collect_garbage();
+    void trace_root();
     void trace(std::vector<int>& remap);
     void trace_and_reclaim_unreachable();
     bool reg_is_unevaluated(int r) const;

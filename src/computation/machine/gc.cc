@@ -170,6 +170,9 @@ void reg_heap::trace_and_reclaim_unreachable()
 #ifdef DEBUG_MACHINE
     check_used_regs();
 #endif
+    // 0. Count the number of regs/steps in the root program.
+    if (log_verbose >= 2)
+        trace_root();
 
     //  vector<int>& tokens = get_scratch_list();
 
@@ -230,4 +233,71 @@ void reg_heap::trace_and_reclaim_unreachable()
     }
     //  release_scratch_list();
     release_scratch_list();
+}
+
+void reg_heap::trace_root()
+{
+    // 1. Set up lists for used/marked regs, steps, and results.
+    vector<int>& used_regs = get_scratch_list();
+    int n_steps = 0;
+    int n_regs = 0;
+
+    auto mark_reg = [&,this](int r) {
+	assert(r > 0);
+	if (not regs.is_marked(r))
+	{
+	    regs.set_mark(r);
+	    used_regs.push_back(r);
+            if (has_step1(r)) n_steps++;
+            n_regs++;
+	}
+    };
+
+    // 2. Get the list of root regs -- stack, temp, heads, and maybe identifiers.
+    for(int r: heads)
+        mark_reg(r);
+
+    // There shouldn't be any steps if there are no tokens.
+    if (not get_n_tokens()) assert(steps.size() == steps.n_null());
+
+    // 6. Mark regs referenced only by regs as used.
+    vector<int> tmp;
+    for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
+    {
+	int r = used_regs[reg_index];
+	const auto& R = regs.access(r);
+	for(int r : R.C.Env)
+	    mark_reg(r);
+
+        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        {
+            auto gco = convert<GCObject>(obj.ptr());
+            gco->get_regs(tmp);
+            for(int r: tmp)
+                mark_reg(r);
+        }
+
+        for(auto [r,_] : R.forced_regs)
+	    mark_reg(r);
+
+        // If there's a step, then the call should be marked.
+        if (has_step1(r))
+            mark_reg( call_for_reg(r) );
+    }
+
+    release_scratch_list();
+
+    // Unmark all the regs.
+    for(auto i = regs.begin();i != regs.end();)
+    {
+        int r = i.addr();
+        i++;
+	if (regs.is_marked(r))
+            regs.unmark(r);
+    }
+
+    std::cerr<<"Root regs: "<<n_regs<<"\n";
+    std::cerr<<"Root steps: "<<n_steps<<"\n";
+    std::cerr<<"n_tokens = "<<get_n_active_tokens()<<"\n";
+    std::cerr<<"n_contexts = "<<get_n_active_contexts()<<"\n";
 }
