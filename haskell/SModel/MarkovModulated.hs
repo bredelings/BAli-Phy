@@ -57,6 +57,24 @@ wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu mod
 
 wssr07 s01 s10 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> wssr07_ssrv s01 s10 nu' model)
 
+-- a -> HB02
+-- b -> GT01 if no HB02
+-- c -> GT01 if    HB02
+
+-- X = (1-a)(1-b)
+-- X + HB02 = a(1-c)
+-- X + GT01 = (1-a)b
+-- X + HB02+GT01 = a * c
+
+wssr07Ext s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
+                                             (gt01,    (1-a)*b),
+                                             (hb02,        a*(1-c)),
+                                             (hb02gt01,    a*c)]
+    where noCov = wssr07_ssrv 1 0 0  model
+          gt01  = wssr07_ssrv 1 0 nu model
+          hb02  = wssr07_ssrv s01 s10 0 model
+          hb02gt01 = wssr07_ssrv s01 s10 nu model
+
 -- Instead of passing rates_between+level_probs, could we just pass a q matrix?
 covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between level_probs where
     Discrete dist = rescale 1 model
