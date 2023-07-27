@@ -40,6 +40,7 @@ enum class LangExt
     EmptyCase,
     EmptyDataDeriving,
     ExistentialQuantification,
+    ExtendedDefaultRules,
     ExplicitForall,
     FlexibleContexts,
     FlexibleInstances,
