@@ -313,10 +313,6 @@ run_lazy' rate (RanOp op) = op (run_lazy' rate)
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
 
-add_null_program_result :: IO a -> IO (Maybe b,a)
-add_null_program_result p = do result <- p
-                               return (Nothing,result)
-
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
 name %=% value = (toJSONKey name, toJSON value)

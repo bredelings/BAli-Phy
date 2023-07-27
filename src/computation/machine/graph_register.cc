@@ -2199,21 +2199,16 @@ int reg_heap::add_program(const expression_ref& E)
         return *program_result_head;
     }
 
-    if (program->type == Program::exe_type::log_list)
-    {
-        // 2. If the program doesn't return a pair, make it a pair
-        P = {var("Probability.Random.add_null_program_result"), P};
-    }
     P = Core::unsafePerformIO(P);
 
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);
 
     // 3. Add the program RESULT head
-    program_result_head = add_compute_expression({fst,P});
+    program_result_head = add_compute_expression(P);
 
     // 4. Add the program LOGGING head
-    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),{snd, P}}});
+    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),P}});
 
     return *program_result_head;
 }
