@@ -30,7 +30,7 @@ class Program: public std::vector<std::shared_ptr<Module>>
 
 public:
 
-    enum class exe_type {standard, log_list, log_pair};
+    enum class exe_type {standard, log_list};
 
     exe_type type = exe_type::standard;
 
