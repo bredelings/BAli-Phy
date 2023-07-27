@@ -17,8 +17,20 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
     if (M.default_decl)
         defaults() = desugar( M.default_decl->types );
+    else if (this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules))
+    {
+        defaults() = { TypeCon({noloc,"()"}), TypeCon({noloc,"[]"}), TypeCon({noloc,"Integer"}), TypeCon({noloc,"Double"}) };
+
+        if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
+            defaults().push_back( list_type( TypeCon({noloc,"Char"}) ) );
+    }
     else
+    {
         defaults() = { TypeCon({noloc,"Integer"}), TypeCon({noloc,"Double"}) };
+
+        if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
+            defaults().push_back( list_type( TypeCon({noloc,"Char"}) ) );
+    }
 }
 
 // Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
