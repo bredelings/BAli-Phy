@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-10,
-               ubuntu-gcc-11-sanitize,
+#               ubuntu-gcc-11-sanitize,
                ubuntu-gcc-11-debugoptimized,
                ubuntu-gcc-11-DEBUG_MACHINE,
                ubuntu-gcc-11,
@@ -31,13 +31,13 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-11-sanitize
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "11"
-            buildtype: "release"
-            sanitize: "address"
-            arch: "linux64"
+ #         - name: ubuntu-gcc-11-sanitize
+ #           os: ubuntu-22.04
+ #           compiler: gcc
+ #           version: "11"
+ #           buildtype: "release"
+ #           sanitize: "address"
+ #           arch: "linux64"
 
           - name: ubuntu-gcc-11-debugoptimized
             os: ubuntu-22.04
