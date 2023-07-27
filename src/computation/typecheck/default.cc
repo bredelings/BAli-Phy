@@ -59,35 +59,51 @@ optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
 bool
 TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
 {
+    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules);
+    bool ovl_string = this_mod().language_extensions.has_extension(LangExt::OverloadedStrings);
+
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
+    set<string> interactive_classes_ = {"Eq", "Ord", "Show", "Foldable", "Traversable"};
+    if (ovl_string)
+        num_classes_.insert("IsString");
+
     add(std_classes_, num_classes_);
 
     set<string> num_classes;
     set<string> std_classes;
+    set<string> interactive_classes;
     for(auto& cls: num_classes_)
         num_classes.insert( find_prelude_tycon_name(cls) );
 
     for(auto& cls: std_classes_)
         std_classes.insert( find_prelude_tycon_name(cls) );
 
+    for(auto& cls: interactive_classes_)
+        interactive_classes.insert( find_prelude_tycon_name(cls) );
+
     bool any_num = false;
+    bool any_interactive = false;
     for(auto& constraint: tv_wanteds)
     {
         // Fail if any of the predicates is not a simple constraint.
-        auto tycon = simple_constraint_class_meta(constraint.pred);
-        if (not tycon) return false;
+        if (auto tycon = simple_constraint_class_meta(constraint.pred))
+        {
+            auto& name = unloc(tycon->name);
+            if (num_classes.count(name))
+                any_num = true;
+            if (interactive_classes.count(name))
+                any_interactive = true;
 
-        auto& name = unloc(tycon->name);
-        if (num_classes.count(name))
-            any_num = true;
-
-        // Fail if any of the predicates are not in the standard prelude.
-        if (not std_classes.count(name)) return false;
+            // Fail if any of the predicates are not in the standard prelude.
+            if (not extended and not std_classes.count(name)) return false;
+        }
+        else if (not extended)
+            return false;
     }
 
     // Fail if none of the predicates is a numerical constraint
-    if (not any_num) return false;
+    if (not any_num or (extended and not any_interactive and not any_num)) return false;
 
     for(auto& type: defaults() )
     {
