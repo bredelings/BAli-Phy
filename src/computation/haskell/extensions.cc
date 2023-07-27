@@ -10,6 +10,7 @@ map<string,LangExt> ext_to_bit =
 {
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
     {"ExistentialQuantification",   {LangExt::ExistentialQuantification}},
+    {"ExtendedDefaultRules",        {LangExt::ExtendedDefaultRules}},
     {"FieldSelectors",              {LangExt::FieldSelectors}},
     {"FlexibleInstances",           {LangExt::FlexibleInstances}},
     {"ForeignFunctionInterface",    {LangExt::ForeignFunctionInterface}},
@@ -22,6 +23,7 @@ map<string,LangExt> ext_to_bit =
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
+    {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
     {"RankNTypes",                  {LangExt::RankNTypes}},
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
