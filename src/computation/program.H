@@ -30,10 +30,6 @@ class Program: public std::vector<std::shared_ptr<Module>>
 
 public:
 
-    enum class exe_type {standard, log_list};
-
-    exe_type type = exe_type::standard;
-
     std::optional<std::string> main;
 
     std::vector<std::shared_ptr<Module>>& modules();
@@ -63,7 +59,6 @@ public:
     const std::shared_ptr<module_loader>& get_module_loader() const;
 
     Program(const std::shared_ptr<module_loader>&);
-    Program(const std::shared_ptr<module_loader>&,exe_type);
 };
 
 std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);

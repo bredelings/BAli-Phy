@@ -707,7 +707,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                                                like_calcs);
     }
 
-    Program P(L, Program::exe_type::log_list);
+    Program P(L);
     auto m = P.get_module_loader()->load_module_from_file(program_filename);
     P.add(m);
     P.main = "Main.main";

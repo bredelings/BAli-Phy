@@ -95,12 +95,6 @@ Program::Program(const std::shared_ptr<module_loader>& L)
     modules().push_back( compiler_prim_module() );
 }
 
-Program::Program(const std::shared_ptr<module_loader>& L, exe_type t)
-    :loader(L),type(t)
-{
-    modules().push_back( compiler_prim_module() );
-}
-
 optional<int> Program::find_module(const string& module_name) const
 {
     int i=0;

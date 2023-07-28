@@ -616,7 +616,7 @@ int main(int argc,char* argv[])
             if (args.count("set"))
                 keys = parse_key_map(args["set"].as<vector<string> >());
 
-            Program P(L, Program::exe_type::log_list);
+            Program P(L);
             if (args.count("model"))
             {
                 auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
