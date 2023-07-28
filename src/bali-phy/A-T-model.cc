@@ -40,7 +40,6 @@
 #include "util/string/join.H"                       // for join
 #include "util/string/split.H"                      // for split, split_on_last
 #include "util/text.H"                              // for bold, bold_blue
-#include "loggers.H"                                // for get_log_formats
 class module_loader;
 
 
@@ -917,18 +916,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     for(int i=0;i<n_partitions;i++)
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
-
-    for(auto& f: fixed)
-        if (f != "topology" and f != "tree" and f != "alignment")
-            throw myexception()<<"--fix: parameter '"<<f<<"' not recognized";
-
-    auto log_formats = get_log_formats(args, args.count("align"));
-    auto prog = gen_atmodel_program(L, dir,
-                                    keys, log_formats, fixed,
+    auto prog = gen_atmodel_program(args,
+                                    L, dir,
                                     program_filename,
                                     tree_filename,
                                     alphabet_exps, filename_ranges, T.n_leaves(),

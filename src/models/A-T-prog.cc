@@ -15,6 +15,7 @@
 #include "sequence/genetic_code.H"
 #include "sequence/codons.H"
 #include "sequence/doublets.H"
+#include "bali-phy/loggers.H"                                // for get_log_formats
 
 using std::vector;
 using std::string;
@@ -29,6 +30,9 @@ using std::optional;
 
 using std::optional;
 namespace fs = std::filesystem;
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
 {
@@ -126,9 +130,7 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
-std::string generate_atmodel_program(const Model::key_map_t& keys,
-                                     const set<string>& /* log_formats */,
-                                     const set<string>& fixed,
+std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<fs::path,string>>& filename_ranges,
@@ -142,6 +144,21 @@ std::string generate_atmodel_program(const Model::key_map_t& keys,
                                      const model_t& branch_length_model,
                                      const std::vector<int>& like_calcs)
 {
+    Model::key_map_t keys;
+    if (args.count("set"))
+        keys = parse_key_map(args["set"].as<vector<string> >());
+
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
+    for(auto& f: fixed)
+        if (f != "topology" and f != "tree" and f != "alignment")
+            throw myexception()<<"--fix: parameter '"<<f<<"' not recognized";
+
+    auto log_formats = get_log_formats(args, args.count("align"));
+
     int n_partitions = filename_ranges.size();
 
     int n_leaves   = n_sequences;
@@ -559,8 +576,8 @@ std::string generate_atmodel_program(const Model::key_map_t& keys,
     do_block main;
 
     expression_ref directory = var("directory");
-    vector<expression_ref> args = {directory};
-    main.perform(get_list(args), var("getArgs"));
+    vector<expression_ref> prog_args = {directory};
+    main.perform(get_list(prog_args), var("getArgs"));
 
     if (n_partitions == 1)
     {
@@ -655,6 +672,7 @@ std::string generate_atmodel_program(const Model::key_map_t& keys,
     // Initialize the alignment loggers
     if (not alignments.empty())
         main.empty_stmt();
+
     // Create alignment loggers.
     for(auto& [i,a,logger]: alignments)
     {
@@ -671,11 +689,9 @@ std::string generate_atmodel_program(const Model::key_map_t& keys,
     return program_file.str();
 }
 
-Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+Program gen_atmodel_program(const boost::program_options::variables_map& args,
+                            const std::shared_ptr<module_loader>& L,
                             const fs::path& output_directory,
-                            const Model::key_map_t& keys,
-                            const set<string>& log_formats,
-                            const set<string>& fixed,
                             const fs::path& program_filename,
                             const std::optional<fs::path>& tree_filename,
                             const vector<expression_ref>& alphabet_exps,
@@ -693,9 +709,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
-        program_file<<generate_atmodel_program(keys,
-                                               log_formats,
-                                               fixed,
+        program_file<<generate_atmodel_program(args,
                                                n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
