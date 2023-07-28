@@ -5,14 +5,46 @@ import Probability.Distribution.Categorical
 import Probability.Distribution.Discrete
 
 {-
-   A (Mixture d) is an example of a "d" where we perform the d by
-    1. Randomly drawing the d using either IO or Random
-    2. Perform the d.
+   PROBLEM:  We CANNOT write e.g. equalMixture [ always 0, uniform 0 1 ]
+              because currently Mixture requires all the component distributions
+              to be the same type.
 
-   In cases where x is a distribution, Mixture d is also a distribution.
+             We CAN write equalMixture [ sample $ always 0, sample $ uniform 0 1]
+              because then all the entries are of type Random Double
 
-   Hmm.. should I parameterize Sampleable over the monad where its sampleable?
-   Would that remove the redundancy?
+             The problem is that usually we'd like the component distributions
+              to all suppose some property -- such as Sampleable, or Dist1D or something.
+             But then we'd need some kind of wrapper that packages the distributions and
+              a dictionary for those pieces of functionality.  We can't derive the required
+              functionality from the calling context.
+
+             Ideally, therefore, it would be best if equalMixture could support a
+              heterogeneous collection that depended on the types of the arguments.
+             Then equalMixture (always 0, uniform 0 1, always 1) would have type
+              Mixture (Discrete Double) Uniform (Discrete Double).
+             We could derive properties such as Sampleable or Dist1D (for cdf) at the call site.
+             But this wouldn't support mixtures of unknown length.
+             In order to handle collections of generic length, we need some kind of
+              metaprogramming.
+-}
+
+{-
+   Generalization: Mixture (IO a)?
+
+   Mixture allows us to
+     * sample from the collection
+     * perform the chosen entry.
+   This sounds like it requires one monad for the choosing, and a second monad for the performing.
+
+   Mixture allows us to choose a random entry, and then do something with it.
+   If the chosen entry is a distribution, we would sample from it as well.
+   But how about when x is something else?  Like an action?  Then shouldn't Mixture d be an action that can be taken?
+   For example, suppose we have a Mixture (IO a).  Then shouldn't this ALSO be an IO a?
+
+   Perhaps Mixture should then be a functor. Perhaps Mixture d a should return IO (d a) or Random (d a)
+   Should we also attempt to join then?  Random (Random a) could reduce to Random a.
+   But how about IO (Random a)
+   Random (IO a) should be performable in IO as join (sample IO)
 -}
 
 data Mixture d = Mixture d
@@ -39,15 +71,7 @@ instance HasAnnotatedPdf d => HasAnnotatedPdf (Mixture (Discrete d)) where
 mixture ps dists | length ps /= length dists  = error "mixture distribution has different number of weights and distributions"
                  | otherwise                  = Mixture $ Discrete $ zip dists ps 
 
-----------------------------------------------------------
+equalMixture dists = mixture ps dists where
+    n = length dists
+    ps = replicate n (1/fromIntegral n)
 
-
-
--- In cases where x is a distribution, Mixture d is also a distribution.
--- But how about when x is something else?  Like an action?  Then shouldn't Mixture d be an action that can be taken?
--- For example, suppose we have a Mixture (IO a).  Then shouldn't this ALSO be an IO a?
---
--- Perhaps Mixture should then be a functor. Perhaps Mixture d a should return IO (d a) or Random (d a)
--- Should we also attempt to join then?  Random (Random a) could reduce to Random a.
--- But how about IO (Random a)
--- Random (IO a) should be performable in IO as join (sample IO)
