@@ -6,13 +6,14 @@ import Probability.Distribution.Uniform
 -- this is a join
 mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
 
-certainly x = Discrete [(x, 1)]
+unit_mixture x = Discrete [(x, 1)]
 
-unit_mixture m = certainly m
+-- Should always get its own type?
+always = unit_mixture
 
-extendDiscrete d p x = mix [p, 1-p] [certainly x, d]
+extendDiscrete d p x = mix [p, 1-p] [always x, d]
 
-extend_mixture ms (x,p) = mix [p, 1-p] [certainly x, ms]
+extend_mixture ms (x,p) = mix [p, 1-p] [always x, ms]
 
 uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
