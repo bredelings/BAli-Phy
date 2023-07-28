@@ -34,7 +34,7 @@ rate_mixture m d = parameter_mixture d (\x->scale x m)
 
 average_frequency ms = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix ms
 
-plus_inv p_inv mm = extend_mixture mm (scale 0 $ f81 pi a, p_inv)
+plus_inv p_inv mm = addComponent mm (scale 0 $ f81 pi a, p_inv)
     where a  = getAlphabet mm
           pi = average_frequency mm
 

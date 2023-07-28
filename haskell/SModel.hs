@@ -54,14 +54,14 @@ submodel +> model = model submodel
 --
 m1a_omega_dist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 
-m2a_omega_dist f1 w1 posP posW = extendDiscrete (m1a_omega_dist f1 w1) posP posW
+m2a_omega_dist f1 w1 posP posW = addComponent (m1a_omega_dist f1 w1) (posW, posP)
 
 m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1
 m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW
 
 m3_omega_dist ps omegas = Discrete $ zip' omegas ps
 
-m3p_omega_dist ps omegas posP posW = extendDiscrete (m3_omega_dist ps omegas) posP posW
+m3p_omega_dist ps omegas posP posW = addComponent (m3_omega_dist ps omegas) (posW, posP)
 
 m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1
 m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW
@@ -75,7 +75,7 @@ m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = 
                                                                           b = n*(1 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8_omega_dist mu gamma n_bins posP posW = extendDiscrete (m7_omega_dist mu gamma n_bins) posP posW
+m8_omega_dist mu gamma n_bins posP posW = addComponent (m7_omega_dist mu gamma n_bins) (posW, posP)
 
 m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1
 
