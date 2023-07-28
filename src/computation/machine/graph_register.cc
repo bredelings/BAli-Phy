@@ -730,7 +730,7 @@ void reg_heap::first_evaluate_program(int r, int c)
     if (program_result_head or logging_head)
         throw myexception()<<"Trying first_evaluate_program for a second time!";
 
-    program_result_head = add_compute_expression(r);
+    program_result_head = add_compute_expression(reg_var(r));
 
     logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"), reg_var(r)}});
 
