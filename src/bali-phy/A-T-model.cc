@@ -15,6 +15,7 @@
 #include "computation/expression/lambda.H"          // for lambda_quantify
 #include "computation/expression/var.H"             // for var
 #include "computation/object.H"                     // for intrusive_ptr_rel...
+#include "computation/program.H"                    // for class Program
 #include "link-partitions.H"                        // for shared_items, get...
 #include "models/TreeInterface.H"                   // for TreeInterface
 #include "models/parameters.H"                      // for Parameters, param...
@@ -557,9 +558,9 @@ int get_num_models(const vector<optional<int>>& mapping)
     return n;
 }
 
-owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-                                      ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
-                                      int /* proc_id */, const fs::path& dir)
+std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
+                                               ostream& out_cache, ostream& out_screen, ostream& out_both,
+                                               int /* proc_id */, const fs::path& dir)
 {
     //------ Determine number of partitions ------//
     vector<pair<fs::path,string>> filename_ranges;
@@ -943,25 +944,21 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
 
-    Model M(prog, keys);
-
-    M.evaluate_program();
-
     //------------- Write out a tree with branch numbers as branch lengths------------- //
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    info.update( log_summary(out_cache, out_screen, out_both,
-                             full_imodels, full_smodels, full_scale_models, branch_length_model,
-                             smodel_mapping, imodel_mapping, scale_mapping,
-                             T.n_branches(), filename_ranges.size(),
-                             alphabet_names,
-                             args) );
+    auto info = log_summary(out_cache, out_screen, out_both,
+                            full_imodels, full_smodels, full_scale_models, branch_length_model,
+                            smodel_mapping, imodel_mapping, scale_mapping,
+                            T.n_branches(), filename_ranges.size(),
+                            alphabet_names,
+                            args);
 
     //------------------- Handle heating ---------------------//
     // setup_heating(proc_id, args, M);
 
-    return M;
+    return {prog, info};
 }
 
 void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)

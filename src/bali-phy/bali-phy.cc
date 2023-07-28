@@ -608,14 +608,15 @@ int main(int argc,char* argv[])
         if (args.count("align"))
         {
             Rules R(get_package_paths(argv[0], args));
-            M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id, output_dir);
+            auto [prog, j] = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, proc_id, output_dir);
+            info.update(j);
+
+            M = Model(prog);
+
+            M->evaluate_program();
         }
         else
         {
-            Model::key_map_t keys;
-            if (args.count("set"))
-                keys = parse_key_map(args["set"].as<vector<string> >());
-
             Program P(L);
             if (args.count("model"))
             {
@@ -641,7 +642,7 @@ int main(int argc,char* argv[])
             else
                 std::abort();
 
-            M = Model(P, keys);
+            M = Model(P);
         }
         L.reset();
 
@@ -652,7 +653,6 @@ int main(int argc,char* argv[])
         auto log_formats = get_log_formats(args, args.count("align"));
         if (args.count("test"))
         {
-
             auto jlog = M->get_logged_parameters();
             if (log_formats.count("tsv"))
             {
