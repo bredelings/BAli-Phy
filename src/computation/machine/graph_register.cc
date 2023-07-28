@@ -2189,23 +2189,18 @@ int reg_heap::add_program(const expression_ref& E)
     if (program_result_head or logging_head)
         throw myexception()<<"Trying to set program a second time!";
 
-    auto P = E;
+    auto P = Core::unsafePerformIO(E);
+
+    int program_head = add_compute_expression(P);
 
     if (program->type == Program::exe_type::standard)
     {
-        P = Core::unsafePerformIO(P);
-        int program_head = add_compute_expression(P);
         program_result_head = program_head;
         return *program_result_head;
     }
 
-    P = Core::unsafePerformIO(P);
-
-    int program_head = add_compute_expression(P);
-    P = reg_var(heads[program_head]);
-
     // 3. Add the program RESULT head
-    program_result_head = add_compute_expression(P);
+    program_result_head = program_head;
 
     // 4. Add the program LOGGING head
     logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),P}});
