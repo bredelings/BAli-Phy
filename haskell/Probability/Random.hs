@@ -310,8 +310,9 @@ run_lazy' rate (RanInterchangeable r) = do
   return $ liftIO $ IO (\s -> (s, interchangeableIO id (run_lazy' rate r) s))
 run_lazy' rate (RanOp op) = op (run_lazy' rate)
 
-gen_model_no_alphabet m = run_strict' 1.0 m
-mcmc = gen_model_no_alphabet
+mcmc = run_strict' 1.0
+
+makeMCMCModel m = makeModel $ run_strict' 1.0 m
 
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
