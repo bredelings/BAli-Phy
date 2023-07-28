@@ -301,6 +301,7 @@ public:
     std::optional<int> lookup_named_head(const std::string&);
 
     std::optional<int> perform_io_head;
+    std::optional<int> main_head;
     std::optional<int> program_result_head;
     std::optional<int> logging_head;
 
@@ -790,8 +791,12 @@ public:
     std::vector<std::pair<int,int>>& get_pair_scratch_list() const;
     void release_pair_scratch_list() const;
 
+    void run_main();
+    
     reg_heap(const Program& P);
 };
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
 
 expression_ref graph_normalize(FreshVarState&, const expression_ref& R);
 

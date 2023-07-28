@@ -2186,27 +2186,28 @@ int reg_heap::add_perform_io_head()
 int reg_heap::add_program(const expression_ref& E)
 {
     // 1. Get the program head
+    if (main_head)
+        throw myexception()<<"Trying to set program a second time!";
+
     if (program_result_head or logging_head)
         throw myexception()<<"Trying to set program a second time!";
 
     auto P = Core::unsafePerformIO(E);
 
     int program_head = add_compute_expression(P);
+    main_head = program_head;
 
-    if (program->type == Program::exe_type::standard)
+    if (program->type != Program::exe_type::standard)
     {
+
+        // 3. Add the program RESULT head
         program_result_head = program_head;
-        return *program_result_head;
+
+        // 4. Add the program LOGGING head
+        P = reg_var(heads[program_head]);
+        logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),P}});
     }
-
-    // 3. Add the program RESULT head
-    program_result_head = program_head;
-
-    // 4. Add the program LOGGING head
-    P = reg_var(heads[program_head]);
-    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),P}});
-
-    return *program_result_head;
+    return *main_head;
 }
 
 void reg_heap::stack_push(int r)
@@ -3187,3 +3188,19 @@ expression_ref reg_heap::maybe_modifiable_structure(int r1)
     return reg_var(r2);
 }
 
+void reg_heap::run_main()
+{
+    int r = heads[main_head.value()];
+    incremental_evaluate_unchangeable(r);
+}
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
+{
+    Program P(L);
+    auto m = L->load_module_from_file(filename);
+    P.add(m);
+    P.main = m->name + ".main";
+
+    reg_heap R(P);
+    R.run_main();
+}
