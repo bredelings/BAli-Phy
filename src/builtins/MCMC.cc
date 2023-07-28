@@ -1317,3 +1317,48 @@ extern "C" closure builtin_function_interchange_entries(OperationArgs& Args)
     return constructor("()",0);
 }
 
+extern "C" closure builtin_function_createContext(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int r = Args.current_closure().reg_for_slot(0);
+
+    int c = M.get_first_context(r);
+
+    return {c};
+}
+
+extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int max_iterations = Args.evaluate(0).as_int();
+
+    int c = Args.evaluate(1).as_int();
+    context_ref C(M, c);
+
+    //---------------- Run the MCMC chain -------------------//
+    for(int iterations=0; iterations < max_iterations; iterations++)
+    {
+        //------------------ record statistics ---------------------//
+        std::cout<<"iterations = "<<iterations<<"\n";
+        std::clog<<"iterations = "<<iterations<<"\n";
+
+        C.run_loggers(iterations);
+
+        //------------------- move to new position -----------------//
+        C.run_transition_kernels();
+    }
+
+    std::cout<<"iterations = "<<max_iterations<<"\n";
+    std::clog<<"iterations = "<<max_iterations<<"\n";
+
+    C.run_loggers(max_iterations);
+
+    std::cout<<"total samples = "<<max_iterations<<std::endl;
+
+    return constructor("()",0);
+}
+
