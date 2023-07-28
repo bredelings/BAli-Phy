@@ -3176,6 +3176,6 @@ void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem
     P.add(m);
     P.main = m->name + ".main";
 
-    reg_heap R(P);
-    R.run_main();
+    object_ptr<reg_heap> R( new reg_heap(P));
+    R->run_main();
 }
