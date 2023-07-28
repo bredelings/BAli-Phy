@@ -792,7 +792,10 @@ context::context(context&& C)
 context::context(const Program& P)
     :context_ref(*new reg_heap(P))
 {
-    context_index = memory_->get_first_context();
+    auto& M = *memory_;
+
+    int r = M.heads[*M.main_head];
+    context_index = M.get_first_context(r);
 }
 
 context::~context()

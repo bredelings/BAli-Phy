@@ -309,13 +309,3 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
 
     return keys;
 }
-
-void execute_file(const std::shared_ptr<module_loader>& L, const fs::path& filename)
-{
-    Program P(L);
-    auto m = L->load_module_from_file(filename);
-    P.add(m);
-    P.main = m->name + ".main";
-
-    context C(P);
-}

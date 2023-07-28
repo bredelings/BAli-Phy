@@ -725,10 +725,14 @@ void reg_heap::mark_unconditional_regs()
     release_scratch_list(); // unconditionally_evaluated_regs
 }
 
-void reg_heap::first_evaluate_program(int c)
+void reg_heap::first_evaluate_program(int r, int c)
 {
-    if (not program_result_head)
-        throw myexception()<<"No program has been set!";
+    if (program_result_head or logging_head)
+        throw myexception()<<"Trying first_evaluate_program for a second time!";
+
+    program_result_head = add_compute_expression(r);
+
+    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"), reg_var(r)}});
 
     assert(get_prev_prog_token_for_context(c));
 
@@ -2178,38 +2182,6 @@ int reg_heap::add_perform_io_head()
     return *perform_io_head;
 }
 
-// 1. Pass in the program without logging state.
-// 2. Generate the loggers regardless.
-// 3. Return the value, and store it in the program head
-// 4. Register the logging head, but don't return it.
-
-int reg_heap::add_program(const expression_ref& E)
-{
-    // 1. Get the program head
-    if (main_head)
-        throw myexception()<<"Trying to set program a second time!";
-
-    if (program_result_head or logging_head)
-        throw myexception()<<"Trying to set program a second time!";
-
-    auto P = Core::unsafePerformIO(E);
-
-    int program_head = add_compute_expression(P);
-    main_head = program_head;
-
-    if (program->type != Program::exe_type::standard)
-    {
-
-        // 3. Add the program RESULT head
-        program_result_head = program_head;
-
-        // 4. Add the program LOGGING head
-        P = reg_var(heads[program_head]);
-        logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),P}});
-    }
-    return *main_head;
-}
-
 void reg_heap::stack_push(int r)
 {
     stack.push_back(r);
@@ -3070,7 +3042,10 @@ reg_heap::reg_heap(const Program& P)
     allocate_identifiers_for_program();
 
     if (P.main)
-        add_program( var( *P.main ) );
+    {
+        expression_ref M = var( *P.main );
+        main_head = add_compute_expression( Core::unsafePerformIO(M) );
+    }
 
     add_perform_io_head();
 }

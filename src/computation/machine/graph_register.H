@@ -306,7 +306,6 @@ public:
     std::optional<int> logging_head;
 
     int add_perform_io_head();
-    int add_program(const expression_ref& E);
 
     // the list of regs that are currently being evaluated
     std::vector<int> stack;
@@ -354,7 +353,7 @@ public:
 private:
     void compute_initial_force_counts();
     void mark_unconditional_regs();
-    void first_evaluate_program(int c);
+    void first_evaluate_program(int r, int c);
 
     bool simple_set_path_to(int child_token) const;
 
@@ -615,7 +614,7 @@ public:
     /// Make the context point to the token of another context
     void switch_to_context(int c1, int c2);
 
-    int get_first_context();
+    int get_first_context(int);
 
     void release_context(int);
 
