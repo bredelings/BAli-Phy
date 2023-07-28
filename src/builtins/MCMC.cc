@@ -1342,22 +1342,11 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
     //---------------- Run the MCMC chain -------------------//
     for(int iterations=0; iterations < max_iterations; iterations++)
     {
-        //------------------ record statistics ---------------------//
-        std::cout<<"iterations = "<<iterations<<"\n";
-        std::clog<<"iterations = "<<iterations<<"\n";
-
         C.run_loggers(iterations);
-
-        //------------------- move to new position -----------------//
         C.run_transition_kernels();
     }
 
-    std::cout<<"iterations = "<<max_iterations<<"\n";
-    std::clog<<"iterations = "<<max_iterations<<"\n";
-
     C.run_loggers(max_iterations);
-
-    std::cout<<"total samples = "<<max_iterations<<std::endl;
 
     return constructor("()",0);
 }
