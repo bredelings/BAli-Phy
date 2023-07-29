@@ -64,10 +64,6 @@ public:
 
     int get_context_index() const {return context_index;}
 
-    void clear_program();
-
-    void clear_identifiers();
-
     const closure& access_result_for_reg(int i) const;
 
     const closure& operator[](int i) const;

@@ -674,16 +674,6 @@ std::ostream& operator<<(std::ostream& o, const context_ref& C)
     return o;
 }
 
-void context_ref::clear_program()
-{
-    memory()->program.reset();
-}
-
-void context_ref::clear_identifiers()
-{
-    memory()->identifiers.clear();
-}
-
 const vector<string>& context_ref::get_args() const
 {
     return memory()->args;
