@@ -162,8 +162,6 @@ public:
 
     expression_ref get_expression(int i) const;
 
-    void compile();
-
     log_double_t prior() const;
     log_double_t likelihood() const;
     log_double_t probability() const;

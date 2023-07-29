@@ -555,10 +555,6 @@ std::optional<std::string> context_ref::dist_type(int s) const
         return it->second;
 }
 
-void context_ref::compile()
-{
-}
-
 log_double_t context_ref::prior() const
 {
     return memory()->prior_for_context(context_index);

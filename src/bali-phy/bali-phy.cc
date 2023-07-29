@@ -732,11 +732,6 @@ int main(int argc,char* argv[])
             out_screen.flush();
 
             //-------- Start the MCMC  -----------//
-#ifdef NDEBUG
-            M->compile();
-#endif
-
-
             auto& s_out = *files[0];
 
             //---------------- Run the MCMC chain -------------------//
