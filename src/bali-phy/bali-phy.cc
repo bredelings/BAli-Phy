@@ -470,6 +470,101 @@ std::pair<string, vector<string>> extract_prog_args(variables_map& args, int arg
     return {name, args_v};
 }
 
+std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map& args, const shared_ptr<module_loader>& L,
+                                          int proc_id, const fs::path& output_dir, json info)
+{
+    auto P = std::make_unique<Program>(L);
+    if (args.count("align"))
+    {
+        Rules R(get_package_paths(argv[0], args));
+        auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
+        info.update(j);
+        *P = prog;
+    }
+    else if (args.count("model"))
+    {
+        /* We could then generate a wrapper that concatenates to the end something like this.
+           But we somehow need to import additional stuff...
+
+           main = do
+           logParams <- jsonLogger (directory </> "C1.log.json")
+           model <- model
+           mymodel <- makeMCMCModel $ do
+           j <- model
+           addLogger $ logParams j
+           return j
+           runMCMC iterations mymodel
+
+           Alternatively, we could copy the module into the directory, put the directory in the include path,
+           and then IMPORT the module!
+
+           This might also work for --test, since both the generated Main and the imported module would be in ".".
+        */
+        auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
+        L->args = args_v;
+
+        fs::path filename = filename_s;
+        if (filename.extension() != ".hs")
+            filename += ".hs";
+
+        auto m = P->get_module_loader()->load_module_from_file(filename);
+        P->add(m);
+        P->main = m->name + ".main";
+    }
+    else
+        std::abort();
+
+    //---------------Do something------------------//
+    auto log_formats = get_log_formats(args, args.count("align"));
+
+    if (args.count("align") and not args.count("test"))
+    {
+        long int max_iterations = 200000;
+        if (args.count("iterations"))
+            max_iterations = args["iterations"].as<long int>();
+        int subsample = args["subsample"].as<int>();
+
+        //---------- Open output files -----------//
+        info["subdirectory"] = output_dir.string();
+        auto files = init_files(proc_id, output_dir, argc, argv);
+
+        if (args.count("align"))
+            write_initial_alignments(args, proc_id, output_dir);
+
+        //------ Write run info to C1.json ------//
+        *files[2]<<info.dump(4)<<std::endl;
+        cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
+
+        //------ Report log files -------//
+        cout<<"\nBeginning MCMC computations."<<endl;
+        if (log_formats.count("json"))
+            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
+        if (log_formats.count("tsv"))
+            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log" << " as TSV\n";
+        if (args.count("align"))
+        {
+            cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
+            cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
+        }
+
+        //------ Clarify lack of auto-stopping -----/
+        cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
+        if (not args.count("iterations"))
+            cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
+        else
+            cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
+
+        cout<<"\n";
+        if (log_formats.count("tsv"))
+            cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
+        cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
+            cout.flush();
+    }
+
+    return P;
+}
+
+
 int main(int argc,char* argv[])
 { 
     int n_procs = 1;
@@ -484,8 +579,6 @@ int main(int argc,char* argv[])
 #endif
 
     std::ios::sync_with_stdio(false);
-
-    vector<shared_ptr<ostream>> files;
 
     int retval=0;
 
@@ -516,7 +609,7 @@ int main(int argc,char* argv[])
 
         //---------- Initialize random seed -----------//
         unsigned long seed = init_rng_and_get_seed(args);
-    
+
         if (log_verbose >= 1) cout<<"random seed = "<<seed<<endl<<endl;
 
         //---------- test optimizer ----------------
@@ -583,99 +676,13 @@ int main(int argc,char* argv[])
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
 
-        auto P = std::make_unique<Program>(L);
-        if (args.count("align"))
-        {
-            Rules R(get_package_paths(argv[0], args));
-            auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
-            info.update(j);
-            *P = prog;
-        }
-        else if (args.count("model"))
-        {
-            /* We could then generate a wrapper that concatenates to the end something like this.
-              But we somehow need to import additional stuff...
-
-              main = do
-                 logParams <- jsonLogger (directory </> "C1.log.json")
-                 model <- model
-                 mymodel <- makeMCMCModel $ do
-                   j <- model
-                   addLogger $ logParams j
-                   return j
-                 runMCMC iterations mymodel
-
-              Alternatively, we could copy the module into the directory, put the directory in the include path,
-              and then IMPORT the module!
-
-              This might also work for --test, since both the generated Main and the imported module would be in ".".
-            */
-            auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
-            L->args = args_v;
-
-            fs::path filename = filename_s;
-            if (filename.extension() != ".hs")
-                filename += ".hs";
-
-            auto m = P->get_module_loader()->load_module_from_file(filename);
-            P->add(m);
-            P->main = m->name + ".main";
-        }
-        else
-            std::abort();
+        auto P = generate_program(argc, argv, args, L, proc_id, output_dir, info);
 
         L.reset();
 
         raise_cpu_limit(cout);
 
         block_signals();
-
-        //---------------Do something------------------//
-        auto log_formats = get_log_formats(args, args.count("align"));
-
-        if (args.count("align") and not args.count("test"))
-        {
-            long int max_iterations = 200000;
-            if (args.count("iterations"))
-                max_iterations = args["iterations"].as<long int>();
-            int subsample = args["subsample"].as<int>();
-      
-            //---------- Open output files -----------//
-            info["subdirectory"] = output_dir.string();
-            files = init_files(proc_id, output_dir, argc, argv);
-
-            if (args.count("align"))
-                write_initial_alignments(args, proc_id, output_dir);
-
-            //------ Write run info to C1.json ------//
-            *files[2]<<info.dump(4)<<std::endl;
-            cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
-
-            //------ Report log files -------//
-            cout<<"\nBeginning MCMC computations."<<endl;
-            if (log_formats.count("json"))
-                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
-            if (log_formats.count("tsv"))
-                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log" << " as TSV\n";
-            if (args.count("align"))
-            {
-                cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
-                cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
-            }
-
-            //------ Clarify lack of auto-stopping -----/
-            cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
-            if (not args.count("iterations"))
-                cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
-            else
-                cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
-
-            cout<<"\n";
-            if (log_formats.count("tsv"))
-                cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
-            cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
-            cout.flush();
-        }
 
         // Run the program P
         execute_program( std::move(P) );
