@@ -40,6 +40,7 @@ void reg_heap::collect_garbage()
     {
         std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
         std::cerr<<"Steps: "<<steps.n_used()<<"/"<<steps.size()<<std::endl;
+        std::cerr<<"n_heads: "<<heads.size()<<std::endl;
     }
 
 #ifdef DEBUG_MACHINE
