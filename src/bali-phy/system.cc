@@ -59,7 +59,7 @@ void raise_cpu_limit(ostream& /*o*/)
 }
 #endif
 
-void show_ending_messages(bool);
+void show_ending_messages();
 
 sig_atomic_t fatal_error_in_progress = 0;
 
@@ -78,7 +78,7 @@ void die_on_signal(int sig)
     cerr<<"received signal "<<sig<<".  Dying."<<endl;
 
     // 2.2 Show messages.
-    show_ending_messages(true);
+    show_ending_messages();
 
     // 3. Supposedly this is cleaner than calling exit or abort
     //    because it sets the return code correctly.

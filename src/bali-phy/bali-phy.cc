@@ -157,7 +157,7 @@ string ctime(const chrono::system_clock::time_point& t)
     return c;
 }
 
-void show_ending_messages(bool show_only)
+void show_ending_messages()
 {
     using namespace chrono;
 
@@ -488,8 +488,6 @@ int main(int argc,char* argv[])
 
     int retval=0;
 
-    bool show_only = false;
-
     owned_ptr<Model> M; // Declare early so we can reference from catch block.
 
     try {
@@ -504,8 +502,6 @@ int main(int argc,char* argv[])
 
         //---------- Parse command line  ---------//
         variables_map args = parse_cmd_line(argc,argv);
-
-        show_only = args.count("test");
 
         //------ Increase precision for (cout,cerr) if we are testing ------//
         if (args.count("test"))
@@ -748,7 +744,7 @@ int main(int argc,char* argv[])
         }
     }
 
-    show_ending_messages(show_only);
+    show_ending_messages();
 
     cout.flush();
     cerr.flush();
