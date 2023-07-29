@@ -8,6 +8,7 @@
 #include "util/assert.hh"
 #include "util/string/join.H"
 #include "util/mapping.H"
+#include "util/log-level.H"
 #include "computation/varinfo.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
@@ -390,7 +391,11 @@ void execute_program(std::unique_ptr<Program> P)
 {
     // Creating an object pointer initializes the refcount to 1.
     object_ptr<reg_heap> R(new reg_heap( std::move(P) ) );
-    R->program.reset();
+    if (log_verbose >= 1)
+    {
+        R->program.reset();
+        R->identifiers.clear();
+    }
     R->run_main();
 }
 
