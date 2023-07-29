@@ -161,7 +161,7 @@ void show_ending_messages(bool show_only)
 {
     using namespace chrono;
 
-    if (not show_only or log_verbose >= 2) {
+    if (log_verbose >= 2) {
 
         extern long total_reductions;
         extern long total_changeable_eval;
@@ -272,7 +272,8 @@ void show_ending_messages(bool show_only)
         cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
         cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
     }
-    if (substitution::total_calc_root_prob > 1 and not show_only) {
+
+    if (substitution::total_calc_root_prob > 1 and log_verbose >= 1) {
         cout<<endl;
         cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
         cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
