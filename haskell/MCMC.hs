@@ -92,7 +92,7 @@ makeModel m = createContext (unsafePerformIO m)
 
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 foreign import bpcall "MCMC:" logLineRaw :: Int -> IO CPPString
-logLine context = Text <$> logLineRaw context
+logLine context = unpack_cpp_string <$> logLineRaw context
 
 scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
 
