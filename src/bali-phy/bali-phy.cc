@@ -149,7 +149,12 @@ unsigned long init_rng_and_get_seed(const variables_map& args)
     return seed;
 }
 
+using boost::chrono::process_user_cpu_clock;
+
 chrono::system_clock::time_point start_time = chrono::system_clock::now();
+
+auto start_work_time = chrono::system_clock::now();
+auto start_work_cpu_time = process_user_cpu_clock::time_point();
 
 string ctime(const chrono::system_clock::time_point& t)
 {
@@ -263,15 +268,27 @@ void show_ending_messages()
             cout<<"total context probability      = "<<total_context_pr<<endl;
         }
     }
-    system_clock::time_point end_time = system_clock::now();
-  
-    if (end_time - start_time > seconds(2)) 
+    auto end_time = system_clock::now();
+    auto end_cpu_time = process_user_cpu_clock::now();
+
+    if (log_verbose >= 1)
     {
         cout<<endl;
-        cout<<"start time: "<<ctime(start_time)<<endl;
-        cout<<"  end time: "<<ctime(end_time)<<endl;
-        cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
-        cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
+        cout<<"Setup:"<<endl;
+        cout<<"  start: "<<ctime(start_time);
+        cout<<"    end: "<<ctime(start_work_time);
+        cout<<"  total (elapsed) time: "<<duration_string( duration_cast<seconds>(start_work_time-start_time) )<<endl;
+        cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(start_work_cpu_time - process_user_cpu_clock::time_point()) )<<endl;
+    }
+
+    if (end_time - start_work_time > seconds(2)) 
+    {
+        cout<<endl;
+        cout<<"Work:"<<endl;
+        cout<<"  start: "<<ctime(start_work_time);
+        cout<<"    end: "<<ctime(end_time);
+        cout<<"  total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time - start_work_time) )<<endl;
+        cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(end_cpu_time - start_work_cpu_time) )<<endl;
     }
 
     if (substitution::total_calc_root_prob > 1 and log_verbose >= 1) {
@@ -437,7 +454,7 @@ expression_ref get_alphabet_expression_from_args(const variables_map& args)
     return a;
 }
 
-void run_print_expression(const string& argv0, variables_map& args, const shared_ptr<module_loader>& L)
+std::unique_ptr<Program> print_program(const string& argv0, variables_map& args, const shared_ptr<module_loader>& L)
 {
     const string mstring = args["print"].as<string>();
     Rules R(get_package_paths(argv0, args));
@@ -448,7 +465,7 @@ void run_print_expression(const string& argv0, variables_map& args, const shared
         checked_ofstream program_file("Print.Main.hs");
         program_file<<generate_print_program(print, a);
     }
-    execute_file(L, "Print.Main.hs");
+    return load_program_from_file(L, "Print.Main.hs");
 }
 
 int simple_size(const expression_ref& E);
@@ -485,6 +502,10 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
             filename += ".hs";
 
         P = load_program_from_file(L, filename);
+    }
+    else if (args.count("print"))
+    {
+        P = print_program(argv[0], args, L);
     }
     else if (args.count("align"))
     {
@@ -639,11 +660,6 @@ int main(int argc,char* argv[])
             }
             exit(0);
         }
-        else if (args.count("print"))
-        {
-            run_print_expression(argv[0], args, L);
-            exit(0);
-        }
 
         //----------- Create output dir --------------//
         fs::path output_dir = fs::current_path();
@@ -683,6 +699,9 @@ int main(int argc,char* argv[])
         raise_cpu_limit(cout);
 
         block_signals();
+
+        start_work_time = chrono::system_clock::now();
+        start_work_cpu_time = process_user_cpu_clock::now();
 
         // Run the program P
         execute_program( std::move(P) );
