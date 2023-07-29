@@ -694,16 +694,10 @@ int main(int argc,char* argv[])
             cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
             cout.flush();
 
-            //-------- Start the MCMC  -----------//
-            auto& s_out = *files[0];
-
             //---------------- Run the MCMC chain -------------------//
             for(int iterations=0; iterations < max_iterations; iterations++)
             {
                 // PP->set_beta( PP->PC->beta_series[iterations] );
-
-                //------------------ record statistics ---------------------//
-                s_out<<"iterations = "<<iterations<<"\n";
 
                 M->run_loggers(iterations);
 
@@ -716,11 +710,7 @@ int main(int argc,char* argv[])
                 //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
             }
 
-            s_out<<"iterations = "<<max_iterations<<"\n";
-
             M->run_loggers(max_iterations);
-
-            s_out<<"total samples = "<<max_iterations<<endl;
 
             // Close all the streams, and write a notification that we finished all the iterations.
             // close_files(files);
