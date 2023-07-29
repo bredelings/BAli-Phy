@@ -399,7 +399,7 @@ void execute_program(std::unique_ptr<Program> P)
     R->run_main();
 }
 
-void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
+std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
 {
     auto m = L->load_module_from_file(filename);
 
@@ -407,5 +407,10 @@ void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem
     P->add(m);
     P->main = m->name + ".main";
 
-    execute_program( std::move(P) );
+    return P;
+}
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
+{
+    execute_program( load_program_from_file(L, filename) );
 }

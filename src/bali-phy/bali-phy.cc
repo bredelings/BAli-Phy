@@ -474,8 +474,21 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
                                           int proc_id, const fs::path& output_dir, json info)
 {
     auto P = std::make_unique<Program>(L);
-    if (args.count("align"))
+
+    if (args.count("run-module"))
     {
+        auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "run-module");
+        L->args = args_v;
+
+        fs::path filename = filename_s;
+        if (filename.extension() != ".hs")
+            filename += ".hs";
+
+        P = load_program_from_file(L, filename);
+    }
+    else if (args.count("align"))
+    {
+        // Change this into a pointer.
         Rules R(get_package_paths(argv[0], args));
         auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
         info.update(j);
@@ -528,8 +541,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         info["subdirectory"] = output_dir.string();
         auto files = init_files(proc_id, output_dir, argc, argv);
 
-        if (args.count("align"))
-            write_initial_alignments(args, proc_id, output_dir);
+        write_initial_alignments(args, proc_id, output_dir);
 
         //------ Write run info to C1.json ------//
         *files[2]<<info.dump(4)<<std::endl;
@@ -558,7 +570,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         if (log_formats.count("tsv"))
             cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
         cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
-            cout.flush();
+        cout.flush();
     }
 
     return P;
@@ -625,18 +637,6 @@ int main(int argc,char* argv[])
             {
                 std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
             }
-            exit(0);
-        }
-        else if (args.count("run-module"))
-        {
-            auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "run-module");
-            L->args = args_v;
-
-            fs::path filename = filename_s;
-            if (filename.extension() != ".hs")
-                filename += ".hs";
-
-            execute_file(L, filename);
             exit(0);
         }
         else if (args.count("print"))

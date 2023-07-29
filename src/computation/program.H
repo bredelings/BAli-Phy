@@ -68,5 +68,8 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<std::str
 
 void execute_program(std::unique_ptr<Program> P);
 
+std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
+
 void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
+
 #endif
