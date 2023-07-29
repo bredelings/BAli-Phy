@@ -289,9 +289,12 @@ public:
 
 	    if (target_mem > memory.size())
             {
+                // Increase the memory by a bit more than the threshhold.
+                int target_mem1 = int(n_used()*2.1)+15 + n_null();
                 // Avoid increasing the total size by very small increments.
-                target_mem = std::max(target_mem, int(memory.size()*1.15));
-                int diff = target_mem - memory.size();
+                int target_mem2 = int(memory.size()*1.15);
+
+                int diff = std::max(target_mem1, target_mem2) - memory.size();
 		expand_memory(diff);
             }
 	}
