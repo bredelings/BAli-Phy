@@ -679,17 +679,11 @@ int main(int argc,char* argv[])
             int subsample = args["subsample"].as<int>();
       
             //---------- Open output files -----------//
-            if (not args.count("test")) {
-                info["subdirectory"] = output_dir.string();
-                files = init_files(proc_id, output_dir, argc, argv);
+            info["subdirectory"] = output_dir.string();
+            files = init_files(proc_id, output_dir, argc, argv);
 
-                if (args.count("align"))
-                    write_initial_alignments(args, proc_id, output_dir);
-            }
-            else {
-                files.push_back(std::make_shared<ostream>(cout.rdbuf()));
-                files.push_back(std::make_shared<ostream>(cerr.rdbuf()));
-            }
+            if (args.count("align"))
+                write_initial_alignments(args, proc_id, output_dir);
 
             M->clear_program();
             M->clear_identifiers();
