@@ -225,8 +225,6 @@ public:
 
     context(context&&);
 
-    context(const Program& P);
-
     virtual ~context();
 };
 

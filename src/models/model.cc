@@ -51,10 +51,6 @@ Model::Model(const context_ref& C, const key_map_t& k)
     :context(C),keys(new key_map_t(k))
 { }
 
-Model::Model(const Program& P, const key_map_t& k)
-    :context(P),keys(new key_map_t(k))
-{ }
-
 /// \brief Check if the string s1 matches a pattern s2
 ///
 /// \param s1   The string

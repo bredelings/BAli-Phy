@@ -39,7 +39,6 @@
 #include "util/json.hh"                             // for json
 #include "util/math/log-double.H"                   // for log_double_t, ope...
 #include "util/bounds.H"
-class Program;
 
 // Variable State: (i) Dirichlet Process or (ii) Augmenting and unaugmenting
 //
@@ -87,9 +86,6 @@ public:
 
     Model& operator=(const Model&) = default;
     Model& operator=(Model&&) = default;
-
-    /// Construct an empty model
-    Model(const Program& P, const key_map_t& k = {});
 
     /// Construct an empty model
     Model(const context_ref& C, const key_map_t& k = {});
