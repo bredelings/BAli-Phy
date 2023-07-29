@@ -670,12 +670,6 @@ int main(int argc,char* argv[])
 
             //------ Redirect output to files -------//
 
-            cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
-            if (not args.count("iterations"))
-                cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
-            else
-                cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
-
             cout<<"\nBeginning MCMC computations."<<endl;
             if (log_formats.count("json"))
                 cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
@@ -686,6 +680,12 @@ int main(int argc,char* argv[])
                 cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
                 cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
             }
+            cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
+            if (not args.count("iterations"))
+                cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
+            else
+                cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
+
             cout<<"\n";
             if (log_formats.count("tsv"))
                 cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
