@@ -775,15 +775,6 @@ context::context(context&& C)
     std::swap(context_index, C.context_index);
 }
 
-context::context(const Program& P)
-    :context_ref(*new reg_heap(P))
-{
-    auto& M = *memory_;
-
-    int r = M.heads[*M.main_head];
-    context_index = M.get_first_context(r);
-}
-
 context::~context()
 {
     if (context_index != -1)
