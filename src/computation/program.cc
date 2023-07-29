@@ -391,11 +391,10 @@ void execute_program(std::unique_ptr<Program> P)
 {
     // Creating an object pointer initializes the refcount to 1.
     object_ptr<reg_heap> R(new reg_heap( std::move(P) ) );
-    if (log_verbose >= 1)
-    {
-        R->program.reset();
-        R->identifiers.clear();
-    }
+#ifdef NDEBUG
+    R->program.reset();
+    R->identifiers.clear();
+#endif
     R->run_main();
 }
 
