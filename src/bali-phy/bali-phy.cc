@@ -678,8 +678,6 @@ int main(int argc,char* argv[])
                 cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
 
             cout<<"\nBeginning MCMC computations."<<endl;
-            cout<<"   - Future screen output sent to "<< output_dir / "C1.out" <<endl;
-            cout<<"   - Future debugging output sent to "<< output_dir / "C1.err" <<endl;
             if (args.count("align"))
             {
                 cout<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
