@@ -3025,9 +3025,14 @@ void reg_heap::allocate_identifiers_for_program()
 }
 
 reg_heap::reg_heap(const Program& P)
+    :reg_heap(std::make_unique<Program>(P))
+{
+}
+
+reg_heap::reg_heap(std::unique_ptr<Program> P)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
-     program(new Program(P)),
+     program(std::move(P)),
      fresh_var_state(program->fresh_var_state()),
      args(program->get_module_loader()->args),
      prog_steps(1,non_existant_index),
@@ -3041,9 +3046,9 @@ reg_heap::reg_heap(const Program& P)
 
     allocate_identifiers_for_program();
 
-    if (P.main)
+    if (program->main)
     {
-        expression_ref M = var( *P.main );
+        expression_ref M = var( *program->main );
         main_head = add_compute_expression( Core::unsafePerformIO(M) );
     }
 

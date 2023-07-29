@@ -440,7 +440,7 @@ public:
     /// Probably this would be non-parameter identifiers
     std::map<var, int> identifiers;
   
-    std::shared_ptr<Program> program;
+    std::unique_ptr<Program> program;
 
     FreshVarState fresh_var_state;
 
@@ -792,6 +792,7 @@ public:
 
     void run_main();
     
+    reg_heap(std::unique_ptr<Program> P);
     reg_heap(const Program& P);
 };
 
