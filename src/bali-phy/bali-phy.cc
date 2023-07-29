@@ -54,6 +54,7 @@ namespace mpi = boost::mpi;
 #include "util/string/split.H"
 #include "util/log-level.H"
 #include "util/set.H"
+#include "util/text.H"
 #include "models/parameters.H"
 #include "models/rules.H"
 #include "models/setup.H"
@@ -677,13 +678,13 @@ int main(int argc,char* argv[])
 
             cout<<"\nBeginning MCMC computations."<<endl;
             if (log_formats.count("json"))
-                cout<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
+                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
             if (log_formats.count("tsv"))
-                cout<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log" << " as TSV\n";
+                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log" << " as TSV\n";
             if (args.count("align"))
             {
-                cout<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
-                cout<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
+                cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
+                cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
             }
             cout<<"\n";
             if (log_formats.count("tsv"))
