@@ -481,25 +481,9 @@ int main(int argc,char* argv[])
     n_procs = world.size();
 #endif
 
-    restore restore_cout(cout);
-    restore restore_cerr(cerr);
-    restore restore_clog(clog);
-
     std::ios::sync_with_stdio(false);
 
-    ostream out_screen(cout.rdbuf());
-    ostream err_screen(cerr.rdbuf());
-
-    std::ostringstream out_cache;
-    std::ostringstream err_cache;
-
     vector<shared_ptr<ostream>> files;
-
-    teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
-    teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
-
-    ostream out_both(&tee_out);
-    ostream err_both(&tee_err);
 
     int retval=0;
 
@@ -528,9 +512,6 @@ int main(int argc,char* argv[])
             cerr.precision(15);
             cout.precision(15);
         }
-        else
-        //------ Capture copy of 'cerr' output in 'err_cache' ------//
-            cerr.rdbuf(err_both.rdbuf());
 
         //------------- Setup module loader -------------//
         auto L = setup_module_loader(args, argv[0]);
@@ -540,7 +521,7 @@ int main(int argc,char* argv[])
         //---------- Initialize random seed -----------//
         unsigned long seed = init_rng_and_get_seed(args);
     
-        if (log_verbose >= 1) out_cache<<"random seed = "<<seed<<endl<<endl;
+        if (log_verbose >= 1) cout<<"random seed = "<<seed<<endl<<endl;
 
         //---------- test optimizer ----------------
         if (args.count("test-module"))
@@ -608,7 +589,7 @@ int main(int argc,char* argv[])
         if (args.count("align"))
         {
             Rules R(get_package_paths(argv[0], args));
-            auto [prog, j] = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, proc_id, output_dir);
+            auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
             info.update(j);
 
             M = Model(prog);
@@ -646,9 +627,6 @@ int main(int argc,char* argv[])
         }
         L.reset();
 
-        //------------ Avoid printing seed during unrelated error messages ---//
-        if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
-
         //---------------Do something------------------//
         auto log_formats = get_log_formats(args, args.count("align"));
         if (args.count("test"))
@@ -669,7 +647,7 @@ int main(int argc,char* argv[])
         }
         else 
         {
-            raise_cpu_limit(out_both);
+            raise_cpu_limit(cout);
 
             block_signals();
 
@@ -688,48 +666,35 @@ int main(int argc,char* argv[])
             M->clear_program();
             M->clear_identifiers();
 
-            //------ Redirect output to files -------//
-            *files[0]<<out_cache.str(); out_cache.str("");
-            *files[1]<<err_cache.str(); err_cache.str("");
-
-            tee_out.setbuf2(files[0]->rdbuf());
-            tee_err.setbuf2(files[1]->rdbuf());
-
-            cout.flush() ; cout.rdbuf(files[0]->rdbuf());
-            cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
-            clog.flush() ; clog.rdbuf(files[1]->rdbuf());
-
             //------ Write run info to C1.json ------//
             *files[2]<<info.dump(4)<<std::endl;
 
             //------ Redirect output to files -------//
 
-            // avoid_zero_likelihood(M, *files[0], out_both);
-
-            out_screen<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
+            cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
             if (not args.count("iterations"))
-                out_screen<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
+                cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
             else
-                out_screen<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
+                cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
 
-            out_screen<<"\nBeginning MCMC computations."<<endl;
-            out_screen<<"   - Future screen output sent to "<< output_dir / "C1.out" <<endl;
-            out_screen<<"   - Future debugging output sent to "<< output_dir / "C1.err" <<endl;
+            cout<<"\nBeginning MCMC computations."<<endl;
+            cout<<"   - Future screen output sent to "<< output_dir / "C1.out" <<endl;
+            cout<<"   - Future debugging output sent to "<< output_dir / "C1.err" <<endl;
             if (args.count("align"))
             {
-                out_screen<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
-                out_screen<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
-                out_screen<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
+                cout<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
+                cout<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
+                cout<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
             }
             if (log_formats.count("json"))
-                out_screen<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
+                cout<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
             if (log_formats.count("tsv"))
-                out_screen<<"   - Sampled numerical parameters logged to '"<< output_dir / "C1.log" << " as TSV\n";
-            out_screen<<"\n";
+                cout<<"   - Sampled numerical parameters logged to '"<< output_dir / "C1.log" << " as TSV\n";
+            cout<<"\n";
             if (log_formats.count("tsv"))
-                out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
-            out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
-            out_screen.flush();
+                cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
+            cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
+            cout.flush();
 
             //-------- Start the MCMC  -----------//
             auto& s_out = *files[0];
@@ -741,7 +706,6 @@ int main(int argc,char* argv[])
 
                 //------------------ record statistics ---------------------//
                 s_out<<"iterations = "<<iterations<<"\n";
-                clog<<"iterations = "<<iterations<<"\n";
 
                 M->run_loggers(iterations);
 
@@ -755,7 +719,6 @@ int main(int argc,char* argv[])
             }
 
             s_out<<"iterations = "<<max_iterations<<"\n";
-            clog<<"iterations = "<<max_iterations<<"\n";
 
             M->run_loggers(max_iterations);
 
@@ -767,27 +730,19 @@ int main(int argc,char* argv[])
     }
     catch (std::bad_alloc&) 
     {
-        // 1. If we haven't yet moved screen output to a file, then write cached screen output.
-        out_screen<<out_cache.str(); out_screen.flush();
-        err_screen<<err_cache.str(); err_screen.flush();
-
-        // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
-        err_both<<"Doh!  Some kind of memory problem?\n"<<endl;
-        // 3. Write memory report to either (screen) or (screen+cache) or (screen+file)
+        // 1. Now, write message to either (screen+cache) or (screen+file), and flush.
+        cerr<<"Doh!  Some kind of memory problem?\n"<<endl;
+        // 2. Write memory report to either (screen) or (screen+cache) or (screen+file)
         report_mem();
         retval=2;
     }
     catch (std::exception& e) 
     {
-        // 1. If we haven't yet moved screen output to a file, then write cached screen output.
-        out_screen<<out_cache.str(); out_screen.flush();
-        err_screen<<err_cache.str(); err_screen.flush();
-
-        // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
+        // 1. Now, write message to either (screen+cache) or (screen+file), and flush.
         if (n_procs > 1)
-            err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
+            cerr<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
         else
-            err_both<<"bali-phy: Error! "<<e.what()<<endl;
+            cerr<<"bali-phy: Error! "<<e.what()<<endl;
 
         retval=1;
 
@@ -799,15 +754,15 @@ int main(int argc,char* argv[])
             }
             catch(...)
             {
-                err_both<<"\n\nError thrown while printing graph after catching exception!\n\n";
+                cerr<<"\n\nError thrown while printing graph after catching exception!\n\n";
             }
         }
     }
 
     show_ending_messages(show_only);
 
-    out_both.flush();
-    err_both.flush();
+    cout.flush();
+    cerr.flush();
     return retval;
 }
 

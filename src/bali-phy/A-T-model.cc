@@ -211,8 +211,7 @@ string show_model(const model_t& m)
     return s.substr(0,2) + bold(s.substr(2));
 }
 
-json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
-                 const vector<model_t>& IModels,
+json log_summary(const vector<model_t>& IModels,
                  const vector<model_t>& SModels,
                  const vector<model_t>& ScaleModels,
                  const model_t& branch_length_model,
@@ -229,13 +228,13 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     json tree;
     if (n_branches > 1)
     {
-        out_both<<"T:topology ~ uniform on tree topologies\n";
+        cout<<"T:topology ~ uniform on tree topologies\n";
         tree["topology"] = "uniform";
     }
 
     if (n_branches > 0)
     {
-        out_both<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
+        cout<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
         tree["lengths"] = branch_length_model.show(false);
     }
 
@@ -250,45 +249,39 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     {
         json partition;
 
-        out_screen<<"Partition "<<magenta(tag("P",i))<<":\n";
+        cout<<"Partition "<<magenta(tag("P",i))<<":\n";
         // 1. filename 
-        out_cache<<"data"<<i+1<<" = "<<filename_ranges[i]<<endl;
         auto [filename,range] = alignment_files[i];
         string file = bold(filename.string());
         if (range.size())
             file += ":"+range;
-        out_screen<<"    file = "<<bold(file)<<endl;
+        cout<<"    file = "<<bold(file)<<endl;
         partition["filename"] = filename.string();
         partition["range"] = range;
 
         // 2. alphabet
         string a_name = alphabet_names[i];
-        out_screen<<"    alphabet = "<<bold(a_name)<<"\n";
-        out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
+        cout<<"    alphabet = "<<bold(a_name)<<"\n";
         partition["alphabet"] = a_name;
 
         // 3. substitution model
         auto s_index = smodel_index_for_partition[i];
-        out_screen<<"    subst "<<show_model(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
-        out_cache<<"smodel-index"<<i+1<<" = "<<smodel_index_for_partition[i]<<endl;
+        cout<<"    subst "<<show_model(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
         partition["smodel"] = optional_to_json( smodel_index_for_partition[i] );
 
         // 4. indel model
         if (auto i_index = imodel_index_for_partition[i])
-            out_screen<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
+            cout<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
         else
-            out_screen<<"    indel = "<<bold("none")<<"\n";
-        out_cache<<"imodel-index"<<i+1<<" = "<<imodel_index_for_partition[i]<<endl;
+            cout<<"    indel = "<<bold("none")<<"\n";
         partition["imodel"] = optional_to_json( imodel_index_for_partition[i] );
 
         // 5. scale model
         auto scale_index = scale_index_for_partition[i];
-        out_screen<<"    scale "<<show_model(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
-        out_cache<<"scale-index"<<i+1<<" = "<<scale_index_for_partition[i]<<endl;
+        cout<<"    scale "<<show_model(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
         partition["scale"] = optional_to_json( scale_index_for_partition[i] );
 
-        out_screen<<endl;
-        out_cache<<endl;
+        cout<<endl;
         partitions.push_back(partition);
     }
 
@@ -296,31 +289,28 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     for(int i=0;i<SModels.size();i++)
     {
         //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-        out_cache<<"subst model"<<i+1<<" "<<SModels[i].show()<<endl<<endl;
         smodels.push_back(SModels[i].pretty_model());
         string e = SModels[i].show_extracted();
         if (e.size())
-            out_screen<<"Substitution model "<<bold_blue(tag("S",i))<<" priors:"<<e<<"\n\n";
+            cout<<"Substitution model "<<bold_blue(tag("S",i))<<" priors:"<<e<<"\n\n";
     }
 
     json imodels = json::array();
     for(int i=0;i<IModels.size();i++)
     {
-        out_cache<<"indel model"<<i+1<<" "<<IModels[i].show()<<endl<<endl;
         imodels.push_back(IModels[i].pretty_model());
         string e = IModels[i].show_extracted();
         if (e.size())
-            out_screen<<"Insertion/deletion model "<<bold_red(tag("I",i))<<" priors:"<<e<<"\n\n";
+            cout<<"Insertion/deletion model "<<bold_red(tag("I",i))<<" priors:"<<e<<"\n\n";
     }
 
     json scales = json::array();
     for(int i=0;i<ScaleModels.size();i++)
     {
-        out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show()<<endl<<endl;
         scales.push_back(ScaleModels[i].pretty_model());
         string e = ScaleModels[i].show_extracted();
         if (e.size())
-            out_screen<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
+            cout<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
     }
 
     info["partitions"] = partitions;
@@ -559,7 +549,6 @@ int get_num_models(const vector<optional<int>>& mapping)
 }
 
 std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-                                               ostream& out_cache, ostream& out_screen, ostream& out_both,
                                                int /* proc_id */, const fs::path& dir)
 {
     //------ Determine number of partitions ------//
@@ -944,12 +933,8 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
 
-    //------------- Write out a tree with branch numbers as branch lengths------------- //
-    write_branch_numbers(out_cache, T);
-
     //-------------------- Log model -------------------------//
-    auto info = log_summary(out_cache, out_screen, out_both,
-                            full_imodels, full_smodels, full_scale_models, branch_length_model,
+    auto info = log_summary(full_imodels, full_smodels, full_scale_models, branch_length_model,
                             smodel_mapping, imodel_mapping, scale_mapping,
                             T.n_branches(), filename_ranges.size(),
                             alphabet_names,
