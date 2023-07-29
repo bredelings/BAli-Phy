@@ -87,9 +87,6 @@ foreign import bpcall "MCMC:" scale_means_only_slice :: [Double] -> [Double] -> 
 
 foreign import bpcall "MCMC:" scale_means_only_proposal :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
 
-foreign import bpcall "MCMC:" createContext :: a -> IO ContextIndex
-makeModel m = createContext (unsafePerformIO m)
-
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 foreign import bpcall "MCMC:" logLineRaw :: Int -> IO CPPString
 logLine context = unpack_cpp_string <$> logLineRaw context

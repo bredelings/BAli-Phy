@@ -314,6 +314,11 @@ mcmc = run_strict' 1.0
 
 makeMCMCModel m = makeModel $ run_strict' 1.0 m
 
+foreign import bpcall "MCMC:" createContext :: [(Key,JSON)] -> CJSON -> IO ContextIndex
+makeModel m = createContext prog log where
+    prog = (unsafePerformIO m)
+    log = c_json $ log_to_json $ prog
+
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
 name %=% value = (toJSONKey name, toJSON value)

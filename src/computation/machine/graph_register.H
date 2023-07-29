@@ -353,7 +353,7 @@ public:
 private:
     void compute_initial_force_counts();
     void mark_unconditional_regs();
-    void first_evaluate_program(int r, int c);
+    void first_evaluate_program(int r_prog, int r_log, int c);
 
     bool simple_set_path_to(int child_token) const;
 
@@ -614,7 +614,7 @@ public:
     /// Make the context point to the token of another context
     void switch_to_context(int c1, int c2);
 
-    int get_first_context(int);
+    int get_first_context(int r_prog, int r_log);
 
     void release_context(int);
 

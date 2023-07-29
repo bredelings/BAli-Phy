@@ -725,14 +725,14 @@ void reg_heap::mark_unconditional_regs()
     release_scratch_list(); // unconditionally_evaluated_regs
 }
 
-void reg_heap::first_evaluate_program(int r, int c)
+void reg_heap::first_evaluate_program(int r_prog, int r_log, int c)
 {
     if (program_result_head or logging_head)
         throw myexception()<<"Trying first_evaluate_program for a second time!";
 
-    program_result_head = add_compute_expression(reg_var(r));
+    program_result_head = add_compute_expression(reg_var(r_prog));
 
-    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"), reg_var(r)}});
+    logging_head = add_compute_expression(reg_var(r_log));
 
     assert(get_prev_prog_token_for_context(c));
 

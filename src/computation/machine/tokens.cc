@@ -597,7 +597,7 @@ int reg_heap::get_new_context()
     return c;
 }
 
-int reg_heap::get_first_context(int r)
+int reg_heap::get_first_context(int r_prog, int r_log)
 {
     int c = get_new_context();
 
@@ -608,7 +608,7 @@ int reg_heap::get_first_context(int r)
 
     check_tokens();
 
-    first_evaluate_program(r, c);
+    first_evaluate_program(r_prog, r_log, c);
 
     return c;
 }

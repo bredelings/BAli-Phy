@@ -1322,9 +1322,11 @@ extern "C" closure builtin_function_createContext(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int r = Args.current_closure().reg_for_slot(0);
+    int r_prog = Args.current_closure().reg_for_slot(0);
 
-    int c = M.get_first_context(r);
+    int r_log = Args.current_closure().reg_for_slot(1);
+
+    int c = M.get_first_context(r_prog, r_log);
 
     return {c};
 }
