@@ -1351,3 +1351,24 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
     return constructor("()",0);
 }
 
+void simplify(json& j);
+json flatten_me(const json& j);
+
+extern "C" closure builtin_function_logLineRaw(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+    context_ref C(M, c);
+
+    std::ostringstream line;
+    auto j = C.get_logged_parameters();
+    simplify(j);
+    j = flatten_me(j);
+    for(auto& [key,j2]: j.items())
+        line<<"   "<<key<<" = "<<j2;
+
+    return String(line.str());
+}
+

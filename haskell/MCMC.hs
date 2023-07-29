@@ -5,6 +5,7 @@ import Range
 import Effect
 import Tree
 import Numeric.LogDouble
+import Data.Text (Text(..))
 
 type ContextIndex = Int
 
@@ -90,6 +91,8 @@ foreign import bpcall "MCMC:" createContext :: a -> IO ContextIndex
 makeModel m = createContext (unsafePerformIO m)
 
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" logLineRaw :: Int -> IO CPPString
+logLine context = Text <$> logLineRaw context
 
 scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
 
