@@ -538,35 +538,41 @@ std::string generate_atmodel_program(const variables_map& args,
     auto treeLogger = var("logTree");
     expression_ref model_fn = {model,sequence_data};
     var loggers_var("loggers");
-    model_fn = {model_fn, paramLogger};
     if (fixed.count("tree"))
         model_fn = {model_fn,tree};
     else if (fixed.count("topology"))
         model_fn = {model_fn, topology};
-    if (not fixed.count("tree"))
-        model_fn = {model_fn, treeLogger};
-    if (not alignment_loggers.empty())
+    if (not args.count("test"))
+    {
+        model_fn = {model_fn, paramLogger};
+        if (not fixed.count("tree"))
+            model_fn = {model_fn, treeLogger};
+        if (not alignment_loggers.empty())
         model_fn = {model_fn, get_list(alignment_loggers)};
+    }
 
     program.let(loggers_var, get_list(program_loggers));
     program.empty_stmt();
 
     // Add the logger for scalar parameters
-    program.empty_stmt();
-    program.perform({var("$"),var("addLogger"),{paramLogger,loggers_var}});
-
-    // Add the tree logger
-    if (not fixed.count("tree"))
+    if (not args.count("test"))
     {
         program.empty_stmt();
-        program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
-    }
+        program.perform({var("$"),var("addLogger"),{paramLogger,loggers_var}});
 
-    // Add the alignment loggers.
-    if (not alignments.empty())
-        program.empty_stmt();
-    for(auto& [i,a,l]: alignments)
-        program.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
+        // Add the tree logger
+        if (not fixed.count("tree"))
+        {
+            program.empty_stmt();
+            program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
+        }
+
+        // Add the alignment loggers.
+        if (not alignments.empty())
+            program.empty_stmt();
+        for(auto& [i,a,l]: alignments)
+            program.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
+    }
     
     program.empty_stmt();
     program.finish_return( loggers_var );
@@ -577,7 +583,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
     expression_ref directory = var("directory");
     vector<expression_ref> prog_args = {directory};
-    main.perform(get_list(prog_args), var("getArgs"));
+    if (not args.count("test"))
+        main.perform(get_list(prog_args), var("getArgs"));
 
     if (n_partitions == 1)
     {
@@ -658,31 +665,65 @@ std::string generate_atmodel_program(const variables_map& args,
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
     }
 
-    // Initialize the parameters logger
-    main.empty_stmt();
-    main.perform(paramLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
-
-    // Initialize the tree logger
-    if (not fixed.count("tree"))
+    if (not args.count("test"))
     {
+        // Initialize the parameters logger
         main.empty_stmt();
-        main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
+        main.perform(paramLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+
+        // Initialize the tree logger
+        if (not fixed.count("tree"))
+        {
+            main.empty_stmt();
+            main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
+        }
+
+        // Initialize the alignment loggers
+        if (not alignments.empty())
+        {
+            main.empty_stmt();
+
+            // Create alignment loggers.
+            for(auto& [i,a,logger]: alignments)
+            {
+                string filename = "C1.P"+std::to_string(i+1)+".fastas";
+                main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
+            }
+        }
     }
 
-    // Initialize the alignment loggers
-    if (not alignments.empty())
-        main.empty_stmt();
-
-    // Create alignment loggers.
-    for(auto& [i,a,logger]: alignments)
-    {
-        string filename = "C1.P"+std::to_string(i+1)+".fastas";
-        main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
-    }
-
-    // Main.5. Emit mcmc $ model sequence_data
+    // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
     main.empty_stmt();
-    main.perform({var("$"),var("mcmc"),model_fn});
+    main.perform(var("mymodel"),{var("$"),var("makeMCMCModel"),model_fn});
+
+    // Main.6. Emit runMCMC iterations mymodel
+    if (args.count("test"))
+    {
+        main.empty_stmt();
+        main.perform(var("line"), {var("logLine"), var("mymodel")});
+        main.empty_stmt();
+        if (log_formats.count("tsv"))
+            main.perform({var("putStrLn"), var("line")});
+/*        
+        if (log_formats.count("json"))
+            std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";
+
+        if (args.count("verbose"))
+        {
+            M->show_graph();
+            M->write_factor_graph();
+        }
+*/
+    }
+    else
+    {
+        main.empty_stmt();
+        int subsample = args["subsample"].as<int>();
+        int max_iterations = 200000;
+        if (args.count("iterations"))
+            max_iterations = args["iterations"].as<long int>();
+        main.perform({var("runMCMC"), max_iterations, var("mymodel")});
+    }
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 

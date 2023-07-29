@@ -489,8 +489,6 @@ int main(int argc,char* argv[])
 
     int retval=0;
 
-    owned_ptr<Model> M; // Declare early so we can reference from catch block.
-
     try {
 // This should probably be a run-time switch.
 #if defined(HAVE_FEENABLEEXCEPT) && defined(DEBUG_FPE)
@@ -556,7 +554,8 @@ int main(int argc,char* argv[])
 
         //----------- Create output dir --------------//
         fs::path output_dir = fs::current_path();
-        if (not args.count("test")) {
+
+        if (args.count("align") and not args.count("test")) {
 #ifdef HAVE_MPI
             // FIXME: Can we just use `broadcast(world, output_dir, 0)`?
             //        This might require a serializer for fs::path.
@@ -584,51 +583,42 @@ int main(int argc,char* argv[])
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
 
+        auto P = std::make_unique<Program>(L);
         if (args.count("align"))
         {
             Rules R(get_package_paths(argv[0], args));
             auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
             info.update(j);
+            *P = prog;
+        }
+        else if (args.count("model"))
+        {
+            auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
+            L->args = args_v;
 
-            M = Model(prog);
+            fs::path filename = filename_s;
+            if (filename.extension() != ".hs")
+                filename += ".hs";
 
-            M->evaluate_program();
+            auto m = P->get_module_loader()->load_module_from_file(filename);
+            P->add(m);
+            P->main = m->name + ".main";
         }
         else
-        {
-            Program P(L);
-            if (args.count("model"))
-            {
-                auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
-                L->args = args_v;
+            std::abort();
 
-                fs::path filename = filename_s;
-                if (filename.extension() != ".hs")
-                    filename += ".hs";
-
-                auto m = P.get_module_loader()->load_module_from_file(filename);
-                P.add(m);
-                P.main = m->name + ".main";
-            }
-            else if (args.count("Model"))
-            {
-                auto [module_name, args_v] = extract_prog_args(args, argc, argv, "Model");
-                L->args = args_v;
-
-                P.add(module_name);
-                P.main = module_name + ".main";
-            }
-            else
-                std::abort();
-
-            M = Model(P);
-        }
         L.reset();
+
+        raise_cpu_limit(cout);
+
+        block_signals();
 
         //---------------Do something------------------//
         auto log_formats = get_log_formats(args, args.count("align"));
-        if (args.count("test"))
+
+        if (args.count("align") and not args.count("test"))
         {
+            /*
             auto jlog = M->get_logged_parameters();
             if (log_formats.count("tsv"))
             {
@@ -642,13 +632,11 @@ int main(int argc,char* argv[])
                 M->show_graph();
                 M->write_factor_graph();
             }
+            */
         }
-        else 
+
+        if (args.count("align") and not args.count("test"))
         {
-            raise_cpu_limit(cout);
-
-            block_signals();
-
             long int max_iterations = 200000;
             if (args.count("iterations"))
                 max_iterations = args["iterations"].as<long int>();
@@ -661,15 +649,11 @@ int main(int argc,char* argv[])
             if (args.count("align"))
                 write_initial_alignments(args, proc_id, output_dir);
 
-            M->clear_program();
-            M->clear_identifiers();
-
             //------ Write run info to C1.json ------//
             *files[2]<<info.dump(4)<<std::endl;
             cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
-            //------ Redirect output to files -------//
-
+            //------ Report log files -------//
             cout<<"\nBeginning MCMC computations."<<endl;
             if (log_formats.count("json"))
                 cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
@@ -680,6 +664,8 @@ int main(int argc,char* argv[])
                 cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
                 cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
             }
+
+            //------ Clarify lack of auto-stopping -----/
             cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
             if (not args.count("iterations"))
                 cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
@@ -691,28 +677,10 @@ int main(int argc,char* argv[])
                 cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
             cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
             cout.flush();
-
-            //---------------- Run the MCMC chain -------------------//
-            for(int iterations=0; iterations < max_iterations; iterations++)
-            {
-                // PP->set_beta( PP->PC->beta_series[iterations] );
-
-                M->run_loggers(iterations);
-
-                //------------------- move to new position -----------------//
-                M->run_transition_kernels();
-
-                //------------------ Exchange Temperatures -----------------//
-                //exchange_random_pairs(iterations,P,*this);
-
-                //exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
-            }
-
-            M->run_loggers(max_iterations);
-
-            // Close all the streams, and write a notification that we finished all the iterations.
-            // close_files(files);
         }
+
+        // Run the program P
+        execute_program( std::move(P) );
     }
     catch (std::bad_alloc&) 
     {
@@ -732,6 +700,7 @@ int main(int argc,char* argv[])
 
         retval=1;
 
+/*        
         if (log_verbose > 0 and M)
         {
             try
@@ -743,6 +712,7 @@ int main(int argc,char* argv[])
                 cerr<<"\n\nError thrown while printing graph after catching exception!\n\n";
             }
         }
+*/
     }
 
     show_ending_messages();
