@@ -9,6 +9,7 @@
 #include <optional>
 #include "computation/expression/expression_ref.H"
 #include "computation/fresh_vars.H"
+#include <filesystem>
 
 class module_loader;
 
@@ -64,4 +65,8 @@ public:
 std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);
 
 expression_ref map_symbol_names(const expression_ref& E, const std::map<std::string, std::string>&);
+
+void execute_program(std::unique_ptr<Program> P);
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
 #endif

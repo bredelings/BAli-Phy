@@ -3173,14 +3173,3 @@ void reg_heap::run_main()
     int r = heads[main_head.value()];
     incremental_evaluate_unchangeable(r);
 }
-
-void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
-{
-    Program P(L);
-    auto m = L->load_module_from_file(filename);
-    P.add(m);
-    P.main = m->name + ".main";
-
-    object_ptr<reg_heap> R( new reg_heap(P));
-    R->run_main();
-}

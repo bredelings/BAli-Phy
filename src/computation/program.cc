@@ -13,6 +13,7 @@
 #include "computation/expression/case.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/occurrence.H"
+#include "computation/machine/graph_register.H"
 
 using std::vector;
 using std::set;
@@ -382,4 +383,24 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
     for(int i=0;i<E.size();i++)
 	V->sub[i] = map_symbol_names(V->sub[i], simplify);
     return V;
+}
+
+
+void execute_program(std::unique_ptr<Program> P)
+{
+    // Creating an object pointer initializes the refcount to 1.
+    object_ptr<reg_heap> R(new reg_heap( std::move(P) ) );
+    R->program.reset();
+    R->run_main();
+}
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
+{
+    auto m = L->load_module_from_file(filename);
+
+    auto P = std::make_unique<Program>(L);
+    P->add(m);
+    P->main = m->name + ".main";
+
+    execute_program( std::move(P) );
 }

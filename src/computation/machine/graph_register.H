@@ -796,8 +796,6 @@ public:
     reg_heap(const Program& P);
 };
 
-void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
-
 expression_ref graph_normalize(FreshVarState&, const expression_ref& R);
 
 void write_dot_graph(const reg_heap& C, std::ostream& o);
