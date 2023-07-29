@@ -281,7 +281,7 @@ void show_ending_messages()
         cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(start_work_cpu_time - process_user_cpu_clock::time_point()) )<<endl;
     }
 
-    if (end_time - start_work_time > seconds(2)) 
+    if (end_time - start_work_time > seconds(2) or log_verbose >= 1)
     {
         cout<<endl;
         cout<<"Work:"<<endl;
@@ -291,7 +291,8 @@ void show_ending_messages()
         cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(end_cpu_time - start_work_cpu_time) )<<endl;
     }
 
-    if (substitution::total_calc_root_prob > 1 and log_verbose >= 1) {
+    if (substitution::total_calc_root_prob > 1 and log_verbose >= 1)
+    {
         cout<<endl;
         cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
         cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
