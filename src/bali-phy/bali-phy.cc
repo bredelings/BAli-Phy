@@ -668,6 +668,7 @@ int main(int argc,char* argv[])
 
             //------ Write run info to C1.json ------//
             *files[2]<<info.dump(4)<<std::endl;
+            cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
             //------ Redirect output to files -------//
 
@@ -682,7 +683,6 @@ int main(int argc,char* argv[])
             {
                 cout<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
                 cout<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
-                cout<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
             }
             if (log_formats.count("json"))
                 cout<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
