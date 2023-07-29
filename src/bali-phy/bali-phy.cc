@@ -593,6 +593,23 @@ int main(int argc,char* argv[])
         }
         else if (args.count("model"))
         {
+            /* We could then generate a wrapper that concatenates to the end something like this.
+              But we somehow need to import additional stuff...
+
+              main = do
+                 logParams <- jsonLogger (directory </> "C1.log.json")
+                 model <- model
+                 mymodel <- makeMCMCModel $ do
+                   j <- model
+                   addLogger $ logParams j
+                   return j
+                 runMCMC iterations mymodel
+
+              Alternatively, we could copy the module into the directory, put the directory in the include path,
+              and then IMPORT the module!
+
+              This might also work for --test, since both the generated Main and the imported module would be in ".".
+            */
             auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
             L->args = args_v;
 
@@ -615,25 +632,6 @@ int main(int argc,char* argv[])
 
         //---------------Do something------------------//
         auto log_formats = get_log_formats(args, args.count("align"));
-
-        if (args.count("align") and not args.count("test"))
-        {
-            /*
-            auto jlog = M->get_logged_parameters();
-            if (log_formats.count("tsv"))
-            {
-                std::cout<<table_logger_line(*M)<<"\n";
-            }
-            if (log_formats.count("json"))
-                std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";
-
-            if (args.count("verbose"))
-            {
-                M->show_graph();
-                M->write_factor_graph();
-            }
-            */
-        }
 
         if (args.count("align") and not args.count("test"))
         {
