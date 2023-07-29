@@ -284,10 +284,16 @@ public:
 	    if (free_memory_callback)
 		free_memory_callback();
 
+            // We should have at least half the space free.
             int target_mem = n_used()*2+10 + n_null();
-            int diff = target_mem - memory.size();
-	    if (diff > 0)
+
+	    if (target_mem > memory.size())
+            {
+                // Avoid increasing the total size by very small increments.
+                target_mem = std::max(target_mem, int(memory.size()*1.15));
+                int diff = target_mem - memory.size();
 		expand_memory(diff);
+            }
 	}
 
     int allocate()
