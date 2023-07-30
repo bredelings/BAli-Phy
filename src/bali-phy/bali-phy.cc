@@ -534,6 +534,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
            and then IMPORT the module!
 
            This might also work for --test, since both the generated Main and the imported module would be in ".".
+           Although -P. actually searches for `haskell/name`, not `./name`.
         */
         auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
         L->args = args_v;
@@ -549,6 +550,18 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     else
         std::abort();
 
+    // Record subdir
+    info["subdirectory"] = output_dir.string();
+
+    //------ Write run info to C1.run.json ------//
+    if (args.count("align") and not args.count("test"))
+    {
+        ofstream run_info( output_dir / "C1.run.json" );
+        run_info<<info.dump(4)<<std::endl;
+        run_info.close();
+        cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
+    }
+
     //---------------Do something------------------//
     auto log_formats = get_log_formats(args, args.count("align"));
 
@@ -557,17 +570,8 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         long int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
-        int subsample = args["subsample"].as<int>();
-
-        //---------- Open output files -----------//
-        info["subdirectory"] = output_dir.string();
-        auto files = init_files(proc_id, output_dir, argc, argv);
 
         write_initial_alignments(args, proc_id, output_dir);
-
-        //------ Write run info to C1.json ------//
-        *files[2]<<info.dump(4)<<std::endl;
-        cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
         //------ Report log files -------//
         cout<<"\nBeginning MCMC computations."<<endl;

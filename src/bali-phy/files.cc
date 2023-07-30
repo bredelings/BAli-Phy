@@ -216,40 +216,6 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const fs::path& dirname,
 				       int argc,char* argv[])
 {
     auto [filenames, files] = open_files(proc_id, dirname, {"out","err","run.json"});
-
-    ostream& s_out = *files[0];
-    
-    s_out<<"command: ";
-    for(int i=0;i<argc;i++) {
-	s_out<<quote_string(argv[i]);
-	if (i != argc-1) s_out<<" ";
-    }
-    s_out<<endl;
-    {
-	time_t now = time(NULL);
-	s_out<<"start time: "<<ctime(&now)<<endl;
-    }
-    print_version_info(s_out);
-    s_out<<"directory: "<<fs::current_path().string()<<endl;
-    s_out<<"subdirectory: "<<dirname<<endl;
-    if (getenv("SLURM_JOBID"))
-	s_out<<"SLURM_JOBID: "<<getenv("SLURM_JOBID")<<endl;
-    if (getenv("JOB_ID"))
-	s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
-    if (getenv("LSB_JOBID"))
-	s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
-    s_out<<"hostname: "<<hostname()<<endl;
-    s_out<<"PID: "<<getpid()<<endl;
-#ifdef HAVE_MPI
-    mpi::communicator world;
-    s_out<<"MPI_RANK: "<<world.rank()<<endl;
-    s_out<<"MPI_SIZE: "<<world.size()<<endl;
-#endif
-    s_out<<endl;
-
-    //  files[0]->precision(10);
-    //  cerr.precision(10);
-
     return files;
 }
 
