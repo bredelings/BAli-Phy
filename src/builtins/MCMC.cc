@@ -1379,3 +1379,25 @@ extern "C" closure builtin_function_logLineRaw(OperationArgs& Args)
     return String(line.str());
 }
 
+extern "C" closure builtin_function_prior(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+    context_ref C(M, c);
+
+    return {C.prior()};
+}
+
+extern "C" closure builtin_function_posterior(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+    context_ref C(M, c);
+
+    return {C.probability()};
+}
+

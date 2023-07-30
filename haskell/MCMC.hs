@@ -91,6 +91,10 @@ foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 foreign import bpcall "MCMC:" logLineRaw :: Int -> IO CPPString
 logLine context = unpack_cpp_string <$> logLineRaw context
 
+foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
+
 scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
 
 metropolis_hastings :: Proposal -> ContextIndex -> IO Bool
