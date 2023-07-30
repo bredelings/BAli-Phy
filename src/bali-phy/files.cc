@@ -23,52 +23,6 @@ namespace fs = std::filesystem;
 namespace po = boost::program_options;
 using po::variables_map;
 
-/// Close the files.
-void close_files(vector<shared_ptr<ofstream>>& files)
-{
-    for(auto& file : files)
-	file->close();
-    files.clear();
-}
-
-/// Delete the files specified by 'filenames'
-void delete_files(vector<fs::path>& filenames)
-{
-    for(auto& filename: filenames)
-	fs::remove(filename);
-    filenames.clear();
-}
-
-std::pair<vector<fs::path>, vector<shared_ptr<ostream>>> open_files(int proc_id, const fs::path& dir, const vector<string>& names)
-{
-    assert(fs::is_directory(dir));
-
-    vector<shared_ptr<ofstream>> files;
-    vector<fs::path> filenames;
-
-    for(auto& name: names)
-    {
-        fs::path filename = dir / ("C" + std::to_string(proc_id+1) + "." + name);
-      
-	if (fs::exists(filename))
-        {
-	    close_files(files);
-	    delete_files(filenames);
-	    throw myexception()<<"Trying to open "<<filename<<" but it already exists!";
-	}
-	else {
-	    files.push_back( std::make_shared<ofstream>(filename) );
-	    filenames.push_back(filename);
-	}
-    }
-
-    vector<shared_ptr<ostream>> files2;
-    for(auto& f: files)
-        files2.push_back(f);
-
-    return {filenames, files2};
-}
-
 fs::path open_dir(const string& dirbase)
 {
     // FIXME. Maybe the ability to create arbitrary files should not be allowed?
@@ -210,12 +164,3 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
     info["mpi"] = mpi;
 #endif
 }
-
-/// Create output files for thread 'proc_id' in directory 'dirname'
-vector<shared_ptr<ostream>> init_files(int proc_id, const fs::path& dirname,
-				       int argc,char* argv[])
-{
-    auto [filenames, files] = open_files(proc_id, dirname, {"out","err","run.json"});
-    return files;
-}
-
