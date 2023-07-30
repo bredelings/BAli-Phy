@@ -255,4 +255,8 @@ public:
 
 std::string write_newick(const Parameters&, bool=true);
 
+int alignment_length(const data_partition& P);
+
+int alignment_length(const Parameters& P);
+
 #endif

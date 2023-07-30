@@ -27,7 +27,6 @@
 #include "dp/3way.H"
 #include "util/permute.H"
 #include "alignment/alignment-util.H"
-#include "mcmc/logger.H"
 
 using MCMC::MoveStats;
 
@@ -591,7 +590,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 // FIXME: Realign from tips basically fails because the distance between sequences is too small!
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
-    int AL0 = MCMC::alignment_length(*P.as<Parameters>());
+    int AL0 = alignment_length(*P.as<Parameters>());
 
     if (log_verbose>=3) std::cerr<<"realign_from_tips: |A0| = "<<AL0<<"\n";
     Parameters& PP = *P.as<Parameters>();
@@ -661,7 +660,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
 
         three_way_topology_sample(P,Stats,b);
     }
-    int AL1 = MCMC::alignment_length(*P.as<Parameters>());
+    int AL1 = alignment_length(*P.as<Parameters>());
     if (log_verbose>=4) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
 
     MCMC::Result result(2);

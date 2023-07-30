@@ -1060,3 +1060,26 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
         if (get_data_partition(i).has_IModel())
             variable_alignment_ = true;
 }
+
+
+int alignment_length(const data_partition& P)
+{
+    if (not P.has_pairwise_alignments()) return 0;
+
+    auto branches = P.t().all_branches_from_node(0);
+
+    int total = P.seqlength(0);
+    for(int b: branches)
+        total += P.get_pairwise_alignment(b).count_insert();
+
+    return total;
+}
+
+
+int alignment_length(const Parameters& P)
+{
+    int total = 0;
+    for(int p=0;p<P.n_data_partitions();p++)
+        total += alignment_length(P[p]);
+    return total;
+}
