@@ -550,9 +550,6 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     else
         std::abort();
 
-    // Record subdir
-    info["subdirectory"] = output_dir.string();
-
     //------ Write run info to C1.run.json ------//
     if (args.count("align") and not args.count("test"))
     {
@@ -696,6 +693,7 @@ int main(int argc,char* argv[])
         json info;
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
+        info["subdirectory"] = output_dir.string();
 
         auto P = generate_program(argc, argv, args, L, proc_id, output_dir, info);
 
