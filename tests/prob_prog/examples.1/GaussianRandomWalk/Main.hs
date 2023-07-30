@@ -17,4 +17,4 @@ model = do
   return ["states" %=% states]
 
 main = do
-  mcmc model
+  return model

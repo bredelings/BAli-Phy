@@ -17,4 +17,4 @@ model fatalities = do
 main = do
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
 
-  mcmc $ model fatalities
+  return $ model fatalities

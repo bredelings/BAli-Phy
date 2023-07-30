@@ -8,4 +8,4 @@ observe_data x = do
 main = do
   let model = observe_data 1
 
-  mcmc model
+  return model

@@ -46,4 +46,4 @@ main = do
 
     seq_data <- load_sequences filename
 
-    mcmc $ model seq_data
+    return $ model seq_data

@@ -8,4 +8,4 @@ model z' = do
     return ["zs" %=% zs]
 
 main = do
-  mcmc $ model 10
+  return $ model 10

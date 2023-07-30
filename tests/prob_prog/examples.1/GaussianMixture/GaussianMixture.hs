@@ -23,4 +23,4 @@ model = do
   return ["x" %=% x]
 
 main = do
-  mcmc model
+  return model

@@ -10,4 +10,4 @@ model = do
     return ["ys" %=% ys]
 
 main = do
-  mcmc model
+  return model

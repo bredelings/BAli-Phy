@@ -23,4 +23,4 @@ model = do
     return ["z1" %=% z1, "z2" %=% z2, "z3" %=% z3, "x" %=% x, "y1" %=% y1, "w1" %=% w1]
 
 main = do
-  mcmc model
+  return model

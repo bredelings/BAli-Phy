@@ -9,4 +9,4 @@ model = do
     return ["p" %=% p, "n" %=% n]
 
 main = do
-  mcmc model
+  return model

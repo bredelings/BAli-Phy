@@ -37,4 +37,4 @@ docs = map words [
         "bear wolf bear python bear wolf bear wolf bear wolf"]
 
 main = do
-  mcmc $ model docs
+  return $ model docs

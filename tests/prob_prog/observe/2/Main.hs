@@ -10,4 +10,4 @@ observe_data z' = do
 main = do
   let model = observe_data 1
 
-  mcmc model
+  return model

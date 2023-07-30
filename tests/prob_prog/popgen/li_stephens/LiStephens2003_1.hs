@@ -25,4 +25,4 @@ main = do
   locs_table <- readTable locs_filename
   let locs = locs_table $$ "locs" :: [Int]
 
-  mcmc $ model locs sequence_data
+  return $ model locs sequence_data

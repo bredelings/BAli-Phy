@@ -31,4 +31,4 @@ main = do
 
   let xs = xtable $$ "x" :: [Double]
 
-  mcmc $ model xs
+  return $ model xs

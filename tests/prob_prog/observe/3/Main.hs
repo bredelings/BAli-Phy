@@ -7,4 +7,4 @@ model = do
   return []
 
 main = do
-  mcmc model
+  return model

@@ -7,4 +7,4 @@ model = do
     return ["n" %=% n, "ys" %=% ys]
 
 main = do
-  mcmc model
+  return model

@@ -14,4 +14,4 @@ model = do
     return ["x" %=% xs]
 
 main = do
-  mcmc model
+  return model

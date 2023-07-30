@@ -14,4 +14,4 @@ model n = do
   return ["r" %=% r]
 
 main = do
-  mcmc $ model 6
+  return $ model 6

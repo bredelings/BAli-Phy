@@ -38,4 +38,4 @@ main = do
 
   let times = frame $$ "time" :: [Double]
 
-  mcmc $ model (1851, 1963) times
+  return $ model (1851, 1963) times

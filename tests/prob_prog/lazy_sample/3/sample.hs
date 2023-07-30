@@ -8,4 +8,4 @@ model x = do
   return [ "mu" %=% mu, "sigma" %=% sigma]
 
 main = do
-  mcmc $ model 1
+  return $ model 1

@@ -10,4 +10,4 @@ model x = do
 
     return ["n" %=% n, "y" %=% y]
 
-main = mcmc $ model 3
+main = return $ model 3

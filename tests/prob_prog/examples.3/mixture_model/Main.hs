@@ -33,4 +33,4 @@ main = do
 
   let xs = frame $$ "x" :: [Double]
 
-  mcmc $ model xs 
+  return $ model xs 

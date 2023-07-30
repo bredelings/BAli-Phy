@@ -27,4 +27,4 @@ model n = do
           "diff-obs" %=% n_diffs hidden_states observations]
 
 main = do
-  mcmc $ model 100
+  return $ model 100

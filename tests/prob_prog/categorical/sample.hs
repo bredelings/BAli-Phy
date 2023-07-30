@@ -7,4 +7,4 @@ model = do
     return ["xs" %=% xs]
 
 main = do
-  mcmc model
+  return model

@@ -38,5 +38,5 @@ main = do
       county_code_values = radon $$ "county_code" :: [Int]
       log_radon_data     = radon $$ "log_radon"   :: [Double]
 
-  mcmc $ model floor_values county_code_values log_radon_data
+  return $ model floor_values county_code_values log_radon_data
 

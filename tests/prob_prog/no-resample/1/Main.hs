@@ -16,4 +16,4 @@ model x = do
     return loggers
 
 main = do
-  mcmc $ model 20
+  return $ model 20

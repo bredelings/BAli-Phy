@@ -28,4 +28,4 @@ model = do
     return ["tree" %=% write_newick tree] --,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]
 
 main = do
-  mcmc model
+  return model

@@ -71,4 +71,4 @@ main = do
 
   let xs = xtable $$ "x" :: [Double]
 
-  mcmc $ model topology lengths xs
+  return $ model topology lengths xs

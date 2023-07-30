@@ -39,6 +39,6 @@ model = do
   let sentence = map (\w -> case w of (Word s) -> s) words
   return ["sentence" %=% sentence]
 
-main = mcmc model
+main = return model
 
 -- question: if the sentence starts with "tall John", what's next?

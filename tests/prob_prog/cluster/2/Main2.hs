@@ -15,4 +15,4 @@ model = do
 
 main = do
 
-  mcmc $ model
+  return $ model
