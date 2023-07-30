@@ -1365,6 +1365,8 @@ extern "C" closure builtin_function_logLineRaw(OperationArgs& Args)
     context_ref C(M, c);
 
     std::ostringstream line;
+    line.precision(17);
+
     line<<"   prior = "<<log(C.prior());
     line<<"   likelihood = "<<log(C.likelihood());
     line<<"   posterior = "<<log(C.probability());
