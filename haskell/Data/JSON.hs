@@ -109,8 +109,11 @@ foreign import bpcall "Foreign:" ejson_null    :: () -> EJSON
 
 foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 
+cjsonToText :: CJSON -> Text
+cjsonToText = Text . cjson_to_bytestring
+
 jsonToText :: JSON -> Text
-jsonToText = Text . cjson_to_bytestring . c_json
+jsonToText = cjsonToText . c_json
 
 deep_eval_json :: JSON -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ list_to_vector $ map deep_eval_json xs
