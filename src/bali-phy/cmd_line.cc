@@ -4,6 +4,7 @@
 #include "cmd_line.H"
 #include "paths.H"
 #include "util/string/join.H"
+#include "util/string/split.H"
 #include "util/text.H"
 #include "util/io.H"
 #include "util/file-paths.H"
@@ -21,6 +22,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::optional;
+using std::set;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -379,3 +381,14 @@ string get_command_line(int argc, char* argv[])
     return join(args," ");
 }
 
+set<string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model)
+{
+    string log_format = is_A_T_model ? "tsv" : "json";
+    if (args.count("log-format"))
+        log_format = args["log-format"].as<string>();
+    auto log_formats_vec = split(log_format,',');
+    set<string> log_formats;
+    for(auto& format: log_formats_vec)
+        log_formats.insert(format);
+    return log_formats;
+}

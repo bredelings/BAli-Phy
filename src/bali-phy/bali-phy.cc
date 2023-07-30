@@ -68,7 +68,6 @@ namespace mpi = boost::mpi;
 #include "A-T-model.H"
 #include "files.H"
 #include "paths.H"
-#include "loggers.H"
 #include "io.H"
 #include "system.H"
 #include "cmd_line.H"

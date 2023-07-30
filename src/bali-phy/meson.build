@@ -4,7 +4,6 @@ baliphy_sources = [
   'help.cc',
   'A-T-model.cc',
   'files.cc',
-  'loggers.cc',
   'system.cc',
   'cmd_line.cc',
   'paths.cc']

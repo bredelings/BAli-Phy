@@ -16,7 +16,7 @@
 #include "sequence/genetic_code.H"
 #include "sequence/codons.H"
 #include "sequence/doublets.H"
-#include "bali-phy/loggers.H"                                // for get_log_formats
+#include "bali-phy/cmd_line.H"                                // for get_log_formats
 
 using std::vector;
 using std::string;
