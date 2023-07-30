@@ -33,6 +33,13 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                             const model_t& branch_length_model,
                             const std::vector<int>& like_calcs);
 
+Program gen_model_program(const boost::program_options::variables_map& args,
+                          const std::shared_ptr<module_loader>& L,
+                          const std::filesystem::path& output_directory,
+                          const std::filesystem::path& program_filename,
+                          const std::filesystem::path& model_filename);
+
+
 #include "sequence/alphabet.H"
 
 expression_ref get_alphabet_expression(const alphabet& a);

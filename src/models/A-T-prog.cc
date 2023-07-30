@@ -11,6 +11,7 @@
 #include "computation/expression/list.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/var.H"
+#include "computation/module.H"
 
 #include "sequence/genetic_code.H"
 #include "sequence/codons.H"
@@ -718,7 +719,7 @@ std::string generate_atmodel_program(const variables_map& args,
     else
     {
         main.empty_stmt();
-        int subsample = args["subsample"].as<int>();
+        // int subsample = args["subsample"].as<int>();
         int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
@@ -770,3 +771,66 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
     return P;
 }
 
+string generate_model_program(const boost::program_options::variables_map& args,
+                              const string& model_module_name,
+                              const fs::path& output_directory)
+{
+    std::ostringstream program_file;
+    program_file<<"module BAliPhy.Main where";
+    program_file<<"\n";
+    for(auto& mod: {"System.FilePath","Probability","Probability.Logger","MCMC"})
+        program_file<<"\nimport "<<mod;
+    program_file<<"\nimport qualified "<<model_module_name<<" as Model\n";
+    program_file<<"\n";
+    program_file<<"main = do\n";
+    program_file<<"  logParams <- jsonLogger $ "<<output_directory / "C1.log.json" <<"\n";
+    program_file<<"\n";
+    program_file<<"  model <- Model.main\n";
+    program_file<<"\n";
+    program_file<<"  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }\n";
+    program_file<<"\n";
+    if (args.count("test"))
+    {
+        program_file<<"  line <- logLine mymodel\n";
+        program_file<<"\n";
+        program_file<<"  putStrLn line\n";
+    }
+    else
+    {
+        int iterations = 200000;
+        if (args.count("iterations"))
+            iterations = args["iterations"].as<long int>();
+
+        program_file<<"  runMCMC "<<iterations<<" mymodel\n";
+    }
+
+    return program_file.str();
+
+}
+
+Program gen_model_program(const boost::program_options::variables_map& args,
+                          const std::shared_ptr<module_loader>& L,
+                          const fs::path& output_directory,
+                          const fs::path& program_filename,
+                          const fs::path& model_filename)
+{
+    // 1. Load the module module.
+    Program P(L);
+    auto m = P.get_module_loader()->load_module_from_file(model_filename);
+    P.add(m);
+//    if (m->name == "Main")
+//        throw myexception()<<"Model module "<<model_filename<<" may not be 'Main'\n";
+
+    // 2. Generate and write the Main module.
+    {
+        checked_ofstream program_file(program_filename);
+        program_file<<generate_model_program(args, m->name, output_directory);
+    }
+
+    // 3. Load the Main module.
+    auto m2 = P.get_module_loader()->load_module_from_file(program_filename);
+    P.add(m2);
+    P.main = "BAliPhy.Main.main";
+
+    return P;
+}

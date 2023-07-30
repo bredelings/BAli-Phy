@@ -64,6 +64,7 @@ namespace mpi = boost::mpi;
 #include "version.H"
 #include "computation/module.H"
 #include "computation/program.H"
+#include "models/A-T-prog.H" // for gen_model_program( )
 
 #include "A-T-model.H"
 #include "files.H"
@@ -471,14 +472,16 @@ std::unique_ptr<Program> print_program(const string& argv0, variables_map& args,
 
 int simple_size(const expression_ref& E);
 
-std::pair<string, vector<string>> extract_prog_args(variables_map& args, int argc, char* argv[], const string& cmd)
+std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int argc, char* argv[], const string& cmd)
 {
     auto args_v = args[cmd].as<vector<string>>();
 
     if (args_v.empty())
         throw myexception()<<"--"<<cmd<<" requires at least one argument";
 
-    string name = args_v[0];
+    fs::path name = args_v[0];
+    if (name.extension() != ".hs")
+        name += ".hs";
 
     args_v.erase(args_v.begin());
 
@@ -495,14 +498,9 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
 
     if (args.count("run-module"))
     {
-        auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "run-module");
+        auto [main_filename, args_v] = extract_prog_args(args, argc, argv, "run-module");
         L->args = args_v;
-
-        fs::path filename = filename_s;
-        if (filename.extension() != ".hs")
-            filename += ".hs";
-
-        P = load_program_from_file(L, filename);
+        P = load_program_from_file(L, main_filename);
     }
     else if (args.count("print"))
     {
@@ -518,60 +516,31 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     }
     else if (args.count("model"))
     {
-        /* We could then generate a wrapper that concatenates to the end something like this.
-           But we somehow need to import additional stuff...
-
-           main = do
-           logParams <- jsonLogger (directory </> "C1.log.json")
-           model <- model
-           mymodel <- makeMCMCModel $ do
-           j <- model
-           addLogger $ logParams j
-           return j
-           runMCMC iterations mymodel
-
-           Alternatively, we could copy the module into the directory, put the directory in the include path,
-           and then IMPORT the module!
-
-           This might also work for --test, since both the generated Main and the imported module would be in ".".
-           Although -P. actually searches for `haskell/name`, not `./name`.
-        */
-        auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
+        auto [model_filename, args_v] = extract_prog_args(args, argc, argv, "model");
         L->args = args_v;
-
-        fs::path filename = filename_s;
-        if (filename.extension() != ".hs")
-            filename += ".hs";
-
-        auto m = P->get_module_loader()->load_module_from_file(filename);
-        P->add(m);
-        P->main = m->name + ".main";
+        *P = gen_model_program(args, L, output_dir, output_dir / "BAliPhy.Main.hs", model_filename);
     }
     else
         std::abort();
 
     //------ Write run info to C1.run.json ------//
-    if (args.count("align") and not args.count("test"))
+    if ((args.count("align") or args.count("model")) and not args.count("test"))
     {
         ofstream run_info( output_dir / "C1.run.json" );
         run_info<<info.dump(4)<<std::endl;
         run_info.close();
         cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
-    }
 
-    //---------------Do something------------------//
-    auto log_formats = get_log_formats(args, args.count("align"));
-
-    if (args.count("align") and not args.count("test"))
-    {
         long int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
 
-        write_initial_alignments(args, proc_id, output_dir);
+        if (args.count("align"))
+            write_initial_alignments(args, proc_id, output_dir);
 
         //------ Report log files -------//
         cout<<"\nBeginning MCMC computations."<<endl;
+        auto log_formats = get_log_formats(args, args.count("align"));
         if (log_formats.count("json"))
             cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
         if (log_formats.count("tsv"))
@@ -666,7 +635,8 @@ int main(int argc,char* argv[])
         //----------- Create output dir --------------//
         fs::path output_dir = fs::current_path();
 
-        if (args.count("align") and not args.count("test")) {
+        if ((args.count("align") or args.count("model")) and not args.count("test"))
+        {
 #ifdef HAVE_MPI
             // FIXME: Can we just use `broadcast(world, output_dir, 0)`?
             //        This might require a serializer for fs::path.
