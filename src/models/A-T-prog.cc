@@ -187,6 +187,7 @@ std::string generate_atmodel_program(const variables_map& args,
         program_file<<"\nimport "<<mod;
     program_file<<"\nimport qualified Data.IntMap as IntMap";
     program_file<<"\nimport qualified Data.JSON as J";
+    program_file<<"\nimport qualified Data.Text.IO as T";
     program_file<<"\nimport Probability.Logger";
     program_file<<"\nimport System.Environment";
     program_file<<"\nimport System.FilePath";
@@ -700,15 +701,23 @@ std::string generate_atmodel_program(const variables_map& args,
     // Main.6. Emit runMCMC iterations mymodel
     if (args.count("test"))
     {
-        main.empty_stmt();
-        main.perform(var("line"), {var("logLine"), var("mymodel")});
-        main.empty_stmt();
         if (log_formats.count("tsv"))
-            main.perform({var("putStrLn"), var("line")});
-/*        
-        if (log_formats.count("json"))
-            std::cout<<logged_params_and_some_computed_stuff(*M, jlog, 0)<<"\n";
+        {
+            main.empty_stmt();
+            main.perform(var("line"), {var("logTableLine"), var("mymodel"), 0});
+            main.empty_stmt();
+            main.perform({var("T.putStrLn"), var("line")});
+        }
 
+        if (log_formats.count("json"))
+        {
+            main.empty_stmt();
+            main.perform(var("jline"), {var("logJSONLine"), var("mymodel"), 0});
+            main.empty_stmt();
+            main.perform({var("T.putStrLn"), var("jline")});
+        }
+
+/*
         if (args.count("verbose"))
         {
             M->show_graph();
@@ -780,6 +789,7 @@ string generate_model_program(const boost::program_options::variables_map& args,
     program_file<<"\n";
     for(auto& mod: {"System.FilePath","Probability","Probability.Logger","MCMC"})
         program_file<<"\nimport "<<mod;
+    program_file<<"\nimport qualified Data.Text.IO as T\n";
     program_file<<"\nimport qualified "<<model_module_name<<" as Model\n";
     program_file<<"\n";
     program_file<<"main = do\n";
@@ -788,12 +798,25 @@ string generate_model_program(const boost::program_options::variables_map& args,
     program_file<<"  model <- Model.main\n";
     program_file<<"\n";
     program_file<<"  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }\n";
-    program_file<<"\n";
     if (args.count("test"))
     {
-        program_file<<"  line <- logLine mymodel\n";
-        program_file<<"\n";
-        program_file<<"  putStrLn line\n";
+        auto log_formats = get_log_formats(args, false);
+
+        if (log_formats.count("tsv"))
+        {
+            program_file<<"\n";
+            program_file<<"  line <- logTableLine mymodel 0\n";
+            program_file<<"\n";
+            program_file<<"  T.putStrLn line\n";
+        }
+
+        if (log_formats.count("json"))
+        {
+            program_file<<"\n";
+            program_file<<"  jline <- logJSONLine mymodel 0\n";
+            program_file<<"\n";
+            program_file<<"  T.putStrLn jline\n";
+        }
     }
     else
     {
@@ -801,6 +824,7 @@ string generate_model_program(const boost::program_options::variables_map& args,
         if (args.count("iterations"))
             iterations = args["iterations"].as<long int>();
 
+        program_file<<"\n";
         program_file<<"  runMCMC "<<iterations<<" mymodel\n";
     }
 

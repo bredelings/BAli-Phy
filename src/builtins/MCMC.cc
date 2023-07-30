@@ -1356,7 +1356,8 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
 void simplify(json& j);
 json flatten_me(const json& j);
 
-extern "C" closure builtin_function_logLineRaw(OperationArgs& Args)
+// Probably we should put this whole thing into the machine.
+extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1364,15 +1365,33 @@ extern "C" closure builtin_function_logLineRaw(OperationArgs& Args)
     int c = Args.evaluate(0).as_int();
     context_ref C(M, c);
 
-    std::ostringstream line;
-    line.precision(17);
+    int t = Args.evaluate(1).as_int();
 
-    line<<"   prior = "<<log(C.prior());
-    line<<"   likelihood = "<<log(C.likelihood());
-    line<<"   posterior = "<<log(C.probability());
-    auto j = C.get_logged_parameters();
+    object_ptr<Box<json>> result(new Box<json>);
+    json& j = *result;
+
+    j["iter"] = t;
+    j["prior"] = log(C.prior());
+    j["likelihood"] = log(C.likelihood());
+    j["posterior"] = log(C.probability());
+    // Probably we should put this into the machine.
+    j["parameters/"] = C.get_logged_parameters();
+
+    return result;
+}
+
+extern "C" closure builtin_function_jsonToTableLineRaw(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    auto j = Args.evaluate(0).as_<Box<json>>();
+
     simplify(j);
     j = flatten_me(j);
+
+    std::ostringstream line;
+    line.precision(17);
     for(auto& [key,j2]: j.items())
         line<<"   "<<key<<" = "<<j2;
 
@@ -1388,6 +1407,17 @@ extern "C" closure builtin_function_prior(OperationArgs& Args)
     context_ref C(M, c);
 
     return {C.prior()};
+}
+
+extern "C" closure builtin_function_likelihood(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+    context_ref C(M, c);
+
+    return {C.likelihood()};
 }
 
 extern "C" closure builtin_function_posterior(OperationArgs& Args)

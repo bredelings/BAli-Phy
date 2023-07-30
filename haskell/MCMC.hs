@@ -6,6 +6,7 @@ import Effect
 import Tree
 import Numeric.LogDouble
 import Data.Text (Text(..))
+import Data.JSON
 
 type ContextIndex = Int
 
@@ -88,8 +89,11 @@ foreign import bpcall "MCMC:" scale_means_only_slice :: [Double] -> [Double] -> 
 foreign import bpcall "MCMC:" scale_means_only_proposal :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
 
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
-foreign import bpcall "MCMC:" logLineRaw :: Int -> IO CPPString
-logLine context = unpack_cpp_string <$> logLineRaw context
+
+foreign import bpcall "MCMC:" logJSONRaw :: Int -> Int -> IO CJSON
+logJSONLine context iter = cjsonToText <$> logJSONRaw context iter
+foreign import bpcall "MCMC:" jsonToTableLineRaw :: CJSON -> CPPString
+logTableLine context iter = Text . jsonToTableLineRaw <$> logJSONRaw context iter
 
 foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
