@@ -628,7 +628,7 @@ private:
 public:
     void interchange_regs_in_context(int r1, int r2, int c);
 
-    void set_reg_value_in_context(int index, closure&& C, int c);
+    int set_reg_value_in_context(int index, closure&& C, int c);
 
     int get_modifiable_value_in_context(int R, int c);
 
@@ -729,7 +729,7 @@ public:
     /*----- Graph splitting -----*/
     /// Update the value of a non-constant, non-computed index
     void interchange_regs(int r1, int r2, int t);
-    void set_reg_value(int index, closure&&, int t);
+    int set_reg_value(int index, closure&&, int t, bool unsafe = false);
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);
     void unshare_regs1(int t1);

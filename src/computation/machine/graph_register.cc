@@ -2050,14 +2050,14 @@ void reg_heap::interchange_regs(int r1, int r2, int t)
 // in the current context.  Other computations can be invalidated later.
 
 /// Update the value of a non-constant, non-computed index
-void reg_heap::set_reg_value(int R, closure&& value, int t)
+int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
 {
     total_set_reg_value++;
     assert(not children_of_token(t).size());
     assert(reg_is_changeable(R));
 
     if (not is_root_token(t))
-        assert(tokens[t].type == token_type::set);
+        assert(unsafe or tokens[t].type == token_type::set);
 
     // Check that this reg is indeed settable
     if (not is_modifiable(expression_at(R)))
@@ -2090,29 +2090,35 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         assert(not reg_is_unevaluated(Q));
 
         // Set the call
-        set_call(s, Q);
+        set_call(s, Q, unsafe);
     }
     // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
     {
-        assert(value.exp.size() == 0);
-        assert(is_WHNF(value.exp));
+	if (not unsafe)
+	{
+	    assert(value.exp.size() == 0);
+	    assert(is_WHNF(value.exp));
+	}
 
-        int R2 = allocate_reg_from_step(s);
+        int R2 = allocate_reg_from_step(s, std::move(value) );
 
-        mark_reg_constant_no_force(R2);
+	if (not unsafe)
+	{
+	    // How important is this?
+	    // What if we want to call something that IS unevaluated?
+	    mark_reg_constant_no_force(R2);
+	}
 
-        // Set the call
-        set_C(R2, std::move( value ) );
-
-        // clear 'reg created' edge from s to old call.
-        set_call(s, R2);
+        set_call(s, R2, unsafe);
     }
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
     check_tokens();
 #endif
+
+    return steps[s].call;
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
@@ -2807,11 +2813,11 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     return expression_at(value);
 }
 
-void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
+int reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
     int t = switch_to_child_token(c, token_type::set);
 
-    set_reg_value(P, std::move(C), t);
+    return set_reg_value(P, std::move(C), t);
 }
 
 void reg_heap::interchange_regs_in_context_(int r1, int r2, int c)
