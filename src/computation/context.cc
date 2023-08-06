@@ -107,17 +107,24 @@ const expression_ref& context_ref::perform_head(int index, bool ec) const
 
 const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
+    auto& M = *memory();
     try {
-	int R = memory()->push_temp_head( std::move(C) );
+	int t = M.switch_to_child_token(context_index, token_type::execute2);
+	int r1 = M.push_temp_head( {modifiable(),{}} );
+	M.mark_reg_changeable(r1);
+	int r2 = M.set_reg_value(r1, std::move(C), t, true);
 
-	const closure& result = ec?memory()->lazy_evaluate(R, context_index) : memory()->lazy_evaluate_unchangeable(R);
+	// copy the context in order to protect the token.
+	context c2(*this);
+
+	const closure& result = ec?memory()->lazy_evaluate(r2, context_index) : memory()->lazy_evaluate_unchangeable(r2);
     
-	memory()->pop_temp_head();
+	M.pop_temp_head();
 	return result;
     }
     catch (myexception& e)
     {
-	memory()->pop_temp_head();
+	M.pop_temp_head();
 	throw;
     }
 }
