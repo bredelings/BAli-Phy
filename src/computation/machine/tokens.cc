@@ -73,9 +73,11 @@ void reg_heap::destroy_step_and_created_regs(int s)
     {
         // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
 
+        // This clears used_by edges pointing to r.  It does not clear used_reg edges pointing to r.
         clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
 
-        // Unforgettable regs have a step in the root, not the tip token being destroyed.
+	// Unforgettable regs have a step in the root, not the tip token being destroyed.
+	// Unforgettable regs include modifiables with 1 argument.
         if (reg_is_unforgettable(r))
         {
             assert(has_step1(r));
