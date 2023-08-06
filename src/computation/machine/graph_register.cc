@@ -2076,9 +2076,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
     assert(not children_of_token(t).size());
 
-    // if the value is NULL, just leave the value and call both unset.
-    //  (this could happen if we set a parameter value to null.)
-    if (not value) return;
+    assert(value);
 
     // If the value is a pre-existing reg_var, then call it.
     if (value.exp.is_index_var())
