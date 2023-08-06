@@ -1116,6 +1116,8 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 {
     const int r;
 
+    const int sp;
+
     const closure& current_closure() const override {return memory()[r];}
 
     bool evaluate_changeables() const override {return false;}
@@ -1157,6 +1159,15 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 
 public:
 
+    int allocate_reg() override
+    {
+	int s_alloc = sp;
+	int r_alloc = OperationArgs::allocate_reg();
+	if (s_alloc > 0)
+	    M.mark_reg_created_by_step(r_alloc, s_alloc);
+	return r_alloc;
+    }
+
     void make_changeable() override
     {
         throw no_context();
@@ -1164,9 +1175,10 @@ public:
 
     RegOperationArgsUnchangeable* clone() const override {return new RegOperationArgsUnchangeable(*this);}
 
-    RegOperationArgsUnchangeable(int r_, reg_heap& m)
-        :OperationArgs(m),r(r_)
-        { }
+    RegOperationArgsUnchangeable(int r_, int sp_, reg_heap& m)
+        :OperationArgs(m), r(r_), sp(sp_)
+        {
+	}
 };
 
 int reg_heap::incremental_evaluate_unchangeable(int r)
@@ -1254,9 +1266,11 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
                 write_dot_graph(*this);
 #endif
 
+            int sp = regs[r].created_by.first;
+
             try
             {
-                RegOperationArgsUnchangeable Args(r, *this);
+                RegOperationArgsUnchangeable Args(r, sp, *this);
                 closure value = (*O)(Args);
                 total_reductions++;
         
