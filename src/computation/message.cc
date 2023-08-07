@@ -36,7 +36,7 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
     if (line2-1 == lines.size() and col2 == 1)
     {
         line2 = lines.size();
-        col2 = lines[line1-1].size()+1;
+        col2 = lines[line2-1].size()+1;
     }
     // Check that the lines exist in the file.
     assert(line1-1 < lines.size());
