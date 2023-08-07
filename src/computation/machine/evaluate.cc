@@ -116,18 +116,6 @@ class RegOperationArgs1 final: public OperationArgs
             return result;
         }
 
-    const closure& evaluate_reg_to_closure(int r2) override
-        {
-            int r3 = evaluate_reg_use(r2);
-            return M[r3];
-        }
-
-    const closure& evaluate_reg_to_closure_(int r2) override
-        {
-            int r3 = evaluate_reg_force(r2);
-            return M[r3];
-        }
-
 public:
 
     bool used_changeable = false;
@@ -459,18 +447,6 @@ class RegOperationArgs2Changeable final: public OperationArgs
             return M.value_for_reg(r2);
         }
 
-    const closure& evaluate_reg_to_closure(int r2)
-        {
-            int r3 = evaluate_reg_use(r2);
-            return M[r3];
-        }
-
-    const closure& evaluate_reg_to_closure_(int r2)
-        {
-            int r3 = evaluate_reg_force(r2);
-            return M[r3];
-        }
-
 public:
 
     void make_changeable() {}
@@ -548,18 +524,6 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             }
 
             return result;
-        }
-
-    const closure& evaluate_reg_to_closure(int r2) override
-        {
-            int r3 = evaluate_reg_use(r2);
-            return M[r3];
-        }
-
-    const closure& evaluate_reg_to_closure_(int r2) override
-        {
-            int r3 = evaluate_reg_force(r2);
-            return M[r3];
         }
 
 public:
@@ -1087,20 +1051,6 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     int evaluate_reg_use(int r2) override
         {
             return evaluate_reg(r2);
-        }
-
-    const closure& evaluate_reg_to_closure(int r2) override
-        {
-            int r3 = evaluate_reg_use(r2);
-            assert(M.reg_is_constant_no_force(r3));
-            return M[r3];
-        }
-
-    const closure& evaluate_reg_to_closure_(int r2) override
-        {
-            int r3 = evaluate_reg_force(r2);
-            assert(M.reg_is_constant_no_force(r3));
-            return M[r3];
         }
 
 public:

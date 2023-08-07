@@ -20,6 +20,20 @@ const expression_ref& OperationArgs::reference(int slot) const
     return current_closure().exp.sub()[slot];
 }
 
+const closure& OperationArgs::evaluate_reg_to_closure(int r2)
+{
+    int r3 = evaluate_reg_use(r2);
+    assert(evaluate_changeables() or M.reg_is_constant_no_force(r3));
+    return M[r3];
+}
+
+const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
+{
+    int r3 = evaluate_reg_force(r2);
+    assert(evaluate_changeables() or M.reg_is_constant_no_force(r3));
+    return M[r3];
+}
+
 const closure& OperationArgs::evaluate_slot_to_closure(int slot)
 {
     return evaluate_reg_to_closure(reg_for_slot(slot));

@@ -54,9 +54,9 @@ public:
   
     int evaluate_slot_use(int);
 
-    virtual const closure& evaluate_reg_to_closure(int) = 0;
+    const closure& evaluate_reg_to_closure(int r2);
 
-    virtual const closure& evaluate_reg_to_closure_(int) = 0;
+    const closure& evaluate_reg_to_closure_(int r2);
 
     const closure& evaluate_slot_to_closure(int);
 
