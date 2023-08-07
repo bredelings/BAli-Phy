@@ -114,8 +114,10 @@ int OperationArgs::allocate(closure&& C)
 
 int OperationArgs::allocate_reg()
 {
-    int r = M.push_temp_head();
     n_allocated++;
+    int r = M.push_temp_head();
+    if (sp > 0)
+	M.mark_reg_created_by_step(r, sp);
     return r;
 }
 

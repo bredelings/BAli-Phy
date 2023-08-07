@@ -135,20 +135,12 @@ public:
     void make_changeable() override
     {
         used_changeable = true;
+	sp = s;
     }
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
-
-    int allocate_reg() override
-        {
-            int s_alloc = used_changeable?s:sp;
-            int r_alloc = OperationArgs::allocate_reg();
-            if (s_alloc > 0)
-                M.mark_reg_created_by_step(r_alloc, s_alloc);
-            return r_alloc;
-        }
 
     void set_effect(int r) override
         {
@@ -489,13 +481,6 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    int allocate_reg()
-        {
-            int r = OperationArgs::allocate_reg();
-            M.mark_reg_created_by_step(r, s);
-            return r;
-        }
-
     void set_effect(int r)
         {
             memory().mark_step_with_effect(s);
@@ -507,6 +492,7 @@ public:
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_)
         {
+	    sp = s;
         }
 };
 
@@ -587,20 +573,12 @@ public:
     void make_changeable() override
     {
         used_changeable = true;
+	sp = s;
     }
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
-
-    int allocate_reg() override
-        {
-            int s_alloc = used_changeable?s:sp;
-            int r_alloc = OperationArgs::allocate_reg();
-            if (s_alloc > 0)
-                M.mark_reg_created_by_step(r_alloc, s_alloc);
-            return r_alloc;
-        }
 
     void set_effect(int r) override
         {
@@ -1132,15 +1110,6 @@ class RegOperationArgsUnchangeable final: public OperationArgs
         }
 
 public:
-
-    int allocate_reg() override
-    {
-	int s_alloc = sp;
-	int r_alloc = OperationArgs::allocate_reg();
-	if (s_alloc > 0)
-	    M.mark_reg_created_by_step(r_alloc, s_alloc);
-	return r_alloc;
-    }
 
     void make_changeable() override
     {

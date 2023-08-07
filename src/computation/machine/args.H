@@ -18,7 +18,7 @@ protected:
 
     const int r;
 
-    const int sp;
+    int sp;
 
 public:
     virtual OperationArgs* clone() const = 0;
@@ -86,7 +86,7 @@ public:
 
     int allocate(closure&&);
 
-    virtual int allocate_reg();
+    int allocate_reg();
 
     OperationArgs(reg_heap& m, int r);
 
