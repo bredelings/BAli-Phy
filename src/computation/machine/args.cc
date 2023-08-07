@@ -125,7 +125,7 @@ void OperationArgs::set_effect(int /*r*/)
 }
 
 OperationArgs::OperationArgs(reg_heap& m, int r_)
-    :M(m), r(r_)
+    :M(m), r(r_), sp(m.creator_step_for_reg(r))
 { }
 
 OperationArgs::~OperationArgs()

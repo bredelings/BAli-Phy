@@ -75,8 +75,6 @@ class RegOperationArgs1 final: public OperationArgs
 {
     const int s;
 
-    const int sp;  // creator step
-
     const bool first_eval;
 
     bool evaluate_changeables() const override {return true;}
@@ -161,8 +159,8 @@ public:
 
     RegOperationArgs1* clone() const override {return new RegOperationArgs1(*this);}
 
-    RegOperationArgs1(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m, r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
+    RegOperationArgs1(int r_, int s_, reg_heap& m)
+        :OperationArgs(m, r_), s(s_), first_eval(m.reg_is_unevaluated(r))
         { }
 };
 
@@ -366,11 +364,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
 
-            int sp = regs[r].created_by.first;
-
             try
             {
-                RegOperationArgs1 Args(r, s, sp, *this);
+                RegOperationArgs1 Args(r, s, *this);
                 auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions++;
@@ -519,8 +515,6 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 {
     const int s;
 
-    const int sp;  // creator step
-
     bool evaluate_changeables() const override {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
@@ -617,8 +611,8 @@ public:
 
     RegOperationArgs2Unevaluated* clone() const override {return new RegOperationArgs2Unevaluated(*this);}
 
-    RegOperationArgs2Unevaluated(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m, r_), s(s_), sp(sp_)
+    RegOperationArgs2Unevaluated(int r_, int s_, reg_heap& m)
+        :OperationArgs(m, r_), s(s_)
         {
             assert(not M.reg_is_forced(r));
         }
@@ -826,11 +820,9 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
 
-            int sp = regs[r].created_by.first;
-
             try
             {
-                RegOperationArgs2Unevaluated Args(r, s, sp, *this);
+                RegOperationArgs2Unevaluated Args(r, s, *this);
                 auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions2++;
@@ -1102,8 +1094,6 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgsUnchangeable final: public OperationArgs
 {
-    const int sp;
-
     bool evaluate_changeables() const override {return false;}
 
     // common worker called when either using or forcing.
@@ -1159,8 +1149,8 @@ public:
 
     RegOperationArgsUnchangeable* clone() const override {return new RegOperationArgsUnchangeable(*this);}
 
-    RegOperationArgsUnchangeable(int r_, int sp_, reg_heap& m)
-        :OperationArgs(m, r_), sp(sp_)
+    RegOperationArgsUnchangeable(int r_, reg_heap& m)
+        :OperationArgs(m, r_)
         {
 	}
 };
@@ -1250,11 +1240,9 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
                 write_dot_graph(*this);
 #endif
 
-            int sp = regs[r].created_by.first;
-
             try
             {
-                RegOperationArgsUnchangeable Args(r, sp, *this);
+                RegOperationArgsUnchangeable Args(r, *this);
                 closure value = (*O)(Args);
                 total_reductions++;
         

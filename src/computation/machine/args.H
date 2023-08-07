@@ -16,7 +16,9 @@ protected:
 
     int n_allocated = 0;
 
-    int r = 0;
+    const int r;
+
+    const int sp;
 
 public:
     virtual OperationArgs* clone() const = 0;
