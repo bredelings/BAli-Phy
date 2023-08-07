@@ -116,8 +116,8 @@ int OperationArgs::allocate_reg()
 {
     n_allocated++;
     int r = M.push_temp_head();
-    if (sp > 0)
-	M.mark_reg_created_by_step(r, sp);
+    if (creator_step > 0)
+	M.mark_reg_created_by_step(r, creator_step);
     return r;
 }
 
@@ -127,7 +127,7 @@ void OperationArgs::set_effect(int /*r*/)
 }
 
 OperationArgs::OperationArgs(reg_heap& m, int r_)
-    :M(m), r(r_), sp(m.creator_step_for_reg(r))
+    :M(m), r(r_), creator_step(m.creator_step_for_reg(r))
 { }
 
 OperationArgs::~OperationArgs()

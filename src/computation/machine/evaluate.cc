@@ -135,7 +135,7 @@ public:
     void make_changeable() override
     {
         used_changeable = true;
-	sp = s;
+	creator_step = s;
     }
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
@@ -369,7 +369,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
                     assert( regs[r].used_regs.empty() );
-                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
+                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to creator_step
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);
                 }
@@ -492,7 +492,7 @@ public:
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_)
         {
-	    sp = s;
+	    creator_step = s;
         }
 };
 
@@ -573,7 +573,7 @@ public:
     void make_changeable() override
     {
         used_changeable = true;
-	sp = s;
+	creator_step = s;
     }
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q

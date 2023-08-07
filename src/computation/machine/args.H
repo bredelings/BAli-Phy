@@ -18,7 +18,7 @@ protected:
 
     const int r;
 
-    int sp;
+    int creator_step;
 
 public:
     virtual OperationArgs* clone() const = 0;
