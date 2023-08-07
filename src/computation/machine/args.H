@@ -80,6 +80,7 @@ public:
 
     void stack_pop();
 
+    // Making this virtual allows the step to be passed by the derived class.
     virtual void set_effect(int r);
 
     int allocate(closure&&);
