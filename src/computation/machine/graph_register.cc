@@ -2534,6 +2534,20 @@ void reg_heap::check_used_regs() const
     {
         int r1 = i.addr();
 
+	if (not reg_is_contingent(r1))
+	{
+	    auto& R = regs[r1];
+
+	    for(int r2: R.C.Env)
+		assert(not reg_is_contingent(r2));
+
+	    for(auto& [r2,_]: R.used_regs)
+		assert(not reg_is_contingent(r2));
+
+	    for(auto& [r2,_]: R.forced_regs)
+		assert(not reg_is_contingent(r2));
+	}
+
         if (check_force_counts)
         {
             assert(prog_force_counts[r1] == force_count(r1));
