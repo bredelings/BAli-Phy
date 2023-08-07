@@ -2,14 +2,13 @@
 #define COMPUTATION_H
 
 #include <optional>
-#include "computation/object.H"
 #include "computation/closure.H"
 #include "computation/machine/graph_register.H"
 
 // class expression_ref;
 // class reg_heap;
 
-class OperationArgs: public Object
+class OperationArgs
 {
 protected:
     reg_heap& M;
@@ -21,7 +20,6 @@ protected:
     int creator_step;
 
 public:
-    virtual OperationArgs* clone() const = 0;
 
     reg_heap& memory() {return M;}
 

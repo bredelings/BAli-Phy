@@ -149,8 +149,6 @@ public:
             M._register_effect_at_reg(r, s);
         }
 
-    RegOperationArgs1* clone() const override {return new RegOperationArgs1(*this);}
-
     RegOperationArgs1(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_), first_eval(m.reg_is_unevaluated(r))
         { }
@@ -487,8 +485,6 @@ public:
             M._register_effect_at_reg(r, s);
         }
 
-    RegOperationArgs2Changeable* clone() const {return new RegOperationArgs2Changeable(*this);}
-
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_)
         {
@@ -586,8 +582,6 @@ public:
             memory().mark_step_with_effect(s);
             M._register_effect_at_reg(r, s);
         }
-
-    RegOperationArgs2Unevaluated* clone() const override {return new RegOperationArgs2Unevaluated(*this);}
 
     RegOperationArgs2Unevaluated(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_)
@@ -1115,8 +1109,6 @@ public:
     {
         throw no_context();
     }
-
-    RegOperationArgsUnchangeable* clone() const override {return new RegOperationArgsUnchangeable(*this);}
 
     RegOperationArgsUnchangeable(int r_, reg_heap& m)
         :OperationArgs(m, r_)
