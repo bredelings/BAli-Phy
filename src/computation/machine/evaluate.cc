@@ -73,15 +73,11 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs1 final: public OperationArgs
 {
-    const int r;
-
     const int s;
 
     const int sp;  // creator step
 
     const bool first_eval;
-
-    const closure& current_closure() const override {return memory().closure_at(r);}
 
     bool evaluate_changeables() const override {return true;}
 
@@ -166,7 +162,7 @@ public:
     RegOperationArgs1* clone() const override {return new RegOperationArgs1(*this);}
 
     RegOperationArgs1(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
+        :OperationArgs(m, r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
         { }
 };
 
@@ -453,11 +449,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 /// Used regs and forced regs should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
 class RegOperationArgs2Changeable final: public OperationArgs
 {
-    const int r;
-
     const int s;
-
-    const closure& current_closure() const {return memory().closure_at(r);}
 
     bool evaluate_changeables() const {return true;}
 
@@ -517,7 +509,7 @@ public:
     RegOperationArgs2Changeable* clone() const {return new RegOperationArgs2Changeable(*this);}
 
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_)
+        :OperationArgs(m, r_), s(s_)
         {
         }
 };
@@ -525,13 +517,9 @@ public:
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs2Unevaluated final: public OperationArgs
 {
-    const int r;
-
     const int s;
 
     const int sp;  // creator step
-
-    const closure& current_closure() const override {return memory().closure_at(r);}
 
     bool evaluate_changeables() const override {return true;}
 
@@ -630,7 +618,7 @@ public:
     RegOperationArgs2Unevaluated* clone() const override {return new RegOperationArgs2Unevaluated(*this);}
 
     RegOperationArgs2Unevaluated(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_)
+        :OperationArgs(m, r_), s(s_), sp(sp_)
         {
             assert(not M.reg_is_forced(r));
         }
@@ -1114,11 +1102,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgsUnchangeable final: public OperationArgs
 {
-    const int r;
-
     const int sp;
-
-    const closure& current_closure() const override {return memory()[r];}
 
     bool evaluate_changeables() const override {return false;}
 
@@ -1176,7 +1160,7 @@ public:
     RegOperationArgsUnchangeable* clone() const override {return new RegOperationArgsUnchangeable(*this);}
 
     RegOperationArgsUnchangeable(int r_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), sp(sp_)
+        :OperationArgs(m, r_), sp(sp_)
         {
 	}
 };

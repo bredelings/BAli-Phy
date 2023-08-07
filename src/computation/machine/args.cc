@@ -124,8 +124,8 @@ void OperationArgs::set_effect(int /*r*/)
     make_changeable();
 }
 
-OperationArgs::OperationArgs(reg_heap& m)
-    :M(m)
+OperationArgs::OperationArgs(reg_heap& m, int r_)
+    :M(m), r(r_)
 { }
 
 OperationArgs::~OperationArgs()

@@ -4,10 +4,10 @@
 #include <optional>
 #include "computation/object.H"
 #include "computation/closure.H"
+#include "computation/machine/graph_register.H"
 
-class expression_ref;
-class reg_heap;
-class effect;
+// class expression_ref;
+// class reg_heap;
 
 class OperationArgs: public Object
 {
@@ -16,6 +16,8 @@ protected:
 
     int n_allocated = 0;
 
+    int r = 0;
+
 public:
     virtual OperationArgs* clone() const = 0;
 
@@ -23,7 +25,7 @@ public:
 
     const reg_heap& memory() const {return M;}
 
-    virtual const closure& current_closure() const = 0;
+    const closure& current_closure() const { return M.closure_at(r); }
 
     virtual bool evaluate_changeables() const = 0;
 
@@ -84,7 +86,7 @@ public:
 
     virtual int allocate_reg();
 
-    OperationArgs(reg_heap& m);
+    OperationArgs(reg_heap& m, int r);
 
     virtual ~OperationArgs();
 };
