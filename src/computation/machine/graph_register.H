@@ -718,6 +718,7 @@ public:
 
     void set_result_for_reg(int r1);
 
+    int creator_step_for_reg(int r) const;
     std::vector<int> used_regs_for_reg(int r) const;
     std::vector<int> forced_regs_for_reg(int r) const;
 

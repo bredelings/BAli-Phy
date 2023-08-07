@@ -2121,6 +2121,11 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     return steps[s].call;
 }
 
+int reg_heap::creator_step_for_reg(int r) const
+{
+    return regs[r].created_by.first;
+}
+
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
