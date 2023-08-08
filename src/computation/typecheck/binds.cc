@@ -350,7 +350,8 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
         push_binder( IDType{ unloc(FD.v), mono_local_env().at(unloc(FD.v)).second } );
         push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
         auto ctx = Hs::FunctionContext{unloc(FD.v).name};
-        tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
+	//  FIXME: do something with wrap_match!
+        auto wrap_match = tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
         pop_note();
@@ -397,9 +398,10 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 
     // 4. Determine the expected type for arguments and result, and check rhs.
     auto ctx = Hs::FunctionContext{poly_id.name};
-    tcMatchesFun( getArity(FD.matches), fun_type,
-                  [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
-                      tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
+    //  FIXME: do something with wrap_match!
+    auto wrap_match = tcMatchesFun( getArity(FD.matches), fun_type,
+				    [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
+					tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
         );
 
     pop_binder();
