@@ -265,8 +265,8 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
     Hs::Var inner_id = get_fresh_Var(unloc(FD.v).name, false);
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
-    auto [wrap_gen, tvs, givens, rho_type] =
-        skolemize_and(polytype,
+    auto [wrap_gen, tvs, givens, rho_type, wrap_match] =
+        skolemize_and_result<Core::wrapper>(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
 
                           // 3. Record the mapping from inner_id -> rho_type for error messages
@@ -275,10 +275,11 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
                           // 4. Analyze the Matches
                           auto ctx = Hs::FunctionContext{unloc(FD.v).name};
-                          tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
-                                             [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
-                                                 tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
+                          auto wrap_match = tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
+							       [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
+								   tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
                           tcs2.pop_binder();
+			  return wrap_match;
                       }
             );
 
