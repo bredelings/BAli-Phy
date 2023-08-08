@@ -53,7 +53,7 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
 {
     if (not is_rho_type(type))
     {
-        auto [wrap_gen, tcs, givens, rho_type, match_wrapper] =
+        auto [wrap_gen, tcs, givens, rho_type, wrap_match] =
             skolemize_and_result<Core::wrapper>
             (
                 type,
@@ -62,7 +62,16 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
                 }
             );
 
-        return wrap_gen * match_wrapper;
+	// It seems like combining wrap_gen and wrap_match like this moves all the
+	// invisible arguments (type args and dictionary args) to the front!
+	//
+	// Q1: Is that what we want?  Shouldn't the extra args be interleaved with the
+	//     visible arguments?
+	// Q2: Are we calling them correctly?
+	// Q3: How would we apply a Int -> forall.t C t => t function to one argument?
+	// Q4: If we used the right wrappers, could we make it work?
+
+        return wrap_gen * wrap_match;
     }
     else if (arg_types.size() == arity)
     {
