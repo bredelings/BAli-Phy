@@ -286,7 +286,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
     // 5. return GenBind with tvs, givens, body
     Type monotype = rho_type;
 
-    Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen);
+    Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen * wrap_match);
 
     auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
 
