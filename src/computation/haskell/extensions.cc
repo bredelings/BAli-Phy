@@ -11,12 +11,14 @@ map<string,LangExt> ext_to_bit =
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
     {"ExistentialQuantification",   {LangExt::ExistentialQuantification}},
     {"ExtendedDefaultRules",        {LangExt::ExtendedDefaultRules}},
+    {"ExplicitForall",              {LangExt::ExplicitForall}},
     {"FieldSelectors",              {LangExt::FieldSelectors}},
     {"FlexibleInstances",           {LangExt::FlexibleInstances}},
     {"ForeignFunctionInterface",    {LangExt::ForeignFunctionInterface}},
     {"GADTSyntax",                  {LangExt::GADTSyntax}},
-    {"GADTs",                       {LangExt::GADTs}},
+    {"GADTs",                       {LangExt::GADTs}},                // implies MonoLocalBinds
     {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
+    {"ImpredicativeTypes",          {LangExt::ImpredicativeTypes}},   // implies RankNTypes
     {"Incoherent Instances",        {LangExt::IncoherentInstances}},  // DEPRECATED
     {"KindSignatures",              {LangExt::KindSignatures}},
     {"LexicalNegation",             {LangExt::LexicalNegation}},
@@ -25,8 +27,9 @@ map<string,LangExt> ext_to_bit =
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
-    {"RankNTypes",                  {LangExt::RankNTypes}},
+    {"RankNTypes",                  {LangExt::RankNTypes}},            // implies ExplicitForall
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
+    {"TypeFamilies",                {LangExt::TypeFamilies}},          // implies MonoLocalBinds
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
     {"StarIsType",                  {LangExt::StarIsType}},
 };
