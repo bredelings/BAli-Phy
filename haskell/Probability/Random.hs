@@ -319,6 +319,8 @@ makeModel m = createContext prog log where
     prog = (unsafePerformIO m)
     log = c_json $ log_to_json $ prog
 
+foreign import bpcall "MCMC:" writeTraceGraph :: ContextIndex -> IO ()
+
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
 name %=% value = (toJSONKey name, toJSON value)

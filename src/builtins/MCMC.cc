@@ -1355,6 +1355,22 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
     return constructor("()",0);
 }
 
+// Really this should return a Text
+extern "C" closure builtin_function_writeTraceGraph(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+    context_ref C(M, c);
+
+    C.evaluate_program();
+    C.show_graph_for_root_token();
+
+    return constructor("()",0);
+}
+
+
 void simplify(json& j);
 json flatten_me(const json& j);
 
