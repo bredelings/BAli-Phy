@@ -156,6 +156,16 @@ expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env
 	else
 	    return E;
     }
+    else if (auto alts = E.to<Core::Alts>())
+    {
+	auto alts2 = new Core::Alts(*alts);
+	for(auto& [pattern,body]: *alts2)
+	{
+	    pattern = subst_referenced_vars(pattern, Env, names);
+	    body = subst_referenced_vars(body, Env, names);
+	}
+	return expression_ref(alts2);
+    }
     else if ( E.is_index_var() )
     {
 	const auto loc = names.find( lookup_in_env(Env, E.as_index_var()) );
