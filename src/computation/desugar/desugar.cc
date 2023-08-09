@@ -314,8 +314,12 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         // [ e | True   ]  =  [ e ]
         // [ e | q      ]  =  [ e | q, True ]
         // [ e | b, Q   ]  =  if b then [ e | Q ] else []
-        // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
         // [ e | let decls, Q] = let decls in [ e | Q ]
+        // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
+        // [ e | x<-l, Q]  =  concatMap (\x -> [e | q ]) l
+        // [ e | x<-l]  =  concatMap (\x -> [e]) l = map (\x -> e) l
+
+
 
         // [ e | True   ]  =  [ e ]
         if (L.quals.size() == 1 and unloc(L.quals[0]).is_a<Hs::SimpleQual>() and unloc(unloc(L.quals[0]).as_<Hs::SimpleQual>().exp) == bool_true)
@@ -347,10 +351,22 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             else if (auto PQ = B.to<Hs::PatQual>())
             {
                 Hs::Var concatMap("Data.OldList.concatMap");
+		// [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
                 if (is_irrefutable_pat(PQ->bindpat))
                 {
-                    expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
-                    return desugar( {concatMap, f, unloc(PQ->exp)} );
+		    // [ e | p<-l]  =  concatMap (\p -> [e]) l
+		    //              =  map (\p -> e) l
+		    if (L.quals.empty())
+		    {
+			expression_ref f = Hs::LambdaExp({PQ->bindpat}, L.body);
+			return desugar( {Hs::Var("Data.OldList.map"), f, unloc(PQ->exp)} );
+		    }
+		    // [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
+		    else
+		    {
+			expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
+			return desugar( {concatMap, f, unloc(PQ->exp)} );
+		    }
                 }
                 else
                 {
