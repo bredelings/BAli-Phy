@@ -358,7 +358,14 @@ set<string> get_names(const map<var, int>& ids)
 {
     set<string> names;
     for(const auto& [x,_]:ids)
-	names.insert( x.print() );
+    {
+	// avoid parenthesizing symbol names
+	string name = x.name;
+	if (x.index!=0)
+	    name += string("#") + convertToString(x.index);
+
+	names.insert( name );
+    }
     return names;
 }
 
