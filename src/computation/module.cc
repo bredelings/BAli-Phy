@@ -336,9 +336,17 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                         if (not s.subspec->names)
                         {
                             for(auto& constructor: d->constructors)
-                                import_symbol(m2_exports.at( get_unqualified_name(constructor) ), modid, qualified);
+			    {
+				auto name = get_unqualified_name(constructor);
+				if (m2_exports.contains(name))
+				    import_symbol(m2_exports.at( name ), modid, qualified);
+			    }
                             for(auto& field: d->fields)
-                                import_symbol(m2_exports.at( get_unqualified_name(field) ), modid, qualified);
+			    {
+				auto name = get_unqualified_name(field);
+				if (m2_exports.contains(name))
+				    import_symbol(m2_exports.at( name ), modid, qualified);
+			    }
                         }
                         else
                         {
@@ -356,6 +364,12 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     continue;
                                 }
 
+				if (not m2_exports.contains(name))
+				{
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
+                                    continue;
+				}
+				    
                                 import_symbol(m2_exports.at(name), modid, qualified);
                             }
                         }
