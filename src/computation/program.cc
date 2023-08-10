@@ -415,7 +415,14 @@ map<string,string> get_simplified_names(const set<string>& names)
 {
     auto m1 = project_unambiguous_names(names, [](const string& s) {return remove_suffix(s,'#');});
     auto m2 = project_unambiguous_names(range(m1), [](const string& s) {return remove_suffix(s,'_');});
-    auto m3 = project_unambiguous_names(range(m2), get_unqualified_name);
+    auto m3 = project_unambiguous_names(range(m2), [](const string & s)
+	{
+	    auto n = get_unqualified_name(s);
+	    if (n.starts_with('$') or n.starts_with('#'))
+		return s;
+	    else
+		return n;
+	});
 
     return compose(m1, compose(m2,m3));
 }
