@@ -166,6 +166,14 @@ expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env
 	}
 	return expression_ref(alts2);
     }
+    else if (auto let = E.to<let_exp>())
+    {
+	auto let2 = new let_exp(*let);
+	let2->body = subst_referenced_vars(let2->body, Env, names);
+	for(auto& [x,E2]: let2->binds)
+	    E2 = subst_referenced_vars(E2, Env, names);
+	return expression_ref(let2);
+    }
     else if ( E.is_index_var() )
     {
 	const auto loc = names.find( lookup_in_env(Env, E.as_index_var()) );
