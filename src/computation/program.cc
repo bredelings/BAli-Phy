@@ -334,12 +334,12 @@ void Program::add(const shared_ptr<Module>& M)
 #endif
 }
 
-map<string,string> get_simplified_names(const set<string>& names)
+map<string,string> project_unambiguous_names(const set<string>& names, const std::function<string(const string&)>& project)
 {
     // 1. Construct mapping from unqualified names to qualified names.
     std::multimap<string,string> aliases;
     for(const string& name: names)
-	aliases.insert({get_unqualified_name(name), name});
+	aliases.insert({project(name), name});
 
     // 2. Invert the mapping if the unqualified name maps to only 1 qualified name.
     map<string,string> simplified;
@@ -363,6 +363,61 @@ map<string,string> get_simplified_names(const set<string>& names)
     }
 
     return simplified;
+}
+
+map<string,string> compose(const map<string,string>& m1, const map<string,string>& m2)
+{
+    auto m3 = m2;
+    for(auto& [name1,name2]: m1)
+    {
+	if (m2.contains(name1))
+	    m3.erase(name1);
+	    
+	if (m2.contains(name2))
+	    m3.insert({name1,m2.at(name2)});
+	else
+	    m3.insert({name1,name2});
+    }
+    return m3;
+}
+
+set<string> range(const map<string,string>& m)
+{
+    set<string> S;
+    for(auto& [_,s]: m)
+	S.insert(s);
+    return S;
+}
+
+string remove_suffix(const string& s, char c)
+{
+    if (s.empty()) return s;
+
+    int i = s.size()-1;
+    while(std::isdigit(s[i]) and i > 0)
+	i--;
+
+    // We stripped the suffix, and there's something left.
+    if (s[i] == c and i > 0)
+    {
+	if (s[i-1] == '.' and i > 1 and is_haskell_id_char(s[i-2]))
+	{
+	    return s;
+	}
+	else
+	    return s.substr(0,i);
+    }
+    else
+	return s;
+}
+
+map<string,string> get_simplified_names(const set<string>& names)
+{
+    auto m1 = project_unambiguous_names(names, [](const string& s) {return remove_suffix(s,'#');});
+    auto m2 = project_unambiguous_names(range(m1), [](const string& s) {return remove_suffix(s,'_');});
+    auto m3 = project_unambiguous_names(range(m2), get_unqualified_name);
+
+    return compose(m1, compose(m2,m3));
 }
 
 
