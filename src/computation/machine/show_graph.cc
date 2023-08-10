@@ -19,6 +19,44 @@ using std::map;
 using std::set;
 using std::ofstream;
 
+expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_ref>& replace)
+{
+    if (auto rv = E.to<reg_var>())
+    {
+	if (replace.contains(rv->target))
+	    return replace.at(rv->target);
+	else
+	    return E;
+    }
+    else if (auto alts = E.to<Core::Alts>())
+    {
+	auto alts2 = new Core::Alts(*alts);
+	for(auto& [pattern,body]: *alts2)
+	{
+	    pattern = subst_reg_vars(pattern, replace);
+	    body = subst_reg_vars(body, replace);
+	}
+	return expression_ref(alts2);
+    }
+    else if (auto let = E.to<let_exp>())
+    {
+	auto let2 = new let_exp(*let);
+	let2->body = subst_reg_vars(let2->body, replace);
+	for(auto& [x,E2]: let2->binds)
+	    E2 = subst_reg_vars(E2, replace);
+	return expression_ref(let2);
+    }
+    else if (E.size() == 0)
+	return E;
+    else
+    {
+	auto sub = E.sub();
+	for(auto& e: sub)
+	    e = subst_reg_vars(e, replace);
+	return expression_ref{E.head(), sub};
+    }
+}
+
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t, bool keep_identifiers) const
 {
     vector<int> unique;
@@ -452,19 +490,52 @@ bool print_as_record(const closure& c)
     return print_as_record(c.exp);
 }
 
-string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
-                     const map<int,string>& constants, const map<string,string>& simplify, bool skip_index_var = false)
+bool contains(const string& s1, const string& s2)
+{
+    for(int i=0;i+s2.size()<s1.size();i++)
+	if (s1.substr(i,s2.size()) == s2)
+	    return true;
+
+    return false;
+}
+
+string reg_name(int R, const map<int,expression_ref>& replace)
+{
+    string name = "<" + convertToString(R) + ">";
+    // We could add <R2> after the name for non-var objects.
+    if (replace.count(R))
+    {
+	auto E = replace.at(R);
+	if (E.is_a<var>())
+	    name = replace.at(R).print();
+	else
+	    name = replace.at(R).print() + " " + name;;
+    }
+    return name;
+}
+
+closure follow_index_var(const reg_heap& M, closure C)
+{
+    for(int& r: C.Env)
+	r = M.follow_index_var(r);
+    return C;
+}
+
+string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& replace, bool skip_index_var = false)
 {
     auto CR = C[R];
     if (skip_index_var)
-        for(int& r: CR.Env)
-            r = C.follow_index_var(r);
+	CR = follow_index_var(C, CR);
 
     expression_ref F = CR.exp;
     // node label = R/name: expression
     string label = convertToString(R);
-    if (reg_names.count(R))
-        label += "/" + reg_names.at(R);
+    if (replace.count(R))
+    {
+	auto E = replace.at(R);
+	if (E.is_a<var>())
+	    label += "/" + E.print();
+    }
     label += ":";
 
     if (print_as_record(F))
@@ -476,6 +547,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
         else
             label += "<td>"+escape(F.head().print())+"</td>";
         if (F.is_expression())
+	{
             for(const expression_ref& E: F.sub())
             {
                 if (E.is_index_var())
@@ -487,41 +559,18 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
                     else
                         std::clog<<"reg "<<R<<" has bad index in "<<CR.print()<<std::endl;
 	  
-                    string reg_name = "<" + convertToString(R2) + ">";
-                    if (constants.count(R2))
-                        reg_name = constants.at(R2) + " " + reg_name;
-                    else if (reg_names.count(R2))
-                    {
-                        reg_name = reg_names.at(R2);
-                        auto loc = simplify.find(reg_name);
-                        if (loc != simplify.end())
-                            reg_name = loc->second;
-                    }
-
-                    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
+                    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name(R2,replace)) + "</td>";
                 }
                 else
                 {
                     label += "<td>" + E.print() + "</td>";
                 }
             }
+	}
         else if (auto im = F.to<IntMap>())
         {
             for(auto& [key, R2]: *im)
-            {
-                string reg_name = "<" + convertToString(R2) + ">";
-                if (constants.count(R2))
-                    reg_name = constants.at(R2) + " " + reg_name;
-                else if (reg_names.count(R2))
-                {
-                    reg_name = reg_names.at(R2);
-                    auto loc = simplify.find(reg_name);
-                    if (loc != simplify.end())
-                        reg_name = loc->second;
-                }
-
-                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(reg_name) + "</td>";
-            }
+                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(reg_name(R2,replace)) + "</td>";
         }
         label += "</tr></table>";
     }
@@ -529,28 +578,13 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
     {
         int R2 = C[R].reg_for_index_var();
 
-        string reg_name = "<" + convertToString(R2) + ">";
-        if (reg_names.count(R2))
-        {
-            reg_name = reg_names.at(R2);
-            auto loc = simplify.find(reg_name);
-            if (loc != simplify.end())
-                reg_name = "<" + loc->second + ">";
-        }
-        else if (constants.count(R2))
-            reg_name = constants.at(R2) + " " + reg_name;
-        label += reg_name;
-	
-        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
-        //      E = map_symbol_names(E, simplify);
-        //      label += E.print();
+        label += reg_name(R2, replace);
+
         label = escape(wrap(label,40));
     }
     else
     {
-        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
-
-        E = map_symbol_names(E, simplify);
+        expression_ref E = unlet(subst_reg_vars(deindexify(trim_unnormalize(C[R])), replace));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -584,6 +618,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
 
         label += "<td>"+escape(head_name)+"</td>";
         if (F.is_expression())
+	{
             for(const expression_ref& E: F.sub())
             {
                 if (E.is_index_var())
@@ -609,6 +644,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
                     label += "<td>" + E.print() + "</td>";
                 }
             }
+	}
         label += "</tr></table>";
     }
     else if (F.type() == index_var_type)
@@ -646,17 +682,48 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     return label;
 }
 
+map<int,expression_ref> get_names_for_regs(const reg_heap& M)
+{
+    // Get mapping from long names to simplified names
+    map<string,string> simplify = get_simplified_names(get_names(M.get_identifiers()));
+
+    // Get mapping from regs to vars with simplified names.
+    map<int,var> reg_to_var;
+    for(auto& [named_var, reg]: M.get_identifiers())
+    {
+	auto named_var2 = named_var;
+	if (simplify.contains(named_var2.name))
+	    named_var2.name = simplify.at(named_var2.name);
+	reg_to_var.insert({reg, named_var2});
+    }
+
+    map<int,expression_ref> reg_to_expression;
+
+    int t = M.get_root_token();
+
+    vector<int> regs = M.find_all_used_regs_in_context(t,false);
+
+    for(int r: regs)
+    {
+	if (reg_to_var.contains(r))
+	{
+	    reg_to_expression.insert({r,reg_to_var.at(r)});
+	}
+	else if (auto E = M.expression_at(r); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>())
+	{
+	    reg_to_expression.insert({r,E});
+	}
+    }
+    return reg_to_expression;
+}
+
 void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
     int t = C.get_root_token();
 
     const auto& ids = C.get_identifiers();
 
-    map<int,string> reg_names = get_register_names(ids, false);
-
-    map<string,string> simplify = get_simplified_names(get_names(ids));
-
-    map<int,string> constants = get_constants(C, t);
+    map<int,expression_ref> replace = get_names_for_regs(C);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
     std::unordered_set<int> regs_set;
@@ -683,7 +750,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
             o<<"shape = plain, ";
 
         // node label = R/name: expression
-	string label = label_for_reg(R, C, reg_names, constants, simplify);
+	string label = label_for_reg(R, C, replace);
 	o<<"label = <"<<label<<">";
 //	if (this is a gc root) // maybe call get_roots, and then make a set<int> of all the roots?
 //	    o<<",style=\"dashed,filled\",color=orange";
@@ -735,10 +802,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 		    if (i == R2) used = true;
 
 		// Don't draw ref edges to things like fmap.
-		if (reg_names.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
-
-		// Don't draw ref edges to things like fmap.
-		if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
+		if (replace.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 		if (not used)
 		    o<<name<<":r"<<R2<<" -> "<<name2<<";\n";
@@ -758,10 +822,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 		    if (i == R2) used = true;
 
 		// Don't draw ref edges to things like fmap.
-		if (reg_names.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
-	
-		// Don't draw ref edges to things like fmap.
-		if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
+		if (replace.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 		if (not used)
 		    o<<name<<" -> "<<name2<<";\n";
