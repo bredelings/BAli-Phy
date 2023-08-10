@@ -329,10 +329,8 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
     return C[R].exp;
 
     map< int, expression_ref> names;
-    for(const auto& id: ids)
+    for(const auto& [name, R]: ids)
     {
-	int R = id.second;
-	string name = id.first;
 	names[R] = expression_ref(new var(name) );
     }
     discover_graph_vars(C, R, names, ids);
