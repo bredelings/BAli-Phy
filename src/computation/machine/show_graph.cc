@@ -721,8 +721,6 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
     int t = C.get_root_token();
 
-    const auto& ids = C.get_identifiers();
-
     map<int,expression_ref> replace = get_names_for_regs(C);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
