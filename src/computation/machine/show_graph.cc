@@ -12,6 +12,9 @@
 #include "computation/context.H"
 #include "haskell/ids.H"
 #include "computation/machine/gcobject.H"
+#include "immer/set.hpp"
+
+typedef Box<immer::set<int>> IntSet;
 
 using std::string;
 using std::vector;
@@ -581,6 +584,23 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
         label += reg_name(R2, replace);
 
         label = escape(wrap(label,40));
+    }
+    else if (auto is = F.head().to<IntSet>())
+    {
+	std::ostringstream o;
+	o<<"IntSet{";
+	bool first = true;
+	for(auto& x: *is)
+	{
+	    if (first)
+		first = false;
+	    else
+		o<<",";
+
+	    o<<x;
+	}
+	o<<"}";
+	label += o.str();
     }
     else
     {
