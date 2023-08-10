@@ -101,7 +101,7 @@ bool is_haskell_id(const std::string& s)
 
     for(char c: s)
     {
-        if (not (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\''))
+        if (not is_haskell_id_char(c))
             return false;
     }
     return true;
@@ -121,14 +121,24 @@ bool is_haskell_conid(const std::string& s)
     return isupper(s[0]);
 }
 
+bool is_haskell_id_char(char c)
+{
+    return (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\'');
+}
+
+const string symbol_chars = "!#$%&*+./<=>?@\\^|-~:";
+
+bool is_haskell_symbol_char(char c)
+{
+    return symbol_chars.find(c) != -1;
+}
+
 bool is_haskell_uqsym(const string& s)
 {
-    static const string symbols = "!#$%&*+./<=>?@\\^|-~:";
-
     if (not s.size()) return false;
 
     for(int i=0;i<s.size();i++)
-        if (symbols.find(s[i]) == -1)
+        if (not is_haskell_symbol_char(s[i]))
             return false;
 
     return true;
