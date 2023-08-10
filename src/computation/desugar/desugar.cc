@@ -52,12 +52,66 @@ Hs::VarPattern make_VarPattern(const var& v)
     return {V};
 }
 
-bool is_irrefutable_pat(const Hs::LPat& lpat)
+bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
 {
     auto& P = unloc(lpat);
     assert(not P.head().is_a<var>());
     assert(not P.head().is_a<Hs::Var>());
-    return P.is_a<Hs::WildcardPattern>() or P.is_a<Hs::VarPattern>() or P.is_a<Hs::LazyPattern>();
+
+    if (P.is_a<Hs::WildcardPattern>())
+	return true;
+    else if (P.is_a<Hs::VarPattern>())
+	return true;
+    else if (P.is_a<Hs::LazyPattern>())
+	return true;
+    else if (auto cp = P.to<Hs::ConPattern>())
+    {
+	auto& con_name = cp->head.name;
+	auto C = m.lookup_resolved_symbol(con_name);
+	string pattern_type = C->parent.value();
+	auto T = m.lookup_resolved_type(pattern_type);
+	auto D = T->is_data();
+	assert(D);
+	assert(not D->constructors.empty());
+	if (D->constructors.size() > 1) return false;
+
+	for(auto& arg: cp->args)
+	    if (not is_irrefutable_pat(m, arg))
+		return false;
+
+	return true;
+    }
+    else if (auto tp = P.to<Hs::TypedPattern>())
+    {
+	return is_irrefutable_pat(m, tp->pat);
+    }
+    else if (auto tp = P.to<Hs::TuplePattern>())
+    {
+	for(auto& arg: tp->elements)
+	    if (not is_irrefutable_pat(m, arg))
+		return false;
+
+	return true;
+    }
+    else if (P.is_a<Hs::ListPattern>())
+    {
+	return false;
+    }
+    else if (auto ap = P.to<Hs::AsPattern>())
+    {
+	return is_irrefutable_pat(m, ap->pattern);
+    }
+    else if (auto sp = P.to<Hs::StrictPattern>())
+    {
+	return is_irrefutable_pat(m, sp->pattern);
+    }
+    else if (P.is_a<Hs::LiteralPattern>())
+    {
+	return false;
+    }
+    else
+	std::abort();
+
 }
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
@@ -352,7 +406,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             {
                 Hs::Var concatMap("Data.OldList.concatMap");
 		// [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
-                if (is_irrefutable_pat(PQ->bindpat))
+                if (is_irrefutable_pat(m, PQ->bindpat))
                 {
 		    // [ e | p<-l]  =  concatMap (\p -> [e]) l
 		    //              =  map (\p -> e) l
@@ -453,7 +507,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         {
             auto& PQ = first.as_<Hs::PatQual>();
 
-            if (is_irrefutable_pat(PQ.bindpat))
+            if (is_irrefutable_pat(m, PQ.bindpat))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
                 result = {PQ.bindOp, unloc(PQ.exp), lambda};
