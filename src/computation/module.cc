@@ -253,13 +253,13 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     bool qualified = impdecl.qualified;
     assert(modid != name);
 
-    auto& m2_exports = M2->exported_symbols();
+    auto& m2_exported_values = M2->exported_symbols();
     auto& m2_exported_types = M2->exported_types();
 
     // import modid
     if (not impdecl.impspec)
     {
-        for(const auto& [_,S]: m2_exports)
+        for(const auto& [_,S]: m2_exported_values)
             import_symbol(S, modid, qualified);
 
         for(const auto& [_,T]: m2_exported_types)
@@ -279,7 +279,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             }
             else if (s.is_value())
             {
-                if (not m2_exports.count(id))
+                if (not m2_exported_values.count(id))
                 {
                     messages.push_back( error(loc, Note()<<"variable `"<<id<<"` not exported.") );
                     continue;
@@ -288,7 +288,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 if (s.subspec)
                     messages.push_back( error(loc, Note()<<"variable `"<<id<<"` can't have export subspec") );
 
-                auto variable = m2_exports.at(id);
+                auto variable = m2_exported_values.at(id);
                 import_symbol( variable, modid, qualified );
             }
             else if (s.is_type())
@@ -318,7 +318,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                         if (not s.subspec->names)
                         {
                             for(auto& method: c->methods)
-                                import_symbol( m2_exports.at(method), modid, qualified );
+                                import_symbol( m2_exported_values.at(method), modid, qualified );
                         }
                         else
                         {
@@ -327,7 +327,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                 if (not c->methods.count(name))
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`") );
                                 else
-                                    import_symbol( m2_exports.at(name), modid, qualified );
+                                    import_symbol( m2_exported_values.at(name), modid, qualified );
                             }
                         }
                     }
@@ -338,14 +338,14 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             for(auto& constructor: d->constructors)
 			    {
 				auto name = get_unqualified_name(constructor);
-				if (m2_exports.contains(name))
-				    import_symbol(m2_exports.at( name ), modid, qualified);
+				if (m2_exported_values.contains(name))
+				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
                             for(auto& field: d->fields)
 			    {
 				auto name = get_unqualified_name(field);
-				if (m2_exports.contains(name))
-				    import_symbol(m2_exports.at( name ), modid, qualified);
+				if (m2_exported_values.contains(name))
+				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
                         }
                         else
@@ -364,13 +364,13 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     continue;
                                 }
 
-				if (not m2_exports.contains(name))
+				if (not m2_exported_values.contains(name))
 				{
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
                                     continue;
 				}
 				    
-                                import_symbol(m2_exports.at(name), modid, qualified);
+                                import_symbol(m2_exported_values.at(name), modid, qualified);
                             }
                         }
                     }
@@ -381,7 +381,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     // import modid hiding ( etc )
     else if (impdecl.impspec and impdecl.impspec->hiding)
     {
-        for(const auto& [_,S]: m2_exports)
+        for(const auto& [_,S]: m2_exported_values)
         {
             auto unqualified_name = get_unqualified_name(S->name);
 
