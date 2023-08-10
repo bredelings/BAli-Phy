@@ -705,13 +705,13 @@ map<int,expression_ref> get_names_for_regs(const reg_heap& M)
 
     for(int r: regs)
     {
-	if (reg_to_var.contains(r))
-	{
-	    reg_to_expression.insert({r,reg_to_var.at(r)});
-	}
-	else if (auto E = M.expression_at(r); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>())
+	if (auto E = M.expression_at(r); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>())
 	{
 	    reg_to_expression.insert({r,E});
+	}
+	else if (reg_to_var.contains(r))
+	{
+	    reg_to_expression.insert({r,reg_to_var.at(r)});
 	}
     }
     return reg_to_expression;
