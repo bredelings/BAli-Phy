@@ -5,7 +5,7 @@ import Range
 import Effect
 import Tree
 import Numeric.LogDouble
-import Data.Text (Text(..))
+import qualified Data.Text as T
 import Data.JSON
 
 type ContextIndex = Int
@@ -93,7 +93,7 @@ foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 foreign import bpcall "MCMC:" logJSONRaw :: Int -> Int -> IO CJSON
 logJSONLine context iter = cjsonToText <$> logJSONRaw context iter
 foreign import bpcall "MCMC:" jsonToTableLineRaw :: CJSON -> CPPString
-logTableLine context iter = Text . jsonToTableLineRaw <$> logJSONRaw context iter
+logTableLine context iter = T.fromCppString . jsonToTableLineRaw <$> logJSONRaw context iter
 
 foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble

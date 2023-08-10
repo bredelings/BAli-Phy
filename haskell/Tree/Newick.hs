@@ -11,7 +11,7 @@ import Tree
 
 import Parse
 
-import Data.Text (Text(..))
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
@@ -45,7 +45,7 @@ instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     branch_info (RootedTree tree _ _) = branch_info tree
 
 foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
-quoteLabel (Text s) = Text $ quoteLabelRaw s
+quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
     node_info   tree node                         = case get_label tree node of Just label -> quoteLabel label

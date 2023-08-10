@@ -10,7 +10,7 @@ import Data.Array
 import Data.Matrix
 import Data.Foldable
 import Foreign.Maybe
-import Data.Text (Text(..))
+import Data.Text (Text)
 import qualified Data.Text as Text
 
 import Data.IntMap (IntMap)
@@ -62,7 +62,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
+      taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
       node_sequences = fmap (sequence_to_indices alphabet) $ fmap fromJust $ getSequencesOnTree sequences tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
@@ -197,7 +197,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       -- So... actually it looks like we already HAVE a minimally_connect_leaf_characters function!!!
 
       n_nodes = numNodes tree
-      taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
+      taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel

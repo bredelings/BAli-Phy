@@ -1,7 +1,8 @@
 module Bio.Alphabet where
 
 import Foreign.String -- For CPPString
-import Data.Text (Text(..))
+import Data.Text (Text)
+import qualified Data.Text as T
 
 data Alphabet
 
@@ -47,5 +48,5 @@ foreign import bpcall "Alphabet:genetic_code_standard" builtin_standard_code :: 
 standard_code = builtin_standard_code ()
 
 foreign import bpcall "Alphabet:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
-sequenceToText a s = Text $ sequenceToTextRaw a s
+sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s
 

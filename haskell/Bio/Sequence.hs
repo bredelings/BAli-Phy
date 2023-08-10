@@ -2,7 +2,7 @@ module Bio.Sequence where
 
 import Data.Map as Map hiding (map)
 import Bio.Alphabet
-import Data.Text (Text(..))
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.BitVector
 
@@ -14,12 +14,12 @@ foreign import bpcall "Alignment:" sequenceDataRaw :: ESequence -> CPPString
 
 data Sequence = Sequence { sequenceName, sequenceData :: Text }
 mkSequence :: ESequence -> Sequence
-mkSequence s = Sequence (Text $ builtin_sequence_name s) (Text $ sequenceDataRaw s)
+mkSequence s = Sequence (T.fromCppString $ builtin_sequence_name s) (T.fromCppString $ sequenceDataRaw s)
 
 foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
 foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
-sequence_to_indices a (Sequence _ (Text s)) = builtin_sequence_to_indices a s
-sequenceToAlignedIndices a (Sequence _ (Text s)) = builtin_sequenceToAlignedIndices a s
+sequence_to_indices a (Sequence _ s) = builtin_sequence_to_indices a (T.toCppString s)
+sequenceToAlignedIndices a (Sequence _ s) = builtin_sequenceToAlignedIndices a (T.toCppString s)
 
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
@@ -35,7 +35,7 @@ foreign import bpcall "Alignment:select_range" builtin_select_range :: EVector I
 select_range :: String -> [Sequence] -> [Sequence]
 select_range range sequences = let maxLength = maximum [ T.length $ sequenceData s | s <- sequences ]
                                    range' = builtin_getRange (list_to_string range) maxLength
-                                   select (Sequence name (Text chars)) = Sequence name (Text $ builtin_select_range range' chars)
+                                   select (Sequence name chars) = Sequence name (T.fromCppString $ builtin_select_range range' (T.toCppString chars))
                                in fmap select sequences
 
 reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"

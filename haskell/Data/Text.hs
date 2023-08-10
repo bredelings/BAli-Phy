@@ -1,23 +1,33 @@
-module Data.Text where
+module Data.Text
+    (Text,
+     pack, unpack,
+     singleton, empty, cons, snoc, append, uncons,
+     head, last, tail, init,
+     null, length,
+     concat,
+     intercalate,
+     fromCppString, toCppString,
+     doubleToText)
+    where
 
 -- Note that this module is really just a hacky implementation of a boxed c++ std::string
 -- It should probably be a UTF-8 string, and make Char a UTF-32 value.
 -- The number of code points can be larger than the number of graphemes.
 -- Does (length) return the number of code points?  Probably.
 
-import Prelude as P hiding (null, head, tail, init, length, empty, intercalate, intersperse, concat)
+import Prelude as P hiding (null, head, last, tail, init, length, empty, intercalate, intersperse, concat, uncons)
 import qualified Prelude as P
 import Data.Char
 import Data.Ord
 import Data.Eq
 
-import Foreign.String
-
+import qualified Foreign.String as FS
 
 -- We need to change this to Text CPPString Int {- offset -} Int {- length -}
 -- Ideally we'd have the strictness annotations ! as well.
---
-data Text = Text CPPString
+
+-- These should all be strict.
+data Text = Text CPPString Int Int
 
 foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
@@ -25,49 +35,61 @@ instance Show Text where
 --    show s = show $ unpack s
     show s = "\"" ++ unpack s ++ "\""
 
-pack = Text . builtin_pack . list_to_vector
+pack = fromCppString . builtin_pack . list_to_vector
 
-unpack (Text s) = unpack_cpp_string s
+unpack (Text array offset length) = FS.unpack_cpp_substring array offset length
 
 foreign import bpcall "Text:singleton" builtin_singleton :: Char -> CPPString
-singleton c = Text $ builtin_singleton c
+singleton c = Text (builtin_singleton c) 0 1
 
 foreign import bpcall "Text:empty" builtin_empty :: () -> CPPString
-empty = Text $ builtin_empty ()
+empty = Text (builtin_empty ()) 0 0
 
 infixr 5 `cons`
 foreign import bpcall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString
-cons c (Text s) = Text $ builtin_cons c s
+cons c t = append (singleton c) t
 
 foreign import bpcall "Text:snoc" builtin_snoc :: CPPString -> Char -> CPPString
-snoc (Text s) c = Text $ builtin_snoc s c
+snoc t c = append t (singleton c)
 
-append :: Text -> Text -> Text
-foreign import bpcall "Text:append" builtin_append :: CPPString -> CPPString -> CPPString
-append (Text s1) (Text s2) = Text $ builtin_append s1 s2
+text arr off len | len == 0  = empty
+                 | otherwise = Text arr off len
+
+foreign import bpcall "Text:append" builtin_append :: CPPString -> Int -> Int ->
+                                                      CPPString -> Int -> Int ->
+                                                      CPPString
+append t1@(Text array1 offset1 len1) t2@(Text array2 offset2 len2)
+    | len1 == 0  = t2
+    | len2 == 0  = t1
+    | otherwise  = Text array3 0 len
+    where
+      len = len1 + len2
+      array3 = builtin_append array1 offset1 len1 array2 offset2 len2
 
 uncons t | null t    = Nothing
          | otherwise = Just (head t, tail t)
 
 -- unsnoc :: Text -> Maybe (Text, Char)
 
-foreign import bpcall "Text:head" builtin_head :: CPPString -> Char
-head (Text s) = builtin_head s
+head (Text arr off len)
+    | len <= 0  = error "head: empty Text"
+    | otherwise = getStringElement arr off
 
-foreign import bpcall "Text:last" builtin_last :: CPPString -> Char
-last (Text s) = builtin_last s
+last t@(Text arr off len)
+    | len <= 0  = error "last: empty Text"
+    | otherwise = getStringElement arr (off+len-1)
 
-foreign import bpcall "Text:tail" builtin_tail :: CPPString -> CPPString
-tail (Text s) = Text $ builtin_tail s
+tail (Text arr off len)
+    | len <= 0  = error "tail: empty Text"
+    | otherwise = text arr (off + 1) (len - 1)
 
-foreign import bpcall "Text:init" builtin_init :: CPPString -> CPPString
-init (Text s) = Text $ builtin_init s
+init (Text arr off len)
+    | len <= 0 = error "tail: empty Text"
+    | otherwise = text arr off (len - 1)
 
-null :: Text -> Bool
-null t = length t == 0
+null t = length t <= 0
 
-foreign import bpcall "Text:length" builtin_length :: CPPString -> Int
-length (Text s) = builtin_length s
+length (Text _ _ len) = len
 
 -- compareLength :: Text -> Int -> Ordering
 
@@ -110,10 +132,12 @@ intercalate i ts = concat $ P.intersperse i ts
 
 -- foldr1 :: (Char -> Char -> Char) -> Text -> Char
 
+fromCppString s = Text s 0 (FS.sizeOfString s)
+
 foreign import bpcall "Text:" concatRaw :: EVector CPPString -> CPPString
 
 concat :: [Text] -> Text
-concat texts = Text $ concatRaw $ list_to_vector $ map (\(Text s) -> s) texts
+concat texts = fromCppString $ concatRaw $ list_to_vector $ map toCppString texts
 
 -- concatMap :: (Char -> Text) -> Text -> Text
 
@@ -241,14 +265,22 @@ concat texts = Text $ concatRaw $ list_to_vector $ map (\(Text s) -> s) texts
 
 -- measureOff :: Int -> Text -> Int
 
-foreign import bpcall "Text:equals" builtin_equals :: CPPString -> CPPString -> Bool
-foreign import bpcall "Text:less_than" builtin_less_than :: CPPString -> CPPString -> Bool
+foreign import bpcall "Text:equals" builtin_equals :: CPPString -> Int -> Int ->
+                                                      CPPString -> Int -> Int ->
+                                                      Bool
+
+foreign import bpcall "Text:less_than" builtin_less_than :: CPPString -> Int -> Int ->
+                                                            CPPString -> Int -> Int ->
+                                                            Bool
 
 instance Eq Text where
-    (Text s1) == (Text s2) = builtin_equals s1 s2
+    (Text arr1 off1 len1) == (Text arr2 off2 len2) = builtin_equals arr1 off1 len1 arr2 off2 len2
 
 instance Ord Text where
-    (Text s1) < (Text s2) = builtin_less_than s1 s2
+    (Text arr1 off1 len1) < (Text arr2 off2 len2) = builtin_less_than arr1 off1 len1 arr2 off2 len2
 
-foreign import bpcall "Prelude:show_double" doubleToTextRaw :: Double -> CPPString
-doubleToText d = Text $ doubleToTextRaw d
+foreign import bpcall "Prelude:show_double" doubleToCPPString :: Double -> CPPString
+doubleToText d = Text arr 0 (FS.sizeOfString arr) where arr = doubleToCPPString d
+
+
+toCppString (Text arr off len) = FS.cppSubString arr off len

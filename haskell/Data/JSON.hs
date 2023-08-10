@@ -1,7 +1,7 @@
 module Data.JSON where
 
 import qualified Data.Text as T
-import Data.Text (Text(..))
+import Data.Text (Text)
 import Foreign.String
 import qualified Data.Map as M
 
@@ -110,16 +110,16 @@ foreign import bpcall "Foreign:" ejson_null    :: () -> EJSON
 foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 
 cjsonToText :: CJSON -> Text
-cjsonToText = Text . cjson_to_bytestring
+cjsonToText = T.fromCppString . cjson_to_bytestring
 
 jsonToText :: JSON -> Text
 jsonToText = cjsonToText . c_json
 
 deep_eval_json :: JSON -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ list_to_vector $ map deep_eval_json xs
-deep_eval_json (Object xs) = ejson_object $ list_to_vector [c_pair key (deep_eval_json value) | (Key (Text key), value) <- xs]
+deep_eval_json (Object xs) = ejson_object $ list_to_vector [c_pair (T.toCppString key) (deep_eval_json value) | (Key key, value) <- xs]
 deep_eval_json (INumber i)  = ejson_inumber i
 deep_eval_json (FNumber f)  = ejson_fnumber f
 deep_eval_json (Bool b)    = ejson_bool b
-deep_eval_json (String (Text s))  = ejson_string s
+deep_eval_json (String s)  = ejson_string (T.toCppString s)
 deep_eval_json Null        = ejson_null ()

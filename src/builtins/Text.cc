@@ -58,13 +58,23 @@ extern "C" closure builtin_function_snoc(OperationArgs& Args)
 
 extern "C" closure builtin_function_append(OperationArgs& Args)
 {
-    String s1  = Args.evaluate(0).as_<String>();
+    auto s1 = Args.evaluate(0);
+    int offset1 = Args.evaluate(1).as_int();
+    int length1 = Args.evaluate(2).as_int();
 
-    String s2  = Args.evaluate(1).as_<String>();
+    auto s2 = Args.evaluate(3);
+    int offset2 = Args.evaluate(4).as_int();
+    int length2 = Args.evaluate(5).as_int();
 
-    String s3 = s1 + s2;
+    auto result = new String;
+    String& s3 = *result;
 
-    return {s3};
+    s3.reserve(length1+length2);
+
+    s3 = s1.as_<String>().substr(offset1,length1);
+    s3 += s2.as_<String>().substr(offset2,length2);
+
+    return result;
 }
 
 extern "C" closure builtin_function_head(OperationArgs& Args)
@@ -126,26 +136,32 @@ extern "C" closure builtin_function_length(OperationArgs& Args)
 
 extern "C" closure builtin_function_equals(OperationArgs& Args)
 {
-    String s1  = Args.evaluate(0).as_<String>();
-    String s2  = Args.evaluate(1).as_<String>();
+    auto s1 = Args.evaluate(0);
+    int offset1 = Args.evaluate(1).as_int();
+    int length1 = Args.evaluate(2).as_int();
 
-    return {s1 == s2};
+    auto s2 = Args.evaluate(3);
+    int offset2 = Args.evaluate(4).as_int();
+    int length2 = Args.evaluate(5).as_int();
+
+    std::string_view S1 = s1.as_<String>();
+    std::string_view S2 = s2.as_<String>();
+    return {S1.substr(offset1,length2) == S2.substr(offset2,length2)};
 }
 
 extern "C" closure builtin_function_less_than(OperationArgs& Args)
 {
-    String s1  = Args.evaluate(0).as_<String>();
-    String s2  = Args.evaluate(1).as_<String>();
+    auto s1 = Args.evaluate(0);
+    int offset1 = Args.evaluate(1).as_int();
+    int length1 = Args.evaluate(2).as_int();
 
-    for(int i=0;i<std::min(s1.size(),s2.size());i++)
-    {
-        if (s1[i] < s2[i])
-            return {true};
-        else if (s1[i] > s2[i])
-            return {false};
-    }
+    auto s2 = Args.evaluate(3);
+    int offset2 = Args.evaluate(4).as_int();
+    int length2 = Args.evaluate(5).as_int();
 
-    return {s1.size() < s2.size()};
+    std::string_view S1 = s1.as_<String>();
+    std::string_view S2 = s2.as_<String>();
+    return {S1.substr(offset1,length2) < S2.substr(offset2,length2)};
 }
 
 extern "C" closure builtin_function_concatRaw(OperationArgs& Args)

@@ -45,6 +45,18 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
     return {s[i]};
 }
 
+extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
+{
+    int offset = Args.evaluate(1).as_int();
+    int length = Args.evaluate(2).as_int();
+    const std::string& s = Args.evaluate(0).as_<String>();
+
+    if (offset == 0 and length == s.size())
+	return {index_var(0),{Args.reg_for_slot(0)}};
+    else
+	return {String(s.substr(offset,length))};
+}
+
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
     const EVector& v = Args.evaluate(0).as_<EVector>();
