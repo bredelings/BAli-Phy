@@ -797,6 +797,7 @@ vector<int> branches_from_leaves(const TreeInterface& t)
     return branch_list;
 }
 
+/*
 vector<dynamic_bitset<>> get_partitions(const TreeInterface& t)
 {
     vector<int> branch_list = t.all_branches_from_node(0);
@@ -849,6 +850,7 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2)
 
     return partitions1.size() + partitions2.size() - 2*shared;
 }
+*/
 
 double tree_length(const TreeInterface& t)
 {

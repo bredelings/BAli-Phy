@@ -176,9 +176,11 @@ double tree_length(const TreeInterface& t);
 
 std::vector<int> branches_from_leaves(const TreeInterface& t);
 
+/* FIXME: These no longer have packed node indices, so we can't use vector< >
+ * for branches, and we can't use dynamic_bitset for node sets.
 std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
-
 unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2);
+ */
 
 /// Return a Newick string representation of the tree 'T' with names 'names' and branch lengths L.
 std::string write(const TreeInterface& T, const std::map<int,double>& L, const std::vector<std::string>& names);

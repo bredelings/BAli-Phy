@@ -266,7 +266,7 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
     result.counts[0] = 1;
     if (success) result.totals[0] = 1;
 
-    int dist = topology_distance(T1,T2)/2;
+    int dist = 0; // topology_distance(T1,T2)/2;
 
     if (b1 != -1) 
 	//---------------- Check if topology changed ----------------//
@@ -288,7 +288,10 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
 	if (same_topology)
 	    assert(dist == 0);
 	else
+	{
+	    dist = 1;
 	    assert(dist > 0);
+	}
     }
 
     // count dist in [0,bins)
