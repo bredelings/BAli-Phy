@@ -96,11 +96,6 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     m123.hidden_bits.set(3);
     m123.B = P.get_beta();
 
-    //------------- Compute sequence properties --------------//
-    dynamic_bitset<> group1 = t.partition(t.find_branch(nodes[0],nodes[1]));
-    dynamic_bitset<> group2 = t.partition(t.find_branch(nodes[0],nodes[2]));
-    dynamic_bitset<> group3 = t.partition(t.find_branch(nodes[0],nodes[3]));
-
     vector<HMM::bitmask_t> a23;
 
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
