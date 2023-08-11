@@ -630,7 +630,7 @@ double TreeInterface::branch_length(int b) const
 {
     assert(has_branch_lengths());
 
-    b = std::min(b, reverse(b));
+    b = undirected(b);
 
     int array_reg = *branch_durations_reg();
 
@@ -643,7 +643,7 @@ bool TreeInterface::can_set_branch_length(int b) const
 {
     assert(has_branch_lengths());
 
-    b = std::min(b, reverse(b));
+    b = undirected(b);
 
     int array_reg = *branch_durations_reg();
 
@@ -660,7 +660,7 @@ void TreeInterface::set_branch_length(int b, double l)
 
     assert(has_branch_lengths());
 
-    b = std::min(b, reverse(b));
+    b = undirected(b);
 
     int array_reg = *branch_durations_reg();
 
