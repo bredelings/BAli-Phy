@@ -21,6 +21,7 @@
 #define CHOOSE_H
 
 #include <vector>
+#include <unordered_map>
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "util/range.H"
@@ -50,6 +51,31 @@ public:
 };
 
 template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V);
+
+template <typename I, typename F>
+class uchoose_exception: public myexception {
+public:
+    /// What is the current choice?
+    I i;
+
+    /// What are the probabilities of each of the options?
+    std::unordered_map<I,F> Pr;
+
+    uchoose_exception(const I& i, const std::unordered_map<I,F>& V)
+        :Pr(V)
+        {
+            (*this)<<"No option chosen! (current = "<<i<<")\n";
+            for(auto& [j,f]: Pr)
+	    {
+                if (i == j) (*this)<<"*";
+                (*this)<<"Pr["<<j<<"] = "<<Pr[j]<<"\n";
+            }
+            (*this)<<show_stack_trace();
+            //    std::abort();
+        }
+    ~uchoose_exception() {}
+};
+
 
 /// Select from choice 0 or 1 in proportion to the probabilities given.
 int choose2(log_double_t, log_double_t);
@@ -212,5 +238,29 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
 }
+
+/// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
+template <typename I, typename F>
+I choose(const std::unordered_map<I,F>& P)
+{
+    F total = 0;
+    for(auto& [i,f]: P)
+	total += f;
+
+    F r = F(uniform() * total);
+
+    F sum = 0;
+    for(auto& [i,f]: P)
+    {
+	sum += f;
+	if (r <= sum) return i;
+    }
+
+    uchoose_exception<I,F> c(P.begin()->first, P);
+    c.prepend(":\n");
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+}
+
 #endif
 
