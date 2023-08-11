@@ -791,11 +791,22 @@ string generate_model_program(const boost::program_options::variables_map& args,
     program_file<<"\nimport qualified "<<model_module_name<<" as Model\n";
     program_file<<"\n";
     program_file<<"main = do\n";
-    program_file<<"  logParams <- jsonLogger $ "<<output_directory / "C1.log.json" <<"\n";
-    program_file<<"\n";
+
+    if (not args.count("test"))
+    {
+	program_file<<"  logParams <- jsonLogger $ "<<output_directory / "C1.log.json" <<"\n";
+	program_file<<"\n";
+    }
     program_file<<"  model <- Model.main\n";
     program_file<<"\n";
-    program_file<<"  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }\n";
+    if (args.count("test"))
+    {
+	program_file<<"  mymodel <- makeMCMCModel $ model\n";
+    }
+    else
+    {
+	program_file<<"  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }\n";
+    }
     if (args.count("test"))
     {
         auto log_formats = get_log_formats(args, false);
