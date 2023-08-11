@@ -631,7 +631,7 @@ int main(int argc,char* argv[])
         }
 
         //----------- Create output dir --------------//
-        fs::path output_dir = fs::current_path();
+        fs::path output_dir;
 
         if ((args.count("align") or args.count("model")) and not args.count("test"))
         {
@@ -661,7 +661,7 @@ int main(int argc,char* argv[])
         json info;
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
-        info["subdirectory"] = output_dir.string();
+        info["subdirectory"] = fs::weakly_canonical(output_dir).make_preferred().string();
 
         auto P = generate_program(argc, argv, args, L, proc_id, output_dir, info);
 
