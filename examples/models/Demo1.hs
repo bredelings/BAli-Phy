@@ -1,1 +1,0 @@
-../../tests/prob_prog/demos/1/Main.hs
