@@ -191,7 +191,6 @@ object_ptr<const EVector> data_partition::get_sequence(int i) const
 object_ptr<const EVector> data_partition::transition_P(int b) const
 {
     b = t().undirected(b);
-    assert(b >= 0 and b < t().n_branches());
     return property(1)[b].value().as_ptr_to<EVector>();
 }
 
