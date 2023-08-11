@@ -510,10 +510,11 @@ optional<int> TreeInterface::search_branch(int n1, int n2) const
 
 int TreeInterface::find_branch(int n1, int n2) const
 {
-    int b = search_branch(n1,n2);
-    if (b == -1)
+    auto b = search_branch(n1,n2);
+    if (not b)
 	std::abort();
-    return b;
+    else
+	return *b;
 }
 
 int TreeInterface::find_undirected_branch(int n1, int n2) const
