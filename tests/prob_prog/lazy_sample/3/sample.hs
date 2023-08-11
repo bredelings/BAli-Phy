@@ -1,3 +1,5 @@
+module Model where
+
 import Probability
 
 model x = do

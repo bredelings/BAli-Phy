@@ -1,1 +1,1 @@
---name ignore --iter=100 -m Main.hs
+--name ignore --iter=100 -m Model.hs

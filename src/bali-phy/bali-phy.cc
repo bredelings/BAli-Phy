@@ -516,7 +516,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     {
         auto [model_filename, args_v] = extract_prog_args(args, argc, argv, "model");
         L->args = args_v;
-        *P = gen_model_program(args, L, output_dir, output_dir / "BAliPhy.Main.hs", model_filename);
+        *P = gen_model_program(args, L, output_dir, model_filename);
     }
     else
         std::abort();

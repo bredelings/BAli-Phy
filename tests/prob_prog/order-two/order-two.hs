@@ -1,3 +1,5 @@
+module Model where
+
 import           Probability
 
 random_walk x1 x2 = do

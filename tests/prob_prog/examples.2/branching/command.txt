@@ -1,1 +1,1 @@
--m Main.hs --iter=100 --name ignore-output
+-m Model.hs --iter=100 --name ignore-output

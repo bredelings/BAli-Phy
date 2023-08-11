@@ -1,3 +1,5 @@
+module LinearRegression where
+
 import           Probability
 import           Data.Frame
 

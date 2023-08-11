@@ -1,12 +1,18 @@
-import           Probability
+import System.FilePath
+import Probability
+import Probability.Logger
+import MCMC
+import qualified Data.Text.IO as T
 
-model = do
-
-    xs <- prior $ iid 10 (normal 0 1)
-
-    let ys = map (\x -> x * x) xs
-
-    return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
+import qualified Model as Model
 
 main = do
-  return model
+  logParams <- jsonLogger $ "/home/bredelings/Devel/bali-phy/git/tests/prob_prog/demos/2/C1.log.json"
+
+  model <- Model.main
+
+  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }
+
+  jline <- logJSONLine mymodel 0
+
+  T.putStrLn jline

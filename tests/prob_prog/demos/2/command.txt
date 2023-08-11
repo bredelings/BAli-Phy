@@ -1,1 +1,1 @@
---test -m Main.hs
+--test -m Model.hs

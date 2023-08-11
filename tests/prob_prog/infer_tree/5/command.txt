@@ -1,1 +1,1 @@
--m Main 5seq.fasta --iter=5 --name ignore-output
+-m Model 5seq.fasta --iter=5 --name ignore-output

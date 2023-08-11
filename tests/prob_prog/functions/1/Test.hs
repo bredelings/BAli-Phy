@@ -1,3 +1,5 @@
+module Test where
+
 import           Probability
 
 cumsum xs = go 0 xs  where

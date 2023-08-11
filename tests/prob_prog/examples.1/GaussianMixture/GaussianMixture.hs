@@ -1,3 +1,5 @@
+module GaussianMixture where
+
 -- See https://github.com/probmods/webppl/blob/dev/examples/gaussianMixture.wppl
 import Probability
 

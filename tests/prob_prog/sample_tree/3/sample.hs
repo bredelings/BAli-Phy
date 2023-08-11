@@ -1,4 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
+module Model where
+
 import           Probability
 import           Tree
 import           Tree.Newick

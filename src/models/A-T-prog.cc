@@ -785,11 +785,9 @@ string generate_model_program(const boost::program_options::variables_map& args,
                               const fs::path& output_directory)
 {
     std::ostringstream program_file;
-    program_file<<"module BAliPhy.Main where";
-    program_file<<"\n";
     for(auto& mod: {"System.FilePath","Probability","Probability.Logger","MCMC"})
-        program_file<<"\nimport "<<mod;
-    program_file<<"\nimport qualified Data.Text.IO as T\n";
+        program_file<<"import "<<mod<<"\n";
+    program_file<<"import qualified Data.Text.IO as T\n";
     program_file<<"\nimport qualified "<<model_module_name<<" as Model\n";
     program_file<<"\n";
     program_file<<"main = do\n";
@@ -835,26 +833,48 @@ string generate_model_program(const boost::program_options::variables_map& args,
 Program gen_model_program(const boost::program_options::variables_map& args,
                           const std::shared_ptr<module_loader>& L,
                           const fs::path& output_directory,
-                          const fs::path& program_filename,
-                          const fs::path& model_filename)
+                          const fs::path& model_filepath)
 {
-    // 1. Load the module module.
-    Program P(L);
-    auto m = P.get_module_loader()->load_module_from_file(model_filename);
-    P.add(m);
-//    if (m->name == "Main")
-//        throw myexception()<<"Model module "<<model_filename<<" may not be 'Main'\n";
+    // 1. Check that the model filepath is valid.
+    if (not fs::exists(model_filepath))
+	throw myexception()<<"The model file "<<model_filepath<<" does not exist!";
 
-    // 2. Generate and write the Main module.
+    if (fs::is_directory(model_filepath))
+	throw myexception()<<"The model file "<<model_filepath<<" is a directory!";
+	
+    if (not fs::is_regular_file(model_filepath))
+	throw myexception()<<"The model file "<<model_filepath<<" is not a regular file!";
+	
+    fs::path main_file = "Main.hs";
+    if (output_directory.empty())
+	main_file = "Test.Main.hs";
+
+    if (model_filepath.filename() == main_file)
+        throw myexception()<<"The model file may not be called "<<main_file<<".";
+
+    // 2. Save a copy of the model file.
+    auto dest_model_filepath = output_directory / model_filepath.filename();
+    if (not output_directory.empty())
+	fs::copy_file(model_filepath, dest_model_filepath);
+
+    // 3. Load the model module.
+    Program P(L);
+    auto m = P.get_module_loader()->load_module_from_file(dest_model_filepath);
+    if (m->name == "Main")
+        throw myexception()<<"The module name for the model file "<<model_filepath<<" may not be 'Main'\n";
+    P.add(m);
+
+    // 4. Generate and write the Main module.
+    auto program_filepath = output_directory / main_file;
     {
-        checked_ofstream program_file(program_filename);
+        checked_ofstream program_file(program_filepath);
         program_file<<generate_model_program(args, m->name, output_directory);
     }
 
-    // 3. Load the Main module.
-    auto m2 = P.get_module_loader()->load_module_from_file(program_filename);
+    // 5. Load the Main module.
+    auto m2 = P.get_module_loader()->load_module_from_file(program_filepath);
     P.add(m2);
-    P.main = "BAliPhy.Main.main";
+    P.main = "Main.main";
 
     return P;
 }

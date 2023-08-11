@@ -1,3 +1,5 @@
+module Coal where
+
 import Probability
 import Data.Frame
 import Data.Array

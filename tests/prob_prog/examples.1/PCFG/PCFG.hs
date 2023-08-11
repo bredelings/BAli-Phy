@@ -1,3 +1,5 @@
+module PCFG where
+
 import Probability
 
 data Rule = Word String | PreTerminal String | Rule String

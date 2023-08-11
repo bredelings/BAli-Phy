@@ -1,3 +1,4 @@
+module LDA where
 -- See https://github.com/probmods/webppl/blob/dev/examples/lda.wppl
 
 import Probability

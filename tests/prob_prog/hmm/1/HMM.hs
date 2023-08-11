@@ -1,3 +1,5 @@
+module HMM where
+
 -- See https://github.com/probmods/webppl/blob/dev/examples/hmm.wppl
 import Probability
 
