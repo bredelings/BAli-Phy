@@ -139,7 +139,7 @@ sampleComponentStates rtree alignment smodel =  do
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
                                    Nothing -> simulateRootSequence (ls IntMap.! node) f
-                                   Just b' -> let b = reverseEdge rtree b'
+                                   Just b' -> let b = reverseEdge b'
                                                   parent = sourceNode rtree b
                                              in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
       stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)

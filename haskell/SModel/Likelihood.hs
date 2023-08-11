@@ -96,7 +96,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs IntMap.! p
-                                                b0 = reverseEdge t to_p
+                                                b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
                                                 a0 = as IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
@@ -137,7 +137,7 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
                      2 -> peel_internal_branch_SEV (lc IntMap.! b1) (lc IntMap.! b2) p
     in lc
 
-peel_likelihood_SEV t cl f root counts = let branches_in = fmap (reverseEdge t) (edgesOutOfNode t root)
+peel_likelihood_SEV t cl f root counts = let branches_in = fmap reverseEdge (edgesOutOfNode t root)
                                              b1 = branches_in!0
                                              b2 = branches_in!1
                                              b3 = branches_in!2
@@ -158,7 +158,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                              2 -> sample_root_deg2_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) f col_to_compressed
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs IntMap.! p
-                                                b0 = reverseEdge t to_p
+                                                b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0

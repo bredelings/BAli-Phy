@@ -62,7 +62,7 @@ sample_uniform_topology n = do
 modifiable_tree :: (forall a.a->a) -> TreeImp -> TreeImp
 modifiable_tree modf tree@(Tree nodes0 branches0 na ea ta) = (Tree nodesMap branchesMap na ea ta) where
     nodesMap = fmap (\(Node node branches_out) -> Node node (modf branches_out)) nodes0
-    branchesMap = fmap (\(Edge s t r b) -> Edge (modf s) (modf t) r b ) branches0
+    branchesMap = fmap (\(Edge s t b) -> Edge (modf s) (modf t) b ) branches0
 
 {-
    leaves   nodes  branches

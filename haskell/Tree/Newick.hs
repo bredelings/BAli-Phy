@@ -213,12 +213,12 @@ combineInfo (Info ns1 es1 ls1 bls1 ncs1 ecs1) (Info ns2 es2 ls2 bls2 ncs2 ecs2) 
     Info (ns1++ns2) (es1++es2) (ls1++ls2) (bls1++bls2) (ncs1++ncs2) (ecs1++ecs2)
 
 getEdge ids node@(NewickNode _ _ _ branchLength branchAttributes) nodeId = (edgeId, edgeInfo `combineInfo` childInfo) where
-    edgeId = hashedId $ idFromSupply ids
+    edgeId = (hashedId $ idFromSupply ids)+1
+    reverseEdgeId = reverseEdge edgeId
     (ids',childIds) = splitIdSupply ids
-    reverseEdgeId = hashedId $ idFromSupply ids'
     edgeInfo = Info [] [eToChild,eFromChild] [] [(edgeId,branchLength),(reverseEdgeId,branchLength)] [] [(edgeId,branchAttributes),(reverseEdgeId,branchAttributes)]
-    eToChild = Edge nodeId targetId reverseEdgeId edgeId
-    eFromChild = Edge targetId nodeId edgeId reverseEdgeId
+    eToChild = Edge nodeId targetId edgeId
+    eFromChild = Edge targetId nodeId reverseEdgeId
     (targetId, childInfo) = getNode childIds node (Just reverseEdgeId)
 
 getNode ids (NewickNode children nodeLabel nodeAttributes _ _) parentEdge = (nodeId,foldr combineInfo nodeInfo childInfo)

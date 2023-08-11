@@ -3,6 +3,7 @@ module Tree where
 import Data.Foldable
 import Data.Array
 import Data.List (lookup)
+import Data.Maybe (mapMaybes)
 
 import Data.Maybe (fromJust)
 import Data.IntMap (IntMap)
@@ -46,12 +47,16 @@ class Tree t where
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
 
+reverseEdge e = -e
+
+isUEdge e = e > reverseEdge e
+
 getEdges t  = getEdgesSet t & IntSet.toList
-getUEdges t = [ e | e <- getEdges t, e < (e_reverse $ findEdge t e)]
+getUEdges t = [ e | e <- getEdges t, isUEdge e]
 getUEdgesSet t = getUEdges t & IntSet.fromList
 numBranches t = length $ getUEdges t
 
-undirectedName t e = min e (reverseEdge t e)
+undirectedName e  = max e (reverseEdge e)
 
 edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
@@ -92,10 +97,10 @@ instance Show Node where
 
 -- ideally e_source_node and e_target_node would be of type Node,
 --   and e_reverse would be of type Edge
-data Edge = Edge { e_source_node, e_target_node, e_reverse, edge_name :: Int }
+data Edge = Edge { e_source_node, e_target_node, edge_name :: Int }
 
 instance Show Edge where
-    show (Edge source target reverse name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", e_reverse = " ++ show reverse ++ ", edge_name = " ++ show name ++ "}"
+    show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
@@ -245,7 +250,7 @@ branch_duration t b = abs (node_time t source - node_time t target)
           target = targetNode t b
 
 instance Tree t => HasBranchLengths (BranchLengthTreeImp t) where
-    branch_length (BranchLengthTree tree ds) b = ds IntMap.! b' where b' = min b (reverseEdge tree b)
+    branch_length (BranchLengthTree tree ds) b = ds IntMap.! (undirectedName b)
 
 instance Tree t => CanModifyBranchLengths (BranchLengthTreeImp t) where
     modifyBranchLengths f t@(BranchLengthTree tree ds) = BranchLengthTree tree (IntMap.fromSet f (IntMap.keysSet ds))
@@ -318,22 +323,21 @@ instance (IsTimeTree t, HasLabels t) => HasLabels (RateTimeTreeImp t) where
 toward_root rt b = not $ away_from_root rt b
 
 branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
-branchFromParent rtree node = reverseEdge rtree <$> branchToParent rtree node
+branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
 
 parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                                 Nothing -> Nothing
 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
-edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node
+edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
 sourceNode  tree b = e_source_node  $ findEdge tree b
 targetNode  tree b = e_target_node  $ findEdge tree b
-reverseEdge tree b = e_reverse      $ findEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = fmap (reverseEdge t) $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
+edgesBeforeEdge t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
     where node = sourceNode t b
-edgesAfterEdge t b = IntSet.toArray $ IntSet.delete (reverseEdge t b) (edgesOutOfNodeSet t node)
+edgesAfterEdge t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
     where node = targetNode t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
@@ -360,18 +364,23 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet
     num_branches = num_nodes - 1
 
     -- is this really how we want to name the branches?
-    forward_backward_edges = zip [0..] $ edges ++ map swap edges
+    namedEdges = zip [1..] $ edges
 
-    reverse b = (b + num_branches) `mod` (2*num_branches)
+    find_branch :: Int -> Maybe (Int,Int)
+    find_branch b | b > 0     = fmap snd $ find (\e -> fst e == b) namedEdges
+                  | otherwise = swap <$> (find_branch $ reverseEdge b)
 
-    find_branch b = fmap snd $ find (\(b',_) -> b' == b) forward_backward_edges
+    branchFrom n (b,(x,y)) | x == n    = Just b
+                           | y == n    = Just (-b)
+                           | otherwise = Nothing
+
+    edgesFrom n = mapMaybes (branchFrom n) namedEdges
 
     nodesSet = IntSet.fromList nodes
-    nodesMap = IntMap.fromSet (\n ->  Node n (IntSet.fromList [b | (b,(x,y)) <- forward_backward_edges, x==n]) ) nodesSet
+    nodesMap = nodesSet & IntMap.fromSet (\n ->  Node n (IntSet.fromList $ edgesFrom n) )
 
-    branchesSet = IntSet.fromList [0..2*num_branches-1]
-    branchesMap = IntMap.fromSet (\b -> let Just (s,t) = find_branch b
-                                        in Edge s t (reverse b) b) branchesSet
+    branchesSet = IntSet.fromList [1..num_branches] `IntSet.union` IntSet.fromList (map negate [1..num_branches])
+    branchesMap = branchesSet & IntMap.fromSet (\b -> let Just (s,t) = find_branch b in Edge s t b)
 
 tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 

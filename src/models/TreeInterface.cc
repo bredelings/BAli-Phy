@@ -103,9 +103,8 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
         param m_source = info[0];
         param m_target = info[1];
-        param m_reverse = info[2];
 
-        parameters_for_tree_branch.insert({edge, {m_source, m_target, m_reverse} });
+        parameters_for_tree_branch.insert({edge, {m_source, m_target} });
     }
 }
 
@@ -470,11 +469,12 @@ int TreeInterface::target(int b) const {
 
 int TreeInterface::reverse(int b) const
 {
-    return std::get<2>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
+    assert(b != 0);
+    return -b;
 }
 
 int TreeInterface::undirected(int b) const {
-    return std::min(b, reverse(b));
+    return std::max(b, reverse(b));
 }
 
 bool TreeInterface::is_connected(int n1, int n2) const

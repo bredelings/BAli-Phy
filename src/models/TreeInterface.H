@@ -20,7 +20,7 @@ struct tree_constants: public Object
     // The tree
     expression_ref tree_exp;
     std::map<int,param> parameters_for_tree_node;
-    std::map<int,std::tuple<param,param,param>> parameters_for_tree_branch;
+    std::map<int,std::tuple<param,param>> parameters_for_tree_branch;
     int n_leaves;
 
     // Root info

@@ -18,7 +18,7 @@ mmm branch_cats m = MixtureModels branch_cats [m]
 
 instance SimpleSModel MixtureModels where
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms)) b = branch_transition_p (SingleBranchLengthModel tree mx) b
-        where mx = mms!!(branchCats IntMap.! undirectedName tree b)
+        where mx = mms!!(branchCats IntMap.! undirectedName b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
     weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
     frequency_matrix          (MixtureModels _ (m:ms)) = frequency_matrix m

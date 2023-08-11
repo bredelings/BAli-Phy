@@ -29,7 +29,7 @@ unaligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
 
     make_a' b | b > b2     = flip_alignment $ make_a b2
               | otherwise  = make_a b
-              where b2 = reverseEdge tree b
+              where b2 = reverseEdge b
 
     make_a b = unaligned_pairwise_alignment l1 l2
         where l1 = length_for_node $ sourceNode tree b
@@ -50,7 +50,7 @@ left_aligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make
 
     make_a' b | b > b2     = flip_alignment $ make_a b2
               | otherwise  = make_a b
-              where b2 = reverseEdge tree b
+              where b2 = reverseEdge b
 
     make_a branch = left_aligned_pairwise_alignment l1 l2
         where l1 = length_for_node $ sourceNode tree branch
