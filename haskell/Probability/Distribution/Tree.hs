@@ -209,14 +209,14 @@ uniform_time_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_
 -- FIXME: check that numLeaves tree is not changeable?
 coalescent_tree_effect tree = do
   sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
-            | node <- [numLeaves tree..numNodes tree - 1]
-            ]
+            | node <- internal_nodes tree]
+
   sequence_ [ add_move $ metropolis_hastings $ fnpr_unsafe_proposal tree node
-            | node <- [0..numNodes tree - 1]
-            ]
+            | node <- getNodes tree]
+
   sequence_ [ add_move $ tnni_on_branch_unsafe tree branch
-            | branch <- [0..2*numBranches tree - 1]
-            ]
+            | branch <- getEdges tree]
+
 
 
 data CoalEvent = Leaf | Internal | RateShift Double
