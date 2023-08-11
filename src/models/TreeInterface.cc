@@ -17,6 +17,7 @@ typedef Box<immer::set<int>> IntSet;
 using std::vector;
 using std::string;
 using std::map;
+using std::optional;
 using boost::dynamic_bitset;
 
 // We use the context_ptr class to avoid pointing to index_var regs, which
