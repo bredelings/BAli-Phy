@@ -559,7 +559,8 @@ void sample_alignments_one(context_ref& C, TreeInterface& t, int b)
     c.push_back(C);
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
-    log_double_t total_ratio = 1.0;
+    std::abort();
+    // log_double_t total_ratio = 1.0;
     for(int i=0;i<c.size();i++)
     {
 
@@ -1401,7 +1402,6 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
 extern "C" closure builtin_function_jsonToTableLineRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
 
     auto j = Args.evaluate(0).as_<Box<json>>();
 
