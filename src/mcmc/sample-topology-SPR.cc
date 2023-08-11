@@ -69,6 +69,22 @@ int n_SPR_moves(const Parameters& P)
     return n+1;
 }
 
+template <typename I, typename T>
+I argmax(const std::unordered_map<I,T>& m)
+{
+    auto [index0,value] = *m.begin();
+    auto index = index0;
+    for(auto& [i,v]: m)
+    {
+	if (v > value)
+	{
+	    index = i;
+	    value = v;
+	}
+    }
+    return index;
+}
+
 void SPR_inc(MoveStats& Stats, MCMC::Result result,const string& name,double L)
 {
     Stats.inc(name, result);
