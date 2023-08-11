@@ -77,4 +77,12 @@ unsigned long myrandom(unsigned long max);
 long myrandom(long min,long max);
 
 int uniform_int(int min, int max);
+
+template <typename T>
+const T& uniform_element(const std::vector<T>& v)
+{
+    assert(not v.empty());
+    int index = uniform_int(0, v.size()-1);
+    return v[index];
+}
 #endif
