@@ -251,66 +251,72 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
 //   be on one of the endpoints of the branch
 // * the cost of a non-leaf branch with branches_out={l,r} is 2*cost[l]+cost[r]
 //   if we visit the subtree in front of l first.
-vector<int> get_cost(const TreeInterface& t)
+std::unordered_map<int,int> get_cost(const TreeInterface& t)
 {
-    if (t.n_leaves() < 2)
-        return {};
-    else if (t.n_leaves() == 2)
-        return {0, 0};
+    std::unordered_map<int,int> cost;
 
-    vector<int> cost(t.n_branches()*2,-1);
     vector<int> stack1; stack1.reserve(t.n_branches()*2);
     vector<int> stack2; stack2.reserve(t.n_branches()*2);
 
     for(auto b: t.leaf_branches())
     {
         int b2 = t.reverse(b);
-        cost[b2] = 0;
+        cost.insert({b2,0});
         stack1.push_back(b2);
     }
+
+    if (t.n_leaves() == 2)
+	return cost;
     
-    while(not stack1.empty()) {
+    while(not stack1.empty())
+    {
         // fill 'stack2' with branches before 'stack1'
         stack2.clear();
-        for(int i=0;i<stack1.size();i++)
-            t.append_branches_before(stack1[i], stack2);
+        for(int b: stack1)
+            t.append_branches_before(b, stack2);
 
         // clear 'stack1'
         stack1.clear();
 
-        for(int i=0;i<stack2.size();i++) {
-            vector<int> children = t.branches_after(stack2[i]);
-
+        for(int b: stack2)
+	{
+            auto children = t.branches_after(b);
             assert(children.size() == 2);
-            int cost_l = cost[children[0]];
-            int cost_r = cost[children[1]];
-            if (cost_l != -1 and cost_r != -1) {
-                if (not t.is_leaf_branch(children[0])) cost_l++;
+	    int l = children[0];
+	    int r = children[1];
 
-                if (not t.is_leaf_branch(children[1])) cost_r++;
+	    if (cost.contains(l) and cost.contains(r))
+	    {
+		int cost_l = cost.at(l);
+		int cost_r = cost.at(r);
+
+                if (not t.is_leaf_branch(l)) cost_l++;
+
+                if (not t.is_leaf_branch(l)) cost_r++;
 
                 if (cost_l > cost_r)
                     std::swap(cost_l,cost_r);
 
-                cost[stack2[i]] = 2*cost_l + cost_r;
-                stack1.push_back(stack2[i]);
+                cost.insert({b, 2*cost_l + cost_r});
+
+                stack1.push_back(b);
             }
         }
     }
-  
+
     // check that all the costs have been calculated
-    for(int i=0;i<cost.size();i++)
-        assert(cost[i] != -1);
+    for(int b: t.directed_branches())
+	assert(cost.contains(b));
 
     return cost;
 }
 
-vector<int> get_distance(const TreeInterface& t, int n)
+std::unordered_map<int,int> get_distance(const TreeInterface& t, int n)
 {
-    vector<int> D(t.n_nodes(),-1);
+    std::unordered_map<int,int> D;
     D[n] = 0;
 
-    vector<int> branches = t.branches_out(n);
+    auto branches = t.branches_out(n);
     int d = 0;
     int i = 0;
     while(i<branches.size())
@@ -382,12 +388,13 @@ vector<int> walk_tree_path_toward_and_away(const TreeInterface& t, int node)
 
 vector<int> walk_tree_path(const TreeInterface& t, int root)
 {
-    vector<int> cost = get_cost(t);
+    auto cost = get_cost(t);
 
-    vector<int> D = get_distance(t,root);
-    vector<int> tcost = cost;
-    for(int i=0;i<cost.size();i++)
-        tcost[i] += D[t.target(i)];
+    auto D = get_distance(t,root);
+
+    auto tcost = cost;
+    for(auto& [b,c]: tcost)
+        c += D.at(t.target(b));
 
     vector<int> b_stack;
     b_stack.reserve(t.n_branches());
@@ -402,13 +409,14 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
     {
         if (not best_leaf_branch)
             best_leaf_branch = b;
-        else if (tcost[b] < tcost[*best_leaf_branch])
+        else if (tcost.at(b) < tcost.at(best_leaf_branch.value()))
             best_leaf_branch = b;
     }
 
     b_stack.push_back(*best_leaf_branch);
 
-    while(not b_stack.empty()) {
+    while(not b_stack.empty())
+    {
         // pop stack into list
         branches.push_back(b_stack.back());
         b_stack.pop_back();
@@ -423,13 +431,13 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
             ;
         else {
             if (children.size() == 2) {
-                if (cost[children[0]] < cost[children[1]])
+                if (cost.at(children[0]) < cost.at(children[1]))
                     std::swap(children[0],children[1]);
             }
             else
                 std::abort();
         }
-      
+
         // put children onto the stack
         for(int b: children)
             b_stack.push_back(b);
