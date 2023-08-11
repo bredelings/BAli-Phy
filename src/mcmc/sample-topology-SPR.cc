@@ -553,7 +553,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 	for(auto& x : p)
             for(int i=0;i<x.n_data_partitions(); i++)
                 if (x[i].has_pairwise_alignments())
-                    for(int b=0; b<2*x.t().n_branches(); b++)
+                    for(int b: x.t().directed_branches())
                     {
                         auto A = x[i].get_pairwise_alignment(b);
                         int n1 = x.t().source(b);
@@ -583,8 +583,7 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
     int b1 = -1;
     while (true)
     {
-	b1 = myrandom(T.n_branches()*2);
-	b1 = T.directed_branches()[b1];
+	b1 = uniform_element(T.directed_branches());
 
 	// forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
@@ -600,8 +599,7 @@ int choose_subtree_branch_uniform2(const TreeInterface& T)
     int b1 = -1;
     while (true)
     {
-	b1 = myrandom(T.n_branches()*2);
-	b1 = T.directed_branches()[b1];
+	b1 = uniform_element(T.directed_branches());
 
 	// forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
@@ -1495,9 +1493,8 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
 
 void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats, bool sum_out_A) 
 {
-    int B = P.as<Parameters>()->t().n_branches();
-
-    for(int b=0;b<2*B;b++)
+    auto branches = P.as<Parameters>()->t().branches();
+    for(int b: branches)
     {
 	slice_sample_branch_length(P,Stats,b);
 	auto& PP = *P.as<Parameters>();

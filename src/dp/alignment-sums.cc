@@ -119,7 +119,8 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
     log_double_t p = 1;
 
     // Add in the branch alignments
-    for(int b=0;b<t.n_branches();b++) {
+    for(int b: t.branches())
+    {
 	int target = t.target(b);
 	int source = t.source(b);
 

@@ -379,7 +379,7 @@ struct Construct
 
 #ifndef NDEBUG
 	    // 5. Check that the resulting matrix yields the correct pairwise alignments
-	    for(int b=0;b<2*t.n_branches();b++)
+	    for(int b: t.directed_branches())
 	    {
 		pairwise_alignment_t a2 = A2::get_pairwise_alignment(M, t.source(b), t.target(b));
 		assert(a[b] == a2);
