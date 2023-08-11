@@ -115,25 +115,6 @@ std::shared_ptr<const alphabet> data_partition::get_alphabet() const
     return property(9).value().as_<PtrBox<alphabet>>();
 }
 
-alignment data_partition::A() const
-{
-    matrix<int> M;
-    if (t().n_nodes() == 1)
-    {
-        M = matrix<int>(get_sequence(0)->size(),1);
-        for(int i=0;i<M.size1();i++)
-            M(i,0) = i;
-    }
-    else
-    {
-        vector<pairwise_alignment_t> As;
-        for(int b=0;b<2*t().n_branches();b++)
-            As.push_back(get_pairwise_alignment(b));
-        M = construct(t(), As);
-    }
-
-    return get_alignment(*get_alphabet(), all_seqs(), leaf_sequences(), M);
-}
 
 ParametersTreeInterface data_partition::t() const
 {
@@ -150,14 +131,6 @@ int data_partition::subst_root() const {
     return property(0).value().as_int();
 }
 
-vector< vector<int> > data_partition::leaf_sequences() const
-{
-    vector< vector<int> > sequences;
-    for(int i=0;i<t().n_leaves();i++)
-        sequences.push_back( (vector<int>)(*get_sequence(i)) );
-    return sequences;
-}
-
 string data_partition::label(int i) const
 {
     auto labels = property(5);
@@ -166,16 +139,6 @@ string data_partition::label(int i) const
         return label->as_<String>();
     else
         return "A"+std::to_string(i);
-}
-
-vector< sequence> data_partition::all_seqs() const
-{
-    vector< sequence > sequences ( t().n_nodes() );
-
-    for(int i=0;i<sequences.size();i++)
-        sequences[i].name = label(i);
-
-    return sequences;
 }
 
 bool data_partition::has_IModel() const
@@ -471,37 +434,6 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
         branch_list_.push_back(int(b));
 
     return branch_list_;
-}
-
-expression_ref tree_expression(const SequenceTree& T)
-{
-    /*------------------------- Create the tree structure -----------------------*/
-    vector<expression_ref> node_branches;
-    for(int n=0; n < T.n_nodes(); n++)
-    {
-        vector<expression_ref> node;
-        for(auto& edge: edges_connecting_to_node(T,n))
-            node.push_back( edge );
-    
-        node_branches.push_back( get_list(node) );
-    }
-    expression_ref node_branches_array = {var("Data.Array.listArray'"),get_list(node_branches)};
-
-    vector<expression_ref> branch_nodes;
-    for(int b=0; b < 2*T.n_branches(); b++)
-    {
-        expression_ref source = T.directed_branch(b).source().name();
-        // FIXME: What position in the edges_out_of_node list for the source node is this branch?
-        expression_ref source_index = 0;
-        expression_ref target = T.directed_branch(b).target().name();
-        int reverse_branch = T.directed_branch(b).reverse();
-        branch_nodes.push_back( Tuple(source, source_index, target, reverse_branch) );
-    }
-    expression_ref branch_nodes_array = {var("Data.Array.listArray'"),get_list(branch_nodes)};
-
-    expression_ref tree_con = var("Tree.Tree");
-
-    return {tree_con, node_branches_array, branch_nodes_array, T.n_nodes()};
 }
 
 bool Parameters::variable_alignment() const

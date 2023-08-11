@@ -101,8 +101,6 @@ public:
     /// Is the alignment allowed to vary?
     bool variable_alignment() const;
 
-    alignment A() const;                        // used in dp-alignment-sums.cc (debug), mcmc/logger.cc (log), sample-alignment.cc (debug), sample-node.cc (debug), mcmc/setup.cc [fraction_non_gap]
-
     ParametersTreeInterface t() const;
 
     /// Cached Transition Probabilities
@@ -110,11 +108,7 @@ public:
   
     object_ptr<const EVector> get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
-    std::vector< std::vector<int> > leaf_sequences() const;
-
     std::string label(int i) const;
-
-    std::vector< sequence > all_seqs() const;
 
     int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 

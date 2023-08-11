@@ -177,7 +177,8 @@ log_double_t sample_alignment(Parameters& P,int b)
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment())
 	    {
-		paths[i].push_back( get_path(p[i][j].A(), node1, node2) );
+		auto a = p[i][j].get_pairwise_alignment(p[i].t().find_branch(node1,node2));
+		paths[i].push_back( get_path_from_pairwise_alignment(a) );
     
 		OS[i].push_back( other_subst(p[i][j],nodes) );
 		OP[i].push_back( other_prior(p[i][j],nodes) );

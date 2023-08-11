@@ -187,7 +187,7 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
     if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
 	 (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
 	 (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
-	cerr<<P.A()<<endl;
+//	cerr<<P.A()<<endl;
 	cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
 	std::abort();
     }
