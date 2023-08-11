@@ -725,7 +725,7 @@ map<int,expression_ref> get_names_for_regs(const reg_heap& M)
 
     for(int r: regs)
     {
-	if (auto E = M.expression_at(r); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>())
+	if (auto E = M.expression_at(r); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>() and E.print().size() < 25)
 	{
 	    reg_to_expression.insert({r,E});
 	}
