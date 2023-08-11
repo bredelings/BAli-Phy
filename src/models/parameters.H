@@ -96,8 +96,6 @@ public:
 
     bool has_pairwise_alignments() const;
 
-    bool has_alignment_matrix() const;
-
     /// Is the alignment allowed to vary?
     bool variable_alignment() const;
 
@@ -107,8 +105,6 @@ public:
     object_ptr<const EVector> transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
   
     object_ptr<const EVector> get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
-
-    std::string label(int i) const;
 
     int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
@@ -143,8 +139,6 @@ public:
     const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
     bool pairwise_alignment_is_unset(int b) const;
-
-    std::string ancestral_sequence_alignment() const;
 
     // The prior, likelihood, and probability
     log_double_t prior_alignment() const;

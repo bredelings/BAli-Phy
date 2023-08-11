@@ -72,6 +72,7 @@ using std::endl;
 using std::ostream;
 using std::map;
 using std::tuple;
+using std::unordered_map;
 
 using std::optional;
 namespace fs = std::filesystem;
@@ -129,16 +130,6 @@ double data_partition::get_beta() const
 
 int data_partition::subst_root() const {
     return property(0).value().as_int();
-}
-
-string data_partition::label(int i) const
-{
-    auto labels = property(5);
-
-    if (auto label = labels[i].value().as_<EMaybe>())
-        return label->as_<String>();
-    else
-        return "A"+std::to_string(i);
 }
 
 bool data_partition::has_IModel() const
@@ -295,11 +286,6 @@ log_double_t data_partition::likelihood() const
     return property(4).value().as_log_double();
 }
 
-string data_partition::ancestral_sequence_alignment() const
-{
-    return property(3)[0].value().as_<String>();
-}
-
 log_double_t data_partition::heated_likelihood() const 
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.
@@ -314,12 +300,6 @@ bool data_partition::has_pairwise_alignments()  const
     // FIXME -- perhaps we should make the vector of pairwise alignments into an optionl<vector<T>> and check that.
     return likelihood_calculator() == 0;
 }
-
-bool data_partition::has_alignment_matrix() const
-{
-    return likelihood_calculator() == 1;
-}
-
 
 int data_partition::likelihood_calculator() const
 {
