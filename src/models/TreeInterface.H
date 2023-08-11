@@ -109,7 +109,7 @@ public:
     bool is_leaf_branch(int b) const;
     bool is_internal_branch(int b) const;
 
-    int search_branch(int n1, int n2) const;
+    std::optional<int> search_branch(int n1, int n2) const;
     int find_branch(int n1, int n2) const;
     int find_undirected_branch(int n1, int n2) const;
     int find_branch(const tree_edge&) const;

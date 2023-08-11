@@ -479,7 +479,7 @@ int TreeInterface::undirected(int b) const {
 
 bool TreeInterface::is_connected(int n1, int n2) const
 {
-    return (search_branch(n1, n2) != -1);
+    return search_branch(n1, n2).has_value();
 }
 
 bool TreeInterface::is_leaf_node(int n) const {
@@ -497,7 +497,7 @@ bool TreeInterface::is_internal_branch(int b) const {
     return not is_leaf_branch(b);
 }
 
-int TreeInterface::search_branch(int n1, int n2) const
+optional<int> TreeInterface::search_branch(int n1, int n2) const
 {
     for(int i=0;i<degree(n1);i++)
     {
@@ -505,7 +505,7 @@ int TreeInterface::search_branch(int n1, int n2) const
 	int n = target(b);
 	if (n == n2) return b;
     }
-    return -1;
+    return {};
 }
 
 int TreeInterface::find_branch(int n1, int n2) const
