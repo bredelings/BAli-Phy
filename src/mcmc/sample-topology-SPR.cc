@@ -173,26 +173,27 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 // Consider measuring similarities/differences by counting.
 // Problem: how do we handle multiple partitions?
 
-vector<double> effective_lengths(const TreeInterface& t)
+std::unordered_map<int,double> effective_lengths(const TreeInterface& t)
 {
-    vector<double> lengths(2*t.n_branches(),0);
+    std::unordered_map<int,double> lengths;
 
-    vector<int> branches = branches_from_leaves(t);
+    auto branches = branches_from_leaves(t);
 
-    for(int i=0;i<branches.size();i++)
+    for(int b: branches)
     {
-	lengths[branches[i]] = t.branch_length(branches[i]);
+	lengths[b] = t.branch_length(b);
 
-	vector<int> pre_b = t.branches_before(branches[i]);
+	auto pre_b = t.branches_before(b);
 
-	if (pre_b.size() > 0) {
+	if (pre_b.size() > 0)
+	{
 	    double Pr_change_on_all = 1;
-	    for(int j=0;j<pre_b.size();j++)
-		Pr_change_on_all *= (1.0-exp(-lengths[pre_b[j]]));
+	    for(int b2: pre_b)
+		Pr_change_on_all *= (1.0-exp(-lengths[b2]));
 	    double Pr_no_change_on_at_least_1 = 1.0-Pr_change_on_all;
 	    if (Pr_no_change_on_at_least_1 > 0)
-		lengths[branches[i]] += -log(Pr_no_change_on_at_least_1);
-	    assert(lengths[branches[i]] >= t.branch_length(branches[i]));
+		lengths[b] += -log(Pr_no_change_on_at_least_1);
+	    assert(lengths[b] >= t.branch_length(b));
 	}
     }
 
@@ -210,25 +211,25 @@ double effective_length(const TreeInterface& T, const tree_edge& E)
     return effective_length(T, b);
 }
 
-vector<double> effective_lengths_min(const TreeInterface& t)
+std::unordered_map<int,double> effective_lengths_min(const TreeInterface& t)
 {
-    vector<double> lengths(2*t.n_branches(),0);
+    std::unordered_map<int,double> lengths;
 
     vector<int> branches = branches_from_leaves(t);
 
-    for(int i=0;i<branches.size();i++)
+    for(int b: branches)
     {
-	lengths[branches[i]] = t.branch_length(branches[i]);
+	lengths[b] = t.branch_length(b);
 
-	vector<int> pre_b = t.branches_before(branches[i]);
+	vector<int> pre_b = t.branches_before(b);
 
 	if (pre_b.size() > 0) 
 	{
 	    double min_prev = t.branch_length(pre_b[0]);
-	    for(int j=1;j<pre_b.size();j++)
-		min_prev = std::min(min_prev, t.branch_length(pre_b[j]));
+	    for(int b2: pre_b)
+		min_prev = std::min(min_prev, t.branch_length(b2));
 
-	    lengths[branches[i]] += min_prev;
+	    lengths[b] += min_prev;
 	}
     }
 
@@ -607,9 +608,8 @@ int choose_subtree_branch_uniform2(const TreeInterface& T)
 	if (T.is_leaf_node(T.target(b1))) continue;
 
 	// forbid branches with only 1 attachment point - not very useful.
-	vector<int> after = T.branches_after(b1);
 	bool ok = false;
-	for(int b: after)
+	for(int b: T.branches_after(b1))
 	    if (not T.is_leaf_node(T.target(b)))
 		ok = true;
 	if (not ok) continue;
