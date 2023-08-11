@@ -565,6 +565,7 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
     while (true)
     {
 	b1 = myrandom(T.n_branches()*2);
+	b1 = T.directed_branches()[b1];
 
 	// forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
@@ -581,6 +582,7 @@ int choose_subtree_branch_uniform2(const TreeInterface& T)
     while (true)
     {
 	b1 = myrandom(T.n_branches()*2);
+	b1 = T.directed_branches()[b1];
 
 	// forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
@@ -1555,6 +1557,8 @@ void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2)
     int n1 = myrandom(T.n_leaves());
     int n2 = -1;
     do { n2 = myrandom(T.n_leaves());} while (n2 == n1);
+    n1 = T.leaf_nodes()[n1];
+    n2 = T.leaf_nodes()[n2];
 
     vector<int> path = path_to(T,n1,n2);
     assert(path.size() >= 3);
