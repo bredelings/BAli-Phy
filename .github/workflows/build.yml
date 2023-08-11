@@ -249,7 +249,7 @@ jobs:
 
         echo ::group::Basic tests
         ${BALIPHY} help
-        cp $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta .
+        cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
         echo ::group::Test suite
