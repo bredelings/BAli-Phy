@@ -717,13 +717,11 @@ std::string generate_atmodel_program(const variables_map& args,
             main.perform({var("T.putStrLn"), var("jline")});
         }
 
-/*
         if (args.count("verbose"))
         {
-            M->show_graph();
-            M->write_factor_graph();
+            main.perform({var("writeTraceGraph"),var("mymodel")});
+//            M->write_factor_graph();
         }
-*/
     }
     else
     {
@@ -835,6 +833,12 @@ string generate_model_program(const boost::program_options::variables_map& args,
 
         program_file<<"\n";
         program_file<<"  runMCMC "<<iterations<<" mymodel\n";
+    }
+
+    if (args.count("verbose"))
+    {
+        program_file<<"\n";
+	program_file<<"  writeTraceGraph mymodel\n";
     }
 
     return program_file.str();
