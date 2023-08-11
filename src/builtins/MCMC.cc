@@ -762,7 +762,7 @@ void FNPR_move(context_ref& c, int tree_reg, int n)
     double p_t = T.node_time(p);
 
     vector<int> branch_targets;
-    for(int n2=0; n2 < T.n_nodes(); n2++)
+    for(int n2: T.nodes())
     {
         auto b = T.parent_branch_for_node(n2);
         if (not b) continue;

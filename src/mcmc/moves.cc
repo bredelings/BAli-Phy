@@ -603,7 +603,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
     if (log_verbose>=3) std::cerr<<"realign_from_tips: |A0| = "<<AL0<<"\n";
     Parameters& PP = *P.as<Parameters>();
     auto t = PP.t();
-    int toward_node = uniform_int(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
+    int toward_node = (t.n_leaves() > 2) ? uniform_element(t.internal_nodes()) : uniform_element(t.nodes());
+
     vector<int> branches = walk_tree_path_toward_and_away(t, toward_node);
 
     for(int b: branches)

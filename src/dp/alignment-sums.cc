@@ -131,7 +131,8 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 
 
     // Add in the node length corrections
-    for(int n=0;n<t.n_nodes();n++) {
+    for(int n: t.nodes())
+    {
 	if (t.is_leaf_node(n))
 	    continue;
 
