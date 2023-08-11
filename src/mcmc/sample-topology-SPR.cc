@@ -241,31 +241,30 @@ int choose_SPR_target(const TreeInterface& T1, int b1)
 {
     //----- Select the branch to move to ------//
     auto subtree_nodes = T1.partition(T1.reverse(b1));
-    subtree_nodes[T1.target(b1)] = true;
+    subtree_nodes.insert(T1.target(b1));
 
-    vector<int> branches;
+    std::unordered_map<int,double> branch_lengths;
     vector<double> lengths;
 
-    for(int i=0;i<T1.n_branches();i++) 
+    for(int b: T1.branches())
     {
 	// skip branch if its contained in the subtree
-	if (subtree_nodes[T1.target(i)] and 
-	    subtree_nodes[T1.source(i)])
+	if (subtree_nodes.contains(T1.target(b)) and
+	    subtree_nodes.contains(T1.source(b)))
 	    continue;
 
 	double L = 1.0;
 
 	// down-weight branch if it is one of the subtree's 2 neighbors
-	if (subtree_nodes[T1.target(i)] or 
-	    subtree_nodes[T1.source(i)])
+	if (subtree_nodes.contains(T1.target(b)) or
+	    subtree_nodes.contains(T1.source(b)))
 	    L = 0.5;
 
-	branches.push_back(i);
-	lengths.push_back(L);
+	branch_lengths.insert({b,L});
     }
 
     try {
-	int b2 = branches[ choose(lengths) ];
+	int b2 = choose(branch_lengths);
 
 	return b2;
     }
@@ -491,8 +490,8 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     const int bins = 6;
 
     // 0. Check that b2 isn't behind b1
-    assert(P.t().partition(b1)[P.t().target(b2)]);
-    assert(P.t().partition(b1)[P.t().source(b2)]);
+    assert(P.t().partition(b1).contains(P.t().target(b2)));
+    assert(P.t().partition(b1).contains(P.t().source(b2)));
 
     // 1. ----- Create objects p[0] and p[1] to store new alignments A1 and A2 for tree T1 and T2 ----//
     int n1 = P.t().target(b1);
@@ -1534,7 +1533,7 @@ vector<int> path_to(const TreeInterface& T,int n1, int n2)
 
 	for(int i: T.branches_after(b))
 	{
-	    if (T.partition(i)[n2]) {
+	    if (T.partition(i).contains(n2)) {
 		path.push_back(T.target(i));
 		break;
 	    }

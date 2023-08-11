@@ -438,25 +438,24 @@ vector<int> TreeInterface::all_branches_toward_node(int n) const
     return branches;
 }
 
-dynamic_bitset<> TreeInterface::partition(int b) const
+std::unordered_set<int> TreeInterface::partition(int b) const
 {
-    dynamic_bitset<> nodes(n_nodes());
-    vector<int> branches = all_branches_after_inclusive(b);
-    for(int b: branches)
-	nodes.set(target(b));
+    std::unordered_set<int> nodes;
+    for(int b: all_branches_after_inclusive(b))
+	nodes.insert(target(b));
     return nodes;
 }
 
 /// Is 'n' contained in the subtree delineated by 'b'?
 bool TreeInterface::subtree_contains(int b,int n) const {
-    return partition(b)[n];
+    return partition(b).contains(n);
 }
 
 /// Is 'b2' contained in the subtree delineated by 'b1'?
 bool TreeInterface::subtree_contains_branch(int b1,int b2) const 
 {
     auto p = partition(b1);
-    return p[source(b2)] and p[target(b2)];
+    return p.contains(source(b2)) and p.contains(target(b2));
 }
 
 
