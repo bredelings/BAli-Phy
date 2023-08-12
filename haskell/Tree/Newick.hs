@@ -80,7 +80,7 @@ write_newick tree = write_newick_rooted (makeRooted tree)
 
 intercalate2 t ts = foldl1 (\x y -> x `T.append` t `T.append` y) ts
 
-write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing `T.snoc` ';' where
+write_newick_node tree node = write_branches_and_node tree (edgesOutOfNodeArray tree node) node Nothing `T.snoc` ';' where
 
     write_branches_and_node tree branches node branch = write_branches tree branches `T.append` get_node_label tree node `T.append` get_branch_label tree branch
 
@@ -88,7 +88,7 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
     write_branches tree branches | otherwise     = (T.singleton '(') `T.append` text `T.append` (T.singleton ')') where
         text = intercalate2 (T.singleton ',') $ fmap (write_branch tree) $ branches
 
-    write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
+    write_branch tree branch = write_branches_and_node tree (edgesAfterEdgeArray tree branch) (targetNode tree branch) (Just branch)
 
 split c "" = []
 split c s  = case break (== c) s of

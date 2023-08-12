@@ -59,7 +59,7 @@ numBranches t = length $ getUEdges t
 undirectedName e  = max e (reverseEdge e)
 
 edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
-edgesOutOfNode tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
+edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 
 class Tree t => HasBranchLengths t where
     branch_length :: t -> Int -> Double
@@ -322,22 +322,22 @@ instance (IsTimeTree t, HasLabels t) => HasLabels (RateTimeTreeImp t) where
 
 toward_root rt b = not $ away_from_root rt b
 
-branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
+branchToParent rtree node = find (toward_root rtree) (edgesOutOfNodeArray rtree node)
 branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
 
 parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                                 Nothing -> Nothing
 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
-edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
+edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
 sourceNode  tree b = e_source_node  $ findEdge tree b
 targetNode  tree b = e_target_node  $ findEdge tree b
-edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
+edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNodeArray t n1)
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
-neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
+neighbors t n = fmap (targetNode t) (edgesOutOfNodeArray t n)
+edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
     where node = sourceNode t b
-edgesAfterEdge t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
+edgesAfterEdgeArray t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
     where node = targetNode t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
@@ -384,14 +384,14 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet
 
 tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 
-allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
-allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
-allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
+allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdgeArray tree b)
+allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNodeArray tree n)
+allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNodeArray tree (root tree))
 
 add_labels labels t = LabelledTree t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 
 add_root r t = rt
-     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
+     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdgeArray rt b))
            nb = numBranches t * 2
            rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
 

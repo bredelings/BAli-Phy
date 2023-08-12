@@ -34,7 +34,7 @@ foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_cou
 branch_hmms (model,_) tree = getUEdgesSet tree & IntMap.fromSet (model $ branch_lengths tree)
   
 seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
-    b = edgesOutOfNode tree node!0
+    b = edgesOutOfNodeArray tree node!0
 
 {-
 pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
@@ -167,9 +167,9 @@ data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector Br
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
 exportAlignmentOnTree :: Tree t => AlignmentOnTree t -> NodeAlignment
-exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNode tree root)
+exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNodeArray tree root)
     where root = head $ getNodes tree
-          branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdge tree e) | e <- toList $ edges]
+          branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]
 
 foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
 

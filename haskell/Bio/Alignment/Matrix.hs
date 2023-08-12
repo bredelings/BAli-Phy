@@ -81,7 +81,7 @@ charactersBehind sequence_masks tree = let
     charBehind'' = branches & IntMap.fromSet charBehind
     charBehind' e = charBehind'' IntMap.! e
     charBehind e = let nodeMask = sequence_masks IntMap.! sourceNode tree e
-                       edgeMasks = fmap charBehind' (edgesBeforeEdge tree e)
+                       edgeMasks = fmap charBehind' (edgesBeforeEdgeArray tree e)
                    in foldr combine nodeMask edgeMasks
     in charBehind''
 
@@ -120,7 +120,7 @@ getConnectedStates sequences tree =
 
         mask_for_node node = case sequence_masks IntMap.! node of
                                Just mask -> mask
-                               Nothing -> let edgesin = edgesTowardNode tree node
+                               Nothing -> let edgesin = edgesTowardNodeArray tree node
                                               inputs = catMaybes $ toList $ fmap charBehind' edgesin
                                           in case inputs of [] -> error $ "get_connected_states: No sequences at or behind node " ++ show node
                                                             [m] -> m

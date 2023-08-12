@@ -26,7 +26,7 @@ foreign import bpcall "Parsimony:" calc_leaf_muts :: Alphabet -> EVector Int -> 
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
-                                                   pcf b = let edges = edgesBeforeEdge t b
+                                                   pcf b = let edges = edgesBeforeEdgeArray t b
                                                                b1 = edges!0
                                                                b2 = edges!1
                                                            in case numElements edges of
@@ -38,7 +38,7 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                             peel_muts' root = let branches_in = edgesTowardNode t root
+                                             peel_muts' root = let branches_in = edgesTowardNodeArray t root
                                                                    b1 = branches_in!0
                                                                    b2 = branches_in!1
                                                                    b3 = branches_in!2
@@ -65,7 +65,7 @@ foreign import bpcall "Parsimony:" calc_leaf_muts_fixed_A :: Alphabet -> EVector
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
-        pcf b = let edges = edgesBeforeEdge t b
+        pcf b = let edges = edgesBeforeEdgeArray t b
                     b1 = edges!0
                     b2 = edges!1
                 in case numElements edges of
@@ -78,7 +78,7 @@ cached_conditional_muts_fixed_A t seqs alpha cost =
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                                         peel_muts' root = let branches_in = edgesTowardNode t root
+                                                         peel_muts' root = let branches_in = edgesTowardNodeArray t root
                                                                                b1 = branches_in!0
                                                                                b2 = branches_in!1
                                                                                b3 = branches_in!2

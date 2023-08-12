@@ -50,7 +50,7 @@ foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
-                                                                           edges = edgesBeforeEdge t b
+                                                                           edges = edgesBeforeEdgeArray t b
                                                                            b1 = edges!0
                                                                            b2 = edges!1
                                                                        in case numElements edges of
@@ -60,7 +60,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fr
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = IntMap.fromSet peel_likelihood' $ getNodesSet t
-                                     peel_likelihood' root = let branches_in = edgesTowardNode t root
+                                     peel_likelihood' root = let branches_in = edgesTowardNodeArray t root
                                                                  b1 = branches_in!0
                                                                  b2 = branches_in!1
                                                                  b3 = branches_in!2
@@ -89,7 +89,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
         ancestor_for_branch n Nothing = sample_root_sequence (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2)
                                                              (as IntMap.! b0) (as IntMap.! b1) (as IntMap.! b2)
                                                              f
-            where edges = edgesTowardNode t n
+            where edges = edgesTowardNodeArray t n
                   b0 = edges!0
                   b1 = edges!1
                   b2 = edges!2
@@ -99,7 +99,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                 b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
                                                 a0 = as IntMap.! b0
-                                                edges = edgesBeforeEdge t to_p
+                                                edges = edgesBeforeEdgeArray t to_p
                                                 b1 = edges!0
                                                 b2 = edges!1
                                             in case numElements edges of
@@ -126,7 +126,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 cached_conditional_likelihoods_SEV t seqs alpha ps smap =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
         lcf b = let p = ps IntMap.! b
-                    edges = edgesBeforeEdge t b
+                    edges = edgesBeforeEdgeArray t b
                     b1 = edges!0
                     b2 = edges!1
                 in case numElements edges of
@@ -137,7 +137,7 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
                      2 -> peel_internal_branch_SEV (lc IntMap.! b1) (lc IntMap.! b2) p
     in lc
 
-peel_likelihood_SEV t cl f root counts = let branches_in = fmap reverseEdge (edgesOutOfNode t root)
+peel_likelihood_SEV t cl f root counts = let branches_in = fmap reverseEdge (edgesOutOfNodeArray t root)
                                              b1 = branches_in!0
                                              b2 = branches_in!1
                                              b3 = branches_in!2
@@ -149,7 +149,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = let edges = edgesTowardNode t n
+        ancestor_for_branch n Nothing = let edges = edgesTowardNodeArray t n
                                             b0 = edges!0
                                             b1 = edges!1
                                             b2 = edges!2
@@ -160,7 +160,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                 parent_seq = ancestor_seqs IntMap.! p
                                                 b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
-                                                edges = edgesBeforeEdge t to_p
+                                                edges = edgesBeforeEdgeArray t to_p
                                                 b1 = edges!0
                                                 b2 = edges!1
                                             in case numElements edges of
