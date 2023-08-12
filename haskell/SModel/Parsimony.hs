@@ -26,29 +26,22 @@ foreign import bpcall "Parsimony:" calc_leaf_muts :: Alphabet -> EVector Int -> 
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
-                                                   pcf b = let edges = edgesBeforeEdgeArray t b
-                                                               b1 = edges!0
-                                                               b2 = edges!1
-                                                           in case numElements edges of
-                                                                0 -> let n=sourceNode t b
+                                                   pcf b = case edgesBeforeEdge t b of
+                                                                [] -> let n=sourceNode t b
                                                                      in peel_muts_leaf_branch (seqs IntMap.! n) alpha cost
-                                                                1 -> error "cached_conditional_muts: knuckles not handled yet."
-                                                                2 -> peel_muts_internal_branch (pc IntMap.! b1) (pc IntMap.! b2) (as IntMap.! b1) (as IntMap.! b2) cost
-                                                                _ -> error $ "cached_conditional_muts: " ++ show (numElements edges)  ++ "edges before edge not handled."
+                                                                [_] -> error "cached_conditional_muts: knuckles not handled yet."
+                                                                [b1,b2] -> peel_muts_internal_branch (pc IntMap.! b1) (pc IntMap.! b2) (as IntMap.! b1) (as IntMap.! b2) cost
+                                                                e -> error $ "cached_conditional_muts: " ++ show (length e)  ++ "edges before edge not handled."
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                             peel_muts' root = let branches_in = edgesTowardNodeArray t root
-                                                                   b1 = branches_in!0
-                                                                   b2 = branches_in!1
-                                                                   b3 = branches_in!2
-                                                               in case numElements branches_in of
-                                                                    1 -> let n=targetNode t b1
+                                             peel_muts' root = case edgesTowardNode t root of
+                                                                    [b1] -> let n=targetNode t b1
                                                                          in calc_leaf_muts alpha (seqs IntMap.! n) (as IntMap.! b1) cost (cp IntMap.! b1)
-                                                                    3 -> calc_root_muts (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) (as IntMap.! b1) (as IntMap.! b2) (as IntMap.! b3) cost
-                                                                    0 -> 0
-                                                                    2 -> error "peel_muts: root node with 2 edges"
-                                                                    _ -> error $ "peel_muts: root node has degree " ++ show (numElements branches_in)
+                                                                    [b1,b2,b3] -> calc_root_muts (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) (as IntMap.! b1) (as IntMap.! b2) (as IntMap.! b3) cost
+                                                                    [] -> 0
+                                                                    [_,_] -> error "peel_muts: root node with 2 edges"
+                                                                    e -> error $ "peel_muts: root node has degree " ++ show (length e)
                          in muts IntMap.! root
 
 
@@ -65,31 +58,24 @@ foreign import bpcall "Parsimony:" calc_leaf_muts_fixed_A :: Alphabet -> EVector
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
-        pcf b = let edges = edgesBeforeEdgeArray t b
-                    b1 = edges!0
-                    b2 = edges!1
-                in case numElements edges of
-                     0 -> let n = sourceNode t b
-                              (seq,mask) = seqs IntMap.! n
-                          in peel_muts_leaf_branch_fixed_A seq mask alpha cost
-                     1 -> error "cached_conditional_muts_fixed_A: knuckles not handled yet."
-                     2 -> peel_muts_internal_branch_fixed_A (pc IntMap.! b1) (pc IntMap.! b2) cost
-                     _ -> error $ "cached_conditional_muts: " ++ show (numElements edges)  ++ "edges before edge not handled."
+        pcf b = case edgesBeforeEdge t b of
+                     [] -> let n = sourceNode t b
+                               (seq,mask) = seqs IntMap.! n
+                           in peel_muts_leaf_branch_fixed_A seq mask alpha cost
+                     [_] -> error "cached_conditional_muts_fixed_A: knuckles not handled yet."
+                     [b1,b2] -> peel_muts_internal_branch_fixed_A (pc IntMap.! b1) (pc IntMap.! b2) cost
+                     e -> error $ "cached_conditional_muts: " ++ show (length e)  ++ "edges before edge not handled."
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                                         peel_muts' root = let branches_in = edgesTowardNodeArray t root
-                                                                               b1 = branches_in!0
-                                                                               b2 = branches_in!1
-                                                                               b3 = branches_in!2
-                                                                           in case numElements branches_in of
-                                                                                1 -> let n = targetNode t b1
-                                                                                         (seq,mask) = seqs IntMap.! n
-                                                                                     in calc_leaf_muts_fixed_A alpha seq mask (cp IntMap.! b1) cost counts
-                                                                                3 -> calc_root_muts_fixed_A (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) cost counts
-                                                                                0 -> 0
-                                                                                2 -> error "peel_muts: root node with 2 edges"
-                                                                                _ -> error $ "peel_muts: root node has degree " ++ show (numElements branches_in)
+                                                         peel_muts' root = case edgesTowardNode t root of
+                                                                                [b1] -> let n = targetNode t b1
+                                                                                            (seq,mask) = seqs IntMap.! n
+                                                                                        in calc_leaf_muts_fixed_A alpha seq mask (cp IntMap.! b1) cost counts
+                                                                                [b1,b2,b3] -> calc_root_muts_fixed_A (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) cost counts
+                                                                                [] -> 0
+                                                                                [_,_] -> error "peel_muts: root node with 2 edges"
+                                                                                e -> error $ "peel_muts: root node has degree " ++ show (length e)
                                                       in muts IntMap.! root
 
 parsimony_fixed_A :: Tree t => t -> IntMap (EVector Int, CBitVector) -> Alphabet -> MutCosts -> ColumnCounts -> Int
