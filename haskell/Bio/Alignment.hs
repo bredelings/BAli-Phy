@@ -34,7 +34,7 @@ foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_cou
 branch_hmms (model,_) tree = getUEdgesSet tree & IntMap.fromSet (model $ branch_lengths tree)
   
 seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
-    b = edgesOutOfNodeArray tree node!0
+    b = head $ edgesOutOfNode tree node
 
 {-
 pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
