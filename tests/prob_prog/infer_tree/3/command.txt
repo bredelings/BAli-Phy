@@ -1,1 +1,1 @@
--m Model bglobin.fasta --iter=5 --name ignore-output
+-m Model bglobin.fasta --iter=5 --name ignore

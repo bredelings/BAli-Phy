@@ -1,1 +1,1 @@
--m Demo3.hs --iter=1000 --name ignore-output
+-m Demo3.hs --iter=1000 --name ignore

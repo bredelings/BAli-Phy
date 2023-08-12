@@ -1,1 +1,1 @@
--m Coal.hs --iter=100 --name=ignore-output
+-m Coal.hs --iter=100 --name=ignore

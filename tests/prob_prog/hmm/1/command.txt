@@ -1,1 +1,1 @@
--m HMM.hs --iter=20 --name ignore-output
+-m HMM.hs --iter=20 --name ignore

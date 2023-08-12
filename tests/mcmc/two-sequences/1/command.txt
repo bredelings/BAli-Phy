@@ -1,1 +1,1 @@
-two.fasta --iter=10 --name ignore-output
+two.fasta --iter=10 --name ignore

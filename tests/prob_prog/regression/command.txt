@@ -1,1 +1,1 @@
--m LinearRegression.hs --iter=100 --name ignore-output
+-m LinearRegression.hs --iter=100 --name ignore

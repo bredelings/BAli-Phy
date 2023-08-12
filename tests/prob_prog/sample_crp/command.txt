@@ -1,1 +1,1 @@
--m sample.hs --iter=100 --name ignore-output
+-m sample.hs --iter=100 --name ignore

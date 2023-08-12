@@ -1,1 +1,1 @@
--m order-two.hs --iter=100 --name ignore-output
+-m order-two.hs --iter=100 --name ignore

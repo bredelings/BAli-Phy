@@ -1,1 +1,1 @@
--m Model.hs --iter=1000 --name ignore-output
+-m Model.hs --iter=1000 --name ignore
