@@ -323,7 +323,7 @@ instance (IsTimeTree t, HasLabels t) => HasLabels (RateTimeTreeImp t) where
 
 toward_root rt b = not $ away_from_root rt b
 
-branchToParent rtree node = find (toward_root rtree) (edgesOutOfNodeArray rtree node)
+branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
 branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
 
 parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
@@ -390,14 +390,14 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet
 
 tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 
-allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdgeArray tree b)
-allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNodeArray tree n)
-allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNodeArray tree (root tree))
+allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
+allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
+allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
 
 add_labels labels t = LabelledTree t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 
 add_root r t = rt
-     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdgeArray rt b))
+     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
            rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
