@@ -60,6 +60,7 @@ undirectedName e  = max e (reverseEdge e)
 
 edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
+edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
 class Tree t => HasBranchLengths t where
     branch_length :: t -> Int -> Double
@@ -330,6 +331,7 @@ parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just 
 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
 edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
+edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
 sourceNode  tree b = e_source_node  $ findEdge tree b
 targetNode  tree b = e_target_node  $ findEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNodeArray t n1)
@@ -338,6 +340,10 @@ neighbors t n = fmap (targetNode t) (edgesOutOfNodeArray t n)
 edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
     where node = sourceNode t b
 edgesAfterEdgeArray t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
+    where node = targetNode t b
+edgesBeforeEdge t b = fmap reverseEdge $ IntSet.toList $ IntSet.delete b (edgesOutOfNodeSet t node)
+    where node = sourceNode t b
+edgesAfterEdge t b = IntSet.toList $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
     where node = targetNode t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
