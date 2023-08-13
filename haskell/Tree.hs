@@ -334,9 +334,9 @@ edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
 edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
 sourceNode  tree b = e_source_node  $ findEdge tree b
 targetNode  tree b = e_target_node  $ findEdge tree b
-edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNodeArray t n1)
+edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
-neighbors t n = fmap (targetNode t) (edgesOutOfNodeArray t n)
+neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
 edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
     where node = sourceNode t b
 edgesAfterEdgeArray t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
