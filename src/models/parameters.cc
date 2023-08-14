@@ -314,58 +314,6 @@ mutable_data_partition::mutable_data_partition(const Parameters* p, int i)
     :data_partition(p,i)
 { }
 
-    // P1. Create pairwise alignment parameters.
-EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector<int>>& sequences)
-{
-    int B = t.n_branches();
-    EVector alignments;
-
-    for(int b=0;b<2*B;b++)
-    {
-        int n1 = t.source(b);
-        int n2 = t.target(b);
-
-        // No evaluation is performed if this is a leaf node.
-        int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
-        int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
-
-        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
-
-        // Ensure that for the 2-sequence case, the two directions agree on the alignment.
-        if (b > t.reverse(b))
-            pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
-
-        alignments.push_back(pi);
-    }
-    return alignments;
-}
-
-// P1. Create pairwise alignment parameters.
-EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& sequences)
-{
-    int B = t.n_branches();
-    EVector alignments;
-
-    for(int b=0;b<2*B;b++)
-    {
-        int n1 = t.source(b);
-        int n2 = t.target(b);
-
-        // No evaluation is performed if this is a leaf node.
-        int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
-        int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
-
-        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
-
-        // Ensure that for the 2-sequence case, the two directions agree on the alignment.
-        if (b > t.reverse(b))
-            pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
-
-        alignments.push_back(pi);
-    }
-    return alignments;
-}
-
 data_partition_constants::data_partition_constants(context_ref& C, int r_data)
 {
     // -------------- Extract method indices from dist properties -----------------//
@@ -582,59 +530,6 @@ void disconnect_subtree(vector<HMM::bitmask_t>& a123456)
 
         if (not col.test(0) and not col.test(5) and col.test(4))
             col.set(4,false);
-    }
-}
-
-void mutable_data_partition::set_alignment(const alignment& A)
-{
-    // 1. Check if the alphabet on the alignment is right.
-    if (*get_alphabet() != A.get_alphabet())
-        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet().print()<<"' in partition with alphabet '"<<get_alphabet()->name<<"'";
-
-    auto T = t();
-
-    auto labels = T.labels();
-    vector<string> labels_v(labels.size());
-    for(auto [index,name]: labels)
-    {
-        assert(index >=0 and index < labels_v.size());
-        labels_v[index] = name;
-    }
-
-    // 2. Reorder and maybe extend the alignment
-    auto AA = link_A(A, labels_v, T);
-
-    // 3. Check that the alignment doesn't disagree with existing leaf sequences lengths!
-    for(auto node: T.leaf_nodes())
-    {
-        assert(AA.seq(node).name == labels[node]);
-        if (AA.seqlength(node) != seqlength(node))
-            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<AA.seq(node).name<<": alignment sequence length "<<AA.seqlength(node)<<" does not match required sequence length "<<seqlength(node);
-    }
-
-    // 4. Set pairwise alignment parameters.
-    for(int b=0;b<T.n_branches();b++)
-    {
-        int n1 = T.source(b);
-        int n2 = T.target(b);
-        auto pi = A2::get_pairwise_alignment(AA,n1,n2);
-        set_pairwise_alignment(b, pi);
-    }
-}
-
-void mutable_data_partition::unalign_sequences()
-{
-    auto T = t();
-    for(int b = 0; b<T.n_branches(); b++)
-    {
-        int n1 = T.source(b);
-        int n2 = T.target(b);
-
-        // No evaluation is performed if this is a leaf node.
-        int L1 = T.is_leaf_node(n1) ? seqlength(n1) : 0;
-        int L2 = T.is_leaf_node(n2) ? seqlength(n2) : 0;
-
-        set_pairwise_alignment(b, make_unaligned_pairwise_alignment(L1,L2) );
     }
 }
 

@@ -150,10 +150,6 @@ public:
 
 struct mutable_data_partition: public data_partition
 {
-    void set_alignment(const alignment&);
-
-    void unalign_sequences();
-
     void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
     void unset_pairwise_alignment(int b);
