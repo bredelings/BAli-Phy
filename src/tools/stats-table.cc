@@ -408,9 +408,9 @@ void unnest_json(const string & path, const json& j_in, json& j_out)
 {
     for(auto& [key, value]: j_in.items())
         if (has_children(key))
-            unnest_json(key+path, value, j_out);
+            unnest_json(path+key, value, j_out);
         else
-            j_out[key] = value;
+            j_out[path+key] = value;
 }
 
 json unnest_json(const json& j_in)
@@ -428,9 +428,9 @@ void unnest_json(const string & path, json&& j_in, json& j_out)
 {
     for(auto& [key, value]: j_in.items())
         if (has_children(key))
-            unnest_json(key+path, std::move(value), j_out);
+            unnest_json(path+key, std::move(value), j_out);
         else
-            j_out[key] = value;
+            j_out[path+key] = value;
 }
 
 json unnest_json(const json&& j_in)
