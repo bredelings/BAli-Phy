@@ -539,7 +539,6 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
     Parameters P0 = PP;
     const Parameters& CPP = dynamic_cast<const Parameters&>(P);
     auto t = CPP.t();
-    int B = CPP.t().n_branches();
     int N = CPP.n_data_partitions();
 
     std::optional<int> bandwidth;
@@ -547,12 +546,12 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
         bandwidth  = (int)CPP.lookup_key("simple_bandwidth");
 
     // 1. Get the old branch HMMs;
-    vector<vector<indel::PairHMM>> old_hmms(N);
+    vector<std::unordered_map<int,indel::PairHMM>> old_hmms(N);
     for(int i=0; i < N; i++)
     {
 	if (CPP[i].has_IModel())
-	    for(int b=0;b<2*B;b++)
-		old_hmms[i].push_back(CPP[i].get_branch_HMM(b));
+	    for(int b : CPP.t().directed_branches())
+		old_hmms[i].insert({b, CPP[i].get_branch_HMM(b)});
     }
 
     // 2. Read, alter, and write parameter values
@@ -582,7 +581,7 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
 	    {
 		{
 		    // Calculate the proposal probability for the backward move.
-		    auto matrix_old = sample_alignment_forward(PP[j], PP.t(), old_hmms[j][b], b, bandwidth);
+		    auto matrix_old = sample_alignment_forward(PP[j], PP.t(), old_hmms[j].at(b), b, bandwidth);
 		    auto a_old = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_old = A2::get_path_from_pairwise_alignment(a_old);
 		    ratio *= matrix_old->path_P(path_old);
