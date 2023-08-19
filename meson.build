@@ -88,6 +88,8 @@ boost = dependency('boost', modules : boost_modules).as_system()
 ## Handle auto / system / internal method of finding/building EIGEN
 eigen = dependency('eigen3').as_system()
 
+fmt = dependency('fmt', static: true).as_system()
+
 json = dependency('nlohmann_json').as_system()
 
 if host_machine.system() == 'windows'

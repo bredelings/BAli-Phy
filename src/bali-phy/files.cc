@@ -10,6 +10,7 @@
 #include "version.H"
 #include "computation/loader.H"
 #include "computation/haskell/ids.H"
+#include <fmt/chrono.h>
 
 using std::cerr;
 using std::endl;
@@ -137,8 +138,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
     for(int i=0;i<argc;i++)
 	command.push_back(argv[i]);
 
-    time_t now = time( nullptr );
-    string start_time = ctime(&now);
+    string start_time = fmt::format("{:%c}", fmt::localtime(std::chrono::system_clock::now()));
     rtrim(start_time);
 
     json env = json::object();

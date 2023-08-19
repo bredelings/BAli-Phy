@@ -38,12 +38,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define TIME_STACK_H
 
 #include <string>
-#include <boost/chrono.hpp>
+#include <chrono>
 
-typedef boost::chrono::nanoseconds duration_t;
+typedef std::chrono::nanoseconds duration_t;
 
 duration_t total_cpu_time();
 
-std::string duration_string(boost::chrono::seconds);
+std::string duration_string(duration_t);
 
 #endif /* TIME_STACK_H */

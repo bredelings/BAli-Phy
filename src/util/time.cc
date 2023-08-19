@@ -27,8 +27,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/assert.hh"
 #include "util/string/convert.H"
 
-using namespace std;
-using namespace boost::chrono;
+#include <boost/chrono.hpp>
+
+#include <fmt/chrono.h>
+
+namespace chrono = std::chrono;
+
+using std::string;
 
 /*
    FIXME: We aren't using std::chrono because only boost::chrono
@@ -38,44 +43,47 @@ using namespace boost::chrono;
       https://stackoverflow.com/questions/22590821/convert-stdduration-to-human-readable-time
  */
 
+using boost::chrono::process_user_cpu_clock;
+
+const auto start_cpu_time = process_user_cpu_clock::now();
+
 duration_t total_cpu_time()
 {
-  return process_user_cpu_clock::now() - process_user_cpu_clock::time_point();
+    // std::chrono doesn't have any way of measuring cpu time.
+    auto delta = process_user_cpu_clock::now() - start_cpu_time;
+    return duration_t(delta.count());
 }
 
-string duration_string(seconds t)
+string duration_string(duration_t t)
 {
-  unsigned long T = t.count();
+    typedef std::chrono::duration<float> fsec;
 
-  string s = convertToString(t);
+    double total_secs = fsec(t).count();
 
-  unsigned long seconds = T%60;
-  T = (T - seconds)/60;
+    auto d = chrono::duration_cast<chrono::days>(t);
+    t -= d;
 
-  // return if 0 minutes
-  if (not T) return s;
+    auto h = chrono::duration_cast<chrono::hours>(t);
+    t -= h;
 
-  unsigned long minutes = T%60;
-  T  = (T - minutes)/60;
+    auto m = chrono::duration_cast<chrono::minutes>(t);
+    t -= m;
 
-  s = convertToString(minutes) + "m " +
-      convertToString(seconds) + "s  (" + s + ")";
+    auto s = chrono::duration_cast<chrono::seconds>(t);
+    t -= m;
 
-  // return if 0 hours
-  if (not T) return s;
+    string out = "(" + fmt::format("{:.3f}",total_secs) + "s)";
+    out = convertToString(s.count()) + "s " + out;
 
-  unsigned long hours = T%24;
-  T  = (T - hours)/24;
+    if (m.count() or h.count() or d.count())
+	out = convertToString(m.count()) + "m " + out;
 
-  s = convertToString(hours) + "h " + s;
+    if (h.count() or d.count())
+	out = convertToString(h.count()) + "h " + out;
 
-  // return if 0 days
-  if (not T) return s;
+    if (d.count())
+	out = convertToString(d.count()) + "days " + out;
 
-  unsigned long days = T;
-
-  s = convertToString(days) + "days " + s;
-
-  return s;
+    return out;
 }
 

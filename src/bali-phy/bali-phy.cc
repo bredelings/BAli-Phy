@@ -36,15 +36,15 @@ namespace mpi = boost::mpi;
 #endif
 
 #include <cmath>
-#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <new>
 #include <map>
 #include <filesystem>
+#include <fmt/chrono.h>
+#include <chrono>
 
 #include <boost/program_options.hpp>
-#include <boost/chrono.hpp>
 
 #include "substitution/substitution.H"
 #include "util/myexception.H"
@@ -75,7 +75,7 @@ namespace mpi = boost::mpi;
 #include "computation/loader.H"
 
 namespace fs = std::filesystem;
-namespace chrono = boost::chrono;
+namespace chrono = std::chrono;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -148,19 +148,10 @@ unsigned long init_rng_and_get_seed(const variables_map& args)
     return seed;
 }
 
-using boost::chrono::process_user_cpu_clock;
-
 chrono::system_clock::time_point start_time = chrono::system_clock::now();
 
 auto start_work_time = chrono::system_clock::now();
-auto start_work_cpu_time = process_user_cpu_clock::time_point();
-
-string ctime(const chrono::system_clock::time_point& t)
-{
-    time_t t2 = chrono::system_clock::to_time_t(t);
-    char* c = ctime(&t2);
-    return c;
-}
+auto start_work_cpu_time = total_cpu_time();
 
 void show_ending_messages()
 {
@@ -268,26 +259,26 @@ void show_ending_messages()
         }
     }
     auto end_time = system_clock::now();
-    auto end_cpu_time = process_user_cpu_clock::now();
+    auto end_cpu_time = total_cpu_time();
 
     if (log_verbose >= 1)
     {
         cout<<endl;
         cout<<"Setup:"<<endl;
-        cout<<"  start: "<<ctime(start_time);
-        cout<<"    end: "<<ctime(start_work_time);
-        cout<<"  total (elapsed) time: "<<duration_string( duration_cast<seconds>(start_work_time-start_time) )<<endl;
-        cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(start_work_cpu_time - process_user_cpu_clock::time_point()) )<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_time))<<endl;
+	cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(start_work_time))<<endl;
+        cout<<"  total (elapsed) time: "<<duration_string( start_work_time-start_time )<<endl;
+        cout<<"  total (CPU) time: "<<duration_string( start_work_cpu_time )<<endl;
     }
 
     if (end_time - start_work_time > seconds(2) or log_verbose >= 1)
     {
         cout<<endl;
         cout<<"Work:"<<endl;
-        cout<<"  start: "<<ctime(start_work_time);
-        cout<<"    end: "<<ctime(end_time);
-        cout<<"  total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time - start_work_time) )<<endl;
-        cout<<"  total (CPU) time: "<<duration_string( duration_cast<seconds>(end_cpu_time - start_work_cpu_time) )<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_work_time))<<endl;
+        cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(end_time))<<endl;
+        cout<<"  total (elapsed) time: "<<duration_string( end_time - start_work_time )<<endl;
+        cout<<"  total (CPU) time: "<<duration_string( end_cpu_time - start_work_cpu_time )<<endl;
     }
 
     if (substitution::total_calc_root_prob > 1 and log_verbose >= 1)
@@ -672,7 +663,7 @@ int main(int argc,char* argv[])
         block_signals();
 
         start_work_time = chrono::system_clock::now();
-        start_work_cpu_time = process_user_cpu_clock::now();
+        start_work_cpu_time = total_cpu_time();
 
         // Run the program P
         execute_program( std::move(P) );
