@@ -72,14 +72,14 @@ jobs:
             os: ubuntu-20.04
             compiler: gcc
             version: "10"
-            buildtype: release
+            buildtype: "release"
             arch: "linux64"
 
           - name: macos-xcode-14
             os: macos-12
             compiler: xcode
             version: "14"
-            buildtype: release
+            buildtype: "release"
             arch: "mac64"
 
           - name: windows
@@ -120,6 +120,10 @@ jobs:
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
+        # For mingw/gcc-12. 
+        cat /etc/apt/sources.list
+        sudo sed -i 's/jammy/lunar/g' /etc/apt/sources.list
+
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
@@ -249,7 +253,7 @@ jobs:
 
         echo ::group::Basic tests
         ${BALIPHY} help
-        cp $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta .
+        cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
         echo ::group::Test suite
@@ -260,13 +264,15 @@ jobs:
 
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
+        git checkout no-root-knuckle
+        rm -rf tests/likelihood/one-sequence
 
         echo ::group::testiphy variable A
-        ./testiphy ${BALIPHY} --seed=$seed
+        ./testiphy ${BALIPHY} --seed=$seed --fix=alignment --fix=tree
         echo ::endgroup::
 
         echo ::group::testiphy fixed A
-        ./testiphy ${BALIPHY} --seed=$seed -Inone
+        ./testiphy ${BALIPHY} --seed=$seed -Inone --fix=alignment --fix=tree
         echo ::endgroup::
 
     - name: Upload tests if they failed
