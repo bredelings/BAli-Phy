@@ -83,33 +83,12 @@ endif
 # NOTE: we can't use cpp_debug_stl unless we build our own BOOST.
 # But we don't have to build it inside of bali-phy.
 
-boost = dependency('boost', modules : boost_modules)
+boost = dependency('boost', modules : boost_modules).as_system()
 
 ## Handle auto / system / internal method of finding/building EIGEN
 eigen = dependency('eigen3').as_system()
 
-## Handle auto / system / internal method of finding  <nlohmann/json.hpp>
-used_json = get_option('json')
-if get_option('json') == 'auto'
-  if cpp.has_header('nlohmann/json.hpp')
-    used_json = 'system'
-    json = []
-  else
-    used_json = 'internal'
-    message('Using internal copy of <nlohman/json.hpp>.')
-    json = include_directories('external/nlohmann', is_system: true)
-    json = declare_dependency(include_directories: json)
-  endif
-elif get_option('json') == 'system'
-  if cpp.has_header('nlohmann/json.hpp')
-    json = []
-  else
-    error('No <nlohmann/json.hpp> header could be found!')
-  endif
-else
-  json = include_directories('external/nlohmann', is_system: true)
-  json = declare_dependency(include_directories: json)
-endif
+json = dependency('nlohmann_json').as_system()
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
@@ -167,8 +146,7 @@ summary({'arch': host_machine.cpu_family(),
          'host': host_machine.system(),
         }, section: 'Architecture')
 
-summary({'Eigen': true,   # how do we tell if this is from a subproject?
-         'nlohmann::json': used_json,
+summary({
          'range v3': used_librange,
          'cairo': used_cairo
         },section: 'Libraries')
