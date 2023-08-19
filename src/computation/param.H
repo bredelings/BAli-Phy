@@ -78,10 +78,4 @@ public:
     param(const expression_ref& v):value(v) {}
 };
 
-param get_param(context_ref& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
-
-std::vector<param> get_params_from_list_(context_ref& C, const expression_ref& list, std::optional<int> check_size = {});
-std::vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size = {});
-std::vector<param> get_params_from_array_(context_ref& C, const expression_ref& array, std::optional<int> check_size = {});
-std::vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size = {});
 #endif
