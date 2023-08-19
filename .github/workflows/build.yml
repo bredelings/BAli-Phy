@@ -120,6 +120,9 @@ jobs:
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
+        # As of Aug 2023, we need this for mingw/gcc-11.  Debian has mingw/gcc-12.
+        sudo add-apt-repository ppa:noasakurajin/sid-ubuntu-ports
+
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
