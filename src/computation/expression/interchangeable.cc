@@ -1,5 +1,6 @@
 #include "interchangeable.H"
 #include "index_var.H"
+#include "util/assert.hh"
 
 closure interchangeable_op(OperationArgs& Args)
 {
