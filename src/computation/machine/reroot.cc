@@ -5,6 +5,7 @@
 #include "util/range.H"
 #include "mapping.H"
 #include "computation/expression/interchangeable.H"
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
@@ -68,7 +69,7 @@ void reg_heap::reroot_at_token(int t)
     do_pending_effect_unregistrations();
 
     // 4. Clean up old root token if it became an unused tip
-    int t2 = release_unreferenced_tips(old_root);
+    /*int t2 =*/ release_unreferenced_tips(old_root);
 
 #ifdef DEBUG_MACHINE
     check_used_regs();

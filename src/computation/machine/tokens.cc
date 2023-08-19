@@ -1,9 +1,9 @@
 #include <iostream>
 #include "graph_register.H"
-#include "util/assert.hh"
 #include "util/range.H" // for remove_element( )
-
 #include "range/v3/all.hpp"
+#include "util/assert.hh"
+
 namespace views = ranges::views;
 
 using std::vector;
