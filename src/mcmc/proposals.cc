@@ -528,38 +528,6 @@ Proposal2M::Proposal2M(const proposal_fn& p,const vector<int>& s, const vector<d
      parameters(v)
 { }
 
-/*
-log_double_t move_subst_type_branch(context_ref& P)
-{
-    Parameters& PP = dynamic_cast<Parameters&>(P);
-
-    int which_branch = -1;
-    int B = PP.t().n_branches();
-    for(int b=0;b<B;b++)
-    {
-	int cat = PP.get_branch_category(b);
-	if (cat == 1)
-	{
-	    assert(which_branch == -1);
-	    which_branch = b;
-	}
-    }
-
-    if (which_branch != -1)
-    {
-	int new_branch = uniform_int(0, B-2);
-	if (new_branch >= which_branch)
-	    new_branch++;
-
-	PP.set_branch_category(which_branch, 0);
-	PP.set_branch_category(new_branch, 1);
-	std::cerr<<"Moved subst type 1 from branch "<<which_branch<<" to branch "<<new_branch<<"\n";
-    }
-
-    return 1.0;
-}
-*/
-
 #include "mcmc/sample.H"
 
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
