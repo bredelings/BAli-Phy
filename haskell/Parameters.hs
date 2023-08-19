@@ -7,8 +7,6 @@ import Numeric.LogDouble  -- for LogDouble
 
 -- An Effect may be a node in a graph??
 
-foreign import bpcall "Modifiables:maybe_modifiable_structure" maybe_modifiable_structure :: a -> a
-
 foreign import bpcall "Modifiables:" modifiable :: a -> a
 
 foreign import bpcall "Modifiables:" register_prior :: Effect -> LogDouble -> IO Effect

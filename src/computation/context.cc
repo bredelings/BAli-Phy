@@ -418,12 +418,6 @@ EVector context_ref::get_modifiable_values(const std::vector<int>& indices) cons
     return values;
 }
 
-expression_ref context_ref::maybe_modifiable_structure(int r)
-{
-    get_reg_value(r);
-    return memory()->maybe_modifiable_structure(r);
-}
-
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_reg_value(int R) const
 {

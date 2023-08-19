@@ -124,8 +124,6 @@ public:
     /// Get the value of a modifiable
     const expression_ref& get_modifiable_value(int index) const;
 
-    expression_ref maybe_modifiable_structure(int r);
-
     /// Update the value of a modifiable - by its location in memory
     void set_reg_value(int R, closure&&);
 

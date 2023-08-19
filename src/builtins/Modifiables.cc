@@ -26,15 +26,6 @@ int force_slot_to_safe_reg(OperationArgs& Args, int slot)
     return Args.memory().follow_index_var(r);
 }
 
-extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Args)
-{
-    Args.evaluate_slot_use(0);
-
-    int R1 = Args.reg_for_slot(0);
-
-    return Args.memory().maybe_modifiable_structure(R1);
-}
-
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
