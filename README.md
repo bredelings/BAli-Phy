@@ -33,8 +33,8 @@ conda install meson gxx boost-cpp cmake pkg-config cairo
 export BOOST_ROOT=$CONDA_PREFIX
 ```
 
-The meson version needs to be at least 1.0.
-If your distribution provides a version of meson that is less than 1.0,
+The meson version needs to be at least 1.1.
+If your distribution provides a version of meson that is less than 1.1,
 then you may need to install meson through the python package manager "pip" or "pip3":
 
     pip3 -V
@@ -50,7 +50,7 @@ This will build the latest unreleased beta version of BAli-Phy, which fixes some
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
 cd BAli-Phy
-meson build --prefix=$HOME/Applications/bali-phy
+meson setup build --prefix=$HOME/Applications/bali-phy
 ninja -C build install
 ninja -C build test
 ```
