@@ -148,11 +148,6 @@ summary({'arch': host_machine.cpu_family(),
          'host': host_machine.system(),
         }, section: 'Architecture')
 
-summary({
-         'range v3': used_librange,
-         'cairo': used_cairo
-        },section: 'Libraries')
-
 summary({'prefix': get_option('prefix'),
         },section: 'Directories')
 
@@ -165,3 +160,9 @@ summary({'optimization': get_option('optimization'),
          'debug': get_option('debug'),
          'assertions': assertions_enabled,
         },section: 'Configuration')
+
+summary({
+         'range v3': used_librange,
+         'cairo': used_cairo
+        },section: 'Libraries')
+
