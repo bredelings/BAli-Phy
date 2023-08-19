@@ -149,7 +149,7 @@ driver::driver (const LanguageExtensions& exts)
     {
         reserved_symbols.insert({"*",{parser::token::TOK_STAR,0}});
     }
-};
+}
 
 /*
    map (\ (x,y,z) -> (mkFastString x,(y,z)))
