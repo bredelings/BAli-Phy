@@ -21,11 +21,6 @@ void reg_heap::collect_garbage()
     total_regs = size();
     total_steps = steps.size();
 
-    // Avoid memory leaks.  But can we do this faster?
-    {
-	vector<Token> new_tokens = tokens;
-	std::swap(new_tokens, tokens);
-    }
     if (log_verbose >= 2)
         std::cerr<<"***********Garbage Collection******************"<<std::endl;
 

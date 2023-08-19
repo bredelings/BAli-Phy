@@ -198,6 +198,9 @@ void reg_heap::release_tip_token(int t)
     assert(tokens[t].vm_result.empty());
     assert(tokens[t].vm_force_count.empty());
     assert(tokens[t].interchanges.empty());
+
+    Token new_token;
+    std::swap(tokens[t],new_token);
 }
 
 // Given parent -> t1 -> t2 -> XXX, make t2 a child of parent instead of t1.
