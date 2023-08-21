@@ -1,0 +1,1 @@
+5S-48-fsa.fasta --iter=2 --name ignore
