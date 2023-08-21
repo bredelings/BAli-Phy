@@ -1,37 +1,37 @@
 * 4.0-beta6 (unreleased)
-- Warning: MAP point is no longer printed.
-- Warning: MCMC begins with all sequences left-aligned (in partitions where the alignment is being estimated).
-+ Initial implemention of sequence simulation.
-  - Command-line language not yet available.
-  - Indels simulated from a continuous-time indel model with geometric length indels.
-  - Substitutions simulated from any substitution model.
-- Model language:
-  + We no longer need a different kind of model for "bali-phy file.fasta".
-  - Create iidMap and use it to sample branch lengths.
-  - Allow reading fixed trees and alignments.
-  - Stop setting alignments from the Parameters constructor.
-  - Logging
-    - Allow the model to register logging actions.
-    - Log trees from the model.
-    - Log alignments from the model.
-    - Start removing C++ logging infrastructure.
-  - Tree
-    - Read / print trees in Newick format.
-    - Correctly parse Newick comments.
-    - Trees can have have node-, edge-, and tree-level attributes.
-    - Get foreground branch categories from the tree we read in.
-  - Refactor Tree
-    - Allow the degree of a node to change dynamically.
-    - Allow node and branch names to be anything.
-    - Add functions to switch between rooted / unrooted trees.
-    - Make write_newick work on unrooted trees.
-    - TreeInterface
-      - drop {begin,end}_modify_topology() from TreeInterface.
-      - get the reverse edge name from the machine.
+- Warning - changes:
+  + MAP point is no longer printed.
+  + the Maximum-Posterior-Decoding alignment is now shorter (it uses the "multiply" criterion).
+  + the initial alignment has all sequences left-aligned when estimated (for now).
+  + "-m" now looks for a Model.main function that returns IO (Random ()).
+  + stdout / stderr are no longer redirected to a file.
 - Bug fixes:
-  - Fix typechecking bug where we allowed e.g (x,y) <- return (x,y,z)
-  - Fix SEV likelihood on 2-taxon trees.
-  - Don't re-execute side-effects in incremental_evaluate1( ).
+  + Memory: reclaim memory from running loggers + transition kernels.
+  + Memory: clear tokens immediately - don't wait for garbage collection.
+  + Memory: don't retain calculations for branches that might not exist.
+  - Alignment: fix alignment with likelihood rescaling.
+  - Likelihood: fix SEV likelihood on 2-taxon trees.
+  - Typechecking: don't allow e.g (x,y) <- return (x,y,z)
+  - Typechecking: handle exporting types without their constructors.
+  - machine: don't re-execute side-effects in incremental_evaluate1( ).
++ Features:
+  - Tree-alignment models can be hand-written -- no magic return type.
+  - Initial implemention of sequence simulation.
+- Model language:
+  - Allow reading / writing trees and alignment from the model.
+  - Logging is done from the model - remove C++ logging.
+  - Transition kernels are run from the model.
+  - Create iidMap and use it to sample branch lengths.
+  - Stop setting alignments from the Parameters constructor.
+  - Refactor Tree
+    - the degree of a node can change dynamically.
+    - node and branch names don't need to be in [0..n-1].
+    - branch names are reversed by negation.
+    - simplify modifying the topology in TreeInterface.
+- Haskell
+  - Reimplement Data.Text more efficiently.
+- Debugging
+  - Improve the clarify of the printed execution graph.
 
 * 4.0-beta5 (Jun 27, 2023)
 - Bug fixes:
