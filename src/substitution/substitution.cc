@@ -1572,7 +1572,10 @@ namespace substitution {
 
         //Clear the padding matrices
         for(int i=0;i<delta;i++)
+	{
             LCB.set(i,0);
+	    LCB.scale(i) = 0;
+	}
 
         vector<object_ptr<const Likelihood_Cache_Branch>> cache;
         for(int branch: b)
@@ -1583,7 +1586,8 @@ namespace substitution {
         {
             LCB.set(i+delta, 1);
 
-            // Note that we could do ZERO products in this loop
+            // Note that it is possible that b.size() == 0, so that
+	    // we do ZERO products, and stay at 1.0 for everything.
             auto m = LCB[i+delta];
             int scale = 0;
             for(int j=0;j<b.size();j++) 
@@ -1594,7 +1598,7 @@ namespace substitution {
                 element_prod_modify(m, (*cache[j])[i0], matrix_size);
                 scale += cache[j]->scale(i0);
             }
-            LCB.scale(i) = scale;
+            LCB.scale(i+delta) = scale;
         }
 
         return LCB;
