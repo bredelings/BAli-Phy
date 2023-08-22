@@ -475,7 +475,7 @@ class TreeFileRun(MCMCRun):
             exit(1)
         return n
 
-    
+
 class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def __init__(self,mcmc_output,**kwargs):
@@ -553,7 +553,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def find_input_file_names(self):
         if self.run_info:
-            return [ p['filename'] for p in self.run_info['partitions']]
+            return [ p['filename']+p['range'] for p in self.run_info['partitions']]
         else:
             input_filenames = []
             with open(outfile,'r',encoding='utf-8') as outf:
