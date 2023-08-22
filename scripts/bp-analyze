@@ -502,7 +502,20 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         self.imodel_indices = self.find_imodel_indices()
         self.scale_model_indices = self.find_scale_model_indices()
         self.alphabets = self.find_alphabets()
+
+        self.log_file = check_one_file_exists( [self.get_dir() / 'C1.log.json',
+                                                self.get_dir() / 'C1.log'] )
+        if not self.out_file and not self.run_file:
+            print("Error:Can't file either C1.out or C1.run.json")
+            exit(1)
+        self.smodels = self.find_models("subst models", "smodels")
+        self.imodels = self.find_models("indel models", "imodels")
+        self.scale_models = self.find_models("scale model", "scales")
+
         logging.debug(f"BAliPhyRun: {mcmc_output}")
+
+    def find_models(self, name1, name2):
+        return [make_extracted(model) for model in self.run_info[name2]]
 
     def get_alphabets(self):
         return self.alphabets
@@ -630,46 +643,6 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         else:
             return self.find_partition_values('alphabet')
 
-class BAliPhy2_3Run(BAliPhyRun):
-    def __init__(self,mcmc_output, **kwargs):
-        super().__init__(mcmc_output, **kwargs)
-        self.log_file = check_file_exists( self.get_dir() / 'C1.p' )
-
-        self.smodels = self.find_models("subst model", "smodels")
-        self.imodels = self.find_models("indel model", "imodels")
-        self.scale_models = None
-        logging.debug(f"BAliPhy2_3Run: {mcmc_output}")
-
-    def find_models(self, name1, name2):
-        models = []
-        with open(self.out_file,encoding='utf-8') as file:
-            for line in file:
-                m = re.match(name1+"([0-9]+) = (.+)", line)
-                if m:
-                    models.append(m.group(2))
-                m = re.match(name1+"([0-9]+) ~ (.+)", line)
-                if m:
-                    models.append("~"+m.group(2))
-                if re.match("^iterations = 0", line):
-                    break
-        return [make_extracted(model) for model in models]
-
-class BAliPhy3Run(BAliPhyRun):
-    def __init__(self,mcmc_output, **kwargs):
-        super().__init__(mcmc_output, **kwargs)
-        self.log_file = check_one_file_exists( [self.get_dir() / 'C1.log.json',
-                                                self.get_dir() / 'C1.log'] )
-        if not self.out_file and not self.run_file:
-            print("Error:Can't file either C1.out or C1.run.json")
-            exit(1)
-        self.smodels = self.find_models("subst models", "smodels")
-        self.imodels = self.find_models("indel models", "imodels")
-        self.scale_models = self.find_models("scale model", "scales")
-        logging.debug(f"BAliPhy3Run: {mcmc_output}")
-
-    def find_models(self, name1, name2):
-        return [make_extracted(model) for model in self.run_info[name2]]
-
 class TreeLogFileRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
@@ -701,7 +674,7 @@ class BEASTRun(MCMCRun):
             self.prefix = get_file_prefix(tree_file)
             self.log_file = check_file_exists(f"{prefix}.log")
 
-def get_bali_phy3_runs(mcmc_args):
+def get_bali_phy_runs(mcmc_args):
     runs = []
     good = []
     bad = []
@@ -709,26 +682,12 @@ def get_bali_phy3_runs(mcmc_args):
         if mcmc_dir.exists() and \
            (Path( mcmc_dir , 'C1.out').exists() or Path( mcmc_dir , 'C1.run.json').exists()) and \
            (Path( mcmc_dir , 'C1.log' ).exists() or Path (mcmc_dir, 'C1.log.json')):
-            runs.append(BAliPhy3Run(mcmc_dir))
+            runs.append(BAliPhyRun(mcmc_dir))
             good.append(mcmc_dir)
         else:
             bad.append(mcmc_dir)
     if len(bad) > 0 and len(good) > 0:
         raise Exception(f"{good} appear to be BAli-Phy 3/4 runs, but {bad} do not!")
-    return runs
-
-def get_bali_phy2_3_runs(mcmc_args):
-    runs = []
-    good = []
-    bad = []
-    for mcmc_dir in mcmc_args:
-        if path.exists(mcmc_dir) and path.exists( mcmc_dir / 'C1.out' ) and path.exists( mcmc_dir / 'C1.p'):
-            runs.append(BAliPhy2_3Run(mcmc_dir))
-            good.append(mcmc_dir)
-        else:
-            bad.append(mcmc_dir)
-    if len(bad) > 0 and len(good) > 0:
-        raise Exception(f"{good} appear to be BAli-Phy 2 runs, but {bad} do not!")
     return runs
 
 def get_phylobayes_runs(mcmc_args):
@@ -802,9 +761,7 @@ def construct_runs(mcmc_outputs):
 
     run_groups = []
 
-    run_groups.append( get_bali_phy3_runs(mcmc_outputs) )
-
-    run_groups.append( get_bali_phy2_3_runs(mcmc_outputs) )
+    run_groups.append( get_bali_phy_runs(mcmc_outputs) )
 
     run_groups.append( get_phylobayes_runs(mcmc_outputs) )
 
