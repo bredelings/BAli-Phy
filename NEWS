@@ -21,7 +21,7 @@
   - Allow reading / writing trees and alignment from the model.
   - Logging is done from the model - remove C++ logging.
   - Transition kernels are run from the model.
-  - Create iidMap and use it to sample branch lengths.
+  - sample branch-lengths from an iid IntMap of distributions.
   - Stop setting alignments from the Parameters constructor.
   - Refactor Tree
     - the degree of a node can change dynamically.
