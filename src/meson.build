@@ -8,6 +8,8 @@ git_version_h = vcs_tag(
 
 subdir('util')
 
+subdir('mcon')
+
 libcommon_sources = [
   'tree/newick-tokenizer.cc',
   'tree/sequencetree.cc',
@@ -146,7 +148,7 @@ tools = ['model_P','statreport','stats-select','alignment-gild','alignment-conse
 	 'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
 	 'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
 	 'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree', 'extract-ancestors',
-         'summarize-ancestors']
+         'summarize-ancestors','mcon-tool']
 
 extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
 		 'alignment-convert', 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
@@ -184,9 +186,9 @@ foreach tool: tools + prefixed_tools
 
   tool_exe = executable(name,
 			sources,
-			include_directories: [root_inc, libutil_inc],
+			include_directories: [root_inc, libutil_inc, libmcon_inc],
 			dependencies: deps,
-			link_with: [libutil,libcommon],
+			link_with: [libutil,libcommon,libmcon],
 			install_rpath: extra_rpath,
 			install: true)
 
