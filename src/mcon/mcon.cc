@@ -98,13 +98,13 @@ json nest(const json& j)
 {
     json j2;
 
-    map<string_view,json> subgroups;
+    map<string,json> subgroups;
     for(auto& [key,value]: j.items())
     {
 	if (auto pos = key.find('/'); pos != string::npos)
 	{
-	    auto prefix = string_view(key).substr(0,pos+1);
-	    auto rest = string_view(key).substr(pos+1);
+	    auto prefix = key.substr(0,pos+1);
+	    auto rest = key.substr(pos+1);
 	    subgroups[prefix][rest] = value;
 	}
 	else
@@ -219,6 +219,12 @@ void Log::atomize()
 	    sample = MCON::atomize(sample,true);
 	atomic = true;
     }
+}
+
+void Log::drop(const string& name)
+{
+    for(auto& sample: samples)
+	sample.erase(name);
 }
 
 std::ostream& write_tsv_line(std::ostream& o, const vector<string>& v)

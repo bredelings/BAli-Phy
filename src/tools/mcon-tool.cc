@@ -25,6 +25,7 @@ po::variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("unnest", "file with alignment to annotate")
 	("atomize","file with tree")
+	("drop",value<vector<string>>()->multitoken(),"top-level names to drop")
 	("output,O",value<string>()->default_value("MCON"),"output format (TSV or MCON)")
 	;
 
@@ -78,6 +79,10 @@ int main(int argc,char* argv[])
 	}
 
 	auto logfile = MCON::read_logfile(*instream, filename);
+
+	if (args.count("drop"))
+	    for(auto& name: args.at("drop").as<vector<string>>())
+		logfile.drop(name);
 
 	if (args.count("unnest"))
 	    logfile.unnest();

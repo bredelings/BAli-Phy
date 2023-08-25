@@ -56,6 +56,8 @@ public:
 
     void atomize();
 
+    void drop(const std::string&);
+
     std::ostream& dump_TSV(std::ostream& o, std::optional<bool> short_names = {}) const;
 
     Log(const json& header);
