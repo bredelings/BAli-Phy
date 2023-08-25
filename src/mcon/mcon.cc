@@ -70,7 +70,8 @@ json atomize(const json& j, bool nested)
 	if (nested and is_nested_key(key))
 	{
 	    json j3;
-	    for(auto& [key2, value2]: atomize(value, true).items())
+	    auto j4 = atomize(value, true);
+	    for(auto& [key2, value2]: j4.items())
 		j3[key2] = value2;
 	    j2[key] = j3;
 	}
