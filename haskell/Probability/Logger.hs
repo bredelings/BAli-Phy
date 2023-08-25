@@ -5,6 +5,8 @@ import qualified Data.Text.IO as T
 import System.IO
 import qualified Data.JSON as J
 import Probability.Random
+import Foreign.String as FS
+import Foreign.Vector as FV
 
 import Tree
 import Tree.Newick
@@ -38,11 +40,19 @@ every n logger iter prior likelihood probability | iter `mod` n == 0  = logger i
 
 ----
 
+data ColumnNames
+
 jsonLogger filename = do
   handle <- openFile filename WriteMode
   hPutStrLn handle "{\"fields\":[\"iter\",\"prior\",\"likelihood\",\"posterior\"],\"nested\":true,\"format\":\"MCON\",\"version\":\"0.1\"}"
   hFlush handle
   return $ writeJSON handle
+
+
+tsvLogger filename firstFields = do
+  handle <- openFile filename WriteMode
+  stateref <- newIORef Nothing
+  return $ writeTSV handle firstFields stateref
 
 
 -- We might need QuickLook to handle types like IO (forall t. *).
@@ -75,3 +85,29 @@ writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
 writeTree file tree iter _ _ _ = do T.hPutStrLn file $ write_newick tree
                                     hFlush file
+
+foreign import bpcall "Foreign:tsvHeaderAndMapping" builtinTsvHeaderAndMapping :: EVector CPPString -> J.CJSON -> EPair CPPString ColumnNames
+tsvHeaderAndMapping firstFields csample = let (cstring,mapping) = pair_from_c $ builtinTsvHeaderAndMapping cFirstFields csample
+                                              cFirstFields = FV.list_to_vector [ FS.pack_cpp_string field | field <- firstFields ] 
+               in (T.fromCppString cstring, mapping)
+
+foreign import bpcall "Foreign:getTsvLine" builtinGetTsvLine :: ColumnNames -> J.CJSON -> CPPString
+getTsvLine mapping sample = T.fromCppString $ builtinGetTsvLine mapping sample
+
+writeTSV file firstFields stateref ljson iter prior likelihood posterior = do
+  let j = J.Object ["iter" %=% iter,
+                    "prior" %=% prior,
+                    "likelihood" %=% likelihood,
+                    "posterior" %=% posterior,
+                    "parameters" %>% ljson]
+      cj = J.c_json j
+
+  state <- readIORef stateref
+
+  case state of
+    Nothing -> do let (header, mapping) = tsvHeaderAndMapping firstFields cj
+                  T.hPutStrLn file $ header
+                  writeIORef stateref (Just mapping)
+                  T.hPutStrLn file $ getTsvLine mapping cj
+
+    Just mapping -> T.hPutStrLn file $ getTsvLine mapping cj

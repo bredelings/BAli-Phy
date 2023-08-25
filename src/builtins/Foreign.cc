@@ -8,10 +8,13 @@
 #include "util/json.hh"
 #include <string_view>
 #include "computation/machine/graph_register.H"
+#include "mcon/mcon.H"
 
 using std::string;
 using std::string_view;
-
+using std::vector;
+using std::set;
+using std::map;
 
 
 json c_json(const expression_ref& E)
@@ -130,4 +133,65 @@ extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
     auto j = Args.evaluate(0).as_<Box<json>>();
     String s = j.dump();
     return s;
+}
+
+extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
+{
+    auto arg0 =  Args.evaluate(0);
+    vector<string> firstFields;
+    for(auto& e: arg0.as_<EVector>())
+	firstFields.push_back(e.as_<String>());
+
+    auto arg1 =  Args.evaluate(1);
+    auto& sample = arg1.as_<Box<json>>();
+
+    vector<string> out_fields = firstFields;
+
+    set<string> fields1;
+    for(auto& field: out_fields)
+	fields1.insert(field);
+
+    auto all_fields = MCON::get_keys_nested(MCON::atomize(sample,true));
+    int nfields = all_fields.size();
+
+    for(auto& field: fields1)
+	if (not all_fields.count(field))
+	{
+	    std::cerr<<"Error: Header: field '"<<field<<"' does not exist!\n";
+	    exit(1);
+	}
+
+    vector<string> fields2;
+    for(auto& field: all_fields)
+	if (not fields1.contains(field))
+	    fields2.push_back(field);
+    std::sort(fields2.begin(), fields2.end());
+    out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
+    assert(out_fields.size() == all_fields.size());
+
+    auto printed_fields = MCON::short_fields(out_fields);
+
+    expression_ref tsv_header = new String(MCON::tsv_line(printed_fields));;
+
+    object_ptr<Box<map<string,int>>> mapping = new Box<map<string,int>>();
+    for(int i=0;i<out_fields.size();i++)
+	mapping->insert({out_fields[i],i});
+
+    expression_ref m2 = mapping;
+
+    return { EPair(tsv_header, m2) };
+}
+
+extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& mapping = arg0.as_<Box<std::map<string,int>>>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sample = arg1.as_<Box<json>>();
+
+    auto sample2 = MCON::atomize(MCON::unnest(sample), true);
+
+    object_ptr<String> result = new String(MCON::tsv_line(MCON::get_row(mapping, sample2)));
+    return result;
 }
