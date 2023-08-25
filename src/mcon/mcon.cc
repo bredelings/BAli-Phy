@@ -8,6 +8,8 @@ using std::set;
 using std::map;
 using std::vector;
 
+namespace fs = std::filesystem;
+
 namespace MCON
 {
 
@@ -452,7 +454,7 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
     return MCON::Log(header, samples);
 }
 
-MCON::Log read_logfile(std::istream& input, const string& filename)
+MCON::Log read_logfile(std::istream& input, const fs::path& filename)
 {
     auto [format,firstline] = detect_format(input);
     if (format == "MCON")
@@ -460,9 +462,9 @@ MCON::Log read_logfile(std::istream& input, const string& filename)
     else if (format == "TSV")
 	return read_TSV(firstline, input);
     else if (not format)
-	std::cerr<<"Unknown format for file '"<<filename<<"'";
+	std::cerr<<"Unknown format for file "<<filename;
     else
-	std::cerr<<"Unknown format '"<<*format<<"'for file '"<<filename<<"'";
+	std::cerr<<"Unknown format '"<<*format<<"'for file "<<filename;
     exit(1);
 }
 

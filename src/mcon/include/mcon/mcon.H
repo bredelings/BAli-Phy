@@ -5,6 +5,7 @@
 #include <string_view>
 #include <iostream>
 #include "nlohmann/json.hpp"
+#include <filesystem>
 
 namespace MCON
 {
@@ -65,6 +66,6 @@ public:
     Log(const json& header, std::vector<json>&& samples);
 };
 
-MCON::Log read_logfile(std::istream& input, const std::string& filename);
+MCON::Log read_logfile(std::istream& input, const std::filesystem::path& filename);
 
 }
