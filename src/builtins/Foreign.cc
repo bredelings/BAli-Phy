@@ -152,7 +152,6 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 	fields1.insert(field);
 
     auto all_fields = MCON::get_keys_nested(MCON::atomize(sample,true));
-    int nfields = all_fields.size();
 
     for(auto& field: fields1)
 	if (not all_fields.count(field))
