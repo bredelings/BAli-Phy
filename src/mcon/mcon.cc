@@ -1,6 +1,7 @@
 #include "mcon/mcon.H"
 #include <tuple>
 #include <optional>
+#include <sstream>
 using std::string;
 using std::string_view;
 using std::set;
@@ -226,10 +227,15 @@ std::ostream& write_tsv_line(std::ostream& o, const vector<string>& v)
 	o<<v[i];
 	if (i+1<v.size())
 	    o<<'\t';
-	else
-	    o<<'\n';
     }
     return o;
+}
+
+std::string tsv_line(const vector<string>& v)
+{
+    std::ostringstream o;
+    write_tsv_line(o,v);
+    return o.str();
 }
 
 vector<string> parse_tsv_line(const string& s)
@@ -247,7 +253,36 @@ vector<string> parse_tsv_line(const string& s)
     strings.push_back(s.substr(s.size()-length,length));
     return strings;
 }
-    
+
+vector<string> get_row(const map<string,int>& all_fields, const json& sample, int sample_index)
+{
+    int nfields = all_fields.size();
+
+    vector<string> row;
+    for(auto& [field,index]: all_fields)
+    {
+	if (not sample.count(field))
+	{
+	    std::cerr<<"Error: sample line "<<sample_index<<" is missing field '"<<field<<"'"<<std::endl;
+	    std::cerr<<"  "<<sample<<"\n";
+	    exit(1);
+	}
+	row.push_back(sample.at(field).dump());
+    }
+    assert(sample.size() >= nfields);
+    if (sample.size() != nfields)
+    {
+	for(auto& [key,value]: sample.items())
+	    if (not all_fields.count(key))
+	    {
+		std::cerr<<"Error: sample line "<<sample_index<<" has extra field '"<<key<<"'"<<std::endl;
+		std::cerr<<"  "<<sample<<"\n";
+		exit(1);
+	    }
+    }
+    assert(sample.size() == nfields);
+    return row;
+}
 
 std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
 {
@@ -290,42 +325,23 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
     assert(out_fields.size() == all_fields.size());
 
+    map<string,int> all_fields_map;
+    for(int i=0;i<out_fields.size();i++)
+	all_fields_map.insert({out_fields[i],i});
+    
     // Log: Writing TSV: nfields fields
 
     auto printed_fields = out_fields;
     if (short_names and *short_names)
 	printed_fields = short_fields(printed_fields);
 
-    write_tsv_line(o, printed_fields);
+    write_tsv_line(o, printed_fields)<<"\n";
 
     for(int sample_index=0;sample_index<samples.size(); sample_index++)
     {
 	auto& sample = samples[sample_index];
 
-	vector<string> row;
-	for(int i=0;i<nfields;i++)
-	{
-	    if (not sample.count(out_fields[i]))
-	    {
-		std::cerr<<"Error: sample line "<<sample_index<<" is missing field '"<<out_fields[i]<<"'"<<std::endl;
-		std::cerr<<"  "<<sample<<"\n";
-		exit(1);
-	    }
-	    row.push_back(sample.at(out_fields[i]).dump());
-	}
-	assert(sample.size() >= nfields);
-	if (sample.size() != nfields)
-	{
-	    for(auto& [key,value]: sample.items())
-		if (not all_fields.count(key))
-		{
-		    std::cerr<<"Error: sample line "<<sample_index<<" has extra field '"<<key<<"'"<<std::endl;
-		    std::cerr<<"  "<<sample<<"\n";
-		    exit(1);
-		}
-	}
-	assert(sample.size() == nfields);
-	write_tsv_line(o, row);
+	write_tsv_line(o, get_row(all_fields_map, sample, sample_index))<<"\n";
     }
 
     return o;
