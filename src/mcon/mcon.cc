@@ -254,7 +254,7 @@ vector<string> parse_tsv_line(const string& s)
     return strings;
 }
 
-vector<string> get_row(const map<string,int>& all_fields, const json& sample, int sample_index)
+vector<string> get_row(const map<string,int>& all_fields, const json& sample, std::optional<int> sample_index)
 {
     int nfields = all_fields.size();
 
@@ -263,7 +263,10 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, in
     {
 	if (not sample.count(field))
 	{
-	    std::cerr<<"Error: sample line "<<sample_index<<" is missing field '"<<field<<"'"<<std::endl;
+	    std::cerr<<"Error: sample";
+	    if (sample_index)
+		std::cerr<<" line "<<*sample_index;
+	    std::cerr<<" is missing field '"<<field<<"'"<<std::endl;
 	    std::cerr<<"  "<<sample<<"\n";
 	    exit(1);
 	}
@@ -275,7 +278,10 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, in
 	for(auto& [key,value]: sample.items())
 	    if (not all_fields.count(key))
 	    {
-		std::cerr<<"Error: sample line "<<sample_index<<" has extra field '"<<key<<"'"<<std::endl;
+		std::cerr<<"Error: sample";
+		if (sample_index)
+		    std::cerr<<" line "<<*sample_index;
+		std::cerr<<" has extra field '"<<key<<"'"<<std::endl;
 		std::cerr<<"  "<<sample<<"\n";
 		exit(1);
 	    }

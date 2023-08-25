@@ -1,5 +1,6 @@
 #include <set>
 #include <string>
+#include <optional>
 #include <map>
 #include <string_view>
 #include <iostream>
@@ -33,7 +34,7 @@ std::ostream& write_tsv_line(std::ostream& o, const std::vector<std::string>& v)
 
 std::string tsv_line(const std::vector<std::string>& v);
 
-std::vector<std::string> get_row(const std::map<std::string,int>& all_fields, const json& sample, int sample_index);
+std::vector<std::string> get_row(const std::map<std::string,int>& all_fields, const json& sample, std::optional<int> sample_index={});
 
 class Log
 {
