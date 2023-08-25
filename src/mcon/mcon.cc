@@ -289,7 +289,7 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     std::sort(fields2.begin(), fields2.end());
     out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
     assert(out_fields.size() == all_fields.size());
-    
+
     // Log: Writing TSV: nfields fields
 
     auto printed_fields = out_fields;
