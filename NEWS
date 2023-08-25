@@ -3,8 +3,9 @@
   + MAP point is no longer printed.
   + the Maximum-Posterior-Decoding alignment is now shorter (it uses the "multiply" criterion).
   + the initial alignment has all sequences left-aligned when estimated (for now).
-  + "-m" now looks for a Model.main function that returns IO (Random ()).
+  + "-m Model.hs" now looks for a Model.main function that returns IO (Random [(Key,JSON)]).
   + stdout / stderr are no longer redirected to a file.
+  + C1.log is not created.  You can convert C1.log.json to TSV format using the new tool mcon-tool.
 - Bug fixes:
   + Memory: reclaim memory from running loggers + transition kernels.
   + Memory: clear tokens immediately - don't wait for garbage collection.
