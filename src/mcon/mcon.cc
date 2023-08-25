@@ -315,7 +315,6 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
 	fields1.insert(field);
 
     auto all_fields = get_keys();
-    int nfields = all_fields.size();
 
     for(auto& field: fields1)
 	if (not all_fields.count(field))
