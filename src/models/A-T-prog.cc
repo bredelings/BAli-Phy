@@ -536,7 +536,8 @@ std::string generate_atmodel_program(const variables_map& args,
     auto sequence_data = var("sequence_data");
     auto topology = var("topology");
     auto tree = var("tree");
-    var paramLogger("logParams");
+    var jsonLogger("logParamsJSON");
+    var tsvLogger("logParamsTSV");
     auto treeLogger = var("logTree");
     expression_ref model_fn = {model,sequence_data};
     var loggers_var("loggers");
@@ -546,7 +547,10 @@ std::string generate_atmodel_program(const variables_map& args,
         model_fn = {model_fn, topology};
     if (not args.count("test"))
     {
-        model_fn = {model_fn, paramLogger};
+	if (log_formats.count("tsv"))
+	    model_fn = {model_fn, tsvLogger};
+	if (log_formats.count("json"))
+	    model_fn = {model_fn, jsonLogger};
         if (not fixed.count("tree"))
             model_fn = {model_fn, treeLogger};
         if (not alignment_loggers.empty())
@@ -559,8 +563,17 @@ std::string generate_atmodel_program(const variables_map& args,
     // Add the logger for scalar parameters
     if (not args.count("test"))
     {
-        program.empty_stmt();
-        program.perform({var("$"),var("addLogger"),{paramLogger,loggers_var}});
+	if (log_formats.count("tsv"))
+	{
+	    program.empty_stmt();
+	    program.perform({var("$"),var("addLogger"),{tsvLogger,loggers_var}});
+	}
+
+	if (log_formats.count("json"))
+	{
+	    program.empty_stmt();
+	    program.perform({var("$"),var("addLogger"),{jsonLogger,loggers_var}});
+	}
 
         // Add the tree logger
         if (not fixed.count("tree"))
@@ -670,8 +683,17 @@ std::string generate_atmodel_program(const variables_map& args,
     if (not args.count("test"))
     {
         // Initialize the parameters logger
-        main.empty_stmt();
-        main.perform(paramLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+	if (log_formats.count("tsv"))
+	{
+	    main.empty_stmt();
+	    main.perform(tsvLogger, {var("tsvLogger"),{var("</>"), directory, String("C1.log")},get_list(vector<String>{"iter"})});
+	}
+
+	if (log_formats.count("json"))
+	{
+	    main.empty_stmt();
+	    main.perform(jsonLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+	}
 
         // Initialize the tree logger
         if (not fixed.count("tree"))
