@@ -5,15 +5,15 @@ import Probability.Distribution.Categorical
 import Probability.Distribution.Discrete
 
 {-
-   PROBLEM:  We CANNOT write e.g. equalMixture [ always 0, uniform 0 1 ]
+   PROBLEM:  We CANNOT write e.g. equalMixture [ always 0, always 1, uniform 0 1 ]
               because currently Mixture requires all the component distributions
               to be the same type.
 
-             We CAN write equalMixture [ sample $ always 0, sample $ uniform 0 1]
+             We CAN write equalMixture [ sample $ always 0, sample $ uniform 0 1 ]
               because then all the entries are of type Random Double
 
              The problem is that usually we'd like the component distributions
-              to all suppose some property -- such as Sampleable, or Dist1D or something.
+              to all support some property -- such as Sampleable, or Dist1D or something.
              But then we'd need some kind of wrapper that packages the distributions and
               a dictionary for those pieces of functionality.  We can't derive the required
               functionality from the calling context.
