@@ -99,7 +99,7 @@ void reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers, vecto
     find_all_regs_in_context_no_check(t,scan,unique);
 
 #ifndef NDEBUG
-    check_used_regs_in_token(t);
+    if (t >= 0) check_used_regs_in_token(t);
 #endif
 }
 
