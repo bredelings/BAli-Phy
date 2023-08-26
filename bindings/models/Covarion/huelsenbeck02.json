@@ -17,13 +17,13 @@
             "arg_name": "r",
             "arg_type": "Double",
 	    "default_value":"~gamma(2,1/4)",
-	    "description":"Rate from OFF to ON"
+	    "description":"s01 + s10"
         },
         {
             "arg_name": "pi1",
             "arg_type": "Double",
 	    "default_value":"~beta(2,2)",
-	    "description":"Rate from ON to OFF"
+	    "description":"Fraction of time spent in the ON state"
         },
         {
             "arg_name": "submodel",
