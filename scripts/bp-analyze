@@ -1822,7 +1822,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_imodel_indices()[i]+1
                 target = f"I{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                section += f'<td>{link} = {smodel}</td>\n'
+                section += f'<td>{link} = {imodel}</td>\n'
             elif self.get_imodels() is not None:
                 section += '<td>none</td>\n'
             else:
