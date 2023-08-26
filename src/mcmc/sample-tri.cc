@@ -42,6 +42,7 @@
 #include "substitution/substitution.H"              // for get_column_likeli...
 #include "util/assert.hh"                           // for assert
 #include "util/math/log-double.H"                   // for log_double_t, ope...
+#include "util/log-level.H"                         // for log_verbose
 #include "util/myexception.H"                       // for myexception
 #include "util/rng.H"                               // for uniform
 
@@ -390,7 +391,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     assert(C == -1 or Pr[C] > 0.0);
 
 #ifndef NDEBUG_DP
-    std::cerr<<"choice = "<<C<<endl;
+    if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
 
     // FIXME: check that alignment of unaffected sequences w/in 2 blocks is unchanged!
     

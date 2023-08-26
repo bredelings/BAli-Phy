@@ -25,6 +25,7 @@
 
 #include <tuple>
 #include "util/assert.hh"
+#include "util/log-level.H"
 #include "slice-sampling.H"
 #include "util/rng.H"
 #include "probability/choose.H"
@@ -302,7 +303,7 @@ scale_means_only_slice_function2::scale_means_only_slice_function2(context_ref& 
     b = between<double>(-40+shift,40+shift);
 
 #ifndef NDEBUG
-    std::clog<<"bounds on t are "<<b<<std::endl;
+    if (log_verbose >= 4) std::clog<<"bounds on t are "<<b<<std::endl;
 #endif
 }
 

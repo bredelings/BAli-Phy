@@ -30,6 +30,7 @@
 #include "alignment/alignment-util2.H"
 #include "substitution/substitution.H"
 #include "dp/dp-matrix.H"
+#include "util/log-level.H"                         // for log_verbose
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -156,7 +157,7 @@ log_double_t sample_alignment(Parameters& P,int b)
     }
 
 #ifndef NDEBUG_DP
-    std::cerr<<"\n\n----------------------------------------------\n";
+    if (log_verbose >=4) std::cerr<<"\n\n----------------------------------------------\n";
 
     int node1 = P.t().source(b);
     int node2 = P.t().target(b);
@@ -207,39 +208,45 @@ log_double_t sample_alignment(Parameters& P,int b)
 	    }
     }
 
-    for(int i=0;i<p[1].n_data_partitions();i++) 
+    if (log_verbose >= 4)
     {
-	if (paths[0][i].size() > paths[1][i].size())
-	    std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
-	if (paths[0][i].size() < paths[1][i].size())
-	    std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
+	for(int i=0;i<p[1].n_data_partitions();i++) 
+	{
+	    if (paths[0][i].size() > paths[1][i].size())
+		std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
+	    if (paths[0][i].size() < paths[1][i].size())
+		std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
+	}
     }
 
     //--------- Check that each choice is sampled w/ the correct Probability ---------//
     check_sampling_probabilities(PR);
 
     //--------- Check construction of A  ---------//
-    for(int j=0;j<P.n_data_partitions();j++) 
+    if (log_verbose >= 4)
     {
-	double diff = log(PR[0][0]) - log(PR[1][0]);
-	std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
-	    " diff = "<<diff<<std::endl;
+	for(int j=0;j<P.n_data_partitions();j++) 
+	{
+	    double diff = log(PR[0][0]) - log(PR[1][0]);
+	    std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
+		" diff = "<<diff<<std::endl;
 
-	if (diff < -10) {
-	    log_double_t L1 = p[1].likelihood();
-	    log_double_t L2 = p[0].likelihood();
+	    if (diff < -10) {
+		log_double_t L1 = p[1].likelihood();
+		log_double_t L2 = p[0].likelihood();
       
-	    log_double_t prior1 = p[1].prior();
-	    log_double_t prior2 = p[0].prior();
+		log_double_t prior1 = p[1].prior();
+		log_double_t prior2 = p[0].prior();
       
-	    std::cerr<<"Yelp!\n";
+		std::cerr<<"Yelp!\n";
       
-	    std::cerr<<std::endl;
-	    std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
-	    std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
-	    std::cerr<<std::endl;
+		std::cerr<<std::endl;
+		std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
+		std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
+		std::cerr<<std::endl;
       
-	    std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
+		std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
+	    }
 	}
     }
 

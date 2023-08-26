@@ -28,6 +28,7 @@
 #include "sample.H"
 #include "probability/choose.H"
 #include "util/rng.H"
+#include "util/log-level.H"                         // for log_verbose
 #include "dp/2way.H"
 #include "dp/3way.H"
 #include "dp/alignment-sums.H"
@@ -210,7 +211,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     assert(Pr[C] > 0.0);
 
 #ifndef NDEBUG_DP
-    std::cerr<<"choice = "<<C<<endl;
+    if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
 
     // FIXME: check that alignment of sequences in each group is unchanged.
 

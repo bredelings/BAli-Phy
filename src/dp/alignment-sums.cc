@@ -163,7 +163,7 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
 
     int prec = cerr.precision(10);
 
-    if (log_verbose)
+    if (log_verbose >= 4)
 	cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
     assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
@@ -175,7 +175,14 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
     log_double_t qt = qs * qp;
     log_double_t lt = P.heated_likelihood() * P.prior_alignment();
 
-    if (log_verbose)
+    bool ok = true;
+
+    if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or
+	 (std::abs(log(qp) - log(lp)) > 1.0e-9) or
+	 (std::abs(log(qt) - log(lt)) > 1.0e-9))
+	ok = false;
+
+    if (log_verbose >= 4 or not ok)
     {
 	cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
 	cerr<<"lp = "<<lp<<"    qp = "<<qp
@@ -184,9 +191,8 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
 	cerr<<endl;
     }
 
-    if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
-	 (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
-	 (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
+    if ( not ok )
+    {
 //	cerr<<P.A()<<endl;
 	cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
 	std::abort();
@@ -244,7 +250,7 @@ void check_sampling_probabilities(const vector< vector<log_double_t> >& PR)
 	log_double_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
 	double diff = log(ratio2/ratio1);
 
-	if (log_verbose or std::abs(diff) > 1.0e-9)
+	if (log_verbose >= 4 or std::abs(diff) > 1.0e-9)
 	{
 	    cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 

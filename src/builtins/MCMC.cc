@@ -1345,7 +1345,7 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
     //---------------- Run the MCMC chain -------------------//
     for(int iterations=0; iterations < max_iterations; iterations++)
     {
-	if (log_verbose>=2)
+	if (log_verbose>=1)
 	    std::cerr<<"iterations = "<<iterations<<"\n";
         C.run_loggers(iterations);
         C.run_transition_kernels();

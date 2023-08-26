@@ -31,6 +31,7 @@
 #include "util/rng.H"
 #include "probability/choose.H"
 #include "probability/probability.H"
+#include "util/log-level.H"                         // for log_verbose
 
 #include "dp/3way.H"
 #include "tree/tree-util.H"
@@ -1170,8 +1171,11 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     }
 
 #ifndef NDEBUG
-    auto peels1 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
-    std::cerr<<"total_peels2 = "<<peels1 - peels0<<std::endl;
+    if (log_verbose >= 4)
+    {
+	auto peels1 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
+	std::cerr<<"total_peels2 = "<<peels1 - peels0<<std::endl;
+    }
 #endif
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 

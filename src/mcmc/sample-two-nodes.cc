@@ -30,6 +30,7 @@
 #include "probability/choose.H"
 #include "util/mapping.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 #include "dp/2way.H"
 #include "dp/5way.H"
 #include "dp/alignment-sums.H"
@@ -217,7 +218,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     }
 
 #ifndef NDEBUG_DP
-    std::cerr<<"choice = "<<C<<endl;
+    if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
 
     // FIXME: check that alignment of sequences besides the middle 2 is the same between P0[j] and p[i][j]
 
