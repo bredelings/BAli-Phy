@@ -122,6 +122,16 @@ ptree parse_constraints(const ptree& cc)
     return constraints;
 }
 
+ptree parse_value(ptree call)
+{
+    auto s = call.get_value<string>();
+    if (s == "[]")
+	return ptree("[]");
+    else
+	// parse_type still uses [].  its not just for types.
+	return parse_type(call.get_value<string>());
+}
+
 ptree convert_rule(const Rules& R, const string& name, Rule rule)
 {
     {
@@ -138,11 +148,7 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 
     {
 	ptree& call = rule.get_child("call");
-	auto s = call.get_value<string>();
-	if (s == "[]")
-	    call = ptree("[]");
-	else
-	    call = parse_type(call.get_value<string>());
+	call = parse_value(call);
     }
 
     for(auto& [_,x]: rule.get_child("args"))
@@ -165,6 +171,15 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 	}
     }
 
+    // Handle optional element "computed".
+    if (auto computed = rule.get_child_optional("computed"))
+    {
+	for(auto& [_,x]: *computed)
+	{
+	    ptree& value = x.get_child("value");
+	    value = parse_value(value);
+	}
+    }
     return rule;
 }
 

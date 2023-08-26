@@ -1141,7 +1141,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     result.code.perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
-    
+
     if (not is_haskell_qid(call.get_value<string>()) and
         not is_haskell_qsym(call.get_value<string>()) and
         not is_haskell_builtin_con_name(call.get_value<string>()) and
@@ -1275,6 +1275,27 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         // 6c. Write the logger for the variable.
         if (do_log)
             result.code.log_value(log_names[i], argument_environment[arg_names[i]]);
+    }
+
+    if (auto computed = rule->get_child_optional("computed"))
+    {
+	for(auto& [_,x]: *computed)
+	{
+	    // A. Generate a unique haskell name for the computed variable
+	    auto x_name = x.get_child("name").get_value<string>();
+	    auto x_log_name = name + ":" + x_name;
+	    auto x_var = scope2.get_var(x_name);
+
+	    // B. Each computed variable can only reference earlier computed variables.
+	    auto& value = x.get_child("value");
+	    result.code.stmts.let(x_var, make_call(value, argument_environment));
+
+	    // C. Log the computed variable
+	    result.code.log_value(x_log_name, x_var);
+
+            // D. Put this var into the argument environment
+	    argument_environment[x_name] = x_var;
+	}
     }
 
     // 7. Compute the call expression.
