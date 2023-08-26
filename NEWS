@@ -5,7 +5,6 @@
   + the initial alignment has all sequences left-aligned when estimated (for now).
   + "-m Model.hs" now looks for a Model.main function that returns IO (Random [(Key,JSON)]).
   + stdout / stderr are no longer redirected to a file.
-  + C1.log is not created.  You can convert C1.log.json to TSV format using the new tool mcon-tool.
 - Bug fixes:
   + Memory: reclaim memory from running loggers + transition kernels.
   + Memory: clear tokens immediately - don't wait for garbage collection.
@@ -18,6 +17,7 @@
 + Features:
   - Tree-alignment models can be hand-written -- no magic return type.
   - Initial implemention of sequence simulation.
+  - you can convert JSON logs to TSV using the new mcon-tool.
 - Model language:
   - Allow reading / writing trees and alignment from the model.
   - Logging is done from the model - remove C++ logging.
