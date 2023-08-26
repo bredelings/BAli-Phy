@@ -664,6 +664,41 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
     return {index_var(0), {C.Env[0]}};
 }
 
+int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)
+{
+    // DO: make an object that pins a reg in memory until it is destroyed.
+    // push_temp head KIND of works, but the stack-based approach is problematic.
+    // We should use a hash.
+    // So, we would have a hash map of heads -> counts inside reg_heap.
+
+    // 1. If the reg r is already non-contingent, use it direcctly.
+    if (not M.creator_of_reg(r)) return r;
+
+    // 2. Evaluate the reg to a constant.
+    auto C = Args.evaluate_reg_to_closure(r);
+
+    // 3. Complain if there the object isn't atomic
+    if (is_gcable_type(C.exp.type()))
+    {
+	vector<int> tmp;
+	auto gco = convert<GCObject>(C.exp.ptr());
+	gco->get_regs(tmp);
+	for(int& r: tmp)
+	    r = copy_out_of_machine(M, Args, r);
+
+	if (tmp.size())
+	    throw myexception()<<"copy_out_of_machine: currently we don't handle GCObjects";
+    }
+    else
+    {
+	for(int& r: C.Env)
+	    r = copy_out_of_machine(M, Args, r);
+    }
+
+    return Args.allocate_non_contingent(std::move(C));
+}
+
+
 extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
 {
     // 1. IORef
@@ -678,6 +713,12 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     // 3. Write the IORef
     auto& M = Args.memory();
     assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    if (not M.creator_of_reg(r_ioref))
+    {
+	// The IORef is non-contingent, but the value is contingent!
+
+	r_value = copy_out_of_machine(M, Args, r_value);
+    }
     C.Env[0] = r_value;
     M.set_C(r_ioref, std::move(C));
 
