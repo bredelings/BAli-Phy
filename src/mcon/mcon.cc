@@ -299,30 +299,15 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, st
     return row;
 }
 
-std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
+vector<string> tsv_fields(const vector<string>& first_fields, const json& j, bool nested)
 {
-    if (is_nested() or not is_atomic())
-    {
-	auto log2 = *this;
-	log2.unnest();
-	log2.atomize();
-	if (not short_names)
-	    short_names = true;
-	return log2.dump_TSV(o, short_names);
-    }
+    vector<string> out_fields = first_fields;
 
-    assert(not is_nested());
-    assert(is_atomic());
-
-    vector<string> out_fields;
-    if (fields)
-	out_fields = *fields;
+    auto all_fields = nested?get_keys_nested(atomize(j,true)):get_keys_non_nested(atomize(j,false));
 
     set<string> fields1;
     for(auto& field: out_fields)
 	fields1.insert(field);
-
-    auto all_fields = get_keys();
 
     for(auto& field: fields1)
 	if (not all_fields.count(field))
@@ -338,6 +323,30 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     std::sort(fields2.begin(), fields2.end());
     out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
     assert(out_fields.size() == all_fields.size());
+
+    return out_fields;
+}
+    
+std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
+{
+    if (is_nested() or not is_atomic())
+    {
+	auto log2 = *this;
+	log2.unnest();
+	log2.atomize();
+	if (not short_names)
+	    short_names = true;
+	return log2.dump_TSV(o, short_names);
+    }
+
+    assert(not is_nested());
+    assert(is_atomic());
+
+    vector<string> first_fields;
+    if (fields)
+	first_fields = *fields;
+
+    vector<string> out_fields = tsv_fields(first_fields, samples[0], nested);
 
     map<string,int> all_fields_map;
     for(int i=0;i<out_fields.size();i++)

@@ -145,28 +145,7 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
     auto arg1 =  Args.evaluate(1);
     auto& sample = arg1.as_<Box<json>>();
 
-    vector<string> out_fields = firstFields;
-
-    set<string> fields1;
-    for(auto& field: out_fields)
-	fields1.insert(field);
-
-    auto all_fields = MCON::get_keys_nested(MCON::atomize(sample,true));
-
-    for(auto& field: fields1)
-	if (not all_fields.count(field))
-	{
-	    std::cerr<<"Error: Header: field '"<<field<<"' does not exist!\n";
-	    exit(1);
-	}
-
-    vector<string> fields2;
-    for(auto& field: all_fields)
-	if (not fields1.contains(field))
-	    fields2.push_back(field);
-    std::sort(fields2.begin(), fields2.end());
-    out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
-    assert(out_fields.size() == all_fields.size());
+    vector<string> out_fields = MCON::tsv_fields(firstFields, sample, true);
 
     auto printed_fields = MCON::short_fields(out_fields);
 
