@@ -135,6 +135,19 @@ int OperationArgs::allocate_reg()
     return r;
 }
 
+int OperationArgs::allocate_non_contingent(closure&& C)
+{
+    int r = allocate_non_contingent_reg();
+    M.set_C(r, std::move(C));
+    return r;
+}
+
+int OperationArgs::allocate_non_contingent_reg()
+{
+    n_allocated++;
+    return M.push_temp_head();
+}
+
 void OperationArgs::set_effect(int /*r*/)
 {
     make_changeable();

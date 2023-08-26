@@ -87,6 +87,10 @@ public:
 
     int allocate_reg();
 
+    int allocate_non_contingent(closure&&);
+
+    int allocate_non_contingent_reg();
+
     OperationArgs(reg_heap& m, int r);
 
     virtual ~OperationArgs();
