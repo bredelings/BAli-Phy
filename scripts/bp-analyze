@@ -331,6 +331,12 @@ class MCMCRun(object):
     def has_model(self):
         return False
 
+    def has_code(self):
+        if self.code:
+            return True;
+        else:
+            return False;
+
     def get_parent_dir(self):
         return self.dir.resolve().parent
 
@@ -343,9 +349,6 @@ class MCMCRun(object):
     def get_prefix(self):
         return self.prefix
     
-    def get_out_file(self):
-        return self.out_file
-
     def get_trees_file(self):
         return self.trees_file
 
@@ -448,6 +451,9 @@ class MCMCRun(object):
     def get_branch_length_prior(self):
         return None
 
+    def get_code(self):
+        return []
+
 class LogFileRun(MCMCRun):
     def __init__(self,mcmc_output,**kwargs):
         super().__init__(mcmc_output, **kwargs)
@@ -521,6 +527,11 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         self.version = self.run_info["program"]["version"]
         self.topology_prior = self.run_info["tree"]["topology"]
         self.branch_prior = self.run_info["tree"]["lengths"]
+
+        self.code = []
+        for file_path in os.listdir( self.get_dir() ):
+            if Path(file_path).suffix == '.hs':
+                self.code.append( self.get_dir() / file_path )
 
         logging.debug(f"BAliPhyRun: {mcmc_output}")
 
@@ -631,6 +642,10 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
                 if line.startswith("iterations"):
                     break
         return indices
+
+    def get_code(self):
+        return self.code
+
 
 class TreeLogFileRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output, **kwargs):
@@ -782,6 +797,10 @@ class Analysis(object):
         # FIXME - maybe switch from gnuplot to R?
         self.gnuplot_exe = find_exe('gnuplot', message='Some graphs will not be generated.\n')
         self.R_exe = find_exe('R', message='Some mixing graphs will not be generated.\n')
+        self.ormolu_exe = shutil.which("ormolu")
+        self.hindent_exe = shutil.which("hindent")
+        if not self.ormolu_exe and not self.hindent_exe:
+            print("Can't find ormolu or hindent -- not formatting Haskell code.")
 
         self.subpartitions = args.subpartitions
         self.subsample = args.subsample
@@ -829,6 +848,8 @@ class Analysis(object):
             self.compute_ancestral_states()
             self.draw_alignments()
             self.compute_and_draw_AU_plots()
+        if self.has_code():
+            self.copy_code()
         self.print_index_html(self.outdir / "index.html")
 
     def n_chains(self):
@@ -845,6 +866,13 @@ class Analysis(object):
 
     def has_model(self):
         return self.mcmc_runs[0].has_model()
+
+    def has_code(self):
+        return self.mcmc_runs[0].has_code()
+
+    def get_code(self):
+        # We should check that all the runs have the SAME code!
+        return self.mcmc_runs[0].get_code()
 
     def run(self,p):
         return self.mcmc_runs[p]
@@ -912,9 +940,6 @@ class Analysis(object):
 
     def get_alphabets(self):
         return first_all_same([run.get_alphabets() for run in self.mcmc_runs])
-
-    def get_out_files(self):
-        return [run.get_out_file() for run in self.mcmc_runs]
 
     def get_alignments_files(self):
         return [run.get_alignments_files() for run in self.mcmc_runs]
@@ -1687,6 +1712,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             output += self.section_analysis()
             if self.has_model():
                 output += self.section_model_and_priors()
+            if self.has_code():
+                output += self.section_code()
             output += self.section_end()
             print(output, file=index)
 
@@ -1782,6 +1809,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       [<a href="#mixing">Mixing</a>]
       [<a href="#analysis">Analysis</a>]
       [<a href="#models">Models+Priors</a>]
+      [<a href="#code">Code</a>]&nbsp;
     </span>
 """
 
@@ -1847,6 +1875,61 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += '</tr>\n'
         section += '</table>\n'
         return section
+
+
+    def format_hs(self,infile,outfile):
+        shutil.copyfile(infile,outfile)
+        if self.ormolu_exe:
+            self.exec_show([self.ormolu_exe, '-i', outfile])
+        elif self.hindent:
+            self.exec_show([self.hindent_exe, outfile])
+
+
+    def create_viewable_source(self,inpath,outpath):
+        infile = open(inpath)
+        code = infile.read()
+        infile.close()
+
+        with open(outpath, 'w') as outfile:
+            print(f"""
+<html>
+<head>
+<title>{inpath.name}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/haskell.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body>
+<pre><code>{code}
+</code>
+</pre>
+</body>
+</html>
+""", file=outfile)
+
+    def copy_code(self):
+        for file_path in self.get_code():
+            out_file_path = self.outdir / file_path.name
+            self.format_hs(file_path, out_file_path)
+            self.create_viewable_source(out_file_path, out_file_path.with_suffix('.html'))
+
+    def section_code(self):
+        if not self.has_code():
+            return None
+
+        section = """\
+<h2 class="clear"><a class="anchor" name="code"></a>Model Code</h2>
+    <ul>
+"""
+        for file_path in self.get_code():
+            url = file_path.with_suffix(".html").name
+            section += f"        <li><a href=\"{url}\">{file_path.name}</a></li>\n"
+        section += "    </ul>\n"
+        section += '<br/><hr/>\n'
+
+        return section
+
 
     def section_scalar_variables(self):
         log_files = self.get_log_files()
