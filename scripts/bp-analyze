@@ -1889,6 +1889,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         infile = open(inpath)
         code = infile.read()
         infile.close()
+        code = re.sub('<','&lt;',code)
 
         with open(outpath, 'w') as outfile:
             print(f"""
