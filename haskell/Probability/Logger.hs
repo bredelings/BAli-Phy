@@ -111,3 +111,5 @@ writeTSV file firstFields stateref ljson iter prior likelihood posterior = do
                   T.hPutStrLn file $ getTsvLine mapping cj
 
     Just mapping -> T.hPutStrLn file $ getTsvLine mapping cj
+
+  hFlush file
