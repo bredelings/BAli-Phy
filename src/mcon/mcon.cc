@@ -131,9 +131,14 @@ string chop_nested(string key)
 
 json simplify(const json& j)
 {
+    // 1. Recursively simplify children.
     json j2;
+    for(auto& [k,v]: j.items())
+	j2[k] = is_nested_key(k) ? simplify(v) : v;
+
+    // 2. Check which keys are present or could be promoted.
     map<string,int> seen;
-    for(auto& [key,value]: j.items())
+    for(auto& [key,value]: j2.items())
     {
 	seen[chop_nested(key)] += 1;
 	if (is_nested_key(key))
@@ -141,7 +146,9 @@ json simplify(const json& j)
 		seen[chop_nested(key2)] += 1;
     }
 
-    for(auto& [key,value]: j.items())
+    // 3. Promote nested keys if there is no ambiguity.
+    json j3;
+    for(auto& [key,value]: j2.items())
     {
 	if (is_nested_key(key))
 	{
@@ -150,15 +157,15 @@ json simplify(const json& j)
 		if (seen.at(chop_nested(k2)) > 1)
 		    ok = false;
 	    if (ok)
-		j2.update(value);
+		j3.update(value);
 	    else
-		j2[key] = value;
+		j3[key] = value;
 	}
 	else
-	    j2[key] = value;
+	    j3[key] = value;
     }
 
-    return j2;
+    return j3;
 }
 
 vector<string> short_fields(const vector<string>& fields)
