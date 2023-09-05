@@ -9,6 +9,7 @@
 #include "util/bounds.H"
 #include "mcmc/prob_ratios.H"
 #include "util/json.hh"
+#include <functional>
 
 class reg_heap;
 
@@ -236,4 +237,5 @@ bool perform_MH(context_ref& C1, const context_ref& C2, log_double_t rho);
 
 std::ostream& operator<<(std::ostream&, const context_ref& C);
 
+typedef std::function<log_double_t(context_ref& P)> Proposal;
 #endif

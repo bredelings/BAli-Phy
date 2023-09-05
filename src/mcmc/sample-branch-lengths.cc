@@ -23,12 +23,18 @@
 #include "util/permute.H"
 #include "dp/5way.H"
 #include "substitution/substitution.H"
-#include "proposals.H"
 
 using MCMC::MoveStats;
 using std::vector;
 using std::string;
 using std::abs;
+
+log_double_t scale_gaussian(double& x, double sigma)
+{
+    auto scale = exp_to<log_double_t>( gaussian(0,sigma) );
+    x *= (double)scale;
+    return scale;
+}
 
 log_double_t branch_twiddle(double& T,double sigma) {
     T += gaussian(0,sigma);

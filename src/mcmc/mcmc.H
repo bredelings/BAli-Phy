@@ -31,17 +31,10 @@
 #ifndef MCMC_H
 #define MCMC_H
 
-#include <functional>                                // for function
 #include <iostream>                                  // for ostream
 #include <map>                                       // for map
 #include <string>                                    // for string
 #include <valarray>                                  // for valarray
-#include <vector>                                    // for vector
-#include "proposals.H"                               // for Proposal
-#include "util/bounds.H"                             // for bounds
-#include "util/owned-ptr.H"                          // for owned_ptr
-class Model;
-struct slice_function;
 
 // how to have different models, with different moves
 // and possibly moves between models?

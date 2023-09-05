@@ -12,7 +12,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/modifiable.H"
 #include "mcmc/slice-sampling.H"
-#include "mcmc/proposals.H"
 #include "computation/operations.H"      // for is_seq( )
 #include "models/TreeInterface.H"
 #include "mcmc/sample.H"

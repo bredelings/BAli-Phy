@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "mcmc/proposals.H"
 #include "math/pow2.H"
 #include "math/logprod.H"
 #include "util/matrix.H"

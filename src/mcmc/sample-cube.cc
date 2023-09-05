@@ -310,8 +310,6 @@ bool cube_sample_alignment_branch(Parameters& P,
     return (C > 0);
 }
 
-#include "mcmc/proposals.H"
-
 bool cube_sample_alignment_and_parameter(Parameters& P, int node1,int node2, const Proposal& propose)
 {
     //----------- Generate the Different Matrices ---------//
