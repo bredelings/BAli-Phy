@@ -17,14 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-///
-/// \file   mcmc.C
-/// \brief  Provides classes for constructing MCMC samplers.
-///
-/// \author Benjamin Redelings
-/// 
-
-#include "mcmc.H"
+#include "result.H"
 #include "util/assert.hh"                           // for assert
 #include <math.h>                                   // for log
 #include <stdlib.h>                                 // for abs, abort
@@ -59,17 +52,8 @@ namespace mpi = boost::mpi;
 
 extern int log_verbose;
 
-using std::endl;
-
-namespace MCMC {
-    using std::vector;
-    using std::valarray;
-    using std::cerr;
-    using std::clog;
-    using std::string;
-    using std::shared_ptr;
-    using std::ostream;
-
+namespace MCMC
+{
     void Result::inc(const Result& R) {
 	if (not counts.size()) {
 	    counts.resize(R.size(),0);
@@ -92,7 +76,7 @@ namespace MCMC {
     }
 
 
-    void MoveStats::inc(const string& name,const Result& R) {
+    void MoveStats::inc(const std::string& name,const Result& R) {
 	(*this)[name].inc(R);
     }
 
@@ -118,7 +102,7 @@ std::ostream& operator<<(std::ostream& o, const MCMC::MoveStats& Stats)
 		o<<"?";
 	    o<<" ["<<R.counts[i]<<"]";
 	}
-	o<<endl;
+	o<<std::endl;
     }
     if (Stats.empty())
 	o<<"   Transition kernel average-based statistics: no data.\n";

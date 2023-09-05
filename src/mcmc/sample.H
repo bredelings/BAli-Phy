@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "tree/tree.H"
 #include "models/parameters.H"
-#include "mcmc.H"
+#include "result.H"
 
 
 void slide_node(owned_ptr<Model>& P, MCMC::MoveStats& Stats, int);

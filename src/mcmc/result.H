@@ -28,8 +28,8 @@
 /// \author Benjamin Redelings
 /// 
 
-#ifndef MCMC_H
-#define MCMC_H
+#ifndef RESULT_H
+#define RESULT_H
 
 #include <iostream>                                  // for ostream
 #include <map>                                       // for map

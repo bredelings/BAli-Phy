@@ -73,7 +73,7 @@ libbaliphy_sources = [
   'dp/5way.cc',
   'dp/alignment-sums.cc',
 
-  'mcmc/mcmc.cc',
+  'mcmc/result.cc',
   'mcmc/slice-sampling.cc',
   'mcmc/moves.cc',
   'mcmc/sample-branch-lengths.cc',
