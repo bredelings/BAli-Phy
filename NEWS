@@ -1,10 +1,14 @@
-* 4.0-beta6 (unreleased)
-- Warning - changes:
-  + MAP point is no longer printed.
-  + the Maximum-Posterior-Decoding alignment is now shorter (it uses the "multiply" criterion).
+* 4.0-beta6 (Sep 5, 2023)
++ Changes:
+  + MAP alignment is no longer printed.
+  + the MPD alignment is now shorter and more condensed (it uses the "multiply" criterion).
   + the initial alignment has all sequences left-aligned when estimated (for now).
   + "-m Model.hs" now looks for a Model.main function that returns IO (Random [(Key,JSON)]).
   + stdout / stderr are no longer redirected to a file.
++ Features:
+  - Tree-alignment models can be hand-written -- no magic return type.
+  - Initial implemention of sequence simulation.
+  - new executable mcon-tool can convert JSON logs to TSV.
 - Bug fixes:
   + Memory: reclaim memory from running loggers + transition kernels.
   + Memory: clear tokens immediately - don't wait for garbage collection.
@@ -14,14 +18,10 @@
   - Typechecking: don't allow e.g (x,y) <- return (x,y,z)
   - Typechecking: handle exporting types without their constructors.
   - machine: don't re-execute side-effects in incremental_evaluate1( ).
-+ Features:
-  - Tree-alignment models can be hand-written -- no magic return type.
-  - Initial implemention of sequence simulation.
-  - you can convert JSON logs to TSV using the new mcon-tool.
 - Model language:
   - Allow reading / writing trees and alignment from the model.
-  - Logging is done from the model - remove C++ logging.
-  - Transition kernels are run from the model.
+  - Logging is done from Haskell - remove C++ logging.
+  - Transition kernels are run Haskell
   - sample branch-lengths from an iid IntMap of distributions.
   - Stop setting alignments from the Parameters constructor.
   - Refactor Tree
