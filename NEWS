@@ -1,4 +1,4 @@
-* 4.0-beta6 (Sep 5, 2023)
+* 4.0-beta6 (Sep 6, 2023)
 + Changes:
   + MAP alignment is no longer printed.
   + the MPD alignment is now shorter and more condensed (it uses the "multiply" criterion).
