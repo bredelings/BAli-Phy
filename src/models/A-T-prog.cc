@@ -182,7 +182,6 @@ std::string generate_atmodel_program(const variables_map& args,
 
     std::ostringstream program_file;
     program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
-    program_file<<"-- Use the program `ormolu` (or `brittany` or `hindent`) to indent this file for readability\n";
     program_file<<"module Main where";
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
