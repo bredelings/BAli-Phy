@@ -113,7 +113,8 @@ instance Dist (CTMCOnTree t s) where
     type Result (CTMCOnTree t s) = [Sequence]
     dist_name _ = "ctmc_on_tree"
 
-instance (HasLabels t, HasBranchLengths t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
+-- TODO: make this work on forests!                  -
+instance (HasLabels t, HasBranchLengths t, Tree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
@@ -255,7 +256,8 @@ instance Dist (CTMCOnTreeFixedA t s) where
     type Result (CTMCOnTreeFixedA t s) = [Sequence]
     dist_name _ = "ctmc_on_tree_fixed_A"
 
-instance (HasLabels t, HasBranchLengths t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
+-- TODO: make this work on forests!                  -
+instance (HasLabels t, HasBranchLengths t, Tree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
     annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
 
 ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel
