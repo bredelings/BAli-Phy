@@ -188,7 +188,7 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
 modifiable_time_tree :: (forall a.a -> a) -> WithNodeTimes (WithRoots TreeImp) -> WithNodeTimes (WithRoots TreeImp)
-modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
+modifiable_time_tree modf (WithNodeTimes rooted_tree' times') = WithNodeTimes rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     maybe_modf :: Int -> a -> a
     maybe_modf node x | node < numLeaves rooted_tree'   = x
