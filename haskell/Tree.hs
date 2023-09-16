@@ -46,17 +46,24 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
 
 -- NOTE: Data.Tree (Rose trees) and Data.Forest (collections of Data.Tree) exists, but are not classes.
 
+type NodeId = Int
+type EdgeId = Int
+type NodeIdSet = IntSet
+type EdgeIdSet = IntSet
+
 class Tree t where
     type family Unrooted t
     type family Rooted t
 
-    findNode    :: t -> Int -> Node
-    findEdge    :: t -> Int -> Edge
-    getNodesSet :: t -> IntSet
-    getEdgesSet :: t -> IntSet
+    getNodesSet :: t -> NodeIdSet
+    getEdgesSet :: t -> EdgeIdSet
 
-    getNodeAttributes :: t -> Int -> Attributes
-    getEdgeAttributes :: t -> Int -> Attributes
+    edgesOutOfNodeSet :: t -> NodeId -> EdgeIdSet
+    sourceNode :: t -> EdgeId -> NodeId
+    targetNode :: t -> EdgeId -> NodeId
+
+    getNodeAttributes :: t -> NodeId -> Attributes
+    getEdgeAttributes :: t -> EdgeId -> Attributes
     getTreeAttributes :: t -> Attributes
 
     unroot :: t -> Unrooted t
@@ -76,7 +83,6 @@ numBranches t = length $ getUEdges t
 
 undirectedName e  = max e (reverseEdge e)
 
-edgesOutOfNodeSet tree nodeIndex = node_out_edges $ findNode tree nodeIndex
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
@@ -142,8 +148,9 @@ instance Tree TreeImp where
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
-    findNode    (Tree nodesMap _ _ _ _) node   = nodesMap IntMap.! node
-    findEdge    (Tree _ edgesMap _ _ _) edge   = edgesMap IntMap.! edge
+    edgesOutOfNodeSet (Tree nodesMap _ _ _ _) nodeId = node_out_edges $ (nodesMap IntMap.! nodeId)
+    sourceNode (Tree _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
+    targetNode (Tree _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
 
     getNodeAttributes (Tree _ _ a _ _) node         = a IntMap.! node
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
@@ -171,8 +178,11 @@ instance Tree t => Tree (RootedTreeImp t) where
 
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
-    findNode    (RootedTree t _ _) node            = findNode t node
-    findEdge    (RootedTree t _ _) edgeIndex       = findEdge t edgeIndex
+
+    edgesOutOfNodeSet (RootedTree t _ _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (RootedTree t _ _) edgeId           = sourceNode t edgeId
+    targetNode (RootedTree t _ _) edgeId           = targetNode t edgeId
+
     getNodeAttributes (RootedTree t _ _) node         = getNodeAttributes t node
     getEdgeAttributes (RootedTree t _ _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
@@ -186,8 +196,11 @@ instance Tree t => Tree (LabelledTreeImp t) where
 
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
-    findNode    (LabelledTree t _) node            = findNode t node
-    findEdge    (LabelledTree t _) edgeIndex       = findEdge t edgeIndex
+
+    edgesOutOfNodeSet (LabelledTree t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (LabelledTree t _) edgeId           = sourceNode t edgeId
+    targetNode (LabelledTree t _) edgeId           = targetNode t edgeId
+
     getNodeAttributes (LabelledTree t _) node         = getNodeAttributes t node
     getEdgeAttributes (LabelledTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
@@ -202,8 +215,11 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
 
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
     getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
-    findNode    (BranchLengthTree t _) node        = findNode t node
-    findEdge    (BranchLengthTree t _) edgeIndex   = findEdge t edgeIndex
+
+    edgesOutOfNodeSet (BranchLengthTree t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (BranchLengthTree t _) edgeId           = sourceNode t edgeId
+    targetNode (BranchLengthTree t _) edgeId           = targetNode t edgeId
+
     getNodeAttributes (BranchLengthTree t _) node         = getNodeAttributes t node
     getEdgeAttributes (BranchLengthTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
@@ -218,8 +234,11 @@ instance HasRoot t => Tree (TimeTreeImp t) where
 
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
-    findNode    (TimeTree t _) node                = findNode t node
-    findEdge    (TimeTree t _) edgeIndex           = findEdge t edgeIndex
+
+    edgesOutOfNodeSet (TimeTree t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (TimeTree t _) edgeId           = sourceNode t edgeId
+    targetNode (TimeTree t _) edgeId           = targetNode t edgeId
+
     getNodeAttributes (TimeTree t _) node         = getNodeAttributes t node
     getEdgeAttributes (TimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (TimeTree t _)              = getTreeAttributes t
@@ -234,8 +253,11 @@ instance IsTimeTree t => Tree (RateTimeTreeImp t) where
 
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
     getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
-    findNode    (RateTimeTree t _) node            = findNode t node
-    findEdge    (RateTimeTree t _) edgeIndex       = findEdge t edgeIndex
+
+    edgesOutOfNodeSet (RateTimeTree t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (RateTimeTree t _) edgeId           = sourceNode t edgeId
+    targetNode (RateTimeTree t _) edgeId           = targetNode t edgeId
+
     getNodeAttributes (RateTimeTree t _) node         = getNodeAttributes t node
     getEdgeAttributes (RateTimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RateTimeTree t _)              = getTreeAttributes t
@@ -350,8 +372,6 @@ parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just 
 -- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
 edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
 edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
-sourceNode  tree b = e_source_node  $ findEdge tree b
-targetNode  tree b = e_target_node  $ findEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
