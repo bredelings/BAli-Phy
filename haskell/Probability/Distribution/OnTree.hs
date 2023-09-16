@@ -114,7 +114,7 @@ instance Dist (CTMCOnTree t s) where
     dist_name _ = "ctmc_on_tree"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, Tree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
@@ -147,7 +147,7 @@ sampleComponentStates rtree alignment smodel =  do
   return stateSequences
 
 
-instance (Tree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t s) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t s) where
     sampleIO (CTMCOnTree tree alignment smodel) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -257,7 +257,7 @@ instance Dist (CTMCOnTreeFixedA t s) where
     dist_name _ = "ctmc_on_tree_fixed_A"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, Tree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
     annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
 
 ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel

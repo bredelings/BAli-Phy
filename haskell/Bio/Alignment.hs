@@ -166,7 +166,7 @@ foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector Bran
 data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
-exportAlignmentOnTree :: Tree t => AlignmentOnTree t -> NodeAlignment
+exportAlignmentOnTree :: IsTree t => AlignmentOnTree t -> NodeAlignment
 exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNodeArray tree root)
     where root = head $ getNodes tree
           branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]

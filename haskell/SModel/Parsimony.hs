@@ -45,7 +45,7 @@ peel_muts t cp as root seqs alpha cost = let muts = IntMap.fromSet peel_muts' $ 
                          in muts IntMap.! root
 
 
-parsimony :: Tree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
+parsimony :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
                                      root = head $ getNodes t
                                  in peel_muts t pc as root seqs alpha cost
@@ -78,12 +78,12 @@ peel_muts_fixed_A t cp root seqs alpha cost counts = let muts = IntMap.fromSet p
                                                                                 e -> error $ "peel_muts: root node has degree " ++ show (length e)
                                                       in muts IntMap.! root
 
-parsimony_fixed_A :: Tree t => t -> IntMap (EVector Int, CBitVector) -> Alphabet -> MutCosts -> ColumnCounts -> Int
+parsimony_fixed_A :: IsTree t => t -> IntMap (EVector Int, CBitVector) -> Alphabet -> MutCosts -> ColumnCounts -> Int
 parsimony_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
                                                  root = head $ getNodes t
                                              in peel_muts_fixed_A t pc root seqs alpha cost counts
 {-
-parsimony_SEV :: Tree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
+parsimony_SEV :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony_SEV t seqs as alpha cost = let pc = cached_conditional_muts_SEV t seqs as alpha cost
                                         root = head $ getNodes t
                                      in peel_muts_SEV t pc as root seqs alpha cost

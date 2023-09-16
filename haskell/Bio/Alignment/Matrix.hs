@@ -69,7 +69,7 @@ alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvecto
       children, which is not allowed.  So, we assume this can't happen and just OR the bits.
 -}
 
-charactersBehind :: Tree t => IntMap (Maybe BitVector) -> t -> IntMap (Maybe BitVector)
+charactersBehind :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap (Maybe BitVector)
 charactersBehind sequence_masks tree = let
     branches = tree & getEdgesSet
 
@@ -105,7 +105,7 @@ charactersBehind sequence_masks tree = let
     presentat the node if its present behind at least two incoming branches.
 -}
 
-getConnectedStates :: Tree t => IntMap (Maybe (EVector Int)) -> t -> IntMap BitVector
+getConnectedStates :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap BitVector
 getConnectedStates sequences tree =
     let nodes = tree & getNodesSet
 
@@ -132,7 +132,7 @@ minimally_connect_characters leaf_sequences tree all_sequences =
         where node_masks = getConnectedStates leaf_sequences tree
               nodes = tree & getNodesSet
 
-minimally_connect_characters' :: Tree t => IntMap (Maybe (EVector Int)) -> t -> IntMap (EVector Int)
+minimally_connect_characters' :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap (EVector Int)
 minimally_connect_characters' leafSequences tree = minimally_connect_characters leafSequences tree all_sequences
     where missingSequence = list_to_vector $ replicate alignmentLength (-2) -- (-2) is N/X
           alignmentLength = vector_size $ head $ catMaybes $ IntMap.elems leafSequences

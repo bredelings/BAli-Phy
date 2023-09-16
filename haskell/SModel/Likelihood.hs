@@ -66,7 +66,7 @@ peel_likelihood t cl as f root = let likelihoods = IntMap.fromSet peel_likelihoo
 substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditional_likelihoods t seqs as alpha ps f smap
                                                          in peel_likelihood t cl as f root
 
-sample_ancestral_sequences :: Tree t =>
+sample_ancestral_sequences :: IsTree t =>
                               t ->
                               Int ->
                               IntMap (EVector Int) ->

@@ -56,7 +56,7 @@ tsvLogger filename firstFields = do
 
 
 -- We might need QuickLook to handle types like IO (forall t. *).
--- treeLogger :: FilePath -> IO ( forall t. (HasRoot (Rooted t), WriteNewickNode (Rooted t), Tree t) => t -> Int -> IO ())
+-- treeLogger :: FilePath -> IO ( forall t. (HasRoot (Rooted t), WriteNewickNode (Rooted t), IsTree t) => t -> Int -> IO ())
 treeLogger filename = do handle <- openFile filename WriteMode
                          return $ writeTree handle
 

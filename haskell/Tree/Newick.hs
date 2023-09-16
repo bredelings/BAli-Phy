@@ -25,7 +25,7 @@ import Data.Array
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
-class Tree t => WriteNewickNode t where
+class IsTree t => WriteNewickNode t where
     node_info :: t -> Int -> Text
     branch_info :: t -> (Maybe Int) -> Text
 

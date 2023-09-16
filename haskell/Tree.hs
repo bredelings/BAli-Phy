@@ -111,7 +111,7 @@ class IsForest f where
     getTreeAttributes :: f -> Attributes
 
 
-class IsForest t => Tree t where
+class IsForest t => IsTree t where
     type family Unrooted t
     type family Rooted t
 
@@ -149,10 +149,10 @@ class IsForest t => HasRoots t where
     roots :: t -> [NodeId]
     away_from_root :: t -> Int -> Bool
 
-class (HasRoots t, Tree t) => HasRoot t where
+class (HasRoots t, IsTree t) => HasRoot t where
     root :: t -> NodeId
 
-instance (HasRoots t, Tree t) => HasRoot t where
+instance (HasRoots t, IsTree t) => HasRoot t where
     root tree = case roots tree of [r] -> r
                                    _ -> error "root: Tree has multiple roots!"
 
@@ -213,7 +213,7 @@ instance IsForest TreeImp where
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
     getTreeAttributes (Tree _ _ _ _ a)              = a
 
-instance Tree TreeImp where
+instance IsTree TreeImp where
     type instance Unrooted TreeImp = TreeImp
     type instance Rooted TreeImp = WithRoots TreeImp
 
@@ -224,7 +224,7 @@ getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeA
 getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
 getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getTreeAttributes tree)
 
-edgeAttributes :: Tree t => t -> Text -> ((Maybe (Maybe Text)) -> a) -> IntMap a
+edgeAttributes :: IsTree t => t -> Text -> ((Maybe (Maybe Text)) -> a) -> IntMap a
 edgeAttributes tree key transform = fmap transform (getEdgesSet tree & IntMap.fromSet (\edge -> getEdgeAttribute tree edge key))
 
 getAttribute key Nothing = error $ "No attribute '" ++ (T.unpack key) ++ "'"
@@ -245,7 +245,7 @@ instance IsForest t => IsForest (WithRoots t) where
     getEdgeAttributes (RootedTree t _ _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
 
-instance Tree t => Tree (WithRoots t) where
+instance IsTree t => IsTree (WithRoots t) where
     type Unrooted (WithRoots t) = Unrooted t
     type Rooted   (WithRoots t) = WithRoots t
 
@@ -265,7 +265,7 @@ instance IsForest t => IsForest (WithLabels t) where
     getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
 
 
-instance Tree t => Tree (WithLabels t) where
+instance IsTree t => IsTree (WithLabels t) where
     type Unrooted (WithLabels t) = WithLabels (Unrooted t)
     type Rooted (WithLabels t) = WithLabels (Rooted t)
 
@@ -286,7 +286,7 @@ instance IsForest t => IsForest (WithBranchLengths t) where
     getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
 
 
-instance Tree t => Tree (WithBranchLengths t) where
+instance IsTree t => IsTree (WithBranchLengths t) where
     type Unrooted (WithBranchLengths t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchLengths t) = WithBranchLengths (Rooted t)
 
@@ -305,7 +305,7 @@ instance HasRoots t => IsForest (WithNodeTimes t) where
     getEdgeAttributes (TimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (TimeTree t _)              = getTreeAttributes t
 
-instance HasRoot t => Tree (WithNodeTimes t) where
+instance HasRoot t => IsTree (WithNodeTimes t) where
     type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
@@ -325,7 +325,7 @@ instance IsTimeTree t => IsForest (WithBranchRates t) where
     getEdgeAttributes (RateTimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RateTimeTree t _)              = getTreeAttributes t
 
-instance IsTimeTree t => Tree (WithBranchRates t) where
+instance IsTimeTree t => IsTree (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
@@ -357,10 +357,10 @@ branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
           target = targetNode t b
 
-instance Tree t => HasBranchLengths (WithBranchLengths t) where
+instance IsTree t => HasBranchLengths (WithBranchLengths t) where
     branch_length (BranchLengthTree tree ds) b = ds IntMap.! (undirectedName b)
 
-instance Tree t => CanModifyBranchLengths (WithBranchLengths t) where
+instance IsTree t => CanModifyBranchLengths (WithBranchLengths t) where
     modifyBranchLengths f t@(BranchLengthTree tree ds) = BranchLengthTree tree (IntMap.fromSet f (IntMap.keysSet ds))
 
 instance IsTimeTree t => HasBranchLengths (WithBranchRates t) where
@@ -382,7 +382,7 @@ scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
 numLeaves t = length $ leaf_nodes t
 
 
-instance Tree t => HasRoots (WithRoots t) where
+instance IsTree t => HasRoots (WithRoots t) where
     roots (RootedTree _ rs _) = rs
     isRoot (RootedTree _ rs _) node = node `elem` rs
     away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
@@ -412,7 +412,7 @@ instance HasRoots t => HasRoots (WithBranchLengths t) where
 remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
-instance Tree t => HasLabels (WithLabels t) where
+instance IsTree t => HasLabels (WithLabels t) where
     get_label  (LabelledTree _ labels) node = labels IntMap.! node
     get_labels (LabelledTree _ labels) = labels
     relabel newLabels (LabelledTree t _) = LabelledTree t newLabels
