@@ -193,7 +193,7 @@ data WithRoots t = RootedTree t [NodeId] (IntMap Bool)
 
 data WithBranchLengths t = BranchLengthTree t (IntMap Double)
 
-data WithLabels t = LabelledTree t (IntMap (Maybe Text))
+data WithLabels t = WithLabels t (IntMap (Maybe Text))
 
 -- The array stores the node times
 data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
@@ -253,24 +253,24 @@ instance IsTree t => IsTree (WithRoots t) where
     makeRooted t = t
 
 instance IsForest t => IsForest (WithLabels t) where
-    getNodesSet (LabelledTree t _)                 = getNodesSet t
-    getEdgesSet (LabelledTree t _)                 = getEdgesSet t
+    getNodesSet (WithLabels t _)                 = getNodesSet t
+    getEdgesSet (WithLabels t _)                 = getEdgesSet t
 
-    edgesOutOfNodeSet (LabelledTree t _) nodeId       = edgesOutOfNodeSet t nodeId
-    sourceNode (LabelledTree t _) edgeId           = sourceNode t edgeId
-    targetNode (LabelledTree t _) edgeId           = targetNode t edgeId
+    edgesOutOfNodeSet (WithLabels t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (WithLabels t _) edgeId           = sourceNode t edgeId
+    targetNode (WithLabels t _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (LabelledTree t _) node         = getNodeAttributes t node
-    getEdgeAttributes (LabelledTree t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
+    getNodeAttributes (WithLabels t _) node         = getNodeAttributes t node
+    getEdgeAttributes (WithLabels t _) edge         = getEdgeAttributes t edge
+    getTreeAttributes (WithLabels t _)              = getTreeAttributes t
 
 
 instance IsTree t => IsTree (WithLabels t) where
     type Unrooted (WithLabels t) = WithLabels (Unrooted t)
     type Rooted (WithLabels t) = WithLabels (Rooted t)
 
-    unroot (LabelledTree t labels) = LabelledTree (unroot t) labels
-    makeRooted (LabelledTree t labels) = LabelledTree (makeRooted t) labels
+    unroot (WithLabels t labels) = WithLabels (unroot t) labels
+    makeRooted (WithLabels t labels) = WithLabels (makeRooted t) labels
 
 
 instance IsForest t => IsForest (WithBranchLengths t) where
@@ -337,7 +337,7 @@ instance HasRoot t => IsTimeTree (WithNodeTimes t) where
     node_time (WithNodeTimes t hs) node = hs IntMap.! node
 
 instance IsTimeTree t => IsTimeTree (WithLabels t) where
-    node_time (LabelledTree tt _) node = node_time tt node
+    node_time (WithLabels tt _) node = node_time tt node
 
 instance IsTimeTree t => IsTimeTree (WithBranchRates t) where
     node_time (WithBranchRates tt _) node = node_time tt node
@@ -370,10 +370,10 @@ instance HasRoot t => HasBranchLengths (WithNodeTimes t) where
     branch_length tree b = branch_duration tree b
 
 instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
-    branch_length (LabelledTree tree _) b = branch_length tree b
+    branch_length (WithLabels tree _) b = branch_length tree b
 
 instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
-    modifyBranchLengths f (LabelledTree tree labels) = LabelledTree (modifyBranchLengths f tree) labels
+    modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
     where ds' = fmap (factor*) ds
@@ -388,9 +388,9 @@ instance IsTree t => HasRoots (WithRoots t) where
     away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
 
 instance HasRoots t => HasRoots (WithLabels t) where
-    roots (LabelledTree t _) = roots t
-    isRoot (LabelledTree t _) node = isRoot t node
-    away_from_root (LabelledTree t _      ) b = away_from_root t b
+    roots (WithLabels t _) = roots t
+    isRoot (WithLabels t _) node = isRoot t node
+    away_from_root (WithLabels t _      ) b = away_from_root t b
 
 instance HasRoots t => HasRoots (WithNodeTimes t) where
     roots (WithNodeTimes t _)     = roots t
@@ -410,12 +410,12 @@ instance HasRoots t => HasRoots (WithBranchLengths t) where
 -- Check for duplicate instances!
 
 remove_root (RootedTree t _ _) = t
--- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
+-- remove_root (WithLabels t labels) = WithLabels (remove_root t) labels
 
 instance IsTree t => HasLabels (WithLabels t) where
-    get_label  (LabelledTree _ labels) node = labels IntMap.! node
-    get_labels (LabelledTree _ labels) = labels
-    relabel newLabels (LabelledTree t _) = LabelledTree t newLabels
+    get_label  (WithLabels _ labels) node = labels IntMap.! node
+    get_labels (WithLabels _ labels) = labels
+    relabel newLabels (WithLabels t _) = WithLabels t newLabels
 
 instance HasLabels t => HasLabels (WithBranchLengths t) where
     get_label  (BranchLengthTree t _) node = get_label t node
@@ -504,7 +504,7 @@ allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge 
 allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
 allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
 
-add_labels labels t = LabelledTree t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
+add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
@@ -512,7 +512,7 @@ add_root r t = rt
            rt = RootedTree t [r] (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 -- These two functions shouldn't go here -- but where should they go?
-addInternalLabels tree = LabelledTree tree newLabels where
+addInternalLabels tree = WithLabels tree newLabels where
     oldLabels = get_labels tree
     newLabels = getNodesSet tree & IntMap.fromSet newLabel
 

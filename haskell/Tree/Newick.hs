@@ -50,7 +50,7 @@ quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
 instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
     node_info   tree node                         = case get_label tree node of Just label -> quoteLabel label
                                                                                 Nothing -> T.empty
-    branch_info (LabelledTree tree labels) branch = branch_info tree branch
+    branch_info (WithLabels tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
     node_info (BranchLengthTree tree lengths) node = node_info tree node
@@ -244,7 +244,7 @@ newickToTree (NewickTree treeAttributes node) = do
       edgeAttributes = IntMap.fromList (i_edgeAttributes info)
       tree = Tree nodes edges nodeAttributes edgeAttributes treeAttributes
       rooted_tree = add_root rootId tree
-      labelled_tree = LabelledTree rooted_tree labels
+      labelled_tree = WithLabels rooted_tree labels
 
   return (labelled_tree, lengths)
 
