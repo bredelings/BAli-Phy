@@ -28,6 +28,24 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
     where go (k, Nothing) = k
           go (k, Just v)  = T.concat [k, T.singleton '=',v]
 
+-- ISSUE: If we define graph operations in terms of node *ids*, then finding neighbors will depend on the id->Node map.
+--        If a node stores references to neighboring nodes themselves, then looking up the ids will not be necessary.
+--        Node ids are still necessary to determine if two nodes are the same or not.
+--
+-- POSSIBLE SOLUTION: Make a type family Node t that abstracts over whether a "Node" is a number of something else.
+--        As long as we can find the neighboring nodes and such, then it doesn't matter what a "Node" is.
+--        Likewise for Branches.
+--
+-- We will also need to have a function that gets the NodeID from a node.
+--
+-- Also maybe we should just use Int's as IDs for now, since we aren't yet allowing the set of nodes/branches to change.
+
+-- Graph => Forest => Tree.  A tree should be a graph.  So, a forest should NOT be a collection of trees.  It should
+
+--                           just be a graph with no loops that needn't be connected.
+
+-- NOTE: Data.Tree (Rose trees) and Data.Forest (collections of Data.Tree) exists, but are not classes.
+
 class Tree t where
     type family Unrooted t
     type family Rooted t
