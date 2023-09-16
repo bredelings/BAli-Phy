@@ -28,23 +28,69 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
     where go (k, Nothing) = k
           go (k, Just v)  = T.concat [k, T.singleton '=',v]
 
--- ISSUE: If we define graph operations in terms of node *ids*, then finding neighbors will depend on the id->Node map.
---        If a node stores references to neighboring nodes themselves, then looking up the ids will not be necessary.
---        Node ids are still necessary to determine if two nodes are the same or not.
---
--- POSSIBLE SOLUTION: Make a type family Node t that abstracts over whether a "Node" is a number of something else.
---        As long as we can find the neighboring nodes and such, then it doesn't matter what a "Node" is.
---        Likewise for Branches.
---
--- We will also need to have a function that gets the NodeID from a node.
---
--- Also maybe we should just use Int's as IDs for now, since we aren't yet allowing the set of nodes/branches to change.
 
--- Graph => Forest => Tree.  A tree should be a graph.  So, a forest should NOT be a collection of trees.  It should
+{-
+ ISSUE: If we define graph operations in terms of node *ids*, then finding neighbors will depend on the id->Node map.
+        If a node stores references to neighboring nodes themselves, then looking up the ids will not be necessary.
+        Node ids are still necessary to determine if two nodes are the same or not.
 
---                           just be a graph with no loops that needn't be connected.
+ POSSIBLE SOLUTION: Make a type family Node t that abstracts over whether a "Node" is a number of something else.
+        As long as we can find the neighboring nodes and such, then it doesn't matter what a "Node" is.
+        Likewise for Branches.
 
--- NOTE: Data.Tree (Rose trees) and Data.Forest (collections of Data.Tree) exists, but are not classes.
+  We would also need to have a function that gets the NodeID from a node.
+
+  Also maybe we should just use Int's as IDs for now, since we aren't yet allowing the set of nodes/branches to change.
+-}
+
+{-
+HasAttributes?
+Graph => HasNodeAttributes?
+Graph => HasEdgeAttributes?
+
+Graph => NoCycles (Forest)
+Graph => Connnected
+Graph => HasLabels
+Graph => HasBranchLengths
+
+NoCycles => HasRoots { roots, isRoot, away_from_root }  -- You can't have a root on a graph with cycles, as edges could point both ways.
+NoCycles, Connected => Tree
+
+HasRoots, Tree => HasRoot
+
+HasRoot => HasNodeTimes (IsTimeTree) -- Technically, we could have a DAG with node times, I think.
+    The rule is probably that we aren't supposed to have a directed edge from a node an older node.
+
+HasNodeTimes, Tree => IsTimeTree
+
+IsTimeTree => IsRateTimeTree
+
+ISSUE: HasRoots basically puts a preferred direction on each edge of the graph.
+       The graph is still an undirected graph though, because we don't have edges that don't have a reverseedge.
+       For rooted trees, we don't take the reverse edges out of the graph.
+
+       We could make a class called PreferredDirection that says whether each pair of reversed edges has one direction that
+       is the real edge.  I guess you could then construct a directed graph where reversed edges don't actually exist.
+
+       If we had actual directed graphs -- that don't necessarily have a reverseEdge function -- we might still want to
+       talk about a reversed edge as a direction, so that we could talk about (for example) walking on the graph in the
+       reverse direction of the edges.  I guess we could then have something like:
+
+           data Direction e = Forward e | Reverse e
+           reverse (Forward e) = Reverse e
+           reverse (Reverse e) = Forward e
+-}
+
+{-
+ For a directed graph, each node would have to have BOTH out-edges AND in-edges.
+
+ For an undirected graph, we kind of have UEdges and Edges (aka directed edges).
+ We could make a directed graph OUT OF an undirected graph.
+ Maybe we could represent this as (Directed undirectedGraph) instead of constructing a new data structure with more edges.
+ Its possible that we could make the EdgeId type for the directed version be the Direction UndirectedEdgeId, instead of an Int.
+-}
+
+-- NOTE: Data.Tree (Rose trees) and Data.Forest (collections of Data.Tree) exist, but are records, not classes.
 
 type NodeId = Int
 type EdgeId = Int
@@ -89,6 +135,9 @@ edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 class Tree t => HasBranchLengths t where
     branch_length :: t -> Int -> Double
 
+-- This seems to be unused in both Haskell and C++ code.
+-- I guess it makes sense that you could construct a BranchLengthTree with arbitrary new branch lengths,
+--   but could not do this for TimeTree...
 class HasBranchLengths t => CanModifyBranchLengths t where
     modifyBranchLengths :: (Int -> Double) -> t -> t
 
