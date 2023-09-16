@@ -189,7 +189,7 @@ instance Show Edge where
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
-data RootedTreeImp t = RootedTree t [NodeId] (IntMap Bool)
+data WithRoots t = RootedTree t [NodeId] (IntMap Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (IntMap Double)
 
@@ -215,7 +215,7 @@ instance Forest TreeImp where
 
 instance Tree TreeImp where
     type instance Unrooted TreeImp = TreeImp
-    type instance Rooted TreeImp = RootedTreeImp TreeImp
+    type instance Rooted TreeImp = WithRoots TreeImp
 
     unroot t = t
     makeRooted t = add_root root t where root = head $ (internal_nodes t ++ leaf_nodes t)
@@ -233,7 +233,7 @@ getAttribute _   (Just (Just text)) = read (T.unpack text)
 
 simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
-instance Forest t => Forest (RootedTreeImp t) where
+instance Forest t => Forest (WithRoots t) where
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
 
@@ -245,9 +245,9 @@ instance Forest t => Forest (RootedTreeImp t) where
     getEdgeAttributes (RootedTree t _ _) edge         = getEdgeAttributes t edge
     getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
 
-instance Tree t => Tree (RootedTreeImp t) where
-    type Unrooted (RootedTreeImp t) = Unrooted t
-    type Rooted   (RootedTreeImp t) = RootedTreeImp t
+instance Tree t => Tree (WithRoots t) where
+    type Unrooted (WithRoots t) = Unrooted t
+    type Rooted   (WithRoots t) = WithRoots t
 
     unroot (RootedTree t _ _) = unroot t
     makeRooted t = t
@@ -382,7 +382,7 @@ scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
 numLeaves t = length $ leaf_nodes t
 
 
-instance Tree t => HasRoots (RootedTreeImp t) where
+instance Tree t => HasRoots (WithRoots t) where
     roots (RootedTree _ rs _) = rs
     isRoot (RootedTree _ rs _) node = node `elem` rs
     away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b

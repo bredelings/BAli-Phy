@@ -40,7 +40,7 @@ get_branch_label t Nothing = T.empty
 instance WriteNewickNode TreeImp where
     node_info tree node = T.pack $ show node
 
-instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
+instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
     node_info (RootedTree tree _ _) = node_info tree
     branch_info (RootedTree tree _ _) = branch_info tree
 

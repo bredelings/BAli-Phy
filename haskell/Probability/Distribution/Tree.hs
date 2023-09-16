@@ -177,7 +177,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
-modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTreeImp TreeImp
+modifiable_rooted_tree :: (forall a.a -> a) -> WithRoots TreeImp -> WithRoots TreeImp
 modifiable_rooted_tree modf (RootedTree tree [root_node] _) = add_root root_node $ modifiable_tree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
@@ -187,7 +187,7 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
-modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp (RootedTreeImp TreeImp) -> TimeTreeImp (RootedTreeImp TreeImp)
+modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp (WithRoots TreeImp) -> TimeTreeImp (WithRoots TreeImp)
 modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     maybe_modf :: Int -> a -> a
@@ -276,7 +276,7 @@ uniform_topology n = UniformTopology n
 data UniformTimeTree = UniformTimeTree Double Int
 
 instance Dist UniformTimeTree where
-    type Result UniformTimeTree = TimeTreeImp (RootedTreeImp TreeImp)
+    type Result UniformTimeTree = TimeTreeImp (WithRoots TreeImp)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf UniformTimeTree where
@@ -291,7 +291,7 @@ uniform_time_tree age n = UniformTimeTree age n
 data CoalescentTree = CoalescentTree Double Int
 
 instance Dist CoalescentTree where
-    type Result CoalescentTree = TimeTreeImp (RootedTreeImp TreeImp)
+    type Result CoalescentTree = TimeTreeImp (WithRoots TreeImp)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf CoalescentTree where
