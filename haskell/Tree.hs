@@ -182,7 +182,7 @@ instance Show Edge where
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
-data RootedTreeImp t = RootedTree t Int (IntMap Bool)
+data RootedTreeImp t = RootedTree t [NodeId] (IntMap Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (IntMap Double)
 
@@ -502,7 +502,7 @@ add_labels labels t = LabelledTree t (getNodesSet t & IntMap.fromSet (\node -> l
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
-           rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
+           rt = RootedTree t [r] (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 -- These two functions shouldn't go here -- but where should they go?
 addInternalLabels tree = LabelledTree tree newLabels where
