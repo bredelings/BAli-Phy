@@ -59,7 +59,7 @@ sample_uniform_topology n = do
    B. a error saying that something isn't a modifiable value.
 -}
 
-modifiable_tree :: (forall a.a->a) -> TreeImp -> TreeImp
+modifiable_tree :: (forall a.a->a) -> Tree -> Tree
 modifiable_tree modf tree@(Tree nodes0 branches0 na ea ta) = (Tree nodesMap branchesMap na ea ta) where
     nodesMap = fmap (\(Node node branches_out) -> Node node (modf branches_out)) nodes0
     branchesMap = fmap (\(Edge s t b) -> Edge (modf s) (modf t) b ) branches0
@@ -177,7 +177,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
-modifiable_rooted_tree :: (forall a.a -> a) -> WithRoots TreeImp -> WithRoots TreeImp
+modifiable_rooted_tree :: (forall a.a -> a) -> WithRoots Tree -> WithRoots Tree
 modifiable_rooted_tree modf (WithRoots tree [root_node] _) = add_root root_node $ modifiable_tree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
@@ -187,7 +187,7 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
-modifiable_time_tree :: (forall a.a -> a) -> WithNodeTimes (WithRoots TreeImp) -> WithNodeTimes (WithRoots TreeImp)
+modifiable_time_tree :: (forall a.a -> a) -> WithNodeTimes (WithRoots Tree) -> WithNodeTimes (WithRoots Tree)
 modifiable_time_tree modf (WithNodeTimes rooted_tree' times') = WithNodeTimes rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     maybe_modf :: Int -> a -> a
@@ -259,7 +259,7 @@ sample_coalescent_tree theta n_leaves = do
 data UniformTopology = UniformTopology Int
 
 instance Dist UniformTopology where
-    type Result UniformTopology = TreeImp
+    type Result UniformTopology = Tree
     dist_name _ = "uniform_topology"
 
 instance HasAnnotatedPdf UniformTopology where
@@ -276,7 +276,7 @@ uniform_topology n = UniformTopology n
 data UniformTimeTree = UniformTimeTree Double Int
 
 instance Dist UniformTimeTree where
-    type Result UniformTimeTree = WithNodeTimes (WithRoots TreeImp)
+    type Result UniformTimeTree = WithNodeTimes (WithRoots Tree)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf UniformTimeTree where
@@ -291,7 +291,7 @@ uniform_time_tree age n = UniformTimeTree age n
 data CoalescentTree = CoalescentTree Double Int
 
 instance Dist CoalescentTree where
-    type Result CoalescentTree = WithNodeTimes (WithRoots TreeImp)
+    type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf CoalescentTree where

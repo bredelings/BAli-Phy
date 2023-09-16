@@ -37,7 +37,7 @@ get_branch_label t branch@(Just edge) = let text = (branch_info t branch) `T.app
                                         in if T.null text then text else T.singleton ':' `T.append` text
 get_branch_label t Nothing = T.empty
 
-instance WriteNewickNode TreeImp where
+instance WriteNewickNode Tree where
     node_info tree node = T.pack $ show node
 
 instance WriteNewickNode t => WriteNewickNode (WithRoots t) where

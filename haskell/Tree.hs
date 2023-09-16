@@ -187,7 +187,7 @@ data Edge = Edge { e_source_node, e_target_node, edge_name :: Int }
 instance Show Edge where
     show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
 
-data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+data Tree = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
 
@@ -201,7 +201,7 @@ data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
 -- The array stores the branch rates
 data WithBranchRates t = WithBranchRates t (IntMap Double)
 
-instance IsForest TreeImp where
+instance IsForest Tree where
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
@@ -213,9 +213,9 @@ instance IsForest TreeImp where
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
     getTreeAttributes (Tree _ _ _ _ a)              = a
 
-instance IsTree TreeImp where
-    type instance Unrooted TreeImp = TreeImp
-    type instance Rooted TreeImp = WithRoots TreeImp
+instance IsTree Tree where
+    type instance Unrooted Tree = Tree
+    type instance Rooted Tree = WithRoots Tree
 
     unroot t = t
     makeRooted t = add_root root t where root = head $ (internal_nodes t ++ leaf_nodes t)
