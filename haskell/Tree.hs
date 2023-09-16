@@ -97,19 +97,19 @@ type EdgeId = Int
 type NodeIdSet = IntSet
 type EdgeIdSet = IntSet
 
+class IsGraph g where
+    getNodesSet :: g -> NodeIdSet
+    getEdgesSet :: g -> EdgeIdSet
 
-class IsForest f where
-    getNodesSet :: f -> NodeIdSet
-    getEdgesSet :: f -> EdgeIdSet
+    edgesOutOfNodeSet :: g -> NodeId -> EdgeIdSet
+    sourceNode :: g -> EdgeId -> NodeId
+    targetNode :: g -> EdgeId -> NodeId
 
-    edgesOutOfNodeSet :: f -> NodeId -> EdgeIdSet
-    sourceNode :: f -> EdgeId -> NodeId
-    targetNode :: f -> EdgeId -> NodeId
+    getNodeAttributes :: g -> NodeId -> Attributes
+    getEdgeAttributes :: g -> EdgeId -> Attributes
+    getTreeAttributes :: g -> Attributes
 
-    getNodeAttributes :: f -> NodeId -> Attributes
-    getEdgeAttributes :: f -> EdgeId -> Attributes
-    getTreeAttributes :: f -> Attributes
-
+class IsGraph f => IsForest f
 
 class IsForest t => IsTree t where
     type family Unrooted t
@@ -135,14 +135,14 @@ undirectedName e  = max e (reverseEdge e)
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
-class IsForest f => HasBranchLengths f where
-    branch_length :: f -> Int -> Double
+class IsGraph g => HasBranchLengths g where
+    branch_length :: g -> Int -> Double
 
 -- This seems to be unused in both Haskell and C++ code.
 -- I guess it makes sense that you could construct a WithBranchLengths with arbitrary new branch lengths,
 --   but could not do this for WithNodeTimes...
-class HasBranchLengths f => CanModifyBranchLengths f where
-    modifyBranchLengths :: (Int -> Double) -> f -> f
+class HasBranchLengths g => CanModifyBranchLengths g where
+    modifyBranchLengths :: (Int -> Double) -> g -> g
 
 class IsForest t => HasRoots t where
     isRoot :: t -> NodeId -> Bool
@@ -162,15 +162,15 @@ class HasRoot t => IsTimeTree t where
 class IsTimeTree t => IsRateTimeTree t where
     branch_rate :: t -> Int -> Double
 
-class IsForest f => HasLabels f where
-    get_label :: f -> Int -> Maybe Text
+class IsGraph g => HasLabels g where
+    get_label :: g -> Int -> Maybe Text
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
     -- indexes on nodes...
     -- TODO: make the C++ code handle this...
     
-    get_labels :: f -> IntMap (Maybe Text)
-    relabel :: IntMap (Maybe Text) -> f -> f
+    get_labels :: g -> IntMap (Maybe Text)
+    relabel :: IntMap (Maybe Text) -> g -> g
 
 -- OK, so should we store attributes inside the tree?
 -- 
@@ -201,7 +201,7 @@ data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
 -- The array stores the branch rates
 data WithBranchRates t = WithBranchRates t (IntMap Double)
 
-instance IsForest Tree where
+instance IsGraph Tree where
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
@@ -212,6 +212,8 @@ instance IsForest Tree where
     getNodeAttributes (Tree _ _ a _ _) node         = a IntMap.! node
     getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
     getTreeAttributes (Tree _ _ _ _ a)              = a
+
+instance IsForest Tree
 
 instance IsTree Tree where
     type instance Unrooted Tree = Tree
@@ -233,7 +235,7 @@ getAttribute _   (Just (Just text)) = read (T.unpack text)
 
 simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
-instance IsForest t => IsForest (WithRoots t) where
+instance IsGraph t => IsGraph (WithRoots t) where
     getNodesSet (WithRoots t _ _)                 = getNodesSet t
     getEdgesSet (WithRoots t _ _)                 = getEdgesSet t
 
@@ -245,6 +247,8 @@ instance IsForest t => IsForest (WithRoots t) where
     getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
     getTreeAttributes (WithRoots t _ _)              = getTreeAttributes t
 
+instance IsForest t => IsForest (WithRoots t)
+
 instance IsTree t => IsTree (WithRoots t) where
     type Unrooted (WithRoots t) = Unrooted t
     type Rooted   (WithRoots t) = WithRoots t
@@ -252,7 +256,7 @@ instance IsTree t => IsTree (WithRoots t) where
     unroot (WithRoots t _ _) = unroot t
     makeRooted t = t
 
-instance IsForest t => IsForest (WithLabels t) where
+instance IsGraph t => IsGraph (WithLabels t) where
     getNodesSet (WithLabels t _)                 = getNodesSet t
     getEdgesSet (WithLabels t _)                 = getEdgesSet t
 
@@ -264,6 +268,7 @@ instance IsForest t => IsForest (WithLabels t) where
     getEdgeAttributes (WithLabels t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (WithLabels t _)              = getTreeAttributes t
 
+instance IsForest f => IsForest (WithLabels f)
 
 instance IsTree t => IsTree (WithLabels t) where
     type Unrooted (WithLabels t) = WithLabels (Unrooted t)
@@ -273,7 +278,7 @@ instance IsTree t => IsTree (WithLabels t) where
     makeRooted (WithLabels t labels) = WithLabels (makeRooted t) labels
 
 
-instance IsForest t => IsForest (WithBranchLengths t) where
+instance IsGraph t => IsGraph (WithBranchLengths t) where
     getNodesSet (WithBranchLengths t _)             = getNodesSet t
     getEdgesSet (WithBranchLengths t _)             = getEdgesSet t
 
@@ -285,6 +290,7 @@ instance IsForest t => IsForest (WithBranchLengths t) where
     getEdgeAttributes (WithBranchLengths t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (WithBranchLengths t _)              = getTreeAttributes t
 
+instance IsForest t => IsForest (WithBranchLengths t)
 
 instance IsTree t => IsTree (WithBranchLengths t) where
     type Unrooted (WithBranchLengths t) = WithBranchLengths (Unrooted t)
@@ -293,8 +299,8 @@ instance IsTree t => IsTree (WithBranchLengths t) where
     unroot (WithBranchLengths t lengths) = WithBranchLengths (unroot t) lengths
     makeRooted (WithBranchLengths t lengths) = WithBranchLengths (makeRooted t) lengths
 
-instance HasRoots t => IsForest (WithNodeTimes t) where
-    getNodesSet (WithNodeTimes  t _)                     = getNodesSet t
+instance IsGraph t => IsGraph (WithNodeTimes t) where
+    getNodesSet (WithNodeTimes t _)                     = getNodesSet t
     getEdgesSet (WithNodeTimes t _)                     = getEdgesSet t
 
     edgesOutOfNodeSet (WithNodeTimes t _) nodeId       = edgesOutOfNodeSet t nodeId
@@ -305,6 +311,8 @@ instance HasRoots t => IsForest (WithNodeTimes t) where
     getEdgeAttributes (WithNodeTimes t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (WithNodeTimes t _)              = getTreeAttributes t
 
+instance IsForest t => IsForest (WithNodeTimes t)
+
 instance HasRoot t => IsTree (WithNodeTimes t) where
     type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
@@ -313,7 +321,7 @@ instance HasRoot t => IsTree (WithNodeTimes t) where
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 
-instance IsTimeTree t => IsForest (WithBranchRates t) where
+instance IsGraph t => IsGraph (WithBranchRates t) where
     getNodesSet (WithBranchRates t _)                 = getNodesSet t
     getEdgesSet (WithBranchRates t _)                 = getEdgesSet t
 
@@ -324,6 +332,8 @@ instance IsTimeTree t => IsForest (WithBranchRates t) where
     getNodeAttributes (WithBranchRates t _) node         = getNodeAttributes t node
     getEdgeAttributes (WithBranchRates t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (WithBranchRates t _)              = getTreeAttributes t
+
+instance IsForest t => IsForest (WithBranchRates t)
 
 instance IsTimeTree t => IsTree (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
@@ -412,7 +422,7 @@ instance HasRoots t => HasRoots (WithBranchLengths t) where
 remove_root (WithRoots t _ _) = t
 -- remove_root (WithLabels t labels) = WithLabels (remove_root t) labels
 
-instance IsTree t => HasLabels (WithLabels t) where
+instance IsGraph t => HasLabels (WithLabels t) where
     get_label  (WithLabels _ labels) node = labels IntMap.! node
     get_labels (WithLabels _ labels) = labels
     relabel newLabels (WithLabels t _) = WithLabels t newLabels
