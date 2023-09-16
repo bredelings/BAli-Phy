@@ -107,7 +107,7 @@ class IsGraph g where
 
     getNodeAttributes :: g -> NodeId -> Attributes
     getEdgeAttributes :: g -> EdgeId -> Attributes
-    getTreeAttributes :: g -> Attributes
+    getAttributes :: g -> Attributes
 
 class IsGraph f => IsForest f
 
@@ -209,9 +209,9 @@ instance IsGraph Tree where
     sourceNode (Tree _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
     targetNode (Tree _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
 
-    getNodeAttributes (Tree _ _ a _ _) node         = a IntMap.! node
-    getEdgeAttributes (Tree _ _ _ a _) edge         = a IntMap.! edge
-    getTreeAttributes (Tree _ _ _ _ a)              = a
+    getNodeAttributes (Tree _ _ a _ _) node     = a IntMap.! node
+    getEdgeAttributes (Tree _ _ _ a _) edge     = a IntMap.! edge
+    getAttributes (Tree _ _ _ _ a)              = a
 
 instance IsForest Tree
 
@@ -224,7 +224,7 @@ instance IsTree Tree where
 
 getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeAttributes tree node)
 getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
-getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getTreeAttributes tree)
+getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getAttributes tree)
 
 edgeAttributes :: IsTree t => t -> Text -> ((Maybe (Maybe Text)) -> a) -> IntMap a
 edgeAttributes tree key transform = fmap transform (getEdgesSet tree & IntMap.fromSet (\edge -> getEdgeAttribute tree edge key))
@@ -245,7 +245,7 @@ instance IsGraph t => IsGraph (WithRoots t) where
 
     getNodeAttributes (WithRoots t _ _) node         = getNodeAttributes t node
     getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (WithRoots t _ _)              = getTreeAttributes t
+    getAttributes (WithRoots t _ _)              = getAttributes t
 
 instance IsForest t => IsForest (WithRoots t)
 
@@ -260,13 +260,13 @@ instance IsGraph t => IsGraph (WithLabels t) where
     getNodesSet (WithLabels t _)                 = getNodesSet t
     getEdgesSet (WithLabels t _)                 = getEdgesSet t
 
-    edgesOutOfNodeSet (WithLabels t _) nodeId       = edgesOutOfNodeSet t nodeId
+    edgesOutOfNodeSet (WithLabels t _) nodeId    = edgesOutOfNodeSet t nodeId
     sourceNode (WithLabels t _) edgeId           = sourceNode t edgeId
     targetNode (WithLabels t _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (WithLabels t _) node         = getNodeAttributes t node
-    getEdgeAttributes (WithLabels t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (WithLabels t _)              = getTreeAttributes t
+    getNodeAttributes (WithLabels t _) node      = getNodeAttributes t node
+    getEdgeAttributes (WithLabels t _) edge      = getEdgeAttributes t edge
+    getAttributes (WithLabels t _)               = getAttributes t
 
 instance IsForest f => IsForest (WithLabels f)
 
@@ -282,13 +282,13 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getNodesSet (WithBranchLengths t _)             = getNodesSet t
     getEdgesSet (WithBranchLengths t _)             = getEdgesSet t
 
-    edgesOutOfNodeSet (WithBranchLengths t _) nodeId       = edgesOutOfNodeSet t nodeId
+    edgesOutOfNodeSet (WithBranchLengths t _) nodeId    = edgesOutOfNodeSet t nodeId
     sourceNode (WithBranchLengths t _) edgeId           = sourceNode t edgeId
     targetNode (WithBranchLengths t _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (WithBranchLengths t _) node         = getNodeAttributes t node
-    getEdgeAttributes (WithBranchLengths t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (WithBranchLengths t _)              = getTreeAttributes t
+    getNodeAttributes (WithBranchLengths t _) node     = getNodeAttributes t node
+    getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
+    getAttributes (WithBranchLengths t _)              = getAttributes t
 
 instance IsForest t => IsForest (WithBranchLengths t)
 
@@ -303,13 +303,13 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getNodesSet (WithNodeTimes t _)                     = getNodesSet t
     getEdgesSet (WithNodeTimes t _)                     = getEdgesSet t
 
-    edgesOutOfNodeSet (WithNodeTimes t _) nodeId       = edgesOutOfNodeSet t nodeId
+    edgesOutOfNodeSet (WithNodeTimes t _) nodeId    = edgesOutOfNodeSet t nodeId
     sourceNode (WithNodeTimes t _) edgeId           = sourceNode t edgeId
     targetNode (WithNodeTimes t _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (WithNodeTimes t _) node         = getNodeAttributes t node
-    getEdgeAttributes (WithNodeTimes t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (WithNodeTimes t _)              = getTreeAttributes t
+    getNodeAttributes (WithNodeTimes t _) node     = getNodeAttributes t node
+    getEdgeAttributes (WithNodeTimes t _) edge     = getEdgeAttributes t edge
+    getAttributes (WithNodeTimes t _)              = getAttributes t
 
 instance IsForest t => IsForest (WithNodeTimes t)
 
@@ -331,7 +331,7 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
 
     getNodeAttributes (WithBranchRates t _) node         = getNodeAttributes t node
     getEdgeAttributes (WithBranchRates t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (WithBranchRates t _)              = getTreeAttributes t
+    getAttributes (WithBranchRates t _)                  = getAttributes t
 
 instance IsForest t => IsForest (WithBranchRates t)
 

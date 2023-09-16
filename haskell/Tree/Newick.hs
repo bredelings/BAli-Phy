@@ -71,7 +71,7 @@ instance (IsTimeTree t, WriteNewickNode t) => WriteNewickNode (WithBranchRates t
     branch_info _    Nothing  = T.empty
 
 write_newick_rooted tree = let nodes = write_newick_node tree (root tree)
-                               attributes = attributesText $ getTreeAttributes tree
+                               attributes = attributesText $ getAttributes tree
                            in if T.null attributes
                               then nodes
                               else T.concat [attributes,T.singleton ' ',nodes]
