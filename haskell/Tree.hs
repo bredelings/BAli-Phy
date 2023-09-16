@@ -145,7 +145,8 @@ class HasBranchLengths f => CanModifyBranchLengths f where
     modifyBranchLengths :: (Int -> Double) -> f -> f
 
 class Tree t => HasRoot t where
-    root :: t -> Int
+    isRoot :: t -> NodeId -> Bool
+    root :: t -> NodeId
     away_from_root :: t -> Int -> Bool
 
 class HasRoot t => IsTimeTree t where
@@ -375,23 +376,28 @@ numLeaves t = length $ leaf_nodes t
 
 
 instance Tree t => HasRoot (RootedTreeImp t) where
-    root (RootedTree _ r _) = r
-    away_from_root (RootedTree t r arr    ) b = arr IntMap.! b
+    root (RootedTree _ [r] _) = r
+    isRoot (RootedTree _ [r] _) node = r == node
+    away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
 
 instance HasRoot t => HasRoot (LabelledTreeImp t) where
     root (LabelledTree t _) = root t
+    isRoot (LabelledTree t _) node = isRoot t node
     away_from_root (LabelledTree t _      ) b = away_from_root t b
 
 instance HasRoot t => HasRoot (TimeTreeImp t) where
     root (TimeTree t _)     = root t
+    isRoot (TimeTree t _) node = isRoot t node
     away_from_root (TimeTree   t _        ) b = away_from_root t b
 
 instance IsTimeTree t => HasRoot (RateTimeTreeImp t) where
     root (RateTimeTree t _) = root t
+    isRoot (RateTimeTree t _) node = isRoot t node
     away_from_root (RateTimeTree tree _  ) b = away_from_root tree b
 
 instance HasRoot t => HasRoot (BranchLengthTreeImp t) where
     root (BranchLengthTree tree _) = root tree
+    isRoot (BranchLengthTree t _) node = isRoot t node
     away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
 
 -- Check for duplicate instances!
