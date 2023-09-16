@@ -144,10 +144,17 @@ class Forest f => HasBranchLengths f where
 class HasBranchLengths f => CanModifyBranchLengths f where
     modifyBranchLengths :: (Int -> Double) -> f -> f
 
-class Tree t => HasRoot t where
+class Forest t => HasRoots t where
     isRoot :: t -> NodeId -> Bool
-    root :: t -> NodeId
+    roots :: t -> [NodeId]
     away_from_root :: t -> Int -> Bool
+
+class (HasRoots t, Tree t) => HasRoot t where
+    root :: t -> NodeId
+
+instance (HasRoots t, Tree t) => HasRoot t where
+    root tree = case roots tree of [r] -> r
+                                   _ -> error "root: Tree has multiple roots!"
 
 class HasRoot t => IsTimeTree t where
     node_time :: t -> Int -> Double
@@ -286,7 +293,7 @@ instance Tree t => Tree (BranchLengthTreeImp t) where
     unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
     makeRooted (BranchLengthTree t lengths) = BranchLengthTree (makeRooted t) lengths
 
-instance HasRoot t => Forest (TimeTreeImp t) where
+instance HasRoots t => Forest (TimeTreeImp t) where
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
 
@@ -375,28 +382,28 @@ scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
 numLeaves t = length $ leaf_nodes t
 
 
-instance Tree t => HasRoot (RootedTreeImp t) where
-    root (RootedTree _ [r] _) = r
-    isRoot (RootedTree _ [r] _) node = r == node
+instance Tree t => HasRoots (RootedTreeImp t) where
+    roots (RootedTree _ rs _) = rs
+    isRoot (RootedTree _ rs _) node = node `elem` rs
     away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
 
-instance HasRoot t => HasRoot (LabelledTreeImp t) where
-    root (LabelledTree t _) = root t
+instance HasRoots t => HasRoots (LabelledTreeImp t) where
+    roots (LabelledTree t _) = roots t
     isRoot (LabelledTree t _) node = isRoot t node
     away_from_root (LabelledTree t _      ) b = away_from_root t b
 
-instance HasRoot t => HasRoot (TimeTreeImp t) where
-    root (TimeTree t _)     = root t
+instance HasRoots t => HasRoots (TimeTreeImp t) where
+    roots (TimeTree t _)     = roots t
     isRoot (TimeTree t _) node = isRoot t node
     away_from_root (TimeTree   t _        ) b = away_from_root t b
 
-instance IsTimeTree t => HasRoot (RateTimeTreeImp t) where
-    root (RateTimeTree t _) = root t
+instance IsTimeTree t => HasRoots (RateTimeTreeImp t) where
+    roots (RateTimeTree t _) = roots t
     isRoot (RateTimeTree t _) node = isRoot t node
     away_from_root (RateTimeTree tree _  ) b = away_from_root tree b
 
-instance HasRoot t => HasRoot (BranchLengthTreeImp t) where
-    root (BranchLengthTree tree _) = root tree
+instance HasRoots t => HasRoots (BranchLengthTreeImp t) where
+    roots (BranchLengthTree tree _) = roots tree
     isRoot (BranchLengthTree t _) node = isRoot t node
     away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
 
