@@ -98,7 +98,7 @@ type NodeIdSet = IntSet
 type EdgeIdSet = IntSet
 
 
-class Forest f where
+class IsForest f where
     getNodesSet :: f -> NodeIdSet
     getEdgesSet :: f -> EdgeIdSet
 
@@ -111,7 +111,7 @@ class Forest f where
     getTreeAttributes :: f -> Attributes
 
 
-class Forest t => Tree t where
+class IsForest t => Tree t where
     type family Unrooted t
     type family Rooted t
 
@@ -135,7 +135,7 @@ undirectedName e  = max e (reverseEdge e)
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
-class Forest f => HasBranchLengths f where
+class IsForest f => HasBranchLengths f where
     branch_length :: f -> Int -> Double
 
 -- This seems to be unused in both Haskell and C++ code.
@@ -144,7 +144,7 @@ class Forest f => HasBranchLengths f where
 class HasBranchLengths f => CanModifyBranchLengths f where
     modifyBranchLengths :: (Int -> Double) -> f -> f
 
-class Forest t => HasRoots t where
+class IsForest t => HasRoots t where
     isRoot :: t -> NodeId -> Bool
     roots :: t -> [NodeId]
     away_from_root :: t -> Int -> Bool
@@ -162,7 +162,7 @@ class HasRoot t => IsTimeTree t where
 class IsTimeTree t => IsRateTimeTree t where
     branch_rate :: t -> Int -> Double
 
-class Forest f => HasLabels f where
+class IsForest f => HasLabels f where
     get_label :: f -> Int -> Maybe Text
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
@@ -201,7 +201,7 @@ data WithNodeTimes t  = TimeTree t (IntMap Double)
 -- The array stores the branch rates
 data WithBranchRates t = RateTimeTree t (IntMap Double)
 
-instance Forest TreeImp where
+instance IsForest TreeImp where
     getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
@@ -233,7 +233,7 @@ getAttribute _   (Just (Just text)) = read (T.unpack text)
 
 simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
-instance Forest t => Forest (WithRoots t) where
+instance IsForest t => IsForest (WithRoots t) where
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
     getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
 
@@ -252,7 +252,7 @@ instance Tree t => Tree (WithRoots t) where
     unroot (RootedTree t _ _) = unroot t
     makeRooted t = t
 
-instance Forest t => Forest (WithLabels t) where
+instance IsForest t => IsForest (WithLabels t) where
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
 
@@ -273,7 +273,7 @@ instance Tree t => Tree (WithLabels t) where
     makeRooted (LabelledTree t labels) = LabelledTree (makeRooted t) labels
 
 
-instance Forest t => Forest (WithBranchLengths t) where
+instance IsForest t => IsForest (WithBranchLengths t) where
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
     getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
 
@@ -293,7 +293,7 @@ instance Tree t => Tree (WithBranchLengths t) where
     unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
     makeRooted (BranchLengthTree t lengths) = BranchLengthTree (makeRooted t) lengths
 
-instance HasRoots t => Forest (WithNodeTimes t) where
+instance HasRoots t => IsForest (WithNodeTimes t) where
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
 
@@ -313,7 +313,7 @@ instance HasRoot t => Tree (WithNodeTimes t) where
     makeRooted (TimeTree t node_heights) = TimeTree (makeRooted t) node_heights
 
 
-instance IsTimeTree t => Forest (WithBranchRates t) where
+instance IsTimeTree t => IsForest (WithBranchRates t) where
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
     getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
 
