@@ -189,7 +189,7 @@ instance Show Edge where
 
 data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
-data WithRoots t = RootedTree t [NodeId] (IntMap Bool)
+data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
 
 data WithBranchLengths t = WithBranchLengths t (IntMap Double)
 
@@ -234,22 +234,22 @@ getAttribute _   (Just (Just text)) = read (T.unpack text)
 simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
 instance IsForest t => IsForest (WithRoots t) where
-    getNodesSet (RootedTree t _ _)                 = getNodesSet t
-    getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
+    getNodesSet (WithRoots t _ _)                 = getNodesSet t
+    getEdgesSet (WithRoots t _ _)                 = getEdgesSet t
 
-    edgesOutOfNodeSet (RootedTree t _ _) nodeId       = edgesOutOfNodeSet t nodeId
-    sourceNode (RootedTree t _ _) edgeId           = sourceNode t edgeId
-    targetNode (RootedTree t _ _) edgeId           = targetNode t edgeId
+    edgesOutOfNodeSet (WithRoots t _ _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (WithRoots t _ _) edgeId           = sourceNode t edgeId
+    targetNode (WithRoots t _ _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (RootedTree t _ _) node         = getNodeAttributes t node
-    getEdgeAttributes (RootedTree t _ _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (RootedTree t _ _)              = getTreeAttributes t
+    getNodeAttributes (WithRoots t _ _) node         = getNodeAttributes t node
+    getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
+    getTreeAttributes (WithRoots t _ _)              = getTreeAttributes t
 
 instance IsTree t => IsTree (WithRoots t) where
     type Unrooted (WithRoots t) = Unrooted t
     type Rooted   (WithRoots t) = WithRoots t
 
-    unroot (RootedTree t _ _) = unroot t
+    unroot (WithRoots t _ _) = unroot t
     makeRooted t = t
 
 instance IsForest t => IsForest (WithLabels t) where
@@ -383,9 +383,9 @@ numLeaves t = length $ leaf_nodes t
 
 
 instance IsTree t => HasRoots (WithRoots t) where
-    roots (RootedTree _ rs _) = rs
-    isRoot (RootedTree _ rs _) node = node `elem` rs
-    away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
+    roots (WithRoots _ rs _) = rs
+    isRoot (WithRoots _ rs _) node = node `elem` rs
+    away_from_root (WithRoots t _ arr    ) b = arr IntMap.! b
 
 instance HasRoots t => HasRoots (WithLabels t) where
     roots (WithLabels t _) = roots t
@@ -409,7 +409,7 @@ instance HasRoots t => HasRoots (WithBranchLengths t) where
 
 -- Check for duplicate instances!
 
-remove_root (RootedTree t _ _) = t
+remove_root (WithRoots t _ _) = t
 -- remove_root (WithLabels t labels) = WithLabels (remove_root t) labels
 
 instance IsTree t => HasLabels (WithLabels t) where
@@ -509,7 +509,7 @@ add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> loo
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
-           rt = RootedTree t [r] (getEdgesSet t & IntMap.fromSet check_away_from_root)
+           rt = WithRoots t [r] (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 -- These two functions shouldn't go here -- but where should they go?
 addInternalLabels tree = WithLabels tree newLabels where

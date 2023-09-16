@@ -178,7 +178,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
 -- 3        5      4
 -- 4        7      6
 modifiable_rooted_tree :: (forall a.a -> a) -> WithRoots TreeImp -> WithRoots TreeImp
-modifiable_rooted_tree modf (RootedTree tree [root_node] _) = add_root root_node $ modifiable_tree modf tree
+modifiable_rooted_tree modf (WithRoots tree [root_node] _) = add_root root_node $ modifiable_tree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
 triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree

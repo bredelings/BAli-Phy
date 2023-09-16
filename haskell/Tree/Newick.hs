@@ -41,8 +41,8 @@ instance WriteNewickNode TreeImp where
     node_info tree node = T.pack $ show node
 
 instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
-    node_info (RootedTree tree _ _) = node_info tree
-    branch_info (RootedTree tree _ _) = branch_info tree
+    node_info (WithRoots tree _ _) = node_info tree
+    branch_info (WithRoots tree _ _) = branch_info tree
 
 foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
