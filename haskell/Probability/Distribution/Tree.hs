@@ -126,7 +126,7 @@ uniform_labelled_tree taxa branch_lengths_dist = do
   -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
 --  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
   branch_lengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branch_lengths_dist topology))
-  let tree = BranchLengthTree topology branch_lengths
+  let tree = WithBranchLengths topology branch_lengths
   return tree `with_tk_effect` add_tree_alignment_moves
 
 ----

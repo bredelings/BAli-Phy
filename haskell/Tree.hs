@@ -139,7 +139,7 @@ class IsForest f => HasBranchLengths f where
     branch_length :: f -> Int -> Double
 
 -- This seems to be unused in both Haskell and C++ code.
--- I guess it makes sense that you could construct a BranchLengthTree with arbitrary new branch lengths,
+-- I guess it makes sense that you could construct a WithBranchLengths with arbitrary new branch lengths,
 --   but could not do this for WithNodeTimes...
 class HasBranchLengths f => CanModifyBranchLengths f where
     modifyBranchLengths :: (Int -> Double) -> f -> f
@@ -191,7 +191,7 @@ data TreeImp = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attr
 
 data WithRoots t = RootedTree t [NodeId] (IntMap Bool)
 
-data WithBranchLengths t = BranchLengthTree t (IntMap Double)
+data WithBranchLengths t = WithBranchLengths t (IntMap Double)
 
 data WithLabels t = WithLabels t (IntMap (Maybe Text))
 
@@ -274,24 +274,24 @@ instance IsTree t => IsTree (WithLabels t) where
 
 
 instance IsForest t => IsForest (WithBranchLengths t) where
-    getNodesSet (BranchLengthTree t _)             = getNodesSet t
-    getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
+    getNodesSet (WithBranchLengths t _)             = getNodesSet t
+    getEdgesSet (WithBranchLengths t _)             = getEdgesSet t
 
-    edgesOutOfNodeSet (BranchLengthTree t _) nodeId       = edgesOutOfNodeSet t nodeId
-    sourceNode (BranchLengthTree t _) edgeId           = sourceNode t edgeId
-    targetNode (BranchLengthTree t _) edgeId           = targetNode t edgeId
+    edgesOutOfNodeSet (WithBranchLengths t _) nodeId       = edgesOutOfNodeSet t nodeId
+    sourceNode (WithBranchLengths t _) edgeId           = sourceNode t edgeId
+    targetNode (WithBranchLengths t _) edgeId           = targetNode t edgeId
 
-    getNodeAttributes (BranchLengthTree t _) node         = getNodeAttributes t node
-    getEdgeAttributes (BranchLengthTree t _) edge         = getEdgeAttributes t edge
-    getTreeAttributes (BranchLengthTree t _)              = getTreeAttributes t
+    getNodeAttributes (WithBranchLengths t _) node         = getNodeAttributes t node
+    getEdgeAttributes (WithBranchLengths t _) edge         = getEdgeAttributes t edge
+    getTreeAttributes (WithBranchLengths t _)              = getTreeAttributes t
 
 
 instance IsTree t => IsTree (WithBranchLengths t) where
     type Unrooted (WithBranchLengths t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchLengths t) = WithBranchLengths (Rooted t)
 
-    unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
-    makeRooted (BranchLengthTree t lengths) = BranchLengthTree (makeRooted t) lengths
+    unroot (WithBranchLengths t lengths) = WithBranchLengths (unroot t) lengths
+    makeRooted (WithBranchLengths t lengths) = WithBranchLengths (makeRooted t) lengths
 
 instance HasRoots t => IsForest (WithNodeTimes t) where
     getNodesSet (WithNodeTimes  t _)                     = getNodesSet t
@@ -309,7 +309,7 @@ instance HasRoot t => IsTree (WithNodeTimes t) where
     type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
-    unroot tt@(WithNodeTimes t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    unroot tt@(WithNodeTimes t node_heights) = WithBranchLengths (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 
@@ -329,7 +329,7 @@ instance IsTimeTree t => IsTree (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
-    unroot tt@(WithBranchRates t _) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    unroot tt@(WithBranchRates t _) = WithBranchLengths (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
     makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
 
 
@@ -345,9 +345,9 @@ instance IsTimeTree t => IsTimeTree (WithBranchRates t) where
 instance IsTimeTree t => IsRateTimeTree (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
-branch_length_tree topology lengths = BranchLengthTree topology lengths
+branch_length_tree topology lengths = WithBranchLengths topology lengths
 
-branch_lengths (BranchLengthTree _ ds) = ds
+branch_lengths (WithBranchLengths _ ds) = ds
 
 time_tree topology times = WithNodeTimes topology times
 
@@ -358,10 +358,10 @@ branch_duration t b = abs (node_time t source - node_time t target)
           target = targetNode t b
 
 instance IsTree t => HasBranchLengths (WithBranchLengths t) where
-    branch_length (BranchLengthTree tree ds) b = ds IntMap.! (undirectedName b)
+    branch_length (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
 
 instance IsTree t => CanModifyBranchLengths (WithBranchLengths t) where
-    modifyBranchLengths f t@(BranchLengthTree tree ds) = BranchLengthTree tree (IntMap.fromSet f (IntMap.keysSet ds))
+    modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.fromSet f (IntMap.keysSet ds))
 
 instance IsTimeTree t => HasBranchLengths (WithBranchRates t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
@@ -375,7 +375,7 @@ instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
 instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
     modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
 
-scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
+scale_branch_lengths factor (WithBranchLengths t ds) = (WithBranchLengths t ds')
     where ds' = fmap (factor*) ds
 
 -- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
@@ -403,9 +403,9 @@ instance IsTimeTree t => HasRoots (WithBranchRates t) where
     away_from_root (WithBranchRates tree _  ) b = away_from_root tree b
 
 instance HasRoots t => HasRoots (WithBranchLengths t) where
-    roots (BranchLengthTree tree _) = roots tree
-    isRoot (BranchLengthTree t _) node = isRoot t node
-    away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
+    roots (WithBranchLengths tree _) = roots tree
+    isRoot (WithBranchLengths t _) node = isRoot t node
+    away_from_root (WithBranchLengths tree _  ) b = away_from_root tree b
 
 -- Check for duplicate instances!
 
@@ -418,9 +418,9 @@ instance IsTree t => HasLabels (WithLabels t) where
     relabel newLabels (WithLabels t _) = WithLabels t newLabels
 
 instance HasLabels t => HasLabels (WithBranchLengths t) where
-    get_label  (BranchLengthTree t _) node = get_label t node
-    get_labels (BranchLengthTree t _) = get_labels t
-    relabel newLabels (BranchLengthTree t lengths) = BranchLengthTree (relabel newLabels t) lengths
+    get_label  (WithBranchLengths t _) node = get_label t node
+    get_labels (WithBranchLengths t _) = get_labels t
+    relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
 
 instance (HasRoot t, HasLabels t) => HasLabels (WithNodeTimes t) where
     get_label (WithNodeTimes t _) node          = get_label t node

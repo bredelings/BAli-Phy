@@ -53,7 +53,7 @@ instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
     branch_info (WithLabels tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
-    node_info (BranchLengthTree tree lengths) node = node_info tree node
+    node_info (WithBranchLengths tree lengths) node = node_info tree node
 
     branch_info blt (Just b) = T.doubleToText (branch_length blt b)
     branch_info _   Nothing  = T.empty
@@ -251,7 +251,7 @@ newickToTree (NewickTree treeAttributes node) = do
 newickToBranchLengthTree newick = do
   (tree, lengths) <- newickToTree newick
   let lengths2 = fmap (fromMaybe 0) lengths
-  return (BranchLengthTree tree lengths2)
+  return (WithBranchLengths tree lengths2)
 
 readTreeTopology filename = do
   text <- readFile filename
