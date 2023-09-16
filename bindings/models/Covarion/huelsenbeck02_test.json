@@ -1,0 +1,51 @@
+{
+    "name": "Covarion.hb02_test",
+    "synonyms": ["Covarion.huelsenbeck02"],
+    "title":"The Huelsenbeck Covarion Model",
+    "result_type": "MixtureModel[a]",
+    "call": "huelsenbeck_02_test[@s01,@s10,@fraction1,@submodel]",
+    "import": ["SModel"],
+    "args": [
+        {
+            "arg_name": "r",
+            "arg_type": "Double",
+	    "default_value":"~gamma(2,1/4)",
+	    "description":"s01 + s10"
+        },
+        {
+            "arg_name": "pi1",
+            "arg_type": "Double",
+	    "default_value":"~beta(2,2)",
+	    "description":"Fraction of time spent in the ON state"
+        },
+	{
+	    "arg_name": "fraction1",
+	    "arg_type": "Double",
+	    "default_value": "~beta(0.5,0.5)",
+	    "description": "Fraction of sites with rate-switching"
+	},
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+	    "description": "The base model"
+        }
+    ],
+    "computed": [
+	{
+	    "name": "rate",
+	    "value": "*[2,*[@r,*[@pi1,-[1,@pi1]]]]"
+	},
+	{
+	    "name": "s01",
+	    "value": "*[@r,@pi1]"
+	},
+	{
+	    "name": "s10",
+	    "value": "*[@r,-[1,@pi1]]"
+	}
+    ],
+    "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
+    "examples": ["gtr +> Rates.gamma +> Covarion.hb02_test","gtr +> Rates.free(n=5) +> Covarion.hb02_test"],
+    "see": ["ts98","hb02"],
+    "extract": "all"
+}

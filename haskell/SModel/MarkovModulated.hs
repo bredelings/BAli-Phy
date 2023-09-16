@@ -42,7 +42,14 @@ tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0 q, q] rates_betw
 
 tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 
+tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (rescale 1 q) & unit_mixture,
+                                                                       tuffley_steel_98_unscaled s01 s10 (rescale 1 q) & unit_mixture]
+
 huelsenbeck_02 s01 s10 model = fmap (tuffley_steel_98_unscaled s01 s10) (rescale 1 model)
+
+huelsenbeck_02_test s01 s10 fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 1 0,
+                                                                         -- ^ ideally we could just put "model" here.
+                                                                         model & huelsenbeck_02 s01 s10]
 
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
     dist = rescale 1 model
