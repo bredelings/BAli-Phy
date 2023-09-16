@@ -196,7 +196,7 @@ data WithBranchLengths t = BranchLengthTree t (IntMap Double)
 data WithLabels t = LabelledTree t (IntMap (Maybe Text))
 
 -- The array stores the node times
-data TimeTreeImp t  = TimeTree t (IntMap Double)
+data WithNodeTimes t  = TimeTree t (IntMap Double)
 
 -- The array stores the branch rates
 data WithBranchRates t = RateTimeTree t (IntMap Double)
@@ -293,7 +293,7 @@ instance Tree t => Tree (WithBranchLengths t) where
     unroot (BranchLengthTree t lengths) = BranchLengthTree (unroot t) lengths
     makeRooted (BranchLengthTree t lengths) = BranchLengthTree (makeRooted t) lengths
 
-instance HasRoots t => Forest (TimeTreeImp t) where
+instance HasRoots t => Forest (WithNodeTimes t) where
     getNodesSet (TimeTree t _)                     = getNodesSet t
     getEdgesSet (TimeTree t _)                     = getEdgesSet t
 
@@ -305,9 +305,9 @@ instance HasRoots t => Forest (TimeTreeImp t) where
     getEdgeAttributes (TimeTree t _) edge         = getEdgeAttributes t edge
     getTreeAttributes (TimeTree t _)              = getTreeAttributes t
 
-instance HasRoot t => Tree (TimeTreeImp t) where
-    type Unrooted (TimeTreeImp t) = WithBranchLengths (Unrooted t)
-    type Rooted   (TimeTreeImp t) = TimeTreeImp (Rooted t)
+instance HasRoot t => Tree (WithNodeTimes t) where
+    type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
+    type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
     unroot tt@(TimeTree t node_heights) = BranchLengthTree (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
     makeRooted (TimeTree t node_heights) = TimeTree (makeRooted t) node_heights
@@ -333,7 +333,7 @@ instance IsTimeTree t => Tree (WithBranchRates t) where
     makeRooted (RateTimeTree t branchRates) = RateTimeTree (makeRooted t) branchRates
 
 
-instance HasRoot t => IsTimeTree (TimeTreeImp t) where
+instance HasRoot t => IsTimeTree (WithNodeTimes t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
 
 instance IsTimeTree t => IsTimeTree (WithLabels t) where
@@ -366,7 +366,7 @@ instance Tree t => CanModifyBranchLengths (WithBranchLengths t) where
 instance IsTimeTree t => HasBranchLengths (WithBranchRates t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
-instance HasRoot t => HasBranchLengths (TimeTreeImp t) where
+instance HasRoot t => HasBranchLengths (WithNodeTimes t) where
     branch_length tree b = branch_duration tree b
 
 instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
@@ -392,7 +392,7 @@ instance HasRoots t => HasRoots (WithLabels t) where
     isRoot (LabelledTree t _) node = isRoot t node
     away_from_root (LabelledTree t _      ) b = away_from_root t b
 
-instance HasRoots t => HasRoots (TimeTreeImp t) where
+instance HasRoots t => HasRoots (WithNodeTimes t) where
     roots (TimeTree t _)     = roots t
     isRoot (TimeTree t _) node = isRoot t node
     away_from_root (TimeTree   t _        ) b = away_from_root t b
@@ -422,7 +422,7 @@ instance HasLabels t => HasLabels (WithBranchLengths t) where
     get_labels (BranchLengthTree t _) = get_labels t
     relabel newLabels (BranchLengthTree t lengths) = BranchLengthTree (relabel newLabels t) lengths
 
-instance (HasRoot t, HasLabels t) => HasLabels (TimeTreeImp t) where
+instance (HasRoot t, HasLabels t) => HasLabels (WithNodeTimes t) where
     get_label (TimeTree t _) node          = get_label t node
     get_labels (TimeTree t _) = get_labels t
     relabel newLabels (TimeTree t nodeHeights) = TimeTree (relabel newLabels t) nodeHeights

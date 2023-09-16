@@ -58,7 +58,7 @@ instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
     branch_info blt (Just b) = T.doubleToText (branch_length blt b)
     branch_info _   Nothing  = T.empty
 
-instance (HasRoot t, WriteNewickNode t) => WriteNewickNode (TimeTreeImp t) where
+instance (HasRoot t, WriteNewickNode t) => WriteNewickNode (WithNodeTimes t) where
     node_info (TimeTree tree _) node = node_info tree node
 
     branch_info nht (Just b) = T.doubleToText (branch_length nht b)

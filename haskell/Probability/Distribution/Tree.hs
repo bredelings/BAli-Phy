@@ -187,7 +187,7 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
-modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp (WithRoots TreeImp) -> TimeTreeImp (WithRoots TreeImp)
+modifiable_time_tree :: (forall a.a -> a) -> WithNodeTimes (WithRoots TreeImp) -> WithNodeTimes (WithRoots TreeImp)
 modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     maybe_modf :: Int -> a -> a
@@ -276,7 +276,7 @@ uniform_topology n = UniformTopology n
 data UniformTimeTree = UniformTimeTree Double Int
 
 instance Dist UniformTimeTree where
-    type Result UniformTimeTree = TimeTreeImp (WithRoots TreeImp)
+    type Result UniformTimeTree = WithNodeTimes (WithRoots TreeImp)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf UniformTimeTree where
@@ -291,7 +291,7 @@ uniform_time_tree age n = UniformTimeTree age n
 data CoalescentTree = CoalescentTree Double Int
 
 instance Dist CoalescentTree where
-    type Result CoalescentTree = TimeTreeImp (WithRoots TreeImp)
+    type Result CoalescentTree = WithNodeTimes (WithRoots TreeImp)
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf CoalescentTree where
