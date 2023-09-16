@@ -193,7 +193,7 @@ data WithRoots t = RootedTree t [NodeId] (IntMap Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (IntMap Double)
 
-data LabelledTreeImp t = LabelledTree t (IntMap (Maybe Text))
+data WithLabels t = LabelledTree t (IntMap (Maybe Text))
 
 -- The array stores the node times
 data TimeTreeImp t  = TimeTree t (IntMap Double)
@@ -252,7 +252,7 @@ instance Tree t => Tree (WithRoots t) where
     unroot (RootedTree t _ _) = unroot t
     makeRooted t = t
 
-instance Forest t => Forest (LabelledTreeImp t) where
+instance Forest t => Forest (WithLabels t) where
     getNodesSet (LabelledTree t _)                 = getNodesSet t
     getEdgesSet (LabelledTree t _)                 = getEdgesSet t
 
@@ -265,9 +265,9 @@ instance Forest t => Forest (LabelledTreeImp t) where
     getTreeAttributes (LabelledTree t _)              = getTreeAttributes t
 
 
-instance Tree t => Tree (LabelledTreeImp t) where
-    type Unrooted (LabelledTreeImp t) = LabelledTreeImp (Unrooted t)
-    type Rooted (LabelledTreeImp t) = LabelledTreeImp (Rooted t)
+instance Tree t => Tree (WithLabels t) where
+    type Unrooted (WithLabels t) = WithLabels (Unrooted t)
+    type Rooted (WithLabels t) = WithLabels (Rooted t)
 
     unroot (LabelledTree t labels) = LabelledTree (unroot t) labels
     makeRooted (LabelledTree t labels) = LabelledTree (makeRooted t) labels
@@ -336,7 +336,7 @@ instance IsTimeTree t => Tree (RateTimeTreeImp t) where
 instance HasRoot t => IsTimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
 
-instance IsTimeTree t => IsTimeTree (LabelledTreeImp t) where
+instance IsTimeTree t => IsTimeTree (WithLabels t) where
     node_time (LabelledTree tt _) node = node_time tt node
 
 instance IsTimeTree t => IsTimeTree (RateTimeTreeImp t) where
@@ -369,10 +369,10 @@ instance IsTimeTree t => HasBranchLengths (RateTimeTreeImp t) where
 instance HasRoot t => HasBranchLengths (TimeTreeImp t) where
     branch_length tree b = branch_duration tree b
 
-instance HasBranchLengths t => HasBranchLengths (LabelledTreeImp t) where
+instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
     branch_length (LabelledTree tree _) b = branch_length tree b
 
-instance CanModifyBranchLengths t => CanModifyBranchLengths (LabelledTreeImp t) where
+instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
     modifyBranchLengths f (LabelledTree tree labels) = LabelledTree (modifyBranchLengths f tree) labels
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
@@ -387,7 +387,7 @@ instance Tree t => HasRoots (WithRoots t) where
     isRoot (RootedTree _ rs _) node = node `elem` rs
     away_from_root (RootedTree t _ arr    ) b = arr IntMap.! b
 
-instance HasRoots t => HasRoots (LabelledTreeImp t) where
+instance HasRoots t => HasRoots (WithLabels t) where
     roots (LabelledTree t _) = roots t
     isRoot (LabelledTree t _) node = isRoot t node
     away_from_root (LabelledTree t _      ) b = away_from_root t b
@@ -412,7 +412,7 @@ instance HasRoots t => HasRoots (BranchLengthTreeImp t) where
 remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
-instance Tree t => HasLabels (LabelledTreeImp t) where
+instance Tree t => HasLabels (WithLabels t) where
     get_label  (LabelledTree _ labels) node = labels IntMap.! node
     get_labels (LabelledTree _ labels) = labels
     relabel newLabels (LabelledTree t _) = LabelledTree t newLabels
