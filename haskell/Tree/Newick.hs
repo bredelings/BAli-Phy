@@ -52,7 +52,7 @@ instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
                                                                                 Nothing -> T.empty
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
-instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
+instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
     node_info (BranchLengthTree tree lengths) node = node_info tree node
 
     branch_info blt (Just b) = T.doubleToText (branch_length blt b)

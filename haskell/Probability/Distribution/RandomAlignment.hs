@@ -117,10 +117,10 @@ annotated_alignment_prs tree hmms model alignment = do
 
 
 
-data RandomAlignment t = (HasLabels t, Tree t) => RandomAlignment (BranchLengthTreeImp t) IModel (Map.Map Text Int) (IntMap PairHMM)
+data RandomAlignment t = (HasLabels t, Tree t) => RandomAlignment (WithBranchLengths t) IModel (Map.Map Text Int) (IntMap PairHMM)
 
 instance Dist (RandomAlignment t) where
-    type Result (RandomAlignment t) = AlignmentOnTree (BranchLengthTreeImp t)
+    type Result (RandomAlignment t) = AlignmentOnTree (WithBranchLengths t)
 
 instance Sampleable (RandomAlignment t) where
     sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
