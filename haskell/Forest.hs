@@ -38,11 +38,21 @@ ISSUE: HasRoots basically puts a preferred direction on each edge of the graph.
  Its possible that we could make the EdgeId type for the directed version be the Direction UndirectedEdgeId, instead of an Int.
 -}
 
-class IsGraph f => IsForest f
+class IsGraph f => IsForest f where
+    type family Unrooted f
+    type family Rooted f
+
+    unroot :: f -> Unrooted f
+    makeRooted :: f -> Rooted f
 
 data Forest = Forest Graph
 
-instance IsForest Forest
+instance IsForest Forest where
+    type instance Unrooted Forest = Forest
+    type instance Rooted Forest = WithRoots Forest
+
+    unroot f = f
+    makeRooted f = addRoots roots f where roots = error "Implement finding connected components!"
 
 instance IsGraph Forest where
     getNodesSet (Forest g) = getNodesSet g
@@ -56,9 +66,19 @@ instance IsGraph Forest where
     getEdgeAttributes (Forest g) edge = getEdgeAttributes g edge
     getAttributes (Forest g) = getAttributes g
 
-instance IsForest f => IsForest (WithLabels f)
+instance IsForest f => IsForest (WithLabels f) where
+    type Unrooted (WithLabels f) = WithLabels (Unrooted f)
+    type Rooted (WithLabels f) = WithLabels (Rooted f)
 
-instance IsForest t => IsForest (WithBranchLengths t)
+    unroot (WithLabels t labels) = WithLabels (unroot t) labels
+    makeRooted (WithLabels t labels) = WithLabels (makeRooted t) labels
+
+instance IsForest f => IsForest (WithBranchLengths f) where
+    type Unrooted (WithBranchLengths f) = WithBranchLengths (Unrooted f)
+    type Rooted (WithBranchLengths f) = WithBranchLengths (Rooted f)
+
+    unroot (WithBranchLengths t lengths) = WithBranchLengths (unroot t) lengths
+    makeRooted (WithBranchLengths t lengths) = WithBranchLengths (makeRooted t) lengths
 
 -------------------------- Rooted forests-----------------------------------
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
@@ -95,7 +115,12 @@ instance IsGraph t => IsGraph (WithRoots t) where
     getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
     getAttributes (WithRoots t _ _)              = getAttributes t
 
-instance IsForest t => IsForest (WithRoots t)
+instance IsForest t => IsForest (WithRoots t) where
+    type Unrooted (WithRoots t) = Unrooted t
+    type Rooted   (WithRoots t) = WithRoots t
+
+    unroot (WithRoots t _ _) = unroot t
+    makeRooted t = t
 
 toward_root rt b = not $ away_from_root rt b
 
@@ -131,7 +156,12 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getEdgeAttributes (WithNodeTimes t _) edge     = getEdgeAttributes t edge
     getAttributes (WithNodeTimes t _)              = getAttributes t
 
-instance IsForest t => IsForest (WithNodeTimes t)
+instance (HasRoots t, IsForest t) => IsForest (WithNodeTimes t) where
+    type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
+    type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
+
+    unroot tt@(WithNodeTimes t node_heights) = WithBranchLengths (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 class HasRoots t => HasNodeTimes t where
     node_time :: t -> Int -> Double
@@ -173,7 +203,13 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     getEdgeAttributes (WithBranchRates t _) edge         = getEdgeAttributes t edge
     getAttributes (WithBranchRates t _)                  = getAttributes t
 
-instance IsForest t => IsForest (WithBranchRates t)
+instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
+    type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
+    type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
+
+    unroot tt@(WithBranchRates t _) = WithBranchLengths (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
+    makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
+
 
 class HasNodeTimes t => HasBranchRates t where
     branch_rate :: t -> Int -> Double
