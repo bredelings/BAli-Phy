@@ -151,6 +151,8 @@ undirectedName e  = max e (reverseEdge e)
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
+tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
+
 ------------------ Branch Lengths ----------------
 
 class IsGraph g => HasBranchLengths g where
@@ -184,6 +186,16 @@ instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
 
 instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
     modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.fromSet f (IntMap.keysSet ds))
+
+instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
+    branch_length (WithLabels tree _) b = branch_length tree b
+
+instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
+    modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
+
+branch_lengths (WithBranchLengths _ ds) = ds
+
+branch_length_tree topology lengths = WithBranchLengths topology lengths
 
 ------------------ Labels ----------------
 
