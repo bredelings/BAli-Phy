@@ -56,10 +56,10 @@ instance (HasRoots t, IsTree t) => HasRoot t where
                                    _ -> error "root: Tree has multiple roots!"
 
 -- FIXME!  This should be HasNodeTimes, and it should depend on HasRoots!
-class HasRoot t => IsTimeTree t where
+class HasRoot t => HasNodeTimes t where
     node_time :: t -> Int -> Double
 
-class IsTimeTree t => IsRateTimeTree t where
+class HasNodeTimes t => IsRateTimeTree t where
     branch_rate :: t -> Int -> Double
 
 -- OK, so should we store attributes inside the tree?
@@ -118,7 +118,7 @@ instance HasRoot t => IsTree (WithNodeTimes t) where
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 
-instance IsTimeTree t => IsTree (WithBranchRates t) where
+instance HasNodeTimes t => IsTree (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
@@ -126,16 +126,16 @@ instance IsTimeTree t => IsTree (WithBranchRates t) where
     makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
 
 
-instance HasRoot t => IsTimeTree (WithNodeTimes t) where
+instance HasRoot t => HasNodeTimes (WithNodeTimes t) where
     node_time (WithNodeTimes t hs) node = hs IntMap.! node
 
-instance IsTimeTree t => IsTimeTree (WithLabels t) where
+instance HasNodeTimes t => HasNodeTimes (WithLabels t) where
     node_time (WithLabels tt _) node = node_time tt node
 
-instance IsTimeTree t => IsTimeTree (WithBranchRates t) where
+instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
     node_time (WithBranchRates tt _) node = node_time tt node
 
-instance IsTimeTree t => IsRateTimeTree (WithBranchRates t) where
+instance HasNodeTimes t => IsRateTimeTree (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
 branch_length_tree topology lengths = WithBranchLengths topology lengths
@@ -150,7 +150,7 @@ branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
           target = targetNode t b
 
-instance IsTimeTree t => HasBranchLengths (WithBranchRates t) where
+instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
 instance HasRoot t => HasBranchLengths (WithNodeTimes t) where
@@ -162,7 +162,7 @@ instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
 instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
     modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
 
-instance IsTimeTree t => HasRoots (WithBranchRates t) where
+instance HasNodeTimes t => HasRoots (WithBranchRates t) where
     roots (WithBranchRates t _) = roots t
     isRoot (WithBranchRates t _) node = isRoot t node
     away_from_root (WithBranchRates tree _  ) b = away_from_root tree b
@@ -177,7 +177,7 @@ instance (HasRoot t, HasLabels t) => HasLabels (WithNodeTimes t) where
     get_labels (WithNodeTimes t _) = get_labels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
 
-instance (IsTimeTree t, HasLabels t) => HasLabels (WithBranchRates t) where
+instance (HasNodeTimes t, HasLabels t) => HasLabels (WithBranchRates t) where
     get_label (WithBranchRates t _) node      = get_label t node
     get_labels (WithBranchRates t _) = get_labels t
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
