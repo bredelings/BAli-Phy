@@ -56,7 +56,7 @@ instance (HasRoots t, IsTree t) => HasRoot t where
                                    _ -> error "root: Tree has multiple roots!"
 
 -- FIXME!  This should be HasNodeTimes, and it should depend on HasRoots!
-class HasRoot t => HasNodeTimes t where
+class HasRoots t => HasNodeTimes t where
     node_time :: t -> Int -> Double
 
 class HasNodeTimes t => IsRateTimeTree t where
@@ -118,7 +118,7 @@ instance HasRoot t => IsTree (WithNodeTimes t) where
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 
-instance HasNodeTimes t => IsTree (WithBranchRates t) where
+instance (IsTree t, HasNodeTimes t) => IsTree (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
@@ -126,7 +126,7 @@ instance HasNodeTimes t => IsTree (WithBranchRates t) where
     makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
 
 
-instance HasRoot t => HasNodeTimes (WithNodeTimes t) where
+instance HasRoots t => HasNodeTimes (WithNodeTimes t) where
     node_time (WithNodeTimes t hs) node = hs IntMap.! node
 
 instance HasNodeTimes t => HasNodeTimes (WithLabels t) where
