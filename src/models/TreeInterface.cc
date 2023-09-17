@@ -40,7 +40,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     auto tree = context_ptr(C, tree_reg);
 
     //------------------------- Create the tree structure -----------------------//
-    if (has_constructor(tree.head(), "Tree.WithBranchLengths"))
+    if (has_constructor(tree.head(), "Graph.WithBranchLengths"))
     {
         // We assume that the path to the array isn't changeable... ???
         branch_durations_reg = tree[1].result().get_reg();
@@ -56,7 +56,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         tree = tree[0];
     }
 
-    if (has_constructor(tree.head(), "Tree.WithLabels"))
+    if (has_constructor(tree.head(), "Graph.WithLabels"))
     {
         assert(tree.size() == 2);
         // FIXME - set labels!
@@ -90,7 +90,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         tree = tree[0];
     }
 
-    assert(has_constructor(tree.head(),"Tree.Graph"));
+    assert(has_constructor(tree.head(),"Graph.Graph"));
     assert(tree.size() == 5);
 
     auto edges_out_of_node = tree[0];

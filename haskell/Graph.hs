@@ -1,0 +1,238 @@
+module Graph where
+
+import Data.List (lookup)
+import Data.Maybe (mapMaybes)
+
+import Data.Maybe (fromJust)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
+import Data.Text (Text)
+import qualified Data.Text as T
+
+type NodeId = Int
+type EdgeId = Int
+type NodeIdSet = IntSet
+type EdgeIdSet = IntSet
+
+data Attributes = Attributes [(Text,Maybe Text)]
+
+(Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
+
+instance Show Attributes where
+    show (Attributes []) = ""
+    show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
+                       go (k, Nothing) = T.unpack k
+                       go (k, Just v)  = T.unpack k ++ "=" ++ T.unpack v
+
+attributesText (Attributes []) = T.empty
+attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.singleton ',') (fmap go cs) ++ [ T.pack "]" ]
+    where go (k, Nothing) = k
+          go (k, Just v)  = T.concat [k, T.singleton '=',v]
+
+noAttributes = Attributes []
+noAttributesOn set = set & IntMap.fromSet (\n -> noAttributes)
+
+
+{-
+ ISSUE: If we define graph operations in terms of node *ids*, then finding neighbors will depend on the id->Node map.
+        If a node stores references to neighboring nodes themselves, then looking up the ids will not be necessary.
+        Node ids are still necessary to determine if two nodes are the same or not.
+
+ POSSIBLE SOLUTION: Make a type family Node t that abstracts over whether a "Node" is a number of something else.
+        As long as we can find the neighboring nodes and such, then it doesn't matter what a "Node" is.
+        Likewise for Branches.
+
+  We would also need to have a function that gets the NodeID from a node.
+
+  Also maybe we should just use Int's as IDs for now, since we aren't yet allowing the set of nodes/branches to change.
+-}
+
+class IsGraph g where
+    getNodesSet :: g -> NodeIdSet
+    getEdgesSet :: g -> EdgeIdSet
+
+    edgesOutOfNodeSet :: g -> NodeId -> EdgeIdSet
+    sourceNode :: g -> EdgeId -> NodeId
+    targetNode :: g -> EdgeId -> NodeId
+
+    getNodeAttributes :: g -> NodeId -> Attributes
+    getEdgeAttributes :: g -> EdgeId -> Attributes
+    getAttributes :: g -> Attributes
+
+    
+data Node = Node { node_name :: Int, node_out_edges:: IntSet}
+
+instance Show Node where
+    show (Node name out_edges) = "Node{node_name = " ++ show name ++ ", node_out_edges = " ++ show out_edges ++ "}"
+
+-- ideally e_source_node and e_target_node would be of type Node,
+--   and e_reverse would be of type Edge
+data Edge = Edge { e_source_node, e_target_node, edge_name :: Int }
+
+instance Show Edge where
+    show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
+
+data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+
+instance IsGraph Graph where
+    getNodesSet (Graph nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
+    getEdgesSet (Graph _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
+
+    edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = node_out_edges $ (nodesMap IntMap.! nodeId)
+    sourceNode (Graph _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
+    targetNode (Graph _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
+
+    getNodeAttributes (Graph _ _ a _ _) node     = a IntMap.! node
+    getEdgeAttributes (Graph _ _ _ a _) edge     = a IntMap.! edge
+    getAttributes (Graph _ _ _ _ a)              = a
+
+------------------ Derived Operations ------------
+edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
+edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
+edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
+
+nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
+neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
+
+edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
+    where node = sourceNode t b
+edgesAfterEdgeArray t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
+    where node = targetNode t b
+edgesBeforeEdge t b = fmap reverseEdge $ IntSet.toList $ IntSet.delete b (edgesOutOfNodeSet t node)
+    where node = sourceNode t b
+edgesAfterEdge t b = IntSet.toList $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
+    where node = targetNode t b
+
+is_leaf_node t n = (nodeDegree t n < 2)
+is_internal_node t n = not $ is_leaf_node t n
+is_internal_branch t b = is_internal_node t (sourceNode t b) && is_internal_node t (targetNode t b)
+is_leaf_branch t b = not $ is_internal_branch t b
+
+nodes t = getNodes t
+leaf_nodes t = filter (is_leaf_node t) (nodes t)
+internal_nodes t = filter (is_internal_node t) (nodes t)
+
+-- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
+numLeaves t = length $ leaf_nodes t
+
+getNodes t = t & getNodesSet & IntSet.toList
+numNodes t = t & getNodesSet & IntSet.size
+
+reverseEdge e = -e
+
+isUEdge e = e > reverseEdge e
+
+getEdges t  = getEdgesSet t & IntSet.toList
+getUEdges t = [ e | e <- getEdges t, isUEdge e]
+getUEdgesSet t = getUEdges t & IntSet.fromList
+numBranches t = length $ getUEdges t
+
+undirectedName e  = max e (reverseEdge e)
+
+edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
+edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
+
+------------------ Branch Lengths ----------------
+
+class IsGraph g => HasBranchLengths g where
+    branch_length :: g -> Int -> Double
+
+--   but could not do this for WithNodeTimes...
+class HasBranchLengths g => CanModifyBranchLengths g where
+    modifyBranchLengths :: (Int -> Double) -> g -> g
+
+-- This seems to be unused in both Haskell and C++ code.
+-- I guess it makes sense that you could construct a WithBranchLengths with arbitrary new branch lengths,
+data WithBranchLengths t = WithBranchLengths t (IntMap Double)
+
+instance IsGraph t => IsGraph (WithBranchLengths t) where
+    getNodesSet (WithBranchLengths t _)             = getNodesSet t
+    getEdgesSet (WithBranchLengths t _)             = getEdgesSet t
+
+    edgesOutOfNodeSet (WithBranchLengths t _) nodeId    = edgesOutOfNodeSet t nodeId
+    sourceNode (WithBranchLengths t _) edgeId           = sourceNode t edgeId
+    targetNode (WithBranchLengths t _) edgeId           = targetNode t edgeId
+
+    getNodeAttributes (WithBranchLengths t _) node     = getNodeAttributes t node
+    getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
+    getAttributes (WithBranchLengths t _)              = getAttributes t
+
+scale_branch_lengths factor (WithBranchLengths t ds) = (WithBranchLengths t ds')
+    where ds' = fmap (factor*) ds
+
+
+------------------ Labels ----------------
+
+class IsGraph g => HasLabels g where
+    get_label :: g -> Int -> Maybe Text
+    -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
+    -- this would map integers to labels, and labels to integers, even if get_label
+    -- indexes on nodes...
+    -- TODO: make the C++ code handle this...
+    
+    get_labels :: g -> IntMap (Maybe Text)
+    relabel :: IntMap (Maybe Text) -> g -> g
+
+data WithLabels t = WithLabels t (IntMap (Maybe Text))
+
+instance IsGraph t => IsGraph (WithLabels t) where
+    getNodesSet (WithLabels t _)                 = getNodesSet t
+    getEdgesSet (WithLabels t _)                 = getEdgesSet t
+
+    edgesOutOfNodeSet (WithLabels t _) nodeId    = edgesOutOfNodeSet t nodeId
+    sourceNode (WithLabels t _) edgeId           = sourceNode t edgeId
+    targetNode (WithLabels t _) edgeId           = targetNode t edgeId
+
+    getNodeAttributes (WithLabels t _) node      = getNodeAttributes t node
+    getEdgeAttributes (WithLabels t _) edge      = getEdgeAttributes t edge
+    getAttributes (WithLabels t _)               = getAttributes t
+
+add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
+
+-- These two functions shouldn't go here -- but where should they go?
+addInternalLabels tree = WithLabels tree newLabels where
+    oldLabels = get_labels tree
+    newLabels = getNodesSet tree & IntMap.fromSet newLabel
+
+    newLabel node = case (oldLabels IntMap.! node) of
+                      Just label -> Just label
+                      Nothing -> Just $ T.append (T.singleton 'A') (T.pack (show node))
+
+add_ancestral_label node labels = case (labels IntMap.! node) of
+                                    Just l -> l
+                                    Nothing -> T.append (T.singleton 'A') (T.pack (show node))
+
+
+dropInternalLabels t = relabel newLabels t where
+    labels = get_labels t
+    newLabels = getNodesSet t & IntMap.fromSet (\node -> if nodeDegree t node <= 1 then labels IntMap.! node else Nothing)
+
+---------------------------- Creating a graph from a list of edges ---------------------------
+graph_from_edges nodes edges = Graph nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
+
+    num_nodes = length nodes
+
+    -- FIX: this is a way to avoid depending changeables when |edges| is constant, but edges is changeable.
+    num_branches = num_nodes - 1
+
+    -- is this really how we want to name the branches?
+    namedEdges = zip [1..] $ edges
+
+    find_branch :: Int -> Maybe (Int,Int)
+    find_branch b | b > 0     = fmap snd $ find (\e -> fst e == b) namedEdges
+                  | otherwise = swap <$> (find_branch $ reverseEdge b)
+
+    branchFrom n (b,(x,y)) | x == n    = Just b
+                           | y == n    = Just (-b)
+                           | otherwise = Nothing
+
+    edgesFrom n = mapMaybes (branchFrom n) namedEdges
+
+    nodesSet = IntSet.fromList nodes
+    nodesMap = nodesSet & IntMap.fromSet (\n ->  Node n (IntSet.fromList $ edgesFrom n) )
+
+    branchesSet = IntSet.fromList [1..num_branches] `IntSet.union` IntSet.fromList (map negate [1..num_branches])
+    branchesMap = branchesSet & IntMap.fromSet (\b -> let Just (s,t) = find_branch b in Edge s t b)
+
