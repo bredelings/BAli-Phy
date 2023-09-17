@@ -48,7 +48,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         tree = tree[0];
     }
 
-    if (has_constructor(tree.head(), "Tree.WithNodeTimes"))
+    if (has_constructor(tree.head(), "Forest.WithNodeTimes"))
     {
         // We assume that the path to the array isn't changeable... ???
         node_times_reg = tree[1].result().get_reg();
@@ -67,7 +67,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         tree = tree[0];
     }
 
-    if (has_constructor(tree.head(), "Tree.WithRoots"))
+    if (has_constructor(tree.head(), "Forest.WithRoots"))
     {
         assert(tree.size() == 3);
 
@@ -85,7 +85,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         tree = tree[0];
     }
 
-    if (has_constructor(tree.head(), "Tree.Forest"))
+    if (has_constructor(tree.head(), "Forest.Forest"))
     {
         tree = tree[0];
     }

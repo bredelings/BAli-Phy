@@ -1,5 +1,9 @@
 module Graph where
 
+-- see fgl: Data.Graph - https://hackage.haskell.org/package/fgl
+-- see Algebra.Graph - https://hackage.haskell.org/package/algebraic-graphs
+-- see https://hackage.haskell.org/package/graphs
+
 import Data.List (lookup)
 import Data.Maybe (mapMaybes)
 
@@ -33,6 +37,19 @@ attributesText (Attributes cs) = T.concat $ [ T.pack "[&" ] ++ intersperse (T.si
 
 noAttributes = Attributes []
 noAttributesOn set = set & IntMap.fromSet (\n -> noAttributes)
+
+getNodeAttribute tree node key = lookup key ((\(Attributes as) -> as) $ getNodeAttributes tree node)
+getEdgeAttribute tree edge key = lookup key ((\(Attributes as) -> as) $ getEdgeAttributes tree edge)
+getTreeAttribute tree key = lookup key ((\(Attributes as) -> as) $ getAttributes tree)
+
+--edgeAttributes :: IsGraph t => t -> Text -> ((Maybe (Maybe Text)) -> a) -> IntMap a
+edgeAttributes tree key transform = fmap transform (getEdgesSet tree & IntMap.fromSet (\edge -> getEdgeAttribute tree edge key))
+
+getAttribute key Nothing = error $ "No attribute '" ++ (T.unpack key) ++ "'"
+getAttribute key (Just Nothing) = error $ "Attribute '" ++ T.unpack key ++ "' has no value"
+getAttribute _   (Just (Just text)) = read (T.unpack text)
+
+simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
 
 {-
@@ -162,6 +179,11 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
 scale_branch_lengths factor (WithBranchLengths t ds) = (WithBranchLengths t ds')
     where ds' = fmap (factor*) ds
 
+instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
+    branch_length (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
+
+instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
+    modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.fromSet f (IntMap.keysSet ds))
 
 ------------------ Labels ----------------
 
@@ -188,6 +210,16 @@ instance IsGraph t => IsGraph (WithLabels t) where
     getNodeAttributes (WithLabels t _) node      = getNodeAttributes t node
     getEdgeAttributes (WithLabels t _) edge      = getEdgeAttributes t edge
     getAttributes (WithLabels t _)               = getAttributes t
+
+instance IsGraph t => HasLabels (WithLabels t) where
+    get_label  (WithLabels _ labels) node = labels IntMap.! node
+    get_labels (WithLabels _ labels) = labels
+    relabel newLabels (WithLabels t _) = WithLabels t newLabels
+
+instance HasLabels t => HasLabels (WithBranchLengths t) where
+    get_label  (WithBranchLengths t _) node = get_label t node
+    get_labels (WithBranchLengths t _) = get_labels t
+    relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
 
 add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 
