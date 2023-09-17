@@ -187,7 +187,11 @@ data Edge = Edge { e_source_node, e_target_node, edge_name :: Int }
 instance Show Edge where
     show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
 
-data Tree = Tree (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+
+data Forest = Forest Graph
+
+data Tree   = Tree Forest
 
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
 
@@ -201,17 +205,43 @@ data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
 -- The array stores the branch rates
 data WithBranchRates t = WithBranchRates t (IntMap Double)
 
+instance IsGraph Graph where
+    getNodesSet (Graph nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
+    getEdgesSet (Graph _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
+
+    edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = node_out_edges $ (nodesMap IntMap.! nodeId)
+    sourceNode (Graph _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
+    targetNode (Graph _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
+
+    getNodeAttributes (Graph _ _ a _ _) node     = a IntMap.! node
+    getEdgeAttributes (Graph _ _ _ a _) edge     = a IntMap.! edge
+    getAttributes (Graph _ _ _ _ a)              = a
+
+instance IsGraph Forest where
+    getNodesSet (Forest g) = getNodesSet g
+    getEdgesSet (Forest g) = getEdgesSet g
+
+    edgesOutOfNodeSet (Forest g) nodeId = edgesOutOfNodeSet g nodeId
+    sourceNode (Forest g) edge = sourceNode g edge
+    targetNode (Forest g) edge = targetNode g edge
+
+    getNodeAttributes (Forest g) node = getNodeAttributes g node
+    getEdgeAttributes (Forest g) edge = getEdgeAttributes g edge
+    getAttributes (Forest g) = getAttributes g
+
 instance IsGraph Tree where
-    getNodesSet (Tree nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
-    getEdgesSet (Tree _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
+    getNodesSet (Tree f) = getNodesSet f
+    getEdgesSet (Tree f) = getEdgesSet f
 
-    edgesOutOfNodeSet (Tree nodesMap _ _ _ _) nodeId = node_out_edges $ (nodesMap IntMap.! nodeId)
-    sourceNode (Tree _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
-    targetNode (Tree _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
+    edgesOutOfNodeSet (Tree f) nodeId = edgesOutOfNodeSet f nodeId
+    sourceNode (Tree f) edge = sourceNode f edge
+    targetNode (Tree f) edge = targetNode f edge
 
-    getNodeAttributes (Tree _ _ a _ _) node     = a IntMap.! node
-    getEdgeAttributes (Tree _ _ _ a _) edge     = a IntMap.! edge
-    getAttributes (Tree _ _ _ _ a)              = a
+    getNodeAttributes (Tree f) node = getNodeAttributes f node
+    getEdgeAttributes (Tree f) edge = getEdgeAttributes f edge
+    getAttributes (Tree f) = getAttributes f
+
+instance IsForest Forest
 
 instance IsForest Tree
 
@@ -482,7 +512,7 @@ remove_element i (x:xs) = x:(remove_element (i-1) xs)
 noAttributes = Attributes []
 noAttributesOn set = set & IntMap.fromSet (\n -> noAttributes)
 
-tree_from_edges nodes edges = Tree nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
+tree_from_edges nodes edges = Tree $ Forest $ Graph nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
 
     num_nodes = length nodes
 
