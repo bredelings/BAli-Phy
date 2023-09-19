@@ -78,7 +78,18 @@ class IsGraph g where
     getEdgeAttributes :: g -> EdgeId -> Attributes
     getAttributes :: g -> Attributes
 
-    
+
+class IsGraph g => IsDirectedGraph g where
+    isForward :: g -> EdgeId -> Bool
+
+outEdges g n = filter (isForward g) (edgesOutOfNode g n)
+inEdges g n = map reverseEdge $ filter (not . isForward g) (edgesOutOfNode g n)
+
+isSource g n = null (inEdges g n)
+isSink g n = null (outEdges g n)
+
+class IsDirectedGraph g => IsDirectedAcyclicGraph g
+
 data Node = Node { node_name :: Int, node_out_edges:: IntSet}
 
 instance Show Node where
@@ -92,6 +103,30 @@ instance Show Edge where
     show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
 
 data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+
+{- ISSUE: How to handle directed graphs?
+
+The underlying data structure represent out-edges.  We should be able to use this to represent
+directed graphs if we don't insist that both e and -e are registered with the graph.  We could then
+make a derived class IsUndirectedGraph with method reverseEdge.
+
+-}
+
+{- ISSUE: Should we store in-edges as well as out-edges? -}
+
+{- ISSUE: Undirected graphs with a preferred direction aren't quite the same as directed graphs.
+
+We currently derive IsDirectedGraph from IsGraph by adding an isForward attribute for an edge. -}
+
+{- ISSUE: How to handle reverse edges on directed graphs?
+
+SOLUTION: Make a "direction" that is either a forward or reverse edge:
+
+       data Direction e = Forward e | Reverse e
+       reverse (Forward e) = Reverse e
+       reverse (Reverse e) = Forward e
+-}
+
 
 instance IsGraph Graph where
     getNodesSet (Graph nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
@@ -232,6 +267,11 @@ instance HasLabels t => HasLabels (WithBranchLengths t) where
     get_label  (WithBranchLengths t _) node = get_label t node
     get_labels (WithBranchLengths t _) = get_labels t
     relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
+
+instance IsDirectedGraph g => IsDirectedGraph (WithLabels g) where
+    isForward (WithLabels g _) e = isForward g e
+
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithLabels g)
 
 add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 

@@ -12,32 +12,6 @@ import qualified Data.IntSet as IntSet
 import Data.Text (Text)
 import qualified Data.Text as T
 
-{-
-ISSUE: HasRoots basically puts a preferred direction on each edge of the graph.
-       The graph is still an undirected graph though, because we don't have edges that don't have a reverseedge.
-       For rooted trees, we don't take the reverse edges out of the graph.
-
-       We could make a class called PreferredDirection that says whether each pair of reversed edges has one direction that
-       is the real edge.  I guess you could then construct a directed graph where reversed edges don't actually exist.
-
-       If we had actual directed graphs -- that don't necessarily have a reverseEdge function -- we might still want to
-       talk about a reversed edge as a direction, so that we could talk about (for example) walking on the graph in the
-       reverse direction of the edges.  I guess we could then have something like:
-
-           data Direction e = Forward e | Reverse e
-           reverse (Forward e) = Reverse e
-           reverse (Reverse e) = Forward e
--}
-
-{-
- For a directed graph, each node would have to have BOTH out-edges AND in-edges.
-
- For an undirected graph, we kind of have UEdges and Edges (aka directed edges).
- We could make a directed graph OUT OF an undirected graph.
- Maybe we could represent this as (Directed undirectedGraph) instead of constructing a new data structure with more edges.
- Its possible that we could make the EdgeId type for the directed version be the Direction UndirectedEdgeId, instead of an Int.
--}
-
 class IsGraph f => IsForest f where
     type family Unrooted f
     type family Rooted f
@@ -83,25 +57,34 @@ instance IsForest f => IsForest (WithBranchLengths f) where
 -------------------------- Rooted forests-----------------------------------
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
 
-class IsForest t => HasRoots t where
+class (IsDirectedAcyclicGraph t, IsForest t) => HasRoots t where
     isRoot :: t -> NodeId -> Bool
     roots :: t -> [NodeId]
-    away_from_root :: t -> Int -> Bool
+
+    isRoot f n = isSource f n
+    roots f = filter (isRoot f) (getNodes f)
+
+instance IsForest f => IsDirectedGraph (WithRoots f) where
+    isForward (WithRoots t _ arr    ) b = arr IntMap.! b
+
+instance IsForest f => IsDirectedAcyclicGraph (WithRoots f)
 
 instance IsForest t => HasRoots (WithRoots t) where
     roots (WithRoots _ rs _) = rs
     isRoot (WithRoots _ rs _) node = node `elem` rs
-    away_from_root (WithRoots t _ arr    ) b = arr IntMap.! b
 
 instance HasRoots t => HasRoots (WithLabels t) where
     roots (WithLabels t _) = roots t
     isRoot (WithLabels t _) node = isRoot t node
-    away_from_root (WithLabels t _      ) b = away_from_root t b
+
+instance IsDirectedGraph g => IsDirectedGraph (WithNodeTimes g) where
+    isForward (WithNodeTimes g _) e = isForward g e
+
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithNodeTimes g)
 
 instance HasRoots t => HasRoots (WithNodeTimes t) where
     roots (WithNodeTimes t _)     = roots t
     isRoot (WithNodeTimes t _) node = isRoot t node
-    away_from_root (WithNodeTimes   t _        ) b = away_from_root t b
 
 instance IsGraph t => IsGraph (WithRoots t) where
     getNodesSet (WithRoots t _ _)                 = getNodesSet t
@@ -122,7 +105,7 @@ instance IsForest t => IsForest (WithRoots t) where
     unroot (WithRoots t _ _) = unroot t
     makeRooted t = t
 
-toward_root rt b = not $ away_from_root rt b
+toward_root rt b = not $ isForward rt b
 
 branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
 branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
@@ -130,15 +113,23 @@ branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
 parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                                 Nothing -> Nothing
 
+instance IsDirectedGraph g => IsDirectedGraph (WithBranchLengths g) where
+    isForward (WithBranchLengths g _) e = isForward g e
+
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchLengths g)
+
 instance HasRoots t => HasRoots (WithBranchLengths t) where
     roots (WithBranchLengths tree _) = roots tree
     isRoot (WithBranchLengths t _) node = isRoot t node
-    away_from_root (WithBranchLengths tree _  ) b = away_from_root tree b
 
-instance HasNodeTimes t => HasRoots (WithBranchRates t) where
+instance IsDirectedGraph g => IsDirectedGraph (WithBranchRates g) where
+    isForward (WithBranchRates g _) e = isForward g e
+
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchRates g)
+
+instance (HasNodeTimes t, HasRoots t) => HasRoots (WithBranchRates t) where
     roots (WithBranchRates t _) = roots t
     isRoot (WithBranchRates t _) node = isRoot t node
-    away_from_root (WithBranchRates tree _  ) b = away_from_root tree b
 
 -------------------------- Forests with node times--------------------------
 -- The array stores the node times
@@ -156,29 +147,29 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getEdgeAttributes (WithNodeTimes t _) edge     = getEdgeAttributes t edge
     getAttributes (WithNodeTimes t _)              = getAttributes t
 
-instance (HasRoots t, IsForest t) => IsForest (WithNodeTimes t) where
+instance (IsDirectedAcyclicGraph t, IsForest t) => IsForest (WithNodeTimes t) where
     type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
     unroot tt@(WithNodeTimes t node_heights) = WithBranchLengths (unroot t) (getUEdgesSet tt & IntMap.fromSet (\b -> branch_length tt b))
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
-class HasRoots t => HasNodeTimes t where
-    node_time :: t -> Int -> Double
+class IsDirectedAcyclicGraph g => HasNodeTimes g where
+    node_time :: g -> Int -> Double
 
-instance HasRoots t => HasNodeTimes (WithNodeTimes t) where
-    node_time (WithNodeTimes t hs) node = hs IntMap.! node
+instance IsDirectedAcyclicGraph g => HasNodeTimes (WithNodeTimes g) where
+    node_time (WithNodeTimes _ hs) node = hs IntMap.! node
 
 instance HasNodeTimes t => HasNodeTimes (WithLabels t) where
     node_time (WithLabels tt _) node = node_time tt node
 
 instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
-    node_time (WithBranchRates tt _) node = node_time tt node
+    node_time (WithBranchRates g _) node = node_time g node
 
 instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
-instance HasRoots t => HasBranchLengths (WithNodeTimes t) where
+instance IsDirectedAcyclicGraph t => HasBranchLengths (WithNodeTimes t) where
     branch_length tree b = branch_duration tree b
 
 branch_duration t b = abs (node_time t source - node_time t target)
@@ -214,7 +205,7 @@ instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
 class HasNodeTimes t => HasBranchRates t where
     branch_rate :: t -> Int -> Double
 
-instance (HasRoots t, HasLabels t) => HasLabels (WithNodeTimes t) where
+instance (IsDirectedAcyclicGraph t, HasLabels t) => HasLabels (WithNodeTimes t) where
     get_label (WithNodeTimes t _) node          = get_label t node
     get_labels (WithNodeTimes t _) = get_labels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
@@ -236,7 +227,7 @@ allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tre
 allEdgesFromRoots forest = concat [concatMap (allEdgesAfterEdge forest) (edgesOutOfNode forest root) | root <- roots forest]
 
 addRoots roots t = rt
-    where check_away_from_root b = (sourceNode rt b `elem` roots) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
+    where check_away_from_root b = (sourceNode rt b `elem` roots) || (or $ fmap (isForward rt) (edgesBeforeEdge rt b))
           nb = numBranches t * 2
           rt = WithRoots t roots (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
