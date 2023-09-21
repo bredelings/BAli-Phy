@@ -274,7 +274,7 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, st
 {
     int nfields = all_fields.size();
 
-    vector<string> row;
+    vector<string> row(all_fields.size());
     for(auto& [field,index]: all_fields)
     {
 	if (not sample.count(field))
@@ -286,7 +286,7 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, st
 	    std::cerr<<"  "<<sample<<"\n";
 	    exit(1);
 	}
-	row.push_back(sample.at(field).dump());
+	row[index] = sample.at(field).dump();
     }
     assert(sample.size() >= nfields);
     if (sample.size() != nfields)
@@ -441,7 +441,7 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
 		    {"version", "0.1"},
 		    {"fields",  tsv_fields},
 		    {"nested", false} };
-    
+
     string line;
     vector<json> samples;
     int ignored_lines = 0;
