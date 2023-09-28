@@ -202,8 +202,8 @@ if exe is None:
 
 # 2. do timings on the exe
 
-old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=2']
-new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=2']
+old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=6']
+new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=6']
 
 #old_cmd = ['ls','/dev/']
 #new_cmd = ['ls','/usr/share/doc/']
