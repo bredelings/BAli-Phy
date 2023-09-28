@@ -134,12 +134,11 @@ foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> 
 
 sampleComponentStates rtree alignment smodel =  do
   let as = pairwise_alignments alignment
-      ls = sequence_lengths alignment
       ps = transition_ps_map (SingleBranchLengthModel rtree smodel)
       f = (weighted_frequency_matrix smodel)
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
-                                   Nothing -> simulateRootSequence (ls IntMap.! node) f
+                                   Nothing -> simulateRootSequence (sequenceLength alignment node) f
                                    Just b' -> let b = reverseEdge b'
                                                   parent = sourceNode rtree b
                                              in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
