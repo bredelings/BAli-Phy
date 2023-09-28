@@ -198,7 +198,9 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 	    for(auto& v: Hs::vars_in_pattern( pat ) )
             {
                 auto x = make_var(v);
-		decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
+		std::ostringstream o;
+		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
+		    decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(Core::error(o.str()))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
