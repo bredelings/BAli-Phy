@@ -2,7 +2,9 @@
 
 # Needs the /usr/bin/time program: apt install time
 
-# Example: ./benchmark.py --dir ~/Work ~/Devel/bali-phy/old/bali-phy-3.6.0/bin/bali-phy ~/Devel/bali-phy/local/gcc-13/bin/bali-phy repo
+# Example: ./benchmark.py ~/Devel/bali-phy/git --dir ~/Work --old ~/Devel/bali-phy/old/bali-phy-3.6.0/bin/bali-phy
+
+# See https://llvm.org/docs/Benchmarking.html
 
 import argparse
 import re
@@ -202,7 +204,7 @@ if exe is None:
 
 # 2. do timings on the exe
 
-old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=6']
+old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=6','--seed=0']
 new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=6']
 
 #old_cmd = ['ls','/dev/']
