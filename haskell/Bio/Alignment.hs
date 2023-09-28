@@ -43,19 +43,25 @@ pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bi
     where bits = minimally_connect_characters a tree
 -}
 
+{- NOTE: How should we handle forests?
+Currently we store the node sequence lengths directory only for nodes with observed data.
+We could alternatively store the node sequence lengths only for nodes not in a pairwise alignment.
+-}
+
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
 data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
+
 n_sequences         (AlignmentOnTree _ n _  _) = n
-sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
+
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
-sequenceLength a node = sequence_lengths a IntMap.! node
 
--- not using this right now
--- get_sequence_lengths leaf_seqs_array = mkArray (length leaf_seqs_array) (\node -> vector_size (leaf_seqs_array!node))
+sequenceLength (AlignmentOnTree t n ls as) node =
+    case IntMap.lookup node ls of Just length -> length
+                                  Nothing -> case edgesOutOfNode t node of (b:_) -> pairwise_alignment_length1 (as IntMap.! b)
+                                                                           _ -> error "sequenceLength: no length for degree-0 node!"
 
--- This function handles the case where we have only 1 sequence.
-compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
-    where n_leaves = length seqs
+
+mkSequenceLengthsMap a@(AlignmentOnTree tree _ ls _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)

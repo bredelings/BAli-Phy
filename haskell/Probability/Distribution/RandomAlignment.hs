@@ -5,6 +5,7 @@ import           Tree
 import           Bio.Alignment
 import           Control.DeepSeq
 import           Data.Array
+import           Data.Maybe (mapMaybes)
 
 import qualified Data.Map as Map
 import Data.IntMap (IntMap)
@@ -14,11 +15,14 @@ import qualified Data.Text as Text
 
 type IModel = (IntMap Double -> Int -> PairHMM, Int -> LogDouble)
 
+
+-- If we change the number of tip sequences, then we need to update the modifiable node sequence lengths {ls'}.
+
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
   where
     as' = fmap modifiable as
-    ls' = getNodesSet tree & IntMap.fromSet (seqlength as' tree)
+    ls' = modifiable ls
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
@@ -56,16 +60,20 @@ left_aligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make
         where l1 = length_for_node $ sourceNode tree branch
               l2 = length_for_node $ targetNode tree branch
 
+{-
+  OK, so here we are only storing node->lengths for tip nodes where the length is fixed.
+  The length for other nodes is computed by looking up the length of a relevant pairwise alignment.  
+-}
 
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
     n_leaves = Map.size tip_lengths
-    ls       = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
-                                                             Just label -> tip_lengths Map.! label
-                                                             Nothing -> seqlength as tree node )
+    ls       = IntMap.fromList $ mapMaybes maybeLength (getNodes tree)
     as       = left_aligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
+    maybeLength node = case get_label tree node of Just label -> Just (node, tip_lengths Map.! label)
+                                                   _          -> Nothing
 
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
 
@@ -109,7 +117,7 @@ annotated_alignment_prs tree hmms model alignment = do
   let prs = alignment_prs hmms model alignment
       pr = product prs
       as = pairwise_alignments alignment
-      ls = sequence_lengths alignment
+      ls = mkSequenceLengthsMap alignment
       lengthp = snd model
       length_prs = fmap lengthp ls
   property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
