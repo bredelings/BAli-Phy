@@ -61,7 +61,7 @@ sequenceLength (AlignmentOnTree t n ls as) node =
                                                                            _ -> error "sequenceLength: no length for degree-0 node!"
 
 
-mkSequenceLengthsMap a@(AlignmentOnTree tree _ ls _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
+mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
@@ -71,13 +71,13 @@ compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_comp
                                                            (compressed, tmp23) = pair_from_c tmp123
                                                            (counts,   mapping) = pair_from_c tmp23
 
-alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls IntMap.! node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
+alignment_on_tree_length a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                                        where node0 = head $ getNodes t
 
-totalNumIndels (AlignmentOnTree t _ ls as) = sum [numIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
+totalNumIndels (AlignmentOnTree t _ _ as) = sum [numIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                          where node0 = head $ getNodes t
 
-totalLengthIndels (AlignmentOnTree t _ ls as) = sum [lengthIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
+totalLengthIndels (AlignmentOnTree t _ _ as) = sum [lengthIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                          where node0 = head $ getNodes t
 
 foreign import bpcall "Alignment:uncompress_alignment" builtin_uncompress_alignment :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
@@ -173,7 +173,7 @@ data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector Br
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
 exportAlignmentOnTree :: IsTree t => AlignmentOnTree t -> NodeAlignment
-exportAlignmentOnTree (AlignmentOnTree tree _ ls as) = mkNodeAlignment root (ls IntMap.! root) (branchAlignments $ edgesOutOfNodeArray tree root)
+exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (sequenceLength a root) (branchAlignments $ edgesOutOfNodeArray tree root)
     where root = head $ getNodes tree
           branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]
 
