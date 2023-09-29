@@ -609,7 +609,7 @@ void NNI(context_ref& c, int tree_reg, int b1, int b2)
 {
     ModifiablesTreeInterface T(c,tree_reg);
 
-    NNI(T, b1, b2);
+    tryNNI(T, b1, b2);
 }
 
 void NNI_move(context_ref& C1, int tree_reg, int b)

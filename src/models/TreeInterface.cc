@@ -940,7 +940,7 @@ std::string write(const TreeInterface& T)
     return write(T, T.labels(), T.has_branch_lengths());
 }
 
-void TreeInterface::reconnect_branch(int s1, int t1, int t2)
+bool TreeInterface::reconnect_branch(int s1, int t1, int t2)
 {
     int b1 = find_branch(s1,t1);
     int b2 = reverse(b1);
@@ -950,20 +950,30 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
 
     auto out_t1_set = out_t1.get_value(get_const_context()).as_<IntSet>();
     out_t1_set = out_t1_set.erase(b2);
-    out_t1.set_value(get_context(), out_t1_set);
 
     auto out_t2_set = out_t2.get_value(get_const_context()).as_<IntSet>();
     out_t2_set = out_t2_set.insert(b2);
-    out_t2.set_value(get_context(), out_t2_set);
 
     // Update branch source and target nodes
-    std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b1)).set_value(get_context(), t2);
-    std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b2)).set_value(get_context(), t2);
+    auto target_b1 = std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b1));
+    auto source_b2 = std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b2));
+    auto& C = get_context();
+    
+    if (out_t1.is_modifiable(C) and out_t2.is_modifiable(C) and target_b1.is_modifiable(C) and source_b2.is_modifiable(C))
+    {
+	out_t1.set_value(C, out_t1_set);
+	out_t2.set_value(C, out_t2_set);
+	target_b1.set_value(C, t2);
+	source_b2.set_value(C, t2);
+	return true;
+    }
+    else
+	return false;
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
 // br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
-void NNI(TreeInterface& T, int br1, int br2)
+bool tryNNI(TreeInterface& T, int br1, int br2)
 {
     int b1 = T.reverse(br1);
     int b2 = T.reverse(br2);
@@ -977,6 +987,11 @@ void NNI(TreeInterface& T, int br1, int br2)
     //  assert(not t().subtree_contains(br1,s2));
     //  assert(not t().subtree_contains(br2,s1));
 
-    T.reconnect_branch(s1,t1,t2);
-    T.reconnect_branch(s2,t2,t1);
+    if (T.reconnect_branch(s1,t1,t2))
+    {
+	if (not T.reconnect_branch(s2,t2,t1)) throw myexception()<<"NNI: can modify first branch, but not second branch!";
+	return true;
+    }
+    else
+	return false;
 }

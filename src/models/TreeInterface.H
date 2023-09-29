@@ -139,7 +139,7 @@ public:
     bool can_set_node_time(int n) const;
     void set_node_time(int n, double t);
 
-    void reconnect_branch(int s1, int t1, int t2);
+    bool reconnect_branch(int s1, int t1, int t2);
 
     virtual ~TreeInterface() = default;
 };
@@ -187,5 +187,5 @@ std::string write(const TreeInterface& T, const std::map<int,double>& L, const s
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const TreeInterface& T, std::map<int,std::string>, bool print_lengths=true);
 
-void NNI(TreeInterface& T, int b1, int b2);
+bool tryNNI(TreeInterface& T, int b1, int b2);
 #endif

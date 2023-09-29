@@ -436,7 +436,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
 void Parameters::exchange_subtrees(int br1, int br2)
 {
     auto T = t();
-    ::NNI(T, br1, br2);
+    tryNNI(T, br1, br2);
 }
 
 #include "dp/hmm.H"
@@ -820,7 +820,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
                 vector<int> branches;
                 T.append_branches_after(T.reverse(*internal_branch), branches);
                 T.append_branches_after(*internal_branch, branches);
-                ::NNI(T, branches[0], branches[2]);
+                tryNNI(T, branches[0], branches[2]);
             }
 
             int branch = T.branches()[0];
