@@ -99,7 +99,8 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0)
     {
-	std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
+	if (log_verbose > 0)
+	    std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
 	return {Matrices,{}};
     }
 
@@ -212,9 +213,9 @@ log_double_t sample_alignment(Parameters& P,int b)
     {
 	for(int i=0;i<p[1].n_data_partitions();i++) 
 	{
-	    if (paths[0][i].size() > paths[1][i].size())
+	    if (paths[0][i].size() > paths[1][i].size() and log_verbose > 0)
 		std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
-	    if (paths[0][i].size() < paths[1][i].size())
+	    if (paths[0][i].size() < paths[1][i].size() and log_verbose > 0)
 		std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
 	}
     }

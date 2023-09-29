@@ -101,7 +101,8 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
     {
-	std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
+	if (log_verbose > 0)
+	    std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
 	return {Matrices,0};
     }
 
@@ -176,7 +177,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 #endif
 		if (M->Pr_sum_all_paths() <= 0.0)
                 {
-		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
+		    if (log_verbose > 0) std::cerr<<"Pr = 0: option "<<i<<", partition "<<j<<" \n";
                     ok = false;
 
                     // Make sure to set all the Matrices[i][j] to something non-NULL.
