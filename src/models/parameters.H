@@ -233,8 +233,8 @@ public:
     Parameters(const Parameters&) = default;
     Parameters(Parameters&&) = default;
 
-    // Can we  create a Parameters from a context and a tree_reg?
-    Parameters(const context_ref& C, int tree_reg);
+    // Can we create a Parameters from a context and a tree_reg?
+    Parameters(const context_ref& C, int tree_reg, std::optional<int> alignments_reg = {});
 };
 
 std::string write_newick(const Parameters&, bool=true);
