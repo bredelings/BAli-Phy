@@ -801,9 +801,13 @@ double Parameters::branch_mean() const
  * Here, we don't do a specific change, but still try to find the terms that depend on the tree.
  */
 
-Parameters::Parameters(const context_ref& C, int tree_reg, std::optional<int> alignments_reg)
+Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int>& alignments_regs)
     :Model(C)
 {
+/*
+ * FIXME: If we are given the alignments_regs, should we try to use properties(3) to access them?
+ */
+
     TC = new tree_constants(*this, tree_reg);
 
     // Find the downstream partitions.
@@ -831,9 +835,9 @@ Parameters::Parameters(const context_ref& C, int tree_reg, std::optional<int> al
             if (T.has_node_times() and T.can_set_node_time(node))
                 T.set_node_time(node, 0.0);
 
-            if (alignments_reg)
+            for(auto& alignments_reg: alignments_regs)
             {
-                context_ptr alignments(C, *alignments_reg);
+                context_ptr alignments(C, alignments_reg);
                 expression_ref tmp = alignments.value();
                 for(auto& [b,_]: tmp.as_<IntMap>())
                 {
