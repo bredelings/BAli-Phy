@@ -427,12 +427,18 @@ const expression_ref& context_ref::get_reg_value(int R) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_modifiable_value(int R) const
 {
-    return get_reg_value(*find_modifiable_reg(R));
+    if (auto M = find_modifiable_reg(R))
+	return get_reg_value(*M);
+    else
+	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
 }
 
 void context_ref::set_modifiable_value_(int R, closure&& C)
 {
-    set_reg_value(*find_modifiable_reg(R), std::move(C) );
+    if (auto M = find_modifiable_reg(R))
+	set_reg_value(*M, std::move(C) );
+    else
+	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
 }
 
 void context_ref::set_modifiable_value(int R, const expression_ref& E)
