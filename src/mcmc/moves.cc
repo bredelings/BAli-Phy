@@ -607,8 +607,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
 
     for(int b: branches)
     {
-        sample_branch_length_(P,Stats,b);
         auto t = P.as<Parameters>()->t();
+        if (t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
         int node1 = t.source(b);
         int node2 = t.target(b);
         if (log_verbose >=4)
@@ -644,7 +644,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
             sample_alignment(*P.as<Parameters>(), b);
         }
-        sample_branch_length_(P,Stats,b);
+        if (t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
 
         if (log_verbose >= 4)
         {
