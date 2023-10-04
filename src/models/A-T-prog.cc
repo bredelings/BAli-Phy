@@ -264,7 +264,7 @@ std::string generate_atmodel_program(const variables_map& args,
         program.let(tree_var, {var("tree")});
     branch_lengths = {var("IntMap.elems"),branch_lengths};
 
-    program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_alignment_moves"), tree_var}}});
+    program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
 
 
     set<string> used_states;

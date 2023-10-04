@@ -6,6 +6,7 @@ import           Bio.Alignment
 import           Control.DeepSeq
 import           Data.Array
 import           Data.Maybe (mapMaybes)
+import           MCMC
 
 import qualified Data.Map as Map
 import Data.IntMap (IntMap)
@@ -123,7 +124,9 @@ annotated_alignment_prs tree hmms model alignment = do
   property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
   return $ prs
 
-
+alignment_effect (AlignmentOnTree tree n ls as) = do
+  SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
+  SamplingRate 0.1 $ add_move $ realign_from_tips tree as
 
 data RandomAlignment t = (HasLabels t, IsTree t) => RandomAlignment (WithBranchLengths t) IModel (Map.Map Text Int) (IntMap PairHMM)
 
@@ -132,11 +135,14 @@ instance Dist (RandomAlignment t) where
     dist_name _ = "RandomAlignment"
 
 instance Sampleable (RandomAlignment t) where
-    sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
+    sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
 
 instance HasAnnotatedPdf (RandomAlignment t) where
     annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) = annotated_alignment_prs tree hmms model
 
 random_alignment tree model tip_lengths = RandomAlignment tree model tip_lengths (branch_hmms model tree)
 
+foreign import bpcall "MCMC:" walk_tree_sample_alignments :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
+
+foreign import bpcall "MCMC:" realign_from_tips :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
 

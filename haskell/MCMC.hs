@@ -50,10 +50,6 @@ foreign import bpcall "MCMC:" fnpr_unsafe_proposal :: t -> Int -> ContextIndex -
 
 walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
 
-foreign import bpcall "MCMC:" walk_tree_sample_alignments :: t -> ContextIndex -> IO ()
-
-foreign import bpcall "MCMC:" realign_from_tips :: t -> ContextIndex -> IO ()
-
 foreign import bpcall "MCMC:" walk_tree_sample_NNI :: t -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" walk_tree_sample_NNI_and_A :: t -> ContextIndex -> IO ()
