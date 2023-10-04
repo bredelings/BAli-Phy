@@ -214,9 +214,6 @@ log_double_t data_partition::sequence_length_pr(int n) const
 
 int data_partition::seqlength(int n) const
 {
-    if (n < t().n_leaves())
-        return get_sequence(n)->size();
-
     assert(has_pairwise_alignments());
 
     return alignment_property(4)[n].value().as_int();
