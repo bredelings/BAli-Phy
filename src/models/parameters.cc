@@ -841,10 +841,10 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
                 expression_ref tmp = alignments.value();
                 for(auto& [b,_]: tmp.as_<IntMap>())
                 {
+		    // This should unset both forward and reverse alignments.
                     auto a_for_b = alignments[b];
                     if (auto m = a_for_b.modifiable())
                         m->set_value(0);
-                    break;
                 }
             }
         };
