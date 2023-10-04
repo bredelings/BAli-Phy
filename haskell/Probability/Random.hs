@@ -104,6 +104,9 @@ data TKEffects a = SamplingRate Double (TKEffects a)
                  | TKReturn a
                  | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
+instance MonadIO TKEffects where
+    liftIO io = TKLiftIO (\_ -> io)
+
 instance Functor TKEffects where
     fmap f x = TKBind x (\result -> TKReturn (f result))
 
