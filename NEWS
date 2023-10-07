@@ -1,4 +1,6 @@
 * 4.0-beta7 (unreleased)
+- Bug fixes:
+  + Allow estimating the alignment with a fixed topology.
 
 * 4.0-beta6 (Sep 6, 2023)
 + Changes:
