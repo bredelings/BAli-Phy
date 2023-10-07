@@ -2,7 +2,7 @@
 
 # Needs the /usr/bin/time program: apt install time
 
-# Example: ./benchmark.py ~/Devel/bali-phy/git --dir ~/Work --old ~/Devel/bali-phy/old/bali-phy-3.6.0/bin/bali-phy
+# Example: ./benchmark.py ~/Devel/bali-phy/git 10 --dir ~/Work --old ~/Devel/bali-phy/old/bali-phy-3.6.0/bin/bali-phy
 
 # See https://llvm.org/docs/Benchmarking.html
 
@@ -170,9 +170,10 @@ parser = argparse.ArgumentParser(description="Extract the consensus sequence for
 
 
 
+parser.add_argument("repo", help="Path to repo")
+parser.add_argument("count", help="Number of commits to benchmark")
 parser.add_argument("--old", help="Reference executable to test")
 parser.add_argument("--new", default=None,help="Executable to test")
-parser.add_argument("repo", help="Path to repo")
 parser.add_argument("--dir", default=".", help="Directory to run in")
 parser.add_argument("--build", default="build",help="Directory to build in")
 parser.add_argument("--install",default="local",help="Directory to install in")
@@ -192,6 +193,19 @@ if args.verbose:
     logging.basicConfig(level=0)
 else:
     logging.basicConfig(level=15)
+
+#1. Find the repo and get the list of commits to analyze
+repo = Repo(args.repo)
+commits = list(repo.iter_commits(max_count=args.count))
+for commit in commits:
+
+    # checkout the commit by running `git checkout {commit}`
+    repo.git.checkout(commit)
+
+    logging.info(f"Checking out commit {commit}")
+
+
+
 
 # 1. build the exe
 exe = args.new
