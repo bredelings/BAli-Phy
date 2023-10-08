@@ -44,7 +44,7 @@ def benchmark(n, name, old_cmd, new_cmd, cwd):
         print(f"testing {name}: iter {i+1}/n ",end='', flush=True)
         old_time = get_times(old_cmd, cwd)["user"];
         print(f'   old = {old_time}s',end='', flush=True)
-        new_time = get_times(new_cmd, cwd)["user"];
+        new_time = get_times(new_cmd+[f'--seed={i}'], cwd)["user"];
         print(f'   new = {new_time}s   ratio = {new_time/old_time}')
         old_times.append(old_time)
         new_times.append(new_time)
@@ -194,49 +194,34 @@ if args.verbose:
 else:
     logging.basicConfig(level=15)
 
+build_dir = Path(args.build).resolve()
+install_dir = Path(args.install).resolve()
+run_dir = Path(args.dir)
+
+
 #1. Find the repo and get the list of commits to analyze
 repo = Repo(args.repo)
 commits = list(repo.iter_commits(max_count=args.count))
 for commit in commits:
 
     # checkout the commit by running `git checkout {commit}`
+    logging.info(f"Checking out commit {commit}")
     repo.git.checkout(commit)
 
-    logging.info(f"Checking out commit {commit}")
-
-
-
-
-# 1. build the exe
-exe = args.new
-
-if exe is None:
-    build_dir = Path(args.build).resolve()
-    install_dir = Path(args.install).resolve()
-
+    logging.info(f"Building executable {commit}")
     exe = build(args.repo, build_dir, install_dir)
 
-# 2. do timings on the exe
+    old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=25','--seed=0']
+    new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=25']
+    #old_cmd = ['ls','/dev/']
+    #new_cmd = ['ls','/usr/share/doc/']
 
-old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=6','--seed=0']
-new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=6']
+    print(f"old cmd = {old_cmd}", file=sys.stderr)
+    print(f"new cmd = {new_cmd}", file=sys.stderr)
 
-#old_cmd = ['ls','/dev/']
-#new_cmd = ['ls','/usr/share/doc/']
-
-print(f"old cmd = {old_cmd}", file=sys.stderr)
-print(f"new cmd = {new_cmd}", file=sys.stderr)
-
-run_dir = Path(args.dir)
-
-old_times, new_times = benchmark(5, "sha", old_cmd, new_cmd, run_dir)
-med_old_time = statistics.median(old_times)
-med_new_time = statistics.median(new_times)
-print(f"old_time = {statistics.median(old_times)}, new_time = {statistics.median(new_times)}   ratio = {med_new_time/med_old_time}")
+    old_times, new_times = benchmark(5, "sha", old_cmd, new_cmd, run_dir)
+    med_old_time = statistics.median(old_times)
+    med_new_time = statistics.median(new_times)
+    print(f"old_time = {statistics.median(old_times)}, new_time = {statistics.median(new_times)}   ratio = {med_new_time/med_old_time}")
 
 
-
-
-# ok, so what do we have already done?
-# right now we can get a ratio between a "new" executable and an "old" one.
-# I guess the next thing that we need to do is to BUILD the executable from GIT sources.
