@@ -28,7 +28,7 @@ Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
         name = T->name;
     }
     else
-        error(loc, Note()<<"Can't find type constructor `"<<name<<"`");
+        error(loc, Note()<<"Undeclared type constructor `"<<name<<"`");
 
     return ltc;
 }
@@ -196,7 +196,21 @@ Haskell::TypeFamilyDecl renamer_state::rename(Haskell::TypeFamilyDecl TF)
 
 Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstanceEqn TIE)
 {
-    TIE.con = rename_type(TIE.con);
+    // TIE.con = rename_type(TIE.con);
+    // But with a specific error message.
+    {
+	auto& [con_loc, tc] = TIE.con;
+	auto& con_name = tc.name;
+
+	if (m.type_is_declared(con_name))
+	{
+	    auto T = m.lookup_type(con_name);
+	    con_name = T->name;
+	}
+	else
+	    error(con_loc, Note()<<"Instance for undeclared type family `"<<con_name<<"`");
+    }
+
     for(auto& arg: TIE.args)
         arg = rename_type(arg);
     TIE.rhs = rename_type(TIE.rhs);
