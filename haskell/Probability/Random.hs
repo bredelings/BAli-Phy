@@ -73,6 +73,8 @@ density dist x = balanced_product (densities dist x)
 
 -- We can observe from these.
 class Dist d => HasAnnotatedPdf d where
+    type DistProperties d :: Type
+    type DistProperties d = ()
     annotated_densities :: d -> Result d -> AnnotatedDensity [LogDouble]
 
 -- We know how to sample from these -- theres a default effect?
@@ -162,6 +164,8 @@ instance MonadFix Random where
 observe datum dist = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
                        register_out_edge s datum
+                       -- here we run the annotated-densities operation
+                       -- i think THIS line has to get the properties
                        density_terms <- make_edges s $ annotated_densities dist datum
                        sequence_ [register_likelihood s term | term <- density_terms]
 
