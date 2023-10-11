@@ -1667,7 +1667,7 @@ typechecker_result Module::typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls
     // 4. Get type synonyms
     tc_state->get_type_synonyms(M.type_decls);
 
-    // 5. Get type families and type family instances
+    // 5. Get type families declared outside of classes.
     tc_state->get_type_families(M.type_decls);
 
     // 6. Get types for value constructors  (CVE_T = constructor types)
