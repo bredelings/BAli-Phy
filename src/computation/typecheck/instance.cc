@@ -74,6 +74,10 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
+    // There CAN be multiple type instances for an associated type family, if they don't unify with each other.
+    // We don't check if a class has only one instance, so I guess we allow this.
+    // But we don't check if the two instances are "apart" either.
+
     // 2. Get the type family info
     auto tf_info = info_for_type_fam( unloc(tf_con.name) );
 
