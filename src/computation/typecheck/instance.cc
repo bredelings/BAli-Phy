@@ -55,6 +55,68 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
+void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+{
+    // 1. The rhs may only mention type vars bound on the lhs.
+    set<TypeVar> lhs_tvs;
+    for(auto& arg: args)
+    {
+        for(auto& tv: free_type_variables(arg))
+            lhs_tvs.insert(tv);
+    }
+
+    for(auto& tv: free_type_variables(rhs))
+        if (not lhs_tvs.count(tv))
+        {
+            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
+            return;
+        }
+
+    // FIXME: We don't use TypeFamEqnInfo for anything!
+    TypeFamEqnInfo eqn{ args, rhs, lhs_tvs | ranges::to<vector>()};
+
+    // 2. Kind-check the parameters and result type, and record the free type variables.
+
+    // 2a. Bind the free type vars
+    kindchecker_state K( this_mod() );
+    K.push_type_var_scope();
+    for(auto& tv: eqn.free_tvs)
+    {
+        assert(not K.type_var_in_scope(tv));
+        tv.kind = K.fresh_kind_var();
+        K.bind_type_var(tv, *tv.kind);
+    }
+
+    // 2b. Kind-check the type vars
+    for(int i=0; i<eqn.args.size(); i++)
+        K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
+    K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+
+    // 2c. Record the final kinds for the free type vars
+    for(int i=0; i<eqn.args.size(); i++)
+        eqn.args[i] = K.zonk_kind_for_type(eqn.args[i]);
+    eqn.rhs = K.zonk_kind_for_type(eqn.rhs);
+
+    for(auto& tv: eqn.free_tvs)
+        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
+
+    // 3. Add the (~) instance to the instance environment
+    Type lhs = make_tyapps(tf_con, eqn.args);
+    Type constraint = make_equality_pred(lhs, eqn.rhs);
+    Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
+
+    auto dvar = fresh_dvar(constraint, true);
+
+    auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}, false, false, false} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
+    S.type = S.instance_info->type();
+    this_mod().add_symbol(S);
+
+    this_mod().local_instances.insert( {dvar, *S.instance_info} );
+    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+}
+
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
@@ -142,7 +204,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         pop_note();
         return;
     }
-            
+
 
     // 7. Check that the type instance has the right number of arguments
     if (inst.args.size() != tf_info->args.size())
@@ -156,68 +218,52 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    // 8. The rhs may only mention type vars bound on the lhs.
-    set<TypeVar> lhs_tvs;
-    for(auto& arg: desugar(inst.args))
-    {
-        for(auto& tv: free_type_variables(arg))
-            lhs_tvs.insert(tv);
-    }
-
-    for(auto& tv: free_type_variables(desugar(inst.rhs)))
-        if (not lhs_tvs.count(tv))
-        {
-            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
-
-            pop_source_span();
-            pop_note();
-            return;
-        }
-
-    // 9. Kind-check the parameters and result type, and record the free type variables.
-    TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
-
-    // 9a. Bind the free type vars
-    kindchecker_state K( this_mod() );
-    K.push_type_var_scope();
-    for(auto& tv: eqn.free_tvs)
-    {
-        assert(not K.type_var_in_scope(tv));
-        tv.kind = K.fresh_kind_var();
-        K.bind_type_var(tv, *tv.kind);
-    }
-
-    // 9b. Kind-check the type vars
-    for(int i=0; i<eqn.args.size(); i++)
-        K.kind_check_type_of_kind(eqn.args[i], *tf_info->args[i].kind);
-    K.kind_check_type_of_kind(eqn.rhs, tf_info->result_kind);
-
-    // 9c. Record the final kinds for the free type vars
-    for(int i=0; i<eqn.args.size(); i++)
-        eqn.args[i] = K.zonk_kind_for_type(eqn.args[i]);
-    eqn.rhs = K.zonk_kind_for_type(eqn.rhs);
-
-    for(auto& tv: eqn.free_tvs)
-        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
-
-    // 10. Add the (~) instance to the instance environment
-    Type lhs = make_tyapps(tf_con, eqn.args);
-    Type constraint = make_equality_pred(lhs, eqn.rhs);
-    Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
-
-    auto dvar = fresh_dvar(constraint, true);
-
-    auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}, false, false, false} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
-    S.type = S.instance_info->type();
-    this_mod().add_symbol(S);
-
-    this_mod().local_instances.insert( {dvar, *S.instance_info} );
-    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+    add_type_instance(tf_con, desugar(inst.args), desugar(inst.rhs), *tf_info, inst_loc);
 
     pop_source_span();
     pop_note();
+}
+
+void TypeChecker::default_type_instance(const TypeCon& tf_con,
+					const std::optional<Hs::TypeFamilyInstanceDecl>& maybe_default,
+					const substitution_t& instance_subst,
+					const yy::location& inst_loc)
+{
+    if (not maybe_default)
+    {
+	record_warning( Note() <<"No instance for associated type family "<<tf_con );
+	return;
+    }
+
+    auto default_instance = *maybe_default;
+
+    // 1. Get the type family info
+    auto tf_info = info_for_type_fam( unloc(tf_con.name) );
+
+    // 2. Now we need to perform this substitution on the type family definition to get the default instance head.
+    //   => 
+    vector<Type> args;
+    for(int i=0;i < tf_info->args.size();i++)
+    {
+	if (instance_subst.count(tf_info->args[i]))
+	    args.push_back(instance_subst.at(tf_info->args[i]));
+	else
+	    args.push_back(tf_info->args[i]);
+    }
+
+    // 3. Now we need to substitute into the TypeFamilyInstanceEqn
+    assert(tf_info->args.size() == default_instance.args.size());
+    substitution_t default_subst;
+    for(int i=0; i < default_instance.args.size(); i++)
+    {
+	auto tv = desugar(default_instance.args[i]).as_<TypeVar>();
+	default_subst = default_subst.insert({tv, args[i]});
+    }
+    auto rhs = desugar(default_instance.rhs);
+    rhs = apply_subst(default_subst, rhs);
+
+    // 4. add the instance
+    add_type_instance(tf_con, args, rhs, *tf_info, inst_loc);
 }
 
 std::optional<Core::Var>
@@ -287,8 +333,21 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     }
 
     // Look at associated type instances
+    std::set<TypeCon> defined_ats;
     for(auto& inst: inst_decl.type_inst_decls)
+    {
+	auto tf_con = desugar(inst.con);
         check_add_type_instance(inst, class_name, instance_subst);
+	defined_ats.insert(tf_con);
+    }
+
+    for(auto& [tf_con, maybe_default]: class_info.associated_type_families)
+    {
+	// The user wrote an instance for this, we're all done.
+	if (not defined_ats.contains(tf_con))
+	    default_type_instance(tf_con, maybe_default, instance_subst, *inst_loc);
+    }
+
 
     auto dfun = fresh_dvar(constraint, true);
 

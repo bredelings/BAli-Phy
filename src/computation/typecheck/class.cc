@@ -170,7 +170,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, unloc(class_decl.name));
         if (class_info.associated_type_families.count(con))
             throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
-        class_info.associated_type_families.insert({con,false});
+        class_info.associated_type_families.insert({con,{}});
     }
 
     // 7. Load default associated type family instances
@@ -211,11 +211,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
             if (not lhs_tvs.count(tv))
                 throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
-        // This type family has a default now.
-        class_info.associated_type_families.at(tf_con) = true;
+        // This type family has a default instance now.
+        class_info.associated_type_families.at(tf_con) = def_inst;
 
         // Add the default type instance -- no need for variables to match the class.
-        check_add_type_instance(def_inst, unloc(class_decl.name), {});
+        // check_add_type_instance(def_inst, unloc(class_decl.name), {});
 
         pop_note();
     }

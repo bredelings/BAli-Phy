@@ -17,9 +17,13 @@ instance Container [a] where
 
 class Asdf a b where
     type Foo a x
+    type Foo y z = y
 
 instance Asdf [y] z where
     type Foo [y] b = Int
+
+instance Asdf Int z
+-- We should get Foo Int x = Int
 
 type family Closed a where
     Closed Int = Int

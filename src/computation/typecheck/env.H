@@ -110,7 +110,8 @@ struct ClassInfo
     // FIXME - we need the order of the constraints, and the order of the members
     std::vector<std::pair<Hs::Var,Type>> fields;
 
-    std::map<TypeCon,bool> associated_type_families;
+    // Each family is associated with a single optional default instance.
+    std::map<TypeCon, std::optional<Hs::TypeFamilyInstanceDecl>> associated_type_families;
 };
 
 struct TypeFamEqnInfo

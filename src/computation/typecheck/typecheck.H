@@ -508,7 +508,14 @@ public:
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
+    void add_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
+
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
+
+    void default_type_instance(const TypeCon& tf_con,
+			       const std::optional<Hs::TypeFamilyInstanceDecl>& maybe_default,
+			       const substitution_t& instance_subst,
+			       const yy::location& inst_loc);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
