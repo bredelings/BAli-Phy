@@ -20,7 +20,7 @@ instance HasPdf Multinomial where
                               | otherwise       = multinomial_density n ps ks
 
 instance HasAnnotatedPdf Multinomial where
-    annotated_densities dist ks = return [pdf dist ks]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps

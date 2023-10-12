@@ -41,7 +41,7 @@ instance HasAnnotatedPdf Gamma where
     annotated_densities dist@(Gamma a b) x = do
                                         in_edge "a" a
                                         in_edge "b" b
-                                        return [gamma_density a b x]
+                                        return ([gamma_density a b x], ())
 
 instance Sampleable Gamma where
     sample dist@(Gamma a b) = RanDistribution2 dist gamma_effect

@@ -42,7 +42,7 @@ instance HasAnnotatedPdf Beta where
     annotated_densities dist@(Beta a b) x = do
                                         in_edge "a" a
                                         in_edge "b" b
-                                        return [beta_density a b x]
+                                        return ([beta_density a b x],())
 
 instance Sampleable Beta where
     sample dist@(Beta a b) = RanDistribution2 dist beta_effect

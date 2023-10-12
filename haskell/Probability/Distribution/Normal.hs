@@ -40,7 +40,7 @@ instance HasAnnotatedPdf Normal where
     annotated_densities dist@(Normal mu sigma) x = do
                                                in_edge "mu" mu
                                                in_edge "sigma" sigma
-                                               return [pdf dist x]
+                                               return ([pdf dist x], ())
 
 
 {-

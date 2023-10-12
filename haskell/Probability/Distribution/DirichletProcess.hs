@@ -122,7 +122,7 @@ instance HasPdf CRP where
     pdf (CRP alpha n d) = crp_density alpha n d
 
 instance HasAnnotatedPdf CRP where
-    annotated_densities dist xs = return [pdf dist xs]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable CRP where
     sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggered_modifiable_list n) (ran_sample_crp alpha n d)

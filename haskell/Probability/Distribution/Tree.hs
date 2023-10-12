@@ -253,7 +253,7 @@ instance Dist UniformTopology where
     dist_name _ = "uniform_topology"
 
 instance HasAnnotatedPdf UniformTopology where
-    annotated_densities (UniformTopology n) _ = return [uniform_topology_pr n]
+    annotated_densities (UniformTopology n) _ = return ([uniform_topology_pr n], ())
 
 instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n)
@@ -270,7 +270,7 @@ instance Dist UniformTimeTree where
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf UniformTimeTree where
-    annotated_densities (UniformTimeTree age n) tree = return $ uniform_time_tree_pr age n tree
+    annotated_densities (UniformTimeTree age n) tree = return (uniform_time_tree_pr age n tree, ())
 
 instance Sampleable UniformTimeTree where
     sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n)
@@ -285,7 +285,7 @@ instance Dist CoalescentTree where
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree theta n) tree = return $ coalescent_tree_pr_factors theta n tree
+    annotated_densities (CoalescentTree theta n) tree = return (coalescent_tree_pr_factors theta n tree, ())
 
 instance Sampleable CoalescentTree where
     sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n)

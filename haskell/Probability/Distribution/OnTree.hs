@@ -102,9 +102,9 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
-  return [likelihood]
+  return ([likelihood], prop)
 
 data CTMCOnTree t s = CTMCOnTree t (AlignmentOnTree t) s
 
@@ -115,6 +115,7 @@ instance Dist (CTMCOnTree t s) where
 
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
+    type DistProperties (CTMCOnTree t s) = CTMCOnTreeProperties
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
@@ -245,9 +246,9 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
-  return [likelihood]
+  return ([likelihood], prop)
 
 data CTMCOnTreeFixedA t s = CTMCOnTreeFixedA t s
 
@@ -257,6 +258,7 @@ instance Dist (CTMCOnTreeFixedA t s) where
 
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
+    type DistProperties (CTMCOnTreeFixedA t s) = CTMCOnTreeFixedAProperties
     annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
 
 ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel

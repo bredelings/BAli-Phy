@@ -24,7 +24,7 @@ instance HasPdf Dirichlet where
     pdf (Dirichlet as) ps = dirichlet_density as ps
 
 instance HasAnnotatedPdf Dirichlet where
-    annotated_densities dist ps = return [pdf dist ps]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable Dirichlet where
     sample dist@(Dirichlet as) = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ sample_dirichlet as
@@ -54,7 +54,7 @@ instance HasPdf (DirichletOn a) where
 
 
 instance HasAnnotatedPdf (DirichletOn a) where
-    annotated_densities dist item_ps = return $ [pdf dist item_ps]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable (DirichletOn a) where
     sample (DirichletOn items as) = do ps <- sample $ dirichlet as

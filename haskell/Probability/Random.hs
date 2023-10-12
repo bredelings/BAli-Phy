@@ -27,13 +27,11 @@ import Probability.Dist
 
 data AnnotatedDensity a where
     InEdge :: String -> b -> AnnotatedDensity ()
-    PropertyEdge :: String -> b -> AnnotatedDensity ()
     ADBind :: AnnotatedDensity b -> (b -> AnnotatedDensity a) -> AnnotatedDensity a
     ADReturn :: a -> AnnotatedDensity a
     ProbFactor :: Double -> AnnotatedDensity ()
 
 in_edge name node = InEdge name node
-property name node = PropertyEdge name node
 
 
 instance Functor AnnotatedDensity where
@@ -53,7 +51,6 @@ get_densities :: AnnotatedDensity a -> a
 get_densities (ADReturn x) = x
 get_densities (ADBind f g) = let x = get_densities f in get_densities (g x)
 get_densities (InEdge _ x) = ()
-get_densities (PropertyEdge _ x) = ()
 
 
 make_edges :: Effect -> AnnotatedDensity a -> IO a
@@ -62,24 +59,28 @@ make_edges event (ADBind f g) = do x <- make_edges event f
                                    make_edges event (g x)
 make_edges event (InEdge name node) = do register_in_edge node event name
                                          return ()
-make_edges event (PropertyEdge name node) = do register_dist_property event node name
-                                               return ()
 
 -- Define the Distribution type
-densities dist x = get_densities $ annotated_densities dist x
+densities dist x = fst $ get_densities $ annotated_densities dist x
 density dist x = balanced_product (densities dist x)
 
 -- can we change all of these ^^ functions into member functions?
 
 -- We can observe from these.
+-- PROBLEM: What if observing from a distribution is supposed to update
+--          a summary statistic?  Can we then register a properties object for each
+--          observation?
 class Dist d => HasAnnotatedPdf d where
     type DistProperties d :: Type
     type DistProperties d = ()
-    annotated_densities :: d -> Result d -> AnnotatedDensity [LogDouble]
+    annotated_densities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
 
 -- We know how to sample from these -- theres a default effect?
 class Dist d => Sampleable d where
     sample :: d -> Random (Result d)
+
+class (Sampleable d, HasAnnotatedPdf d) => SampleableWithProps d where
+    sampleWithProps :: d -> Random (Result d, DistProperties d)
 
 instance Dist (Random a) where
     type Result (Random a) = a
@@ -161,16 +162,52 @@ instance Monad Random where
 instance MonadFix Random where
     mfix f   = RanOp (\interp -> mfix $ interp . f)
 
+register_dist_properties event props = register_dist_property event props "properties"
+
+{-
+This is nearly the same between sampling and observe events.
+- observe starts with liftIO .. this allows it to run in the Random monad.
+- observe uses register_likelihood vs register_prior
+- observe does NOT run tk_effects
+-}
+
+sample_effect_props rate dist tk_effect x = do
+  s <- register_dist_sample (dist_name dist)
+  register_out_edge s x
+  (density_terms, props) <- make_edges s $ annotated_densities dist x
+  register_dist_properties s props
+  sequence_ [register_prior s term | term <- density_terms]
+
+  run_tk_effects rate $ tk_effect x
+
+  return props
+
+sample_effect rate dist tk_effect x = do
+  sample_effect_props rate dist tk_effect x
+  return ()
+
 observe datum dist = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
                        register_out_edge s datum
-                       -- here we run the annotated-densities operation
-                       -- i think THIS line has to get the properties
-                       density_terms <- make_edges s $ annotated_densities dist datum
+                       (density_terms, props) <- make_edges s $ annotated_densities dist datum
+                       register_dist_properties s props
                        sequence_ [register_likelihood s term | term <- density_terms]
+
+                       return props
 
 infix 0 `observe`
 
+{-  So, how do we do an action that samples and returns properties?
+    Constructors like RanDistribution2/3 need to specify a return value -- Random x or Random (x,properties).
+    We COULD make this return Random (Result d, DistProperties d), since (HasAnnotatedPdf d) is a constraint...
+       but does that mean that we would have to use an undefined value for the properties if we sample outside
+       of the mcmc interpreter?
+    Maybe not.  The annotated_densities function IS able to return the properties.
+    So, if we use the annotated_densities function, we COULD compute and return the properties
+
+
+-}
+    
 instance MonadIO Random where
     liftIO io = RanOp (\interp -> io)
 
@@ -256,16 +293,6 @@ apply_modifier x y = x y
 modifiable_structure :: b -> (b -> IO ()) -> b
 modifiable_structure = triggered_modifiable_structure apply_modifier
 
-sample_effect rate dist tk_effect x = do
-  run_tk_effects rate $ tk_effect x
-  s <- register_dist_sample (dist_name dist)
-  density_terms <- make_edges s $ annotated_densities dist x
-  sequence_ [register_prior s term | term <- density_terms]
-  register_out_edge s x
-  return ()
-
-
-
 foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
 
 foreign import bpcall "MCMC:" interchange_entries :: Int -> ContextIndex -> IO ()
@@ -336,8 +363,8 @@ prefix %>% subvalue = (toJSONKey $ prefix ++ "/", log_to_json subvalue)
 log_to_json loggers = J.Object $ loggers
 
 -- Define some helper functions
-make_densities density x = return [density x]
-make_densities' densities x = return $ densities x
+make_densities density x = return ([density x],())
+make_densities' densities x = return (densities x,())
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
 

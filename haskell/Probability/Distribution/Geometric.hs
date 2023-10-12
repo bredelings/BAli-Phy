@@ -40,7 +40,7 @@ instance Variance Geometric
 instance HasAnnotatedPdf Geometric where
     annotated_densities dist@(Geometric p_success) n = do
                                      in_edge "p_success" p_success
-                                     return [pdf dist n]
+                                     return ([pdf dist n],())
 
 instance Sampleable Geometric where
     sample dist@(Geometric p_success) = RanDistribution2 dist geometric_effect

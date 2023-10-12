@@ -32,7 +32,7 @@ instance Dist1D Categorical where
                            where n = floor x
 
 instance HasAnnotatedPdf Categorical where
-    annotated_densities dist n = return [pdf dist n]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable Categorical where
     sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (length ps)
@@ -63,7 +63,7 @@ instance Eq a => HasPdf (CategoricalOn a) where
                                     Just n -> doubleToLogDouble $ ps!n
 
 instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
-    annotated_densities dist x = return [pdf dist x]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable (CategoricalOn a) where
     sample dist@(CategoricalOn xs ps) = do

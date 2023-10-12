@@ -43,7 +43,7 @@ instance HasAnnotatedPdf Uniform where
     annotated_densities dist@(Uniform l u) x = do
         in_edge "l" l
         in_edge "u" u
-        return [pdf dist x]
+        return ([pdf dist x],())
 
 instance Sampleable Uniform where
     sample dist@(Uniform l u) = RanDistribution2 dist (uniform_effect l u)
@@ -79,7 +79,7 @@ instance HasPdf UniformInt where
     pdf (UniformInt l u) = uniform_int_density l u
 
 instance HasAnnotatedPdf UniformInt where
-    annotated_densities dist x = return [ pdf dist x ]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable UniformInt where
     sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)

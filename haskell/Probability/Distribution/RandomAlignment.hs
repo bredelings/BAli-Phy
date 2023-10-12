@@ -121,8 +121,8 @@ annotated_alignment_prs tree hmms model alignment = do
       ls = mkSequenceLengthsMap alignment
       lengthp = snd model
       length_prs = fmap lengthp ls
-  property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
-  return $ prs
+      props = RandomAlignmentProperties pr hmms lengthp as ls length_prs
+  return $ (prs, props)
 
 alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
@@ -138,7 +138,8 @@ instance Sampleable (RandomAlignment t) where
     sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
 
 instance HasAnnotatedPdf (RandomAlignment t) where
-    annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) = annotated_alignment_prs tree hmms model
+    type DistProperties (RandomAlignment t) = RandomAlignmentProperties
+    annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
 
 random_alignment tree model tip_lengths = RandomAlignment tree model tip_lengths (branch_hmms model tree)
 
