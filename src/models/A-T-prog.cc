@@ -436,7 +436,8 @@ std::string generate_atmodel_program(const variables_map& args,
             distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
         else
             distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
-        program.perform({var("observe"),sequence_data_var,distribution});
+	var properties("properties"+part_suffix);
+	program.perform(properties, {var("observe"),sequence_data_var,distribution});
 
         program.empty_stmt();
 
@@ -444,9 +445,6 @@ std::string generate_atmodel_program(const variables_map& args,
         expression_ref alignment_exp;
         if (imodel_index)
         {
-            var properties("properties"+part_suffix);
-            program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeProperties")}));
-
             if (n_branches > 0)
             {
                 var alignment_length("alignment_length"+part_suffix);
@@ -485,9 +483,6 @@ std::string generate_atmodel_program(const variables_map& args,
         }
         else
         {
-            var properties("properties"+part_suffix);
-            program.let(properties,Hs::TypedExp({noloc,{var("getProperties"), sequence_data_var}},{noloc,Hs::TypeCon("CTMCOnTreeFixedAProperties")}));
-
             sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_fa_likelihood"),properties}}});
 
             if (n_branches > 0)
