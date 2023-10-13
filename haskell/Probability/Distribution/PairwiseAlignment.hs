@@ -36,7 +36,7 @@ instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLeng
                      lengthForNode node  = case branchFromParent rtree node of
                                              Nothing -> startLength
                                              Just b -> pairwise_alignment_length2 (as IM.! b)
-                     alignmentForBranch b | toward_root rtree b = return $ flip_alignment $ as IM.! (reverseEdge rtree b)
+                     alignmentForBranch b | toward_root rtree b = return $ flip_alignment $ as IM.! (reverseEdge b)
                                           | otherwise           = sampleIO $ distFn (branch_length rtree b) (lengths IM.! sourceNode rtree b)
                  as <- lazySequence $ (getEdgesSet rtree & IM.fromSet alignmentForBranch)
           ; return $ AlignmentOnTree rtree (numNodes rtree) lengths as}
