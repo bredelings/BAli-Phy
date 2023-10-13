@@ -426,7 +426,9 @@ std::string generate_atmodel_program(const variables_map& args,
             {
                 var leaf_sequence_lengths("sequence_lengths" + part_suffix);
                 program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
-                program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+
+                var properties_A("properties_A"+part_suffix);
+		program.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
             }
         }
 
@@ -473,7 +475,6 @@ std::string generate_atmodel_program(const variables_map& args,
             if (not fixed.count("alignment"))
             {
                 var properties_A("properties_A"+part_suffix);
-                program.let(properties_A,Hs::TypedExp({noloc,{var("getProperties"), alignment_on_tree}},{noloc,Hs::TypeCon("RandomAlignmentProperties")}));
                 var prior_A("prior_A" + part_suffix);
                 program.let(prior_A, {var("probability"),properties_A});
                 sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
