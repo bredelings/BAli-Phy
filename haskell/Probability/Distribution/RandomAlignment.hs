@@ -7,6 +7,7 @@ import           Control.DeepSeq
 import           Data.Array
 import           Data.Maybe (mapMaybes)
 import           MCMC
+import           Effect (getProperties)
 
 import qualified Data.Map as Map
 import Data.IntMap (IntMap)
@@ -140,6 +141,14 @@ instance Sampleable (RandomAlignment t) where
 instance HasAnnotatedPdf (RandomAlignment t) where
     type DistProperties (RandomAlignment t) = RandomAlignmentProperties
     annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
+
+instance SampleableWithProps (RandomAlignment t) where
+    sampleWithProps dist = do
+      x <- sample dist
+      let props = getProperties' x dist
+          getProperties' :: a -> d -> DistProperties d
+          getProperties' x _ = getProperties x
+      return (x, props)
 
 random_alignment tree model tip_lengths = RandomAlignment tree model tip_lengths (branch_hmms model tree)
 
