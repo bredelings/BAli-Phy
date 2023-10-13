@@ -26,8 +26,9 @@ getTree args = do
 --  T.putStrLn $ write_newick rtree
 
   return rtree
-  
-getStartLength args = read startLength' :: Int where (_:startLength':_) = args
+
+getStartLength args = read startLength' :: Int
+    where (_:startLength':_) = args
 
 -- Sample substitution model parameters and define the substitution model
 getSmodel = do
@@ -46,7 +47,7 @@ getImodel = do
       meanLength = 5
 
   return $ LongIndels mu lambda meanLength
-         
+
 main = do
   -- 1. Read the tree and get the starting sequence length
   args <- getArgs
