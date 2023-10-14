@@ -9,7 +9,6 @@
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
 #include "dp/2way.H"
-#include "models/site-compression.H"
 #include "util/cmdline.H"
 #include "util/range.H"
 #include "util/rng.H"
@@ -417,7 +416,7 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
 }
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
-compressed_alignment compress_alignment(const alignment& A, int n)
+std::tuple<alignment, vector<int>, vector<int>> compress_alignment(const alignment& A, int n)
 {
     if (A.length() == 0)
         return {A,{},{}};
