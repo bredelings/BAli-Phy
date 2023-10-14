@@ -94,7 +94,6 @@ libbaliphy_sources = [
 
   'models/parameters.cc',
   'models/A-T-prog.cc',
-  'models/site-compression.cc',
   'models/TreeInterface.cc',
   'models/setup.cc',
   'models/rules.cc',
