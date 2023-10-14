@@ -27,6 +27,9 @@ import Data.Text (Text)
 import Foreign.IntMap (EIntMap)
 import qualified Foreign.IntMap as FIM
 
+import qualified Data.Map as Map
+import Data.Map (Map)
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
@@ -133,6 +136,17 @@ alignmentOnTreeFromSequences tree sequences alphabet = AlignmentOnTree tree numS
 
 
 find_sequence label sequences = find (\s -> sequenceName s == label) sequences
+
+-- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
+-- Complain if a labeled node doesn't have a corresponding entry in the Map.
+getObjectsOnTree :: HasLabels t => Map Text v -> t -> IntMap (Maybe v)
+getObjectsOnTree things tree = getNodesSet tree & IntMap.fromSet objectForNode where
+    objectForNode node = case get_label tree node of
+                           Nothing -> Nothing
+                           Just label ->
+                               case Map.lookup label things of
+                                 Just object -> Just object
+                                 Nothing -> error $ "No object for node labeled " ++ Text.unpack label
 
 getSequencesOnTree :: HasLabels t => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where

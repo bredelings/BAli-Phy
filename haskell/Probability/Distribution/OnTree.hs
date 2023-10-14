@@ -68,6 +68,57 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_n_muts :: Int -- This shouldn't be here.
     }
 
+{- TODO:
+Switch from Sequence to AlignedCharacterData / UnalignedCharacterData
+-}
+
+{- NOTE: aligned/unaligned character data object.
+
+OK, so I'd like to have some kind of character data type (or type class) that is not in Text form.
+It should be possible to print it to FASTA.
+
+If we sample UNALIGNED character data from ctmc_on_tree, then we need to be able to combine it with an alignment to
+print to sampled sequences and the alignment together.
+
+One possibility would be something like:
+
+  data CharacterData = CharacterData Alphabet (Map Text (EVector Int))
+
+  instance ToFasta CharacterData
+
+Currently, it seems like I'm using [Sequence] as a way of passing around the data.
+-}
+
+{- NOTE: Aligned and Unaligned character data
+
+Do I want to have two different versions for aligned and unaligned character data.
+
+-- All sequences should be the same length!
+data AlignedCharacterData = Aligned CharacterData
+
+-- No gaps!
+data UnalignedCharacterData = Unaligned CharacterData
+
+-}
+
+{- NOTE: How should we represent ancestral states?
+
+Currently we are representing them as Text.  Should we instead use Aligned/UnalignedCharacterData?
+
+-}
+
+{- NOTE: Sampling from phyloCTMC and phyloCTMCFixedA.
+
+The idea is to sample an UnalignedCharacterData object from phyloCTMC, and an AlignedCharacterData object from phyloCTMCFixedA.
+
+We could make a function alignCharacterData :: AlignmentOnTree -> UnalignedCharacterData -> AlignedCharacterData
+
+For sampling from phyloCTMCFixedA, we might want two versions:
+1. given a length l, sample assuming no indels or wildcards
+2. given a alignment with gaps and wildcards, sample assuming no indels and then overwrite gaps and wildcards.
+   PROBLEM: what about ambiguous characters?
+-}
+
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
