@@ -231,7 +231,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     if (n_partitions > 0)
     {
-        expression_ref sequence_data1 = var("sequence_data");
+        expression_ref sequence_data1 = var("sequenceData");
         if (n_partitions > 1)
             sequence_data1 = {var("!!"),sequence_data1,0};
         program.let(taxon_names_var, {var("map"),var("fst"),sequence_data1});
@@ -395,7 +395,7 @@ std::string generate_atmodel_program(const variables_map& args,
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
         expression_ref smodel = smodels[smodel_index];
-        expression_ref sequence_data_var = var("sequence_data");
+        expression_ref sequence_data_var = var("sequenceData");
         if (n_partitions > 1)
             sequence_data_var = {var("!!"),sequence_data_var,i};
 
@@ -529,7 +529,7 @@ std::string generate_atmodel_program(const variables_map& args,
         alignment_loggers.push_back(l);
 
     auto model = var("model");
-    auto sequence_data = var("sequence_data");
+    auto sequence_data = var("sequenceData");
     auto topology = var("topology");
     auto tree = var("tree");
     var jsonLogger("logParamsJSON");
@@ -644,7 +644,7 @@ std::string generate_atmodel_program(const variables_map& args,
             for(int i=0;i<n_partitions;i++)
             {
                 string part = std::to_string(i+1);
-                var partition_sequence_data_var("sequence_data"+part);
+                var partition_sequence_data_var("sequenceData"+part);
                 int index = index_for_filename.at( filename_ranges[i].first );
                 expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
                 if (not filename_ranges[i].second.empty())
