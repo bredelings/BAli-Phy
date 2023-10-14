@@ -219,7 +219,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel
 
-      let sequenceForNode label stateSequence = Sequence label (sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
+      let sequenceForNode label stateSequence = (label, sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
 
       return $ getLabelled tree sequenceForNode stateSequences
 

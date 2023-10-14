@@ -135,7 +135,7 @@ alignmentOnTreeFromSequences tree sequences alphabet = AlignmentOnTree tree numS
           pairwiseAs = getEdgesSet tree & IntMap.fromSet alignmentForBranch
 
 
-find_sequence label sequences = find (\s -> sequenceName s == label) sequences
+find_sequence label sequences = find (\s -> fst s == label) sequences
 
 -- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
 -- Complain if a labeled node doesn't have a corresponding entry in the Map.
@@ -168,9 +168,9 @@ getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
 
-fastaTree tree sequences =  fastaSeqs [Sequence label sequence | n <- leaf_nodes tree ++ internal_nodes tree,
-                                                                   let label = add_ancestral_label n (get_labels tree),
-                                                                   let sequence = sequences IntMap.! n]
+fastaTree tree sequences =  fastaSeqs [(label, sequence) | n <- leaf_nodes tree ++ internal_nodes tree,
+                                                             let label = add_ancestral_label n (get_labels tree),
+                                                             let sequence = sequences IntMap.! n]
 
 -- Ideally we'd like to do
 --    type NodeAlignment = EPair Int BranchAlignments
