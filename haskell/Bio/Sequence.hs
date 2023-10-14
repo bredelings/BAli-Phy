@@ -14,9 +14,14 @@ foreign import bpcall "Alignment:" sequenceDataRaw :: ESequence -> CPPString
 
 type Sequence = (Text,Text)
 
+-- Map Text Text would be nicer, but discards the order of the sequences.
+type Sequences = [Sequence]
+
 mkSequence :: ESequence -> Sequence
 mkSequence s = (T.fromCppString $ builtin_sequence_name s, T.fromCppString $ sequenceDataRaw s)
 
+-- FIXME: make these operate on just the text, not the pair?
+-- FIXME: remove sequence_to_indices in favor of strip_gaps . sequenceToAlignedIndices?
 foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
 foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
 sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
@@ -58,3 +63,18 @@ fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq,
 
 fastaSeqs sequences = T.concat [fastaSeq s | s <- sequences]
 
+data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
+data AlignedCharacterData = Aligned CharacterData
+data UnalignedCharacterData = Unaligned CharacterData
+
+
+mkCharacterData :: Alphabet -> Sequences -> CharacterData
+mkCharacterData alphabet sequences = CharacterData alphabet [(label, go sequence) | (label, sequence) <- sequences]
+    where go s = builtin_sequenceToAlignedIndices alphabet (T.toCppString s)
+
+mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet indices')
+    where CharacterData _ indices = mkCharacterData alphabet sequences
+          indices' = map (\(label,is) -> (label, strip_gaps is)) indices
+
+-- We should check that the sequences are all the same length and error out otherwise.
+mkAlignedCharacterData alphabet sequences = Aligned $ mkCharacterData alphabet sequences
