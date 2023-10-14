@@ -122,13 +122,14 @@ For sampling from phyloCTMCFixedA, we might want two versions:
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
-annotated_subst_like_on_tree tree alignment smodel sequences = do
+annotated_subst_like_on_tree tree alignment smodel sequences' = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
-      node_sequences = fmap (sequence_to_indices alphabet) $ fmap fromJust $ getSequencesOnTree sequences tree
+      node_sequences = fmap fromJust $ getObjectsOnTree sequences tree
+      Unaligned (CharacterData _ sequences) = mkUnalignedCharacterData alphabet sequences'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
