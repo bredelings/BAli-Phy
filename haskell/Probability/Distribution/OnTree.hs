@@ -129,7 +129,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences' = do
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
-      node_sequences = fmap fromJust $ getObjectsOnTree sequences tree
+      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap sequences tree
       Unaligned (CharacterData _ sequences) = mkUnalignedCharacterData alphabet sequences'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
@@ -241,7 +241,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
       compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq)) | (name,seq) <- isequences]
 
-      node_seqs_bits = fromMaybe (error "No label") <$> getObjectsOnTree compressed_sequences tree
+      node_seqs_bits = fromMaybe (error "No label") <$> labelToNodeMap compressed_sequences tree
       node_sequences = fmap fst node_seqs_bits
       -- stop going through Alignment
 

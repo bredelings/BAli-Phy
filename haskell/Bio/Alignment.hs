@@ -135,8 +135,8 @@ find_sequence label sequences = find (\s -> fst s == label) sequences
 
 -- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
 -- Complain if a labeled node doesn't have a corresponding entry in the Map.
-getObjectsOnTree :: HasLabels t => [(Text, v)] -> t -> IntMap (Maybe v)
-getObjectsOnTree things tree = getNodesSet tree & IntMap.fromSet objectForNode where
+labelToNodeMap :: HasLabels t => [(Text, v)] -> t -> IntMap (Maybe v)
+labelToNodeMap things tree = getNodesSet tree & IntMap.fromSet objectForNode where
     objectForNode node = case get_label tree node of
                            Nothing -> Nothing
                            Just label ->
