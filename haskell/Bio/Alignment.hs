@@ -69,10 +69,11 @@ mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
 foreign import bpcall "Alignment:compress_alignment" builtin_compress_alignment :: AlignmentMatrix ->
-                                                                                   EPair AlignmentMatrix (EPair (EVector Int) (EVector Int))
+                                                                                   EPair (EVector (EPair CPPString (EVector Int))) (EPair (EVector Int) (EVector Int))
 compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_compress_alignment a
-                                                           (compressed, tmp23) = pair_from_c tmp123
+                                                           (compressed', tmp23) = pair_from_c tmp123
                                                            (counts,   mapping) = pair_from_c tmp23
+                                                           compressed = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ list_from_vector compressed'
 
 alignment_on_tree_length a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                                        where node0 = head $ getNodes t

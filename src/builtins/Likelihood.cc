@@ -601,7 +601,7 @@ extern "C" closure builtin_function_peel_likelihood_1_SEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    const auto& A        = arg0.as_<Box<alignment>>();
+    const auto& s1       = arg0.as_<EVector>();
     const alphabet& a    = *arg1.as_<Alphabet>();
     const auto& WF       = arg2.as_<Box<Matrix>>();
     const auto& counts   = arg3.as_<EVector>();
@@ -617,9 +617,9 @@ extern "C" closure builtin_function_peel_likelihood_1_SEV(OperationArgs& Args)
     }
 
     log_double_t Pr = 1;
-    for(int i=0;i<A.length();i++)
+    for(int i=0;i<s1.size();i++)
     {
-        int l = A(i,0);
+        int l = s1[i].as_int();
         log_double_t p = letter_frequency(l, a, F, LF);
         int count = counts[i].as_int();
 	Pr *= pow(p,count);
@@ -635,14 +635,17 @@ extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
 
-    const auto& A         = arg0.as_<Box<alignment>>();
-    const alphabet& alpha = *arg1.as_<Alphabet>();
-    const auto& P         = arg2.as_<EVector>();
-    const auto& WF        = arg3.as_<Box<Matrix>>();
-    const auto& counts    = arg4.as_<EVector>();
+    const auto& s1       = arg0.as_<EVector>();
+    const auto& s2       = arg1.as_<EVector>();
+    const alphabet& alpha = *arg2.as_<Alphabet>();
+    const auto& P         = arg3.as_<EVector>();
+    const auto& WF        = arg4.as_<Box<Matrix>>();
+    const auto& counts    = arg5.as_<EVector>();
 
-    assert(A.n_sequences() == 2);
+    assert(s1.size() == s2.size());
+    assert(s1.size() == counts.size());
 
     // Make frequency-vector AND log(frequency)-vector
     vector<double> F(alpha.size(),0);
@@ -656,10 +659,10 @@ extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
 
     log_double_t Pr = 1;
 
-    for(int x=0;x<A.length();x++)
+    for(int x=0;x<s1.size();x++)
     {
-        int l1 = A(x,0);
-        int l2 = A(x,1);
+        int l1 = s1[x].as_int();
+        int l2 = s2[x].as_int();
 
         if (l1 < 0 and l2 < 0) continue;
 

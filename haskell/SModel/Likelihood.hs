@@ -36,8 +36,8 @@ foreign import bpcall "Likelihood:" peel_internal_branch_SEV :: CondLikes -> Con
 foreign import bpcall "Likelihood:" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "Likelihood:" calc_root_probability_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "Likelihood:" calc_root_deg2_probability_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_2_SEV :: AlignmentMatrix -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_1_SEV :: AlignmentMatrix -> Alphabet -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "Likelihood:" peel_likelihood_2_SEV :: (EVector Int) -> (EVector Int) -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "Likelihood:" peel_likelihood_1_SEV :: (EVector Int) -> Alphabet -> Matrix Double -> EVector Int -> LogDouble
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "Likelihood:" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt

@@ -236,8 +236,7 @@ for alignments, we could also use an ordering of the sequences to ensure that th
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
-  let (compressed_alignment, column_counts, mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
-      isequences = isequences_from_alignment compressed_alignment
+  let (isequences, column_counts, mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
       -- stop going through Alignment
 
       compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq)) | (name,seq) <- isequences]
@@ -272,10 +271,13 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               transition_ps
               smap
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
-                 | n_nodes == 1   = peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
-                 | n_nodes == 2   = let [n1,n2] = getNodes tree
-                                        [b1,b2] = getEdges tree
-                                    in peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps IntMap.! b1) f column_counts
+                 | n_nodes == 1   = let n1 = head $ getNodes tree
+                                        s1 = node_sequences IntMap.! n1
+                                    in peel_likelihood_1_SEV s1 alphabet f column_counts
+                 | n_nodes == 2   = let b1 = head $ getEdges tree
+                                        s1 = node_sequences IntMap.! (sourceNode tree b1)
+                                        s2 = node_sequences IntMap.! (targetNode tree b1)
+                                    in peel_likelihood_2_SEV s1 s2 alphabet (transition_ps IntMap.! b1) f column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of

@@ -402,24 +402,39 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
     return {columns, counts, mapping};
 }
 
-alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, int n_leaves)
+EVector alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, int n_leaves)
 {
     assert(n_leaves == patterns[0].size());
 
-    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
+    int L = patterns.size();
+
+    EVector A(n_leaves);
 
     for(int i=0;i<n_leaves;i++)
-        for(int c=0;c<A.length();c++)
-            A.set_value(c,i,patterns[c][i]);
+    {
+	EVector row(L);
+        for(int c=0;c<L;c++)
+            row[c] = patterns[c][i];
+	String name(old.seq(i).name);
+	A[i] = EPair(name,row);
+    }
 
     return A;
 }
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
-std::tuple<alignment, vector<int>, vector<int>> compress_alignment(const alignment& A, int n)
+std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const alignment& A, int n)
 {
     if (A.length() == 0)
-        return {A,{},{}};
+    {
+	EVector A2(n);
+	for(int i=0;i<n;i++)
+	{
+	    String name(A.seq(i).name);
+	    A2[i] = EPair(name,EVector());
+	}
+        return {A2,{},{}};
+    }
 
     auto [patterns, counts, mapping] = compress_site_patterns(A, n);
     return {alignment_from_patterns(A, patterns, n), counts, mapping};
@@ -440,7 +455,7 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     tmp23->second = EVector(mapping); 
 
     object_ptr<EPair> tmp123(new EPair);
-    tmp123->first = Box<alignment>(A);
+    tmp123->first = A;
     tmp123->second = tmp23;
 
     return tmp123;
