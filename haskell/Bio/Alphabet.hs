@@ -50,3 +50,5 @@ standard_code = builtin_standard_code ()
 foreign import bpcall "Alphabet:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
 sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s
 
+class HasAlphabet x where
+    getAlphabet :: x -> Alphabet

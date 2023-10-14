@@ -21,13 +21,13 @@ mut_sel ws' m0@(ReversibleMarkov a smap _ _) = reversible_markov a smap q pi whe
 
 mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (letters a) w' "fitnesses"
-    a = get_alphabet q0
+    a = getAlphabet q0
 
 mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"
-    codon_alphabet = get_alphabet q0
+    codon_alphabet = getAlphabet q0
     amino_alphabet = getAminoAcids codon_alphabet
 
 fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & mut_sel codon_w

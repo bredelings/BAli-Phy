@@ -2,6 +2,7 @@ module SModel.MixtureModel (module SModel.MixtureModel,
                             module Probability.Distribution.Discrete)
                            where
 
+import Bio.Alphabet
 import SModel.Simple
 import SModel.Rate
 import SModel.Frequency
@@ -45,6 +46,9 @@ baseModel model i = component model i
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
+instance HasAlphabet MixtureModel where
+    getAlphabet model = getAlphabet $ baseModel model 0
+
 instance SimpleSModel MixtureModel where
     branch_transition_p (SingleBranchLengthModel tree model) b = [qExp $ scale (branch_length tree b/r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
@@ -55,7 +59,6 @@ instance SimpleSModel MixtureModel where
     frequency_matrix model = builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
     nBaseModels model = length $ unpackDiscrete model
     stateLetters model = stateLetters $ baseModel model 0
-    getAlphabet model = getAlphabet $ baseModel model 0
     componentFrequencies model i = frequencies $ baseModel model i
 
 instance Scalable a => Scalable (Discrete a) where

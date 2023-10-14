@@ -1,5 +1,6 @@
 module SModel.MixtureModels where
 
+import Bio.Alphabet
 import SModel.Simple
 import SModel.MixtureModel
 import Tree
@@ -16,6 +17,9 @@ branch_categories (MixtureModels categories _) = categories
 
 mmm branch_cats m = MixtureModels branch_cats [m]
 
+instance HasAlphabet MixtureModels where
+    getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
+
 instance SimpleSModel MixtureModels where
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms)) b = branch_transition_p (SingleBranchLengthModel tree mx) b
         where mx = mms!!(branchCats IntMap.! undirectedName b)
@@ -24,7 +28,6 @@ instance SimpleSModel MixtureModels where
     frequency_matrix          (MixtureModels _ (m:ms)) = frequency_matrix m
     nBaseModels               (MixtureModels _ (m:ms)) = nBaseModels m
     stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
-    getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
     componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
 
 

@@ -21,9 +21,8 @@ get_tree' (SingleBranchLengthModel t _) = t        -- Avoid aliasing with get_tr
    would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector EVector Double.
 -}
 
-class SimpleSModel m where
+class HasAlphabet m => SimpleSModel m where
     stateLetters :: m -> EVector Int
-    getAlphabet :: m -> Alphabet
 
     branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]

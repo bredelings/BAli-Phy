@@ -43,8 +43,6 @@ data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Markov.Reversibl
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 get_smap (ReversibleMarkov a s m r) = s
 
-get_alphabet (ReversibleMarkov a s m r) = a
-
 instance CTMC ReversibleMarkov where
     qExp (ReversibleMarkov _ _ m _) = qExp m
     get_pi (ReversibleMarkov _ _ m _) = get_pi m
@@ -90,6 +88,9 @@ plus_gwf a pi f s = reversible_markov a (simple_smap a) (s %*% plus_gwf_matrix p
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
+instance HasAlphabet ReversibleMarkov where
+    getAlphabet (ReversibleMarkov a _ _ _) = a
+
 instance SimpleSModel ReversibleMarkov where
     branch_transition_p (SingleBranchLengthModel tree smodel) b = [qExp $ scale (branch_length tree b/r) smodel]
         where r = rate smodel
@@ -98,7 +99,6 @@ instance SimpleSModel ReversibleMarkov where
     frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_frequency_matrix (list_to_vector [get_pi m])
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    getAlphabet (ReversibleMarkov a _ _ _) = a
     componentFrequencies smodel i = [frequencies smodel]!!i
 
 instance Scalable ReversibleMarkov where
