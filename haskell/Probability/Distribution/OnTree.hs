@@ -49,7 +49,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_alphabet :: Alphabet,
       prop_n_states :: Int,
       prop_n_base_models :: Int,
-      prop_n_muts :: Int
+      prop_n_muts :: Int -- This shouldn't be here.
     }
 
 data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
@@ -65,7 +65,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_alphabet :: Alphabet,
       prop_fa_n_states :: Int,
       prop_fa_n_base_models :: Int,
-      prop_fa_n_muts :: Int
+      prop_fa_n_muts :: Int -- This shouldn't be here.
     }
 
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
