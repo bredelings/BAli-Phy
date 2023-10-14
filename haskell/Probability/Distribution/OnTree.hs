@@ -21,18 +21,32 @@ import Data.Maybe (fromJust)
 import Control.Monad.Fix -- for rec
 import Probability.Distribution.List -- for independent
 
+-- 0 - subst_root
+-- 1 - transition_ps
+-- 2 - CLVs
+-- 3 - ?ancestral states -- used through haskell, not parameters.cc
+-- 4 - likelihood
+-- 5 - ??  taxa
+-- 6 - weightedfrequencymatrix
+-- 7 - state -> letter
+-- 8 - sequences as EVector
+-- 9 - alphabet
+-- 10 - n_states
+-- 11 - n_base_models
+-- 12 - ?parsimony -- used through haskell, not parameters.cc
+
+
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_cond_likes :: IntMap CondLikes,
       prop_anc_seqs :: Text,
       prop_likelihood :: LogDouble,
-      prop_taxa :: IntMap (CMaybe CPPString),
+      prop_taxa :: IntMap (CMaybe CPPString),  -- Is this needed?
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
       prop_leaf_sequences :: IntMap (EVector Int),
       prop_alphabet :: Alphabet,
-      prop_as :: IntMap PairwiseAlignment,
       prop_n_states :: Int,
       prop_n_base_models :: Int,
       prop_n_muts :: Int
@@ -43,7 +57,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fa_cond_likes :: IntMap CondLikes,
       prop_fa_anc_seqs :: Text,
-      prop_fa_likelihood :: LogDouble,
+      prop_fa_likelihood :: LogDouble, -- Is this needed?
       prop_fa_taxa :: IntMap (CMaybe CPPString),
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
@@ -102,7 +116,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 

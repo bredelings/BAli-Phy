@@ -170,12 +170,12 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(12).value().as_int();
+    return property(11).value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(11).value().as_int();
+    return property(10).value().as_int();
 }
 
 object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix() const
