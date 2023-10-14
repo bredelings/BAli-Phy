@@ -238,12 +238,12 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   let (compressed_alignment, column_counts, mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
       isequences = isequences_from_alignment compressed_alignment
+      -- stop going through Alignment
 
       compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq)) | (name,seq) <- isequences]
 
       node_seqs_bits = fromMaybe (error "No label") <$> labelToNodeMap compressed_sequences tree
       node_sequences = fmap fst node_seqs_bits
-      -- stop going through Alignment
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
       node_sequences0 = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree sequences tree
