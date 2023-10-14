@@ -67,6 +67,30 @@ data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
 data AlignedCharacterData = Aligned CharacterData
 data UnalignedCharacterData = Unaligned CharacterData
 
+instance HasAlphabet CharacterData where
+    getAlphabet (CharacterData a _) = a
+
+instance HasAlphabet AlignedCharacterData where
+    getAlphabet (Aligned d) = getAlphabet d
+
+instance HasAlphabet UnalignedCharacterData where
+    getAlphabet (Unaligned d) = getAlphabet d
+
+class HasSequences d where
+    -- If we change the sequences to observations, then does this generalization still work?
+    getSequences :: d -> [(Text, EVector Int)]
+
+instance HasSequences CharacterData where
+    getSequences (CharacterData _ d) = d
+
+instance HasSequences AlignedCharacterData where
+    getSequences (Aligned d) = getSequences d
+
+instance HasSequences UnalignedCharacterData where
+    getSequences (Unaligned d) = getSequences d
+
+getTaxa d = map fst $ getSequences d
+
 
 mkCharacterData :: Alphabet -> Sequences -> CharacterData
 mkCharacterData alphabet sequences = CharacterData alphabet [(label, go sequence) | (label, sequence) <- sequences]
