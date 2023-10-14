@@ -242,10 +242,10 @@ for alignments, we could also use an ordering of the sequences to ensure that th
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
-  let a0 = alignment_from_sequences alphabet sequences
-      (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
+  let (compressed_alignment, column_counts, mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
       compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq))
                                    | (name,seq) <- isequences_from_alignment compressed_alignment]
+
       node_seqs_bits = getCompressedSequencesOnTree compressed_sequences tree
       node_sequences = fmap fst node_seqs_bits
       -- stop going through Alignment
