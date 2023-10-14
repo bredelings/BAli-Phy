@@ -4,6 +4,11 @@ import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,elems,looku
 import qualified Data.OldList as List
 import qualified Data.Set as Set
 
+import Data.Eq
+import Data.Functor
+import qualified Data.Foldable
+import Text.Show
+
 data Map k a = Map [(k,a)]
 
 empty = Map []
@@ -152,4 +157,17 @@ toList (Map xs) = xs
 toAscList (Map xs) = List.sortOn snd xs
 
 toDescList = reverse . toAscList
+
+instance (Eq k, Eq v) => Eq (Map k v) where
+    Map xs == Map ys = xs == ys
+
+instance Functor (Map k) where
+    fmap = map
+
+instance Foldable (Map k) where
+    toList (Map xs) = List.map snd xs
+
+instance (Show k, Show v) => Show (Map k v) where
+    show (Map xs) = "Map " ++ show xs
+
 
