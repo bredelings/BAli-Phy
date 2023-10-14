@@ -10,6 +10,7 @@ import Data.Array
 import Data.Matrix
 import Data.Foldable
 import Foreign.Maybe
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as Text
 
@@ -226,13 +227,6 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
 
 ----------------------------------------
-getCompressedSequencesOnTree compressed_sequences tree = getNodesSet tree & IntMap.fromSet sequence_for_node
-    where sequence_for_node node = case get_label tree node of
-                                     Nothing ->  error "No label"
-                                     Just label ->
-                                         case lookup label compressed_sequences of
-                                           Just indices -> indices
-                                           Nothing -> error $ "No such sequence " ++ Text.unpack label
 
 {-
 ok, so how do we pass IntMaps to C++ functions?
@@ -243,10 +237,11 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let (compressed_alignment, column_counts, mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
-      compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq))
-                                   | (name,seq) <- isequences_from_alignment compressed_alignment]
+      isequences = isequences_from_alignment compressed_alignment
 
-      node_seqs_bits = getCompressedSequencesOnTree compressed_sequences tree
+      compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq)) | (name,seq) <- isequences]
+
+      node_seqs_bits = fromMaybe (error "No label") <$> getObjectsOnTree compressed_sequences tree
       node_sequences = fmap fst node_seqs_bits
       -- stop going through Alignment
 
