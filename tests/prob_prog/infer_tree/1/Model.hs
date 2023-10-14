@@ -13,7 +13,7 @@ import           System.Environment  -- for getArgs
 branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = numBranches topology
 
 model seq_data = do
-    let taxa            = map sequenceName seq_data
+    let taxa            = map fst seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
     -- Tree

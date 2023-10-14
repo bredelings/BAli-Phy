@@ -25,7 +25,7 @@ branch_length_dist zero_p topology b | is_internal_branch topology b = branch_di
 
 model seq_data = do
 
-    let taxa = map sequenceName seq_data
+    let taxa = map fst seq_data
 
     zero_p <- prior $ beta 0.1 1
 

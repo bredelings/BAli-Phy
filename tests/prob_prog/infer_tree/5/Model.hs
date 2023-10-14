@@ -31,7 +31,7 @@ tree_prior taxa = do
 
 
 model seq_data = do
-    let taxa = zip [0..] $ map sequenceName seq_data
+    let taxa = zip [0..] $ map fst seq_data
 
     (tree  , tree_loggers) <- tree_prior taxa
 
