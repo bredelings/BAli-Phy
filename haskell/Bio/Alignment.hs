@@ -83,10 +83,6 @@ totalNumIndels (AlignmentOnTree t _ _ as) = sum [numIndels (as IntMap.! b) | b <
 totalLengthIndels (AlignmentOnTree t _ _ as) = sum [lengthIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                          where node0 = head $ getNodes t
 
-foreign import bpcall "Alignment:uncompress_alignment" builtin_uncompress_alignment :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
-
-uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mapping
-
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
 

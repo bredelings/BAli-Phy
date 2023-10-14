@@ -447,33 +447,6 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     return tmp123;
 }
 
-alignment uncompress_alignment(const alignment& compressed, const vector<int>& mapping)
-{
-    alignment A(compressed.get_alphabet(), compressed.seqs(), mapping.size());
-
-    for(int i=0;i<mapping.size();i++)
-        for(int row = 0; row < A.n_sequences(); row++)
-            A.set_value(i, row, compressed(mapping[i], row) );
-
-    return A;
-}
-
-alignment uncompress_alignment(const compressed_alignment& A)
-{
-    return uncompress_alignment(A.compressed, A.mapping);
-}
-
-extern "C" closure builtin_function_uncompress_alignment(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto& A1 = arg0.as_checked<alignment>();
-
-    auto arg1 = Args.evaluate(1);
-    auto& mapping = arg1.as_<EVector>();
-
-    return object_ptr<Box<alignment>>(new Box<alignment>(uncompress_alignment(A1, (vector<int>)mapping)));
-}
-
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
