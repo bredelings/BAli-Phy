@@ -353,14 +353,13 @@ struct column_map
     }
 };
 
-vector<int> site_pattern(const alignment& A, int n, int c)
+vector<int> site_pattern(const EVector& A, int c)
 {
-    assert(n <= A.n_sequences());
-
+    int n = A.size();
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        int x = A(c,j);
+        int x = A[j].as_<EPair>().second.as_<EVector>()[c].as_int();
         if (x < 0) x = alphabet::gap;
         pattern[j] = x;
     }
@@ -389,21 +388,29 @@ int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& co
     return c;
 }
 
-tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const alignment& A, int n)
+tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const EVector& A)
 {
+    int L = A[0].as_<EPair>().second.as_<EVector>().size();
+
+    // Check that all the sequences have the same length
+    for(int i=1;i<A.size();i++)
+	assert(L == A[i].as_<EPair>().second.as_<EVector>().size());
+
     column_map M;
     vector<vector<int>> columns;
     vector<int> counts;
-    vector<int> mapping(A.length());
-    for(int c=0;c<A.length();c++)
-        mapping[c] = add_column(M, site_pattern(A,n,c), columns, counts);
+    vector<int> mapping(L);
+    for(int c=0;c<L;c++)
+        mapping[c] = add_column(M, site_pattern(A,c), columns, counts);
 
     assert(counts.size() == columns.size());
     return {columns, counts, mapping};
 }
 
-EVector alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, int n_leaves)
+EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& patterns)
 {
+    int n_leaves = old.size();
+
     assert(n_leaves == patterns[0].size());
 
     int L = patterns.size();
@@ -415,7 +422,7 @@ EVector alignment_from_patterns(const alignment& old, const vector<vector<int>>&
 	EVector row(L);
         for(int c=0;c<L;c++)
             row[c] = patterns[c][i];
-	String name(old.seq(i).name);
+	const String&  name( old[i].as_<EPair>().first.as_<String>() );
 	A[i] = EPair(name,row);
     }
 
@@ -423,32 +430,22 @@ EVector alignment_from_patterns(const alignment& old, const vector<vector<int>>&
 }
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
-std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const alignment& A, int n)
+std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const EVector& A)
 {
-    if (A.length() == 0)
-    {
-	EVector A2(n);
-	for(int i=0;i<n;i++)
-	{
-	    String name(A.seq(i).name);
-	    A2[i] = EPair(name,EVector());
-	}
-        return {A2,{},{}};
-    }
+    if (A.size() == 0)
+        return {{},{},{}};
 
-    auto [patterns, counts, mapping] = compress_site_patterns(A, n);
-    return {alignment_from_patterns(A, patterns, n), counts, mapping};
+    auto [patterns, counts, mapping] = compress_site_patterns(A);
+    return {alignment_from_patterns(A, patterns), counts, mapping};
 }
 
 
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& A1 = arg0.as_checked<alignment>();
+    auto& A1 = arg0.as_checked<EVector>();
 
-    int n = A1.n_sequences();
-
-    auto [A,counts,mapping] = compress_alignment(A1,n);
+    auto [A,counts,mapping] = compress_alignment(A1);
 
     object_ptr<EPair> tmp23(new EPair);
     tmp23->first = EVector(counts);
