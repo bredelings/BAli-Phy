@@ -246,7 +246,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       node_sequences = fmap fst node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree sequences tree
+      node_sequences0 = labelToNodeMap (getSequences sequence_data) tree
 
       -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
       -- OK, so how are we going to do this?
