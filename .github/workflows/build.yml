@@ -242,7 +242,7 @@ jobs:
     - name: Test
       run: |
         export seed=$RANDOM
-        if [ "${{ matrix.name }}" = "windows" ]; then
+        if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
           BALIPHY="wine bali-phy"
         else
@@ -258,15 +258,18 @@ jobs:
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
 
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.
+        debugmachine=false
         case "${{ matrix.name }}" in
-          *-DEBUG_MACHINE) exit ;;
+          *-DEBUG_MACHINE) debugmachine=true ;;
         esac
 
-        echo ::group::Test suite
-        cd tests
-        ./run-tests.py ${BALIPHY} --seed=$seed
-        cd
-        echo ::endgroup::
+        if [ "$debugmachine" = "false" ] ; then
+            echo ::group::Test suite
+            cd tests
+            ./run-tests.py ${BALIPHY} --seed=$seed
+            cd
+            echo ::endgroup::
+        fi
 
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
