@@ -240,10 +240,9 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       (isequences, column_counts, mapping) = compress_alignment (getSequences sequence_data)
       -- stop going through Alignment
 
-      compressed_sequences = [ (name, (strip_gaps seq, bitmask_from_sequence seq)) | (name,seq) <- isequences]
-
-      node_seqs_bits = fromMaybe (error "No label") <$> labelToNodeMap compressed_sequences tree
-      node_sequences = fmap fst node_seqs_bits
+      node_isequences = fromMaybe (error "No label") <$> labelToNodeMap isequences tree
+      node_seqs_bits = (\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$> node_isequences
+      node_sequences = fst <$> node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
       node_sequences0 = labelToNodeMap (getSequences sequence_data) tree
@@ -273,11 +272,11 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               smap
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
                  | n_nodes == 1   = let n1 = head $ getNodes tree
-                                        s1 = node_sequences IntMap.! n1
+                                        s1 = node_isequences IntMap.! n1
                                     in peel_likelihood_1_SEV s1 alphabet f column_counts
                  | n_nodes == 2   = let b1 = head $ getEdges tree
-                                        s1 = node_sequences IntMap.! (sourceNode tree b1)
-                                        s2 = node_sequences IntMap.! (targetNode tree b1)
+                                        s1 = node_isequences IntMap.! (sourceNode tree b1)
+                                        s2 = node_isequences IntMap.! (targetNode tree b1)
                                     in peel_likelihood_2_SEV s1 s2 alphabet (transition_ps IntMap.! b1) f column_counts
 
 --    This also needs the map from columns to compressed columns:
