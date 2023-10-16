@@ -29,11 +29,18 @@ import Probability.Distribution.List -- for independent
 -- 4 - likelihood
 -- 5 - weightedfrequencymatrix
 -- 6 - state -> letter
--- 7 - sequences as EVector
+-- 7 - sequences as EVector Int
 -- 8 - alphabet
 -- 9 - n_states
 -- 10 - n_base_models
 -- 11 - ?parsimony -- used through haskell, not parameters.cc
+
+-- Some of these things could be access through the distribution arguments:
+-- 6. state -> letter
+-- 7. sequences as EVector Int
+-- 8. alphabet
+-- 9. n_states
+-- 10. n_base_models
 
 
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
@@ -67,41 +74,18 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
     }
 
 {- TODO:
-Switch from Sequence to AlignedCharacterData / UnalignedCharacterData
--}
-
-{- NOTE: aligned/unaligned character data object.
-
-OK, so I'd like to have some kind of character data type (or type class) that is not in Text form.
-It should be possible to print it to FASTA.
-
-If we sample UNALIGNED character data from ctmc_on_tree, then we need to be able to combine it with an alignment to
-print to sampled sequences and the alignment together.
-
-One possibility would be something like:
-
-  data CharacterData = CharacterData Alphabet (Map Text (EVector Int))
-
-  instance ToFasta CharacterData
-
-Currently, it seems like I'm using [Sequence] as a way of passing around the data.
--}
-
-{- NOTE: Aligned and Unaligned character data
-
-Do I want to have two different versions for aligned and unaligned character data.
-
--- All sequences should be the same length!
-data AlignedCharacterData = Aligned CharacterData
-
--- No gaps!
-data UnalignedCharacterData = Unaligned CharacterData
-
+ Pass in AlignedCharacterData / UnalignedCharacterData instead of Sequences
 -}
 
 {- NOTE: How should we represent ancestral states?
 
-Currently we are representing them as Text.  Should we instead use Aligned/UnalignedCharacterData?
+Currently we are representing them as Text.
+
+Can we switch to representing them as Aligned/UnalignedCharacterData?
+
+* We need a way to convert CharacterData to Text (as Fasta).
+
+* We would need a way to convert UnalignedCharacterData to AlignedCharacterData, given an AlignmentOnTree.
 
 -}
 
