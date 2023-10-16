@@ -109,7 +109,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences' = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap sequences tree
+      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap tree sequences
       Unaligned (CharacterData _ sequences) = mkUnalignedCharacterData alphabet sequences'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
@@ -217,15 +217,15 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let sequence_data = mkAlignedCharacterData alphabet sequences
-      (isequences, column_counts, mapping) = compress_alignment (getSequences sequence_data)
+      (isequences, column_counts, mapping) = compress_alignment $ getSequences sequence_data
       -- stop going through Alignment
 
-      node_isequences = fromMaybe (error "No label") <$> labelToNodeMap isequences tree
+      node_isequences = fromMaybe (error "No label") <$> labelToNodeMap tree isequences
       node_seqs_bits = (\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$> node_isequences
       node_sequences = fst <$> node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = labelToNodeMap (getSequences sequence_data) tree
+      node_sequences0 = labelToNodeMap tree $ getSequences sequence_data
 
       -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
       -- OK, so how are we going to do this?
