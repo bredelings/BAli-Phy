@@ -111,7 +111,7 @@ const data_partition_constants& data_partition::DPC() const
 
 std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return property(9).value().as_<PtrBox<alphabet>>();
+    return property(8).value().as_<PtrBox<alphabet>>();
 }
 
 
@@ -137,7 +137,7 @@ bool data_partition::has_IModel() const
 
 object_ptr<const EVector> data_partition::get_sequence(int i) const
 {
-    return property(8)[i].value().as_ptr_to<EVector>();
+    return property(7)[i].value().as_ptr_to<EVector>();
 }
 
 object_ptr<const EVector> data_partition::transition_P(int b) const
@@ -169,22 +169,22 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(11).value().as_int();
+    return property(10).value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(10).value().as_int();
+    return property(9).value().as_int();
 }
 
 object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix() const
 {
-    return property(6).value().as_ptr_to<Box<Matrix>>();
+    return property(5).value().as_ptr_to<Box<Matrix>>();
 }
 
 object_ptr<const EVector> data_partition::state_letters() const
 {
-    return property(7).value().as_ptr_to<EVector>();
+    return property(6).value().as_ptr_to<EVector>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const

@@ -27,14 +27,13 @@ import Probability.Distribution.List -- for independent
 -- 2 - CLVs
 -- 3 - ?ancestral states -- used through haskell, not parameters.cc
 -- 4 - likelihood
--- 5 - ??  taxa
--- 6 - weightedfrequencymatrix
--- 7 - state -> letter
--- 8 - sequences as EVector
--- 9 - alphabet
--- 10 - n_states
--- 11 - n_base_models
--- 12 - ?parsimony -- used through haskell, not parameters.cc
+-- 5 - weightedfrequencymatrix
+-- 6 - state -> letter
+-- 7 - sequences as EVector
+-- 8 - alphabet
+-- 9 - n_states
+-- 10 - n_base_models
+-- 11 - ?parsimony -- used through haskell, not parameters.cc
 
 
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
@@ -43,7 +42,6 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_cond_likes :: IntMap CondLikes,
       prop_anc_seqs :: Text,
       prop_likelihood :: LogDouble,
-      prop_taxa :: IntMap (CMaybe CPPString),  -- Is this needed?
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
       prop_leaf_sequences :: IntMap (EVector Int),
@@ -59,7 +57,6 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_cond_likes :: IntMap CondLikes,
       prop_fa_anc_seqs :: Text,
       prop_fa_likelihood :: LogDouble, -- Is this needed?
-      prop_fa_taxa :: IntMap (CMaybe CPPString),
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
       prop_fa_leaf_sequences :: IntMap (EVector Int),
@@ -128,7 +125,6 @@ annotated_subst_like_on_tree tree alignment smodel sequences' = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
       node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap sequences tree
       Unaligned (CharacterData _ sequences) = mkUnalignedCharacterData alphabet sequences'
       alphabet = getAlphabet smodel
@@ -169,7 +165,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences' = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
@@ -258,7 +254,6 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       -- So... actually it looks like we already HAVE a minimally_connect_leaf_characters function!!!
 
       n_nodes = numNodes tree
-      taxa = fmap (cMaybe . fmap Text.toCppString) $ get_labels tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -309,7 +304,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
