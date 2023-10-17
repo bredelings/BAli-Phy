@@ -7,7 +7,7 @@ import Tree
 import Data.BitVector
 import Data.Foldable
 import Data.Array
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromMaybe)
 import Parameters
 import Foreign.Vector
 import Foreign.Pair
@@ -212,3 +212,9 @@ instance ToFasta UnalignedCharacterData where
 
 instance ToFasta AlignedCharacterData where
     toFasta (Aligned d) = toFasta d
+
+align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterData alphabet alignedSeqs)
+    where AlignmentOnTree tree _ _ _ = alignment
+          seqsOnTree = fromMaybe (error "No label") <$> labelToNodeMap tree seqs
+          alignedSeqsOnTree = alignedSequences alignment seqsOnTree
+          alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
