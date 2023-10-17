@@ -100,3 +100,5 @@ mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet 
 
 -- We should check that the sequences are all the same length and error out otherwise.
 mkAlignedCharacterData alphabet sequences = Aligned $ mkCharacterData alphabet sequences
+
+unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, strip_gaps s) | (l,s) <- sequences])
