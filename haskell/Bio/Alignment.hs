@@ -123,11 +123,11 @@ foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignmen
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
     where sites' = list_to_vector $ map (\(x,y) -> c_pair x y) sites
 
-alignmentOnTreeFromSequences tree sequences alphabet = AlignmentOnTree tree numSequences lengths pairwiseAs
+alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (EVector Int))
-          observedSequences = fmap (fmap $ sequenceToAlignedIndices alphabet) $ getSequencesOnTree sequences tree
+          observedSequences = labelToNodeMap tree $ getSequences sequences
           allSequences = minimally_connect_characters' observedSequences tree
-          numSequences = length sequences
+          numSequences = length $ getSequences sequences
           lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ strip_gaps $ allSequences IntMap.! node)
           bits = fmap bitmask_from_sequence' allSequences
           alignmentForBranch b = pairwise_alignment_from_bits (bits IntMap.! source) (bits IntMap.! target)

@@ -452,7 +452,7 @@ std::string generate_atmodel_program(const variables_map& args,
             expression_ref alphabet = {var("getAlphabet"),smodel};
             if (fixed.count("alignment"))
             {
-                program.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var, alphabet});
+                program.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var});
             }
             else
             {
