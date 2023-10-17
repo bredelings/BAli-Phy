@@ -51,3 +51,9 @@ we could do something like:
 
 The problem with this is that we can only sample the alignments for branches going away from the root.
 -}
+
+instance Dist d => HasAnnotatedPdf (IndelsOnTree t d) where
+    annotated_densities dist _ = undefined
+
+instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLengths t) => Sampleable (IndelsOnTree t d) where
+    sample dist = RanDistribution2 dist do_nothing
