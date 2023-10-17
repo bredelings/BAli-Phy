@@ -48,38 +48,33 @@ getImodel = do
 
   return $ LongIndels mu lambda meanLength
 
-main = do
-  -- 1. Read the tree and get the starting sequence length
-  args <- getArgs
-
-  rtree <- getTree args
-
-  let startLength = getStartLength args
+model rootedTree startLength = do
 
   smodel <- getSmodel
 
   imodel <- getImodel
 
-  -- 4. Sample the sequences and their alignment
-  alignment <- sampleIO $ IndelsOnTree rtree imodel startLength
---  putStrLn $ "lengths = " ++ show (sequence_lengths alignment)
---  putStrLn $ show $ pairwise_alignments alignment
+  -- Sample the sequences and their alignment
+  alignment <- sampleIO $ IndelsOnTree rootedTree imodel startLength
 
-  -- 5. Sample ancestral sequence STATES
-  sequences <- sampleIO $ ctmc_on_tree rtree alignment smodel
+  -- Sample ancestral sequence STATES
+  sequences <- sampleIO $ ctmc_on_tree rootedTree alignment smodel
 
-  -- 6. Print the aligned sequences
-  T.putStr $ toFasta $ align alignment sequences
+  -- Print the aligned sequences
+  return $ align alignment sequences
 
-{-
-  -- putStrLn $ "componentStateSequences = " ++ show componentStateSequences
 
-  -- 5. Sample aligned sequences
-  sequences <- sampleIO $ ctmc_on_tree rtree alignment smodel
-  putStrLn "FASTA ="
-  sequence [T.putStr (fastaSeq s)|  s <- sequences]
--}
-  return ()
+main = do
+  -- 1. Read the tree and get the starting sequence length
+  args <- getArgs
+
+  rootedTree <- getTree args
+
+  let startLength = getStartLength args
+
+  alignedSequences <- model rootedTree startLength
+
+  T.putStr $ toFasta $ alignedSequences
 
 
   
