@@ -237,7 +237,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     for(int i=0;i<n_partitions;i++)
     {
-	int g = (i_mapping[i])?0:1;
+	int g = (i_mapping[i] and not fixed.contains("alignment"))?0:1;
 	partition_group[i] = g;
 	partition_index[i] = partition_group_size[g]++;
     }
@@ -471,7 +471,10 @@ std::string generate_atmodel_program(const variables_map& args,
         else
             distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
 	var properties("properties"+part_suffix);
-	program.perform(properties, {var("observe"),sequence_data_var,distribution});
+	expression_ref sequence_data = sequence_data_var;
+	if (fixed.contains("alignment") and i_mapping[i])
+	    sequence_data = {var("unalign"), sequence_data};
+	program.perform(properties, {var("observe"),sequence_data,distribution});
 
         program.empty_stmt();
 
@@ -654,7 +657,7 @@ std::string generate_atmodel_program(const variables_map& args,
             E = {var("<$>"), {var("select_range"),String(range)}, E};
 
 	// Convert to CharacterData
-	if (i_mapping[0])
+	if (partition_group[0] == 0)
 	    E = {var("<$>"),{var("mkUnalignedCharacterData"),alphabet_exps[0]}, E};
 	else
 	    E = {var("<$>"),{var("mkAlignedCharacterData"),alphabet_exps[0]}, E};
@@ -706,7 +709,7 @@ std::string generate_atmodel_program(const variables_map& args,
                 expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
                 if (not filename_ranges[i].second.empty())
                     loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-		if (i_mapping[i])
+		if (partition_group[i] == 0)
 		{
 		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
 		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
