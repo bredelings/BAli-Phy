@@ -52,6 +52,9 @@ we could do something like:
 The problem with this is that we can only sample the alignments for branches going away from the root.
 -}
 
+-- PROBLEM! Can we somehow only require HasAnnotatedPdf for RanDistribution2 when we are running
+--          it in the MCMC interpreter?
+
 instance Dist d => HasAnnotatedPdf (IndelsOnTree t d) where
     annotated_densities dist _ = undefined
 
