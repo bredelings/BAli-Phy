@@ -158,11 +158,6 @@ getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequen
                                      Just sequence -> Just sequence
                                      Nothing -> error $ "No such sequence " ++ Text.unpack label
 
-foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
-instance Show VectorPairIntInt where
-    show = unpack_cpp_string . showVectorPairIntInt
-
-
 getLabelled :: HasLabels t => t -> (Text -> a -> b) -> IntMap a -> [b]
 getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
     go (node, thing) = case get_label tree node of
@@ -172,6 +167,11 @@ getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
 sequencesFromTree tree isequences = [(label, isequence) | n <- leaf_nodes tree ++ internal_nodes tree,
                                                              let label = add_ancestral_label n (get_labels tree),
                                                              let isequence = isequences IntMap.! n]
+
+foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
+instance Show VectorPairIntInt where
+    show = unpack_cpp_string . showVectorPairIntInt
+
 
 -- Ideally we'd like to do
 --    type NodeAlignment = EPair Int BranchAlignments
