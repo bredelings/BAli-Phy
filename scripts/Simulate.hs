@@ -66,12 +66,10 @@ main = do
 --  putStrLn $ show $ pairwise_alignments alignment
 
   -- 5. Sample ancestral sequence STATES
-  stateSequences <- (extractStates <$>) <$> sampleComponentStates rtree alignment smodel
-  let alignedStateSequences = alignedSequences alignment stateSequences
-      alignedLetterSequences = fmap (statesToLetters (stateLetters smodel)) alignedStateSequences
-      alignedTextSequences = fmap (sequenceToText dna) alignedLetterSequences
-  let fasta = fastaSeqs $ getLabelled rtree Sequence alignedTextSequences
-  T.putStr fasta
+  sequences <- sampleIO $ ctmc_on_tree rtree alignment smodel
+
+  -- 6. Print the aligned sequences
+  T.putStr $ toFasta $ align alignment sequences
 
 {-
   -- putStrLn $ "componentStateSequences = " ++ show componentStateSequences
