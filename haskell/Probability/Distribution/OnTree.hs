@@ -139,8 +139,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
                                             2 -> node_sequences
                                             _ -> fmap extractStates ancestralComponentStateSequences
 
-      fasta = let stateSequences = alignedSequences alignment ancestral_sequences
-              in fastaTree tree (fmap (sequenceToText alphabet .  statesToLetters smap) stateSequences)
+      ancestralSequences = CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -148,7 +147,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls fasta likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls (toFasta ancestralSequences) likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
@@ -247,8 +246,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
-                              1 -> Text.concat [fastaSeq $ (label, sequenceToText alphabet s) | (label,s) <- getSequences sequenceData ]
-                              2 -> Text.concat [fastaSeq $ (label, sequenceToText alphabet s) | (label,s) <- getSequences sequenceData ]
+                              1 -> sequenceData
+                              2 -> sequenceData
                               _ -> let ancestralComponentStateSequences :: IntMap VectorPairIntInt
                                        ancestralComponentStateSequences = sample_ancestral_sequences_SEV
                                          tree
@@ -261,13 +260,13 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
                                          smap
                                          mapping
                                        ancestralStateSequences :: IntMap (EVector Int)
-                                       ancestralStateSequences = fmap extractStates ancestralComponentStateSequences
+                                       ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
                                        ancestralStateSequences' = minimally_connect_characters
                                                                         node_sequences0
                                                                         tree
                                                                         ancestralStateSequences
-                                       ancestralLetterSequences = fmap (sequenceToText alphabet . statesToLetters smap) ancestralStateSequences'
-                                   in fastaTree tree ancestralLetterSequences
+                                       ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
+                                   in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 
       n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
 
@@ -275,7 +274,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls (toFasta ancestral_sequences) likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 

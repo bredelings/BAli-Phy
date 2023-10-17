@@ -169,9 +169,9 @@ getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
 
-fastaTree tree sequences =  fastaSeqs [(label, sequence) | n <- leaf_nodes tree ++ internal_nodes tree,
+sequencesFromTree tree isequences = [(label, isequence) | n <- leaf_nodes tree ++ internal_nodes tree,
                                                              let label = add_ancestral_label n (get_labels tree),
-                                                             let sequence = sequences IntMap.! n]
+                                                             let isequence = isequences IntMap.! n]
 
 -- Ideally we'd like to do
 --    type NodeAlignment = EPair Int BranchAlignments
@@ -200,3 +200,15 @@ constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw 
 alignedSequences alignment@(AlignmentOnTree tree _ _ _) sequences = getNodesSet tree & IntMap.fromSet stateSequenceForNode
     where positionSequences = constructPositionSequences alignment
           stateSequenceForNode n = substituteLetters (sequences IntMap.! n) (positionSequences IntMap.! n)
+
+class ToFasta a where
+    toFasta :: a -> Text
+
+instance ToFasta CharacterData where
+    toFasta (CharacterData a sequences) = fastaSeqs [(label,sequenceToText a sequence) | (label,sequence) <- sequences]
+
+instance ToFasta UnalignedCharacterData where
+    toFasta (Unaligned d) = toFasta d
+
+instance ToFasta AlignedCharacterData where
+    toFasta (Aligned d) = toFasta d
