@@ -48,9 +48,7 @@ reorder_sequences names sequences | length names /= length sequences  = error "S
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
     where sequences_map = Map.fromList [ (fst sequence, sequence) | sequence <- sequences ]
 
-sequence_length a sequence = vector_size $ sequence_to_indices a sequence
-
-get_sequence_lengths a sequences = Map.fromList [ (fst sequence, sequence_length a sequence) | sequence <- sequences]
+get_sequence_lengths a sequenceData = Map.fromList [ (label, vector_size isequence) | (label, isequence) <- getSequences $ sequenceData]
 
 foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
 foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int

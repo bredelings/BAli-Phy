@@ -168,6 +168,7 @@ std::string generate_atmodel_program(const variables_map& args,
     set<string> imports;
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
+    imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Probability.Distribution.OnTree");       // for ctmc_on_tree{,fixed_A}
@@ -228,13 +229,46 @@ std::string generate_atmodel_program(const variables_map& args,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     // M1. Taxa
+    // Partitions are classified into n groups.
+    // Currently n = 2, and groups are {unaligned, aligned}.
+    vector<int> partition_index(n_partitions);
+    vector<int> partition_group(n_partitions);
+    vector<int> partition_group_size(2);
+
+    for(int i=0;i<n_partitions;i++)
+    {
+	int g = (i_mapping[i])?0:1;
+	partition_group[i] = g;
+	partition_index[i] = partition_group_size[g]++;
+    }
+
+    auto unaligned_sequence_data = var("sequenceData");
+    auto aligned_sequence_data = var("sequenceData");
+
+    if (partition_group_size[0] > 0 and partition_group_size[1] > 0)
+    {
+	unaligned_sequence_data = var("unalignedSequenceData");
+	aligned_sequence_data = var("alignedSequenceData");
+    }
+
+    auto getSequenceData = [&](int p) -> expression_ref
+    {
+	assert(n_partitions > 0);
+
+	int group = partition_group[p];
+
+	auto sequenceData = (group == 0) ? unaligned_sequence_data : aligned_sequence_data;
+
+	// Only subscript if the group contains more than one element.
+	if (partition_group_size[group] == 1)
+	    return sequenceData;
+	else
+	    return {var("!!"), sequenceData, partition_index[p]};
+    };
 
     if (n_partitions > 0)
     {
-        expression_ref sequence_data1 = var("sequenceData");
-        if (n_partitions > 1)
-            sequence_data1 = {var("!!"),sequence_data1,0};
-        program.let(taxon_names_var, {var("map"),var("fst"),sequence_data1});
+        program.let(taxon_names_var, {var("getTaxa"), getSequenceData(0)});
         program.empty_stmt();
     }
 
@@ -395,9 +429,7 @@ std::string generate_atmodel_program(const variables_map& args,
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
         expression_ref smodel = smodels[smodel_index];
-        expression_ref sequence_data_var = var("sequenceData");
-        if (n_partitions > 1)
-            sequence_data_var = {var("!!"),sequence_data_var,i};
+        expression_ref sequence_data_var = getSequenceData(i);
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
         var branch_dist_tree("tree" + part_suffix);
@@ -528,19 +560,29 @@ std::string generate_atmodel_program(const variables_map& args,
     for(auto& [i,a,l]: alignments)
         alignment_loggers.push_back(l);
 
+    var sequences("sequences");
     auto model = var("model");
-    auto sequence_data = var("sequenceData");
-    auto topology = var("topology");
+
+    expression_ref model_fn = model;
+
+    // Pass in the sequence data for the two groups.
+    if (partition_group_size[0] > 0)
+	model_fn = {model_fn, unaligned_sequence_data};
+    if (partition_group_size[1] > 0)
+	model_fn = {model_fn, aligned_sequence_data};
+
+    // Pass in the fixed tree or topology
     auto tree = var("tree");
+    auto topology = var("topology");
+    if (fixed.count("tree"))
+        model_fn = {model_fn, tree};
+    else if (fixed.count("topology"))
+        model_fn = {model_fn, topology};
+
+    // Pass in the loggers
     var jsonLogger("logParamsJSON");
     var tsvLogger("logParamsTSV");
     auto treeLogger = var("logTree");
-    expression_ref model_fn = {model,sequence_data};
-    var loggers_var("loggers");
-    if (fixed.count("tree"))
-        model_fn = {model_fn,tree};
-    else if (fixed.count("topology"))
-        model_fn = {model_fn, topology};
     if (not args.count("test"))
     {
 	if (log_formats.count("tsv"))
@@ -553,6 +595,7 @@ std::string generate_atmodel_program(const variables_map& args,
         model_fn = {model_fn, get_list(alignment_loggers)};
     }
 
+    var loggers_var("loggers");
     program.let(loggers_var, get_list(program_loggers));
     program.empty_stmt();
 
@@ -597,15 +640,26 @@ std::string generate_atmodel_program(const variables_map& args,
     if (not args.count("test"))
         main.perform(get_list(prog_args), var("getArgs"));
 
+    auto unaligned_partitions = unaligned_sequence_data;
+    auto aligned_partitions = aligned_sequence_data;
     if (n_partitions == 1)
     {
         auto [filename, range] = filename_ranges[0];
-        expression_ref E = {var("load_sequences"),String(filename.string())};
-        if (not range.empty())
-            E = {var("<$>"), {var("select_range"),String(range)}, E};
-        main.empty_stmt();
 
-        main.perform(sequence_data, E);
+	// Load the sequences
+	expression_ref E = {var("load_sequences"),String(filename.string())};
+
+	// Select range
+	if (not range.empty())
+            E = {var("<$>"), {var("select_range"),String(range)}, E};
+
+	// Convert to CharacterData
+	if (i_mapping[0])
+	    E = {var("<$>"),{var("mkUnalignedCharacterData"),alphabet_exps[0]}, E};
+	else
+	    E = {var("<$>"),{var("mkAlignedCharacterData"),alphabet_exps[0]}, E};
+
+        main.perform(var("sequenceData"), E);
     }
     else
     {
@@ -628,9 +682,6 @@ std::string generate_atmodel_program(const variables_map& args,
             main.let(filenames_var,get_list(filenames_));
         }
 
-        if (index_for_filename.size() == n_partitions and not any_ranges)
-            main.perform(sequence_data,{var("mapM"), var("load_sequences"), filenames_var});
-        else
         {
             // Main.2: Emit let filenames_to_seqs = ...
             var filename_to_seqs("seqs");
@@ -640,22 +691,42 @@ std::string generate_atmodel_program(const variables_map& args,
             main.empty_stmt();
 
             // Main.3. Emit let sequence_data<n> = 
-            vector<expression_ref> partition_sequence_data;
+            vector<var> unaligned_sequence_partitions;
+            vector<var> aligned_sequence_partitions;
             for(int i=0;i<n_partitions;i++)
             {
+		int group = partition_group[i];
                 string part = std::to_string(i+1);
+
                 var partition_sequence_data_var("sequenceData"+part);
+		if (partition_group_size[group] == 1)
+		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
+
                 int index = index_for_filename.at( filename_ranges[i].first );
                 expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
                 if (not filename_ranges[i].second.empty())
                     loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+		if (i_mapping[i])
+		{
+		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
+		}
+		else
+		{
+		    loaded_sequences = {var("mkAlignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
+		}
                 main.let(partition_sequence_data_var, loaded_sequences);
-                partition_sequence_data.push_back(partition_sequence_data_var);
                 main.empty_stmt();
             }
 
             // Main.4. Emit let sequence_data = ...
-            main.let(sequence_data, get_list(partition_sequence_data));
+	    if (unaligned_sequence_partitions.size() > 1)
+		main.let(unaligned_partitions, get_list(unaligned_sequence_partitions));
+
+	    if (aligned_sequence_partitions.size() > 1)
+		main.let(aligned_partitions, get_list(aligned_sequence_partitions));
+
             main.empty_stmt();
         }
     }

@@ -25,7 +25,7 @@ branch_length_dist zero_p topology b | is_internal_branch topology b = branch_di
 
 model seq_data = do
 
-    let taxa = map fst seq_data
+    let taxa = getTaxa seq_data
 
     zero_p <- prior $ beta 0.1 1
 
@@ -55,6 +55,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- load_sequences filename
+    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
 
     return $ model seq_data

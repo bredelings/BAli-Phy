@@ -33,7 +33,7 @@ branch_length_dist topology b = gamma 0.5 (2.0 / fromIntegral n) where n = numBr
 
 model seq_data = do
 
-    let taxa = map fst seq_data
+    let taxa = getTaxa seq_data
 
     scale <- prior $ gamma 0.5 2.0
 
@@ -50,6 +50,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- load_sequences filename
+    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
 
     return $ model seq_data

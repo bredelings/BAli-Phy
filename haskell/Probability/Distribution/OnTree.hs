@@ -104,13 +104,12 @@ For sampling from phyloCTMCFixedA, we might want two versions:
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
-annotated_subst_like_on_tree tree alignment smodel sequences' = do
+annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap tree sequences
-      Unaligned (CharacterData _ sequences) = mkUnalignedCharacterData alphabet sequences'
+      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap tree (getSequences sequenceData)
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -157,7 +156,7 @@ data CTMCOnTree t s = CTMCOnTree t (AlignmentOnTree t) s
 
 
 instance Dist (CTMCOnTree t s) where
-    type Result (CTMCOnTree t s) = [Sequence]
+    type Result (CTMCOnTree t s) = UnalignedCharacterData
     dist_name _ = "ctmc_on_tree"
 
 -- TODO: make this work on forests!                  -
@@ -201,9 +200,9 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel
 
-      let sequenceForNode label stateSequence = (label, sequenceToText alphabet . statesToLetters smap $ extractStates stateSequence)
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
-      return $ getLabelled tree sequenceForNode stateSequences
+      return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
 
 ----------------------------------------
@@ -213,29 +212,17 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotated_subst_likelihood_fixed_A tree smodel sequences = do
+annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
-  let sequence_data = mkAlignedCharacterData alphabet sequences
-      (isequences, column_counts, mapping) = compress_alignment $ getSequences sequence_data
-      -- stop going through Alignment
+  let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
       node_isequences = fromMaybe (error "No label") <$> labelToNodeMap tree isequences
       node_seqs_bits = (\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$> node_isequences
       node_sequences = fst <$> node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = labelToNodeMap tree $ getSequences sequence_data
-
-      -- (compressed_node_sequences, column_counts', mapping') = compress_sequences node_sequence0
-      -- OK, so how are we going to do this?
-      -- * turn the sequences into an EIntMap (EVector Int)
-      -- * run the pattern compression on the EIntMap (EVector Int)
-      -- * return the compressed EIntMap (EVector Int), an EVector Int for the orig->compress mapping, and an EVector Int for the column counts).
-      -- * convert the EIntMap (EVector Int) back to an IntMap EVector Int for the compressed sequences.
-
-      -- OK, so now we need to get the ancestral sequences as an IntMap (EVector Int)
-      -- So... actually it looks like we already HAVE a minimally_connect_leaf_characters function!!!
+      node_sequences0 = labelToNodeMap tree $ getSequences sequenceData
 
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
@@ -260,8 +247,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
-                              1 -> Text.concat [fastaSeq s | s <- sequences]
-                              2 -> Text.concat [fastaSeq s | s <- sequences]
+                              1 -> Text.concat [fastaSeq $ (label, sequenceToText alphabet s) | (label,s) <- getSequences sequenceData ]
+                              2 -> Text.concat [fastaSeq $ (label, sequenceToText alphabet s) | (label,s) <- getSequences sequenceData ]
                               _ -> let ancestralComponentStateSequences :: IntMap VectorPairIntInt
                                        ancestralComponentStateSequences = sample_ancestral_sequences_SEV
                                          tree
@@ -295,7 +282,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 data CTMCOnTreeFixedA t s = CTMCOnTreeFixedA t s
 
 instance Dist (CTMCOnTreeFixedA t s) where
-    type Result (CTMCOnTreeFixedA t s) = [Sequence]
+    type Result (CTMCOnTreeFixedA t s) = AlignedCharacterData
     dist_name _ = "ctmc_on_tree_fixed_A"
 
 -- TODO: make this work on forests!                  -

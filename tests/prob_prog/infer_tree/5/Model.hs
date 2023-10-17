@@ -31,7 +31,7 @@ tree_prior taxa = do
 
 
 model seq_data = do
-    let taxa = zip [0..] $ map fst seq_data
+    let taxa = zip [0..] $ getTaxa seq_data
 
     (tree  , tree_loggers) <- tree_prior taxa
 
@@ -46,6 +46,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- load_sequences filename
+    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
 
     return $ model seq_data

@@ -3,6 +3,7 @@ module Model where
 import           Probability
 import           Bio.Alignment
 import           Bio.Alphabet
+import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
@@ -13,7 +14,7 @@ import           System.Environment  -- for getArgs
 branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = numBranches topology
 
 model seq_data = do
-    let taxa            = map fst seq_data
+    let taxa            = getTaxa seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
     -- Tree
@@ -54,6 +55,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- load_sequences filename
+    seq_data <- mkUnalignedCharacterData dna <$> load_sequences filename
 
     return $ model seq_data
