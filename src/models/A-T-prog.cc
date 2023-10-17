@@ -494,7 +494,7 @@ std::string generate_atmodel_program(const variables_map& args,
                 program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
                 var anc_alignment("anc_alignment"+part_suffix);
-                program.let(anc_alignment, {var("prop_anc_seqs"), properties} );
+                program.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties}} );
                 alignment_exp = anc_alignment;
 
                 var substs("substs"+part_suffix);
@@ -534,7 +534,7 @@ std::string generate_atmodel_program(const variables_map& args,
                     // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
 
                     var anc_alignment("anc_alignment"+part_suffix);
-                    program.let(anc_alignment, {var("prop_fa_anc_seqs"), properties} );
+                    program.let(anc_alignment, {var("toFasta"),{var("prop_fa_anc_seqs"), properties} });
                     alignment_exp = anc_alignment;
                 }
             }

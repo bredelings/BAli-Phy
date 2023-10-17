@@ -47,7 +47,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_cond_likes :: IntMap CondLikes,
-      prop_anc_seqs :: Text,
+      prop_anc_seqs :: AlignedCharacterData,
       prop_likelihood :: LogDouble,
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
@@ -62,7 +62,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_subst_root :: Int,
       prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fa_cond_likes :: IntMap CondLikes,
-      prop_fa_anc_seqs :: Text,
+      prop_fa_anc_seqs :: AlignedCharacterData,
       prop_fa_likelihood :: LogDouble, -- Is this needed?
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
@@ -139,7 +139,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
                                             2 -> node_sequences
                                             _ -> fmap extractStates ancestralComponentStateSequences
 
-      ancestralSequences = CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
       n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
 
@@ -147,7 +147,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls (toFasta ancestralSequences) likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
@@ -245,7 +245,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
                                     in peel_likelihood_2_SEV s1 s2 alphabet (transition_ps IntMap.! b1) f column_counts
 
 --    This also needs the map from columns to compressed columns:
-      ancestral_sequences = case n_nodes of
+      ancestralSequences = case n_nodes of
                               1 -> sequenceData
                               2 -> sequenceData
                               _ -> let ancestralComponentStateSequences :: IntMap VectorPairIntInt
@@ -274,7 +274,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls (toFasta ancestral_sequences) likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
