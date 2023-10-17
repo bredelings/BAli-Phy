@@ -50,15 +50,15 @@ getImodel = do
 
 model rootedTree startLength = do
 
-  smodel <- run_lazy $ getSmodel
+  smodel <- getSmodel
 
-  imodel <- run_lazy $ getImodel
+  imodel <- getImodel
 
   -- Sample the sequences and their alignment
-  alignment <- sampleIO $ IndelsOnTree rootedTree imodel startLength
+  alignment <- sample $ IndelsOnTree rootedTree imodel startLength
 
   -- Sample ancestral sequence STATES
-  sequences <- run_lazy $ sample $ ctmc_on_tree rootedTree alignment smodel
+  sequences <- sample $ ctmc_on_tree rootedTree alignment smodel
 
   -- Print the aligned sequences
   return $ align alignment sequences
@@ -72,7 +72,7 @@ main = do
 
   let startLength = getStartLength args
 
-  alignedSequences <- model rootedTree startLength
+  alignedSequences <- run_lazy $ model rootedTree startLength
 
   T.putStr $ toFasta $ alignedSequences
 
