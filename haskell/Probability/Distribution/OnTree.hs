@@ -203,6 +203,9 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (CTMCOnTree t s) where
+    sample dist = RanDistribution2 dist do_nothing
+
 
 ----------------------------------------
 

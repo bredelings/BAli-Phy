@@ -32,11 +32,11 @@ getStartLength args = read startLength' :: Int
 
 -- Sample substitution model parameters and define the substitution model
 getSmodel = do
-  kappaPur <- sampleIO $ log_normal (log 2) 0.25
+  kappaPur <- sample $ log_normal (log 2) 0.25
 
-  kappaPyr <- sampleIO $ log_normal (log 2) 0.25
+  kappaPyr <- sample $ log_normal (log 2) 0.25
 
-  pi <- sampleIO $ symmetric_dirichlet_on (letters dna) 1
+  pi <- sample $ symmetric_dirichlet_on (letters dna) 2
 
   return $ tn93' dna kappaPur kappaPyr pi
 
@@ -50,15 +50,15 @@ getImodel = do
 
 model rootedTree startLength = do
 
-  smodel <- getSmodel
+  smodel <- run_lazy $ getSmodel
 
-  imodel <- getImodel
+  imodel <- run_lazy $ getImodel
 
   -- Sample the sequences and their alignment
   alignment <- sampleIO $ IndelsOnTree rootedTree imodel startLength
 
   -- Sample ancestral sequence STATES
-  sequences <- sampleIO $ ctmc_on_tree rootedTree alignment smodel
+  sequences <- run_lazy $ sample $ ctmc_on_tree rootedTree alignment smodel
 
   -- Print the aligned sequences
   return $ align alignment sequences
