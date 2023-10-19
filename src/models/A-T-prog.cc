@@ -134,14 +134,14 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
 vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 					     const vector<string>& scaleM_function_for_index,
 					     const expression_ref& tree_var,
-					     do_block& program,
-					     vector<expression_ref>& program_loggers)
+					     do_block& model,
+					     vector<expression_ref>& model_loggers)
 {
     // define tree_length
     var tree_length_var("tlength");
-    program.let(tree_length_var, {var("tree_length"),tree_var});
+    model.let(tree_length_var, {var("tree_length"),tree_var});
     // log |T|
-    program_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
+    model_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
 
     vector<expression_ref> scales;
 
@@ -157,15 +157,15 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 	expression_ref E = var(scaleM_function_for_index[i]);
 
 	// This should still log sub-loggers of the scales, I think.
-	auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
+	auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
 
 	scales.push_back(scale_var);
 
 	// log scale[i]
-	program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
+	model_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
 
 	// log scale[i]*|T|
-	program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
+	model_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
     }
 
     return scales;
@@ -176,8 +176,8 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<string>& SM_function_for_index,
 						    const vector<expression_ref>& alphabet_exps,
 						    const expression_ref& branch_categories,
-						    do_block& program,
-						    vector<expression_ref>& program_loggers)
+						    do_block& model,
+						    vector<expression_ref>& model_loggers)
 {
     // M7. Substitution models
     vector<expression_ref> smodels;
@@ -210,7 +210,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 
         auto smodel_var = var("smodel" + suffix);
         auto log_smodel = var("log_"+smodel_var.name);
-        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), program, program_loggers);
+        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), model, model_loggers);
         smodels.push_back(smodel_var);
     }
     return smodels;
@@ -219,8 +219,8 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
 					     const vector<string>& IM_function_for_index,
 					     const expression_ref& tree_var,
-					     do_block& program,
-					     vector<expression_ref>& program_loggers)
+					     do_block& model,
+					     vector<expression_ref>& model_loggers)
 {
     // M8. Indel models
     vector<expression_ref> imodels;
@@ -241,14 +241,13 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
 
         auto imodel_var = var("imodel" + suffix);
         auto log_imodel = var("log_"+imodel_var.name);
-        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), program, program_loggers);
+        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), model, model_loggers);
         imodels.push_back(imodel_var);
     }
     return imodels;
 }
 
 do_block generate_main(const variables_map& args,
-		       int n_sequences,
 		       const optional<fs::path>& tree_filename,
 		       const vector<pair<fs::path,string>>& filename_ranges,
 		       const vector<expression_ref>& alphabet_exps,
@@ -276,8 +275,6 @@ do_block generate_main(const variables_map& args,
     auto log_formats = get_log_formats(args, args.count("align"));
 
     int n_partitions = filename_ranges.size();
-
-    int n_leaves   = n_sequences;
 
     do_block main;
 
@@ -558,7 +555,7 @@ std::string generate_atmodel_program(const variables_map& args,
         program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
-    do_block program;
+    do_block model;
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -566,7 +563,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
-    vector<expression_ref> program_loggers;
+    vector<expression_ref> model_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     // M1. Taxa
@@ -609,8 +606,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
     if (n_partitions > 0)
     {
-        program.let(taxon_names_var, {var("getTaxa"), getSequenceData(0)});
-        program.empty_stmt();
+        model.let(taxon_names_var, {var("getTaxa"), getSequenceData(0)});
+        model.empty_stmt();
     }
 
     // We could fix the whole tree or just the topology.
@@ -620,7 +617,7 @@ std::string generate_atmodel_program(const variables_map& args,
     // M2. Topology
     auto topology_var = var("topology");
     if (not fixed.count("topology") and not fixed.count("tree"))
-        program.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
+        model.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
 
     // M3. Branch lengths
     if (n_branches > 0 and not fixed.count("tree"))
@@ -630,16 +627,16 @@ std::string generate_atmodel_program(const variables_map& args,
         expression_ref E = {var("sample_"+var_name),topology_var};
         E = {var("RanSamplingRate"),0.0,E};
 
-        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
+        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
     }
     // M4. Branch-length tree
     if (not fixed.count("tree"))
-        program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+        model.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
     else
-        program.let(tree_var, {var("tree")});
+        model.let(tree_var, {var("tree")});
     branch_lengths = {var("IntMap.elems"),branch_lengths};
 
-    program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
+    model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
 
 
     set<string> used_states;
@@ -651,7 +648,7 @@ std::string generate_atmodel_program(const variables_map& args,
     if (used_states.count("branch_categories"))
     {
         var branch_categories_var("branch_categories");
-        program.let(branch_categories_var, { var("foregroundBranches"), tree_var, String("foreground")});
+        model.let(branch_categories_var, { var("foregroundBranches"), tree_var, String("foreground")});
         branch_categories = branch_categories_var;
     }
 
@@ -659,18 +656,18 @@ std::string generate_atmodel_program(const variables_map& args,
     vector<expression_ref> scales;
     if (n_branches > 0)
     {
-	scales = generate_scale_models(scaleMs, scaleM_function_for_index, tree_var, program, program_loggers);
+	scales = generate_scale_models(scaleMs, scaleM_function_for_index, tree_var, model, model_loggers);
 
         if (not fixed.count("tree"))
         {
-            program.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
-            program.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_MH"), get_list(scales), branch_lengths}}}});
+            model.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
+            model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_MH"), get_list(scales), branch_lengths}}}});
         }
     }
 
-    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, program, program_loggers);
-    auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, program, program_loggers);
-    program.empty_stmt();
+    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, model, model_loggers);
+    auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, model, model_loggers);
+    model.empty_stmt();
 
     vector<tuple<int,expression_ref,expression_ref>> alignments; // partition, alignment var, alignment logger
     vector<expression_ref> alignment_lengths;
@@ -694,10 +691,10 @@ std::string generate_atmodel_program(const variables_map& args,
         if (n_branches > 0)
         {
             expression_ref scale = scales[scale_index];
-            program.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
+            model.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
         }
         else
-            program.let(branch_dist_tree, tree_var);
+            model.let(branch_dist_tree, tree_var);
 
         // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment" + part_suffix);
@@ -710,15 +707,15 @@ std::string generate_atmodel_program(const variables_map& args,
             expression_ref alphabet = {var("getAlphabet"),smodel};
             if (fixed.count("alignment"))
             {
-                program.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var});
+                model.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var});
             }
             else
             {
                 var leaf_sequence_lengths("sequence_lengths" + part_suffix);
-                program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
+                model.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
 
                 var properties_A("properties_A"+part_suffix);
-		program.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
             }
         }
 
@@ -732,9 +729,9 @@ std::string generate_atmodel_program(const variables_map& args,
 	expression_ref sequence_data = sequence_data_var;
 	if (fixed.contains("alignment") and i_mapping[i])
 	    sequence_data = {var("unalign"), sequence_data};
-	program.perform(properties, {var("observe"),sequence_data,distribution});
+	model.perform(properties, {var("observe"),sequence_data,distribution});
 
-        program.empty_stmt();
+        model.empty_stmt();
 
         // Model.Partition.4 Logging.
         expression_ref alignment_exp;
@@ -743,20 +740,20 @@ std::string generate_atmodel_program(const variables_map& args,
             if (n_branches > 0)
             {
                 var alignment_length("alignment_length"+part_suffix);
-                program.let(alignment_length, {var("alignment_on_tree_length"), alignment_on_tree} );
+                model.let(alignment_length, {var("alignment_on_tree_length"), alignment_on_tree} );
                 alignment_lengths.push_back(alignment_length);
                 var num_indels("num_indels"+part_suffix);
-                program.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );
+                model.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );
                 total_num_indels.push_back(num_indels);
                 var length_indels("total_length_indels"+part_suffix);
-                program.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
+                model.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
                 var anc_alignment("anc_alignment"+part_suffix);
-                program.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties}} );
+                model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties}} );
                 alignment_exp = anc_alignment;
 
                 var substs("substs"+part_suffix);
-                program.let(substs, {var("prop_n_muts"), properties});
+                model.let(substs, {var("prop_n_muts"), properties});
                 total_substs.push_back(substs);
 
                 sub_loggers.push_back({var("%=%"), String("|A|"), alignment_length });
@@ -769,7 +766,7 @@ std::string generate_atmodel_program(const variables_map& args,
             {
                 var properties_A("properties_A"+part_suffix);
                 var prior_A("prior_A" + part_suffix);
-                program.let(prior_A, {var("probability"),properties_A});
+                model.let(prior_A, {var("probability"),properties_A});
                 sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
             }
 
@@ -782,7 +779,7 @@ std::string generate_atmodel_program(const variables_map& args,
             if (n_branches > 0)
             {
                 var substs("substs"+part_suffix);
-                program.let(substs, {var("prop_fa_n_muts"), properties});
+                model.let(substs, {var("prop_fa_n_muts"), properties});
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
 
@@ -792,39 +789,38 @@ std::string generate_atmodel_program(const variables_map& args,
                     // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
 
                     var anc_alignment("anc_alignment"+part_suffix);
-                    program.let(anc_alignment, {var("toFasta"),{var("prop_fa_anc_seqs"), properties} });
+                    model.let(anc_alignment, {var("toFasta"),{var("prop_fa_anc_seqs"), properties} });
                     alignment_exp = anc_alignment;
                 }
             }
         }
 
         var part_loggers("p"+part+"_loggers");
-        program.let(part_loggers,get_list(sub_loggers));
-        program_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
-        program.empty_stmt();
+        model.let(part_loggers,get_list(sub_loggers));
+        model_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
+        model.empty_stmt();
 
         if (alignment_exp)
             alignments.push_back({i,alignment_exp,var("logA"+part_suffix)});
     }
     if (not alignment_lengths.empty())
-        program_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
+        model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
     if (not total_num_indels.empty())
-        program_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
+        model_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
     if (not total_length_indels.empty())
-        program_loggers.push_back( {var("%=%"), String("|indels|"), {var("sum"),get_list(total_length_indels) }} );
+        model_loggers.push_back( {var("%=%"), String("|indels|"), {var("sum"),get_list(total_length_indels) }} );
     if (not total_substs.empty())
-        program_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
+        model_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
     if (not total_prior_A.empty())
-        program_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
+        model_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
 
     vector<expression_ref> alignment_loggers;
     for(auto& [i,a,l]: alignments)
         alignment_loggers.push_back(l);
 
     var sequences("sequences");
-    auto model = var("model");
 
-    expression_ref model_fn = model;
+    expression_ref model_fn = var("model");
 
     // Pass in the sequence data for the two groups.
     if (partition_group_size[0] > 0)
@@ -857,45 +853,44 @@ std::string generate_atmodel_program(const variables_map& args,
     }
 
     var loggers_var("loggers");
-    program.let(loggers_var, get_list(program_loggers));
-    program.empty_stmt();
+    model.let(loggers_var, get_list(model_loggers));
+    model.empty_stmt();
 
     // Add the logger for scalar parameters
     if (not args.count("test"))
     {
 	if (log_formats.count("tsv"))
 	{
-	    program.empty_stmt();
-	    program.perform({var("$"),var("addLogger"),{tsvLogger,loggers_var}});
+	    model.empty_stmt();
+	    model.perform({var("$"),var("addLogger"),{tsvLogger,loggers_var}});
 	}
 
 	if (log_formats.count("json"))
 	{
-	    program.empty_stmt();
-	    program.perform({var("$"),var("addLogger"),{jsonLogger,loggers_var}});
+	    model.empty_stmt();
+	    model.perform({var("$"),var("addLogger"),{jsonLogger,loggers_var}});
 	}
 
         // Add the tree logger
         if (not fixed.count("tree"))
         {
-            program.empty_stmt();
-            program.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
+            model.empty_stmt();
+            model.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
         }
 
         // Add the alignment loggers.
         if (not alignments.empty())
-            program.empty_stmt();
+            model.empty_stmt();
         for(auto& [i,a,l]: alignments)
-            program.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
+            model.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
     }
-    
-    program.empty_stmt();
-    program.finish_return( loggers_var );
+
+    model.empty_stmt();
+    model.finish_return( loggers_var );
     program_file<<"\n";
-    program_file<<model_fn<<" = "<<program.get_expression().print()<<"\n";
+    program_file<<model_fn<<" = "<<model.get_expression().print()<<"\n";
 
     auto main = generate_main(args,
-			      n_sequences,
 			      tree_filename,
 			      filename_ranges,
 			      alphabet_exps,
