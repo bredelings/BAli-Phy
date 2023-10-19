@@ -131,6 +131,46 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
+vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
+					     const vector<string>& scaleM_function_for_index,
+					     const expression_ref& tree_var,
+					     do_block& program,
+					     vector<expression_ref>& program_loggers)
+{
+    // define tree_length
+    var tree_length_var("tlength");
+    program.let(tree_length_var, {var("tree_length"),tree_var});
+    // log |T|
+    program_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
+
+    vector<expression_ref> scales;
+
+    for(int i=0; i<scaleMs.size(); i++)
+    {
+	// FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
+	//        This would obviate the need to create a Scale1 (etc) prefix here.
+	string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
+	string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
+	string var_name = "scale"+indexsuffix;
+
+	auto code = scaleMs[i].code;
+	expression_ref E = var(scaleM_function_for_index[i]);
+
+	// This should still log sub-loggers of the scales, I think.
+	auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
+
+	scales.push_back(scale_var);
+
+	// log scale[i]
+	program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
+
+	// log scale[i]*|T|
+	program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
+    }
+
+    return scales;
+}
+
 
 vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<optional<int>>& s_mapping,
@@ -178,7 +218,6 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 }
 
 vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
-					     const vector<optional<int>>& i_mapping,
 					     const vector<string>& IM_function_for_index,
 					     const expression_ref& tree_var,
 					     do_block& program,
@@ -396,34 +435,7 @@ std::string generate_atmodel_program(const variables_map& args,
     vector<expression_ref> scales;
     if (n_branches > 0)
     {
-        // define tree_length
-        var tree_length_var("tlength");
-        program.let(tree_length_var, {var("tree_length"),tree_var});
-        // log |T|
-        program_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
-
-        for(int i=0; i<scaleMs.size(); i++)
-        {
-            // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
-            //        This would obviate the need to create a Scale1 (etc) prefix here.
-            string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
-            string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
-            string var_name = "scale"+indexsuffix;
-
-            auto code = scaleMs[i].code;
-            expression_ref E = var(scaleM_function_for_index[i]);
-
-            // This should still log sub-loggers of the scales, I think.
-            auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
-
-            scales.push_back(scale_var);
-
-            // log scale[i]
-            program_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
-
-            // log scale[i]*|T|
-            program_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
-        }
+	scales = generate_scale_models(scaleMs, scaleM_function_for_index, tree_var, program, program_loggers);
 
         if (not fixed.count("tree"))
         {
@@ -433,7 +445,7 @@ std::string generate_atmodel_program(const variables_map& args,
     }
 
     auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, program, program_loggers);
-    auto imodels = generate_indel_models(IMs, i_mapping, IM_function_for_index, tree_var, program, program_loggers);
+    auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, program, program_loggers);
     program.empty_stmt();
 
     vector<tuple<int,expression_ref,expression_ref>> alignments; // partition, alignment var, alignment logger
