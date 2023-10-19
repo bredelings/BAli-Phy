@@ -131,6 +131,84 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     return function_for_index;
 }
 
+
+vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
+						    const vector<optional<int>>& s_mapping,
+						    const vector<string>& SM_function_for_index,
+						    const vector<expression_ref>& alphabet_exps,
+						    const expression_ref& branch_categories,
+						    do_block& program,
+						    vector<expression_ref>& program_loggers)
+{
+    // M7. Substitution models
+    vector<expression_ref> smodels;
+    for(int i=0;i<SMs.size();i++)
+    {
+        string prefix = "S" + convertToString(i+1);
+        string _suffix = (SMs.size()>1)?"_"+convertToString(i+1):"";
+        string suffix = (SMs.size()>1)?convertToString(i+1):"";
+
+        optional<int> first_partition;
+        for(int j=0;j<s_mapping.size();j++)
+            if (s_mapping[j] and *s_mapping[j] == i)
+                first_partition = j;
+
+        auto code = SMs[i].code;
+
+        expression_ref smodel = var(SM_function_for_index[i]);
+        for(auto& state_name: code.used_states)
+        {
+            if (state_name == "alphabet")
+                smodel = {smodel, alphabet_exps[*first_partition]};
+            else if (state_name == "branch_categories")
+            {
+                assert(branch_categories);
+                smodel = {smodel, branch_categories};
+            }
+            else
+                throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
+        }
+
+        auto smodel_var = var("smodel" + suffix);
+        auto log_smodel = var("log_"+smodel_var.name);
+        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), program, program_loggers);
+        smodels.push_back(smodel_var);
+    }
+    return smodels;
+}
+
+vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
+					     const vector<optional<int>>& i_mapping,
+					     const vector<string>& IM_function_for_index,
+					     const expression_ref& tree_var,
+					     do_block& program,
+					     vector<expression_ref>& program_loggers)
+{
+    // M8. Indel models
+    vector<expression_ref> imodels;
+    for(int i=0;i<IMs.size();i++)
+    {
+        string prefix = "I" + convertToString(i+1);
+        string _suffix = (IMs.size()>1)?"_"+convertToString(i+1):"";
+        string suffix = (IMs.size()>1)?convertToString(i+1):"";
+
+        auto code = IMs[i].code;
+
+        expression_ref imodel = var(IM_function_for_index[i]);
+        for(auto& state_name: code.used_states)
+        {
+            if (state_name == "topology")
+                imodel = {imodel, tree_var};
+        }
+
+        auto imodel_var = var("imodel" + suffix);
+        auto log_imodel = var("log_"+imodel_var.name);
+        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), program, program_loggers);
+        imodels.push_back(imodel_var);
+    }
+    return imodels;
+}
+
 std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
@@ -354,64 +432,8 @@ std::string generate_atmodel_program(const variables_map& args,
         }
     }
 
-    // M7. Substitution models
-    vector<expression_ref> smodels;
-    for(int i=0;i<SMs.size();i++)
-    {
-        string prefix = "S" + convertToString(i+1);
-        string _suffix = (SMs.size()>1)?"_"+convertToString(i+1):"";
-        string suffix = (SMs.size()>1)?convertToString(i+1):"";
-
-        optional<int> first_partition;
-        for(int j=0;j<s_mapping.size();j++)
-            if (s_mapping[j] and *s_mapping[j] == i)
-                first_partition = j;
-
-        auto code = SMs[i].code;
-
-        expression_ref smodel = var(SM_function_for_index[i]);
-        for(auto& state_name: code.used_states)
-        {
-            if (state_name == "alphabet")
-                smodel = {smodel, alphabet_exps[*first_partition]};
-            else if (state_name == "branch_categories")
-            {
-                assert(branch_categories);
-                smodel = {smodel, branch_categories};
-            }
-            else
-                throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
-        }
-
-        auto smodel_var = var("smodel" + suffix);
-        auto log_smodel = var("log_"+smodel_var.name);
-        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), program, program_loggers);
-        smodels.push_back(smodel_var);
-    }
-
-
-    // M8. Indel models
-    vector<expression_ref> imodels;
-    for(int i=0;i<IMs.size();i++)
-    {
-        string prefix = "I" + convertToString(i+1);
-        string _suffix = (IMs.size()>1)?"_"+convertToString(i+1):"";
-        string suffix = (IMs.size()>1)?convertToString(i+1):"";
-
-        auto code = IMs[i].code;
-
-        expression_ref imodel = var(IM_function_for_index[i]);
-        for(auto& state_name: code.used_states)
-        {
-            if (state_name == "topology")
-                imodel = {imodel, tree_var};
-        }
-
-        auto imodel_var = var("imodel" + suffix);
-        auto log_imodel = var("log_"+imodel_var.name);
-        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), program, program_loggers);
-        imodels.push_back(imodel_var);
-    }
+    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, program, program_loggers);
+    auto imodels = generate_indel_models(IMs, i_mapping, IM_function_for_index, tree_var, program, program_loggers);
     program.empty_stmt();
 
     vector<tuple<int,expression_ref,expression_ref>> alignments; // partition, alignment var, alignment logger
