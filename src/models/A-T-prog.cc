@@ -171,7 +171,6 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
     return scales;
 }
 
-
 vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<optional<int>>& s_mapping,
 						    const vector<string>& SM_function_for_index,
@@ -247,6 +246,231 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
     }
     return imodels;
 }
+
+do_block generate_main(const variables_map& args,
+		       int n_sequences,
+		       const optional<fs::path>& tree_filename,
+		       const vector<pair<fs::path,string>>& filename_ranges,
+		       const vector<expression_ref>& alphabet_exps,
+		       const vector<int>& partition_group,
+		       const vector<int>& partition_group_size,
+		       const var& unaligned_sequence_data,
+		       const var& aligned_sequence_data,
+		       const expression_ref& tree,
+		       const expression_ref& topology,
+		       const expression_ref& tsvLogger,
+		       const expression_ref& jsonLogger,
+		       const expression_ref& treeLogger,
+		       const expression_ref& model_fn,
+		       vector<tuple<int,expression_ref,expression_ref>>& alignments)
+{
+    Model::key_map_t keys;
+    if (args.count("set"))
+        keys = parse_key_map(args["set"].as<vector<string> >());
+
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
+    auto log_formats = get_log_formats(args, args.count("align"));
+
+    int n_partitions = filename_ranges.size();
+
+    int n_leaves   = n_sequences;
+
+    do_block main;
+
+    expression_ref directory = var("directory");
+    vector<expression_ref> prog_args = {directory};
+    if (not args.count("test"))
+        main.perform(get_list(prog_args), var("getArgs"));
+
+    auto unaligned_partitions = unaligned_sequence_data;
+    auto aligned_partitions = aligned_sequence_data;
+    if (n_partitions == 1)
+    {
+        auto [filename, range] = filename_ranges[0];
+
+	// Load the sequences
+	expression_ref E = {var("load_sequences"),String(filename.string())};
+
+	// Select range
+	if (not range.empty())
+            E = {var("<$>"), {var("select_range"),String(range)}, E};
+
+	// Convert to CharacterData
+	if (partition_group[0] == 0)
+	    E = {var("<$>"),{var("mkUnalignedCharacterData"),alphabet_exps[0]}, E};
+	else
+	    E = {var("<$>"),{var("mkAlignedCharacterData"),alphabet_exps[0]}, E};
+
+        main.perform(var("sequenceData"), E);
+    }
+    else
+    {
+        // Main.1: Emit let filenames = ...
+        var filenames_var("filenames");
+        bool any_ranges = false;
+        map<fs::path,int> index_for_filename;
+        {
+            vector<expression_ref> filenames_;
+            for(auto& [filename,range]: filename_ranges)
+            {
+                if (not index_for_filename.count(filename))
+                {
+                    index_for_filename.insert({filename,filenames_.size()});
+                    filenames_.push_back(String(filename.string()));
+                }
+                if (not range.empty())
+                    any_ranges = true;
+            }
+            main.let(filenames_var,get_list(filenames_));
+        }
+
+        {
+            // Main.2: Emit let filenames_to_seqs = ...
+            var filename_to_seqs("seqs");
+            {
+                main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
+            }
+            main.empty_stmt();
+
+            // Main.3. Emit let sequence_data<n> = 
+            vector<var> unaligned_sequence_partitions;
+            vector<var> aligned_sequence_partitions;
+            for(int i=0;i<n_partitions;i++)
+            {
+		int group = partition_group[i];
+                string part = std::to_string(i+1);
+
+                var partition_sequence_data_var("sequenceData"+part);
+		if (partition_group_size[group] == 1)
+		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
+
+                int index = index_for_filename.at( filename_ranges[i].first );
+                expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
+                if (not filename_ranges[i].second.empty())
+                    loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+		if (partition_group[i] == 0)
+		{
+		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
+		}
+		else
+		{
+		    loaded_sequences = {var("mkAlignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
+		}
+                main.let(partition_sequence_data_var, loaded_sequences);
+                main.empty_stmt();
+            }
+
+            // Main.4. Emit let sequence_data = ...
+	    if (unaligned_sequence_partitions.size() > 1)
+		main.let(unaligned_partitions, get_list(unaligned_sequence_partitions));
+
+	    if (aligned_sequence_partitions.size() > 1)
+		main.let(aligned_partitions, get_list(aligned_sequence_partitions));
+
+            main.empty_stmt();
+        }
+    }
+
+    if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
+    {
+        throw myexception()<<"The tree is fixed, but no tree file is given. (Use --tree)";
+    }
+
+    if (fixed.count("tree"))
+    {
+        main.empty_stmt();
+        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename->string())}});
+    }
+    else if (fixed.count("topology"))
+    {
+        main.empty_stmt();
+        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
+    }
+
+    if (not args.count("test"))
+    {
+        // Initialize the parameters logger
+	if (log_formats.count("tsv"))
+	{
+	    main.empty_stmt();
+	    main.perform(tsvLogger, {var("tsvLogger"),{var("</>"), directory, String("C1.log")},get_list(vector<String>{"iter"})});
+	}
+
+	if (log_formats.count("json"))
+	{
+	    main.empty_stmt();
+	    main.perform(jsonLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+	}
+
+        // Initialize the tree logger
+        if (not fixed.count("tree"))
+        {
+            main.empty_stmt();
+            main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
+        }
+
+        // Initialize the alignment loggers
+        if (not alignments.empty())
+        {
+            main.empty_stmt();
+
+            // Create alignment loggers.
+            for(auto& [i,a,logger]: alignments)
+            {
+                string filename = "C1.P"+std::to_string(i+1)+".fastas";
+                main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
+            }
+        }
+    }
+
+    // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
+    main.empty_stmt();
+    main.perform(var("mymodel"),{var("$"),var("makeMCMCModel"),model_fn});
+
+    // Main.6. Emit runMCMC iterations mymodel
+    if (args.count("test"))
+    {
+        if (log_formats.count("tsv"))
+        {
+            main.empty_stmt();
+            main.perform(var("line"), {var("logTableLine"), var("mymodel"), 0});
+            main.empty_stmt();
+            main.perform({var("T.putStrLn"), var("line")});
+        }
+
+        if (log_formats.count("json"))
+        {
+            main.empty_stmt();
+            main.perform(var("jline"), {var("logJSONLine"), var("mymodel"), 0});
+            main.empty_stmt();
+            main.perform({var("T.putStrLn"), var("jline")});
+        }
+
+        if (args.count("verbose"))
+        {
+            main.perform({var("writeTraceGraph"),var("mymodel")});
+//            M->write_factor_graph();
+        }
+    }
+    else
+    {
+        main.empty_stmt();
+        // int subsample = args["subsample"].as<int>();
+        int max_iterations = 200000;
+        if (args.count("iterations"))
+            max_iterations = args["iterations"].as<long int>();
+        main.perform({var("runMCMC"), max_iterations, var("mymodel")});
+    }
+
+    return main;
+}
+
 
 std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
@@ -670,194 +894,22 @@ std::string generate_atmodel_program(const variables_map& args,
     program_file<<"\n";
     program_file<<model_fn<<" = "<<program.get_expression().print()<<"\n";
 
-    do_block main;
-
-    expression_ref directory = var("directory");
-    vector<expression_ref> prog_args = {directory};
-    if (not args.count("test"))
-        main.perform(get_list(prog_args), var("getArgs"));
-
-    auto unaligned_partitions = unaligned_sequence_data;
-    auto aligned_partitions = aligned_sequence_data;
-    if (n_partitions == 1)
-    {
-        auto [filename, range] = filename_ranges[0];
-
-	// Load the sequences
-	expression_ref E = {var("load_sequences"),String(filename.string())};
-
-	// Select range
-	if (not range.empty())
-            E = {var("<$>"), {var("select_range"),String(range)}, E};
-
-	// Convert to CharacterData
-	if (partition_group[0] == 0)
-	    E = {var("<$>"),{var("mkUnalignedCharacterData"),alphabet_exps[0]}, E};
-	else
-	    E = {var("<$>"),{var("mkAlignedCharacterData"),alphabet_exps[0]}, E};
-
-        main.perform(var("sequenceData"), E);
-    }
-    else
-    {
-        // Main.1: Emit let filenames = ...
-        var filenames_var("filenames");
-        bool any_ranges = false;
-        map<fs::path,int> index_for_filename;
-        {
-            vector<expression_ref> filenames_;
-            for(auto& [filename,range]: filename_ranges)
-            {
-                if (not index_for_filename.count(filename))
-                {
-                    index_for_filename.insert({filename,filenames_.size()});
-                    filenames_.push_back(String(filename.string()));
-                }
-                if (not range.empty())
-                    any_ranges = true;
-            }
-            main.let(filenames_var,get_list(filenames_));
-        }
-
-        {
-            // Main.2: Emit let filenames_to_seqs = ...
-            var filename_to_seqs("seqs");
-            {
-                main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
-            }
-            main.empty_stmt();
-
-            // Main.3. Emit let sequence_data<n> = 
-            vector<var> unaligned_sequence_partitions;
-            vector<var> aligned_sequence_partitions;
-            for(int i=0;i<n_partitions;i++)
-            {
-		int group = partition_group[i];
-                string part = std::to_string(i+1);
-
-                var partition_sequence_data_var("sequenceData"+part);
-		if (partition_group_size[group] == 1)
-		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
-
-                int index = index_for_filename.at( filename_ranges[i].first );
-                expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
-                if (not filename_ranges[i].second.empty())
-                    loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-		if (partition_group[i] == 0)
-		{
-		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
-		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
-		}
-		else
-		{
-		    loaded_sequences = {var("mkAlignedCharacterData"),alphabet_exps[i],loaded_sequences};
-		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
-		}
-                main.let(partition_sequence_data_var, loaded_sequences);
-                main.empty_stmt();
-            }
-
-            // Main.4. Emit let sequence_data = ...
-	    if (unaligned_sequence_partitions.size() > 1)
-		main.let(unaligned_partitions, get_list(unaligned_sequence_partitions));
-
-	    if (aligned_sequence_partitions.size() > 1)
-		main.let(aligned_partitions, get_list(aligned_sequence_partitions));
-
-            main.empty_stmt();
-        }
-    }
-
-    if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
-    {
-        throw myexception()<<"The tree is fixed, but no tree file is given. (Use --tree)";
-    }
-
-    if (fixed.count("tree"))
-    {
-        main.empty_stmt();
-        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename->string())}});
-    }
-    else if (fixed.count("topology"))
-    {
-        main.empty_stmt();
-        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
-    }
-
-    if (not args.count("test"))
-    {
-        // Initialize the parameters logger
-	if (log_formats.count("tsv"))
-	{
-	    main.empty_stmt();
-	    main.perform(tsvLogger, {var("tsvLogger"),{var("</>"), directory, String("C1.log")},get_list(vector<String>{"iter"})});
-	}
-
-	if (log_formats.count("json"))
-	{
-	    main.empty_stmt();
-	    main.perform(jsonLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
-	}
-
-        // Initialize the tree logger
-        if (not fixed.count("tree"))
-        {
-            main.empty_stmt();
-            main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
-        }
-
-        // Initialize the alignment loggers
-        if (not alignments.empty())
-        {
-            main.empty_stmt();
-
-            // Create alignment loggers.
-            for(auto& [i,a,logger]: alignments)
-            {
-                string filename = "C1.P"+std::to_string(i+1)+".fastas";
-                main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
-            }
-        }
-    }
-
-    // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
-    main.empty_stmt();
-    main.perform(var("mymodel"),{var("$"),var("makeMCMCModel"),model_fn});
-
-    // Main.6. Emit runMCMC iterations mymodel
-    if (args.count("test"))
-    {
-        if (log_formats.count("tsv"))
-        {
-            main.empty_stmt();
-            main.perform(var("line"), {var("logTableLine"), var("mymodel"), 0});
-            main.empty_stmt();
-            main.perform({var("T.putStrLn"), var("line")});
-        }
-
-        if (log_formats.count("json"))
-        {
-            main.empty_stmt();
-            main.perform(var("jline"), {var("logJSONLine"), var("mymodel"), 0});
-            main.empty_stmt();
-            main.perform({var("T.putStrLn"), var("jline")});
-        }
-
-        if (args.count("verbose"))
-        {
-            main.perform({var("writeTraceGraph"),var("mymodel")});
-//            M->write_factor_graph();
-        }
-    }
-    else
-    {
-        main.empty_stmt();
-        // int subsample = args["subsample"].as<int>();
-        int max_iterations = 200000;
-        if (args.count("iterations"))
-            max_iterations = args["iterations"].as<long int>();
-        main.perform({var("runMCMC"), max_iterations, var("mymodel")});
-    }
+    auto main = generate_main(args,
+			      n_sequences,
+			      tree_filename,
+			      filename_ranges,
+			      alphabet_exps,
+			      partition_group,
+			      partition_group_size,
+			      unaligned_sequence_data,
+			      aligned_sequence_data,
+			      tree,
+			      topology,
+			      tsvLogger,
+			      jsonLogger,
+			      treeLogger,
+			      model_fn,
+			      alignments);
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
