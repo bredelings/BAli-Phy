@@ -218,7 +218,7 @@ json log_summary(const vector<model_t>& IModels,
                  std::vector<std::optional<int>>& smodel_index_for_partition,
                  std::vector<std::optional<int>>& imodel_index_for_partition,
                  std::vector<std::optional<int>>& scale_index_for_partition,
-                 int n_branches, int n_data_partitions,
+                 int n_sequences, int n_data_partitions,
                  const vector<string>& alphabet_names,
                  const variables_map& args)
 {
@@ -226,13 +226,14 @@ json log_summary(const vector<model_t>& IModels,
     json partitions;
 
     json tree;
-    if (n_branches > 1)
+    if (n_sequences >= 3)
     {
         cout<<"T:topology ~ uniform on tree topologies\n";
         tree["topology"] = "uniform";
     }
 
-    if (n_branches > 0)
+
+    if (n_sequences >= 2)
     {
         cout<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
         tree["lengths"] = branch_length_model.show(false);
@@ -704,13 +705,6 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         check_alignment_values(A[i],filename_ranges[i]);
     }
 
-    //----------- Load tree and link to alignments ---------//
-    SequenceTree T;
-    optional<fs::path> tree_filename;
-
-    if (args.count("tree"))
-        tree_filename = args.at("tree").as<string>();
-
     //--------- Set up indel model --------//
     auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
     auto& imodel_mapping = imodel_names_mapping.item_for_partition;
@@ -892,8 +886,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
     auto prog = gen_atmodel_program(args,
                                     L, dir,
                                     program_filename,
-                                    tree_filename,
-                                    alphabet_exps, filename_ranges, T.n_leaves(),
+                                    alphabet_exps, filename_ranges, A[0].n_sequences(),
                                     full_smodels, smodel_mapping,
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,
@@ -919,7 +912,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
     //-------------------- Log model -------------------------//
     auto info = log_summary(full_imodels, full_smodels, full_scale_models, branch_length_model,
                             smodel_mapping, imodel_mapping, scale_mapping,
-                            T.n_branches(), filename_ranges.size(),
+                            A[0].n_sequences(), filename_ranges.size(),
                             alphabet_names,
                             args);
 

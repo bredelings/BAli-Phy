@@ -248,7 +248,6 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
 }
 
 do_block generate_main(const variables_map& args,
-		       const optional<fs::path>& tree_filename,
 		       const vector<pair<fs::path,string>>& filename_ranges,
 		       const vector<expression_ref>& alphabet_exps,
 		       const vector<int>& partition_group,
@@ -373,6 +372,9 @@ do_block generate_main(const variables_map& args,
             main.empty_stmt();
         }
     }
+    optional<fs::path> tree_filename;
+    if (args.count("tree"))
+	tree_filename = args.at("tree").as<string>();
 
     if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
     {
@@ -473,7 +475,6 @@ std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<fs::path,string>>& filename_ranges,
-                                     const optional<fs::path>& tree_filename,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
                                      const vector<model_t>& IMs,
@@ -891,7 +892,6 @@ std::string generate_atmodel_program(const variables_map& args,
     program_file<<model_fn<<" = "<<model.get_expression().print()<<"\n";
 
     auto main = generate_main(args,
-			      tree_filename,
 			      filename_ranges,
 			      alphabet_exps,
 			      partition_group,
@@ -915,7 +915,6 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                             const std::shared_ptr<module_loader>& L,
                             const fs::path& output_directory,
                             const fs::path& program_filename,
-                            const std::optional<fs::path>& tree_filename,
                             const vector<expression_ref>& alphabet_exps,
                             const vector<pair<fs::path,string>>& filename_ranges,
                             int n_leaves,
@@ -935,7 +934,6 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                                                n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
-                                               tree_filename,
                                                SMs, s_mapping,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
