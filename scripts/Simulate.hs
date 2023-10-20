@@ -23,7 +23,6 @@ getTree args = do
   let (filename:_) = args
 
   rtree <- dropInternalLabels <$> readBranchLengthTree filename
---  T.putStrLn $ write_newick rtree
 
   return rtree
 
@@ -60,7 +59,7 @@ model rootedTree startLength = do
   -- Sample ancestral sequence STATES
   sequences <- sample $ ctmc_on_tree rootedTree alignment smodel
 
-  -- Print the aligned sequences
+  -- Return the AlignedCharacterData
   return $ align alignment sequences
 
 
