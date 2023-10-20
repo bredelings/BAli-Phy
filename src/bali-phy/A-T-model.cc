@@ -709,24 +709,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
     optional<fs::path> tree_filename;
 
     if (args.count("tree"))
-    {
         tree_filename = args.at("tree").as<string>();
-        T = load_T(args);
-    }
-    else
-    {
-        SequenceTree TC = star_tree(sequence_names(A[0]));
-        if (args.count("t-constraint"))
-            TC = load_constraint_tree(args["t-constraint"].as<string>(),sequence_names(A[0]));
-
-        T = TC;
-        RandomTree(T);
-    }
-
-    clean_T(T);
-
-    //--------- Handle branch lengths <= 0 and very short branch lengths --------//
-    sanitize_branch_lengths(T);
 
     //--------- Set up indel model --------//
     auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
