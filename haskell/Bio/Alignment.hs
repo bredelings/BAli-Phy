@@ -58,15 +58,16 @@ data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlig
 
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
-sequenceLength (AlignmentOnTree t n ls as) node =
-    case IntMap.lookup node ls of Just length -> length
-                                  Nothing -> case edgesOutOfNode t node of (b:_) -> pairwise_alignment_length1 (as IntMap.! b)
-                                                                           _ -> error "sequenceLength: no length for degree-0 node!"
-
 instance IsGraph t => Alignment (AlignmentOnTree t) where
     alignmentLength a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                                        where node0 = head $ getNodes t
-    numSequences         (AlignmentOnTree _ n _  _) = n
+    numSequences   (AlignmentOnTree _ n _  _) = n
+    sequenceLength (AlignmentOnTree t n ls as) node =
+        case IntMap.lookup node ls of Just length -> length
+                                      Nothing -> case edgesOutOfNode t node of
+                                                   (b:_) -> pairwise_alignment_length1 (as IntMap.! b)
+                                                   _ -> error "sequenceLength: no length for degree-0 node!"
+
 
 mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
@@ -223,3 +224,4 @@ align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterDa
 instance Alignment AlignedCharacterData where
     alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
     numSequences (Aligned (CharacterData _ seqs)) = length seqs
+    sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ strip_gaps $ snd $ (seqs !! index)
