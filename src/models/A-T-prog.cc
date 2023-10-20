@@ -740,7 +740,7 @@ std::string generate_atmodel_program(const variables_map& args,
             if (n_branches > 0)
             {
                 var alignment_length("alignment_length"+part_suffix);
-                model.let(alignment_length, {var("alignment_on_tree_length"), alignment_on_tree} );
+                model.let(alignment_length, {var("alignmentLength"), alignment_on_tree} );
                 alignment_lengths.push_back(alignment_length);
                 var num_indels("num_indels"+part_suffix);
                 model.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );

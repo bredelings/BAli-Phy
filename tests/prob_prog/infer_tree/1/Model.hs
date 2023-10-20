@@ -49,7 +49,7 @@ model seq_data = do
         , "scale1" %=% scale1
         , "|T|" %=% tree_length tree
         , "scale1*|T|" %=% tree_length tree1
-        , "|A|" %=% alignment_on_tree_length alignment
+        , "|A|" %=% alignmentLength alignment
         ]
 
 main = do

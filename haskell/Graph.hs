@@ -193,7 +193,6 @@ tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 class IsGraph g => HasBranchLengths g where
     branch_length :: g -> Int -> Double
 
-
 branchLengths g = branch_length g <$> getUEdges g
 
 --   but could not do this for WithNodeTimes...

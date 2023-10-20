@@ -1,7 +1,8 @@
 module Bio.Alignment (module Bio.Alignment,
                       module Bio.Sequence,
                       module Bio.Alignment.Matrix,
-                      module Bio.Alignment.Pairwise) where
+                      module Bio.Alignment.Pairwise,
+                      module Bio.Alignment.Class) where
 
 import Tree
 import Data.BitVector
@@ -15,6 +16,7 @@ import Bio.Sequence
 import Bio.Alphabet -- for Alphabet type
 import Bio.Alignment.Matrix
 import Bio.Alignment.Pairwise
+import Bio.Alignment.Class
 
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
@@ -54,8 +56,6 @@ We could alternatively store the node sequence lengths only for nodes not in a p
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
 data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
 
-n_sequences         (AlignmentOnTree _ n _  _) = n
-
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
 sequenceLength (AlignmentOnTree t n ls as) node =
@@ -63,6 +63,10 @@ sequenceLength (AlignmentOnTree t n ls as) node =
                                   Nothing -> case edgesOutOfNode t node of (b:_) -> pairwise_alignment_length1 (as IntMap.! b)
                                                                            _ -> error "sequenceLength: no length for degree-0 node!"
 
+instance IsGraph t => Alignment (AlignmentOnTree t) where
+    alignmentLength a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
+                                                       where node0 = head $ getNodes t
+    numSequences         (AlignmentOnTree _ n _  _) = n
 
 mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
@@ -78,9 +82,6 @@ compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_comp
                                                            (compressed', tmp23) = pair_from_c tmp123
                                                            (counts, mapping) = pair_from_c tmp23
                                                            compressed = fromEAlignment compressed'
-
-alignment_on_tree_length a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
-                                                       where node0 = head $ getNodes t
 
 totalNumIndels (AlignmentOnTree t _ _ as) = sum [numIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]
                                          where node0 = head $ getNodes t
@@ -218,3 +219,7 @@ align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterDa
           seqsOnTree = fromMaybe (error "No label") <$> labelToNodeMap tree seqs
           alignedSeqsOnTree = alignedSequences alignment seqsOnTree
           alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
+
+instance Alignment AlignedCharacterData where
+    alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
+    numSequences (Aligned (CharacterData _ seqs)) = length seqs
