@@ -163,7 +163,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 */
 
 vector<model_t>
-get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, const SequenceTree&)
+get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
 {
     map<string,pair<string,string>> imodel_states = {{"topology",{"topology","Topology"}}};
 
@@ -775,7 +775,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
                 value = "rs07";
         }
     }
-    auto full_imodels = get_imodels(R, imodel_names_mapping, T);
+    auto full_imodels = get_imodels(R, imodel_names_mapping);
 
     // 5. ----- Check that all smodel-linked partitions end up with the same alphabet. -----
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
