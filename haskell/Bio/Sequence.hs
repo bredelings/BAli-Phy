@@ -61,6 +61,26 @@ fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq,
 
 fastaSeqs sequences = T.concat [fastaSeq s | s <- sequences]
 
+{- NOTE: If we switch to multiple alphabet types.
+
+data CharacterData = forall a.Alphabet a => CharacterData a [(Text, EVector Int)]
+   OR
+data CharacterData a = CharacterData a [(Text, EVector Int)]
+
+If we switch to multiple Alphabet types, we would probably need to have a main
+class Alphabet and then also a class Nucleotides and a class Triplets.
+
+* If we used `forall a.Alphabet a =>` then that only packages the methods for the
+  main class.
+
+* If we used `CharacterData a`, then we know what the underlying type is, but we
+  can't put them in a list.
+
+* If we use Data.Dynamic for the alphabet, then we could check if its a Codons DNA,
+  but I don't know if can check if its a `Codons a` while finding out the a.
+
+-}
+
 data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
 data AlignedCharacterData = Aligned CharacterData
 data UnalignedCharacterData = Unaligned CharacterData
