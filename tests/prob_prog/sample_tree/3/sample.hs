@@ -7,7 +7,7 @@ import           Tree.Newick
 import           Control.Monad.Fix -- should be unneeded
 
 model = do
-    tree <- prior $ uniform_topology 5
+    tree <- prior $ uniformTopology 5
     let rtree = add_root 0 tree
 
     let ps    = map (show . parentNode rtree) [0 .. 5]
