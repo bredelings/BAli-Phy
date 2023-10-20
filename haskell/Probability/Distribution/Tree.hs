@@ -85,8 +85,9 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
 triggered_modifiable_tree = triggered_modifiable_structure modifiable_tree
 
 uniform_topology_effect tree = do
---  add_move $ walk_tree_sample_NNI_unsafe tree  -- probably we should ensure that the probability of the alignment is zero if pairwise alignments don't match?
-  add_move $ walk_tree_sample_NNI tree         -- does this handle situations with no data partitions?
+  -- SPR moves aren't added here because they depend on branch lengths.
+  -- Note that we could in theory have multiple branch-length-trees with the same topology.
+  add_move $ walk_tree_sample_NNI tree -- Q: does this handle situations with no data partitions?
 
 uniform_labelled_topology taxa = do
   topology <- sample $ uniformTopology (length taxa)
