@@ -92,8 +92,15 @@ uniform_labelled_topology taxa = do
   topology <- sample $ uniformTopology (length taxa)
   return $ add_labels (zip [0..] taxa) topology
 
+
+{-
+tree ~ uniformLabelledTree(taxa, function(topology: gamma(0.5, 2/numBranches(topology))))
+
+tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2/numBranches(topology) ) ) )
+-}
+
 uniformLabelledTree taxa dist = do
-  topology <- RanSamplingRate 0 $ sample $ uniformTopology (length taxa)
+  topology <- RanSamplingRate 0 $ sample $ uniform_labelled_topology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
   let tree = branch_length_tree topology branchLengths
   RanSamplingRate 2 $ PerformTKEffect $ add_topology_moves tree
