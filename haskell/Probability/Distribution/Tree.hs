@@ -89,8 +89,22 @@ uniform_topology_effect tree = do
   add_move $ walk_tree_sample_NNI tree         -- does this handle situations with no data partitions?
 
 uniform_labelled_topology taxa = do
-  topology <- sample $ uniform_topology (length taxa)
+  topology <- sample $ uniformTopology (length taxa)
   return $ add_labels (zip [0..] taxa) topology
+
+uniformLabelledTree taxa dist = do
+  topology <- RanSamplingRate 0 $ sample $ uniformTopology (length taxa)
+  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
+  let tree = branch_length_tree topology branchLengths
+  RanSamplingRate 2 $ PerformTKEffect $ add_topology_moves tree
+  RanSamplingRate 2 $ PerformTKEffect $ add_length_moves tree
+  return tree
+
+fixedTopologyTree topology dist = do
+  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
+  let tree = branch_length_tree topology branchLengths
+  PerformTKEffect $ add_move $ walk_tree_sample_branch_lengths tree
+  return tree
 
 add_SPR_moves tree = do
   SamplingRate 1 $ add_move $ sample_SPR_all tree
@@ -258,7 +272,7 @@ instance HasAnnotatedPdf UniformTopology where
 instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n)
 
-uniform_topology n = UniformTopology n
+uniformTopology n = UniformTopology n
 
 
 
