@@ -1,6 +1,29 @@
 * 4.0-beta7 (unreleased)
 - Bug fixes:
   + Allow estimating the alignment with a fixed topology.
+  - Fix -l tsv with -m Model.hs
+- Haskell
+  + Report ancestral sequences as AlignedCharacterData.
+  + Allow simulating from ctmc_on_tree.
+  + Add class Alignment for common methods between AlignmentOnTree and AlignedCharacterData.
+  - Fix default instances for type families.
+  - Refactor Tree class to add Graph and Forest
+  - AlignmentOnTree: Only store sequence lengths for some nodes.
+  - Add some instances for Data.Map
+  - Replace Sequence with (,)
+  - Add AlignedCharacterData, UnalignedCharacterData, CharacterData.
+  - Stop using C++ alignment class when compressing sequence data.
+  - Make ctmc_on_tree operate on UnalignedCharacterData.
+  - Make ctmc_on_tree_fixed_A operate on AlignedCharacterData.
+- Machine:
+  - Don't crash trying NNI on fixed tree.
+  - Better error message if trying to read/modify a non-modifiable.
+  - Allow discovering a single partition by supplying alignment regs.
+  - realign_from_tips: don't modify the branch lengths if they are fixed.
+  - Add associated type DistProperties, and return it from observed.
+  - Add sampleWithProps -- hacky version.
+  - Synchronize property indices between between variable and fixed-A.
+  - Remove unused property prop_taxa.
 
 * 4.0-beta6 (Sep 6, 2023)
 + Changes:
