@@ -713,7 +713,7 @@ std::string generate_atmodel_program(const variables_map& args,
             else
             {
                 var leaf_sequence_lengths("sequence_lengths" + part_suffix);
-                model.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
+                model.let(leaf_sequence_lengths, {var("get_sequence_lengths"), sequence_data_var});
 
                 var properties_A("properties_A"+part_suffix);
 		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
@@ -1041,10 +1041,10 @@ Program gen_model_program(const boost::program_options::variables_map& args,
 
     if (fs::is_directory(model_filepath))
 	throw myexception()<<"The model file "<<model_filepath<<" is a directory!";
-	
+
     if (not fs::is_regular_file(model_filepath))
 	throw myexception()<<"The model file "<<model_filepath<<" is not a regular file!";
-	
+
     fs::path main_file = "Main.hs";
     if (output_directory.empty())
 	main_file = "Test.Main.hs";
