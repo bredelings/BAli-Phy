@@ -811,6 +811,9 @@ int main(int argc,char* argv[])
 
 	//---------- Load alignment and tree -----------//
         vector<sequence> S;
+	if (not args.count("file"))
+	    throw myexception()<<"No filename given!";
+
         auto filename = args["file"].as<string>();
         if (filename == "-")
             S = load_file(std::cin);
