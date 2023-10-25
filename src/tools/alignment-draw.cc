@@ -723,6 +723,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("column-colors","Color-code column ticks by column certainty") 
 	("AU",value<string>(),"file with alignment uncertainties")
 	("show-gaps",value<string>()->default_value("yes"),"Show gaps") 
+	("show-letters",value<string>()->default_value("yes"),"Show gaps") 
 	("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.") 
 	("width",value<int>(),"The number of columns per line")
 	("start",value<int>(),"The first column to plot")
@@ -805,9 +806,13 @@ int main(int argc,char* argv[])
 
 	bool show_column_numbers = args.count("show-ruler")==1;
 
-	bool showgaps = true;
+	bool show_gaps = true;
 	if (args.count("show-gaps") and args["show-gaps"].as<string>() == "no")
-	    showgaps = false;
+	    show_gaps = false;
+
+	bool show_letters = true;
+	if (args.count("show-letters") and args["show-letters"].as<string>() == "no")
+	    show_letters = false;
 
 	//---------- Load alignment and tree -----------//
         vector<sequence> S;
@@ -1000,13 +1005,13 @@ BODY {\n\
 		    int s = i;
 		    cout<<"  <tr>\n";
 		    cout<<"    <td class=\"sequencename\">"<<S[s].name<<"</td>\n";
-		    for(int column=pos;column<pos+width and column <= end; column++) {
-                        auto c = S[s][column];
-                        string c_string(1, c);
-			if (c == '-') {
-			    if (not showgaps)
-				c_string = "&nbsp;";
-			}
+		    for(int column=pos;column<pos+width and column <= end; column++)
+		    {
+			auto c = S[s][column];
+			string c_string(1,c);
+			if (not show_letters or (not show_gaps and c == '-'))
+			    c_string = "&nbsp;";
+
 			string style = getstyle(colors(column,s),string(1,c),*color_scheme);
 			cout<<"<td style=\""<<style<<"\">"<<c_string<<"</td>";
 		    }
