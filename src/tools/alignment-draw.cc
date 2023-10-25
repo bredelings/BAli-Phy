@@ -211,7 +211,8 @@ public:
 	{ }
 };
 
-RGB AA_color(char aa) {
+RGB AA_color_old(char aa) {
+
     if (strchr("GPST",aa))
 	return orange;
     else if (strchr("HKR",aa))
@@ -225,6 +226,61 @@ RGB AA_color(char aa) {
     else if (strchr("-*+X ",aa))
 	return grey;
   
+    throw myexception()<<"Letter '"<<aa<<"' does not appear to be an amino acid";
+}
+
+
+RGB AA_color(char aa)
+{
+    if (aa == 'G')
+	return rgb(0xff, 0xb1, 0x59);
+    else if (aa == 'P')
+	return rgb(0xec, 0xec, 0x00);
+    else if (aa == 'S')
+	return rgb(0xad, 0x02, 0xad);
+    else if (aa == 'T')
+	return rgb(0x50, 0xe8, 0x50);
+    else if (aa == 'H')
+	return rgb(0x1d, 0xcf, 0xcf);
+    else if (aa == 'K')
+	return rgb(0xff, 0x3b, 0x1d);
+    else if (aa == 'R')
+	return rgb(0xff, 0x4f, 0x33);
+    else if (aa == 'F')
+	return rgb(0x1d, 0x94, 0xff);
+    else if (aa == 'W')
+	return rgb(0x04, 0x62, 0xc3);
+    else if (aa == 'Y')
+	return rgb(0x17, 0xe5, 0xe7);
+    else if (aa == 'I')
+	return rgb(0x5a, 0xb9, 0xff);
+    else if (aa == 'L')
+	return rgb(0x8b, 0xc0, 0xf6);
+    else if (aa == 'M')
+	return rgb(0x11, 0x61, 0xb3);
+    else if (aa == 'V')
+	return rgb(0x05, 0x90, 0xff);
+    else if (aa == 'A')
+	return rgb(0x2d, 0x7f, 0xd3);
+    else if (aa == 'C')
+	return rgb(0xff, 0x94, 0x94);
+    else if (aa == 'D')
+	return rgb(0xed, 0x61, 0xed);
+    else if (aa == 'E')
+	return rgb(0xaf, 0x4a, 0xae);
+    else if (aa == 'N')
+	return rgb(0x1d, 0xec, 0x1d);
+    else if (aa == 'Q')
+	return rgb(0x6a, 0xff, 0x6a);
+    else if (aa == 'Z') // E or Q
+	return rgb((0xaf + 0x6a)/2, (0x4a + 0xff)/2 , (0xae + 0x6a)/2);
+    else if (aa == 'B') // D or N
+	return rgb((0xed + 0x1d)/2, (0x61+0xec)/2, (0xed+0x1d)/2);
+    else if (aa == 'J') // L or I
+	return rgb((0x5a+0x8a)/2, (0xb9+0xc0)/2, (0xff+0xf6)/2);
+    else if (strchr("-*+X ",aa))
+	return grey;
+
     throw myexception()<<"Letter '"<<aa<<"' does not appear to be an amino acid";
 }
 

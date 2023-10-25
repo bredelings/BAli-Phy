@@ -51,6 +51,8 @@ namespace colors {
     RGB(double r,double g,double b);
   };
 
+  inline RGB rgb(int r, int g, int b) {return RGB(double(r)/256, double(g)/256, double(b)/256);};
+
   class HSV:public std::vector<double> 
   {
   public:
