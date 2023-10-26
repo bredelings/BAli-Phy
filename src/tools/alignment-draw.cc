@@ -722,9 +722,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("show-ruler","Print a ruler to show column numbers") 
 	("column-colors","Color-code column ticks by column certainty") 
 	("AU",value<string>(),"file with alignment uncertainties")
-	("show-gaps",value<string>()->default_value("yes"),"Show gaps") 
-	("show-letters",value<string>()->default_value("yes"),"Show gaps") 
-	("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.") 
+	("show-gaps",value<string>()->default_value("yes"),"Show gaps")
+	("show-letters",value<string>()->default_value("yes"),"Show letters")
+	("show-names",value<string>()->default_value("yes"),"Show names")
+	("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.")
 	("width",value<int>(),"The number of columns per line")
 	("start",value<int>(),"The first column to plot")
 	("end",value<int>(),"The last column to plot")
@@ -813,6 +814,10 @@ int main(int argc,char* argv[])
 	bool show_letters = true;
 	if (args.count("show-letters") and args["show-letters"].as<string>() == "no")
 	    show_letters = false;
+
+	bool show_names = true;
+	if (args.count("show-names") and args["show-names"].as<string>() == "no")
+	    show_names = false;
 
 	//---------- Load alignment and tree -----------//
         vector<sequence> S;
@@ -988,7 +993,9 @@ BODY {\n\
 
 		// Print columns positions
 		if (show_column_numbers) {
-		    cout<<"<tr><td></td>";
+		    cout<<"<tr>";
+		    if (show_names)
+			cout<<"<td></td>";
 	  
 		    for(int column=pos;column<pos+width and column <= end; column++) {
 			double P=colors(column, S.size());
@@ -1004,7 +1011,8 @@ BODY {\n\
 		for(int i=0;i<S.size();i++) {
 		    int s = i;
 		    cout<<"  <tr>\n";
-		    cout<<"    <td class=\"sequencename\">"<<S[s].name<<"</td>\n";
+		    if (show_names)
+			cout<<"    <td class=\"sequencename\">"<<S[s].name<<"</td>\n";
 		    for(int column=pos;column<pos+width and column <= end; column++)
 		    {
 			auto c = S[s][column];
@@ -1017,7 +1025,9 @@ BODY {\n\
 		    }
 		    cout<<"  </tr>\n";
 		}
-		cout<<"<tr><td></td><td>&nbsp;</td></tr>\n";
+		cout<<"<tr>";
+		if (show_names) cout<<"<td></td>";
+		cout<<"<td>&nbsp;</td></tr>\n";
 		cout<<"</table>"<<endl;
 		pos += width;
 	    }
