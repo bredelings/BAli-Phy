@@ -25,7 +25,7 @@ module Probability (module Probability,
                     module Probability.Distribution.List,
                     module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
-                    module Probability.Distribution.Phylolignment
+                    module Probability.Distribution.PhyloAlignment
                    )
     where
 
