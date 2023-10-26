@@ -34,7 +34,7 @@ model seq_data = do
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
     -- Alignment
-    alignment <- prior $ random_alignment tree1 imodel tip_seq_lengths
+    alignment <- prior $ phyloAlignment tree1 imodel tip_seq_lengths
 
     -- Observation
     observe seq_data $ phyloCTMC tree1 alignment tn93_model

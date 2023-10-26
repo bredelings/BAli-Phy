@@ -716,7 +716,7 @@ std::string generate_atmodel_program(const variables_map& args,
                 model.let(leaf_sequence_lengths, {var("get_sequence_lengths"), sequence_data_var});
 
                 var properties_A("properties_A"+part_suffix);
-		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
+		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("phyloAlignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
             }
         }
 

@@ -103,7 +103,7 @@ triggered_modifiable_alignment value effect = triggered_a where
     triggered_a = withEffect effect' raw_a
 
 
-data RandomAlignmentProperties = RandomAlignmentProperties 
+data PhyloAlignmentProperties = PhyloAlignmentProperties 
     {
       probability :: LogDouble,
       hmms :: IntMap PairHMM,
@@ -122,27 +122,27 @@ annotated_alignment_prs tree hmms model alignment = do
       ls = mkSequenceLengthsMap alignment
       lengthp = snd model
       length_prs = fmap lengthp ls
-      props = RandomAlignmentProperties pr hmms lengthp as ls length_prs
+      props = PhyloAlignmentProperties pr hmms lengthp as ls length_prs
   return $ (prs, props)
 
 alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
   SamplingRate 0.1 $ add_move $ realign_from_tips tree as
 
-data RandomAlignment t = (HasLabels t, IsTree t) => RandomAlignment (WithBranchLengths t) IModel (Map.Map Text Int) (IntMap PairHMM)
+data PhyloAlignment t = (HasLabels t, IsTree t) => PhyloAlignment (WithBranchLengths t) IModel (Map.Map Text Int) (IntMap PairHMM)
 
-instance Dist (RandomAlignment t) where
-    type Result (RandomAlignment t) = AlignmentOnTree (WithBranchLengths t)
-    dist_name _ = "RandomAlignment"
+instance Dist (PhyloAlignment t) where
+    type Result (PhyloAlignment t) = AlignmentOnTree (WithBranchLengths t)
+    dist_name _ = "PhyloAlignment"
 
-instance Sampleable (RandomAlignment t) where
-    sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
+instance Sampleable (PhyloAlignment t) where
+    sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
 
-instance HasAnnotatedPdf (RandomAlignment t) where
-    type DistProperties (RandomAlignment t) = RandomAlignmentProperties
-    annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
+instance HasAnnotatedPdf (PhyloAlignment t) where
+    type DistProperties (PhyloAlignment t) = PhyloAlignmentProperties
+    annotated_densities dist@(PhyloAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
 
-instance SampleableWithProps (RandomAlignment t) where
+instance SampleableWithProps (PhyloAlignment t) where
     sampleWithProps dist = do
       x <- sample dist
       let props = getProperties' x dist
@@ -150,7 +150,7 @@ instance SampleableWithProps (RandomAlignment t) where
           getProperties' x _ = getProperties x
       return (x, props)
 
-random_alignment tree model tip_lengths = RandomAlignment tree model tip_lengths (branch_hmms model tree)
+phyloAlignment tree model tip_lengths = PhyloAlignment tree model tip_lengths (branch_hmms model tree)
 
 foreign import bpcall "MCMC:" walk_tree_sample_alignments :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
 
