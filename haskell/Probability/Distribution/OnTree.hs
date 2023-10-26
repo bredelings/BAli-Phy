@@ -122,15 +122,15 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
 
   return ([likelihood], prop)
 
-data CTMCOnTree t s = CTMCOnTree t (AlignmentOnTree t) s
+data CTMCOnTree t a s = CTMCOnTree t a s
 
-instance Dist (CTMCOnTree t s) where
-    type Result (CTMCOnTree t s) = UnalignedCharacterData
+instance Dist (CTMCOnTree t (AlignmentOnTree t) s) where
+    type Result (CTMCOnTree t (AlignmentOnTree t) s) = UnalignedCharacterData
     dist_name _ = "ctmc_on_tree"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
-    type DistProperties (CTMCOnTree t s) = CTMCOnTreeProperties
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t (AlignmentOnTree t) s) where
+    type DistProperties (CTMCOnTree t (AlignmentOnTree t) s) = CTMCOnTreeProperties
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
 ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
@@ -162,7 +162,7 @@ sampleComponentStates rtree alignment smodel =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t s) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t (AlignmentOnTree t) s) where
     sampleIO (CTMCOnTree tree alignment smodel) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -173,7 +173,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (CTMCOnTree t s) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (CTMCOnTree t (AlignmentOnTree t) s) where
     sample dist = RanDistribution2 dist do_nothing
 
 
