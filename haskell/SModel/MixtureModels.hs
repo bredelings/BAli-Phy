@@ -21,7 +21,7 @@ instance HasAlphabet MixtureModels where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
 instance SimpleSModel MixtureModels where
-    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms)) b = branch_transition_p (SingleBranchLengthModel tree mx) b
+    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
         where mx = mms!!(branchCats IntMap.! undirectedName b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
     weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m

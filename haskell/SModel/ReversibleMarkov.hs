@@ -92,7 +92,7 @@ instance HasAlphabet ReversibleMarkov where
     getAlphabet (ReversibleMarkov a _ _ _) = a
 
 instance SimpleSModel ReversibleMarkov where
-    branch_transition_p (SingleBranchLengthModel tree smodel) b = [qExp $ scale (branch_length tree b/r) smodel]
+    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     weighted_frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [get_pi m])

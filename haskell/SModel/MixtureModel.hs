@@ -50,7 +50,7 @@ instance HasAlphabet MixtureModel where
     getAlphabet model = getAlphabet $ baseModel model 0
 
 instance SimpleSModel MixtureModel where
-    branch_transition_p (SingleBranchLengthModel tree model) b = [qExp $ scale (branch_length tree b/r) component | (component,_) <- unpackDiscrete model]
+    branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
     distribution model = map snd (unpackDiscrete model)
     weighted_frequency_matrix model = let dist = list_to_vector $ distribution model

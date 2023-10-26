@@ -689,9 +689,10 @@ std::string generate_atmodel_program(const variables_map& args,
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
         var branch_dist_tree("tree" + part_suffix);
+	expression_ref scale = 1;
         if (n_branches > 0)
         {
-            expression_ref scale = scales[scale_index];
+            scale = scales[scale_index];
             model.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
         }
         else
@@ -723,11 +724,11 @@ std::string generate_atmodel_program(const variables_map& args,
         // Model.Partition.3. Observe the sequence data from the distribution
         expression_ref distribution;
         if (like_calcs[i] == 0)
-            distribution = {var("phyloCTMC"), branch_dist_tree, alignment_on_tree, smodel};
+            distribution = {var("phyloCTMC"), tree_var, alignment_on_tree, smodel, scale};
         else
 	{
 	    expression_ref alignment_length = {var("alignmentLength"), sequence_data_var};
-            distribution = {var("phyloCTMC"), branch_dist_tree, alignment_length, smodel};
+            distribution = {var("phyloCTMC"), tree_var, alignment_length, smodel, scale};
 	}
 	var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;

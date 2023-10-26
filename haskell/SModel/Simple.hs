@@ -4,8 +4,8 @@ import Foreign.Vector
 import Bio.Alphabet
 import Tree
 
-data SingleBranchLengthModel t a = SingleBranchLengthModel t a
-get_tree' (SingleBranchLengthModel t _) = t        -- Avoid aliasing with get_tree from DataPartition
+data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
+get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
 
 -- See LikelihoodMixtureModel
 

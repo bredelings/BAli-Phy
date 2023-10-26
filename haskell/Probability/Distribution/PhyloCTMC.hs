@@ -75,7 +75,7 @@ For sampling from phyloCTMCFixedA, we might want two versions:
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
 
-annotated_subst_like_on_tree tree alignment smodel sequenceData = do
+annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
@@ -83,7 +83,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap tree (getSequences sequenceData)
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
-      smodel_on_tree = SingleBranchLengthModel tree smodel
+      smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods
@@ -122,7 +122,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
 
   return ([likelihood], prop)
 
-data PhyloCTMC t a s = PhyloCTMC t a s
+data PhyloCTMC t a s = PhyloCTMC t a s Double
 
 instance Dist (PhyloCTMC t (AlignmentOnTree t) s) where
     type Result (PhyloCTMC t (AlignmentOnTree t) s) = UnalignedCharacterData
@@ -131,9 +131,9 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t) s) where
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t) s) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment smodel scale
 
-phyloCTMC tree alignment smodel = PhyloCTMC tree alignment smodel
+phyloCTMC tree alignment smodel scale = PhyloCTMC tree alignment smodel scale
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
@@ -148,9 +148,9 @@ phyloCTMC tree alignment smodel = PhyloCTMC tree alignment smodel
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
 foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
-sampleComponentStates rtree alignment smodel =  do
+sampleComponentStates rtree alignment smodel scale =  do
   let as = pairwise_alignments alignment
-      ps = transition_ps_map (SingleBranchLengthModel rtree smodel)
+      ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
       f = (weighted_frequency_matrix smodel)
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
@@ -163,11 +163,11 @@ sampleComponentStates rtree alignment smodel =  do
 
 
 instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s) where
-    sampleIO (PhyloCTMC tree alignment smodel) = do
+    sampleIO (PhyloCTMC tree alignment smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel
+      stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -184,7 +184,7 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
+annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
@@ -199,7 +199,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
-      smodel_on_tree = SingleBranchLengthModel tree smodel
+      smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
@@ -258,4 +258,4 @@ instance Dist (PhyloCTMC t Int s) where
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel) = annotated_subst_likelihood_fixed_A tree length smodel
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length smodel scale
