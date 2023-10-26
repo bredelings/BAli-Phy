@@ -322,7 +322,7 @@ data_partition_constants::data_partition_constants(context_ref& C, int r_data)
 
     auto dist_type = *C.dist_type(s_sequences);
 
-    if (dist_type == "ctmc_on_tree")
+    if (dist_type == "PhyloCTMC")
     {
         likelihood_calculator = 0;
 
@@ -339,7 +339,7 @@ data_partition_constants::data_partition_constants(context_ref& C, int r_data)
             alignment_properties_reg = A_properties->get("properties");
         }
     }
-    else if (dist_type == "ctmc_on_tree_fixed_A")
+    else if (dist_type == "PhyloCTMCFixedA")
     {
         likelihood_calculator = 1;
     }
@@ -854,7 +854,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
             // Under what circumstances would se get unregistered?
             if (auto type = dist_type(se))
             {
-                if (*type == "ctmc_on_tree" or *type == "ctmc_on_tree_fixed_A")
+                if (*type == "PhyloCTMC" or *type == "PhyloCTMCFixedA")
                 {
                     auto r_out = out_edges_from_dist(se);
                     if (not r_out)

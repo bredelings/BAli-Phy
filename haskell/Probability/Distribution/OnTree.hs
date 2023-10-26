@@ -43,7 +43,7 @@ import Probability.Distribution.List -- for independent
 -- 10. n_base_models
 
 
-data CTMCOnTreeProperties = CTMCOnTreeProperties {
+data PhyloCTMCProperties = PhyloCTMCProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_cond_likes :: IntMap CondLikes,
@@ -118,22 +118,22 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
-data CTMCOnTree t a s = CTMCOnTree t a s
+data PhyloCTMC t a s = PhyloCTMC t a s
 
-instance Dist (CTMCOnTree t (AlignmentOnTree t) s) where
-    type Result (CTMCOnTree t (AlignmentOnTree t) s) = UnalignedCharacterData
-    dist_name _ = "ctmc_on_tree"
+instance Dist (PhyloCTMC t (AlignmentOnTree t) s) where
+    type Result (PhyloCTMC t (AlignmentOnTree t) s) = UnalignedCharacterData
+    dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t (AlignmentOnTree t) s) where
-    type DistProperties (CTMCOnTree t (AlignmentOnTree t) s) = CTMCOnTreeProperties
-    annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s) where
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t) s) = PhyloCTMCProperties
+    annotated_densities (PhyloCTMC tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
-phyloCTMC tree alignment smodel = CTMCOnTree tree alignment smodel
+phyloCTMC tree alignment smodel = PhyloCTMC tree alignment smodel
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
@@ -162,8 +162,8 @@ sampleComponentStates rtree alignment smodel =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (CTMCOnTree t (AlignmentOnTree t) s) where
-    sampleIO (CTMCOnTree tree alignment smodel) = do
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s) where
+    sampleIO (PhyloCTMC tree alignment smodel) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
@@ -173,7 +173,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (CTMCOnTree t (AlignmentOnTree t) s) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s) where
     sample dist = RanDistribution2 dist do_nothing
 
 
@@ -247,15 +247,15 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (CTMCOnTreeProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
-instance Dist (CTMCOnTree t Int s) where
-    type Result (CTMCOnTree t Int s) = AlignedCharacterData
-    dist_name _ = "ctmc_on_tree_fixed_A"
+instance Dist (PhyloCTMC t Int s) where
+    type Result (PhyloCTMC t Int s) = AlignedCharacterData
+    dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t Int s) where
-    type DistProperties (CTMCOnTree t Int s) = CTMCOnTreeProperties
-    annotated_densities (CTMCOnTree tree length smodel) = annotated_subst_likelihood_fixed_A tree length smodel
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
+    type DistProperties (PhyloCTMC t Int s) = PhyloCTMCProperties
+    annotated_densities (PhyloCTMC tree length smodel) = annotated_subst_likelihood_fixed_A tree length smodel
