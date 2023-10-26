@@ -184,7 +184,7 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
+annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
@@ -251,15 +251,11 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
 
   return ([likelihood], prop)
 
-data CTMCOnTreeFixedA t s = CTMCOnTreeFixedA t s
-
-instance Dist (CTMCOnTreeFixedA t s) where
-    type Result (CTMCOnTreeFixedA t s) = AlignedCharacterData
+instance Dist (CTMCOnTree t Int s) where
+    type Result (CTMCOnTree t Int s) = AlignedCharacterData
     dist_name _ = "ctmc_on_tree_fixed_A"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
-    type DistProperties (CTMCOnTreeFixedA t s) = CTMCOnTreeProperties
-    annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
-
-ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t Int s) where
+    type DistProperties (CTMCOnTree t Int s) = CTMCOnTreeProperties
+    annotated_densities (CTMCOnTree tree length smodel) = annotated_subst_likelihood_fixed_A tree length smodel

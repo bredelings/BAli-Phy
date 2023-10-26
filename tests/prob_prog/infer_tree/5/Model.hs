@@ -2,6 +2,7 @@ module Model where
 
 import           Probability
 import           Bio.Alphabet
+import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
@@ -30,8 +31,8 @@ tree_prior taxa = do
     return (tree, loggers)
 
 
-model seq_data = do
-    let taxa = zip [0..] $ getTaxa seq_data
+model seqData = do
+    let taxa = zip [0..] $ getTaxa seqData
 
     (tree  , tree_loggers) <- tree_prior taxa
 
@@ -39,13 +40,13 @@ model seq_data = do
 
     let loggers = tree_loggers ++ ["tn93" %>% sloggers]
 
-    observe seq_data $ ctmc_on_tree_fixed_A tree smodel
+    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) smodel
 
     return loggers
 
 main = do
     [filename] <- getArgs
 
-    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
 
-    return $ model seq_data
+    return $ model seqData

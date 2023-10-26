@@ -2,6 +2,7 @@ module Model where
 
 import           Probability
 import           Bio.Alphabet
+import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
@@ -9,9 +10,9 @@ import           SModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
-model seq_data = do
+model seqData = do
 
-    let taxa = zip [0..] $ getTaxa seq_data
+    let taxa = zip [0..] $ getTaxa seqData
 
     age    <- sample $ gamma 0.5 2
     tree   <- add_labels taxa <$> sample (uniform_time_tree age (length taxa))
@@ -22,7 +23,7 @@ model seq_data = do
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    observe seq_data $ ctmc_on_tree_fixed_A tree tn93_model
+    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) tn93_model
 
     return ["tree" %=% write_newick tree,
             "age" %=% age,
@@ -33,6 +34,7 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
 
-    return $ model seq_data
+    return $ model seqData
+

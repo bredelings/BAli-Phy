@@ -725,7 +725,10 @@ std::string generate_atmodel_program(const variables_map& args,
         if (like_calcs[i] == 0)
             distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
         else
-            distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
+	{
+	    expression_ref alignment_length = {var("alignmentLength"), sequence_data_var};
+            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_length, smodel};
+	}
 	var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;
 	if (fixed.contains("alignment") and i_mapping[i])

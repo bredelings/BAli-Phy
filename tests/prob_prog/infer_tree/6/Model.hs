@@ -2,6 +2,7 @@ module Model where
 
 import           Probability
 import           Bio.Alphabet
+import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
@@ -23,9 +24,9 @@ branch_length_dist zero_p topology b | is_internal_branch topology b = branch_di
     branch_dist_leaf     = prior $ gamma 0.5 (2 / fromIntegral n)
     branch_dist_internal = maybe_zero zero_p branch_dist_leaf
 
-model seq_data = do
+model seqData = do
 
-    let taxa = getTaxa seq_data
+    let taxa = getTaxa seqData
 
     zero_p <- prior $ beta 0.1 1
 
@@ -41,7 +42,7 @@ model seq_data = do
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    observe seq_data $ ctmc_on_tree_fixed_A tree tn93_model
+    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) tn93_model
 
     return
         [ "tree" %=% write_newick tree
@@ -55,6 +56,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
 
-    return $ model seq_data
+    return $ model seqData

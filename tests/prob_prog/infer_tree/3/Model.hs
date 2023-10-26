@@ -2,6 +2,7 @@ module Model where
 
 import           Probability
 import           Bio.Alphabet
+import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
@@ -31,9 +32,9 @@ smodel_prior codons = do
 
 branch_length_dist topology b = gamma 0.5 (2.0 / fromIntegral n) where n = numBranches topology
 
-model seq_data = do
+model seqData = do
 
-    let taxa = getTaxa seq_data
+    let taxa = getTaxa seqData
 
     scale <- prior $ gamma 0.5 2.0
 
@@ -43,13 +44,13 @@ model seq_data = do
 
     let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
 
-    observe seq_data $ ctmc_on_tree_fixed_A tree smodel
+    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) smodel
 
     return loggers
 
 main = do
     [filename] <- getArgs
 
-    seq_data <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
 
-    return $ model seq_data
+    return $ model seqData
