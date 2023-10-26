@@ -60,22 +60,6 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_n_muts :: Int -- This shouldn't be here.
     }
 
-{- TODO:
- Pass in AlignedCharacterData / UnalignedCharacterData instead of Sequences
--}
-
-{- NOTE: How should we represent ancestral states?
-
-Currently we are representing them as Text.
-
-Can we switch to representing them as Aligned/UnalignedCharacterData?
-
-* We need a way to convert CharacterData to Text (as Fasta).
-
-* We would need a way to convert UnalignedCharacterData to AlignedCharacterData, given an AlignmentOnTree.
-
--}
-
 {- NOTE: Sampling from phyloCTMC and phyloCTMCFixedA.
 
 The idea is to sample an UnalignedCharacterData object from phyloCTMC, and an AlignedCharacterData object from phyloCTMCFixedA.
