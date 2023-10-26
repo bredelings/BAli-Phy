@@ -47,6 +47,8 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_subst_root :: Int,
       prop_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_cond_likes :: IntMap CondLikes,
+-- Probably this shold be UnalignedCharacterData for variable-alignment models.
+-- Is that slower?
       prop_anc_seqs :: AlignedCharacterData,
       prop_likelihood :: LogDouble,
       prop_get_weighted_frequency_matrix :: Matrix Double,
@@ -56,21 +58,6 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_n_states :: Int,
       prop_n_base_models :: Int,
       prop_n_muts :: Int -- This shouldn't be here.
-    }
-
-data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
-      prop_fa_subst_root :: Int,
-      prop_fa_transition_ps :: IntMap (EVector (Matrix Double)),
-      prop_fa_cond_likes :: IntMap CondLikes,
-      prop_fa_anc_seqs :: AlignedCharacterData,
-      prop_fa_likelihood :: LogDouble, -- Is this needed?
-      prop_fa_get_weighted_frequency_matrix :: Matrix Double,
-      prop_fa_smap :: EVector Int,
-      prop_fa_leaf_sequences :: IntMap (EVector Int),
-      prop_fa_alphabet :: Alphabet,
-      prop_fa_n_states :: Int,
-      prop_fa_n_base_models :: Int,
-      prop_fa_n_muts :: Int -- This shouldn't be here.
     }
 
 {- TODO:
@@ -152,7 +139,6 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   return ([likelihood], prop)
 
 data CTMCOnTree t s = CTMCOnTree t (AlignmentOnTree t) s
-
 
 instance Dist (CTMCOnTree t s) where
     type Result (CTMCOnTree t s) = UnalignedCharacterData
@@ -277,7 +263,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (CTMCOnTreeProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
@@ -289,7 +275,7 @@ instance Dist (CTMCOnTreeFixedA t s) where
 
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
-    type DistProperties (CTMCOnTreeFixedA t s) = CTMCOnTreeFixedAProperties
+    type DistProperties (CTMCOnTreeFixedA t s) = CTMCOnTreeProperties
     annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
 
 ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel

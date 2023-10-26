@@ -775,12 +775,12 @@ std::string generate_atmodel_program(const variables_map& args,
         }
         else
         {
-            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_fa_likelihood"),properties}}});
+            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
 
             if (n_branches > 0)
             {
                 var substs("substs"+part_suffix);
-                model.let(substs, {var("prop_fa_n_muts"), properties});
+                model.let(substs, {var("prop_n_muts"), properties});
                 sub_loggers.push_back({var("%=%"), String("#substs"), substs });
                 total_substs.push_back(substs);
 
@@ -790,7 +790,7 @@ std::string generate_atmodel_program(const variables_map& args,
                     // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
 
                     var anc_alignment("anc_alignment"+part_suffix);
-                    model.let(anc_alignment, {var("toFasta"),{var("prop_fa_anc_seqs"), properties} });
+                    model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
                     alignment_exp = anc_alignment;
                 }
             }
