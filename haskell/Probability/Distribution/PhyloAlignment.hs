@@ -1,4 +1,4 @@
-module Probability.Distribution.RandomAlignment where
+module Probability.Distribution.PhyloAlignment where
 
 import           Probability.Random
 import           Tree
