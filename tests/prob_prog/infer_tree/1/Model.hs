@@ -37,7 +37,7 @@ model seq_data = do
     alignment <- prior $ random_alignment tree1 imodel tip_seq_lengths
 
     -- Observation
-    observe seq_data $ ctmc_on_tree tree1 alignment tn93_model
+    observe seq_data $ phyloCTMC tree1 alignment tn93_model
 
     return
         [ "tree1" %=% write_newick tree1

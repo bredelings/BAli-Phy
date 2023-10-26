@@ -44,7 +44,7 @@ model seqData = do
 
     let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
 
-    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) smodel
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel
 
     return loggers
 

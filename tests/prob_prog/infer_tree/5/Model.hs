@@ -40,7 +40,7 @@ model seqData = do
 
     let loggers = tree_loggers ++ ["tn93" %>% sloggers]
 
-    observe seqData $ ctmc_on_tree tree (alignmentLength seqData) smodel
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel
 
     return loggers
 

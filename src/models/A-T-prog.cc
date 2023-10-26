@@ -510,7 +510,7 @@ std::string generate_atmodel_program(const variables_map& args,
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
-    imports.insert("Probability.Distribution.OnTree");       // for ctmc_on_tree{,fixed_A}
+    imports.insert("Probability.Distribution.OnTree");       // for phyloCTMC{,fixed_A}
     imports.insert("Tree.Newick");                           // for write_newick
     for(auto& m: SMs)
         add(imports, m.imports);
@@ -723,11 +723,11 @@ std::string generate_atmodel_program(const variables_map& args,
         // Model.Partition.3. Observe the sequence data from the distribution
         expression_ref distribution;
         if (like_calcs[i] == 0)
-            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
+            distribution = {var("phyloCTMC"), branch_dist_tree, alignment_on_tree, smodel};
         else
 	{
 	    expression_ref alignment_length = {var("alignmentLength"), sequence_data_var};
-            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_length, smodel};
+            distribution = {var("phyloCTMC"), branch_dist_tree, alignment_length, smodel};
 	}
 	var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;

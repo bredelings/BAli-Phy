@@ -133,7 +133,7 @@ instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnot
     type DistProperties (CTMCOnTree t (AlignmentOnTree t) s) = CTMCOnTreeProperties
     annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
 
-ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
+phyloCTMC tree alignment smodel = CTMCOnTree tree alignment smodel
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 

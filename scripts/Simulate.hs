@@ -57,7 +57,7 @@ model rootedTree startLength = do
   alignment <- sample $ IndelsOnTree rootedTree imodel startLength
 
   -- Sample ancestral sequence STATES
-  sequences <- sample $ ctmc_on_tree rootedTree alignment smodel
+  sequences <- sample $ phyloCTMC rootedTree alignment smodel
 
   -- Return the AlignedCharacterData
   return $ align alignment sequences
