@@ -35,7 +35,7 @@ import Probability.Distribution.List -- for independent
 -- 10 - n_base_models
 -- 11 - ?parsimony -- used through haskell, not parameters.cc
 
--- Some of these things could be access through the distribution arguments:
+-- Some of these things could be accessed through the distribution arguments:
 -- 6. state -> letter
 -- 7. sequences as EVector Int
 -- 8. alphabet
