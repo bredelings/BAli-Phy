@@ -14,7 +14,10 @@ module SModel (module SModel,
                module SModel.MutSel,
                frequencies_from_dict) where
 
-import Probability
+import Probability.Distribution.Discrete
+import Probability.Distribution.Beta
+import Probability.Distribution.Gamma
+import Probability.Distribution.Transform
 import Bio.Alphabet
 import Bio.Sequence
 import Tree

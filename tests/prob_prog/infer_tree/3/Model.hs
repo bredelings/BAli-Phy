@@ -7,7 +7,6 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
 smodel_prior codons = do

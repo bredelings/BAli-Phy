@@ -7,7 +7,6 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
 branch_length_dist topology b = gamma 0.5 (2 / fromIntegral n) where n = numBranches topology

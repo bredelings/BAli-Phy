@@ -8,7 +8,6 @@ import           Tree
 import           Tree.Newick
 import           SModel
 import           IModel
-import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
 branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = numBranches topology

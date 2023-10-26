@@ -25,6 +25,7 @@ module Probability (module Probability,
                     module Probability.Distribution.List,
                     module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
+                    module Probability.Distribution.PhyloCTMC,
                     module Probability.Distribution.PhyloAlignment
                    )
     where
@@ -60,4 +61,5 @@ import Probability.Distribution.Transform
 import Probability.Distribution.List
 import Probability.Distribution.Markov
 import Probability.Distribution.Tree
+import Probability.Distribution.PhyloCTMC
 import Probability.Distribution.PhyloAlignment

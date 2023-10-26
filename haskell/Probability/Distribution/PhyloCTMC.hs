@@ -1,4 +1,4 @@
-module Probability.Distribution.OnTree where
+module Probability.Distribution.PhyloCTMC where
 
 import Probability.Random
 import Tree

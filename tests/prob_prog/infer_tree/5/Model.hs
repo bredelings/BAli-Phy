@@ -7,8 +7,6 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           Probability.Distribution.OnTree
-import           Probability.Distribution.Tree
 import           System.Environment  -- for getArgs
 
 smodel_prior nucleotides =  do

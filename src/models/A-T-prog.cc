@@ -510,7 +510,7 @@ std::string generate_atmodel_program(const variables_map& args,
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("Effect");                                // for getProperties
     imports.insert("MCMC");                                  // for scale_means_only_slice
-    imports.insert("Probability.Distribution.OnTree");       // for phyloCTMC{,fixed_A}
+//    imports.insert("Probability.Distribution.OnTree");       // for phyloCTMC{,fixed_A}
     imports.insert("Tree.Newick");                           // for write_newick
     for(auto& m: SMs)
         add(imports, m.imports);
