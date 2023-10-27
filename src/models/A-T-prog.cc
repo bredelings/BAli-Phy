@@ -612,7 +612,7 @@ std::string generate_atmodel_program(const variables_map& args,
     }
 
     // We could fix the whole tree or just the topology.
-    auto tree_var = var("tree'");
+    auto tree_var = var("tree");
     expression_ref branch_lengths = var("IntMap.empty");
 
     // M2. Topology
@@ -633,8 +633,7 @@ std::string generate_atmodel_program(const variables_map& args,
     // M4. Branch-length tree
     if (not fixed.count("tree"))
         model.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
-    else
-        model.let(tree_var, {var("tree")});
+
     branch_lengths = {var("IntMap.elems"),branch_lengths};
 
     model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
@@ -688,15 +687,9 @@ std::string generate_atmodel_program(const variables_map& args,
         expression_ref sequence_data_var = getSequenceData(i);
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
-        var branch_dist_tree("tree" + part_suffix);
 	expression_ref scale = 1;
         if (n_branches > 0)
-        {
             scale = scales[scale_index];
-            model.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
-        }
-        else
-            model.let(branch_dist_tree, tree_var);
 
         // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment" + part_suffix);
