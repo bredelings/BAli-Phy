@@ -31,7 +31,7 @@ model seqData = do
 
     scale  <- prior $ gamma 0.5 2
 
-    tree   <- scale_branch_lengths scale <$> prior (uniform_labelled_tree taxa (branch_length_dist zero_p))
+    tree   <- prior $ uniform_labelled_tree taxa (branch_length_dist zero_p)
 
     freqs  <- prior $ symmetric_dirichlet_on (letters dna) 1
 
@@ -41,7 +41,7 @@ model seqData = do
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model scale
 
     return
         [ "tree" %=% write_newick tree

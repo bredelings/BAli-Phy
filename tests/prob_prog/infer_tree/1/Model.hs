@@ -17,9 +17,8 @@ model seq_data = do
         tip_seq_lengths = get_sequence_lengths seq_data
 
     -- Tree
-    scale1 <- prior $ gamma (1/2) 2
+    scale <- prior $ gamma (1/2) 2
     tree   <- prior $ uniform_labelled_tree taxa branch_length_dist
-    let tree1 = scale_branch_lengths scale1 tree
 
     -- Indel model
     indel_rate   <- prior $ log_laplace (-4) 0.707
@@ -33,21 +32,21 @@ model seq_data = do
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
     -- Alignment
-    alignment <- prior $ phyloAlignment tree1 imodel tip_seq_lengths
+    alignment <- prior $ phyloAlignment tree imodel scale tip_seq_lengths
 
     -- Observation
-    observe seq_data $ phyloCTMC tree1 alignment tn93_model
+    observe seq_data $ phyloCTMC tree alignment tn93_model scale
 
     return
-        [ "tree1" %=% write_newick tree1
+        [ "tree" %=% write_newick tree
         , "log(indel_rate)" %=% log indel_rate
         , "mean_length" %=% mean_length
         , "kappa1" %=% kappa1
         , "kappa2" %=% kappa2
         , "frequencies" %=% freqs
-        , "scale1" %=% scale1
+        , "scale" %=% scale
         , "|T|" %=% tree_length tree
-        , "scale1*|T|" %=% tree_length tree1
+        , "scale*|T|" %=% tree_length tree * scale
         , "|A|" %=% alignmentLength alignment
         ]
 

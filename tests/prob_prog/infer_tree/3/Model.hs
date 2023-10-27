@@ -37,13 +37,13 @@ model seqData = do
 
     scale <- prior $ gamma 0.5 2.0
 
-    tree <- scale_branch_lengths scale <$> prior (uniform_labelled_tree taxa branch_length_dist)
+    tree <- prior $ uniform_labelled_tree taxa branch_length_dist
 
     (smodel, sloggers    ) <- smodel_prior (codons dna standard_code)
 
     let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
 
-    observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel scale
 
     return loggers
 

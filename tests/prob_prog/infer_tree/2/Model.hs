@@ -15,10 +15,9 @@ model seqData = do
 
     let taxa = getTaxa seqData
 
-    scale1  <- prior $ gamma 0.5 2
+    scale  <- prior $ gamma 0.5 2
 
     tree   <- prior $ uniform_labelled_tree taxa branch_length_dist
-    let tree1 = scale_branch_lengths scale1 tree
 
     freqs  <- prior $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
     kappa1 <- prior $ log_normal 0 1
@@ -26,15 +25,15 @@ model seqData = do
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    observe seqData $ phyloCTMC tree1 (alignmentLength seqData) tn93_model
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model scale
 
-    return ["tree1" %=% write_newick tree1,
-            "scale" %=% scale1,
+    return ["tree" %=% write_newick tree,
+            "scale" %=% scale,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,
             "tn93:frequencies" %=% freqs,
             "|T|" %=% tree_length tree,
-            "scale1*|T|" %=% tree_length tree1]
+            "scale*|T|" %=% scale * tree_length tree]
 
 main = do
     [filename] <- getArgs

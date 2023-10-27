@@ -22,7 +22,7 @@ model seqData = do
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model 1
 
     return ["tree" %=% write_newick tree,
             "age" %=% age,
