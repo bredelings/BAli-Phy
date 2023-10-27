@@ -541,10 +541,6 @@ std::string generate_atmodel_program(const variables_map& args,
     // Write pragmas, module, imports.
     std::ostringstream program_file;
     write_header(program_file, SMs, IMs, scaleMs, branch_length_model);
-
-    // F1. Substitution models
-    map<string,string> code_to_name;
-
     program_file<<"\n\n";
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
@@ -556,9 +552,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
         // F4. Branch lengths
         if (not fixed.count("tree"))
-        {
             program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
-        }
     }
 
     // F5. Topology
