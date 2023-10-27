@@ -150,7 +150,7 @@ instance SampleableWithProps (PhyloAlignment t) where
           getProperties' x _ = getProperties x
       return (x, props)
 
-phyloAlignment tree model tip_lengths = PhyloAlignment tree model tip_lengths (branch_hmms model tree)
+phyloAlignment tree model scale tip_lengths = PhyloAlignment tree model tip_lengths (branch_hmms model tree scale)
 
 foreign import bpcall "MCMC:" walk_tree_sample_alignments :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
 
