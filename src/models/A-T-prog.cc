@@ -471,6 +471,40 @@ do_block generate_main(const variables_map& args,
 }
 
 
+void write_header(std::ostream& program_file,
+		  const vector<model_t>& SMs,
+		  const vector<model_t>& IMs,
+		  const vector<model_t>& scaleMs,
+		  const model_t& branch_length_model)
+{
+    set<string> imports;
+    imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
+    imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
+    imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
+    imports.insert("MCMC");                                  // for scale_means_only_slice
+    imports.insert("Tree.Newick");                           // for write_newick
+    for(auto& m: SMs)
+        add(imports, m.imports);
+    for(auto& m: IMs)
+        add(imports, m.imports);
+    for(auto& m: scaleMs)
+        add(imports, m.imports);
+    add(imports, branch_length_model.imports);
+
+    program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
+    program_file<<"module Main where";
+    for(auto& mod: imports)
+        program_file<<"\nimport "<<mod;
+    program_file<<"\nimport qualified Data.IntMap as IntMap";
+    program_file<<"\nimport qualified Data.JSON as J";
+    program_file<<"\nimport qualified Data.Text.IO as T";
+    program_file<<"\nimport Probability.Logger";
+    program_file<<"\nimport System.Environment";
+    program_file<<"\nimport System.FilePath";
+}
+
+
+
 std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
@@ -504,33 +538,9 @@ std::string generate_atmodel_program(const variables_map& args,
     int n_leaves   = n_sequences;
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
 
-    set<string> imports;
-    imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
-    imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
-    imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
-    imports.insert("Effect");                                // for getProperties
-    imports.insert("MCMC");                                  // for scale_means_only_slice
-//    imports.insert("Probability.Distribution.OnTree");       // for phyloCTMC{,fixed_A}
-    imports.insert("Tree.Newick");                           // for write_newick
-    for(auto& m: SMs)
-        add(imports, m.imports);
-    for(auto& m: IMs)
-        add(imports, m.imports);
-    for(auto& m: scaleMs)
-        add(imports, m.imports);
-    add(imports, branch_length_model.imports);
-
+    // Write pragmas, module, imports.
     std::ostringstream program_file;
-    program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
-    program_file<<"module Main where";
-    for(auto& mod: imports)
-        program_file<<"\nimport "<<mod;
-    program_file<<"\nimport qualified Data.IntMap as IntMap";
-    program_file<<"\nimport qualified Data.JSON as J";
-    program_file<<"\nimport qualified Data.Text.IO as T";
-    program_file<<"\nimport Probability.Logger";
-    program_file<<"\nimport System.Environment";
-    program_file<<"\nimport System.FilePath";
+    write_header(program_file, SMs, IMs, scaleMs, branch_length_model);
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -699,7 +709,6 @@ std::string generate_atmodel_program(const variables_map& args,
             assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
 
-            expression_ref alphabet = {var("getAlphabet"),smodel};
             if (fixed.count("alignment"))
             {
                 model.let(alignment_on_tree, {var("alignmentOnTreeFromSequences"), tree_var, sequence_data_var});
