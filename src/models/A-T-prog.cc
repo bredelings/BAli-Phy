@@ -746,18 +746,10 @@ std::string generate_atmodel_program(const variables_map& args,
                 var length_indels("total_length_indels"+part_suffix);
                 model.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
                 total_length_indels.push_back(length_indels);
-                var anc_alignment("anc_alignment"+part_suffix);
-                model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties}} );
-                alignment_exp = anc_alignment;
-
-                var substs("substs"+part_suffix);
-                model.let(substs, {var("prop_n_muts"), properties});
-                total_substs.push_back(substs);
 
                 sub_loggers.push_back({var("%=%"), String("|A|"), alignment_length });
                 sub_loggers.push_back({var("%=%"), String("#indels"), num_indels });
                 sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
-                sub_loggers.push_back({var("%=%"), String("#substs"), substs });
             }
 
             if (not fixed.count("alignment"))
@@ -767,32 +759,28 @@ std::string generate_atmodel_program(const variables_map& args,
                 model.let(prior_A, {var("probability"),properties_A});
                 sub_loggers.push_back({var("%=%"), String("prior_A"), {var("ln"),prior_A}});
             }
-
-            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
-        }
-        else
-        {
-            sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
-
-            if (n_branches > 0)
-            {
-                var substs("substs"+part_suffix);
-                model.let(substs, {var("prop_n_muts"), properties});
-                sub_loggers.push_back({var("%=%"), String("#substs"), substs });
-                total_substs.push_back(substs);
-
-                if (load_value(keys,"write-fixed-alignments",false))
-                {
-                    // This should affect whether we allow modifying leaf sequences.
-                    // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
-
-                    var anc_alignment("anc_alignment"+part_suffix);
-                    model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
-                    alignment_exp = anc_alignment;
-                }
-            }
         }
 
+	sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
+
+	if (n_branches > 0)
+	{
+	    if (imodel_index or load_value(keys,"write-fixed-alignments",false))
+	    {
+		// This should affect whether we allow modifying leaf sequences.
+		// bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
+
+		var anc_alignment("anc_alignment"+part_suffix);
+		model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
+		alignment_exp = anc_alignment;
+	    }
+
+	    var substs("substs"+part_suffix);
+	    model.let(substs, {var("prop_n_muts"), properties});
+	    sub_loggers.push_back({var("%=%"), String("#substs"), substs });
+	    total_substs.push_back(substs);
+	}
+	
         var part_loggers("p"+part+"_loggers");
         model.let(part_loggers,get_list(sub_loggers));
         model_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
