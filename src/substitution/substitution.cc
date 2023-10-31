@@ -22,6 +22,7 @@
 #include "sequence/alphabet.H"
 #include "util/rng.H"
 #include "util/range.H"
+#include "util/log-level.H"
 #include <cmath>
 #include <valarray>
 #include <vector>
@@ -523,7 +524,7 @@ namespace substitution {
         Pr *= LCB2.other_subst;
         Pr *= LCB3.other_subst;
         Pr.log() += log_scale_min * scale;
-        if (std::isnan(Pr.log()))
+        if (std::isnan(Pr.log()) and log_verbose > 0)
         {
             std::cerr<<"calc_root_probability: probability is NaN!\n";
             return log_double_t(0.0);
@@ -643,7 +644,7 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-        if (std::isnan(Pr.log()))
+        if (std::isnan(Pr.log()) and log_verbose > 0)
         {
             std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
             return log_double_t(0.0);
@@ -750,7 +751,7 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-        if (std::isnan(Pr.log()))
+        if (std::isnan(Pr.log()) and log_verbose > 0)
         {
             std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
             return log_double_t(0.0);
