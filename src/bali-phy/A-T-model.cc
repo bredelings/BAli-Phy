@@ -565,6 +565,12 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
 
+    //------------- Find out what is fixed -------------
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
     // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
@@ -823,7 +829,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         auto scale_model = scale_names_mapping.unique(i);
         if (scale_model.empty())
         {
-            if (args.count("tree"))
+            if (fixed.count("tree"))
                 scale_model = "1";
             else
                 scale_model = "~gamma(0.5, 2)";
