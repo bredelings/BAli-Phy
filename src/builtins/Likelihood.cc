@@ -804,3 +804,30 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     return sequence;
 }
 
+extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
+
+    auto& arg1 = Args.evaluate(1);
+    auto& transition_ps = arg1.as_<EVector>();
+
+    auto arg2 = Args.evaluate(2);
+    auto& F = arg2.as_<Box<Matrix>>();
+
+    int L = parentSequence.size();
+
+    Vector<pair<int,int>> sequence;
+    auto S = F;
+    for(int i=0; i<L; i++)
+    {
+        auto parent_model_state = parentSequence[i];
+
+        substitution::calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
+
+        sequence.push_back(sample(S));
+    }
+
+    return sequence;
+}
+

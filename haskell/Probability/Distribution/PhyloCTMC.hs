@@ -259,3 +259,34 @@ instance Dist (PhyloCTMC t Int s) where
 instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length smodel scale
+
+foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntInt -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
+
+sampleComponentStatesFixed rtree rootLength smodel scale =  do
+  let ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
+      f = (weighted_frequency_matrix smodel)
+
+  rec let simulateSequenceForNode node = case branchToParent rtree node of
+                                   Nothing -> simulateRootSequence rootLength f
+                                   Just b' -> let b = reverseEdge b'
+                                                  parent = sourceNode rtree b
+                                             in simulateFixedSequenceFrom (stateSequences IntMap.! parent) (ps IntMap.! b) f
+      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
+  return stateSequences
+
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s) where
+    sampleIO (PhyloCTMC tree rootLength smodel scale) = do
+      let alphabet = getAlphabet smodel
+          smap = stateLetters smodel
+
+      stateSequences <- sampleComponentStatesFixed (makeRooted tree) rootLength smodel scale
+
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
+
+      return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s) where
+    sample dist = RanDistribution2 dist do_nothing
+
+

@@ -38,28 +38,15 @@ getSmodel = do
 
   return $ tn93' dna kappaPur kappaPyr pi
 
--- Get the indel model
-getImodel = do
-  let mu = 0.05
-      lambda = mu
-      meanLength = 5
-
-  return $ LongIndels mu lambda meanLength
-
 model rootedTree startLength = do
 
   smodel <- getSmodel
 
-  imodel <- getImodel
-
-  -- Sample the sequences and their alignment
-  alignment <- sample $ IndelsOnTree rootedTree imodel startLength
-
   -- Sample ancestral sequence STATES
-  sequences <- sample $ phyloCTMC rootedTree alignment smodel 1
+  sequences <- sample $ phyloCTMC rootedTree startLength smodel 1
 
   -- Return the AlignedCharacterData
-  return $ align alignment sequences
+  return sequences
 
 
 main = do
