@@ -7,10 +7,13 @@
   - Fix -l tsv with -m Model.hs
   - Fix default instances for type families.
 - Haskell
-  + Ancestral sequences are now AlignedCharacterData.
-  + Sampled/observed sequences are Unaligned/AlignedCharacterData depending on if alignment is fixed.
-  + Can now simulate from ctmc_on_tree.
-  + Common methods between AlignmentOnTree and AlignedCharacterData now in class Alignment.
+  + Rename ctmc_on_tree and ctmc_on_tree_fixed_a -> phyloCTMC.
+  + Rename random_alignment -> phyloAlignment.
+  + Can now simulate from phyloCTMC.
+  + Can now simulate data on fixed alignment with no gaps.
+  - Ancestral sequences are now AlignedCharacterData.
+  - Sampled/observed sequences are Unaligned/AlignedCharacterData depending on if alignment is fixed.
+  - Common methods between AlignmentOnTree and AlignedCharacterData now in class Alignment.
   - Refactor generic methods in Tree class into classes Graph and Forest.
   - AlignmentOnTree: Only store sequence lengths for some nodes.
   - Replace Sequence with (,)
