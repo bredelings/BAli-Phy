@@ -18,10 +18,14 @@ import shutil
 import logging
 from pathlib import Path
 
-def get_times(cmd, cwd):
+def get_times(cmd, cwd, shield=True):
     tmpfile = tempfile.NamedTemporaryFile()
 
     cmd = ['time' ,'-p','-o', tmpfile.name] + cmd
+
+    if shield:
+        cmd = ["cset", "shield", "--exe", "--"] + cmd
+
     result = subprocess.run(cmd, capture_output=True, cwd=cwd)
 
     if result.returncode != 0:
@@ -37,18 +41,14 @@ def get_times(cmd, cwd):
 
     return times
 
-def benchmark(n, name, old_cmd, new_cmd, cwd):
-    old_times = []
-    new_times = []
+def benchmark(n, name, cmd, cwd):
+    times = []
     for i in range(n):
         print(f"testing {name}: iter {i+1}/n ",end='', flush=True)
-        old_time = get_times(old_cmd, cwd)["user"];
-        print(f'   old = {old_time}s',end='', flush=True)
-        new_time = get_times(new_cmd+[f'--seed={i}'], cwd)["user"];
-        print(f'   new = {new_time}s   ratio = {new_time/old_time}')
-        old_times.append(old_time)
-        new_times.append(new_time)
-    return (old_times, new_times)
+        time = get_times(cmd+[f'--seed={i}'], cwd)["real"];
+        print(f'   {time}s')
+        times.append(time)
+    return times
 
 def exec_show_result(cmd, **kwargs):
     showcmd = ' '.join([f"'{word}'" for word in cmd])
@@ -172,8 +172,6 @@ parser = argparse.ArgumentParser(description="Extract the consensus sequence for
 
 parser.add_argument("repo", help="Path to repo")
 parser.add_argument("count", help="Number of commits to benchmark")
-parser.add_argument("--old", help="Reference executable to test")
-parser.add_argument("--new", default=None,help="Executable to test")
 parser.add_argument("--dir", default=".", help="Directory to run in")
 parser.add_argument("--build", default="build",help="Directory to build in")
 parser.add_argument("--install",default="local",help="Directory to install in")
@@ -211,17 +209,15 @@ for commit in commits:
     logging.info(f"Building executable {commit}")
     exe = build(args.repo, build_dir, install_dir)
 
-    old_cmd = [args.old, '48-muscle.fasta', '--pre-burnin=0', '--iter=25','--seed=0']
-    new_cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=25']
-    #old_cmd = ['ls','/dev/']
-    #new_cmd = ['ls','/usr/share/doc/']
+    cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iter=25']
+    #cmd = ['ls','/dev/']
+    #cmd = ['ls','/usr/share/doc/']
 
-    print(f"old cmd = {old_cmd}", file=sys.stderr)
-    print(f"new cmd = {new_cmd}", file=sys.stderr)
+    print(f"cmd = {cmd}", file=sys.stderr)
 
-    old_times, new_times = benchmark(5, "sha", old_cmd, new_cmd, run_dir)
-    med_old_time = statistics.median(old_times)
-    med_new_time = statistics.median(new_times)
-    print(f"old_time = {statistics.median(old_times)}, new_time = {statistics.median(new_times)}   ratio = {med_new_time/med_old_time}")
+    times = benchmark(5, "sha", cmd, run_dir)
+    med_time = statistics.median(times)
+    sigma_time = statistics.stdev(times)
+    print(f"time = {med_time} +- {sigma_time}")
 
 
