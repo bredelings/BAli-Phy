@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "4.0-beta4"         >
+<!ENTITY  version        "4.0-beta7"         >
 
 <!ENTITY  source.file    "&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -1942,8 +1942,8 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
       </section>
 
       <section><info><title>The branch-site substitution model</title></info>
-      <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and disable topology changes in order to keep the topology fixed:
-    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S branch_site -T <replaceable>tree</replaceable>.tree --disable=topology</screen>
+      <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and fix the topology:
+    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S branch_site -T <replaceable>tree</replaceable>.tree --fix=topology</screen>
     The tree file should be in Newick format, with foreground branches labelled using &amp; attributes. The attribute must be applied to the branch, not the node, so it must occur after a colon.
 
 <example><title>An tree with a foreground branch</title>
@@ -3101,23 +3101,24 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	<qandaentry>
 	  <question><para>Can I fix the tree topology, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--disable=topology --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
-	  </answer>
-	</qandaentry>
-
-	<qandaentry>
-	  <question><para>Can I fix the tree topology and <emphasis>relative</emphasis> branch lengths, while allowing the alignment to vary?</para></question>
-	  <answer>
-	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--fix=topology --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
 	  <question><para>Can I fix the tree topology and <emphasis>absolute</emphasis> branch lengths <emphasis>in all data partitions</emphasis>, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable> --scale=1</userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--fix=tree --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
+
+	<qandaentry>
+	  <question><para>Can I fix the tree topology and <emphasis>relative</emphasis> branch lengths, while allowing the alignment to vary?</para></question>
+	  <answer>
+	    <para>Yes.  Add <userinput>--fix=tree --tree=<replaceable>treefile</replaceable> '--scale=~gamma(0.5,2)'</userinput> on the command line.</para>
+	  </answer>
+	</qandaentry>
+
       </qandaset>
 
     </section>
