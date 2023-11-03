@@ -1,4 +1,7 @@
-* 4.0-beta7 (unreleased)
+* 4.0-beta8 (unreleased)
+
+
+* 4.0-beta7 (Nor 1, 2023)
 - Bug fixes:
   + Allow estimating the alignment with a fixed topology.
     - Don't crash trying NNI on fixed tree.
