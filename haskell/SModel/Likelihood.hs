@@ -56,7 +56,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fr
                                                                lcf b = let p = ps IntMap.! b
                                                                        in case edgesBeforeEdge t b of
                                                                             [] -> let n=sourceNode t b in peelBranch [seqs IntMap.! n] alpha smap [] [] p f
-                                                                            [b1,b2] -> peel_internal_branch (lc IntMap.! b1) (lc IntMap.! b2) (as IntMap.! b1) (as IntMap.! b2) p f
+                                                                            [b1,b2] -> peelBranch [] alpha smap [lc IntMap.! b1, lc IntMap.! b2] [as IntMap.! b1, as IntMap.! b2] p f
                                                                             e -> error $ "cached_conditional_likelihoods: bad number of edges: " ++ show (length e)
                                                            in lc
 
