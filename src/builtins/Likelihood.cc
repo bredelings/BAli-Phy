@@ -81,6 +81,15 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask, const EVector& smap);
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch(const EVector& sequences,
+		const alphabet& a,
+		const EVector& smap,
+		const EVector& LCB,
+		const EVector& A,
+		const EVector& transition_P,
+		const Matrix& F);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
@@ -104,6 +113,29 @@ extern "C" closure builtin_function_peel_leaf_branch_SEV(OperationArgs& Args)
 
     return substitution::peel_leaf_branch_SEV(arg0.as_<EVector>(), *arg1.as_<Alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>(), arg4.as_<EVector>());
 }
+
+extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& sequences = arg0.as_<EVector>();
+
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
+
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+
+    return substitution::peel_branch(sequences,                  // sequence
+				     *arg1.as_<Alphabet>(),      // alphabet
+				     arg2.as_<EVector>(),        // smap
+				     arg3.as_<EVector>(),        // LCB
+				     arg4.as_<EVector>(),        // A
+				     arg5.as_<EVector>(),        // transition_P
+				     arg6.as_<Box<Matrix>>()  ); // F
+}
+
 
 
 namespace substitution {
