@@ -54,10 +54,11 @@ foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
-                                                                       in case edgesBeforeEdge t b of
-                                                                            [] -> let n=sourceNode t b in peelBranch [seqs IntMap.! n] alpha smap [] [] p f
-                                                                            [b1,b2] -> peelBranch [] alpha smap [lc IntMap.! b1, lc IntMap.! b2] [as IntMap.! b1, as IntMap.! b2] p f
-                                                                            e -> error $ "cached_conditional_likelihoods: bad number of edges: " ++ show (length e)
+                                                                           in_edges = edgesBeforeEdge t b
+                                                                           sequences = if null in_edges then [seqs IntMap.! (sourceNode t b)] else []
+                                                                           clsIn = fmap (lc IntMap.!) in_edges
+                                                                           asIn  = fmap (as IntMap.!) in_edges
+                                                                       in peelBranch sequences alpha smap clsIn asIn p f
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = IntMap.fromSet peel_likelihood' $ getNodesSet t
