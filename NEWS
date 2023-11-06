@@ -1,4 +1,7 @@
 * 4.0-beta8 (unreleased)
+- Usability tweaks
+  + Write out tree with branch-lengths scaled according to weighted average of partition scales.
+  + Print the alignment length including fixed-alignment partitions.
 
 
 * 4.0-beta7 (Nor 1, 2023)
