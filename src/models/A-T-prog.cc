@@ -512,6 +512,7 @@ compute_logged_quantities(do_block& model,
 			  int i,
 			  const expression_ref& alignment_on_tree,
 			  const expression_ref& properties,
+			  const expression_ref& sequence_data,
 			  std::optional<int> imodel_index,
 			  vector<expression_ref>& alignment_lengths,
 			  vector<expression_ref>& total_num_indels,
@@ -527,11 +528,12 @@ compute_logged_quantities(do_block& model,
     expression_ref alignment_exp;
     if (imodel_index)
     {
+	var alignment_length("alignment_length"+part_suffix);
+	model.let(alignment_length, {var("alignmentLength"), alignment_on_tree} );
+	alignment_lengths.push_back(alignment_length);
+
 	if (n_branches > 0)
 	{
-	    var alignment_length("alignment_length"+part_suffix);
-	    model.let(alignment_length, {var("alignmentLength"), alignment_on_tree} );
-	    alignment_lengths.push_back(alignment_length);
 	    var num_indels("num_indels"+part_suffix);
 	    model.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );
 	    total_num_indels.push_back(num_indels);
@@ -552,6 +554,13 @@ compute_logged_quantities(do_block& model,
 	    total_prior_A.push_back(prior_A);
 	    sub_loggers.push_back({var("%=%"), String("prior_A"), prior_A});
 	}
+    }
+    else
+    {
+	// For fixed-alignment partitions, the alignment length comes from the observed-data matrix.
+	var alignment_length("alignment_length"+part_suffix);
+	model.let(alignment_length, {var("alignmentLength"), sequence_data} );
+	alignment_lengths.push_back(alignment_length);
     }
 
     sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
@@ -817,6 +826,7 @@ std::string generate_atmodel_program(const variables_map& args,
 						     i,
 						     alignment_on_tree,
 						     properties,
+						     sequence_data,
 						     imodel_index,
 						     alignment_lengths,
 						     total_num_indels,
@@ -830,7 +840,8 @@ std::string generate_atmodel_program(const variables_map& args,
         model_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
         model.empty_stmt();
     }
-    if (not alignment_lengths.empty())
+    bool has_a_variable_alignment = not total_num_indels.empty();
+    if (not alignment_lengths.empty() and has_a_variable_alignment)
         model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
     if (not total_num_indels.empty())
         model_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
