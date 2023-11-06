@@ -208,7 +208,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             auto fvar = make_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
-            auto otherwise = Core::error(fvar.name+": pattern match failure");
+            auto otherwise = Core::error(m.name + "." + fvar.name+": pattern match failure");
 
             decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
@@ -550,7 +550,9 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         auto L = E.as_<Hs::LambdaExp>();
 
         auto equation = desugar_match(L.match);
-        expression_ref otherwise = Core::error("lambda: pattern match failure");
+	// what top-level function is the lambda in?
+	// what line is it on?
+        expression_ref otherwise = Core::error(m.name + " lambda: pattern match failure");
 
         return def_function({equation}, otherwise);
     }
