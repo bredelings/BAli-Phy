@@ -68,3 +68,9 @@ allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree 
 -- add_root :: IsTree t => NodeId -> t -> Rooted t
 add_root r t = addRoots [r] t
 
+-- Should this go somewhere else?
+weightedAverage weights values | length weights == length values = go weights values 0 0
+                               | otherwise                       = error $ "weightedAverage: |weights| = " ++ show (length weights) ++ "  |values| = " ++ show (length values)
+    where
+      go (w:ws) (v:vs) top bot = go ws vs (top + (w * v)) (bot + w)
+      go []     []     top bot = top / bot
