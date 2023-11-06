@@ -842,16 +842,20 @@ std::string generate_atmodel_program(const variables_map& args,
     }
     bool has_a_variable_alignment = not total_num_indels.empty();
     model.let(var("alignmentLengths"),get_list(alignment_lengths));
-    if (n_partitions > 1)
+    if (n_branches > 0)
     {
-	model.let(var("scales"),get_list(partition_scales));
-	expression_ref a_lengths = {var("fmap"),var("fromIntegral"),var("alignmentLengths")};
-	model.let(var("scale"),{var("weightedAverage"), a_lengths, var("scales")});
+	if (n_partitions > 1)
+	{
+	    model.let(var("scales"),get_list(partition_scales));
+	    expression_ref a_lengths = {var("fmap"),var("fromIntegral"),var("alignmentLengths")};
+	    model.let(var("scale"),{var("weightedAverage"), a_lengths, var("scales")});
+	}
+	else
+	    model.let(var("scale"),{var("scale1")});
+	model_loggers.push_back( {var("%=%"), String("scale"), var("scale")});
+	model_loggers.push_back( {var("%=%"), String("scale*|T|"), {var("*"),var("scale"),var("tlength")}});
     }
-    else
-	model.let(var("scale"),{var("scale1")});
-    model_loggers.push_back( {var("%=%"), String("scale"), var("scale")});
-    model_loggers.push_back( {var("%=%"), String("scale*|T|"), {var("*"),var("scale"),var("tlength")}});
+
     if (not alignment_lengths.empty() and has_a_variable_alignment)
         model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),var("alignmentLengths") }} );
     if (not total_num_indels.empty())
