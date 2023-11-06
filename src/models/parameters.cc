@@ -823,13 +823,19 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
                 tryNNI(T, branches[0], branches[2]);
             }
 
-            int branch = T.branches()[0];
-            if (T.has_branch_lengths() and T.can_set_branch_length(branch))
-                T.set_branch_length(branch,1.0);
+	    if (T.n_branches() > 0)
+	    {
+		int branch = T.branches()[0];
+		if (T.has_branch_lengths() and T.can_set_branch_length(branch))
+		    T.set_branch_length(branch,1.0);
+	    }
 
-            int node = T.nodes()[0];
-            if (T.has_node_times() and T.can_set_node_time(node))
-                T.set_node_time(node, 0.0);
+	    if (T.n_nodes() > 0)
+	    {
+		int node = T.nodes()[0];
+		if (T.has_node_times() and T.can_set_node_time(node))
+		    T.set_node_time(node, 0.0);
+	    }
 
             for(auto& alignments_reg: alignments_regs)
             {
