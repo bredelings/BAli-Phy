@@ -928,7 +928,9 @@ std::string generate_atmodel_program(const variables_map& args,
         if (not fixed.count("tree"))
         {
             model.empty_stmt();
-	    expression_ref scaled_tree = {var("scale_branch_lengths"),var("scale"),tree_var};
+	    expression_ref scaled_tree = tree_var;
+	    if (n_branches > 0)
+		scaled_tree = {var("scale_branch_lengths"),var("scale"), scaled_tree};
             model.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"), scaled_tree}}});
         }
 
