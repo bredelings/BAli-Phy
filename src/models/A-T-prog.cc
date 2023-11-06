@@ -149,9 +149,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
     {
 	// FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
 	//        This would obviate the need to create a Scale1 (etc) prefix here.
-	string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
-	string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
-	string var_name = "scale"+indexsuffix;
+	string var_name = "scale" + convertToString(i+1);
 
 	auto code = scaleMs[i].code;
 	expression_ref E = var(scaleM_function_for_index[i]);
@@ -763,6 +761,7 @@ std::string generate_atmodel_program(const variables_map& args,
     vector<expression_ref> total_length_indels;
     vector<expression_ref> total_substs;
     vector<expression_ref> total_prior_A;
+    vector<expression_ref> partition_scales;
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -778,7 +777,8 @@ std::string generate_atmodel_program(const variables_map& args,
 	expression_ref scale = 1;
         if (n_branches > 0)
             scale = scales[scale_index];
-
+	partition_scales.push_back(scale);
+	
         // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment" + part_suffix);
         if (imodel_index)
@@ -841,8 +841,19 @@ std::string generate_atmodel_program(const variables_map& args,
         model.empty_stmt();
     }
     bool has_a_variable_alignment = not total_num_indels.empty();
+    model.let(var("alignmentLengths"),get_list(alignment_lengths));
+    if (n_partitions > 1)
+    {
+	model.let(var("scales"),get_list(partition_scales));
+	expression_ref a_lengths = {var("fmap"),var("fromIntegral"),var("alignmentLengths")};
+	model.let(var("scale"),{var("weightedAverage"), a_lengths, var("scales")});
+    }
+    else
+	model.let(var("scale"),{var("scale1")});
+    model_loggers.push_back( {var("%=%"), String("scale"), var("scale")});
+    model_loggers.push_back( {var("%=%"), String("scale*|T|"), {var("*"),var("scale"),var("tlength")}});
     if (not alignment_lengths.empty() and has_a_variable_alignment)
-        model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),get_list(alignment_lengths) }} );
+        model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),var("alignmentLengths") }} );
     if (not total_num_indels.empty())
         model_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
     if (not total_length_indels.empty())
@@ -913,7 +924,8 @@ std::string generate_atmodel_program(const variables_map& args,
         if (not fixed.count("tree"))
         {
             model.empty_stmt();
-            model.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"),tree_var}}});
+	    expression_ref scaled_tree = {var("scale_branch_lengths"),var("scale"),tree_var};
+            model.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"), scaled_tree}}});
         }
 
         // Add the alignment loggers.
