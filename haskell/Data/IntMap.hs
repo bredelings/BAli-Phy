@@ -127,8 +127,8 @@ toList m = [ (k,m!k) | k <- keys m]
 
 -- filter :: (a -> bool) -> IntMap a -> IntMap a
 -- filterWithKey :: (Key -> a -> Bool) -> IntMap a -> IntMap a
--- restrictKeys :: IntMap a -> IntSet -> IntMap a
--- withoutKeys :: IntMap a -> IntSet -> IntMap a
+foreign import bpcall "IntMap:" restrictKeys :: IntMap a -> IntSet -> IntMap a
+foreign import bpcall "IntMap:" withoutKeys  :: IntMap a -> IntSet -> IntMap a
 -- partition :: (a -> Bool) -> IntMap a -> (IntMap a, IntMap a)
 -- partitionWithKey :: (Key -> a -> Bool) -> IntMap a -> (IntMap a, IntMap a)
 -- mapMaybe :: (a -> Maybe b) -> IntMap a -> IntMap b

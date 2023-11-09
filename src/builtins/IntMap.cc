@@ -380,6 +380,38 @@ extern "C" closure builtin_function_keysSet(OperationArgs& Args)
     return keys;
 }
 
+
+extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& map0 = arg0.as_<IntMap>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& keys = arg1.as_<IntSet>();
+
+    IntMap result;
+
+    for(auto& k: keys)
+	if (map0.has_key(k))
+	    result.insert(k, map0[k]);
+
+    return result;
+}
+
+extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto result = arg0.as_<IntMap>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& keys = arg1.as_<IntSet>();
+
+    for(auto& k: keys)
+	result.erase(k);
+
+    return result;
+}
+
 extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
