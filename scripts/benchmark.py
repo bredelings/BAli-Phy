@@ -44,7 +44,7 @@ def get_times(cmd, cwd, shield=True):
 def benchmark(n, name, cmd, cwd):
     times = []
     for i in range(n):
-        print(f"testing {name}: iter {i+1}/n ",end='', flush=True)
+        print(f"testing {name}: iter {i+1}/{n} ",end='', flush=True)
         time = get_times(cmd+[f'--seed={i}'], cwd)["real"];
         print(f'   {time}s')
         times.append(time)
@@ -176,6 +176,8 @@ parser.add_argument("--dir", default=".", help="Directory to run in")
 parser.add_argument("--build", default="build",help="Directory to build in")
 parser.add_argument("--install",default="local",help="Directory to install in")
 parser.add_argument("--verbose",help="Be verbose",action='store_true')
+parser.add_argument("--reps", type=int, default=10, help="Be verbose")
+
 #parser.add_argument("reference", help="Reference file used to map the bam file (.fasta)")
 #parser.add_argument("--chromosome", help="The chromosome from which to extract the consensus sequence")
 #parser.add_argument("--min-quality", default=25, type=int, help="Quality score required for a base in a read to count (default is 25)")
@@ -215,7 +217,7 @@ for commit in commits:
 
     print(f"cmd = {cmd}", file=sys.stderr)
 
-    times = benchmark(5, "sha", cmd, run_dir)
+    times = benchmark(args.reps, "sha", cmd, run_dir)
     med_time = statistics.median(times)
     sigma_time = statistics.stdev(times)
     print(f"time = {med_time} +- {sigma_time}")
