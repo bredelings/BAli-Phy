@@ -398,6 +398,45 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
     return result;
 }
 
+closure makeEVector(OperationArgs& Args)
+{
+    int n = Args.current_closure().Env.size();
+
+    EVector result;
+    for(int i=0;i<n;i++)
+    {
+	int r = Args.current_closure().Env[i];
+	auto obj = Args.evaluate_reg_to_object( r );
+	result.push_back( obj );
+    }
+    return result;
+}
+
+extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto map0 = arg0.as_<IntMap>();
+
+    // The order for a specific keys object should remain unchanged.
+    auto arg1 = Args.evaluate(1);
+    auto& keys = arg1.as_<IntSet>();
+
+    int n = keys.size();
+
+    closure result;
+    result.Env.resize(n);
+    int i=0;
+    for(int key: keys)
+    {
+	result.Env[i] = map0[key];
+
+	i++;
+    }
+    result.exp = Operation(0,makeEVector,"makeEVector");
+
+    return result;
+}
+
 extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);

@@ -161,3 +161,5 @@ instance Show a => Show (IntMap a) where
 instance Foldable IntMap where
     toList = elems
     length = size
+
+foreign import bpcall "IntMap:" restrictKeysToVector :: IntMap a -> IntSet -> EVector a
