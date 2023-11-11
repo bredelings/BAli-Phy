@@ -412,23 +412,6 @@ extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
     return result;
 }
 
-extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto& map1 = arg0.as_<IntMap>();
-
-    auto result = object_ptr<EIntMap>(new EIntMap);
-    auto& map2 = *result;
-
-    for(auto& [key,r_value]: map1)
-    {
-        auto value = Args.evaluate_reg_to_object(r_value);
-        map2.insert({key, value});
-    }
-
-    return result;
-}
-
 extern "C" closure builtin_function_esubscript(OperationArgs& Args)
 {
     int key = Args.evaluate(1).as_int();
