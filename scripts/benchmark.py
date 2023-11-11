@@ -220,6 +220,6 @@ for commit in commits:
     times = benchmark(args.reps, "sha", cmd, run_dir)
     med_time = statistics.median(times)
     sigma_time = statistics.stdev(times)
-    print(f"time = {med_time} +- {sigma_time}   {commit.message}")
+    print(f"time = {med_time:.2f} +- {sigma_time:.2f}   {commit.message}")
 
 
