@@ -13,6 +13,7 @@ import Bio.Sequence (bitmask_from_sequence, strip_gaps)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 
 data CondLikes
 
@@ -26,7 +27,7 @@ foreign import bpcall "Likelihood:" peel_likelihood_2 :: EVector Int -> EVector 
 foreign import bpcall "Likelihood:" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:peelBranch" builtinPeelBranch :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 
-peelBranch sequences alphabet smap cls as ps f = builtinPeelBranch (list_to_vector sequences) alphabet smap (list_to_vector cls) (list_to_vector as) ps f
+peelBranch sequences alphabet smap cls as ps f = builtinPeelBranch (list_to_vector sequences) alphabet smap cls as ps f
 
 
 -- ancestral sequence sampling for connected-CLVs
@@ -54,10 +55,10 @@ foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
-                                                                           in_edges = edgesBeforeEdge t b
-                                                                           sequences = if null in_edges then [seqs IntMap.! (sourceNode t b)] else []
-                                                                           clsIn = fmap (lc IntMap.!) in_edges
-                                                                           asIn  = fmap (as IntMap.!) in_edges
+                                                                           inEdges = edgesBeforeEdgeSet t b
+                                                                           sequences = if IntSet.null inEdges then [seqs IntMap.! (sourceNode t b)] else []
+                                                                           clsIn = IntMap.restrictKeysToVector lc inEdges
+                                                                           asIn  = IntMap.restrictKeysToVector as inEdges
                                                                        in peelBranch sequences alpha smap clsIn asIn p f
                                                            in lc
 
