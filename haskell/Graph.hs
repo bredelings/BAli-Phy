@@ -141,27 +141,24 @@ instance IsGraph Graph where
     getAttributes (Graph _ _ _ _ a)              = a
 
 ------------------ Derived Operations ------------
-edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
-edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
-edgesTowardNodeSet t node = IntSet.mapNegate $ edgesOutOfNodeSet t node
+edgesTowardNodeSet t node = reverseEdgesSet $ edgesOutOfNodeSet t node
+edgesTowardNodeArray t node = IntSet.toArray $ edgesTowardNodeSet t node
+edgesTowardNode t node = IntSet.toList $ edgesTowardNodeSet t node
+
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
 
-edgesBeforeEdgeSet t b  = IntSet.mapNegate $ IntSet.delete b $ edgesOutOfNodeSet t node
+edgesBeforeEdgeSet t b  = reverseEdgesSet $ IntSet.delete b $ edgesOutOfNodeSet t node
     where node = sourceNode t b
 edgesAfterEdgeSet t b = IntSet.delete (reverseEdge b) $ edgesOutOfNodeSet t node
     where node = targetNode t b
 
-edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
-    where node = sourceNode t b
-edgesAfterEdgeArray t b = IntSet.toArray $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
-    where node = targetNode t b
-edgesBeforeEdge t b = fmap reverseEdge $ IntSet.toList $ IntSet.delete b (edgesOutOfNodeSet t node)
-    where node = sourceNode t b
-edgesAfterEdge t b = IntSet.toList $ IntSet.delete (reverseEdge b) (edgesOutOfNodeSet t node)
-    where node = targetNode t b
+edgesBeforeEdgeArray t b = IntSet.toArray $ edgesBeforeEdgeSet t b
+edgesAfterEdgeArray t b = IntSet.toArray $ edgesAfterEdgeSet t b
+edgesBeforeEdge t b = IntSet.toList $ edgesBeforeEdgeSet t b
+edgesAfterEdge t b = IntSet.toList $ edgesAfterEdgeSet t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
 is_internal_node t n = not $ is_leaf_node t n
@@ -179,6 +176,11 @@ getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
 
 reverseEdge e = -e
+
+reverseEdges = map reverseEdge
+reverseEdgesSet = IntSet.mapNegate
+--reverseEdgesArray :: Array Int -> Array Int
+reverseEdgesArray = fmap reverseEdge
 
 isUEdge e = e > reverseEdge e
 
