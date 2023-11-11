@@ -1274,9 +1274,6 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        Matrix ones(n_models, n_states);
-        element_assign(ones, 1);
-
         log_prod total;
         int total_scale = 0;
 	vector<int> AL(n_branches_in);
