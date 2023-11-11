@@ -92,3 +92,5 @@ map f set = fromList $ L.map f $ toList set
 
 instance Show (IntSet) where
     show m = show $ toList m
+
+foreign import bpcall "IntSet:" mapNegate :: IntSet -> IntSet

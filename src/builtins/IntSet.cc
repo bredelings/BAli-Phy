@@ -199,3 +199,14 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
     }
     return S3;
 }
+
+extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
+{
+    auto& S1 = Args.evaluate(0).as_<IntSet>();
+
+    IntSet S2;
+    for(int b: S1)
+	S2 = S2.insert(-b);
+
+    return S2;
+}
