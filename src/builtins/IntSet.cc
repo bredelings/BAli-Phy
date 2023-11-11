@@ -86,8 +86,10 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
 {
-    auto& S1 = Args.evaluate(0).as_<IntSet>();
-    auto& S2 = Args.evaluate(1).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
     if (S2.size() < S1.size())
@@ -108,8 +110,10 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
 
 extern "C" closure builtin_function_difference(OperationArgs& Args)
 {
-    auto& S1 = Args.evaluate(0).as_<IntSet>();
-    auto& S2 = Args.evaluate(1).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
     if (S1.size() < S2.size())
@@ -146,8 +150,10 @@ extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
 
 extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 {
-    auto& S1 = Args.evaluate(0).as_<IntSet>();
-    auto& S2 = Args.evaluate(1).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
     bool disjoint = true;
@@ -172,8 +178,10 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
 {
-    auto& S1 = Args.evaluate(0).as_<IntSet>();
-    auto& S2 = Args.evaluate(1).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S2 = arg1.as_<IntSet>();
 
     // Optimized for the case when one set is very small.
     IntSet S3;
