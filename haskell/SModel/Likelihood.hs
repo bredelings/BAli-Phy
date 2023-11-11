@@ -57,21 +57,24 @@ foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
                                                                            inEdges = edgesBeforeEdgeSet t b
+                                                                           -- FIXME!  How to determine if the node has any data?
                                                                            sequences = if IntSet.null inEdges then [seqs IntMap.! (sourceNode t b)] else []
                                                                            clsIn = IntMap.restrictKeysToVector lc inEdges
                                                                            asIn  = IntMap.restrictKeysToVector as inEdges
                                                                        in peelBranch sequences alpha smap clsIn asIn p f
                                                            in lc
 
-peel_likelihood t cl as f root = let likelihoods = IntMap.fromSet peel_likelihood' $ getNodesSet t
-                                     peel_likelihood' root = case edgesTowardNode t root of
-                                                               [b1,b2,b3] -> calc_root_probability (cl IntMap.! b1) (cl IntMap.! b2) (cl IntMap.! b3) (as IntMap.! b1) (as IntMap.! b2) (as IntMap.! b3) f
-                                                               e -> error $ "peel_likelihood: Bad number of edges: " ++ show (length e)
-                                 in likelihoods IntMap.! root
+peel_likelihood t seqs cls as alpha f smap root = let likelihoods = IntMap.fromSet peel_likelihood_at_node $ getNodesSet t
+                                                      peel_likelihood_at_node root = let inEdges = edgesTowardNodeSet t root
+                                                                                         sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
+                                                                                         clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                                                         asIn  = IntMap.restrictKeysToVector as inEdges
+                                                                                     in calcRootProb (list_to_vector sequences) alpha smap clsIn asIn f
+                                                  in likelihoods IntMap.! root
 
 
-substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditional_likelihoods t seqs as alpha ps f smap
-                                                         in peel_likelihood t cl as f root
+substitution_likelihood t root seqs as alpha ps f smap = let cls = cached_conditional_likelihoods t seqs as alpha ps f smap
+                                                         in peel_likelihood t seqs cls as alpha f smap root
 
 sample_ancestral_sequences :: IsTree t =>
                               t ->

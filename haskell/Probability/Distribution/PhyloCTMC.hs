@@ -96,13 +96,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
               smap
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood | n_nodes > 2    = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
-                 | n_nodes == 1   = let [n1] = getNodes tree
-                                    in alignment `seq` peel_likelihood_1 (node_sequences IntMap.! n1) alphabet f
-                 | n_nodes == 2   = let [n1, n2] = getNodes tree
-                                        [b1, b2] = getEdges tree
-                                    in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! b1) (transition_ps IntMap.! b1) f
-                 | otherwise      = error $ "likelihood: n_nodes = " ++ show n_nodes
+      likelihood  = peel_likelihood tree node_sequences cls as alphabet (weighted_frequency_matrix smodel) smap subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
