@@ -143,10 +143,16 @@ instance IsGraph Graph where
 ------------------ Derived Operations ------------
 edgesTowardNodeArray t node = fmap reverseEdge $ edgesOutOfNodeArray t node
 edgesTowardNode t node = fmap reverseEdge $ edgesOutOfNode t node
+edgesTowardNodeSet t node = IntSet.mapNegate $ edgesOutOfNodeSet t node
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 
 nodeDegree t n = IntSet.size (edgesOutOfNodeSet t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
+
+edgesBeforeEdgeSet t b  = IntSet.mapNegate $ IntSet.delete b $ edgesOutOfNodeSet t node
+    where node = sourceNode t b
+edgesAfterEdgeSet t b = IntSet.delete (reverseEdge b) $ edgesOutOfNodeSet t node
+    where node = targetNode t b
 
 edgesBeforeEdgeArray t b = fmap reverseEdge $ IntSet.toArray $ IntSet.delete b (edgesOutOfNodeSet t node)
     where node = sourceNode t b
