@@ -1248,8 +1248,6 @@ namespace substitution {
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-        // get the relationships with the sub-alignments for the (two) branches behind b0
-
         // Do this before accessing matrices or other_subst
 	int n_branches_in = LCB.size();
 	assert(not sequences.empty() or not A.empty());
@@ -1632,6 +1630,153 @@ namespace substitution {
         }
 
         return LCB3;
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch_SEV(const EVector& sequences,
+                    const alphabet& a,
+                    const EVector& smap,
+                    const EVector& LCB,
+                    const EVector& transition_P)
+    {
+        total_peel_internal_branches++;
+
+        const int n_models = transition_P.size();
+        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int matrix_size = n_models * n_states;
+
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
+        auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+
+        int n_branches_in = LCB.size();
+        assert(not sequences.empty() or not LCB.empty());
+        int L = (sequences.empty()) ? cache(0).bits.size() : mask(0).size();
+
+        int n_sequences = sequences.size();
+
+#ifndef NDEBUG
+        assert(L > 0);
+        for(int i=0;i<n_sequences;i++)
+        {
+            assert(mask(i).size() == L);
+        }
+
+        for(int i=0;i<n_branches_in;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // Do this before accessing matrices or other_subst
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+        LCB_OUT->bits.resize(L);
+        for(int i=0;i<n_sequences;i++)
+            LCB_OUT->bits |= mask(i);
+        for(int i=0;i<n_branches_in;i++)
+            LCB_OUT->bits |= cache(i).bits;
+
+        const auto& bits_out = LCB_OUT->bits;
+        assert(bits_out.size() == L);
+
+        // scratch matrix
+        double* S = LCB_OUT->scratch(0);
+
+        // index into sequences
+        vector<int> i(n_sequences, 0);
+        // index into LCBs
+        vector<int> s(n_branches_in, 0);
+        // index into LCB_OUT
+        int s_out = 0;
+
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+            int scale = 0;
+            const double* C = S;
+            for(int k=0; k<matrix_size; k++)
+                S[k] = 1.0;
+
+            // Handle branches in
+            for(int j=0;j<n_branches_in;j++)
+            {
+                if (cache(j).bits.test(c))
+                {
+                    auto& lcb = cache(j);
+                    element_prod_assign(S, lcb[s[j]], matrix_size);
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+            // TODO: Should we just precalculate the LCB at leaf nodes?
+            //       We're doing it here and propagating in separate steps already,
+            //         which is slower, but simpler.
+
+            // Handle observed sequences at the node.
+            for(int j=0;j<n_sequences;j++)
+            {
+                if (not mask(j).test(c)) continue;
+
+                int letter = sequence(j)[i[j]].as_int();
+                i[j]++;
+
+                // We need to zero out the inconsistent characters.
+                // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+                if (letter >= 0)
+                {
+                    auto& ok = a.letter_fmask(letter);
+                    for(int m=0;m<n_models;m++)
+                    {
+                        for(int s1=0;s1<n_states;s1++)
+                        {
+                            int l = smap[s1].as_int();
+                            if (not ok[l])
+                            {
+                                // Pr *= Pr(observation | state )
+                                // Currently we are doing Pr *= Pr(observation | letter(state))
+                                // So maybe I should make a Pr(observation | state) matrix.
+                                S[m*n_states + s1] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            // propagate from the source distribution
+            double* R = (*LCB_OUT)[s_out];            //name the result matrix
+            bool need_scale = true;
+            for(int m=0;m<n_models;m++)
+            {
+                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+                // compute the distribution at the target (parent) node - multiple letters
+                for(int s1=0;s1<n_states;s1++) {
+                    double temp=0;
+                    for(int s2=0;s2<n_states;s2++)
+                        temp += Q(s1,s2)*C[m*n_states + s2];
+                    R[m*n_states + s1] = temp;
+                    need_scale = need_scale and (temp < scale_min);
+                }
+            }
+
+            if (need_scale)
+            {
+                scale++;
+                for(int j=0; j<matrix_size; j++)
+                    R[j] *= scale_factor;
+            }
+
+            LCB_OUT->scale(s_out) = scale;
+
+            s_out++;
+        }
+
+        return LCB_OUT;
     }
 
     // Generalize to degree n>=1?
