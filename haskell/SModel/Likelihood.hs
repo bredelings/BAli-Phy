@@ -46,7 +46,7 @@ foreign import bpcall "Likelihood:" peel_likelihood_1_SEV :: (EVector Int) -> Al
 foreign import bpcall "Likelihood:" calcRootProb :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:peelBranchSEV" builtinPeelBranchSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 
-peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vector sequences) alphabet smap (list_to_vector cls) ps
+peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vector sequences) alphabet smap cls ps
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "Likelihood:" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
@@ -130,11 +130,12 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 cached_conditional_likelihoods_SEV t seqs alpha ps smap =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
         lcf b = let p = ps IntMap.! b
-                in case edgesBeforeEdge t b of
-                     [] -> let node = sourceNode t b
-                           in peelBranchSEV [c_pair' (seqs IntMap.! node)] alpha smap [] p
-                     [b1] -> peelBranchSEV [] alpha smap [lc IntMap.! b1] p
-                     [b1,b2] -> peelBranchSEV [] alpha smap [lc IntMap.! b1, lc IntMap.! b2] p
+                    inEdges = edgesBeforeEdgeSet t b
+                    clsIn = IntMap.restrictKeysToVector lc inEdges
+                    -- FIXME!  How to determine if the node has any data?
+                    node = sourceNode t b
+                    sequences = if IntSet.null inEdges then [c_pair' $ seqs IntMap.! node] else []
+                in peelBranchSEV sequences alpha smap clsIn p
     in lc
 
 peel_likelihood_SEV t cl f root counts = case edgesTowardNode t root of
