@@ -310,6 +310,13 @@ namespace substitution {
 				const EVector& A,
 				const Matrix& F);
 
+    log_double_t calc_root_prob_SEV(const EVector& sequences,
+				    const alphabet& a,
+				    const EVector& smap,
+				    const EVector& LCB,
+				    const Matrix& F,
+				    const EVector& counts);
+
     log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					   const Likelihood_Cache_Branch& LCB2,
 					   const Likelihood_Cache_Branch& LCB3,
@@ -338,6 +345,24 @@ extern "C" closure builtin_function_calcRootProb(OperationArgs& Args)
 						   arg3.as_<EVector>(),       // LCB
 						   arg4.as_<EVector>(),       // A
 						   arg5.as_<Box<Matrix>>());  // F
+    return {Pr};
+}
+
+extern "C" closure builtin_function_calcRootProbSEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+
+    log_double_t Pr = substitution::calc_root_prob_SEV(arg0.as_<EVector>(),       // sequences
+						       *arg1.as_<Alphabet>(),     // a
+						       arg2.as_<EVector>(),       // smap
+						       arg3.as_<EVector>(),       // LCB
+						       arg4.as_<Box<Matrix>>(),   // F
+						       arg5.as_<EVector>());  // counts
     return {Pr};
 }
 
