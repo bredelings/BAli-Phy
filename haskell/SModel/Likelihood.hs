@@ -135,7 +135,7 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
                                (node_seq, bitmask) = seqs IntMap.! node
                            in peel_leaf_branch_SEV node_seq alpha p bitmask smap
                      [b1] -> peel_deg2_branch_SEV (lc IntMap.! b1) p
-                     [b1,b2] -> peel_internal_branch_SEV (lc IntMap.! b1) (lc IntMap.! b2) p
+                     [b1,b2] -> peelBranchSEV [] alpha smap [lc IntMap.! b1, lc IntMap.! b2] p
     in lc
 
 peel_likelihood_SEV t cl f root counts = case edgesTowardNode t root of
