@@ -132,8 +132,7 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
         lcf b = let p = ps IntMap.! b
                 in case edgesBeforeEdge t b of
                      [] -> let node = sourceNode t b
-                               (node_seq, bitmask) = seqs IntMap.! node
-                           in peel_leaf_branch_SEV node_seq alpha p bitmask smap
+                           in peelBranchSEV [c_pair' (seqs IntMap.! node)] alpha smap [] p
                      [b1] -> peelBranchSEV [] alpha smap [lc IntMap.! b1] p
                      [b1,b2] -> peelBranchSEV [] alpha smap [lc IntMap.! b1, lc IntMap.! b2] p
     in lc
