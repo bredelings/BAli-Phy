@@ -139,9 +139,10 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
                 in peelBranchSEV sequences alpha smap clsIn p
     in lc
 
-peel_likelihood_SEV t cl f root counts = case edgesTowardNode t root of
-                                              [b1,b2,b3] -> calc_root_probability_SEV      (cl IntMap.! b1) (cl IntMap.! b2) (cl IntMap.! b3) f counts
-                                              [b1,b2]    -> calc_root_deg2_probability_SEV (cl IntMap.! b1) (cl IntMap.! b2) f counts
+peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
+                                                              sequences = if is_leaf_node t root then [c_pair' $ seqs IntMap.! root] else []
+                                                              clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                          in calcRootProbSEV (list_to_vector sequences) alpha smap clsIn f counts
 
 sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
     let rt = add_root root t

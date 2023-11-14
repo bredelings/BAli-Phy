@@ -202,14 +202,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
               alphabet
               transition_ps
               smap
-      likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
-                 | n_nodes == 1   = let n1 = head $ getNodes tree
-                                        s1 = node_isequences IntMap.! n1
-                                    in peel_likelihood_1_SEV s1 alphabet f column_counts
-                 | n_nodes == 2   = let b1 = head $ getEdges tree
-                                        s1 = node_isequences IntMap.! (sourceNode tree b1)
-                                        s2 = node_isequences IntMap.! (targetNode tree b1)
-                                    in peel_likelihood_2_SEV s1 s2 alphabet (transition_ps IntMap.! b1) f column_counts
+      likelihood = peel_likelihood_SEV node_seqs_bits tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = case n_nodes of
