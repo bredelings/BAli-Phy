@@ -662,6 +662,113 @@ namespace substitution {
     }
 
 
+    // Generalize to degree n>=1?
+    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+                                                const Likelihood_Cache_Branch& LCB2,
+                                                const Matrix& F,
+                                                const EVector& counts)
+    {
+        total_calc_root_prob++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+        assert(n_models == LCB1.n_models());
+        assert(n_states == LCB1.n_states());
+
+        assert(n_models == LCB2.n_models());
+        assert(n_states == LCB2.n_states());
+
+#ifdef DEBUG_SUBSTITUTION
+        // scratch matrix
+        Matrix S(n_models,n_states);
+#endif
+
+        const auto& bits1 = LCB1.bits;
+        const auto& bits2 = LCB2.bits;
+
+        const int L = bits1.size();
+        assert(L > 0);
+        assert(L == bits2.size());
+        assert(L == counts.size());
+
+        total_root_clv_length += L;
+
+        log_prod total;
+        int scale = 0;
+        for(int c=0,i1=0,i2=0;c<L;c++)
+        {
+            bool non_gap1 = bits1.test(c);
+            bool non_gap2 = bits2.test(c);
+
+            if ((not non_gap1) and (not non_gap2)) continue;
+
+            const double* m[2];
+            int mi=0;
+
+            if (non_gap1)
+            {
+                m[mi++] = LCB1[i1];
+                scale += LCB1.scale(i1);
+            }
+            if (non_gap2)
+            {
+                m[mi++] = LCB2[i2];
+                scale += LCB2.scale(i2);
+            }
+
+            double p_col = 1.0;
+            if (mi==2)
+                p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+            else if (mi==1)
+                p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+
+#ifdef DEBUG_SUBSTITUTION
+            //-------------- Set letter & model prior probabilities  ---------------//
+            element_assign(S,F);
+
+            //-------------- Propagate and collect information at 'root' -----------//
+            if (non_gap1)
+                element_prod_modify(S.begin(),LCB1[i1], matrix_size);
+            if (non_gap2)
+                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
+
+            //------------ Check that individual models are not crazy -------------//
+            for(int m=0;m<n_models;m++) {
+                double p_model=0;
+                for(int s=0;s<n_states;s++)
+                    p_model += S(m,s);
+                // A specific model (e.g. the INV model) could be impossible
+                assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
+            }
+
+            double p_col2 = element_sum(S);
+
+            assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
+#endif
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+            if (non_gap1) i1++;
+            if (non_gap2) i2++;
+
+            total.mult_with_count(p_col,counts[c].as_int());
+            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+        }
+
+        log_double_t Pr = total;
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
+            return log_double_t(0.0);
+        }
+        Pr.log() += log_scale_min * scale;
+        return Pr;
+    }
+
+
     log_double_t calc_root_prob_SEV(const EVector& sequences,
 				    const alphabet& a,
 				    const EVector& smap,
@@ -670,6 +777,18 @@ namespace substitution {
 				    const EVector& counts)
     {
 	total_calc_root_prob++;
+
+	if (sequences.empty() and LCB.size() == 3)
+	    return calc_root_probability_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
+					     LCB[1].as_<Likelihood_Cache_Branch>(),
+					     LCB[2].as_<Likelihood_Cache_Branch>(),
+					     F,
+					     counts);
+	else if (sequences.empty() and LCB.size() == 2)
+	    return calc_root_deg2_probability_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
+						  LCB[1].as_<Likelihood_Cache_Branch>(),
+						  F,
+						  counts);
 
         const int n_models = F.size1();
         const int n_states = F.size2();
@@ -791,113 +910,6 @@ namespace substitution {
             return log_double_t(0.0);
         }
 
-        return Pr;
-    }
-
-
-    // Generalize to degree n>=1?
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                                const Likelihood_Cache_Branch& LCB2,
-                                                const Matrix& F,
-                                                const EVector& counts)
-    {
-        total_calc_root_prob++;
-
-        const int n_models = F.size1();
-        const int n_states = F.size2();
-        const int matrix_size = n_models * n_states;
-
-        assert(n_models == LCB1.n_models());
-        assert(n_states == LCB1.n_states());
-
-        assert(n_models == LCB2.n_models());
-        assert(n_states == LCB2.n_states());
-
-#ifdef DEBUG_SUBSTITUTION
-        // scratch matrix
-        Matrix S(n_models,n_states);
-#endif
-
-        const auto& bits1 = LCB1.bits;
-        const auto& bits2 = LCB2.bits;
-
-        const int L = bits1.size();
-        assert(L > 0);
-        assert(L == bits2.size());
-        assert(L == counts.size());
-
-        total_root_clv_length += L;
-
-        log_prod total;
-        int scale = 0;
-        for(int c=0,i1=0,i2=0;c<L;c++)
-        {
-            bool non_gap1 = bits1.test(c);
-            bool non_gap2 = bits2.test(c);
-
-            if ((not non_gap1) and (not non_gap2)) continue;
-
-            const double* m[2];
-            int mi=0;
-
-            if (non_gap1)
-            {
-                m[mi++] = LCB1[i1];
-                scale += LCB1.scale(i1);
-            }
-            if (non_gap2)
-            {
-                m[mi++] = LCB2[i2];
-                scale += LCB2.scale(i2);
-            }
-
-            double p_col = 1.0;
-            if (mi==2)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
-            else if (mi==1)
-                p_col = element_prod_sum(F.begin(), m[0], matrix_size);
-
-#ifdef DEBUG_SUBSTITUTION
-            //-------------- Set letter & model prior probabilities  ---------------//
-            element_assign(S,F);
-
-            //-------------- Propagate and collect information at 'root' -----------//
-            if (non_gap1)
-                element_prod_modify(S.begin(),LCB1[i1], matrix_size);
-            if (non_gap2)
-                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
-
-            //------------ Check that individual models are not crazy -------------//
-            for(int m=0;m<n_models;m++) {
-                double p_model=0;
-                for(int s=0;s<n_states;s++)
-                    p_model += S(m,s);
-                // A specific model (e.g. the INV model) could be impossible
-                assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
-            }
-
-            double p_col2 = element_sum(S);
-
-            assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
-#endif
-
-            // SOME model must be possible
-            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-
-            if (non_gap1) i1++;
-            if (non_gap2) i2++;
-
-            total.mult_with_count(p_col,counts[c].as_int());
-            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
-        }
-
-        log_double_t Pr = total;
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
-            return log_double_t(0.0);
-        }
-        Pr.log() += log_scale_min * scale;
         return Pr;
     }
 
@@ -1765,6 +1777,66 @@ namespace substitution {
         return LCB3;
     }
 
+    // Generalize to degree n>=1?
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
+                         const EVector& transition_P)
+    {
+        total_peel_internal_branches++;
+
+        const int n_models = transition_P.size();
+        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int matrix_size = n_models * n_states;
+
+        const auto& bits1 = LCB1.bits;
+
+        int L = bits1.size();
+        assert(L > 0);
+
+        // Do this before accessing matrices or other_subst
+        auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+        LCB2->bits = LCB1.bits;
+
+        for(int c=0,i=0;c<L;c++)
+        {
+            if (not bits1.test(c)) continue;
+
+            int scale = 0;
+
+            const double* C = LCB1[i];
+            scale = LCB1.scale(i);
+
+            // propagate from the source distribution
+            double* R = (*LCB2)[i];            //name the result matrix
+            bool need_scale = true;
+            for(int m=0;m<n_models;m++)
+            {
+                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+                // compute the distribution at the target (parent) node - multiple letters
+                for(int s1=0;s1<n_states;s1++)
+                {
+                    double temp=0;
+                    for(int s2=0;s2<n_states;s2++)
+                        temp += Q(s1,s2)*C[m*n_states + s2];
+                    R[m*n_states + s1] = temp;
+                    need_scale = need_scale and (temp < scale_min);
+                }
+            }
+            if (need_scale)
+            {
+                scale++;
+                for(int j=0; j<matrix_size; j++)
+                    R[j] *= scale_factor;
+            }
+            LCB2->scale(i) = scale;
+
+            i++;
+        }
+
+        return LCB2;
+    }
+
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_SEV(const EVector& sequences,
                     const alphabet& a,
@@ -1773,6 +1845,20 @@ namespace substitution {
                     const EVector& transition_P)
     {
         total_peel_internal_branches++;
+
+	if (sequences.empty() and LCB.size() == 2)
+	    return peel_internal_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
+					    LCB[1].as_<Likelihood_Cache_Branch>(),
+					    transition_P);
+	else if (sequences.empty() and LCB.size() == 1)
+	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
+					transition_P);
+	else if (sequences.size() == 1 and LCB.empty())
+	    return peel_leaf_branch_SEV(sequences[0].as_<EPair>().first.as_<EVector>(),
+					a,
+					transition_P,
+					sequences[0].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(),
+					smap);
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
@@ -1912,66 +1998,6 @@ namespace substitution {
         return LCB_OUT;
     }
 
-    // Generalize to degree n>=1?
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
-                         const EVector& transition_P)
-    {
-        total_peel_internal_branches++;
-
-        const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
-        const int matrix_size = n_models * n_states;
-
-        const auto& bits1 = LCB1.bits;
-
-        int L = bits1.size();
-        assert(L > 0);
-
-        // Do this before accessing matrices or other_subst
-        auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB2->bits = LCB1.bits;
-
-        for(int c=0,i=0;c<L;c++)
-        {
-            if (not bits1.test(c)) continue;
-
-            int scale = 0;
-
-            const double* C = LCB1[i];
-            scale = LCB1.scale(i);
-
-            // propagate from the source distribution
-            double* R = (*LCB2)[i];            //name the result matrix
-            bool need_scale = true;
-            for(int m=0;m<n_models;m++)
-            {
-                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-                // compute the distribution at the target (parent) node - multiple letters
-                for(int s1=0;s1<n_states;s1++)
-                {
-                    double temp=0;
-                    for(int s2=0;s2<n_states;s2++)
-                        temp += Q(s1,s2)*C[m*n_states + s2];
-                    R[m*n_states + s1] = temp;
-                    need_scale = need_scale and (temp < scale_min);
-                }
-            }
-            if (need_scale)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
-            LCB2->scale(i) = scale;
-
-            i++;
-        }
-
-        return LCB2;
-    }
-  
     object_ptr<const Box<matrix<int>>> alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
     {
         auto a0 = convert_to_bits(A0, 0, 2);
