@@ -244,6 +244,27 @@ inline void element_prod_assign(double* __restrict__ M1,
         M1[i] = M2[i]*M3[i];
 }
 
+inline void element_prod_assign(double* __restrict__ M1,
+                                const double* __restrict__ M2,
+                                const double* __restrict__ M3,
+                                const double* __restrict__ M4,
+				int size)
+{
+    for(int i=0;i<size;i++)
+        M1[i] = M2[i]*M3[i]*M4[i];
+}
+
+inline void element_prod_assign(double* __restrict__ M1,
+                                const double* __restrict__ M2,
+                                const double* __restrict__ M3,
+                                const double* __restrict__ M4,
+                                const double* __restrict__ M5,
+				int size)
+{
+    for(int i=0;i<size;i++)
+        M1[i] = M2[i]*M3[i]*M4[i]*M5[i];
+}
+
 inline double element_sum(const double* M1, int size)
 {
     double sum = 0;
@@ -778,18 +799,6 @@ namespace substitution {
     {
 	total_calc_root_prob++;
 
-	if (sequences.empty() and LCB.size() == 3)
-	    return calc_root_probability_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
-					     LCB[1].as_<Likelihood_Cache_Branch>(),
-					     LCB[2].as_<Likelihood_Cache_Branch>(),
-					     F,
-					     counts);
-	else if (sequences.empty() and LCB.size() == 2)
-	    return calc_root_deg2_probability_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
-						  LCB[1].as_<Likelihood_Cache_Branch>(),
-						  F,
-						  counts);
-
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
@@ -843,55 +852,95 @@ namespace substitution {
         {
             if (not bits_out.test(c)) continue;
 
-	    element_assign(S, F.begin(), matrix_size);
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
 
             // Handle branches in
-            for(int j=0;j<n_branches_in;j++)
+	    int j=0;
+            for(;j<n_branches_in and mi < mi_max;j++)
             {
                 if (cache(j).bits.test(c))
                 {
                     auto& lcb = cache(j);
-                    element_prod_assign(S, lcb[s[j]], matrix_size);
+
+		    m[mi++] = lcb[s[j]];
+                    // element_prod_assign(S, lcb[s[j]], matrix_size);
                     scale += lcb.scale(s[j]);
                     s[j]++;
                 }
             }
 
-            // TODO: Should we just precalculate the LCB at leaf nodes?
-            //       We're doing it here and propagating in separate steps already,
-            //         which is slower, but simpler.
+	    double p_col = 1;
+	    if (n_sequences == 0 and j == n_branches_in)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		else
+		    element_assign(S, F.begin(), matrix_size);
 
-            // Handle observed sequences at the node.
-            for(int j=0;j<n_sequences;j++)
-            {
-                if (not mask(j).test(c)) continue;
+		for(;j<n_branches_in;j++)
+		{
+		    if (cache(j).bits.test(c))
+		    {
+			auto& lcb = cache(j);
 
-                int letter = sequence(j)[i[j]].as_int();
-                i[j]++;
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+		// TODO: Should we just precalculate the LCB at leaf nodes?
+		//       We're doing it here and propagating in separate steps already,
+		//         which is slower, but simpler.
 
-                // We need to zero out the inconsistent characters.
-                // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-                if (letter >= 0)
-                {
-                    auto& ok = a.letter_fmask(letter);
-                    for(int m=0;m<n_models;m++)
-                    {
-                        for(int s1=0;s1<n_states;s1++)
-                        {
-                            int l = smap[s1].as_int();
-                            if (not ok[l])
-                            {
-                                // Pr *= Pr(observation | state )
-                                // Currently we are doing Pr *= Pr(observation | letter(state))
-                                // So maybe I should make a Pr(observation | state) matrix.
-                                S[m*n_states + s1] = 0;
-                            }
-                        }
-                    }
-                }
-            }
+		// Handle observed sequences at the node.
+		for(int j=0;j<n_sequences;j++)
+		{
+		    if (not mask(j).test(c)) continue;
 
-	    double p_col = element_sum(S, matrix_size);
+		    int letter = sequence(j)[i[j]].as_int();
+		    i[j]++;
+
+		    // We need to zero out the inconsistent characters.
+		    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+		    if (letter >= 0)
+		    {
+			auto& ok = a.letter_fmask(letter);
+			for(int m=0;m<n_models;m++)
+			{
+			    for(int s1=0;s1<n_states;s1++)
+			    {
+				int l = smap[s1].as_int();
+				if (not ok[l])
+				{
+				    // Pr *= Pr(observation | state )
+				    // Currently we are doing Pr *= Pr(observation | letter(state))
+				    // So maybe I should make a Pr(observation | state) matrix.
+				    S[m*n_states + s1] = 0;
+				}
+			    }
+			}
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
 
             // SOME model must be possible
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
