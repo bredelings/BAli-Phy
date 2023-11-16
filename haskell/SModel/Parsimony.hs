@@ -35,13 +35,11 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                                 e -> error $ "cached_conditional_muts: " ++ show (length e)  ++ "edges before edge not handled."
                                                in pc
 
-peel_muts t cp as root seqs alpha cost = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                             peel_muts' root = let inEdges = edgesTowardNodeSet t root
-                                                                   cpsIn = IntMap.restrictKeysToVector cp inEdges
-                                                                   asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                   sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
-                                                               in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
-                                         in muts IntMap.! root
+peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
+                                             cpsIn = IntMap.restrictKeysToVector cp inEdges
+                                             asIn  = IntMap.restrictKeysToVector as inEdges
+                                             sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
+                                         in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
 
 parsimony :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
