@@ -1302,6 +1302,32 @@ namespace substitution {
     }
         
 
+    inline void propagate(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+    {
+	int matrix_size = n_models * n_states;
+	bool need_scale = true;
+	for(int m=0;m<n_models;m++)
+	{
+	    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+	    // compute the distribution at the target (parent) node - multiple letters
+	    for(int s1=0;s1<n_states;s1++)
+	    {
+		double temp=0;
+		for(int s2=0;s2<n_states;s2++)
+		    temp += Q(s1,s2)*S[m*n_states + s2];
+		R[m*n_states + s1] = temp;
+		need_scale = need_scale and (temp < scale_min);
+	    }
+	}
+	if (need_scale)
+	{
+	    scale++;
+	    for(int j=0; j<matrix_size; j++)
+		R[j] *= scale_factor;
+	}
+    }
+
     object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch(const Likelihood_Cache_Branch& LCB1,
                          const Likelihood_Cache_Branch& LCB2,
@@ -1398,26 +1424,7 @@ namespace substitution {
 
             // propagate from the source distribution
             double* R = (*LCB3)[s2];            //name the result matrix
-            bool need_scale = true;
-            for(int m=0;m<n_models;m++)
-            {
-                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-        
-                // compute the distribution at the target (parent) node - multiple letters
-                for(int s1=0;s1<n_states;s1++) {
-                    double temp=0;
-                    for(int s2=0;s2<n_states;s2++)
-                        temp += Q(s1,s2)*C[m*n_states + s2];
-                    R[m*n_states + s1] = temp;
-                    need_scale = need_scale and (temp < scale_min);
-                }
-            }
-            if (need_scale) // and false)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
+	    propagate(R, n_models, n_states, scale, transition_P, C);
             LCB3->scale(s2) = scale;
             s2++;
         }
@@ -1554,27 +1561,7 @@ namespace substitution {
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
-	    bool need_scale = true;
-	    for(int m=0;m<n_models;m++)
-	    {
-		const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-		// compute the distribution at the target (parent) node - multiple letters
-		for(int s1=0;s1<n_states;s1++) {
-		    double temp=0;
-		    for(int s2=0;s2<n_states;s2++)
-			temp += Q(s1,s2)*S[m*n_states + s2];
-		    R[m*n_states + s1] = temp;
-		    need_scale = need_scale and (temp < scale_min);
-		}
-	    }
-
-            if (need_scale) // and false)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
+	    propagate(R, n_models, n_states, scale, transition_P, S);
             LCB_OUT->scale(s_out++) = scale;
         }
 
@@ -1796,26 +1783,7 @@ namespace substitution {
 
             // propagate from the source distribution
             double* R = (*LCB3)[i3];            //name the result matrix
-            bool need_scale = true;
-            for(int m=0;m<n_models;m++)
-            {
-                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-        
-                // compute the distribution at the target (parent) node - multiple letters
-                for(int s1=0;s1<n_states;s1++) {
-                    double temp=0;
-                    for(int s2=0;s2<n_states;s2++)
-                        temp += Q(s1,s2)*C[m*n_states + s2];
-                    R[m*n_states + s1] = temp;
-                    need_scale = need_scale and (temp < scale_min);
-                }
-            }
-            if (need_scale)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
+	    propagate(R, n_models, n_states, scale, transition_P, C);
             LCB3->scale(i3) = scale;
 
             if (nongap1) i1++;
@@ -1857,27 +1825,7 @@ namespace substitution {
 
             // propagate from the source distribution
             double* R = (*LCB2)[i];            //name the result matrix
-            bool need_scale = true;
-            for(int m=0;m<n_models;m++)
-            {
-                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-                // compute the distribution at the target (parent) node - multiple letters
-                for(int s1=0;s1<n_states;s1++)
-                {
-                    double temp=0;
-                    for(int s2=0;s2<n_states;s2++)
-                        temp += Q(s1,s2)*C[m*n_states + s2];
-                    R[m*n_states + s1] = temp;
-                    need_scale = need_scale and (temp < scale_min);
-                }
-            }
-            if (need_scale)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
+	    propagate(R, n_models, n_states, scale, transition_P, C);
             LCB2->scale(i) = scale;
 
             i++;
@@ -2017,28 +1965,7 @@ namespace substitution {
 
             // propagate from the source distribution
             double* R = (*LCB_OUT)[s_out];            //name the result matrix
-            bool need_scale = true;
-            for(int m=0;m<n_models;m++)
-            {
-                const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-                // compute the distribution at the target (parent) node - multiple letters
-                for(int s1=0;s1<n_states;s1++) {
-                    double temp=0;
-                    for(int s2=0;s2<n_states;s2++)
-                        temp += Q(s1,s2)*C[m*n_states + s2];
-                    R[m*n_states + s1] = temp;
-                    need_scale = need_scale and (temp < scale_min);
-                }
-            }
-
-            if (need_scale)
-            {
-                scale++;
-                for(int j=0; j<matrix_size; j++)
-                    R[j] *= scale_factor;
-            }
-
+	    propagate(R, n_models, n_states, scale, transition_P, C);
             LCB_OUT->scale(s_out) = scale;
 
             s_out++;
