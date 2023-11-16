@@ -28,12 +28,12 @@ foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
-                                                   pcf b = case edgesBeforeEdge t b of
-                                                                [] -> let n=sourceNode t b
-                                                                     in peel_muts_leaf_branch (seqs IntMap.! n) alpha cost
-                                                                [_] -> error "cached_conditional_muts: knuckles not handled yet."
-                                                                [b1,b2] -> peel_muts_internal_branch (pc IntMap.! b1) (pc IntMap.! b2) (as IntMap.! b1) (as IntMap.! b2) cost
-                                                                e -> error $ "cached_conditional_muts: " ++ show (length e)  ++ "edges before edge not handled."
+                                                   pcf b = let inEdges = edgesBeforeEdgeSet t b
+                                                               cpsIn = IntMap.restrictKeysToVector pc inEdges
+                                                               asIn  = IntMap.restrictKeysToVector as inEdges
+                                                               node = sourceNode t b
+                                                               sequences = if is_leaf_node t node then [seqs IntMap.! node] else []
+                                                           in peelMuts (list_to_vector sequences) alpha asIn cpsIn cost
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
