@@ -1,4 +1,6 @@
 #include "substitution/parsimony.H"
+
+#include <limits>
 #include "dp/hmm.H"
 #include "dp/2way.H"
 #include "util/range.H"
@@ -297,6 +299,111 @@ int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwi
 	    total += c;
 	}
     }
+    return total;
+}
+
+int muts_root(const EVector& sequences,
+	      const alphabet& a,
+	      const EVector& A_,
+	      const EVector& n_muts_,
+              const matrix<int>& cost)
+{
+    int n_branches_in = n_muts_.size();
+    assert(n_muts_.size() == n_branches_in);
+    assert(A_.size() == n_branches_in);
+
+    auto A = [&](int i) -> auto& {return A_[i].as_<Box<pairwise_alignment_t>>();};
+    auto sequence = [&](int i) -> auto& {return sequences[i].as_<EVector>();};
+    auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
+
+    assert(not sequences.empty() or not A_.empty());
+    int L = (sequences.empty()) ? A(0).length2() : sequence(0).size();
+
+    int n_letters = n_muts(0).n_letters;
+
+#ifndef NDEBUG
+    for(int i=0;i<n_branches_in;i++)
+    {
+	assert(n_muts(i).n_letters == n_letters);
+	assert(A(i).length2() == L);
+    }
+#endif
+
+    int total = 0;
+    vector<int> AL(n_branches_in);
+    for(int j=0; j < n_branches_in;j++)
+    {
+	total += n_muts(j).other_subst;
+	AL[j] = A(j).size();
+    }
+
+    vector<int> S(n_letters);
+
+    // index into source sequences and n_muts
+    vector<int> s(n_branches_in, 0);
+    // index into pairwise alignments
+    vector<int> i(n_branches_in, 0);
+
+    for(int s_node=0;;s_node++)
+    {
+	for(int j=0; j < n_branches_in; j++)
+	{
+	    auto& a = A(j);
+	    auto& ij = i[j];
+	    while(ij < AL[j] and not a.has_character2(ij))
+	    {
+		assert(a.has_character1(ij));
+		total += n_muts(j).min(s[j]);
+		ij++;
+		s[j]++;
+	    }
+	}
+
+        if (s_node == L)
+        {
+	    for(int j=0; j<n_branches_in; j++)
+		assert(i[j] == AL[j]);
+
+            break;
+        }
+        else
+        {
+	    for(int j=0; j<n_branches_in; j++)
+	    {
+		assert(i[j] < AL[j]);
+		assert(A(j).has_character2(i[j]));
+	    }
+        }
+
+        for(auto& s: S)
+            s = 0;
+
+	for(int j=0;j<n_branches_in;j++)
+	{
+	    if (A(j).has_character1(i[j]))
+	    {
+		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, cost);
+		s[j]++;
+	    }
+	    i[j]++;
+	}
+
+	for(auto& esequence: sequences)
+	{
+	    auto& sequence = esequence.as_<EVector>();
+	    int letter = sequence[s_node].as_int();
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (not ok[l])
+			S[l] = std::numeric_limits<int>::max();
+	    }
+	}
+
+        total += min(S);
+    }
+
     return total;
 }
 

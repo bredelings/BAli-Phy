@@ -118,6 +118,27 @@ extern "C" closure builtin_function_calc_root_muts(OperationArgs& Args)
     return {muts};
 }
 
+int muts_root(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);
+
+extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0); // sequences
+    auto arg1 = Args.evaluate(1); // alphabet
+    auto arg2 = Args.evaluate(2); // A
+    auto arg3 = Args.evaluate(3); // n_muts
+    auto arg4 = Args.evaluate(4); // cost
+
+    int muts = muts_root(arg0.as_<EVector>(),
+			 *arg1.as_<Alphabet>(),
+			 arg2.as_<EVector>(),
+			 arg3.as_<EVector>(),
+			 arg4.as_<Box<matrix<int>>>());
+
+    return {muts};
+}
+
+
+
 // calc_leaf_muts :: Alphabet -> EVector Int -> PairwiseAlignment -> MutCosts -> CondPars -> Int
 int accumulate_root_leaf(const alphabet& a, const EVector& letters, const pairwise_alignment_t& A, const matrix<int>& cost, const ParsimonyCacheBranch& n_muts);
 

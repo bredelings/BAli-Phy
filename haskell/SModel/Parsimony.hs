@@ -23,6 +23,7 @@ foreign import bpcall "Parsimony:" peel_muts_leaf_branch :: EVector Int -> Alpha
 foreign import bpcall "Parsimony:" peel_muts_internal_branch :: CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" calc_root_muts :: CondPars -> CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> Int
 foreign import bpcall "Parsimony:" calc_leaf_muts :: Alphabet -> EVector Int -> PairwiseAlignment -> MutCosts -> CondPars -> Int
+foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
@@ -35,15 +36,12 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                             peel_muts' root = case edgesTowardNode t root of
-                                                                    [b1] -> let n=targetNode t b1
-                                                                         in calc_leaf_muts alpha (seqs IntMap.! n) (as IntMap.! b1) cost (cp IntMap.! b1)
-                                                                    [b1,b2,b3] -> calc_root_muts (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) (as IntMap.! b1) (as IntMap.! b2) (as IntMap.! b3) cost
-                                                                    [] -> 0
-                                                                    [_,_] -> error "peel_muts: root node with 2 edges"
-                                                                    e -> error $ "peel_muts: root node has degree " ++ show (length e)
-                         in muts IntMap.! root
-
+                                             peel_muts' root = let inEdges = edgesTowardNodeSet t root
+                                                                   cpsIn = IntMap.restrictKeysToVector cp inEdges
+                                                                   asIn  = IntMap.restrictKeysToVector as inEdges
+                                                                   sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
+                                                               in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
+                                         in muts IntMap.! root
 
 parsimony :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
