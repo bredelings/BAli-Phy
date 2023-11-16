@@ -2715,7 +2715,7 @@ namespace substitution {
 	// index into alignments
 	vector<int> i(n_branches_in, 0);
 	// index into parent_A
-	int i_parent;
+	int i_parent = 0;
 
 	Vector<pair<int,int>> ancestral_characters(L);
         for(;;)
