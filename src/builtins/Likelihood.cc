@@ -248,6 +248,13 @@ namespace substitution {
                                                const pairwise_alignment_t& A2,
                                                const Matrix& F);
 
+    Vector<pair<int,int>> sample_root_sequence(const EVector& sequences,
+					       const alphabet& a,
+					       const EVector& smap,
+					       const EVector& LCB,
+					       const EVector& A,
+                                               const Matrix& F);
+
     Vector<pair<int,int>> sample_root_deg2_sequence_SEV(const Likelihood_Cache_Branch& cache1,
                                                         const Likelihood_Cache_Branch& cache2,
                                                         const Matrix& F,
@@ -403,6 +410,23 @@ extern "C" closure builtin_function_sample_root_sequence(OperationArgs& Args)
                                               arg4.as_<Box<pairwise_alignment_t>>(),
                                               arg5.as_<Box<pairwise_alignment_t>>(),
                                               arg6.as_<Box<Matrix>>());
+}
+
+extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+
+    return substitution::sample_root_sequence(arg0.as_<EVector>(),      // sequences
+                                              *arg1.as_<Alphabet>(),    // alphabet
+                                              arg2.as_<EVector>(),      // smap
+                                              arg3.as_<EVector>(),      // LCB
+                                              arg4.as_<EVector>(),      // As
+                                              arg5.as_<Box<Matrix>>()); // F
 }
 
 extern "C" closure builtin_function_sample_root_sequence_SEV(OperationArgs& Args)
