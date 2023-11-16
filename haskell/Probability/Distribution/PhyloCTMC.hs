@@ -80,7 +80,8 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      node_sequences = fromMaybe (error "No Label") <$> labelToNodeMap tree (getSequences sequenceData)
+      maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+      node_sequences = fromMaybe (error "No Label") <$> maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
@@ -88,7 +89,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods
               tree
-              node_sequences
+              maybeNodeSequences
               as
               alphabet
               transition_ps
@@ -96,7 +97,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
               smap
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peel_likelihood tree node_sequences cls as alphabet (weighted_frequency_matrix smodel) smap subst_root
+      likelihood  = peel_likelihood tree maybeNodeSequences cls as alphabet (weighted_frequency_matrix smodel) smap subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 

@@ -6,6 +6,7 @@ import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
 import Data.Matrix
+import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
@@ -61,8 +62,7 @@ foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
                                                                            inEdges = edgesBeforeEdgeSet t b
-                                                                           -- FIXME!  How to determine if the node has any data?
-                                                                           sequences = if IntSet.null inEdges then [seqs IntMap.! (sourceNode t b)] else []
+                                                                           sequences = maybeToList $ seqs IntMap.! (sourceNode t b)
                                                                            clsIn = IntMap.restrictKeysToVector lc inEdges
                                                                            asIn  = IntMap.restrictKeysToVector as inEdges
                                                                        in peelBranch sequences alpha smap clsIn asIn p f
@@ -70,7 +70,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fr
 
 peel_likelihood t seqs cls as alpha f smap root = let likelihoods = IntMap.fromSet peel_likelihood_at_node $ getNodesSet t
                                                       peel_likelihood_at_node root = let inEdges = edgesTowardNodeSet t root
-                                                                                         sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
+                                                                                         sequences = maybeToList $ seqs IntMap.! root
                                                                                          clsIn = IntMap.restrictKeysToVector cls inEdges
                                                                                          asIn  = IntMap.restrictKeysToVector as inEdges
                                                                                      in calcRootProb (list_to_vector sequences) alpha smap clsIn asIn f
