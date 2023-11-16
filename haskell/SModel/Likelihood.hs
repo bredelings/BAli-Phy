@@ -71,13 +71,11 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fr
                                                                        in peelBranch sequences alpha smap clsIn asIn p f
                                                            in lc
 
-peel_likelihood t seqs cls as alpha f smap root = let likelihoods = IntMap.fromSet peel_likelihood_at_node $ getNodesSet t
-                                                      peel_likelihood_at_node root = let inEdges = edgesTowardNodeSet t root
-                                                                                         sequences = maybeToList $ seqs IntMap.! root
-                                                                                         clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                                                         asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                                     in calcRootProb (list_to_vector sequences) alpha smap clsIn asIn f
-                                                  in likelihoods IntMap.! root
+peel_likelihood t seqs cls as alpha f smap root = let inEdges = edgesTowardNodeSet t root
+                                                      sequences = maybeToList $ seqs IntMap.! root
+                                                      clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                      asIn  = IntMap.restrictKeysToVector as inEdges
+                                                  in calcRootProb (list_to_vector sequences) alpha smap clsIn asIn f
 
 
 substitution_likelihood t root seqs as alpha ps f smap = let cls = cached_conditional_likelihoods t seqs as alpha ps f smap
