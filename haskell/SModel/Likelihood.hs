@@ -111,25 +111,11 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                 b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
                                                 a0 = as IntMap.! b0
-                                            in case edgesBeforeEdge t to_p of
-                                                 [] -> sample_leaf_sequence
-                                                          parent_seq
-                                                          ps_for_b0
-                                                          (seqs IntMap.! n)
-                                                          alpha
-                                                          smap
-                                                          a0
-                                                          f
-                                                 [b1,b2] -> sample_internal_sequence
-                                                          parent_seq
-                                                          ps_for_b0
-                                                          (cl IntMap.! b1)
-                                                          (cl IntMap.! b2)
-                                                          a0
-                                                          (as IntMap.! b1)
-                                                          (as IntMap.! b2)
-                                                          f
-                                                 e -> error $ "bad number of edges: " ++ show (length e)
+                                                inEdges = edgesBeforeEdgeSet t to_p
+                                                clsIn = IntMap.restrictKeysToVector cl inEdges
+                                                asIn  = IntMap.restrictKeysToVector as inEdges
+                                                sequences = if IntSet.null inEdges then [ seqs IntMap.! (sourceNode t to_p) ] else []
+                                            in sampleBranchSequence parent_seq a0 (list_to_vector sequences) alpha smap clsIn asIn ps_for_b0 f
     in ancestor_seqs
 
 cached_conditional_likelihoods_SEV t seqs alpha ps smap =
