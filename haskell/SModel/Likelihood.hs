@@ -33,6 +33,8 @@ peelBranch sequences alphabet smap cls as ps f = builtinPeelBranch (list_to_vect
 
 
 -- ancestral sequence sampling for connected-CLVs
+foreign import bpcall "Likelihood:" sampleRootSequence :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
+
 foreign import bpcall "Likelihood:" sample_root_sequence :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_internal_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
@@ -97,11 +99,12 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
 
-        ancestor_for_branch n Nothing = case edgesTowardNode t n of
-                                          [b0,b1,b2] -> sample_root_sequence (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2)
-                                                            (as IntMap.! b0) (as IntMap.! b1) (as IntMap.! b2)
-                                                            f
-                                          e -> error $ "ancestor_for_branch: bad number of nodes " ++ show (length e)
+        ancestor_for_branch n Nothing = let inEdges = edgesTowardNodeSet t n
+                                            sequences = []
+                                            clsIn = IntMap.restrictKeysToVector cl inEdges
+                                            asIn  = IntMap.restrictKeysToVector as inEdges
+                                        in sampleRootSequence (list_to_vector sequences) alpha smap clsIn asIn f
+
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs IntMap.! p
                                                 b0 = reverseEdge to_p
