@@ -20,10 +20,6 @@ type MutCosts = Matrix Int
 
 foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet -> MutCosts
 
-foreign import bpcall "Parsimony:" peel_muts_leaf_branch :: EVector Int -> Alphabet -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" peel_muts_internal_branch :: CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" calc_root_muts :: CondPars -> CondPars -> CondPars -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> MutCosts -> Int
-foreign import bpcall "Parsimony:" calc_leaf_muts :: Alphabet -> EVector Int -> PairwiseAlignment -> MutCosts -> CondPars -> Int
 foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
 
