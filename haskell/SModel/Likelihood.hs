@@ -86,7 +86,7 @@ substitution_likelihood t root seqs as alpha ps f smap = let cls = cached_condit
 sample_ancestral_sequences :: IsTree t =>
                               t ->
                               Int ->
-                              IntMap (EVector Int) ->
+                              IntMap (Maybe (EVector Int)) ->
                               IntMap PairwiseAlignment ->
                               Alphabet ->
                               IntMap (EVector (Matrix Double)) ->
@@ -106,15 +106,14 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                             asIn  = IntMap.restrictKeysToVector as inEdges
                                         in sampleRootSequence (list_to_vector sequences) alpha smap clsIn asIn f
 
-        ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
-                                                parent_seq = ancestor_seqs IntMap.! p
+        ancestor_for_branch n (Just to_p) = let parent_seq = ancestor_seqs IntMap.! (targetNode t to_p)
                                                 b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
                                                 a0 = as IntMap.! b0
                                                 inEdges = edgesBeforeEdgeSet t to_p
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
                                                 asIn  = IntMap.restrictKeysToVector as inEdges
-                                                sequences = if IntSet.null inEdges then [ seqs IntMap.! (sourceNode t to_p) ] else []
+                                                sequences = maybeToList $ seqs IntMap.! (sourceNode t to_p)
                                             in sampleBranchSequence parent_seq a0 (list_to_vector sequences) alpha smap clsIn asIn ps_for_b0 f
     in ancestor_seqs
 

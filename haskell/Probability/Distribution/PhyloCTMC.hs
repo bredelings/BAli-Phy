@@ -99,7 +99,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       -- but instead we just ensure that the alignment is evaluated.
       likelihood  = peel_likelihood tree maybeNodeSequences cls as alphabet (weighted_frequency_matrix smodel) smap subst_root
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root maybeNodeSequences as alphabet transition_ps f cls smap
 
       ancestral_sequences = case n_nodes of 1 -> node_sequences
                                             2 -> node_sequences
