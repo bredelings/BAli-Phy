@@ -50,6 +50,26 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
 }
 
 
+object_ptr<ParsimonyCacheBranch>
+peel_muts(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);
+
+extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0); // EVector Int
+    auto arg1 = Args.evaluate(1); // Alphabet
+    auto arg2 = Args.evaluate(2); // MutCosts
+    auto arg3 = Args.evaluate(3); // n_
+    auto arg4 = Args.evaluate(4); // MutCosts
+
+    return peel_muts(arg0.as_<EVector>(),    // sequences
+		     *arg1.as_<Alphabet>(),  // alphabet
+		     arg2.as_<EVector>(),    // A
+		     arg3.as_<EVector>(),    // n_muts
+		     arg4.as_<Box<matrix<int>>>());
+}
+
+
+
 
 // peel_muts_leaf_branch :: EVector Int -> Alphabet -> MutCosts -> CondPars
 object_ptr<const ParsimonyCacheBranch> peel_muts_leaf_branch(const alphabet& a, const EVector& letters, const matrix<int>& cost);

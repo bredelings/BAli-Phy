@@ -163,6 +163,111 @@ peel_muts_internal_branch(const pairwise_alignment_t& A0,
     return result;
 }
 
+object_ptr<ParsimonyCacheBranch>
+peel_muts(const EVector& sequences,
+	  const alphabet& a,
+	  const EVector& A_,
+	  const EVector& n_muts_,
+	  const matrix<int>& cost)
+{
+    int n_branches_in = n_muts_.size();
+    assert(n_muts_.size() == n_branches_in);
+    assert(A_.size() == n_branches_in);
+
+    auto A = [&](int i) -> auto& {return A_[i].as_<Box<pairwise_alignment_t>>();};
+    auto sequence = [&](int i) -> auto& {return sequences[i].as_<EVector>();};
+    auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
+
+    assert(not sequences.empty() or not A_.empty());
+    int L = (sequences.empty())?A(0).length2() : sequence(0).size();
+
+    int n_letters = cost.size1();
+
+#ifndef NDEBUG
+    for(int i=0; i<n_branches_in; i++)
+    {
+	assert(n_muts(i).n_letters == n_letters);
+	assert(A(i).length2() == L);
+//	assert(A(i).length1() == n_muts(i).n_columns());
+    }
+#endif
+
+    auto result = object_ptr<ParsimonyCacheBranch>(new ParsimonyCacheBranch(n_letters, L));
+    auto& n_muts_out = *result;
+
+    int other_subst = 0;
+    for(int j=0; j < n_branches_in;j++)
+	other_subst += n_muts(j).other_subst;
+
+    // index into source sequences and n_muts
+    vector<int> s(n_branches_in, 0);
+    // index into pairwise alignments
+    vector<int> i(n_branches_in, 0);
+
+    for(int s_node=0;;s_node++)
+    {
+	for(int j=0; j < n_branches_in; j++)
+	{
+	    auto& a = A(j);
+	    auto& ij = i[j];
+	    while(ij < a.size() and not a.has_character2(ij))
+	    {
+		assert(a.has_character1(ij));
+		other_subst += n_muts(j).min(s[j]);
+		ij++;
+		s[j]++;
+	    }
+	}
+
+        if (s_node == L)
+        {
+	    for(int j=0; j<n_branches_in; j++)
+		assert(i[j] == A(j).size());
+
+            break;
+        }
+        else
+        {
+	    for(int j=0; j<n_branches_in; j++)
+	    {
+		assert(i[j] < A(j).size());
+		assert(A(j).has_character2(i[j]));
+	    }
+        }
+
+	int* S = &n_muts_out(s_node,0);
+
+	for(int l=0;l<n_letters;l++)
+	    S[l] = 0;
+
+	for(int j=0;j<n_branches_in;j++)
+	{
+	    if (A(j).has_character1(i[j]))
+	    {
+		peel_muts(&n_muts(j)(s[j],0), S, n_letters, cost);
+		s[j]++;
+	    }
+	    i[j]++;
+	}
+
+	for(auto& esequence: sequences)
+	{
+	    auto& sequence = esequence.as_<EVector>();
+	    int letter = sequence[s_node].as_int();
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (not ok[l])
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	}
+    }
+
+    result->other_subst = other_subst;
+    return result;
+}
+
 int muts_root(const pairwise_alignment_t& A0,
               const pairwise_alignment_t& A1,
               const pairwise_alignment_t& A2,
