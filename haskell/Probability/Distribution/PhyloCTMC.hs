@@ -105,7 +105,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
 
       ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
-      n_muts = parsimony tree node_sequences as alphabet (unitCostMatrix alphabet)
+      n_muts = parsimony tree maybeNodeSequences as alphabet (unitCostMatrix alphabet)
 
   in_edge "tree" tree
   in_edge "alignment" alignment

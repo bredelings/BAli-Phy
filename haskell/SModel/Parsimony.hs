@@ -9,6 +9,7 @@ import Data.Matrix
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
+import Data.Maybe (maybeToList)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -32,17 +33,16 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                                cpsIn = IntMap.restrictKeysToVector pc inEdges
                                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                                                node = sourceNode t b
-                                                               sequences = if is_leaf_node t node then [seqs IntMap.! node] else []
+                                                               sequences = maybeToList $ seqs IntMap.! node
                                                            in peelMuts (list_to_vector sequences) alpha asIn cpsIn cost
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
                                              cpsIn = IntMap.restrictKeysToVector cp inEdges
                                              asIn  = IntMap.restrictKeysToVector as inEdges
-                                             sequences = if is_leaf_node t root then [seqs IntMap.! root] else []
+                                             sequences = maybeToList $ seqs IntMap.! root
                                          in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
 
-parsimony :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
                                      root = head $ getNodes t
                                  in peel_muts t pc as root seqs alpha cost
