@@ -921,7 +921,7 @@ namespace substitution {
 		    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 		    if (letter >= 0)
 		    {
-			auto& ok = a.letter_fmask(letter);
+			auto& ok = a.letter_mask(letter);
 			for(int m=0;m<n_models;m++)
 			{
 			    for(int s1=0;s1<n_states;s1++)
@@ -1541,7 +1541,7 @@ namespace substitution {
 		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 		if (letter >= 0)
 		{
-		    auto& ok = a.letter_fmask(letter);
+		    auto& ok = a.letter_mask(letter);
 		    for(int m=0;m<n_models;m++)
 		    {
 			for(int s1=0;s1<n_states;s1++)
@@ -1681,7 +1681,7 @@ namespace substitution {
 		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 		if (letter >= 0)
 		{
-		    auto& ok = a.letter_fmask(letter);
+		    auto& ok = a.letter_mask(letter);
 		    for(int m=0;m<n_models;m++)
 		    {
 			for(int s1=0;s1<n_states;s1++)
@@ -1943,7 +1943,7 @@ namespace substitution {
                 // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
                 if (letter >= 0)
                 {
-                    auto& ok = a.letter_fmask(letter);
+                    auto& ok = a.letter_mask(letter);
                     for(int m=0;m<n_models;m++)
                     {
                         for(int s1=0;s1<n_states;s1++)
@@ -2429,7 +2429,7 @@ namespace substitution {
 		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 		if (letter >= 0)
 		{
-		    auto& ok = a.letter_fmask(letter);
+		    auto& ok = a.letter_mask(letter);
 		    for(int m=0;m<n_models;m++)
 		    {
 			for(int s1=0;s1<n_states;s1++)
@@ -2780,7 +2780,7 @@ namespace substitution {
 		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 		if (letter >= 0)
 		{
-		    auto& ok = a.letter_fmask(letter);
+		    auto& ok = a.letter_mask(letter);
 		    for(int m=0;m<n_models;m++)
 		    {
 			for(int s1=0;s1<n_states;s1++)
