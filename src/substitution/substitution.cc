@@ -2375,7 +2375,6 @@ namespace substitution {
 	    AL[j] = A[j].as_<Box<pairwise_alignment_t>>().size();
 
 	vector<int> s(n_branches_in, 0);
-	int s_out = 0;
 	vector<int> i(n_branches_in, 0);
 	Vector<pair<int,int>> ancestral_characters(L);
         for(int s_out=0;;s_out++)
