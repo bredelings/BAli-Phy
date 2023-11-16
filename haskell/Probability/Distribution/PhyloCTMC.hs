@@ -101,9 +101,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root maybeNodeSequences as alphabet transition_ps f cls smap
 
-      ancestral_sequences = case n_nodes of 1 -> node_sequences
-                                            2 -> node_sequences
-                                            _ -> fmap extractStates ancestralComponentStateSequences
+      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
 
       ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
