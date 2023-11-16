@@ -2,7 +2,9 @@
 - Usability tweaks
   + Write out tree with branch-lengths scaled according to weighted average of partition scales.
   + Print the alignment length including fixed-alignment partitions.
-
+- Phylogenetics
+  + Update likelihoods and other infrastructure to handle multifurcating trees.
+  + Update likelihoods and other infrastructure to handle data on internal nodes.
 
 * 4.0-beta7 (Nor 1, 2023)
 - Bug fixes:
