@@ -68,13 +68,17 @@ namespace bali_phy
 
 	matrix& operator=(const matrix<T>& m2)
 	    {
-		matrix<T>(m2).swap(*this);
+		resize(m2.size1(), m2.size2());
+
+		for(int i=0;i<m2.size();i++)
+		    data_[i] = m2.data_[i];
+
 		return *this;
 	    }
 
 	matrix& operator=(matrix<T>&& m2) noexcept
 	    {
-		matrix<T>(m2).swap(*this);
+		swap(m2);
 		return *this;
 	    }
 
@@ -139,10 +143,7 @@ namespace bali_phy
 
 	matrix(const matrix<T>& m2)
 	    {
-		resize(m2.size1(), m2.size2());
-
-		for(int i=0;i<m2.size();i++)
-		    data_[i] = m2.data_[i];
+		operator=(m2);
 	    }
 
 	matrix(matrix<T>&& m2) noexcept
