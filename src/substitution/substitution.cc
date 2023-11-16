@@ -2663,6 +2663,149 @@ namespace substitution {
         return ancestral_characters;
     }
 
+    Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
+						 const pairwise_alignment_t& parent_A,
+						 const EVector& sequences,
+						 const alphabet& a,
+						 const EVector& smap,
+						 const EVector& LCB,
+						 const EVector& A,
+						 const EVector& transition_P,
+						 const Matrix& F)
+    {
+        total_peel_internal_branches++;
+
+        const int n_models = transition_P.size();
+        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int matrix_size = n_models * n_states;
+
+        // Do this before accessing matrices or other_subst
+	int n_branches_in = LCB.size();
+	assert(not sequences.empty() or not A.empty());
+	int L = (sequences.empty())?A[0].as_<Box<pairwise_alignment_t>>().length2() : sequences[0].as_<EVector>().size();
+
+#ifndef NDEBUG
+	// Check that all the sequences have the right length.
+	for(auto& esequence: sequences)
+	    assert(esequence.as_<EVector>().size() == L);
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
+	{
+	    assert(A[i].as_<Box<pairwise_alignment_t>>().length2() == L);
+	    assert(A[i].as_<Box<pairwise_alignment_t>>().length1() == LCB[i].as_<Likelihood_Cache_Branch>().n_columns());
+	}
+#endif
+
+        // scratch matrix
+	Matrix SMAT(n_models, n_states);
+        double* S = SMAT.begin();
+
+	vector<int> AL(n_branches_in);
+	for(int j=0; j < n_branches_in;j++)
+	    AL[j] = A[j].as_<Box<pairwise_alignment_t>>().size();
+
+	// index into LCBs
+	vector<int> s(n_branches_in, 0);
+	// index into node sequence
+	int s_node = 0;
+	// index into parent sequence
+	int s_parent = 0;
+	// index into alignments
+	vector<int> i(n_branches_in, 0);
+	// index into parent_A
+	int i_parent;
+
+	Vector<pair<int,int>> ancestral_characters(L);
+        for(;;)
+        {
+	    for(int j =0;j < n_branches_in; j++)
+	    {
+		auto& a = A[j].as_<Box<pairwise_alignment_t>>();
+		auto& ij = i[j];
+		while (ij < AL[j] and not a.has_character2(ij))
+		{
+		    assert(a.has_character1(ij));
+		    ij++;
+		    s[j]++;
+		}
+	    }
+	    {
+		while (i_parent < parent_A.size() and not parent_A.has_character2(i_parent))
+		{
+		    assert(parent_A.has_character1(i_parent));
+		    i_parent++;
+		    s_parent++;
+		}
+	    }
+            if (s_node == L)
+            {
+		for(int j=0;j<n_branches_in;j++)
+		    assert(i[j] == AL[j]);
+                break;
+            }
+	    else
+	    {
+		for(int j=0;j<n_branches_in;j++)
+		{
+		    assert(i[j] < AL[j]);
+		    assert(A[j].as_<Box<pairwise_alignment_t>>().has_character2(i[j]));
+		}
+	    }
+
+	    pair<int,int> state_model_parent(-1,-1);
+	    if (i_parent < parent_A.size() and parent_A.has_character1(i_parent))
+		state_model_parent = parent_seq[s_parent];
+	    calc_transition_prob_from_parent(SMAT, state_model_parent, transition_P, F);
+
+	    for(int j=0;j<n_branches_in;j++)
+	    {
+		if (A[j].as_<Box<pairwise_alignment_t>>().has_character1(i[j]))
+		{
+		    auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
+		    element_prod_assign(S, lcb[s[j]], matrix_size);
+		    s[j]++;
+		}
+		i[j]++;
+	    }
+
+	    // Handle observed sequences at the node.
+	    for(auto& esequence: sequences)
+	    {
+		auto& sequence = esequence.as_<EVector>();
+		int letter = sequence[s_node].as_int();
+
+		// We need to zero out the inconsistent characters.
+		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+		if (letter >= 0)
+		{
+		    auto& ok = a.letter_fmask(letter);
+		    for(int m=0;m<n_models;m++)
+		    {
+			for(int s1=0;s1<n_states;s1++)
+			{
+			    int l = smap[s1].as_int();
+			    if (not ok[l])
+			    {
+				// Pr *= Pr(observation | state )
+				// Currently we are doing Pr *= Pr(observation | letter(state))
+				// So maybe I should make a Pr(observation | state) matrix.
+				S[m*n_states + s1] = 0;
+			    }
+			}
+		    }
+		}
+	    }
+
+            ancestral_characters[s_node] = sample(SMAT);
+
+	    s_node++;
+        }
+
+        return ancestral_characters;
+    }
+
     
     Vector<pair<int,int>> sample_internal_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
                                                             const EVector& transition_Ps,
