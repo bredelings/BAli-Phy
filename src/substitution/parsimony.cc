@@ -264,7 +264,7 @@ int muts_root(const EVector& sequences,
 		auto& ok = a.letter_mask(letter);
 		for(int l=0;l<n_letters;l++)
 		    if (not ok[l])
-			S[l] = std::numeric_limits<int>::max();
+			S[l] = std::numeric_limits<int>::max()/2;
 	    }
 	}
 
