@@ -44,8 +44,6 @@ parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alph
                                  in peel_muts t pc as root seqs alpha cost
 ----
 type ColumnCounts = EVector Int
-foreign import bpcall "Parsimony:" peel_muts_leaf_branch_fixed_A :: EVector Int -> CBitVector -> Alphabet -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" peel_muts_internal_branch_fixed_A :: CondPars -> CondPars -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" calc_root_muts_fixed_A :: CondPars -> CondPars -> CondPars -> MutCosts -> ColumnCounts -> Int
 foreign import bpcall "Parsimony:" calc_leaf_muts_fixed_A :: Alphabet -> EVector Int -> CBitVector -> CondPars -> MutCosts -> ColumnCounts -> Int
 
@@ -53,13 +51,11 @@ foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
-        pcf b = case edgesBeforeEdge t b of
-                     [] -> let n = sourceNode t b
-                               (seq,mask) = seqs IntMap.! n
-                           in peel_muts_leaf_branch_fixed_A seq mask alpha cost
-                     [_] -> error "cached_conditional_muts_fixed_A: knuckles not handled yet."
-                     [b1,b2] -> peel_muts_internal_branch_fixed_A (pc IntMap.! b1) (pc IntMap.! b2) cost
-                     e -> error $ "cached_conditional_muts: " ++ show (length e)  ++ "edges before edge not handled."
+        pcf b = let inEdges = edgesBeforeEdgeSet t b
+                    clsIn = IntMap.restrictKeysToVector pc inEdges
+                    node = sourceNode t b
+                    sequences = if is_leaf_node t node then [c_pair' $ seqs IntMap.! node] else []
+                in peelMutsFixedA (list_to_vector sequences) alpha clsIn cost
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
