@@ -87,6 +87,23 @@ extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
     return {muts};
 }
 
+object_ptr<const ParsimonyCacheBranch>
+peel_muts_fixed_A(const EVector& sequences, const alphabet& a, const EVector& n_muts_, const matrix<int>& cost);
+
+extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    return peel_muts_fixed_A(arg0.as_<EVector>(),            // sequences
+			     *arg1.as_<Alphabet>(),          // a
+			     arg2.as_<EVector>(),            // n_muts_
+			     arg3.as_<Box<matrix<int>>>());  // cost
+}
+
+
 // peel_muts_leaf_branch_fixed_A :: EVector Int -> CBitVector -> Alphabet -> MutCosts -> CondPars
 object_ptr<const ParsimonyCacheBranch>
 peel_muts_leaf_branch_fixed_A(const alphabet& a, const EVector& seq, const dynamic_bitset<>& mask, const matrix<int>& cost);
