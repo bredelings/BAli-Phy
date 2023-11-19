@@ -48,6 +48,7 @@ foreign import bpcall "Parsimony:" calc_root_muts_fixed_A :: CondPars -> CondPar
 foreign import bpcall "Parsimony:" calc_leaf_muts_fixed_A :: Alphabet -> EVector Int -> CBitVector -> CondPars -> MutCosts -> ColumnCounts -> Int
 
 foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> CondPars
+foreign import bpcall "Parsimony:" mutsRootFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> EVector Int -> Int
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
