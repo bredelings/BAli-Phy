@@ -59,16 +59,10 @@ cached_conditional_muts_fixed_A t seqs alpha cost =
                 in peelMutsFixedA (list_to_vector sequences) alpha clsIn cost
     in pc
 
-peel_muts_fixed_A t cp root seqs alpha cost counts = let muts = IntMap.fromSet peel_muts' $ getNodesSet t
-                                                         peel_muts' root = case edgesTowardNode t root of
-                                                                                [b1] -> let n = targetNode t b1
-                                                                                            (seq,mask) = seqs IntMap.! n
-                                                                                        in calc_leaf_muts_fixed_A alpha seq mask (cp IntMap.! b1) cost counts
-                                                                                [b1,b2,b3] -> calc_root_muts_fixed_A (cp IntMap.! b1) (cp IntMap.! b2) (cp IntMap.! b3) cost counts
-                                                                                [] -> 0
-                                                                                [_,_] -> error "peel_muts: root node with 2 edges"
-                                                                                e -> error $ "peel_muts: root node has degree " ++ show (length e)
-                                                      in muts IntMap.! root
+peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNodeSet t root
+                                                         clsIn = IntMap.restrictKeysToVector cp inEdges
+                                                         sequences = if is_leaf_node t root then [c_pair' $ seqs IntMap.! root] else []
+                                                     in mutsRootFixedA (list_to_vector sequences) alpha clsIn cost counts
 
 parsimony_fixed_A :: IsTree t => t -> IntMap (EVector Int, CBitVector) -> Alphabet -> MutCosts -> ColumnCounts -> Int
 parsimony_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
