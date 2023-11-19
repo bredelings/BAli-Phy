@@ -298,6 +298,10 @@ peel_muts_fixed_A(const EVector& sequences,
 	assert(n_muts(i).n_letters == n_letters);
 	assert(n_muts(i).bits.size() == L);
     }
+    for(int i=0; i<n_sequences; i++)
+    {
+	assert(mask(i).size() == L);
+    }
 #endif
 
     dynamic_bitset<> bits;
@@ -353,6 +357,94 @@ peel_muts_fixed_A(const EVector& sequences,
     }
 
     return result;
+}
+
+int muts_root_fixed_A(const EVector& sequences,
+		      const alphabet& a,
+		      const EVector& n_muts_,
+		      const matrix<int>& costs,
+		      const EVector& counts)
+{
+    int n_letters = costs.size1();
+
+    auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
+    auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+    auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
+
+    int n_branches_in = n_muts_.size();
+    assert(not sequences.empty() or not n_muts_.empty());
+    int L = (sequences.empty()) ? n_muts(0).bits.size() : mask(0).size();
+
+    int n_sequences = sequences.size();
+
+#ifndef NDEBUG
+    for(int i=0; i<n_branches_in; i++)
+    {
+	assert(n_muts(i).n_letters == n_letters);
+	assert(n_muts(i).bits.size() == L);
+    }
+    for(int i=0; i<n_sequences; i++)
+    {
+	assert(mask(i).size() == L);
+    }
+#endif
+
+    dynamic_bitset<> bits;
+    bits.resize(L);
+    for(int i=0;i<n_sequences;i++)
+	bits |= mask(i);
+    for(int i=0;i<n_branches_in;i++)
+	bits |= n_muts(i).bits;
+
+    int total = 0;
+
+    vector<int> S(n_letters);
+
+    // index into sequences
+    vector<int> i(n_sequences, 0);
+    // index into LCBs
+    vector<int> s(n_branches_in, 0);
+    // index into LCB_OUT
+    int s_node = 0;
+
+    for(int c=0;c<L;c++)
+    {
+	if (not bits.test(c)) continue;
+
+	for(auto& s: S)
+	    s = 0;
+
+	for(int j=0;j<n_branches_in;j++)
+	{
+	    if (n_muts(j).bits.test(c))
+	    {
+		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, costs);
+		s[j]++;
+	    }
+	}
+
+	for(int j=0;j<n_sequences;j++)
+	{
+	    if (not mask(j).test(c)) continue;
+
+	    int letter = sequence(j)[i[j]].as_int();
+	    i[j]++;
+
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (not ok[l])
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	}
+
+        total += min(S) * counts[s_node].as_int();
+
+	s_node++;
+    }
+
+    return total;
 }
 
 
