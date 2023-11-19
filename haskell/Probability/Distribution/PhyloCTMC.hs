@@ -182,8 +182,10 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
-      node_isequences = fromMaybe (error "No label") <$> labelToNodeMap tree isequences
+      maybeNodeISequences = labelToNodeMap tree isequences
+      node_isequences = fromMaybe (error "No label") <$> maybeNodeISequences
       node_seqs_bits = (\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$> node_isequences
+      maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
       node_sequences = fst <$> node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
@@ -227,7 +229,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
                                        ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
                                    in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 
-      n_muts = parsimony_fixed_A tree node_seqs_bits alphabet (unitCostMatrix alphabet) column_counts
+      n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
 
   in_edge "tree" tree
   in_edge "smodel" smodel

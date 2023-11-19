@@ -55,16 +55,15 @@ cached_conditional_muts_fixed_A t seqs alpha cost =
         pcf b = let inEdges = edgesBeforeEdgeSet t b
                     clsIn = IntMap.restrictKeysToVector pc inEdges
                     node = sourceNode t b
-                    sequences = if is_leaf_node t node then [c_pair' $ seqs IntMap.! node] else []
+                    sequences = maybeToList $ c_pair' <$> seqs IntMap.! node
                 in peelMutsFixedA (list_to_vector sequences) alpha clsIn cost
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNodeSet t root
                                                          clsIn = IntMap.restrictKeysToVector cp inEdges
-                                                         sequences = if is_leaf_node t root then [c_pair' $ seqs IntMap.! root] else []
+                                                         sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
                                                      in mutsRootFixedA (list_to_vector sequences) alpha clsIn cost counts
 
-parsimony_fixed_A :: IsTree t => t -> IntMap (EVector Int, CBitVector) -> Alphabet -> MutCosts -> ColumnCounts -> Int
 parsimony_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
                                                  root = head $ getNodes t
                                              in peel_muts_fixed_A t pc root seqs alpha cost counts
