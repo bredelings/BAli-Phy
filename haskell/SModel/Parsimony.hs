@@ -44,8 +44,6 @@ parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alph
                                  in peel_muts t pc as root seqs alpha cost
 ----
 type ColumnCounts = EVector Int
-foreign import bpcall "Parsimony:" calc_root_muts_fixed_A :: CondPars -> CondPars -> CondPars -> MutCosts -> ColumnCounts -> Int
-foreign import bpcall "Parsimony:" calc_leaf_muts_fixed_A :: Alphabet -> EVector Int -> CBitVector -> CondPars -> MutCosts -> ColumnCounts -> Int
 
 foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" mutsRootFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> EVector Int -> Int
