@@ -199,11 +199,11 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
               tree
-              node_seqs_bits
+              maybeNodeSeqsBits
               alphabet
               transition_ps
               smap
-      likelihood = peel_likelihood_SEV node_seqs_bits tree cls f alphabet smap subst_root column_counts
+      likelihood = peel_likelihood_SEV maybeNodeSeqsBits tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = case n_nodes of

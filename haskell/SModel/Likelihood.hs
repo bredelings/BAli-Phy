@@ -122,12 +122,12 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
                     clsIn = IntMap.restrictKeysToVector lc inEdges
                     -- FIXME!  How to determine if the node has any data?
                     node = sourceNode t b
-                    sequences = if IntSet.null inEdges then [c_pair' $ seqs IntMap.! node] else []
+                    sequences = maybeToList $ c_pair' <$> seqs IntMap.! node
                 in peelBranchSEV sequences alpha smap clsIn p
     in lc
 
 peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
-                                                              sequences = if is_leaf_node t root then [c_pair' $ seqs IntMap.! root] else []
+                                                              sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
                                                               clsIn = IntMap.restrictKeysToVector cls inEdges
                                                           in calcRootProbSEV (list_to_vector sequences) alpha smap clsIn f counts
 
