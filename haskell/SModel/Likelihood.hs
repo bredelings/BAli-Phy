@@ -112,7 +112,7 @@ sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compres
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = let sequences = if is_leaf_node t n then [c_pair' $ seqsBits IntMap.! n] else []
+        ancestor_for_branch n Nothing = let sequences = maybeToList $ c_pair' <$> seqsBits IntMap.! n
                                             inEdges = edgesTowardNodeSet t n
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
                                         in sampleRootSequenceSEV (list_to_vector sequences)
@@ -126,7 +126,7 @@ sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compres
                                                 ps_for_b0 = ps IntMap.! b0
                                                 inEdges = edgesBeforeEdgeSet t to_p
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
-                                                sequences = if is_leaf_node t n then [c_pair' $ seqsBits IntMap.! n] else []
+                                                sequences = maybeToList $ c_pair' <$> seqsBits IntMap.! n
                                             in sampleSequenceSEV parent_seq
                                                                  (list_to_vector sequences)
                                                                  alpha
