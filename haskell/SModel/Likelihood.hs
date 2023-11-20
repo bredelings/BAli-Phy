@@ -54,6 +54,8 @@ foreign import bpcall "Likelihood:peelBranchSEV" builtinPeelBranchSEV :: EVector
 peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vector sequences) alphabet smap cls ps
 
 -- ancestral sequence sampling for SEV
+foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
+
 foreign import bpcall "Likelihood:" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_root_deg2_sequence_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_internal_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> EVector Int -> VectorPairIntInt

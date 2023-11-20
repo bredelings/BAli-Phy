@@ -918,7 +918,7 @@ namespace substitution {
 		    i[j]++;
 
 		    // We need to zero out the inconsistent characters.
-		    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+		    // Observing the complete state doesn't decouple subtrees unless
 		    if (letter >= 0)
 		    {
 			auto& ok = a.letter_mask(letter);
@@ -2565,6 +2565,111 @@ namespace substitution {
 
             ancestral_characters[c] = sample( S );
         }
+        return ancestral_characters;
+    }
+
+    // Currently we are not treating N as a gap during compression.
+    // So, we can assume that anything that's not in the mask will not have an ancestral letter.
+    Vector<pair<int,int>> sample_root_sequence_SEV(const EVector& sequences,
+						   const alphabet& a,
+						   const EVector& smap,
+						   const EVector& LCB,
+                                                   const Matrix& F,
+                                                   const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch CL matrix, and check that dimensions match inputs
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
+        auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+
+	int n_branches_in = LCB.size();
+	assert(not sequences.empty() or not LCB.empty());
+        int L_compressed = (sequences.empty()) ? cache(0).bits.size() : mask(0).size();
+        int L_full = compressed_col_for_col.size();
+
+	int n_sequences = sequences.size();
+
+#ifndef NDEBUG
+	assert(L_full >= L_compressed);
+        for(int i=0;i<n_sequences;i++)
+        {
+            assert(mask(i).size() == L_compressed);
+        }
+
+        for(int i=0;i<n_branches_in;i++)
+        {
+            assert(cache(i).bits.size() == L_compressed);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+	// scratch matrix
+        Matrix S(n_models,n_states);
+
+	boost::dynamic_bitset<> allbits;
+	allbits.resize(L_compressed);
+        for(int i=0;i<n_sequences;i++)
+            allbits |= mask(i);
+        for(int i=0;i<n_branches_in;i++)
+            allbits |= cache(i).bits;
+
+	vector<vector<optional<int>>> cache_index_for_compressed_column;
+	for(int i=0;i<n_branches_in;i++)
+	    cache_index_for_compressed_column.push_back( get_index_for_column( cache(i).bits ) );
+
+	vector<vector<optional<int>>> seq_index_for_compressed_column;
+	for(int i=0;i<n_sequences;i++)
+	    seq_index_for_compressed_column.push_back( get_index_for_column( mask(i) ) );
+
+	// Initially all the ancestral letters are missing.
+        Vector<pair<int,int>> ancestral_characters(L_full,{-1,-1});
+
+        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
+        for(int c = 0; c < L_full; c++)
+        {
+            int c2 = compressed_col_for_col[c].as_int();
+
+            if (not allbits.test(c2)) continue;
+
+            S = F;
+
+	    for(int b=0;b<n_branches_in;b++)
+		if (auto i = cache_index_for_compressed_column[b][c2])
+		    element_prod_modify(S.begin(), cache(b)[*i], matrix_size);
+
+	    for(int j=0;j<n_sequences;j++)
+	    {
+		if (auto k = seq_index_for_compressed_column[j][c2])
+		{
+		    int letter_class = sequence(j)[*k].as_int();
+		    if (letter_class < 0) continue;
+
+		    auto& letter_fits_class = a.letter_mask(letter_class);
+		    for(int m=0;m<n_models;m++)
+		    {
+			for(int s1=0;s1<n_states;s1++)
+			{
+			    int letter_for_state = smap[s1].as_int();
+			    bool state_fits_class = letter_fits_class[letter_for_state];
+			    if (not state_fits_class)
+			    {
+				// Pr *= Pr(observation | state )
+				// Currently we are doing Pr *= Pr(observation | letter(state))
+				// So maybe I should make a Pr(observation | state) matrix.
+				(S.begin())[m*n_states + s1] = 0;
+			    }
+			}
+		    }
+		}
+	    }
+            ancestral_characters[c] = sample( S );
+        }
+
         return ancestral_characters;
     }
 
