@@ -134,10 +134,9 @@ peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTow
 
 sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compressed =
     let rt = add_root root t
-        seqs = fst <$> seqsBits
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = let sequences = [] -- maybeToList $ c_pair' <$> seqsBits IntMap.! n
+        ancestor_for_branch n Nothing = let sequences = if is_leaf_node t n then [c_pair' $ seqsBits IntMap.! n] else []
                                             inEdges = edgesTowardNodeSet t n
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
                                         in sampleRootSequenceSEV (list_to_vector sequences)
@@ -146,29 +145,18 @@ sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compres
                                                                  clsIn
                                                                  f
                                                                  col_to_compressed
-        ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
-                                                parent_seq = ancestor_seqs IntMap.! p
+        ancestor_for_branch n (Just to_p) = let parent_seq = ancestor_seqs IntMap.! (targetNode t to_p)
                                                 b0 = reverseEdge to_p
                                                 ps_for_b0 = ps IntMap.! b0
-                                            in case edgesBeforeEdge t to_p of
-                                                 [] -> sample_leaf_sequence_SEV
-                                                          parent_seq
-                                                          ps_for_b0
-                                                          (seqs IntMap.! n)
-                                                          (cl IntMap.! to_p)
-                                                          alpha
-                                                          smap
-                                                          col_to_compressed
-                                                 [b1] -> sample_deg2_sequence_SEV
-                                                          parent_seq
-                                                          ps_for_b0
-                                                          (cl IntMap.! b1)
-                                                          col_to_compressed
-                                                 [b1,b2] -> sample_internal_sequence_SEV
-                                                          parent_seq
-                                                          ps_for_b0
-                                                          (cl IntMap.! b1)
-                                                          (cl IntMap.! b2)
-                                                          col_to_compressed
+                                                inEdges = edgesBeforeEdgeSet t to_p
+                                                clsIn = IntMap.restrictKeysToVector cl inEdges
+                                                sequences = if is_leaf_node t n then [c_pair' $ seqsBits IntMap.! n] else []
+                                            in sampleSequenceSEV parent_seq
+                                                                 (list_to_vector sequences)
+                                                                 alpha
+                                                                 smap
+                                                                 ps_for_b0
+                                                                 clsIn
+                                                                 col_to_compressed
     in ancestor_seqs
                                                                        
