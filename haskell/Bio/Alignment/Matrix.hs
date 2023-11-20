@@ -105,6 +105,16 @@ charactersBehind sequence_masks tree = let
     presentat the node if its present behind at least two incoming branches.
 -}
 
+
+{- Issues:
+   (a) This is quadritic in the node degree.
+       We could fix this by COUNTING the number of bits at a node and recording a 1 if there are 2 or more.
+       greaterThanBits 1 $ foldr1 addBits (zeroBits L) ms
+   (b) Its not clear how to handle observed data at internal nodes.
+       Suppose we have observed data at all nodes.  And suppose that we have "-" -> "N" -> "-".
+       What should we do?
+       Currently what we do is to treat an observed - as - even if there are Ns on both sides.
+ -}
 getConnectedStates :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap BitVector
 getConnectedStates sequences tree =
     let nodes = tree & getNodesSet
