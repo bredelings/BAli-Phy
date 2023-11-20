@@ -2265,14 +2265,6 @@ namespace substitution {
         return Pr3;
     }
 
-    log_double_t combine_likelihoods(const vector<Matrix>& likelihoods)
-    {
-        log_double_t Pr = 1;
-        for(int i=0;i<likelihoods.size();i++)
-            Pr *= element_sum(likelihoods[i]);
-        return Pr;
-    }
-
     void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps)
     {
         auto [mp,lp] = state_model_parent;
@@ -2298,34 +2290,6 @@ namespace substitution {
             S = WF;
         else
             calc_transition_prob_from_parent(S, state_model_parent, Ps);
-    }
-
-    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const EVector& smap)
-    {
-        int n_models = S.size1();
-        int n_states = S.size2();
-
-        if (l == alphabet::not_gap)
-            ;
-        else if (a.is_letter(l))
-        {
-            // Clear S(m,s) for every state s that doesn't map to the observed letter l
-            for(int s=0;s<n_states;s++)
-                if (smap[s].as_int() != l)
-                    for(int m=0;m<n_models;m++)
-                        S(m,s) = 0;
-        }
-        else
-        {
-            assert(a.is_letter_class(l));
-            const auto& letters = a.letter_mask(l);
-            for(int l=0;l<letters.size();l++)
-                if (letters.test(l))
-                    for(int s=0;s<n_states;s++)
-                        if (smap[s].as_int() != l)
-                            for(int m=0;m<n_models;m++)
-                                S(m,s) = 0;
-        }
     }
 
     Vector<pair<int,int>> sample_root_sequence(const EVector& sequences,
@@ -2453,61 +2417,6 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    Vector<pair<int,int>> sample_root_sequence(const Likelihood_Cache_Branch& cache0,
-                                               const Likelihood_Cache_Branch& cache1,
-                                               const Likelihood_Cache_Branch& cache2,
-                                               const pairwise_alignment_t& A0,
-                                               const pairwise_alignment_t& A1,
-                                               const pairwise_alignment_t& A2,
-                                               const Matrix& F)
-    {
-        // FIXME - this doesn't handle case where tree has only 2 leaves.
-
-        // 1. Get and check length for the central node
-        int L0 = A0.length2();
-        assert(L0 == A1.length2());
-        assert(L0 == A2.length2());
-
-        // 2. Get the alignment of columns present at the internal node.
-        auto a10 = convert_to_bits(A0,1,0);
-        auto a20 = convert_to_bits(A1,2,0);
-        auto a30 = convert_to_bits(A2,3,0);
-        auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-        auto index = get_indices_from_bitpath_w(a0123, {1,2,3}, (1<<0));
-        assert(L0 == index.size1());
-
-        // 3. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = F.size1();
-        int n_states = F.size2();
-        assert(n_models == cache0.n_models());
-        assert(n_states == cache0.n_states());
-        assert(n_models == cache1.n_models());
-        assert(n_states == cache1.n_states());
-        assert(n_models == cache2.n_models());
-        assert(n_states == cache2.n_states());
-        Matrix S(n_models, n_states);
-        const int matrix_size = n_models * n_states;
-
-
-        // 4. Walk the alignment and sample (model,letter) for ancestral sequence
-        Vector<pair<int,int>> ancestral_characters(L0);
-        for(int i=0;i<L0;i++)
-        {
-            int i0 = index(i,0);
-            int i1 = index(i,1);
-            int i2 = index(i,2);
-
-            S = F;
-
-            if (i0 != -1) element_prod_modify(S.begin(), cache0[i0], matrix_size);
-            if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
-            if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
-
-            ancestral_characters[i] = sample(S);
-        }
-        return ancestral_characters;
-    }
-
     vector<optional<int>> get_index_for_column(const boost::dynamic_bitset<>& bits)
     {
         vector<optional<int>> index_for_column(bits.size());
@@ -2625,61 +2534,6 @@ namespace substitution {
             ancestral_characters[c] = sample( S );
         }
 
-        return ancestral_characters;
-    }
-
-    Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
-                                                        const EVector& transition_Ps,
-                                                        const Likelihood_Cache_Branch& cache1,
-                                                        const Likelihood_Cache_Branch& cache2,
-                                                        const pairwise_alignment_t& A0,
-                                                        const pairwise_alignment_t& A1,
-                                                        const pairwise_alignment_t& A2,
-                                                        const Matrix& F)
-    {
-        // 1. Get and check length for the central node
-        int L0 = A0.length2();
-        assert(L0 == A1.length2());
-        assert(L0 == A2.length2());
-
-        // 2. Get the alignment of columns present at the internal node.
-        auto a10 = convert_to_bits(A0,1,0);
-        auto a20 = convert_to_bits(A1,2,0);
-        auto a30 = convert_to_bits(A2,3,0);
-        auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-        auto index = get_indices_from_bitpath_w(a0123, {1,2,3}, (1<<0));
-        assert(L0 == index.size1());
-
-        // 3. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = F.size1();
-        int n_states = F.size2();
-        assert(n_models == cache1.n_models());
-        assert(n_states == cache1.n_states());
-        assert(n_models == cache2.n_models());
-        assert(n_states == cache2.n_states());
-        Matrix S(n_models, n_states);
-        const int matrix_size = n_models * n_states;
-
-
-        // 4. Walk the alignment and sample (model,letter) for ancestral sequence
-        Vector<pair<int,int>> ancestral_characters(L0);
-        for(int i=0;i<L0;i++)
-        {
-            int i0 = index(i,0);
-            int i1 = index(i,1);
-            int i2 = index(i,2);
-
-            pair<int,int> parent_state(-1,-1);
-            if (i0 != -1)
-                parent_state = parent_seq[i0];
-
-            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
-
-            if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
-            if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
-
-            ancestral_characters[i] = sample(S);
-        }
         return ancestral_characters;
     }
 
@@ -2827,49 +2681,6 @@ namespace substitution {
     }
 
     
-    Vector<pair<int,int>> sample_internal_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                            const EVector& transition_Ps,
-                                                            const Likelihood_Cache_Branch& cache1,
-                                                            const Likelihood_Cache_Branch& cache2,
-                                                            const EVector& compressed_col_for_col)
-    {
-        // 1. Construct a scratch matrix and check that dimensions match inputs
-        const int n_models  = transition_Ps.size();
-        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
-        assert(n_models == cache1.n_models());
-        assert(n_states == cache1.n_states());
-        assert(n_models == cache2.n_models());
-        assert(n_states == cache2.n_states());
-        Matrix S(n_models, n_states);
-        const int matrix_size = n_models * n_states;
-
-        // 2. Get the total length of the COMPRESSED matrix.
-        auto allbits = cache1.bits | cache2.bits ;
-
-        auto index_for_column1 = get_index_for_column(cache1.bits);
-        auto index_for_column2 = get_index_for_column(cache2.bits);
-
-        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
-        int L = compressed_col_for_col.size();
-        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
-        for(int c = 0; c < L; c++)
-        {
-            int c2 = compressed_col_for_col[c].as_int();
-            if (not allbits.test(c2)) continue;
-
-            calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
-
-            if (auto i1 = index_for_column1[c2])
-                element_prod_modify(S.begin(), cache1[*i1], matrix_size);
-            if (auto i2 = index_for_column2[c2])
-                element_prod_modify(S.begin(), cache2[*i2], matrix_size);
-
-            ancestral_characters[c] = sample(S);
-        }
-        return ancestral_characters;
-    }
-
-
     Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
 					      const EVector& sequences,
 					      const alphabet& a,
@@ -2976,117 +2787,4 @@ namespace substitution {
         return ancestral_characters;
     }
 
-
-    // Generalize to degree n>=1?
-    Vector<pair<int,int>> sample_deg2_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                        const EVector& transition_Ps,
-                                                        const Likelihood_Cache_Branch& cache,
-                                                        const EVector& compressed_col_for_col)
-    {
-        // 1. Construct a scratch matrix and check that dimensions match inputs
-        const int n_models  = transition_Ps.size();
-        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
-        assert(n_models == cache.n_models());
-        assert(n_states == cache.n_states());
-        Matrix S(n_models, n_states);
-        const int matrix_size = n_models * n_states;
-
-        auto index_for_column = get_index_for_column(cache.bits);
-
-        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
-        int L = compressed_col_for_col.size();
-        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
-        for(int c = 0; c < L; c++)
-        {
-            int c2 = compressed_col_for_col[c].as_int();
-            if (not cache.bits.test(c2)) continue;
-
-            calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
-
-            if (auto i = index_for_column[c2])
-                element_prod_modify(S.begin(), cache[*i], matrix_size);
-
-            ancestral_characters[c] = sample(S);
-        }
-        return ancestral_characters;
-    }
-
-
-    Vector<pair<int,int>> sample_leaf_node_sequence(const Vector<pair<int,int>>& parent_seq,
-                                                    const EVector& transition_Ps,
-                                                    const EVector& sequence,
-                                                    const alphabet& a,
-                                                    const EVector& smap,
-                                                    const pairwise_alignment_t& A0,
-                                                    const Matrix& F)
-    {
-        // 1. Get and check length for the leaf node
-        int L0 = A0.length2();
-
-        // 2. Get the alignment of columns present at the leaf node.
-        auto a10 = convert_to_bits(A0,1,0);
-        auto index = get_indices_from_bitpath_w(a10, {1}, (1<<0));
-        assert(L0 == index.size1());
-        assert(L0 == sequence.size());
-
-        // 3. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = F.size1();
-        int n_states = F.size2();
-        Matrix S(n_models, n_states);
-
-        // 4. Walk the alignment and sample (model,letter) for leaf sequence
-        Vector<pair<int,int>> ancestral_characters(L0);
-        for(int i=0;i<L0;i++)
-        {
-            int i0 = index(i,0);
-
-            pair<int,int> parent_state(-1,-1);
-            if (i0 != -1)
-                parent_state = parent_seq[i0];
-
-            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
-
-            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap);
-
-            ancestral_characters[i] = sample(S);
-        }
-        return ancestral_characters;
-    }
-
-
-    Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                        const EVector& transition_Ps,
-                                                        const EVector& sequence,
-                                                        const Likelihood_Cache_Branch& cache,
-                                                        const alphabet& a,
-                                                        const EVector& smap,
-                                                        const EVector& compressed_col_for_col)
-    {
-        // 1. Construct a scratch matrix and check that dimensions match inputs
-        const int n_models  = transition_Ps.size();
-        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
-        Matrix S(n_models, n_states);
-
-        // 2. Walk the alignment and sample (model,letter) for leaf sequence
-        auto index_for_column = get_index_for_column(cache.bits);
-
-        int L = compressed_col_for_col.size();
-        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
-        for(int c = 0; c < L; c++)
-        {
-            int c2 = compressed_col_for_col[c].as_int();
-
-            if (auto index = index_for_column[c2])
-            {
-                int letter = sequence[*index].as_int();
-
-                calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
-
-                calc_leaf_likelihood(S, letter, a, smap);
-
-                ancestral_characters[c] = sample(S);
-            }
-        }
-        return ancestral_characters;
-    }
 }
