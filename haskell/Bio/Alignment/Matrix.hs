@@ -142,6 +142,7 @@ minimally_connect_characters leaf_sequences tree all_sequences =
         where node_masks = getConnectedStates leaf_sequences tree
               nodes = tree & getNodesSet
 
+{- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 minimally_connect_characters' :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap (EVector Int)
 minimally_connect_characters' leafSequences tree = minimally_connect_characters leafSequences tree all_sequences
     where missingSequence = list_to_vector $ replicate alignmentLength (-2) -- (-2) is N/X
