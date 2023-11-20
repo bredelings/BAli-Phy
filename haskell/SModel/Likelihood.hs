@@ -57,12 +57,6 @@ peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vec
 foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleSequenceSEV :: VectorPairIntInt -> EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
 
-foreign import bpcall "Likelihood:" sample_internal_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> EVector Int -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sample_deg2_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> EVector Int -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> CondLikes -> Alphabet -> EVector Int -> EVector Int -> VectorPairIntInt
-
-
-
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
                                                                            inEdges = edgesBeforeEdgeSet t b

@@ -240,13 +240,6 @@ extern "C" closure builtin_function_peelBranchSEV(OperationArgs& Args)
 }
 
 namespace substitution {
-    Vector<pair<int,int>> sample_root_sequence(const Likelihood_Cache_Branch& cache0,
-                                               const Likelihood_Cache_Branch& cache1,
-                                               const Likelihood_Cache_Branch& cache2,
-                                               const pairwise_alignment_t& A0,
-                                               const pairwise_alignment_t& A1,
-                                               const pairwise_alignment_t& A2,
-                                               const Matrix& F);
 
     Vector<pair<int,int>> sample_root_sequence(const EVector& sequences,
 					       const alphabet& a,
@@ -261,11 +254,6 @@ namespace substitution {
 						   const EVector& LCB,
 						   const Matrix& F,
 						   const EVector& compressed_col_for_col);
-
-    Vector<pair<int,int>> sample_root_deg2_sequence_SEV(const Likelihood_Cache_Branch& cache1,
-                                                        const Likelihood_Cache_Branch& cache2,
-                                                        const Matrix& F,
-                                                        const EVector& compressed_col_for_col);
 
     Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
@@ -295,32 +283,6 @@ namespace substitution {
                                                     const Matrix& F);
 
 
-
-    Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache0,
-                                                   const Likelihood_Cache_Branch& cache1,
-                                                   const Likelihood_Cache_Branch& cache2,
-                                                   const Matrix& F,
-                                                   const EVector& compressed_col_for_col);
-
-    Vector<pair<int,int>> sample_internal_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                            const EVector& transition_Ps,
-                                                            const Likelihood_Cache_Branch& cache1,
-                                                            const Likelihood_Cache_Branch& cache2,
-                                                            const EVector& compressed_col_for_col);
-
-    Vector<pair<int,int>> sample_deg2_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                        const EVector& transition_Ps,
-                                                        const Likelihood_Cache_Branch& cache,
-                                                        const EVector& compressed_col_for_col);
-
-    Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-                                                        const EVector& transition_Ps,
-                                                        const EVector& sequence,
-                                                        const Likelihood_Cache_Branch& cache1,  // just for the mask
-                                                        const alphabet& a,
-                                                        const EVector& smap1,
-                                                        const EVector& compressed_col_for_col);
-
     Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
 					      const EVector& sequences,
 					      const alphabet& a,
@@ -328,14 +290,6 @@ namespace substitution {
 					      const EVector& transition_Ps,
 					      const EVector& LCB,
 					      const EVector& compressed_col_for_col);
-
-    log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
-				       const Likelihood_Cache_Branch& LCB2,
-				       const Likelihood_Cache_Branch& LCB3,
-				       const pairwise_alignment_t& A1,
-				       const pairwise_alignment_t& A2,
-				       const pairwise_alignment_t& A3,
-				       const Matrix& F);
 
     log_double_t calc_root_prob(const EVector& sequences,
 				const alphabet& a,
@@ -350,17 +304,6 @@ namespace substitution {
 				    const EVector& LCB,
 				    const Matrix& F,
 				    const EVector& counts);
-
-    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-					   const Likelihood_Cache_Branch& LCB2,
-					   const Likelihood_Cache_Branch& LCB3,
-					   const Matrix& F,
-					   const EVector& counts);
-
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                                const Likelihood_Cache_Branch& LCB2,
-                                                const Matrix& F,
-                                                const EVector& counts);
 }
 
 
@@ -419,45 +362,6 @@ extern "C" closure builtin_function_calcRootProbSEV(OperationArgs& Args)
     return {Pr};
 }
 
-extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
-
-    log_double_t Pr = substitution::calc_root_probability(arg0.as_<Likelihood_Cache_Branch>(),
-							  arg1.as_<Likelihood_Cache_Branch>(),
-							  arg2.as_<Likelihood_Cache_Branch>(),
-							  arg3.as_<Box<pairwise_alignment_t>>(),
-							  arg4.as_<Box<pairwise_alignment_t>>(),
-							  arg5.as_<Box<pairwise_alignment_t>>(),
-							  arg6.as_<Box<Matrix>>());
-    return {Pr};
-}
-
-extern "C" closure builtin_function_sample_root_sequence(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
-
-    return substitution::sample_root_sequence(arg0.as_<Likelihood_Cache_Branch>(),
-                                              arg1.as_<Likelihood_Cache_Branch>(),
-                                              arg2.as_<Likelihood_Cache_Branch>(),
-                                              arg3.as_<Box<pairwise_alignment_t>>(),
-                                              arg4.as_<Box<pairwise_alignment_t>>(),
-                                              arg5.as_<Box<pairwise_alignment_t>>(),
-                                              arg6.as_<Box<Matrix>>());
-}
-
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -492,27 +396,6 @@ extern "C" closure builtin_function_sampleRootSequenceSEV(OperationArgs& Args)
                                                   arg5.as_<EVector>());
 }
 
-extern "C" closure builtin_function_sample_internal_sequence(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
-    auto arg7 = Args.evaluate(7);
-
-    return substitution::sample_internal_node_sequence(arg0.as_<Vector<pair<int,int>>>(),
-                                                       arg1.as_<EVector>(),
-                                                       arg2.as_<Likelihood_Cache_Branch>(),
-                                                       arg3.as_<Likelihood_Cache_Branch>(),
-                                                       arg4.as_<Box<pairwise_alignment_t>>(),
-                                                       arg5.as_<Box<pairwise_alignment_t>>(),
-                                                       arg6.as_<Box<pairwise_alignment_t>>(),
-                                                       arg7.as_<Box<Matrix>>());
-}
-
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -534,102 +417,6 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 						arg6.as_<EVector>(),                   // A
 						arg7.as_<EVector>(),                   // transition_P
 						arg8.as_<Box<Matrix>>());              // F
-}
-
-extern "C" closure builtin_function_sample_internal_sequence_SEV(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-
-    return substitution::sample_internal_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
-                                                           arg1.as_<EVector>(),
-                                                           arg2.as_<Likelihood_Cache_Branch>(),
-                                                           arg3.as_<Likelihood_Cache_Branch>(),
-                                                           arg4.as_<EVector>());
-}
-
-extern "C" closure builtin_function_sample_deg2_sequence_SEV(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-
-    return substitution::sample_deg2_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
-                                                       arg1.as_<EVector>(),
-                                                       arg2.as_<Likelihood_Cache_Branch>(),
-                                                       arg3.as_<EVector>());
-}
-
-extern "C" closure builtin_function_sample_leaf_sequence(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
-
-    return substitution::sample_leaf_node_sequence(arg0.as_<Vector<pair<int,int>>>(),
-                                                   arg1.as_<EVector>(),
-                                                   arg2.as_<EVector>(),
-                                                   *arg3.as_<Alphabet>(),
-                                                   arg4.as_<EVector>(),
-                                                   arg5.as_<Box<pairwise_alignment_t>>(),
-                                                   arg6.as_<Box<Matrix>>());
-}
-
-extern "C" closure builtin_function_sample_leaf_sequence_SEV(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
-
-    return substitution::sample_leaf_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
-                                                       arg1.as_<EVector>(),
-                                                       arg2.as_<EVector>(),
-                                                       arg3.as_<Likelihood_Cache_Branch>(),
-                                                       *arg4.as_<Alphabet>(),
-                                                       arg5.as_<EVector>(),
-                                                       arg6.as_<EVector>());
-}
-
-extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-
-    log_double_t Pr = substitution::calc_root_probability_SEV(arg0.as_<Likelihood_Cache_Branch>(),
-							      arg1.as_<Likelihood_Cache_Branch>(),
-							      arg2.as_<Likelihood_Cache_Branch>(),
-							      arg3.as_<Box<Matrix>>(),
-							      arg4.as_<EVector>());
-    return {Pr};
-}
-
-extern "C" closure builtin_function_calc_root_deg2_probability_SEV(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-
-    log_double_t Pr = substitution::calc_root_deg2_probability_SEV(arg0.as_<Likelihood_Cache_Branch>(),
-                                                                   arg1.as_<Likelihood_Cache_Branch>(),
-                                                                   arg2.as_<Box<Matrix>>(),
-                                                                   arg3.as_<EVector>());
-    return {Pr};
 }
 
 inline double letter_class_frequency(int l, const alphabet& a, const vector<double>& f)
