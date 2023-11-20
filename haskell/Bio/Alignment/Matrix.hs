@@ -4,6 +4,7 @@ import Bio.Sequence
 import Bio.Alphabet
 import Data.BitVector
 import Data.Text (Text)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as Text
 
 import Tree
@@ -137,16 +138,21 @@ getConnectedStates sequences tree =
                                                             ms -> foldr1 (.|.) [m1 .&. m2 | (m1,m2) <- pairs ms]
      in node_masks
 
-minimally_connect_characters leaf_sequences tree all_sequences =
-    nodes & IntMap.fromSet (\n -> maskSequence (node_masks IntMap.! n) (all_sequences IntMap.! n))
-        where node_masks = getConnectedStates leaf_sequences tree
-              nodes = tree & getNodesSet
+minimally_connect_characters leaf_sequences tree all_sequences = nodes & IntMap.fromSet sequenceForNode
+    where sequenceForNode n = maskSequence (node_masks IntMap.! n) (all_sequences IntMap.! n)
+          node_masks = getConnectedStates leaf_sequences tree
+          nodes = tree & getNodesSet
+
+allSameAs x xs = and ((x==) <$> xs)
+
+allSame []                       = error "allSame: nothing to compare!"
+allSame (x:xs) | allSameAs x xs  = Just x
+               | otherwise       = Nothing
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
-minimally_connect_characters' :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap (EVector Int)
-minimally_connect_characters' leafSequences tree = minimally_connect_characters leafSequences tree all_sequences
-    where missingSequence = list_to_vector $ replicate alignmentLength (-2) -- (-2) is N/X
-          alignmentLength = vector_size $ head $ catMaybes $ IntMap.elems leafSequences
-          getS (Just sequence) = sequence
-          getS Nothing         = missingSequence
-          all_sequences = fmap getS leafSequences
+addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
+    where missingSequence = list_to_vector $ replicate alignmentLength missingCharIndex
+          alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
+          msg = "minimally_connect_characters': not all observed sequences are the same length!"
+          observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
+
