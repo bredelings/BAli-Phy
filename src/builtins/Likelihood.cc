@@ -321,6 +321,14 @@ namespace substitution {
                                                         const EVector& smap1,
                                                         const EVector& compressed_col_for_col);
 
+    Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+					      const EVector& sequences,
+					      const alphabet& a,
+					      const EVector& smap,
+					      const EVector& transition_Ps,
+					      const EVector& LCB,
+					      const EVector& compressed_col_for_col);
+
     log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
 				       const Likelihood_Cache_Branch& LCB2,
 				       const Likelihood_Cache_Branch& LCB3,
@@ -372,6 +380,25 @@ extern "C" closure builtin_function_calcRootProb(OperationArgs& Args)
 						   arg4.as_<EVector>(),       // A
 						   arg5.as_<Box<Matrix>>());  // F
     return {Pr};
+}
+
+extern "C" closure builtin_function_sampleSequenceSEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
+
+    return substitution::sample_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(), // parent_seq,
+					     arg1.as_<EVector>(),               // sequences
+					     *arg2.as_<Alphabet>(),             // a
+					     arg3.as_<EVector>(),               // smap
+					     arg4.as_<EVector>(),               // transition_ps
+					     arg5.as_<EVector>(),               // LCB
+					     arg6.as_<EVector>());              // compressed_col_for_col
 }
 
 extern "C" closure builtin_function_calcRootProbSEV(OperationArgs& Args)
