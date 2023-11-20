@@ -19,13 +19,6 @@ import qualified Data.IntSet as IntSet
 data CondLikes
 
 -- peeling for connected-CLVs
-foreign import bpcall "Likelihood:" peel_leaf_branch :: EVector Int -> Alphabet -> EVector (Matrix Double) -> EVector Int -> CondLikes
-foreign import bpcall "Likelihood:" alignment_index2 :: PairwiseAlignment -> PairwiseAlignment -> Matrix Int
-foreign import bpcall "Likelihood:" alignment_index3 :: PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Int
-foreign import bpcall "Likelihood:" peel_internal_branch :: CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
-foreign import bpcall "Likelihood:" calc_root_probability :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_2 :: EVector Int -> EVector Int -> Alphabet -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:" calcRootProb :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:peelBranch" builtinPeelBranch :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 
@@ -36,18 +29,7 @@ peelBranch sequences alphabet smap cls as ps f = builtinPeelBranch (list_to_vect
 foreign import bpcall "Likelihood:" sampleRootSequence :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
-foreign import bpcall "Likelihood:" sample_root_sequence :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sample_internal_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-
 -- peeling for SEV
-foreign import bpcall "Likelihood:" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
-foreign import bpcall "Likelihood:" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "Likelihood:" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "Likelihood:" calc_root_probability_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" calc_root_deg2_probability_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_2_SEV :: (EVector Int) -> (EVector Int) -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" peel_likelihood_1_SEV :: (EVector Int) -> Alphabet -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector (EPair (EVector Int) CBitVector)-> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "Likelihood:peelBranchSEV" builtinPeelBranchSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 
