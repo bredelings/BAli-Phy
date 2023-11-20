@@ -56,8 +56,6 @@ peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vec
 -- ancestral sequence sampling for SEV
 foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 
-foreign import bpcall "Likelihood:" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sample_root_deg2_sequence_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_internal_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_deg2_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sample_leaf_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> CondLikes -> Alphabet -> EVector Int -> EVector Int -> VectorPairIntInt
@@ -140,15 +138,13 @@ sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compres
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
         ancestor_for_branch n Nothing = let sequences = [] -- maybeToList $ c_pair' <$> seqsBits IntMap.! n
                                             inEdges = edgesTowardNodeSet t n
-                                        in case edgesTowardNode t n of
---                                             [b0,b1,b2] -> sample_root_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2) f col_to_compressed
-                                             [b0,b1,b2] -> sampleRootSequenceSEV (list_to_vector sequences)
-                                                                                 alpha
-                                                                                 smap
-                                                                                 (list_to_vector [cl IntMap.! b0, cl IntMap.! b1, cl IntMap.! b2])
-                                                                                 f
-                                                                                 col_to_compressed
-                                             [b0,b1] -> sample_root_deg2_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) f col_to_compressed
+                                            clsIn = IntMap.restrictKeysToVector cl inEdges
+                                        in sampleRootSequenceSEV (list_to_vector sequences)
+                                                                 alpha
+                                                                 smap
+                                                                 clsIn
+                                                                 f
+                                                                 col_to_compressed
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs IntMap.! p
                                                 b0 = reverseEdge to_p
