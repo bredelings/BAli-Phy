@@ -2608,7 +2608,12 @@ namespace substitution {
             if (s_node == L)
             {
 		for(int j=0;j<n_branches_in;j++)
+		{
 		    assert(i[j] == AL[j]);
+		    assert(s[j] == A[j].as_<Box<pairwise_alignment_t>>().length1());
+		}
+		assert(i_parent == parent_A.size());
+		assert(s_parent == parent_A.length1());
                 break;
             }
 	    else
@@ -2616,13 +2621,19 @@ namespace substitution {
 		for(int j=0;j<n_branches_in;j++)
 		{
 		    assert(i[j] < AL[j]);
+		    assert(s[j] <= A[j].as_<Box<pairwise_alignment_t>>().length1());
 		    assert(A[j].as_<Box<pairwise_alignment_t>>().has_character2(i[j]));
 		}
+		assert(i_parent < parent_A.size());
 	    }
 
 	    pair<int,int> state_model_parent(-1,-1);
 	    if (i_parent < parent_A.size() and parent_A.has_character1(i_parent))
+	    {
 		state_model_parent = parent_seq[s_parent];
+		s_parent++;
+	    }
+	    i_parent++;
 	    calc_transition_prob_from_parent(SMAT, state_model_parent, transition_P, F);
 
 	    for(int j=0;j<n_branches_in;j++)
