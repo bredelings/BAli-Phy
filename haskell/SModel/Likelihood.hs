@@ -133,12 +133,21 @@ peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTow
                                                               clsIn = IntMap.restrictKeysToVector cls inEdges
                                                           in calcRootProbSEV (list_to_vector sequences) alpha smap clsIn f counts
 
-sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
+sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compressed =
     let rt = add_root root t
+        seqs = fst <$> seqsBits
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = case edgesTowardNode t n of
-                                             [b0,b1,b2] -> sample_root_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2) f col_to_compressed
+        ancestor_for_branch n Nothing = let sequences = [] -- maybeToList $ c_pair' <$> seqsBits IntMap.! n
+                                            inEdges = edgesTowardNodeSet t n
+                                        in case edgesTowardNode t n of
+--                                             [b0,b1,b2] -> sample_root_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) (cl IntMap.! b2) f col_to_compressed
+                                             [b0,b1,b2] -> sampleRootSequenceSEV (list_to_vector sequences)
+                                                                                 alpha
+                                                                                 smap
+                                                                                 (list_to_vector [cl IntMap.! b0, cl IntMap.! b1, cl IntMap.! b2])
+                                                                                 f
+                                                                                 col_to_compressed
                                              [b0,b1] -> sample_root_deg2_sequence_SEV (cl IntMap.! b0) (cl IntMap.! b1) f col_to_compressed
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs IntMap.! p
