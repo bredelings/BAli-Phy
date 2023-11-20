@@ -52,3 +52,7 @@ sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s
 
 class HasAlphabet x where
     getAlphabet :: x -> Alphabet
+
+gapCharIndex = -1 :: Int
+
+missingCharIndex = -2 :: Int
