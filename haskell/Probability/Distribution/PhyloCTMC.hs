@@ -72,9 +72,6 @@ For sampling from phyloCTMCFixedA, we might want two versions:
    PROBLEM: what about ambiguous characters?
 -}
 
-transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
-    edges = getEdgesSet $ get_tree' smodel_on_tree
-
 annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 

@@ -3,6 +3,7 @@ module SModel.Simple where
 import Foreign.Vector
 import Bio.Alphabet
 import Tree
+import qualified Data.IntMap as IntMap (fromSet)
 
 data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
 get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
@@ -32,3 +33,7 @@ class HasAlphabet m => SimpleSModel m where
     componentFrequencies :: m -> Int -> EVector Double
 
 nStates m = vector_size (stateLetters m)
+
+transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
+    edges = getEdgesSet $ get_tree' smodel_on_tree
+
