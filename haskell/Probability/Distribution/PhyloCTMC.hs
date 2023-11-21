@@ -29,7 +29,7 @@ import Probability.Distribution.List -- for independent
 -- 4 - likelihood
 -- 5 - weightedfrequencymatrix
 -- 6 - state -> letter
--- 7 - sequences as EVector Int
+-- 7 - sequences as EVector Int  -- only to get CLVs for single node when aligning 2 sequences.
 -- 8 - alphabet
 -- 9 - n_states
 -- 10 - n_base_models
@@ -183,10 +183,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
       maybeNodeISequences = labelToNodeMap tree isequences
-      node_isequences = fromMaybe (error "No label") <$> maybeNodeISequences
-      node_seqs_bits = (\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$> node_isequences
       maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
-      node_sequences = fst <$> node_seqs_bits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
       node_sequences0 = labelToNodeMap tree $ getSequences sequenceData
@@ -235,7 +232,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
