@@ -45,8 +45,8 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVsSEV alphabet smap nModels maybeNodeSeqsBits
 
-      node_sequences0 :: IntMap (Maybe (EVector Int))
-      node_sequences0 = labelToNodeMap tree $ getSequences sequenceData
+      uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
+      uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
 
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
@@ -54,35 +54,29 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
-      cls = cached_conditional_likelihoods_SEV
-              tree
-              nodeCLVs
-              transition_ps
+      cls = cached_conditional_likelihoods_SEV tree nodeCLVs transition_ps
       likelihood = peel_likelihood_SEV nodeCLVs tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
-      ancestralSequences = case n_nodes of
-                              1 -> sequenceData
-                              2 -> sequenceData
-                              _ -> let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-                                       ancestralComponentStateSequences = sample_ancestral_sequences_SEV
-                                         tree
-                                         subst_root
-                                         nodeCLVs
-                                         alphabet
-                                         transition_ps
-                                         f
-                                         cls
-                                         smap
-                                         mapping
-                                       ancestralStateSequences :: IntMap (EVector Int)
-                                       ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
-                                       ancestralStateSequences' = minimally_connect_characters
-                                                                        node_sequences0
-                                                                        tree
-                                                                        ancestralStateSequences
-                                       ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-                                   in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+      ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
+                               ancestralComponentStateSequences = sample_ancestral_sequences_SEV
+                                                                     tree
+                                                                     subst_root
+                                                                     nodeCLVs
+                                                                     alphabet
+                                                                     transition_ps
+                                                                     f
+                                                                     cls
+                                                                     smap
+                                                                     mapping
+                               ancestralStateSequences :: IntMap (EVector Int)
+                               ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
+                               ancestralStateSequences' = minimally_connect_characters
+                                                                     uncompressedNodeSequences
+                                                                     tree
+                                                                     ancestralStateSequences
+                               ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
+                           in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 
       n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
 
