@@ -1032,26 +1032,26 @@ namespace substitution {
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
 
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+	EVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
 
-	int n_branches_in = LCB.size();
-	int n_sequences = LCN.size();
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
-	assert(not LCN.empty() or not LCB.empty());
-        int L = (LCN.empty()) ? cache(0).bits.size() : node_cache(0).bits.size();
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
+        int L = cache(0).bits.size();
 
 
 #ifndef NDEBUG
 	assert(L > 0);
-        for(int i=0;i<n_sequences;i++)
-        {
-            assert(node_cache(i).bits.size() == L);
-	    assert(n_models == node_cache(i).n_models());
-	    assert(n_states == node_cache(i).n_states());
-        }
 
-        for(int i=0;i<n_branches_in;i++)
+        for(int i=0;i<n_clvs;i++)
         {
             assert(cache(i).bits.size() == L);
 	    assert(n_models == cache(i).n_models());
@@ -1066,16 +1066,12 @@ namespace substitution {
 
 	boost::dynamic_bitset<> bits_out;
 	bits_out.resize(L);
-        for(int i=0;i<n_sequences;i++)
-            bits_out |= node_cache(i).bits;
-        for(int i=0;i<n_branches_in;i++)
+        for(int i=0;i<n_clvs;i++)
             bits_out |= cache(i).bits;
 
-        // index into sequences
-        vector<int> i(n_sequences, 0);
-        // index into LCBs
-        vector<int> s(n_branches_in, 0);
-        // index into LCB_OUT
+        // index into LCs
+        vector<int> s(n_clvs, 0);
+
         int scale = 0;
 
         log_prod total;
@@ -1089,21 +1085,19 @@ namespace substitution {
 
             // Handle branches in
 	    int j=0;
-            for(;j<n_branches_in and mi < mi_max;j++)
+            for(;j<n_clvs and mi < mi_max;j++)
             {
-                if (cache(j).bits.test(c))
+		auto& lcb = cache(j);
+                if (lcb.bits.test(c))
                 {
-                    auto& lcb = cache(j);
-
 		    m[mi++] = lcb[s[j]];
-                    // element_prod_assign(S, lcb[s[j]], matrix_size);
                     scale += lcb.scale(s[j]);
                     s[j]++;
                 }
             }
 
 	    double p_col = 1;
-	    if (n_sequences == 0 and j == n_branches_in)
+	    if (j == n_clvs)
 	    {
 		if (mi==3)
 		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
@@ -1125,7 +1119,7 @@ namespace substitution {
 		else
 		    element_assign(S, F.begin(), matrix_size);
 
-		for(;j<n_branches_in;j++)
+		for(;j<n_clvs;j++)
 		{
 		    auto& lcb = cache(j);
 		    if (lcb.bits.test(c))
@@ -1133,21 +1127,6 @@ namespace substitution {
 			element_prod_assign(S, lcb[s[j]], matrix_size);
 			scale += lcb.scale(s[j]);
 			s[j]++;
-		    }
-		}
-		// TODO: Should we just precalculate the LCB at leaf nodes?
-		//       We're doing it here and propagating in separate steps already,
-		//         which is slower, but simpler.
-
-		// Handle observed sequences at the node.
-		for(int j=0;j<n_sequences;j++)
-		{
-		    auto& lcn = node_cache(j);
-		    if (lcn.bits.test(c))
-		    {
-			element_prod_assign(S, lcn[i[j]], matrix_size);
-			scale += lcn.scale(i[j]);
-			i[j]++;
 		    }
 		}
 
