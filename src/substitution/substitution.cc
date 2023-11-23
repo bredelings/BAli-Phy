@@ -871,7 +871,6 @@ namespace substitution {
 
         int L = cache(0).bits.size();
 
-
 #ifndef NDEBUG
 	assert(L > 0);
 
@@ -1055,8 +1054,6 @@ namespace substitution {
                 element_assign(R, matrix_size, 1);
         }
 
-        LCB->other_subst = 1;
-
         return LCB;
     }
 
@@ -1116,8 +1113,6 @@ namespace substitution {
             else
                 element_assign(R, matrix_size, 1);
         }
-
-        LCB->other_subst = 1;
 
         return LCB;
     }
@@ -1194,8 +1189,6 @@ namespace substitution {
                 element_assign(R, matrix_size, 1);
         }
 
-        LCB->other_subst = 1;
-
         return LCB;
     }
 
@@ -1253,7 +1246,6 @@ namespace substitution {
                 element_assign(R, matrix_size, 1);
         }
 
-        LCB->other_subst = 1;
 
         return LCB;
     }
