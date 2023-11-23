@@ -34,7 +34,7 @@ foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector CondLikes -> EVec
 foreign import bpcall "Likelihood:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
+foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleSequenceSEV :: VectorPairIntInt -> EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
 
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoodsSEV :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
@@ -113,16 +113,14 @@ peel_likelihood_SEV nodeCLVs t cls f alpha smap root counts = let inEdges = edge
                                                                   clsIn = IntMap.restrictKeysToVector cls inEdges
                                                               in calcRootProbSEV nodeCLs clsIn f counts
 
-sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compressed =
+sample_ancestral_sequences_SEV t root nodeCLVs seqsBits alpha ps f cl smap col_to_compressed =
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = let sequences = maybeToList $ c_pair' <$> seqsBits IntMap.! n
+        ancestor_for_branch n Nothing = let nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! n
                                             inEdges = edgesTowardNodeSet t n
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
-                                        in sampleRootSequenceSEV (list_to_vector sequences)
-                                                                 alpha
-                                                                 smap
+                                        in sampleRootSequenceSEV nodeCLs
                                                                  clsIn
                                                                  f
                                                                  col_to_compressed

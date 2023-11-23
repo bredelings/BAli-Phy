@@ -156,9 +156,7 @@ namespace substitution {
 					       const EVector& A,
                                                const Matrix& F);
 
-    Vector<pair<int,int>> sample_root_sequence_SEV(const EVector& sequences,
-						   const alphabet& a,
-						   const EVector& smap,
+    Vector<pair<int,int>> sample_root_sequence_SEV(const EVector& LCN,
 						   const EVector& LCB,
 						   const Matrix& F,
 						   const EVector& compressed_col_for_col);
@@ -280,15 +278,11 @@ extern "C" closure builtin_function_sampleRootSequenceSEV(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
 
-    return substitution::sample_root_sequence_SEV(arg0.as_<EVector>(),
-                                                  *arg1.as_<Alphabet>(),
-                                                  arg2.as_<EVector>(),
-                                                  arg3.as_<EVector>(),
-                                                  arg4.as_<Box<Matrix>>(),
-                                                  arg5.as_<EVector>());
+    return substitution::sample_root_sequence_SEV(arg0.as_<EVector>(),      // LCN
+                                                  arg1.as_<EVector>(),      // LCB
+                                                  arg2.as_<Box<Matrix>>(),  // F
+                                                  arg3.as_<EVector>());     // compressed_col_for_col
 }
 
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
