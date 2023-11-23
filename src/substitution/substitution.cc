@@ -1846,50 +1846,50 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& sequences,
-                    const alphabet& a,
-                    const EVector& smap,
+    peel_branch_SEV(const EVector& LCN,
                     const EVector& LCB,
                     const EVector& transition_P)
     {
         total_peel_internal_branches++;
 
-	if (sequences.empty() and LCB.size() == 2)
+	  if (LCN.empty() and LCB.size() == 2)
 	    return peel_internal_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					    LCB[1].as_<Likelihood_Cache_Branch>(),
 					    transition_P);
-	else if (sequences.empty() and LCB.size() == 1)
+	else if (LCN.empty() and LCB.size() == 1)
 	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
-	else if (sequences.size() == 1 and LCB.empty())
+	else if (LCN.size() == 1 and LCB.empty())
+	    ;
+	/*
 	    return peel_leaf_branch_SEV(sequences[0].as_<EPair>().first.as_<EVector>(),
 					a,
 					transition_P,
 					sequences[0].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(),
 					smap);
+	*/
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
-        auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+	EVector LC;
+	LC.reserve(LCB.size() + LCN.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
 
-        int n_branches_in = LCB.size();
-        assert(not sequences.empty() or not LCB.empty());
-        int L = (sequences.empty()) ? cache(0).bits.size() : mask(0).size();
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
-        int n_sequences = sequences.size();
+        int n_clvs = LC.size();
+        assert(not LC.empty());
+        int L = cache(0).bits.size();
 
 #ifndef NDEBUG
         assert(L > 0);
-        for(int i=0;i<n_sequences;i++)
-        {
-            assert(mask(i).size() == L);
-        }
 
-        for(int i=0;i<n_branches_in;i++)
+        for(int i=0;i<n_clvs;i++)
         {
             assert(cache(i).bits.size() == L);
 	    assert(n_models == cache(i).n_models());
@@ -1898,23 +1898,19 @@ namespace substitution {
 #endif
 
         // Do this before accessing matrices or other_subst
-        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB_OUT->bits.resize(L);
-        for(int i=0;i<n_sequences;i++)
-            LCB_OUT->bits |= mask(i);
-        for(int i=0;i<n_branches_in;i++)
-            LCB_OUT->bits |= cache(i).bits;
-
+	boost::dynamic_bitset<> bits;
+	bits.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits |= cache(i).bits;
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch( std::move(bits), n_models, n_states));
         const auto& bits_out = LCB_OUT->bits;
         assert(bits_out.size() == L);
 
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        // index into sequences
-        vector<int> i(n_sequences, 0);
         // index into LCBs
-        vector<int> s(n_branches_in, 0);
+        vector<int> s(n_clvs, 0);
         // index into LCB_OUT
         int s_out = 0;
 
@@ -1928,7 +1924,7 @@ namespace substitution {
                 S[k] = 1.0;
 
             // Handle branches in
-            for(int j=0;j<n_branches_in;j++)
+            for(int j=0;j<n_clvs;j++)
             {
                 if (cache(j).bits.test(c))
                 {
@@ -1936,40 +1932,6 @@ namespace substitution {
                     element_prod_assign(S, lcb[s[j]], matrix_size);
                     scale += lcb.scale(s[j]);
                     s[j]++;
-                }
-            }
-
-            // TODO: Should we just precalculate the LCB at leaf nodes?
-            //       We're doing it here and propagating in separate steps already,
-            //         which is slower, but simpler.
-
-            // Handle observed sequences at the node.
-            for(int j=0;j<n_sequences;j++)
-            {
-                if (not mask(j).test(c)) continue;
-
-                int letter = sequence(j)[i[j]].as_int();
-                i[j]++;
-
-                // We need to zero out the inconsistent characters.
-                // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-                if (letter >= 0)
-                {
-                    auto& ok = a.letter_mask(letter);
-                    for(int m=0;m<n_models;m++)
-                    {
-                        for(int s1=0;s1<n_states;s1++)
-                        {
-                            int l = smap[s1].as_int();
-                            if (not ok[l])
-                            {
-                                // Pr *= Pr(observation | state )
-                                // Currently we are doing Pr *= Pr(observation | letter(state))
-                                // So maybe I should make a Pr(observation | state) matrix.
-                                S[m*n_states + s1] = 0;
-                            }
-                        }
-                    }
                 }
             }
 

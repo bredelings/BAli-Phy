@@ -79,11 +79,9 @@ namespace substitution
 {
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& sequences,
-		    const alphabet& a,
-		    const EVector& smap,
-		    const EVector& LCB,
-		    const EVector& transition_P);
+    peel_branch_SEV(const EVector& LCN,
+                    const EVector& LCB,
+                    const EVector& transition_P);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch(const EVector& sequences,
@@ -143,14 +141,10 @@ extern "C" closure builtin_function_peelBranchSEV(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_branch_SEV(arg0.as_<EVector>(),        // sequences
-					 *arg1.as_<Alphabet>(),      // alphabet
-					 arg2.as_<EVector>(),        // smap
-					 arg3.as_<EVector>(),        // LCB
-					 arg4.as_<EVector>());       // transition_P
+    return substitution::peel_branch_SEV(arg0.as_<EVector>(),        // LCN
+					 arg1.as_<EVector>(),        // LCB
+					 arg2.as_<EVector>());       // transition_P
 }
 
 namespace substitution {

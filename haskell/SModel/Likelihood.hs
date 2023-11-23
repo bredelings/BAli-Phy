@@ -31,9 +31,7 @@ foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> 
 
 -- peeling for SEV
 foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:peelBranchSEV" builtinPeelBranchSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-
-peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vector sequences) alphabet smap cls ps
+foreign import bpcall "Likelihood:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
@@ -94,23 +92,26 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                             in sampleBranchSequence parent_seq a0 (list_to_vector sequences) alpha smap clsIn asIn ps_for_b0 f
     in ancestor_seqs
 
-cached_conditional_likelihoods_SEV t seqs alpha ps smap =
+-- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
+simpleNodeCLVsSEV :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int, CBitVector)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVsSEV alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
+    where sequenceToCL = simpleSequenceLikelihoodsSEV alpha smap nModels . c_pair'
+
+cached_conditional_likelihoods_SEV t nodeCLVs ps =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
         lcf b = let p = ps IntMap.! b
                     inEdges = edgesBeforeEdgeSet t b
                     clsIn = IntMap.restrictKeysToVector lc inEdges
-                    -- FIXME!  How to determine if the node has any data?
                     node = sourceNode t b
-                    sequences = maybeToList $ c_pair' <$> seqs IntMap.! node
-                in peelBranchSEV sequences alpha smap clsIn p
+                    nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
+                in peelBranchSEV nodeCLs clsIn p
     in lc
 
-peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
-                                                              nModels = nrows f
-                                                              sequenceToCL = simpleSequenceLikelihoodsSEV alpha smap nModels . c_pair'
-                                                              nodeCLs = maybeToList $ sequenceToCL <$> seqs IntMap.! root
-                                                              clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                          in calcRootProbSEV (list_to_vector nodeCLs) clsIn f counts
+peel_likelihood_SEV nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
+                                                                  nModels = nrows f
+                                                                  nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                                  clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                              in calcRootProbSEV nodeCLs clsIn f counts
 
 sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compressed =
     let rt = add_root root t

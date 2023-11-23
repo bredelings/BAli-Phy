@@ -42,6 +42,8 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
 
       maybeNodeISequences = labelToNodeMap tree isequences
       maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+      nModels = nrows f
+      nodeCLVs = simpleNodeCLVsSEV alphabet smap nModels maybeNodeSeqsBits
 
       node_sequences0 :: IntMap (Maybe (EVector Int))
       node_sequences0 = labelToNodeMap tree $ getSequences sequenceData
@@ -54,11 +56,9 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
               tree
-              maybeNodeSeqsBits
-              alphabet
+              nodeCLVs
               transition_ps
-              smap
-      likelihood = peel_likelihood_SEV maybeNodeSeqsBits tree cls f alphabet smap subst_root column_counts
+      likelihood = peel_likelihood_SEV nodeCLVs tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = case n_nodes of
