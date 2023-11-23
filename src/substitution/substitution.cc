@@ -1759,15 +1759,9 @@ namespace substitution {
 	else if (LCN.empty() and LCB.size() == 1)
 	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
-	else if (LCN.size() == 1 and LCB.empty())
-	    ;
-	/*
-	    return peel_leaf_branch_SEV(sequences[0].as_<EPair>().first.as_<EVector>(),
-					a,
-					transition_P,
-					sequences[0].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(),
-					smap);
-	*/
+	else if (LCN.size() == 1 and LCB.empty() and false)
+	    return peel_leaf_branch_SEV(LCN[0].as_<Likelihood_Cache_Branch>(),
+					transition_P);
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
