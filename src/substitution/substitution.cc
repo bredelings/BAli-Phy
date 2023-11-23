@@ -802,7 +802,7 @@ namespace substitution {
 	int n_states = smap.size();
 	int matrix_size = n_models * n_states;
 
-	int L = sequence.size();
+	int L = mask.size();
 
 	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 	LCB->bits.resize(mask.size());
