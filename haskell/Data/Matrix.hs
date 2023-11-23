@@ -10,6 +10,8 @@ foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) ->
 
 fromLists xss = fromVectors $ list_to_vector $ map list_to_vector xss
 
+foreign import bpcall "Matrix:" nrows :: Matrix a -> Int
+foreign import bpcall "Matrix:" ncols :: Matrix a -> Int
 foreign import bpcall "Matrix:transpose" tr :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" scaleMatrix :: a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double

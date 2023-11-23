@@ -26,6 +26,28 @@ using std::abs;
 using Alphabet = PtrBox<alphabet>;
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_nrows(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Matrix& m = arg0.as_<Box<Matrix>>();
+
+    int n1 = m.size1();
+
+    return { n1 } ;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_ncols(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Matrix& m = arg0.as_<Box<Matrix>>();
+
+    int n2 = m.size2();
+
+    return { n2 } ;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
 {
     double factor = Args.evaluate(0).as_double();;
