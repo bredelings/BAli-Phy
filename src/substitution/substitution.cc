@@ -804,9 +804,7 @@ namespace substitution {
 
 	int L = mask.size();
 
-	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-	LCB->bits.resize(mask.size());
-	LCB->bits = mask;
+	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
 
 	int i=0;
         for(int c=0;c<L;c++)
@@ -1080,8 +1078,8 @@ namespace substitution {
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
 
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
-        LCB->bits = mask;
+	assert(L0 == mask.count());
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
     
         assert(n_states >= n_letters and n_states%n_letters == 0);
 
@@ -1276,8 +1274,8 @@ namespace substitution {
 
         total_peel_leaf_branches++;
 
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
-        LCB->bits = mask;
+	assert(L0 == mask.count());
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
 
         assert(n_states >= n_letters and n_states%n_letters == 0);
 
@@ -1759,8 +1757,7 @@ namespace substitution {
         assert(bits2.size() == L);
 
         // Do this before accessing matrices or other_subst
-        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB3->bits = LCB1.bits | LCB2.bits;
+        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(LCB1.bits | LCB2.bits, n_models, n_states));
         const auto& bits3 = LCB3->bits;
         assert(bits3.size() == L);
 
@@ -1826,8 +1823,7 @@ namespace substitution {
         assert(L > 0);
 
         // Do this before accessing matrices or other_subst
-        auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB2->bits = LCB1.bits;
+        auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(LCB1.bits, n_models, n_states));
 
         for(int c=0,i=0;c<L;c++)
         {
