@@ -1057,66 +1057,6 @@ namespace substitution {
         return LCB;
     }
 
-    // the SEV version differs from the non-SEV version in two respectes:
-    // * it doesn't need to propagate counts.
-    // * it needs to set LCB->bits
-    // they are otherwise identical.
-    // how could we share the code?
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_simple_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask)
-    {
-        total_peel_leaf_branches++;
-
-        int L0 = sequence.size();
-
-        const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
-        const int matrix_size = n_models * n_states;
-        const int n_letters = a.n_letters();
-
-	assert(L0 == mask.count());
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
-    
-        assert(n_states >= n_letters and n_states%n_letters == 0);
-
-        for(int i=0;i<L0;i++)
-        {
-            double* R = (*LCB)[i];
-            // compute the distribution at the parent node
-            int l2 = sequence[i].as_int();
-
-            if (a.is_letter(l2))
-                for(int m=0;m<n_models;m++) 
-                {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-                    for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = Q(s1,l2);
-                }
-            else if (a.is_letter_class(l2)) 
-            {
-                // FIXME - why is the sum(Q,l1,l2,a) function so much slower?
-                // FIXME - would this slowness affect the modulated peeling functions also?
-                const alphabet::fmask_t& fmask = a.letter_fmask(l2);
-                for(int m=0;m<n_models;m++) 
-                {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-                    for(int s1=0;s1<n_states;s1++)
-                    {
-                        double sum = 0.0;
-                        for(int s2=0;s2<n_states;s2++)
-                            sum += Q(s1,s2) * fmask[s2];
-                        R[m*n_states + s1] = sum;
-                    }
-                }
-            }
-            else
-                element_assign(R, matrix_size, 1);
-        }
-
-        return LCB;
-    }
-
     vector<double> f81_exp_a_t(const data_partition& P, int /*b0*/, double L)
     {
         const int n_models  = P.n_base_models();
@@ -1246,68 +1186,8 @@ namespace substitution {
                 element_assign(R, matrix_size, 1);
         }
 
-
         return LCB;
     }
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask, const EVector& smap)
-    {
-        // Do this before accessing matrices or other_subst
-        int L0 = sequence.size();
-
-        const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
-        const int matrix_size = n_models * n_states;
-        const int n_letters = a.n_letters();
-
-        if (n_states == n_letters and is_iota(smap))
-            return peel_leaf_branch_simple_SEV(sequence, a, transition_P, mask);
-
-        total_peel_leaf_branches++;
-
-	assert(L0 == mask.count());
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
-
-        assert(n_states >= n_letters and n_states%n_letters == 0);
-
-        for(int i=0;i<L0;i++)
-        {
-            double* R = (*LCB)[i];
-            // compute the distribution at the parent node
-            int l2 = sequence[i].as_int();
-
-            if (a.is_letter(l2))
-                for(int m=0;m<n_models;m++) {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-                    for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = sum(Q,smap,s1,l2);
-                }
-            else if (a.is_letter_class(l2)) {
-                for(int m=0;m<n_models;m++) {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-                    for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = sum(Q,smap,s1,l2,a);
-                }
-            }
-            else
-                element_assign(R, matrix_size, 1);
-        }
-
-        LCB->other_subst = 1;
-
-        return LCB;
-    }
-
-    int sum_row(const matrix<int>& index, int row)
-    {
-        int total = 0;
-        for(int i=0;i<index.size1();i++)
-            if (index(i,row) >= 0)
-                total++;
-        return total;
-    }
-        
 
     inline void propagate(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
     {
@@ -1333,6 +1213,34 @@ namespace substitution {
 	    for(int j=0; j<matrix_size; j++)
 		R[j] *= scale_factor;
 	}
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const EVector& transition_P)
+    {
+        int L0 = nodeCLV.n_columns();
+
+        const int n_models  = transition_P.size();
+        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+
+	assert(nodeCLV.n_models() == n_models);
+	assert(nodeCLV.n_states() == n_states);
+
+        total_peel_leaf_branches++;
+
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(nodeCLV.bits, n_models, n_states));
+
+        for(int i=0;i<L0;i++)
+        {
+	    const double* S = nodeCLV[i];
+
+	    int scale = 0;
+            double* R = (*LCB)[i];
+	    propagate(R, n_models, n_states, scale, transition_P, S);
+	    LCB->scale(i) = scale;
+        }
+
+        return LCB;
     }
 
     object_ptr<const Likelihood_Cache_Branch>
