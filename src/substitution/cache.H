@@ -154,6 +154,18 @@ public:
 		count_[i] = 1;
 	    }
 	}
+    Likelihood_Cache_Branch(const boost::dynamic_bitset<>& mask, int M, int S)
+	:Likelihood_Cache_Branch(mask.count(), M, S)
+	{
+	    bits = mask;
+	}
+
+    Likelihood_Cache_Branch(boost::dynamic_bitset<>&& mask, int M, int S)
+	:Likelihood_Cache_Branch(mask.count(), M, S)
+	{
+	    bits = std::move(mask);
+	}
+
     Likelihood_Cache_Branch(Likelihood_Cache_Branch&& LCB) noexcept
     {
 	swap(LCB);
