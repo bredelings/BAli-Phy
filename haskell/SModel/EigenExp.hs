@@ -1,5 +1,7 @@
 module SModel.EigenExp where
 
+import Data.Matrix
+
 data EigenSystem
 
 foreign import bpcall "Matrix:" get_eigensystem :: Matrix Double -> EVector Double -> EigenSystem

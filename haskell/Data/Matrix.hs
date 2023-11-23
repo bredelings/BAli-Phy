@@ -4,6 +4,10 @@ import Foreign.Vector
 
 import Text.Show
 
+data Matrix a
+
+foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
+
 fromLists xss = fromVectors $ list_to_vector $ map list_to_vector xss
 
 foreign import bpcall "Matrix:transpose" tr :: Matrix a -> Matrix a

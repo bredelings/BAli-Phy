@@ -11,10 +11,6 @@ foreign import bpcall "Vector:" vector_size :: EVector a -> Int
 
 foreign import bpcall "Vector:" clist_to_vector :: CList a -> EVector a
 
-data Matrix a
-
-foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
-
 list_from_vector_of_size :: EVector a -> Int -> [a]
 list_from_vector_of_size vec size = map_from 0# size (\i -> get_vector_index vec i)
 

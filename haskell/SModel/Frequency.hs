@@ -2,6 +2,7 @@ module SModel.Frequency (module SModel.Frequency, Markov.plus_gwf_matrix, Markov
 
 import Bio.Alphabet
 import Foreign.Vector
+import Data.Matrix
 import qualified Markov
 
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double

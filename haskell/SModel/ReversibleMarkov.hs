@@ -1,4 +1,4 @@
-module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
+module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency, module Data.Matrix) where
 
 import qualified Markov
 import           Markov (CTMC, get_q, get_pi, qExp)
