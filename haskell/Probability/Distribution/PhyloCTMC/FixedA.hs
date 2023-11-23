@@ -69,7 +69,6 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
                                          tree
                                          subst_root
                                          nodeCLVs
-                                         maybeNodeSeqsBits
                                          alphabet
                                          transition_ps
                                          f

@@ -181,9 +181,7 @@ namespace substitution {
 
 
     Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-					      const EVector& sequences,
-					      const alphabet& a,
-					      const EVector& smap,
+					      const EVector& LCN,
 					      const EVector& transition_Ps,
 					      const EVector& LCB,
 					      const EVector& compressed_col_for_col);
@@ -229,16 +227,12 @@ extern "C" closure builtin_function_sampleSequenceSEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
 
     return substitution::sample_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(), // parent_seq,
-					     arg1.as_<EVector>(),               // sequences
-					     *arg2.as_<Alphabet>(),             // a
-					     arg3.as_<EVector>(),               // smap
-					     arg4.as_<EVector>(),               // transition_ps
-					     arg5.as_<EVector>(),               // LCB
-					     arg6.as_<EVector>());              // compressed_col_for_col
+					     arg1.as_<EVector>(),               // LCN
+					     arg2.as_<EVector>(),               // transition_ps
+					     arg3.as_<EVector>(),               // LCB
+					     arg4.as_<EVector>());              // compressed_col_for_col
 }
 
 extern "C" closure builtin_function_calcRootProbSEV(OperationArgs& Args)

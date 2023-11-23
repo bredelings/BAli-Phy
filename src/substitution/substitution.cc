@@ -2526,9 +2526,7 @@ namespace substitution {
 
     
     Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-					      const EVector& sequences,
-					      const alphabet& a,
-					      const EVector& smap,
+					      const EVector& LCN,
 					      const EVector& transition_Ps,
 					      const EVector& LCB,
 					      const EVector& compressed_col_for_col)
@@ -2538,27 +2536,29 @@ namespace substitution {
         const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
-        auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
+	// But then we'd be using a pointer, which is indirect.
+	EVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
 
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
-	int n_branches_in = LCB.size();
-	assert(not sequences.empty() or not LCB.empty());
-        int L_compressed = (sequences.empty()) ? cache(0).bits.size() : mask(0).size();
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
         int L_full = compressed_col_for_col.size();
-
-	int n_sequences = sequences.size();
+        int L_compressed = cache(0).bits.size();
 
 #ifndef NDEBUG
 	assert(parent_seq.size() == L_full);
 	assert(L_full >= L_compressed);
-        for(int i=0;i<n_sequences;i++)
-        {
-            assert(mask(i).size() == L_compressed);
-        }
 
-        for(int i=0;i<n_branches_in;i++)
+        for(int i=0;i<n_clvs;i++)
         {
             assert(cache(i).bits.size() == L_compressed);
 	    assert(n_models == cache(i).n_models());
@@ -2570,18 +2570,12 @@ namespace substitution {
 
 	boost::dynamic_bitset<> allbits;
 	allbits.resize(L_compressed);
-        for(int i=0;i<n_sequences;i++)
-            allbits |= mask(i);
-        for(int i=0;i<n_branches_in;i++)
+        for(int i=0;i<n_clvs;i++)
             allbits |= cache(i).bits;
 
-	vector<vector<optional<int>>> cache_index_for_compressed_column;
-	for(int i=0;i<n_branches_in;i++)
-	    cache_index_for_compressed_column.push_back( get_index_for_column( cache(i).bits ) );
-
-	vector<vector<optional<int>>> seq_index_for_compressed_column;
-	for(int i=0;i<n_sequences;i++)
-	    seq_index_for_compressed_column.push_back( get_index_for_column( mask(i) ) );
+	vector<vector<optional<int>>> cache_index_for_compressed_column(n_clvs);
+	for(int i=0;i<n_clvs;i++)
+	    cache_index_for_compressed_column[i] = get_index_for_column( cache(i).bits );
 
 	// Initially all the ancestral letters are missing.
         Vector<pair<int,int>> ancestral_characters(L_full,{-1,-1});
@@ -2595,35 +2589,9 @@ namespace substitution {
 
             calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
 
-	    for(int b=0;b<n_branches_in;b++)
+	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])
 		    element_prod_modify(S.begin(), cache(b)[*i], matrix_size);
-
-	    for(int j=0;j<n_sequences;j++)
-	    {
-		if (auto k = seq_index_for_compressed_column[j][c2])
-		{
-		    int letter_class = sequence(j)[*k].as_int();
-		    if (letter_class < 0) continue;
-
-		    auto& letter_fits_class = a.letter_mask(letter_class);
-		    for(int m=0;m<n_models;m++)
-		    {
-			for(int s1=0;s1<n_states;s1++)
-			{
-			    int letter_for_state = smap[s1].as_int();
-			    bool state_fits_class = letter_fits_class[letter_for_state];
-			    if (not state_fits_class)
-			    {
-				// Pr *= Pr(observation | state )
-				// Currently we are doing Pr *= Pr(observation | letter(state))
-				// So maybe I should make a Pr(observation | state) matrix.
-				(S.begin())[m*n_states + s1] = 0;
-			    }
-			}
-		    }
-		}
-	    }
 
             ancestral_characters[c] = sample(S);
         }
