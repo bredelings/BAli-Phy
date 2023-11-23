@@ -30,7 +30,7 @@ foreign import bpcall "Likelihood:" sampleRootSequence :: EVector (EVector Int) 
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector (EPair (EVector Int) CBitVector)-> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "Likelihood:peelBranchSEV" builtinPeelBranchSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 
 peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vector sequences) alphabet smap cls ps
@@ -38,6 +38,8 @@ peelBranchSEV sequences alphabet smap cls ps = builtinPeelBranchSEV (list_to_vec
 -- ancestral sequence sampling for SEV
 foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleSequenceSEV :: VectorPairIntInt -> EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector Int -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
+
+foreign import bpcall "Likelihood:" simpleSequenceLikelihoodsSEV :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
                                                                lcf b = let p = ps IntMap.! b
@@ -104,9 +106,11 @@ cached_conditional_likelihoods_SEV t seqs alpha ps smap =
     in lc
 
 peel_likelihood_SEV seqs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
-                                                              sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
+                                                              nModels = nrows f
+                                                              sequenceToCL = simpleSequenceLikelihoodsSEV alpha smap nModels . c_pair'
+                                                              nodeCLs = maybeToList $ sequenceToCL <$> seqs IntMap.! root
                                                               clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                          in calcRootProbSEV (list_to_vector sequences) alpha smap clsIn f counts
+                                                          in calcRootProbSEV (list_to_vector nodeCLs) clsIn f counts
 
 sample_ancestral_sequences_SEV t root seqsBits alpha ps f cl smap col_to_compressed =
     let rt = add_root root t

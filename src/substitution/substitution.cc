@@ -790,6 +790,64 @@ namespace substitution {
     }
 
 
+    object_ptr<const Likelihood_Cache_Branch>
+    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
+				    const alphabet& a,
+				    const EVector& smap,
+				    int n_models)
+    {
+	auto& sequence = sequence_mask.first.as_<EVector>();
+	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
+
+	int n_states = smap.size();
+	int matrix_size = n_models * n_states;
+
+	int L = sequence.size();
+
+	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+	LCB->bits.resize(mask.size());
+	LCB->bits = mask;
+
+        // scratch matrix
+        double* S = LCB->scratch(0);
+
+	int i=0;
+        for(int c=0;c<L;c++)
+	{
+	    if (not mask.test(c)) continue;
+
+	    int letter = sequence[i].as_int();
+
+            for(int k=0; k<matrix_size; k++)
+                S[k] = 1.0;
+
+	    // We need to zero out the inconsistent characters.
+	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int m=0;m<n_models;m++)
+		{
+		    for(int s1=0;s1<n_states;s1++)
+		    {
+			int l = smap[s1].as_int();
+			if (not ok[l])
+			{
+			    // Pr *= Pr(observation | state )
+			    // Currently we are doing Pr *= Pr(observation | letter(state))
+			    // So maybe I should make a Pr(observation | state) matrix.
+			    S[m*n_states + s1] = 0;
+			}
+		    }
+		}
+	    }
+
+	    i++;
+	}
+
+	return LCB;
+    }
+
     log_double_t calc_root_prob_SEV(const EVector& sequences,
 				    const alphabet& a,
 				    const EVector& smap,
@@ -936,6 +994,160 @@ namespace substitution {
 				}
 			    }
 			}
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+            total.mult_with_count(p_col, counts[c].as_int());
+            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+        }
+
+        log_double_t Pr = total;
+
+        Pr.log() += log_scale_min * scale;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
+    }
+
+
+    log_double_t calc_root_prob_SEV(const EVector& LCN,
+				    const EVector& LCB,
+				    const Matrix& F,
+				    const EVector& counts)
+    {
+	total_calc_root_prob++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+
+	int n_branches_in = LCB.size();
+	int n_sequences = LCN.size();
+
+	assert(not LCN.empty() or not LCB.empty());
+        int L = (LCN.empty()) ? cache(0).bits.size() : node_cache(0).bits.size();
+
+
+#ifndef NDEBUG
+	assert(L > 0);
+        for(int i=0;i<n_sequences;i++)
+        {
+            assert(node_cache(i).bits.size() == L);
+	    assert(n_models == node_cache(i).n_models());
+	    assert(n_states == node_cache(i).n_states());
+        }
+
+        for(int i=0;i<n_branches_in;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
+        total_root_clv_length += L;
+
+	boost::dynamic_bitset<> bits_out;
+	bits_out.resize(L);
+        for(int i=0;i<n_sequences;i++)
+            bits_out |= node_cache(i).bits;
+        for(int i=0;i<n_branches_in;i++)
+            bits_out |= cache(i).bits;
+
+        // index into sequences
+        vector<int> i(n_sequences, 0);
+        // index into LCBs
+        vector<int> s(n_branches_in, 0);
+        // index into LCB_OUT
+        int scale = 0;
+
+        log_prod total;
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
+
+            // Handle branches in
+	    int j=0;
+            for(;j<n_branches_in and mi < mi_max;j++)
+            {
+                if (cache(j).bits.test(c))
+                {
+                    auto& lcb = cache(j);
+
+		    m[mi++] = lcb[s[j]];
+                    // element_prod_assign(S, lcb[s[j]], matrix_size);
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+	    double p_col = 1;
+	    if (n_sequences == 0 and j == n_branches_in)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		else
+		    element_assign(S, F.begin(), matrix_size);
+
+		for(;j<n_branches_in;j++)
+		{
+		    auto& lcb = cache(j);
+		    if (lcb.bits.test(c))
+		    {
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+		// TODO: Should we just precalculate the LCB at leaf nodes?
+		//       We're doing it here and propagating in separate steps already,
+		//         which is slower, but simpler.
+
+		// Handle observed sequences at the node.
+		for(int j=0;j<n_sequences;j++)
+		{
+		    auto& lcn = node_cache(j);
+		    if (lcn.bits.test(c))
+		    {
+			element_prod_assign(S, lcn[i[j]], matrix_size);
+			scale += lcn.scale(i[j]);
+			i[j]++;
 		    }
 		}
 
