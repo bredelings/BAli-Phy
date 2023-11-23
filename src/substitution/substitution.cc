@@ -808,15 +808,14 @@ namespace substitution {
 	LCB->bits.resize(mask.size());
 	LCB->bits = mask;
 
-        // scratch matrix
-        double* S = LCB->scratch(0);
-
 	int i=0;
         for(int c=0;c<L;c++)
 	{
 	    if (not mask.test(c)) continue;
 
 	    int letter = sequence[i].as_int();
+
+	    double* S = (*LCB)[i];
 
             for(int k=0; k<matrix_size; k++)
                 S[k] = 1.0;
