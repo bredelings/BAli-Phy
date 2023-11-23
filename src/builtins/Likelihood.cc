@@ -203,13 +203,6 @@ namespace substitution {
 				const EVector& A,
 				const Matrix& F);
 
-    log_double_t calc_root_prob_SEV(const EVector& sequences,
-				    const alphabet& a,
-				    const EVector& smap,
-				    const EVector& LCB,
-				    const Matrix& F,
-				    const EVector& counts);
-
     log_double_t calc_root_prob_SEV(const EVector& LCN,
 				    const EVector& LCB,
 				    const Matrix& F,
