@@ -21,10 +21,7 @@ data CondLikes
 -- peeling for connected-CLVs
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
 foreign import bpcall "Likelihood:" calcRootProb :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:peelBranch" builtinPeelBranch :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
-
-peelBranch sequences alphabet smap cls as ps f = builtinPeelBranch (list_to_vector sequences) alphabet smap cls as ps f
-
+foreign import bpcall "Likelihood:" peelBranch :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 
 -- ancestral sequence sampling for connected-CLVs
 foreign import bpcall "Likelihood:" sampleRootSequence :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
@@ -40,14 +37,18 @@ foreign import bpcall "Likelihood:" sampleSequenceSEV :: VectorPairIntInt -> EVe
 
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoodsSEV :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
-cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = IntMap.fromSet lcf $ getEdgesSet t
-                                                               lcf b = let p = ps IntMap.! b
-                                                                           inEdges = edgesBeforeEdgeSet t b
-                                                                           sequences = maybeToList $ seqs IntMap.! (sourceNode t b)
-                                                                           clsIn = IntMap.restrictKeysToVector lc inEdges
-                                                                           asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                       in peelBranch sequences alpha smap clsIn asIn p f
-                                                           in lc
+simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
+    where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
+
+cached_conditional_likelihoods t nodeCLVs as alpha ps f smap = let lc    = getEdgesSet t & IntMap.fromSet lcf
+                                                                   lcf b = let p = ps IntMap.! b
+                                                                               inEdges = edgesBeforeEdgeSet t b
+                                                                               nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t b)
+                                                                               branchCLVs = IntMap.restrictKeysToVector lc inEdges
+                                                                               asIn  = IntMap.restrictKeysToVector as inEdges
+                                                                           in peelBranch nodeCLV branchCLVs asIn p f
+                                                               in lc
 
 peel_likelihood t seqs cls as alpha f smap root = let inEdges = edgesTowardNodeSet t root
                                                       sequences = maybeToList $ seqs IntMap.! root
@@ -56,8 +57,8 @@ peel_likelihood t seqs cls as alpha f smap root = let inEdges = edgesTowardNodeS
                                                   in calcRootProb (list_to_vector sequences) alpha smap clsIn asIn f
 
 
-substitution_likelihood t root seqs as alpha ps f smap = let cls = cached_conditional_likelihoods t seqs as alpha ps f smap
-                                                         in peel_likelihood t seqs cls as alpha f smap root
+substitution_likelihood t root nodeCLVs seqs as alpha ps f smap = let cls = cached_conditional_likelihoods t nodeCLVs as alpha ps f smap
+                                                                  in peel_likelihood t seqs cls as alpha f smap root
 
 sample_ancestral_sequences :: IsTree t =>
                               t ->

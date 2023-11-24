@@ -35,6 +35,8 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       as = pairwise_alignments alignment
       maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
       node_sequences = fromMaybe (error "No Label") <$> maybeNodeSequences
+      nModels = nrows f
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
@@ -42,7 +44,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods
               tree
-              maybeNodeSequences
+              nodeCLVs
               as
               alphabet
               transition_ps

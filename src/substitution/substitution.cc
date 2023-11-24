@@ -1399,9 +1399,7 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch(const EVector& sequences,
-		const alphabet& a,
-		const EVector& smap,
+    peel_branch(const EVector& LCN,
 		const EVector& LCB,
 		const EVector& A,
 		const EVector& transition_P,
@@ -1414,16 +1412,17 @@ namespace substitution {
         const int matrix_size = n_models * n_states;
 
         // Do this before accessing matrices or other_subst
+	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
-	assert(not sequences.empty() or not A.empty());
-	int L = (sequences.empty())?A[0].as_<Box<pairwise_alignment_t>>().length2() : sequences[0].as_<EVector>().size();
+	assert(not LCN.empty() or not A.empty());
+	int L = (LCN.empty()) ? A[0].as_<Box<pairwise_alignment_t>>().length2() : LCN[0].as_<Likelihood_Cache_Branch>().n_columns();
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.
-	for(auto& esequence: sequences)
-	    assert(esequence.as_<EVector>().size() == L);
+	for(auto& lcn: LCN)
+	    assert(lcn.as_<Likelihood_Cache_Branch>().n_columns() == L);
 
 	// Check that all the alignments have the right length for both sequences.
 	assert(A.size() == n_branches_in);
@@ -1496,31 +1495,10 @@ namespace substitution {
 	    }
 
 	    // Handle observed sequences at the node.
-	    for(auto& esequence: sequences)
+	    for(int j=0;j<n_sequences;j++)
 	    {
-		auto& sequence = esequence.as_<EVector>();
-		int letter = sequence[s_out].as_int();
-
-		// We need to zero out the inconsistent characters.
-		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-		if (letter >= 0)
-		{
-		    auto& ok = a.letter_mask(letter);
-		    for(int m=0;m<n_models;m++)
-		    {
-			for(int s1=0;s1<n_states;s1++)
-			{
-			    int l = smap[s1].as_int();
-			    if (not ok[l])
-			    {
-				// Pr *= Pr(observation | state )
-				// Currently we are doing Pr *= Pr(observation | letter(state))
-				// So maybe I should make a Pr(observation | state) matrix.
-				S[m*n_states + s1] = 0;
-			    }
-			}
-		    }
-		}
+		auto& lcn = LCN[j].as_<Likelihood_Cache_Branch>();
+		element_prod_assign(S, lcn[s_out], matrix_size);
 	    }
 
 	    // propagate from the source distribution
