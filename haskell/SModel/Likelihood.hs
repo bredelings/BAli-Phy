@@ -25,7 +25,7 @@ foreign import bpcall "Likelihood:" peelBranch :: EVector CondLikes -> EVector C
 
 -- ancestral sequence sampling for connected-CLVs
 foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
 foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
@@ -57,7 +57,7 @@ peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t ro
                                            in calcRootProb nodeCLV clsIn asIn f
 
 
-sample_ancestral_sequences t root nodeCLVs seqs as alpha ps f cl smap =
+sample_ancestral_sequences t root nodeCLVs as ps f cl =
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
 
@@ -76,8 +76,8 @@ sample_ancestral_sequences t root nodeCLVs seqs as alpha ps f cl smap =
                                                 inEdges = edgesBeforeEdgeSet t to_p
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
                                                 asIn  = IntMap.restrictKeysToVector as inEdges
-                                                sequences = maybeToList $ seqs IntMap.! (sourceNode t to_p)
-                                            in sampleBranchSequence parent_seq a0 (list_to_vector sequences) alpha smap clsIn asIn ps_for_b0 f
+                                                nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t to_p)
+                                            in sampleBranchSequence parent_seq a0 nodeCLV clsIn asIn ps_for_b0 f
     in ancestor_seqs
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?

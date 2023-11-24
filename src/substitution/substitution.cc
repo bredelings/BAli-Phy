@@ -2338,11 +2338,9 @@ namespace substitution {
 
     Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
-						 const EVector& sequences,
-						 const alphabet& a,
-						 const EVector& smap,
+						 const EVector& LCN,
 						 const EVector& LCB,
-						 const EVector& A,
+						 const EVector& A_,
 						 const EVector& transition_P,
 						 const Matrix& F)
     {
@@ -2352,32 +2350,36 @@ namespace substitution {
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
         // Do this before accessing matrices or other_subst
+	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
-	assert(not sequences.empty() or not A.empty());
-	int L = (sequences.empty())?A[0].as_<Box<pairwise_alignment_t>>().length2() : sequences[0].as_<EVector>().size();
+	assert(not LCN.empty() or not A_.empty());
+	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.
-	for(auto& esequence: sequences)
-	    assert(esequence.as_<EVector>().size() == L);
+	for(int i=0; i<n_sequences; i++)
+	    assert(node_cache(i).n_columns() == L);
 
 	// Check that all the alignments have the right length for both sequences.
-	assert(A.size() == n_branches_in);
+	assert(A_.size() == n_branches_in);
 	for(int i=0; i<n_branches_in; i++)
 	{
-	    assert(A[i].as_<Box<pairwise_alignment_t>>().length2() == L);
-	    assert(A[i].as_<Box<pairwise_alignment_t>>().length1() == LCB[i].as_<Likelihood_Cache_Branch>().n_columns());
+	    assert(A(i).length2() == L);
+	    assert(A(i).length1() == cache(i).n_columns());
+
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
 	}
 #endif
 
         // scratch matrix
 	Matrix SMAT(n_models, n_states);
         double* S = SMAT.begin();
-
-	vector<int> AL(n_branches_in);
-	for(int j=0; j < n_branches_in;j++)
-	    AL[j] = A[j].as_<Box<pairwise_alignment_t>>().size();
 
 	// index into LCBs
 	vector<int> s(n_branches_in, 0);
@@ -2395,9 +2397,9 @@ namespace substitution {
         {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
-		auto& a = A[j].as_<Box<pairwise_alignment_t>>();
+		auto& a = A(j);
 		auto& ij = i[j];
-		while (ij < AL[j] and not a.has_character2(ij))
+		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
 		    ij++;
@@ -2416,8 +2418,8 @@ namespace substitution {
             {
 		for(int j=0;j<n_branches_in;j++)
 		{
-		    assert(i[j] == AL[j]);
-		    assert(s[j] == A[j].as_<Box<pairwise_alignment_t>>().length1());
+		    assert(i[j] == A(j).size());
+		    assert(s[j] == A(j).length1());
 		}
 		assert(i_parent == parent_A.size());
 		assert(s_parent == parent_A.length1());
@@ -2427,9 +2429,9 @@ namespace substitution {
 	    {
 		for(int j=0;j<n_branches_in;j++)
 		{
-		    assert(i[j] < AL[j]);
-		    assert(s[j] <= A[j].as_<Box<pairwise_alignment_t>>().length1());
-		    assert(A[j].as_<Box<pairwise_alignment_t>>().has_character2(i[j]));
+		    assert(i[j] < A(j).size());
+		    assert(s[j] <= A(j).length1());
+		    assert(A(j).has_character2(i[j]));
 		}
 		assert(i_parent < parent_A.size());
 	    }
@@ -2445,9 +2447,9 @@ namespace substitution {
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
-		if (A[j].as_<Box<pairwise_alignment_t>>().has_character1(i[j]))
+		if (A(j).has_character1(i[j]))
 		{
-		    auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
+		    auto& lcb = cache(j);
 		    element_prod_assign(S, lcb[s[j]], matrix_size);
 		    s[j]++;
 		}
@@ -2455,32 +2457,8 @@ namespace substitution {
 	    }
 
 	    // Handle observed sequences at the node.
-	    for(auto& esequence: sequences)
-	    {
-		auto& sequence = esequence.as_<EVector>();
-		int letter = sequence[s_node].as_int();
-
-		// We need to zero out the inconsistent characters.
-		// Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-		if (letter >= 0)
-		{
-		    auto& ok = a.letter_mask(letter);
-		    for(int m=0;m<n_models;m++)
-		    {
-			for(int s1=0;s1<n_states;s1++)
-			{
-			    int l = smap[s1].as_int();
-			    if (not ok[l])
-			    {
-				// Pr *= Pr(observation | state )
-				// Currently we are doing Pr *= Pr(observation | letter(state))
-				// So maybe I should make a Pr(observation | state) matrix.
-				S[m*n_states + s1] = 0;
-			    }
-			}
-		    }
-		}
-	    }
+	    for(int j=0;j<n_sequences;j++)
+		element_prod_assign(S, node_cache(j)[s_node], matrix_size);
 
             ancestral_characters[s_node] = sample(SMAT);
 

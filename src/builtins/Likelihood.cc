@@ -173,9 +173,7 @@ namespace substitution {
 
     Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
-						 const EVector& sequences,
-						 const alphabet& a,
-						 const EVector& smap,
+						 const EVector& LCN,
 						 const EVector& LCB,
 						 const EVector& A,
 						 const EVector& transition_P,
@@ -288,18 +286,14 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     auto arg4 = Args.evaluate(4);
     auto arg5 = Args.evaluate(5);
     auto arg6 = Args.evaluate(6);
-    auto arg7 = Args.evaluate(7);
-    auto arg8 = Args.evaluate(8);
 
     return substitution::sample_branch_sequence(arg0.as_<Vector<pair<int,int>>>(),     // parent_seq
 						arg1.as_<Box<pairwise_alignment_t>>(), // parent_A
-						arg2.as_<EVector>(),                   // sequences
-						*arg3.as_<Alphabet>(),                 // alphabet
-						arg4.as_<EVector>(),                   // smap
-						arg5.as_<EVector>(),                   // LCB
-						arg6.as_<EVector>(),                   // A
-						arg7.as_<EVector>(),                   // transition_P
-						arg8.as_<Box<Matrix>>());              // F
+						arg2.as_<EVector>(),                   // LCN
+						arg3.as_<EVector>(),                   // LCB
+						arg4.as_<EVector>(),                   // A
+						arg5.as_<EVector>(),                   // transition_P
+						arg6.as_<Box<Matrix>>());              // F
 }
 
 // maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
