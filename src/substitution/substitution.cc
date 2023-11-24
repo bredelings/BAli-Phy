@@ -845,6 +845,53 @@ namespace substitution {
 	return LCB;
     }
 
+    object_ptr<const Likelihood_Cache_Branch>
+    simple_sequence_likelihoods(const EVector& sequence,
+				const alphabet& a,
+				const EVector& smap,
+				int n_models)
+    {
+	int n_states = smap.size();
+	int matrix_size = n_models * n_states;
+
+	int L = sequence.size();
+
+	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+
+        for(int i=0;i<L;i++)
+	{
+	    int letter = sequence[i].as_int();
+
+	    double* S = (*LCB)[i];
+
+            for(int k=0; k<matrix_size; k++)
+                S[k] = 1.0;
+
+	    // We need to zero out the inconsistent characters.
+	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int m=0;m<n_models;m++)
+		{
+		    for(int s1=0;s1<n_states;s1++)
+		    {
+			int l = smap[s1].as_int();
+			if (not ok[l])
+			{
+			    // Pr *= Pr(observation | state )
+			    // Currently we are doing Pr *= Pr(observation | letter(state))
+			    // So maybe I should make a Pr(observation | state) matrix.
+			    S[m*n_states + s1] = 0;
+			}
+		    }
+		}
+	    }
+	}
+
+	return LCB;
+    }
+
     log_double_t calc_root_prob_SEV(const EVector& LCN,
 				    const EVector& LCB,
 				    const Matrix& F,
