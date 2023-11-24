@@ -47,7 +47,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       -- but instead we just ensure that the alignment is evaluated.
       likelihood  = peel_likelihood tree nodeCLVs cls as f subst_root
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root maybeNodeSequences as alphabet transition_ps f cls smap
+      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs maybeNodeSequences as alphabet transition_ps f cls smap
 
       ancestral_sequences = extractStates <$> ancestralComponentStateSequences
 

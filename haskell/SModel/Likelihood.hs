@@ -24,7 +24,7 @@ foreign import bpcall "Likelihood:" calcRootProb :: EVector CondLikes -> EVector
 foreign import bpcall "Likelihood:" peelBranch :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 
 -- ancestral sequence sampling for connected-CLVs
-foreign import bpcall "Likelihood:" sampleRootSequence :: EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector (EVector Int) -> Alphabet -> EVector Int -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
@@ -57,28 +57,17 @@ peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t ro
                                            in calcRootProb nodeCLV clsIn asIn f
 
 
-sample_ancestral_sequences :: IsTree t =>
-                              t ->
-                              Int ->
-                              IntMap (Maybe (EVector Int)) ->
-                              IntMap PairwiseAlignment ->
-                              Alphabet ->
-                              IntMap (EVector (Matrix Double)) ->
-                              Matrix Double ->
-                              IntMap CondLikes ->
-                              EVector Int ->
-                              IntMap VectorPairIntInt
-sample_ancestral_sequences t root seqs as alpha ps f cl smap =
+sample_ancestral_sequences t root nodeCLVs seqs as alpha ps f cl smap =
     let rt = add_root root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
 
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
 
         ancestor_for_branch n Nothing = let inEdges = edgesTowardNodeSet t n
-                                            sequences = []
+                                            nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
                                             asIn  = IntMap.restrictKeysToVector as inEdges
-                                        in sampleRootSequence (list_to_vector sequences) alpha smap clsIn asIn f
+                                        in sampleRootSequence nodeCLV clsIn asIn f
 
         ancestor_for_branch n (Just to_p) = let parent_seq = ancestor_seqs IntMap.! (targetNode t to_p)
                                                 b0 = reverseEdge to_p

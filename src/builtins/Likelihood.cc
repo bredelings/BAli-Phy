@@ -161,9 +161,7 @@ extern "C" closure builtin_function_peelBranchSEV(OperationArgs& Args)
 
 namespace substitution {
 
-    Vector<pair<int,int>> sample_root_sequence(const EVector& sequences,
-					       const alphabet& a,
-					       const EVector& smap,
+    Vector<pair<int,int>> sample_root_sequence(const EVector& LCN,
 					       const EVector& LCB,
 					       const EVector& A,
                                                const Matrix& F);
@@ -261,15 +259,11 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
 
-    return substitution::sample_root_sequence(arg0.as_<EVector>(),      // sequences
-                                              *arg1.as_<Alphabet>(),    // alphabet
-                                              arg2.as_<EVector>(),      // smap
-                                              arg3.as_<EVector>(),      // LCB
-                                              arg4.as_<EVector>(),      // As
-                                              arg5.as_<Box<Matrix>>()); // F
+    return substitution::sample_root_sequence(arg0.as_<EVector>(),      // LCN
+                                              arg1.as_<EVector>(),      // LCB
+                                              arg2.as_<EVector>(),      // As
+                                              arg3.as_<Box<Matrix>>()); // F
 }
 
 extern "C" closure builtin_function_sampleRootSequenceSEV(OperationArgs& Args)
