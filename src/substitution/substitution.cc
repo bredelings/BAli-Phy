@@ -1026,6 +1026,142 @@ namespace substitution {
     }
 
 
+    log_double_t calc_root_prob_SEV2(const EVector& LCN,
+				     const EVector& LCB,
+				     const EMaybe& FF,
+				     const EVector& counts)
+    {
+	if (FF) return calc_root_prob_SEV(LCN, LCB, FF->as_<Box<Matrix>>(), counts);
+
+	total_calc_root_prob++;
+
+	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
+	// But then we'd be using a pointer, which is indirect.
+	EVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
+
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
+        int L = cache(0).bits.size();
+        const int n_models = cache(0).n_models();
+        const int n_states = cache(0).n_states();
+        const int matrix_size = n_models * n_states;
+
+
+#ifndef NDEBUG
+	assert(L > 0);
+
+        for(int i=0;i<n_clvs;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
+        total_root_clv_length += L;
+
+	boost::dynamic_bitset<> bits_out;
+	bits_out.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits_out |= cache(i).bits;
+
+        // index into LCs
+        vector<int> s(n_clvs, 0);
+
+        int scale = 0;
+
+        log_prod total;
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
+
+            // Handle branches in
+	    int j=0;
+            for(;j<n_clvs and mi < mi_max;j++)
+            {
+		auto& lcb = cache(j);
+                if (lcb.bits.test(c))
+                {
+		    m[mi++] = lcb[s[j]];
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+	    double p_col = 1;
+	    if (j == n_clvs)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_sum(m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, m[0], matrix_size);
+		else
+		    element_assign(S, 1.0, matrix_size);
+
+		for(;j<n_clvs;j++)
+		{
+		    auto& lcb = cache(j);
+		    if (lcb.bits.test(c))
+		    {
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+            total.mult_with_count(p_col, counts[c].as_int());
+            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+        }
+
+        log_double_t Pr = total;
+
+        Pr.log() += log_scale_min * scale;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
+    }
+
+
     inline double sum(const Matrix& Q, const EVector& smap, int s1, int l)
     {
         double total = 0;
@@ -1835,16 +1971,94 @@ namespace substitution {
         return LCB_OUT;
     }
 
-    object_ptr<const Box<matrix<int>>> alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch_SEV2(const EVector& LCN,
+		     const EVector& LCB,
+		     const EVector& transition_P,
+		     const EMaybe& ff)
     {
-        auto a0 = convert_to_bits(A0, 0, 2);
-        auto a1 = convert_to_bits(A1, 1, 2);
-        auto a012 = Glue_A(a0, a1);
+	if (not ff)
+	    return peel_branch_SEV(LCN, LCB, transition_P);
 
-        // get the relationships with the sub-alignments for the (two) branches behind b0
-        auto index = object_ptr<Box<matrix<int>>>(new Box<matrix<int>>);
-        *index = get_indices_from_bitpath(a012, {0,1,2});
-        return index;
+	const Matrix& f = ff->as_<Box<Matrix>>();
+
+        total_peel_internal_branches++;
+
+        const int n_models = transition_P.size();
+        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int matrix_size = n_models * n_states;
+
+	EVector LC;
+	LC.reserve(LCB.size() + LCN.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
+
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+        int n_clvs = LC.size();
+        assert(not LC.empty());
+        int L = cache(0).bits.size();
+
+#ifndef NDEBUG
+        assert(L > 0);
+
+        for(int i=0;i<n_clvs;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // Do this before accessing matrices or other_subst
+	boost::dynamic_bitset<> bits;
+	bits.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits |= cache(i).bits;
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch( std::move(bits), n_models, n_states));
+        const auto& bits_out = LCB_OUT->bits;
+        assert(bits_out.size() == L);
+
+        // scratch matrix
+        double* S = LCB_OUT->scratch(0);
+
+        // index into LCBs
+        vector<int> s(n_clvs, 0);
+        // index into LCB_OUT
+        int s_out = 0;
+
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+            int scale = 0;
+            const double* C = S;
+	    element_assign(S, f.begin(), matrix_size);
+
+            // Handle branches in
+            for(int j=0;j<n_clvs;j++)
+            {
+                if (cache(j).bits.test(c))
+                {
+                    auto& lcb = cache(j);
+                    element_prod_assign(S, lcb[s[j]], matrix_size);
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+
+            // propagate from the source distribution
+            double* R = (*LCB_OUT)[s_out];            //name the result matrix
+	    propagate(R, n_models, n_states, scale, transition_P, C);
+            LCB_OUT->scale(s_out) = scale;
+
+            s_out++;
+        }
+
+        return LCB_OUT;
     }
 
     object_ptr<const Likelihood_Cache_Branch>
