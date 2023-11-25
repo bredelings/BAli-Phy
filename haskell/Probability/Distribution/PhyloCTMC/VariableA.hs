@@ -34,7 +34,6 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
-      node_sequences = fromMaybe (error "No Label") <$> maybeNodeSequences
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
@@ -59,7 +58,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 

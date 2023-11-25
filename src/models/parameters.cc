@@ -135,9 +135,13 @@ bool data_partition::has_IModel() const
     return (bool)DPC().alignment_properties_reg;
 }
 
-object_ptr<const EVector> data_partition::get_sequence(int i) const
+object_ptr<const Likelihood_Cache_Branch> data_partition::get_node_CLV(int node) const
 {
-    return property(7)[i].value().as_ptr_to<EVector>();
+    auto maybe_node_CLV = property(7)[node];
+    if (maybe_node_CLV.size() > 0)
+	return maybe_node_CLV[0].value().as_ptr_to<Likelihood_Cache_Branch>();
+    else
+	return {};
 }
 
 object_ptr<const EVector> data_partition::transition_P(int b) const

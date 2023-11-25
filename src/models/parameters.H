@@ -104,7 +104,7 @@ public:
     /// Cached Transition Probabilities
     object_ptr<const EVector> transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
   
-    object_ptr<const EVector> get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
+    object_ptr<const Likelihood_Cache_Branch> get_node_CLV(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
     int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 

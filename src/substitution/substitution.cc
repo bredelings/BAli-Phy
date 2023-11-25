@@ -1972,46 +1972,26 @@ namespace substitution {
     }
 
 
-    /// Get the likelihood matrix for each letter l of sequence 'sequence', where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
-    Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const EVector& sequence, const alphabet& a, const data_partition& P, int delta)
-    {
-        int L = sequence.size();
-
-        const int n_letters = a.size();
-
-        const int n_models = P.n_base_models();
-        const int n_states = P.n_states();
-
-        // Compute the likelihood matrix just one for each letter (not letter classes)
-        vector<Matrix> letter_likelihoods;
-        for(int l=0;l<n_letters;l++)
-            letter_likelihoods.push_back( get_letter_likelihoods(l, a, P) );
-
-        // Compute the likelihood matrices for each letter in the sequence
-        Likelihood_Cache_Branch LCB(L+delta, n_models, n_states);
-
-        for(int i=0;i<delta;i++)
-            LCB.set(i,0);
-
-        for(int i=0;i<L;i++)
-        {
-            int letter = sequence[i].as_int();
-            if (a.is_letter(letter))
-                LCB.set(i+delta, letter_likelihoods[letter]);
-            else
-                LCB.set(i+delta, get_letter_likelihoods(letter, a, P));
-        }
-
-        return LCB;
-    }
-
     Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
     {
-        const auto sequence = P.get_sequence(n);
-        auto a = P.get_alphabet();
-        return get_leaf_seq_likelihoods(*sequence, *a, P, delta);
+        auto node_CLV_ptr = P.get_node_CLV(n);
+	auto& node_CLV = *node_CLV_ptr;
+
+        const int n_models = node_CLV.n_models();
+        const int n_states = node_CLV.n_states();
+
+        // Compute the likelihood matrices for each letter in the sequence
+        int L = node_CLV.n_columns();
+        Likelihood_Cache_Branch LCB(L+delta, n_models, n_states);
+
+        for(int i=0;i<delta;i++)
+            LCB.set(i, 0);
+
+        for(int i=0;i<L;i++)
+	    LCB.set_ptr(i+delta, node_CLV[i]);
+
+        return LCB;
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'

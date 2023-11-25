@@ -42,7 +42,7 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
       prop_likelihood :: LogDouble,
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
-      prop_leaf_sequences :: IntMap (EVector Int),
+      prop_nodeCLVs :: IntMap (Maybe CondLikes),
       prop_alphabet :: Alphabet,
       prop_n_states :: Int,
       prop_n_base_models :: Int,
