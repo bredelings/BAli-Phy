@@ -77,6 +77,13 @@ public:
 	    m1[i] = m2[i];
     }
 
+    void set_ptr(int c, const double* __restrict__ m2)
+    {
+	double* __restrict__ m1 = data + matrix_size()*c;
+	for(int i=0;i<matrix_size();i++)
+	    m1[i] = m2[i];
+    }
+
     void get(int c, Matrix& M) const
     {
 	double* __restrict__ m1 = M.begin();
