@@ -5,6 +5,7 @@
 - Phylogenetics
   + Update likelihoods and other infrastructure to handle multifurcating trees.
   + Update likelihoods and other infrastructure to handle data on internal nodes.
+  + Compute CLVs for observed sequences.
 
 * 4.0-beta7 (Nor 1, 2023)
 - Bug fixes:
