@@ -1753,7 +1753,7 @@ namespace substitution {
 	else if (LCN.empty() and LCB.size() == 1)
 	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
-	else if (LCN.size() == 1 and LCB.empty() and false)
+	else if (LCN.size() == 1 and LCB.empty())
 	    return peel_leaf_branch_SEV(LCN[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
 
