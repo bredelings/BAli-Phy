@@ -29,16 +29,16 @@ foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> E
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "Likelihood:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" calcRootProbSEV2 :: EVector CondLikes -> EVector CondLikes -> CMaybe (Matrix Double) -> EVector Int -> LogDouble
-foreign import bpcall "Likelihood:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "Likelihood:" peelBranchSEV2 :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CMaybe (Matrix Double) -> CondLikes
+foreign import bpcall "LikelihoodSEV:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" calcRootProbSEV2 :: EVector CondLikes -> EVector CondLikes -> CMaybe (Matrix Double) -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
+foreign import bpcall "LikelihoodSEV:" peelBranchSEV2 :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CMaybe (Matrix Double) -> CondLikes
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "Likelihood:" sampleRootSequenceSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sampleSequenceSEV :: VectorPairIntInt -> EVector CondLikes -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:" sampleRootSequenceSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:" sampleSequenceSEV :: VectorPairIntInt -> EVector CondLikes -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
 
-foreign import bpcall "Likelihood:" simpleSequenceLikelihoodsSEV :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoodsSEV :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
 simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
