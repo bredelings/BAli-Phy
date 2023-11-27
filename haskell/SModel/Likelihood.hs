@@ -104,12 +104,12 @@ cachedConditionalLikelihoodsSEV2 t nodeCLVs ps f = let clvs = getEdgesSet t & In
                                                                         in peelBranchSEV2 nodeCLs clsIn p (cMaybe f')
                                                    in clvs
 
-peel_likelihood_SEV2 nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
-                                                                   nModels = nrows f
-                                                                   nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
-                                                                   clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                                   f' = if isRoot t root then Just f else Nothing
-                                                               in calcRootProbSEV2 nodeCLs clsIn (cMaybe f') counts
+peelLikelihoodSEV2 nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
+                                                                 nModels = nrows f
+                                                                 nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                                 clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                                 f' = if isRoot t root then Just f else Nothing
+                                                             in calcRootProbSEV2 nodeCLs clsIn (cMaybe f') counts
 
 cached_conditional_likelihoods_SEV t nodeCLVs ps =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
