@@ -13,8 +13,6 @@ import Markov (CTMC, qExp)
 
 import SModel.ReversibleMarkov
 
-type MixtureModel = Discrete ReversibleMarkov
-
 scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
 
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
