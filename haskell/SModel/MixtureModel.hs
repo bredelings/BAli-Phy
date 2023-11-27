@@ -9,7 +9,7 @@ import SModel.Frequency
 import Probability.Distribution.Discrete -- for mix
 import Probability.Dist                  -- for mean
 import Tree
-import Markov (qExp)
+import Markov (CTMC, qExp)
 
 import SModel.ReversibleMarkov
 
@@ -46,10 +46,10 @@ baseModel model i = component model i
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
-instance HasAlphabet MixtureModel where
+instance HasAlphabet m => HasAlphabet (Discrete m) where
     getAlphabet model = getAlphabet $ baseModel model 0
 
-instance SimpleSModel MixtureModel where
+instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (Discrete m) where
     branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
     distribution model = map snd (unpackDiscrete model)
