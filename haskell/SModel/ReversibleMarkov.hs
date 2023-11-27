@@ -95,8 +95,6 @@ instance SimpleSModel ReversibleMarkov where
     branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
-    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [get_pi m])
-    frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_frequency_matrix (list_to_vector [get_pi m])
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
     componentFrequencies smodel i = [frequencies smodel]!!i

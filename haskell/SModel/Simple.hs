@@ -25,13 +25,19 @@ get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_
 
 class HasAlphabet m => SimpleSModel m where
     stateLetters :: m -> EVector Int
-
     branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]
-    weighted_frequency_matrix :: m -> Matrix Double
-    frequency_matrix :: m -> Matrix Double
     nBaseModels :: m -> Int
     componentFrequencies :: m -> Int -> EVector Double
+
+foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
+
+weighted_frequency_matrix model = let dist = list_to_vector $ distribution model
+                                      freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
+                                  in builtin_weighted_frequency_matrix dist freqs
+
+frequency_matrix model = builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
 
 nStates m = vector_size (stateLetters m)
 

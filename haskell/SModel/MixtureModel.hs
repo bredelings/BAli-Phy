@@ -53,10 +53,6 @@ instance SimpleSModel MixtureModel where
     branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
     distribution model = map snd (unpackDiscrete model)
-    weighted_frequency_matrix model = let dist = list_to_vector $ distribution model
-                                          freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
-                                      in builtin_weighted_frequency_matrix dist freqs
-    frequency_matrix model = builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
     nBaseModels model = length $ unpackDiscrete model
     stateLetters model = stateLetters $ baseModel model 0
     componentFrequencies model i = frequencies $ baseModel model i
