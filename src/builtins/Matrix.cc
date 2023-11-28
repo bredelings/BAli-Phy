@@ -209,7 +209,7 @@ extern "C" closure builtin_function_transpose(OperationArgs& Args)
     auto M2p = new Box<Matrix>(M1.size2(), M1.size1());
     auto& M2 = *M2p;
     for(int i=0;i<M2.size1();i++)
-        for(int j=0;i<M2.size2();i++)
+        for(int j=0;j<M2.size2();j++)
             M2(i,j) = M1(j,i);
 
     return M2p;
