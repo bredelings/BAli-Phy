@@ -210,7 +210,7 @@ pair<int,int> sample(const Matrix& M)
     return {-2,-2};
 }
 
-inline void element_assign(double* M1, int size, double d)
+inline void element_assign(double* M1, double d, int size)
 {
     for(int i=0;i<size;i++)
         M1[i] = d;
@@ -1236,7 +1236,7 @@ namespace substitution {
                 }
             }
             else
-                element_assign(R, matrix_size, 1);
+                element_assign(R, 1.0, matrix_size);
         }
 
         return LCB;
@@ -1311,7 +1311,7 @@ namespace substitution {
                 }
             }
             else
-                element_assign(R, matrix_size, 1);
+                element_assign(R, 1, matrix_size);
         }
 
         return LCB;
@@ -1368,7 +1368,7 @@ namespace substitution {
                 }
             }
             else
-                element_assign(R, matrix_size, 1);
+                element_assign(R, 1, matrix_size);
         }
 
         return LCB;
