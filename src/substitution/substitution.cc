@@ -1028,10 +1028,21 @@ namespace substitution {
 
     log_double_t calc_root_prob_SEV2(const EVector& LCN,
 				     const EVector& LCB,
-				     const EMaybe& FF,
+				     const Matrix& FF,
 				     const EVector& counts)
     {
-	if (FF) return calc_root_prob_SEV(LCN, LCB, FF->as_<Box<Matrix>>(), counts);
+	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
+	for(auto& lcb: LCB)
+	    if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_branch);
+		away_from_root_branch = &lcb.as_<Likelihood_Cache_Branch>();
+	    }
+
+	bool at_root = not away_from_root_branch;
+
+	if (at_root)
+	    return calc_root_prob_SEV(LCN, LCB, FF, counts);
 
 	total_calc_root_prob++;
 
@@ -1066,6 +1077,8 @@ namespace substitution {
 	    assert(n_states == cache(i).n_states());
         }
 #endif
+	const Matrix& f = away_from_root_branch->away_from_root_WF.value();
+	const boost::dynamic_bitset<>& prev_rootward_bits = away_from_root_branch->bits;
 
         // scratch matrix
         Matrix SMAT(n_models,n_states);
@@ -1090,6 +1103,9 @@ namespace substitution {
 	    constexpr int mi_max = 3;
 	    const double* m[mi_max];
 	    int mi=0;
+
+	    if (not prev_rootward_bits.test(c))
+		m[mi++] = f.begin();
 
             // Handle branches in
 	    int j=0;
@@ -1975,12 +1991,23 @@ namespace substitution {
     peel_branch_SEV2(const EVector& LCN,
 		     const EVector& LCB,
 		     const EVector& transition_P,
-		     const EMaybe& ff)
+		     const Matrix& ff,
+		     bool away_from_root)
     {
-	if (not ff)
+	if (not away_from_root)
 	    return peel_branch_SEV(LCN, LCB, transition_P);
 
-	const Matrix& f = ff->as_<Box<Matrix>>();
+	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
+	for(auto& lcb: LCB)
+	    if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_branch);
+		away_from_root_branch = &lcb.as_<Likelihood_Cache_Branch>();
+	    }
+
+	bool at_root = not away_from_root_branch;
+
+	const Matrix& f = at_root ? ff : away_from_root_branch->away_from_root_WF.value();
 
         total_peel_internal_branches++;
 
@@ -2012,6 +2039,11 @@ namespace substitution {
         }
 #endif
 
+	boost::dynamic_bitset<> prev_rootward_bits_;
+	if (at_root)
+	    prev_rootward_bits_.resize(L);
+	const boost::dynamic_bitset<>& prev_rootward_bits = at_root ? prev_rootward_bits_ : away_from_root_branch->bits;
+
         // Do this before accessing matrices or other_subst
 	boost::dynamic_bitset<> bits;
 	bits.resize(L);
@@ -2035,7 +2067,10 @@ namespace substitution {
 
             int scale = 0;
             const double* C = S;
-	    element_assign(S, f.begin(), matrix_size);
+	    if (prev_rootward_bits.test(c))
+		element_assign(S, 1, matrix_size);
+	    else
+		element_assign(S, f.begin(), matrix_size);
 
             // Handle branches in
             for(int j=0;j<n_clvs;j++)
@@ -2049,7 +2084,6 @@ namespace substitution {
                 }
             }
 
-
             // propagate from the source distribution
             double* R = (*LCB_OUT)[s_out];            //name the result matrix
 	    propagate(R, n_models, n_states, scale, transition_P, C);
@@ -2057,6 +2091,21 @@ namespace substitution {
 
             s_out++;
         }
+
+	LCB_OUT->away_from_root_WF = Matrix(n_models, n_states);
+	auto& F2 = LCB_OUT->away_from_root_WF.value();
+	for(int m = 0;m<n_models;m++)
+	{
+	    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+	    for(int s2=0;s2<n_states;s2++)
+	    {
+		double p = 0;
+		for(int s1=0;s1<n_states;s1++)
+		    p += f(m,s1) * Q(s2,s1); // Q is transposed, so Q(s2,s1) is Pr(s1->s2)
+		F2(m,s2) = p;
+	    }
+	    // TODO - maybe normalize these to sum to one to reduce roundoff error?
+	}
 
         return LCB_OUT;
     }
