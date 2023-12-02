@@ -45,12 +45,15 @@ public:
   
     log_double_t other_subst = 1;
     boost::dynamic_bitset<> bits;
+    std::optional<Matrix> away_from_root_WF;
+
+    bool away_from_root() const {return away_from_root_WF.has_value();}
 
     int n_states() const {return n_states_;}
     int n_models() const {return n_models_;}
     int n_columns() const {return n_columns_;}
     int matrix_size() const {return matrix_size_;}
-  
+
     double* scratch(int i) {assert(0 <= i and i<2); return data + matrix_size()*(n_columns() + i);}
 
     double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
