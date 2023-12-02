@@ -65,11 +65,6 @@ using std::optional;
 //
 // * 
 
-struct F81_Object: public Object
-{
-    double alpha_;
-};
-
 inline void element_assign(Matrix& M1,double d)
 {
     M1.fill(d);
@@ -1258,81 +1253,6 @@ namespace substitution {
         return LCB;
     }
 
-    vector<double> f81_exp_a_t(const data_partition& P, int /*b0*/, double L)
-    {
-        const int n_models  = P.n_base_models();
-        //    const vector<unsigned>& smap = P.state_letters();
-
-        vector<object_ptr<const F81_Object> > SubModels(n_models);
-        for(int m=0;m<n_models;m++) {
-//          SubModels[m] = P.base_model(m,b0).as_ptr_to<F81_Object>();
-//          assert(SubModels[m]);
-        }
-        //    const double L = t.branch_length(b0);
-
-        vector<double> exp_a_t(n_models);
-        for(int m=0;m<n_models;m++) 
-            exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
-
-        return exp_a_t;
-    }
-  
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_F81(const EVector& sequence, const alphabet& a, const vector<double>& exp_a_t, const Matrix& FF)
-    {
-        total_peel_leaf_branches++;
-
-        // Do this before accessing matrices or other_subst
-        int L0 = sequence.size();
-
-        const int n_models  = exp_a_t.size();
-        const int n_states  = a.n_letters();
-        const int matrix_size = n_models * n_states;
-
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
-
-        //    const vector<unsigned>& smap = P.state_letters();
-
-        // This could be wrong, if the code below assumes row or column major incorrectly
-        const double* F = FF.begin();
-
-        for(int i=0;i<L0;i++)
-        {
-            double* R = (*LCB)[i];
-
-            // compute the distribution at the parent node
-            int l2 = sequence[i].as_int();
-
-            if (a.is_letter(l2))
-                for(int m=0;m<n_models;m++) {
-                    double temp = (1.0-exp_a_t[m])*F[m*n_states + l2]; // move load out of loop for GCC vectorizer
-                    for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = temp;
-                    R[m*n_states + l2] += exp_a_t[m];
-                }
-            else if (a.is_letter_class(l2)) 
-            {
-                for(int m=0;m<n_models;m++) 
-                {
-                    double sum=0;
-                    for(int l=0;l<a.size();l++)
-                        if (a.matches(l,l2))
-                            sum += F[m*n_states + l];
-                    double temp = (1.0-exp_a_t[m])*sum; // move load out of loop for GCC vectorizer
-                    for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = temp;
-                    for(int l=0;l<a.size();l++)
-                        if (a.matches(l,l2))
-                            R[m*n_states + l] += exp_a_t[m];
-                }
-            }
-            else
-                element_assign(R, 1, matrix_size);
-        }
-
-        return LCB;
-    }
-
     bool is_iota(const EVector& v)
     {
         for(int i=0;i<v.size();i++)
@@ -2108,80 +2028,6 @@ namespace substitution {
 	}
 
         return LCB_OUT;
-    }
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch_F81(const Likelihood_Cache_Branch& LCB1,
-                             const Likelihood_Cache_Branch& LCB2,
-                             const pairwise_alignment_t& A0,
-                             const pairwise_alignment_t& A1,
-                             const vector<double>& exp_a_t,
-                             const Matrix& FF,
-                             const Matrix& /*WF*/)
-    {
-        //    std::cerr<<"got here! (internal)"<<endl;
-        total_peel_internal_branches++;
-
-        auto a0 = convert_to_bits(A0, 0, 2);
-        auto a1 = convert_to_bits(A1, 1, 2);
-        auto a012 = Glue_A(a0, a1);
-
-        // get the relationships with the sub-alignments for the (two) branches behind b0
-        matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
-
-        const double* F = FF.begin();
-
-        const int n_models = FF.size1();
-        const int n_states = FF.size2();
-        const int matrix_size = n_models * n_states;
-
-        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(index.size1(), n_models, n_states));
-
-        // scratch matrix
-        double* S = LCB3->scratch(0);
-
-        Matrix ones(n_models, n_states);
-        element_assign(ones, 1);
-    
-        for(int i=0;i<index.size1();i++) 
-        {
-            // compute the source distribution from 2 branch distributions
-            int i0 = index(i,0);
-            int i1 = index(i,1);
-
-            const double* C = S;
-            if (i0 != alphabet::gap and i1 != alphabet::gap)
-                element_prod_assign(S, LCB1[i0], LCB2[i1], matrix_size);
-            else if (i0 != alphabet::gap)
-                C = LCB1[i0];
-            else if (i1 != alphabet::gap)
-                C = LCB2[i1];
-            else
-                C = ones.begin();
-
-            // propagate from the source distribution
-            double* R = (*LCB3)[i];            //name the result matrix
-            for(int m=0;m<n_models;m++) 
-            {
-                // compute the distribution at the target (parent) node - multiple letters
-
-                //  sum = (1-exp(-a*t))*(\sum[s2] pi[s2]*L[s2])
-                double sum = 0;
-                for(int s2=0;s2<n_states;s2++)
-                    sum += F[m*n_states + s2]*C[m*n_states + s2];
-                sum *= (1.0 - exp_a_t[m]);
-
-                // L'[s1] = exp(-a*t)L[s1] + sum
-                double temp = exp_a_t[m]; //move load out of loop for GCC 4.5 vectorizer.
-                for(int s1=0;s1<n_states;s1++) 
-                    R[m*n_states + s1] = temp*C[m*n_states + s1] + sum;
-            }
-        }
-
-        /*-------------------- Do the other_subst collection part -------------b-------*/
-        matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
-//      LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index_collect, WF);
-        return LCB3;
     }
 
     Likelihood_Cache_Branch
