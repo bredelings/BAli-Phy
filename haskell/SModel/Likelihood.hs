@@ -9,7 +9,6 @@ import Data.Matrix
 import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
-import Foreign.Maybe
 import Numeric.LogDouble
 import Bio.Sequence (bitmask_from_sequence, strip_gaps)
 
@@ -30,9 +29,9 @@ foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> 
 
 -- peeling for SEV
 foreign import bpcall "LikelihoodSEV:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" calcRootProbSEV2 :: EVector CondLikes -> EVector CondLikes -> CMaybe (Matrix Double) -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" calcRootProbSEV2 :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "LikelihoodSEV:" peelBranchSEV2 :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CMaybe (Matrix Double) -> CondLikes
+foreign import bpcall "LikelihoodSEV:" peelBranchSEV2 :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> Bool -> CondLikes
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "LikelihoodSEV:" sampleRootSequenceSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
@@ -101,15 +100,14 @@ cachedConditionalLikelihoodsSEV2 t nodeCLVs ps f = let clvs = getEdgesSet t & In
                                                                             node = sourceNode t b
                                                                             nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
                                                                             f' = if isRoot t node then Just f else Nothing
-                                                                        in peelBranchSEV2 nodeCLs clsIn p (cMaybe f')
+                                                                        in peelBranchSEV2 nodeCLs clsIn p f (not $ toward_root t b)
                                                    in clvs
 
 peelLikelihoodSEV2 nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
                                                                  nModels = nrows f
                                                                  nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
                                                                  clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                                 f' = if isRoot t root then Just f else Nothing
-                                                             in calcRootProbSEV2 nodeCLs clsIn (cMaybe f') counts
+                                                             in calcRootProbSEV2 nodeCLs clsIn f counts
 
 cached_conditional_likelihoods_SEV t nodeCLVs ps =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
