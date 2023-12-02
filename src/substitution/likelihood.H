@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file substitution.H
+/// \file likelihood.H
 ///
 /// \brief Contains functions related to calculating the substitution likelihood.
 ///

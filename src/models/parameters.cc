@@ -38,7 +38,7 @@
 #include "util/set.H"
 #include "util/io.H"
 #include "util/log-level.H"
-#include "substitution/substitution.H"
+#include "substitution/likelihood.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "probability/probability.H"

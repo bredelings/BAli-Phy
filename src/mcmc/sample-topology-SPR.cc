@@ -38,7 +38,7 @@
 #include "util/permute.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-constraint.H"
-#include "substitution/substitution.H"
+#include "substitution/likelihood.H"
 
 using MCMC::MoveStats;
 

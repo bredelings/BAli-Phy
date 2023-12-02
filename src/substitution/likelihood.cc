@@ -17,7 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "substitution.H"
+#include "likelihood.H"
 #include "models/parameters.H"
 #include "sequence/alphabet.H"
 #include "util/rng.H"

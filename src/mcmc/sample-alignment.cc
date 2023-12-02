@@ -28,7 +28,7 @@
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
-#include "substitution/substitution.H"
+#include "substitution/likelihood.H"
 #include "dp/dp-matrix.H"
 #include "util/log-level.H"                         // for log_verbose
 

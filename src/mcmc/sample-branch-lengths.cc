@@ -21,7 +21,7 @@
 #include "sample.H"
 #include "util/permute.H"
 #include "dp/5way.H"
-#include "substitution/substitution.H"
+#include "substitution/likelihood.H"
 
 using MCMC::MoveStats;
 using std::vector;

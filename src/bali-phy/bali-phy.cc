@@ -46,7 +46,7 @@ namespace mpi = boost::mpi;
 
 #include <boost/program_options.hpp>
 
-#include "substitution/substitution.H"
+#include "substitution/likelihood.H"
 #include "util/myexception.H"
 #include "util/rng.H"
 #include "util/mapping.H"

@@ -85,7 +85,7 @@ libbaliphy_sources = [
   'mcmc/sample-cube.cc',
   'mcmc/sample-tri.cc',
 
-  'substitution/substitution.cc',
+  'substitution/likelihood.cc',
   'substitution/parsimony.cc',
 
   'math/exponential.cc',

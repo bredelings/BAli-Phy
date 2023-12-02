@@ -37,7 +37,7 @@
 #include "imodel/imodel.H"                          // for PairHMM
 #include "models/TreeInterface.H"                   // for TreeInterface
 #include "models/parameters.H"                      // for data_partition
-#include "substitution/substitution.H"              // for other_subst
+#include "substitution/likelihood.H"                // for other_subst
 #include "util/assert.hh"                           // for assert
 #include "util/matrix.H"                            // for matrix
 #include "util/myexception.H"                       // for show_stack_trace
