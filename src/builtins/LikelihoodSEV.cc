@@ -12,6 +12,7 @@
 #include "util/range.H"
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
+#include "computation/expression/bool.H"
 
 using std::vector;
 using std::pair;
@@ -41,7 +42,8 @@ namespace substitution
     peel_branch_SEV2(const EVector& LCN,
 		     const EVector& LCB,
 		     const EVector& transition_P,
-		     const EMaybe& f);
+		     const Matrix& f,
+		     bool away_from_root);
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
@@ -67,7 +69,7 @@ namespace substitution
 
     log_double_t calc_root_prob_SEV2(const EVector& LCN,
 				     const EVector& LCB,
-				     const EMaybe& FF,
+				     const Matrix& FF,
 				     const EVector& counts);
 }
 
@@ -101,11 +103,13 @@ extern "C" closure builtin_function_peelBranchSEV2(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
+    bool arg4 = is_bool_true(Args.evaluate(4));
 
     return substitution::peel_branch_SEV2(arg0.as_<EVector>(),        // LCN
 					  arg1.as_<EVector>(),        // LCB
 					  arg2.as_<EVector>(),        // transition_P
-					  arg3.as_<EMaybe>());
+					  arg3.as_<Box<Matrix>>(),      
+					  arg4);
 }
 
 extern "C" closure builtin_function_sampleSequenceSEV(OperationArgs& Args)
@@ -132,7 +136,7 @@ extern "C" closure builtin_function_calcRootProbSEV2(OperationArgs& Args)
 
     log_double_t Pr = substitution::calc_root_prob_SEV2(arg0.as_<EVector>(),       // sequences
 							arg1.as_<EVector>(),       // LCB
-							arg2.as_<EMaybe>(),        // FF
+							arg2.as_<Box<Matrix>>(),   // FF
 							arg3.as_<EVector>());      // counts
     return {Pr};
 }
