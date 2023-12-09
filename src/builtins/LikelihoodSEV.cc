@@ -1,17 +1,9 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
 #include "computation/machine/args.H"
-#include "math/exponential.H"
-#include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
-#include "sequence/doublets.H"
-#include "sequence/codons.H"
-#include "util/io.H"
-#include <valarray>
-#include "dp/2way.H"
-#include "util/range.H"
-#include <unsupported/Eigen/MatrixFunctions>
-#include "substitution/parsimony.H"
+#include "substitution/ops.H"
+#include "substitution/likelihoodSEV.H"
 #include "computation/expression/bool.H"
 
 using std::vector;
@@ -29,49 +21,6 @@ using Alphabet = PtrBox<alphabet>;
 #include "substitution/cache.H"
 #include "dp/hmm.H"
 using boost::dynamic_bitset;
-
-namespace substitution
-{
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& LCN,
-                    const EVector& LCB,
-                    const EVector& transition_P);
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV2(const EVector& LCN,
-		     const EVector& LCB,
-		     const EVector& transition_P,
-		     const Matrix& f,
-		     bool away_from_root);
-
-    object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
-				    const alphabet& a,
-				    const EVector& smap,
-				    int n_models);
-
-    Vector<pair<int,int>> sample_root_sequence_SEV(const EVector& LCN,
-						   const EVector& LCB,
-						   const Matrix& F,
-						   const EVector& compressed_col_for_col);
-
-    Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-					      const EVector& LCN,
-					      const EVector& transition_Ps,
-					      const EVector& LCB,
-					      const EVector& compressed_col_for_col);
-
-    log_double_t calc_root_prob_SEV(const EVector& LCN,
-				    const EVector& LCB,
-				    const Matrix& F,
-				    const EVector& counts);
-
-    log_double_t calc_root_prob_SEV2(const EVector& LCN,
-				     const EVector& LCB,
-				     const Matrix& FF,
-				     const EVector& counts);
-}
 
 extern "C" closure builtin_function_simpleSequenceLikelihoodsSEV(OperationArgs& Args)
 {

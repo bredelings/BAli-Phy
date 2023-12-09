@@ -22,7 +22,6 @@
 #include "models/parameters.H"
 #include "sequence/alphabet.H"
 #include "util/rng.H"
-#include "util/range.H"
 #include "util/log-level.H"
 #include <cmath>
 #include <valarray>

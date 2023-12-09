@@ -23,8 +23,8 @@
 /// \brief Contains functions related to calculating the substitution likelihood.
 ///
 
-#ifndef SUBSTITUTION_H
-#define SUBSTITUTION_H
+#ifndef LIKELIHOOD_H
+#define LIKELIHOOD_H
 
 #include <vector>
 #include "util/matrix.H"

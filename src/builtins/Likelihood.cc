@@ -1,24 +1,15 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
 #include "computation/machine/args.H"
-#include "math/exponential.H"
-#include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
-#include "sequence/doublets.H"
-#include "sequence/codons.H"
-#include "util/io.H"
-#include <valarray>
 #include "dp/2way.H"
-#include "util/range.H"
-#include <unsupported/Eigen/MatrixFunctions>
-#include "substitution/parsimony.H"
+#include "substitution/ops.H"
 #include "substitution/likelihood.H"
 
 using std::vector;
 using std::pair;
 using std::istringstream;
 using std::istream;
-using std::valarray;
 
 using std::cerr;
 using std::endl;
@@ -178,8 +169,6 @@ extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
     return sequence;
 }
 
-pair<int,int> sample(const Matrix& M);
-
 extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 {
     int L = Args.evaluate(0).as_int();
@@ -191,12 +180,6 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
         sequence[i] = sample(F);
     return sequence;
 }
-
-namespace substitution
-{
-
-void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps);
-};
 
 extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 {
@@ -224,7 +207,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
         else if (alignment.is_insert(i))
             parent_model_state = sample(F);
 
-        substitution::calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
+        calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
 
         sequence.push_back(sample(S));
     }
@@ -251,7 +234,7 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
     {
         auto parent_model_state = parentSequence[i];
 
-        substitution::calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
+        calc_transition_prob_from_parent(S, parent_model_state, transition_ps);
 
         sequence.push_back(sample(S));
     }

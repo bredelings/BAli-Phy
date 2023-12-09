@@ -1,17 +1,12 @@
 #include "likelihood.H"
+#include "likelihoodSEV.H"
 #include "ops.H"
-#include "models/parameters.H"
 #include "sequence/alphabet.H"
 #include "util/rng.H"
-#include "util/range.H"
 #include "util/log-level.H"
 #include <cmath>
-#include <valarray>
 #include <vector>
-#include "util/set.H"
 #include "math/logprod.H"
-#include "dp/hmm.H"
-#include "dp/2way.H"
 #include <boost/dynamic_bitset.hpp>
 
 // #define DEBUG_SUBSTITUTION
@@ -33,7 +28,6 @@
 // perhaps move the collection root node one branch away?
 // then we have to do re-validation...
 
-using std::valarray;
 using std::vector;
 using std::pair;
 using std::optional;
@@ -163,7 +157,6 @@ namespace substitution
     }
 
 
-    // Generalize to degree n>=1?
     log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                                 const Likelihood_Cache_Branch& LCB2,
                                                 const Matrix& F,
