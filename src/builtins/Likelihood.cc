@@ -12,6 +12,7 @@
 #include "util/range.H"
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
+#include "substitution/likelihood.H"
 
 using std::vector;
 using std::pair;
@@ -74,23 +75,6 @@ extern "C" closure builtin_function_strip_gaps(OperationArgs& Args)
     return Seq2;
 }
 
-
-namespace substitution
-{
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_branch(const EVector& LCN,
-		const EVector& LCB,
-		const EVector& A,
-		const EVector& transition_P,
-		const Matrix& F);
-
-    object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods(const EVector& sequence,
-				const alphabet& a,
-				const EVector& smap,
-				int n_models);
-}
-
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -120,37 +104,6 @@ extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
 				     arg3.as_<EVector>(),        // transition_P
 				     arg4.as_<Box<Matrix>>()  ); // F
 }
-
-namespace substitution {
-
-    Vector<pair<int,int>> sample_root_sequence(const EVector& LCN,
-					       const EVector& LCB,
-					       const EVector& A,
-                                               const Matrix& F);
-
-    Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
-						 const pairwise_alignment_t& parent_A,
-						 const EVector& LCN,
-						 const EVector& LCB,
-						 const EVector& A,
-						 const EVector& transition_P,
-						 const Matrix& F);
-
-    Vector<pair<int,int>> sample_leaf_node_sequence(const Vector<pair<int,int>>& parent_seq,
-                                                    const EVector& transition_Ps,
-                                                    const EVector& sequence,
-                                                    const alphabet& a,
-                                                    const EVector& smap1,
-                                                    const pairwise_alignment_t& A0,
-                                                    const Matrix& F);
-
-
-    log_double_t calc_root_prob(const EVector& LCN,
-				const EVector& LCB,
-				const EVector& A,
-				const Matrix& F);
-}
-
 
 extern "C" closure builtin_function_calcRootProb(OperationArgs& Args)
 {

@@ -844,10 +844,6 @@ namespace substitution {
         return Pr;
     }
 
-    Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const EVector& sequence, const alphabet& a, const data_partition& P, int delta);
-
-
     /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
     Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P)
     {
