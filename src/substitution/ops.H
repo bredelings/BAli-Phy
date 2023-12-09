@@ -3,6 +3,8 @@
 
 #include <utility>
 #include "util/matrix.H"
+#include "computation/expression/expression_ref.H"
+#include "substitution/cache.H"
 
 inline void element_assign(Matrix& M1,double d)
 {
@@ -221,6 +223,35 @@ inline double element_prod_sum(const double* __restrict__ M1,
 
     return sum;
 }
+
+inline void propagate(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+{
+    int matrix_size = n_models * n_states;
+    bool need_scale = true;
+    for(int m=0;m<n_models;m++)
+    {
+	const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+	// compute the distribution at the target (parent) node - multiple letters
+	for(int s1=0;s1<n_states;s1++)
+	{
+	    double temp=0;
+	    for(int s2=0;s2<n_states;s2++)
+		temp += Q(s1,s2)*S[m*n_states + s2];
+	    R[m*n_states + s1] = temp;
+	    need_scale = need_scale and (temp < scale_min);
+	}
+    }
+    if (need_scale)
+    {
+	scale++;
+	for(int j=0; j<matrix_size; j++)
+	    R[j] *= scale_factor;
+    }
+}
+
+void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps);
+void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF);
 
 std::pair<int,int> sample(const Matrix& M);
 
