@@ -250,6 +250,8 @@ inline void propagate(double* R, int n_models, int n_states, int& scale, const E
     }
 }
 
+Matrix propagate_frequencies(const Matrix& F, const EVector& transition_P);
+
 void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps);
 void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF);
 

@@ -113,3 +113,79 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBran
     sample dist = RanDistribution2 dist do_nothing
 
 
+-----------
+annotated_subst_like_on_tree2 tree alignment smodel scale sequenceData = do
+  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+
+  let n_nodes = numNodes tree
+      as = pairwise_alignments alignment
+      maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+      nModels = nrows f
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
+      alphabet = getAlphabet smodel
+      smap   = stateLetters smodel
+      smodel_on_tree = SingleBranchLengthModel tree smodel scale
+      transition_ps = transition_ps_map smodel_on_tree
+      f = weighted_frequency_matrix smodel
+      fs = frequenciesOnTree tree f transition_ps
+      cls = cached_conditional_likelihoods2 tree nodeCLVs as transition_ps fs
+      -- Possibly we should check that the sequence lengths match the alignment..
+      -- but instead we just ensure that the alignment is evaluated.
+      likelihood  = peel_likelihood2 tree nodeCLVs cls as fs subst_root
+
+      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
+
+      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
+
+      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+
+      n_muts = parsimony tree maybeNodeSequences as alphabet (unitCostMatrix alphabet)
+
+  in_edge "tree" tree
+  in_edge "alignment" alignment
+  in_edge "smodel" smodel
+
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+
+  return ([likelihood], prop)
+
+instance Dist (PhyloCTMC2 t (AlignmentOnTree t) s) where
+    type Result (PhyloCTMC2 t (AlignmentOnTree t) s) = UnalignedCharacterData
+    dist_name _ = "PhyloCTMC"
+
+-- TODO: make this work on forests!                  -
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC2 t (AlignmentOnTree t) s) where
+    type DistProperties (PhyloCTMC2 t (AlignmentOnTree t) s) = PhyloCTMCProperties
+    annotated_densities (PhyloCTMC2 tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment smodel scale
+
+-- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
+
+sampleComponentStates2 rtree alignment smodel scale =  do
+  let as = pairwise_alignments alignment
+      ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
+      f = (weighted_frequency_matrix smodel)
+
+  rec let simulateSequenceForNode node = case branchToParent rtree node of
+                                   Nothing -> simulateRootSequence (sequenceLength alignment node) f
+                                   Just b' -> let b = reverseEdge b'
+                                                  parent = sourceNode rtree b
+                                             in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
+      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
+  return stateSequences
+
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC2 t (AlignmentOnTree t) s) where
+    sampleIO (PhyloCTMC2 tree alignment smodel scale) = do
+      let alphabet = getAlphabet smodel
+          smap = stateLetters smodel
+
+      stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel scale
+
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
+
+      return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC2 t (AlignmentOnTree t) s) where
+    sample dist = RanDistribution2 dist do_nothing
+
+

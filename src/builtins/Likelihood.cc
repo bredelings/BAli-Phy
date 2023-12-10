@@ -5,6 +5,7 @@
 #include "dp/2way.H"
 #include "substitution/ops.H"
 #include "substitution/likelihood.H"
+#include "computation/expression/bool.H"
 
 using std::vector;
 using std::pair;
@@ -108,6 +109,47 @@ extern "C" closure builtin_function_calcRootProb(OperationArgs& Args)
 						   arg2.as_<EVector>(),       // A
 						   arg3.as_<Box<Matrix>>());  // F
     return {Pr};
+}
+
+extern "C" closure builtin_function_peelBranch2(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    bool arg5 = is_bool_true(Args.evaluate(5));
+
+    return substitution::peel_branch2(arg0.as_<EVector>(),        // LCN
+				      arg1.as_<EVector>(),        // LCB
+				      arg2.as_<EVector>(),        // A
+				      arg3.as_<EVector>(),        // transition_P
+				      arg4.as_<Box<Matrix>>(),    // F
+				      arg5);
+}
+
+extern "C" closure builtin_function_calcRootProb2(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    log_double_t Pr = substitution::calc_root_prob2(arg0.as_<EVector>(),       // LCN
+						    arg1.as_<EVector>(),       // LCB
+						    arg2.as_<EVector>(),       // A
+						    arg3.as_<Box<Matrix>>());  // F
+    return {Pr};
+}
+
+extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+
+    object_ptr<Box<Matrix>> F2 = new Box<Matrix>(propagate_frequencies(arg0.as_<Box<Matrix>>(), // F
+								       arg1.as_<EVector>()));   // transition_P
+    return F2;
 }
 
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)

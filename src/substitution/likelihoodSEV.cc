@@ -939,20 +939,7 @@ namespace substitution
             s_out++;
         }
 
-	LCB_OUT->away_from_root_WF = Matrix(n_models, n_states);
-	auto& F2 = LCB_OUT->away_from_root_WF.value();
-	for(int m = 0;m<n_models;m++)
-	{
-	    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-	    for(int s2=0;s2<n_states;s2++)
-	    {
-		double p = 0;
-		for(int s1=0;s1<n_states;s1++)
-		    p += f(m,s1) * Q(s2,s1); // Q is transposed, so Q(s2,s1) is Pr(s1->s2)
-		F2(m,s2) = p;
-	    }
-	    // TODO - maybe normalize these to sum to one to reduce roundoff error?
-	}
+	LCB_OUT->away_from_root_WF = propagate_frequencies(f, transition_P);
 
         return LCB_OUT;
     }

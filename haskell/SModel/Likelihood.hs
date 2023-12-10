@@ -22,6 +22,9 @@ data CondLikes
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
 foreign import bpcall "Likelihood:" calcRootProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:" peelBranch :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "Likelihood:" calcRootProb2 :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import bpcall "Likelihood:" peelBranch2 :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> Bool -> CondLikes
+foreign import bpcall "Likelihood:" propagateFrequencies :: Matrix Double -> EVector (Matrix Double) -> Matrix Double
 
 -- ancestral sequence sampling for connected-CLVs
 foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
@@ -58,6 +61,26 @@ peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t ro
                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                            in calcRootProb nodeCLV clsIn asIn f
 
+cached_conditional_likelihoods2 t nodeCLVs as ps fs = let lc    = getEdgesSet t & IntMap.fromSet lcf
+                                                          lcf b = let p = ps IntMap.! b
+                                                                      inEdges = edgesBeforeEdgeSet t b
+                                                                      node = sourceNode t b
+                                                                      nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
+                                                                      branchCLVs = IntMap.restrictKeysToVector lc inEdges
+                                                                      asIn  = IntMap.restrictKeysToVector as inEdges
+                                                                  in peelBranch2 nodeCLV branchCLVs asIn p (fs IntMap.! node) (not $ toward_root t b)
+                                                      in lc
+
+peel_likelihood2 t nodeCLVs cls as fs root = let inEdges = edgesTowardNodeSet t root
+                                                 nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                 clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                 asIn  = IntMap.restrictKeysToVector as inEdges
+                                             in calcRootProb2 nodeCLV clsIn asIn (fs IntMap.! root)
+
+frequenciesOnTree t f ps = let fs = getNodesSet t & IntMap.fromSet getF
+                               getF node | Just b <- branchFromParent t node = propagateFrequencies (fs IntMap.! sourceNode t b) (ps IntMap.! b)
+                                         | otherwise      = f
+                           in fs
 
 sample_ancestral_sequences t root nodeCLVs as ps f cl =
     let rt = add_root root t
@@ -99,7 +122,6 @@ cachedConditionalLikelihoodsSEV2 t nodeCLVs ps f = let clvs = getEdgesSet t & In
                                                                             clsIn = IntMap.restrictKeysToVector clvs inEdges
                                                                             node = sourceNode t b
                                                                             nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                            f' = if isRoot t node then Just f else Nothing
                                                                         in peelBranchSEV2 nodeCLs clsIn p f (not $ toward_root t b)
                                                    in clvs
 
