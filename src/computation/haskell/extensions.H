@@ -31,6 +31,7 @@ enum class LangExt
     BinaryLiterals,
     ConstrainedClassMethods,
     ConstraintKinds,
+    DataKinds,
     DeriveDataTypeable,
     DeriveFoldable,
     DeriveFunctor,

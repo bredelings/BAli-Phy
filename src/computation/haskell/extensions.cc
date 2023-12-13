@@ -8,6 +8,7 @@ using std::optional;
 
 map<string,LangExt> ext_to_bit =
 {
+    {"DataKinds",                   {LangExt::DataKinds}},
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
     {"ExistentialQuantification",   {LangExt::ExistentialQuantification}},
     {"ExtendedDefaultRules",        {LangExt::ExtendedDefaultRules}},
@@ -27,9 +28,11 @@ map<string,LangExt> ext_to_bit =
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
+    {"PolyKinds",                   {LangExt::PolyKinds}},
     {"RankNTypes",                  {LangExt::RankNTypes}},            // implies ExplicitForall
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
     {"TypeFamilies",                {LangExt::TypeFamilies}},          // implies MonoLocalBinds
+    {"TypeOperators",               {LangExt::TypeOperators}},
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
     {"StarIsType",                  {LangExt::StarIsType}},
 };
