@@ -21,8 +21,15 @@ class (Real a, Enum a) => Integral a  where
     divMod  :: a -> a -> (a,a)
     toInteger :: a -> Integer
 
+    div x y = d where (d,_) = divMod x y
+    mod x y = m where (_,m) = divMod x y
+    quot x y = q where (q,_) = quotRem x y
+    rem x y = r where (_,r) = quotRem x y
+
+    divMod n d          =  if signum r == negate (signum d) then (q-1, r+d) else qr
+                           where qr@(q,r) = quotRem n d
+
     quotRem x y = (x `quot` y, x `rem` y)
-    divMod x y = (x `div` y, x `mod` y)
 
 foreign import bpcall "Prelude:"  div_int :: Int -> Int -> Int
 foreign import bpcall "Prelude:"  mod_int :: Int -> Int -> Int
