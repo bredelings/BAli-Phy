@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Ord (module Data.Eq,
+                 Ordering (..),
                  Ord,
                 (<),
                 (<=),
