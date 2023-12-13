@@ -32,13 +32,28 @@ class Enum a where
 
     enumFrom n = n:enumFrom (succ n)
 
+    enumFromTo n m | fromEnum n <= fromEnum m     = n : enumFromTo (succ n) m
+                   | otherwise                    = []
+
+    enumFromThen n n' = n : n' : worker (f x) (f x n') where
+             worker s v = v : worker s (s v)
+             x = fromEnum n' - fromEnum n
+             f n y  | n > 0 = f (n - 1) (succ y)
+                    | n < 0 = f (n + 1) (pred y)
+                    | otherwise = y
+
+    enumFromThenTo n n' m = worker (f x) (c x) n m where
+             x = fromEnum n' - fromEnum n
+             c x = bool (>=) (<=) (x > 0)
+             f n y | n > 0      = f (n - 1) (succ y)
+                   | n < 0      = f (n + 1) (pred y)
+                   | otherwise  = y
+             worker s c v m | c (fromEnum v) (fromEnum m)      = v : worker s c (s v) m
+                            | otherwise  = []
 
 instance Enum Char where
     toEnum n = intToChar n
     fromEnum n = charToInt n
-
-    enumFromTo n m | fromEnum n <= fromEnum m    = n:enumFromTo (succ n) m
-                   | otherwise                   = []
 
     enumFromThen from next = enumByFrom (next-from) from
 
@@ -48,9 +63,6 @@ instance Enum Int where
     toEnum n = n
     fromEnum n = n
 
-    enumFromTo n m | fromEnum n <= fromEnum m    = n:enumFromTo (succ n) m
-                   | otherwise                   = []
-
     enumFromThen from next = enumByFrom (next-from) from
 
     enumFromThenTo from next to = enumByToFrom (next - from) to from
@@ -59,9 +71,6 @@ instance Enum Integer where
     toEnum n = intToInteger n
     fromEnum n = integerToInt n
 
-    enumFromTo n m | fromEnum n <= fromEnum m    = n:enumFromTo (succ n) m
-                   | otherwise                   = []
-
     enumFromThen from next = enumByFrom (next-from) from
 
     enumFromThenTo from next to = enumByToFrom (next - from) to from
@@ -69,9 +78,6 @@ instance Enum Integer where
 instance Enum Double where
     toEnum n = intToDouble n
     fromEnum x = error "fromEnum: Double"
-
-    enumFromTo x y | x < y      = x:enumFromTo (x+1) y
-                   | otherwise  = []
 
     enumFromThen from next = enumByFrom (next-from) from
 
