@@ -10,7 +10,6 @@ import           Data.Matrix
 import           Tree
 import           SModel.EigenExp
 import           SModel.LikelihoodMixtureModel
-import           Data.Type.Bool
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 
@@ -93,7 +92,7 @@ instance HasAlphabet ReversibleMarkov where
     getAlphabet (ReversibleMarkov a _ _ _) = a
 
 instance SimpleSModel ReversibleMarkov where
-    type instance IsReversible ReversibleMarkov = TrueType
+    type instance IsReversible ReversibleMarkov = Reversible
     branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]

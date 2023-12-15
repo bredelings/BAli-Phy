@@ -28,8 +28,6 @@ import Data.Maybe (fromJust)
 
 import Control.Monad.Fix -- for rec
 
-import Data.Type.Bool
-
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
@@ -88,13 +86,13 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
 
   return ([likelihood], prop)
 
-instance Dist (PhyloCTMC t Int s TrueType) where
-    type Result (PhyloCTMC t Int s TrueType) = AlignedCharacterData
+instance Dist (PhyloCTMC t Int s Reversible) where
+    type Result (PhyloCTMC t Int s Reversible) = AlignedCharacterData
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s TrueType) where
-    type DistProperties (PhyloCTMC t Int s TrueType) = PhyloCTMCProperties
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s Reversible) where
+    type DistProperties (PhyloCTMC t Int s Reversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length smodel scale
 
 -- This is imported twice, which is ugly.
@@ -114,7 +112,7 @@ sampleComponentStatesFixed rtree rootLength smodel scale =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s TrueType) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s Reversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -125,7 +123,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s TrueType) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s Reversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
@@ -188,13 +186,13 @@ annotated_subst_likelihood_fixed_A2 tree length smodel scale sequenceData = do
 
   return ([likelihood], prop)
 
-instance Dist (PhyloCTMC t Int s FalseType) where
-    type Result (PhyloCTMC t Int s FalseType) = AlignedCharacterData
+instance Dist (PhyloCTMC t Int s NonReversible) where
+    type Result (PhyloCTMC t Int s NonReversible) = AlignedCharacterData
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasRoots t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s FalseType) where
-    type DistProperties (PhyloCTMC t Int s FalseType) = PhyloCTMCProperties
+instance (HasLabels t, HasRoots t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonReversible) where
+    type DistProperties (PhyloCTMC t Int s NonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A2 tree length smodel scale
 
 
@@ -214,7 +212,7 @@ sampleComponentStatesFixed2 rtree rootLength smodel scale =  do
 -- Should hasRoots t imply HasRoots (Rooted t)?
 -- Where is (Rooted t) coming up?  Can we remove it?
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s FalseType) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonReversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -225,7 +223,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoots t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s FalseType) where
+instance (IsTree t, HasRoots t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
