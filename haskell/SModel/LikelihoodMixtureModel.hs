@@ -22,9 +22,6 @@ class LikelihoodMixtureComponent m where
     _transitionProbabilities :: m -> Int -> Matrix Double
 
     _rootFrequencies :: m -> MixtureIndex -> EVector Double
-    -- This means that all the transition_probability matrices in a component
-    -- satisfy detailed balance with the root frequencies
-    _isReversible :: m -> Bool
 
 
 class LikelihoodMixtureModel m where
@@ -47,11 +44,6 @@ class LikelihoodMixtureModel m where
     rootFrequencies :: m -> MixtureIndex -> EVector Double
 
     numComponents m = length $ componentProbabilities m
-
-    -- This means that all the transition_probability matrices in a component
-    -- satisfy detailed balance with the root frequencies
-    isReversible :: m -> Bool
-
 
 -- There should be an easy enough function to compute the frequencies at each node
 -- for each mixture component... we should make an Array of Arrays.

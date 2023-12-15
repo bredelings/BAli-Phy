@@ -9,7 +9,7 @@ foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matr
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
-foreign import bpcall "SModel:compute_stationary_freqs" builtin_get_pi :: Matrix Double -> EVector Double
+foreign import bpcall "SModel:compute_stationary_freqs" builtin_getPi :: Matrix Double -> EVector Double
 
 -- We don't have rates here, because rates require a concept of states being "equal".
 -- For cases like markov modulated models, the rate we care about is the rate of switching letter,
@@ -27,12 +27,12 @@ foreign import bpcall "SModel:compute_stationary_freqs" builtin_get_pi :: Matrix
 -- Originally, it probably was a way to avoid recomputing the eigensystem when rescaling.
 
 class Scalable c => CTMC c where
-    get_q :: c -> Matrix Double
-    get_pi :: c -> EVector Double
+    getQ :: c -> Matrix Double
+    getPi :: c -> EVector Double
     qExp :: c -> Matrix Double
 
-    get_pi m = builtin_get_pi (get_q m)
-    qExp m = mexp (get_q m) 1.0
+    getPi m = builtin_getPi (getQ m)
+    qExp m = mexp (getQ m) 1
 
 -- Should I add gtr, equ n x, and f81 to this class? Probably...
 
@@ -44,7 +44,7 @@ instance Scalable (Matrix Double) where
     scale f m = scaleMatrix f m
 
 instance CTMC (Matrix Double) where
-    get_q m = m
+    getQ m = m
 
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
@@ -52,10 +52,10 @@ data Markov = Markov (Matrix Double) (EVector Double) Double
 
 -- can I hide the Markov constructor?
 -- should I rename this function to ctmc?
-non_reversible_markov q pi = Markov q_fixed pi 1.0 where
+non_reversible_markov q pi = Markov q_fixed pi 1 where
     q_fixed = fixup_diagonal_rates q
 
-non_reversible_markov' q = Markov q_fixed (builtin_get_pi q_fixed) 1.0 where
+non_reversible_markov' q = Markov q_fixed (builtin_getPi q_fixed) 1 where
     q_fixed = fixup_diagonal_rates q
 
 non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
@@ -64,8 +64,8 @@ instance Scalable Markov where
     scale f (Markov q pi s) = Markov q pi (s*f)
 
 instance CTMC Markov where
-    get_q  (Markov q _  factor) = scaleMatrix factor q
-    get_pi (Markov _ pi _     ) = pi
+    getQ  (Markov q _  factor) = scaleMatrix factor q
+    getPi (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
 data ReversibleMarkov = ReversibleMarkov Markov
@@ -74,11 +74,11 @@ instance Scalable ReversibleMarkov where
     scale f (ReversibleMarkov m) = ReversibleMarkov $ scale f m
 
 instance CTMC ReversibleMarkov where
-    get_q  (ReversibleMarkov m) = get_q m
-    get_pi (ReversibleMarkov m) = get_pi m
-    qExp   (ReversibleMarkov m) = qExp m
+    getQ  (ReversibleMarkov m) = getQ m
+    getPi (ReversibleMarkov m) = getPi m
+    qExp  (ReversibleMarkov m) = qExp m
 
-plus_f_matrix pi = plus_gwf_matrix pi 1.0
+plus_f_matrix pi = plus_gwf_matrix pi 1
 
 reversible_markov q pi = ReversibleMarkov $ non_reversible_markov q pi
 

@@ -1,7 +1,7 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency, module Data.Matrix) where
 
 import qualified Markov
-import           Markov (CTMC, get_q, get_pi, qExp)
+import           Markov (CTMC, getQ, getPi, qExp)
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -45,17 +45,17 @@ get_smap (ReversibleMarkov a s m r) = s
 
 instance CTMC ReversibleMarkov where
     qExp (ReversibleMarkov _ _ m _) = qExp m
-    get_pi (ReversibleMarkov _ _ m _) = get_pi m
-    get_q (ReversibleMarkov _ _ m  _) = get_q m
+    getPi (ReversibleMarkov _ _ m _) = getPi m
+    getQ (ReversibleMarkov _ _ m  _) = getQ m
 
-frequencies = get_pi
+frequencies = getPi
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov a smap q pi = ReversibleMarkov a smap rm rate where
     rm = Markov.reversible_markov q pi
-    rate = get_equilibrium_rate a smap (get_q rm) pi
+    rate = get_equilibrium_rate a smap (getQ rm) pi
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -113,7 +113,7 @@ instance RateModel ReversibleMarkov where
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
 instance Show ReversibleMarkov where
-    show q = show $ get_q q
+    show q = show $ getQ q
 
 instance HasBranchLengths t => LikelihoodMixtureModel (ReversibleMarkov,t) where
     alphabet (m,_) = getAlphabet m
@@ -123,5 +123,5 @@ instance HasBranchLengths t => LikelihoodMixtureModel (ReversibleMarkov,t) where
     stateToObservedState ((ReversibleMarkov _ smap _ _ ),_) (MixtureIndex 0) = smap
     numStates m component = vector_size $ stateToObservedState m component
     transitionProbabilities (smodel,tree) (MixtureIndex 0) b = qExp $ scale (branch_length tree b/r) smodel where r = rate smodel
-    rootFrequencies (m,_) (MixtureIndex 0) = get_pi m
-    isReversible m = True
+    rootFrequencies (m,_) (MixtureIndex 0) = getPi m
+
