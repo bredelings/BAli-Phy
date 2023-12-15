@@ -5,6 +5,7 @@ import Bio.Alphabet
 import Tree
 import Data.Matrix
 import qualified Data.IntMap as IntMap (fromSet)
+import Data.Type.Bool
 
 data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
 get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
@@ -24,6 +25,8 @@ get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_
 -}
 
 class HasAlphabet m => SimpleSModel m where
+    type family IsReversible m
+    type instance IsReversible m = FalseType
     stateLetters :: m -> EVector Int
     branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]
