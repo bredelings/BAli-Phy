@@ -48,16 +48,18 @@ instance CTMC Markov where
     getPi (Markov _ _ m _) = getPi m
     getQ (Markov _ _ m  _) = getQ m
 
-data ReversibleMarkov = ReversibleMarkov Markov
+data ReversibleMarkov = Reversible Markov
+
+reversible = Reversible
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap ReversibleMarkov where
-    get_smap (ReversibleMarkov m) = get_smap m
+    get_smap (Reversible m) = get_smap m
 
 instance CTMC ReversibleMarkov where
-    qExp (ReversibleMarkov m) = qExp m
-    getPi (ReversibleMarkov m) = getPi m
-    getQ (ReversibleMarkov m) = getQ m
+    qExp (Reversible m) = qExp m
+    getPi (Reversible m) = getPi m
+    getQ (Reversible m) = getQ m
 
 frequencies = getPi
 
@@ -73,14 +75,11 @@ markov' a smap q = Markov a smap rm rate where
     rm = Markov.markov' q
     rate = get_equilibrium_rate a smap (getQ rm) (getPi rm)
 
-reversibleMarkov a smap q pi = ReversibleMarkov $ markov a smap q pi
-reversibleMarkov' a smap q = ReversibleMarkov $ markov' a smap q
-
 equ a = Markov.equ (alphabetSize a) 1.0
 
 gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
-gtr a s pi = reversibleMarkov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
+gtr a s pi = reversible $ markov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
 
 f81     pi a = gtr a (equ a) pi
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
@@ -102,7 +101,7 @@ gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (letters a)
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
-plus_gwf a pi f s = reversibleMarkov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
+plus_gwf a pi f s = reversible $ markov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
 
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
@@ -111,7 +110,7 @@ instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
 instance HasAlphabet ReversibleMarkov where
-    getAlphabet (ReversibleMarkov m) = getAlphabet m
+    getAlphabet (Reversible m) = getAlphabet m
 
 instance SimpleSModel Markov where
     type instance IsReversible Markov = NonReversible
@@ -135,13 +134,13 @@ instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)
 
 instance Scalable ReversibleMarkov where
-    scale x (ReversibleMarkov m) = ReversibleMarkov (scale x m)
+    scale x (Reversible m) = Reversible (scale x m)
 
 instance RateModel Markov where
     rate (Markov _ _ _ r) = r
 
 instance RateModel ReversibleMarkov where
-    rate (ReversibleMarkov m) = rate m
+    rate (Reversible m) = rate m
 
 -- A markov model needs a map from state -> letter in order to have a rate!
 -- For codon models, we basically use smap = id for nucleotides (then divide by three)
@@ -153,5 +152,5 @@ instance Show Markov where
     show q = show $ getQ q
 
 instance Show ReversibleMarkov where
-    show (ReversibleMarkov m) = show m
+    show (Reversible m) = show m
 

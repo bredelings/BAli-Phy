@@ -20,7 +20,7 @@ modulated_markov_pi pis level_probs = builtin_modulated_markov_pi (list_to_vecto
 modulated_markov_smap smaps = builtin_modulated_markov_smap (list_to_vector smaps)
 
 -- This could get renamed, after I look at the paper that uses the term "modulated markov"
-modulated_markov models rates_between level_probs = reversibleMarkov a smap q pi where
+modulated_markov models rates_between level_probs = reversible $ markov a smap q pi where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getPi models
