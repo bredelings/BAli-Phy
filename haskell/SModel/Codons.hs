@@ -48,6 +48,6 @@ x3_sym a s = singlet_to_triplet_rates a s s s
 x3 a q = x3x3 a q q q
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS omega m@(ReversibleMarkov a s _ r) = reversibleMarkov a s q pi where
+dNdS omega m@(ReversibleMarkov (Markov a s _ r)) = reversibleMarkov a s q pi where
     pi = getPi m
     q = (getQ m) %*% dNdS_matrix a omega

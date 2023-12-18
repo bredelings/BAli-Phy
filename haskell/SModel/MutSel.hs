@@ -12,7 +12,7 @@ import Markov (getQ, getPi)
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 
-mut_sel ws' m0@(ReversibleMarkov a smap _ _) = reversibleMarkov a smap q pi where
+mut_sel ws' m0@(ReversibleMarkov (Markov a smap _ _)) = reversibleMarkov a smap q pi where
     q0 = getQ m0
     pi0 = getPi m0
     ws = list_to_vector ws'
@@ -23,7 +23,7 @@ mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (letters a) w' "fitnesses"
     a = getAlphabet q0
 
-mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _) = mut_sel (aa_to_codon codon_a ws) q
+mut_sel_aa ws q@(ReversibleMarkov (Markov codon_a _ _ _)) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"

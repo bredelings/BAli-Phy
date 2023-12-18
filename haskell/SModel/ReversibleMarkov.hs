@@ -37,17 +37,6 @@ foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alph
 --   that is, all transition_p matricies in component m satisfy detailed balance with respect to the root frequences in component m
 --
 
-data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Markov.ReversibleMarkov Double
-
--- This is used both for observations, and also to determine which states are the same for computing rates.
-instance HasSMap ReversibleMarkov where
-    get_smap (ReversibleMarkov _ s _ _) = s
-
-instance CTMC ReversibleMarkov where
-    qExp (ReversibleMarkov _ _ m _) = qExp m
-    getPi (ReversibleMarkov _ _ m _) = getPi m
-    getQ (ReversibleMarkov _ _ m  _) = getQ m
-
 data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
@@ -59,14 +48,33 @@ instance CTMC Markov where
     getPi (Markov _ _ m _) = getPi m
     getQ (Markov _ _ m  _) = getQ m
 
+data ReversibleMarkov = ReversibleMarkov Markov
+
+-- This is used both for observations, and also to determine which states are the same for computing rates.
+instance HasSMap ReversibleMarkov where
+    get_smap (ReversibleMarkov m) = get_smap m
+
+instance CTMC ReversibleMarkov where
+    qExp (ReversibleMarkov m) = qExp m
+    getPi (ReversibleMarkov m) = getPi m
+    getQ (ReversibleMarkov m) = getQ m
+
 frequencies = getPi
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversibleMarkov a smap q pi = ReversibleMarkov a smap rm rate where
-    rm = Markov.reversibleMarkov q pi
+markov a smap q pi = Markov a smap rm rate where
+    rm = Markov.markov q pi
     rate = get_equilibrium_rate a smap (getQ rm) pi
+
+-- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
+markov' a smap q = Markov a smap rm rate where
+    rm = Markov.markov' q
+    rate = get_equilibrium_rate a smap (getQ rm) (getPi rm)
+
+reversibleMarkov a smap q pi = ReversibleMarkov $ markov a smap q pi
+reversibleMarkov' a smap q = ReversibleMarkov $ markov' a smap q
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -99,30 +107,11 @@ plus_gwf a pi f s = reversibleMarkov a (simple_smap a) (s %*% plus_gwf_matrix pi
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
--- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov a smap q pi = Markov a smap rm rate where
-    rm = Markov.markov q pi
-    rate = get_equilibrium_rate a smap (getQ rm) pi
-
--- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov' a smap q = Markov a smap rm rate where
-    rm = Markov.markov' q
-    rate = get_equilibrium_rate a smap (getQ rm) (getPi rm)
-
-instance HasAlphabet ReversibleMarkov where
-    getAlphabet (ReversibleMarkov a _ _ _) = a
-
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
-instance SimpleSModel ReversibleMarkov where
-    type instance IsReversible ReversibleMarkov = Reversible
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
-        where r = rate smodel
-    distribution _ = [1.0]
-    nBaseModels _ = 1
-    stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [frequencies smodel]!!i
+instance HasAlphabet ReversibleMarkov where
+    getAlphabet (ReversibleMarkov m) = getAlphabet m
 
 instance SimpleSModel Markov where
     type instance IsReversible Markov = NonReversible
@@ -133,17 +122,26 @@ instance SimpleSModel Markov where
     stateLetters rm = get_smap rm
     componentFrequencies smodel i = [frequencies smodel]!!i
 
-instance Scalable ReversibleMarkov where
-    scale x (ReversibleMarkov a s rm r) = ReversibleMarkov a s (scale x rm) (x*r)
+instance SimpleSModel ReversibleMarkov where
+    type instance IsReversible ReversibleMarkov = Reversible
+    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
+        where r = rate smodel
+    distribution _ = [1.0]
+    nBaseModels _ = 1
+    stateLetters rm = get_smap rm
+    componentFrequencies smodel i = [frequencies smodel]!!i
 
 instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)
 
-instance RateModel ReversibleMarkov where
-    rate (ReversibleMarkov _ _ _ r) = r
+instance Scalable ReversibleMarkov where
+    scale x (ReversibleMarkov m) = ReversibleMarkov (scale x m)
 
 instance RateModel Markov where
     rate (Markov _ _ _ r) = r
+
+instance RateModel ReversibleMarkov where
+    rate (ReversibleMarkov m) = rate m
 
 -- A markov model needs a map from state -> letter in order to have a rate!
 -- For codon models, we basically use smap = id for nucleotides (then divide by three)
@@ -151,8 +149,9 @@ instance RateModel Markov where
 -- If we had a covarion model on codons, then we'd need to first collaps the state to
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
-instance Show ReversibleMarkov where
-    show q = show $ getQ q
-
 instance Show Markov where
     show q = show $ getQ q
+
+instance Show ReversibleMarkov where
+    show (ReversibleMarkov m) = show m
+
