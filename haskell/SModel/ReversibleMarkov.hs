@@ -9,7 +9,6 @@ import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
 import           SModel.EigenExp
-import           SModel.LikelihoodMixtureModel
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 
@@ -115,14 +114,4 @@ instance RateModel ReversibleMarkov where
 
 instance Show ReversibleMarkov where
     show q = show $ getQ q
-
-instance HasBranchLengths t => LikelihoodMixtureModel (ReversibleMarkov,t) where
-    alphabet (m,_) = getAlphabet m
-    numObservedStates m = length $ letters $ alphabet m
-    componentProbabilities (m,_) = [1.0]
-    numComponents _ = 1
-    stateToObservedState ((ReversibleMarkov _ smap _ _ ),_) (MixtureIndex 0) = smap
-    numStates m component = vector_size $ stateToObservedState m component
-    transitionProbabilities (smodel,tree) (MixtureIndex 0) b = qExp $ scale (branch_length tree b/r) smodel where r = rate smodel
-    rootFrequencies (m,_) (MixtureIndex 0) = getPi m
 
