@@ -41,7 +41,8 @@ foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alph
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Markov.ReversibleMarkov Double
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
-get_smap (ReversibleMarkov a s m r) = s
+instance HasSMap ReversibleMarkov where
+    get_smap (ReversibleMarkov _ s _ _) = s
 
 instance CTMC ReversibleMarkov where
     qExp (ReversibleMarkov _ _ m _) = qExp m
