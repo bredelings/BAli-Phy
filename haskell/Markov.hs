@@ -52,10 +52,10 @@ data Markov = Markov (Matrix Double) (EVector Double) Double
 
 -- can I hide the Markov constructor?
 -- should I rename this function to ctmc?
-nonReversibleMarkov q pi = Markov q_fixed pi 1 where
+markov q pi = Markov q_fixed pi 1 where
     q_fixed = fixup_diagonal_rates q
 
-nonReversibleMarkov' q = Markov q_fixed (builtin_getPi q_fixed) 1 where
+markov' q = Markov q_fixed (builtin_getPi q_fixed) 1 where
     q_fixed = fixup_diagonal_rates q
 
 non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
@@ -80,9 +80,9 @@ instance CTMC ReversibleMarkov where
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 
-reversibleMarkov q pi = ReversibleMarkov $ nonReversibleMarkov q pi
+reversibleMarkov q pi = ReversibleMarkov $ markov q pi
 
-reversibleMarkov' q = ReversibleMarkov $ nonReversibleMarkov' q
+reversibleMarkov' q = ReversibleMarkov $ markov' q
 
 gtr_sym n exchange = builtin_gtr_sym (list_to_vector exchange) n
 
