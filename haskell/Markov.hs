@@ -68,25 +68,23 @@ instance CTMC Markov where
     getPi (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
-data ReversibleMarkov = ReversibleMarkov Markov
+data ReversibleMarkov = Reversible Markov
+
+reversible = Reversible
 
 instance Scalable ReversibleMarkov where
-    scale f (ReversibleMarkov m) = ReversibleMarkov $ scale f m
+    scale f (Reversible m) = Reversible $ scale f m
 
 instance CTMC ReversibleMarkov where
-    getQ  (ReversibleMarkov m) = getQ m
-    getPi (ReversibleMarkov m) = getPi m
-    qExp  (ReversibleMarkov m) = qExp m
+    getQ  (Reversible m) = getQ m
+    getPi (Reversible m) = getPi m
+    qExp  (Reversible m) = qExp m
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 
-reversibleMarkov q pi = ReversibleMarkov $ markov q pi
-
-reversibleMarkov' q = ReversibleMarkov $ markov' q
-
 gtr_sym n exchange = builtin_gtr_sym (list_to_vector exchange) n
 
-gtr er pi = reversibleMarkov (er %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
+gtr er pi = reversible $ markov (er %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)
