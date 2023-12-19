@@ -103,6 +103,9 @@ number_pairs n = [ show x ++ "|" ++ show y | (x,y) <- all_pairs [1..n]]
 get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'")
 get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y
 
+getElement []                 x  = error ("No exchangeability specified for '" ++ x ++ "'")
+getElement ((key,value):rest) x  = if key == x then value else getElement rest x
+
 gtr_sym_from_numbers n es' = gtr_sym n es where
     npairs = all_pairs [1..n]
     es :: [Double]

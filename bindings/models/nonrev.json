@@ -1,0 +1,23 @@
+{
+    "name": "nonrev",
+    "title":"The General Time-Reversible rate matrix",
+    "result_type": "RevCTMC[a]",
+    "call": "nonRev'[@a,@rates]",
+    "import": ["SModel"],
+    "args": [
+        {
+            "arg_name": "rates",
+            "arg_type": "List[Tuple[String,Double]]",
+	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
+	    "description":"Symmetric exchangability matrix"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "get_state(alphabet)",
+	    "description": "The alphabet"
+        }
+    ],
+    "description": "The general non-reversible rate matrix Q(i,j)",
+    "extract": "all"
+}

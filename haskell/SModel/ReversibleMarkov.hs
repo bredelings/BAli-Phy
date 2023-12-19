@@ -19,8 +19,7 @@ jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
 
 gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
 
--- es' is a [(String,Double)] here
-letter_pair_names a = [l1++l2|(l1,l2) <- Markov.all_pairs (letters a)]
+letter_pair_names a = pairNames $ Markov.all_pairs (letters a)
 
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
@@ -38,7 +37,6 @@ plus_gwf a pi f s = reversible $ markov a (simple_smap a) (s %*% plus_gwf_matrix
 
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
-
 
 data ReversibleMarkov = Reversible Markov
 
