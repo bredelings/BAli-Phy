@@ -38,8 +38,6 @@ import SModel.Empirical
 import SModel.MarkovModulated
 import SModel.MutSel
 
-import SModel.LikelihoodMixtureModel
-
 import Data.Matrix
 
 data F81 = F81 Alphabet (EVector Int) () (EVector Double)
