@@ -1,4 +1,4 @@
-* 4.0-beta8 (unreleased)
+* 4.0-beta8 (Dec 19, 2023)
 - Usability tweaks
   + Write out tree with branch-lengths scaled according to weighted average of partition scales.
   + Print the alignment length including fixed-alignment partitions.
@@ -6,8 +6,19 @@
   + Update likelihoods and other infrastructure to handle multifurcating trees.
   + Update likelihoods and other infrastructure to handle data on internal nodes.
   + Compute CLVs for observed sequences.
+  + Allow tips with no observed sequences.
+  + Stop special-casing 1-node and 2-node trees.
+- Tools
+  * Add benchmarking script benchmark.py
+- Fixes
+  * Don't allocate new memory in matrix::operator=( ) if we don't have to.
+  * Test letter_mask, not letter fmask!
+  * Correctly handle ASR for 1-node and 2-node trees.
+  * Fix matrix transpose.
+- Testing
+  * Re-enable the sanitizer test.
 
-* 4.0-beta7 (Nor 1, 2023)
+* 4.0-beta7 (Nov 1, 2023)
 - Bug fixes:
   + Allow estimating the alignment with a fixed topology.
     - Don't crash trying NNI on fixed tree.
