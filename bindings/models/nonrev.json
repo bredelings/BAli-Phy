@@ -18,6 +18,12 @@
 	    "description": "The alphabet"
         }
     ],
+    "computed": [
+	{
+	    "name": "frequencies",
+	    "value": "labelledFrequencies[nonRev'[@a,@rates]]"
+	}
+    ],
     "description": "The general non-reversible rate matrix Q(i,j)",
     "extract": "all"
 }
