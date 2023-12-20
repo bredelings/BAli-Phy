@@ -587,6 +587,29 @@ compute_logged_quantities(do_block& model,
     return sub_loggers;
 }
 
+bool is_reversible(const ptree& t)
+{
+    if (t.get_value<string>() == "RevCTMC")
+	return true;
+    else if (t.get_value<string>() == "CTMC")
+	return false;
+    else if (t.get_value<string>() == "MixtureModel")
+	return is_reversible(t[0].second);
+    else if (t.get_value<string>() == "MultiMixtureModel")
+	return is_reversible(t[0].second);
+    else
+	throw myexception()<<"is_reversible: unrecognized type!";
+}
+
+bool is_reversible(const vector<model_t>& SMs)
+{
+    for(auto& SM: SMs)
+	if (not is_reversible(SM.type))
+	    return false;
+
+    return true;
+}
+
 std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
@@ -716,9 +739,20 @@ std::string generate_atmodel_program(const variables_map& args,
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
     }
+
+    if (not is_reversible(SMs))
+    {
+	model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"),var("topology")}}});
+    }
+
     // M4. Branch-length tree
     if (not fixed.count("tree"))
-        model.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    {
+	expression_ref tree_exp = {var("branch_length_tree"),topology_var,branch_lengths};
+	if (not is_reversible(SMs))
+	    tree_exp = {var("add_root"),var("root"),tree_exp};
+	model.let(tree_var, tree_exp);
+    }
 
     branch_lengths = {var("IntMap.elems"),branch_lengths};
 
