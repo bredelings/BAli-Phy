@@ -143,12 +143,6 @@ minimally_connect_characters leaf_sequences tree all_sequences = nodes & IntMap.
           node_masks = getConnectedStates leaf_sequences tree
           nodes = tree & getNodesSet
 
-allSameAs x xs = and ((x==) <$> xs)
-
-allSame []                       = error "allSame: nothing to compare!"
-allSame (x:xs) | allSameAs x xs  = Just x
-               | otherwise       = Nothing
-
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
     where missingSequence = list_to_vector $ replicate alignmentLength missingCharIndex

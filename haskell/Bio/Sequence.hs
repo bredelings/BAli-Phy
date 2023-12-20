@@ -118,6 +118,11 @@ mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet 
     where CharacterData _ indices = mkCharacterData alphabet sequences
           indices' = map (\(label,is) -> (label, strip_gaps is)) indices
 
+allSameAs x xs = and ((x==) <$> xs)
+
+allSame []                       = error "allSame: nothing to compare!"
+allSame (x:xs) | allSameAs x xs  = Just x
+               | otherwise       = Nothing
 -- We should check that the sequences are all the same length and error out otherwise.
 mkAlignedCharacterData alphabet sequences = Aligned $ mkCharacterData alphabet sequences
 
