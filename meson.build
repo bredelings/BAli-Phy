@@ -111,7 +111,7 @@ subdir('external/immer/')
 
 math_dep = cpp.find_library('m', required:false)
 
-small_fasta=files('examples/5S-rRNA/5d.fasta')
+small_fasta=files('examples/5S-rRNA/5d-muscle.fasta')
 big_fasta=files('examples/5S-rRNA/48-muscle.fasta')
 builtins = meson.project_build_root()/'src/builtins'
 packagepath = '--package-path=@0@:@1@'.format(builtins,meson.project_source_root())
