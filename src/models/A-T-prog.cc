@@ -6,6 +6,7 @@
 #include "util/set.H"
 #include "util/io.H"
 #include "models/setup.H"   // for model_t
+#include "models/parse.H"   // for unparse_type
 
 #include "computation/loader.H"
 #include "computation/expression/list.H"
@@ -598,7 +599,7 @@ bool is_reversible(const ptree& t)
     else if (t.get_value<string>() == "MultiMixtureModel")
 	return is_reversible(t[0].second);
     else
-	throw myexception()<<"is_reversible: unrecognized type!";
+	throw myexception()<<"is_reversible: unrecognized type "<<unparse_type(t)<<"!";
 }
 
 bool is_reversible(const vector<model_t>& SMs)
