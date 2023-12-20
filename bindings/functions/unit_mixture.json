@@ -8,7 +8,7 @@
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[a]"
+            "arg_type": "a"
         }
     ]
 }
