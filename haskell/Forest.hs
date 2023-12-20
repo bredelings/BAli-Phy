@@ -223,6 +223,10 @@ instance HasLabels t => HasLabels (WithRoots t) where
 instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
+instance HasBranchLengths t => HasBranchLengths (WithRoots t) where
+    branch_length (WithRoots t _ _) b   = branch_length t b
+
+
 rate_time_tree time_tree rates = WithBranchRates time_tree rates
 
 --
