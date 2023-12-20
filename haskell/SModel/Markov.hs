@@ -1,4 +1,4 @@
-module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix) where
+module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getPi) where
 
 import qualified Markov
 import           Markov (CTMC, getQ, getPi, qExp)
@@ -108,3 +108,6 @@ nonRev' a rates' = nonRev a rs
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
 
 
+labelledFrequencies m = zip (letters a) frequencies
+    where frequencies = list_from_vector $ getPi m
+          a = getAlphabet m
