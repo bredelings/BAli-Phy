@@ -57,6 +57,18 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    result.push_back({"submodel",model});
 	    model = result;
 	}
+	else
+	{
+	    t2.put_value("CTMC");
+	    E = convertible_to(model,t1,t2);
+	    if (E)
+	    {
+		ptree result;
+		result.put_value("unit_mixture");
+		result.push_back({"submodel",model});
+		model = result;
+	    }
+	}
     }
     else if (t2.get_value<string>() == "RevCTMC")
     {

@@ -515,6 +515,11 @@ model_t get_smodel(const Rules& R, const std::string& model, const string& what)
     catch (myexception& e) {};
 
     try {
+        return get_model(R, "CTMC[a]", model, what, {}, smodel_states);
+    }
+    catch (myexception& e) {};
+
+    try {
         return get_model(R, "MixtureModel[a]", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
