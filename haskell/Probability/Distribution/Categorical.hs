@@ -74,3 +74,7 @@ instance Sampleable (CategoricalOn a) where
 categorical_on pairs = CategoricalOn (listArray' xs) (listArray' ps)
     where xs = map fst pairs
           ps = map snd pairs
+
+uniformCategoricalOn xs = CategoricalOn (listArray' xs) (listArray' ps)
+    where ps = replicate n (1/fromIntegral n)
+          n = length xs
