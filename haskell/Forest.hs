@@ -215,6 +215,11 @@ instance (HasNodeTimes t, HasLabels t) => HasLabels (WithBranchRates t) where
     get_labels (WithBranchRates t _) = get_labels t
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
 
+instance HasLabels t => HasLabels (WithRoots t) where
+    get_label (WithRoots t _ _) node               = get_label t node
+    get_labels (WithRoots t _ _)                   = get_labels t
+    relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
+
 instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
 
