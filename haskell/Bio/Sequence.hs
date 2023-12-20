@@ -5,6 +5,7 @@ import Bio.Alphabet
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.BitVector
+import Data.Maybe (isJust)
 
 -- Dummy type that stands for the c++ `sequence` type
 -- Can we eliminate this?
@@ -123,8 +124,12 @@ allSameAs x xs = and ((x==) <$> xs)
 allSame []                       = error "allSame: nothing to compare!"
 allSame (x:xs) | allSameAs x xs  = Just x
                | otherwise       = Nothing
--- We should check that the sequences are all the same length and error out otherwise.
-mkAlignedCharacterData alphabet sequences = Aligned $ mkCharacterData alphabet sequences
+
+checkSameLengths d@(CharacterData _ sequences) | isJust $ allSame lengths = d
+                                               | otherwise                = error "Sequences have different lengths!"
+    where lengths = [vector_size x | (_,x) <- sequences]
+
+mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkCharacterData alphabet sequences
 
 unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, strip_gaps s) | (l,s) <- sequences])
 
