@@ -202,6 +202,7 @@ class IsGraph g => HasBranchLengths g where
     branch_length :: g -> Int -> Double
 
 branchLengths g = branch_length g <$> getUEdges g
+branchLengthsSet g = getUEdgesSet g & IntMap.fromSet (branch_length g)
 
 --   but could not do this for WithNodeTimes...
 class HasBranchLengths g => CanModifyBranchLengths g where
