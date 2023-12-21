@@ -148,13 +148,13 @@ annotated_subst_like_on_tree2 tree alignment smodel scale sequenceData = do
 
   return ([likelihood], prop)
 
-instance Dist (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
-    type Result (PhyloCTMC t (AlignmentOnTree t) s NonReversible) = UnalignedCharacterData
+instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) where
+    type Result (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) = UnalignedCharacterData
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
-    type DistProperties (PhyloCTMC t (AlignmentOnTree t) s NonReversible) = PhyloCTMCProperties
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) where
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment smodel scale
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
