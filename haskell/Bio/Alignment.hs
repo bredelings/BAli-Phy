@@ -36,7 +36,7 @@ data VectorPairIntInt -- ancestral sequences with (int letter, int category) for
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
 
-branch_hmms (model,_) tree scale = getUEdgesSet tree & IntMap.fromSet (model $ fmap (scale *) $ branch_lengths tree)
+branch_hmms (model,_) tree scale = getUEdgesSet tree & IntMap.fromSet (model $ fmap (scale *) $ branchLengthsSet tree)
 
 seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
     b = head $ edgesOutOfNode tree node
