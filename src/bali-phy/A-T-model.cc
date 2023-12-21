@@ -557,7 +557,10 @@ int get_num_models(const vector<optional<int>>& mapping)
 string get_alphabet_type(ptree type)
 {
     if (type.get_value<string>() == "MixtureModel" or type.get_value<string>() == "MultiMixtureModel")
-	type = type.begin()->second;
+    {
+	ptree tmp = type[0].second;
+	type = tmp;
+    }
 
     ptree alphabet_type;
     if (type.get_value<string>() == "RevCTMC" or type.get_value<string>() == "CTMC")
