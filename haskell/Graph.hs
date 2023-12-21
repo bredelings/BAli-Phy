@@ -223,14 +223,13 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
     getAttributes (WithBranchLengths t _)              = getAttributes t
 
-scale_branch_lengths factor (WithBranchLengths t ds) = (WithBranchLengths t ds')
-    where ds' = fmap (factor*) ds
+scale_branch_lengths factor g = modifyBranchLengths (\b -> factor * branch_length g b) g
 
 instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
     branch_length (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
 
 instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
-    modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.fromSet f (IntMap.keysSet ds))
+    modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.keysSet ds & IntMap.fromSet f)
 
 instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
     branch_length (WithLabels tree _) b = branch_length tree b
