@@ -40,54 +40,58 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     auto tree = context_ptr(C, tree_reg);
 
     //------------------------- Create the tree structure -----------------------//
-    if (has_constructor(tree.head(), "Graph.WithBranchLengths"))
+
+    while(not has_constructor(tree.head(), "Graph.Graph"))
     {
-        // We assume that the path to the array isn't changeable... ???
-        branch_durations_reg = tree[1].result().get_reg();
+	if (has_constructor(tree.head(), "Graph.WithBranchLengths"))
+	{
+	    // We assume that the path to the array isn't changeable... ???
+	    branch_durations_reg = tree[1].result().get_reg();
 
-        tree = tree[0];
-    }
+	    tree = tree[0];
+	}
 
-    if (has_constructor(tree.head(), "Forest.WithNodeTimes"))
-    {
-        // We assume that the path to the array isn't changeable... ???
-        node_times_reg = tree[1].result().get_reg();
+	if (has_constructor(tree.head(), "Forest.WithNodeTimes"))
+	{
+	    // We assume that the path to the array isn't changeable... ???
+	    node_times_reg = tree[1].result().get_reg();
 
-        tree = tree[0];
-    }
+	    tree = tree[0];
+	}
 
-    if (has_constructor(tree.head(), "Graph.WithLabels"))
-    {
-        assert(tree.size() == 2);
-        // FIXME - set labels!
+	if (has_constructor(tree.head(), "Graph.WithLabels"))
+	{
+	    assert(tree.size() == 2);
+	    // FIXME - set labels!
 
-        // Use the outermost set of labels.
-        if (not labels_reg)
-            labels_reg = tree[1].get_reg();
-        tree = tree[0];
-    }
+	    // Use the outermost set of labels.
+	    if (not labels_reg)
+		labels_reg = tree[1].get_reg();
+	    tree = tree[0];
+	}
 
-    if (has_constructor(tree.head(), "Forest.WithRoots"))
-    {
-        assert(tree.size() == 3);
+	if (has_constructor(tree.head(), "Forest.WithRoots"))
+	{
+	    assert(tree.size() == 3);
 
-        // We need to evaluate this to avoid getting an index_var.
-        root_reg = tree[1].get_reg();
+	    // We need to evaluate this to avoid getting an index_var.
+	    root_reg = tree[1].get_reg();
 
-        // We need to evaluate this to avoid getting an index_var.
-        away_from_root_reg = tree[2].get_reg();
+	    // We need to evaluate this to avoid getting an index_var.
+	    away_from_root_reg = tree[2].get_reg();
 
-        tree = tree[0];
-    }
+	    tree = tree[0];
+	}
 
-    if (has_constructor(tree.head(), "Tree.Tree"))
-    {
-        tree = tree[0];
-    }
+	if (has_constructor(tree.head(), "Tree.Tree"))
+	{
+	    tree = tree[0];
+	}
 
-    if (has_constructor(tree.head(), "Forest.Forest"))
-    {
-        tree = tree[0];
+	if (has_constructor(tree.head(), "Forest.Forest"))
+	{
+	    tree = tree[0];
+	}
     }
 
     assert(has_constructor(tree.head(),"Graph.Graph"));
