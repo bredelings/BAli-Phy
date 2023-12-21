@@ -554,6 +554,18 @@ int get_num_models(const vector<optional<int>>& mapping)
     return n;
 }
 
+string get_alphabet_type(ptree type)
+{
+    if (type.get_value<string>() == "MixtureModel" or type.get_value<string>() == "MultiMixtureModel")
+	type = type.begin()->second;
+
+    ptree alphabet_type;
+    if (type.get_value<string>() == "RevCTMC" or type.get_value<string>() == "CTMC")
+	alphabet_type = type.begin()->second;
+
+    return alphabet_type.get_value<string>();
+}
+
 std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                                int /* proc_id */, const fs::path& dir)
 {
@@ -595,7 +607,8 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
 
         auto type = full_smodels[i].type;
         auto& constraints = full_smodels[i].constraints;
-        auto alphabet_type = type.begin()->second;
+
+	auto alphabet_type = get_alphabet_type(type);
 
         vector<int> a_specified;
         vector<int> a_unspecified;
@@ -616,38 +629,38 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
                 if (alphabet_names[j] != alphabet_names[a_specified[0]])
                     throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
             string a = alphabet_names[a_specified[0]];
-            if (alphabet_type.get_value<string>() == "Codons")
+            if (alphabet_type == "Codons")
             {
                 if (a != "Codons")
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
             }
-            else if (alphabet_type.get_value<string>() == "Triplets")
+            else if (alphabet_type == "Triplets")
             {
                 if (a != "Triplets")
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
             }
-            else if (alphabet_type.get_value<string>() == "Doublets")
+            else if (alphabet_type == "Doublets")
             {
                 if (a != "Doublets")
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a doublet alphabet!";
             }
-            else if (alphabet_type.get_value<string>() == "AA")
+            else if (alphabet_type == "AA")
             {
                 if (a != "AA" and a != "Amino-Acids" and a != "Amino-AcidsWithStop")
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires an amino-acid alphabet!";
             }
         }
-        else if (alphabet_type.get_value<string>() == "Codons")
+        else if (alphabet_type == "Codons")
         {
             for(int j: smodel_names_mapping.partitions_for_item[i])
                 alphabet_names[j] = "Codons";
         }
-        else if (alphabet_type.get_value<string>() == "Triplets")
+        else if (alphabet_type == "Triplets")
         {
             for(int j: smodel_names_mapping.partitions_for_item[i])
                 alphabet_names[j] = "Triplets";
         }
-        else if (alphabet_type.get_value<string>() == "Doublets")
+        else if (alphabet_type == "Doublets")
         {
             for(int j: smodel_names_mapping.partitions_for_item[i])
                 alphabet_names[j] = "Doublets";
@@ -673,7 +686,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
                     alphabet_names[j] = "Doublets";
         }
 //      Use the auto-detected alphabet right now -- it leads to better error messages.
-//      else if (alphabet_type.get_value<string>() == "AA")
+//      else if (alphabet_type == "AA")
 //      {
 //          for(int j: smodel_names_mapping.partitions_for_item[i])
 //              alphabet_names[j] = "AA";
@@ -809,16 +822,16 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         auto type = full_smodels[i].type;
         auto alphabet_type = type.begin()->second;
 
-        if (alphabet_type.get_value<string>() == "Codons" and not dynamic_cast<const Codons*>(&a))
+        if (alphabet_type == "Codons" and not dynamic_cast<const Codons*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
 
-        if (alphabet_type.get_value<string>() == "Triplets" and not dynamic_cast<const Triplets*>(&a))
+        if (alphabet_type == "Triplets" and not dynamic_cast<const Triplets*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a triplet alphabet, but sequences are '"<<a.name<<"'";;
 
-        if (alphabet_type.get_value<string>() == "Doublets" and not dynamic_cast<const Doublets*>(&a))
+        if (alphabet_type == "Doublets" and not dynamic_cast<const Doublets*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a doublet alphabet, but sequences are '"<<a.name<<"'";;
 
-        if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))
+        if (alphabet_type == "AA" and not dynamic_cast<const AminoAcids*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
     }
 

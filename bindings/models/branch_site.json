@@ -1,7 +1,7 @@
 {
     "name": "branch_site",
     "title": "The branch-site test for positive selection from Zhang et al. (2005)",
-    "result_type": "MultiMixtureModel[Codons[a]]",
+    "result_type": "MultiMixtureModel[a[Codons[b]]]",
     "citation": {
 	"type": "article",
 	"title": "Evaluation of an improved branch-site likelihood method for detecting positive selection at the molecular level",
@@ -45,7 +45,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "Function[Double,RevCTMC[a]]",
+            "arg_type": "Function[Double,a[Codons[b]]]",
             "default_value": "function(w:gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },

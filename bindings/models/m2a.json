@@ -1,13 +1,13 @@
 {
     "name": "m2a",
     "synonyms": ["M2a"],
-    "result_type": "MixtureModel[Codons[a]]",
+    "result_type": "MixtureModel[a[Codons[b]]]",
     "call": "SModel.m2a[@omega0,@p0,@posP,@posW,@submodel]",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "Function[Double,RevCTMC[a]]",
+            "arg_type": "Function[Double,a[Codons[b]]]",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },

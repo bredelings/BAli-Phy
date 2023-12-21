@@ -2,7 +2,7 @@
     "name": "m8a_test",
     "title": "Bayesian version of the M8a test for positive selection",
     "synonyms": ["M8a_Test"],
-    "result_type": "MixtureModel[Codons[a]]",
+    "result_type": "MixtureModel[a[Codons[b]]]",
     "call": "SModel.m8a_test[@mu,@gamma,@n,@posP,@posW,@posSelection,@submodel]",
     "import": ["SModel"],
     "args": [
@@ -14,7 +14,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "Function[Double,RevCTMC[a]]",
+            "arg_type": "Function[Double,a[Codons[b]]]",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },
