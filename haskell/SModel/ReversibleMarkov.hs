@@ -42,6 +42,8 @@ data ReversibleMarkov = Reversible Markov
 
 reversible = Reversible
 
+nonreversible (Reversible m) = m
+
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap ReversibleMarkov where
     get_smap (Reversible m) = get_smap m
