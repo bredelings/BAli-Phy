@@ -129,20 +129,20 @@ alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
   SamplingRate 0.1 $ add_move $ realign_from_tips tree as
 
-data PhyloAlignment t = (HasBranchLengths t, HasLabels t, IsTree t) => PhyloAlignment t IModel (Map.Map Text Int) (IntMap PairHMM)
+data PhyloAlignment t = (HasLabels t, IsTree t) => PhyloAlignment t IModel (Map.Map Text Int) (IntMap PairHMM)
 
-instance HasBranchLengths t => Dist (PhyloAlignment t) where
+instance Dist (PhyloAlignment t) where
     type Result (PhyloAlignment t) = AlignmentOnTree t
     dist_name _ = "PhyloAlignment"
 
-instance HasBranchLengths t => Sampleable (PhyloAlignment t) where
+instance Sampleable (PhyloAlignment t) where
     sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
 
-instance HasBranchLengths t => HasAnnotatedPdf (PhyloAlignment t) where
+instance HasAnnotatedPdf (PhyloAlignment t) where
     type DistProperties (PhyloAlignment t) = PhyloAlignmentProperties
     annotated_densities dist@(PhyloAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
 
-instance HasBranchLengths t => SampleableWithProps (PhyloAlignment t) where
+instance SampleableWithProps (PhyloAlignment t) where
     sampleWithProps dist = do
       x <- sample dist
       let props = getProperties' x dist
