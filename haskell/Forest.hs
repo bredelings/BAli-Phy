@@ -226,6 +226,8 @@ instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
 instance HasBranchLengths t => HasBranchLengths (WithRoots t) where
     branch_length (WithRoots t _ _) b   = branch_length t b
 
+instance CanModifyBranchLengths t => CanModifyBranchLengths (WithRoots t) where
+    modifyBranchLengths f (WithRoots t roots forward) = WithRoots (modifyBranchLengths f t) roots forward
 
 rate_time_tree time_tree rates = WithBranchRates time_tree rates
 
