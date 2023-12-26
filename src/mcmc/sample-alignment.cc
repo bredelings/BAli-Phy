@@ -54,6 +54,22 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     // `get_indices_n( )` just constructs a 1-row matrix from 0 to n-1.
     auto dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
 
+    /*
+     * OK, so here we need to handle (i) multifurcating nodes and (ii) non-reversible models.
+     *
+     * (i) For multifurcating nodes, this should be the same as the peeling routine, except that
+     *     we do not peel along the branch.
+     *     So we shouldn't need an index, and the order of columns should be unambiguous.
+     *
+     * (ii) For non-reversible models, we need to do just what the peeling routine does,
+     *      including apply root frequencies, and using the transposed P matrix if necessary,
+     *      but just not peel.
+     *
+     * Now, we could try and expose the type of calculator that is being used.  But it would probably
+     * be simpler to set this up as a property when we run the annotated likelihood routine.  Then we
+     * can simply compute the property without the C++ code having to know how the likelihood calculator works.
+     */
+
     DPmatrixEmit::EmissionProbs dists2;
     if (t.n_nodes() == 2)
     {
