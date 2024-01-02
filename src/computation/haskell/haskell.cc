@@ -964,7 +964,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             foreign_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(ldecl);
-        else if (decl.is_a<FamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
+        else if (decl.is_a<FamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>() or decl.is_a<DataFamilyInstanceDecl>())
             type_decls.push_back(ldecl);
         else if (decl.is_a<KindSigDecl>())
             type_decls.push_back(ldecl);
