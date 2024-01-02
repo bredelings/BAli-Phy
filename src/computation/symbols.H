@@ -68,6 +68,7 @@ struct symbol_info
 struct ClassInfo;
 struct TypeSynonymInfo;
 struct TypeFamInfo;
+struct DataFamInfo;
 
 struct type_info
 {
@@ -90,6 +91,9 @@ struct type_info
     struct type_fam_info {
         std::shared_ptr<TypeFamInfo> info;
     };
+    struct data_fam_info {
+	std::shared_ptr<DataFamInfo> info;
+    };
 
     bool is_type_other() const; // "->", but now also "~"
     const data_info* is_data() const;
@@ -99,10 +103,12 @@ struct type_info
           type_syn_info* is_type_syn();
     const type_fam_info* is_type_fam() const;
           type_fam_info* is_type_fam();
+    const data_fam_info* is_data_fam() const;
+          data_fam_info* is_data_fam();
 
     std::string name;
     // info/children
-    std::variant<std::monostate, class_info, data_info, type_syn_info, type_fam_info> info;
+    std::variant<std::monostate, class_info, data_info, type_syn_info, type_fam_info, data_fam_info> info;
     std::optional<fixity_info> fixity; // for the function arrow (->) only
     std::optional<int> arity;
 

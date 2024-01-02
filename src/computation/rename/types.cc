@@ -92,10 +92,8 @@ Haskell::Context renamer_state::rename(Haskell::Context context)
     return context;
 }
 
-Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
+Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
 {
-    qualify_name(decl.name);
-
     decl.context = rename(decl.context);
 
     if (decl.is_regular_decl())
@@ -136,6 +134,15 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
             constructors.type = rename_type(constructors.type);
         }
     }
+    return decl;
+}
+
+Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
+{
+    qualify_name(decl.name);
+
+    reinterpret_cast<Hs::DataDefn&>(decl) = rename( reinterpret_cast<Hs::DataDefn&>(decl) );
+
     return decl;
 }
 
@@ -217,6 +224,31 @@ Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstance
     return TIE;
 }
 
+Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanceDecl DI)
+{
+    // TIE.con = rename_type(TIE.con);
+    // But with a specific error message.
+    {
+	auto& [con_loc, tc] = DI.con;
+	auto& con_name = tc.name;
+
+	if (m.type_is_declared(con_name))
+	{
+	    auto T = m.lookup_type(con_name);
+	    con_name = T->name;
+	}
+	else
+	    error(con_loc, Note()<<"Instance for undeclared data family `"<<con_name<<"`");
+    }
+
+    for(auto& arg: DI.args)
+        arg = rename_type(arg);
+
+    DI.rhs = rename( DI.rhs );
+
+    return DI;
+}
+
 Haskell::TypeFamilyInstanceDecl renamer_state::rename(Haskell::TypeFamilyInstanceDecl TI)
 {
     TI = rename( static_cast<Hs::TypeFamilyInstanceEqn&>(TI) );
@@ -246,6 +278,8 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
         else if (auto TF = decl.to<Hs::FamilyDecl>())
             decl = rename(*TF);
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+            decl = rename(*TI);
+        else if (auto TI = decl.to<Hs::DataFamilyInstanceDecl>())
             decl = rename(*TI);
         else if (auto KS = decl.to<Hs::KindSigDecl>())
             decl = rename(*KS);

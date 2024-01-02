@@ -137,6 +137,18 @@ struct TypeFamInfo
     TypeFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
 };
 
+struct DataFamInfo
+{
+    std::vector<TypeVar> args;
+    Kind result_kind;
+
+    std::optional<std::string> associated_class;
+
+    int arity() const {return args.size();}
+
+    DataFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
+};
+
 
 typedef std::map<TypeCon, TypeFamInfo> TypeFamEnv;
 

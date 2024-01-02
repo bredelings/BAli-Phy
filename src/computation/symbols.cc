@@ -67,3 +67,13 @@ type_info::type_fam_info* type_info::is_type_fam()
     return to<type_fam_info>(info);
 }
 
+const type_info::data_fam_info* type_info::is_data_fam() const
+{
+    return to<data_fam_info>(info);
+}
+
+type_info::data_fam_info* type_info::is_data_fam()
+{
+    return to<data_fam_info>(info);
+}
+

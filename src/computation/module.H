@@ -138,6 +138,8 @@ public:
 
     void def_type_family(const std::string& family_name, int arity);
 
+    void def_data_family(const std::string& family_name, int arity);
+
     symbol_ptr add_symbol(const symbol_info&);
 
     type_ptr add_type(const type_info&);

@@ -1617,6 +1617,14 @@ void Module::def_type_family(const std::string& fname, int arity)
     declare_type( {fname, type_info::type_fam_info(), {}, arity, /*kind*/ {}} );
 }
 
+void Module::def_data_family(const std::string& fname, int arity)
+{
+    if (is_qualified_symbol(fname))
+        throw myexception()<<"Locally defined type '"<<fname<<"' should not be qualified.";
+
+    declare_type( {fname, type_info::data_fam_info(), {}, arity, /*kind*/ {}} );
+}
+
 void Module::def_type_class(const std::string& cname, const type_info::class_info& info)
 {
     if (is_qualified_symbol(cname))
@@ -1762,7 +1770,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 	    if (TF->is_type_family())
 		def_type_family( unloc(TF->con).name, TF->arity() );
 	    else
-		throw myexception()<<"data families not implemented!";
+		def_data_family( unloc(TF->con).name, TF->arity() );
         }
     }
 }
