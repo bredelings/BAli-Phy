@@ -141,7 +141,8 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 {
     qualify_name(decl.name);
 
-    reinterpret_cast<Hs::DataDefn&>(decl) = rename( reinterpret_cast<Hs::DataDefn&>(decl) );
+    Hs::DataDefn& decl2 = decl;
+    decl2 = rename( decl2 );
 
     return decl;
 }
