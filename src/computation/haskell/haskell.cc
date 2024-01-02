@@ -616,6 +616,26 @@ string InstanceDecl::print() const
     return result;
 }
 
+std::ostream& operator<<(std::ostream& o, DataOrNewtype d)
+{
+    if (d == DataOrNewtype::data)
+	return (o<<"data");
+    else
+	return (o<<"newtype");
+}
+
+
+string DataFamilyInstanceDecl::print() const
+{
+    std::ostringstream out;
+    out<<rhs.data_or_newtype<<" instance ";
+    out<<con.print();
+    for(auto& arg: args)
+        out<<" "<<arg.print();
+    out<<rhs.print();
+    return out.str();
+}
+
 string TypeFamilyInstanceEqn::print() const
 {
     std::ostringstream out;
@@ -701,49 +721,48 @@ string ConstructorsDecl::print() const
     return join(cons, " | ");
 }
 
-bool DataOrNewtypeDecl::is_empty_decl() const
+bool DataDefn::is_empty_decl() const
 {
     return std::holds_alternative<ConstructorsDecl>(constructors);
 }
 
-bool DataOrNewtypeDecl::is_regular_decl() const
+bool DataDefn::is_regular_decl() const
 {
     return std::holds_alternative<ConstructorsDecl>(constructors);
 }
 
-bool DataOrNewtypeDecl::is_gadt_decl() const
+bool DataDefn::is_gadt_decl() const
 {
     return std::holds_alternative<GADTConstructorsDecl>(constructors);
 }
 
-const ConstructorsDecl& DataOrNewtypeDecl::get_constructors() const
+const ConstructorsDecl& DataDefn::get_constructors() const
 {
     assert(is_regular_decl());
     return std::get<ConstructorsDecl>(constructors);
 }
 
-ConstructorsDecl& DataOrNewtypeDecl::get_constructors()
+ConstructorsDecl& DataDefn::get_constructors()
 {
     assert(is_regular_decl());
     return std::get<ConstructorsDecl>(constructors);
 }
 
-const GADTConstructorsDecl& DataOrNewtypeDecl::get_gadt_constructors() const
+const GADTConstructorsDecl& DataDefn::get_gadt_constructors() const
 {
     assert(is_gadt_decl());
     return std::get<GADTConstructorsDecl>(constructors);
 }
 
-GADTConstructorsDecl& DataOrNewtypeDecl::get_gadt_constructors()
+GADTConstructorsDecl& DataDefn::get_gadt_constructors()
 {
     assert(is_gadt_decl());
     return std::get<GADTConstructorsDecl>(constructors);
 }
 
-std::string DataOrNewtypeDecl::print() const
+std::string DataDefn::print() const
 {
-    string result = (data_or_newtype == DataOrNewtype::data) ? "data " : "newtype ";
-    result += show_type_or_class_header(context, name, type_vars);
+    string result;
     if (kind_sig)
         result += " :: " + kind_sig->print();
     
@@ -751,7 +770,19 @@ std::string DataOrNewtypeDecl::print() const
         result += " = " + get_constructors().print();
 
     else if (is_gadt_decl())
-        result += "\n" + get_gadt_constructors().print();
+    {
+	if (not get_gadt_constructors().empty())
+	    result += "\n" + get_gadt_constructors().print();
+    }
+
+    return result;
+}
+
+std::string DataOrNewtypeDecl::print() const
+{
+    string result = (data_or_newtype == DataOrNewtype::data) ? "data " : "newtype ";
+    result += show_type_or_class_header(context, name, type_vars);
+    result += DataDefn::print();
 
     return result;
 }

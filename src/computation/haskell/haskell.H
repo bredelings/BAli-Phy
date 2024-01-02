@@ -431,14 +431,14 @@ struct ConstructorsDecl: public std::vector<ConstructorDecl>
 
 enum class DataOrNewtype {data,newtype};
 
-struct DataOrNewtypeDecl: public Object
+std::ostream& operator<<(std::ostream& o, DataOrNewtype);
+
+struct DataDefn
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     // Should I factor out this group into a DataOrNewtypeHeader?
     DataOrNewtype data_or_newtype;
-    Located<std::string> name;
-    std::vector<LTypeVar> type_vars;
     Context context;
     std::optional<Kind> kind_sig;
 
@@ -458,47 +458,55 @@ struct DataOrNewtypeDecl: public Object
 //  Instructors for deriving instances...
 //    std::optional<derivings> derivings;
 
-    DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
     std::string print() const;
 
-    DataOrNewtypeDecl(DataOrNewtype dn,
-                      const Located<std::string>& s,
-                      const std::vector<LTypeVar>& tvs,
-                      const Context& ct,
-                      const std::optional<Kind>& k)
+    DataDefn(DataOrNewtype dn,
+	    const Context& ct,
+	    const std::optional<Kind>& k)
         :data_or_newtype(dn),
-         name(s),
-         type_vars(tvs),
          context(ct),
          kind_sig(k)
         {}
 
-    DataOrNewtypeDecl(DataOrNewtype dn,
-                      const Located<std::string>& s,
-                      const std::vector<LTypeVar>& tvs,
-                      const Context& ct,
-                      const std::optional<Kind>& k,
-                      const ConstructorsDecl& cs)
+    DataDefn(DataOrNewtype dn,
+	    const Context& ct,
+	    const std::optional<Kind>& k,
+	    const ConstructorsDecl& cs)
         :data_or_newtype(dn),
-         name(s),
-         type_vars(tvs),
          context(ct),
          kind_sig(k),
          constructors(cs)
         {}
 
-    DataOrNewtypeDecl(DataOrNewtype dn,
-                      const Located<std::string>& s,
-                      const std::vector<LTypeVar>& tvs,
-                      const Context& ct,
-                      const std::optional<Kind>& k,
-                      const GADTConstructorsDecl& gadt_cs)
+    DataDefn(DataOrNewtype dn,
+	     const Context& ct,
+	     const std::optional<Kind>& k,
+	     const GADTConstructorsDecl& gadt_cs)
         :data_or_newtype(dn),
-         name(s),
-         type_vars(tvs),
          context(ct),
          kind_sig(k),
          constructors(gadt_cs)
+        {}
+};
+
+
+struct DataOrNewtypeDecl: public Object, public DataDefn
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // Should I factor out this group into a DataOrNewtypeHeader?
+    Located<std::string> name;
+    std::vector<LTypeVar> type_vars;
+
+    DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
+    std::string print() const;
+
+    DataOrNewtypeDecl(const Located<std::string>& s,
+		      const std::vector<LTypeVar>& tvs,
+		      const DataDefn& def)
+        :DataDefn(def),
+         name(s),
+         type_vars(tvs)
         {}
 };
 
@@ -527,7 +535,6 @@ struct TypeSynonymDecl: public Object
 
 struct TypeFamilyInstanceEqn: public Object
 {
-    // std::vector<LTypeVar> forall;
     Located<TypeCon> con;
     std::vector<LType> args;
     LType rhs;
@@ -549,6 +556,34 @@ struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
 
     using TypeFamilyInstanceEqn::TypeFamilyInstanceEqn;
     TypeFamilyInstanceDecl(const TypeFamilyInstanceEqn& e):TypeFamilyInstanceEqn(e) {}
+};
+
+
+// HsFamEqn pass (HsDataDefn pass)
+// HsFamEqn pass rhs = {tycon :: Id pass, bndrs :: optional<vector<LTypeVar>>, pats :: vector<LHsTypeArg>, rhs :: rhs }
+// - pats holds patterns on the LHS of a type instance, such as @k or (a::k)
+// - optional<vector<LTypeVar>> determines whether we infer the binders (empty optional) or use the given forall, following
+//   the forall-or-nothing rule.
+//
+// HsDataDefn pass = Maybe (LContext), Maybe (CType), Maybe Kind, constructors, deriving
+// -- constructors<a> = Newtype a | DataType [a]
+//
+// See GHC/Tc/TyCl/Instance.hs
+
+
+struct DataFamilyInstanceDecl: public Object
+{
+    Located<TypeCon> con;
+    std::vector<LType> args;
+    DataDefn rhs;
+    
+    DataFamilyInstanceDecl* clone() const {return new DataFamilyInstanceDecl(*this);}
+
+    std::string print() const;
+
+    DataFamilyInstanceDecl(const Located<TypeCon>& c, const std::vector<LType>& as, const DataDefn& d)
+	:con(c), args(as), rhs(d)
+	{}
 };
 
 enum FamilyInfo { TypeFamily, DataFamily };

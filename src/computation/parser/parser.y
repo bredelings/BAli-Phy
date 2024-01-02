@@ -38,9 +38,10 @@
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const std::optional<Hs::GADTConstructorsDecl>& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::LType& context);
+  std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -272,6 +273,7 @@
 %type <std::optional<Located<Hs::Kind>>> opt_at_kind_inj_sig
 
 %type <std::pair<Hs::Context,Hs::LType>> tycl_hdr
+%type <std::tuple<std::optional<std::vector<Hs::LTypeVar>>,std::optional<Located<Hs::Context>>,Hs::LType>> datafam_inst_hdr
 /* %type <void> capi_ctype 
 
 
@@ -356,7 +358,7 @@
  //%type <Hs::Kind> kind
 %type <expression_ref> kind
 
-%type <std::optional<Hs::GADTConstructorsDecl>> gadt_constrlist
+%type <Hs::GADTConstructorsDecl> gadt_constrlist
 %type <Hs::GADTConstructorsDecl> gadt_constrs
 %type <Hs::GADTConstructorDecl> gadt_constr
 
@@ -675,8 +677,18 @@ sks_vars: sks_vars "," oqtycon                                             {$$ =
 // inst_type -> sigtype -> ctype --maybe--> context => type
 inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = {@$,make_instance_decl($2,$3,$4)};}
 |          "type" "instance" ty_fam_inst_eqn                               {$$ = {@$,Hs::TypeFamilyInstanceDecl($3)};}
-/* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
-   |          data_or_newtype "instance" capi_ctype opt_kind_sig */
+|          data_or_newtype "instance" capi_ctype datafam_inst_hdr constrs maybe_derivings
+           {
+	       auto& [tvs,context,type] = $4;
+	       auto [con, args] = check_type_or_class_header2(type);
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, {}, {}, $5))};
+	   }
+|          data_or_newtype "instance" capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
+           {
+	       auto& [tvs,context,type] = $4;
+	       auto [con, args] = check_type_or_class_header2(type);
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, Hs::Context(), $5, $6))};
+	   }
 
 overlap_pragma: "{-# OVERLAPPABLE" "#-}"       { $$ = "OVERLAPPABLE"; }
 |               "{-# OVERLAPPING" "#-}"        { $$ = "OVERLAPPING"; }
@@ -742,6 +754,20 @@ opt_instance: %empty | "instance"
 
 at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = {@$,Hs::TypeFamilyInstanceDecl($3)};    }
 
+|             data_or_newtype opt_instance capi_ctype datafam_inst_hdr constrs maybe_derivings
+              {
+		  auto& [tvs, context, type] = $4;
+		  auto [con, args] = check_type_or_class_header2(type);
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, {}, {}, $5))};
+	      }
+
+|             data_or_newtype opt_instance capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
+              {
+		  auto& [tvs,context,type] = $4;
+		  auto [con, args] = check_type_or_class_header2(type);
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, Hs::Context(), $5, $6))};
+	      }
+
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
 
@@ -762,9 +788,14 @@ opt_at_kind_inj_sig: %empty           {}
 |                    "=" tv_bndr_no_braces "|" injectivity_cond   {}
 
 /* Type class header */
-
 tycl_hdr: context "=>" type  {$$ = {$1,$3};}
 |         type               {$$ = {{},$1};}
+
+
+datafam_inst_hdr: "forall" tv_bndrs "." context "=>" type { $$ = {{$2}, {{@4,$4}}, $6}; }
+|                  "forall" tv_bndrs "=>" type            { $$ = {{$2}, {}, $4}; }
+|                  context "=>" type                      { $$ = {{}, {{@1,$1}}, $3}; }
+|                  type                                   { $$ = {{}, {}, $1}; }
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -1592,6 +1623,23 @@ pair<vector<Hs::LImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::
 }
 
 // See PostProcess.hs:checkTyClHdr
+std::tuple<Located<Hs::TypeCon>, vector<Hs::LType>>
+check_type_or_class_header2(const Hs::LType& type)
+{
+    auto [type_head, type_args] = Hs::decompose_type_apps(type);
+
+    // FIXME -- add location!
+    auto tc = unloc(type_head).to<Hs::TypeCon>();
+
+    // Convert to error message!
+    if (not tc)
+        throw myexception()<<"Malformed type or class header '"<<type<<"'";
+
+    auto name = tc->name;
+
+    return {{type_head.loc, *tc}, type_args};
+}
+
 std::tuple<Located<string>, vector<Hs::LType>>
 check_type_or_class_header(const Hs::LType& type)
 {
@@ -1691,23 +1739,20 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
-    return {d_or_n, name, check_all_type_vars(type_args), context, k, constrs};
+    return {name, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::LType& header, const std::optional<Hs::Kind>& k, const std::optional<Hs::GADTConstructorsDecl>& constrs)
+                                           const Hs::LType& header, const std::optional<Hs::Kind>& k, const Hs::GADTConstructorsDecl& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype)
     {
-        if (not constrs or constrs->size() != 1 or (*constrs)[0].con_names.size() != 1)
+        if (constrs.size() != 1 or constrs[0].con_names.size() != 1)
             throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
     }
 
-    if (not constrs)
-        return {d_or_n, name, check_all_type_vars(type_args), context, k};
-    else
-        return {d_or_n, name, check_all_type_vars(type_args), context, k, *constrs};
+    return {name, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
 }
 
 Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& ltype_orig, const optional<Located<Hs::Decls>>& decls)
