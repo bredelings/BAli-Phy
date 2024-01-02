@@ -1737,8 +1737,11 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             type_info::class_info info;
 
-            for(auto& tf: Class.type_fam_decls)
-                def_type_family( unloc(tf.con).name, tf.arity() );
+            for(auto& fam_decl: Class.fam_decls)
+		if (fam_decl.is_type_family())
+		    def_type_family( unloc(fam_decl.con).name, fam_decl.arity() );
+		else
+		    throw myexception()<<"data families not handled";
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
@@ -1754,9 +1757,12 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         {
             def_type_synonym(unloc(S->name), S->arity());
         }
-        else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
+        else if (auto TF = decl.to<Hs::FamilyDecl>())
         {
-            def_type_family( unloc(TF->con).name, TF->arity() );
+	    if (TF->is_type_family())
+		def_type_family( unloc(TF->con).name, TF->arity() );
+	    else
+		throw myexception()<<"data families not implemented!";
         }
     }
 }

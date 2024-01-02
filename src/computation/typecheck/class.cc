@@ -160,7 +160,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     }
 
     // 6. Load associated type families
-    for(auto& type_fam_decl: class_decl.type_fam_decls)
+    for(auto& type_fam_decl: class_decl.fam_decls)
     {
         auto args = desugar(type_fam_decl.args);
         auto fname = unloc(type_fam_decl.con).name;
@@ -288,7 +288,7 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
 {
     for(auto& [_,decl]: decls)
     {
-        if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
+        if (auto type_fam_decl = decl.to<Hs::FamilyDecl>())
         {
             auto args = desugar(type_fam_decl->args);
             auto fname = unloc(type_fam_decl->con).name;

@@ -32,8 +32,8 @@
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
   Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
-  Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
-                                      const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
+  Hs::FamilyDecl make_family_decl(Hs::FamilyInfo info, const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+				  const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
   Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
@@ -267,6 +267,7 @@
  */
 %type <Hs::DataOrNewtype> data_or_newtype
 %type <std::optional<Hs::Kind>> opt_kind_sig
+%type <std::optional<Located<Hs::Kind>>> opt_datafam_kind_sig
 %type <std::optional<Located<Hs::Kind>>> opt_tyfam_kind_sig
 %type <std::optional<Located<Hs::Kind>>> opt_at_kind_inj_sig
 
@@ -655,14 +656,16 @@ topdecl: cl_decl                               {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp                              {$$ = $1;}
 
+
 cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3)};}
 
-ty_decl: "type" type "=" ktype                                             {$$ = {@$,make_type_synonym($2,$4)};}
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$,make_data_or_newtype($1, $3.first, $3.second,{},$4)};}
+
+ty_decl: "type" type "=" ktype                                             {$$ = {@$, make_type_synonym($2,$4)};}
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second,{},$4)};}
 /* This is kind of a hack to allow `data X` */
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$,make_data_or_newtype($1, $3.first, $3.second, $4, $5)};}
-|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = {@$,make_type_family($3, $4, $6)};}
-/* |        "data" "family" type opt_datafam_kind_sig */
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second, $4, $5)};}
+|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = {@$, make_family_decl(Hs::TypeFamily, $3, $4, $6)};}
+|        "data" "family" type opt_datafam_kind_sig                                        {$$ = {@$, make_family_decl(Hs::DataFamily, $3, $4, {})};}
 
 standalone_kind_sig: "type" sks_vars "::" kind                             {$$ = {@$,Hs::KindSigDecl($2,$4)};}
 
@@ -722,14 +725,14 @@ ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn     {$$ = $1; $$.push_bac
 ty_fam_inst_eqn: type "=" ctype                            {$$ = make_type_family_instance_eqn($1,$3);}
 
 /* Associated type family declarations */
-at_decl_cls: "data" opt_family type opt_datafam_kind_sig       {}
+at_decl_cls: "data" opt_family type opt_datafam_kind_sig       { $$ = {@$, make_family_decl(Hs::DataFamily, $3, $4, {})}; }
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" type opt_at_kind_inj_sig                   { $$ = {@$,make_type_family($2, $3, {})}; }
+|            "type" type opt_at_kind_inj_sig                   { $$ = {@$, make_family_decl(Hs::TypeFamily, $2, $3, {})}; }
 
-|            "type" "family" type opt_at_kind_inj_sig          { $$ = {@$,make_type_family($3, $4, {})}; }
+|            "type" "family" type opt_at_kind_inj_sig          { $$ = {@$, make_family_decl(Hs::TypeFamily, $3, $4, {})}; }
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" ty_fam_inst_eqn                            { $$ = {@$,Hs::TypeFamilyInstanceDecl($2)};    }
-|            "type" "instance" ty_fam_inst_eqn                 { $$ = {@$,Hs::TypeFamilyInstanceDecl($3)};    }
+|            "type" ty_fam_inst_eqn                            { $$ = {@$, Hs::TypeFamilyInstanceDecl($2)};    }
+|            "type" "instance" ty_fam_inst_eqn                 { $$ = {@$, Hs::TypeFamilyInstanceDecl($3)};    }
 
 opt_family: %empty | "family"
 
@@ -747,8 +750,8 @@ data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 opt_kind_sig: %empty       {$$ = {};}
 |             "::" kind    {$$ = $2;}
 
-opt_datafam_kind_sig: %empty
-|                     "::" kind
+opt_datafam_kind_sig: %empty     {$$ = {};}
+|                     "::" kind  {$$ = {{@2,$2}};}
 
 opt_tyfam_kind_sig: %empty            {}
 |                   "::" kind         {$$ = {{@2,$2}};}
@@ -1630,8 +1633,8 @@ Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
-Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
-                                    const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns)
+Hs::FamilyDecl make_family_decl(Hs::FamilyInfo info, const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+				const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns)
 {
     auto [lhead, largs] = Hs::decompose_type_apps(lhs_type);
 
@@ -1666,7 +1669,7 @@ Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::option
     if (kind_sig)
         kind = kind_sig->value();
 
-    return Hs::TypeFamilyDecl(lcon, tyvars, kind, eqns);
+    return Hs::FamilyDecl(info, lcon, tyvars, kind, eqns);
 }
 
 Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type)
@@ -1743,7 +1746,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
     auto [name, type_args] = check_type_or_class_header(header);
 
     std::vector<Hs::FixityDecl> fixity_decls;
-    std::vector<Hs::TypeFamilyDecl> type_fam_decls;
+    std::vector<Hs::FamilyDecl> fam_decls;
     std::vector<Hs::TypeFamilyInstanceDecl> default_type_inst_decls;
     std::vector<Hs::SignatureDecl> sig_decls;
     Hs::Decls default_method_decls;
@@ -1753,8 +1756,8 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
         {
             if (auto F = decl.to<Hs::FixityDecl>())
                 fixity_decls.push_back(*F);
-            else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
-                type_fam_decls.push_back(*TF);
+            else if (auto TF = decl.to<Hs::FamilyDecl>())
+                fam_decls.push_back(*TF);
             else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
                 default_type_inst_decls.push_back(*TI);
             else if (auto S = decl.to<Hs::SignatureDecl>())
@@ -1765,7 +1768,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
                 throw myexception()<<"In declaration of class "<<name<<", I don't recognize declaration:\n   "<<decl.print();
         }
 
-    return {context, name, check_all_type_vars(type_args), fixity_decls, type_fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
+    return {context, name, check_all_type_vars(type_args), fixity_decls, fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
 }
 
 // Can we change the context parsing rule to expect:

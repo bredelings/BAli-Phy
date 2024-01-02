@@ -585,7 +585,7 @@ string ClassDecl::print() const
     vector<string> decls;
     for(auto& decl: fixity_decls)
         decls.push_back(decl.print());
-    for(auto& decl: type_fam_decls)
+    for(auto& decl: fam_decls)
         decls.push_back(decl.print());
     for(auto& decl: default_type_inst_decls)
         decls.push_back(decl.print());
@@ -631,10 +631,14 @@ string TypeFamilyInstanceDecl::print() const
     return "type instance " + TypeFamilyInstanceEqn::print();
 }
 
-string TypeFamilyDecl::print() const
+string FamilyDecl::print() const
 {
     std::ostringstream out;
-    out<<"type family "<<con.print();
+    if (is_type_family())
+	out<<"type";
+    else
+	out<<"data";
+    out<<" family "<<con.print();
     for(auto& arg: args)
         out<<" "<<unloc(arg).print_with_kind();
     if (kind_sig)
@@ -643,7 +647,7 @@ string TypeFamilyDecl::print() const
 }
 
 
-vector<Kind> TypeFamilyDecl::arg_kinds() const
+vector<Kind> FamilyDecl::arg_kinds() const
 {
     vector<Kind> ks;
 
@@ -653,7 +657,7 @@ vector<Kind> TypeFamilyDecl::arg_kinds() const
     return ks;
 }
 
-bool TypeFamilyDecl::has_kind_notes() const
+bool FamilyDecl::has_kind_notes() const
 {
     bool kind_notes = kind_sig.has_value();
     for(auto& tv: args)
@@ -662,7 +666,7 @@ bool TypeFamilyDecl::has_kind_notes() const
     return kind_notes;
 }
 
-Kind TypeFamilyDecl::result_kind() const
+Kind FamilyDecl::result_kind() const
 {
     if (kind_sig)
         return *kind_sig;
@@ -670,7 +674,7 @@ Kind TypeFamilyDecl::result_kind() const
         return kind_type();
 }
 
-Kind TypeFamilyDecl::kind() const
+Kind FamilyDecl::kind() const
 {
     return function_kind(arg_kinds(), result_kind());
 }
@@ -929,7 +933,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             foreign_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(ldecl);
-        else if (decl.is_a<TypeFamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
+        else if (decl.is_a<FamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
             type_decls.push_back(ldecl);
         else if (decl.is_a<KindSigDecl>())
             type_decls.push_back(ldecl);

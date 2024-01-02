@@ -76,7 +76,7 @@ struct renamer_state
     Hs::ClassDecl rename(Hs::ClassDecl);
     Hs::TypeSynonymDecl rename(Hs::TypeSynonymDecl);
     Hs::DataOrNewtypeDecl rename(Hs::DataOrNewtypeDecl);
-    Hs::TypeFamilyDecl rename(Hs::TypeFamilyDecl);
+    Hs::FamilyDecl rename(Hs::FamilyDecl);
     Hs::TypeFamilyInstanceDecl rename(Hs::TypeFamilyInstanceDecl);
     Hs::TypeFamilyInstanceEqn rename(Hs::TypeFamilyInstanceEqn);
     Haskell::KindSigDecl rename(Haskell::KindSigDecl KS);

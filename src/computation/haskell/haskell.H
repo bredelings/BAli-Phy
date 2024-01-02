@@ -551,8 +551,11 @@ struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
     TypeFamilyInstanceDecl(const TypeFamilyInstanceEqn& e):TypeFamilyInstanceEqn(e) {}
 };
 
-struct TypeFamilyDecl: public Object
+enum FamilyInfo { TypeFamily, DataFamily };
+
+struct FamilyDecl: public Object
 {
+    FamilyInfo info;
     LTypeCon con;
     std::vector<LTypeVar> args;
     std::optional<Kind> kind_sig;
@@ -564,14 +567,19 @@ struct TypeFamilyDecl: public Object
     std::vector<Kind> arg_kinds() const;
     Kind kind() const;
     bool has_kind_notes() const;
+    bool is_type_family() const {return info == TypeFamily;}
+    bool is_data_family() const {return info == TypeFamily;}
+    bool is_open_type_family() const {return is_type_family() and not where_instances;}
+    bool is_closed_type_family() const {return is_type_family() and where_instances;}
 
-    TypeFamilyDecl* clone() const { return new TypeFamilyDecl(*this);}
+    FamilyDecl* clone() const { return new FamilyDecl(*this);}
 
     std::string print() const;
 
-    TypeFamilyDecl(const LTypeCon& tc, const std::vector<LTypeVar>& as, const std::optional<Kind>& ks,
+    FamilyDecl(FamilyInfo i, const LTypeCon& tc, const std::vector<LTypeVar>& as, const std::optional<Kind>& ks,
                    const std::optional<std::vector<TypeFamilyInstanceEqn>>& es)
-        :con(tc),
+        :info(i),
+	 con(tc),
          args(as),
          kind_sig(ks),
          where_instances(es)
@@ -588,7 +596,7 @@ struct ClassDecl: public Object
 
     std::vector<FixityDecl> fixity_decls;
 
-    std::vector<TypeFamilyDecl> type_fam_decls;
+    std::vector<FamilyDecl> fam_decls;
     std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
     std::vector<SignatureDecl> sig_decls;
     Decls default_method_decls;
@@ -600,7 +608,7 @@ struct ClassDecl: public Object
               const Located<std::string>& s,
               const std::vector<LTypeVar>& tvs,
               const std::vector<FixityDecl>& fxs,
-              const std::vector<TypeFamilyDecl>& tfds,
+              const std::vector<FamilyDecl>& tfds,
               const std::vector<TypeFamilyInstanceDecl>& tids,
               const std::vector<SignatureDecl>& sds,
               const Decls& dms)
@@ -608,7 +616,7 @@ struct ClassDecl: public Object
          name(s),
          type_vars(tvs),
          fixity_decls(fxs),
-         type_fam_decls(tfds),
+         fam_decls(tfds),
          default_type_inst_decls(tids),
          sig_decls(sds),
          default_method_decls(dms)

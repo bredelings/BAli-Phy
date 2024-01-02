@@ -210,7 +210,7 @@ public:
 
     void get_kind_sigs(const Hs::Decls& type_decls);
 
-    void get_tycon_info(const Hs::TypeFamilyDecl&);
+    void get_tycon_info(const Hs::FamilyDecl&);
     void get_tycon_info(const Hs::Decls& type_decls);
 
     Hs::Decls add_type_var_kinds(Hs::Decls type_decls);

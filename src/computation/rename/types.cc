@@ -157,8 +157,8 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
     qualify_name(C.name);
     C.context = rename(C.context);
 
-    for(auto& type_fam_decl: C.type_fam_decls)
-        type_fam_decl = rename(type_fam_decl);
+    for(auto& fam_decl: C.fam_decls)
+        fam_decl = rename(fam_decl);
 
     for(auto& default_type_inst_decl: C.default_type_inst_decls)
         default_type_inst_decl = rename(default_type_inst_decl);
@@ -183,7 +183,7 @@ Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
     return decl;
 }
 
-Haskell::TypeFamilyDecl renamer_state::rename(Haskell::TypeFamilyDecl TF)
+Haskell::FamilyDecl renamer_state::rename(Haskell::FamilyDecl TF)
 {
     qualify_name(unloc(TF.con));
 
@@ -243,7 +243,7 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
             decl = rename(*I);
         else if (auto T = decl.to<Hs::TypeSynonymDecl>())
             decl = rename(*T);
-        else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
+        else if (auto TF = decl.to<Hs::FamilyDecl>())
             decl = rename(*TF);
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
             decl = rename(*TI);

@@ -71,8 +71,8 @@
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
   Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
-  Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
-                                      const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
+  Hs::FamilyDecl make_family_decl(Hs::FamilyInfo info, const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+				  const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
   Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
@@ -626,6 +626,7 @@ namespace yy {
       // fbind
       char dummy42[sizeof (std::optional<Located<Hs::FieldBinding>>)];
 
+      // opt_datafam_kind_sig
       // opt_tyfam_kind_sig
       // opt_at_kind_inj_sig
       char dummy43[sizeof (std::optional<Located<Hs::Kind>>)];
@@ -1584,6 +1585,7 @@ namespace yy {
         value.move< std::optional<Located<Hs::FieldBinding>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_opt_datafam_kind_sig: // opt_datafam_kind_sig
       case symbol_kind::S_opt_tyfam_kind_sig: // opt_tyfam_kind_sig
       case symbol_kind::S_opt_at_kind_inj_sig: // opt_at_kind_inj_sig
         value.move< std::optional<Located<Hs::Kind>> > (std::move (that.value));
@@ -2899,6 +2901,7 @@ switch (yykind)
         value.template destroy< std::optional<Located<Hs::FieldBinding>> > ();
         break;
 
+      case symbol_kind::S_opt_datafam_kind_sig: // opt_datafam_kind_sig
       case symbol_kind::S_opt_tyfam_kind_sig: // opt_tyfam_kind_sig
       case symbol_kind::S_opt_at_kind_inj_sig: // opt_at_kind_inj_sig
         value.template destroy< std::optional<Located<Hs::Kind>> > ();
@@ -5746,7 +5749,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5091,     ///< Last index in yytable_.
+      yylast_ = 5171,     ///< Last index in yytable_.
       yynnts_ = 205,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -6054,6 +6057,7 @@ switch (yykind)
         value.copy< std::optional<Located<Hs::FieldBinding>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_opt_datafam_kind_sig: // opt_datafam_kind_sig
       case symbol_kind::S_opt_tyfam_kind_sig: // opt_tyfam_kind_sig
       case symbol_kind::S_opt_at_kind_inj_sig: // opt_at_kind_inj_sig
         value.copy< std::optional<Located<Hs::Kind>> > (YY_MOVE (that.value));
@@ -6471,6 +6475,7 @@ switch (yykind)
         value.move< std::optional<Located<Hs::FieldBinding>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_opt_datafam_kind_sig: // opt_datafam_kind_sig
       case symbol_kind::S_opt_tyfam_kind_sig: // opt_tyfam_kind_sig
       case symbol_kind::S_opt_at_kind_inj_sig: // opt_at_kind_inj_sig
         value.move< std::optional<Located<Hs::Kind>> > (YY_MOVE (s.value));
@@ -6697,7 +6702,7 @@ switch (yykind)
 
 
 } // yy
-#line 6701 "parser.hh"
+#line 6706 "parser.hh"
 
 
 

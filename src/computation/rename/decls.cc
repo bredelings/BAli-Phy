@@ -101,7 +101,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         return E;
     else if (E.is_a<Hs::FixityDecl>())
         return E;
-    else if (E.is_a<Hs::TypeFamilyDecl>() or E.is_a<Hs::TypeFamilyInstanceDecl>())
+    else if (E.is_a<Hs::FamilyDecl>() or E.is_a<Hs::TypeFamilyInstanceDecl>())
     {
         // We get here for type family stuff inside of class declarations.
         // Ignoring infix type names for now?

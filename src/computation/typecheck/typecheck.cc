@@ -568,7 +568,7 @@ void TypeChecker::set_expected_type(const Expected& E, const Type& type)
         unify(type, E.check_type());
 }
 
-void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
+void TypeChecker::get_tycon_info(const Hs::FamilyDecl& F)
 {
     auto con = desugar(F.con);
     auto kind = F.kind();
@@ -633,11 +633,11 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 
     for(auto& [_,type_decl]: type_decls)
     {
-        if (auto F = type_decl.to<Hs::TypeFamilyDecl>())
+        if (auto F = type_decl.to<Hs::FamilyDecl>())
             get_tycon_info(*F);
         else if (auto C = type_decl.to<Hs::ClassDecl>())
         {
-            for(auto& F: C->type_fam_decls)
+            for(auto& F: C->fam_decls)
                 get_tycon_info(F);
         }
     }
