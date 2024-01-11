@@ -147,6 +147,33 @@ namespace substitution {
     }
 
 
+    inline double sum(const Matrix& Q, const EVector& smap, int s1, int l)
+    {
+        double total = 0;
+        int n_states = smap.size();
+
+        for(int s2=0; s2<n_states; s2++)
+            if (smap[s2].as_int() == l)
+                total += Q(s1,s2);
+
+        assert(total - 1.0 < 1.0e-9*Q.size1());
+        return total;
+    }
+
+    inline double sum(const Matrix& Q,const EVector& smap,
+                      int s1, int l2, const alphabet& a)
+    {
+        double total=0;
+
+        for(int s=0;s<smap.size();s++)
+            if (a.matches(smap[s].as_int(),l2))
+                total += Q(s1,s);
+
+        assert(total - 1.0 < 1.0e-9*Q.size1());
+        return total;
+    }
+
+
     log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
                                        const Likelihood_Cache_Branch& LCB2,
                                        const Likelihood_Cache_Branch& LCB3,
@@ -319,79 +346,273 @@ namespace substitution {
         return Pr;
     }
 
-    object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods(const EVector& sequence,
-				const alphabet& a,
-				const EVector& smap,
-				int n_models)
+    log_double_t calc_root_prob(const EVector& LCN,
+				const EVector& LCB,
+				const EVector& A_,
+				const Matrix& F)
     {
-	int n_states = smap.size();
-	int matrix_size = n_models * n_states;
+        total_calc_root_prob++;
 
-	int L = sequence.size();
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
 
-	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
 
-        for(int i=0;i<L;i++)
+	int n_sequences = LCN.size();
+	int n_branches_in = LCB.size();
+	assert(not LCN.empty() or not A_.empty());
+	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+
+#ifndef NDEBUG
+	// Check that all the sequences have the right length.
+	for(int i=0; i<n_sequences; i++)
+	    assert(node_cache(i).n_columns() == L);
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A_.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
 	{
-	    int letter = sequence[i].as_int();
+	    assert(A(i).length2() == L);
+	    assert(A(i).length1() == cache(i).n_columns());
 
-	    double* S = (*LCB)[i];
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+	}
+#endif
 
-            for(int k=0; k<matrix_size; k++)
-                S[k] = 1.0;
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
 
-	    // We need to zero out the inconsistent characters.
-	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-	    if (letter >= 0)
+        log_prod total;
+        int total_scale = 0;
+
+	vector<int> s(n_branches_in, 0);
+	vector<int> i(n_branches_in, 0);
+        for(int s_out=0;;s_out++)
+        {
+	    for(int j =0;j < n_branches_in; j++)
 	    {
-		auto& ok = a.letter_mask(letter);
-		for(int m=0;m<n_models;m++)
+		auto& a = A(j);
+		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
+		auto& ij = i[j];
+		auto& sj = s[j];
+		while (ij < a.size() and not a.has_character2(ij))
 		{
-		    for(int s1=0;s1<n_states;s1++)
-		    {
-			int l = smap[s1].as_int();
-			if (not ok[l])
-			{
-			    // Pr *= Pr(observation | state )
-			    // Currently we are doing Pr *= Pr(observation | letter(state))
-			    // So maybe I should make a Pr(observation | state) matrix.
-			    S[m*n_states + s1] = 0;
-			}
-		    }
+		    assert(a.has_character1(ij));
+		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+		    total *= p_col;
+		    total_scale += lcb.scale(sj);
+		    ij++;
+		    sj++;
 		}
 	    }
+            if (s_out == L)
+            {
+		for(int j=0;j<n_branches_in;j++)
+		    assert(i[j] == A(j).size());
+                break;
+            }
+	    else
+	    {
+		for(int j=0;j<n_branches_in;j++)
+		{
+		    assert(i[j] < A(j).size());
+		    assert(A(j).has_character2(i[j]));
+		}
+	    }
+
+	    element_assign(S, F.begin(), matrix_size);
+
+	    for(int j=0;j<n_branches_in;j++)
+	    {
+		if (A(j).has_character1(i[j]))
+		{
+		    auto& lcb = cache(j);
+		    element_prod_assign(S, lcb[s[j]], matrix_size);
+		    total_scale += lcb.scale(s[j]);
+		    s[j]++;
+		}
+		i[j]++;
+	    }
+
+	    // Handle observed sequences at the node.
+	    for(int j=0;j<n_sequences;j++)
+		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+
+	    double p_col = element_sum(S, matrix_size);
+
+	    total *= p_col;
+
+	    total_root_clv_length++;
+        }
+
+        log_double_t Pr = total;
+	for(int i=0;i<n_branches_in;i++)
+	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+
+        Pr.log() += log_scale_min * total_scale;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
+    }
+
+    log_double_t calc_root_prob2_not_at_root(const EVector& LCN,
+					     const EVector& LCB,
+					     const EVector& A_,
+					     const Matrix& F)
+    {
+        total_calc_root_prob++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+	int n_sequences = LCN.size();
+	int n_branches_in = LCB.size();
+	assert(not LCN.empty() or not A_.empty());
+	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+
+#ifndef NDEBUG
+	// Check that all the sequences have the right length.
+	for(int i=0; i<n_sequences; i++)
+	    assert(node_cache(i).n_columns() == L);
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A_.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
+	{
+	    assert(A(i).length2() == L);
+	    assert(A(i).length1() == cache(i).n_columns());
+
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
 	}
+#endif
 
-	return LCB;
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
+
+        log_prod total;
+        int total_scale = 0;
+
+	vector<int> s(n_branches_in, 0);
+	vector<int> i(n_branches_in, 0);
+        for(int s_out=0;;s_out++)
+        {
+	    for(int j =0;j < n_branches_in; j++)
+	    {
+		auto& a = A(j);
+		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
+		auto& ij = i[j];
+		auto& sj = s[j];
+		while (ij < a.size() and not a.has_character2(ij))
+		{
+		    assert(a.has_character1(ij));
+		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+		    total *= p_col;
+		    total_scale += lcb.scale(sj);
+		    ij++;
+		    sj++;
+		}
+	    }
+            if (s_out == L)
+            {
+		for(int j=0;j<n_branches_in;j++)
+		    assert(i[j] == A(j).size());
+                break;
+            }
+	    else
+	    {
+		for(int j=0;j<n_branches_in;j++)
+		{
+		    assert(i[j] < A(j).size());
+		    assert(A(j).has_character2(i[j]));
+		}
+	    }
+
+	    if (A(0).has_character2(i[0]))
+		element_assign(S, 1.0, matrix_size);
+	    else
+		element_assign(S, F.begin(), matrix_size);
+
+	    for(int j=0;j<n_branches_in;j++)
+	    {
+		if (A(j).has_character1(i[j]))
+		{
+		    auto& lcb = cache(j);
+		    element_prod_assign(S, lcb[s[j]], matrix_size);
+		    total_scale += lcb.scale(s[j]);
+		    s[j]++;
+		}
+		i[j]++;
+	    }
+
+	    // Handle observed sequences at the node.
+	    for(int j=0;j<n_sequences;j++)
+		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+
+	    double p_col = element_sum(S, matrix_size);
+
+	    total *= p_col;
+
+	    total_root_clv_length++;
+        }
+
+        log_double_t Pr = total;
+	for(int i=0;i<n_branches_in;i++)
+	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+
+        Pr.log() += log_scale_min * total_scale;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
     }
 
-    inline double sum(const Matrix& Q, const EVector& smap, int s1, int l)
+    log_double_t calc_root_prob2(const EVector& LCN,
+				 const EVector& LCB,
+				 const EVector& A_,
+				 const Matrix& F)
     {
-        double total = 0;
-        int n_states = smap.size();
+	optional<int> away_from_root_index;
+	for(int j=0;j<LCB.size();j++)
+	    if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_index.has_value());
+		away_from_root_index = j;
+	    }
 
-        for(int s2=0; s2<n_states; s2++)
-            if (smap[s2].as_int() == l)
-                total += Q(s1,s2);
+	if (not away_from_root_index)
+	    return calc_root_prob(LCN, LCB, A_, F);
+	else
+	{
+	    auto LCB2 = LCB;
+	    if (*away_from_root_index != 0)
+		std::swap(LCB2[0], LCB2[*away_from_root_index]);
 
-        assert(total - 1.0 < 1.0e-9*Q.size1());
-        return total;
+	    return calc_root_prob2_not_at_root(LCN, LCB2, A_, F);
+	}
     }
-
-    inline double sum(const Matrix& Q,const EVector& smap,
-                      int s1, int l2, const alphabet& a)
-    {
-        double total=0;
-
-        for(int s=0;s<smap.size();s++)
-            if (a.matches(smap[s].as_int(),l2))
-                total += Q(s1,s);
-
-        assert(total - 1.0 < 1.0e-9*Q.size1());
-        return total;
-    }
-
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P)
@@ -994,272 +1215,51 @@ namespace substitution {
     }
 
 
-    log_double_t calc_root_prob(const EVector& LCN,
-				const EVector& LCB,
-				const EVector& A_,
-				const Matrix& F)
+    object_ptr<const Likelihood_Cache_Branch>
+    simple_sequence_likelihoods(const EVector& sequence,
+				const alphabet& a,
+				const EVector& smap,
+				int n_models)
     {
-        total_calc_root_prob++;
+	int n_states = smap.size();
+	int matrix_size = n_models * n_states;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
-        const int matrix_size = n_models * n_states;
+	int L = sequence.size();
 
-        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 
-	int n_sequences = LCN.size();
-	int n_branches_in = LCB.size();
-	assert(not LCN.empty() or not A_.empty());
-	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
-
-#ifndef NDEBUG
-	// Check that all the sequences have the right length.
-	for(int i=0; i<n_sequences; i++)
-	    assert(node_cache(i).n_columns() == L);
-
-	// Check that all the alignments have the right length for both sequences.
-	assert(A_.size() == n_branches_in);
-	for(int i=0; i<n_branches_in; i++)
+        for(int i=0;i<L;i++)
 	{
-	    assert(A(i).length2() == L);
-	    assert(A(i).length1() == cache(i).n_columns());
+	    int letter = sequence[i].as_int();
 
-	    assert(n_models == cache(i).n_models());
-	    assert(n_states == cache(i).n_states());
+	    double* S = (*LCB)[i];
+
+            for(int k=0; k<matrix_size; k++)
+                S[k] = 1.0;
+
+	    // We need to zero out the inconsistent characters.
+	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int m=0;m<n_models;m++)
+		{
+		    for(int s1=0;s1<n_states;s1++)
+		    {
+			int l = smap[s1].as_int();
+			if (not ok[l])
+			{
+			    // Pr *= Pr(observation | state )
+			    // Currently we are doing Pr *= Pr(observation | letter(state))
+			    // So maybe I should make a Pr(observation | state) matrix.
+			    S[m*n_states + s1] = 0;
+			}
+		    }
+		}
+	    }
 	}
-#endif
 
-        // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
-
-        log_prod total;
-        int total_scale = 0;
-
-	vector<int> s(n_branches_in, 0);
-	vector<int> i(n_branches_in, 0);
-        for(int s_out=0;;s_out++)
-        {
-	    for(int j =0;j < n_branches_in; j++)
-	    {
-		auto& a = A(j);
-		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
-		auto& ij = i[j];
-		auto& sj = s[j];
-		while (ij < a.size() and not a.has_character2(ij))
-		{
-		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
-		    ij++;
-		    sj++;
-		}
-	    }
-            if (s_out == L)
-            {
-		for(int j=0;j<n_branches_in;j++)
-		    assert(i[j] == A(j).size());
-                break;
-            }
-	    else
-	    {
-		for(int j=0;j<n_branches_in;j++)
-		{
-		    assert(i[j] < A(j).size());
-		    assert(A(j).has_character2(i[j]));
-		}
-	    }
-
-	    element_assign(S, F.begin(), matrix_size);
-
-	    for(int j=0;j<n_branches_in;j++)
-	    {
-		if (A(j).has_character1(i[j]))
-		{
-		    auto& lcb = cache(j);
-		    element_prod_assign(S, lcb[s[j]], matrix_size);
-		    total_scale += lcb.scale(s[j]);
-		    s[j]++;
-		}
-		i[j]++;
-	    }
-
-	    // Handle observed sequences at the node.
-	    for(int j=0;j<n_sequences;j++)
-		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
-
-	    double p_col = element_sum(S, matrix_size);
-
-	    total *= p_col;
-
-	    total_root_clv_length++;
-        }
-
-        log_double_t Pr = total;
-	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
-
-        Pr.log() += log_scale_min * total_scale;
-
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
-
-        return Pr;
-    }
-
-    log_double_t calc_root_prob2_not_at_root(const EVector& LCN,
-					     const EVector& LCB,
-					     const EVector& A_,
-					     const Matrix& F)
-    {
-        total_calc_root_prob++;
-
-        const int n_models = F.size1();
-        const int n_states = F.size2();
-        const int matrix_size = n_models * n_states;
-
-        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
-
-	int n_sequences = LCN.size();
-	int n_branches_in = LCB.size();
-	assert(not LCN.empty() or not A_.empty());
-	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
-
-#ifndef NDEBUG
-	// Check that all the sequences have the right length.
-	for(int i=0; i<n_sequences; i++)
-	    assert(node_cache(i).n_columns() == L);
-
-	// Check that all the alignments have the right length for both sequences.
-	assert(A_.size() == n_branches_in);
-	for(int i=0; i<n_branches_in; i++)
-	{
-	    assert(A(i).length2() == L);
-	    assert(A(i).length1() == cache(i).n_columns());
-
-	    assert(n_models == cache(i).n_models());
-	    assert(n_states == cache(i).n_states());
-	}
-#endif
-
-        // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
-
-        log_prod total;
-        int total_scale = 0;
-
-	vector<int> s(n_branches_in, 0);
-	vector<int> i(n_branches_in, 0);
-        for(int s_out=0;;s_out++)
-        {
-	    for(int j =0;j < n_branches_in; j++)
-	    {
-		auto& a = A(j);
-		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
-		auto& ij = i[j];
-		auto& sj = s[j];
-		while (ij < a.size() and not a.has_character2(ij))
-		{
-		    assert(a.has_character1(ij));
-		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
-		    ij++;
-		    sj++;
-		}
-	    }
-            if (s_out == L)
-            {
-		for(int j=0;j<n_branches_in;j++)
-		    assert(i[j] == A(j).size());
-                break;
-            }
-	    else
-	    {
-		for(int j=0;j<n_branches_in;j++)
-		{
-		    assert(i[j] < A(j).size());
-		    assert(A(j).has_character2(i[j]));
-		}
-	    }
-
-	    if (A(0).has_character2(i[0]))
-		element_assign(S, 1.0, matrix_size);
-	    else
-		element_assign(S, F.begin(), matrix_size);
-
-	    for(int j=0;j<n_branches_in;j++)
-	    {
-		if (A(j).has_character1(i[j]))
-		{
-		    auto& lcb = cache(j);
-		    element_prod_assign(S, lcb[s[j]], matrix_size);
-		    total_scale += lcb.scale(s[j]);
-		    s[j]++;
-		}
-		i[j]++;
-	    }
-
-	    // Handle observed sequences at the node.
-	    for(int j=0;j<n_sequences;j++)
-		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
-
-	    double p_col = element_sum(S, matrix_size);
-
-	    total *= p_col;
-
-	    total_root_clv_length++;
-        }
-
-        log_double_t Pr = total;
-	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
-
-        Pr.log() += log_scale_min * total_scale;
-
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
-
-        return Pr;
-    }
-
-    log_double_t calc_root_prob2(const EVector& LCN,
-				 const EVector& LCB,
-				 const EVector& A_,
-				 const Matrix& F)
-    {
-	optional<int> away_from_root_index;
-	for(int j=0;j<LCB.size();j++)
-	    if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
-	    {
-		assert(not away_from_root_index.has_value());
-		away_from_root_index = j;
-	    }
-
-	if (not away_from_root_index)
-	    return calc_root_prob(LCN, LCB, A_, F);
-	else
-	{
-	    auto LCB2 = LCB;
-	    if (*away_from_root_index != 0)
-		std::swap(LCB2[0], LCB2[*away_from_root_index]);
-
-	    return calc_root_prob2_not_at_root(LCN, LCB2, A_, F);
-	}
+	return LCB;
     }
 
     Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P)
