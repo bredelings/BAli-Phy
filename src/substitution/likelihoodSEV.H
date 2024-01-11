@@ -10,28 +10,22 @@ class data_partition;
 
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
-    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+    log_double_t calc_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                            const Likelihood_Cache_Branch& LCB2,
                                            const Likelihood_Cache_Branch& LCB3,
                                            const Matrix& F,
 					   const EVector& counts);
 
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+    log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                                 const Likelihood_Cache_Branch& LCB2,
                                                 const Matrix& F,
                                                 const EVector& counts);
-    object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
-				    const alphabet& a,
-				    const EVector& smap,
-				    int n_models);
+    log_double_t calc_prob_at_root_SEV(const EVector& LCN,
+				       const EVector& LCB,
+				       const Matrix& F,
+				       const EVector& counts);
 
-    log_double_t calc_root_prob_SEV(const EVector& LCN,
-				    const EVector& LCB,
-				    const Matrix& F,
-				    const EVector& counts);
-
-    log_double_t calc_root_prob_SEV2(const EVector& LCN,
+    log_double_t calc_prob_SEV(const EVector& LCN,
 				     const EVector& LCB,
 				     const Matrix& FF,
 				     const EVector& counts);
@@ -50,16 +44,22 @@ namespace substitution {
                          const EVector& transition_P);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& LCN,
+    peel_branch_toward_root_SEV(const EVector& LCN,
                     const EVector& LCB,
                     const EVector& transition_P);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV2(const EVector& LCN,
-		     const EVector& LCB,
-		     const EVector& transition_P,
-		     const Matrix& ff,
-		     bool away_from_root);
+    peel_branch_SEV(const EVector& LCN,
+		    const EVector& LCB,
+		    const EVector& transition_P,
+		    const Matrix& ff,
+		    bool away_from_root);
+
+    object_ptr<const Likelihood_Cache_Branch>
+    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
+				    const alphabet& a,
+				    const EVector& smap,
+				    int n_models);
 
     Vector<std::pair<int,int>> sample_root_sequence_SEV(const EVector& LCN,
 							const EVector& LCB,

@@ -31,10 +31,10 @@ foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> E
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "LikelihoodSEV:" calcRootProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" calcRootProbSEV2 :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "LikelihoodSEV:" peelBranchSEV2 :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> Bool -> CondLikes
+foreign import bpcall "LikelihoodSEV:" calcProbAtRootSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" calcProbSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" peelBranchTowardRootSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
+foreign import bpcall "LikelihoodSEV:" peelBranchSEV :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> Bool -> CondLikes
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "LikelihoodSEV:" sampleRootSequenceSEV :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
@@ -122,14 +122,14 @@ cachedConditionalLikelihoodsSEV2 t nodeCLVs ps f = let clvs = getEdgesSet t & In
                                                                             clsIn = IntMap.restrictKeysToVector clvs inEdges
                                                                             node = sourceNode t b
                                                                             nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                        in peelBranchSEV2 nodeCLs clsIn p f (not $ toward_root t b)
+                                                                        in peelBranchSEV nodeCLs clsIn p f (not $ toward_root t b)
                                                    in clvs
 
 peelLikelihoodSEV2 nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
                                                                  nModels = nrows f
                                                                  nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
                                                                  clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                             in calcRootProbSEV2 nodeCLs clsIn f counts
+                                                             in calcProbSEV nodeCLs clsIn f counts
 
 cached_conditional_likelihoods_SEV t nodeCLVs ps =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
@@ -138,14 +138,14 @@ cached_conditional_likelihoods_SEV t nodeCLVs ps =
                     clsIn = IntMap.restrictKeysToVector lc inEdges
                     node = sourceNode t b
                     nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
-                in peelBranchSEV nodeCLs clsIn p
+                in peelBranchTowardRootSEV nodeCLs clsIn p
     in lc
 
 peel_likelihood_SEV nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
                                                                   nModels = nrows f
                                                                   nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
                                                                   clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                              in calcRootProbSEV nodeCLs clsIn f counts
+                                                              in calcProbAtRootSEV nodeCLs clsIn f counts
 
 sample_ancestral_sequences_SEV t root nodeCLVs alpha ps f cl smap col_to_compressed =
     let rt = add_root root t

@@ -35,11 +35,11 @@ using std::optional;
 
 namespace substitution
 {
-   log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                           const Likelihood_Cache_Branch& LCB2,
-                                           const Likelihood_Cache_Branch& LCB3,
-                                           const Matrix& F,
-                                           const EVector& counts)
+   log_double_t calc_probability_at_root_SEV(const Likelihood_Cache_Branch& LCB1,
+					     const Likelihood_Cache_Branch& LCB2,
+					     const Likelihood_Cache_Branch& LCB3,
+					     const Matrix& F,
+					     const EVector& counts)
     {
         total_calc_root_prob++;
 
@@ -157,10 +157,10 @@ namespace substitution
     }
 
 
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                                const Likelihood_Cache_Branch& LCB2,
-                                                const Matrix& F,
-                                                const EVector& counts)
+    log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+					      const Likelihood_Cache_Branch& LCB2,
+					      const Matrix& F,
+					      const EVector& counts)
     {
         total_calc_root_prob++;
 
@@ -263,65 +263,10 @@ namespace substitution
     }
 
 
-    object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
-				    const alphabet& a,
-				    const EVector& smap,
-				    int n_models)
-    {
-	auto& sequence = sequence_mask.first.as_<EVector>();
-	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
-
-	int n_states = smap.size();
-	int matrix_size = n_models * n_states;
-
-	int L = mask.size();
-
-	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
-
-	int i=0;
-        for(int c=0;c<L;c++)
-	{
-	    if (not mask.test(c)) continue;
-
-	    int letter = sequence[i].as_int();
-
-	    double* S = (*LCB)[i];
-
-            for(int k=0; k<matrix_size; k++)
-                S[k] = 1.0;
-
-	    // We need to zero out the inconsistent characters.
-	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
-	    if (letter >= 0)
-	    {
-		auto& ok = a.letter_mask(letter);
-		for(int m=0;m<n_models;m++)
-		{
-		    for(int s1=0;s1<n_states;s1++)
-		    {
-			int l = smap[s1].as_int();
-			if (not ok[l])
-			{
-			    // Pr *= Pr(observation | state )
-			    // Currently we are doing Pr *= Pr(observation | letter(state))
-			    // So maybe I should make a Pr(observation | state) matrix.
-			    S[m*n_states + s1] = 0;
-			}
-		    }
-		}
-	    }
-
-	    i++;
-	}
-
-	return LCB;
-    }
-
-    log_double_t calc_root_prob_SEV(const EVector& LCN,
-				    const EVector& LCB,
-				    const Matrix& F,
-				    const EVector& counts)
+    log_double_t calc_prob_at_root_SEV(const EVector& LCN,
+				       const EVector& LCB,
+				       const Matrix& F,
+				       const EVector& counts)
     {
 	total_calc_root_prob++;
 
@@ -452,10 +397,10 @@ namespace substitution
     }
 
 
-    log_double_t calc_root_prob_SEV2(const EVector& LCN,
-				     const EVector& LCB,
-				     const Matrix& FF,
-				     const EVector& counts)
+    log_double_t calc_prob_SEV(const EVector& LCN,
+			       const EVector& LCB,
+			       const Matrix& FF,
+			       const EVector& counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -468,7 +413,7 @@ namespace substitution
 	bool at_root = not away_from_root_branch;
 
 	if (at_root)
-	    return calc_root_prob_SEV(LCN, LCB, FF, counts);
+	    return calc_prob_at_root_SEV(LCN, LCB, FF, counts);
 
 	total_calc_root_prob++;
 
@@ -739,9 +684,9 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& LCN,
-                    const EVector& LCB,
-                    const EVector& transition_P)
+    peel_branch_toward_root_SEV(const EVector& LCN,
+				const EVector& LCB,
+				const EVector& transition_P)
     {
         total_peel_internal_branches++;
 
@@ -835,14 +780,14 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV2(const EVector& LCN,
+    peel_branch_SEV(const EVector& LCN,
 		     const EVector& LCB,
 		     const EVector& transition_P,
 		     const Matrix& ff,
 		     bool away_from_root)
     {
 	if (not away_from_root)
-	    return peel_branch_SEV(LCN, LCB, transition_P);
+	    return peel_branch_toward_root_SEV(LCN, LCB, transition_P);
 
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -942,6 +887,61 @@ namespace substitution
 	LCB_OUT->away_from_root_WF = propagate_frequencies(f, transition_P);
 
         return LCB_OUT;
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
+				    const alphabet& a,
+				    const EVector& smap,
+				    int n_models)
+    {
+	auto& sequence = sequence_mask.first.as_<EVector>();
+	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
+
+	int n_states = smap.size();
+	int matrix_size = n_models * n_states;
+
+	int L = mask.size();
+
+	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(mask, n_models, n_states));
+
+	int i=0;
+        for(int c=0;c<L;c++)
+	{
+	    if (not mask.test(c)) continue;
+
+	    int letter = sequence[i].as_int();
+
+	    double* S = (*LCB)[i];
+
+            for(int k=0; k<matrix_size; k++)
+                S[k] = 1.0;
+
+	    // We need to zero out the inconsistent characters.
+	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int m=0;m<n_models;m++)
+		{
+		    for(int s1=0;s1<n_states;s1++)
+		    {
+			int l = smap[s1].as_int();
+			if (not ok[l])
+			{
+			    // Pr *= Pr(observation | state )
+			    // Currently we are doing Pr *= Pr(observation | letter(state))
+			    // So maybe I should make a Pr(observation | state) matrix.
+			    S[m*n_states + s1] = 0;
+			}
+		    }
+		}
+	    }
+
+	    i++;
+	}
+
+	return LCB;
     }
 
     vector<optional<int>> get_index_for_column(const boost::dynamic_bitset<>& bits)
