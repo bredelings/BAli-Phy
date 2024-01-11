@@ -174,13 +174,13 @@ namespace substitution {
     }
 
 
-    log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
-                                       const Likelihood_Cache_Branch& LCB2,
-                                       const Likelihood_Cache_Branch& LCB3,
-                                       const pairwise_alignment_t& A0,
-                                       const pairwise_alignment_t& A1,
-                                       const pairwise_alignment_t& A2,
-                                       const Matrix& F)
+    log_double_t calc_probability_at_root(const Likelihood_Cache_Branch& LCB1,
+					  const Likelihood_Cache_Branch& LCB2,
+					  const Likelihood_Cache_Branch& LCB3,
+					  const pairwise_alignment_t& A0,
+					  const pairwise_alignment_t& A1,
+					  const pairwise_alignment_t& A2,
+					  const Matrix& F)
     {
         assert(LCB1.n_columns() == A0.length1());
         assert(LCB2.n_columns() == A1.length1());
@@ -346,10 +346,10 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_root_prob_at_root(const EVector& LCN,
-					const EVector& LCB,
-					const EVector& A_,
-					const Matrix& F)
+    log_double_t calc_prob_at_root(const EVector& LCN,
+				   const EVector& LCB,
+				   const EVector& A_,
+				   const Matrix& F)
     {
         total_calc_root_prob++;
 
@@ -466,10 +466,10 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_root_prob2_not_at_root(const EVector& LCN,
-					     const EVector& LCB,
-					     const EVector& A_,
-					     const Matrix& F)
+    log_double_t calc_prob_not_at_root(const EVector& LCN,
+				       const EVector& LCB,
+				       const EVector& A_,
+				       const Matrix& F)
     {
         total_calc_root_prob++;
 
@@ -589,10 +589,10 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_root_prob2(const EVector& LCN,
-				 const EVector& LCB,
-				 const EVector& A_,
-				 const Matrix& F)
+    log_double_t calc_prob(const EVector& LCN,
+			   const EVector& LCB,
+			   const EVector& A_,
+			   const Matrix& F)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -603,7 +603,7 @@ namespace substitution {
 	    }
 
 	if (not away_from_root_index)
-	    return calc_root_prob_at_root(LCN, LCB, A_, F);
+	    return calc_prob_at_root(LCN, LCB, A_, F);
 	else
 	{
 	    auto LCB2 = LCB;
@@ -614,7 +614,7 @@ namespace substitution {
 		std::swap(A[0], A[*away_from_root_index]);
 	    }
 
-	    return calc_root_prob2_not_at_root(LCN, LCB2, A, F);
+	    return calc_prob_not_at_root(LCN, LCB2, A, F);
 	}
     }
 
@@ -949,11 +949,11 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch2_at_root(const EVector& LCN,
-			 const EVector& LCB,
-			 const EVector& A_,
-			 const EVector& transition_P,
-			 const Matrix& F)
+    peel_branch_at_root(const EVector& LCN,
+			const EVector& LCB,
+			const EVector& A_,
+			const EVector& transition_P,
+			const Matrix& F)
     {
         total_peel_internal_branches++;
 
@@ -1064,11 +1064,11 @@ namespace substitution {
 
 	
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch2_away_from_root(const EVector& LCN,
-				const EVector& LCB,
-				const EVector& A_,
-				const EVector& transition_P,
-				const Matrix& F)
+    peel_branch_away_from_root(const EVector& LCN,
+			       const EVector& LCB,
+			       const EVector& A_,
+			       const EVector& transition_P,
+			       const Matrix& F)
     {
 	total_peel_internal_branches++;
 
@@ -1182,12 +1182,12 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch2(const EVector& LCN,
-		 const EVector& LCB,
-		 const EVector& A_,
-		 const EVector& transition_P,
-		 const Matrix& F,
-		 bool away_from_root)
+    peel_branch(const EVector& LCN,
+		const EVector& LCB,
+		const EVector& A_,
+		const EVector& transition_P,
+		const Matrix& F,
+		bool away_from_root)
     {
 	if (not away_from_root)
 	    return peel_branch_toward_root(LCN, LCB, A_, transition_P, F);
@@ -1202,7 +1202,7 @@ namespace substitution {
 		}
 
 	    if (not away_from_root_index)
-		return peel_branch2_at_root(LCN, LCB, A_, transition_P, F);
+		return peel_branch_at_root(LCN, LCB, A_, transition_P, F);
 	    else
 	    {
 		auto LCB2 = LCB;
@@ -1213,7 +1213,7 @@ namespace substitution {
 		    std::swap(A[0], A[*away_from_root_index]);
 		}
 
-		return peel_branch2_away_from_root(LCN, LCB2, A, transition_P, F);
+		return peel_branch_away_from_root(LCN, LCB2, A, transition_P, F);
 	    }
 	}
     }

@@ -89,11 +89,25 @@ namespace substitution {
 			    const Matrix& F);
 
 
-    log_double_t calc_root_prob_at_root(const EVector& LCN,
-					const EVector& LCB,
-					const EVector& A_,
-					const Matrix& F);
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch(const EVector& LCN,
+		const EVector& LCB,
+		const EVector& A_,
+		const EVector& transition_P,
+		const Matrix& F,
+		bool away_from_root);
 
+
+    log_double_t calc_prob_at_root(const EVector& LCN,
+				   const EVector& LCB,
+				   const EVector& A_,
+				   const Matrix& F);
+
+
+    log_double_t calc_prob(const EVector& LCN,
+			   const EVector& LCB,
+			   const EVector& A_,
+			   const Matrix& F);
 
     Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P);
 
@@ -113,18 +127,5 @@ namespace substitution {
 						 const EVector& transition_P,
 						 const Matrix& F);
 
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_branch2(const EVector& LCN,
-		 const EVector& LCB,
-		 const EVector& A_,
-		 const EVector& transition_P,
-		 const Matrix& F,
-		 bool away_from_root);
-
-
-    log_double_t calc_root_prob2(const EVector& LCN,
-				 const EVector& LCB,
-				 const EVector& A_,
-				 const Matrix& F);
 }
 #endif
