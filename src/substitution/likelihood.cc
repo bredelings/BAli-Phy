@@ -346,10 +346,10 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_root_prob(const EVector& LCN,
-				const EVector& LCB,
-				const EVector& A_,
-				const Matrix& F)
+    log_double_t calc_root_prob_at_root(const EVector& LCN,
+					const EVector& LCB,
+					const EVector& A_,
+					const Matrix& F)
     {
         total_calc_root_prob++;
 
@@ -603,7 +603,7 @@ namespace substitution {
 	    }
 
 	if (not away_from_root_index)
-	    return calc_root_prob(LCN, LCB, A_, F);
+	    return calc_root_prob_at_root(LCN, LCB, A_, F);
 	else
 	{
 	    auto LCB2 = LCB;
@@ -835,11 +835,11 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch(const EVector& LCN,
-		const EVector& LCB,
-		const EVector& A_,
-		const EVector& transition_P,
-		const Matrix& F)
+    peel_branch_toward_root(const EVector& LCN,
+			    const EVector& LCB,
+			    const EVector& A_,
+			    const EVector& transition_P,
+			    const Matrix& F)
     {
         total_peel_internal_branches++;
 
@@ -1190,7 +1190,7 @@ namespace substitution {
 		 bool away_from_root)
     {
 	if (not away_from_root)
-	    return peel_branch(LCN, LCB, A_, transition_P, F);
+	    return peel_branch_toward_root(LCN, LCB, A_, transition_P, F);
 	else
 	{
 	    optional<int> away_from_root_index;

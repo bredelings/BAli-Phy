@@ -82,7 +82,7 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 
 
 
-extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
+extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -90,24 +90,24 @@ extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_branch(arg0.as_<EVector>(),        // LCN
-				     arg1.as_<EVector>(),        // LCB
-				     arg2.as_<EVector>(),        // A
-				     arg3.as_<EVector>(),        // transition_P
-				     arg4.as_<Box<Matrix>>()  ); // F
+    return substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
+						 arg1.as_<EVector>(),        // LCB
+						 arg2.as_<EVector>(),        // A
+						 arg3.as_<EVector>(),        // transition_P
+						 arg4.as_<Box<Matrix>>()  ); // F
 }
 
-extern "C" closure builtin_function_calcRootProb(OperationArgs& Args)
+extern "C" closure builtin_function_calcRootProbAtRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    log_double_t Pr = substitution::calc_root_prob(arg0.as_<EVector>(),       // LCN
-						   arg1.as_<EVector>(),       // LCB
-						   arg2.as_<EVector>(),       // A
-						   arg3.as_<Box<Matrix>>());  // F
+    log_double_t Pr = substitution::calc_root_prob_at_root(arg0.as_<EVector>(),       // LCN
+							   arg1.as_<EVector>(),       // LCB
+							   arg2.as_<EVector>(),       // A
+							   arg3.as_<Box<Matrix>>());  // F
     return {Pr};
 }
 
