@@ -9,6 +9,7 @@ import Probability.Distribution.PhyloCTMC.PhyloCTMC
 import Probability.Random
 import Tree
 import SModel
+import SModel.Likelihood.VariableA
 import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
 import Bio.Alphabet  -- for type Alphabet

@@ -3,7 +3,6 @@ module SModel (module SModel,
                module SModel.Doublets,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
-               module SModel.Likelihood,
                module SModel.Parsimony,
                module SModel.Simple,
                module SModel.Rate,
@@ -28,7 +27,6 @@ import SModel.Nucleotides
 import SModel.Doublets
 import SModel.Codons
 import SModel.ReversibleMarkov
-import SModel.Likelihood
 import SModel.Parsimony
 import SModel.Simple
 import SModel.Rate

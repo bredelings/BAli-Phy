@@ -8,7 +8,7 @@ import Data.Matrix
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
-import SModel.Likelihood
+import SModel.Likelihood.CLV
 import Numeric.LogDouble
 
 -- 0 - subst_root
