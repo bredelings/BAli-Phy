@@ -22,7 +22,7 @@ using Alphabet = PtrBox<alphabet>;
 #include "dp/hmm.H"
 using boost::dynamic_bitset;
 
-extern "C" closure builtin_function_simpleSequenceLikelihoodsSEV(OperationArgs& Args)
+extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -35,7 +35,7 @@ extern "C" closure builtin_function_simpleSequenceLikelihoodsSEV(OperationArgs& 
 							 arg2.as_int());        // n_models
 }
 
-extern "C" closure builtin_function_peelBranchTowardRootSEV(OperationArgs& Args)
+extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -46,7 +46,7 @@ extern "C" closure builtin_function_peelBranchTowardRootSEV(OperationArgs& Args)
 						     arg2.as_<EVector>());       // transition_P
 }
 
-extern "C" closure builtin_function_peelBranchSEV(OperationArgs& Args)
+extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -61,7 +61,7 @@ extern "C" closure builtin_function_peelBranchSEV(OperationArgs& Args)
 					 arg4);
 }
 
-extern "C" closure builtin_function_sampleSequenceSEV(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -76,7 +76,7 @@ extern "C" closure builtin_function_sampleSequenceSEV(OperationArgs& Args)
 					     arg4.as_<EVector>());              // compressed_col_for_col
 }
 
-extern "C" closure builtin_function_calcProbSEV(OperationArgs& Args)
+extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -90,7 +90,7 @@ extern "C" closure builtin_function_calcProbSEV(OperationArgs& Args)
     return {Pr};
 }
 
-extern "C" closure builtin_function_calcProbAtRootSEV(OperationArgs& Args)
+extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -104,7 +104,7 @@ extern "C" closure builtin_function_calcProbAtRootSEV(OperationArgs& Args)
     return {Pr};
 }
 
-extern "C" closure builtin_function_sampleRootSequenceSEV(OperationArgs& Args)
+extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);

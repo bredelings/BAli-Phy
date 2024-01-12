@@ -42,7 +42,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       maybeNodeISequences = labelToNodeMap tree isequences
       maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
       nModels = nrows f
-      nodeCLVs = simpleNodeCLVsSEV alphabet smap nModels maybeNodeSeqsBits
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
       uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
       uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
@@ -53,12 +53,12 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
-      cls = cached_conditional_likelihoods_SEV tree nodeCLVs transition_ps
-      likelihood = peel_likelihood_SEV nodeCLVs tree cls f alphabet smap subst_root column_counts
+      cls = cached_conditional_likelihoods tree nodeCLVs transition_ps
+      likelihood = peel_likelihood nodeCLVs tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-                               ancestralComponentStateSequences = sample_ancestral_sequences_SEV
+                               ancestralComponentStateSequences = sample_ancestral_sequences
                                                                      tree
                                                                      subst_root
                                                                      nodeCLVs
@@ -142,7 +142,7 @@ annotated_subst_likelihood_fixed_A2 tree length smodel scale sequenceData = do
       maybeNodeISequences = labelToNodeMap tree isequences
       maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
       nModels = nrows f
-      nodeCLVs = simpleNodeCLVsSEV alphabet smap nModels maybeNodeSeqsBits
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
       uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
       uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
@@ -153,12 +153,12 @@ annotated_subst_likelihood_fixed_A2 tree length smodel scale sequenceData = do
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map2 smodel_on_tree
       f = weighted_frequency_matrix smodel
-      cls = cachedConditionalLikelihoodsSEV2 tree nodeCLVs transition_ps f
-      likelihood = peelLikelihoodSEV2 nodeCLVs tree cls f alphabet smap subst_root column_counts
+      cls = cachedConditionalLikelihoods2 tree nodeCLVs transition_ps f
+      likelihood = peelLikelihood2 nodeCLVs tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-                               ancestralComponentStateSequences = sample_ancestral_sequences_SEV
+                               ancestralComponentStateSequences = sample_ancestral_sequences
                                                                      tree
                                                                      subst_root
                                                                      nodeCLVs
