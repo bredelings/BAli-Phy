@@ -154,9 +154,9 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) where
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) where
+instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment smodel scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonRev tree alignment smodel scale
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
@@ -169,23 +169,23 @@ sampleComponentStatesNonRev rtree alignment smodel scale =  do
                                    Nothing -> simulateRootSequence (sequenceLength alignment node) f
                                    Just b' -> let b = reverseEdge b'
                                                   parent = sourceNode rtree b
-                                             in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
+                                              in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
       stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
     sampleIO (PhyloCTMC tree alignment smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStates (makeRooted tree) alignment smodel scale
+      stateSequences <- sampleComponentStates tree alignment smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s NonReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
