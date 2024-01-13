@@ -134,7 +134,7 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotated_subst_likelihood_fixed_A2 tree length smodel scale sequenceData = do
+annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
@@ -153,8 +153,8 @@ annotated_subst_likelihood_fixed_A2 tree length smodel scale sequenceData = do
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map2 smodel_on_tree
       f = weighted_frequency_matrix smodel
-      cls = cachedConditionalLikelihoods2 tree nodeCLVs transition_ps f
-      likelihood = peelLikelihood2 nodeCLVs tree cls f alphabet smap subst_root column_counts
+      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transition_ps f
+      likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap subst_root column_counts
 
 --    This also needs the map from columns to compressed columns:
       ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
@@ -194,10 +194,10 @@ instance Dist (PhyloCTMC t Int s NonReversible) where
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasRoots t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonReversible) where
     type DistProperties (PhyloCTMC t Int s NonReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A2 tree length smodel scale
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
 
-sampleComponentStatesFixed2 rtree rootLength smodel scale =  do
+sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
   let ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
       f = (weighted_frequency_matrix smodel)
 
@@ -218,7 +218,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStatesFixed2 (makeRooted tree) rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixedNonRev (makeRooted tree) rootLength smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 

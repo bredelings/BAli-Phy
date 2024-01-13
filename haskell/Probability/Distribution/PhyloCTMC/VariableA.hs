@@ -114,7 +114,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBran
 
 
 -----------
-annotated_subst_like_on_tree2 tree alignment smodel scale sequenceData = do
+annotatedSubstLikeOnTreeNonRev tree alignment smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
@@ -128,10 +128,10 @@ annotated_subst_like_on_tree2 tree alignment smodel scale sequenceData = do
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       fs = frequenciesOnTree tree f transition_ps
-      cls = cached_conditional_likelihoods2 tree nodeCLVs as transition_ps fs
+      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs as transition_ps fs
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peel_likelihood2 tree nodeCLVs cls as fs subst_root
+      likelihood  = peelLikelihoodNonRev tree nodeCLVs cls as fs subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
 
@@ -160,7 +160,7 @@ instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => 
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
-sampleComponentStates2 rtree alignment smodel scale =  do
+sampleComponentStatesNonRev rtree alignment smodel scale =  do
   let as = pairwise_alignments alignment
       ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
       f = (weighted_frequency_matrix smodel)

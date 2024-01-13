@@ -41,20 +41,20 @@ simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
      isn't really a matrix of 1s in the mix.
  -}
 
-cachedConditionalLikelihoods2 t nodeCLVs ps f = let clvs = getEdgesSet t & IntMap.fromSet clvForBranch
-                                                    clvForBranch b = let p = ps IntMap.! b
-                                                                         inEdges = edgesBeforeEdgeSet t b
-                                                                         clsIn = IntMap.restrictKeysToVector clvs inEdges
-                                                                         node = sourceNode t b
-                                                                         nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                     in peelBranch nodeCLs clsIn p f (not $ toward_root t b)
-                                                in clvs
+cachedConditionalLikelihoodsNonRev t nodeCLVs ps f = let clvs = getEdgesSet t & IntMap.fromSet clvForBranch
+                                                         clvForBranch b = let p = ps IntMap.! b
+                                                                              inEdges = edgesBeforeEdgeSet t b
+                                                                              clsIn = IntMap.restrictKeysToVector clvs inEdges
+                                                                              node = sourceNode t b
+                                                                              nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
+                                                                          in peelBranch nodeCLs clsIn p f (not $ toward_root t b)
+                                                     in clvs
 
-peelLikelihood2 nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
-                                                              nModels = nrows f
-                                                              nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
-                                                              clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                          in calcProb nodeCLs clsIn f counts
+peelLikelihoodNonRev nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
+                                                                   nModels = nrows f
+                                                                   nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                                   clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                               in calcProb nodeCLs clsIn f counts
 
 cached_conditional_likelihoods t nodeCLVs ps =
     let lc    = IntMap.fromSet lcf $ getEdgesSet t
