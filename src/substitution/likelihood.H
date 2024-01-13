@@ -53,14 +53,6 @@ namespace substitution {
     extern int total_likelihood;
     extern long total_root_clv_length;
 
-    log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
-                                       const Likelihood_Cache_Branch& LCB2,
-                                       const Likelihood_Cache_Branch& LCB3,
-                                       const pairwise_alignment_t& A0,
-                                       const pairwise_alignment_t& A1,
-                                       const pairwise_alignment_t& A2,
-                                       const Matrix& F);
-
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods(const EVector& sequence,
 				const alphabet& a,
