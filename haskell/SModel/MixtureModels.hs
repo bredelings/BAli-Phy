@@ -23,6 +23,7 @@ instance HasAlphabet m => HasAlphabet (MixtureModels m) where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
 instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (MixtureModels m) where
+    type instance IsReversible (MixtureModels m) = IsReversible m
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
         where mx = mms!!(branchCats IntMap.! undirectedName b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
