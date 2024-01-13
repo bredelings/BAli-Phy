@@ -192,7 +192,7 @@ instance Dist (PhyloCTMC t Int s NonReversible) where
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasRoots t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonReversible) where
+instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonReversible) where
     type DistProperties (PhyloCTMC t Int s NonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
@@ -213,18 +213,18 @@ sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
 -- Should hasRoots t imply HasRoots (Rooted t)?
 -- Where is (Rooted t) coming up?  Can we remove it?
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonReversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStatesFixedNonRev (makeRooted tree) rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixedNonRev tree rootLength smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoots t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
