@@ -741,17 +741,15 @@ std::string generate_atmodel_program(const variables_map& args,
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
     }
 
-    if (not is_reversible(SMs))
-    {
-	model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"),var("topology")}}});
-    }
-
     // M4. Branch-length tree
     if (not fixed.count("tree"))
     {
 	expression_ref tree_exp = {var("branch_length_tree"),topology_var,branch_lengths};
-	if (not is_reversible(SMs))
+	if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
+	{
+	    model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
 	    tree_exp = {var("add_root"),var("root"),tree_exp};
+	}
 	model.let(tree_var, tree_exp);
     }
 
