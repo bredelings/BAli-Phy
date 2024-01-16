@@ -278,11 +278,11 @@ jobs:
         rm -rf tests/likelihood/one-sequence
 
         echo ::group::testiphy variable A
-        ./testiphy ${BALIPHY} --seed=$seed --fix=alignment --fix=tree
+        ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
 
         echo ::group::testiphy fixed A
-        ./testiphy ${BALIPHY} --seed=$seed -Inone --fix=alignment --fix=tree
+        ./testiphy ${BALIPHY} --seed=$seed -Inone
         echo ::endgroup::
 
     - name: Upload tests if they failed
