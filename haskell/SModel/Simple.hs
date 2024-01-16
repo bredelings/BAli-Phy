@@ -49,9 +49,3 @@ nStates m = vector_size (stateLetters m)
 
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ get_tree' smodel_on_tree
-
-transition_ps_map2 smodel_on_tree = getEdgesSet tree & IntMap.fromSet branchToPs
-    where tree = get_tree' smodel_on_tree
-          branchToPs b = list_to_vector $ maybeTr b $ branch_transition_p smodel_on_tree b
-          maybeTr b = if not $ toward_root tree b then map tr else id
-

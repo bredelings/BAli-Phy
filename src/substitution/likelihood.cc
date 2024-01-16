@@ -824,7 +824,7 @@ namespace substitution {
 
             // propagate from the source distribution
             double* R = (*LCB3)[s2];            //name the result matrix
-	    propagate(R, n_models, n_states, scale, transition_P, C);
+	    propagate_toward_root(R, n_models, n_states, scale, transition_P, C);
             LCB3->scale(s2) = scale;
             s2++;
         }
@@ -936,7 +936,7 @@ namespace substitution {
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
-	    propagate(R, n_models, n_states, scale, transition_P, S);
+	    propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
             LCB_OUT->scale(s_out++) = scale;
         }
 
@@ -1049,7 +1049,7 @@ namespace substitution {
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
-	    propagate(R, n_models, n_states, scale, transition_P, S);
+	    propagate_away_from_root(R, n_models, n_states, scale, transition_P, S);
             LCB_OUT->scale(s_out++) = scale;
         }
 
@@ -1169,7 +1169,7 @@ namespace substitution {
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
-	    propagate(R, n_models, n_states, scale, transition_P, S);
+	    propagate_away_from_root(R, n_models, n_states, scale, transition_P, S);
             LCB_OUT->scale(s_out++) = scale;
         }
 

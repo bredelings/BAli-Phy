@@ -224,7 +224,7 @@ inline double element_prod_sum(const double* __restrict__ M1,
     return sum;
 }
 
-inline void propagate(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_toward_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
 {
     int matrix_size = n_models * n_states;
     bool need_scale = true;
@@ -250,7 +250,7 @@ inline void propagate(double* R, int n_models, int n_states, int& scale, const E
     }
 }
 
-inline void propagate_away(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_away_from_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
 {
     int matrix_size = n_models * n_states;
     bool need_scale = true;
