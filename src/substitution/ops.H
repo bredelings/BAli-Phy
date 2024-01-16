@@ -250,6 +250,32 @@ inline void propagate(double* R, int n_models, int n_states, int& scale, const E
     }
 }
 
+inline void propagate_away(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+{
+    int matrix_size = n_models * n_states;
+    bool need_scale = true;
+    for(int m=0;m<n_models;m++)
+    {
+	const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+	// compute the distribution at the target (parent) node - multiple letters
+	for(int s1=0;s1<n_states;s1++)
+	{
+	    double temp=0;
+	    for(int s2=0;s2<n_states;s2++)
+		temp += Q(s2,s1)*S[m*n_states + s2];
+	    R[m*n_states + s1] = temp;
+	    need_scale = need_scale and (temp < scale_min);
+	}
+    }
+    if (need_scale)
+    {
+	scale++;
+	for(int j=0; j<matrix_size; j++)
+	    R[j] *= scale_factor;
+    }
+}
+
 Matrix propagate_frequencies(const Matrix& F, const EVector& transition_P);
 
 void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps);

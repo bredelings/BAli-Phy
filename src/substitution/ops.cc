@@ -43,12 +43,11 @@ Matrix propagate_frequencies(const Matrix& F, const EVector& transition_P)
 	{
 	    double p = 0;
 	    for(int s1=0;s1<n_states;s1++)
-		p += F(m,s1) * P(s2,s1); // Q is transposed, so P(s2,s1) is Pr(s1->s2)
+		p += F(m,s1) * P(s1,s2);
 	    F2(m,s2) = p;
 	}
 	// TODO - maybe normalize these to sum to one to reduce roundoff error?
     }
 
     return F2;
-
 }

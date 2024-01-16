@@ -878,7 +878,7 @@ namespace substitution
 
             // propagate from the source distribution
             double* R = (*LCB_OUT)[s_out];            //name the result matrix
-	    propagate(R, n_models, n_states, scale, transition_P, C);
+	    propagate_away(R, n_models, n_states, scale, transition_P, C);
             LCB_OUT->scale(s_out) = scale;
 
             s_out++;
