@@ -546,7 +546,7 @@ namespace substitution {
 		}
 	    }
 
-	    if (A(0).has_character2(i[0]))
+	    if (A(0).has_character1(i[0]))
 		element_assign(S, 1.0, matrix_size);
 	    else
 		element_assign(S, F.begin(), matrix_size);
@@ -1146,7 +1146,7 @@ namespace substitution {
 	    }
 
 	    int scale = 0;
-	    if (A(0).has_character2(i[0]))
+	    if (A(0).has_character1(i[0]))
 		element_assign(S, 1.0, matrix_size);
 	    else
 		element_assign(S, F.begin(), matrix_size);
