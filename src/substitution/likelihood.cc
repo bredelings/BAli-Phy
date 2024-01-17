@@ -1313,25 +1313,30 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
+    shift(const Likelihood_Cache_Branch& CL, int delta)
     {
-        auto node_CLV_ptr = P.get_node_CLV(n);
-	auto& node_CLV = *node_CLV_ptr;
+	assert(delta >= 0);
 
-        const int n_models = node_CLV.n_models();
-        const int n_states = node_CLV.n_states();
+        const int n_models = CL.n_models();
+        const int n_states = CL.n_states();
 
         // Compute the likelihood matrices for each letter in the sequence
-        int L = node_CLV.n_columns();
+        int L = CL.n_columns();
         Likelihood_Cache_Branch LCB(L+delta, n_models, n_states);
 
         for(int i=0;i<delta;i++)
             LCB.set(i, 0);
 
         for(int i=0;i<L;i++)
-	    LCB.set_ptr(i+delta, node_CLV[i]);
+	    LCB.set_ptr(i+delta, CL[i]);
 
         return LCB;
+    }
+
+    Likelihood_Cache_Branch
+    get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
+    {
+        return shift(*P.get_node_CLV(n), delta);
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'

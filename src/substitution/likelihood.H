@@ -39,6 +39,9 @@ class data_partition;
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
 
+    /// Find the likelihood matrices for data at leaf node n.
+    Likelihood_Cache_Branch shift(const Likelihood_Cache_Branch& CL, int delta);
+
     Likelihood_Cache_Branch get_column_likelihoods(const data_partition&, const std::vector<int>& b, const matrix<int>& index,int delta=0);
 
     /// Find the likelihood matrices for data at leaf node n.
