@@ -110,6 +110,9 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform_expression(const expression_ref&,bool=false) const;
 
+    /// Compute and the return the value of a function application.
+    const expression_ref& evaluate_apply(const expression_ref& f, const expression_ref& x, bool=true) const;
+
     /// Evaluate a particular reg and return the value.
     const expression_ref& evaluate_reg(int r) const;
 

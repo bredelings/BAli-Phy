@@ -152,8 +152,12 @@ const expression_ref& context_ref::evaluate_expression(const expression_ref& E,b
 const expression_ref& context_ref::perform_expression(const expression_ref& E,bool ec) const
 {
     expression_ref perform_io = get_expression(*(memory()->perform_io_head));
-    expression_ref E2 = {perform_io, E};
-    return evaluate_expression_( preprocess(E2), ec);
+    return evaluate_apply(perform_io, E, ec);
+}
+
+const expression_ref& context_ref::evaluate_apply(const expression_ref& f, const expression_ref& x, bool ec) const
+{
+    return evaluate_expression( {f, x}, ec);
 }
 
 const expression_ref& context_ref::evaluate_reg(int r) const
