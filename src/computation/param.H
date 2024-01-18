@@ -30,6 +30,7 @@ public:
 
     int size() const;
     context_ptr operator[](int i) const;
+    expression_ref operator()(const expression_ref& x) const;
     expression_ref head() const;
     expression_ref value() const;
     context_ptr list_element(int i) const;

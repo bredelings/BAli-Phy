@@ -104,6 +104,11 @@ context_ptr context_ptr::operator[](int i) const
     return {C, r};
 }
 
+expression_ref context_ptr::operator()(const expression_ref& x) const
+{
+    return C.evaluate_apply(reg_var(reg), x);
+}
+
 context_ptr context_ptr::list_element(int index) const
 {
     context_ptr L = result();
