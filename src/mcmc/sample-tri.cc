@@ -91,7 +91,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
 
-    auto dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
+    auto dists1 = substitution::shift(*P.cache(b1), 2);
     auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
 
     //-------------- Create alignment matrices ---------------//
