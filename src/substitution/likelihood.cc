@@ -1325,10 +1325,16 @@ namespace substitution {
         Likelihood_Cache_Branch LCB(L+delta, n_models, n_states);
 
         for(int i=0;i<delta;i++)
+	{
             LCB.set(i, 0);
+	    LCB.scale(i) =  0;
+	}
 
         for(int i=0;i<L;i++)
+	{
 	    LCB.set_ptr(i+delta, CL[i]);
+	    LCB.scale(i+delta) = CL.scale(i);
+	}
 
         return LCB;
     }
