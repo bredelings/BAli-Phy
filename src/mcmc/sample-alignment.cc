@@ -49,8 +49,8 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 
     int bb = t.reverse(b);
 
-    // We SHOULD be able to avoid constructing an index here.
-    // There should be no question of what order the columns go.
+    int n2 = t.target(b);
+
     // `get_indices_n( )` just constructs a 1-row matrix from 0 to n-1.
     auto dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
 
@@ -110,7 +110,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
                          HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
                          std::move(dists1),
                          std::move(dists2),
-                         *P.WeightedFrequencyMatrix()
+                         *P.WeightedFrequencyMatrix(n2)
                     );
 
     Matrices->forward_band();

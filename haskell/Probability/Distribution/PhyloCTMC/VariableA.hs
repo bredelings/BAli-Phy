@@ -41,6 +41,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       smodel_on_tree = SingleBranchLengthModel tree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
+      fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
       cls = cached_conditional_likelihoods tree nodeCLVs as transition_ps f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
@@ -58,7 +59,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 
@@ -145,7 +146,7 @@ annotatedSubstLikeOnTreeNonRev tree alignment smodel scale sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood f smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
   return ([likelihood], prop)
 

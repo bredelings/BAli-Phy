@@ -133,7 +133,7 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
     shared_ptr<DPcubeSimple>
-	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), *P.WeightedFrequencyMatrix()));
+	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), *P.WeightedFrequencyMatrix(nodes[0])));
     Matrices->forward_cube();
 
     if (Matrices->Pr_sum_all_paths() <= 0.0) 

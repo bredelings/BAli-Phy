@@ -40,13 +40,13 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
 -- Is that slower?
       prop_anc_seqs :: AlignedCharacterData,
       prop_likelihood :: LogDouble,
-      prop_get_weighted_frequency_matrix :: Matrix Double,
+      prop_get_weighted_frequency_matrix :: IntMap (Matrix Double), -- only variable A
       prop_smap :: EVector Int,
-      prop_nodeCLVs :: IntMap (Maybe CondLikes),
+      prop_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
       prop_alphabet :: Alphabet,
       prop_n_states :: Int,
       prop_n_base_models :: Int,
-      prop_n_muts :: Int -- This shouldn't be here.
+      prop_n_muts :: Int                                            -- This shouldn't be here.
     }
 
 

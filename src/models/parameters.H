@@ -113,7 +113,7 @@ public:
     // Perhaps this should also be per-mixture-component.
     object_ptr<const EVector> state_letters() const;
   
-    object_ptr<const Box<Matrix>> WeightedFrequencyMatrix() const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc, substitution.cc[sample_subst_history]
+    object_ptr<const Box<Matrix>> WeightedFrequencyMatrix(int n) const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc
 
     object_ptr<const Likelihood_Cache_Branch> cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
 

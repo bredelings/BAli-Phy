@@ -116,7 +116,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
                         m123,
                         std::move(dists1),
                         std::move(dists23),
-                        *P.WeightedFrequencyMatrix()
+                        *P.WeightedFrequencyMatrix(nodes[0])
                     );
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;
