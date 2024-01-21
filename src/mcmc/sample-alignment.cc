@@ -51,8 +51,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 
     int n2 = t.target(b);
 
-    // `get_indices_n( )` just constructs a 1-row matrix from 0 to n-1.
-    auto dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
+    auto dists1 = substitution::shift(*P.cache(b), 2);
 
     /*
      * OK, so here we need to handle (i) multifurcating nodes and (ii) non-reversible models.
