@@ -43,6 +43,28 @@ using std::optional;
 using boost::dynamic_bitset;
 using namespace A2;
 
+/*
+ * So we are are doing calc_prob_at_root( ) or calc_prob_not_at_root( ).
+ *
+ * We only include F in dist1*dist2*F (for match states) if we are at_root.
+ *
+ * When we divide out by the I and D probabilities, we multiply by F only if the root
+ * frequencies are NOT included.
+ *
+ * When merging columns in get_column_likelihoods( ), we apply root frequecies whenever the
+ * branch leading to the root is a "-".  If the root isn't behind either of the branches, then
+ * we don't apply any frequencies.
+ *
+ * We need to copy the away_from_root_frequencies in the shift( ) function.
+ *
+ * We need to handle the case where n2 has observed sequences in sample_alignment.
+ * So perhaps we should allow passing in node_CLVs.
+ * This would remove the special case for the tree having 2 nodes.
+ * 
+ * But if there is an observed sequence at n0 in sample_tri, then we need to complain.
+ */
+
+
 shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const TreeInterface& t, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     assert(P.variable_alignment());
