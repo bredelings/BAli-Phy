@@ -1349,13 +1349,13 @@ namespace substitution {
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
     Likelihood_Cache_Branch
-    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& index, int delta)
+    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& indices, int delta)
     {
         auto t = P.t();
 
         //------ Check that the number of branches matches the number of rows -----------//
 	int B = branches.size();
-	assert(index.size2() == B);
+	assert(indices.size2() == B);
         assert(B);
 
         //------ Check that all branches point to a 'root' node -----------//
@@ -1365,7 +1365,7 @@ namespace substitution {
         const int n_models = P.n_base_models();
         const int n_states = P.n_states();
         const int matrix_size = n_models * n_states;
-        Likelihood_Cache_Branch LCB(index.size1() + delta, n_models, n_states);
+        Likelihood_Cache_Branch LCB(indices.size1() + delta, n_models, n_states);
 
         //Clear the padding matrices
         for(int i=0;i<delta;i++)
@@ -1385,8 +1385,8 @@ namespace substitution {
 	    }
 	}
 
-        // For each column in the index (e.g. for each present character at node 'root')
-        for(int i=0;i<index.size1();i++) 
+        // For each column in the indices (e.g. for each present character at node 'root')
+        for(int i=0;i<indices.size1();i++) 
         {
             LCB.set(i+delta, 1);
 
@@ -1396,7 +1396,7 @@ namespace substitution {
             int scale = 0;
             for(int j=0;j<B;j++) 
             {
-                int i0 = index(i,j);
+                int i0 = indices(i,j);
                 if (i0 == alphabet::gap) continue;
 
                 element_prod_modify(m, (*cache[j])[i0], matrix_size);
