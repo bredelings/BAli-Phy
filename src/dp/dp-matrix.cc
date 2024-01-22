@@ -443,9 +443,19 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
     //----- cache G1,G2 emission probabilities -----//
     int scale = 0;
     log_prod prod;
+    bool at_root = not dists1.away_from_root_WF and not dists2.away_from_root_WF;
+
     for(int i=2;i<dists1.n_columns();i++)
     {
-	double sum = dists1.dot(i, weighted_frequencies);
+	// `sum` is the emission probability of a Deletion.
+	// Dividing dists1 by this ensures that this probability is 1.0.
+	double sum;
+	// If the root is within dists1, then the frequencies are already included.
+	if (dists1.away_from_root_WF)
+	    sum = dists1.sum(i);
+	else
+	    sum = dists1.dot(i, weighted_frequencies);
+
 	assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
 	if (sum != 0)
@@ -459,9 +469,15 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 
     for(int i=2;i<dists2.n_columns();i++)
     {
-	dists2.mul(i, weighted_frequencies);
+	// `sum` is the emission probability of a Insertion.
+	// Dividing dists1 by this ensures that this probability is 1.0.
+	double sum;
+	// If the root is within dists2, then the frequencies are already included.
+	if (dists2.away_from_root_WF)
+	    sum = dists2.sum(i);
+	else
+	    sum = dists2.dot(i, weighted_frequencies);
 
-	double sum = dists2.sum(i);
 	assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
 	if (sum != 0)
@@ -471,6 +487,10 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 	}
 
 	scale += dists2.scale(i);
+
+	// If we are at the root then we want the match probabilities to include WF.
+	if (at_root)
+	    dists2.mul(i, weighted_frequencies);
     }
     Pr_extra_subst = prod;
     Pr_extra_subst.log() += log_scale_min*scale;

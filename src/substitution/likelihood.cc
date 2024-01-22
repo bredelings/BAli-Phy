@@ -1375,20 +1375,29 @@ namespace substitution {
 	}
 
         vector<object_ptr<const Likelihood_Cache_Branch>> cache;
-        for(int b: branches)
+	optional<int> root_branch_index;
+        for(int i=0;i<branches.size();i++)
 	{
+	    int b = branches[i];
             cache.push_back(P.cache(b));
 	    if (cache.back()->away_from_root_WF)
 	    {
 		assert(not LCB.away_from_root_WF);
 		LCB.away_from_root_WF = cache.back()->away_from_root_WF;
+		assert(not root_branch_index);
+		root_branch_index = i;
 	    }
 	}
 
         // For each column in the indices (e.g. for each present character at node 'root')
         for(int i=0;i<indices.size1();i++) 
         {
-            LCB.set(i+delta, 1);
+	    // If the root is behind one of these branches and the root frequencies have not been applied,
+	    // then apply them here.
+	    if (root_branch_index and indices(i, *root_branch_index) == alphabet::gap)
+		LCB.set(i+delta, F);
+	    else
+		LCB.set(i+delta, 1);
 
             // Note that it is possible that branches.size() == 0, so that
 	    // we do ZERO products, and stay at 1.0 for everything.
