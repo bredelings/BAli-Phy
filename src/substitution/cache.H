@@ -138,6 +138,9 @@ public:
 	std::swap(n_states_, LCB.n_states_);
 	std::swap(n_models_, LCB.n_models_);
 	std::swap(n_columns_, LCB.n_columns_);
+	std::swap(other_subst, LCB.other_subst);
+	std::swap(bits, LCB.bits);
+	std::swap(away_from_root_WF, LCB.away_from_root_WF);
     }
 
     Likelihood_Cache_Branch& operator=(const Likelihood_Cache_Branch&) = delete;
