@@ -1336,7 +1336,9 @@ namespace substitution {
 	    LCB.scale(i+delta) = CL.scale(i);
 	}
 
-        return LCB;
+	LCB.away_from_root_WF = CL.away_from_root_WF;
+
+	return LCB;
     }
 
     Likelihood_Cache_Branch
@@ -1372,7 +1374,14 @@ namespace substitution {
 
         vector<object_ptr<const Likelihood_Cache_Branch>> cache;
         for(int branch: b)
+	{
             cache.push_back(P.cache(branch));
+	    if (cache.back()->away_from_root_WF)
+	    {
+		assert(not LCB.away_from_root_WF);
+		LCB.away_from_root_WF = cache.back()->away_from_root_WF;
+	    }
+	}
 
         // For each column in the index (e.g. for each present character at node 'root')
         for(int i=0;i<index.size1();i++) 
