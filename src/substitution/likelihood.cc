@@ -1349,16 +1349,18 @@ namespace substitution {
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
     Likelihood_Cache_Branch
-    get_column_likelihoods(const data_partition& P, const vector<int>& b, const matrix<int>& index, int delta)
+    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& index, int delta)
     {
         auto t = P.t();
 
-        //------ Check that all branches point to a 'root' node -----------//
-        assert(b.size());
+        //------ Check that the number of branches matches the number of rows -----------//
+	int B = branches.size();
+	assert(index.size2() == B);
+        assert(B);
 
-        int root = t.target(b[0]);
-        for(int i=1;i<b.size();i++)
-            assert(t.target(b[i]) == root);
+        //------ Check that all branches point to a 'root' node -----------//
+        for(int i=1;i<B;i++)
+            assert(t.target(branches[i]) == t.target(branches[0]));
 
         const int n_models = P.n_base_models();
         const int n_states = P.n_states();
@@ -1373,9 +1375,9 @@ namespace substitution {
 	}
 
         vector<object_ptr<const Likelihood_Cache_Branch>> cache;
-        for(int branch: b)
+        for(int b: branches)
 	{
-            cache.push_back(P.cache(branch));
+            cache.push_back(P.cache(b));
 	    if (cache.back()->away_from_root_WF)
 	    {
 		assert(not LCB.away_from_root_WF);
@@ -1388,11 +1390,11 @@ namespace substitution {
         {
             LCB.set(i+delta, 1);
 
-            // Note that it is possible that b.size() == 0, so that
+            // Note that it is possible that branches.size() == 0, so that
 	    // we do ZERO products, and stay at 1.0 for everything.
             auto m = LCB[i+delta];
             int scale = 0;
-            for(int j=0;j<b.size();j++) 
+            for(int j=0;j<B;j++) 
             {
                 int i0 = index(i,j);
                 if (i0 == alphabet::gap) continue;
