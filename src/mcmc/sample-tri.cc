@@ -88,11 +88,11 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     m123.B = P.get_beta();
 
     //------------- Compute sequence properties --------------//
-
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
 
+    auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b1), 2);
-    auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
+    auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), *F, 2);
 
     //-------------- Create alignment matrices ---------------//
 
@@ -116,7 +116,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
                         m123,
                         std::move(dists1),
                         std::move(dists23),
-                        *P.WeightedFrequencyMatrix(nodes[0])
+                        *F
                     );
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;

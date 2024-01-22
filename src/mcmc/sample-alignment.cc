@@ -91,10 +91,12 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
      * can simply compute the property without the C++ code having to know how the likelihood calculator works.
      */
 
+    auto F = P.WeightedFrequencyMatrix(n2);
+
     DPmatrixEmit::EmissionProbs dists2;
     if (t.n_nodes() == 2)
     {
-	dists2 = substitution::get_leaf_seq_likelihoods(P, t.target(b), 2);
+	dists2 = substitution::get_leaf_seq_likelihoods(P, n2, 2);
     }
     else
     {
@@ -103,7 +105,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 	auto a0 = convert_to_bits(P.get_pairwise_alignment(prev[0]),0,2);
 	auto a1 = convert_to_bits(P.get_pairwise_alignment(prev[1]),1,2);
 	auto a012 = Glue_A(a0,a1);
-	dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), 2);
+	dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), *F, 2);
     }
     //  To handle a 2-node tree, we can do something things for dists2:
     //      dists2 = substitution::get_leaf_seq_likelihoods(P, root, 2);
@@ -131,7 +133,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
                          HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
                          std::move(dists1),
                          std::move(dists2),
-                         *P.WeightedFrequencyMatrix(n2)
+                         *F
                     );
 
     Matrices->forward_band();

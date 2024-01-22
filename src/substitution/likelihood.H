@@ -42,7 +42,7 @@ namespace substitution {
     /// Find the likelihood matrices for data at leaf node n.
     Likelihood_Cache_Branch shift(const Likelihood_Cache_Branch& CL, int delta);
 
-    Likelihood_Cache_Branch get_column_likelihoods(const data_partition&, const std::vector<int>& b, const matrix<int>& index,int delta=0);
+    Likelihood_Cache_Branch get_column_likelihoods(const data_partition& P, const std::vector<int>& b, const matrix<int>& index, const Matrix& F, int delta);
 
     /// Find the likelihood matrices for data at leaf node n.
     Likelihood_Cache_Branch get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
@@ -105,9 +105,6 @@ namespace substitution {
 			   const Matrix& F);
 
     Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P);
-
-    Likelihood_Cache_Branch
-    get_column_likelihoods(const data_partition& P, const std::vector<int>& b, const matrix<int>& index, int delta);
 
     Vector<std::pair<int,int>> sample_root_sequence(const EVector& LCN,
 					       const EVector& LCB,

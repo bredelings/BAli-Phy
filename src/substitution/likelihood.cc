@@ -1349,7 +1349,7 @@ namespace substitution {
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
     Likelihood_Cache_Branch
-    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& indices, int delta)
+    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& indices, const Matrix& F, int delta)
     {
         auto t = P.t();
 

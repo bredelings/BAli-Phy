@@ -122,9 +122,10 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 	a23 = remove_silent(a123, m23);
     }
 
-    auto dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
-    auto dists2 = substitution::get_column_likelihoods(P, {b2}, get_indices_n(P.seqlength(nodes[2])), 2);
-    auto dists3 = substitution::get_column_likelihoods(P, {b3}, get_indices_n(P.seqlength(nodes[3])), 2);
+    auto F = P.WeightedFrequencyMatrix(nodes[0]);
+    auto dists1 = substitution::shift(*P.cache(b1), 2);
+    auto dists2 = substitution::shift(*P.cache(b2), 2);
+    auto dists3 = substitution::shift(*P.cache(b3), 2);
 
     //-------------- Create alignment matrices ---------------//
 
@@ -133,7 +134,7 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
     shared_ptr<DPcubeSimple>
-	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), *P.WeightedFrequencyMatrix(nodes[0])));
+	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), *F));
     Matrices->forward_cube();
 
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
