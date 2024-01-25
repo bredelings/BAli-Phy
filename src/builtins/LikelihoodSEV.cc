@@ -46,19 +46,17 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 						     arg2.as_<EVector>());       // transition_P
 }
 
-extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
+extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    bool arg4 = is_bool_true(Args.evaluate(4));
 
-    return substitution::peel_branch_SEV(arg0.as_<EVector>(),        // LCN
-					 arg1.as_<EVector>(),        // LCB
-					 arg2.as_<EVector>(),        // transition_P
-					 arg3.as_<Box<Matrix>>(),      
-					 arg4);
+    return substitution::peel_branch_away_from_root_SEV(arg0.as_<EVector>(),        // LCN
+							arg1.as_<EVector>(),        // LCB
+							arg2.as_<EVector>(),        // transition_P
+							arg3.as_<Box<Matrix>>());   // WF
 }
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)

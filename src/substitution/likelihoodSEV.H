@@ -49,11 +49,10 @@ namespace substitution {
                     const EVector& transition_P);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& LCN,
-		    const EVector& LCB,
-		    const EVector& transition_P,
-		    const Matrix& ff,
-		    bool away_from_root);
+    peel_branch_away_from_root_SEV(const EVector& LCN,
+				   const EVector& LCB,
+				   const EVector& transition_P,
+				   const Matrix& ff);
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const EPair& sequence_mask,

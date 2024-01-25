@@ -22,7 +22,10 @@ import SModel.Likelihood.CLV
 foreign import bpcall "LikelihoodSEV:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "LikelihoodSEV:" peelBranch :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> Bool -> CondLikes
+foreign import bpcall "LikelihoodSEV:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+
+peelBranch nodeCLs branchCLs ps f toward | toward    = peelBranchTowardRoot   nodeCLs branchCLs ps
+                                         | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
 foreign import bpcall "LikelihoodSEV:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
@@ -47,7 +50,7 @@ cachedConditionalLikelihoodsNonRev t nodeCLVs ps f = let clvs = getEdgesSet t & 
                                                                               clsIn = IntMap.restrictKeysToVector clvs inEdges
                                                                               node = sourceNode t b
                                                                               nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                          in peelBranch nodeCLs clsIn p f (not $ toward_root t b)
+                                                                          in peelBranch nodeCLs clsIn p f (toward_root t b)
                                                      in clvs
 
 peelLikelihoodNonRev nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root

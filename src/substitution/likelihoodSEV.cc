@@ -780,15 +780,11 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_SEV(const EVector& LCN,
-		     const EVector& LCB,
-		     const EVector& transition_P,
-		     const Matrix& ff,
-		     bool away_from_root)
+    peel_branch_away_from_root_SEV(const EVector& LCN,
+				   const EVector& LCB,
+				   const EVector& transition_P,
+				   const Matrix& ff)
     {
-	if (not away_from_root)
-	    return peel_branch_toward_root_SEV(LCN, LCB, transition_P);
-
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
 	    if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
