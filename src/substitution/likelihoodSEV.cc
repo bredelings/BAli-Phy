@@ -595,7 +595,7 @@ namespace substitution
         assert(L > 0);
         assert(bits2.size() == L);
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
         auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(LCB1.bits | LCB2.bits, n_models, n_states));
         const auto& bits3 = LCB3->bits;
         assert(bits3.size() == L);
@@ -660,7 +660,7 @@ namespace substitution
         int L = bits1.size();
         assert(L > 0);
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
         auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(LCB1.bits, n_models, n_states));
 
         for(int c=0,i=0;c<L;c++)
@@ -729,7 +729,7 @@ namespace substitution
         }
 #endif
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
 	boost::dynamic_bitset<> bits;
 	bits.resize(L);
         for(int i=0;i<n_clvs;i++)
@@ -836,7 +836,7 @@ namespace substitution
 	    prev_rootward_bits_.resize(L);
 	const boost::dynamic_bitset<>& prev_rootward_bits = at_root ? prev_rootward_bits_ : away_from_root_branch->bits;
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
 	boost::dynamic_bitset<> bits;
 	bits.resize(L);
         for(int i=0;i<n_clvs;i++)
