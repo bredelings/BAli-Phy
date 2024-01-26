@@ -115,6 +115,7 @@ namespace substitution {
     int total_peel_leaf_branches=0;
     int total_peel_internal_branches=0;
     int total_peel_branches=0;
+    int total_collect_other_subst=0;
     int total_likelihood=0;
     int total_calc_root_prob=0;
     long int total_root_clv_length=0;
@@ -834,6 +835,72 @@ namespace substitution {
         LCB3->other_subst.log() += total_scale*log_scale_min;
         return LCB3;
     }
+
+    log_double_t
+    collect_other_subst(const Likelihood_Cache_Branch& LCB,
+			const pairwise_alignment_t& A,
+			const Matrix& F,
+			const EVector& OS)
+    {
+        total_collect_other_subst++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A.length1() == LCB.n_columns());
+
+        log_prod total;
+        int total_scale = 0;
+
+	int s = 0;
+	if (LCB.away_from_root_WF)
+	{
+	    for(int i=0; i<A.size(); i++)
+	    {
+		assert(A.has_character1(i) or A.has_character2(i));
+
+		if (not A.has_character2(i))
+		{
+		    assert(A.has_character1(i));
+		    double p_col = element_sum(LCB[s], matrix_size );
+		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+		    total *= p_col;
+		    total_scale += LCB.scale(s);
+		}
+
+		if (A.has_character1(i))
+		    s++;
+	    }
+	}
+	else
+	{
+	    for(int i=0; i<A.size(); i++)
+	    {
+		assert(A.has_character1(i) or A.has_character2(i));
+
+		if (not A.has_character2(i))
+		{
+		    assert(A.has_character1(i));
+		    double p_col = element_prod_sum(F.begin(), LCB[s], matrix_size );
+		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+		    total *= p_col;
+		    total_scale += LCB.scale(s);
+		}
+
+		if (A.has_character1(i))
+		    s++;
+	    }
+	}
+
+	log_double_t other_subst = total;
+        other_subst.log() += total_scale*log_scale_min;
+	for(auto os_branch: OS)
+	    other_subst *= os_branch.as_log_double();
+        return other_subst;
+    }
+
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root(const EVector& LCN,

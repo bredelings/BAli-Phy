@@ -22,6 +22,7 @@ import SModel.Likelihood.CLV
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
 foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import bpcall "Likelihood:" collectOtherSubst :: CondLikes -> PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
 foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 foreign import bpcall "Likelihood:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 foreign import bpcall "Likelihood:" propagateFrequencies :: Matrix Double -> EVector (Matrix Double) -> Matrix Double
@@ -37,6 +38,13 @@ simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int))
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
+otherSubsts t cls as f = let os = getEdgesSet t & IntMap.fromSet osf
+                             osf b = let inEdges = edgesBeforeEdgeSet t b
+                                         branchCLVs = IntMap.restrictKeysToVector cls inEdges
+                                         osIn = IntMap.restrictKeysToVector os inEdges
+                                     in collectOtherSubst (cls IntMap.! b) (as IntMap.! b) f osIn
+                         in os
+
 cached_conditional_likelihoods t nodeCLVs as ps f = let lc    = getEdgesSet t & IntMap.fromSet lcf
                                                         lcf b = let p = ps IntMap.! b
                                                                     inEdges = edgesBeforeEdgeSet t b
@@ -51,6 +59,15 @@ peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t ro
                                                clsIn = IntMap.restrictKeysToVector cls inEdges
                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                            in calcProbAtRoot nodeCLV clsIn asIn f
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+otherSubstsNonEq t cls as fs = let os = getEdgesSet t & IntMap.fromSet osf
+                                   osf b = let inEdges = edgesBeforeEdgeSet t b
+                                               osIn = IntMap.restrictKeysToVector os inEdges
+                                               node = targetNode t b
+                                           in collectOtherSubst (cls IntMap.! b) (as IntMap.! b) (fs IntMap.! node) osIn
+                               in os
 
 cachedConditionalLikelihoodsNonRev t nodeCLVs as ps fs = let lc    = getEdgesSet t & IntMap.fromSet lcf
                                                              lcf b = let p = ps IntMap.! b

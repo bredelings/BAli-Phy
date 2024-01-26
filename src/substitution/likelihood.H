@@ -55,6 +55,7 @@ namespace substitution {
     extern int total_peel_leaf_branches;
     extern int total_peel_internal_branches;
     extern int total_peel_branches;
+    extern int total_collect_other_subst;
     extern int total_calc_root_prob;
     extern int total_likelihood;
     extern long total_root_clv_length;
@@ -78,6 +79,12 @@ namespace substitution {
                          const pairwise_alignment_t& A1,
                          const EVector& transition_P,
                          const Matrix& F);
+
+    log_double_t
+    collect_other_subst(const Likelihood_Cache_Branch& LCB,
+			const pairwise_alignment_t& A,
+			const Matrix& F,
+			const EVector& OS);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root(const EVector& LCN,
