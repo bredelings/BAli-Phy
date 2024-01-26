@@ -350,7 +350,8 @@ namespace substitution {
     log_double_t calc_prob_at_root(const EVector& LCN,
 				   const EVector& LCB,
 				   const EVector& A_,
-				   const Matrix& F)
+				   const Matrix& F,
+				   const EVector& OS)
     {
         total_calc_root_prob++;
 
@@ -471,7 +472,8 @@ namespace substitution {
     log_double_t calc_prob_not_at_root(const EVector& LCN,
 				       const EVector& LCB,
 				       const EVector& A_,
-				       const Matrix& F)
+				       const Matrix& F,
+				       const EVector& OS)
     {
         total_calc_root_prob++;
 
@@ -509,6 +511,9 @@ namespace substitution {
         Matrix SMAT(n_models,n_states);
         double* S = SMAT.begin();
 
+        vector<log_prod> totalB(n_branches_in);
+        vector<int> total_scaleB(n_branches_in, 0);
+
         log_prod total;
         int total_scale = 0;
 
@@ -528,7 +533,9 @@ namespace substitution {
 		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
+		    totalB[j] *= p_col;
 		    total_scale += lcb.scale(sj);
+		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
@@ -594,7 +601,8 @@ namespace substitution {
     log_double_t calc_prob(const EVector& LCN,
 			   const EVector& LCB,
 			   const EVector& A_,
-			   const Matrix& F)
+			   const Matrix& F,
+			   const EVector& OS)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -605,7 +613,7 @@ namespace substitution {
 	    }
 
 	if (not away_from_root_index)
-	    return calc_prob_at_root(LCN, LCB, A_, F);
+	    return calc_prob_at_root(LCN, LCB, A_, F, OS);
 	else
 	{
 	    auto LCB2 = LCB;
@@ -616,7 +624,7 @@ namespace substitution {
 		std::swap(A[0], A[*away_from_root_index]);
 	    }
 
-	    return calc_prob_not_at_root(LCN, LCB2, A, F);
+	    return calc_prob_not_at_root(LCN, LCB2, A, F, OS);
 	}
     }
 
