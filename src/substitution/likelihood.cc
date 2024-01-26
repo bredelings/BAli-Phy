@@ -882,9 +882,6 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
-        int total_scale = 0;
-
 	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
 	vector<int> i(n_branches_in, 0);
@@ -899,10 +896,6 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
@@ -1078,9 +1071,6 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
-        int total_scale = 0;
-
 	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
 	vector<int> i(n_branches_in, 0);
@@ -1095,10 +1085,6 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
@@ -1200,9 +1186,6 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
-        int total_scale = 0;
-
 	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
 	vector<int> i(n_branches_in, 0);
@@ -1217,11 +1200,6 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    // Characters coming from the root have already have the root frequencies applied.
-		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
