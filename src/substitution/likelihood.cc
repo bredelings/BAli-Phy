@@ -335,9 +335,9 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-        Pr *= LCB1.other_subst;
-        Pr *= LCB2.other_subst;
-        Pr *= LCB3.other_subst;
+        // Pr *= LCB1.other_subst;
+        // Pr *= LCB2.other_subst;
+        // Pr *= LCB3.other_subst;
         Pr.log() += log_scale_min * scale;
         if (std::isnan(Pr.log()))
         {
@@ -454,13 +454,8 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-	for(int i=0;i<n_branches_in;i++)
-	{
-	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
-	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
-
-	    Pr *= OS[i].as_log_double();
-	}
+	for(auto& os: OS)
+	    Pr *= os.as_log_double();
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -584,13 +579,8 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-	for(int i=0;i<n_branches_in;i++)
-	{
-	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
-	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
-
-	    Pr *= OS[i].as_log_double();
-	}
+	for(auto& os: OS)
+	    Pr *= os.as_log_double();
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -702,7 +692,7 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap)
     {
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
         int L0 = sequence.size();
 
         const int n_models  = transition_P.size();
@@ -761,7 +751,7 @@ namespace substitution {
 
         // get the relationships with the sub-alignments for the (two) branches behind b0
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
         auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(A0.length2(), n_models, n_states));
         assert(A0.length2() == A1.length2());
         assert(A0.length1() == LCB1.n_columns());
@@ -846,8 +836,8 @@ namespace substitution {
             s2++;
         }
 
-        LCB3->other_subst = LCB1.other_subst * LCB2.other_subst * total;
-        LCB3->other_subst.log() += total_scale*log_scale_min;
+        // LCB3->other_subst = LCB1.other_subst * LCB2.other_subst * total;
+        // LCB3->other_subst.log() += total_scale*log_scale_min;
         return LCB3;
     }
 
@@ -957,10 +947,6 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
-	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
         return LCB_OUT;
     }
 
@@ -1156,10 +1142,6 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
-	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
 	LCB_OUT->away_from_root_WF = Matrix(0,0);
         return LCB_OUT;
     }
@@ -1287,10 +1269,6 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
-	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
 	LCB_OUT->away_from_root_WF = Matrix(0,0);
         return LCB_OUT;
     }
@@ -1615,12 +1593,9 @@ namespace substitution {
         log_double_t Pr3 = 1;
         for(int b: leaf_branch_list)
 	{
-	    auto os1 = P.cache(b)->other_subst;
 	    log_double_t os2 = P.other_subst(b);
 
-	    assert( std::abs( os1.log() - os2.log() ) < 1.0e-7 );
-
-            Pr3 *= os1;
+            Pr3 *= os2;
 	}
 
         return Pr3;
@@ -1736,7 +1711,7 @@ namespace substitution {
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
         auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
 
-        // Do this before accessing matrices or other_subst
+        // Do this before accessing matrices
 	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
 	assert(not LCN.empty() or not A_.empty());

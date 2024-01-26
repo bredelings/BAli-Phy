@@ -43,7 +43,6 @@ class Likelihood_Cache_Branch: public Object
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
   
-    log_double_t other_subst = 1;
     boost::dynamic_bitset<> bits;
     std::optional<Matrix> away_from_root_WF;
 
@@ -138,7 +137,6 @@ public:
 	std::swap(n_states_, LCB.n_states_);
 	std::swap(n_models_, LCB.n_models_);
 	std::swap(n_columns_, LCB.n_columns_);
-	std::swap(other_subst, LCB.other_subst);
 	std::swap(bits, LCB.bits);
 	std::swap(away_from_root_WF, LCB.away_from_root_WF);
     }
