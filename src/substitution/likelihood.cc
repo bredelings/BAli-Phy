@@ -1604,7 +1604,16 @@ namespace substitution {
 
         log_double_t Pr3 = 1;
         for(int b: leaf_branch_list)
-            Pr3 *= P.cache(b)->other_subst;
+	{
+	    auto os1 = P.cache(b)->other_subst;
+	    log_double_t os2 = 1;
+	    for(auto b2: t.branches_before(b))
+		os2 *= P.other_subst(b2);
+
+	    assert( std::abs( os1.log() - os2.log() ) < 1.0e-7 );
+
+            Pr3 *= os1;
+	}
 
         return Pr3;
     }

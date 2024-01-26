@@ -114,6 +114,8 @@ public:
 
     object_ptr<const Likelihood_Cache_Branch> cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
 
+    log_double_t other_subst(int b) const;
+
     int subst_root() const;
 
     /// cached branch HMMs
