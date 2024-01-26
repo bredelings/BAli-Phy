@@ -23,6 +23,7 @@ import Numeric.LogDouble
 -- 9 - n_states
 -- 10 - n_base_models
 -- 11 - ?parsimony -- used through haskell, not parameters.cc
+-- 12 - other_substs
 
 -- Some of these things could be accessed through the distribution arguments:
 -- 6. state -> letter
@@ -46,7 +47,8 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
       prop_alphabet :: Alphabet,
       prop_n_states :: Int,
       prop_n_base_models :: Int,
-      prop_n_muts :: Int                                            -- This shouldn't be here.
+      prop_n_muts :: Int,                                           -- This shouldn't be here.
+      prop_other_substs :: IntMap LogDouble                         -- only variable A
     }
 
 

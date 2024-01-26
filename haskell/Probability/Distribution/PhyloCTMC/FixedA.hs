@@ -78,7 +78,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts undefined)
 
   return ([likelihood], prop)
 
@@ -159,7 +159,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts undefined)
 
   return ([likelihood], prop)
 

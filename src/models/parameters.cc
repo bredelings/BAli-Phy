@@ -274,6 +274,11 @@ object_ptr<const Likelihood_Cache_Branch> data_partition::cache(int b) const
     return property(2)[b].value().as_ptr_to<Likelihood_Cache_Branch>();
 }
 
+log_double_t data_partition::other_subst(int b) const
+{
+    return property(12)[b].value().as_log_double();
+}
+
 log_double_t data_partition::likelihood() const 
 {
     substitution::total_likelihood++;
