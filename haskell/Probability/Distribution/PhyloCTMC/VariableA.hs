@@ -43,9 +43,10 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
       cls = cached_conditional_likelihoods tree nodeCLVs as transition_ps f
+      os = otherSubsts tree cls as f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peel_likelihood tree nodeCLVs cls as f subst_root
+      likelihood  = peel_likelihood tree nodeCLVs cls os as f subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
 
@@ -130,9 +131,10 @@ annotatedSubstLikeOnTreeNonRev tree alignment smodel scale sequenceData = do
       f = weighted_frequency_matrix smodel
       fs = frequenciesOnTree tree f transition_ps
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs as transition_ps fs
+      os = otherSubstsNonEq tree cls as fs
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodNonRev tree nodeCLVs cls as fs subst_root
+      likelihood  = peelLikelihoodNonRev tree nodeCLVs cls os as fs subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
 

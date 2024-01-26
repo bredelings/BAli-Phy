@@ -20,8 +20,8 @@ import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
-foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
+foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
 foreign import bpcall "Likelihood:" collectOtherSubst :: CondLikes -> PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
 foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 foreign import bpcall "Likelihood:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
@@ -54,11 +54,12 @@ cached_conditional_likelihoods t nodeCLVs as ps f = let lc    = getEdgesSet t & 
                                                                 in peelBranchTowardRoot nodeCLV branchCLVs asIn p f
                                                     in lc
 
-peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t root
-                                               nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
-                                               clsIn = IntMap.restrictKeysToVector cls inEdges
-                                               asIn  = IntMap.restrictKeysToVector as inEdges
-                                           in calcProbAtRoot nodeCLV clsIn asIn f
+peel_likelihood t nodeCLVs cls os as f root = let inEdges = edgesTowardNodeSet t root
+                                                  nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                  clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                  asIn  = IntMap.restrictKeysToVector as inEdges
+                                                  osIn  = IntMap.restrictKeysToVector os inEdges
+                                              in calcProbAtRoot nodeCLV clsIn asIn f osIn
 
 --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -79,11 +80,12 @@ cachedConditionalLikelihoodsNonRev t nodeCLVs as ps fs = let lc    = getEdgesSet
                                                                      in peelBranch nodeCLV branchCLVs asIn p (fs IntMap.! node) (toward_root t b)
                                                          in lc
 
-peelLikelihoodNonRev t nodeCLVs cls as fs root = let inEdges = edgesTowardNodeSet t root
-                                                     nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
-                                                     clsIn = IntMap.restrictKeysToVector cls inEdges
-                                                     asIn  = IntMap.restrictKeysToVector as inEdges
-                                                 in calcProb nodeCLV clsIn asIn (fs IntMap.! root)
+peelLikelihoodNonRev t nodeCLVs cls os as fs root = let inEdges = edgesTowardNodeSet t root
+                                                        nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                        clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                        asIn  = IntMap.restrictKeysToVector as inEdges
+                                                        osIn  = IntMap.restrictKeysToVector os inEdges
+                                                    in calcProb nodeCLV clsIn asIn (fs IntMap.! root) osIn
 
 frequenciesOnTree t f ps = let fs = getNodesSet t & IntMap.fromSet getF
                                getF node | Just b <- branchFromParent t node = propagateFrequencies (fs IntMap.! sourceNode t b) (ps IntMap.! b)
