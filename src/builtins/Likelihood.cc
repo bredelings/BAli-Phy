@@ -81,6 +81,20 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 }
 
 
+extern "C" closure builtin_function_collectOtherSubst(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    auto other_subst = substitution::collect_other_subst(arg0.as_<Likelihood_Cache_Branch>(),   // LCB
+							 arg1.as_<Box<pairwise_alignment_t>>(), // A
+							 arg2.as_<Box<Matrix>>(),               // F
+							 arg3.as_<EVector>());                  // OS
+
+    return { other_subst };
+}
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
