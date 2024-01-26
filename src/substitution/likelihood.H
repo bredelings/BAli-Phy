@@ -100,13 +100,15 @@ namespace substitution {
     log_double_t calc_prob_at_root(const EVector& LCN,
 				   const EVector& LCB,
 				   const EVector& A_,
-				   const Matrix& F);
+				   const Matrix& F,
+				   const EVector& OS);
 
 
     log_double_t calc_prob(const EVector& LCN,
 			   const EVector& LCB,
 			   const EVector& A_,
-			   const Matrix& F);
+			   const Matrix& F,
+			   const EVector& OS);
 
     Vector<std::pair<int,int>> sample_root_sequence(const EVector& LCN,
 					       const EVector& LCB,

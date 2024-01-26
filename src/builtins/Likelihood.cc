@@ -116,11 +116,13 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
 
     log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<EVector>(),       // LCN
 						      arg1.as_<EVector>(),       // LCB
 						      arg2.as_<EVector>(),       // A
-						      arg3.as_<Box<Matrix>>());  // F
+						      arg3.as_<Box<Matrix>>(),  // F
+						      arg4.as_<EVector>());
     return {Pr};
 }
 
@@ -145,11 +147,14 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
 
     log_double_t Pr = substitution::calc_prob(arg0.as_<EVector>(),       // LCN
 					      arg1.as_<EVector>(),       // LCB
 					      arg2.as_<EVector>(),       // A
-					      arg3.as_<Box<Matrix>>());  // F
+					      arg3.as_<Box<Matrix>>(),  // F
+					      arg4.as_<EVector>());
+
     return {Pr};
 }
 
