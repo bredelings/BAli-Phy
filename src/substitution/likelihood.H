@@ -90,8 +90,7 @@ namespace substitution {
     peel_branch_toward_root(const EVector& LCN,
 			    const EVector& LCB,
 			    const EVector& A_,
-			    const EVector& transition_P,
-			    const Matrix& F);
+			    const EVector& transition_P);
 
 
     object_ptr<const Likelihood_Cache_Branch>
