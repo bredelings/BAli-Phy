@@ -111,21 +111,19 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     return {Pr};
 }
 
-extern "C" closure builtin_function_peelBranch(OperationArgs& Args)
+extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
-    bool arg5 = is_bool_true(Args.evaluate(5));
 
-    return substitution::peel_branch(arg0.as_<EVector>(),        // LCN
-				     arg1.as_<EVector>(),        // LCB
-				     arg2.as_<EVector>(),        // A
-				     arg3.as_<EVector>(),        // transition_P
-				     arg4.as_<Box<Matrix>>(),    // F
-				     arg5);
+    return substitution::peel_branch_away_from_root(arg0.as_<EVector>(),        // LCN
+						    arg1.as_<EVector>(),        // LCB
+						    arg2.as_<EVector>(),        // A
+						    arg3.as_<EVector>(),        // transition_P
+						    arg4.as_<Box<Matrix>>());   // F
 }
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)

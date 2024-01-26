@@ -85,13 +85,11 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch(const EVector& LCN,
-		const EVector& LCB,
-		const EVector& A_,
-		const EVector& transition_P,
-		const Matrix& F,
-		bool away_from_root);
-
+    peel_branch_away_from_root(const EVector& LCN,
+			       const EVector& LCB,
+			       const EVector& A_,
+			       const EVector& transition_P,
+			       const Matrix& F);
 
     log_double_t calc_prob_at_root(const EVector& LCN,
 				   const EVector& LCB,

@@ -1070,6 +1070,17 @@ namespace substitution {
 			       const EVector& transition_P,
 			       const Matrix& F)
     {
+	optional<int> away_from_root_index;
+	for(int j=0;j<LCB.size();j++)
+	    if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_index.has_value());
+		away_from_root_index = j;
+	    }
+
+	if (not away_from_root_index)
+	    return peel_branch_at_root(LCN, LCB, A_, transition_P, F);
+
 	total_peel_internal_branches++;
 
         const int n_models = F.size1();
@@ -1146,7 +1157,7 @@ namespace substitution {
 	    }
 
 	    int scale = 0;
-	    if (A(0).has_character1(i[0]))
+	    if (A(*away_from_root_index).has_character1(i[*away_from_root_index]))
 		element_assign(S, 1.0, matrix_size);
 	    else
 		element_assign(S, F.begin(), matrix_size);
@@ -1179,43 +1190,6 @@ namespace substitution {
 	    LCB_OUT->other_subst *= cache(j).other_subst;
 	LCB_OUT->away_from_root_WF = Matrix(0,0);
         return LCB_OUT;
-    }
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_branch(const EVector& LCN,
-		const EVector& LCB,
-		const EVector& A_,
-		const EVector& transition_P,
-		const Matrix& F,
-		bool away_from_root)
-    {
-	if (not away_from_root)
-	    return peel_branch_toward_root(LCN, LCB, A_, transition_P, F);
-	else
-	{
-	    optional<int> away_from_root_index;
-	    for(int j=0;j<LCB.size();j++)
-		if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
-		{
-		    assert(not away_from_root_index.has_value());
-		    away_from_root_index = j;
-		}
-
-	    if (not away_from_root_index)
-		return peel_branch_at_root(LCN, LCB, A_, transition_P, F);
-	    else
-	    {
-		auto LCB2 = LCB;
-		EVector A = A_;
-		if (*away_from_root_index != 0)
-		{
-		    std::swap(LCB2[0], LCB2[*away_from_root_index]);
-		    std::swap(A[0], A[*away_from_root_index]);
-		}
-
-		return peel_branch_away_from_root(LCN, LCB2, A, transition_P, F);
-	    }
-	}
     }
 
 
