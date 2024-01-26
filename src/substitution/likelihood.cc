@@ -845,13 +845,12 @@ namespace substitution {
     peel_branch_toward_root(const EVector& LCN,
 			    const EVector& LCB,
 			    const EVector& A_,
-			    const EVector& transition_P,
-			    const Matrix& F)
+			    const EVector& transition_P)
     {
         total_peel_internal_branches++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models  = transition_P.size();
+        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };

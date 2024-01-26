@@ -101,13 +101,11 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
 
     return substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
 						 arg1.as_<EVector>(),        // LCB
 						 arg2.as_<EVector>(),        // A
-						 arg3.as_<EVector>(),        // transition_P
-						 arg4.as_<Box<Matrix>>()  ); // F
+						 arg3.as_<EVector>());       // transition_P
 }
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)

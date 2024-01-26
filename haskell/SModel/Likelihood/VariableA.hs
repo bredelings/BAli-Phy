@@ -23,11 +23,11 @@ foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVe
 foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
 foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> EVector LogDouble -> LogDouble
 foreign import bpcall "Likelihood:" peelOtherSubst :: EVector CondLikes -> EVector PairwiseAlignment -> EVector LogDouble -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "Likelihood:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 foreign import bpcall "Likelihood:" propagateFrequencies :: Matrix Double -> EVector (Matrix Double) -> Matrix Double
 
-peelBranch nodeCLs branchCLs asIn ps f toward | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps f
+peelBranch nodeCLs branchCLs asIn ps f toward | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps
                                               | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs asIn ps f
 
 -- ancestral sequence sampling for connected-CLVs
@@ -52,7 +52,7 @@ cached_conditional_likelihoods t nodeCLVs as ps f = let lc    = getEdgesSet t & 
                                                                     nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t b)
                                                                     branchCLVs = IntMap.restrictKeysToVector lc inEdges
                                                                     asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                in peelBranchTowardRoot nodeCLV branchCLVs asIn p f
+                                                                in peelBranchTowardRoot nodeCLV branchCLVs asIn p
                                                     in lc
 
 peel_likelihood t nodeCLVs cls os as f root = let inEdges = edgesTowardNodeSet t root
