@@ -389,9 +389,6 @@ namespace substitution {
         Matrix SMAT(n_models,n_states);
         double* S = SMAT.begin();
 
-        vector<log_prod> totalB(n_branches_in);
-        vector<int> total_scaleB(n_branches_in, 0);
-
         log_prod total;
         int total_scale = 0;
 
@@ -402,18 +399,12 @@ namespace substitution {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
 		auto& a = A(j);
-		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
 		auto& ij = i[j];
-		auto& sj = s[j];
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    totalB[j] *= p_col;
-		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
-		    sj++;
+		    s[j]++;
 		}
 	    }
             if (s_out == L)
@@ -514,9 +505,6 @@ namespace substitution {
         Matrix SMAT(n_models,n_states);
         double* S = SMAT.begin();
 
-        vector<log_prod> totalB(n_branches_in);
-        vector<int> total_scaleB(n_branches_in, 0);
-
         log_prod total;
         int total_scale = 0;
 
@@ -527,18 +515,12 @@ namespace substitution {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
 		auto& a = A(j);
-		auto& lcb = LCB[j].as_<Likelihood_Cache_Branch>();
 		auto& ij = i[j];
-		auto& sj = s[j];
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    totalB[j] *= p_col;
-		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
-		    sj++;
+		    s[j]++;
 		}
 	    }
             if (s_out == L)
@@ -962,14 +944,12 @@ namespace substitution {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
 		auto& a = A(j);
-		auto& lcb = cache(j);
 		auto& ij = i[j];
-		auto& sj = s[j];
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
 		    ij++;
-		    sj++;
+		    s[j]++;
 		}
 	    }
             if (s_out == L)
@@ -1065,14 +1045,12 @@ namespace substitution {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
 		auto& a = A(j);
-		auto& lcb = cache(j);
 		auto& ij = i[j];
-		auto& sj = s[j];
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
 		    ij++;
-		    sj++;
+		    s[j]++;
 		}
 	    }
             if (s_out == L)
@@ -1180,14 +1158,12 @@ namespace substitution {
 	    for(int j =0;j < n_branches_in; j++)
 	    {
 		auto& a = A(j);
-		auto& lcb = cache(j);
 		auto& ij = i[j];
-		auto& sj = s[j];
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
 		    ij++;
-		    sj++;
+		    s[j]++;
 		}
 	    }
             if (s_out == L)
