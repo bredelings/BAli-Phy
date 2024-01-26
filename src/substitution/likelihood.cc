@@ -389,6 +389,9 @@ namespace substitution {
         Matrix SMAT(n_models,n_states);
         double* S = SMAT.begin();
 
+        vector<log_prod> totalB(n_branches_in);
+        vector<int> total_scaleB(n_branches_in, 0);
+
         log_prod total;
         int total_scale = 0;
 
@@ -407,8 +410,8 @@ namespace substitution {
 		    assert(a.has_character1(ij));
 		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
+		    totalB[j] *= p_col;
+		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
@@ -455,7 +458,14 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	{
+	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    os *= totalB[i];
+	    os.log() += log_scale_min * total_scaleB[i];
+	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
+
+	    Pr *= OS[i].as_log_double();
+	}
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -532,9 +542,7 @@ namespace substitution {
 		    assert(a.has_character1(ij));
 		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
 		    totalB[j] *= p_col;
-		    total_scale += lcb.scale(sj);
 		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
 		    sj++;
@@ -585,7 +593,14 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	{
+	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    os *= totalB[i];
+	    os.log() += log_scale_min * total_scaleB[i];
+	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
+
+	    Pr *= OS[i].as_log_double();
+	}
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -618,13 +633,15 @@ namespace substitution {
 	{
 	    auto LCB2 = LCB;
 	    auto A = A_;
+	    auto OS2 = OS;
 	    if (*away_from_root_index != 0)
 	    {
 		std::swap(LCB2[0], LCB2[*away_from_root_index]);
 		std::swap(A[0], A[*away_from_root_index]);
+		std::swap(OS2[0], OS2[*away_from_root_index]);
 	    }
 
-	    return calc_prob_not_at_root(LCN, LCB2, A, F, OS);
+	    return calc_prob_not_at_root(LCN, LCB2, A, F, OS2);
 	}
     }
 
