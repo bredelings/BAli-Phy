@@ -1134,7 +1134,7 @@ namespace substitution {
 		{
 		    assert(a.has_character1(ij));
 		    // Characters coming from the root have already have the root frequencies applied.
-		    double p_col = (j==0) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
