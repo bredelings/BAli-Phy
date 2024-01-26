@@ -338,9 +338,9 @@ namespace substitution {
         Pr *= LCB2.other_subst;
         Pr *= LCB3.other_subst;
         Pr.log() += log_scale_min * scale;
-        if (std::isnan(Pr.log()) and log_verbose > 0)
+        if (std::isnan(Pr.log()))
         {
-            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
             return log_double_t(0.0);
         }
         return Pr;
@@ -457,9 +457,10 @@ namespace substitution {
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()) and log_verbose > 0)
+        if (std::isnan(Pr.log()))
         {
-            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
+
             return log_double_t(0.0);
         }
 
@@ -580,9 +581,9 @@ namespace substitution {
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()) and log_verbose > 0)
+        if (std::isnan(Pr.log()))
         {
-            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
             return log_double_t(0.0);
         }
 
