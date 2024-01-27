@@ -28,6 +28,7 @@ foreign import bpcall "SModel:compute_stationary_freqs" builtin_getEqFreqs :: Ma
 
 class Scalable c => CTMC c where
     getQ :: c -> Matrix Double
+    getStartFreqs :: c -> EVector Double
     getEqFreqs :: c -> EVector Double
     qExp :: c -> Matrix Double
 
@@ -45,6 +46,7 @@ instance Scalable (Matrix Double) where
 
 instance CTMC (Matrix Double) where
     getQ m = m
+    getStartFreqs = error "No start freqs for Matrix Double"
 
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
@@ -65,7 +67,7 @@ instance Scalable Markov where
 
 instance CTMC Markov where
     getQ  (Markov q _  factor) = scaleMatrix factor q
-    getEqFreqs (Markov _ pi _     ) = pi
+    getStartFreqs (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
 data MkReversible m = Reversible m
@@ -82,7 +84,8 @@ instance Show m => Show (MkReversible m) where
 
 instance CTMC m => CTMC (MkReversible m) where
     getQ  (Reversible m) = getQ m
-    getEqFreqs (Reversible m) = getEqFreqs m
+    getStartFreqs (Reversible m) = getStartFreqs m
+    getEqFreqs (Reversible m) = getStartFreqs m      -- these are cached.
     qExp  (Reversible m) = qExp m
 
 plus_f_matrix pi = plus_gwf_matrix pi 1

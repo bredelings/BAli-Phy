@@ -1,7 +1,7 @@
 module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
 
 import qualified Markov
-import           Markov (CTMC, getQ, getEqFreqs, qExp)
+import           Markov (CTMC(..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -47,6 +47,7 @@ instance HasSMap Markov where
 
 instance CTMC Markov where
     qExp (Markov _ _ m _) = qExp m
+    getStartFreqs (Markov _ _ m _) = getStartFreqs m
     getEqFreqs (Markov _ _ m _) = getEqFreqs m
     getQ (Markov _ _ m  _) = getQ m
 
@@ -71,7 +72,7 @@ instance SimpleSModel Markov where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [getEqFreqs smodel]!!i
+    componentFrequencies smodel i = [getStartFreqs smodel]!!i
 
 instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)
@@ -119,6 +120,10 @@ nonEq' a rates' pi' = nonEq a rs pi
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
           pi = list_to_vector $ frequencies_from_dict a pi'
 
-labelledFrequencies m = zip (letters a) frequencies
+labelledEqFrequencies m = zip (letters a) frequencies
     where frequencies = list_from_vector $ getEqFreqs m
+          a = getAlphabet m
+
+labelledStartFrequencies m = zip (letters a) frequencies
+    where frequencies = list_from_vector $ getStartFreqs m
           a = getAlphabet m

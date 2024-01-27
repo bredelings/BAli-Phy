@@ -6,7 +6,7 @@ module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
     where
 
 import           Bio.Alphabet
-import           Markov (MkReversible(..), reversible, nonreversible, CTMC, getQ, getEqFreqs, qExp)
+import           Markov (MkReversible(..), reversible, nonreversible, CTMC(..))
 import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
@@ -59,7 +59,7 @@ instance SimpleSModel (MkReversible Markov) where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [getEqFreqs smodel]!!i
+    componentFrequencies smodel i = [getStartFreqs smodel]!!i
 
 instance RateModel ReversibleMarkov where
     rate (Reversible m) = rate m
