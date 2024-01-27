@@ -37,6 +37,8 @@ foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alph
 --   that is, all transition_p matricies in component m satisfy detailed balance with respect to the root frequences in component m
 --
 
+-- Fields are: alphabet, smap, q, and cached rate.
+
 data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
