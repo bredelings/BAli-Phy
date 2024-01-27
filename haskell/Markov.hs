@@ -9,7 +9,7 @@ foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matr
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
-foreign import bpcall "SModel:compute_stationary_freqs" builtin_getPi :: Matrix Double -> EVector Double
+foreign import bpcall "SModel:compute_stationary_freqs" builtin_getEqFreqs :: Matrix Double -> EVector Double
 
 -- We don't have rates here, because rates require a concept of states being "equal".
 -- For cases like markov modulated models, the rate we care about is the rate of switching letter,
@@ -28,10 +28,10 @@ foreign import bpcall "SModel:compute_stationary_freqs" builtin_getPi :: Matrix 
 
 class Scalable c => CTMC c where
     getQ :: c -> Matrix Double
-    getPi :: c -> EVector Double
+    getEqFreqs :: c -> EVector Double
     qExp :: c -> Matrix Double
 
-    getPi m = builtin_getPi (getQ m)
+    getEqFreqs m = builtin_getEqFreqs (getQ m)
     qExp m = mexp (getQ m) 1
 
 -- Should I add gtr, equ n x, and f81 to this class? Probably...
@@ -55,7 +55,7 @@ data Markov = Markov (Matrix Double) (EVector Double) Double
 markov q pi = Markov q_fixed pi 1 where
     q_fixed = fixup_diagonal_rates q
 
-markov' q = Markov q_fixed (builtin_getPi q_fixed) 1 where
+markov' q = Markov q_fixed (builtin_getEqFreqs q_fixed) 1 where
     q_fixed = fixup_diagonal_rates q
 
 non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
@@ -65,7 +65,7 @@ instance Scalable Markov where
 
 instance CTMC Markov where
     getQ  (Markov q _  factor) = scaleMatrix factor q
-    getPi (Markov _ pi _     ) = pi
+    getEqFreqs (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
 data ReversibleMarkov = Reversible Markov
@@ -77,7 +77,7 @@ instance Scalable ReversibleMarkov where
 
 instance CTMC ReversibleMarkov where
     getQ  (Reversible m) = getQ m
-    getPi (Reversible m) = getPi m
+    getEqFreqs (Reversible m) = getEqFreqs m
     qExp  (Reversible m) = qExp m
 
 plus_f_matrix pi = plus_gwf_matrix pi 1

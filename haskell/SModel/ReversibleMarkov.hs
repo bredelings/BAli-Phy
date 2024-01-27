@@ -1,7 +1,7 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Markov) where
 
 import           Bio.Alphabet
-import           Markov (CTMC, getQ, getPi, qExp)
+import           Markov (CTMC, getQ, getEqFreqs, qExp)
 import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
@@ -50,7 +50,7 @@ instance HasSMap ReversibleMarkov where
 
 instance CTMC ReversibleMarkov where
     qExp (Reversible m) = qExp m
-    getPi (Reversible m) = getPi m
+    getEqFreqs (Reversible m) = getEqFreqs m
     getQ (Reversible m) = getQ m
 
 instance HasAlphabet ReversibleMarkov where
@@ -63,7 +63,7 @@ instance SimpleSModel ReversibleMarkov where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [getPi smodel]!!i
+    componentFrequencies smodel i = [getEqFreqs smodel]!!i
 
 instance Scalable ReversibleMarkov where
     scale x (Reversible m) = Reversible (scale x m)

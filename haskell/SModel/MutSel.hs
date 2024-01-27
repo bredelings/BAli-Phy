@@ -7,14 +7,14 @@ import SModel.Codons
 import SModel.Frequency -- for get_ordered_elements
 import Bio.Alphabet
 import qualified Markov
-import Markov (getQ, getPi)
+import Markov (getQ, getEqFreqs)
 
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 
 mut_sel ws' m0@(Reversible (Markov a smap _ _)) = reversible $ markov a smap q pi where
     q0 = getQ m0
-    pi0 = getPi m0
+    pi0 = getEqFreqs m0
     ws = list_to_vector ws'
     q = mut_sel_q q0 ws
     pi = mut_sel_pi pi0 ws

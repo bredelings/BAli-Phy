@@ -6,7 +6,7 @@ import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
 import qualified Markov
-import Markov (getQ, getPi)
+import Markov (getQ, getEqFreqs)
 import Data.Matrix -- for fromLists, %*%
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -23,7 +23,7 @@ modulated_markov_smap smaps = builtin_modulated_markov_smap (list_to_vector smap
 modulated_markov models rates_between level_probs = reversible $ markov a smap q pi where
     a = getAlphabet $ head models
     qs = map getQ models
-    pis = map getPi models
+    pis = map getEqFreqs models
     smaps = map get_smap models
     q = modulated_markov_rates qs rates_between
     pi = modulated_markov_pi pis level_probs
