@@ -1,0 +1,35 @@
+{
+    "name": "nonEq",
+    "title":"The General Non-Reversible rate matrix",
+    "result_type": "CTMC[a]",
+    "call": "nonEq'[@a,@rates,@pi]",
+    "import": ["SModel"],
+    "args": [
+        {
+            "arg_name": "rates",
+            "arg_type": "List[Tuple[String,Double]]",
+	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
+	    "description":"rate matrix"
+        },
+        {
+            "arg_name": "pi",
+            "arg_type": "List[Tuple[String,Double]]",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+	    "description": "Letter frequencies"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "get_state(alphabet)",
+	    "description": "The alphabet"
+        }
+    ],
+    "computed": [
+	{
+	    "name": "eqFrequencies",
+	    "value": "labelledEqFrequencies[nonEq'[@a,@rates,@pi]]"
+	}
+    ],
+    "description": "The general non-reversible rate matrix Q(i,j) with separate frequencies",
+    "extract": "all"
+}
