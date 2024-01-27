@@ -48,8 +48,6 @@ instance CTMC Markov where
     getPi (Markov _ _ m _) = getPi m
     getQ (Markov _ _ m  _) = getQ m
 
-frequencies = getPi
-
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
@@ -72,7 +70,7 @@ instance SimpleSModel Markov where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [frequencies smodel]!!i
+    componentFrequencies smodel i = [getPi smodel]!!i
 
 instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)
@@ -88,6 +86,11 @@ instance RateModel Markov where
 
 instance Show Markov where
     show q = show $ getQ q
+
+nonEq a rates pi = markov a smap q pi
+    where smap = simple_smap a
+          n = length $ letters a
+          q = Markov.non_rev_from_list n rates
 
 nonRev a rates = markov' a smap q
     where smap = simple_smap a
@@ -107,6 +110,13 @@ nonRev' a rates' = nonRev a rs
                else
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
 
+nonEq' a rates' pi' = nonEq a rs pi
+    where lPairs = allOrderedPairs (letters a)
+          rs = if length lPairs == length rates' then
+                   [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
+               else
+                   error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
+          pi = list_to_vector $ frequencies_from_dict a pi'
 
 labelledFrequencies m = zip (letters a) frequencies
     where frequencies = list_from_vector $ getPi m

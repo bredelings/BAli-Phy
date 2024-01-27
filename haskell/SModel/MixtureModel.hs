@@ -54,7 +54,7 @@ instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (D
     distribution model = map snd (unpackDiscrete model)
     nBaseModels model = length $ unpackDiscrete model
     stateLetters model = stateLetters $ baseModel model 0
-    componentFrequencies model i = frequencies $ baseModel model i
+    componentFrequencies model i = getPi $ baseModel model i
 
 instance Scalable a => Scalable (Discrete a) where
     scale x dist = fmap (scale x) dist

@@ -63,7 +63,7 @@ instance SimpleSModel ReversibleMarkov where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    componentFrequencies smodel i = [frequencies smodel]!!i
+    componentFrequencies smodel i = [getPi smodel]!!i
 
 instance Scalable ReversibleMarkov where
     scale x (Reversible m) = Reversible (scale x m)
