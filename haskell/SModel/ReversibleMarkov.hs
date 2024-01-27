@@ -1,7 +1,12 @@
-module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Markov) where
+module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
+                                module SModel.Markov,
+                                MkReversible(..),
+                                reversible,
+                                nonreversible)
+    where
 
 import           Bio.Alphabet
-import           Markov (CTMC, getQ, getEqFreqs, qExp)
+import           Markov (MkReversible(..), reversible, nonreversible, CTMC, getQ, getEqFreqs, qExp)
 import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
@@ -38,26 +43,17 @@ plus_gwf a pi f s = reversible $ markov a (simple_smap a) (s %*% plus_gwf_matrix
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
-data ReversibleMarkov = Reversible Markov
-
-reversible = Reversible
-
-nonreversible (Reversible m) = m
+type ReversibleMarkov = MkReversible Markov
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
-instance HasSMap ReversibleMarkov where
+instance HasSMap m => HasSMap (MkReversible m) where
     get_smap (Reversible m) = get_smap m
 
-instance CTMC ReversibleMarkov where
-    qExp (Reversible m) = qExp m
-    getEqFreqs (Reversible m) = getEqFreqs m
-    getQ (Reversible m) = getQ m
-
-instance HasAlphabet ReversibleMarkov where
+instance HasAlphabet m => HasAlphabet (MkReversible m) where
     getAlphabet (Reversible m) = getAlphabet m
 
-instance SimpleSModel ReversibleMarkov where
-    type instance IsReversible ReversibleMarkov = Reversible
+instance SimpleSModel (MkReversible Markov) where
+    type instance IsReversible (MkReversible Markov) = Reversible
     branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
@@ -65,12 +61,6 @@ instance SimpleSModel ReversibleMarkov where
     stateLetters rm = get_smap rm
     componentFrequencies smodel i = [getEqFreqs smodel]!!i
 
-instance Scalable ReversibleMarkov where
-    scale x (Reversible m) = Reversible (scale x m)
-
 instance RateModel ReversibleMarkov where
     rate (Reversible m) = rate m
-
-instance Show ReversibleMarkov where
-    show (Reversible m) = show m
 

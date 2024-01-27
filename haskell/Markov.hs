@@ -68,14 +68,19 @@ instance CTMC Markov where
     getEqFreqs (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
-data ReversibleMarkov = Reversible Markov
+data MkReversible m = Reversible m
 
 reversible = Reversible
 
-instance Scalable ReversibleMarkov where
+nonreversible (Reversible m) = m
+
+instance Scalable m => Scalable (MkReversible m) where
     scale f (Reversible m) = Reversible $ scale f m
 
-instance CTMC ReversibleMarkov where
+instance Show m => Show (MkReversible m) where
+    show (Reversible m) = show m
+
+instance CTMC m => CTMC (MkReversible m) where
     getQ  (Reversible m) = getQ m
     getEqFreqs (Reversible m) = getEqFreqs m
     qExp  (Reversible m) = qExp m
