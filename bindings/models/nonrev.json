@@ -20,8 +20,8 @@
     ],
     "computed": [
 	{
-	    "name": "frequencies",
-	    "value": "labelledFrequencies[nonRev'[@a,@rates]]"
+	    "name": "eqFrequencies",
+	    "value": "labelledEqFrequencies[nonRev'[@a,@rates]]"
 	}
     ],
     "description": "The general non-reversible rate matrix Q(i,j)",
