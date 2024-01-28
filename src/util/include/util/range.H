@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 template<typename T>
 T sum(const std::vector<T>& v)
