@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <algorithm>
 
 /// Does v include t?
 template <typename T>
