@@ -186,11 +186,6 @@ object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix(int n) con
     return property(5)[n].value().as_ptr_to<Box<Matrix>>();
 }
 
-object_ptr<const EVector> data_partition::state_letters() const
-{
-    return property(6).value().as_ptr_to<EVector>();
-}
-
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
     assert(variable_alignment());

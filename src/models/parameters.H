@@ -110,9 +110,6 @@ public:
 
     int n_states() const;                       // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
-    // Perhaps this should also be per-mixture-component.
-    object_ptr<const EVector> state_letters() const;
-  
     object_ptr<const Box<Matrix>> WeightedFrequencyMatrix(int n) const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc
 
     object_ptr<const Likelihood_Cache_Branch> cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
