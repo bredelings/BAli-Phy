@@ -73,43 +73,25 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 
     int n2 = t.target(b);
 
-    auto dists1 = substitution::shift(*P.cache(b), 2);
-
-    /*
-     * OK, so here we need to handle (i) multifurcating nodes and (ii) non-reversible models.
-     *
-     * (i) For multifurcating nodes, this should be the same as the peeling routine, except that
-     *     we do not peel along the branch.
-     *     So we shouldn't need an index, and the order of columns should be unambiguous.
-     *
-     * (ii) For non-reversible models, we need to do just what the peeling routine does,
-     *      including apply root frequencies, and using the transposed P matrix if necessary,
-     *      but just not peel.
-     *
-     * Now, we could try and expose the type of calculator that is being used.  But it would probably
-     * be simpler to set this up as a property when we run the annotated likelihood routine.  Then we
-     * can simply compute the property without the C++ code having to know how the likelihood calculator works.
-     */
-
     auto F = P.WeightedFrequencyMatrix(n2);
 
-    DPmatrixEmit::EmissionProbs dists2;
-    if (t.n_nodes() == 2)
-    {
-	dists2 = substitution::get_leaf_seq_likelihoods(P, n2, 2);
-    }
-    else
-    {
-	vector<int> prev = t.branches_before(bb);
-	assert(prev.size() == 2);
-	auto a0 = convert_to_bits(P.get_pairwise_alignment(prev[0]),0,2);
-	auto a1 = convert_to_bits(P.get_pairwise_alignment(prev[1]),1,2);
-	auto a012 = Glue_A(a0,a1);
-	dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), *F, 2);
-    }
-    //  To handle a 2-node tree, we can do something things for dists2:
-    //      dists2 = substitution::get_leaf_seq_likelihoods(P, root, 2);
+    auto dists1 = substitution::shift(*P.cache(b), 2);
 
+    EVector LCN;
+    if (auto lcn = P.get_node_CLV(n2))
+	LCN.push_back(lcn);
+
+    EVector LCB;
+    EVector A;
+    for(int b: t.branches_before(bb))
+    {
+	LCB.push_back(P.cache(b));
+	A.push_back(P.get_pairwise_alignment_(b));
+    }
+
+    // Unlike with sample-tri, the order of characters at n2 is determined by the pairwise alignments.
+    auto dists2 = substitution::shift(*substitution::merge_branches(LCN, LCB, A, *F), 2);
+    
     vector<HMM::bitmask_t> state_emit(4,0);
     state_emit[0] |= (1<<1)|(1<<0);
     state_emit[1] |= (1<<1);

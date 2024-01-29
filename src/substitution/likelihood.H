@@ -44,8 +44,11 @@ namespace substitution {
 
     Likelihood_Cache_Branch get_column_likelihoods(const data_partition& P, const std::vector<int>& b, const matrix<int>& index, const Matrix& F, int delta);
 
-    /// Find the likelihood matrices for data at leaf node n.
-    Likelihood_Cache_Branch get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
+    object_ptr<const Likelihood_Cache_Branch>
+    merge_branches(const EVector& LCN,
+		   const EVector& LCB,
+		   const EVector& A_,
+		   const Matrix& F);
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   

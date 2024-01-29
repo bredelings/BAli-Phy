@@ -1063,7 +1063,7 @@ namespace substitution {
     }
 
 
-	
+
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_away_from_root(const EVector& LCN,
 			       const EVector& LCB,
@@ -1193,6 +1193,122 @@ namespace substitution {
         return LCB_OUT;
     }
 
+    // For sample_alignment, we want to handle
+    // * any root frequencies from branches that are BEHIND the LCB branches.
+    // * observed sequences at the node.
+    // If the node is the root, dp-matrix handles root frequencies external to this function.
+
+    object_ptr<const Likelihood_Cache_Branch>
+    merge_branches(const EVector& LCN,
+		   const EVector& LCB,
+		   const EVector& A_,
+		   const Matrix& F)
+    {
+	optional<int> away_from_root_index;
+	for(int j=0;j<LCB.size();j++)
+	    if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_index.has_value());
+		away_from_root_index = j;
+	    }
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+	int n_sequences = LCN.size();
+	int n_branches_in = LCB.size();
+	assert(not LCN.empty() or not A_.empty());
+	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+	if (away_from_root_index)
+	    LCB_OUT->away_from_root_WF = Matrix(0,0);
+
+#ifndef NDEBUG
+	// Check that all the sequences have the right length.
+	for(int i=0; i<n_sequences;i++)
+	    assert(node_cache(i).n_columns() == L);
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A_.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
+	{
+	    assert(A(i).length2() == L);
+	    assert(A(i).length1() == cache(i).n_columns());
+	}
+#endif
+
+        // scratch matrix
+	vector<int> s(n_branches_in, 0);
+	int s_out = 0;
+	vector<int> i(n_branches_in, 0);
+        for(;;)
+        {
+	    for(int j =0;j < n_branches_in; j++)
+	    {
+		auto& a = A(j);
+		auto& ij = i[j];
+		while (ij < a.size() and not a.has_character2(ij))
+		{
+		    assert(a.has_character1(ij));
+		    ij++;
+		    s[j]++;
+		}
+	    }
+            if (s_out == L)
+            {
+		for(int j=0;j<n_branches_in;j++)
+		    assert(i[j] == A(j).size());
+                break;
+            }
+	    else
+	    {
+		for(int j=0;j<n_branches_in;j++)
+		{
+		    assert(i[j] < A(j).size());
+		    assert(A(j).has_character2(i[j]));
+		}
+	    }
+
+	    double* S = (*LCB_OUT)[s_out];
+
+	    int scale = 0;
+	    if (away_from_root_index and not A(*away_from_root_index).has_character1(i[*away_from_root_index]))
+		element_assign(S, F.begin(), matrix_size);
+	    else
+		element_assign(S, 1.0, matrix_size);
+
+	    for(int j=0;j<n_branches_in;j++)
+	    {
+		if (A(j).has_character1(i[j]))
+		{
+		    auto& lcb = cache(j);
+		    element_prod_assign(S, lcb[s[j]], matrix_size);
+		    scale += lcb.scale(s[j]);
+		    s[j]++;
+		}
+		i[j]++;
+	    }
+
+	    // Handle observed sequences at the node.
+	    for(int j=0;j<n_sequences;j++)
+	    {
+		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+		scale += node_cache(j).scale(s_out);
+	    }
+
+	    // propagate from the source distribution
+            LCB_OUT->scale(s_out++) = scale;
+        }
+
+        return LCB_OUT;
+    }
+
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods(const EVector& sequence,
@@ -1268,12 +1384,6 @@ namespace substitution {
 	LCB.away_from_root_WF = CL.away_from_root_WF;
 
 	return LCB;
-    }
-
-    Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
-    {
-        return shift(*P.get_node_CLV(n), delta);
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
