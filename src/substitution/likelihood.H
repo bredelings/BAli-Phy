@@ -102,8 +102,6 @@ namespace substitution {
 			   const EVector& A_,
 			   const Matrix& F);
 
-    Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P);
-
     Vector<std::pair<int,int>> sample_root_sequence(const EVector& LCN,
 					       const EVector& LCB,
 					       const EVector& A_,

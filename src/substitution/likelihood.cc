@@ -1241,52 +1241,6 @@ namespace substitution {
 	return LCB;
     }
 
-    Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P)
-    {
-        assert(a.is_feature(l));
-
-        const int n_letters = a.size();
-
-        const int n_models = P.n_base_models();
-        const int n_states = P.n_states();
-
-        Matrix R(n_models,n_states);
-
-        if (l == alphabet::not_gap)
-        {
-            element_assign(R,1);
-            return R;
-        }
-
-        element_assign(R,0.0);
-
-        // FIXME - its wasteful to do this for each letter.
-        auto smap_ptr = P.state_letters();
-        auto& smap = *smap_ptr;
-
-        if (a.is_letter(l))
-        {
-            for(int m=0;m<n_models;m++)
-                for(int s=0;s<n_states;s++)
-                    if (l == smap[s].as_int())
-                        R(m,s) = 1;
-        }
-        else if (a.is_letter_class(l))
-        {
-            for(int l2=0;l2<n_letters;l2++)
-                if (a.matches(l,l2))
-                    for(int m=0;m<n_models;m++)
-                        for(int s=0;s<n_states;s++)
-                            if (l2 == smap[s].as_int())
-                                R(m,s) = 1;
-        }
-        else
-            std::abort();
-
-        return R;
-    }
-
-
     Likelihood_Cache_Branch
     shift(const Likelihood_Cache_Branch& CL, int delta)
     {
