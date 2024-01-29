@@ -14,11 +14,11 @@ import Numeric.LogDouble
 -- 0 - subst_root
 -- 1 - transition_ps
 -- 2 - CLVs
--- 3 - ?ancestral states -- used through haskell, not parameters.cc
+-- 3 - ?ancestral states         -- used through haskell, not parameters.cc
 -- 4 - likelihood
 -- 5 - weightedfrequencymatrix
--- 6 - state -> letter
--- 7 - sequences as EVector Int  -- only to get CLVs for single node when aligning 2 sequences.
+-- 6 - state -> letter           -- unused
+-- 7 - sequence likelihoods      -- used to get node CLVs for dists2 when aligning 2 sequences.
 -- 8 - alphabet
 -- 9 - n_states
 -- 10 - n_base_models
