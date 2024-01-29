@@ -155,7 +155,7 @@ expression_ref unlet(const expression_ref& E)
 	expression* V = E.as_expression().clone();
 	V->sub[1] = unlet(E.sub()[1]);
 
-	if (V->sub[1].ptr() == E.sub()[1].ptr())
+	if (V->sub[1].is_object_type() and E.sub()[1].is_object_type() and V->sub[1].ptr() == E.sub()[1].ptr())
 	    return E;
 	else
 	    return V;
