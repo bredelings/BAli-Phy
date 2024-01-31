@@ -618,13 +618,15 @@ namespace substitution {
 	{
 	    auto LCB2 = LCB;
 	    auto A = A_;
+	    auto OS2 = OS;
 	    if (*away_from_root_index != 0)
 	    {
 		std::swap(LCB2[0], LCB2[*away_from_root_index]);
 		std::swap(A[0], A[*away_from_root_index]);
+		std::swap(OS2[0], OS2[*away_from_root_index]);
 	    }
 
-	    return calc_prob_not_at_root(LCN, LCB2, A, F, OS);
+	    return calc_prob_not_at_root(LCN, LCB2, A, F, OS2);
 	}
     }
 
