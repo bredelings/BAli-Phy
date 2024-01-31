@@ -38,6 +38,14 @@ simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int))
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
+otherSubsts t cls as f = let os = getEdgesSet t & IntMap.fromSet osf
+                             osf b = let inEdges = edgesBeforeEdgeSet t b
+                                         branchCLVs = IntMap.restrictKeysToVector cls inEdges
+                                         asIn  = IntMap.restrictKeysToVector as inEdges
+                                         osIn = IntMap.restrictKeysToVector os inEdges
+                                     in peelOtherSubst branchCLVs asIn osIn f
+                         in os
+
 cached_conditional_likelihoods t nodeCLVs as ps f = let lc    = getEdgesSet t & IntMap.fromSet lcf
                                                         lcf b = let p = ps IntMap.! b
                                                                     inEdges = edgesBeforeEdgeSet t b
@@ -52,6 +60,15 @@ peel_likelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t ro
                                                clsIn = IntMap.restrictKeysToVector cls inEdges
                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                            in calcProbAtRoot nodeCLV clsIn asIn f
+
+otherSubstsNonRev t cls as fs = let os = getEdgesSet t & IntMap.fromSet osf
+                                    osf b = let inEdges = edgesBeforeEdgeSet t b
+                                                branchCLVs = IntMap.restrictKeysToVector cls inEdges
+                                                asIn  = IntMap.restrictKeysToVector as inEdges
+                                                osIn = IntMap.restrictKeysToVector os inEdges
+                                                node = sourceNode t b
+                                            in peelOtherSubst branchCLVs asIn osIn (fs IntMap.! node)
+                                in os
 
 cachedConditionalLikelihoodsNonRev t nodeCLVs as ps fs = let lc    = getEdgesSet t & IntMap.fromSet lcf
                                                              lcf b = let p = ps IntMap.! b
