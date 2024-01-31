@@ -455,7 +455,12 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	{
+	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
+
+	    Pr *= OS[i].as_log_double();
+	}
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -580,7 +585,12 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	{
+	    log_double_t os = LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    assert( std::abs(os.log() - OS[i].as_log_double().log()) < 1.0e-7 );
+
+	    Pr *= OS[i].as_log_double();
+	}
 
         Pr.log() += log_scale_min * total_scale;
 
