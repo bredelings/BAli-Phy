@@ -52,9 +52,12 @@ namespace substitution {
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
+    log_double_t peel_other_subst(const EVector& LCB, const EVector& A_, const EVector& OS, const Matrix& F);
+
     extern int total_peel_leaf_branches;
     extern int total_peel_internal_branches;
     extern int total_peel_branches;
+    extern int total_other_subst;
     extern int total_calc_root_prob;
     extern int total_likelihood;
     extern long total_root_clv_length;

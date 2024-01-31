@@ -115,6 +115,7 @@ namespace substitution {
     int total_peel_leaf_branches=0;
     int total_peel_internal_branches=0;
     int total_peel_branches=0;
+    int total_other_subst=0;
     int total_likelihood=0;
     int total_calc_root_prob=0;
     long int total_root_clv_length=0;
@@ -946,6 +947,92 @@ namespace substitution {
 	for(int j=0;j<n_branches_in;j++)
 	    LCB_OUT->other_subst *= cache(j).other_subst;
         return LCB_OUT;
+    }
+
+
+    log_double_t
+    peel_other_subst(const EVector& LCB,
+		     const EVector& A_,
+		     const EVector& OS,
+		     const Matrix& F)
+    {
+        total_other_subst++;
+
+	int n_branches_in = LCB.size();
+	// We could bump this to the haskell code.
+	if (n_branches_in == 0) return log_double_t(1);
+
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+#ifndef NDEBUG
+	// Check that all the alignments have the right length for both sequences.
+	assert(A_.size() == n_branches_in);
+	assert(OS.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
+	{
+	    assert(A(i).length2() == A(0).length2());
+	    assert(A(i).length1() == cache(i).n_columns());
+	}
+#endif
+
+
+        log_prod total;
+        int total_scale = 0;
+
+	for(int j =0;j < n_branches_in; j++)
+	{
+	    auto& a = A(j);
+	    auto& lcb = cache(j);
+	    const int matrix_size = lcb.matrix_size();
+
+	    if (lcb.away_from_root_WF)
+	    {
+		// s is the index into the source sequence (sequence 1)
+		for(int i=0, s=0; i<a.size(); i++)
+		{
+		    assert(a.has_character1(i) or a.has_character2(i));
+
+		    if (not a.has_character2(i))
+		    {
+			assert(a.has_character1(i));
+			double p_col = element_sum(lcb[s], matrix_size );
+			assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+			total *= p_col;
+			total_scale += lcb.scale(s);
+		    }
+
+		    if (a.has_character1(i))
+			s++;
+		}
+	    }
+	    else
+	    {
+		// s is the index into the source sequence (sequence 1)
+		for(int i=0, s=0; i<a.size(); i++)
+		{
+		    assert(a.has_character1(i) or a.has_character2(i));
+
+		    if (not a.has_character2(i))
+		    {
+			assert(a.has_character1(i));
+			double p_col = element_prod_sum(F.begin(), lcb[s], matrix_size );
+			assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+			total *= p_col;
+			total_scale += lcb.scale(s);
+		    }
+
+		    if (a.has_character1(i))
+			s++;
+		}
+	    }
+        }
+
+	log_double_t other_subst_pr = total;
+	other_subst_pr.log() += total_scale * log_scale_min;
+	for(auto& os_branch: OS)
+	    other_subst_pr *= os_branch.as_log_double();
+	return other_subst_pr;
     }
 
 

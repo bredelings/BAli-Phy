@@ -286,6 +286,7 @@ void show_ending_messages()
         cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
         cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
         cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
+        cout<<"total other_subst = "<<substitution::total_other_subst<<endl;
         cout<<"average root clv length = "<<substitution::total_root_clv_length/substitution::total_calc_root_prob<<endl;
         cout<<endl;
     }

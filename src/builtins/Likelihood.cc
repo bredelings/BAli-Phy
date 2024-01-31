@@ -80,7 +80,20 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 						     arg2.as_int());        // n_models
 }
 
+extern "C" closure builtin_function_peelOtherSubst(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
 
+    auto other_subst = substitution::peel_other_subst(arg0.as_<EVector>(),        // LCB
+						      arg1.as_<EVector>(),        // A
+						      arg2.as_<EVector>(),        // OS
+						      arg3.as_<Box<Matrix>>()  ); // F
+
+    return { other_subst };
+}
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
