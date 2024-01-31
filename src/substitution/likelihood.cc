@@ -511,9 +511,6 @@ namespace substitution {
         Matrix SMAT(n_models,n_states);
         double* S = SMAT.begin();
 
-        vector<log_prod> totalB(n_branches_in);
-        vector<int> total_scaleB(n_branches_in, 0);
-
         log_prod total;
         int total_scale = 0;
 
@@ -533,9 +530,7 @@ namespace substitution {
 		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
-		    totalB[j] *= p_col;
 		    total_scale += lcb.scale(sj);
-		    total_scaleB[j] += lcb.scale(sj);
 		    ij++;
 		    sj++;
 		}
