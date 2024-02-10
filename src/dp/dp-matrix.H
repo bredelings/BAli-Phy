@@ -59,9 +59,9 @@ struct MatrixShape: public MatrixSize
 
 struct Extent
 {
-    int offset;
-    int start_index;
-    int size;
+    long int offset;
+    long int start_index;
+    long int size;
 };
 
 class state_matrix
@@ -134,7 +134,7 @@ public:
         // We need an extent for column -1 also.
         extents.resize(yboundaries.size()+1);
 
-        int offset = 0;
+        long int offset = 0;
         for(int i=0;i<extents.size();i++)
         {
             // Column (i-1)
