@@ -155,7 +155,10 @@ public:
             offset += length;
         }
 
-        data = new double[offset * s3];
+	long int mem = offset * s3;
+	if (mem > UINT_MAX)
+	    throw std::bad_alloc();
+        data = new double[mem];
     }
 
     state_matrix(const state_matrix&) = delete;
