@@ -1500,7 +1500,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             dest= Path(self.outdir, "Work", name+"-unordered.fasta")
             if not more_recent_than(dest,source):
                 # strip empty columns
-                cmd = ['alignment-cat', '-e', source]
+                cmd = ['alignment-cat', '-p', '-e', source]
                 self.exec_show(cmd, outfile=dest)
             alignment_names.append(name)
         print(" done.")
