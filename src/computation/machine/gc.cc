@@ -89,6 +89,43 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 
 void reg_heap::trace(vector<int>& remap)
 {
+    /*
+     * Roots are:
+     * (i) roots
+     * (ii) regs with steps
+     * (iii) regs called from steps
+     * (iv) regs with results -- why? Is this for index-vars-with-force?
+     *
+     * We then extend this with:
+     * (v) regs in the environment of a referenced reg.
+     * (vi) regs that are forced by a referenced reg.
+     *
+     * We don't follow use edges, because anything that is used should also be in the
+     * environment.
+     *
+     * If something is only forced, then:
+     * - if it is a constant (with force), we should be able to ignore its references.
+     * - otherwise, the references will count.
+     *
+     * Thus, when we mark something forced, we can put it on a list of things that might be
+     * only forced.  But if it is later referenced, how would we take it off that list?
+     *
+     */
+
+    /*
+     * Perhaps we have a problem mixing force-effects with values.  If we split a constant-with-force (i.e. a pair)
+     * into a constant and force-thing that only forced other things, then we might be able to eliminate
+     * the constant (which references two things) from the force-thing that has no references.
+     *
+     * We also have a problem with an index-var-with-force that evaluates to a constant.  Its not easy to
+     * eliminate the index-var-with-force ... because it has a result?
+     */
+
+    /*
+     * We have also replaced `seq` with `withEffect` to avoid forcing computation of the alignment prior
+     * when we compute conditional likelihoods.
+     */
+
     // 1. Set up lists for used/marked regs, steps, and results.
     vector<int>& used_regs = get_scratch_list();
 
