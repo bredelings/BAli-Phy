@@ -79,16 +79,16 @@ jobs:
           - name: macos-xcode-14-intel
             os: macos-12
             compiler: xcode
-            version: "12"
+            version: "14"
             buildtype: "release"
-            arch: "mac64"
+            arch: "mac-intel64"
 
           - name: macos-xcode-14-arm
             os: macos-14
             compiler: xcode
             version: "14"
             buildtype: "release"
-            arch: "mac64"
+            arch: "mac-arm64"
 
           - name: windows
             os: ubuntu-22.04
