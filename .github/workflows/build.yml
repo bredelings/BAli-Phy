@@ -19,7 +19,8 @@ jobs:
                ubuntu-gcc-11,
                ubuntu-gcc-12,
                ubuntu-clang-15,
-               macos-xcode-14,
+               macos-xcode-14-intel,
+               macos-xcode-14-arm,
                windows
                ]
 
@@ -75,7 +76,14 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-xcode-14
+          - name: macos-xcode-14-intel
+            os: macos-12
+            compiler: xcode
+            version: "12"
+            buildtype: "release"
+            arch: "mac64"
+
+          - name: macos-xcode-14-arm
             os: macos-14
             compiler: xcode
             version: "14"
