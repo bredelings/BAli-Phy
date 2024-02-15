@@ -1812,7 +1812,7 @@ std::optional<int> reg_heap::reg_has_single_force(int r) const
         return {};
 }
 
-int reg_heap::set_forced_reg(int r1, int r2)
+void reg_heap::set_forced_reg(int r1, int r2)
 {
     assert(regs.is_used(r2));
 
@@ -1821,21 +1821,6 @@ int reg_heap::set_forced_reg(int r1, int r2)
     assert(reg_is_changeable_or_forcing(r2));
 
     assert(reg_has_value(r2));
-
-    // If r2 forces only one thing and has no other effects, then force that thing instead.
-    if (auto r3 = reg_has_single_force(r2))
-    {
-        // If r2 was a constant, then r3 is NOT guaranteed to be evaluated under
-        // incremental_evaluate1(r2), only under incremental_evaluate2(r2,...).
-
-        r2 = *r3;
-
-        assert(regs.is_used(r2));
-
-        assert(closure_at(r2));
-
-        assert(reg_is_changeable_or_forcing(r2));
-    }
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1849,9 +1834,6 @@ int reg_heap::set_forced_reg(int r1, int r2)
     R1.forced_regs.push_back({r2,back_index});
 
     assert(reg_is_forced_by(r1,r2));
-
-    // Return the reg that was actually forced.
-    return r2;
 }
 
 void reg_heap::set_index_var_ref(int r1, int r2)
