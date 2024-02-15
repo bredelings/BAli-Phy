@@ -296,7 +296,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
 
-            if (not reg_is_constant_no_force(r3))
+            if (not reg_is_constant(r3))
                 set_index_var_ref(r,r3);
 
             assert(not has_result1(r));
@@ -319,7 +319,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             assert(not expression_at(r).is_a<Operation>());
             if (regs[r].forced_regs.empty())
 	    {
-                mark_reg_constant_no_force(r);
+                mark_reg_constant(r);
 
 		assert( not has_step1(r) );
 		assert( not has_result1(r) );
@@ -633,15 +633,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         assert(not reg_has_value(r));
 #endif
 
-    if (reg_is_constant_no_force(r)) return {r,r};
-
-    else if (reg_is_constant_with_force(r))
-    {
-        if (not reg_is_forced(r))
-            force_reg_no_call(r);
-
-        return {r, r};
-    }
+    if (reg_is_constant(r))
+	return {r,r};
     else if (reg_is_changeable(r))
         return incremental_evaluate2_changeable_(r);
     else if (unevaluated_reg_is_index_var_no_force(r))
@@ -710,7 +703,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
 
-            if (not reg_is_constant_no_force(r3))
+            if (not reg_is_constant(r3))
                 set_index_var_ref(r,r3);
 
             assert(not has_result1(r));
@@ -730,7 +723,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         {
             if (regs[r].forced_regs.empty())
 	    {
-                mark_reg_constant_no_force(r);
+                mark_reg_constant(r);
 
 		assert( not has_step1(r) );
 		assert( not has_result1(r) );
@@ -1111,7 +1104,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
     {
         assert(expression_at(r));
 
-        if (reg_is_constant_no_force(r) or reg_is_changeable_or_forcing(r))
+        if (reg_is_constant(r) or reg_is_changeable_or_forcing(r))
             break;
 
         else if (unevaluated_reg_is_index_var_no_force(r))
@@ -1140,7 +1133,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
-            mark_reg_constant_no_force(r);
+            mark_reg_constant(r);
 
 #ifndef NDEBUG
         else if (expression_at(r).head().is_a<Trim>())

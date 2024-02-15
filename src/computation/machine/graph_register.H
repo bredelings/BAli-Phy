@@ -108,11 +108,10 @@ public:
     {
         unevaluated=0,
         index_var_no_force=1,
-        constant_no_force=2,
+        constant=2,
         changeable=3,
         index_var_with_force_to_nonchangeable=4,
-        index_var_with_force_to_changeable=5,
-        constant_with_force=6
+        index_var_with_force_to_changeable=5
     };
 
     type_t type = type_t::unevaluated;
@@ -246,8 +245,8 @@ public:
     void trace_and_reclaim_unreachable();
     bool reg_is_unevaluated(int r) const;
     void mark_reg_unevaluated(int r);
-    bool reg_is_constant_no_force(int r) const;
-    void mark_reg_constant_no_force(int r);
+    bool reg_is_constant(int r) const;
+    void mark_reg_constant(int r);
     bool reg_is_changeable(int r) const;
     void mark_reg_changeable(int r);
     bool unevaluated_reg_is_index_var_no_force(int r) const;
@@ -258,13 +257,9 @@ public:
     bool reg_is_index_var_with_force_to_changeable(int r) const;
     void mark_reg_index_var_with_force_to_changeable(int r);
     bool reg_is_index_var_with_force(int r) const;
-    bool reg_is_constant_with_force(int r) const;
-    void mark_reg_constant_with_force(int r);
-    bool reg_is_constant(int r) const;
     bool reg_is_changeable_or_forcing(int r) const;
     bool reg_is_to_changeable(int r) const;
     bool reg_has_forces(int r) const;
-    std::optional<int> reg_has_single_force(int r) const;
     bool reg_is_on_stack(int r) const;
     bool regs_maybe_different_value(int r1, int r2) const;
     bool reg_is_unforgettable(int r) const;
@@ -854,16 +849,16 @@ inline void reg_heap::mark_reg_unevaluated(int r)
     regs[r].type = reg::type_t::unevaluated;
 }
 
-inline bool reg_heap::reg_is_constant_no_force(int r) const
+inline bool reg_heap::reg_is_constant(int r) const
 {
-    return regs.access(r).type == reg::type_t::constant_no_force;
+    return regs.access(r).type == reg::type_t::constant;
 }
 
-inline void reg_heap::mark_reg_constant_no_force(int r)
+inline void reg_heap::mark_reg_constant(int r)
 {
-    assert( reg_is_constant_no_force(r) or reg_is_unevaluated(r));
+    assert( reg_is_constant(r) or reg_is_unevaluated(r));
 
-    regs[r].type = reg::type_t::constant_no_force;
+    regs[r].type = reg::type_t::constant;
 }
 
 inline bool reg_heap::reg_is_changeable(int r) const
@@ -924,23 +919,6 @@ inline bool reg_heap::reg_is_index_var_with_force(int r) const
 {
     return reg_is_index_var_with_force_to_changeable(r)
         or reg_is_index_var_with_force_to_nonchangeable(r);
-}
-
-inline bool reg_heap::reg_is_constant_with_force(int r) const
-{
-    return regs.access(r).type == reg::type_t::constant_with_force;
-}
-
-inline void reg_heap::mark_reg_constant_with_force(int r)
-{
-    assert( reg_is_constant_with_force(r) or reg_is_unevaluated(r));
-
-    regs[r].type = reg::type_t::constant_with_force;
-}
-
-inline bool reg_heap::reg_is_constant(int r) const
-{
-    return reg_is_constant_no_force(r) or reg_is_constant_with_force(r);
 }
 
 inline bool reg_heap::reg_is_changeable_or_forcing(int r) const
