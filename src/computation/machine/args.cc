@@ -23,14 +23,14 @@ const expression_ref& OperationArgs::reference(int slot) const
 const closure& OperationArgs::evaluate_reg_to_closure(int r2)
 {
     int r3 = evaluate_reg_use(r2);
-    assert(evaluate_changeables() or M.reg_is_constant_no_force(r3));
+    assert(evaluate_changeables() or M.reg_is_constant(r3));
     return M[r3];
 }
 
 const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
 {
     int r3 = evaluate_reg_force(r2);
-    assert(evaluate_changeables() or M.reg_is_constant_no_force(r3));
+    assert(evaluate_changeables() or M.reg_is_constant(r3));
     return M[r3];
 }
 

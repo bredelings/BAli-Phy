@@ -781,7 +781,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	    o<<",fillcolor=\"#770000\",fontcolor=white";
 	else if (C[R].exp.is_index_var())
 	    o<<",fillcolor=\"#77bbbb\"";
-	else if (C.reg_is_constant_no_force(R))
+	else if (C.reg_is_constant(R))
 	    o<<",fillcolor=\"#bbbb77\"";
 	o<<"];\n";
 

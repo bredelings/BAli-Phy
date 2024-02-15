@@ -823,7 +823,7 @@ void reg_heap::check_force_counts()
         if (has_step1(r) and not reg_is_unforgettable(r))
             assert(prog_force_counts[r] > 0);
         if (prog_force_counts[r] > 0)
-            assert(reg_is_constant_with_force(r) or has_result1(r));
+            assert(has_result1(r));
     }
 }
 
@@ -1638,7 +1638,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(reg_is_constant_with_force(r2) or has_result2(r2));
+        assert(has_result2(r2));
         assert(reg_is_forced(r2));
     }
 
@@ -1651,7 +1651,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(reg_is_constant_with_force(r2) or has_result2(r2));
+        assert(has_result2(r2));
         assert(reg_is_forced(r2));
 
         same_inputs = same_inputs and not prog_unshare[r2].test(different_result_bit);
@@ -1662,7 +1662,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 void reg_heap::force_reg_no_call(int r)
 {
     assert(reg_is_changeable_or_forcing(r));
-    assert(reg_is_constant_with_force(r) or has_result2(r));
+    assert(has_result2(r));
     assert(not reg_is_forced(r));
 
     // We can't use a range-for here because regs[r] can be moved
@@ -1673,7 +1673,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(reg_is_constant_with_force(r2) or has_result2(r2));
+        assert(has_result2(r2));
         assert(reg_is_forced(r2));
     }
 
@@ -1683,7 +1683,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(reg_is_constant_with_force(r2) or has_result2(r2));
+        assert(has_result2(r2));
         assert(reg_is_forced(r2));
     }
 }
@@ -1701,7 +1701,7 @@ void reg_heap::force_reg_with_call(int r)
     int call = steps[s].call;
     assert(call > 0);
 
-    assert(reg_is_constant_no_force(call) or reg_is_changeable_or_forcing(call));
+    assert(reg_is_constant(call) or reg_is_changeable_or_forcing(call));
 
     // If R2 is WHNF then we are done
     if (reg_is_changeable_or_forcing(call))
@@ -1709,9 +1709,9 @@ void reg_heap::force_reg_with_call(int r)
         // If r has a result, then shouldn't its call have a result?
         // In this case, the call is to a constant-with-force.
         // Do those have results?
-        assert(has_result2(call) or reg_is_constant_with_force(call));
+        assert(has_result2(call));
         incremental_evaluate2(call, true);
-        assert(has_result2(call) or reg_is_constant_with_force(call));
+        assert(has_result2(call));
         assert(reg_is_forced(call));
     }
 }
@@ -1763,7 +1763,7 @@ void reg_heap::set_result_for_reg(int r1)
 {
     // 1. Find called reg
     int r2 = step_for_reg(r1).call;
-    assert(reg_is_constant_no_force(r2) or reg_is_changeable_or_forcing(r2));
+    assert(reg_is_constant(r2) or reg_is_changeable_or_forcing(r2));
 
     // 2. Set the result value for the current reg
     prog_results[r1] = value_for_reg(r2);
@@ -1794,23 +1794,6 @@ void reg_heap::set_used_reg(int r1, int r2)
     assert(reg_is_used_by(r1,r2));
 }
 
-
-std::optional<int> reg_heap::reg_has_single_force(int r) const
-{
-    // Consider constant_with_force
-    if (reg_is_constant_with_force(r))
-        ;
-    // An index_var_with_force that calls a constant
-    // is awkward to handle, since it has a result we might have to clear.
-    else
-        return {};
-
-    // Return the single forced reg if there is one.
-    if (regs[r].forced_regs.size() == 1)
-        return regs[r].forced_regs[0].first;
-    else
-        return {};
-}
 
 void reg_heap::set_forced_reg(int r1, int r2)
 {
@@ -1878,7 +1861,7 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
     S1.call = r2;
 
     // We may need a call edge to constant-with-force nodes in order to achieve the proper count
-    if (not reg_is_constant_no_force(r2))
+    if (not reg_is_constant(r2))
     {
         assert(unsafe or not reg_is_index_var_no_force(r2));
         assert(unsafe or not reg_is_unevaluated(r2));
@@ -2089,7 +2072,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
 	{
 	    // How important is this?
 	    // What if we want to call something that IS unevaluated?
-	    mark_reg_constant_no_force(R2);
+	    mark_reg_constant(R2);
 	}
 
         set_call(s, R2, unsafe);
