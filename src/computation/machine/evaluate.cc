@@ -318,15 +318,52 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         {
             assert(not expression_at(r).is_a<Operation>());
             if (regs[r].forced_regs.empty())
+	    {
                 mark_reg_constant_no_force(r);
-            else
-                mark_reg_constant_with_force(r);
 
-            assert( not has_step1(r) );
-            assert( not has_result1(r) );
-            assert( not reg_is_unevaluated(r) );
+		assert( not has_step1(r) );
+		assert( not has_result1(r) );
+		assert( not reg_is_unevaluated(r) );
 
-            return {r,r};
+		return {r,r};
+	    }
+	    else
+	    {
+		// Get the creator of the current reg
+		int creator_step = creator_step_for_reg(r);
+		closure C2 = closure_at(r);
+
+		// Allocate a new reg with the constant
+		int r2 = allocate();
+		set_C(r2, std::move(C2));
+                mark_reg_constant_no_force(r2);
+		if (creator_step > 0)
+		    mark_reg_created_by_step(r2, creator_step);
+
+		// Make the current reg into an index-var that points to it.
+		closure C1(index_var(0),{r2});
+		set_C(r, std::move(C1));
+                mark_reg_index_var_with_force_to_nonchangeable(r);
+
+		// FIXME RESULT: set the result of r to r2.
+		if (not tokens[root_token].children.empty())
+		{
+		    int t = tokens[root_token].children[0];
+		    tokens[t].vm_result.add_value(r, non_computed_index);
+		}
+		prog_results[r] = r2;
+
+		assert( not has_step1(r) );
+		assert( has_result1(r) );
+		assert( not reg_is_unevaluated(r) );
+
+		assert( not has_step1(r2) );
+		assert( not has_result1(r2) );
+		assert( not reg_is_unevaluated(r2) );
+
+		return {r, r2};
+	    }
+
         }
 
 #ifndef NDEBUG
