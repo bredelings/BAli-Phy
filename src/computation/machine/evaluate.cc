@@ -735,15 +735,31 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         else if (is_WHNF(expression_at(r)))
         {
             if (regs[r].forced_regs.empty())
+	    {
                 mark_reg_constant_no_force(r);
-            else
-                mark_reg_constant_with_force(r);
 
-            assert( not has_step1(r) );
-            assert( not has_result1(r) );
-            assert( not reg_is_unevaluated(r) );
+		assert( not has_step1(r) );
+		assert( not has_result1(r) );
+		assert( not reg_is_unevaluated(r) );
 
-            return {r,r};
+		return {r,r};
+	    }
+	    else
+	    {
+		// Get the creator of the current reg
+		int creator_step = creator_step_for_reg(r);
+		closure C2 = closure_at(r);
+
+		// Allocate a new reg with the constant
+		int r2 = allocate();
+		set_C(r2, std::move(C2));
+		if (creator_step > 0)
+		    mark_reg_created_by_step(r2, creator_step);
+
+		// Make the current reg into an index-var that points to it.
+		closure C1(index_var(0),{r2});
+		set_C(r, std::move(C1));
+	    }
         }
 
 #ifndef NDEBUG
