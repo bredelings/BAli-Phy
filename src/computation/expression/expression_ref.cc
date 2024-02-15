@@ -48,24 +48,24 @@ string double_to_string(double d)
 
 std::string expression_ref::print() const
 {
-    switch(type_)
+    switch(u.index())
     {
-    case null_type:
+    case 0:
         return "[NULL]";
-    case int_type:
-        return (i<0)?"("+convertToString(i)+")":convertToString(i);
+    case 1:
+        return std::string("'")+as_char()+"'";
         break;
-    case double_type:
-        return (d<0)?"("+double_to_string(d)+")":double_to_string(d);
+    case 2:
+        return [](int i) { return (i<0)?"("+convertToString(i)+")":convertToString(i); }(as_int());
         break;
-    case log_double_type:
-        return "LD"+convertToString(ld);
+    case 3:
+        return [](double d) { return (d<0)?"("+double_to_string(d)+")":double_to_string(d);}(as_double());
         break;
-    case char_type:
-        return std::string("'")+c+"'";
+    case 4:
+        return "LD"+convertToString(as_log_double());
         break;
-    case index_var_type:
-        return std::string("%")+convertToString(i);
+    case 5:
+        return std::string("%")+convertToString(as_index_var());
         break;
     default:
         return ptr()->print();
@@ -342,7 +342,7 @@ expression_ref::expression_ref(const bool& b)
     :expression_ref(b?bool_true:bool_false)
 {}
 
-expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
+expression_ref::expression_ref(const index_var& iv):u(std::in_place_index_t<5>(),iv.index) {}
 
 expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
 {

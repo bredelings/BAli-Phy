@@ -2,6 +2,7 @@
 #define EXPRESSION_REF_H
 
 #include <vector>
+#include <variant>
 #include <memory>
 #include <optional>
 #include <string>
@@ -16,47 +17,41 @@ struct index_var;
 
 class expression_ref
 {
-    union
-    {
-	char c;
-	int i;
-	double d;
-	log_double_t ld;
-	object_ptr<const Object> O;
-    };
-    type_constant type_ = null_type;
+    std::variant<std::monostate, char, int, double, log_double_t, int, object_ptr<const Object> > u;
 
 public:
 
-    bool is_object_type() const {return ::is_object_type(type_);}
+    bool is_object_type() const {return u.index() == 6;}
 
     bool operator==(const expression_ref& E2) const
 	{
-	    if (type_ != E2.type())
+	    if (u.index() != E2.u.index())
 		return false;
     
-	    switch(type_)
+	    switch(u.index())
 	    {
-	    case null_type:
+	    case 0:
 		return true;
 		break;
-	    case int_type:
-		return (i == E2.as_int());
+	    case 1:
+		return (as_char() == E2.as_char());
 		break;
-	    case double_type:
-		return (d == E2.as_double());
+	    case 2:
+		return (as_int() == E2.as_int());
 		break;
-	    case log_double_type:
-		return (ld == E2.as_log_double());
+	    case 3:
+		return (as_double() == E2.as_double());
 		break;
-	    case char_type:
-		return (c == E2.as_char());
+	    case 4:
+		return (as_log_double() == E2.as_log_double());
 		break;
-	    case index_var_type:
-		return (i == E2.as_index_var());
+	    case 5:
+		return (as_index_var() == E2.as_index_var());
 		break;
 	    default:
                 if (ptr() == E2.ptr()) return true;
+
+		if (ptr()->type() != E2.ptr()->type()) return false;
 
 		return (*ptr() == *E2.ptr());
 	    }
@@ -70,7 +65,7 @@ public:
 		return (*ptr() == O);
 	}
 
-    void clear() {destroy_ptr();type_=null_type;}
+    void clear() { u = std::monostate();}
 
     bool is_expression() const;
 
@@ -81,7 +76,29 @@ public:
 
     type_constant type() const
 	{
-	    return type_;
+	    switch(u.index())
+	    {
+	    case 0:
+  	        return null_type;
+		break;
+	    case 1:
+		return char_type;
+		break;
+	    case 2:
+		return int_type;
+		break;
+	    case 3:
+		return double_type;
+		break;
+	    case 4:
+		return log_double_type;
+		break;
+	    case 5:
+		return index_var_type;
+		break;
+	    default:
+		return ptr()->type();
+	    }
 	}
   
     const expression& as_expression() const
@@ -176,86 +193,80 @@ public:
 
     bool is_int() const
 	{
-	    return type_ == int_type;
+	    return u.index() == 2;
 	}
 
     int as_int() const
 	{
 	    if (not is_int())
 		throw myexception()<<"Treating '"<<*this<<"' as int!";
-	    return i;
+	    return std::get<2>(u);
 	}
 
     bool is_double() const
 	{
-	    return type_ == double_type;
+	    return u.index() == 3;
 	}
 
     double as_double() const
 	{
 	    if (not is_double())
 		throw myexception()<<"Treating '"<<*this<<"' as double!";
-	    return d;
+	    return std::get<double>(u);
 	}
 
     bool is_char() const
 	{
-	    return type_ == char_type;
+	    return u.index() == 1;
 	}
 
     char as_char() const
 	{
 	    if (not is_char())
 		throw myexception()<<"Treating '"<<*this<<"' as char!";
-	    return c;
+	    return std::get<char>(u);
 	}
 
     bool is_log_double() const
 	{
-	    return type_ == log_double_type;
+	    return u.index() == 4;
 	}
 
     log_double_t as_log_double() const
 	{
 	    if (not is_log_double())
 		throw myexception()<<"Treating '"<<*this<<"' as log_double!";
-	    return ld;
+	    return std::get<log_double_t>(u);
 	}
 
     bool is_index_var() const
 	{
-	    return type_ == index_var_type;
+	    return u.index() == 5;
 	}
   
     int as_index_var() const
 	{
 	    if (not is_index_var())
 		throw myexception()<<"Treating '"<<*this<<"' as index_var!";
-	    return i;
+	    return std::get<5>(u);
 	}
 
     inline const object_ptr<const Object>& ptr() const
 	{
 	    if (not is_object_type())
 		throw myexception()<<"Treating '"<<*this<<"' as object type!";
-	    assert((bool)O);
-	    return O;
+	    assert((bool)std::get<object_ptr<const Object>>(u));
+	    return std::get<object_ptr<const Object>>(u);
 	}
 
     inline explicit operator bool() const
 	{
-	    return (type_ != null_type);
+	    return not std::holds_alternative<std::monostate>(u);
 	}
 
     std::string print() const;
 
     typedef object_ptr<const Object> otype;
-
-    inline void destroy_ptr()
-	{
-	    if (is_object_type())
-		(&O)->~otype();
-	}
 
     // Default
     expression_ref() {}
@@ -273,11 +284,11 @@ public:
     explicit expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
 
     // Object arguments
-    expression_ref(Object* v):O(v),type_(v->type()) { }
+    expression_ref(Object* v):u(std::in_place_type_t<object_ptr<const Object>>(), v) { }
 
-    expression_ref(const Object* v):O(v),type_(v->type()) { }
+    expression_ref(const Object* v):u(std::in_place_type_t<object_ptr<const Object>>(), v) { }
 
-    expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
+    expression_ref(const object_ptr<Object>& v):u(std::in_place_type_t<object_ptr<const Object>>(), v) { }
 
     template <typename T>
     expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
@@ -285,58 +296,41 @@ public:
     expression_ref(const Object& o):expression_ref(o.clone()) { }
 
     // Builtin-type arguments
-    expression_ref(const int& i2):i(i2),type_(int_type) {}
-    expression_ref(const double& d2):d(d2),type_(double_type) {}
-    expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
+    expression_ref(const int& i2):u(std::in_place_index_t<1>(), i2) {}
+    expression_ref(const double& d2):u(d2) {}
+    expression_ref(const log_double_t& ld2):u(ld2) {}
     expression_ref(const bool& b);
     expression_ref(const index_var& iv);
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
-    expression_ref(const char& c2):c(c2),type_(char_type) {}
+    expression_ref(const char& c2):u(c2) {}
     expression_ref(const String& s):expression_ref(s.clone()) { }
     expression_ref(const std::initializer_list<expression_ref>&);
 
     void swap(expression_ref& E) noexcept
-        {
-            static_assert(sizeof(d) >= sizeof(O));
-            std::swap(d, E.d);
-            std::swap(type_, E.type_);
-        }
+    {
+	std::swap(u, E.u);
+    }
 
     expression_ref& operator=(const expression_ref& E)
-	{
-            // If *this points to a structure containing E,
-            // then E can get destroyed during the operation.
-            // That means we can't access E.type_ after the assignment of E.O
+    {
+	// If *this points to a structure containing E,
+	// then E can get destroyed during the operation.
+	// That means we can't access E.type_ after the assignment of E.O
 
-            // By constructing a temporary here we
-            // * increment the reference of E.O (if its a pointer)
-            // * copy E.type_, so that we can use it safely.
+	// By constructing a temporary here we
+	// * increment the reference of E.O (if its a pointer)
+	// * copy E.type_, so that we can use it safely.
 
-            expression_ref(E).swap(*this);
-	    return *this;
-	}
+	expression_ref(E).swap(*this);
+	return *this;
+    }
 
-    expression_ref& operator=(expression_ref&& E) noexcept
-	{
-            swap(E);
-	    return *this;
-	}
+    expression_ref& operator=(expression_ref&& E) noexcept = default;
 
-    expression_ref(const expression_ref& E):type_(E.type_)
-	{
-	    if (is_object_type())
-		new (&O) otype(E.ptr());
-	    else
-		d = E.d;
-	}
+    expression_ref(const expression_ref& E) = default;
 
-    expression_ref(expression_ref&& E) noexcept
-	{
-	    swap(E);
-	}
-
-    inline ~expression_ref() {destroy_ptr();}
+    expression_ref(expression_ref&& E) noexcept = default;
 };
 
 
@@ -387,7 +381,7 @@ inline const expression_ref& expression_ref::head() const
 
 inline bool expression_ref::is_expression() const
 {
-    return (type_ == expression_type);
+    return (type() == expression_type);
 }
 
 inline std::vector<expression_ref> expression_ref::copy_sub() const
@@ -400,9 +394,9 @@ inline std::vector<expression_ref> expression_ref::copy_sub() const
 
 inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
 
-inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type) { }
+inline expression_ref::expression_ref(expression* e):u(std::in_place_index_t<6>(), e) { }
 
-inline expression_ref::expression_ref(const expression* e):O(e),type_(expression_type) { }
+inline expression_ref::expression_ref(const expression* e):u(std::in_place_index_t<6>(), e) { }
 
 inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
 
