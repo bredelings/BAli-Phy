@@ -629,11 +629,6 @@ int reg_heap::force_count(int r) const
         if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and prog_force_counts[r2] > 0)
             count++;
 
-    // Look at index-vars that refer to the root's result
-    for(auto& r2: regs[r].called_by_index_vars)
-        if (prog_force_counts[r2] > 0)
-            count++;
-
     return count;
 }
 
@@ -667,10 +662,6 @@ void reg_heap::compute_initial_force_counts()
         // 3b. Count forces
         for(auto [fr,_]: R.forced_regs)
             force_reg(fr);
-
-        int ref = R.index_var_ref.first;
-        if (ref > 0)
-            force_reg(ref);
 
         if (has_step1(r))
         {
@@ -715,11 +706,6 @@ void reg_heap::mark_unconditional_regs()
         // Mark force regs
         for(auto [fr,_]: R.forced_regs)
             use_reg_unconditionally(fr);
-
-        // Mark index-var-referenced regs.
-        auto [ref,_] = R.index_var_ref;
-        if (ref > 0)
-            use_reg_unconditionally(ref);
     }
 
     release_scratch_list(); // unconditionally_evaluated_regs
@@ -1662,7 +1648,6 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 void reg_heap::force_reg_no_call(int r)
 {
     assert(reg_is_changeable_or_forcing(r));
-    assert(has_result2(r));
     assert(not reg_is_forced(r));
 
     // We can't use a range-for here because regs[r] can be moved

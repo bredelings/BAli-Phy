@@ -660,9 +660,6 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
             dec_force_count(r2);
         for(auto [r2,_]: regs[r].forced_regs)
             dec_force_count(r2);
-        int ref = regs[r].index_var_ref.first;
-        if (ref > 0)
-            dec_force_count(ref);
 
         // If unshare_step_bit is set, then we've already decremented any force_count!
         if (not prog_unshare[r].test(unshare_step_bit) and reg_is_changeable(r))

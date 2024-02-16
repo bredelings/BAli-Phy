@@ -297,7 +297,10 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 mark_reg_index_var_with_force_to_nonchangeable(r);
 
             if (not reg_is_constant(r3))
+	    {
                 set_index_var_ref(r,r3);
+		set_forced_reg(r,r3);
+	    }
 
             assert(not has_result1(r));
 
@@ -710,7 +713,10 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                 mark_reg_index_var_with_force_to_nonchangeable(r);
 
             if (not reg_is_constant(r3))
+	    {
+		set_forced_reg(r,r3);
                 set_index_var_ref(r,r3);
+	    }
 
             assert(not has_result1(r));
 
@@ -842,22 +848,28 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
 pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
 {
-    int r2 = closure_at(r).reg_for_index_var();
+    if (not reg_is_forced(r))
+	force_reg_no_call(r);
 
     if (has_result2(r))
     {
-        if (not reg_is_forced(r))
-        {
-            force_reg_no_call(r);
-            incremental_evaluate2(r2, true);
-        }
-
         int result = result_for_reg(r);
         return {r,result};
     }
     else
     {
-        auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
+	int r2 = closure_at(r).reg_for_index_var();
+
+	/*
+	 * NOTE: If we are going to evaluate the same reg twice, once do_count=true
+	 *       and once with do_count=false, then we have to do the do_count=true one first.
+	 *
+	 *       If we don't, the children will get their counts incremented twice.
+	 *       This is because incrementing of child counts is done whenever the parent starts
+	 *         out unforced.
+	 */
+
+        auto [r3, result3] = incremental_evaluate2(r2, false);
 
         if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result3))
             prog_unshare[r].set(different_result_bit);
@@ -870,9 +882,6 @@ pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
             prog_results[r] = result3;
         }
         prog_unshare[r].reset(unshare_result_bit);
-
-        if (not reg_is_forced(r))
-            force_reg_no_call(r);
 
         assert(not reg_is_unevaluated(r));
         return {r, result3};
