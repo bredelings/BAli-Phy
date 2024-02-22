@@ -238,6 +238,7 @@ public:
 
     void check_used_regs_in_token(int) const;
     void check_used_regs() const;
+    void check_used_regs1() const;
 
     void collect_garbage();
     void trace_root();

@@ -2473,6 +2473,26 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
 }
 
+void reg_heap::check_used_regs1() const
+{
+    bool ok = true;
+    for(auto i = regs.begin(); i != regs.end(); i++)
+    {
+        int r1 = i.addr();
+
+	for(int r2: regs[r1].C.Env)
+	{
+	    if (regs.is_free(r2))
+	    {
+		std::cout<<"Reg "<<r1<<" with closure "<<closure_at(r1).print()<<" refers to free reg "<<r2<<"\n";
+		ok = false;
+	    }
+	}
+    }
+    if (not ok)
+	std::abort();
+}
+
 void reg_heap::check_used_regs() const
 {
     if (root_token >= 0)
