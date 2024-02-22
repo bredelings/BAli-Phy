@@ -87,7 +87,7 @@ jobs:
             os: macos-14
             compiler: xcode
             version: "14"
-            buildtype: "release"
+            buildtype: "debugoptimized"
             arch: "mac-arm64"
 
           - name: windows
