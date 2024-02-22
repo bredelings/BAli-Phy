@@ -265,6 +265,7 @@ jobs:
         cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
+        ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
 
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.
         skip=false
