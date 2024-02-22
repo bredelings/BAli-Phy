@@ -152,13 +152,16 @@ expression_ref unlet(const expression_ref& E)
     if (E.head().is_a<lambda>())
     {
 	assert(E.size() == 2);
-	expression* V = E.as_expression().clone();
-	V->sub[1] = unlet(E.sub()[1]);
+	auto body = unlet(E.sub()[1]);
 
-	if (V->sub[1].is_object_type() and E.sub()[1].is_object_type() and V->sub[1].ptr() == E.sub()[1].ptr())
+	if (body.is_object_type() and E.sub()[1].is_object_type() and body.ptr() == E.sub()[1].ptr())
 	    return E;
 	else
+	{
+	    object_ptr<expression> V = E.as_expression().clone();
+	    V->sub[1] = body;
 	    return V;
+	}
     }
 
     // 6. Case
@@ -238,7 +241,7 @@ expression_ref unlet(const expression_ref& E)
             return E;
         else
         {
-            expression* V = E.as_expression().clone();
+            object_ptr<expression> V = E.as_expression().clone();
             for(int i=0;i<E.size();i++)
                 V->sub[i] = unlet(E.sub()[i]);
             return V;

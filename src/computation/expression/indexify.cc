@@ -122,7 +122,7 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
             return E;
         else
         {
-            expression* V = E.as_expression().clone();
+            object_ptr<expression> V = E.as_expression().clone();
             for(int i=0;i<V->size();i++)
                 V->sub[i] = indexify(V->sub[i], variables);
             return V;
@@ -228,7 +228,7 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
             return E;
         else
         {
-            expression* V = E.as_expression().clone();
+            object_ptr<expression> V = E.as_expression().clone();
             for(int i=0;i<V->size();i++)
                 V->sub[i] = deindexify(V->sub[i], variables);
             return V;
