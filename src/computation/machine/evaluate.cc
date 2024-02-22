@@ -329,15 +329,15 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 	    }
 	    else
 	    {
-		// Get the creator of the current reg
-		int creator_step = creator_step_for_reg(r);
-		closure C2 = closure_at(r);
-
-		// Allocate a new reg with the constant
+		// Allocate a new reg
 		int r2 = allocate();
-		set_C(r2, std::move(C2));
+		int creator_step = creator_step_for_reg(r);
 		if (creator_step > 0)
 		    mark_reg_created_by_step(r2, creator_step);
+
+		// Copy the constant from r -> r2
+		closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
+		set_C(r2, std::move(C2));
 
 		// Make the current reg into an index-var that points to it.
 		closure C1(index_var(0),{r2});
@@ -739,15 +739,15 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    }
 	    else
 	    {
-		// Get the creator of the current reg
-		int creator_step = creator_step_for_reg(r);
-		closure C2 = closure_at(r);
-
-		// Allocate a new reg with the constant
+		// Allocate a new reg
 		int r2 = allocate();
-		set_C(r2, std::move(C2));
+		int creator_step = creator_step_for_reg(r);
 		if (creator_step > 0)
 		    mark_reg_created_by_step(r2, creator_step);
+
+		// Copy the constant from r -> r2
+		closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
+		set_C(r2, std::move(C2));
 
 		// Make the current reg into an index-var that points to it.
 		closure C1(index_var(0),{r2});
