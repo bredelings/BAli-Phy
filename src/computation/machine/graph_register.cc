@@ -605,33 +605,6 @@ void reg_heap::do_pending_effect_unregistrations()
     assert(steps_pending_effect_unregistration.empty());
 }
 
-int reg_heap::force_count(int r) const
-{
-    if (not reg_is_changeable_or_forcing(r)) return 0;
-
-    // Count a reference from the program_result_head.
-    int count = 0;
-    if (program_result_head and r == heads[*program_result_head])
-        count = 1;
-
-    // Look at steps that USE the root's result
-    for(auto& [r2,_]: regs[r].used_by)
-        if (prog_force_counts[r2] > 0)
-            count++;
-
-    // Look at steps that FORCE the root's result
-    for(auto& [r2,_]: regs[r].forced_by)
-        if (prog_force_counts[r2] > 0)
-            count++;
-
-    // Look at steps that CALL the root's result
-    for(auto& s2: regs[r].called_by)
-        if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and prog_force_counts[r2] > 0)
-            count++;
-
-    return count;
-}
-
 void reg_heap::compute_initial_force_counts()
 {
     vector<int> forced_regs;
@@ -799,13 +772,47 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
     return reg_values;
 }
 
-void reg_heap::check_force_counts()
+void reg_heap::check_force_counts() const
 {
+    vector<int> true_force_counts(regs.size(),0);
+
+    if (program_result_head)
+    {
+	int h = heads[*program_result_head];;
+	true_force_counts[h]++;
+    }
+
+    for(auto i = regs.begin(); i != regs.end(); i++)
+    {
+	int r = i.addr();
+
+	// Skip if prog_force_counts is zero.
+	if (prog_force_counts[r] == 0) continue;
+
+	for(auto& [r2,_]: regs[r].used_regs)
+	    true_force_counts[r2]++;
+
+	for(auto& [r2,_]: regs[r].forced_regs)
+	    true_force_counts[r2]++;
+
+	if (reg_is_changeable(r))
+	{
+	    assert(has_step1(r));
+
+	    int call = step_for_reg(r).call;
+
+	    if (reg_is_changeable_or_forcing(call))
+		true_force_counts[call]++;
+	}
+    }
+
     for(int r=1;r<regs.size();r++)
     {
         assert(prog_unshare[r].none());
         if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
+	{
+            assert(prog_force_counts[r] == true_force_counts[r]);
+	}
         if (has_step1(r) and not reg_is_unforgettable(r))
             assert(prog_force_counts[r] > 0);
         if (prog_force_counts[r] > 0)
@@ -2498,7 +2505,10 @@ void reg_heap::check_used_regs() const
     }
 
     bool in_pe_token = (root_token>=0)?is_program_execution_token(root_token):false;
-    bool check_force_counts = in_pe_token and stack.empty();
+    bool do_check_force_counts = in_pe_token and stack.empty();
+
+    if (do_check_force_counts)
+	check_force_counts();
 
     for(auto i = regs.begin(); i != regs.end(); i++)
     {
@@ -2518,14 +2528,14 @@ void reg_heap::check_used_regs() const
 		assert(not reg_is_contingent(r2));
 	}
 
-        if (check_force_counts)
+        if (do_check_force_counts)
         {
-            assert(prog_force_counts[r1] == force_count(r1));
             if (has_step1(r1))
                 assert(reg_is_unforgettable(r1) or reg_is_forced(r1));
 
             if (has_step1(r1) and reg_is_forced(r1))
                 assert(prog_force_counts[r1] > 0);
+
             if (has_result1(r1))
                 assert(prog_force_counts[r1] > 0);
         }

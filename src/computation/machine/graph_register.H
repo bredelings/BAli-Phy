@@ -359,8 +359,6 @@ private:
 
     expression_ref unshare_and_evaluate_program(int c);
 
-    int force_count(int r) const;
-
 public:
     expression_ref evaluate_program(int c);
 
@@ -742,7 +740,7 @@ public:
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
     void unregister_effects_for_bumped_steps();
     void mark_as_program_execution_token(int t);
-    void check_force_counts();
+    void check_force_counts() const;
     expression_ref unshare_regs2(int t1);
 
     void check_unshare_regs(int t);
