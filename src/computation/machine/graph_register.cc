@@ -1846,13 +1846,11 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
     {
 	assert(not reg_is_unevaluated(r2));
 
-	if (not reg_is_constant(r2))
+	// put the back-edge on the first non-index-var that we see
+	r2 = follow_index_var(r2);
+
+	if (reg_is_changeable(r2))
 	{
-	    assert(reg_is_changeable(r2));
-
-	    // put the back-edge on the first non-index-var that we see
-	    r2 = follow_index_var(r2);
-
 	    // 6. Add a call edge from to R2.
 	    auto& R2 = regs[r2];
 	    int back_index = R2.called_by.size();
@@ -1862,7 +1860,10 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
 	    S1.call_edge = {r2, back_index};
 	}
 	else
+	{
+	    assert(reg_is_constant(r2));
 	    S1.call_edge.first = -1;
+	}
     }
     else
 	assert(S1.call_edge.first == 0);
