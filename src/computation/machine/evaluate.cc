@@ -205,9 +205,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             // Evaluate S, looking through unchangeable redirections
             auto [call, result] = incremental_evaluate1(steps[s].call);
 
-            // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
-            // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
-            if (call != call_for_reg(r))
+	    // If the back-edge has not been set, then we need to update the call to look through
+	    // index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
+            if (steps[s].call_edge.first == 0)
             {
                 // This should only ever happen for modifiable values set with set_reg_value( ).
                 // In such cases, we need this, because the value we set could evaluate to an index_var.
@@ -215,6 +215,8 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 clear_call_for_reg(r);
                 set_call(s, call);
             }
+	    else
+		assert(call == call_for_reg(r));
 
             // r gets its value from S.
             set_result_for_reg( r );
@@ -930,9 +932,9 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         // Evaluate S, looking through unchangeable redirections
         auto [call, result] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
 
-        // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
-        // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
-        if (call != call_for_reg(r))
+	// If the back-edge has not been set, then we need to update the call to look through
+	// index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
+        if (steps[s].call_edge.first == 0)
         {
             // This should only ever happen for modifiable values set with set_reg_value( ).
             // In such cases, we need this, because the value we set could evaluate to an index_var.
@@ -940,6 +942,8 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
             clear_call_for_reg(r);
             set_call(s, call);
         }
+	else
+	    assert(call == call_for_reg(r));
 
         // I think we can only get get here if
         // (i) the step is valid, but the result is invalid.

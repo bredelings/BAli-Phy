@@ -1830,30 +1830,42 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
     // Check that R2 is legal
     assert(regs.is_used(r2));
 
-    // R2 could be unevaluated if we are setting the value of a modifiable.
-
-    // R2 shouldn't have an index var.
-    assert(unsafe or not reg_is_index_var_no_force(r2));
+    auto& S1 = steps[s1];
 
     // Don't override an *existing* call
-    assert(steps[s1].call == 0);
-
-    auto& S1 = steps[s1];
+    assert(S1.call == 0);
+    assert(S1.call_edge.first == 0);
 
     // Set the call
     S1.call = r2;
 
-    // We may need a call edge to constant-with-force nodes in order to achieve the proper count
-    if (not reg_is_constant(r2))
+    // We may need a call edge to index-var-with-force nodes in order to achieve the proper force count.
+    // But back-edges can only be on changeables.
+    // In order to achieve that, we only set call back-edges when the target is evaluated.
+    if (not unsafe)
     {
-        assert(unsafe or not reg_is_index_var_no_force(r2));
-        assert(unsafe or not reg_is_unevaluated(r2));
-        // 6. Add a call edge from to R2.
-        auto& R2 = regs[r2];
-        int back_index = R2.called_by.size();
-        R2.called_by.push_back(s1);
-        S1.call_edge = {r2, back_index};
+	assert(not reg_is_unevaluated(r2));
+
+	if (not reg_is_constant(r2))
+	{
+	    assert(reg_is_changeable(r2));
+
+	    // put the back-edge on the first non-index-var that we see
+	    r2 = follow_index_var(r2);
+
+	    // 6. Add a call edge from to R2.
+	    auto& R2 = regs[r2];
+	    int back_index = R2.called_by.size();
+	    R2.called_by.push_back(s1);
+
+	    // Maybe this should just be optional<int> back_index?
+	    S1.call_edge = {r2, back_index};
+	}
+	else
+	    S1.call_edge.first = -1;
     }
+    else
+	assert(S1.call_edge.first == 0);
 }
 
 void reg_heap::clear_call(int s)
@@ -1863,11 +1875,11 @@ void reg_heap::clear_call(int s)
     assert(call > 0);
 
     // 1. Remove the edge from step[s] <--- regs[call]
-    if (S.call_edge.first > 0 and not regs.is_free(call))
+    if (S.call_edge.first > 0 and not regs.is_free(S.call_edge.first))
     {
         auto [r2,j] = S.call_edge;
-        assert(call == r2);
-        auto& backward = regs[call].called_by;
+        assert(follow_index_var(call) == r2);
+        auto& backward = regs[r2].called_by;
         assert(0 <= j and j < backward.size());
 
         // Move the last element to the hole, and adjust index of correspond forward edge.
