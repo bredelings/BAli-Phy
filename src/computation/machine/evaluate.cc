@@ -291,7 +291,11 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
-            else if (reg_is_to_changeable(r3))
+
+	    int r4 = follow_index_var(r3);
+	    if (r3 != r4) regs[r].C.Env[0] = r4;
+
+	    if (reg_is_to_changeable(r3))
                 mark_reg_index_var_with_force_to_changeable(r);
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
@@ -707,7 +711,11 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
-            else if (reg_is_to_changeable(r3))
+
+	    int r4 = follow_index_var(r3);
+	    if (r3 != r4) regs[r].C.Env[0] = r4;
+
+	    if (reg_is_to_changeable(r3))
                 mark_reg_index_var_with_force_to_changeable(r);
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
