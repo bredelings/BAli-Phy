@@ -270,7 +270,7 @@ jobs:
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.
         skip=false
         case "${{ matrix.name }}" in
-          *-DEBUG_MACHINE) skip=true ;;
+          *-DEBUG_MACHINE) skip=some ;;
           *-sanitize) skip=true ;;
         esac
 
@@ -278,6 +278,12 @@ jobs:
             echo ::group::Test suite
             cd tests
             ./run-tests.py ${BALIPHY} --seed=$seed
+            cd
+            echo ::endgroup::
+        elif [ "$skip" = "some" ] ; then
+            echo ::group::Reduced test suite
+            cd tests/prob_prog/demos
+            ../../run-tests.py ${BALIPHY} --seed=$seed
             cd
             echo ::endgroup::
         fi
