@@ -190,7 +190,7 @@ void reg_heap::trace(vector<int>& remap)
                 mark_reg(r);
         }
 
-        for(auto [r,_] : R.forced_regs)
+        for(auto r : R.forced_regs)
 	    mark_reg(r);
     }
 
@@ -310,7 +310,7 @@ void reg_heap::trace_root()
                 mark_reg(r);
         }
 
-        for(auto [r,_] : R.forced_regs)
+        for(auto r : R.forced_regs)
 	    mark_reg(r);
 
         // If there's a step, then the call should be marked.

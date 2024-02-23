@@ -119,13 +119,10 @@ public:
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
 
-    boost::container::small_vector< std::pair<int,int>, 2 > forced_regs;
+    boost::container::small_vector< int, 2 > forced_regs;
 
     /// Which regs (reg,index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
-
-    /// Which regs (reg,index) FORCE this reg?
-    boost::container::small_vector<std::pair<int,int>, 2> forced_by;
 
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
