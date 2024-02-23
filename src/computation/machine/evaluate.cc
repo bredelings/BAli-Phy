@@ -296,15 +296,21 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 	    if (r3 != r4) regs[r].C.Env[0] = r4;
 
 	    if (reg_is_to_changeable(r3))
+	    {
+		assert(reg_is_changeable(r4));
+
+                set_index_var_ref(r,r4);
                 mark_reg_index_var_with_force_to_changeable(r);
+	    }
             else
+	    {
+		assert(reg_is_constant(r4));
+
                 mark_reg_index_var_with_force_to_nonchangeable(r);
+	    }
 
             if (not reg_is_constant(r3))
-	    {
-                set_index_var_ref(r,r3);
 		set_forced_reg(r,r3);
-	    }
 
             assert(not has_result1(r));
 
@@ -716,15 +722,21 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    if (r3 != r4) regs[r].C.Env[0] = r4;
 
 	    if (reg_is_to_changeable(r3))
+	    {
+		assert(reg_is_changeable(r4));
+
+                set_index_var_ref(r,r4);
                 mark_reg_index_var_with_force_to_changeable(r);
+	    }
             else
+	    {
+		assert(reg_is_constant(r4));
+
                 mark_reg_index_var_with_force_to_nonchangeable(r);
+	    }
 
             if (not reg_is_constant(r3))
-	    {
 		set_forced_reg(r,r3);
-                set_index_var_ref(r,r3);
-	    }
 
             assert(not has_result1(r));
 
