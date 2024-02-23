@@ -774,7 +774,8 @@ void reg_heap::check_force_counts() const
     if (program_result_head)
     {
 	int h = heads[*program_result_head];;
-	true_force_counts[h]++;
+	if (reg_is_changeable_or_forcing(h))
+	    true_force_counts[h]++;
     }
 
     for(auto i = regs.begin(); i != regs.end(); i++)
