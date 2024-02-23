@@ -268,13 +268,13 @@ jobs:
         ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
 
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.
-        skip=false
+        skip=none
         case "${{ matrix.name }}" in
           *-DEBUG_MACHINE) skip=some ;;
-          *-sanitize) skip=true ;;
+          *-sanitize) skip=all ;;
         esac
 
-        if [ "$skip" = "false" ] ; then
+        if [ "$skip" = "none" ] ; then
             echo ::group::Test suite
             cd tests
             ./run-tests.py ${BALIPHY} --seed=$seed
@@ -282,8 +282,9 @@ jobs:
             echo ::endgroup::
         elif [ "$skip" = "some" ] ; then
             echo ::group::Reduced test suite
-            cd tests/prob_prog/demos
-            ../../run-tests.py ${BALIPHY} --seed=$seed
+            ( cd tests/prob_prog/demos ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            ( cd tests/prob_prog/coal_mining ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            ( cd tests/prob_prog/cluster ; ../../run-tests.py ${BALIPHY} --seed=$seed )
             cd
             echo ::endgroup::
         fi
