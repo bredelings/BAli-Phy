@@ -96,6 +96,12 @@ foreign import bpcall "Modifiables:" withEffect :: a -> b -> b
 
 --- An effect monad that doesn't require sequencing of its operations.
 
+{- Floating values outside of the Effect2 constructor means that running the
+     the effect multiple times will only perform it once.
+
+   However, for effects, I think that is actually OK?
+ -}
+
 data Effect2 a = Effect2 { runEffect :: () -> a }
 
 instance Functor Effect2 where
