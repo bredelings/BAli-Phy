@@ -1777,23 +1777,26 @@ void reg_heap::set_result_for_reg(int r1)
 
 void reg_heap::set_used_reg(int r1, int r2)
 {
-    assert(reg_is_to_changeable(r2));
-
+    assert(regs.is_used(r1));
     assert(regs.is_used(r2));
 
     assert(closure_at(r2));
-
     assert(reg_has_value(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
     assert(not reg_is_index_var_no_force(r2));
 
+    // We are going to put the back-edge on the first non-index-var that we see.
+    int r3 = follow_index_var_target(r2);
+
+    assert(reg_is_changeable(r3));
+
     auto& R1 = regs[r1];
-    auto& R2 = regs[r2];
-    int back_index = R2.used_by.size();
+    auto& R3 = regs[r3];
+    int back_index = R3.used_by.size();
     int forw_index = R1.used_regs.size();
-    R2.used_by.push_back({r1,forw_index});
+    R3.used_by.push_back({r1,forw_index});
     R1.used_regs.push_back({r2,back_index});
 
     assert(reg_is_used_by(r1,r2));
@@ -2664,12 +2667,19 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     for(auto& forward: regs[r].used_regs)
     {
         auto [r3,j] = forward;
+
         if (regs.is_free(r3)) continue;
-        auto& backward = regs[r3].used_by;
+	r3 = follow_index_var_target(r3);
+	if (regs.is_free(r3)) continue;
+
+	assert(reg_is_changeable(r3));
+
+	auto& backward = regs[r3].used_by;
         assert(0 <= j and j < backward.size());
 
         forward = {0,0};
 
+	// erase regs[r3].used_by[j]
         if (j+1 < backward.size())
         {
             // erase the backward edge by moving another backward edge on top of it.
