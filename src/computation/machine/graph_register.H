@@ -117,7 +117,7 @@ public:
     type_t type = type_t::unevaluated;
 
     /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
+    boost::container::small_vector< std::tuple<int,int,int>, 2 > used_regs;
 
     boost::container::small_vector< int, 2 > forced_regs;
 
