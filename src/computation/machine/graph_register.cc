@@ -2293,8 +2293,8 @@ bool reg_heap::reg_is_called_by(int r1, int s1) const
 
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-    for(auto& [r,_]: regs[r2].used_by)
-        if (r == r1)
+    for(auto& [r,_]: regs[r1].used_regs)
+        if (r == r2)
             return true;
 
     return false;
