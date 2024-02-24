@@ -1,5 +1,7 @@
 module Effect where
 
+import Control.Monad
+
 -- An Effect may be a node in a graph??
 data Effect
 
@@ -91,3 +93,20 @@ Why doesn't this happen with `withEffect`?
 -}
 
 foreign import bpcall "Modifiables:" withEffect :: a -> b -> b
+
+--- An effect monad that doesn't require sequencing of its operations.
+
+data Effect2 a = Effect2 { runEffect :: () -> a }
+
+instance Functor Effect2 where
+    fmap f x = Effect2 (\_ -> let y = runEffect x () in y `seq` f y)
+
+instance Applicative Effect2 where
+    pure x = Effect2 (\_ -> x)
+    t1 <*> t2 = Effect2 (\_ -> let f = runEffect t1 ()
+                                   x = runEffect t2 ()
+                               in f `seq` x `seq` f x)
+
+instance Monad Effect2 where
+    f >>= g = Effect2 (\_ -> let x = runEffect f () in x `seq` runEffect (g x) ())
+
