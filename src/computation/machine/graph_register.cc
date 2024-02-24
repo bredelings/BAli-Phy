@@ -315,6 +315,23 @@ int reg_heap::follow_index_var(int r) const
     return r;
 }
 
+int reg_heap::follow_index_var_target(int r) const
+{
+    assert(not reg_is_unevaluated(r));
+
+    assert(not reg_is_index_var_no_force(r));
+
+    if (reg_is_index_var_with_force(r))
+    {
+	r = closure_at(r).reg_for_index_var();
+	assert(regs.is_free(r) or not reg_is_unevaluated(r));
+    }
+
+    assert(not expression_at(r).is_index_var());
+
+    return r;
+}
+
 int reg_heap::follow_index_var_no_force(int r) const
 {
     while(reg_is_index_var_no_force(r))

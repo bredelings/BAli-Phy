@@ -675,6 +675,7 @@ public:
     bool has_result2(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
+    int follow_index_var_target(int r) const;
     int follow_index_var_no_force(int r) const;
     bool reg_is_forced(int r) const;
     int inc_count(int r);
