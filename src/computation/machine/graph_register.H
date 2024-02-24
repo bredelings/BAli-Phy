@@ -241,6 +241,7 @@ public:
     void trace_root();
     void trace(std::vector<int>& remap);
     void trace_and_reclaim_unreachable();
+    bool reg_is_evaluated(int r) const;
     bool reg_is_unevaluated(int r) const;
     void mark_reg_unevaluated(int r);
     bool reg_is_constant(int r) const;
@@ -813,6 +814,11 @@ extern long total_tokens;
 inline bool reg_heap::reg_is_unevaluated(int r) const
 {
     return regs.access(r).type == reg::type_t::unevaluated;
+}
+
+inline bool reg_heap::reg_is_evaluated(int r) const
+{
+    return not reg_is_unevaluated(r);
 }
 
 inline bool reg_heap::reg_has_forces(int r) const
