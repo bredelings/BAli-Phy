@@ -2691,7 +2691,7 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
             forward2[i2].second = j;
 
             assert(regs[r2].used_regs[i2].second == j);
-            assert(regs[forward2[i2].first].used_by[forward2[i2].second].second == i2);
+            assert(regs[follow_index_var_target(forward2[i2].first)].used_by[forward2[i2].second].second == i2);
         }
 
         backward.pop_back();
