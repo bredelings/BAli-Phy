@@ -366,6 +366,22 @@ vector<int> site_pattern(const EVector& A, int c)
     return pattern;
 }
 
+vector<int> site_pattern_var_nonvar(const EVector& A, int c)
+{
+    int n = A.size();
+    vector<int> pattern(n);
+    for(int j=0;j<n;j++)
+    {
+        int x = A[j].as_<EPair>().second.as_<EVector>()[c].as_int();
+        if (x < 0)
+            x = alphabet::gap;
+        else
+            x = alphabet::not_gap;
+        pattern[j] = x;
+    }
+    return pattern;
+}
+
 int find_add_column(column_map& M, const vector<int>& column, int next)
 {
     auto& result = M.insert(column);
@@ -407,6 +423,25 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
     return {columns, counts, mapping};
 }
 
+tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const EVector& A, const alphabet& a)
+{
+    int L = A[0].as_<EPair>().second.as_<EVector>().size();
+
+    // Check that all the sequences have the same length
+    for(int i=1;i<A.size();i++)
+	assert(L == A[i].as_<EPair>().second.as_<EVector>().size());
+
+    column_map M;
+    vector<vector<int>> columns;
+    vector<int> counts;
+    vector<int> mapping(L);
+    for(int c=0;c<L;c++)
+        mapping[c] = add_column(M, site_pattern_var_nonvar(A,c), columns, counts);
+
+    assert(counts.size() == columns.size());
+    return {columns, counts, mapping};
+}
+
 EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& patterns)
 {
     int n_leaves = old.size();
@@ -440,6 +475,38 @@ std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const EVector& 
 }
 
 
+// This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
+std::tuple<EVector, vector<int>> compress_alignment_var_nonvar(const EVector& A, const alphabet& a)
+{
+    if (A.size() == 0)
+        return {{},{}};
+
+    // extract patterns
+    auto [patterns, counts, mapping] = compress_site_patterns_var_nonvar(A, a);
+
+    // construct constant patterns
+    vector<vector<int>> constant_patterns;
+    for(auto& pattern: patterns)
+    {
+	for(int letter=0;letter<a.size();letter++)
+	{
+	    auto constant_pattern = pattern;
+	    for(auto& entry: constant_pattern)
+	    {
+		assert(entry == alphabet::not_gap or entry == alphabet::gap);
+		if (entry == alphabet::not_gap)
+		    entry = letter;
+	    }
+	    constant_patterns.push_back(constant_pattern);
+	}
+    }
+
+    assert(constant_patterns.size() == patterns.size() * a.size());
+
+    return {alignment_from_patterns(A, constant_patterns), counts};
+}
+
+
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -456,6 +523,23 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     tmp123->second = tmp23;
 
     return tmp123;
+}
+
+extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A0 = arg0.as_checked<EVector>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& a = *arg1.as_checked<Alphabet>();
+
+    auto [A,counts] = compress_alignment_var_nonvar(A0, a);
+
+    object_ptr<EPair> tmp12(new EPair);
+    tmp12->first = A;
+    tmp12->second = EVector(counts);
+
+    return tmp12;
 }
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
