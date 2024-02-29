@@ -132,6 +132,13 @@ extern "C" closure builtin_function_aaWithStop(OperationArgs&)
     return Alphabet(new AminoAcidsWithStop());
 }
 
+extern "C" closure builtin_function_mkNumeric(OperationArgs& Args)
+{
+    int n = Args.evaluate(0).as_int();
+
+    return Alphabet(new Numeric(n));
+}
+
 extern "C" closure builtin_function_translate(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);

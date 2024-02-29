@@ -68,9 +68,14 @@ expression_ref get_alphabet_expression(const alphabet& a)
         auto nucs = get_alphabet_expression(doublets->getNucleotides());
         return {var("doublets"),nucs};
     }
+    else if (auto num = dynamic_cast<const Numeric*>(&a))
+    {
+	int n = num->size();
+	return {var("mkNumeric"),n};
+    }
     else
     {
-        throw myexception()<<"Can't translate alphabet "<<a.name;
+	throw myexception()<<"Can't translate C++ alphabet object "<<a.name<<" into Haskell expression";
     }
 }
 

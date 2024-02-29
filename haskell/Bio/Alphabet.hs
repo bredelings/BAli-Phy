@@ -44,6 +44,8 @@ foreign import bpcall "Alphabet:aaWithStop" builtin_aaWithStop :: () -> Alphabet
 aaWithStop = builtin_aaWithStop ()
 amino_acids_with_stop = builtin_aaWithStop ()
 
+foreign import bpcall "Alphabet:" mkNumeric :: Int -> Alphabet
+
 foreign import bpcall "Alphabet:genetic_code_standard" builtin_standard_code :: () -> GeneticCode
 standard_code = builtin_standard_code ()
 
