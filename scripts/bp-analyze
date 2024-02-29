@@ -1563,6 +1563,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def color_scheme_for_alphabet(self,alphabet):
         if alphabet == "Amino-Acids":
             return "AA+contrast"
+        elif re.match('Numeric\[\d+\]',alphabet):
+            return "plain+contrast"
         else:
             return "DNA+contrast"
 
