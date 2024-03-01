@@ -238,6 +238,14 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel scale sequenceDat
       cls = cached_conditional_likelihoods tree nodeCLVs transition_ps
       likelihood = peel_likelihood nodeCLVs tree cls f alphabet smap subst_root column_counts
 
+      -- computing the probability of the condition
+      (isequences2, column_counts2) = compress_alignment_var_nonvar (getSequences sequenceData) alphabet
+      maybeNodeISequences2 = labelToNodeMap tree isequences2
+      maybeNodeSeqsBits2 = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences2
+      nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
+      cls2 = cached_conditional_likelihoods tree nodeCLVs2 transition_ps
+      likelihood2 = peel_likelihood nodeCLVs2 tree cls2 f alphabet smap subst_root column_counts2
+
       ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
       n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
@@ -248,7 +256,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel scale sequenceDat
   -- How about stuff related to alignment compression?
   let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
 
-  return ([likelihood], prop)
+  return ([likelihood,1/likelihood2], prop)
 
 instance Dist (PhyloCTMC t Int s r) => Dist (VariablePhyloCTMC t s r) where
     type Result (VariablePhyloCTMC t s r) = Result (PhyloCTMC t Int s r)
