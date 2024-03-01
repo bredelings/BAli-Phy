@@ -1,6 +1,7 @@
 module Probability.Distribution.PhyloCTMC.FixedA
     (module Probability.Distribution.PhyloCTMC.Properties,
-     module Probability.Distribution.PhyloCTMC.PhyloCTMC
+     module Probability.Distribution.PhyloCTMC.PhyloCTMC,
+     VariablePhyloCTMC(..)
     )
 
 where
@@ -202,5 +203,74 @@ instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) 
 
 instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonReversible) where
     sample dist = RanDistribution2 dist do_nothing
+
+
+----------------------
+
+data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
+
+
+
+{-
+ok, so how do we pass IntMaps to C++ functions?
+well, we could turn each IntMap into an EIntMap
+for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
+   -}
+annotated_subst_likelihood_fixed_A_variable tree length smodel scale sequenceData = do
+  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+
+  let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
+
+      maybeNodeISequences = labelToNodeMap tree isequences
+      maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+      nModels = nrows f
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
+
+      uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
+      uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
+
+      n_nodes = numNodes tree
+      alphabet = getAlphabet smodel
+      smap   = stateLetters smodel
+      smodel_on_tree = SingleBranchLengthModel tree smodel scale
+      transition_ps = transition_ps_map smodel_on_tree
+      f = weighted_frequency_matrix smodel
+      cls = cached_conditional_likelihoods tree nodeCLVs transition_ps
+      likelihood = peel_likelihood nodeCLVs tree cls f alphabet smap subst_root column_counts
+
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
+
+      n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
+
+  in_edge "tree" tree
+  in_edge "smodel" smodel
+
+  -- How about stuff related to alignment compression?
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+
+  return ([likelihood], prop)
+
+instance Dist (PhyloCTMC t Int s r) => Dist (VariablePhyloCTMC t s r) where
+    type Result (VariablePhyloCTMC t s r) = Result (PhyloCTMC t Int s r)
+    dist_name (Variable dist) = "Variable" ++ dist_name dist
+
+-- TODO: make this work on forests!                  -
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (VariablePhyloCTMC t s Reversible) where
+    type DistProperties (VariablePhyloCTMC t s Reversible) = DistProperties (PhyloCTMC t Int s Reversible)
+    annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length smodel scale
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (VariablePhyloCTMC t s Reversible) where
+    sampleIO (Variable (PhyloCTMC tree rootLength smodel scale)) = do
+      let alphabet = getAlphabet smodel
+          smap = stateLetters smodel
+
+      stateSequences <- sampleComponentStatesFixed (makeRooted tree) rootLength smodel scale
+
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
+
+      return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
+
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (VariablePhyloCTMC t s Reversible) where
+    sample (Variable dist) = RanDistribution2 dist do_nothing
 
 
