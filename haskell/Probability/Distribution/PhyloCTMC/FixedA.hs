@@ -29,6 +29,20 @@ import Data.Maybe (fromJust)
 
 import Control.Monad.Fix -- for rec
 
+sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping =
+--    This also needs the map from columns to compressed columns:
+      let ancestralComponentStateSequences :: IntMap VectorPairIntInt
+          ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
+
+          ancestralStateSequences :: IntMap (EVector Int)
+          ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
+          ancestralStateSequences' = minimally_connect_characters uncompressedNodeSequences tree ancestralStateSequences
+
+          ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
+
+      in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+
+
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
@@ -56,26 +70,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       cls = cached_conditional_likelihoods tree nodeCLVs transition_ps
       likelihood = peel_likelihood nodeCLVs tree cls f alphabet smap subst_root column_counts
 
---    This also needs the map from columns to compressed columns:
-      ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-                               ancestralComponentStateSequences = sample_ancestral_sequences
-                                                                     tree
-                                                                     subst_root
-                                                                     nodeCLVs
-                                                                     alphabet
-                                                                     transition_ps
-                                                                     f
-                                                                     cls
-                                                                     smap
-                                                                     mapping
-                               ancestralStateSequences :: IntMap (EVector Int)
-                               ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
-                               ancestralStateSequences' = minimally_connect_characters
-                                                                     uncompressedNodeSequences
-                                                                     tree
-                                                                     ancestralStateSequences
-                               ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-                           in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
       n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
 
@@ -156,26 +151,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transition_ps f
       likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap subst_root column_counts
 
---    This also needs the map from columns to compressed columns:
-      ancestralSequences = let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-                               ancestralComponentStateSequences = sample_ancestral_sequences
-                                                                     tree
-                                                                     subst_root
-                                                                     nodeCLVs
-                                                                     alphabet
-                                                                     transition_ps
-                                                                     f
-                                                                     cls
-                                                                     smap
-                                                                     mapping
-                               ancestralStateSequences :: IntMap (EVector Int)
-                               ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
-                               ancestralStateSequences' = minimally_connect_characters
-                                                                     uncompressedNodeSequences
-                                                                     tree
-                                                                     ancestralStateSequences
-                               ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-                           in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
       n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
 
