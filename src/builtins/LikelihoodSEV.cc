@@ -102,6 +102,20 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     return {Pr};
 }
 
+extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<EVector>(),       // sequences
+								   arg1.as_<EVector>(),       // LCB
+								   arg2.as_<Box<Matrix>>(),   // F
+								   arg3.as_<EVector>());      // counts
+    return {Pr};
+}
+
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
