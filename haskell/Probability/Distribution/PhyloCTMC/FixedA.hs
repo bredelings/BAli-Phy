@@ -244,7 +244,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel scale sequenceDat
       maybeNodeSeqsBits2 = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
       cls2 = cached_conditional_likelihoods tree nodeCLVs2 transition_ps
-      likelihood2 = peel_likelihood nodeCLVs2 tree cls2 f alphabet smap subst_root column_counts2
+      likelihood2 = peel_likelihood_variable nodeCLVs2 tree cls2 f alphabet smap subst_root column_counts2
 
       ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
