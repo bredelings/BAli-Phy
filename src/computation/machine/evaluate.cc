@@ -438,7 +438,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
         {
             r2 = M.follow_index_var_no_force(r2);
 
-            assert(M.reg_is_constant(r2) or M.has_result2(r2));
+            assert(M.reg_is_constant(M.follow_index_var_target(r2)) or M.has_result2(M.follow_index_var_target(r2)));
 
             return M.value_for_reg(r2);
         }
@@ -448,7 +448,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
         {
             r2 = M.follow_index_var_no_force(r2);
 
-            assert(M.reg_is_constant(r2) or M.has_result2(r2));
+            assert(M.reg_is_constant(M.follow_index_var_target(r2)) or M.has_result2(M.follow_index_var_target(r2)));
 
             return M.value_for_reg(r2);
         }
