@@ -348,10 +348,6 @@ void reg_heap::unshare_regs1(int t)
             if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                 unshare_result(r2);
 
-        // Look at steps that CALL the reg in the root (that has overridden result in t)
-        for(int r2: R.called_by_index_vars)
-            unshare_result(r2);
-
         // Look at steps that USE the reg in the root (that has overridden result in t)
         for(auto& [r2,_]: R.used_by)
             if (prog_steps[r2] > 0)
@@ -488,11 +484,6 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
         // Look at steps that CALL the reg in the root (that has overridden result in t)
         for(int s2: R.called_by)
             if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and has_result1(r2))
-                unshare_result(r2);
-
-        // Look at steps that have a FIXED CALL to the reg in the root (that has overridden result in t)
-        for(int r2: R.called_by_index_vars)
-            if (has_result1(r2))
                 unshare_result(r2);
 
         // Look at steps that USE the reg in the root (that has overridden result in t)
