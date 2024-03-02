@@ -182,7 +182,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         assert(not reg_is_unevaluated(r));
     }
     if (unevaluated_reg_is_index_var_no_force(r))
-        assert(not reg_has_value(r));
+        assert(not has_result1(r));
 #endif
 
     if (reg_is_constant(r)) return {r,r};
@@ -275,9 +275,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         {
             assert( not reg_is_changeable(r) );
 
-            assert( not reg_has_value(r) );
-
-            assert( not reg_has_call(r) );
+            assert( not has_result1(r) );
 
             assert( not has_step1(r) );
 
@@ -385,7 +383,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 if (not Args.used_changeable)
                 {
                     assert( not reg_has_call(r) );
-                    assert( not reg_has_value(r) );
+                    assert( not has_result1(r) );
                     assert( regs[r].used_regs.empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to creator_step
                     set_C( r, std::move(value) );
@@ -651,7 +649,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         assert(not reg_is_unevaluated(r));
     }
     if (unevaluated_reg_is_index_var_no_force(r))
-        assert(not reg_has_value(r));
+        assert(not has_result1(r));
 #endif
 
     if (reg_is_constant(r))
@@ -688,7 +686,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         assert(not reg_is_unevaluated(r));
     }
     if (unevaluated_reg_is_index_var_no_force(r))
-        assert(not reg_has_value(r));
+        assert(not has_result1(r));
 #endif
 
     while (1)
@@ -700,9 +698,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         {
             assert( not reg_is_changeable(r) );
 
-            assert( not reg_has_value(r) );
-
-            assert( not reg_has_call(r) );
+            assert( not has_result1(r) );
 
             assert( not has_step1(r) );
 
@@ -807,7 +803,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                 if (not Args.used_changeable)
                 {
                     assert( not reg_has_call(r) );
-                    assert( not reg_has_value(r) );
+                    assert( not has_result1(r) );
                     assert( regs[r].used_regs.empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
