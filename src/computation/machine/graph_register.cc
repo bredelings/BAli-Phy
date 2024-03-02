@@ -2849,28 +2849,33 @@ bool reg_heap::execution_allowed() const
 
 const closure& reg_heap::value_for_precomputed_reg(int r) const
 {
-    r = follow_index_var_no_force(r);
+    r = follow_index_var(r);
     return access_value_for_reg(r);
 }
 
 optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
     // QUESTION: Should I replace this with incremental_evaluate_unchangeable?
-    r = follow_index_var_no_force(r);
+    r = follow_index_var(r);
 
-    if (reg_is_constant(r)) return r;
-
-    reroot_at_context(c);
-
-    // In theory, variants of this routine could allow
-    // * having a result, but no force.
-    // * have a chain of steps, but no result.
-    if (reg_is_changeable_or_forcing(r) and has_result1(r))
-        return result_for_reg(r);
+    if (reg_is_constant(r))
+	return r;
     else
     {
-        std::abort();
-        return {};
+	assert(reg_is_changeable(r));
+
+	reroot_at_context(c);
+
+	// In theory, variants of this routine could allow
+	// * having a result, but no force.
+	// * having a chain of steps, but no result.
+	if (has_result1(r))
+	    return result_for_reg(r);
+	else
+	{
+	    std::abort();
+	    return {};
+	}
     }
 }
 
