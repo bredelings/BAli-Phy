@@ -321,7 +321,7 @@ namespace trees_format
 	leaf_names.resize(words.size()/3+1);
 	for(int i=0;i<leaf_names.size();i++) 
 	{
-	    leaf_names[i] = words[i*3+1];
+	    leaf_names[i] = unescape_from_newick(words[i*3+1]);
 
 	    if (i>0) assert(words[i*3-1] == ",");
 	}
