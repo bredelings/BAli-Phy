@@ -1637,7 +1637,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
         assert(reg_is_forced(r2));
     }
 
@@ -1650,7 +1650,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
         assert(reg_is_forced(r2));
 
         same_inputs = same_inputs and not prog_unshare[r2].test(different_result_bit);
@@ -1671,7 +1671,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
         assert(reg_is_forced(r2));
     }
 
@@ -1681,7 +1681,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
         assert(reg_is_forced(r2));
     }
 }
@@ -1707,9 +1707,9 @@ void reg_heap::force_reg_with_call(int r)
         // If r has a result, then shouldn't its call have a result?
         // In this case, the call is to a constant-with-force.
         // Do those have results?
-        assert(has_result2(call));
+        assert(reg_is_constant(follow_index_var_target(call)) or has_result2(follow_index_var_target(call)));
         incremental_evaluate2(call, true);
-        assert(has_result2(call));
+	assert(reg_is_constant(follow_index_var_target(call)) or has_result2(follow_index_var_target(call)));
         assert(reg_is_forced(call));
     }
 }
