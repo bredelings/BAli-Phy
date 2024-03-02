@@ -1766,6 +1766,8 @@ bool reg_heap::regs_maybe_different_value(int r1, int r2) const
 
 void reg_heap::set_result_for_reg(int r1)
 {
+    assert(reg_is_changeable(r1));
+
     // 1. Find called reg
     int r2 = step_for_reg(r1).call;
     assert(reg_is_constant(r2) or reg_is_changeable_or_forcing(r2));
