@@ -1832,8 +1832,8 @@ void reg_heap::set_index_var_ref(int r1, int r2)
     // Check that R2 is legal
     assert(regs.is_used(r2));
 
-    // R2 shouldn't have an index var.
-    assert(not reg_is_index_var_no_force(r2));
+    // R2 shouldn't be an index var.
+    assert(not expression_at(r2).is_index_var());
 
     // Don't override an *existing* call
 
