@@ -200,9 +200,7 @@ void reg::clear()
     truncate(forced_regs);
     truncate(used_by);
     truncate(called_by);
-    truncate(called_by_index_vars);
     created_by = {0,0};
-    index_var_ref = {0,0};
     flags.reset();
 }
 
@@ -214,11 +212,8 @@ void reg::check_cleared() const
     assert(forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
-    assert(called_by_index_vars.empty());
     assert(created_by.first == 0);
     assert(created_by.second == 0);
-    assert(index_var_ref.first == 0);
-    assert(index_var_ref.second == 0);
     assert(flags.none());
 }
 
@@ -236,11 +231,7 @@ reg& reg::operator=(reg&& R) noexcept
 
     called_by = std::move( R.called_by );
 
-    called_by_index_vars = std::move( R.called_by_index_vars );
-
     created_by = std::move(R.created_by);
-
-    index_var_ref = std::move(R.index_var_ref);
 
     flags = R.flags;
 
@@ -254,9 +245,7 @@ reg::reg(reg&& R) noexcept
      forced_regs (std::move(R.forced_regs) ),
      used_by ( std::move( R.used_by) ),
      called_by ( std::move( R.called_by) ),
-     called_by_index_vars ( std::move( R.called_by_index_vars) ),
      created_by( std::move(R.created_by) ),
-     index_var_ref( std::move(R.index_var_ref) ),
      flags ( R.flags )
 { }
 
@@ -1829,26 +1818,6 @@ void reg_heap::set_forced_reg(int r1, int r2)
     assert(reg_is_forced_by(r1,r2));
 }
 
-void reg_heap::set_index_var_ref(int r1, int r2)
-{
-    // Check that step s is legal
-    assert(regs.is_used(r1));
-
-    // Check that R2 is legal
-    assert(regs.is_used(r2));
-
-    // R2 shouldn't be an index var.
-    assert(not expression_at(r2).is_index_var());
-
-    // Don't override an *existing* call
-
-    int index = regs[r2].called_by_index_vars.size();
-    regs[r2].called_by_index_vars.push_back(r1);
-    assert(regs[r1].index_var_ref.first == 0);
-    assert(regs[r1].index_var_ref.second == 0);
-    regs[r1].index_var_ref = {r2, index};
-}
-
 void reg_heap::set_call(int s1, int r2, bool unsafe)
 {
     // Check that step s is legal
@@ -2728,30 +2697,6 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
             }
             backward.pop_back();
         }
-    }
-
-    // 4. When destroying a reg, if there is an edge from regs[r] ---- index_var_ref ----> regs[r2]
-    assert(r > 0);
-    auto& index_var_ref = regs.access(r).index_var_ref;
-    auto [r2,j] = index_var_ref;
-    if (r2 > 0 and not regs.is_free(r2))
-    {
-        auto& backward = regs[r2].called_by_index_vars;
-        assert(0 <= j and j < backward.size());
-
-        // Clear the forward edge.
-        index_var_ref = {0, 0};
-
-        // Move the last element to the hole, and adjust index of correspond forward edge.
-        if (j + 1 < backward.size())
-        {
-            backward[j] = backward.back();
-            auto& forward2 = regs.access(backward[j]);
-            forward2.index_var_ref.second = j;
-            
-            assert(regs.access(backward[j]).index_var_ref.second == j);
-        }
-        backward.pop_back();
     }
 }
 

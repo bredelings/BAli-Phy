@@ -238,28 +238,12 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
     }
     else if (reg_is_index_var_with_force(r))
     {
-        int r2 = closure_at(r).reg_for_index_var();
+	// We don't have to force the forced regs in evaluate1.
+	int r2 = closure_at(r).reg_for_index_var();
+	auto [r3, result3] = incremental_evaluate1(r2);
 
-        if (has_result1(r))
-        {
-            int result = result_for_reg(r);
-            return {r,result};
-        }
-        else
-        {
-            auto [r3, result3] = incremental_evaluate1(r2);
-
-            // r gets its value from S.
-            if (not tokens[root_token].children.empty())
-            {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
-            }
-            prog_results[r] = result3;
-
-            assert(not reg_is_unevaluated(r));
-            return {r, result3};
-        }
+	assert(not reg_is_unevaluated(r));
+	return {r, result3};
     }
 
     while (1)
@@ -299,7 +283,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 	    {
 		assert(reg_is_changeable(r4));
 
-                set_index_var_ref(r,r4);
                 mark_reg_index_var_with_force_to_changeable(r);
 	    }
             else
@@ -313,13 +296,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 		set_forced_reg(r,r3);
 
             assert(not has_result1(r));
-
-            if (not tokens[root_token].children.empty())
-            {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
-            }
-            prog_results[r] = result;
 
             assert(not prog_unshare[r].test(unshare_result_bit));
             assert(not reg_is_unevaluated(r));
@@ -723,7 +699,6 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    {
 		assert(reg_is_changeable(r4));
 
-                set_index_var_ref(r,r4);
                 mark_reg_index_var_with_force_to_changeable(r);
 	    }
             else
@@ -737,14 +712,8 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 		set_forced_reg(r,r3);
 
             assert(not has_result1(r));
-
-            int t = tokens[root_token].children[0];
-            tokens[t].vm_result.add_value(r, prog_results[r]);
-
-            prog_results[r] = result;
-
             assert(not prog_unshare[r].test(unshare_result_bit));
-            assert(not reg_is_unevaluated(r));
+            assert(reg_is_evaluated(r));
             return {r, result};
         }
 
@@ -869,41 +838,25 @@ pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
     if (not reg_is_forced(r))
 	force_reg_no_call(r);
 
-    if (has_result2(r))
-    {
-        int result = result_for_reg(r);
-        return {r,result};
-    }
-    else
-    {
-	int r2 = closure_at(r).reg_for_index_var();
+    assert(not has_result1(r));
+    assert(not has_result2(r));
 
-	/*
-	 * NOTE: If we are going to evaluate the same reg twice, once do_count=true
-	 *       and once with do_count=false, then we have to do the do_count=true one first.
-	 *
-	 *       If we don't, the children will get their counts incremented twice.
-	 *       This is because incrementing of child counts is done whenever the parent starts
-	 *         out unforced.
-	 */
+    int r2 = closure_at(r).reg_for_index_var();
 
-        auto [r3, result3] = incremental_evaluate2(r2, false);
+    /*
+     * NOTE: If we are going to evaluate the same reg twice, once do_count=true
+     *       and once with do_count=false, then we have to do the do_count=true one first.
+     *
+     *       If we don't, the children will get their counts incremented twice.
+     *       This is because incrementing of child counts is done whenever the parent starts
+     *         out unforced.
+     */
 
-        if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result3))
-            prog_unshare[r].set(different_result_bit);
+    auto [r3, result3] = incremental_evaluate2(r2, false);
 
-        bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
-        if (not reshare_result)
-        {
-            int t = tokens[root_token].children[0];
-            tokens[t].vm_result.add_value(r, prog_results[r]);
-            prog_results[r] = result3;
-        }
-        prog_unshare[r].reset(unshare_result_bit);
+    assert(not reg_is_unevaluated(r));
 
-        assert(not reg_is_unevaluated(r));
-        return {r, result3};
-    }
+    return {r, result3};
 }
 
 pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
