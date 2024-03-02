@@ -308,6 +308,7 @@ class MCMCRun(object):
         self.input_files = None
         self.command = None
         self.version = None
+        self.code = None
 
         if self.mcmc_output.is_dir():
             self.dir = self.mcmc_output
