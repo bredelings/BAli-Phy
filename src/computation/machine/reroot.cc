@@ -337,8 +337,6 @@ void reg_heap::unshare_regs1(int t)
     check_created_regs_unshared(t);
 #endif
 
-    int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
-
     auto do_result_changed = [&](int r)
     {
         auto& R = regs[r];
@@ -348,14 +346,19 @@ void reg_heap::unshare_regs1(int t)
             if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                 unshare_result(r2);
 
-        // Look at steps that CALL the reg in the root (that has overridden result in t)
-        for(int r2: R.called_by_index_vars)
-            unshare_result(r2);
-
         // Look at steps that USE the reg in the root (that has overridden result in t)
         for(auto& [r2,_]: R.used_by)
             if (prog_steps[r2] > 0)
                 unshare_step(r2);
+    };
+
+    auto do_result_changed2 = [&](int r)
+    {
+        auto& R = regs[r];
+
+        // Look at steps that CALL the reg in the root (that has overridden result in t)
+        for(int r2: R.called_by_index_vars)
+            unshare_result(r2);
     };
 
     // 2. Scan regs with different result in t that are used/called by root steps/results
@@ -367,23 +370,31 @@ void reg_heap::unshare_regs1(int t)
         do_result_changed(r2);
     }
 
-    for(;i<delta_result.size();i++)
+    for(int i=0;i<delta_result.size();i++)
         if (auto [r,_] = delta_result[i]; has_result1(r))
             do_result_changed(r);
 
-    // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
+    int N1 = delta_result.size();
 
-//  int j = delta_step.size();
-    int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
-             // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
-             //        this means that we need to scan all overridden steps each time :-(
+    for(auto& [r1,r2]: interchanges)
+    {
+        assert(has_step1(r1));
+        do_result_changed2(r1);
+        assert(has_step1(r2));
+        do_result_changed2(r2);
+    }
 
-    // Also unshare any results and steps that are for regs created in the root context.
-    // LOGIC: Any reg that uses or call a created reg must either
-    //          (i) be another created reg, or
-    //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
-    //        In the former case, this loop handles them.  In the later case, they should be invalid.
-    for(;j<delta_step.size();j++)
+    for(int i=0;i<delta_result.size();i++)
+        if (auto [r,_] = delta_result[i]; has_result1(r))
+            do_result_changed2(r);
+
+    for(int i=N1;i<delta_result.size();i++)
+    {
+	auto [r,_] = delta_result[i];
+	assert(reg_is_index_var_with_force(r));
+    }
+
+    for(int j=0;j<delta_step.size();j++)
         if (auto [r,_] = delta_step[j]; has_step1(r))
             for(int r2: step_for_reg(r).created_regs)
             {
@@ -490,16 +501,22 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
             if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and has_result1(r2))
                 unshare_result(r2);
 
-        // Look at steps that have a FIXED CALL to the reg in the root (that has overridden result in t)
-        for(int r2: R.called_by_index_vars)
-            if (has_result1(r2))
-                unshare_result(r2);
-
         // Look at steps that USE the reg in the root (that has overridden result in t)
         for(auto& [r2,_]: R.used_by)
             if (prog_steps[r2] > 0 and has_result1(r2))
                 unshare_step(r2);
 
+    };
+
+    // 2. Scan regs with different result in t that are used/called by root steps/results
+    auto do_result_changed2 = [&](int r)
+    {
+        auto& R = regs[r];
+
+        // Look at steps that have a FIXED CALL to the reg in the root (that has overridden result in t)
+        for(int r2: R.called_by_index_vars)
+            if (has_result1(r2))
+                unshare_result(r2);
     };
 
     for(auto& [r1,r2]: interchanges)
@@ -517,6 +534,27 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     for(int i=0;i<unshared_regs.size();i++)
     {
         do_result_changed(unshared_regs[i]);
+    }
+
+    int N1 = unshared_regs.size();
+
+    for(auto& [r1,r2]: interchanges)
+    {
+        assert(has_step1(r1));
+        do_result_changed2(r1);
+        assert(has_step2(r2));
+        do_result_changed2(r2);
+    }
+
+    for(int i=0;i<unshared_regs.size();i++)
+    {
+        do_result_changed2(unshared_regs[i]);
+    }
+
+    for(int i=N1;i<unshared_regs.size();i++)
+    {
+	int r = unshared_regs[i];
+	assert(reg_is_index_var_with_force(r));
     }
 }
 
