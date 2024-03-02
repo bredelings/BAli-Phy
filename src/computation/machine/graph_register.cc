@@ -829,7 +829,7 @@ void reg_heap::check_force_counts() const
         if (has_step1(r) and not reg_is_unforgettable(r))
             assert(prog_force_counts[r] > 0);
         if (prog_force_counts[r] > 0)
-            assert(has_result1(r));
+            assert(reg_has_value(r));
     }
 }
 
@@ -1593,6 +1593,10 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
+    // We can't assume that r is evaluated in all callers...
+    if (reg_is_index_var_with_force(r))
+	r = closure_at(r).reg_for_index_var();
+
     if (reg_is_constant(r))
         return true;
     else
@@ -1724,13 +1728,14 @@ void reg_heap::force_reg_with_call(int r)
 int reg_heap::value_for_reg(int r) const
 {
     assert(not reg_is_unevaluated(r));
-    assert(not reg_is_index_var_no_force(r));
+
+    r = follow_index_var_target(r);
 
     if (reg_is_constant(r))
         return r;
     else
     {
-        assert(reg_is_changeable_or_forcing(r));
+        assert(reg_is_changeable(r));
         assert(has_result1(r));
         return result_for_reg(r);
     }
@@ -2830,10 +2835,10 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     total_get_reg_value_non_const++;
     reroot_at_context(c);
 
-    if (has_result1(R))
+    if (reg_has_value(R))
     {
         total_get_reg_value_non_const_with_result++;
-        int R2 = result_for_reg(R);
+        int R2 = value_for_reg(R);
         if (R2) return expression_at(R2);
     }
 
