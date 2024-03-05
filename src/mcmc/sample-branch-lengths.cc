@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include "util/log-level.H"
 #include "util/rng.H"
 #include "sample.H"
 #include "util/permute.H"
@@ -387,6 +388,8 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 /// Propose three neighboring branch lengths all anti-correlated
 void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n) 
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[change_3_branch_lengths]\n";
+
     Parameters* PP = P.as<Parameters>();
     MCMC::Result result(2);
 

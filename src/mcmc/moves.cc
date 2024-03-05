@@ -452,6 +452,7 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
 
 void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[sample_branch_length_]\n";
     //std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
     double slice_fraction = P->load_value("branch_slice_fraction",0.9);
@@ -678,6 +679,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
 
 void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[walk_tree_sample_branch_lengths]\n";
+
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
