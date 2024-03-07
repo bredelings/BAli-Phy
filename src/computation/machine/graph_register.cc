@@ -1650,8 +1650,10 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
         assert(reg_is_forced(r2));
+        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
+
+	r2 = follow_index_var_target(r2);
 
         same_inputs = same_inputs and not prog_unshare[r2].test(different_result_bit);
     }
