@@ -502,6 +502,10 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
 
     };
 
+    // Interchanges aren't actually unshared.  But they have changed.
+    // We therefore
+    //  (i)  mark regs that use or call them (HERE)
+    //  (ii) treat them as regs that have already been executed, leaving a different result (BELOW).
     for(auto& [r1,r2]: interchanges)
     {
         assert(has_step1(r1));
@@ -517,6 +521,14 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     for(int i=0;i<unshared_regs.size();i++)
     {
         do_result_changed(unshared_regs[i]);
+    }
+
+    // Can we interchange and also set modifiables in the same token?
+    // In that case, the results COULD be unshared, although the steps couldn't.
+    for(auto& [r1,r2]: interchanges)
+    {
+	if (prog_unshare[r1].none()) prog_unshare[r1].set(different_result_bit);
+	if (prog_unshare[r2].none()) prog_unshare[r2].set(different_result_bit);
     }
 }
 
@@ -674,7 +686,7 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 
 }
 
-void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_regs)
+void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_regs, const std::vector<interchange_op>& interchanges)
 {
     for(int r: unshared_regs | views::reverse)
     {
@@ -688,6 +700,12 @@ void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_reg
     // We can't clear the different_result_bit until evaluation is finished!
     for(int r: unshared_regs)
         prog_unshare[r].reset(different_result_bit);
+
+    for(auto& [r1,r2]: interchanges)
+    {
+        prog_unshare[r1].reset(different_result_bit);
+        prog_unshare[r2].reset(different_result_bit);
+    }
 
 #ifndef NDEBUG
     for(int r: unshared_regs | views::reverse)
@@ -828,6 +846,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto& delta_result = tokens[t].vm_result.delta();
     auto& delta_step   = tokens[t].vm_step.delta();
+    auto& interchanges = tokens[t].interchanges;
 
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
@@ -859,7 +878,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
     // 5. Evaluate forced invalid regs.
-    evaluate_forced_invalid_regs(unshared_regs);
+    evaluate_forced_invalid_regs(unshared_regs, interchanges);
     tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
