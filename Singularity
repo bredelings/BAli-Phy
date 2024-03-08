@@ -21,10 +21,9 @@ From: ubuntu:22.04
     export PATH=$PATH:/scif/apps/bali-phy/bin
 
 %appinstall bali-phy
-    mkdir /bali-phy
-    cd /bali-phy
-    git clone https://github.com/bredelings/BAli-Phy.git git
-    meson setup git build --prefix=${SCIF_APPROOT} --buildtype=release
+    # This should be run FROM inside the checked out repo.
+
+    meson setup build --prefix=${SCIF_APPROOT} --buildtype=release
     ninja -C build install
 
 %labels

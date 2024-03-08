@@ -63,7 +63,8 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-10,
-               macos-xcode-14,
+               macos-xcode-14-intel,
+               macos-xcode-14-arm,
                windows
                ]
 
@@ -75,12 +76,19 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-xcode-14
+          - name: macos-xcode-14-intel
             os: macos-12
             compiler: xcode
             version: "14"
             buildtype: "release"
-            arch: "mac64"
+            arch: "mac-intel64"
+
+          - name: macos-xcode-14-arm
+            os: macos-14
+            compiler: xcode
+            version: "14"
+            buildtype: "debugoptimized"
+            arch: "mac-arm64"
 
           - name: windows
             os: ubuntu-22.04
@@ -91,10 +99,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: 3.12.0
 
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
@@ -141,6 +149,7 @@ jobs:
           brew install boost eigen range-v3 nlohmann-json cairo
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
+          if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
 
     - name: Install meson
       run: |
@@ -203,7 +212,7 @@ jobs:
       if: failure()
       with:
         name: meson-log-${{ matrix.name }}
-        path: '/home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt'
+        path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
     - name: Build
       run: |
@@ -256,6 +265,8 @@ jobs:
         cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
+        ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
+
         echo ::group::Test suite
         cd tests
         ./run-tests.py ${BALIPHY} --seed=$seed
