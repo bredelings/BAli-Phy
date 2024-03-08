@@ -31,9 +31,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.12.0
-    - uses: eWaterCycle/setup-singularity@v7
+    - uses: eWaterCycle/setup-apptainer@v2
       with:
-        singularity-version: 4.1.1
+        singularity-version: 1.2.4
 
     - name: Get version
       id: get_version
