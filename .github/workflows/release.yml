@@ -27,8 +27,8 @@ jobs:
     needs: create_release
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.12.0
     - uses: eWaterCycle/setup-apptainer@v2
@@ -251,7 +251,7 @@ jobs:
     - name: Test
       run: |
         export seed=$RANDOM
-        if [ "${{ matrix.name }}" = "windows" ]; then
+        if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
           BALIPHY="wine bali-phy"
         else
@@ -279,11 +279,11 @@ jobs:
         rm -rf tests/likelihood/one-sequence
 
         echo ::group::testiphy variable A
-        ./testiphy ${BALIPHY} --seed=$seed --fix=alignment --fix=tree
+        ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
 
         echo ::group::testiphy fixed A
-        ./testiphy ${BALIPHY} --seed=$seed -Inone --fix=alignment --fix=tree
+        ./testiphy ${BALIPHY} --seed=$seed -Inone
         echo ::endgroup::
 
     - name: Upload tests if they failed
