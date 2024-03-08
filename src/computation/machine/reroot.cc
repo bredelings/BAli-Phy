@@ -459,11 +459,30 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
                             };
 
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
+    //    (These would be regs for modifiables that have had their step changed).
     for(auto [r,s]: delta_step)
     {
         assert(s > 0);
         unshare_step(r);
+    }
+    // All the same regs should have (r,-) in the result.
+    assert(delta_step.size() == delta_result.size());
 
+    // Previously we did do_result_changed( ) on these, but that relied on there being an index-var
+    //   in front of each interchangeable that we could mark as having a different result.
+    // Why not do unshare_step( )?  I guess because the step IS known, even though it has changed from the previous token.
+    //   So we don't need to rerun the "interchangeable" operation.
+    for(auto& [r1,r2]: interchanges)
+    {
+        assert(has_step1(r1));
+        unshare_result(r1);
+        assert(has_step2(r2));
+        unshare_result(r2);
+    }
+
+    // 2. Mark regs that are initially unforced
+    for(int r: unshared_regs)
+    {
         if (not reg_is_forced(r))
         {
             zero_count_regs_initial.push_back(r);
@@ -473,10 +492,8 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
             prog_unshare[r].set(initially_unforced_bit);
         }
     }
-    // All the same regs should have (r,-) in the result.
-    assert(delta_step.size() == delta_result.size());
 
-    // 2. Scan regs with different result in t that are used/called by root steps/results
+    // 3. Scan regs with different result in t that are used/called by root steps/results
     auto do_result_changed = [&](int r)
     {
         auto& R = regs[r];
@@ -497,14 +514,6 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
                 unshare_step(r2);
 
     };
-
-    for(auto& [r1,r2]: interchanges)
-    {
-        assert(has_step1(r1));
-        do_result_changed(r1);
-        assert(has_step2(r2));
-        do_result_changed(r2);
-    }
 
 #ifndef NDEBUG
     check_created_regs_unshared(t);
