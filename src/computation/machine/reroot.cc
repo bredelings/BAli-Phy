@@ -846,7 +846,6 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto& delta_result = tokens[t].vm_result.delta();
     auto& delta_step   = tokens[t].vm_step.delta();
-    auto& interchanges = tokens[t].interchanges;
 
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
@@ -878,7 +877,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
     // 5. Evaluate forced invalid regs.
-    evaluate_forced_invalid_regs(unshared_regs, interchanges);
+    evaluate_forced_invalid_regs(unshared_regs, tokens[t2].interchanges);
     tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
