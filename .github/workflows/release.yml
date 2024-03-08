@@ -44,7 +44,7 @@ jobs:
       id: create_image
       run: |
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}-linux64-intel-singularity.sif
-        singularity build --fakeroot ~/${PACKAGE} Singularity
+        singularity build --fakeroot --build-arg version=${{ steps.get_version.outputs.version }} ~/${PACKAGE} Singularity
         echo "archive_name=${PACKAGE}" >> $GITHUB_OUTPUT
         echo "archive_path=${HOME}/${PACKAGE}" >> $GITHUB_OUTPUT
 

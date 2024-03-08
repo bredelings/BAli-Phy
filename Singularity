@@ -1,5 +1,5 @@
 BootStrap: library
-From: ubuntu:22.04
+From: ubuntu:23.04
 
 %post
 
@@ -21,9 +21,11 @@ From: ubuntu:22.04
     export PATH=$PATH:/scif/apps/bali-phy/bin
 
 %appinstall bali-phy
-    # This should be run FROM inside the checked out repo.
-
-    meson setup build --prefix=${SCIF_APPROOT} --buildtype=release
+    mkdir /bali-phy
+    cd /bali-phy
+    git clone https://github.com/bredelings/BAli-Phy.git git
+    ( cd git; git checkout {{ version }} )
+    meson setup git build --prefix=${SCIF_APPROOT} --buildtype=release
     ninja -C build install
 
 %labels
