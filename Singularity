@@ -1,4 +1,4 @@
-BootStrap: library
+BootStrap: docker
 From: ubuntu:23.04
 
 %post
@@ -9,8 +9,9 @@ From: ubuntu:23.04
 
     # bali-phy dependencies
     apt-get update -y
-    apt-get install -y build-essential git cmake pandoc ccache python3-pip pkg-config
-    pip install meson ninja
+    apt-get install -y build-essential git cmake pandoc ccache python3-full pkg-config
+    python3 -m venv /venv
+    /venv/bin/pip install meson ninja
 
     apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev
 
@@ -21,6 +22,7 @@ From: ubuntu:23.04
     export PATH=$PATH:/scif/apps/bali-phy/bin
 
 %appinstall bali-phy
+    export PATH=$PATH:/venv/bin
     mkdir /bali-phy
     cd /bali-phy
     git clone https://github.com/bredelings/BAli-Phy.git git
