@@ -1805,6 +1805,37 @@ void reg_heap::set_used_reg(int r1, int r2)
 }
 
 
+int reg_heap::follow_single_force_index_var(int r) const
+{
+    assert(regs.is_used(r));
+
+    assert(closure_at(r));
+
+    assert(reg_is_evaluated(r));
+
+    assert(reg_is_changeable_or_forcing(r));
+
+    assert(reg_has_value(r));
+
+    while(reg_is_index_var_with_force(r) and regs[r].forced_regs.size() == 1)
+    {
+	r = regs[r].forced_regs[0];
+
+	assert(regs.is_used(r));
+
+	assert(closure_at(r));
+
+	assert(reg_is_evaluated(r));
+
+	assert(reg_is_changeable_or_forcing(r));
+
+	assert(reg_has_value(r));
+    }
+
+    assert(reg_is_changeable(r) or regs[r].forced_regs.size() > 1);
+
+    return r;
+}
 void reg_heap::set_forced_reg(int r1, int r2)
 {
     assert(regs.is_used(r2));

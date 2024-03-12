@@ -678,6 +678,7 @@ public:
     int follow_index_var(int r) const;
     int follow_index_var_target(int r) const;
     int follow_index_var_no_force(int r) const;
+    int follow_single_force_index_var(int r) const;
     bool reg_is_forced(int r) const;
     int inc_count(int r);
     int dec_count(int r);
