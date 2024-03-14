@@ -2666,10 +2666,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
     assert(steps[s].call_edge.second == 0);
 
     for(auto& r: steps.access_unused(s).created_regs)
-    {
-        assert(regs.access(r).created_by);
-        auto [step, index] = regs.access(r).created_by.value();
-    }
+        assert(not regs.access(r).created_by);
 }
 
 void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
