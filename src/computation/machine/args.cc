@@ -130,8 +130,8 @@ int OperationArgs::allocate_reg()
 {
     n_allocated++;
     int r = M.push_temp_head();
-    if (creator_step > 0)
-	M.mark_reg_created_by_step(r, creator_step);
+    if (creator_step)
+	M.mark_reg_created_by_step(r, *creator_step);
     return r;
 }
 

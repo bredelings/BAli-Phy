@@ -127,7 +127,7 @@ public:
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
 
-    std::pair<int, int> created_by;
+    std::optional<std::pair<int, int>> created_by;
 
     bitmask_8 flags;
 
@@ -706,7 +706,7 @@ public:
 
     void set_result_for_reg(int r1);
 
-    int creator_step_for_reg(int r) const;
+    std::optional<int> creator_step_for_reg(int r) const;
     std::vector<int> used_regs_for_reg(int r) const;
     std::vector<int> forced_regs_for_reg(int r) const;
 

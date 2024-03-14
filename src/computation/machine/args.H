@@ -17,7 +17,7 @@ protected:
 
     const int r;
 
-    int creator_step;
+    std::optional<int> creator_step;
 
 public:
 

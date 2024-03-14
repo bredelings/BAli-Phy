@@ -200,7 +200,7 @@ void reg::clear()
     truncate(forced_regs);
     truncate(used_by);
     truncate(called_by);
-    created_by = {0,0};
+    truncate(created_by);
     flags.reset();
 }
 
@@ -212,8 +212,7 @@ void reg::check_cleared() const
     assert(forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
-    assert(created_by.first == 0);
-    assert(created_by.second == 0);
+    assert(not created_by);
     assert(flags.none());
 }
 
@@ -251,12 +250,14 @@ reg::reg(reg&& R) noexcept
 
 std::optional<int> reg_heap::creator_of_reg(int r) const
 {
-    int s = regs[r].created_by.first;
-    assert(s >= 0);
-    if (s == 0)
-        return {};
+    if (regs[r].created_by)
+    {
+	int s = regs[r].created_by.value().first;
+	assert(s >= 0);
+	return s;
+    }
     else
-        return s;
+	return {};
 }
 
 bool reg_heap::reg_is_contingent(int r) const
@@ -1961,8 +1962,7 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
 
     int index = steps[s].created_regs.size();
     steps[s].created_regs.push_back(r);
-    assert(regs.access(r).created_by.first == 0);
-    assert(regs.access(r).created_by.second == 0);
+    assert(not regs.access(r).created_by);
     regs.access(r).created_by = {s,index};
 }
 
@@ -2111,9 +2111,13 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     return steps[s].call;
 }
 
-int reg_heap::creator_step_for_reg(int r) const
+std::optional<int> reg_heap::creator_step_for_reg(int r) const
 {
-    return regs[r].created_by.first;
+    auto& created_by = regs[r].created_by;
+    if (created_by)
+	return created_by->first;
+    else
+	return {};
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
@@ -2663,9 +2667,8 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
 
     for(auto& r: steps.access_unused(s).created_regs)
     {
-        auto [step, index] = regs.access(r).created_by;
-        assert(step == 0);
-        assert(index == 0);
+        assert(regs.access(r).created_by);
+        auto [step, index] = regs.access(r).created_by.value();
     }
 }
 
@@ -2710,23 +2713,23 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     {
         assert(r > 0);
         auto& created_by = regs.access(r).created_by;
-        auto [s,j] = created_by;
-        if (s > 0)
+        if (created_by)
         {
+	    auto [s,j] = *created_by;
             auto& backward = steps[s].created_regs;
             assert(0 <= j and j < backward.size());
 
             // Clear the forward edge.
-            created_by = {0, 0};
+            created_by.reset();
 
             // Move the last element to the hole, and adjust index of correspond forward edge.
             if (j + 1 < backward.size())
             {
                 backward[j] = backward.back();
                 auto& forward2 = regs.access(backward[j]);
-                forward2.created_by.second = j;
+                forward2.created_by->second = j;
 
-                assert(regs.access(backward[j]).created_by.second == j);
+                assert(regs.access(backward[j]).created_by->second == j);
             }
             backward.pop_back();
         }

@@ -320,9 +320,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 	    {
 		// Allocate a new reg
 		int r2 = allocate();
-		int creator_step = creator_step_for_reg(r);
-		if (creator_step > 0)
-		    mark_reg_created_by_step(r2, creator_step);
+		auto creator_step = creator_step_for_reg(r);
+		if (creator_step)
+		    mark_reg_created_by_step(r2, *creator_step);
 
 		// Copy the constant from r -> r2
 		closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
@@ -378,7 +378,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs[r2].created_by.first == s);
+                        assert(regs[r2].created_by.value().first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -734,9 +734,9 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    {
 		// Allocate a new reg
 		int r2 = allocate();
-		int creator_step = creator_step_for_reg(r);
-		if (creator_step > 0)
-		    mark_reg_created_by_step(r2, creator_step);
+		auto creator_step = creator_step_for_reg(r);
+		if (creator_step)
+		    mark_reg_created_by_step(r2, *creator_step);
 
 		// Copy the constant from r -> r2
 		closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
@@ -791,7 +791,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs[r2].created_by.first == s);
+                        assert(regs[r2].created_by.value().first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -974,7 +974,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         else
         {
             r2 = Args.allocate( std::move(value) ) ;
-            assert(regs[r2].created_by.first == s);
+            assert(regs[r2].created_by.value().first == s);
             assert(not has_step1(r2));
         }
 
