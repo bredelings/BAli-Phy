@@ -127,7 +127,7 @@ public:
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
 
-    std::optional<std::pair<int, int>> created_by;
+    std::optional<std::pair<int, int>> created_by_step;
 
     bitmask_8 flags;
 
@@ -220,7 +220,6 @@ public:
 
     bool reg_is_used(int r) const {return regs.is_used(r);}
     reg::type_t reg_type(int r) const {return regs.access(r).type;}
-    std::optional<int> creator_of_reg(int r) const;
     bool reg_is_contingent(int r) const;
     bool reg_exists(int r) const;
     bool step_exists_in_root(int s) const;

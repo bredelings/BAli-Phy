@@ -200,7 +200,7 @@ void reg::clear()
     truncate(forced_regs);
     truncate(used_by);
     truncate(called_by);
-    truncate(created_by);
+    truncate(created_by_step);
     flags.reset();
 }
 
@@ -212,7 +212,7 @@ void reg::check_cleared() const
     assert(forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
-    assert(not created_by);
+    assert(not created_by_step);
     assert(flags.none());
 }
 
@@ -230,7 +230,7 @@ reg& reg::operator=(reg&& R) noexcept
 
     called_by = std::move( R.called_by );
 
-    created_by = std::move(R.created_by);
+    created_by_step = std::move(R.created_by_step);
 
     flags = R.flags;
 
@@ -244,15 +244,15 @@ reg::reg(reg&& R) noexcept
      forced_regs (std::move(R.forced_regs) ),
      used_by ( std::move( R.used_by) ),
      called_by ( std::move( R.called_by) ),
-     created_by( std::move(R.created_by) ),
+     created_by_step( std::move(R.created_by_step) ),
      flags ( R.flags )
 { }
 
-std::optional<int> reg_heap::creator_of_reg(int r) const
+std::optional<int> reg_heap::creator_step_for_reg(int r) const
 {
-    if (regs[r].created_by)
+    if (regs[r].created_by_step)
     {
-	int s = regs[r].created_by.value().first;
+	int s = regs[r].created_by_step.value().first;
 	assert(s >= 0);
 	return s;
     }
@@ -262,7 +262,7 @@ std::optional<int> reg_heap::creator_of_reg(int r) const
 
 bool reg_heap::reg_is_contingent(int r) const
 {
-    return (bool)creator_of_reg(r);
+    return (bool)creator_step_for_reg(r);
 }
 
 bool reg_heap::step_exists_in_root(int s) const
@@ -275,7 +275,7 @@ bool reg_heap::step_exists_in_root(int s) const
 
 bool reg_heap::reg_exists(int r) const
 {
-    auto s = creator_of_reg(r);
+    auto s = creator_step_for_reg(r);
     if (not s)
         return true;
     else
@@ -1962,8 +1962,8 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
 
     int index = steps[s].created_regs.size();
     steps[s].created_regs.push_back(r);
-    assert(not regs.access(r).created_by);
-    regs.access(r).created_by = {s,index};
+    assert(not regs.access(r).created_by_step);
+    regs.access(r).created_by_step = {s,index};
 }
 
 void reg_heap::mark_step_with_effect(int s)
@@ -2109,15 +2109,6 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
 #endif
 
     return steps[s].call;
-}
-
-std::optional<int> reg_heap::creator_step_for_reg(int r) const
-{
-    auto& created_by = regs[r].created_by;
-    if (created_by)
-	return created_by->first;
-    else
-	return {};
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
@@ -2666,7 +2657,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
     assert(steps[s].call_edge.second == 0);
 
     for(auto& r: steps.access_unused(s).created_regs)
-        assert(not regs.access(r).created_by);
+        assert(not regs.access(r).created_by_step);
 }
 
 void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
@@ -2709,24 +2700,24 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     if (creator_survives)
     {
         assert(r > 0);
-        auto& created_by = regs.access(r).created_by;
-        if (created_by)
+        auto& created_by_step = regs.access(r).created_by_step;
+        if (created_by_step)
         {
-	    auto [s,j] = *created_by;
+	    auto [s,j] = *created_by_step;
             auto& backward = steps[s].created_regs;
             assert(0 <= j and j < backward.size());
 
             // Clear the forward edge.
-            created_by.reset();
+            created_by_step.reset();
 
             // Move the last element to the hole, and adjust index of correspond forward edge.
             if (j + 1 < backward.size())
             {
                 backward[j] = backward.back();
                 auto& forward2 = regs.access(backward[j]);
-                forward2.created_by->second = j;
+                forward2.created_by_step->second = j;
 
-                assert(regs.access(backward[j]).created_by->second == j);
+                assert(regs.access(backward[j]).created_by_step->second == j);
             }
             backward.pop_back();
         }

@@ -378,7 +378,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs[r2].created_by.value().first == s);
+                        assert(regs[r2].created_by_step.value().first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -791,7 +791,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs[r2].created_by.value().first == s);
+                        assert(regs[r2].created_by_step.value().first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -974,7 +974,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         else
         {
             r2 = Args.allocate( std::move(value) ) ;
-            assert(regs[r2].created_by.value().first == s);
+            assert(regs[r2].created_by_step.value().first == s);
             assert(not has_step1(r2));
         }
 
