@@ -13,10 +13,10 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-10,
-               ubuntu-gcc-11-sanitize,
-               ubuntu-gcc-11-debugoptimized,
-               ubuntu-gcc-11-DEBUG_MACHINE,
                ubuntu-gcc-11,
+               ubuntu-gcc-12-debugoptimized,
+               ubuntu-gcc-12-DEBUG_MACHINE,
+               ubuntu-gcc-12-sanitize,
                ubuntu-gcc-12,
                ubuntu-clang-15,
                macos-xcode-14-intel,
@@ -32,34 +32,34 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-11-sanitize
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "11"
-            buildtype: "release"
-            sanitize: "address"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-11-debugoptimized
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "11"
-            buildtype: "debugoptimized"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-11-DEBUG_MACHINE
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "11"
-            buildtype: "debugoptimized"
-            cxxflags: "-DDEBUG_MACHINE=1"
-            arch: "linux64"
-
           - name: ubuntu-gcc-11
             os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-12-sanitize
+            os: ubuntu-22.04
+            compiler: gcc
+            version: "12"
+            buildtype: "release"
+            sanitize: "address"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-12-debugoptimized
+            os: ubuntu-22.04
+            compiler: gcc
+            version: "12"
+            buildtype: "debugoptimized"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-12-DEBUG_MACHINE
+            os: ubuntu-22.04
+            compiler: gcc
+            version: "12"
+            buildtype: "debugoptimized"
+            cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
           - name: ubuntu-gcc-12
