@@ -672,7 +672,7 @@ int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)
     // So, we would have a hash map of heads -> counts inside reg_heap.
 
     // 1. If the reg r is already non-contingent, use it direcctly.
-    if (not M.creator_of_reg(r)) return r;
+    if (not M.reg_is_contingent(r)) return r;
 
     // 2. Evaluate the reg to a constant.
     auto C = Args.evaluate_reg_to_closure(r);
@@ -713,7 +713,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     // 3. Write the IORef
     auto& M = Args.memory();
     assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
-    if (not M.creator_of_reg(r_ioref))
+    if (not M.reg_is_contingent(r_ioref))
     {
 	// The IORef is non-contingent, but the value is contingent!
 
