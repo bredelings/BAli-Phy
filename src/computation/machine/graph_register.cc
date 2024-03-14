@@ -1646,16 +1646,14 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     bool same_inputs = prog_unshare[r].test(unshare_step_bit);
     for(int i=0;i<regs[r].used_regs.size();i++)
     {
-        auto [r2,_,__] = regs[r].used_regs[i];
+        auto [r2,r3,__] = regs[r].used_regs[i];
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(reg_is_forced(r2));
-        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
+        assert(reg_is_forced(r3));
+        assert(reg_is_constant(r3) or has_result2(r3));
 
-	r2 = follow_index_var_target(r2);
-
-        same_inputs = same_inputs and not prog_unshare[r2].test(different_result_bit);
+        same_inputs = same_inputs and not prog_unshare[r3].test(different_result_bit);
     }
     return same_inputs;
 }
