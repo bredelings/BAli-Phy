@@ -1907,23 +1907,25 @@ void reg_heap::clear_call(int s)
     assert(call > 0);
 
     // 1. Remove the edge from step[s] <--- regs[call]
-    if (S.call_edge and std::get<1>(*S.call_edge) > 0 and not regs.is_free(std::get<1>(*S.call_edge)))
+    if (S.call_edge)
     {
-        auto [r3,r2,j] = *S.call_edge;
-        assert(follow_index_var(call) == r2);
-        auto& backward = regs[r2].called_by;
-        assert(0 <= j and j < backward.size());
+        auto [_, r2, j] = S.call_edge.value();
 
-        // Move the last element to the hole, and adjust index of correspond forward edge.
-        if (j+1 < backward.size())
-        {
-            backward[j] = backward.back();
-            auto& forward2 = steps[backward[j]];
-            std::get<2>(*forward2.call_edge) = j;
+	if (r2 > 0 and not regs.is_free(r2))
+	{
+	    assert(follow_index_var(call) == r2);
+	    auto& backward = regs[r2].called_by;
+	    assert(0 <= j and j < backward.size());
 
-            assert(std::get<2>(*steps[backward[j]].call_edge) == j);
-        }
-        backward.pop_back();
+	    // Move the last element to the hole, and adjust index of correspond forward edge.
+	    if (j+1 < backward.size())
+	    {
+		backward[j] = backward.back();
+		auto& [_, rr2, jj] = steps[backward[j]].call_edge.value();
+		jj = j;
+	    }
+	    backward.pop_back();
+	}
     }
 
     // 2. Clear the forward edge from steps[s] -> regs[call]
