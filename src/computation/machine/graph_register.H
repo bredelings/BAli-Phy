@@ -38,7 +38,7 @@ struct Step
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
 
     /// Does C reduce to another reg that we need to evaluate to get the true value?
-    std::tuple<int,int,int> call_edge;
+    std::optional<std::tuple<int,int,int>> call_edge;
 
     boost::container::small_vector< int, 2 > created_regs;
 
