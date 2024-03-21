@@ -207,7 +207,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
 	    // If the back-edge has not been set, then we need to update the call to look through
 	    // index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
-            if (steps[s].call_edge.first == 0)
+            if (std::get<1>(steps[s].call_edge) == 0)
             {
                 // This should only ever happen for modifiable values set with set_reg_value( ).
                 // In such cases, we need this, because the value we set could evaluate to an index_var.
@@ -883,7 +883,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
 
 	// If the back-edge has not been set, then we need to update the call to look through
 	// index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
-        if (steps[s].call_edge.first == 0)
+        if (std::get<1>(steps[s].call_edge) == 0)
         {
             // This should only ever happen for modifiable values set with set_reg_value( ).
             // In such cases, we need this, because the value we set could evaluate to an index_var.

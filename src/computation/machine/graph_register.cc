@@ -158,7 +158,7 @@ void Step::clear()
 void Step::check_cleared() const
 {
     assert(not call);
-    assert(not call_edge.first);
+    assert(not std::get<1>(call_edge));
     assert(created_regs.empty());
     assert(flags.none());
 }
@@ -1864,7 +1864,7 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
 
     // Don't override an *existing* call
     assert(S1.call == 0);
-    assert(S1.call_edge.first == 0);
+    assert(std::get<1>(S1.call_edge) == 0);
 
     // Set the call
     S1.call = r2;
@@ -1877,6 +1877,7 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
 	assert(not reg_is_unevaluated(r2));
 
 	// put the back-edge on the first non-index-var that we see
+	int r3 = r2;
 	r2 = follow_index_var(r2);
 
 	if (reg_is_changeable(r2))
@@ -1887,16 +1888,16 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
 	    R2.called_by.push_back(s1);
 
 	    // Maybe this should just be optional<int> back_index?
-	    S1.call_edge = {r2, back_index};
+	    S1.call_edge = {r3, r2, back_index};
 	}
 	else
 	{
 	    assert(reg_is_constant(r2));
-	    S1.call_edge.first = -1;
+	    S1.call_edge = {r3, -1, -1};
 	}
     }
     else
-	assert(S1.call_edge.first == 0);
+	assert(std::get<1>(S1.call_edge) == 0);
 }
 
 void reg_heap::clear_call(int s)
@@ -1906,9 +1907,9 @@ void reg_heap::clear_call(int s)
     assert(call > 0);
 
     // 1. Remove the edge from step[s] <--- regs[call]
-    if (S.call_edge.first > 0 and not regs.is_free(S.call_edge.first))
+    if (std::get<1>(S.call_edge) > 0 and not regs.is_free(std::get<1>(S.call_edge)))
     {
-        auto [r2,j] = S.call_edge;
+        auto [r3,r2,j] = S.call_edge;
         assert(follow_index_var(call) == r2);
         auto& backward = regs[r2].called_by;
         assert(0 <= j and j < backward.size());
@@ -1918,16 +1919,16 @@ void reg_heap::clear_call(int s)
         {
             backward[j] = backward.back();
             auto& forward2 = steps[backward[j]];
-            forward2.call_edge.second = j;
+            std::get<2>(forward2.call_edge) = j;
 
-            assert(steps[backward[j]].call_edge.second == j);
+            assert(std::get<2>(steps[backward[j]].call_edge) == j);
         }
         backward.pop_back();
     }
 
     // 2. Clear the forward edge from steps[s] -> regs[call]
     S.call = 0;
-    S.call_edge = {0, 0};
+    S.call_edge = {0, 0, 0};
 }
 
 void reg_heap::clear_call_for_reg(int R)
@@ -2653,8 +2654,8 @@ int reg_heap::add_shared_step(int r)
 
 void reg_heap::check_back_edges_cleared_for_step(int s) const
 {
-    assert(steps[s].call_edge.first == 0);
-    assert(steps[s].call_edge.second == 0);
+    assert(std::get<1>(steps[s].call_edge) == 0);
+    assert(std::get<2>(steps[s].call_edge) == 0);
 
     for(auto& r: steps.access_unused(s).created_regs)
         assert(not regs.access(r).created_by_step);
