@@ -102,6 +102,7 @@ unit: exp {drv.result = $1;}
 
 exp: terms                                    { $$ = fold_terms($1); }
 |    varid "=" exp ";" exp                    { $$ = ptree("let",{{$1,$3},{"",$5}}); }
+|    varid "~" exp ";" exp                    { $$ = ptree("let",{{$1,add_sample($3)},{"",$5}}); }
 
 terms: term                 { $$.push_back($1);}
 |      terms "+>" term       { $$ = $1; $$.push_back($3);}
