@@ -675,8 +675,11 @@ void reg_heap::mark_unconditional_regs()
         auto & R = regs[r];
 
         // Mark used regs
-        for(auto [ur,_,__]: R.used_regs)
+        for(auto [fr, ur, _]: R.used_regs)
+	{
+            use_reg_unconditionally(fr);
             use_reg_unconditionally(ur);
+	}
 
         // Mark force regs
         for(auto fr: R.forced_regs)
@@ -1833,9 +1836,20 @@ int reg_heap::follow_single_force_index_var(int r) const
 
     return r;
 }
-void reg_heap::set_forced_reg(int r1, int r2)
+
+std::optional<int> reg_heap::reg_has_single_force(int r1) const
+{
+    if (expression_at(r1).is_index_var() and regs[r1].forced_regs.size() == 1)
+	return regs[r1].forced_regs[0];
+    else
+	return {};
+}
+
+int reg_heap::set_forced_reg(int r1, int r2)
 {
     assert(regs.is_used(r2));
+
+    assert(reg_is_evaluated(r2));
 
     assert(closure_at(r2));
 
@@ -1847,9 +1861,26 @@ void reg_heap::set_forced_reg(int r1, int r2)
     // So, we may as well forbid using an index_var as an input.
     assert(not reg_is_index_var_no_force(r2));
 
+    if (auto r3 = reg_has_single_force(r2))
+    {
+	r2 = *r3;
+
+	assert(regs.is_used(r2));
+
+	assert(closure_at(r2));
+
+	assert(reg_is_changeable_or_forcing(r2));
+
+	assert(reg_has_value(r2));
+
+	assert(not reg_is_index_var_no_force(r2));
+    }
+
     regs[r1].forced_regs.push_back(r2);
 
     assert(reg_is_forced_by(r1,r2));
+
+    return r2;
 }
 
 void reg_heap::set_call(int s1, int r2, bool unsafe)

@@ -253,6 +253,7 @@ public:
     bool reg_is_changeable_or_forcing(int r) const;
     bool reg_is_to_changeable(int r) const;
     bool reg_has_forces(int r) const;
+    std::optional<int> reg_has_single_force(int r) const;
     bool reg_is_on_stack(int r) const;
     bool regs_maybe_different_value(int r1, int r2) const;
     bool reg_is_unforgettable(int r) const;
@@ -260,7 +261,7 @@ public:
     void mark_reg_unforgettable(int r);
 
     void set_used_reg(int r1, int r2);
-    void set_forced_reg(int r1, int r2);
+    int set_forced_reg(int r1, int r2);
     void set_call(int s, int r2, bool = false);
     void destroy_step_and_created_regs(int s);
     void destroy_all_computations_in_token(int t);
