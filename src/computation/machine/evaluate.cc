@@ -692,15 +692,13 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            bool has_forces = not regs[r].forced_regs.empty();
-
             int r2 = closure_at(r).reg_for_index_var();
-            auto [r3, result] = incremental_evaluate2(r2, has_forces);
+            auto [r3, result] = incremental_evaluate2(r2, false);
 
             // Update the index_var to point to the end of the index_var_no_force chain.
             if (r2 != r3) regs[r].C.Env[0] = r3;
 
-            if (not has_forces)
+            if (regs[r].forced_regs.empty())
             {
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
@@ -723,7 +721,19 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    }
 
             if (not reg_is_constant(r3))
-		set_forced_reg(r,r3);
+	    {
+		int r5 = set_forced_reg(r,r3);
+
+                // Case 1: r5 == r3 -> new force edge to r3!
+                // Case 2: r3 != r5, r3 is forced -> new force edge to r5!
+                // Case 3: r3 != r5  r3 is not forced -> new force edge to r5,
+		//         but we already incremented the force count when evaluating r3->r5
+		//         when r3 calls force_reg_no_call( ).
+		if (r5 == r3 or reg_is_forced(r3))
+		    inc_count(r5);
+		else
+		    assert(reg_is_forced(r5));
+	    }
 
             assert(not has_result1(r));
             assert(not prog_unshare[r].test(unshare_result_bit));
