@@ -11,6 +11,7 @@
 #include <optional>
 
 #include "util/json.hh"
+#include "util/myexception.H"
 
 struct monostate{};
 std::ostream& operator<<(std::ostream& o,const monostate&);

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "util/ref_counted.H"
+#include "util/myexception.H"
 #include "util/math/log-double.H"
 #include "computation/type_constant.H"
 

@@ -1,4 +1,5 @@
 libutil_sources = [
+  'assert.cc',
   'string/pred.cc',
   'string/sanitize.cc',
   'string/strip.cc',

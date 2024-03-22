@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/beta.hpp>
 #include <boost/math/distributions.hpp>
+#include "util/myexception.H"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
