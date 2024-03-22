@@ -926,7 +926,7 @@ inline bool reg_heap::reg_is_changeable_or_forcing(int r) const
 
 inline bool reg_heap::reg_is_to_changeable(int r) const
 {
-    return reg_is_changeable(r) or reg_is_index_var_with_force_to_changeable(r);
+    return reg_is_changeable(follow_index_var_target(r));
 }
 
 inline bool reg_heap::reg_is_forced(int r) const
