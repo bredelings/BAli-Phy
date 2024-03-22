@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include "util/assert.hh"
+#include "util/myexception.H"
 #include <vector>
 #include <valarray>
 #include <cmath>

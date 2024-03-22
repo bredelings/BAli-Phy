@@ -37,6 +37,7 @@
 
 #include "tree/sequencetree.H"
 #include "util/set.H"
+#include "util/myexception.H"
 #include "statistics.H"
 #include "tree-dist.H"
 
