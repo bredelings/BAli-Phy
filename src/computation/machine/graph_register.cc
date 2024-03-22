@@ -1863,9 +1863,13 @@ int reg_heap::set_forced_reg(int r1, int r2)
 
     if (auto r3 = reg_has_single_force(r2))
     {
+	assert(not reg_has_single_force(*r3));
+
 	r2 = *r3;
 
 	assert(regs.is_used(r2));
+
+	assert(reg_is_evaluated(r2));
 
 	assert(closure_at(r2));
 
