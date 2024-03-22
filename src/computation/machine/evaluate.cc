@@ -488,8 +488,15 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 
             if (M.reg_is_changeable_or_forcing(r3))
 	    {
-		M.inc_count(r3);
-                M.set_forced_reg(r, r3);
+                int r4 = M.set_forced_reg(r, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
 	    }
 
             return result;
@@ -511,8 +518,15 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             }
             else if (M.reg_is_changeable_or_forcing(r3))
 	    {
-		M.inc_count(r3);
-                M.set_forced_reg(r, r3);
+                int r4 = M.set_forced_reg(r, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
 	    }
 
             return result;
