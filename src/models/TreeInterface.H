@@ -24,7 +24,7 @@ struct tree_constants: public Object
     int n_leaves;
 
     // Root info
-    std::optional<int> root_reg;
+    std::optional<int> roots_reg;
     std::optional<int> away_from_root_reg;
 
     // Node labels
@@ -46,7 +46,7 @@ class TreeInterface
 {
     std::optional<int> branch_durations_reg() const;
 
-    std::optional<int> root_reg() const;
+    std::optional<int> roots_reg() const;
 
     std::optional<int> node_times_reg() const;
 
@@ -120,7 +120,8 @@ public:
     tree_edge edge(int n1, int n2) const;
     tree_edge edge(int b) const;
 
-    bool has_root() const;
+    bool is_rooted() const;
+    std::vector<int> roots() const;
     int root() const;
     bool away_from_root(int b) const;
     bool toward_root(int b) const;

@@ -75,7 +75,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    assert(tree.size() == 3);
 
 	    // We need to evaluate this to avoid getting an index_var.
-	    root_reg = tree[1].get_reg();
+	    roots_reg = tree[1].get_reg();
 
 	    // We need to evaluate this to avoid getting an index_var.
 	    away_from_root_reg = tree[2].get_reg();
@@ -128,9 +128,9 @@ std::optional<int> TreeInterface::branch_durations_reg() const
     return get_tree_constants().branch_durations_reg;
 }
 
-std::optional<int> TreeInterface::root_reg() const
+std::optional<int> TreeInterface::roots_reg() const
 {
-    return get_tree_constants().root_reg;
+    return get_tree_constants().roots_reg;
 }
 
 std::optional<int> TreeInterface::node_times_reg() const
@@ -556,23 +556,34 @@ tree_edge TreeInterface::edge(int n1, int n2) const
     return edge(find_branch(n1,n2));
 }
 
-bool TreeInterface::has_root() const
+bool TreeInterface::is_rooted() const
 {
-    if (root_reg())
+    if (roots_reg())
         return true;
     else
         return false;
 }
 
+vector<int> TreeInterface::roots() const
+{
+    auto& C = get_const_context();
+    int r = roots_reg().value();
+    auto roots_evec = context_ptr(C,r).list_to_vector();
+    return (vector<int>)roots_evec;
+}
+
 int TreeInterface::root() const
 {
-    int r = *root_reg();
-    return get_const_context().evaluate_reg(r).as_int();
+    auto rs = roots();
+    if (rs.size() != 1)
+	throw myexception()<<"TreeInterface::root(): asking for single root, but there are "<<rs.size()<<" roots.";
+
+    return rs[0];
 }
 
 bool TreeInterface::away_from_root(int b) const
 {
-    assert(has_root());
+    assert(is_rooted());
 
     int array_reg = *away_from_root_reg();
 
