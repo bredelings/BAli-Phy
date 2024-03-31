@@ -1,3 +1,36 @@
+* 4.0-beta9 (Mar 40, 2024)
+- Bug fixes:
+  + Fix crash with long sequences.
+  + Fix crash in meson test
+  - Fix numeric alphabet (e.g. 0/1 characters)
+  - Fix bp-analyze on tree-only runs.
+  - Fix quotes and _ in Nexus names.
+  - Fix singularity build.
+- Non-reversible substitution models
+  - Currently only enabled for fixed-alignments. Will work for variable alignments in the next release.
+  - Generate rooted tree for non-reversible substitution model.
+  - Log computed frequencies for non-reversible substitution model.
+  - Add model nonreversible
+- Haskell
+  - Allow parsing and renaming data families and instances.
+  - Simplify the seqs in the IO monad.
+- Alignment
+  - Allow sample-alignment on multifurcating trees.
+- Machine
+  - Remove constant-with-force in favor of index-var-with-force to constant.
+  - Remove forced_by edges.
+  - Remove index-var edges.
+  - Remove index_var_with_force_to_* ==> index_var_with_force.
+  - Make index-vars point to final value.
+  - Add force edge from index-var to target.
+  - Look through a single-force index-var when forcing.
+  - Make interchangeables unforgettable.
+  - Move called_by and used_by edges to changeable nodes.
+- Command-line language        
+  - Allow "var ~ dist ; ... "
+- Build
+  - Add Mac/ARM.
+
 * 4.0-beta8 (Dec 19, 2023)
 - Usability tweaks
   + Write out tree with branch-lengths scaled according to weighted average of partition scales.
