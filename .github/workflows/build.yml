@@ -161,9 +161,9 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-         key: ${{ matrix.name }}-ccache-
+         key: ${{ matrix.name }}
          restore-keys: |
-           ${{ matrix.name }}-ccache-
+           ${{ matrix.name }}
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
@@ -172,11 +172,14 @@ jobs:
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
 
     - name: Configure
+      env:
+        OSX_VERSION_MIN: "11.0"
       run: |
-        if [ "${{ runner.os }}" = "macOS" ]; then
-          export CFLAGS="-mmacosx-version-min=10.15"
-          export CXXFLAGS="-mmacosx-version-min=10.15"
-          export LDFLAGS="-mmacosx-version-min=10.15"
+        if [ ${{ runner.os }} = "macOS" ] && [ -n "${OSX_VERSION_MIN}" ]; then
+           MIN="-mmacosx-version-min=${OSX_VERSION_MIN}"
+           export CFLAGS="$CFLAGS $MIN"
+           export CXXFLAGS="$CXXFLAGS $MIN"
+           export LDFLAGS="$LDFLAGS $MIN"
         fi
         CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
