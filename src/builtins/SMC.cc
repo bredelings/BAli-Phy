@@ -1008,8 +1008,16 @@ double emission_probability(int copied_letter, int emitted_letter, double emissi
     }
 }
 
+/*
+ *  OK, so for variant j, we compute the recombination probability based on the distance between them times rho.
+ *  This is equal to the integal of rho dx from d[k-1] to d[k].  So lets say that if we have 10 sites, then the
+ *  chromosome is of length 10, and the first site is at 0.5, and the last site is at 9.5.
+ *
+ *  So, we need to integrate rho from d[k-1]+0.5 to d[k] + 0.5
+ */
+
 // Question: do we want to actually distinguish between N and -?
-log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, double rho, double theta)
+log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, const EVector& rho, double theta)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
     assert(k>=1);
@@ -1023,6 +1031,27 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     for(int i=0;i<k;i++)
         m(0,i) = 1.0/k;
 
+    int rho_index=0;
+    auto rho_integral = [&](double l1, double l2)
+    {
+	assert(l1 <= l2);
+	assert(rho[rho_index].as_<EPair>().first.as_double() <= l1);
+	// Find the change-point just before l1.
+	while(rho_index+1 < rho.size() and rho[rho_index+1].as_<EPair>().first.as_double() < l1)
+	    rho_index++;
+	double integral = 0;
+	// As long as there is a change-point before l2, add in the integral of rho(l) from l1 to the next change-point.
+	while(rho_index+1 < rho.size() and rho[rho_index+1].as_<EPair>().first.as_double() < l2)
+	{
+	    integral += rho[rho_index].as_<EPair>().second.as_double() * (rho[rho_index+1].as_<EPair>().first.as_double() - l1);
+	    l1 = rho[rho_index].as_<EPair>().first.as_double();
+	    rho_index++;
+	}
+	// Now add in the integral from the l1 to l2.
+	integral += rho[rho_index].as_<EPair>().second.as_double() * (l2 - l1);
+	return integral;
+    };
+
     // 3. Perform the forward algorithm
     int prev_column = 0;
     for(int column1=0; column1<L; column1++)
@@ -1030,8 +1059,8 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
         double maximum = 0;
 
         int column2 = column1 + 1;
-        double dist = d[column1] - prev_column;
-        double transition_diff_parent = (1.0-exp(-rho*dist/k))/k;
+        double rho_mass = rho_integral(prev_column+0.5, d[column1]+0.5);
+        double transition_diff_parent = (1.0-exp(-rho_mass/k))/k;
         double transition_same_parent = 1.0 - (k-1)*transition_diff_parent;
         int emitted_letter = A(column1,k);
 
@@ -1050,6 +1079,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
                 total += m(column1,i1) * transition_i1_i2 * emission_i2;
             }
             if (total > maximum) maximum = total;
+	    assert( total > 0 );
             m(column2,i2) = total;
         }
         prev_column = d[column1];
@@ -1077,7 +1107,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     return { Pr };
 }
 
-log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, double rho)
+log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, const EVector& rho)
 {
     assert(A.length() == d.size());
 
@@ -1093,16 +1123,17 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vec
 }
 
 
-extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(OperationArgs& Args)
+extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
     auto locs = (vector<int>)Args.evaluate(0).as_<EVector>();
 
-    double rho = Args.evaluate(1).as_double();
+    auto arg1 = Args.evaluate(1);
+    auto& rho_func = arg1.as_<EVector>();
 
-    auto arg2= Args.evaluate(2);
+    auto arg2 = Args.evaluate(2);
     auto& A = arg2.as_<Box<alignment>>().value();
 
-    log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rho);
+    log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rho_func);
     
     return { Pr };
 }
