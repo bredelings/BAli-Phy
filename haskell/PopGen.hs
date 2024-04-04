@@ -76,12 +76,12 @@ selfing_coalescence n_loci s = SelfingCoalescence n_loci s
 
 ----------------------------------------
 
-data LiStephens2003 = LiStephens2003 (EVector Int) [(Double,Double)]
+data LiStephens2003 = LiStephens2003 (EVector Int) [(Double,Double,Double)]
 
-foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: EVector Int -> EVector (EPair Double Double) -> AlignmentMatrix -> LogDouble
+foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: EVector Int -> EVector (EVector Double) -> AlignmentMatrix -> LogDouble
 
 li_stephens_2003_composite_likelihood sites rhoFunc alignment = li_stephens_2003_composite_likelihood_raw sites rhoFuncRaw alignment
-    where rhoFuncRaw = list_to_vector $ map c_pair' rhoFunc
+    where rhoFuncRaw = list_to_vector [list_to_vector [x,start,end] | (x,start,end) <- rhoFunc]
 
 instance Dist LiStephens2003 where
     type Result LiStephens2003 = AlignmentMatrix

@@ -12,7 +12,9 @@ model locs sequence_data = do
 
   rho <- sample $ log_laplace 0.01 2
 
-  observe sequence_data $ li_stephens_2003 locs [(0,rho)]
+  let len = 1 + fromIntegral (last locs)
+
+  observe sequence_data $ li_stephens_2003 locs [(rho,0,len)]
 
   return ["rho" %=% rho ]
 

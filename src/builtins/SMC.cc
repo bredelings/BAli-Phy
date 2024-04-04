@@ -1008,6 +1008,13 @@ double emission_probability(int copied_letter, int emitted_letter, double emissi
     }
 }
 
+struct Chunk
+{
+    double value;
+    double start;
+    double end;
+};
+
 /*
  *  OK, so for variant j, we compute the recombination probability based on the distance between them times rho.
  *  This is equal to the integal of rho dx from d[k-1] to d[k].  So lets say that if we have 10 sites, then the
@@ -1017,7 +1024,7 @@ double emission_probability(int copied_letter, int emitted_letter, double emissi
  */
 
 // Question: do we want to actually distinguish between N and -?
-log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, const EVector& rho, double theta)
+log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, const vector<Chunk>& rho, double theta)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
     assert(k>=1);
@@ -1035,20 +1042,23 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     auto rho_integral = [&](double l1, double l2)
     {
 	assert(l1 <= l2);
-	assert(rho[rho_index].as_<EPair>().first.as_double() <= l1);
+	assert(rho.front().start <= l1);
+	assert(l2 <= rho.back().end);
+
+	assert(rho[rho_index].start <= l1);
 	// Find the change-point just before l1.
-	while(rho_index+1 < rho.size() and rho[rho_index+1].as_<EPair>().first.as_double() < l1)
+	while(rho_index+1 < rho.size() and rho[rho_index+1].start < l1)
 	    rho_index++;
 	double integral = 0;
 	// As long as there is a change-point before l2, add in the integral of rho(l) from l1 to the next change-point.
-	while(rho_index+1 < rho.size() and rho[rho_index+1].as_<EPair>().first.as_double() < l2)
+	while(rho_index+1 < rho.size() and rho[rho_index+1].start < l2)
 	{
-	    integral += rho[rho_index].as_<EPair>().second.as_double() * (rho[rho_index+1].as_<EPair>().first.as_double() - l1);
-	    l1 = rho[rho_index].as_<EPair>().first.as_double();
+	    integral += rho[rho_index].value * (rho[rho_index+1].start - l1);
+	    l1 = rho[rho_index+1].start;
 	    rho_index++;
 	}
 	// Now add in the integral from the l1 to l2.
-	integral += rho[rho_index].as_<EPair>().second.as_double() * (l2 - l1);
+	integral += rho[rho_index].value * (l2 - l1);
 	return integral;
     };
 
@@ -1079,7 +1089,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
                 total += m(column1,i1) * transition_i1_i2 * emission_i2;
             }
             if (total > maximum) maximum = total;
-	    assert( total > 0 );
+	    assert( std::isnan(total) or total >= 0 );
             m(column2,i2) = total;
         }
         prev_column = d[column1];
@@ -1107,7 +1117,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     return { Pr };
 }
 
-log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, const EVector& rho)
+log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, const vector<Chunk>& rho)
 {
     assert(A.length() == d.size());
 
@@ -1122,18 +1132,23 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vec
     return Pr;
 }
 
-
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
     auto locs = (vector<int>)Args.evaluate(0).as_<EVector>();
 
     auto arg1 = Args.evaluate(1);
     auto& rho_func = arg1.as_<EVector>();
+    vector<Chunk> rhos;
+    for(auto& chunk: rho_func)
+    {
+	auto& c = chunk.as_<EVector>();
+	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
+    }
 
     auto arg2 = Args.evaluate(2);
     auto& A = arg2.as_<Box<alignment>>().value();
 
-    log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rho_func);
+    log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rhos);
     
     return { Pr };
 }
