@@ -274,7 +274,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
 
 
 
-Proposal inc_dec_mh_proposal(int x_reg, const bounds<int>& range)
+Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
 {
     return [=](context_ref& C)
            {
@@ -288,10 +288,11 @@ Proposal inc_dec_mh_proposal(int x_reg, const bounds<int>& range)
 
                // 3. Propose a new value
                int x2 = x1;
+	       int delta = uniform_int(1,n);
                if (uniform() > 0.5)
-                   x2++;
+                   x2 += delta;
                else
-                   x2--;
+                   x2 -= delta;
 
                // 4. Cancel move if its outside of the bounds
                if (not range.in_range(x2))
@@ -329,7 +330,7 @@ extern "C" closure builtin_function_inc_dec_mh_raw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     //------------- 2. Perform the proposal ------------
-    auto proposal = inc_dec_mh_proposal(x_reg, range);
+    auto proposal = inc_dec_mh_proposal(x_reg, 2, range);
 
     if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
 
