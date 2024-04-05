@@ -16,22 +16,40 @@ instance Dist d => Dist (Changepoints d) where
 instance IOSampleable d => IOSampleable (Changepoints d) where
     sampleIO (Changepoints lambda (start,end) dist) = do
       n <- sampleIO $ poisson lambda
-      ps'' <- sampleIO $ iid2 (n+1) dist (uniform start end)
-      let ((x1,_):ps') = ps
-          ps = sortOn snd ps''
-          points = toChangePoints x1 start end ps
+      ps' <- sortOn snd <$> (sampleIO $ iid2 (n+1) dist (uniform start end))
+      let ((y1,x1):ps) = ps'
+          f x = start + (x-x1)*(end-start)/(end-x1)
+          points = toChangePoints y1 start end $ [ (y, f x) | (y,x) <- ps]
       return points
+
+{- We need to pick the point corresponding to the left/starting value in
+   an exchangeable way, like we are picking from a set.  Currently, we
+   pick the left-most point, and then need to rescale the remaining points.
+
+   We could pick an integer index at random from the sorted list.  This
+   should have the right distribution, since it has a 1/n chance of being
+   the last added point, the second-to-the-last-added point, etc.  So
+   everything should still be uniformly space. BUT, the integer index
+   could go down to probability 0 if the size of the set decreases.
+   - could we make (uniform_int 0 n) resample if n goes down, and keep the same
+     value otherwise?
+
+   We could pick a point at random from the set if we could operate on sets
+   and look at the previous value.  If the input set changes, then we could
+   keep the same choice if it remains in the set, and choose another entry
+   uniformly at random otherwise.
+ -}
 
 instance Sampleable d => Sampleable (Changepoints d) where
     sample (Changepoints lambda (start,end) dist) = do
       n <- sample $ poisson lambda
-      ps'' <- sample $ iid2 (n+1) dist (uniform start end)
-      let ((x1,_):ps') = ps
-          ps = sortOn snd ps''
-          points = toChangePoints x1 start end ps
+      ps' <- sortOn snd <$> (sample $ iid2 (n+1) dist (uniform start end))
+      let ((y1,x1):ps) = ps'
+          f x = start + (x-x1)*(end-start)/(end-x1)
+          points = toChangePoints y1 start end $ [ (y, f x) | (y,x) <- ps]
       return points
     
-changepoints lambda (start,end) dist = Changepoints lambda (start,end )dist
+changepoints lambda (start,end) dist = Changepoints lambda (start,end) dist
 
 toChangePoints value start end [] = [(value,start,end)]
 toChangePoints value start end ((value2,x2):ps) = (value,start,x2):toChangePoints value2 x2 end ps
