@@ -17,12 +17,14 @@ module Probability (module Probability,
                     module Probability.Distribution.Bernoulli,
                     module Probability.Distribution.Exponential,
                     module Probability.Distribution.DirichletProcess,
+                    module Probability.Distribution.Changepoints,
 
                     module Probability.Distribution.Uniform,
                     module Probability.Distribution.Discrete,
                     module Probability.Distribution.Transform,
 
                     module Probability.Distribution.List,
+                    module Probability.Distribution.Tuple,
                     module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
                     module Probability.Distribution.PhyloCTMC,
@@ -53,12 +55,14 @@ import Probability.Distribution.Poisson
 import Probability.Distribution.Bernoulli
 import Probability.Distribution.Exponential
 import Probability.Distribution.DirichletProcess
+import Probability.Distribution.Changepoints
 
 import Probability.Distribution.Uniform
 import Probability.Distribution.Discrete
 import Probability.Distribution.Transform
 
 import Probability.Distribution.List
+import Probability.Distribution.Tuple
 import Probability.Distribution.Markov
 import Probability.Distribution.Tree
 import Probability.Distribution.PhyloCTMC

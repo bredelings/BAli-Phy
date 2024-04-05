@@ -2,6 +2,7 @@ module Probability.Distribution.List where
 
 import Probability.Random
 import Probability.Distribution.Gamma
+import Probability.Distribution.Tuple
 import Data.Array
 import Effect
 import MCMC
@@ -133,10 +134,10 @@ iid_on items dist = IIDOn items dist
 -}
 
 
-iid2 n dist1 dist2 = sample $ iid n $ (,) <$> sample dist1 <*> sample dist2
+iid2 n dist1 dist2 = iid n $ PairDist dist1 dist2
 
 iid_mixture_dist n weight_dist item_dist = do
-    (ps, items) <- unzip <$> iid2 n weight_dist item_dist
+    (ps, items) <- unzip <$> (sample $ iid2 n weight_dist item_dist)
     return (map (/sum ps) ps, items)
 
 dirichlet_mixture_dist n a item_dist = iid_mixture_dist n (gamma a 1) item_dist
