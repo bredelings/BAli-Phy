@@ -1304,11 +1304,7 @@ extern "C" closure builtin_function_interchange_entries(OperationArgs& Args)
 
         int n = 0;
         if (interchange_regs.size() >= 2)
-        {
             n = sqrt( interchange_regs.size() );
-            if (uniform_int(0,1))
-            n = std::max(0, n-1);
-        }
 
         for(int i=0;i<n;i++)
         {
