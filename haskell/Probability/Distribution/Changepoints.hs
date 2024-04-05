@@ -4,7 +4,8 @@ module Probability.Distribution.Changepoints where
 import Probability.Random
 import Probability.Distribution.Uniform
 import Probability.Distribution.Poisson
-import Probability.Distribution.List
+import Probability.Distribution.Transform (log_laplace)
+import Probability.Distribution.List (iid2)
 
 data Changepoints d = Changepoints Double (Double,Double) d
 
@@ -35,7 +36,7 @@ changepoints lambda (start,end) dist = Changepoints lambda (start,end )dist
 toChangePoints value start end [] = [(value,start,end)]
 toChangePoints value start end ((value2,x2):ps) = (value,start,x2):toChangePoints value2 x2 end ps
 
-{-
+------------------------------------------------------------------------
 {-
  ok, so pos * x1 + (1-pos) * x2 = 1, and x2/x1 = ratio.  x2 = ratio * x1
  And x1/x2 > 0.
@@ -44,7 +45,20 @@ toChangePoints value start end ((value2,x2):ps) = (value,start,x2):toChangePoint
 x1 = 1 / (pos + (1-pos) * ratio)
 s2 = ratio / (pos + (1-pos) * ratio)
 -}    
-                
+
+data Changepoints2 d = Changepoints2 Double (Double,Double) d
+
+instance (Dist d, Result d ~ Double) => Dist (Changepoints2 d) where
+    type Result (Changepoints2 d) = [(Result d, Double, Double)]
+    dist_name _ = "Changepoints2"
+
+instance (Sampleable d, Result d ~ Double) => Sampleable (Changepoints2 d) where
+    sample (Changepoints2 lambda (start,end) dist) = do
+      x <- sample $ dist
+      rtree <- getChangePoints lambda
+      return $ flattenChangePoints x start (end - start) rtree
+
+changepoints2 lambda (start,end) dist = Changepoints2 lambda (start,end) dist
 
 type Position = Double
 type Ratio    = Double
@@ -79,5 +93,3 @@ getChangePoints lambda = do
     region1 <- getChangePoints lambda1
     region2 <- getChangePoints lambda2
     return $ Split2 pos ratio region1 region2
-
--}                                                  
