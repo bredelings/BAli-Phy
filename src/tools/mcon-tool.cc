@@ -25,7 +25,7 @@ po::variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("unnest", "file with alignment to annotate")
 	("atomize","file with tree")
-	("drop",value<vector<string>>()->multitoken(),"top-level names to drop")
+	("drop",value<vector<string>>()->multitoken(),"paths to drop")
 	("output,O",value<string>()->default_value("MCON"),"output format (TSV or MCON)")
 	;
 

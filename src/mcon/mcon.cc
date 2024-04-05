@@ -2,6 +2,7 @@
 #include <tuple>
 #include <optional>
 #include <sstream>
+#include <boost/algorithm/string/split.hpp>
 using std::string;
 using std::string_view;
 using std::set;
@@ -12,6 +13,26 @@ namespace fs = std::filesystem;
 
 namespace MCON
 {
+
+vector<string> mcon_path(const string& name)
+{
+    vector<string> path;
+    boost::split(path, name, [](char c) {return c == '/';});
+
+    for(int i=0;i+1<path.size();i++)
+	path[i].push_back('/');
+    return path;
+}
+
+void drop_path(json& j, const vector<string>& path)
+{
+    json* jj = &j;
+    for(int i=0;i+1<path.size();i++)
+    {
+	jj = & jj->at(path[i]);
+    }
+    jj->erase(path.back());
+}
 
 bool is_nested_key(string_view key)
 {
@@ -232,8 +253,9 @@ void Log::atomize()
 
 void Log::drop(const string& name)
 {
+    auto path = mcon_path(name);
     for(auto& sample: samples)
-	sample.erase(name);
+	drop_path(sample, path);
 }
 
 std::ostream& write_tsv_line(std::ostream& o, const vector<string>& v)
