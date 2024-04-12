@@ -23,13 +23,15 @@ get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_
    would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector EVector Double.
 -}
 
-data Reversible
+data EquilibriumReversible
 
-data NonReversible
+data EquilibriumNonReversible
+
+data NonEquilibrium
 
 class HasAlphabet m => SimpleSModel m where
     type family IsReversible m
-    type instance IsReversible m = NonReversible
+    type instance IsReversible m = NonEquilibrium
     stateLetters :: m -> EVector Int
     branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]
