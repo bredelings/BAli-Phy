@@ -115,7 +115,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBran
 
 
 -----------
-annotatedSubstLikeOnTreeNonRev tree alignment smodel scale sequenceData = do
+annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale sequenceData = do
   let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
 
   let n_nodes = numNodes tree
@@ -129,10 +129,10 @@ annotatedSubstLikeOnTreeNonRev tree alignment smodel scale sequenceData = do
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       fs = frequenciesOnTree tree f transition_ps
-      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs as transition_ps fs
+      cls = cachedConditionalLikelihoodsEqNonRev tree nodeCLVs as transition_ps fs
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodNonRev tree nodeCLVs cls as fs subst_root
+      likelihood  = peelLikelihoodEqNonRev tree nodeCLVs cls as fs subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
 
@@ -157,7 +157,7 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonRevers
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonRev tree alignment smodel scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
@@ -190,6 +190,41 @@ instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths
     sample dist = RanDistribution2 dist do_nothing
 
 ---------------------------------------------
+annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
+  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+
+  let n_nodes = numNodes tree
+      as = pairwise_alignments alignment
+      maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+      nModels = nrows f
+      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
+      alphabet = getAlphabet smodel
+      smap   = stateLetters smodel
+      smodel_on_tree = SingleBranchLengthModel tree smodel scale
+      transition_ps = transition_ps_map smodel_on_tree
+      f = weighted_frequency_matrix smodel
+      fs = frequenciesOnTree tree f transition_ps
+      cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transition_ps fs
+      -- Possibly we should check that the sequence lengths match the alignment..
+      -- but instead we just ensure that the alignment is evaluated.
+      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as fs subst_root
+
+      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
+
+      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
+
+      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+
+      n_muts = parsimony tree maybeNodeSequences as alphabet (unitCostMatrix alphabet)
+
+  in_edge "tree" tree
+  in_edge "alignment" alignment
+  in_edge "smodel" smodel
+
+  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+
+  return ([likelihood], prop)
+
 instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     type Result (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = UnalignedCharacterData
     dist_name _ = "PhyloCTMC"
@@ -197,11 +232,11 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) wher
 -- TODO: make this work on forests!                  -
 instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonRev tree alignment smodel scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment smodel scale
 
 -- getSequencesFromTree :: HasLabels t => t -> IntMap Sequence ->
 
-sampleComponentStatesNonRev rtree alignment smodel scale =  do
+sampleComponentStatesNonEq rtree alignment smodel scale =  do
   let as = pairwise_alignments alignment
       ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
       f = (weighted_frequency_matrix smodel)
