@@ -263,7 +263,6 @@ jobs:
 
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
-        git checkout no-root-knuckle
         rm -rf tests/likelihood/one-sequence
 
         echo ::group::testiphy variable A
