@@ -282,3 +282,49 @@ double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
     assert(rate >= 0);
     return rate;
 }
+
+std::vector<double> compute_stationary_freqs(const Matrix& Q)
+{
+    assert(Q.size1() == Q.size2());
+
+    int n = Q.size1();
+
+    // We start with pi * Q = 0, sum(pi) = 1.
+    // We transpose to get Q * pi = 0.
+    // For the sum, We add an extra row of 1s to get 1[i] * pi[i] = 1.
+
+    // 1. QQ = Q, but with an extra row of 1's
+    Eigen::MatrixXd QQ(n+1,n);
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            QQ(i,j) = Q(j,i);
+    // This sets up the sum(pi)
+    for(int j=0;j<n;j++)
+        QQ(n,j) = 1;
+
+    // 2. b = 0*n + 1
+    Eigen::VectorXd b(n+1);
+    for(int i=0;i<n;i++)
+        b[i] = 0;
+    // This sets up the result of sum(pi)
+    b[n] = 1;
+
+    // 3. Solve the equations
+    // Eigen::VectorXd epi = QQ.ColPivHouseholderQr.solve(b);  Maybe faster?
+    Eigen::VectorXd epi = QQ.fullPivLu().solve(b);
+
+    double err = (QQ * epi - b).cwiseAbs().sum();
+
+    if (err > 1.0e-5)
+    {
+        std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"\n";
+    }
+
+    // 4. Copy back to an EVector double;
+    std::vector<double> pi(n);
+    for(int i=0;i<n;i++)
+        pi[i] = epi[i];
+
+    return pi;
+}
+

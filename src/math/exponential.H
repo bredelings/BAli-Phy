@@ -42,5 +42,7 @@ void positivize_and_renormalize_matrix(Eigen::MatrixXd& E);
 Eigen::MatrixXd toEigen(const Matrix& Q);
 Matrix fromEigen(const Eigen::MatrixXd& EM);
 
+std::vector<double> compute_stationary_freqs(const Matrix& Q);
+
 
 #endif
