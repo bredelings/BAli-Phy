@@ -28,9 +28,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef EXPONENTIAL_H
 #define EXPONENTIAL_H
 #include "util/matrix.H"
+#include <Eigen/Dense>
 
 class EigenValues;
 Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);
+Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t);
+
+double rate_away(const std::vector<double>& pi, const Eigen::MatrixXd& Q);
+
 void positivize_and_renormalize_matrix(Matrix& E);
+void positivize_and_renormalize_matrix(Eigen::MatrixXd& E);
+
+Eigen::MatrixXd toEigen(const Matrix& Q);
+Matrix fromEigen(const Eigen::MatrixXd& EM);
+
 
 #endif

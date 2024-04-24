@@ -26,6 +26,7 @@
 #include <vector>
 #include "math/exponential.H"
 #include "math/eigenvalue.H"
+#include <unsupported/Eigen/MatrixFunctions>
 
 
 // The approach used in this file works because of general properties
@@ -206,4 +207,78 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
     positivize_and_renormalize_matrix(E);
 
     return E;
+}
+
+void positivize_and_renormalize_matrix(Eigen::MatrixXd& E)
+{
+    // Force positive, and renormalize rows.
+    for(int i=0;i<E.rows();i++)
+    {
+        double sum = 0;
+        for(int j=0;j<E.cols();j++) {
+            // assert(E(i,j) >= -1.0e-10);
+
+            // Force positive
+            E(i,j) = std::max(0.0, E(i,j));
+            sum += E(i,j);
+        }
+
+        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
+
+        // Renormalize rows
+        double factor = 1.0/sum;
+        for(int j=0;j<E.cols();j++)
+            E(i,j) *= factor;
+    }
+}
+
+Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t)
+{
+    // 1. Take the matrix exponential
+    Eigen::MatrixXd E = (Q*t).exp();
+
+    // 2. Ensure that all entries are non-negative and rows sum to 1
+    positivize_and_renormalize_matrix(E);
+
+    return E;
+}
+
+Eigen::MatrixXd toEigen(const Matrix& Q)
+{
+    int N1 = Q.size1();
+    int N2 = Q.size2();
+
+    Eigen::MatrixXd EQ(N1,N2);
+
+    for(int i=0;i<N1;i++)
+        for(int j=0;j<N2;j++)
+            EQ(i,j) = Q(i,j);
+
+    return EQ;
+}
+
+Matrix fromEigen(const Eigen::MatrixXd& EM)
+{
+    int N1 = EM.rows();
+    int N2 = EM.cols();
+
+    Matrix M(N1,N2);
+
+    for(int i=0;i<N1;i++)
+        for(int j=0;j<N2;j++)
+            M(i,j) = EM(i,j);
+
+    return M;
+}
+
+double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
+{
+    double rate = 0;
+    for(int s=0;s<Q.rows();s++)
+    {
+        assert(Q(s,s) <= 0);
+        rate -= pi[s] * Q(s,s);
+    }
+    assert(rate >= 0);
+    return rate;
 }

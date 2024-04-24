@@ -10,7 +10,6 @@
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
-#include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
 
 using std::vector;
@@ -98,26 +97,7 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 
     double t = Args.evaluate(1).as_double();
 
-    // 1. Copy to Eigen matrix
-    Eigen::MatrixXd QQ(n,n);
-    for(int i=0;i<n;i++)
-        for(int j=0;j<n;j++)
-            QQ(i,j) = Q(i,j)*t;
-
-    // 2. Take the matrix exponential
-    Eigen::MatrixXd EE = QQ.exp();
-
-    // 3. Copy back from Eigen matrix
-    auto E = new Box<Matrix>(n,n);
-
-    for(int i=0;i<n;i++)
-        for(int j=0;j<n;j++)
-            (*E)(i,j) = EE(i,j);
-
-    // 4. Ensure that all entries are non-negative and rows sum to 1
-    positivize_and_renormalize_matrix(*E);
-
-    return E;
+    return new Box<Matrix>( fromEigen( exp(toEigen(Q),t) ) );
 }
 
 
