@@ -3,6 +3,7 @@ module PopGen where
 import Probability
 import Range
 import Bio.Alignment.Matrix
+import Data.Matrix
 
 data VVI -- Vector<Vector<int>>
 
@@ -95,9 +96,9 @@ li_stephens_2003 locs rho = LiStephens2003 (list_to_vector locs) rho
 
 ----------------------------------------
 
-data WilsonMcVean2006 = WilsonMcVean2006 [(Double,Double,Double)]
+data WilsonMcVean2006 = WilsonMcVean2006 (Matrix Double) [(Double,Double,Double)] Double
 
-foreign import bpcall "SMC:" wilson_mcvean_2006_composite_likelihood_raw :: Matrix -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
+foreign import bpcall "SMC:" wilson_mcvean_2006_composite_likelihood_raw :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
 
 wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilson_mcvean_2006_composite_likelihood_raw q rhosRaw theta alignment
     where rhosRaw = list_to_vector [list_to_vector [x,start,end] | (x,start,end) <- rhos]
