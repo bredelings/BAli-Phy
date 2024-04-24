@@ -4,6 +4,7 @@
 
 #include "math/pow2.H"
 #include "math/logprod.H"
+#include "math/exponential.H"
 #include "util/matrix.H"
 #include "util/log-level.H"
 #include "util/range.H"
@@ -1149,6 +1150,161 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
     auto& A = arg2.as_<Box<alignment>>().value();
 
     log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rhos);
+    
+    return { Pr };
+}
+
+// https://doi.org/10.1534/genetics.105.044917
+// No missing data allowed!
+log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const Matrix& Q_, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+{
+    assert(k>=1);
+
+    double L = A.length();
+
+    if (k == 0)
+    {
+	vector<log_double_t> pi_log;
+	for(double p: pi)
+	    pi_log.push_back(p);
+
+	log_double_t Pr = 1;
+	for(int c=0; c<L; c++)
+	    Pr *= pi_log[c];
+
+	return { Pr };
+    }
+
+    const int S = Q_.size1();
+    assert(Q_.size2() == S);
+    assert(pi.size() == S);
+
+    // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
+    double subst_rate = theta/2;
+    EMatrix Q = toEigen(Q_) * subst_rate / rate_away(pi, Q);
+
+    // The rate of coalescing with another lineage is k for k other lineages.
+    double coalescent_time = 1.0/k;
+    EMatrix P = exp(Q, coalescent_time * 2);
+
+    // 2. Set the probability of copying from each of the k parents to 1/k at location 0.
+    Matrix m(L+1,k);
+    vector<int> scale(L+1,0);
+    for(int i=0;i<k;i++)
+        m(0,i) = 1.0/k;
+
+    int rho_index=0;
+    auto rho_integral = [&](double l1, double l2)
+    {
+        assert(l1 <= l2);
+        assert(rho.front().start <= l1);
+        assert(l2 <= rho.back().end);
+
+        assert(rho[rho_index].start <= l1);
+        // Find the change-point just before l1.
+        while(rho_index+1 < rho.size() and rho[rho_index+1].start < l1)
+            rho_index++;
+        double integral = 0;
+        // As long as there is a change-point before l2, add in the integral of rho(l) from l1 to the next change-point.
+        while(rho_index+1 < rho.size() and rho[rho_index+1].start < l2)
+        {
+            integral += rho[rho_index].value * (rho[rho_index+1].start - l1);
+            l1 = rho[rho_index+1].start;
+            rho_index++;
+        }
+        // Now add in the integral from the l1 to l2.
+        integral += rho[rho_index].value * (l2 - l1);
+        return integral;
+    };
+
+    // 3. Perform the forward algorithm
+    for(int column1=0; column1<L; column1++)
+    {
+        int column2 = column1 + 1;
+
+        double rho_mass = rho_integral(column1 + 0.5, column2 + 0.5);
+
+        // recombination occurs at rate rho/k
+        double transition_same_parent = exp(-rho_mass/k);
+        double transition_diff_parent = (1.0-transition_same_parent)/k;
+
+        int emitted_letter = A(column1,k);
+
+        double maximum = 0;
+        for(int i2=0;i2<k;i2++)
+        {
+            int copied_letter  = A(column1,i2);
+            double emission_prob = pi[copied_letter] * P(copied_letter, emitted_letter);
+
+            double total = 0;
+            for(int i1=0;i1<k;i1++)
+            {
+                double transition_i1_i2 = (i1==i2) ? transition_same_parent : transition_diff_parent;
+                total += m(column1,i1) * transition_i1_i2 * emission_prob;
+            }
+            if (total > maximum) maximum = total;
+            assert( std::isnan(total) or total >= 0 );
+            m(column2,i2) = total;
+        }
+
+        scale[column2] = scale[column1];
+
+        //------- if exponent is too low, rescale ------//
+        if (maximum > 0 and maximum < fp_scale::lo_cutoff)
+        {
+            int logs = -(int)log2(maximum);
+            double scale_factor = pow2(logs);
+            for(int i2=0;i2<k;i2++)
+                m(column2,i2) *= scale_factor;
+            scale[column2] -= logs;
+        }
+    }
+
+    // 3. Compute the total probability
+    double total = 0;
+    for(int i=0;i<k;i++)
+        total += m(L-1,i);
+
+    log_double_t Pr = pow(log_double_t(2.0),scale[L-1]) * total;
+
+    return { Pr };
+}
+
+log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const Matrix& Q, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+{
+    int n = A.n_sequences();
+
+    log_double_t Pr = 1.0;
+
+    for(int i=0;i<n;i++)
+        Pr *= wilson_mcvean_2006_CSD(A, i, Q, pi, rho, theta);
+
+    return Pr;
+}
+
+extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(OperationArgs& Args)
+{
+    auto arg0  = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+
+    auto arg1 = Args.evaluate(1);
+
+    auto& rho_func = arg1.as_<EVector>();
+    vector<Chunk> rhos;
+    for(auto& chunk: rho_func)
+    {
+	auto& c = chunk.as_<EVector>();
+	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
+    }
+
+    double theta = Args.evaluate(2).as_double();
+
+    auto arg3 = Args.evaluate(3);
+    auto& A = arg3.as_<Box<alignment>>().value();
+
+    auto pi = compute_stationary_freqs(Q);
+
+    log_double_t Pr = wilson_mcvean_2006_composite_likelihood(A, Q, pi, rhos, theta);
     
     return { Pr };
 }

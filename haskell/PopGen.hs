@@ -93,3 +93,22 @@ instance HasAnnotatedPdf LiStephens2003 where
 li_stephens_2003 locs rho = LiStephens2003 (list_to_vector locs) rho
 
 
+----------------------------------------
+
+data WilsonMcVean2006 = WilsonMcVean2006 [(Double,Double,Double)]
+
+foreign import bpcall "SMC:" wilson_mcvean_2006_composite_likelihood_raw :: Matrix -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
+
+wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilson_mcvean_2006_composite_likelihood_raw q rhosRaw theta alignment
+    where rhosRaw = list_to_vector [list_to_vector [x,start,end] | (x,start,end) <- rhos]
+
+instance Dist WilsonMcVean2006 where
+    type Result WilsonMcVean2006 = AlignmentMatrix
+    dist_name _ = "wilson_mcvean_2006"
+
+instance HasAnnotatedPdf WilsonMcVean2006 where
+    annotated_densities (WilsonMcVean2006 q rhos theta) = make_densities $ wilson_mcvean_2006_composite_likelihood q rhos theta
+
+wilson_mcvean_2006 q rhos theta = WilsonMcVean2006 q rhos theta
+
+
