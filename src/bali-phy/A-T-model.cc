@@ -569,35 +569,9 @@ string get_alphabet_type(ptree type)
     return alphabet_type.get_value<string>();
 }
 
-std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-                                               int /* proc_id */, const fs::path& dir)
+std::vector<string> get_default_alphabet_names(const shared_items<string>& smodel_names_mapping, const vector<model_t>& full_smodels, const shared_items<string>& alphabet_names_mapping)
 {
-    //------ Determine number of partitions ------//
-    vector<pair<fs::path,string>> filename_ranges;
-    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
-        filename_ranges.push_back( {fs::path(filename), range});
-
-    const int n_partitions = filename_ranges.size();
-
-    //------------- Get smodel names -------------------
-    auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
-    auto& smodel_mapping = smodel_names_mapping.item_for_partition;
-
-    vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
-
-    //------------- Find out what is fixed -------------
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
-
-    // 1. Get smodels for all SPECIFIED smodel names.
-    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
-        if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
-
     //------------- Get alphabet names -------------------
-    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
     vector<string> alphabet_names;
     for(int i=0;i<alphabet_names_mapping.n_partitions();i++)
         alphabet_names.push_back(alphabet_names_mapping[i]);
@@ -611,7 +585,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         auto type = full_smodels[i].type;
         auto& constraints = full_smodels[i].constraints;
 
-	auto alphabet_type = get_alphabet_type(type);
+        auto alphabet_type = get_alphabet_type(type);
 
         vector<int> a_specified;
         vector<int> a_unspecified;
@@ -628,30 +602,6 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
 
         if (a_specified.size())
         {
-            for(int j: a_specified)
-                if (alphabet_names[j] != alphabet_names[a_specified[0]])
-                    throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
-            auto a = get_alphabet( alphabet_names[a_specified[0]] );
-            if (alphabet_type == "Codons")
-            {
-                if (not dynamic_cast<const Codons*>(a.get()))
-                    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
-            }
-            else if (alphabet_type == "Triplets")
-            {
-                if (not dynamic_cast<const Triplets*>(a.get()))
-                    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
-            }
-            else if (alphabet_type == "Doublets")
-            {
-                if (not dynamic_cast<const Doublets*>(a.get()))
-                    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a doublet alphabet!";
-            }
-            else if (alphabet_type == "AA")
-            {
-                if (not dynamic_cast<const AminoAcids*>(a.get()))
-                    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires an amino-acid alphabet!";
-            }
         }
         else if (alphabet_type == "Codons")
         {
@@ -696,35 +646,38 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
 //      }
     }
 
-    //----------- Load alignments  ---------//
+    return alphabet_names;
+}
+
+// Read the alignments and update the alphabet names to what we actually see.
+vector<alignment> read_alignments(const vector<pair<fs::path,string>>& filename_ranges, vector<string>& alphabet_names)
+{
     vector<alignment> A(filename_ranges.size());
 
-    // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
+    map<fs::path,vector<sequence>> sequences_for_filename;
+    for(auto& [filename, range]: filename_ranges)
+        if (not sequences_for_filename.count(filename))
+            sequences_for_filename[filename] = sequence_format::load_from_file(filename);
+
+    for(int i=0;i<filename_ranges.size();i++)
     {
-        map<fs::path,vector<sequence>> sequences_for_filename;
-        for(auto& [filename, range]: filename_ranges)
-            if (not sequences_for_filename.count(filename))
-                sequences_for_filename[filename] = sequence_format::load_from_file(filename);
-
-        for(int i=0;i<filename_ranges.size();i++)
+        auto [filename, range] = filename_ranges[i];
+        try
         {
-            auto [filename, range] = filename_ranges[i];
-            try
-            {
-                A[i] = load_alignment(select(sequences_for_filename[filename], range), alphabet_names[i]);
-            }
-            catch (myexception& e)
-            {
-                if (range.empty())
-                    e.prepend("In file '"+filename.string()+"': ");
-                else
-                    e.prepend("In file '"+filename.string()+"' columns "+range+": ");
-                throw;
-            }
-
-            if (alphabet_names[i].empty())
-                alphabet_names[i] = A[i].get_alphabet().name;
+            A[i] = load_alignment(select(sequences_for_filename[filename], range), alphabet_names[i]);
         }
+        catch (myexception& e)
+        {
+            if (range.empty())
+                e.prepend("In file '"+filename.string()+"': ");
+            else
+                e.prepend("In file '"+filename.string()+"' columns "+range+": ");
+            throw;
+        }
+
+        // Record the final guessed alphabet name, in case the alphabet was unspecified (e.g. "")
+        // or not fully specified (e.g. "Codons", "Codons(,standard)", "Codons(DNA)").
+        alphabet_names[i] = A[i].get_alphabet().name;
     }
 
     for(int i=0;i<A.size();i++) {
@@ -732,10 +685,30 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         check_alignment_values(A[i],filename_ranges[i]);
     }
 
-    //--------- Set up indel model --------//
-    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
-    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
+    return A;
+}
 
+string findAndReplaceAll( std::string data,
+                          const std::string& match,
+                          const std::string& replace)
+{
+   // Get the first occurrence
+   size_t pos = data.find(match);
+
+   // Repeat till end is reached
+   while( pos != std::string::npos )
+   {
+        data.replace(pos, match.size(), replace);
+
+       // Get the next occurrence from the current position
+        pos = data.find(match, pos+replace.size());
+   }
+
+   return data;
+}
+
+void get_default_imodels(shared_items<string>& imodel_names_mapping, const vector<alignment>& A)
+{
     //-- Check that we're not estimating the alignment for things that aren't sequences --//
     for(int i = imodel_names_mapping.n_unique_items() - 1; i >= 0; i--)
     {
@@ -779,28 +752,70 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
                 value = "rs07";
         }
     }
+}
+
+
+std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
+                                               int /* proc_id */, const fs::path& dir)
+{
+    //------ Determine number of partitions ------//
+    vector<pair<fs::path,string>> filename_ranges;
+    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
+        filename_ranges.push_back( {fs::path(filename), range});
+
+    const int n_partitions = filename_ranges.size();
+
+    //------------- Get smodel names -------------------
+    auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+    auto& smodel_mapping = smodel_names_mapping.item_for_partition;
+
+    vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
+
+    //------------- Find out what is fixed -------------
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
+    // 1. Get smodels for all SPECIFIED smodel names.
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+        if (not smodel_names_mapping.unique(i).empty())
+            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
+
+    // 2. Get default alphabet names from specifed substitution model types
+    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
+
+    vector<string> alphabet_names = get_default_alphabet_names(smodel_names_mapping, full_smodels, alphabet_names_mapping);
+
+    // 3. -- Load alignments (for SPECIFIED, UNSPECIFIED, and PARTIALLY SPECIFIED alphabets)
+    vector<alignment> A = read_alignments(filename_ranges, alphabet_names);
+
+    // 4. --------- Set up indel model --------//
+    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
+
+    get_default_imodels(imodel_names_mapping, A);
+
     auto full_imodels = get_imodels(R, imodel_names_mapping);
 
     // 5. ----- Check that all smodel-linked partitions end up with the same alphabet. -----
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
-        int first_index = smodel_names_mapping.partitions_for_item[i][0];
-        for(int j: smodel_names_mapping.partitions_for_item[i])
-            if (alphabet_names[j] != alphabet_names[first_index])
-                throw myexception()<<"Partitions "<<first_index+1<<" and "<<j+1<<" have different alphabets '"<<alphabet_names[first_index]<<"' and '"<<alphabet_names[j]<<"', but share a linked substitution model!";
+	int first_partition = smodel_names_mapping.partitions_for_item[i][0];
+	string a1 = alphabet_names[first_partition];
+	string a1b = findAndReplaceAll(a1, "RNA", "DNA");
+
+        for(int partition: smodel_names_mapping.partitions_for_item[i])
+	{
+	    string a2 = alphabet_names[partition];
+	    string a2b = findAndReplaceAll(a2, "RNA", "DNA");
+	    if (a1b != a2b)
+		throw myexception()<<"Partitions "<<first_partition+1<<" ("<<a1<<") and "<<partition+1<<" ("<<a2<<") have different alphabets, but are given the same substitution model!";
+	}
+
     }
 
-    // 6. ------ Check that all alphabet-linked partitions end up with the same alphabet. -----
-    for(int i=0;i<alphabet_names_mapping.n_unique_items();i++)
-    {
-        int first_index = alphabet_names_mapping.partitions_for_item[i][0];
-        for(int other_index: alphabet_names_mapping.partitions_for_item[i])
-        {
-            if (alphabet_names[first_index] != alphabet_names[other_index])
-                throw myexception()<<"Partitions "<<first_index+1<<" and "<<other_index+1<<" have different alphabets, but are specified as being linked!";
-        }
-    }
-    // 7. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
+    // 6. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (smodel_names_mapping.unique(i).empty())
         {
@@ -815,14 +830,16 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
 
             full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
         }
-    
-    // 8. Check that alignment alphabet fits requirements from smodel.
+
+    // 7. Check that alignment alphabet fits requirements from smodel.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
         int first_index = smodel_names_mapping.partitions_for_item[i][0];
         const alphabet& a = A[first_index].get_alphabet();
 
         auto type = full_smodels[i].type;
+//      FIXME: Actually we need to look at constraints for Nucleotides[a], Doublets[a,b], Triplets[a,b]
+//      auto& constraints = full_smodels[i].constraints;
         auto alphabet_type = type.begin()->second;
 
         if (alphabet_type == "Codons" and not dynamic_cast<const Codons*>(&a))
@@ -899,7 +916,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         if (unalign and imodel_mapping[i])
             if (likelihood_calculators[i] != 0)
                 throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
-    
+
     //--------------- Create the Parameters object---------------//
     Model::key_map_t keys;
     if (args.count("set"))
