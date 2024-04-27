@@ -27,10 +27,8 @@ protected:
 
     void setup_table(std::istream&);
 
-    void setup_table_from_file(const std::filesystem::path& filename);
-
 public:
-    virtual Genetic_Code* clone() const=0;
+    virtual Genetic_Code* clone() const {return new Genetic_Code(*this);}
 
     const std::string& name() const {return name_;}
 
@@ -49,10 +47,10 @@ public:
 
     Genetic_Code(const std::string& name, std::istream&);
 
-    Genetic_Code(const std::string& name, const std::filesystem::path& filename);
-
     virtual ~Genetic_Code() = default;
 };
+
+Genetic_Code read_code_from_file(const std::string& name, const std::filesystem::path& filename);
 
 
 class Standard_Genetic_Code: public Genetic_Code

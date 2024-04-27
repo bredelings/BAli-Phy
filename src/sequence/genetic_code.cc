@@ -75,11 +75,12 @@ void Genetic_Code::setup_table(std::istream& file)
     setup_table(n1,n2,n3,aa);
 }
 
-void Genetic_Code::setup_table_from_file(const fs::path& filename)
+Genetic_Code genetic_code_from_file(const std::string& name, const std::filesystem::path& filename)
 {
     checked_ifstream file(filename,"genetic code file");
-    setup_table(file);
+    return Genetic_Code(name,file);
 }
+
 
 int Genetic_Code::translate(int n1, int n2, int n3) const
 {
@@ -111,12 +112,6 @@ Genetic_Code::Genetic_Code(const string& n, istream& file)
     :name_(n)
 {
     setup_table(file);
-}
-
-Genetic_Code::Genetic_Code(const string& n, const fs::path& filename)
-    :name_(n)
-{
-    setup_table_from_file(filename);
 }
 
 Standard_Genetic_Code::Standard_Genetic_Code()
