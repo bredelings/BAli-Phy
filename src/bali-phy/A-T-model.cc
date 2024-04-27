@@ -631,25 +631,25 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
             for(int j: a_specified)
                 if (alphabet_names[j] != alphabet_names[a_specified[0]])
                     throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
-            string a = alphabet_names[a_specified[0]];
+            auto a = get_alphabet( alphabet_names[a_specified[0]] );
             if (alphabet_type == "Codons")
             {
-                if (a != "Codons")
+                if (not dynamic_cast<const Codons*>(a.get()))
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
             }
             else if (alphabet_type == "Triplets")
             {
-                if (a != "Triplets")
+                if (not dynamic_cast<const Triplets*>(a.get()))
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
             }
             else if (alphabet_type == "Doublets")
             {
-                if (a != "Doublets")
+                if (not dynamic_cast<const Doublets*>(a.get()))
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a doublet alphabet!";
             }
             else if (alphabet_type == "AA")
             {
-                if (a != "AA" and a != "Amino-Acids" and a != "Amino-AcidsWithStop")
+                if (not dynamic_cast<const AminoAcids*>(a.get()))
                     throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires an amino-acid alphabet!";
             }
         }
