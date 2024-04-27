@@ -114,6 +114,18 @@ Genetic_Code::Genetic_Code(const string& n, istream& file)
     setup_table(file);
 }
 
+Genetic_Code::Genetic_Code(const std::string& name, const std::string& code)
+    :name_(name)
+{
+    setup_table(code);
+}
+
+Genetic_Code::Genetic_Code(const std::string& name, const std::string& n1, const std::string& n2, const std::string& n3, const std::string& code)
+    :name_(name)
+{
+    setup_table(n1,n2,n3,code);
+}
+
 Standard_Genetic_Code::Standard_Genetic_Code()
     :Genetic_Code("standard")
 {

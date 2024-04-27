@@ -47,6 +47,10 @@ public:
 
     Genetic_Code(const std::string& name, std::istream&);
 
+    Genetic_Code(const std::string& name, const std::string& code);
+
+    Genetic_Code(const std::string& name, const std::string& n1, const std::string& n2, const std::string& n3, const std::string& code);
+
     virtual ~Genetic_Code() = default;
 };
 
