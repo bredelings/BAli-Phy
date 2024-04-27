@@ -1,0 +1,1 @@
+--test bears_cytb.fasta --alphabet=Codons(DNA,mt-vert)
