@@ -156,26 +156,26 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
 	return guess_alphabet(sequences);
 
     string name = name_;
-    vector<string> arguments = get_arguments(name,'[',']');
+    vector<string> arguments = get_arguments(name,'(',')');
 
     if (name == "Codons")
     {
 	if (arguments.size() < 2) arguments.resize(2);
 	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
 	if (arguments[1].empty()) arguments[1] = "standard";
-	return "Codons[" + arguments[0] + "," + arguments[1] + "]";
+	return "Codons(" + arguments[0] + "," + arguments[1] + ")";
     }
     else if (name == "Doublets")
     {
 	if (arguments.size() < 1) arguments.resize(1);
 	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
-	return "Doublets[" + arguments[0] + "]";
+	return "Doublets(" + arguments[0] + ")";
     }
     else if (name == "Triplets")
     {
 	if (arguments.size() < 1) arguments.resize(1);
 	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
-	return "Triplets[" + arguments[0] + "]";
+	return "Triplets(" + arguments[0] + ")";
     }
     else
 	return name_;

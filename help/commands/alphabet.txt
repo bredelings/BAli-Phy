@@ -15,12 +15,12 @@ but the same partition cannot be referenced twice.
 The Doublets alphabet takes an optional extra argument specifying
 the nucleotide alphabet:
 
-     Doublets[DNA]            Doublets[RNA]
+     Doublets(DNA)      Doublets(RNA)
 
 The Triplets and Codons alphabets take optional
 extra arguments specifying the nucleotide alphabet and genetic code:
 
-     Triplets[DNA]            Codons[RNA,standard]
+     Triplets(DNA)      Codons(RNA)      Codons(RNA,standard)
 
 # Examples:
 

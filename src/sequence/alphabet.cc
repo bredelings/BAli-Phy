@@ -448,10 +448,13 @@ shared_ptr<const Nucleotides> get_nucleotides(const string& name)
 shared_ptr<const alphabet> get_alphabet(const string& name_)
 {
     string name = name_;
-    vector<string> arguments = get_arguments(name,'[',']');
+    vector<string> arguments = get_arguments(name,'(',')');
 
     if (name == "Codons")
     {
+	if (arguments.size() == 1)
+	    arguments.push_back("standard");
+
 	if (arguments.size() != 2 or arguments[0].empty() or arguments[1].empty())
 	    throw myexception()<<"Codons needs two arguments specifying the nucleotide alphabet and the genetic code: e.g. Codons[DNA,standard].";
 
