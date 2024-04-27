@@ -1,3 +1,7 @@
+* 4.0-beta10 (unreleased)
+- Features
+  + Allow allow codon models with any genetic code.
+
 * 4.0-beta9 (Mar 40, 2024)
 - Bug fixes:
   + Fix crash with long sequences.
