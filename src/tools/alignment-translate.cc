@@ -159,7 +159,7 @@ int main(int argc,char* argv[])
 	int n1 = A1(column+1,i);
 	int n2 = A1(column+2,i);
 
-	int aa = G->translate(n0,n1,n2);
+	int aa = G.translate(n0,n1,n2);
 
 	S += AA.lookup(aa);
       }

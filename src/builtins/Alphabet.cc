@@ -100,16 +100,23 @@ extern "C" closure builtin_function_codons(OperationArgs& Args)
 	throw myexception()<<"codons: object "<<a.print()<<"is not a Nucleotides alphabet.";
 
     auto arg1 = Args.evaluate(1);
-    if (not arg1.is_a<PtrBox<Genetic_Code>>())
+    if (not arg1.is_a<Box<Genetic_Code>>())
 	throw myexception()<<"codons: object "<<arg1.print()<<"is not a Genetic_Code object.";
-    const Genetic_Code& code = *arg1.as_<PtrBox<Genetic_Code>>();
+    auto code = arg1.as_<Box<Genetic_Code>>();
 
     return Alphabet(new Codons(*nuc, AminoAcids(), code));
 }
 
-extern "C" closure builtin_function_genetic_code_standard(OperationArgs&)
+extern "C" closure builtin_function_geneticCodeByNumber(OperationArgs& Args)
 {
-    return PtrBox<Genetic_Code>(new Standard_Genetic_Code());
+    int number = Args.evaluate(0).as_int();
+    return Box<Genetic_Code>(get_genetic_code(number));
+}
+
+extern "C" closure builtin_function_geneticCodeRaw(OperationArgs& Args)
+{
+    auto name = Args.evaluate(0).as_<String>();
+    return Box<Genetic_Code>(get_genetic_code(name));
 }
 
 extern "C" closure builtin_function_dna(OperationArgs&)

@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <optional>
 
 #include "alphabet.H"
 
@@ -11,6 +12,9 @@
 class Genetic_Code
 {
     std::string name_;
+
+    // From https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+    std::optional<int> number_;
 
     RNA rna;
     DNA dna;
@@ -32,6 +36,8 @@ public:
 
     const std::string& name() const {return name_;}
 
+    std::optional<int> number() const {return number_;}
+
     const RNA& get_RNA() const {return rna;}
     const DNA& get_DNA() const {return dna;}
 
@@ -43,68 +49,31 @@ public:
     /// Is letter codon a stop codon?
     bool is_stop_codon(int, int, int) const;
 
-    Genetic_Code(const std::string& name);
+    Genetic_Code& operator=(const Genetic_Code&) = default;
 
-    Genetic_Code(const std::string& name, std::istream&);
+    Genetic_Code& operator=(Genetic_Code&&) noexcept = default;
 
-    Genetic_Code(const std::string& name, const std::string& code);
+    Genetic_Code(const std::string& name, std::optional<int>);
 
-    Genetic_Code(const std::string& name, const std::string& n1, const std::string& n2, const std::string& n3, const std::string& code);
+    Genetic_Code(const std::string& name, std::optional<int>, std::istream&);
+
+    Genetic_Code(const std::string& name, std::optional<int>, const std::string& code);
+
+    Genetic_Code(const std::string& name, std::optional<int>, const std::string& n1, const std::string& n2, const std::string& n3, const std::string& code);
+
+    Genetic_Code(const Genetic_Code&) = default;
+
+    Genetic_Code(Genetic_Code&&) noexcept = default;
 
     virtual ~Genetic_Code() = default;
 };
 
-Genetic_Code read_code_from_file(const std::string& name, const std::filesystem::path& filename);
+// From https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+Genetic_Code get_genetic_code(const std::string& name);
+Genetic_Code get_genetic_code(int number);
 
+Genetic_Code get_genetic_code_from_file(const std::string& name, const std::filesystem::path& filename);
 
-class Standard_Genetic_Code: public Genetic_Code
-{
-public:
-    Standard_Genetic_Code* clone() const {return new Standard_Genetic_Code(*this);}
+Genetic_Code standard_code();
 
-    Standard_Genetic_Code();
-};
-
-class Mt_Invertebrate_Genetic_Code: public Genetic_Code
-{
-public:
-    Mt_Invertebrate_Genetic_Code* clone() const {return new Mt_Invertebrate_Genetic_Code(*this);}
-
-    Mt_Invertebrate_Genetic_Code();
-};
-
-class Mt_Vertebrate_Genetic_Code: public Genetic_Code
-{
-public:
-    Mt_Vertebrate_Genetic_Code* clone() const {return new Mt_Vertebrate_Genetic_Code(*this);}
-
-    Mt_Vertebrate_Genetic_Code();
-};
-
-class Mt_Protozoan_Genetic_Code: public Genetic_Code
-{
-public:
-    Mt_Protozoan_Genetic_Code* clone() const {return new Mt_Protozoan_Genetic_Code(*this);}
-
-    Mt_Protozoan_Genetic_Code();
-};
-
-class Mt_Yeast_Genetic_Code: public Genetic_Code
-{
-public:
-    Mt_Yeast_Genetic_Code* clone() const {return new Mt_Yeast_Genetic_Code(*this);}
-
-    Mt_Yeast_Genetic_Code();
-};
-
-class Mt_Echinoderm_Genetic_Code: public Genetic_Code
-{
-public:
-    Mt_Echinoderm_Genetic_Code* clone() const {return new Mt_Echinoderm_Genetic_Code(*this);}
-
-    Mt_Echinoderm_Genetic_Code();
-};
-
-
-std::shared_ptr<const Genetic_Code> get_genetic_code(const std::string& name);
 #endif

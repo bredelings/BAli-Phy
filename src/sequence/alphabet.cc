@@ -458,7 +458,7 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
 	auto N = get_nucleotides(arguments[0]);
 	auto G = get_genetic_code(arguments[1]);
 
-	return shared_ptr<const alphabet>(new Codons(*N, AminoAcids(), *G));
+	return shared_ptr<const alphabet>(new Codons(*N, AminoAcids(), G));
     }
     else if (name == "Triplets")
     {

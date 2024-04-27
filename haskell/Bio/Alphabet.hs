@@ -46,8 +46,12 @@ amino_acids_with_stop = builtin_aaWithStop ()
 
 foreign import bpcall "Alphabet:" mkNumeric :: Int -> Alphabet
 
-foreign import bpcall "Alphabet:genetic_code_standard" builtin_standard_code :: () -> GeneticCode
-standard_code = builtin_standard_code ()
+-- https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+foreign import bpcall "Alphabet:" geneticCodeByNumber :: Int -> GeneticCode
+foreign import bpcall "Alphabet:" geneticCodeRaw :: CPPString -> GeneticCode
+geneticCode name = geneticCodeRaw (pack_cpp_string name)
+
+standard_code = geneticCodeByNumber 1
 
 foreign import bpcall "Alphabet:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
 sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s

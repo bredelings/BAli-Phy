@@ -38,10 +38,7 @@ using po::variables_map;
 
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
 {
-    if (code.name() == "standard")
-        return var("standard_code");
-    else
-        throw myexception()<<"Need to add a Haskell function for genetic code '"<<code.name()<<"'";
+    return {var("geneticCode"),String(code.name())};
 }
 
 expression_ref get_alphabet_expression(const alphabet& a)
