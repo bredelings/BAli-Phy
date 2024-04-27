@@ -1807,7 +1807,48 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
       <section xml:id="genetic-codes">
 	<info><title>Genetic Codes</title></info>
       
-	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A Codons(,<replaceable>genetic-code</replaceable>)</userinput>.
+        Available genetic codes are:</para>
+	<informaltable>
+	  <tgroup cols="3">
+	    <thead><row>
+	      <entry>Name</entry>
+	      <entry>Number</entry>
+	      <entry>Description</entry>
+	    </row></thead>
+	    <tbody>
+<row><entry>standard</entry><entry> 1</entry><entry>Standard</entry></row>
+<row><entry>mt-vert</entry><entry> 2</entry><entry>Mt: Vertebrate</entry></row>
+<row><entry>mt-yeast</entry><entry> 3</entry><entry>Mt: Yeast</entry></row>
+<row><entry>mt-protozoa</entry><entry> 4</entry><entry>*: Mold, Protozoan and Coelenterate Mitochondrial Code and Mycoplasma/Spiroplasma</entry></row>
+<row><entry>mt-invert</entry><entry> 5</entry><entry>Mt: Invertebrate</entry></row>
+<row><entry>nuc-ciliate</entry><entry> 6</entry><entry>Nuc: Ciliate, Dasycladacean and Hexamita</entry></row>
+<row><entry>mt-echinoderm</entry><entry> 9</entry><entry>Mt:  Echinoderm and Flatworm</entry></row>
+<row><entry>nuc-euplotid</entry><entry> 10</entry><entry>Nuc: Euplotid</entry></row>
+<row><entry>bacteria</entry><entry> 11</entry><entry>*:   Bacterial, Archaeal and Plant Plastid</entry></row>
+<row><entry>nuc-yeast-alt</entry><entry> 12</entry><entry>Nuc: Alternative Yeast</entry></row>
+<row><entry>mt-ascidian</entry><entry> 13</entry><entry>Mt:  Ascidian</entry></row>
+<row><entry>mt-flatworm-alt</entry><entry> 14</entry><entry>Mt:  Alternative Flatworm</entry></row>
+<row><entry>nuc-blepharisma</entry><entry> 15</entry><entry>Nuc: Blepharisma Nuclear Code</entry></row>
+<row><entry>mt-chlorophycean</entry><entry> 16</entry><entry>Mt:  Chlorophycean</entry></row>
+<row><entry>mt-trematode</entry><entry> 21</entry><entry>Mt:   Trematode</entry></row>
+<row><entry>mt-scenedesmus-obliquus</entry><entry> 22</entry><entry>Mt:   Scenedesmus obliquus</entry></row>
+<row><entry>mt-thraustochytrium</entry><entry> 23</entry><entry>Mt:   Thraustochytrium</entry></row>
+<row><entry>mt-rhabdopleuridae</entry><entry> 24</entry><entry>Mt:   Rhabdopleuridae</entry></row>
+<row><entry>bacteria-sr1</entry><entry> 25</entry><entry>*:    Candidate Division SR1 and Gracilibacteria</entry></row>
+<row><entry>nuc-pachysolen-tannophilus</entry><entry> 26</entry><entry>Nuc:  Pachysolen tannophilus</entry></row>
+<row><entry>nuc-karyorelict</entry><entry> 27</entry><entry>Nuc:  Karyorelict</entry></row>
+<row><entry>nuc-condylostoma</entry><entry> 28</entry><entry>Nuc:  Condylostoma</entry></row>
+<row><entry>nuc-mesodinium</entry><entry> 29</entry><entry>Nuc:  Mesodinium</entry></row>
+<row><entry>nuc-peritrich</entry><entry> 30</entry><entry>Nuc:  Peritrich</entry></row>
+<row><entry>nuc-blastocrithidia</entry><entry> 31</entry><entry>Nuc:  Blastocrithidia</entry></row>
+<row><entry>mt-cephalodiscidae</entry><entry> 33</entry><entry>Mt:   Cephalodiscidae UAA-Tyr</entry></row>
+
+            </tbody>
+          </tgroup>
+        </informaltable>
+	      
+
 	<para>If the genetic code is not specified, then the standard code is used:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
 <prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[RNA]</screen>
