@@ -1851,10 +1851,10 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 
 	<para>If the genetic code is not specified, then the standard code is used:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[RNA]</screen>
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(RNA)</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[DNA,mt-vert]
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[,mt-vert]</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(DNA,mt-vert)
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(,mt-vert)</screen>	
 </para>
       </section>
       <section>

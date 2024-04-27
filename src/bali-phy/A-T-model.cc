@@ -603,7 +603,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         alphabet_names.push_back(alphabet_names_mapping[i]);
 
     // 2. For all SPECIFIED smodels, try to determine the alphabet.
-    //    (Alphabets for SPECIFIED smodel groups must all specified or all unspecified).
+    //    (Alphabets for SPECIFIED smodel groups must be all specified or all unspecified).
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
         if (smodel_names_mapping.unique(i).empty()) continue;

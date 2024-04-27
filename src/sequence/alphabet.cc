@@ -456,7 +456,7 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
 	    arguments.push_back("standard");
 
 	if (arguments.size() != 2 or arguments[0].empty() or arguments[1].empty())
-	    throw myexception()<<"Codons needs two arguments specifying the nucleotide alphabet and the genetic code: e.g. Codons[DNA,standard].";
+	    throw myexception()<<"Codons needs two arguments specifying the nucleotide alphabet and the genetic code: e.g. Codons(DNA,standard).";
 
 	auto N = get_nucleotides(arguments[0]);
 	auto G = get_genetic_code(arguments[1]);
@@ -466,7 +466,7 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
     else if (name == "Triplets")
     {
 	if (arguments.size() != 1 or arguments[0].empty())
-	    throw myexception()<<"Triplets needs one argument specifying the nucleotide alphabet: e.g. Triplets[DNA].";
+	    throw myexception()<<"Triplets needs one argument specifying the nucleotide alphabet: e.g. Triplets(DNA).";
 
 	auto N = get_nucleotides(arguments[0]);
 
@@ -475,7 +475,7 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
     else if (name == "Doublets")
     {
 	if (arguments.size() != 1 or arguments[0].empty())
-	    throw myexception()<<"Doublets needs one argument specifying the nucleotide alphabet: e.g. Doublets[RNA].";
+	    throw myexception()<<"Doublets needs one argument specifying the nucleotide alphabet: e.g. Doublets(RNA).";
 
 	auto N = get_nucleotides(arguments[0]);
 
@@ -484,7 +484,7 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
     else if (name == "Numeric")
     {
 	if (arguments.size() != 1 or arguments[0].empty())
-	    throw myexception()<<"Numeric needs one argument specifying the number of states: e.g. Numeric[2].";
+	    throw myexception()<<"Numeric needs one argument specifying the number of states: e.g. Numeric(2).";
 	int n = convertTo<int>(arguments[0]);
 
 	return shared_ptr<const alphabet>(new Numeric(n));

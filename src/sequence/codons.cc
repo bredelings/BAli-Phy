@@ -65,5 +65,5 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G
     setup_sub_nuc_table();
     setup_letter_classes();
 
-    name = string("Codons[") + getNucleotides().name + ","+ G->name() + "]";
+    name = string("Codons(") + getNucleotides().name + ","+ G->name() + ")";
 }

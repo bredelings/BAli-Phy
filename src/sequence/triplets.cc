@@ -274,6 +274,6 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 }
 
 Triplets::Triplets(const Nucleotides& a)
-    :Triplets(string("Triplets[")+a.name+"]",a)
+    :Triplets(string("Triplets(")+a.name+")",a)
 { }
 

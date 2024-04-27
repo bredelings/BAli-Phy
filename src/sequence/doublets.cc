@@ -285,7 +285,7 @@ Doublets::Doublets(const string& s,const Nucleotides& a)
 }
 
 Doublets::Doublets(const Nucleotides& a)
-    :Doublets(string("Doublets[")+a.name+"]",a)
+    :Doublets(string("Doublets(")+a.name+")",a)
 { }
 
 
