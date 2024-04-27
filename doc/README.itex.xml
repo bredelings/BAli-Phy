@@ -1849,7 +1849,9 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
         </informaltable>
 	      
 
-	<para>If the genetic code is not specified, then the standard code is used:
+	<para>Genetic codes may be specified by name or by <userinput>code<replaceable>n</replaceable></userinput> where <replaceable>n</replaceable> is the code number.
+        For example <userinput>code1</userinput> is the standard code.
+If the genetic code is not specified, then the standard code is used:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
 <prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(RNA)</screen>
 	These examples specify the vertebrate mitochondrial code:
