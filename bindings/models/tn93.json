@@ -11,7 +11,7 @@
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a040023"}]
 	       },
     "constraints": ["Nucleotides[a]"],
-    "call": "tn93'[@a,@kappaPur,@kappaPyr,@pi]",
+    "call": "tn93'(@a,@kappaPur,@kappaPyr,@pi)",
     "import": ["SModel"],
     "args": [
         {

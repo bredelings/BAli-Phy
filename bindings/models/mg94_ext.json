@@ -2,7 +2,7 @@
     "name": "mg94_ext",
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
-    "call": "mg94_ext[@a,@omega,@nuc_model]",
+    "call": "mg94_ext(@a,@omega,@nuc_model)",
     "import": ["SModel"],
     "args": [
         {

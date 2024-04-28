@@ -1,7 +1,7 @@
 {
     "name": "letters",
     "result_type": "List[String]",
-    "call": "letters[@a]",
+    "call": "letters(@a)",
     "import": ["Bio.Alphabet"],
     "args": [
         {

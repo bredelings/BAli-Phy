@@ -3,7 +3,7 @@
     "synonyms": [ "F61" ],
     "result_type": "List[Tuple[String,Double]]",
     "constraints": "Triplets[a,b]",
-    "call": "id[@pi]",
+    "call": "id(@pi)",
     "args": [
         {
             "arg_name": "pi",

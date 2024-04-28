@@ -2,7 +2,7 @@
     "name": "Rates.gamma",
     "synonyms": ["Rates.Gamma"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.gamma_rates[@alpha,@n,@submodel]",
+    "call": "SModel.gamma_rates(@alpha,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {

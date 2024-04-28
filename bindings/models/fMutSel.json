@@ -1,7 +1,7 @@
 {
     "name": "fMutSel",
     "result_type": "RevCTMC[Codons[a]]",
-    "call": "SModel.fMutSel'[@a,@ss,@omega,@submodel]",
+    "call": "SModel.fMutSel'(@a,@ss,@omega,@submodel)",
     "import": ["SModel"],
     "args": [
         {

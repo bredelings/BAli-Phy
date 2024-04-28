@@ -7,6 +7,7 @@
 #include "util/json.hh"
 #include "models/setup.H"
 #include "models/parse.H" // for is_constant( )
+#include "models/driver.hh" // for parse_expression( )
 
 using std::vector;
 using std::set;
@@ -129,7 +130,7 @@ ptree parse_value(ptree call)
 	return ptree("[]");
     else
 	// parse_type still uses [].  its not just for types.
-	return parse_type(call.get_value<string>());
+	return parse_expression(call.get_value<string>(),"call");
 }
 
 ptree convert_rule(const Rules& R, const string& name, Rule rule)

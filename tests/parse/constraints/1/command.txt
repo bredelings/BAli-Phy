@@ -1,1 +1,1 @@
---test dna.fasta --smodel=Add(hky85_sym,hky85_sym)
+--test dna.fasta --smodel=hky85_sym+hky85_sym

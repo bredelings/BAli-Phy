@@ -2,7 +2,7 @@
     "name": "cos",
     "result_type": "Double",
     "no_log": true,
-    "call": "cos[@x]",
+    "call": "cos(@x)",
     "args": [
         {
             "arg_name": "x",

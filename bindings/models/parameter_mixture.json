@@ -1,7 +1,7 @@
 {
     "name": "parameter_mixture",
     "result_type": "MixtureModel[a]",
-    "call": "SModel.parameter_mixture[Discrete[zip[@values,@frequencies]],@submodel]",
+    "call": "SModel.parameter_mixture(Discrete(zip(@values,@frequencies)),@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -12,7 +12,7 @@
         {
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
-            "default_value": "let(n=length(@values),replicate(n, div(1.0, intToDouble(n))))",
+            "default_value": "let(n=length(@values),replicate(n, 1.0 / intToDouble(n)))",
 	    "description": "The frequencies for each model"
         },
         {

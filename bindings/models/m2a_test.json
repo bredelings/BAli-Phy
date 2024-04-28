@@ -2,7 +2,7 @@
     "name": "m2a_test",
     "synonyms": ["M2a_Test"],
     "result_type": "MixtureModel[a[Codons[b]]]",
-    "call": "SModel.m2a_test[@omega0,@p0,@posP,@posW,@posSelection,@submodel]",
+    "call": "SModel.m2a_test(@omega0,@p0,@posP,@posW,@posSelection,@submodel)",
     "import": ["SModel"],
     "args": [
         {

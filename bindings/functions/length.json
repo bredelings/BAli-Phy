@@ -2,7 +2,7 @@
     "name": "length",
     "result_type": "Int",
     "no_log": true,
-    "call": "length[@x]",
+    "call": "length(@x)",
     "args": [
         {
             "arg_name": "x",

@@ -24,8 +24,13 @@ class zz_driver
 
     std::map<std::string,std::pair<zz::parser::token_type,int>> reserved_words;
 
+    int start_token = 0;
+
 public:
+
     zz_driver ();
+
+    int get_start_token();
 
     zz::parser::symbol_type varid(const zz::parser::location_type& loc) const;
 
@@ -35,8 +40,8 @@ public:
     // Store the result
     ptree result;
     // Run the parser on file F.  Return 0 on success.
-    int parse_file (const std::string& filename);
-    int parse_string (const std::string& content, const std::string& input_name);
+    int parse_file (const std::string& filename, int stok);
+    int parse_string (const std::string& content, const std::string& input_name, int stok);
     // The name of the file being parsed.
     std::string file;
     // Whether to generate parser debug traces.
@@ -56,6 +61,7 @@ public:
     bool check_closing_token() {return prec_close_count > 0;}
 };
 
-ptree parse_string(const std::string&, const std::string&);
+ptree parse_expression(const std::string&, const std::string&);
+ptree parse_type(const std::string&, const std::string&);
 #endif // ! DRIVER_HH
 

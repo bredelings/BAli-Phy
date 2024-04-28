@@ -2,7 +2,7 @@
     "name": "zipWith",
     "result_type": "List[c]",
     "no_log": true,
-    "call": "zipWith[@f,@x,@y]",
+    "call": "zipWith(@f,@x,@y)",
     "args": [
         {
             "arg_name": "f",

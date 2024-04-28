@@ -2,7 +2,7 @@
     "name": "sqrt",
     "result_type": "Double",
     "no_log": true,
-    "call": "sqrt[@x]",
+    "call": "sqrt(@x)",
     "args": [
         {
             "arg_name": "x",

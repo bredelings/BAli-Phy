@@ -2,7 +2,7 @@
     "name": "take",
     "result_type": "List[a]",
     "no_log": true,
-    "call": "take[@n,@xs]",
+    "call": "take(@n,@xs)",
     "args": [
         {
             "arg_name": "n",

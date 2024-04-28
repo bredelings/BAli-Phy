@@ -3,7 +3,7 @@
     "constraints": [ "Doublets[a,b]" ],
     "result_type": "RevCTMC[a]",
     "title": "Rate matrix constructed from rate matrices on each doublet position",
-    "call": "x2x2[@a,@rates1,@rates2]",
+    "call": "x2x2(@a,@rates1,@rates2)",
     "import": ["SModel"],
     "args": [
         {

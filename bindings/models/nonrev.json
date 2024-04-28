@@ -2,7 +2,7 @@
     "name": "nonrev",
     "title":"The General Non-Reversible rate matrix",
     "result_type": "CTMC[a]",
-    "call": "nonRev'[@a,@rates]",
+    "call": "nonRev'(@a,@rates)",
     "import": ["SModel"],
     "args": [
         {
@@ -21,7 +21,7 @@
     "computed": [
 	{
 	    "name": "eqFrequencies",
-	    "value": "labelledEqFrequencies[nonRev'[@a,@rates]]"
+	    "value": "labelledEqFrequencies(nonRev'(@a,@rates))"
 	}
     ],
     "description": "The general non-reversible rate matrix Q(i,j)",

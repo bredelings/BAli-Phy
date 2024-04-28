@@ -2,7 +2,7 @@
     "name": "m8a",
     "synonyms": ["M8a"],
     "result_type": "MixtureModel[a[Codons[b]]]",
-    "call": "SModel.m8a[@mu,@gamma,@n,@posP,@submodel]",
+    "call": "SModel.m8a(@mu,@gamma,@n,@posP,@submodel)",
     "import": ["SModel"],
     "args": [
         {

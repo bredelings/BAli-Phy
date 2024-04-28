@@ -1,7 +1,7 @@
 {
     "name": "iidMap",
     "result_type": "Distribution[IntMap[a]]",
-    "call": "iidMap[@set,@dist]",
+    "call": "iidMap(@set,@dist)",
     "import": ["Probability"],
     "args": [
         {

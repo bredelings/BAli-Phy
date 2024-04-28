@@ -2,7 +2,7 @@
     "name": "exp",
     "result_type": "Double",
     "no_log": true,
-    "call": "exp[@x]",
+    "call": "exp(@x)",
     "args": [
         {
             "arg_name": "x",

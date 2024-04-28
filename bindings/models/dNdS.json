@@ -3,7 +3,7 @@
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "Scale non-synonymous rates by `omega`",
-    "call": "dNdS[@omega,@submodel]",
+    "call": "dNdS(@omega,@submodel)",
     "import": ["SModel"],
     "args": [
         {

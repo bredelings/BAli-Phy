@@ -2,7 +2,7 @@
     "name": "gtr_sym",
     "title":"The GTR exchangability matrix",
     "result_type": "ExchangeModel[a]",
-    "call": "gtr_sym'[@sym,@a]",
+    "call": "gtr_sym'(@sym,@a)",
     "import": ["SModel"],
     "citation":"Tavare, 1986",
     "args": [

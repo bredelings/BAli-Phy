@@ -2,7 +2,7 @@
     "name": "log",
     "result_type": "Double",
     "no_log": true,
-    "call": "log[@x]",
+    "call": "log(@x)",
     "args": [
         {
             "arg_name": "x",

@@ -2,7 +2,7 @@
     "name": "tan",
     "result_type": "Double",
     "no_log": true,
-    "call": "tan[@x]",
+    "call": "tan(@x)",
     "args": [
         {
             "arg_name": "x",

@@ -2,7 +2,7 @@
     "name": "sin",
     "result_type": "Double",
     "no_log": true,
-    "call": "sin[@x]",
+    "call": "sin(@x)",
     "args": [
         {
             "arg_name": "x",

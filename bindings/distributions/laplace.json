@@ -2,7 +2,7 @@
     "name": "laplace",
     "synonyms": [ "Laplace" ],
     "result_type": "Distribution[Double]",
-    "call": "laplace[@m,@s]",
+    "call": "laplace(@m,@s)",
     "import": ["Probability"],
     "args": [
         {

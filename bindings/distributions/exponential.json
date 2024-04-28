@@ -2,7 +2,7 @@
     "name": "exponential",
     "synonyms": [ "Exponential" ],
     "result_type": "Distribution[Double]",
-    "call": "exponential[@mean]",
+    "call": "exponential(@mean)",
     "import": ["Probability"],
     "title": "The Exponential distribution",
     "args": [

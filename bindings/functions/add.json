@@ -1,10 +1,9 @@
 {
-    "name": "add",
-    "synonyms": ["Add"],
+    "name": "+",
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],
-    "call": "+[@x,@y]",
+    "call": "@x + @y",
     "args": [
         {
             "arg_name": "x",

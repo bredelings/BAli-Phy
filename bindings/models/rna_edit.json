@@ -3,7 +3,7 @@
     "result_type": "RevCTMC[Doublets[a]]",
     "constraints": [ "Nucleotides[a]" ],
     "title": "RNA editting model",
-    "call": "SModel.rna_editting[@a,@submodel,@edits]",
+    "call": "SModel.rna_editting(@a,@submodel,@edits)",
     "import": ["SModel"],
     "args": [
         {

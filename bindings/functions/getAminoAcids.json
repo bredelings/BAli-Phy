@@ -1,7 +1,7 @@
 {
     "name": "getAminoAcids",
     "result_type": "AA",
-    "call": "getAminoAcids[@a]",
+    "call": "getAminoAcids(@a)",
     "import": ["Bio.Alphabet"],
     "args": [
         {

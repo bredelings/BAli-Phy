@@ -1,7 +1,7 @@
 {
     "name": "get_q",
     "result_type": "Matrix[a]",
-    "call": "getQ[@q]",
+    "call": "getQ(@q)",
     "import": ["SModel"],
     "args": [
         {

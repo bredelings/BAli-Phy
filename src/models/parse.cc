@@ -67,25 +67,7 @@ vector<string> split_args(string s)
 
 ptree parse_type(const string& s)
 {
-    // 1. Split the head and the arguments
-    auto args = split_args(s);
-
-    // 2. Set the head
-    string head = args.front();
-    args.erase(args.begin());
-
-    ptree result;
-    result.put_value(head);
-
-    // 3. Set the arguments
-    for(const auto& arg: args)
-    {
-	if (arg.empty()) throw myexception()<<"Type '"<<s<<"' has empty argument";
-
-	result.push_back({"", parse_type(arg)});
-    }
-
-    return result;
+    return parse_type(s,"type");
 }
 
 ptree add_sample(const ptree& p)
@@ -288,7 +270,7 @@ void handle_positional_args(ptree& model, const Rules& R)
 ptree parse(const Rules& R, const string& s, const string& what)
 {
     // 1. Get the last head[args]
-    auto model = parse_string(s, what);
+    auto model = parse_expression(s, what);
 
     // 2. Fill in keywords where they are not given
     auto f2 = [&](ptree& p) {handle_positional_args(p,R);};

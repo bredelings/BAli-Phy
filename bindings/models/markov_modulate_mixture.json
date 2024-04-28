@@ -1,7 +1,7 @@
 {
     "name": "markov_modulate",
     "result_type": "RevCTMC[a]",
-    "call": "markov_modulate_mixture[@nu,@submodel]",
+    "call": "markov_modulate_mixture(@nu,@submodel)",
     "import": ["SModel"],
     "args": [
         {

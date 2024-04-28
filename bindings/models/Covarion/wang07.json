@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.wang07"],
     "title":"The WSSR (2007) Covarion Model",
     "result_type": "MixtureModel[a]",
-    "call": "wssr07[@s01,@s10,@nu,@pi,@submodel]",
+    "call": "wssr07(@s01,@s10,@nu,@pi,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Testing for Covarion-like Evolution in Protein Sequences",

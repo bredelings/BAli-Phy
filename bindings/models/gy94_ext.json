@@ -3,7 +3,7 @@
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "An extended version of the Goldman & Yang (1994) model of dN\/dS",
-    "call": "gy94_ext[@nuc_model,@omega,frequencies_from_dict[@a,@pi],@a]",
+    "call": "gy94_ext(@nuc_model,@omega,frequencies_from_dict(@a,@pi),@a)",
     "import": ["SModel"],
     "args": [
         {

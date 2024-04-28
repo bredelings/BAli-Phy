@@ -102,8 +102,19 @@ signed       {negative}?
 
   /* Code run each time yylex is called. */
 %{
-  // A handy shortcut to the location held by the driver.
+    // A handy shortcut to the location held by the driver.
     auto& loc = drv.location;
+
+    if (int t = drv.get_start_token())
+    {
+	if (t == 1)
+	    return zz::parser::make_START_EXP (loc);
+	else if (t == 2)
+	    return zz::parser::make_START_TYPE (loc);
+	else
+	    std::abort();
+    }
+
     loc.step ();
 %}
 
@@ -127,6 +138,7 @@ signed       {negative}?
 ";"      return zz::parser::make_SEMI   (loc);
 ":"      return zz::parser::make_COLON  (loc);
 "+>"     return zz::parser::make_STACK  (loc);
+"->"     return zz::parser::make_ARROW  (loc);
 "@"      return zz::parser::make_AT     (loc);
 "~"      return zz::parser::make_TILDE  (loc);
 "+"      return zz::parser::make_PLUS   (loc);

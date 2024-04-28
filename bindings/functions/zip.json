@@ -2,7 +2,7 @@
     "name": "zip",
     "result_type": "List[Tuple[a,b]]",
     "no_log": true,
-    "call": "zip[@x,@y]",
+    "call": "zip(@x,@y)",
     "args": [
         {
             "arg_name": "x",

@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
     "result_type": "MixtureModel[a]",
-    "call": "huelsenbeck_02_test[@s01,@s10,@fraction1,@submodel]",
+    "call": "huelsenbeck_02_test(@s01,@s10,@fraction1,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -33,15 +33,15 @@
     "computed": [
 	{
 	    "name": "rate",
-	    "value": "*[2,*[@r,*[@pi1,-[1,@pi1]]]]"
+	    "value": "2 * @r *(@pi1 * (1 - @pi1))"
 	},
 	{
 	    "name": "s01",
-	    "value": "*[@r,@pi1]"
+	    "value": "@r * @pi1"
 	},
 	{
 	    "name": "s10",
-	    "value": "*[@r,-[1,@pi1]]"
+	    "value": "@r * (1 - @pi1)"
 	}
     ],
     "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",

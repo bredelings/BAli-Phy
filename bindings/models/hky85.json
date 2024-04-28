@@ -11,7 +11,7 @@
 		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
 		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
 	       },
-    "call": "hky85'[@a,@kappa,@pi]",
+    "call": "hky85'(@a,@kappa,@pi)",
     "import": ["SModel"],
     "args": [
         {

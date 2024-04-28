@@ -2,7 +2,7 @@
     "name": "equ",
     "synonyms": ["EQU"],
     "result_type": "ExchangeModel[a]",
-    "call": "SModel.equ[@a]",
+    "call": "SModel.equ(@a)",
     "import": ["SModel"],
     "args": [
         {

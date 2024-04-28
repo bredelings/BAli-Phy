@@ -1,7 +1,7 @@
 {
     "name": "shifted_gamma",
     "result_type": "Distribution[Double]",
-    "call": "shifted_gamma[@a,@b,@shift]",
+    "call": "shifted_gamma(@a,@b,@shift)",
     "import": ["Probability"],
     "args": [
         {

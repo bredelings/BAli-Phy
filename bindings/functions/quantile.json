@@ -2,7 +2,7 @@
     "name": "quantile",
     "result_type": "Double",
     "no_log": true,
-    "call": "quantile[@dist,@p]",
+    "call": "quantile(@dist,@p)",
     "import": ["Probability"],
     "args": [
         {

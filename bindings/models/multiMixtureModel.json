@@ -3,7 +3,7 @@
     "synonyms": ["MultiMixtureModel"],
     "result_type": "MultiMixtureModel[a]",
     "no_log": true,
-    "call": "SModel.mmm[@branch_cats,@submodel]",
+    "call": "SModel.mmm(@branch_cats,@submodel)",
     "import": ["SModel"],
     "args": [
         {

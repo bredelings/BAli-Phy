@@ -2,7 +2,7 @@
     "name": "nonEq",
     "title":"The General Non-Reversible rate matrix",
     "result_type": "CTMC[a]",
-    "call": "nonEq'[@a,@rates,@pi]",
+    "call": "nonEq'(@a,@rates,@pi)",
     "import": ["SModel"],
     "args": [
         {
@@ -27,7 +27,7 @@
     "computed": [
 	{
 	    "name": "eqFrequencies",
-	    "value": "labelledEqFrequencies[nonEq'[@a,@rates,@pi]]"
+	    "value": "labelledEqFrequencies(nonEq'(@a,@rates,@pi))"
 	}
     ],
     "description": "The general non-reversible rate matrix Q(i,j) with separate frequencies",

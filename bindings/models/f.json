@@ -2,7 +2,7 @@
     "name": "f",
     "synonyms": ["F"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.plus_f'[@a,@pi,@submodel]",
+    "call": "SModel.plus_f'(@a,@pi,@submodel)",
     "import": ["SModel"],
     "args": [
         {

@@ -2,7 +2,7 @@
     "title": "The LG amino-acid frequencies",
     "name": "lg08_freq",
     "result_type": "List[Tuple[String,Double]]",
-    "call": "lg_frequencies[@a]",
+    "call": "lg_frequencies(@a)",
     "import": ["SModel"],
     "args": [
         {

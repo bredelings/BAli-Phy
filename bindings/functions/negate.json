@@ -3,7 +3,7 @@
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],
-    "call": "negate[@x]",
+    "call": "negate(@x)",
     "args": [
         {
             "arg_name": "x",

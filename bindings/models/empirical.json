@@ -2,7 +2,7 @@
     "name": "empirical",
     "synonyms": ["Empirical"],
     "result_type": "ExchangeModel[a]",
-    "call": "SModel.empirical[@a,@filename]",
+    "call": "SModel.empirical(@a,@filename)",
     "import": ["SModel"],
     "args": [
         {

@@ -41,6 +41,8 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %define api.token.prefix {TOK_}
 %token
   END  0  "end of file"
+  START_EXP 1
+  START_TYPE 2
 
   FUNCTION      "function"
   SEMI          ";"
@@ -62,9 +64,11 @@ ptree fold_terms(const std::vector<ptree>& terms);
   DIVIDE        "/"
 
   STACK         "+>"
+  ARROW         "->"
 ;
 
 %token <std::string> VARID    "VARID"
+%token <std::string> VARSYM   "VARSYM"
 %token <std::string> QVARID   "QVARID"
 
 %token <std::string>   STRING   "STRING"
@@ -80,6 +84,9 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %type <ptree> ditem
 %type <std::vector<std::pair<std::string,ptree>>> tup_args
 
+%type <ptree>       type
+%type <std::vector<std::pair<std::string,ptree>>> type_tup_args
+
 %type <std::string> qvarid
 %type <std::string> varid
 
@@ -94,10 +101,12 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %left "+" "-"
 %left "*" "/"
 %left "~"
+%right "->"
 
 %%
-%start unit;
-unit: exp {drv.result = $1;}
+%start start;
+start: START_EXP exp {drv.result = $2;}
+|      START_TYPE type {drv.result = $2;}
 
 
 exp: terms                                    { $$ = fold_terms($1); }
@@ -121,10 +130,10 @@ term: qvarid                      { $$ = ptree($1); }
 |    "function" "(" varid ":" exp ")"         { $$ = ptree("function",{{"",ptree($3)},{"",$5}}); }
 |    "(" exp ")"                              { $$ = $2; }
 |     "-" term                    { $$ = ptree("negate",{{"",ptree($2)}}); }
-|     term "+" term               { $$ = ptree("add",{{"",ptree($1)},{"",$3}}); }
-|     term "-" term               { $$ = ptree("sub",{{"",ptree($1)},{"",$3}}); }
-|     term "*" term               { $$ = ptree("mul",{{"",ptree($1)},{"",$3}}); }
-|     term "/" term               { $$ = ptree("div",{{"",ptree($1)},{"",$3}}); }
+|     term "+" term               { $$ = ptree("+",{{"",ptree($1)},{"",$3}}); }
+|     term "-" term               { $$ = ptree("-",{{"",ptree($1)},{"",$3}}); }
+|     term "*" term               { $$ = ptree("*",{{"",ptree($1)},{"",$3}}); }
+|     term "/" term               { $$ = ptree("/",{{"",ptree($1)},{"",$3}}); }
 
 
 
@@ -150,10 +159,27 @@ qvarid: varid  { $$ = $1; }
 |       QVARID { $$ = $1; }
 
 varid: VARID        { $$ = $1; }
+|       "(" VARSYM ")" { $$ = $2; }
+|       "(" ":" ")" { $$ = ":"; }
+|       "(" "+" ")" { $$ = "+"; }
+|       "(" "-" ")" { $$ = "-"; }
+|       "(" "*" ")" { $$ = "*"; }
+|       "(" "/" ")" { $$ = "/"; }
 
 literal: STRING      {$$ = ptree('"' + $1 + '"');}
 |        INTEGER     {$$ = ptree($1);}
 |        FLOAT       {$$ = ptree($1);}
+
+/* -------------------------------------------------------------- */
+
+type: varid                           { $$ = ptree($1); }
+|     varid "[" type_tup_args "]"     { $$ = ptree($1, $3); }
+|     "(" type ")"                    { $$ = $2; }
+|     "(" type_tup_args "," type ")"  { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
+|     type "->" type                  { $$ = ptree("Function",{{"",$1},{"",$3}});  }
+
+type_tup_args: type               { $$.push_back({"",$1});}
+|              type_tup_args "," type  { $$ = $1; $$.push_back({"",$3});}
 
 
        /* Without the yyerrok, the yyerror seems not to be called at the end of the file, 

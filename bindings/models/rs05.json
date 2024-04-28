@@ -1,7 +1,7 @@
 {
     "name": "rs05",
     "result_type": "IndelModel",
-    "call": "IModel.rs05[@log_prob,@mean_length,@tau,@topology]",
+    "call": "IModel.rs05(@log_prob,@mean_length,@tau,@topology)",
     "import": ["IModel"],
     "title": "Redelings & Suchard (2005) model of insertions and deletions",
     "citation":{"type": "article",

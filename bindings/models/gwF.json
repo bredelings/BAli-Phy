@@ -1,7 +1,7 @@
 {
     "name": "gwF",
     "result_type": "RevCTMC[a]",
-    "call": "plus_gwf'[@a,@pi,@f,@submodel]",
+    "call": "plus_gwf'(@a,@pi,@f,@submodel)",
     "import": ["SModel"],
     "args": [
         {

@@ -10,7 +10,7 @@
 	"journal": { "name": "Molecular biology and evolution", "volume": "22", "number": "12", "pages": "2472--2479"},
 	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
     },
-    "call": "branch_site_test[@fs,@omegas,@posP,@posW,@posSelection,@branch_cats,@submodel]",
+    "call": "branch_site_test(@fs,@omegas,@posP,@posW,@posSelection,@branch_cats,@submodel)",
     "import": ["SModel"],
     "args": [
         {

@@ -2,7 +2,7 @@
     "name": "wag",
     "deprecated-synonyms": ["WAG"],
     "result_type": "ExchangeModel[AA]",
-    "call": "wag[@a]",
+    "call": "wag(@a)",
     "import": ["SModel"],
     "args": [
         {

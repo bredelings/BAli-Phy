@@ -2,7 +2,7 @@
     "name": "map",
     "result_type": "List[b]",
     "no_log": true,
-    "call": "map[@f,@xs]",
+    "call": "map(@f,@xs)",
     "args": [
         {
             "arg_name": "f",

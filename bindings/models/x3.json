@@ -3,7 +3,7 @@
     "result_type": "RevCTMC[a]",
     "constraints": [ "Triplets[a,b]" ],
     "title": "Rate matrix on triplets/codon constructed from nucleotide rates",
-    "call": "SModel.x3[@a,@submodel]",
+    "call": "SModel.x3(@a,@submodel)",
     "import": ["SModel"],
     "args": [
         {

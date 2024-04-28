@@ -2,7 +2,7 @@
     "name": "nonreversible",
     "result_type": "CTMC[a]",
     "no_log": true,
-    "call": "nonreversible[@x]",
+    "call": "nonreversible(@x)",
     "args": [
         {
             "arg_name": "x",

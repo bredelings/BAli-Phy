@@ -2,7 +2,7 @@
     "name": "symmetric_dirichlet",
     "synonyms": [ "Dirichlet"],
     "result_type": "Distribution[List[Double]]",
-    "call": "symmetric_dirichlet[@n,@x]",
+    "call": "symmetric_dirichlet(@n,@x)",
     "import": ["Probability"],
     "args": [
         {

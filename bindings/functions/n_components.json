@@ -2,7 +2,7 @@
     "name": "n_components",
     "result_type": "Int",
     "no_log": true,
-    "call": "nComponents[@x]",
+    "call": "nComponents(@x)",
     "args": [
         {
             "arg_name": "x",

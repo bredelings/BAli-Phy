@@ -3,7 +3,7 @@
     "title":"The General Time-Reversible rate matrix",
     "deprecated-synonyms": ["GTR"],
     "result_type": "RevCTMC[a]",
-    "call": "gtr'[@sym,@pi,@a]",
+    "call": "gtr'(@sym,@pi,@a)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Some Probabilistic and Statistical Problems in the Analysis of DNA Sequences",

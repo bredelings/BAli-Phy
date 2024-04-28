@@ -1,7 +1,7 @@
 {
     "name": "iid_on",
     "result_type": "Distribution[List[Tuple[a,b]]]",
-    "call": "iid_on[@xs,@dist]",
+    "call": "iid_on(@xs,@dist)",
     "import": ["Probability"],
     "args": [
         {

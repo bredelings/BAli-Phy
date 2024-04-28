@@ -1,7 +1,7 @@
 {
     "name": "mut_sel",
     "result_type": "RevCTMC[a]",
-    "call": "mut_sel'[@ss,@submodel]",
+    "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
     "title": "Mutation-selection model with fitness values for codons",
     "args": [

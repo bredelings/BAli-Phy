@@ -2,7 +2,7 @@
     "name": "mixture",
     "synonyms":["Mixture"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.mixture[@models,@frequencies]",
+    "call": "SModel.mixture(@models,@frequencies)",
     "import": ["SModel"],
     "args": [
         {

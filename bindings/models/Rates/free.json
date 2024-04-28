@@ -2,7 +2,7 @@
     "name": "Rates.free",
     "synonyms": ["DP"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.free_rates[@rates,@frequencies,@submodel]",
+    "call": "SModel.free_rates(@rates,@frequencies,@submodel)",
     "import": ["SModel"],
     "args": [
         {

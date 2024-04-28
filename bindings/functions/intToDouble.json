@@ -3,7 +3,7 @@
     "name": "intToDouble",
     "result_type": "Double",
     "no_log": true,
-    "call": "intToDouble[@x]",
+    "call": "intToDouble(@x)",
     "args": [
         {
             "arg_name": "x",

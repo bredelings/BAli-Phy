@@ -1,7 +1,7 @@
 {
     "name": "Cons",
     "result_type": "List[a]",
-    "call": ":[@first,@second]",
+    "call": "(:)(@first,@second)",
     "args": [
         {
             "arg_name": "first",

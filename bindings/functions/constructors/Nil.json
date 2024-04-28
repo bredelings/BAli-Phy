@@ -1,7 +1,7 @@
 {
     "name": "Nil",
     "result_type": "List[a]",
-    "call": "[]",
+    "call": "([])",
     "args": [ ],
     "title": "The empty list"
 }
