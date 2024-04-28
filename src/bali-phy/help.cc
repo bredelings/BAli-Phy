@@ -235,11 +235,12 @@ string get_help_for_rule(const Rule& rule)
     {
 	string arg_name = arg.get<string>("arg_name");
 	string arg_type = unparse_type(arg.get_child("arg_type"));
-	args_names_types.push_back(arg_name + ": " + arg_type);
+	args_names_types.push_back(blue(arg_name) + bold(": ") + red(arg_type));
     }
     help<<header("Usage");
     help<<"   "<<bold(name);
-    if (args_names_types.size()) help<<"("<<join(args_names_types,", ")<<")";
+    if (args_names_types.size()) help<<bold("(")<<join(args_names_types,bold(", "))<<bold(")");
+    help<<" "<<bold("->")<<" "<<red(result_type);
     help<<"\n\n";
     
     if (auto synonyms = rule.get_child_optional("synonyms"))
@@ -257,7 +258,7 @@ string get_help_for_rule(const Rule& rule)
     {
 	// 1. arg: description
 	auto description = arg.get_optional<string>("description");
-	help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<".\n";
+	help<<"   "<<blue(arg.get<string>("arg_name"))<<": "<<description<<".\n";
 
 	// 2. default =/~ default
 	if (auto default_value = arg.get_child_optional("default_value"))
@@ -265,8 +266,6 @@ string get_help_for_rule(const Rule& rule)
 
 	help<<std::endl;
     }
-    help<<header("Result type");
-    help<<indent(3,result_type)<<"\n\n";
 
     if (auto description = rule.get_optional<string>("description"))
     {
