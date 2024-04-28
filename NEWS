@@ -1,6 +1,9 @@
 * 4.0-beta10 (unreleased)
 - Features
   + Allow allow codon models with any genetic code.
+- Bindings
+  - Change types from Distribution[Double] to Distribution<Double>
+  - Move calls and default values to the expression parser.
 
 * 4.0-beta9 (Mar 40, 2024)
 - Bug fixes:
