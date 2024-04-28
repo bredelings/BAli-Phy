@@ -1,7 +1,7 @@
 {
     "name": "inv",
     "synonyms": ["INV"],
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "plus_inv(@p_inv,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -13,7 +13,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]"
+            "arg_type": "MixtureModel<a>"
         }
     ],
     "title": "Invariable sites model",

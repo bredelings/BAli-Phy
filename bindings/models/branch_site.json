@@ -1,7 +1,7 @@
 {
     "name": "branch_site",
     "title": "The branch-site test for positive selection from Zhang et al. (2005)",
-    "result_type": "MultiMixtureModel[a[Codons[b]]]",
+    "result_type": "MultiMixtureModel<a<Codons<b>>>",
     "citation": {
 	"type": "article",
 	"title": "Evaluation of an improved branch-site likelihood method for detecting positive selection at the molecular level",
@@ -15,13 +15,13 @@
     "args": [
         {
             "arg_name": "fs",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(2,1)",
 	    "description":"Class frequencies in the background model."
         },
         {
             "arg_name": "omegas",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~iid(1,uniform(0,1))",
 	    "description":"dN/dS ratios for the first n-1 classes in the background model."
         },
@@ -45,13 +45,13 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "Function[Double,a[Codons[b]]]",
+            "arg_type": "Function<Double,a<Codons<b>>>",
             "default_value": "function(w:gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "branch_cats",
-            "arg_type": "List[Int]",
+            "arg_type": "List<Int>",
             "default_value": "get_state(branch_categories)"
         }
     ],

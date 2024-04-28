@@ -8,7 +8,7 @@
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[a]"
+            "arg_type": "Distribution<a>"
         }
     ]
 }

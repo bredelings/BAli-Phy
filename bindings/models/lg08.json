@@ -1,7 +1,7 @@
 {
     "name": "lg08",
     "deprecated-synonyms": ["lg,LG,LG08"],
-    "result_type": "ExchangeModel[AA]",
+    "result_type": "ExchangeModel<AA>",
     "call": "SModel.lg(@a)",
     "import": ["SModel"],
     "args": [

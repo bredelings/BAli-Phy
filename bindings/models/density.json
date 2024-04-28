@@ -7,7 +7,7 @@
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[a]",
+            "arg_type": "Distribution<a>",
 	    "description": "The distribution to take the density of"
         },
         {

@@ -1,26 +1,26 @@
 {
     "name": "mut_sel_aa",
-    "result_type": "RevCTMC[Codons[a]]",
+    "result_type": "RevCTMC<Codons<a>>",
     "synonyms": ["mut_sel0"],
-    "constraints": ["Nucleotides[a]"],
+    "constraints": ["Nucleotides<a>"],
     "title": "Mutation-selection model with fitness values for amino-acids",
     "call": "mut_sel_aa'(@ss,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[Codons[a]]",
+            "arg_type": "RevCTMC<Codons<a>>",
 	    "description": "Model of neutral mutation"
         },
         {
             "arg_name": "ss",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "aas=letters(getAminoAcids(@a)); zip(aas, ~iid(length(aas), normal(0,1)))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
 	    "arg_name": "a",
-	    "arg_type": "Codons[a]",
+	    "arg_type": "Codons<a>",
 	    "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
 	}

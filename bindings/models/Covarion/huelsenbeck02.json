@@ -2,7 +2,7 @@
     "name": "Covarion.hb02",
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "huelsenbeck_02(@s01,@s10,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -27,7 +27,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
 	    "description": "The base model"
         }
     ],

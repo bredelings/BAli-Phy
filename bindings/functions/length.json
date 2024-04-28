@@ -6,7 +6,7 @@
     "args": [
         {
             "arg_name": "x",
-            "arg_type": "List[a]"
+            "arg_type": "List<a>"
         }
     ]
 }

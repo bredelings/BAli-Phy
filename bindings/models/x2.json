@@ -1,20 +1,20 @@
 {
     "name": "x2",
-    "result_type": "RevCTMC[Doublets[a]]",
-    "constraints": [ "Nucleotides[a]" ],
+    "result_type": "RevCTMC<Doublets<a>>",
+    "constraints": [ "Nucleotides<a>" ],
     "title": "Rate matrix on doublets constructed from nucleotide rates",
     "call": "SModel.x2(@a,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[b]",
+            "arg_type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },
         {
             "arg_name": "a",
-            "arg_type": "Doublets[a]",
+            "arg_type": "Doublets<a>",
             "default_value": "get_state(alphabet)",
 	    "description": "The Doublets alphabet"
         }

@@ -1,7 +1,7 @@
 {
     "name": "bernoulli",
     "synonyms": [ "Bernoulli" ],
-    "result_type": "Distribution[Int]",
+    "result_type": "Distribution<Int>",
     "call": "bernoulli(@p)",
     "import": ["Probability"],
     "title": "The Bernoulli distribution",

@@ -1,8 +1,8 @@
 {
     "name": "mg94k",
     "deprecated-synonyms": ["MG94"],
-    "result_type": "RevCTMC[Codons[a]]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "RevCTMC<Codons<a>>",
+    "constraints": ["Nucleotides<a>"],
     "call": "mg94k(@a,@kappa,frequencies_from_dict(getNucleotides(@a),@pi),@omega)",
     "import": ["SModel","Bio.Alphabet"],
     "args": [
@@ -20,7 +20,7 @@
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)), 1.0)",
 	    "description": "Nucleotide frequencies"
         },

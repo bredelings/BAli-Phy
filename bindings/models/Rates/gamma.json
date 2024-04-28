@@ -1,7 +1,7 @@
 {
     "name": "Rates.gamma",
     "synonyms": ["Rates.Gamma"],
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "SModel.gamma_rates(@alpha,@n,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -19,7 +19,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
             "description": "The model being scaled"
         }
     ],

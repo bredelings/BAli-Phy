@@ -1,7 +1,7 @@
 {
     "name": "getNucleotides",
     "result_type": "b",
-    "constraints": "Triplets[a,b]",
+    "constraints": "Triplets<a,b>",
     "call": "getNucleotides(@a)",
     "import": ["Bio.Alphabet"],
     "args": [

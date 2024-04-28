@@ -1,6 +1,6 @@
 {
     "name": "replicate",
-    "result_type": "List[a]",
+    "result_type": "List<a>",
     "title": "The replicate function",
     "call": "replicate(@n,@x)",
     "args": [

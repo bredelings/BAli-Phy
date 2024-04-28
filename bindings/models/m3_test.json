@@ -1,25 +1,25 @@
 {
     "name": "m3_test",
     "synonyms": ["M3_Test"],
-    "result_type": "MixtureModel[a[Codons[b]]]",
+    "result_type": "MixtureModel<a<Codons<b>>>",
     "call": "SModel.m3_test(@ps,@omegas,@posP,@posW,@posSelection,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "Function[Double,a[Codons[b]]]",
+            "arg_type": "Function<Double,a<Codons<b>>>",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "ps",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n,2)",
 	    "description": "The frequency of each omega"
         },
         {
             "arg_name": "omegas",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~iid(@n,uniform(0,1))",
 	    "description": "The omega (i.e. dN/dS) values"
         },

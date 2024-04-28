@@ -1,14 +1,14 @@
 {
     "name": "x3_sym",
-    "constraints": [ "Triplets[a,b]" ],
-    "result_type": "ExchangeModel[a]",
+    "constraints": [ "Triplets<a,b>" ],
+    "result_type": "ExchangeModel<a>",
     "title": "Exchangability matrix on triplets/codon constructed from nucleotide exchange rates",
     "call": "SModel.x3_sym(@a,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "ExchangeModel[b]",
+            "arg_type": "ExchangeModel<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "The singlet exchange model"
         },

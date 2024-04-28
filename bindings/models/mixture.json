@@ -1,18 +1,18 @@
 {
     "name": "mixture",
     "synonyms":["Mixture"],
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "SModel.mixture(@models,@frequencies)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "models",
-            "arg_type": "List[MixtureModel[a]]",
+            "arg_type": "List<MixtureModel<a>>",
 	    "description": "The models to mix"
         },
         {
             "arg_name": "frequencies",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(length(@models), 3)",
 	    "description": "The frequencies for each model"
         }

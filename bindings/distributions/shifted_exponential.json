@@ -1,6 +1,6 @@
 {
     "name": "shifted_exponential",
-    "result_type": "Distribution[Double]",
+    "result_type": "Distribution<Double>",
     "call": "shifted_exponential(@mean,@shift)",
     "import": ["Probability"],
     "title": "The Exponential distribution",

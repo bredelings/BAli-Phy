@@ -1,19 +1,19 @@
 {
     "name": "Covarion.gtr",
     "title":"The General Reversity Covarion Model",
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "covarion_gtr_sym(gtr_sym_from_numbers(nComponents(@submodel),@sym),@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "sym",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
 	    "default_value":"~iid_on(number_pairs(n_components(@submodel)),gamma(0.5,1.0))",
 	    "description":"Symmetric class-switching exchangability matrix"
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
 	    "description": "The base mixture model"
         }
     ],

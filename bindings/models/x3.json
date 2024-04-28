@@ -1,14 +1,14 @@
 {
     "name": "x3",
-    "result_type": "RevCTMC[a]",
-    "constraints": [ "Triplets[a,b]" ],
+    "result_type": "RevCTMC<a>",
+    "constraints": [ "Triplets<a,b>" ],
     "title": "Rate matrix on triplets/codon constructed from nucleotide rates",
     "call": "SModel.x3(@a,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[b]",
+            "arg_type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },

@@ -526,10 +526,20 @@ string unparse_type(const ptree& p)
 {
     string s = p.get_value<string>();
     vector<string> args;
-    for(const auto& pair: p)
-	args.push_back( unparse_type(pair.second) );
-    if (not args.empty())
-	s = s + "[" + join(args,',') + "]";
+    for(const auto& [_,t]: p)
+	args.push_back( unparse_type(t) );
+    if (s == "Tuple")
+	s = "("+join(args,",")+")";
+    else if (s == "Function")
+    {
+	string s1 = args[0];
+	if (p[0].second.get_value<string>() == "Function")
+	    s1 = "(" + s1 + ")";
+	string s2 = args[1];
+	s = s1 + " -> " + s2;
+    }
+    else if (not args.empty())
+	s = s + "<" + join(args,',') + ">";
     return s;
 }
 

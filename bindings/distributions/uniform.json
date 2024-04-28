@@ -1,7 +1,7 @@
 {
     "name": "uniform",
     "synonyms": ["Uniform"],
-    "result_type": "Distribution[Double]",
+    "result_type": "Distribution<Double>",
     "call": "uniform(@low,@high)",
     "import": ["Probability"],
     "args": [

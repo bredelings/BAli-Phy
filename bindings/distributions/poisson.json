@@ -1,6 +1,6 @@
 {
     "name": "poisson",
-    "result_type": "Distribution[Int]",
+    "result_type": "Distribution<Int>",
     "call": "poisson(@mu)",
     "import": ["Probability"],
     "args": [

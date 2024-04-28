@@ -1,6 +1,6 @@
 {
     "name": "Cons",
-    "result_type": "List[a]",
+    "result_type": "List<a>",
     "call": "(:)(@first,@second)",
     "args": [
         {
@@ -9,7 +9,7 @@
         },
         {
             "arg_name": "second",
-            "arg_type": "List[a]"
+            "arg_type": "List<a>"
         }
     ],
     "title":"cons: append to the front of a list"

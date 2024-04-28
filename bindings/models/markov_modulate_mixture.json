@@ -1,6 +1,6 @@
 {
     "name": "markov_modulate",
-    "result_type": "RevCTMC[a]",
+    "result_type": "RevCTMC<a>",
     "call": "markov_modulate_mixture(@nu,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -12,7 +12,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
 	    "description": "The base mixture model"
         }
     ],

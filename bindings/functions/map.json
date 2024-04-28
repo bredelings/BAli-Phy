@@ -1,16 +1,16 @@
 {
     "name": "map",
-    "result_type": "List[b]",
+    "result_type": "List<b>",
     "no_log": true,
     "call": "map(@f,@xs)",
     "args": [
         {
             "arg_name": "f",
-            "arg_type": "Function[a,b]"
+            "arg_type": "Function<a,b>"
         },
         {
             "arg_name": "xs",
-            "arg_type": "List[a]"
+            "arg_type": "List<a>"
         }
     ]
 }

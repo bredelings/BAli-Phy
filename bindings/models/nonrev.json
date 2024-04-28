@@ -1,13 +1,13 @@
 {
     "name": "nonrev",
     "title":"The General Non-Reversible rate matrix",
-    "result_type": "CTMC[a]",
+    "result_type": "CTMC<a>",
     "call": "nonRev'(@a,@rates)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "rates",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
 	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
 	    "description":"rate matrix"
         },

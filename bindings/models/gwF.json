@@ -1,12 +1,12 @@
 {
     "name": "gwF",
-    "result_type": "RevCTMC[a]",
+    "result_type": "RevCTMC<a>",
     "call": "plus_gwf'(@a,@pi,@f,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1.0)"
         },
         {
@@ -16,7 +16,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "ExchangeModel[a]",
+            "arg_type": "ExchangeModel<a>",
 	    "description": "Symmetric (exchangability) matrix"
         },
         {

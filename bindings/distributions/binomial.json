@@ -1,7 +1,7 @@
 {
     "name": "binomial",
     "synonyms" : [ "Binomial"],
-    "result_type": "Distribution[Int]",
+    "result_type": "Distribution<Int>",
     "call": "binomial(@n,@p)",
     "import": ["Probability"],
     "title": "Binomial distribution",

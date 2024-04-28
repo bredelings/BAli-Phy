@@ -1,26 +1,26 @@
 {
     "name": "f3x4",
     "synonyms": [ "F3x4" ],
-    "result_type": "List[Tuple[String,Double]]",
-    "constraints": "Triplets[a,b]",
+    "result_type": "List<Tuple<String,Double>>",
+    "constraints": "Triplets<a,b>",
     "call": "f3x4'_frequencies(@a,@pi1,@pi2,@pi3)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi1",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
             "arg_name": "pi2",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
             "arg_name": "pi3",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 3"
         },

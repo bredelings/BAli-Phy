@@ -1,7 +1,7 @@
 {
     "name": "beta",
     "synonyms": [ "Beta" ],
-    "result_type": "Distribution[Double]",
+    "result_type": "Distribution<Double>",
     "call": "beta(@a,@b)",
     "import": ["Probability"],
     "args": [

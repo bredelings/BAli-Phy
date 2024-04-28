@@ -1,7 +1,7 @@
 {
     "name": "pam",
     "synonyms": ["PAM"],
-    "result_type": "ExchangeModel[AA]",
+    "result_type": "ExchangeModel<AA>",
     "call": "SModel.pam(@a)",
     "import": ["SModel"],
     "args": [

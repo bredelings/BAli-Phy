@@ -1,19 +1,19 @@
 {
     "name": "Rates.free",
     "synonyms": ["DP"],
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "SModel.free_rates(@rates,@frequencies,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "rates",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Rates for each category"
         },
         {
             "arg_name": "frequencies",
-            "arg_type": "List[Double]",
+            "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Frequencies for each category"
         },
@@ -25,7 +25,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
 	    "description": "The model to be scaled"
         }
     ],

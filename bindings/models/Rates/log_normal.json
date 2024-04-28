@@ -1,7 +1,7 @@
 {
     "name": "Rates.log_normal",
     "synonyms": ["Rates.log_normal"],
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "SModel.log_normal_rates(@lsigma,@n,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -19,7 +19,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
             "description": "The model being scaled"
         }
     ],

@@ -6,7 +6,7 @@
     "args": [
         {
             "arg_name": "a",
-            "arg_type": "Codons[a]"
+            "arg_type": "Codons<a>"
         }
     ]
 }

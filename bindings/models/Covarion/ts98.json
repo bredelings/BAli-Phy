@@ -2,7 +2,7 @@
     "name": "Covarion.ts98",
     "synonyms": ["Covarion.tuffley_steel_98"],
     "title":"The Tuffley-Steel Covarion Model",
-    "result_type": "RevCTMC[a]",
+    "result_type": "RevCTMC<a>",
     "call": "tuffley_steel_98(@s01,@s10,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -27,7 +27,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC<a>",
 	    "description": "The base model"
         }
     ],

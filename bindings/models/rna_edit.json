@@ -1,25 +1,25 @@
 {
     "name": "rna_edit",
-    "result_type": "RevCTMC[Doublets[a]]",
-    "constraints": [ "Nucleotides[a]" ],
+    "result_type": "RevCTMC<Doublets<a>>",
+    "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
     "call": "SModel.rna_editting(@a,@submodel,@edits)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "edits",
-            "arg_type": "List[Tuple[String,String]]",
+            "arg_type": "List<Tuple<String,String>>",
             "description": "List of [from,to] to describe editting"
         },
         {
             "arg_name": "a",
-            "arg_type": "Doublets[a]",
+            "arg_type": "Doublets<a>",
             "default_value": "get_state(alphabet)",
 	    "description": "The Doublets alphabet"
         },
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[b]",
+            "arg_type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         }

@@ -1,18 +1,18 @@
 {
     "name": "mut_sel",
-    "result_type": "RevCTMC[a]",
+    "result_type": "RevCTMC<a>",
     "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
     "title": "Mutation-selection model with fitness values for codons",
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC<a>",
 	    "description": "Model of neutral mutation"
         },
         {
             "arg_name": "ss",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "zip(letters(@a), ~iid(length(letters(@a)), laplace(0, 0.1)))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },

@@ -1,13 +1,13 @@
 {
     "name": "f61",
     "synonyms": [ "F61" ],
-    "result_type": "List[Tuple[String,Double]]",
-    "constraints": "Triplets[a,b]",
+    "result_type": "List<Tuple<String,Double>>",
+    "constraints": "Triplets<a,b>",
     "call": "id(@pi)",
     "args": [
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1.0)"
         },
         {

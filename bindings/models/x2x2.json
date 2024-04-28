@@ -1,20 +1,20 @@
 {
     "name": "x2x2",
-    "constraints": [ "Doublets[a,b]" ],
-    "result_type": "RevCTMC[a]",
+    "constraints": [ "Doublets<a,b>" ],
+    "result_type": "RevCTMC<a>",
     "title": "Rate matrix constructed from rate matrices on each doublet position",
     "call": "x2x2(@a,@rates1,@rates2)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "rates1",
-            "arg_type": "RevCTMC[b]",
+            "arg_type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 1"
         },
         {
             "arg_name": "rates2",
-            "arg_type": "RevCTMC[b]",
+            "arg_type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 2"
         },

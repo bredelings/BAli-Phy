@@ -518,25 +518,27 @@ namespace zz {
     TOK_EQUAL = 261,               // "="
     TOK_OBRACK = 262,              // "["
     TOK_CBRACK = 263,              // "]"
-    TOK_OPAREN = 264,              // "("
-    TOK_CPAREN = 265,              // ")"
-    TOK_OCURLY = 266,              // "{"
-    TOK_CCURLY = 267,              // "}"
-    TOK_COMMA = 268,               // ","
-    TOK_AT = 269,                  // "@"
-    TOK_TILDE = 270,               // "~"
-    TOK_PLUS = 271,                // "+"
-    TOK_MINUS = 272,               // "-"
-    TOK_TIMES = 273,               // "*"
-    TOK_DIVIDE = 274,              // "/"
-    TOK_STACK = 275,               // "+>"
-    TOK_ARROW = 276,               // "->"
-    TOK_VARID = 277,               // "VARID"
-    TOK_VARSYM = 278,              // "VARSYM"
-    TOK_QVARID = 279,              // "QVARID"
-    TOK_STRING = 280,              // "STRING"
-    TOK_INTEGER = 281,             // "INTEGER"
-    TOK_FLOAT = 282                // "FLOAT"
+    TOK_OANGLE = 264,              // "<"
+    TOK_CANGLE = 265,              // ">"
+    TOK_OPAREN = 266,              // "("
+    TOK_CPAREN = 267,              // ")"
+    TOK_OCURLY = 268,              // "{"
+    TOK_CCURLY = 269,              // "}"
+    TOK_COMMA = 270,               // ","
+    TOK_AT = 271,                  // "@"
+    TOK_TILDE = 272,               // "~"
+    TOK_PLUS = 273,                // "+"
+    TOK_MINUS = 274,               // "-"
+    TOK_TIMES = 275,               // "*"
+    TOK_DIVIDE = 276,              // "/"
+    TOK_STACK = 277,               // "+>"
+    TOK_ARROW = 278,               // "->"
+    TOK_VARID = 279,               // "VARID"
+    TOK_VARSYM = 280,              // "VARSYM"
+    TOK_QVARID = 281,              // "QVARID"
+    TOK_STRING = 282,              // "STRING"
+    TOK_INTEGER = 283,             // "INTEGER"
+    TOK_FLOAT = 284                // "FLOAT"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -553,7 +555,7 @@ namespace zz {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 30, ///< Number of tokens.
+        YYNTOKENS = 32, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -566,40 +568,42 @@ namespace zz {
         S_EQUAL = 8,                             // "="
         S_OBRACK = 9,                            // "["
         S_CBRACK = 10,                           // "]"
-        S_OPAREN = 11,                           // "("
-        S_CPAREN = 12,                           // ")"
-        S_OCURLY = 13,                           // "{"
-        S_CCURLY = 14,                           // "}"
-        S_COMMA = 15,                            // ","
-        S_AT = 16,                               // "@"
-        S_TILDE = 17,                            // "~"
-        S_PLUS = 18,                             // "+"
-        S_MINUS = 19,                            // "-"
-        S_TIMES = 20,                            // "*"
-        S_DIVIDE = 21,                           // "/"
-        S_STACK = 22,                            // "+>"
-        S_ARROW = 23,                            // "->"
-        S_VARID = 24,                            // "VARID"
-        S_VARSYM = 25,                           // "VARSYM"
-        S_QVARID = 26,                           // "QVARID"
-        S_STRING = 27,                           // "STRING"
-        S_INTEGER = 28,                          // "INTEGER"
-        S_FLOAT = 29,                            // "FLOAT"
-        S_YYACCEPT = 30,                         // $accept
-        S_start = 31,                            // start
-        S_exp = 32,                              // exp
-        S_terms = 33,                            // terms
-        S_term = 34,                             // term
-        S_ditems = 35,                           // ditems
-        S_ditem = 36,                            // ditem
-        S_args = 37,                             // args
-        S_arg = 38,                              // arg
-        S_tup_args = 39,                         // tup_args
-        S_qvarid = 40,                           // qvarid
-        S_varid = 41,                            // varid
-        S_literal = 42,                          // literal
-        S_type = 43,                             // type
-        S_type_tup_args = 44                     // type_tup_args
+        S_OANGLE = 11,                           // "<"
+        S_CANGLE = 12,                           // ">"
+        S_OPAREN = 13,                           // "("
+        S_CPAREN = 14,                           // ")"
+        S_OCURLY = 15,                           // "{"
+        S_CCURLY = 16,                           // "}"
+        S_COMMA = 17,                            // ","
+        S_AT = 18,                               // "@"
+        S_TILDE = 19,                            // "~"
+        S_PLUS = 20,                             // "+"
+        S_MINUS = 21,                            // "-"
+        S_TIMES = 22,                            // "*"
+        S_DIVIDE = 23,                           // "/"
+        S_STACK = 24,                            // "+>"
+        S_ARROW = 25,                            // "->"
+        S_VARID = 26,                            // "VARID"
+        S_VARSYM = 27,                           // "VARSYM"
+        S_QVARID = 28,                           // "QVARID"
+        S_STRING = 29,                           // "STRING"
+        S_INTEGER = 30,                          // "INTEGER"
+        S_FLOAT = 31,                            // "FLOAT"
+        S_YYACCEPT = 32,                         // $accept
+        S_start = 33,                            // start
+        S_exp = 34,                              // exp
+        S_terms = 35,                            // terms
+        S_term = 36,                             // term
+        S_ditems = 37,                           // ditems
+        S_ditem = 38,                            // ditem
+        S_args = 39,                             // args
+        S_arg = 40,                              // arg
+        S_tup_args = 41,                         // tup_args
+        S_qvarid = 42,                           // qvarid
+        S_varid = 43,                            // varid
+        S_literal = 44,                          // literal
+        S_type = 45,                             // type
+        S_type_tup_args = 46                     // type_tup_args
       };
     };
 
@@ -1211,6 +1215,36 @@ switch (yykind)
       make_CBRACK (const location_type& l)
       {
         return symbol_type (token::TOK_CBRACK, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_OANGLE (location_type l)
+      {
+        return symbol_type (token::TOK_OANGLE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_OANGLE (const location_type& l)
+      {
+        return symbol_type (token::TOK_OANGLE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CANGLE (location_type l)
+      {
+        return symbol_type (token::TOK_CANGLE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CANGLE (const location_type& l)
+      {
+        return symbol_type (token::TOK_CANGLE, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1828,7 +1862,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 200,     ///< Last index in yytable_.
+      yylast_ = 239,     ///< Last index in yytable_.
       yynnts_ = 15,  ///< Number of nonterminal symbols.
       yyfinal_ = 25 ///< Termination state number.
     };
@@ -1877,10 +1911,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     1,     2,     5,     6,
        7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
       17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
-      27,    28,    29
+      27,    28,    29,    30,    31
     };
     // Last valid token kind.
-    const int code_max = 282;
+    const int code_max = 284;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2077,7 +2111,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2081 "parser.hh"
+#line 2115 "parser.hh"
 
 
 

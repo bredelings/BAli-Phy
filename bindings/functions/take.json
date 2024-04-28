@@ -1,6 +1,6 @@
 {
     "name": "take",
-    "result_type": "List[a]",
+    "result_type": "List<a>",
     "no_log": true,
     "call": "take(@n,@xs)",
     "args": [
@@ -10,7 +10,7 @@
         },
         {
             "arg_name": "xs",
-            "arg_type": "List[a]"
+            "arg_type": "List<a>"
         }
     ]
 }

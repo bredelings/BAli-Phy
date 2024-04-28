@@ -1,7 +1,7 @@
 {
     "name": "cauchy",
     "synonyms": ["Cauchy"],
-    "result_type": "Distribution[Double]",
+    "result_type": "Distribution<Double>",
     "call": "cauchy(@m,@s)",
     "import": ["Probability"],
     "args": [

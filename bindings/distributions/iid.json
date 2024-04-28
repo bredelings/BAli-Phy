@@ -1,6 +1,6 @@
 {
     "name": "iid",
-    "result_type": "Distribution[List[a]]",
+    "result_type": "Distribution<List<a>>",
     "call": "iid(@n,@dist)",
     "import": ["Probability"],
     "args": [
@@ -11,7 +11,7 @@
         },
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[a]",
+            "arg_type": "Distribution<a>",
 	    "description": "The distribution to sample from"
         }
     ],

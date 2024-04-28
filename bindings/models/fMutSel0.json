@@ -1,6 +1,6 @@
 {
     "name": "fMutSel0",
-    "result_type": "RevCTMC[Codons[a]]",
+    "result_type": "RevCTMC<Codons<a>>",
     "call": "fMutSel0'(@a,@ss,@omega,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -12,20 +12,20 @@
         },
         {
             "arg_name": "ss",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "zip(letters(getAminoAcids(@a)),~iid(length(letters(getAminoAcids(@a))),normal(0,0.5)))",
 	    "description": "Scaled selection coefficients (2Ns) of amino acids"
         },
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC<a>",
             "default_value": "gtr",
 	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
 	{
 	    "arg_name": "a",
-	    "arg_type": "Codons[a]",
+	    "arg_type": "Codons<a>",
 	    "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
 	}

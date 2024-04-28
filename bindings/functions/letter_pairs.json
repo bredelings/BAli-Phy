@@ -1,6 +1,6 @@
 {
     "name": "letter_pairs",
-    "result_type": "List[String]",
+    "result_type": "List<String>",
     "call": "letter_pair_names(@a)",
     "args": [
         {

@@ -50,6 +50,8 @@ ptree fold_terms(const std::vector<ptree>& terms);
   EQUAL         "="
   OBRACK        "["
   CBRACK        "]"
+  OANGLE        "<"
+  CANGLE        ">"
   OPAREN        "("
   CPAREN        ")"
   OCURLY        "{"
@@ -173,7 +175,7 @@ literal: STRING      {$$ = ptree('"' + $1 + '"');}
 /* -------------------------------------------------------------- */
 
 type: varid                           { $$ = ptree($1); }
-|     varid "[" type_tup_args "]"     { $$ = ptree($1, $3); }
+|     varid "<" type_tup_args ">"     { $$ = ptree($1, $3); }
 |     "(" type ")"                    { $$ = $2; }
 |     "(" type_tup_args "," type ")"  { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
 |     type "->" type                  { $$ = ptree("Function",{{"",$1},{"",$3}});  }

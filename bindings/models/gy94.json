@@ -2,8 +2,8 @@
     "name": "gy94",
     "synonyms": ["m0"],
     "deprecated-synonyms": ["M0","GY94"],
-    "result_type": "RevCTMC[Codons[a]]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "RevCTMC<Codons<a>>",
+    "constraints": ["Nucleotides<a>"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
     "call": "gy94(@kappa,@omega,frequencies_from_dict(@a,@pi),@a)",
     "import": ["SModel","Bio.Alphabet"],
@@ -22,7 +22,7 @@
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },

@@ -1,6 +1,6 @@
 {
     "name": "Frequencies.uniform",
-    "result_type": "List[Tuple[String,Double]]",
+    "result_type": "List<Tuple<String,Double>>",
     "call": "SModel.uniform_frequencies_dict(@a)",
     "import": ["SModel"],
     "args": [

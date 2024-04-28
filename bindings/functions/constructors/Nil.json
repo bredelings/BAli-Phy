@@ -1,6 +1,6 @@
 {
     "name": "Nil",
-    "result_type": "List[a]",
+    "result_type": "List<a>",
     "call": "([])",
     "args": [ ],
     "title": "The empty list"

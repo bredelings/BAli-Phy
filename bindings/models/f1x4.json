@@ -1,14 +1,14 @@
 {
     "name": "f1x4",
     "synonyms": [ "F1x4" ],
-    "result_type": "List[Tuple[String,Double]]",
-    "constraints": "Triplets[a,b]",
+    "result_type": "List<Tuple<String,Double>>",
+    "constraints": "Triplets<a,b>",
     "call": "f1x4'_frequencies(@a,@pi)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies"
         },

@@ -2,7 +2,7 @@
     "name": "Covarion.gt01",
     "synonyms": ["Covarion.galtier01"],
     "title":"The Galtier (2001) Covarion Model",
-    "result_type": "MixtureModel[a]",
+    "result_type": "MixtureModel<a>",
     "call": "galtier_01(@nu,@pi,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -27,7 +27,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
+            "arg_type": "MixtureModel<a>",
 	    "description": "The base mixture model"
         }
     ],

@@ -2,7 +2,7 @@
     "name": "tn93",
     "title": "The Tamura-Nei (1993) nucleotide rate matrix",
     "deprecated-synonyms": ["TN","TrN","tn","TN93","trn"],
-    "result_type": "RevCTMC[a]",
+    "result_type": "RevCTMC<a>",
     "citation":{"type": "article",
 		"title": "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees.",
 		"year": "1993",
@@ -10,7 +10,7 @@
 		"journal": {"name": "Molecular biology and evolution", "volume": "10", "number": "3", "pages": "512--526"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a040023"}]
 	       },
-    "constraints": ["Nucleotides[a]"],
+    "constraints": ["Nucleotides<a>"],
     "call": "tn93'(@a,@kappaPur,@kappaPyr,@pi)",
     "import": ["SModel"],
     "args": [
@@ -28,7 +28,7 @@
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },

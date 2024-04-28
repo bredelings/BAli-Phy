@@ -6,7 +6,7 @@
     "args": [
         {
             "arg_name": "x",
-            "arg_type": "MixtureModel[a]"
+            "arg_type": "MixtureModel<a>"
         }
     ]
 }

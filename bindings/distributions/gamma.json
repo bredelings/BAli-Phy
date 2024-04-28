@@ -1,7 +1,7 @@
 {
     "name": "gamma",
     "synonyms": ["Gamma"],
-    "result_type": "Distribution[Double]",
+    "result_type": "Distribution<Double>",
     "call": "gamma(@a,@b)",
     "import": ["Probability"],
     "args": [

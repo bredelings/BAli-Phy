@@ -7,7 +7,7 @@
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[Double]",
+            "arg_type": "Distribution<Double>",
 	    "description": "The distribution parameter"
         },
         {

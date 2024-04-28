@@ -1,6 +1,6 @@
 {
     "name": "iidMap",
-    "result_type": "Distribution[IntMap[a]]",
+    "result_type": "Distribution<IntMap<a>>",
     "call": "iidMap(@set,@dist)",
     "import": ["Probability"],
     "args": [
@@ -11,7 +11,7 @@
         },
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[a]",
+            "arg_type": "Distribution<a>",
 	    "description": "The distribution to sample from"
         }
     ],

@@ -1,7 +1,7 @@
 {
     "name": "dNdS",
-    "result_type": "RevCTMC[Codons[a]]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "RevCTMC<Codons<a>>",
+    "constraints": ["Nucleotides<a>"],
     "title": "Scale non-synonymous rates by `omega`",
     "call": "dNdS(@omega,@submodel)",
     "import": ["SModel"],
@@ -14,7 +14,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "RevCTMC[Codons[a]]",
+            "arg_type": "RevCTMC<Codons<a>>",
             "description": "Rate matrix on codons"
         }
     ],

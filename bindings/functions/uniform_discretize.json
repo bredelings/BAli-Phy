@@ -1,13 +1,13 @@
 {
     "name": "uniform_discretize",
-    "result_type": "List[Double]",
+    "result_type": "List<Double>",
     "title": "Uniformly discretize a continuous distribution",
     "call": "uniformDiscretize(@dist,@n)",
     "import": ["Probability"],
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[Double]",
+            "arg_type": "Distribution<Double>",
 	    "description": "The distribution to discretize"
         },
         {

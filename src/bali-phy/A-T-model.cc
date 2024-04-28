@@ -507,24 +507,24 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 model_t get_smodel(const Rules& R, const std::string& model, const string& what)
 {
     map<string,pair<string,string>> smodel_states = {{"alphabet",{"alpha","a"}},
-                                                     {"branch_categories",{"branch_categories","List[Int]"}}};
+                                                     {"branch_categories",{"branch_categories","List<Int>"}}};
 
     try {
-        return get_model(R, "RevCTMC[a]", model, what, {}, smodel_states);
+        return get_model(R, "RevCTMC<a>", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        return get_model(R, "CTMC[a]", model, what, {}, smodel_states);
+        return get_model(R, "CTMC<a>", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        return get_model(R, "MixtureModel[a]", model, what, {}, smodel_states);
+        return get_model(R, "MixtureModel<a>", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
-    return get_model(R, "MultiMixtureModel[a]", model, what, {}, smodel_states);
+    return get_model(R, "MultiMixtureModel<a>", model, what, {}, smodel_states);
 }
 
 
@@ -838,7 +838,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         const alphabet& a = A[first_index].get_alphabet();
 
         auto type = full_smodels[i].type;
-//      FIXME: Actually we need to look at constraints for Nucleotides[a], Doublets[a,b], Triplets[a,b]
+//      FIXME: Actually we need to look at constraints for Nucleotides<a>, Doublets<a,b>, Triplets<a,b>
 //      auto& constraints = full_smodels[i].constraints;
         auto alphabet_type = type.begin()->second;
 
@@ -884,7 +884,7 @@ std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& ar
         else
             M = "~iidMap(branches(tree), gamma(0.5, 2.0/num_branches(tree)))";
 
-        branch_length_model = get_model(R, "IntMap[Double]", M, "branch length model", {{"tree","Tree"}});
+        branch_length_model = get_model(R, "IntMap<Double>", M, "branch length model", {{"tree","Tree"}});
         branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);
     }
 

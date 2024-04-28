@@ -1,8 +1,8 @@
 {
     "name": "hky85_sym",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide exchangabilty matrix",
-    "result_type": "ExchangeModel[a]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "ExchangeModel<a>",
+    "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
 		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
 		"year": "1985",

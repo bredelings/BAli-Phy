@@ -1,8 +1,8 @@
 {
     "name": "RNA.m16a",
     "synonyms": ["shh01_m16a","RNA.shh01_m16a"],
-    "constraints": [ "Doublets[a,b]" ],
-    "result_type": "RevCTMC[a]",
+    "constraints": [ "Doublets<a,b>" ],
+    "result_type": "RevCTMC<a>",
     "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
     "call": "rna_stem_16a(@a,@aS,@aD,@b,@g,@e,frequencies_from_dict(@a,@pi))",
     "import": ["SModel"],
@@ -46,7 +46,7 @@
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Doublet frequencies"
         },

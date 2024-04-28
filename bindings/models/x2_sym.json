@@ -1,14 +1,14 @@
 {
     "name": "x2_sym",
-    "constraints": [ "Doublets[a,b]" ],
-    "result_type": "ExchangeModel[a]",
+    "constraints": [ "Doublets<a,b>" ],
+    "result_type": "ExchangeModel<a>",
     "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
     "call": "SModel.x2_sym(@a,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "ExchangeModel[b]",
+            "arg_type": "ExchangeModel<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "The singlet exchange model"
         },

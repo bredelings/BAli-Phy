@@ -2,8 +2,8 @@
     "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "deprecated-synonyms": ["HKY","hky","HKY85"],
-    "result_type": "RevCTMC[a]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "RevCTMC<a>",
+    "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
 		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
 		"year": "1985",
@@ -22,7 +22,7 @@
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Tuple[String,Double]]",
+            "arg_type": "List<Tuple<String,Double>>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },

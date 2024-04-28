@@ -2,7 +2,7 @@
     "name": "*",
     "result_type": "a",
     "no_log": true,
-    "constraints": ["Num[a]"],
+    "constraints": ["Num<a>"],
     "call": "@x * @y",
     "args": [
         {

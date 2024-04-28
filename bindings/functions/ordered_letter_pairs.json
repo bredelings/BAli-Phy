@@ -1,6 +1,6 @@
 {
     "name": "ordered_letter_pairs",
-    "result_type": "List[String]",
+    "result_type": "List<String>",
     "call": "orderedLetterPairNames(@a)",
     "args": [
         {
