@@ -231,13 +231,11 @@ string get_help_for_rule(const Rule& rule)
 	    cs.push_back(unparse_type(x.second));
 //		help<<join(cs,", ")<<" => ";
     }
-    for(auto& argpair: args)
+    for(auto& [_,arg]: args)
     {
-	auto& arg = argpair.second;
 	string arg_name = arg.get<string>("arg_name");
-	if (auto default_value = arg.get_child_optional("default_value"))
-	    arg_name += " " + show_model_abbrev(*default_value, 15);
-	args_names_types.push_back(arg_name);
+	string arg_type = unparse_type(arg.get_child("arg_type"));
+	args_names_types.push_back(arg_name + ": " + arg_type);
     }
     help<<header("Usage");
     help<<"   "<<bold(name);
@@ -255,18 +253,13 @@ string get_help_for_rule(const Rule& rule)
 
     if (not args.empty())
 	help<<header("Arguments");
-    for(auto& argpair: args)
+    for(auto& [_,arg]: args)
     {
-	auto& arg = argpair.second;
-
 	// 1. arg: description
 	auto description = arg.get_optional<string>("description");
 	help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<".\n";
 
-	// 2. type: type
-	help<<"       type: "<<unparse_type(arg.get_child("arg_type"))<<"\n";
-
-	// 3. default =/~ default
+	// 2. default =/~ default
 	if (auto default_value = arg.get_child_optional("default_value"))
 	    help<<"       default "<<show_model(*default_value)<<"\n";
 
