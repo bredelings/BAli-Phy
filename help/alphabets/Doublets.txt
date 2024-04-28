@@ -1,6 +1,6 @@
 # The `Doublets` alphabet:
 
-Doublets[nucleotide]
+Doublets(nucleotide)
 
 The `Doublets` alphabet is used for paired RNA stems.  The
 alignment of Doublets partitions cannot be estimated.  It is
@@ -16,6 +16,6 @@ A,T,G,U, and C in the file.
 
    Doublets
    
-   Doublets[RNA]
+   Doublets(RNA)
    
-   Doublets[DNA]
+   Doublets(DNA)

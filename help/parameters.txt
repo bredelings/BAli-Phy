@@ -3,7 +3,7 @@
 Models, functions and probability distributions all take named
 parameters in BAli-Phy. Parameters are in given square brackets:
 
-   Model[parameter1=value,parameter2~distribution]
+   Model(parameter1=value,parameter2~distribution]
 
 Values are given with `=`, and priors are given with `~`.
 A value or prior for a parameter must be given, unless the
@@ -14,11 +14,11 @@ For example, the Tamura-Nei (tn93) model has 3 parameters, `kappaPur`,
 parameter, the following are the same:
 
      tn93
-     tn93[kappaPur~log_normal[log[2],0.5]]
+     tn93(kappaPur~log_normal(log(2),0.5))
 
 It is also possible to specify parameter values by position only:
 
-     tn93[2,~log_normal[log[1],0.5]]
+     tn93(2,~log_normal(log(1),0.5))
 
 The parameter names, order, type and default values for any function
 can be found by giving that function name to the `help` command.

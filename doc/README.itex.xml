@@ -2291,7 +2291,7 @@ In such cases the parameter value should be specified with <userinput>=</userinp
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
-following is of type <userinput>Distribution[Double]</userinput>:
+following is of type <userinput>Distribution&lt;Double&gt;</userinput>:
 <programlisting>uniform(0,1)</programlisting>
 In contrast, the following are both of type <userinput>Double</userinput>:
 <programlisting>sample(uniform(0,1))
@@ -2320,13 +2320,13 @@ The <userinput>help</userinput> command can be used to determine the default val
   <section xml:id="types"><info><title>Argument and result types</title></info>
   <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
 
-  <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
+  <para>Some types contain parameters.  For example <userinput>List&lt;Int&gt;</userinput> indicates a list of integers and <userinput>List&lt;Double&gt;</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List&lt;a&gt;</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>x+y</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
 <programlisting>1 + 2        // arguments are a=Int, so result is of type Int
 1.0 + 2.0    // arguments are a=Double, so result is of type Double</programlisting>
-<userinput>Tuple[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Tuple[String,Double]</userinput> and <userinput>Tuple[Int,Int]</userinput>.
+<userinput>(a,b)</userinput> is a parameterized type that can be specialized to (for example) <userinput>(String,Double)</userinput> and <userinput>(Int,Int)</userinput>.
   </para>
 
-  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC[a]</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
+  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC&lt;a&gt;</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
   </para>
 
   </section>

@@ -10,7 +10,7 @@ be referenced as the variable T.
 
 The default branch-length prior is:
 
-   ~iid[num\_branches[T],gamma[0.5,div[2,num\_branches[T]]]]
+   ~iid(num\_branches(T),gamma(0.5, 2/num\_branches(T)))
 
 Since the expected total tree length is 1 under this prior, the
 expected total tree length for each partition is given by the
@@ -18,6 +18,6 @@ scale factor.
 
 # Examples:
 
-   -B ~iid[num\_branches[T],gamma[0.5,div[2,num\_branches[T]]]]
+   -B ~iid(num\_branches(T),gamma(0.5, 2/num\_branches(T)))
    
-   --branch-length iid[num\_branches[T],~exponential[div[1,num\_branches[T]]]]
+   --branch-length iid(num\_branches(T),~exponential(1/num\_branches(T)))

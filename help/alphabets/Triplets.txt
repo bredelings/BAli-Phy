@@ -1,6 +1,6 @@
 # The Triplets alphabet:
 
-Triplets[nucleotides]
+Triplets(nucleotides)
 
 The Triplets alphabet is used for triplets of DNA or RNA data.
 It is like the Codons alphabet, with the difference that:
@@ -18,8 +18,8 @@ A,T,G,U, and C in the file.
 # Examples:
 
    Triplets
-   Triplets[RNA]
-   Triplets[DNA]
+   Triplets(RNA)
+   Triplets(DNA)
 
 # See also:
 

@@ -31,7 +31,7 @@ data is specified using the command `align`.
    align = ITS2.fasta
 
    # Link the first and third partition's smodel.
-   smodel = 1,3:tn93+Rates.free[n=3]
+   smodel = 1,3:tn93+>Rates.free(n=3)
 
    # The second partition has a fixed alignment.
    smodel = 2:tn93

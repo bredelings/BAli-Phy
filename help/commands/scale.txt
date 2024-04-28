@@ -8,12 +8,12 @@ partition-specific scale factor to yield the branch lengths for
 each partition. Estimating this scale factor allows estimating the
 evolutionary rate for the partition.
 
-If no prior is specified, then the default prior `~gamma[0.5,2]`
+If no prior is specified, then the default prior `~gamma(0.5,2)`
 for the scale factor is used.
 
 If no partitions are specified, as in
 
-   --scale=~gamma[0.5,2]
+   --scale=~gamma(0.5,2)
 
 then every partition gets a separate scale following the same
 distribution.
@@ -35,10 +35,10 @@ partition cannot be referenced twice.
 
 # Examples:
 
-   -R ~gamma[0.5,2]
+   -R ~gamma(0.5,2)
    
    --scale=2,3:
    
-   --scale=~gamma[0.5,2]
+   --scale=~gamma(0.5,2)
    
    --scale=1

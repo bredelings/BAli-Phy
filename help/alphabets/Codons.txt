@@ -1,6 +1,6 @@
 # The `Codons` alphabet:
 
-Codons[nucleotides,genetic-code]
+Codons(nucleotides,genetic-code)
 
 The `Codons` alphabet is used for triplets of DNA or RNA data
 where each triplet is mapped to an amino acid.  Stop codons are
@@ -17,11 +17,11 @@ help on "genetic-code" for a list of supported genetic codes.
 
    Codons
    
-   Codons[,mt-vert]
+   Codons(,mt-vert)
    
-   Codons[RNA]
+   Codons(RNA)
    
-   Codons[DNA,standard]
+   Codons(DNA,standard)
 
 # See also:
 

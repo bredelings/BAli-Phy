@@ -10,5 +10,5 @@ Evaluate the expression and show the result.  The expression is a model
    bali-phy -p hky85_sym -A DNA
 
    # Generate 10 i.i.d. random variables from a normal distribution.
-   bali-phy -p ~iid[10,normal[0,1]]
+   bali-phy -p '~iid(10,normal(0,1))'
 
