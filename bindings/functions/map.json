@@ -6,7 +6,7 @@
     "args": [
         {
             "arg_name": "f",
-            "arg_type": "Function<a,b>"
+            "arg_type": "a -> b"
         },
         {
             "arg_name": "xs",
