@@ -18,10 +18,12 @@ instance (IOSampleable d, Result d ~ Double) => IOSampleable (ExpTransform d) wh
     sampleIO (ExpTransform dist) = exp <$> sampleIO dist
 
 instance (HasPdf d, Result d ~ Double) => HasPdf (ExpTransform d) where
-    pdf (ExpTransform dist) x = pdf dist x / doubleToLogDouble x
+    pdf (ExpTransform dist) x | x <= 0     = 0
+                              | otherwise  = pdf dist (log x) / doubleToLogDouble x
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (ExpTransform d) where
-    cdf (ExpTransform dist) x = cdf dist (log x)
+    cdf (ExpTransform dist) x | x <= 0    = 0
+                              | otherwise = cdf dist (log x)
     lower_bound (ExpTransform dist) = fmap exp $ lower_bound dist
     upper_bound (ExpTransform dist) = fmap exp $ upper_bound dist
 
