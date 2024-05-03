@@ -1,0 +1,22 @@
+{
+    "name": "pdf",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "pdf(@dist,@x)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution<a>",
+	    "description": "The distribution parameter"
+        },
+        {
+            "arg_name": "x",
+            "arg_type": "a",
+	    "description": "The argument"
+        }
+    ],
+    "title": "The probability density function",
+    "examples": ["pdf(gamma(1, 2), 1)"],
+    "description": "Find the probability density of x under the distribution dist."
+}

@@ -1,0 +1,22 @@
+{
+    "name": "cdf",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "cdf(@dist,@x)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution<Double>",
+	    "description": "The distribution parameter"
+        },
+        {
+            "arg_name": "x",
+            "arg_type": "Double",
+	    "description": "The argument"
+        }
+    ],
+    "title": "The cumulative distribution function",
+    "examples": ["cdf(gamma(1, 2), 1)"],
+    "description": "Find the Pr(X < x) under the distribution."
+}
