@@ -46,7 +46,7 @@ extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
 {
     double a      = Args.evaluate(0).as_double();
     double b      = Args.evaluate(1).as_double();
-    double x      = Args.evaluate(3).as_double();
+    double x      = Args.evaluate(2).as_double();
     assert(a >= 0);
     assert(b >= 0);
 
