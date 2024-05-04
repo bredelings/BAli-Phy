@@ -15,7 +15,7 @@
         {
             "arg_name": "ss",
             "arg_type": "List<Tuple<String,Double>>",
-            "default_value": "aas=letters(getAminoAcids(@a)); zip(aas, ~iid(length(aas), normal(0,1)))",
+            "default_value": "~iid_on(letters(getAminoAcids(@a)), normal(0,1))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{

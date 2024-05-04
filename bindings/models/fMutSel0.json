@@ -13,7 +13,7 @@
         {
             "arg_name": "ss",
             "arg_type": "List<Tuple<String,Double>>",
-            "default_value": "zip(letters(getAminoAcids(@a)),~iid(length(letters(getAminoAcids(@a))),normal(0,0.5)))",
+            "default_value": "~iid_on(letters(getAminoAcids(@a)),normal(0,0.5))",
 	    "description": "Scaled selection coefficients (2Ns) of amino acids"
         },
         {
