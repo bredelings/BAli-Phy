@@ -416,32 +416,14 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
 
 expression_ref get_alphabet_expression_from_args(const variables_map& args)
 {
-    expression_ref a = {var("error"),String("No alphabet!")};
-    if (args.count("alphabet"))
-    {
-        auto as = args["alphabet"].as<vector<string>>();
-        if (as.size() > 1)
-            throw myexception()<<"Only a single alphabet can be used with --print!";
-        auto alpha = as[0];
-        if (as.size() == 1)
-        {
-            if (alpha == "DNA")
-                a = var("dna");
-            else if (alpha == "RNA")
-                a = var("rna");
-            else if (alpha == "AA")
-                a = var("amino_acids");
-            else if (alpha == "Doublets")
-                a = {var("doublets"),var("rna")};
-            else if (alpha == "Triplets")
-                a = {var("triplets"),var("dna")};
-            else if (alpha == "Codons")
-                a = {var("codons"),var("dna"),var("standard_code")};
-            else
-                throw myexception()<<"I don't recognize alphabet '"<<alpha<<"'";
-        }
-    }
-    return a;
+    if (not args.count("alphabet") or args.at("alphabet").as<vector<string>>().empty())
+	return {var("error"),String("No alphabet!")};
+
+    auto anames = args.at("alphabet").as<vector<string>>();
+    if (anames.size() > 1)
+	throw myexception()<<"Only a single alphabet can be used with --print!";
+
+    return get_alphabet_expression( *get_alphabet(anames[0]) );
 }
 
 std::unique_ptr<Program> print_program(const string& argv0, variables_map& args, const shared_ptr<module_loader>& L)
