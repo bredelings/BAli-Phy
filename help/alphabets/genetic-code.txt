@@ -2,17 +2,38 @@
 
 Genetic code names include:
 
-   `standard`
-   `mt-vert`
-   `mt-invert`
-   `mt-yeast`
-   `mt-protozoan`
+   1: `standard`
+   2: `mt-vert`
+   3: `mt-yeast`
+   4: `mt-protozoan`
+   5: `mt-invert`
+   6: `nuc-ciliate`
+   9: `mt-echinoderm`
+   10: `nuc-euplotid`
+   11: `bacteria`
+   12: `nuc-yeast-alt`
+   13: `mt-ascidian`
+   14: `mt-flatworm-alt`
+   15: `nuc-blepharisma`
+   16: `mt-chlorophycean`
+   21: `mt-trematode`
+   22: `mt-scenedesmus-obliquus`
+   23: `mt-thraustochytrium`
+   24: `mt-rhabdopleuridae`
+   25: `bacteria-sr1`
+   26: `nuc-pachysolen-tannophilus`
+   27: `nuc-karyorelict`
+   28: `nuc-condylostoma`
+   29: `nuc-mesodinium`
+   30: `nuc-peritrich`
+   31: `nuc-blastocrithidia`
+   33: `mt-cephalodiscidae`
 
+Each code can also be refered to as code`n`, where `n` is the number of the code.
 Genetic codes can be specified to the Codons alphabet.
 
 See https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi for
-more information on alternate genetic codes.  Let me know if you
-need more flexibility on the codes.
+more information on genetic codes.
 
 # See also:
 
