@@ -1,6 +1,6 @@
 {
     "name": "zip",
-    "result_type": "List<Tuple<a,b>>",
+    "result_type": "List<(a,b)>",
     "no_log": true,
     "call": "zip(@x,@y)",
     "args": [

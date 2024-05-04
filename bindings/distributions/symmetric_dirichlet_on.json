@@ -1,7 +1,7 @@
 {
     "name": "symmetric_dirichlet_on",
     "synonyms": ["DirichletOn"],
-    "result_type": "Distribution<List<Tuple<a,Double>>>",
+    "result_type": "Distribution<List<(a,Double)>>",
     "call": "symmetric_dirichlet_on(@items,@n)",
     "import": ["Probability"],
     "args": [

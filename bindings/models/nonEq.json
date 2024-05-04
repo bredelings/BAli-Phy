@@ -7,13 +7,13 @@
     "args": [
         {
             "arg_name": "rates",
-            "arg_type": "List<Tuple<String,Double>>",
+            "arg_type": "List<(String,Double)>",
 	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
 	    "description":"rate matrix"
         },
         {
             "arg_name": "pi",
-            "arg_type": "List<Tuple<String,Double>>",
+            "arg_type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },

@@ -1,7 +1,7 @@
 {
     "title": "The WAG amino-acid frequencies",
     "name": "wag_freq",
-    "result_type": "List<Tuple<String,Double>>",
+    "result_type": "List<(String,Double)>",
     "call": "wag_frequencies(@a)",
     "import": ["SModel"],
     "args": [
