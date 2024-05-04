@@ -2,7 +2,7 @@
 
 To make a Haskell function accessible from the command line, you must add a JSON file to the directory `bindings/` that registers the Haskell function.
 
-For example, the file `bindings/models/hky85.json` allows the user to specify (for example) `-S hky85[kappa=2]` as a substitution model.
+For example, the file `bindings/models/hky85.json` allows the user to specify (for example) `-S hky85(kappa=2)` as a substitution model.
 The JSON looks like this:
 
 ``` json
@@ -10,35 +10,35 @@ The JSON looks like this:
     "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "deprecated-synonyms": ["HKY","hky","HKY85"],
-    "result_type": "RevCTMC[a]",
-    "constraints": ["Nucleotides[a]"],
+    "result_type": "RevCTMC<a>",
+    "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
-                "title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
-                "year": "1985",
-                "author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
-                "journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
-                "identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
-               },
-    "call": "hky85[@kappa,frequencies_from_dict[@a,@pi],@a]",
+		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
+		"year": "1985",
+		"author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
+		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
+		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
+	       },
+    "call": "hky85'(@a,@kappa,@pi)",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
             "description": "Transition\/transversion ratio"
         },
         {
             "arg_name": "pi",
-            "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[@a],1]",
-            "description": "Letter frequencies"
+            "arg_type": "List<(String,Double)>",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+	    "description": "Letter frequencies"
         },
         {
             "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet",
-            "description": "The alphabet"
+	    "default_value": "get_state(alphabet)",
+	    "description": "The alphabet"
         }
     ],
     "description":"The HKY85 model",

@@ -70,7 +70,7 @@ containing the text:
     "name": "square",
     "result_type": "Double",
     "import": ["Bio.MyModule"],
-    "call": "square[x]",
+    "call": "square(x)",
     "args": [
         {
             "arg_name": "x",

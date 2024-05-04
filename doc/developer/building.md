@@ -2,11 +2,11 @@
 
 ## Prequisites
 
-You will need a C++ compiler that understands C++17.  
+You will need a C++ compiler that understands C++20:
 
-* gcc 7 (or higher) works
-* clang 7 (or higher) works
-* XCode 10.0 (or higher) works
+* gcc 10 (or higher) works
+* clang 3 (or higher) works
+* XCode 14.0 (or higher) works
 
 You will also need to install
 
@@ -40,7 +40,6 @@ sudo apt-get install g++ meson pandoc libcairo2-dev
 ``` sh
 cd BAli-Phy/
 meson build --prefix=$HOME/Applications/bali-phy
-cd build
-ninja install
+ninja -C build install
 ```
 
