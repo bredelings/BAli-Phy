@@ -8,7 +8,7 @@
     "args": [
         {
             "arg_name": "edits",
-            "arg_type": "List<Tuple<String,String>>",
+            "arg_type": "List<(String,String)>",
             "description": "List of [from,to] to describe editting"
         },
         {
