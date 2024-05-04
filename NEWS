@@ -1,11 +1,16 @@
 * 4.0-beta10 (unreleased)
 - Features
-  + Allow allow codon models with any genetic code.
+  + Allow codon models with any genetic code.
+  + Colorized help info; more readable types.
 - Bindings
-  - Change types from Distribution[Double] to Distribution<Double>
   - Move calls and default values to the expression parser.
+  - Read types using the parser.
+  - Change types from Distribution[Double] to Distribution<Double>
+  - Use a -> b for Function<a,b> and (a,b) for Tuple<a,b>.
+- Bug fixes:
+  - Fix non-standard genetic codes.
 
-* 4.0-beta9 (Mar 40, 2024)
+* 4.0-beta9 (Mar 30, 2024)
 - Bug fixes:
   + Fix crash with long sequences.
   + Fix crash in meson test
