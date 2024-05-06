@@ -34,12 +34,14 @@ export BOOST_ROOT=$CONDA_PREFIX
 ```
 
 The meson version needs to be at least 1.1.
-If your distribution provides a version of meson that is less than 1.1,
-then you may need to install meson through the python package manager "pip" or "pip3":
 
-    pip3 -V
-    PATH=$HOME/.local/bin:$PATH
-    pip3 install --user meson ninja
+    meson --version
+
+If your version of meson is less than 1.1, you need to install the most recent version of meson into a python virtual environment:
+
+    python3 -m venv meson_venv
+    source meson_venv/bin/activate
+    pip install meson ninja
 
 
 Build BAli-Phy
