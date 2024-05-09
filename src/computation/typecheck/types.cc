@@ -1,6 +1,7 @@
 #include "types.H"
 #include "util/set.H"   // for add( , )
 #include "haskell/ids.H"
+#include "util/assert.hh"
 
 #include "computation/expression/tuple.H"
 
