@@ -2465,6 +2465,7 @@ double max_delta(const vector<point_position>& p)
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/kamada_kawai_spring_layout.hpp>
 #include <boost/graph/fruchterman_reingold.hpp>
+#include "util/assert.hh"
 
 using namespace boost;
 
