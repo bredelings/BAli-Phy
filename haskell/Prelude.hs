@@ -35,6 +35,7 @@ module Prelude (
         module Compiler.Num,
         module Compiler.Real,
         module Compiler.RealFrac,
+        module Compiler.RealFloat,
         module Compiler.Enum,
         module Compiler.Classes
   ) where
@@ -50,6 +51,7 @@ import Compiler.Num
 import Compiler.Real
 import Compiler.RealFrac
 import Compiler.Enum
+import Compiler.RealFloat
 import Compiler.Classes
 import Data.Bool
 import Data.Either

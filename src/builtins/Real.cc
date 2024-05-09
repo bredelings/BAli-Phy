@@ -1,5 +1,10 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+#include "computation/expression/bool.H"
+#include "computation/haskell/Integer.H"
+
+#include <cmath>
+#include <cstdint>
 
 using boost::dynamic_pointer_cast;
 using std::string;
@@ -233,3 +238,66 @@ extern "C" closure builtin_function_acosh(OperationArgs& Args)
     return {acosh(x)};
 }
 
+extern "C" closure builtin_function_isDoubleNaN(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+
+    return make_Bool(std::isnan(x));
+}
+
+extern "C" closure builtin_function_isDoubleFinite(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+
+    return make_Bool(std::isfinite(x));
+}
+
+extern "C" closure builtin_function_isDoubleInfinite(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+
+    return make_Bool(std::isinf(x));
+}
+
+extern "C" closure builtin_function_isDoubleDenormalized(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+
+    return make_Bool(std::fpclassify(x) == FP_SUBNORMAL);
+}
+
+extern "C" closure builtin_function_isDoubleNegativeZero(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+
+    return make_Bool(x == 0 and std::signbit(x));
+}
+
+extern "C" closure builtin_function_atan2_double(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+    double y = Args.evaluate(1).as_double();
+
+    return {atan2(x,y)};
+}
+
+extern "C" closure builtin_function_decodeDoubleRaw(OperationArgs& Args)
+{
+    double x = Args.evaluate(0).as_double();
+    int64_t sig = 0;
+    int exp = 0;
+    if (x)
+    {
+	sig = (int64_t)std::scalbn(std::frexp(x,&exp), DBL_MANT_DIG);
+	exp -= DBL_MANT_DIG;
+    }
+    return EPair(Integer(sig),exp);
+}
+
+extern "C" closure builtin_function_encodeDouble(OperationArgs& Args)
+{
+    auto sig = (int64_t)Args.evaluate(0).as_<Integer>();
+    auto exp = Args.evaluate(1).as_int();
+
+    return { std::ldexp(sig,exp) };
+}
