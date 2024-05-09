@@ -2,7 +2,7 @@ module Numeric.Log where
 
 import Compiler.Floating
 
-data Log a = Log a
+data Log a = Exp a
 
 {-
 This requires (at least) log to be in class Floating
@@ -17,13 +17,13 @@ instance Num (Log a) where
     fromInteger = undefined
 
 instance Fractional (Log a) where
-    recip (Log x) = Log $ -x
-    fromRational x = Log $ log x
+    recip (Exp x) = Exp $ -x
+    fromRational x = Exp $ log x
 
 instance Pow (Log a) where
-    pow (Log x) t = Log $ x*t
-    ln (Log x) = x
-    expTo x = Log x
+    pow (Exp x) t = Exp $ x*t
+    ln (Exp x) = x
+    expTo x = Exp x
 -}
 
 
