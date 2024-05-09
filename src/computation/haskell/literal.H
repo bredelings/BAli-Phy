@@ -33,6 +33,8 @@ struct Integer
     Integer(integer i, const expression_ref& op): value(i), fromIntegerOp(op) {}
 };
 
+integer integerFromString(const std::string& s);
+
 struct String
 {
     std::string value;

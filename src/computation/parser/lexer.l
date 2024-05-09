@@ -24,10 +24,12 @@
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc);
-
 yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
 				           const yy::parser::location_type& loc);
+
+yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc);
+
+yy::parser::symbol_type make_boxed_integer10(const yy::parser::location_type& loc);
 
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
 
@@ -224,8 +226,8 @@ signed       {negative}?
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
 <INITIAL>{consym}       return drv.consym(loc);
 
-<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer(10,false,0,loc);
-<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer(10,true,0,loc);
+<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer10(loc);
+<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer10(loc);
 <INITIAL>{decimal}                              drv.set_closing_token(); return make_integer10(loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 <INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer( 8,true,2,loc);
@@ -403,12 +405,21 @@ yy::parser::symbol_type driver::consym(const yy::parser::location_type& loc) con
 
 yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc)
 {
-    return yy::parser::make_INTEGER(integer(yytext), loc);
+    return yy::parser::make_INTEGER(Haskell::integerFromString(yytext), loc);
+}
+
+yy::parser::symbol_type make_boxed_integer10(const yy::parser::location_type& loc)
+{
+    std::string s(yytext);
+    assert(s.back() == '#');
+    s.resize(s.size()-1);
+    return yy::parser::make_PRIMINTEGER(Haskell::integerFromString(s), loc);
 }
 
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc)
 {
+    // This doesn't handle underscore separators
     errno = 0;
     auto n = std::stoi(yytext+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
@@ -421,6 +432,7 @@ yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
                                            const yy::parser::location_type& loc)
 {
+    // This doesn't handle underscore separators
     errno = 0;
     auto n = std::stoi(yytext+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))

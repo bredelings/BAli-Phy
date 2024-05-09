@@ -26,6 +26,11 @@ namespace Haskell
     std::string rgx_s1 = fmt::format( R"(_*({0})\.({0})({1})?)",decimal,exponent);
     std::string rgx_s2 = fmt::format( R"(_*({0})({1}))",decimal,exponent);
 
+    integer integerFromString(const string& s)
+    {
+	return integer(remove_underscore(s));
+    }
+
 rational rationalFromString(const string& s)
 {
     static const std::regex rgx1( rgx_s1 , std::regex_constants::ECMAScript);
