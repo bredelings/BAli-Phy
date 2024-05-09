@@ -4,28 +4,25 @@ import Compiler.Floating
 
 data Log a = Exp a
 
-{-
-This requires (at least) log to be in class Floating
-
-instance Num (Log a) where
+instance RealFloat a => Num (Log a) where
     (+) = undefined
     (-) = undefined
     (*) = undefined
     negate = error "Negation not allowed"
     abs = id
-    signum _ = (Log 0)
+    signum _ = Exp 0
     fromInteger = undefined
 
-instance Fractional (Log a) where
+instance RealFloat a => Fractional (Log a) where
+    (Exp x) / (Exp y) = Exp (x - y)
     recip (Exp x) = Exp $ -x
-    fromRational x = Exp $ log x
 
-instance Pow (Log a) where
+{-
+instance RealFloat a => Pow (Log a) where
     pow (Exp x) t = Exp $ x*t
     ln (Exp x) = x
     expTo x = Exp x
 -}
-
 
 class Floating a => Precise a where { }
 
