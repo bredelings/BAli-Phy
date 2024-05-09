@@ -242,35 +242,35 @@ extern "C" closure builtin_function_isDoubleNaN(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
 
-    return make_Bool(std::isnan(x));
+    return {std::isnan(x)};
 }
 
 extern "C" closure builtin_function_isDoubleFinite(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
 
-    return make_Bool(std::isfinite(x));
+    return {std::isfinite(x)};
 }
 
 extern "C" closure builtin_function_isDoubleInfinite(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
 
-    return make_Bool(std::isinf(x));
+    return {std::isinf(x)};
 }
 
 extern "C" closure builtin_function_isDoubleDenormalized(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
 
-    return make_Bool(std::fpclassify(x) == FP_SUBNORMAL);
+    return {std::fpclassify(x) == FP_SUBNORMAL};
 }
 
 extern "C" closure builtin_function_isDoubleNegativeZero(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
 
-    return make_Bool(x == 0 and std::signbit(x));
+    return {x == 0 and std::signbit(x)};
 }
 
 extern "C" closure builtin_function_atan2_double(OperationArgs& Args)
