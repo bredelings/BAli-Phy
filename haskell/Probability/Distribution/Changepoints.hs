@@ -78,11 +78,11 @@ instance (Sampleable d, Result d ~ Double) => Sampleable (Changepoints2 d) where
 
 changepoints2 lambda (start,end) dist = Changepoints2 lambda (start,end) dist
 
-type Position = Double
-type Ratio    = Double
-type Length   = Double
+type Position  = Double
+type RatioType = Double
+type Length    = Double
 
-data RegionTree = Constant | Split2 Position Ratio RegionTree RegionTree
+data RegionTree = Constant | Split2 Position RatioType RegionTree RegionTree
 
 flattenChangePoints x left length Constant = [(x, left, left+length)]
 
