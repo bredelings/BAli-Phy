@@ -31,6 +31,8 @@
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
 #include "computation/varinfo.H"
+#include "util/assert.hh"
+
 
 namespace views = ranges::views;
 
