@@ -6,8 +6,8 @@
 #include "rename/rename.H" // for get_indices_for_names( )
 
 #include "util/set.H"
-
 #include <range/v3/all.hpp>
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
