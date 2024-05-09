@@ -308,7 +308,6 @@ do_block generate_main(const variables_map& args,
     {
         // Main.1: Emit let filenames = ...
         var filenames_var("filenames");
-        bool any_ranges = false;
         map<fs::path,int> index_for_filename;
         {
             vector<expression_ref> filenames_;
@@ -319,8 +318,6 @@ do_block generate_main(const variables_map& args,
                     index_for_filename.insert({filename,filenames_.size()});
                     filenames_.push_back(String(filename.string()));
                 }
-                if (not range.empty())
-                    any_ranges = true;
             }
             main.let(filenames_var,get_list(filenames_));
         }
