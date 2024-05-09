@@ -17,6 +17,7 @@ class Fractional a => Floating a where
     asin, atan, acos :: a -> a
     sinh, tanh, cosh :: a -> a
     asinh, atanh, acosh :: a -> a
+    log1p, expm1, log1pexp, log1mexp :: a -> a
 
 foreign import bpcall "Real:exp" exp_double :: Double -> Double
 foreign import bpcall "Real:sqrt" sqrt_a :: a -> a
@@ -35,6 +36,10 @@ foreign import bpcall "Real:cosh" cosh_double :: Double -> Double
 foreign import bpcall "Real:asinh" asinh_double :: Double -> Double
 foreign import bpcall "Real:atanh" atanh_double :: Double -> Double
 foreign import bpcall "Real:acosh" acosh_double :: Double -> Double
+foreign import bpcall "Real:expm1" expm1_double :: Double -> Double
+foreign import bpcall "Real:log1p" log1p_double :: Double -> Double
+foreign import bpcall "Real:log1pexp" log1pexp_double :: Double -> Double
+foreign import bpcall "Real:log1mexp" log1mexp_double :: Double -> Double
 
 instance Floating Double where
     pi = 3.14159265358979323846
@@ -56,6 +61,10 @@ instance Floating Double where
     asinh = asinh_double
     atanh = atanh_double
     acosh = acosh_double
+    expm1 = expm1_double
+    log1p = log1p_double
+    log1pexp = log1pexp_double
+    log1mexp = log1mexp_double
 
 infixr 8 `pow`
 
