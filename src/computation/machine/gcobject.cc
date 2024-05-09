@@ -7,7 +7,7 @@ void GCObject::get_regs(std::vector<int>& regs) const
     regs.clear();
 }
 
-void GCObject::update_regs(const std::vector<int>& remap) const
+void GCObject::update_regs(const std::vector<int>& /*remap*/ ) const
 {
 }
 
