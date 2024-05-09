@@ -258,7 +258,7 @@ public:
 	}
 
     // Default
-    expression_ref() {}
+    expression_ref() {d = 0;}
 
     expression_ref(expression* e);
 
