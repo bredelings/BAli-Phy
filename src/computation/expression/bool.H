@@ -13,5 +13,3 @@ bool is_bool_true(const expression_ref& e);
 bool is_bool_false(const expression_ref& e);
 
 bool is_otherwise(const expression_ref& e);
-
-expression_ref make_Bool(bool a);

@@ -43,12 +43,3 @@ bool is_otherwise(const expression_ref& e)
 
     return e.as_<var>().name == "Data.Bool.otherwise";
 }
-
-expression_ref make_Bool(bool a)
-{
-    if (a)
-        return var("True");
-    else
-        return var("False");
-}
-
