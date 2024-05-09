@@ -243,6 +243,8 @@ public:
 
     Type integer_type() const;
 
+    Type rational_type() const;
+
     Type double_type() const;
 
     bool add_substitution(const MetaTypeVar& a, const Type& type);

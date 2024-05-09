@@ -1057,6 +1057,8 @@ TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m)
 
 Hs::Var TypeChecker::find_prelude_var(string name) const
 {
+    // We need to look in the Prelude, not this module!
+    // But then we would have to rename all modules before type-checking any of them.
     if (this_mod().is_declared(name))
         name = this_mod().lookup_symbol(name)->name;
     return Hs::Var(name);
@@ -1064,6 +1066,8 @@ Hs::Var TypeChecker::find_prelude_var(string name) const
 
 ID TypeChecker::find_prelude_tycon_name(const string& name) const
 {
+    // We need to look in the Prelude, not this module!
+    // But then we would have to rename all modules before type-checking any of them.
     if (this_mod().type_is_declared(name))
         return this_mod().lookup_type(name)->name;
     else
@@ -1072,6 +1076,8 @@ ID TypeChecker::find_prelude_tycon_name(const string& name) const
 
 TypeCon TypeChecker::find_prelude_tycon(const string& name) const
 {
+    // We need to look in the Prelude, not this module!
+    // But then we would have to rename all modules before type-checking any of them.
     auto prelude_name = find_prelude_tycon_name(name);
     return TypeCon({noloc, prelude_name });
 }
@@ -1094,6 +1100,11 @@ Type TypeChecker::int_type() const
 Type TypeChecker::integer_type() const
 {
     return find_prelude_tycon("Integer");
+}
+
+Type TypeChecker::rational_type() const
+{
+    return TypeCon({noloc,"Compiler.Ratio.Rational"});
 }
 
 Type TypeChecker::double_type() const
