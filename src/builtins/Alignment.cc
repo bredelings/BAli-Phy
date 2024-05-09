@@ -423,7 +423,7 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
     return {columns, counts, mapping};
 }
 
-tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const EVector& A, const alphabet& a)
+tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const EVector& A, const alphabet& /*a*/)
 {
     int L = A[0].as_<EPair>().second.as_<EVector>().size();
 
