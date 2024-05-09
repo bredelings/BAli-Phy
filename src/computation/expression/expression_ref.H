@@ -333,6 +333,7 @@ public:
 
     expression_ref(expression_ref&& E) noexcept
 	{
+	    d = 0;
 	    swap(E);
 	}
 
