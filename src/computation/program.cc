@@ -5,7 +5,6 @@
 #include "models/model.H"
 #include "expression/var.H"
 #include "util/myexception.H"
-#include "util/assert.hh"
 #include "util/string/join.H"
 #include "util/mapping.H"
 #include "util/log-level.H"
@@ -15,6 +14,7 @@
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/machine/graph_register.H"
+#include "util/assert.hh"
 
 using std::vector;
 using std::set;
