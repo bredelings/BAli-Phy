@@ -33,6 +33,7 @@ module Prelude (
         module Compiler.Integral,
         module Compiler.ST,
         module Compiler.Num,
+        module Compiler.Ratio,
         module Compiler.Real,
         module Compiler.RealFrac,
         module Compiler.RealFloat,
@@ -40,19 +41,20 @@ module Prelude (
         module Compiler.Classes
   ) where
 
+import Compiler.Base
+import Compiler.Classes
+import Compiler.Enum
 import Compiler.Error
 import Compiler.Floating
 import Compiler.Fractional
-import Compiler.Base
 import Compiler.IO
-import Compiler.ST
 import Compiler.Integral
 import Compiler.Num
+import Compiler.Ratio
 import Compiler.Real
 import Compiler.RealFrac
-import Compiler.Enum
 import Compiler.RealFloat
-import Compiler.Classes
+import Compiler.ST
 import Data.Bool
 import Data.Either
 import Data.Eq

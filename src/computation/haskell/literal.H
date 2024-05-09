@@ -40,15 +40,19 @@ struct String
     String(const std::string& s):value(s) {}
 };
 
-struct Double
+struct Floating
 {
-    double value;
-    bool operator==(const Double&) const;
+    rational value;
+
+    bool operator==(const Floating&) const = default;
 
     expression_ref fromRationalOp;
-    Double(double d): value(d) {}
-    Double(double d, const expression_ref& op): value(d), fromRationalOp(op) {}
+
+    Floating(rational r):value(r) {}
+    Floating(rational r, const expression_ref& op):value(r),fromRationalOp(op) {}
 };
+
+rational rationalFromString(const std::string& s);
 
 struct BoxedInteger
 {
@@ -58,7 +62,7 @@ struct BoxedInteger
 
 struct Literal: public Object
 {
-    std::variant<Char, Integer, String, Double, BoxedInteger> literal;
+    std::variant<Char, Integer, String, Floating, BoxedInteger> literal;
 
     bool operator==(const Literal&) const;
     bool operator==(const Object&) const override;
@@ -74,7 +78,7 @@ struct Literal: public Object
     std::optional<char> is_Char() const;
     std::optional<integer> is_Integer() const;
     std::optional<std::string> is_String() const;
-    std::optional<double> is_Double() const;
+    std::optional<rational> is_Floating() const;
     std::optional<integer> is_BoxedInteger() const;
 
     template <typename T>

@@ -581,7 +581,6 @@ namespace yy {
       // "PRIMCHAR"
       char dummy29[sizeof (char)];
 
-      // "RATIONAL"
       // "PRIMDOUBLE"
       char dummy30[sizeof (double)];
 
@@ -603,56 +602,59 @@ namespace yy {
       // "PRIMINTEGER"
       char dummy34[sizeof (integer)];
 
+      // "RATIONAL"
+      char dummy35[sizeof (rational)];
+
       // export_subspec
-      char dummy35[sizeof (std::optional<Hs::ExportSubSpec>)];
+      char dummy36[sizeof (std::optional<Hs::ExportSubSpec>)];
 
       // maybeimpspec
-      char dummy36[sizeof (std::optional<Hs::ImpSpec>)];
+      char dummy37[sizeof (std::optional<Hs::ImpSpec>)];
 
       // opt_kind_sig
-      char dummy37[sizeof (std::optional<Hs::Kind>)];
+      char dummy38[sizeof (std::optional<Hs::Kind>)];
 
       // opt_tyconsig
-      char dummy38[sizeof (std::optional<Hs::LType>)];
+      char dummy39[sizeof (std::optional<Hs::LType>)];
 
       // wherebinds
-      char dummy39[sizeof (std::optional<Located<Hs::Binds>>)];
+      char dummy40[sizeof (std::optional<Located<Hs::Binds>>)];
 
       // where_cls
       // where_inst
-      char dummy40[sizeof (std::optional<Located<Hs::Decls>>)];
+      char dummy41[sizeof (std::optional<Located<Hs::Decls>>)];
 
       // fbind
-      char dummy41[sizeof (std::optional<Located<Hs::FieldBinding>>)];
+      char dummy42[sizeof (std::optional<Located<Hs::FieldBinding>>)];
 
       // opt_datafam_kind_sig
       // opt_tyfam_kind_sig
       // opt_at_kind_inj_sig
-      char dummy42[sizeof (std::optional<Located<Hs::Kind>>)];
+      char dummy43[sizeof (std::optional<Located<Hs::Kind>>)];
 
       // maybeas
-      char dummy43[sizeof (std::optional<Located<std::string>>)];
+      char dummy44[sizeof (std::optional<Located<std::string>>)];
 
       // prec
-      char dummy44[sizeof (std::optional<int>)];
+      char dummy45[sizeof (std::optional<int>)];
 
       // overlap_pragma
-      char dummy45[sizeof (std::optional<std::string>)];
+      char dummy46[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy46[sizeof (std::optional<std::vector<Hs::LExport>>)];
+      char dummy47[sizeof (std::optional<std::vector<Hs::LExport>>)];
 
       // where_type_family
-      char dummy47[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
+      char dummy48[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
 
       // tycl_hdr
-      char dummy48[sizeof (std::pair<Hs::Context,Hs::LType>)];
+      char dummy49[sizeof (std::pair<Hs::Context,Hs::LType>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy49[sizeof (std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>)];
+      char dummy50[sizeof (std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -707,50 +709,50 @@ namespace yy {
       // conid
       // qconsym
       // consym
-      char dummy50[sizeof (std::string)];
+      char dummy51[sizeof (std::string)];
 
       // datafam_inst_hdr
-      char dummy51[sizeof (std::tuple<std::optional<std::vector<Hs::LTypeVar>>,std::optional<Located<Hs::Context>>,Hs::LType>)];
+      char dummy52[sizeof (std::tuple<std::optional<std::vector<Hs::LTypeVar>>,std::optional<Located<Hs::Context>>,Hs::LType>)];
 
       // fielddecls
       // fielddecls1
-      char dummy52[sizeof (std::vector<Hs::FieldDecl>)];
+      char dummy53[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy53[sizeof (std::vector<Hs::GuardedRHS>)];
+      char dummy54[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // exportlist
       // exportlist1
-      char dummy54[sizeof (std::vector<Hs::LExport>)];
+      char dummy55[sizeof (std::vector<Hs::LExport>)];
 
       // importdecls
       // importdecls_semi
-      char dummy55[sizeof (std::vector<Hs::LImpDecl>)];
+      char dummy56[sizeof (std::vector<Hs::LImpDecl>)];
 
       // sigtypes1
       // btype_no_ops
       // comma_types0
       // comma_types1
-      char dummy56[sizeof (std::vector<Hs::LType>)];
+      char dummy57[sizeof (std::vector<Hs::LType>)];
 
       // sks_vars
-      char dummy57[sizeof (std::vector<Hs::LTypeCon>)];
+      char dummy58[sizeof (std::vector<Hs::LTypeCon>)];
 
       // tv_bndrs
       // forall
-      char dummy58[sizeof (std::vector<Hs::LTypeVar>)];
+      char dummy59[sizeof (std::vector<Hs::LTypeVar>)];
 
       // sig_vars
-      char dummy59[sizeof (std::vector<Hs::LVar>)];
+      char dummy60[sizeof (std::vector<Hs::LVar>)];
 
       // ty_fam_inst_eqn_list
       // ty_fam_inst_eqns
-      char dummy60[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
+      char dummy61[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
 
       // alts
       // alts1
-      char dummy61[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy62[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // decls
       // tup_exprs
@@ -760,13 +762,13 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy62[sizeof (std::vector<Located<expression_ref>>)];
+      char dummy63[sizeof (std::vector<Located<expression_ref>>)];
 
       // qcnames
       // qcnames1
       // ops
       // con_list
-      char dummy63[sizeof (std::vector<Located<std::string>>)];
+      char dummy64[sizeof (std::vector<Located<std::string>>)];
     };
 
     /// The size of the largest semantic type.
@@ -1529,7 +1531,6 @@ namespace yy {
         value.move< char > (std::move (that.value));
         break;
 
-      case symbol_kind::S_RATIONAL: // "RATIONAL"
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.move< double > (std::move (that.value));
         break;
@@ -1554,6 +1555,10 @@ namespace yy {
       case symbol_kind::S_INTEGER: // "INTEGER"
       case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
         value.move< integer > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+        value.move< rational > (std::move (that.value));
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
@@ -2250,6 +2255,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, rational&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const rational& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<Hs::ExportSubSpec>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2846,7 +2865,6 @@ switch (yykind)
         value.template destroy< char > ();
         break;
 
-      case symbol_kind::S_RATIONAL: // "RATIONAL"
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.template destroy< double > ();
         break;
@@ -2871,6 +2889,10 @@ switch (yykind)
       case symbol_kind::S_INTEGER: // "INTEGER"
       case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
         value.template destroy< integer > ();
+        break;
+
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+        value.template destroy< rational > ();
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
@@ -3191,8 +3213,7 @@ switch (yykind)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
-        YY_ASSERT (tok == token::TOK_RATIONAL
-                   || tok == token::TOK_PRIMDOUBLE);
+        YY_ASSERT (tok == token::TOK_PRIMDOUBLE);
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -3230,6 +3251,18 @@ switch (yykind)
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::TOK_INTEGER
                    || tok == token::TOK_PRIMINTEGER);
+#endif
+      }
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, rational v, location_type l)
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
+#else
+      symbol_type (int tok, const rational& v, const location_type& l)
+        : super_type (token_kind_type (tok), v, l)
+#endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        YY_ASSERT (tok == token::TOK_RATIONAL);
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -5322,14 +5355,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_RATIONAL (double v, location_type l)
+      make_RATIONAL (rational v, location_type l)
       {
         return symbol_type (token::TOK_RATIONAL, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_RATIONAL (const double& v, const location_type& l)
+      make_RATIONAL (const rational& v, const location_type& l)
       {
         return symbol_type (token::TOK_RATIONAL, v, l);
       }
@@ -6003,7 +6036,6 @@ switch (yykind)
         value.copy< char > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_RATIONAL: // "RATIONAL"
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.copy< double > (YY_MOVE (that.value));
         break;
@@ -6028,6 +6060,10 @@ switch (yykind)
       case symbol_kind::S_INTEGER: // "INTEGER"
       case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
         value.copy< integer > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+        value.copy< rational > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
@@ -6422,7 +6458,6 @@ switch (yykind)
         value.move< char > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_RATIONAL: // "RATIONAL"
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.move< double > (YY_MOVE (s.value));
         break;
@@ -6447,6 +6482,10 @@ switch (yykind)
       case symbol_kind::S_INTEGER: // "INTEGER"
       case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
         value.move< integer > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+        value.move< rational > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
@@ -6709,7 +6748,7 @@ switch (yykind)
 
 
 } // yy
-#line 6713 "parser.hh"
+#line 6752 "parser.hh"
 
 
 

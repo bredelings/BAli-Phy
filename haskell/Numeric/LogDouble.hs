@@ -37,7 +37,6 @@ instance Num LogDouble where
 instance Fractional LogDouble where
     (/) = divide_logdouble
     recip = recip_logdouble
-    fromRational = doubleToLogDouble
 
 instance Real LogDouble where
     toRational x = error "undefined"

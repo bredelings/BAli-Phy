@@ -621,15 +621,16 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             else
                 return Integer(I.value);
         }
-        else if (auto d = L->is_Double())
+        else if (auto r = L->is_Floating())
         {
-            Hs::Double D = std::get<Hs::Double>(L->literal);
-            if (D.fromRationalOp)
-                return {desugar(D.fromRationalOp), D.value};
-            else
-                return D.value;
+            auto F = std::get<Hs::Floating>(L->literal);
 
-            return *d;
+	    expression_ref ratio={var("Compiler.Ratio.Ratio"),Integer(r->numerator()),Integer(r->denominator())};
+
+            if (F.fromRationalOp)
+                return {desugar(F.fromRationalOp), ratio};
+            else
+                return ratio;
         }
         else if (auto s = L->is_String())
         {

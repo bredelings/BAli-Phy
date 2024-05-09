@@ -3,6 +3,7 @@
 # include <climits>
 # include <cstdlib>
 # include <string>
+# include <regex>
 # include "driver.hh"
 # include "parser.hh"
 
@@ -429,11 +430,12 @@ yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
     return yy::parser::make_PRIMINTEGER(n, loc);
 }
 
+#include "computation/haskell/literal.H"
+
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
 {
-    std::string s(yytext);
-    double d = convertTo<double>(std::string(yytext));
-    return yy::parser::make_RATIONAL(d,loc);
+    rational r = Haskell::rationalFromString(yytext);
+    return yy::parser::make_RATIONAL(r, loc);
 }
 
 std::optional<char> get_char(const char* s, int& i)

@@ -146,12 +146,12 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         auto [arg_type, result_type] = unify_function(fromInteger_type);
         set_expected_type( exp_type, result_type );
 
-        // 3. The argument type should be Int
+        // 3. The argument type should be Integer
         unify(arg_type, integer_type());
 
         Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
     }
-    else if (auto d = Lit.is_Double())
+    else if (auto r = Lit.is_Floating())
     {
         // 1. Typecheck fromRational
         auto fromRational = Hs::Var("Compiler.Fractional.fromRational");
@@ -161,10 +161,10 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         auto [arg_type, result_type] = unify_function(fromRational_type);
         set_expected_type( exp_type, result_type );
 
-        // 3. The argument type should be Double (well, not not really, but for now....)
-        unify(arg_type, double_type());
+        // 3. The argument type should be Rational
+        unify(arg_type, rational_type());
 
-        Lit = Hs::Literal(Hs::Double{*d, fromRational});
+        Lit = Hs::Literal(Hs::Floating{*r, fromRational});
     }
     else
         std::abort();

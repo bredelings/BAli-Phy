@@ -146,8 +146,6 @@ instance Fractional Prob where
     recip (IOdds y) = Odds y
     recip Infinity  = Zero
 
-    fromRational x = toProb x
-
 instance Show Prob where
     show Zero = "0"
     show (Odds y) = show $ (fromProb (Odds y) :: Double)

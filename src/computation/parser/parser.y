@@ -203,7 +203,7 @@
 %token <char>          CHAR     "CHAR"
 %token <std::string>   STRING   "STRING"
 %token <integer>       INTEGER  "INTEGER"
-%token <double>        RATIONAL "RATIONAL"
+%token <rational>      RATIONAL "RATIONAL"
 
 %token <char>          PRIMCHAR    "PRIMCHAR"
 %token <std::string>   PRIMSTRING  "PRIMSTRING"
@@ -1572,7 +1572,7 @@ consym:  CONSYM  { $$ = $1; }
 literal: CHAR        {$$ = Hs::Literal(Hs::Char{$1});}
 |        STRING      {$$ = Hs::Literal(Hs::String{$1});}
 |        INTEGER     {$$ = Hs::Literal(Hs::Integer{$1});}
-|        RATIONAL    {$$ = Hs::Literal(Hs::Double{$1});}
+|        RATIONAL    {$$ = Hs::Literal(Hs::Floating{$1});}
 |        PRIMINTEGER {$$ = Hs::Literal(Hs::BoxedInteger{$1});}
 
 
