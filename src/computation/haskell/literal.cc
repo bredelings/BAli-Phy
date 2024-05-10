@@ -7,15 +7,23 @@
 using std::string;
 using std::optional;
 
-std::string remove_underscore(const std::string& s1)
+std::string remove_underscore_and_leading_zeros(const std::string& s1)
 {
     std::string s2;
     s2.reserve(s1.size());
     for(char c: s1)
-	if (c != '_')
-	    s2.push_back(c);
+    {
+	if (c == '_') continue;
 
-    return s2;
+	s2.push_back(c);
+    }
+
+    // remove leading zeros
+    int first = 0;
+    while(first + 1 < s2.size() and s2[first] == '0')
+	first++;
+
+    return s2.substr(first);
 }
 
 namespace Haskell
@@ -28,7 +36,7 @@ namespace Haskell
 
     integer integerFromString(const string& s)
     {
-	return integer(remove_underscore(s));
+	return integer(remove_underscore_and_leading_zeros(s));
     }
 
 rational rationalFromString(const string& s)
@@ -41,18 +49,21 @@ rational rationalFromString(const string& s)
     std::smatch matches;
     if (std::regex_match(s, matches, rgx1))
     {
-	auto decimal1 = remove_underscore(matches[1].str());
-	auto decimal2 = remove_underscore(matches[3].str());
+	auto decimal1 = remove_underscore_and_leading_zeros(matches[1].str());
+	auto decimal2 = remove_underscore_and_leading_zeros(matches[3].str());
 
 	int digits2 = decimal2.size();
 	integer factor = boost::multiprecision::pow(integer(10), digits2);
 
-	r = (factor*integer(decimal1) + integer(decimal2));
+	integer before(decimal1);
+	integer after(decimal2);
+
+	r = (factor*before + after);
 	r /= factor;
 
 	if (not matches[6].str().empty())
 	{
-	    int exp = convertTo<int>(remove_underscore(matches[6].str()));
+	    int exp = convertTo<int>(remove_underscore_and_leading_zeros(matches[6].str()));
 	    if (exp > 0)
 		r *= boost::multiprecision::pow(integer(10), exp);
 	    else
@@ -61,13 +72,13 @@ rational rationalFromString(const string& s)
     }
     else if (std::regex_match(s, matches, rgx2))
     {
-	auto decimal = remove_underscore(matches[1].str());
+	auto decimal = remove_underscore_and_leading_zeros(matches[1].str());
 
 	r = integer(decimal);
 
 	if (not matches[4].str().empty())
 	{
-	    int exp = convertTo<int>(remove_underscore(matches[4].str()));
+	    int exp = convertTo<int>(remove_underscore_and_leading_zeros(matches[4].str()));
 	    r *= boost::multiprecision::pow(integer(10), exp);
 	    if (exp > 0)
 		r *= boost::multiprecision::pow(integer(10), exp);
