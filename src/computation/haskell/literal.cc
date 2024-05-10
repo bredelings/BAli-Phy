@@ -7,7 +7,7 @@
 using std::string;
 using std::optional;
 
-std::string remove_underscore_and_leading_zeros(const std::string& s1)
+std::string remove_underscore(const std::string& s1)
 {
     std::string s2;
     s2.reserve(s1.size());
@@ -18,12 +18,22 @@ std::string remove_underscore_and_leading_zeros(const std::string& s1)
 	s2.push_back(c);
     }
 
+    return s2;
+}
+
+string remove_leading_zeros(const std::string& s)
+{
     // remove leading zeros
     int first = 0;
-    while(first + 1 < s2.size() and s2[first] == '0')
+    while(first + 1 < s.size() and s[first] == '0')
 	first++;
 
-    return s2.substr(first);
+    return s.substr(first);
+}
+
+string remove_underscore_and_leading_zeros(const std::string& s)
+{
+    return remove_leading_zeros(remove_underscore(s));
 }
 
 namespace Haskell
@@ -49,14 +59,14 @@ rational rationalFromString(const string& s)
     std::smatch matches;
     if (std::regex_match(s, matches, rgx1))
     {
-	auto decimal1 = remove_underscore_and_leading_zeros(matches[1].str());
-	auto decimal2 = remove_underscore_and_leading_zeros(matches[3].str());
+	auto decimal1 = remove_underscore(matches[1].str());
+	auto decimal2 = remove_underscore(matches[3].str());
 
 	int digits2 = decimal2.size();
 	integer factor = boost::multiprecision::pow(integer(10), digits2);
 
-	integer before(decimal1);
-	integer after(decimal2);
+	integer before(remove_leading_zeros(decimal1));
+	integer after(remove_leading_zeros(decimal2));
 
 	r = (factor*before + after);
 	r /= factor;
@@ -74,7 +84,7 @@ rational rationalFromString(const string& s)
     {
 	auto decimal = remove_underscore_and_leading_zeros(matches[1].str());
 
-	r = integer(decimal);
+	r = integer(remove_leading_zeros(decimal));
 
 	if (not matches[4].str().empty())
 	{
