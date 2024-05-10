@@ -36,12 +36,14 @@ fromProb (IOdds y)| y < 0     = let e = expTo y in (1 + e)/e
 fromProb Infinity             = 1 / 0
 
 toProb :: Double -> Prob
-toProb p | p < 0     = error "Negative Probability!"
-         | p == 0    = Zero
-         | p < 1     = Odds $ log $ p / (1-p)
-         | p == 1    = One
-         | p > 1     = let (Odds y) = toProb (1/p) in IOdds y
---       | p == Inf  = Infinity
+toProb p | p < 0         = error "Negative Probability!"
+         | p == 0        = Zero
+         | p < 1         = Odds $ log $ p / (1-p)
+         | p == 1        = One
+         | p > 1         = recip $ toProb (1/p)
+         | isInfinite p  = Infinity
+         | isNaN p       = error "toProb: NaN"
+         | otherwise     = error ("toProb: unknown number: " ++ show p)
 
 -- Only defined on non-zero probabilities.
 logProb :: Prob -> Double
