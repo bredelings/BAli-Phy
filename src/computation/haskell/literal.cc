@@ -89,7 +89,6 @@ rational rationalFromString(const string& s)
 	if (not matches[4].str().empty())
 	{
 	    int exp = convertTo<int>(remove_underscore_and_leading_zeros(matches[4].str()));
-	    r *= boost::multiprecision::pow(integer(10), exp);
 	    if (exp > 0)
 		r *= boost::multiprecision::pow(integer(10), exp);
 	    else
