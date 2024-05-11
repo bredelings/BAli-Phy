@@ -301,3 +301,29 @@ extern "C" closure builtin_function_encodeDouble(OperationArgs& Args)
 
     return { std::ldexp(sig,exp) };
 }
+
+extern "C" closure builtin_function_integerToInvLogOdds(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    double result = 0;
+
+    int extra = boost::multiprecision::msb(x) - 1019;
+    if (extra > 0)
+    {
+	integer d = boost::multiprecision::pow(integer(2),extra);
+	x /= d;
+
+	std::cerr<<"extra = "<<extra<<"\n";
+
+	double p = (double)x;
+	result = -extra*log(2) -log(p); // - log1p(-1/(p*d))) which is approximately +1/(p*d)
+    }
+    else
+    {
+	double p = (double)x;
+	result = (-log(p) - log1p(-1/p));
+    }
+
+    return { result };
+}
