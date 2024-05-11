@@ -95,7 +95,7 @@ mul (Odds y1) (IOdds y2) | y1 == y2 = One
                          | otherwise = Odds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
 
 mul (IOdds y1) (Odds y2) = mul (Odds y2) (IOdds y1)
-mul (IOdds y1) (IOdds y2) = let (Odds y3) = mul (Odds y1) (Odds y2) in IOdds y3
+mul (IOdds y1) (IOdds y2) = recip $ mul (Odds y1) (Odds y2)
 mul Zero      Infinity  = error "0 * Inf is undefined"
 mul Infinity  Zero      = error "Inf * 0 is undefined"
 mul Zero      x         = Zero
