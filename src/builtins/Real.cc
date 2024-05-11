@@ -89,7 +89,6 @@ extern "C" closure builtin_function_log1mexp(OperationArgs& Args)
     // QUESTION: should we implement this for logdouble?
 
     double xx = x.as_double();
-    assert(xx >= 0);
     return {log1mexp(xx)};
 }
 
