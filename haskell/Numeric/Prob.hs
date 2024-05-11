@@ -132,7 +132,7 @@ instance Num Prob where
     fromInteger 0 = Zero
     fromInteger 1 = One
     fromInteger x | x < 0     = error "Negative Probability!"
-                  | otherwise = toProb $ fromInteger x
+                  | otherwise = IOdds $ integerToInvLogOdds x
 
 instance Real Prob where
     toRational Zero = 0 % 1
@@ -203,3 +203,5 @@ instance FloatConvert Double Prob where
 -- Handle Int, Integer, and anything else that we can get a double from.
 instance FloatConvert a Double => FloatConvert a Prob where
     toFloating i = toFloating (toFloating i :: Double)
+
+foreign import bpcall "Real:" integerToInvLogOdds :: Integer -> Double
