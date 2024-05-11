@@ -122,10 +122,10 @@ class Paup(Program):
 
 class BAliPhy(Program):
     def __init__(self, cmd):
-        Program.__init__(self,cmd)
+        Program.__init__(self,[cmd[0]])
         self.name = "bali-phy"
         self.likelihood_regex = r".* likelihood = ([^ ]+) .*"
-        self.extra_args = []
+        self.extra_args = self.cmd[1:]
 
     def prefix(self):
         return ""
