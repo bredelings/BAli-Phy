@@ -466,9 +466,9 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
 {
     auto P = std::make_unique<Program>(L);
 
-    if (args.count("run-module"))
+    if (args.count("run"))
     {
-        auto [main_filename, args_v] = extract_prog_args(args, argc, argv, "run-module");
+        auto [main_filename, args_v] = extract_prog_args(args, argc, argv, "run");
         L->args = args_v;
         P = load_program_from_file(L, main_filename);
     }

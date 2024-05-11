@@ -225,7 +225,7 @@ po::options_description developer_options()
     developer.add_options()
 	("test-module",value<string>(),"Parse and optimize the given module")
 	("--no-type-check","Type-check modules")
-	("run-module,r",value<vector<string>>()->multitoken(),"Run the given module")
+	("run,r",value<vector<string>>()->multitoken(),"Run the given module")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
 	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
@@ -274,18 +274,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
     positional_options_description p;
     p.add("align", -1);
 
-    string command;
-    string topic;
     vector<string> cargs = drop_trailing_args(argc, argv, trailing_args_separator);
     if (cargs.size()>=1 and cargs[0] == "help")
     {
-	command = "help";
-	cargs.erase(cargs.begin());
-	if (cargs.size() >= 1)
-	{
-	    topic = cargs[0];
-	    cargs.erase(cargs.begin());
-	}
+        cargs[0] = "--help";
+    }
+    else if (cargs.size()>=1 and cargs[0] == "print")
+    {
+        cargs[0] = "--print";
+    }
+    else if (cargs.size()>=1 and cargs[0] == "run")
+    {
+        cargs[0] = "--run";
+    }
+    else if (cargs.size()>=1 and cargs[0] == "model")
+    {
+        cargs[0] = "--model";
     }
     variables_map args;
     store(command_line_parser(cargs).options(all).positional(p).run(), args);
@@ -298,10 +302,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
 
-    if (args.count("help") or command == "help")
+    if (args.count("help"))
     {
-	if (topic.empty())
-	    topic = args.count("help")?args["help"].as<string>():"basic";
+        string topic = args.count("help")?args["help"].as<string>():"basic";
 
 	auto package_paths = get_package_paths(argv[0], args);
 	if (help_levels.count(topic))
@@ -349,7 +352,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     load_bali_phy_rc(args,all);
 
     std::set<string> commands;
-    for(auto word : {"align", "Model", "model", "print", "test-module", "run-module"})
+    for(auto word : {"align", "Model", "model", "print", "test-module", "run"})
 	if (args.count(word))
 	    commands.insert(word);
 
