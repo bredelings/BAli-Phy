@@ -3,7 +3,7 @@
     "title":"The General Non-Reversible rate matrix",
     "result_type": "CTMC<a>",
     "call": "nonRev'(@a,@rates)",
-    "import": ["SModel"],
+    "import": ["SModel.NonReversibleMarkov"],
     "args": [
         {
             "arg_name": "rates",

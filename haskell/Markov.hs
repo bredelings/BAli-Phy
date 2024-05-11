@@ -70,11 +70,13 @@ instance CTMC Markov where
     getStartFreqs (Markov _ pi _     ) = pi
     qExp   (Markov q _  factor) = mexp q factor
 
-data MkReversible m = Reversible m
+-- Wrapper class to mark things reversible AND at equilibrium.
+-- Used for both Markov.Markov and SModel.Markov.
+-- Which is why it takes any type m.
+
+data MkReversible m = Reversible  { nonreversible :: m }
 
 reversible = Reversible
-
-nonreversible (Reversible m) = m
 
 instance Scalable m => Scalable (MkReversible m) where
     scale f (Reversible m) = Reversible $ scale f m
@@ -85,8 +87,34 @@ instance Show m => Show (MkReversible m) where
 instance CTMC m => CTMC (MkReversible m) where
     getQ  (Reversible m) = getQ m
     getStartFreqs (Reversible m) = getStartFreqs m
-    getEqFreqs (Reversible m) = getStartFreqs m      -- these are cached.
+    getEqFreqs (Reversible m) = getStartFreqs m
     qExp  (Reversible m) = qExp m
+    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
+       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
+
+-- Wrapper class to mark things reversible AND at equilibrium.
+-- Used for both Markov.Markov and SModel.Markov.
+-- Which is why it takes any type m.
+
+data MkEquilibrium m = Equilibrium  { nonequilibrium :: m }
+
+equilibrium = Equilibrium
+
+instance Scalable m => Scalable (MkEquilibrium m) where
+    scale f (Equilibrium m) = Equilibrium $ scale f m
+
+instance Show m => Show (MkEquilibrium m) where
+    show (Equilibrium m) = show m
+
+instance CTMC m => CTMC (MkEquilibrium m) where
+    getQ  (Equilibrium m) = getQ m
+    getStartFreqs (Equilibrium m) = getStartFreqs m
+    getEqFreqs (Equilibrium m) = getStartFreqs m
+    qExp  (Equilibrium m) = qExp m
+    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
+       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
+
+----------------------------
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 

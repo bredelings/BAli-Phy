@@ -94,23 +94,11 @@ nonEq a rates pi = markov a smap q pi
           n = length $ letters a
           q = Markov.non_rev_from_list n rates
 
-nonRev a rates = markov' a smap q
-    where smap = simple_smap a
-          n = length $ letters a
-          q = Markov.non_rev_from_list n rates
-
 pairNames ls = [l1 ++ l2 | (l1,l2) <- ls]
 
 allOrderedPairs l = [(x,y) | x <- l, y <- l, x /= y]
 
 orderedLetterPairNames a = pairNames $ allOrderedPairs (letters a)
-
-nonRev' a rates' = nonRev a rs
-    where lPairs = allOrderedPairs (letters a)
-          rs = if length lPairs == length rates' then
-                   [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
-               else
-                   error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
 
 nonEq' a rates' pi' = nonEq a rs pi
     where lPairs = allOrderedPairs (letters a)
