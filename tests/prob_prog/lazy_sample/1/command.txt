@@ -1,1 +1,1 @@
---run-module sample.hs --test
+run sample.hs --test

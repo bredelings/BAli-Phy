@@ -1,1 +1,1 @@
---run-module Main.hs
+run Main
