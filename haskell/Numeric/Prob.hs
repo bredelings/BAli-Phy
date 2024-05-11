@@ -90,9 +90,9 @@ sub _         _ = error "Negative probability"
 
 mul (Odds y1) (Odds y2) | y1 > y2   = Odds $ y2 - log1p( exp(y2-y1) + exp(-y1) )
                         | otherwise = Odds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
-mul (Odds y1) (IOdds y2) | y1 == y2 = One
-                         | y1 > y2   = Odds $ y2 - log1p( exp(y2-y1) + exp(-y1) )
-                         | otherwise = Odds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
+mul (Odds y1) (IOdds y2) | y1 == y2   = One
+                         | y1 < y2    = Odds $ y1 + log1pexp(-y2) - log1mexp(y1-y2)
+                         | otherwise  = IOdds $ y2 + log1pexp(-y1) - log1mexp(y2-y1)
 
 mul (IOdds y1) (Odds y2) = mul (Odds y2) (IOdds y1)
 mul (IOdds y1) (IOdds y2) = recip $ mul (Odds y1) (Odds y2)
