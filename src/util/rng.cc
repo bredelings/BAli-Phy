@@ -18,6 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <ctime>
+#include <cstdint>
 #include "util/assert.hh"
 #include <cmath>
 #include <fstream>
@@ -27,21 +28,24 @@
 #include "util/rng.H"
 
 using std::valarray;
+using std::int64_t;
+using std::uint64_t;
 
-unsigned long get_random_seed()
+uint64_t get_random_seed()
 {
-    unsigned long s=0;
-    const int bits_per_read = sizeof(unsigned)*8;
-  
     boost::random::random_device random;
+    const int bits_per_read = sizeof(boost::random::random_device::result_type)*8;
   
+    uint64_t s=0;
     if (random.entropy())
+    {
 	for(int i=0;i*bits_per_read < sizeof(s)*8;i++) 
 	{
 	    unsigned u = random();
 	    s <<= bits_per_read;
 	    s |=  u;
 	}
+    }
     else
 	s = time(NULL);
   
@@ -50,13 +54,13 @@ unsigned long get_random_seed()
 
 std::mt19937_64 standard;
 
-unsigned long myrand_init(unsigned long s) 
+std::uint64_t myrand_init(std::uint64_t s) 
 {
     standard.seed(s);
     return s;
 }
 
-unsigned long myrand_init() 
+std::uint64_t myrand_init() 
 {
     return myrand_init(get_random_seed());
 }
@@ -66,18 +70,18 @@ double uniform()
     return std::uniform_real_distribution<>(0.0, 1.0)(standard);
 }
 
-int uniform_int(int min, int max)
+int64_t uniform_int(int64_t min, int64_t max)
 {
     assert(min <= max);
-    return std::uniform_int_distribution<unsigned long>(min, max)(standard);
+    return std::uniform_int_distribution<std::int64_t>(min, max)(standard);
 }
 
 /// returns a value in [0,max-1]
-unsigned long myrandom(unsigned long max) {
+uint64_t myrandom(uint64_t max) {
     return uniform_int(0, max-1);
 } 
 
-long myrandom(long min,long max) {
+int64_t myrandom(int64_t min, int64_t max) {
     assert(min < max);
     return uniform_int(min,max-1);
 }

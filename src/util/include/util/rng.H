@@ -22,9 +22,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <valarray>
 #include <random>
+#include <cstdint>
 
-unsigned long myrand_init();
-unsigned long myrand_init(unsigned long);
+std::uint64_t myrand_init();
+std::uint64_t myrand_init(std::uint64_t);
  
 // returns a value in [0,1)
 double uniform();
@@ -71,12 +72,12 @@ unsigned bernoulli(double p);
 // return a dirichlet random vector
 std::valarray<double> dirichlet(const std::valarray<double>& n);
 
-unsigned long get_random_seed();
+std::uint64_t get_random_seed();
 
-unsigned long myrandom(unsigned long max);
-long myrandom(long min,long max);
+std::uint64_t myrandom(std::uint64_t max);
+std::int64_t myrandom(std::int64_t min, std::int64_t max);
 
-int uniform_int(int min, int max);
+std::int64_t uniform_int(std::int64_t min, std::int64_t max);
 
 template <typename T>
 const T& uniform_element(const std::vector<T>& v)
