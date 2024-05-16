@@ -63,8 +63,8 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-10,
-               macos-xcode-14-intel,
-               macos-xcode-14-arm,
+               macos-xcode-15-intel,
+               macos-xcode-15-arm,
                windows
                ]
 
@@ -76,17 +76,17 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-xcode-14-intel
+          - name: macos-xcode-15-intel
             os: macos-12
             compiler: xcode
-            version: "14"
+            version: "15"
             buildtype: "release"
             arch: "mac-intel64"
 
-          - name: macos-xcode-14-arm
+          - name: macos-xcode-15-arm
             os: macos-14
             compiler: xcode
-            version: "14"
+            version: "15"
             buildtype: "debugoptimized"
             arch: "mac-arm64"
 
