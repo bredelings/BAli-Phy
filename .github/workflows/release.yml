@@ -109,7 +109,7 @@ jobs:
       run: |
         sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
-        sudo apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev
+        sudo apt-get install -y libboost-all-dev librange-v3-dev libeigen3-dev libcairo2-dev
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           # For newer GCCs, maybe.
@@ -146,7 +146,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 nlohmann-json cairo
+          brew install boost eigen range-v3 cairo
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
