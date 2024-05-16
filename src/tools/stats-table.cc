@@ -260,10 +260,10 @@ optional<vector<string>> TableReader::get_row()
         {
             if (is_json)
             {
-                json j = json::parse(*line);
+                auto j = json::parse(*line, {}, {.allow_infinity_and_nan=true}).as_object();
                 auto values = parameter_values(j);
                 for(int i=0;i<indices.size();i++)
-                    v[i] = values[indices[i]].dump();
+                    v[i] = json::serialize(values[indices[i]],{.allow_infinity_and_nan=true});
             }
             else
                 read_entries(*line, indices, '\t', v);
@@ -295,12 +295,13 @@ TableReader::TableReader(std::istream& f, int sk, int sub, int lst, const vector
     {
         string line;
         portable_getline(file,line);
-        json header = json::parse(line);
+        auto header = json::parse(line, {}, {.allow_infinity_and_nan=true}).as_object();
         if (not header.count("version"))
             throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
 
         portable_getline(file,line);
-        names_ = parameter_names(json::parse(line));
+        auto line1 = json::parse(line, {}, {.allow_infinity_and_nan=true}).as_object();
+        names_ = parameter_names(line1);
         saved_line = line;
     }
     else
@@ -329,30 +330,30 @@ void Table<string>::load_file(std::istream& file,int skip,int subsample, int las
 
 // We should be able to collapse this to some kind of visitor pattern!
 
-vector<string> parameter_names(const json& j)
+vector<string> parameter_names(const json::object& j)
 {
     vector<string> all_names;
-    for(auto& [key, value]: j.items())
+    for(auto& [key, value]: j)
     {
         if (has_children(key))
         {
-            vector<string> names = parameter_names(value);
+            vector<string> names = parameter_names(value.as_object());
             for(auto& name: names)
-                all_names.push_back(key + name);
+                all_names.push_back(string(key) + name);
         }
         else
 	{
-	    if (value.is_array())
+	    if (auto array = value.if_array())
 	    {
 		// FIXME we are not looking looking into the value for "value" / "children"
-		for(int i=0;i<value.size();i++)
-		    all_names.push_back(key+"["+std::to_string(i+1)+"]");
+		for(int i=0;i<array->size();i++)
+		    all_names.push_back(string(key)+"["+std::to_string(i+1)+"]");
 	    }
-	    else if (value.is_object())
+	    else if (auto object = value.if_object())
 	    {
 		// FIXME we are not looking looking into value2 for "value" / "children"
-		for(auto& [key2,value2]: value.items())
-		    all_names.push_back(key+"["+key2+"]");
+		for(auto& [key2,value2]: *object)
+		    all_names.push_back(string(key)+"["+string(key2)+"]");
 	    }
 	    else
 		all_names.push_back(key);
@@ -361,29 +362,29 @@ vector<string> parameter_names(const json& j)
     return all_names;
 }
 
-vector<json> parameter_values(const json& j)
+vector<json::value> parameter_values(const json::object& j)
 {
-    vector<json> all_values;
-    for(auto& [key, value]: j.items())
+    vector<json::value> all_values;
+    for(auto& [key, value]: j)
     {
         if (has_children(key))
         {
-            vector<json> values = parameter_values(value);
+            auto values = parameter_values(value.as_object());
             for(auto& value: values)
                 all_values.push_back(std::move(value));
         }
         else
 	{
-	    if (value.is_array())
+	    if (auto a = value.if_array())
 	    {
 		// FIXME we are not looking looking into the value for "value" / "children"
-		for(int i=0;i<value.size();i++)
-		    all_values.push_back(value[i]);
+		for(int i=0;i<a->size();i++)
+		    all_values.push_back((*a)[i]);
 	    }
-	    else if (value.is_object())
+	    else if (auto o = value.if_object())
 	    {
 		// FIXME we are not looking looking into value2 for "value" / "children"
-		for(auto& [key2,value2]: value.items())
+		for(auto& [key2,value2]: *o)
 		    all_values.push_back(value2);
 	    }
 	    else
@@ -404,41 +405,41 @@ bool has_children(const string& s)
     return false;
 }
 
-void unnest_json(const string & path, const json& j_in, json& j_out)
+void unnest_json(const string & path, const json::object& j_in, json::object& j_out)
 {
-    for(auto& [key, value]: j_in.items())
+    for(auto& [key, value]: j_in)
         if (has_children(key))
-            unnest_json(path+key, value, j_out);
+            unnest_json(path + string(key), value.as_object(), j_out);
         else
-            j_out[path+key] = value;
+            j_out[path + string(key)] = value;
 }
 
-json unnest_json(const json& j_in)
+json::object unnest_json(const json::object& j_in)
 {
-    json j_out;
-    for(auto& [key, value]: j_in.items())
+    json::object j_out;
+    for(auto& [key, value]: j_in)
         if (has_children(key))
-            unnest_json(key, value, j_out);
+            unnest_json(key, value.as_object(), j_out);
         else
             j_out[key] = value;
     return j_out;
 }
 
-void unnest_json(const string & path, json&& j_in, json& j_out)
+void unnest_json(const string & path, json::object&& j_in, json::object& j_out)
 {
-    for(auto& [key, value]: j_in.items())
+    for(auto& [key, value]: j_in)
         if (has_children(key))
-            unnest_json(path+key, std::move(value), j_out);
+            unnest_json(path + string(key), std::move(value.as_object()), j_out);
         else
-            j_out[path+key] = value;
+            j_out[path + string(key)] = value;
 }
 
-json unnest_json(const json&& j_in)
+json::object unnest_json(const json::object&& j_in)
 {
-    json j_out;
-    for(auto& [key, value]: j_in.items())
+    json::object j_out;
+    for(auto& [key, value]: j_in)
         if (has_children(key))
-            unnest_json(key, std::move(value), j_out);
+            unnest_json(key, std::move(value.as_object()), j_out);
         else
             j_out[key] = value;
     return j_out;

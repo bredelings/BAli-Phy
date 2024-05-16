@@ -186,7 +186,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 {
     optional<int> bandwidth;
     if (p[0].contains_key("simple_bandwidth"))
-        bandwidth  = (int)p[0].lookup_key("simple_bandwidth");
+        bandwidth  = p[0].lookup_key("simple_bandwidth").as_int64();
 
     try {
 	sample_cube_multi_calculation tri(p, nodes, bandwidth);

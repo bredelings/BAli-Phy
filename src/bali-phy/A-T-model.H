@@ -36,8 +36,8 @@ void log_summary(std::ostream& out_cache, std::ostream& out_screen,std::ostream&
 
 void set_foreground_branches(Parameters& P, const SequenceTree& T);
 
-std::tuple<Program, json> create_A_and_T_model(const Rules& R, boost::program_options::variables_map& args, const std::shared_ptr<module_loader>& L,
-                                               int proc_id, const std::filesystem::path& dir);
+std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, boost::program_options::variables_map& args, const std::shared_ptr<module_loader>& L,
+						       int proc_id, const std::filesystem::path& dir);
 
 void write_initial_alignments(boost::program_options::variables_map& args, int proc_id, const std::filesystem::path& dir_name);
 

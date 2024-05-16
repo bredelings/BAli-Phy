@@ -92,19 +92,19 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
 }
 
 // This me be a good candidate for the range library.
-vector<pair<string,json>> flatten_value(const string& name, const json& value)
+vector<pair<string,json::value>> flatten_value(const string& name, const json::value& value)
 {
-    vector<pair<string,json>> values;
-    if (value.is_object())
+    vector<pair<string,json::value>> values;
+    if (auto* object = value.if_object())
     {
-        for(auto& [name2,v2]: value.items())
-            for(auto& p: flatten_value(name+"["+name2+"]", v2))
+        for(auto& [name2,v2]: *object)
+            for(auto& p: flatten_value(name+"["+string(name2)+"]", v2))
                 values.push_back(std::move(p));
     }
-    else if (value.is_array())
+    else if (auto array = value.if_array())
     {
-        for(int i=0;i<value.size();i++)
-            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", value[i]))
+        for(int i=0;i<array->size();i++)
+            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", (*array)[i]))
                 values.push_back(std::move(p));
     }
     else
@@ -113,16 +113,16 @@ vector<pair<string,json>> flatten_value(const string& name, const json& value)
 }
 
 // Kind of like unnesting, but we call flatten_value on children.
-json flatten_me(const json& j)
+json::object flatten_me(const json::object& j)
 {
-    json j2;
-    for(auto& [name, obj]: j.items())
+    json::object j2;
+    for(auto& [name, obj]: j)
     {
         if (has_children(name))
         {
-            json c = flatten_me(obj);
-            for(auto& [name2,j3]: c.items())
-                j2[name+name2] = std::move(j3);
+            auto c = flatten_me(obj.as_object());
+            for(auto& [name2,j3]: c)
+                j2[string(name)+string(name2)] = std::move(j3);
         }
         else // Without this transofmration, we are just unnesting.
             for(auto& [name2,value2]: flatten_value(name, obj))
@@ -131,16 +131,14 @@ json flatten_me(const json& j)
     return j2;
 }
 
-void simplify(json& j)
+void simplify(json::object& j)
 {
-    assert(j.is_object());
-
     if (j.empty()) return;
 
     // 1. First we simplify all the levels below this level.
-    for(auto& [name, obj]: j.items())
-        if (has_children(name))
-            simplify(obj);
+    for(auto& [key, value]: j)
+        if (has_children(key))
+            simplify(value.as_object());
 
     // 2. In order to move child-level names up to the top level, we have to avoid
     //   a. clashing with the same name at the top level
@@ -148,26 +146,25 @@ void simplify(json& j)
     // We therefore count which names at these levels occur twice and avoid them.
     // NOTE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}.
     multiset<string> names;
-    for(auto& [name, obj]: j.items())
+    for(auto& [name, value]: j)
     {
         names.insert(name);
         if (has_children(name))
-            for(auto& [name2, j2]: obj.items())
+            for(auto& [name2, j2]: value.as_object())
                 names.insert(name2);
     }
 
     // 3. Check if we can move the children for each key up to the top level
     //    names in that entry up to the top level.
-    vector<pair<string,json>> moved;
+    vector<pair<string,json::value>> moved;
     for(auto iter = j.begin(); iter != j.end(); )
     {
-        auto& name = iter.key();
-        auto& obj = iter.value();
+        auto& [name,value] = *iter;
 
         if (has_children(name))
         {
             bool collision = false;
-            for(auto& [name2, _]: obj.items())
+            for(auto& [name2, _]: value.as_object())
             {
                 if (names.count(name2) > 1)
                 {
@@ -178,7 +175,7 @@ void simplify(json& j)
 
             if (not collision)
             {
-                for(auto& [name2, j2]: obj.items())
+                for(auto& [name2, j2]: value.as_object())
                 {
                     moved.push_back({name2,std::move(j2)});
                 }
@@ -191,7 +188,6 @@ void simplify(json& j)
             ++iter;
     }
 
-    json j2;
     for(auto& [name,obj]: moved)
         j[name] = std::move(obj);
 }
@@ -300,7 +296,7 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
 
 	string key = parse[0];
 
-	keys[key] = json::parse(parse[1]);
+	keys[key] = json::parse(parse[1], {}, {.allow_infinity_and_nan=true});
     }
 
     return keys;

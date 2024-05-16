@@ -196,7 +196,7 @@ public:
 
     expression_ref evaluate_program() const;
 
-    virtual json get_logged_parameters() const;
+    virtual json::object get_logged_parameters() const;
 
     context_ref& operator=(const context_ref& c);
 

@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/json.hh"
 
 void print_version_info(std::ostream&);
-json version_info();
+json::object version_info();
 
 #endif
 

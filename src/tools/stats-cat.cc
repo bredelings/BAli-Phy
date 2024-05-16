@@ -121,20 +121,22 @@ int main(int argc,char* argv[])
             if (not is_json)
                 throw myexception()<<"--unnest: file must be in JSON format";
 
+	    std::cout<<json::serialize_options({.allow_infinity_and_nan=true});
+
             string line;
             if (portable_getline(*file,line))
             {
-                auto h = json::parse(line);
+                auto h = json::parse(line, {},{.allow_infinity_and_nan=true}).as_object();
                 if (not h.count("version"))
                     throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
                 h["nested"] = false;
-                std::cout<<h.dump()<<"\n";
+                std::cout<<h<<"\n";
             }
 
             bool do_unnest = args.count("unnest");
             while(portable_getline(*file,line))
             {
-                auto j = json::parse(line);
+                auto j = json::parse(line, {}, {.allow_infinity_and_nan=true}).as_object();
                 if (do_unnest)
                 {
                     auto j2 = unnest_json(std::move(j));
@@ -144,16 +146,16 @@ int main(int argc,char* argv[])
                     j.erase(field);
                 if (select.size())
                 {
-                    json j2;
+		    json::object j2;
                     for(auto& field: select)
                     {
                         auto it = j.find(field);
                         if (it != j.end())
-                            j2[field] = *it;
+                            j2.insert(*it); //[field] = it->second;
                     }
                     std::swap(j,j2);
                 }
-                std::cout<<j.dump()<<"\n";
+                std::cout<<j<<"\n";
             }
             exit(0);
         }

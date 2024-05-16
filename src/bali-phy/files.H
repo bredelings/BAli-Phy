@@ -11,6 +11,6 @@
 
 std::filesystem::path init_dir(const boost::program_options::variables_map& args);
 
-void run_info(json& j, int proc_id, int argc,char* argv[]);
+void run_info(json::object& j, int proc_id, int argc,char* argv[]);
 
 #endif

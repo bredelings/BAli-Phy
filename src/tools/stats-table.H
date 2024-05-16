@@ -168,13 +168,13 @@ std::vector<std::string> read_header(std::istream&);
 
 void write_header(std::ostream&,const std::vector<std::string>&);
 
-std::vector<std::string> parameter_names(const json& j);
+std::vector<std::string> parameter_names(const json::object& j);
 
-std::vector<json> parameter_values(const json& j);
+std::vector<json::value> parameter_values(const json::object& j);
 
 bool has_children(const std::string& s);
 
-json unnest_json(const json& j);
-json unnest_json(const json&& j);
+json::object unnest_json(const json::object& j);
+json::object unnest_json(const json::object&& j);
 
 #endif

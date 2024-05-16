@@ -177,19 +177,22 @@ bool is_loggable_type(const type_t& type)
 }
 
 
-void to_json(json& j, const pretty_model_t& m)
+json::object convert_to_json(const pretty_model_t& m)
 {
+    json::object j;
     j["main"] = unparse_annotated(m.main);
-    json extracted = json::array();
+    json::array extracted;
     for(int i=0;i<m.terms.size();i++)
     {
-        json p = json::array();
-        p[0] = m.term_names[i];
-        p[1] = m.terms[i];
+	json::array p(2);
+        p[0] = json::string(m.term_names[i]);
+        p[1] = convert_to_json(m.terms[i]);
         extracted.push_back(p);
     }
     j["extracted"] = extracted;
+    return j;
 }
+
 
 string show(vector<string> args)
 {
