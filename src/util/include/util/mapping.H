@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <optional>
+#include <algorithm>
 #include "util/assert.hh"
 #include "util/myexception.H"
 
