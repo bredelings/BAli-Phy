@@ -228,37 +228,6 @@ string show(const ptree& pt, bool pretty, int depth)
     return result;
 }
 
-void to_json(json& j, const ptree::value_t& v)
-{
-    if (v.index() == 0)
-	;
-    else if (v.index() == 1)
-	j = std::get<std::string>(v);
-    else if (v.index() == 2)
-	j = std::get<int>(v);
-    else if (v.index() == 3)
-	j = std::get<double>(v);
-    else if (v.index() == 4)
-	j = std::get<bool>(v);
-    else
-	std::abort();
-}
-
-void to_json(json& j, const ptree& p)
-{
-    json value = p.value;
-
-    json args = json::array();
-    for(auto& arg: p)
-    {
-	json p = json::array();
-	p[0] = arg.first;
-	p[1] = arg.second;
-	args.push_back(p);
-    }
-    j = {{"value",value},{"args",args}};
-}
-
 std::ostream& operator<<(std::ostream& o, const ptree::value_t& v)
 {
     if (std::holds_alternative<monostate>(v))

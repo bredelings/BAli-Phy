@@ -142,9 +142,6 @@ template <>  inline bool ptree::has_value<std::string>() const {return value.ind
 
 std::string show(const ptree& pt, bool pretty = false, int depth=0);
 
-void to_json(json& j, const ptree::value_t& p);
-void to_json(json& j, const ptree& p);
-
 inline auto index(const ptree& p, int i)
 {
     if (i > p.size())
