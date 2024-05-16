@@ -110,13 +110,13 @@ std::vector<T> apply_mapping(const std::vector<T>& v1,const std::vector<int>& ma
 
 /// Get index of t in v
 template <typename T>
-std::optional<int> find_index(const std::vector<T>& v,const T& t) 
+std::optional<size_t> find_index(const std::vector<T>& v,const T& t)
 {
-    typename std::vector<T>::const_iterator loc = std::find(v.begin(),v.end(),t);
+    auto loc = std::find(v.begin(),v.end(),t);
     if (loc == v.end())
 	return {};
     else
-	return int(loc - v.begin());
+	return size_t(loc - v.begin());
 }
 
 /// invert the mapping
