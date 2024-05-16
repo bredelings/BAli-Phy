@@ -18,7 +18,7 @@ jobs:
                ubuntu-gcc-12-DEBUG_MACHINE,
                ubuntu-gcc-12-sanitize,
                ubuntu-gcc-12,
-               ubuntu-clang-15,
+               ubuntu-clang-17,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
                windows
@@ -69,10 +69,10 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-clang-15
+          - name: ubuntu-clang-17
             os: ubuntu-24.04
             compiler: clang
-            version: "15"
+            version: "17"
             buildtype: "release"
             arch: "linux64"
 
