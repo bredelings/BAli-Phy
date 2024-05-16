@@ -77,7 +77,7 @@ jobs:
             arch: "linux64"
 
           - name: macos-xcode-15-intel
-            os: macos-12
+            os: macos-13
             compiler: xcode
             version: "15"
             buildtype: "release"
