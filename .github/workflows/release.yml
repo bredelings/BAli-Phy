@@ -62,17 +62,17 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        name: [ubuntu-gcc-10,
+        name: [ubuntu-gcc-13,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-10
-            os: ubuntu-20.04
+          - name: ubuntu-gcc-13
+            os: ubuntu-24.04
             compiler: gcc
-            version: "10"
+            version: "13"
             buildtype: "release"
             arch: "linux64"
 
@@ -91,7 +91,7 @@ jobs:
             arch: "mac-arm64"
 
           - name: windows
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: mingw
             version: "N/A"
             buildtype: "release"
