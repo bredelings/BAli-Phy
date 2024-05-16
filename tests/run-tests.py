@@ -128,7 +128,6 @@ def splitCmd(cmd):
 
 class BAliPhy(Program):
     def __init__(self, cmd):
-        print(splitCmd(cmd))
         (cmd1,cmd2) = splitCmd(cmd)
         Program.__init__(self, cmd1)
         self.name = "bali-phy"
