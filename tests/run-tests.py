@@ -120,12 +120,20 @@ class Paup(Program):
             likelihood = "-"+likelihood
         return likelihood
 
+def splitCmd(cmd):
+    for i in range(0,len(cmd)):
+        if cmd[i].startswith('-'):
+            return (cmd[0:i],cmd[i:])
+    return (cmd,[])
+
 class BAliPhy(Program):
     def __init__(self, cmd):
-        Program.__init__(self,[cmd[0]])
+        print(splitCmd(cmd))
+        (cmd1,cmd2) = splitCmd(cmd)
+        Program.__init__(self, cmd1)
         self.name = "bali-phy"
         self.likelihood_regex = r".* likelihood = ([^ ]+) .*"
-        self.extra_args = self.cmd[1:]
+        self.extra_args = cmd2
 
     def prefix(self):
         return ""
