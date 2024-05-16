@@ -93,3 +93,28 @@ uniform_int_effect l u x = add_move $ slice_sample_integer_random_variable x (un
 
 
 uniform_int l u = UniformInt l u
+
+-------------------------------
+data UniformD a = UniformD [a]
+
+instance Dist (UniformD a) where
+    type Result (UniformD a) = a
+    dist_name _ = "uniformD"
+
+instance IOSampleable (UniformD a) where
+    sampleIO (UniformD values) = do
+      index <- sampleIO $ uniform_int 0 (length values-1)
+      return $ values !! index
+
+instance Eq a => HasPdf (UniformD a) where
+    pdf (UniformD values) x = sum [ if x == v then 1 else 0 | v <- values] / fromIntegral (length values)
+
+instance Eq a => HasAnnotatedPdf (UniformD a) where
+    annotated_densities dist = make_densities $ pdf dist
+
+instance Sampleable (UniformD a) where
+    sample (UniformD values) = do
+      index  <- sample $ uniform_int 0 (length values - 1)
+      return $ values !! index
+
+uniformD values = UniformD values
