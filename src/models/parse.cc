@@ -594,3 +594,34 @@ bool is_constant(const ptree& model)
 
     return (name.size()>=2 and name[0] == '"' and name.back() == '"');
 }
+
+int add_arg_placeholder(ptree& p1, const ptree& arg)
+{
+    int n_placeholders = 0;
+
+    for(auto& [key,value]: p1)
+    {
+	if (value == "_")
+	{
+	    n_placeholders++;
+	    value = arg;
+	}
+    }
+
+    return n_placeholders;
+}
+
+
+ptree add_arg(const ptree& p1, const ptree& p2)
+{
+    ptree p3 = p2;
+
+    int n_placeholders = add_arg_placeholder(p3, p1);
+    if (n_placeholders > 1)
+	throw myexception()<<"Placeholder '_' may only occur once.";
+
+    if (n_placeholders == 0)
+	p3.insert(p3.begin(), {"",p1});
+
+    return p3;
+}

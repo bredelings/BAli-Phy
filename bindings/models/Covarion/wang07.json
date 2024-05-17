@@ -18,6 +18,11 @@
                },
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel<a>",
+	    "description": "The base mixture model"
+        },
+        {
             "arg_name": "s01",
             "arg_type": "Double",
 	    "default_value":"~exponential(0.5)",
@@ -40,11 +45,6 @@
             "arg_type": "Double",
 	    "default_value":"~uniform(0,1)",
 	    "description":"Fraction of sites undergoing class-switching"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
-	    "description": "The base mixture model"
         }
     ],
     "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes.",

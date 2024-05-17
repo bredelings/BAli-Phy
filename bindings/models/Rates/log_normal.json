@@ -6,6 +6,11 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel<a>",
+            "description": "The model being scaled"
+        },
+        {
             "arg_name": "n",
             "arg_type": "Int",
             "default_value": "4",
@@ -16,11 +21,6 @@
             "arg_type": "Double",
             "description": "The standard deviation parameter",
             "default_value": "~log_laplace(-3,1)"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
-            "description": "The model being scaled"
         }
     ],
     "examples": ["gtr +> Rates.log_normal(4) +> inv"]

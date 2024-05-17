@@ -7,15 +7,15 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC<Codons<a>>",
+            "description": "Rate matrix on codons"
+        },
+        {
             "arg_name": "omega",
             "arg_type": "Double",
             "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "RevCTMC<Codons<a>>",
-            "description": "Rate matrix on codons"
         }
     ],
     "examples": ["hky85 +> x3 +> dNdS","gtr +> x3 +> dNdS"],

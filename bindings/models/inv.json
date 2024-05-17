@@ -6,14 +6,14 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel<a>"
+        },
+        {
             "arg_name": "p_inv",
             "arg_type": "Double",
             "default_value": "~uniform(0,1)",
             "description": "The fraction of invariable sites."
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>"
         }
     ],
     "title": "Invariable sites model",

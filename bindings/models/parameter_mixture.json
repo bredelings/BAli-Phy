@@ -5,6 +5,11 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "b -> MixtureModel<a>",
+	    "description": "The models to mix"
+        },
+        {
             "arg_name": "values",
             "arg_type": "List<b>",
 	    "description": "The frequencies for each model"
@@ -14,11 +19,6 @@
             "arg_type": "List<Double>",
             "default_value": "let(n=length(@values),replicate(n, 1.0 / intToDouble(n)))",
 	    "description": "The frequencies for each model"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "b -> MixtureModel<a>",
-	    "description": "The models to mix"
         }
     ],
     "title": "Mixture model",
