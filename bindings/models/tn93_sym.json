@@ -14,20 +14,20 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "kappaPur",
-            "arg_type": "Double",
+            "name": "kappaPur",
+            "type": "Double",
             "default_value": "~log_normal(log(2),0.25)",
             "description": "A<->G Transition\/transversion ratio"
         },
         {
-            "arg_name": "kappaPyr",
-            "arg_type": "Double",
+            "name": "kappaPyr",
+            "type": "Double",
             "default_value": "~log_normal(log(2),0.25)",
             "description": "C<->T Transition\/transversion ratio"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
 	    "default_value": "get_state(alphabet)",
             "description": "The nucleotide alphabet (DNA or RNA)."
         }

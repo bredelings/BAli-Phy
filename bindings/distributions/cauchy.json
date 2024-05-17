@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "m",
-            "arg_type": "Double",
+            "name": "m",
+            "type": "Double",
 	    "description": "The center parameter"
         },
         {
-            "arg_name": "s",
-            "arg_type": "Double",
+            "name": "s",
+            "type": "Double",
 	    "description": "The scale parameter"
         }
     ],

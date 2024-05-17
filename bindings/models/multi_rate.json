@@ -6,16 +6,16 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>"
+            "name": "submodel",
+            "type": "MixtureModel<a>"
         },
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<Double>"
+            "name": "dist",
+            "type": "Distribution<Double>"
         },
         {
-            "arg_name": "n_bins",
-            "arg_type": "Int",
+            "name": "n_bins",
+            "type": "Int",
             "default_value": "4"
         }
     ]

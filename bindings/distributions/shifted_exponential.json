@@ -6,13 +6,13 @@
     "title": "The Exponential distribution",
     "args": [
         {
-            "arg_name": "mean",
-            "arg_type": "Double",
+            "name": "mean",
+            "type": "Double",
 	    "description": "The mean parameter"
         },
 	{
-	    "arg_name": "shift",
-	    "arg_type": "Double",
+	    "name": "shift",
+	    "type": "Double",
 	    "description": "The shift parameter"
 	}
     ],

@@ -7,12 +7,12 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>"
+            "name": "submodel",
+            "type": "MixtureModel<a>"
         },
         {
-            "arg_name": "branch_cats",
-            "arg_type": "List<Int>",
+            "name": "branch_cats",
+            "type": "List<Int>",
             "default_value": "get_state(branch_categories)"
         }
     ]

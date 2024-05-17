@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<a>",
+            "name": "dist",
+            "type": "Distribution<a>",
 	    "description": "The distribution parameter"
         },
         {
-            "arg_name": "x",
-            "arg_type": "a",
+            "name": "x",
+            "type": "a",
 	    "description": "The argument"
         }
     ],

@@ -154,10 +154,10 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 
     for(auto& [_,x]: rule.get_child("args"))
     {
-        string arg_name = x.get_child("arg_name").get_value<string>();
+        string arg_name = x.get_child("name").get_value<string>();
 
 	{
-	    ptree& arg_type = x.get_child("arg_type");
+	    ptree& arg_type = x.get_child("type");
 	    arg_type = parse_type(arg_type.get_value<string>());
 	}
 
@@ -213,7 +213,7 @@ Rule Rules::require_rule_for_func(const string& s) const
 optional<ptree> maybe_get_arg(const Rule& rule, const string& arg_name)
 {
     for(const auto& arg: rule.get_child("args"))
-	if (arg.second.get<string>("arg_name") == arg_name)
+	if (arg.second.get<string>("name") == arg_name)
 	    return arg.second;
     return {};
 }
@@ -239,12 +239,12 @@ string get_keyword_for_positional_arg(const Rule& rule, int i)
     for(int j=0;j<i;j++)
 	it++;
 	
-    return it->second.get<string>("arg_name");
+    return it->second.get<string>("name");
 }
 
 ptree get_type_for_arg(const Rule& rule, const string& arg)
 {
-    return get_arg(rule,arg).get_child("arg_type");
+    return get_arg(rule,arg).get_child("type");
 }
 
 /*

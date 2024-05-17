@@ -4,12 +4,12 @@
     "call": "(:)(@first,@second)",
     "args": [
         {
-            "arg_name": "first",
-            "arg_type": "a"
+            "name": "first",
+            "type": "a"
         },
         {
-            "arg_name": "second",
-            "arg_type": "List<a>"
+            "name": "second",
+            "type": "List<a>"
         }
     ],
     "title":"cons: append to the front of a list"

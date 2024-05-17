@@ -6,19 +6,19 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "models",
-            "arg_type": "List<MixtureModel<a>>",
+            "name": "models",
+            "type": "List<MixtureModel<a>>",
 	    "description": "The models to mix"
         },
         {
-            "arg_name": "rates",
-            "arg_type": "List<Double>",
+            "name": "rates",
+            "type": "List<Double>",
             "default_value": "~symmetric_dirichlet(length(@models),2)",
 	    "description": "The (relative) scaling factors for each model"
         },
         {
-            "arg_name": "frequencies",
-            "arg_type": "List<Double>",
+            "name": "frequencies",
+            "type": "List<Double>",
             "default_value": "~symmetric_dirichlet(length(@models),3)",
 	    "description": "The frequencies for each model"
         }

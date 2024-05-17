@@ -6,19 +6,19 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
+            "name": "submodel",
+            "type": "MixtureModel<a>",
             "description": "The model being scaled"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
             "default_value": "4",
             "description": "The number of bins for discretizing the logNormal distribution"
         },
         {
-            "arg_name": "lsigma",
-            "arg_type": "Double",
+            "name": "lsigma",
+            "type": "Double",
             "description": "The standard deviation parameter",
             "default_value": "~log_laplace(-3,1)"
         }

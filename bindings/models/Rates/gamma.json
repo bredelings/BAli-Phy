@@ -6,19 +6,19 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
+            "name": "submodel",
+            "type": "MixtureModel<a>",
             "description": "The model being scaled"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
             "default_value": "4",
             "description": "The number of bins for discretizing the Gamma distribution"
         },
         {
-            "arg_name": "alpha",
-            "arg_type": "Double",
+            "name": "alpha",
+            "type": "Double",
             "default_value": "~log_laplace(6,2)",
             "description": "The shape parameter for the Gamma distribution"
         }

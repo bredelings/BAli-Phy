@@ -5,13 +5,13 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
+            "name": "submodel",
+            "type": "MixtureModel<a>",
 	    "description": "The base mixture model"
         },
         {
-            "arg_name": "nu",
-            "arg_type": "Double",
+            "name": "nu",
+            "type": "Double",
 	    "default_value":"~exponential(0.1)",
 	    "description":"Rate of class-switching"
         }

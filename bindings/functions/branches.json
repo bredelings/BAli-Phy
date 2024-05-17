@@ -6,8 +6,8 @@
     "import": ["Tree"],
     "args": [
         {
-            "arg_name": "t",
-            "arg_type": "Tree"
+            "name": "t",
+            "type": "Tree"
         }
     ]
 }

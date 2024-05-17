@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<Double>",
+            "name": "dist",
+            "type": "Distribution<Double>",
 	    "description": "The distribution to discretize"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
 	    "description": "The number of bins in the discretization"
         }
     ],

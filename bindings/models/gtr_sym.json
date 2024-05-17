@@ -7,14 +7,14 @@
     "citation":"Tavare, 1986",
     "args": [
         {
-            "arg_name": "sym",
-            "arg_type": "List<(String,Double)>",
+            "name": "sym",
+            "type": "List<(String,Double)>",
 	    "default_value":"~symmetric_dirichlet_on(letter_pairs(@a),1)",
 	    "description":"Symmetric exchangability matrix"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)"
         }
     ],

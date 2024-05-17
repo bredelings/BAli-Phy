@@ -5,13 +5,13 @@
     "call": "replicate(@n,@x)",
     "args": [
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
 	    "description": "Number of times to replicate the object"
         },
         {
-            "arg_name": "x",
-            "arg_type": "a",
+            "name": "x",
+            "type": "a",
 	    "description": "The object to replicate"
         }
     ],

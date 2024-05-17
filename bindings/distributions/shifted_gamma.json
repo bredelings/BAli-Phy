@@ -5,18 +5,18 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "a",
-            "arg_type": "Double",
+            "name": "a",
+            "type": "Double",
 	    "description": "The shape parameter"
         },
         {
-            "arg_name": "b",
-            "arg_type": "Double",
+            "name": "b",
+            "type": "Double",
 	    "description": "The scale parameter"
         },
 	{
-	    "arg_name": "shift",
-	    "arg_type": "Double",
+	    "name": "shift",
+	    "type": "Double",
 	    "description": "The shift parameter"
 	}
     ],

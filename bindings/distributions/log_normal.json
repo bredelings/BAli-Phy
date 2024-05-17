@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "lmu",
-            "arg_type": "Double",
+            "name": "lmu",
+            "type": "Double",
 	    "description": "The mean parameter (log scale)"
         },
         {
-            "arg_name": "lsigma",
-            "arg_type": "Double",
+            "name": "lsigma",
+            "type": "Double",
 	    "description": "The standard deviation parameter (log scale)"
         }
     ],

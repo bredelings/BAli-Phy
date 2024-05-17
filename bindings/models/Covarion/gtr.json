@@ -6,13 +6,13 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
+            "name": "submodel",
+            "type": "MixtureModel<a>",
 	    "description": "The base mixture model"
         },
         {
-            "arg_name": "sym",
-            "arg_type": "List<(String,Double)>",
+            "name": "sym",
+            "type": "List<(String,Double)>",
 	    "default_value":"~iid_on(number_pairs(n_components(@submodel)),gamma(0.5,1.0))",
 	    "description":"Symmetric class-switching exchangability matrix"
         }

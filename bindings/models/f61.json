@@ -6,13 +6,13 @@
     "call": "id(@pi)",
     "args": [
         {
-            "arg_name": "pi",
-            "arg_type": "List<(String,Double)>",
+            "name": "pi",
+            "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1.0)"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)"
         }
     ],

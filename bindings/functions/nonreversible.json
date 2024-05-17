@@ -5,8 +5,8 @@
     "call": "nonreversible(@x)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "RevCTMC<a>"
+            "name": "x",
+            "type": "RevCTMC<a>"
         }
     ],
     "title": "The exponential function"

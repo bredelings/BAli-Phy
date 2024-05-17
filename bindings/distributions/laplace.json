@@ -6,12 +6,12 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "m",
-            "arg_type": "Double"
+            "name": "m",
+            "type": "Double"
         },
         {
-            "arg_name": "s",
-            "arg_type": "Double"
+            "name": "s",
+            "type": "Double"
         }
     ],
     "title": "The Laplace distribution"

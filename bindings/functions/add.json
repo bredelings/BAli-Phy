@@ -6,12 +6,12 @@
     "call": "@x + @y",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "a"
+            "name": "x",
+            "type": "a"
         },
         {
-            "arg_name": "y",
-            "arg_type": "a"
+            "name": "y",
+            "type": "a"
         }
     ],
     "title":"The addition operator"

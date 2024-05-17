@@ -6,8 +6,8 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "a",
-            "arg_type": "AA",
+            "name": "a",
+            "type": "AA",
             "default_value": "get_state(alphabet)",
             "description": "The alphabet"
         }

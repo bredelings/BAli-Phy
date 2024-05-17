@@ -7,13 +7,13 @@
     "title": "Binomial distribution",
     "args": [
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
 	    "description": "Number of trials"
         },
         {
-            "arg_name": "p",
-            "arg_type": "Double",
+            "name": "p",
+            "type": "Double",
 	    "description": "Probability of success in each trial"
         }
     ],

@@ -13,23 +13,23 @@
 	       },
     "args": [
         {
-            "arg_name": "log_prob",
-            "arg_type": "Double",
+            "name": "log_prob",
+            "type": "Double",
             "default_value": "~laplace(-4, 0.707)"
         },
         {
-            "arg_name": "mean_length",
-            "arg_type": "Double",
+            "name": "mean_length",
+            "type": "Double",
             "default_value": "~shifted_exponential(10,1)"
         },
         {
-            "arg_name": "tau",
-            "arg_type": "Double",
+            "name": "tau",
+            "type": "Double",
             "default_value": "0.001"
         },
         {
-            "arg_name": "topology",
-            "arg_type": "Topology",
+            "name": "topology",
+            "type": "Topology",
             "default_value": "get_state(topology)"
         }
     ],

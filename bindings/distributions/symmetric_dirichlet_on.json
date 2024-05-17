@@ -6,12 +6,12 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "items",
-            "arg_type": "List<a>"
+            "name": "items",
+            "type": "List<a>"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Double"
+            "name": "n",
+            "type": "Double"
         }
     ]
 }

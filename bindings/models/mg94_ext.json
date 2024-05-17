@@ -6,20 +6,20 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "nuc_model",
-            "arg_type": "RevCTMC<a>",
+            "name": "nuc_model",
+            "type": "RevCTMC<a>",
             "alphabet": "getNucleotides(@a)",
             "description": "Nucleotide substitution rate matrix"
         },
         {
-            "arg_name": "omega",
-            "arg_type": "Double",
+            "name": "omega",
+            "type": "Double",
             "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }

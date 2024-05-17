@@ -6,8 +6,8 @@
     "call": "negate(@x)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "a"
+            "name": "x",
+            "type": "a"
         }
     ]
 }

@@ -7,20 +7,20 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "rates1",
-            "arg_type": "RevCTMC<b>",
+            "name": "rates1",
+            "type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 1"
         },
         {
-            "arg_name": "rates2",
-            "arg_type": "RevCTMC<b>",
+            "name": "rates2",
+            "type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 2"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)",
 	    "description": "The Triplets alphabet"
         }

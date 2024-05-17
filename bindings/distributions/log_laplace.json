@@ -6,12 +6,12 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "lm",
-            "arg_type": "Double"
+            "name": "lm",
+            "type": "Double"
         },
         {
-            "arg_name": "ls",
-            "arg_type": "Double"
+            "name": "ls",
+            "type": "Double"
         }
     ]
 }

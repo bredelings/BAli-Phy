@@ -5,13 +5,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "set",
-            "arg_type": "IntSet",
+            "name": "set",
+            "type": "IntSet",
 	    "description": "The number of samples"
         },
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<a>",
+            "name": "dist",
+            "type": "Distribution<a>",
 	    "description": "The distribution to sample from"
         }
     ],

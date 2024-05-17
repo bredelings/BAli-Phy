@@ -7,8 +7,8 @@
     "title": "The Bernoulli distribution",
     "args": [
         {
-            "arg_name": "p",
-            "arg_type": "Double",
+            "name": "p",
+            "type": "Double",
 	    "description": "Probability of success (i.e. drawing a 1)"
         }
     ],

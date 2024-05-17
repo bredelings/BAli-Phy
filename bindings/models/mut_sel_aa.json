@@ -8,19 +8,19 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "RevCTMC<Codons<a>>",
+            "name": "submodel",
+            "type": "RevCTMC<Codons<a>>",
 	    "description": "Model of neutral mutation"
         },
         {
-            "arg_name": "ss",
-            "arg_type": "List<(String,Double)>",
+            "name": "ss",
+            "type": "List<(String,Double)>",
             "default_value": "~iid_on(letters(getAminoAcids(@a)), laplace(0,0.1))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
-	    "arg_name": "a",
-	    "arg_type": "Codons<a>",
+	    "name": "a",
+	    "type": "Codons<a>",
 	    "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
 	}

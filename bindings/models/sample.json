@@ -7,8 +7,8 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<a>"
+            "name": "dist",
+            "type": "Distribution<a>"
         }
     ]
 }

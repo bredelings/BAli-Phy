@@ -5,12 +5,12 @@
     "call": "@x \/ @y",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "Double"
+            "name": "x",
+            "type": "Double"
         },
         {
-            "arg_name": "y",
-            "arg_type": "Double"
+            "name": "y",
+            "type": "Double"
         }
     ]
 }

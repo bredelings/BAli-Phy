@@ -5,8 +5,8 @@
     "import": ["Markov"],
     "args": [
         {
-            "arg_name": "n",
-            "arg_type": "Int"
+            "name": "n",
+            "type": "Int"
         }
     ]
 }

@@ -6,13 +6,13 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "ExchangeModel<a>",
+            "name": "submodel",
+            "type": "ExchangeModel<a>",
 	    "description": "Symmetric (exchangability) matrix"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
 	    "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }

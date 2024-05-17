@@ -6,26 +6,26 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "Double -> a<Codons<b>>",
+            "name": "submodel",
+            "type": "Double -> a<Codons<b>>",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
-            "arg_name": "ps",
-            "arg_type": "List<Double>",
+            "name": "ps",
+            "type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n,2)",
 	    "description": "The frequency of each omega"
         },
         {
-            "arg_name": "omegas",
-            "arg_type": "List<Double>",
+            "name": "omegas",
+            "type": "List<Double>",
             "default_value": "~iid(@n, uniform(0,1))",
 	    "description": "The omega (i.e. dN/dS) values"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
             "default_value": "4",
 	    "description": "The number of omega categories, if not specified"
         }

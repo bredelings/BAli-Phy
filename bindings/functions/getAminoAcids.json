@@ -5,8 +5,8 @@
     "import": ["Bio.Alphabet"],
     "args": [
         {
-            "arg_name": "a",
-            "arg_type": "Codons<a>"
+            "name": "a",
+            "type": "Codons<a>"
         }
     ]
 }

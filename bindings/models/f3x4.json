@@ -7,26 +7,26 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "pi1",
-            "arg_type": "List<(String,Double)>",
+            "name": "pi1",
+            "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
-            "arg_name": "pi2",
-            "arg_type": "List<(String,Double)>",
+            "name": "pi2",
+            "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
-            "arg_name": "pi3",
-            "arg_type": "List<(String,Double)>",
+            "name": "pi3",
+            "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 3"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value":"get_state(alphabet)",
 	    "description": "The (codon) alphabet"
         }

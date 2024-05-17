@@ -6,8 +6,8 @@
     "call": "intToDouble(@x)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "Int",
+            "name": "x",
+            "type": "Int",
 	    "description": "The integer to convert"
         }
     ]

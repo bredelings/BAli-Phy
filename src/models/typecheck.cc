@@ -90,7 +90,7 @@ set<string> find_rule_type_vars(const ptree& rule)
 {
     set<string> vars = find_variables_in_type(rule.get_child("result_type"));
     for(const auto& x: rule.get_child("args"))
-	add(vars, find_variables_in_type( x.second.get_child("arg_type") ) );
+	add(vars, find_variables_in_type( x.second.get_child("type") ) );
     return vars;
 }
 
@@ -100,7 +100,7 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
     substitute(renaming, rule.get_child("constraints") );
     for(auto& x: rule.get_child("args"))
     {
-	ptree& arg_type = x.second.get_child("arg_type");
+	ptree& arg_type = x.second.get_child("type");
 	substitute( renaming, arg_type );
     }
     return rule;
@@ -142,7 +142,7 @@ Rule substitute_in_rule_types(const equations& renaming, Rule rule)
     substitute(renaming, rule.get_child("constraints") );
     for(auto& x: rule.get_child("args"))
     {
-	ptree& arg_type = x.second.get_child("arg_type");
+	ptree& arg_type = x.second.get_child("type");
 	substitute( renaming, arg_type );
     }
     return rule;
@@ -667,18 +667,18 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
     map<string,ptree> arg_env;
     for(const auto& [_, argument]: rule.get_child("args"))
     {
-	string arg_name = argument.get<string>("arg_name");
+	string arg_name = argument.get<string>("name");
 
-	auto arg_required_type = argument.get_child("arg_type");
+	auto arg_required_type = argument.get_child("type");
         arg_env.insert({arg_name, arg_required_type});
     }
 
     // 7. Handle arguments in rule order
     for(const auto& [_,argument]: rule.get_child("args"))
     {
-	string arg_name = argument.get<string>("arg_name");
+	string arg_name = argument.get<string>("name");
 
-	auto arg_required_type = argument.get_child("arg_type");
+	auto arg_required_type = argument.get_child("type");
 	substitute(E, arg_required_type);
 	ptree arg_value;
 	bool is_default = false;

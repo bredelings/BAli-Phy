@@ -5,13 +5,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "xs",
-            "arg_type": "List<a>",
+            "name": "xs",
+            "type": "List<a>",
 	    "description": "The number of samples"
         },
         {
-            "arg_name": "dist",
-            "arg_type": "Distribution<b>",
+            "name": "dist",
+            "type": "Distribution<b>",
 	    "description": "The distribution to sample from"
         }
     ],

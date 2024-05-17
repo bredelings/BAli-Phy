@@ -6,25 +6,25 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
+            "name": "submodel",
+            "type": "MixtureModel<a>",
 	    "description": "The model to be scaled"
         },
         {
-            "arg_name": "rates",
-            "arg_type": "List<Double>",
+            "name": "rates",
+            "type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Rates for each category"
         },
         {
-            "arg_name": "frequencies",
-            "arg_type": "List<Double>",
+            "name": "frequencies",
+            "type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Frequencies for each category"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
             "default_value": "4",
 	    "description": "Number of categories, if not specified"
         }

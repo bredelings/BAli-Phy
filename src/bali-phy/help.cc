@@ -233,8 +233,8 @@ string get_help_for_rule(const Rule& rule)
     }
     for(auto& [_,arg]: args)
     {
-	string arg_name = arg.get<string>("arg_name");
-	string arg_type = unparse_type(arg.get_child("arg_type"));
+	string arg_name = arg.get<string>("name");
+	string arg_type = unparse_type(arg.get_child("type"));
 	args_names_types.push_back(blue(arg_name) + bold(": ") + red(arg_type));
     }
     help<<header("Usage");
@@ -258,7 +258,7 @@ string get_help_for_rule(const Rule& rule)
     {
 	// 1. arg: description
 	auto description = arg.get_optional<string>("description");
-	help<<"   "<<blue(arg.get<string>("arg_name"))<<": "<<description<<".\n";
+	help<<"   "<<blue(arg.get<string>("name"))<<": "<<description<<".\n";
 
 	// 2. default =/~ default
 	if (auto default_value = arg.get_child_optional("default_value"))

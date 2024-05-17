@@ -6,14 +6,14 @@
     "import": ["SModel.NonReversibleMarkov"],
     "args": [
         {
-            "arg_name": "rates",
-            "arg_type": "List<(String,Double)>",
+            "name": "rates",
+            "type": "List<(String,Double)>",
 	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
 	    "description":"rate matrix"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }

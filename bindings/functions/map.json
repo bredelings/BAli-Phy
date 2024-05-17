@@ -5,12 +5,12 @@
     "call": "map(@f,@xs)",
     "args": [
         {
-            "arg_name": "f",
-            "arg_type": "a -> b"
+            "name": "f",
+            "type": "a -> b"
         },
         {
-            "arg_name": "xs",
-            "arg_type": "List<a>"
+            "name": "xs",
+            "type": "List<a>"
         }
     ]
 }

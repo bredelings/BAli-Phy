@@ -5,12 +5,12 @@
     "call": "zip(@x,@y)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "List<a>"
+            "name": "x",
+            "type": "List<a>"
         },
         {
-            "arg_name": "y",
-            "arg_type": "List<b>"
+            "name": "y",
+            "type": "List<b>"
         }
     ]
 }

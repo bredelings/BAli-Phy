@@ -5,8 +5,8 @@
     "call": "tan(@x)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "Double"
+            "name": "x",
+            "type": "Double"
         }
     ],
     "title": "The tangent function"

@@ -608,7 +608,7 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     for(int i=0; i < args.size(); i++)
     {
         auto argi = array_index(args,i);
-        if (arg_name == argi.get_child("arg_name").get_value<string>())
+        if (arg_name == argi.get_child("name").get_value<string>())
             return i;
     }
     throw myexception()<<"No arg named '"<<arg_name<<"'";
@@ -1160,7 +1160,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
-        arg_names[i] = argi.get_child("arg_name").get_value<string>();
+        arg_names[i] = argi.get_child("name").get_value<string>();
 
         auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();

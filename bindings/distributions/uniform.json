@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "low",
-            "arg_type": "Double",
+            "name": "low",
+            "type": "Double",
 	    "description": "The lower bound"
         },
         {
-            "arg_name": "high",
-            "arg_type": "Double",
+            "name": "high",
+            "type": "Double",
 	    "description": "The upper bound"
         }
     ],

@@ -6,12 +6,12 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "low",
-            "arg_type": "Int"
+            "name": "low",
+            "type": "Int"
         },
         {
-            "arg_name": "high",
-            "arg_type": "Int"
+            "name": "high",
+            "type": "Int"
         }
     ],
     "title": "Uniform distribution on integers"

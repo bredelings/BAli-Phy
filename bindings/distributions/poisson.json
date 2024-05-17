@@ -5,8 +5,8 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "mu",
-            "arg_type": "Double",
+            "name": "mu",
+            "type": "Double",
 	    "description": "The mean parameter"
         }
     ],

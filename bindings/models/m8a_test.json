@@ -7,44 +7,44 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "Double -> a<Codons<b>>",
+            "name": "submodel",
+            "type": "Double -> a<Codons<b>>",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },
         {
-            "arg_name": "n",
-            "arg_type": "Int",
+            "name": "n",
+            "type": "Int",
             "default_value": "4",
 	    "description": "The number of bins for discretizing the Beta distribution"
         },
         {
-            "arg_name": "mu",
-            "arg_type": "Double",
+            "name": "mu",
+            "type": "Double",
             "default_value": "~uniform(0,1)",
 	    "description": "The mean of the Beta distribution"
         },
         {
-            "arg_name": "gamma",
-            "arg_type": "Double",
+            "name": "gamma",
+            "type": "Double",
             "default_value": "~beta(1,10)",
 	    "description": "The fraction of possible Beta variance given mu"
         },
         {
-            "arg_name": "posP",
-            "arg_type": "Double",
+            "name": "posP",
+            "type": "Double",
             "default_value": "~beta(1,10)",
             "description": "The fraction of positively-selected or neutral sites"
         },
         {
-            "arg_name": "posW",
-            "arg_type": "Double",
+            "name": "posW",
+            "type": "Double",
             "default_value": "~log_gamma(4,0.25)",
             "description": "The dN\/dS value for positively-selected or neutral sites"
         },
         {
-            "arg_name": "posSelection",
-            "arg_type": "Int",
+            "name": "posSelection",
+            "type": "Int",
             "default_value": "~bernoulli(0.5)",
             "description": "The model indicator -- H0 or H1"
         }

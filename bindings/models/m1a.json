@@ -6,20 +6,20 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "Double -> a<Codons<b>>",
+            "name": "submodel",
+            "type": "Double -> a<Codons<b>>",
             "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
-            "arg_name": "omega0",
-            "arg_type": "Double",
+            "name": "omega0",
+            "type": "Double",
             "default_value": "~uniform(0,1)",
 	    "description": "The dN/dS value for conserved sites"
         },
         {
-            "arg_name": "p0",
-            "arg_type": "Double",
+            "name": "p0",
+            "type": "Double",
             "default_value": "~uniform(0,1)",
 	    "description": "The fraction of conserved sites"
         }

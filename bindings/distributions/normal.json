@@ -6,13 +6,13 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "mean",
-            "arg_type": "Double",
+            "name": "mean",
+            "type": "Double",
 	    "description": "The mean parameter"
         },
         {
-            "arg_name": "sigma",
-            "arg_type": "Double",
+            "name": "sigma",
+            "type": "Double",
 	    "description": "The standard deviation parameter"
         }
     ],

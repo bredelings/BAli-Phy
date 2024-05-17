@@ -6,12 +6,12 @@
     "import": ["Probability"],
     "args": [
         {
-            "arg_name": "n",
-            "arg_type": "Int"
+            "name": "n",
+            "type": "Int"
         },
         {
-            "arg_name": "x",
-            "arg_type": "Double"
+            "name": "x",
+            "type": "Double"
         }
     ],
     "title":"The Dirichlet distribution",

@@ -5,12 +5,12 @@
     "call": "take(@n,@xs)",
     "args": [
         {
-            "arg_name": "n",
-            "arg_type": "Int"
+            "name": "n",
+            "type": "Int"
         },
         {
-            "arg_name": "xs",
-            "arg_type": "List<a>"
+            "name": "xs",
+            "type": "List<a>"
         }
     ]
 }

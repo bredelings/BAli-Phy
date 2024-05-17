@@ -5,8 +5,8 @@
     "call": "nComponents(@x)",
     "args": [
         {
-            "arg_name": "x",
-            "arg_type": "MixtureModel<a>"
+            "name": "x",
+            "type": "MixtureModel<a>"
         }
     ]
 }

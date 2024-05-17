@@ -14,20 +14,20 @@
     "import": ["IModel"],
     "args": [
         {
-            "arg_name": "rate",
-            "arg_type": "Double",
+            "name": "rate",
+            "type": "Double",
             "default_value": "~log_laplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {
-            "arg_name": "mean_length",
-            "arg_type": "Double",
+            "name": "mean_length",
+            "type": "Double",
             "default_value": "~shifted_exponential(10,1)",
 	    "description": "The mean indel length"
         },
         {
-            "arg_name": "topology",
-            "arg_type": "Topology",
+            "name": "topology",
+            "type": "Topology",
             "default_value": "get_state(topology)"
         }
     ],

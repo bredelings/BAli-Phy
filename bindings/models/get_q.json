@@ -5,8 +5,8 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "q",
-            "arg_type": "RevCTMC<a>"
+            "name": "q",
+            "type": "RevCTMC<a>"
         }
     ]
 }

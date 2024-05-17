@@ -6,12 +6,12 @@
     "import": ["Bio.Alphabet"],
     "args": [
         {
-            "arg_name": "nucleotides",
-            "arg_type": "a"
+            "name": "nucleotides",
+            "type": "a"
         },
         {
-            "arg_name": "code",
-            "arg_type": "GeneticCode",
+            "name": "code",
+            "type": "GeneticCode",
             "default_value": "standard_code"
         }
     ],

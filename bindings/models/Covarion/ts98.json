@@ -14,19 +14,19 @@
                },
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "RevCTMC<a>",
+            "name": "submodel",
+            "type": "RevCTMC<a>",
 	    "description": "The base model"
         },
         {
-            "arg_name": "r",
-            "arg_type": "Double",
+            "name": "r",
+            "type": "Double",
 	    "default_value":"~gamma(2,1/4)",
 	    "description":"s01 + s10"
         },
         {
-            "arg_name": "pi1",
-            "arg_type": "Double",
+            "name": "pi1",
+            "type": "Double",
 	    "default_value":"~beta(2,2)",
 	    "description":"Fraction of time spent in the ON state."
         }

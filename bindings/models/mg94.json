@@ -8,20 +8,20 @@
     "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
-            "arg_name": "omega",
-            "arg_type": "Double",
+            "name": "omega",
+            "type": "Double",
             "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
-            "arg_name": "pi",
-            "arg_type": "List<(String,Double)>",
+            "name": "pi",
+            "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies"
         },
         {
-            "arg_name": "a",
-            "arg_type": "a",
+            "name": "a",
+            "type": "a",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
