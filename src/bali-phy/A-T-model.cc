@@ -177,7 +177,7 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
 }
 
 template <typename T>
-json optional_to_json(const std::optional<T>& o)
+json::value optional_to_json(const std::optional<T>& o)
 {
     if (not o)
         return nullptr;
@@ -211,21 +211,21 @@ string show_model(const model_t& m)
     return s.substr(0,2) + bold(s.substr(2));
 }
 
-json log_summary(const vector<model_t>& IModels,
-                 const vector<model_t>& SModels,
-                 const vector<model_t>& ScaleModels,
-                 const model_t& branch_length_model,
-                 std::vector<std::optional<int>>& smodel_index_for_partition,
-                 std::vector<std::optional<int>>& imodel_index_for_partition,
-                 std::vector<std::optional<int>>& scale_index_for_partition,
-                 int n_sequences, int n_data_partitions,
-                 const vector<string>& alphabet_names,
-                 const variables_map& args)
+json::object log_summary(const vector<model_t>& IModels,
+			 const vector<model_t>& SModels,
+			 const vector<model_t>& ScaleModels,
+			 const model_t& branch_length_model,
+			 std::vector<std::optional<int>>& smodel_index_for_partition,
+			 std::vector<std::optional<int>>& imodel_index_for_partition,
+			 std::vector<std::optional<int>>& scale_index_for_partition,
+                         int n_sequences, int n_data_partitions,
+                         const vector<string>& alphabet_names,
+                         const variables_map& args)
 {
-    json info;
-    json partitions;
+    json::object info;
+    json::array partitions;
 
-    json tree;
+    json::object tree;
     if (n_sequences >= 3)
     {
         cout<<"T:topology ~ uniform on tree topologies\n";
@@ -248,7 +248,7 @@ json log_summary(const vector<model_t>& IModels,
 
     for(int i=0;i<n_data_partitions;i++)
     {
-        json partition;
+	json::object partition;
 
         cout<<"Partition "<<magenta(tag("P",i))<<":\n";
         // 1. filename 
@@ -286,29 +286,29 @@ json log_summary(const vector<model_t>& IModels,
         partitions.push_back(partition);
     }
 
-    json smodels = json::array();
+    json::array smodels;
     for(int i=0;i<SModels.size();i++)
     {
         //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-        smodels.push_back(SModels[i].pretty_model());
+        smodels.push_back( convert_to_json(SModels[i].pretty_model()) );
         string e = SModels[i].show_extracted();
         if (e.size())
             cout<<"Substitution model "<<bold_blue(tag("S",i))<<" priors:"<<e<<"\n\n";
     }
 
-    json imodels = json::array();
+    json::array imodels;
     for(int i=0;i<IModels.size();i++)
     {
-        imodels.push_back(IModels[i].pretty_model());
+        imodels.push_back( convert_to_json(IModels[i].pretty_model()) );
         string e = IModels[i].show_extracted();
         if (e.size())
             cout<<"Insertion/deletion model "<<bold_red(tag("I",i))<<" priors:"<<e<<"\n\n";
     }
 
-    json scales = json::array();
+    json::array scales;
     for(int i=0;i<ScaleModels.size();i++)
     {
-        scales.push_back(ScaleModels[i].pretty_model());
+        scales.push_back( convert_to_json(ScaleModels[i].pretty_model()) );
         string e = ScaleModels[i].show_extracted();
         if (e.size())
             cout<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
@@ -755,7 +755,7 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 }
 
 
-std::tuple<Program, json> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
+std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                                int /* proc_id */, const fs::path& dir)
 {
     //------ Determine number of partitions ------//

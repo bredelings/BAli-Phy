@@ -63,20 +63,20 @@ class Model: public context
     ////  \param indices The indices of the parameters that changed.
 
 public:
-    typedef std::map<std::string, json> key_map_t;
+    typedef std::map<std::string, json::value> key_map_t;
 
     /// An object for key-value pairs.
     cow_ptr< key_map_t > keys;
 
     bool contains_key(const std::string& key) const { return keys->count(key);}
-    json lookup_key(const std::string& key) const { return keys->find(key)->second;}
+    json::value lookup_key(const std::string& key) const { return keys->find(key)->second;}
 
     template<typename T>
-    T load_value(const std::string& key, const T& t) const 
+    T load_value(const std::string& key, const T& t) const
 	{ 
 	    auto loc = keys->find(key);
 	    if (loc != keys->end())
-		return loc->second;
+		return json::value_to<T>(loc->second);
 	    else
 		return t;
 	}
@@ -113,7 +113,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 {
     auto loc = keys.find(key);
     if (loc != keys.end())
-        return loc->second;
+        return json::value_to<T>(loc->second);
     else
         return t;
 }

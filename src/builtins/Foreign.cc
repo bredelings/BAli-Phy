@@ -17,7 +17,7 @@ using std::set;
 using std::map;
 
 
-json c_json(const expression_ref& E)
+json::value c_json(const expression_ref& E)
 {
     int type = E.as_<EPair>().first.as_int();
 
@@ -28,7 +28,7 @@ json c_json(const expression_ref& E)
         return {};
     // String
     else if (type == 5)
-        return (string)J.as_<String>();
+        return json::string((string)J.as_<String>());
     // Bool
     else if (type == 4)
     {
@@ -47,15 +47,14 @@ json c_json(const expression_ref& E)
     // Double
     else if (type == 3)
     {
-        // I think we'd like to serialize Inf as 1e999999
-        // and -Inf as -1e999999. But here we return JSON,
-        // not a string, so that doesn't work.
+	// With Boost.JSON we should be able to serialize
+	// -Infinity, Infinity, and NaN
         return J.as_double();
     }
     // Object
     else if (type == 1)
     {
-	json object = json::object();
+	json::object object;
 	for(auto& j: J.as_<EVector>())
 	{
             auto& K = j.as_<EPair>().first;
@@ -67,7 +66,7 @@ json c_json(const expression_ref& E)
     }
     else if (type == 0)
     {
-	json array = json::array();
+	json::array array;
 	for(auto& j: J.as_<EVector>())
 	    array.push_back(c_json(j));
 	return array;
@@ -81,7 +80,7 @@ extern "C" closure builtin_function_c_json(OperationArgs& Args)
 {
     auto j = Args.evaluate(0);
 
-    Box<json> J = c_json(j);
+    Box<json::value> J = c_json(j);
 
     return (const Object&)J;
 }
@@ -130,8 +129,8 @@ extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_<Box<json>>();
-    String s = j.dump();
+    auto j = Args.evaluate(0).as_<Box<json::value>>();
+    String s = json::serialize(j,{.allow_infinity_and_nan=true});
     return s;
 }
 
@@ -143,7 +142,7 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 	firstFields.push_back(e.as_<String>());
 
     auto arg1 =  Args.evaluate(1);
-    auto& sample = arg1.as_<Box<json>>();
+    auto& sample = arg1.as_<Box<json::value>>().as_object();
 
     vector<string> out_fields = MCON::tsv_fields(firstFields, sample, true);
 
@@ -166,7 +165,7 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     auto& mapping = arg0.as_<Box<std::map<string,int>>>();
 
     auto arg1 = Args.evaluate(1);
-    auto& sample = arg1.as_<Box<json>>();
+    auto& sample = arg1.as_<Box<json::value>>().as_object();
 
     auto sample2 = MCON::atomize(MCON::unnest(sample), true);
 

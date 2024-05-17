@@ -18,7 +18,7 @@ jobs:
                ubuntu-gcc-12-DEBUG_MACHINE,
                ubuntu-gcc-12-sanitize,
                ubuntu-gcc-12,
-               ubuntu-clang-15,
+               ubuntu-clang-17,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
                windows
@@ -26,21 +26,21 @@ jobs:
 
         include:
           - name: ubuntu-gcc-10
-            os: ubuntu-20.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "10"
             buildtype: "release"
             arch: "linux64"
 
           - name: ubuntu-gcc-11
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "11"
             buildtype: "release"
             arch: "linux64"
 
           - name: ubuntu-gcc-12-sanitize
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "12"
             buildtype: "release"
@@ -48,14 +48,14 @@ jobs:
             arch: "linux64"
 
           - name: ubuntu-gcc-12-debugoptimized
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "12"
             buildtype: "debugoptimized"
             arch: "linux64"
 
           - name: ubuntu-gcc-12-DEBUG_MACHINE
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "12"
             buildtype: "debugoptimized"
@@ -63,16 +63,16 @@ jobs:
             arch: "linux64"
 
           - name: ubuntu-gcc-12
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             version: "12"
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-clang-15
-            os: ubuntu-22.04
+          - name: ubuntu-clang-17
+            os: ubuntu-24.04
             compiler: clang
-            version: "15"
+            version: "17"
             buildtype: "release"
             arch: "linux64"
 
@@ -91,7 +91,7 @@ jobs:
             arch: "mac-arm64"
 
           - name: windows
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: mingw
             version: "N/A"
             buildtype: "release"
@@ -109,7 +109,7 @@ jobs:
       run: |
         sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
-        sudo apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev
+        sudo apt-get install -y libboost-all-dev librange-v3-dev libeigen3-dev libcairo2-dev
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           # For newer GCCs, maybe.
@@ -146,7 +146,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 nlohmann-json cairo
+          brew install boost eigen range-v3 cairo
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi

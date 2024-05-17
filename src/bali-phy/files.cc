@@ -132,16 +132,16 @@ inline void rtrim(std::string &s)
     }).base(), s.end());
 }
 
-void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
+void run_info(json::object& info, int /*proc_id*/, int argc, char* argv[])
 {
-    json command;
+    json::array command;
     for(int i=0;i<argc;i++)
 	command.push_back(argv[i]);
 
     string start_time = fmt::format("{:%c}", fmt::localtime(std::chrono::system_clock::now()));
     rtrim(start_time);
 
-    json env = json::object();
+    json::object env;
     for(auto& var: {"SLURM_JOBID", "JOB_ID", "LSB_JOBID"})
 	if (auto evar = getenv(var))
 	    env[var] = evar;
@@ -152,7 +152,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
     info["environment"] = env;
     info["pid"] = getpid();
     info["hostname"] = hostname();
-    json program = version_info();
+    json::object program = version_info();
     program["name"] = "bali-phy";
     info["program"] = program;
 

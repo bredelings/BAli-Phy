@@ -162,7 +162,7 @@ log_double_t sample_alignment(Parameters& P,int b)
   
     optional<int> bandwidth;
     if (P.contains_key("simple_bandwidth"))
-        bandwidth  = (int)P.lookup_key("simple_bandwidth");
+        bandwidth  = P.lookup_key("simple_bandwidth").as_int64();
 
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
     const Parameters P0 = P;

@@ -1210,7 +1210,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
     optional<int> bandwidth;
     if (P.contains_key("simple_bandwidth"))
-        bandwidth  = (int)P.lookup_key("simple_bandwidth");
+        bandwidth  = P.lookup_key("simple_bandwidth").as_int64();
 
     shared_ptr<sample_A3_multi_calculation> tri;
     if (do_cube)

@@ -1371,9 +1371,9 @@ extern "C" closure builtin_function_writeTraceGraph(OperationArgs& Args)
     return constructor("()",0);
 }
 
-
-void simplify(json& j);
-json flatten_me(const json& j);
+// These are defined in models/model.cc
+void simplify(json::object& j);
+json::object flatten_me(const json::object& j);
 
 // Probably we should put this whole thing into the machine.
 extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
@@ -1386,8 +1386,7 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
 
     int t = Args.evaluate(1).as_int();
 
-    object_ptr<Box<json>> result(new Box<json>);
-    json& j = *result;
+    json::object j;
 
     j["iter"] = t;
     j["prior"] = log(C.prior());
@@ -1396,6 +1395,8 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
     // Probably we should put this into the machine.
     j["parameters/"] = C.get_logged_parameters();
 
+    object_ptr<Box<json::value>> result(new Box<json::value>(j));
+
     return result;
 }
 
@@ -1403,14 +1404,14 @@ extern "C" closure builtin_function_jsonToTableLineRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
-    auto j = Args.evaluate(0).as_<Box<json>>();
+    auto j = Args.evaluate(0).as_<Box<json::value>>().as_object();
 
     simplify(j);
     j = flatten_me(j);
 
     std::ostringstream line;
     line.precision(17);
-    for(auto& [key,j2]: j.items())
+    for(auto& [key,j2]: j)
         line<<"   "<<key<<" = "<<j2;
 
     return String(line.str());

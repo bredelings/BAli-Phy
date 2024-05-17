@@ -14,6 +14,18 @@ namespace fs = std::filesystem;
 namespace MCON
 {
 
+void update(json::object& j1, const json::object& j2)
+{
+    for(auto& [key,value]: j2)
+	j1[key] = value;
+}
+
+void update(json::object& j1, json::object&& j2)
+{
+    for(auto& [key,value]: j2)
+	j1[key] = std::move(value);
+}
+
 vector<string> mcon_path(const string& name)
 {
     vector<string> path;
@@ -24,12 +36,12 @@ vector<string> mcon_path(const string& name)
     return path;
 }
 
-void drop_path(json& j, const vector<string>& path)
+void drop_path(json::object& j, const vector<string>& path)
 {
-    json* jj = &j;
+    json::object* jj = &j;
     for(int i=0;i+1<path.size();i++)
     {
-	jj = & jj->at(path[i]);
+	jj = & jj->at(path[i]).as_object();
     }
     jj->erase(path.back());
 }
@@ -39,18 +51,18 @@ bool is_nested_key(string_view key)
     return key.ends_with('/');
 }
 
-set<string> get_keys_non_nested(const json& j)
+set<string> get_keys_non_nested(const json::object& j)
 {
     set<string> keys;
-    for(auto& [key,value]: j.items())
+    for(auto& [key,value]: j)
 	keys.insert(key);
     return keys;
 }
 
-set<string> get_keys_nested(const json& j)
+set<string> get_keys_nested(const json::object& j)
 {
     set<string> keys;
-    for(auto& [key,value]: j.items())
+    for(auto& [key,value]: j)
     {
 	if (is_nested_key(key))
 	{
@@ -58,8 +70,8 @@ set<string> get_keys_nested(const json& j)
 	    // Could be quadratic in length of string.
 	    // Linear in depth of key.
 	    // But simple.
-	    for(auto& key2: get_keys_nested(value))
-		keys.insert(key+key2);
+	    for(auto& key2: get_keys_nested(value.as_object()))
+		keys.insert(string(key)+string(key2));
 	}
 	else
 	    keys.insert(key);
@@ -67,62 +79,62 @@ set<string> get_keys_nested(const json& j)
     return keys;
 }
 
-json get_long_names_and_values_data(const std::string& prefix, const json& j)
+json::object get_long_names_and_values_data(const std::string& prefix, const json::value& j)
 {
-    json j2;
+    json::object j2;
     if (j.is_object())
     {
-	for(auto& [key,value]: j.items())
-	    j2.update( get_long_names_and_values_data(prefix+'['+key+']', value) );
+	for(auto& [key,value]: j.as_object())
+	    update( j2, get_long_names_and_values_data(prefix+'['+string(key)+']', value) );
     }
-    else if (j.is_array())
+    else if (auto array = j.if_array())
     {
-	for(int i=0; i<j.size(); i++)
-	    j2.update( get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', j[i]) );
+	for(int i=0; i< array->size(); i++)
+	    update( j2, get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', (array)[i]) );
     }
     else
 	j2[prefix] = j;
     return j2;
 }
 
-json atomize(const json& j, bool nested)
+json::object atomize(const json::object& j, bool nested)
 {
-    json j2;
-    for(auto& [key,value]: j.items())
+    json::object j2;
+    for(auto& [key,value]: j)
     {
 	if (nested and is_nested_key(key))
 	{
-	    json j3;
-	    auto j4 = atomize(value, true);
-	    for(auto& [key2, value2]: j4.items())
+	    json::object j3;
+	    auto j4 = atomize(value.as_object(), true);
+	    for(auto& [key2, value2]: j4)
 		j3[key2] = value2;
 	    j2[key] = j3;
 	}
 	else
-	    j2.update( get_long_names_and_values_data(key,value) );
+	    update( j2, get_long_names_and_values_data(key,value) );
     }
     return j2;
 }
 
-json unnest(const json& j, const string& prefix)
+json::object unnest(const json::object& j, const string& prefix)
 {
-    json j2;
-    for(auto& [key,value]: j.items())
+    json::object j2;
+    for(auto& [key,value]: j)
     {
 	if (is_nested_key(key))
-	    j2.update( unnest(value, prefix+key) );
+	    update( j2, unnest(value.as_object(), prefix+string(key)) );
 	else
-	    j2[prefix+key] = value;
+	    j2[prefix+string(key)] = value;
     }
     return j2;
 }
 
-json nest(const json& j)
+json::object nest(const json::object& j)
 {
-    json j2;
+    json::object j2;
 
-    map<string,json> subgroups;
-    for(auto& [key,value]: j.items())
+    map<string,json::object> subgroups;
+    for(auto& [key,value]: j)
     {
 	if (auto pos = key.find('/'); pos != string::npos)
 	{
@@ -142,7 +154,7 @@ json nest(const json& j)
     return j2;
 }
 
-string chop_nested(string key)
+string chop_nested(const string& key)
 {
     if (is_nested_key(key))
 	return key.substr(0,key.size()-1);
@@ -150,35 +162,35 @@ string chop_nested(string key)
 	return key;
 }
 
-json simplify(const json& j)
+json::object simplify(const json::object& j)
 {
     // 1. Recursively simplify children.
-    json j2;
-    for(auto& [k,v]: j.items())
-	j2[k] = is_nested_key(k) ? simplify(v) : v;
+    json::object j2;
+    for(auto& [k,v]: j)
+	j2[k] = is_nested_key(k) ? simplify(v.as_object()) : v;
 
     // 2. Check which keys are present or could be promoted.
     map<string,int> seen;
-    for(auto& [key,value]: j2.items())
+    for(auto& [key,value]: j2)
     {
 	seen[chop_nested(key)] += 1;
 	if (is_nested_key(key))
-	    for(auto& [key2,value2]: value.items())
+	    for(auto& [key2,value2]: value.as_object())
 		seen[chop_nested(key2)] += 1;
     }
 
     // 3. Promote nested keys if there is no ambiguity.
-    json j3;
-    for(auto& [key,value]: j2.items())
+    json::object j3;
+    for(auto& [key,value]: j2)
     {
 	if (is_nested_key(key))
 	{
 	    bool ok = true;
-	    for(auto& [k2,v2]: value.items())
+	    for(auto& [k2,v2]: value.as_object())
 		if (seen.at(chop_nested(k2)) > 1)
 		    ok = false;
 	    if (ok)
-		j3.update(value);
+		update(j3, value.as_object());
 	    else
 		j3[key] = value;
 	}
@@ -191,15 +203,15 @@ json simplify(const json& j)
 
 vector<string> short_fields(const vector<string>& fields)
 {
-    json j;
+    json::object j;
     for(int i=0;i<fields.size();i++)
 	j[fields[i]] = i;
 
     j = unnest(simplify(nest(j)));
 
     vector<string> fields2(fields.size());
-    for(auto& [key,index]: j.items())
-	fields2[index] = key;
+    for(auto& [key,index]: j)
+	fields2[index.as_int64()] = string(key);
 
     return fields2;
 }
@@ -207,9 +219,14 @@ vector<string> short_fields(const vector<string>& fields)
 
 std::ostream& Log::dump_MCON(std::ostream& o) const
 {
-    json header;
+    json::object header;
     if (fields)
-	header["fields"] = *fields;
+    {
+	json::array jfields;
+	for(auto& field: *fields)
+	    jfields.push_back(json::string(field));
+	header["fields"] = jfields;
+    }
 
     header["format"] = "MCON";
     header["version"] = "0.1";
@@ -292,7 +309,7 @@ vector<string> parse_tsv_line(const string& s)
     return strings;
 }
 
-vector<string> get_row(const map<string,int>& all_fields, const json& sample, std::optional<int> sample_index)
+vector<string> get_row(const map<string,int>& all_fields, const json::object& sample, std::optional<int> sample_index)
 {
     int nfields = all_fields.size();
 
@@ -308,12 +325,12 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, st
 	    std::cerr<<"  "<<sample<<"\n";
 	    exit(1);
 	}
-	row[index] = sample.at(field).dump();
+	row[index] = json::serialize(sample.at(field),{.allow_infinity_and_nan=true});
     }
     assert(sample.size() >= nfields);
     if (sample.size() != nfields)
     {
-	for(auto& [key,value]: sample.items())
+	for(auto& [key,value]: sample)
 	    if (not all_fields.count(key))
 	    {
 		std::cerr<<"Error: sample";
@@ -328,7 +345,7 @@ vector<string> get_row(const map<string,int>& all_fields, const json& sample, st
     return row;
 }
 
-vector<string> tsv_fields(const vector<string>& first_fields, const json& j, bool nested)
+vector<string> tsv_fields(const vector<string>& first_fields, const json::object& j, bool nested)
 {
     vector<string> out_fields = first_fields;
 
@@ -399,25 +416,30 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     return o;
 }
 
-Log::Log(const json& header)
+Log::Log(const json::object& header)
 {
     if (header.count("fields"))
-	fields = header.at("fields");
+    {
+	vector<string> fs;
+	for(auto& field: header.at("fields").as_array())
+	    fs.push_back(string(field.as_string()));
+	fields = std::move(fs);
+    }
 
     if (header.count("nested"))
-	nested = header.at("nested");
+	nested = header.at("nested").as_bool();
 
     if (header.count("atomic"))
-	atomic = header.at("atomic");
+	atomic = header.at("atomic").as_bool();
 }
 
-Log::Log(const json& header, const std::vector<json>& js)
+Log::Log(const json::object& header, const std::vector<json::object>& js)
     :Log(header)
 {
     samples = js;
 }
 
-Log::Log(const json& header, std::vector<json>&& js)
+Log::Log(const json::object& header, std::vector<json::object>&& js)
     :Log(header)
 {
     samples = std::move(js);
@@ -430,7 +452,7 @@ std::tuple<std::optional<string>,string> detect_format(std::istream& instream)
 
     try
     {
-	auto header = json::parse(firstline);
+	auto header = json::parse(firstline, {}, {.allow_infinity_and_nan = true}).as_object();
 	if (header.count("format") and header.at("format") == "MCON" and header.count("version"))
 	    return {"MCON",firstline};
 	else
@@ -445,13 +467,21 @@ std::tuple<std::optional<string>,string> detect_format(std::istream& instream)
 
 MCON::Log read_MCON(const string& firstline, std::istream& input)
 {
-    json header = json::parse(firstline);
-    vector<json> samples;
+    json::object header = json::parse(firstline, {}, {.allow_infinity_and_nan = true}).as_object();
+    vector<json::object> samples;
 
     string line;
     while(getline(input,line))
-	samples.push_back(json::parse(line));
+	samples.push_back(json::parse(line, {}, {.allow_infinity_and_nan = true}).as_object());
     return MCON::Log(header, std::move(samples));
+}
+
+json::array convert_to_json(const vector<string>& v)
+{
+    json::array array;
+    for(auto& s: v)
+	array.push_back(json::string(s));
+    return array;
 }
 
 MCON::Log read_TSV(const string& firstline, std::istream& input)
@@ -459,13 +489,13 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
     auto tsv_fields = parse_tsv_line(firstline);
     int nfields = tsv_fields.size();
 
-    json header = { {"format","MCON"},
-		    {"version", "0.1"},
-		    {"fields",  tsv_fields},
-		    {"nested", false} };
+    json::object header = { {"format","MCON"},
+			    {"version", "0.1"},
+			    {"fields",  convert_to_json(tsv_fields)},
+			    {"nested", false} };
 
     string line;
-    vector<json> samples;
+    vector<json::object> samples;
     int ignored_lines = 0;
     while(getline(input, line))
     {
@@ -476,9 +506,9 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
 	    ignored_lines++;
 	    break;
 	}
-	json j;
+	json::object j;
 	for(int i=0;i<nfields;i++)
-	    j[tsv_fields[i]] = json::parse(fields[i]);
+	    j[tsv_fields[i]] = json::parse(fields[i], {}, {.allow_infinity_and_nan = true}).as_object();
 	samples.push_back(j);
     }
     while(getline(input, line))

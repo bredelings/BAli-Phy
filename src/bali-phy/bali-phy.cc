@@ -462,7 +462,7 @@ std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int a
 }
 
 std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map& args, const shared_ptr<module_loader>& L,
-                                          int proc_id, const fs::path& output_dir, json info)
+                                          int proc_id, const fs::path& output_dir, json::object info)
 {
     auto P = std::make_unique<Program>(L);
 
@@ -481,7 +481,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         // Change this into a pointer.
         Rules R(get_package_paths(argv[0], args));
         auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
-        info.update(j);
+        update(info, j);
         *P = prog;
     }
     else if (args.count("model"))
@@ -497,7 +497,8 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     if ((args.count("align") or args.count("model")) and not args.count("test"))
     {
         ofstream run_info( output_dir / "C1.run.json" );
-        run_info<<info.dump(4)<<std::endl;
+	run_info<<json::serialize_options({.allow_infinity_and_nan=true});
+        run_info<<info<<std::endl;
         run_info.close();
         cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
@@ -630,7 +631,7 @@ int main(int argc,char* argv[])
         }
 
         //---------- Create model object -----------//
-        json info;
+        json::object info;
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
         info["subdirectory"] = fs::weakly_canonical(output_dir).make_preferred().string();

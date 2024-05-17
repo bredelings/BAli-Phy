@@ -283,37 +283,36 @@ string show_paths(const vector<fs::path>& paths)
     return join(spaths,":");
 }
 
-ptree json_to_ptree(const json& j)
+ptree json_to_ptree(const json::value& j)
 {
     ptree p;
-    switch(j.type())
+    switch(j.kind())
     {
-    case json::value_t::null:
+    case json::kind::null:
 	break;
 	// j.is_boolean()
-    case json::value_t::boolean:
-	p = ptree(j.get<bool>());
+    case json::kind::bool_:
+	p = ptree(j.as_bool());
 	break;
-    case json::value_t::number_integer:
-	p = ptree(j.get<int>());
+    case json::kind::uint64:
+	p = ptree((int)j.as_uint64());
 	break;
-	// j.is_number_unsigned()
-    case json::value_t::number_unsigned:
-	p = ptree(int(j.get<unsigned>()));
+    case json::kind::int64:
+    p = ptree((int)j.as_int64());
 	break;
-    case json::value_t::number_float:
-	p = ptree(j.get<double>());
+    case json::kind::double_:
+	p = ptree(j.as_double());
 	break;
-    case json::value_t::string:
-	p = ptree(j.get<string>());
+    case json::kind::string:
+	p = ptree(string(j.as_string()));
 	break;
 	// j.is_array()
-    case json::value_t::array:
-	for(auto& x: j)
+    case json::kind::array:
+	for(auto& x: j.as_array())
 	    p.push_back({"", json_to_ptree(x)});
 	break;
-    case json::value_t::object:
-	for(auto [key,value]: j.items())
+    case json::kind::object:
+	for(auto& [key,value]: j.as_object())
 	    p.push_back({key, json_to_ptree(value)});
 	break;
     default:
@@ -328,12 +327,12 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 
     Rule rule;
     try {
-	json j;
+	json::value j;
 	infile>>j;
-	json category;
+	json::array category;
 	for(const auto& s:rel_path)
-	    category.push_back(s.string());
-	j["category"] = category;
+	    category.push_back(json::string(s.string()));
+	j.as_object()["category"] = category;
 	rule = json_to_ptree(j);
     }
     catch (const std::exception& e)

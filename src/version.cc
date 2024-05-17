@@ -120,9 +120,9 @@ void print_version_info(ostream& file)
 	file<<"FLAGS: "<<config_flags()<<endl;
 }
 
-json version_info() 
+json::object version_info() 
 {
-    json info;
+    json::object info;
     info["version"] = version();
     info["build-date"] = build_date();
     if (arch().size())

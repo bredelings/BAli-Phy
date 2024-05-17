@@ -75,7 +75,7 @@ if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')
 endif
 
-boost_modules = [ 'program_options', 'random', 'system', 'chrono']
+boost_modules = [ 'program_options', 'random', 'system', 'chrono', 'json']
 if get_option('with-mpi')
   boost_modules += ['serialization', 'mpi']
 endif
@@ -89,8 +89,6 @@ boost = dependency('boost', modules : boost_modules).as_system()
 eigen = dependency('eigen3').as_system()
 
 fmt = dependency('fmt', static: true).as_system()
-
-json = dependency('nlohmann_json').as_system()
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.

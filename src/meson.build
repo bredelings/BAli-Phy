@@ -57,7 +57,7 @@ libcommon_sources = [
 libcommon = static_library('common',
 			   libcommon_sources,
 			   include_directories: libutil_inc,
-			   dependencies: [boost, eigen, librange, json])
+			   dependencies: [boost, eigen, librange])
 
 subdir('computation')
 
@@ -126,7 +126,7 @@ libbaliphy_sources = [
 
 libbaliphy = static_library('baliphy', libbaliphy_sources, 
 			    include_directories: [root_inc, libutil_inc],
-			    dependencies: [boost, eigen, json, libdl, math_dep, librange, immer])
+			    dependencies: [boost, eigen, libdl, math_dep, librange, immer])
 			    
 subdir('bali-phy')
 
@@ -172,7 +172,7 @@ foreach tool: tools + prefixed_tools
     sources += extra_sources[tool]
   endif
 
-  deps = [boost, librange, math_dep, json]
+  deps = [boost, librange, math_dep]
   if tool in extra_deps
     deps += extra_deps[tool]
   endif

@@ -646,7 +646,7 @@ expression_ref context_ref::evaluate_program() const
 }
 
 
-json context_ref::get_logged_parameters() const
+json::object context_ref::get_logged_parameters() const
 {
     // 1. Check if there is a logging head.
     if (not memory()->logging_head)
@@ -660,7 +660,7 @@ json context_ref::get_logged_parameters() const
     auto L = evaluate_head(*memory()->logging_head);
 
     // 4. Check that the result is a JSON object.
-    return L.as_checked<Box<json>>().value();
+    return L.as_checked<Box<json::value>>().value().as_object();
 }
 
 int context_ref::get_compute_expression_reg(int index) const
@@ -825,15 +825,15 @@ bool perform_MH(context_ref& C1,const context_ref& C2,log_double_t rho)
 }
 
 
-void simplify(json& j);
-json flatten_me(const json& j);
+void simplify(json::object& j);
+json::object flatten_me(const json::object& j);
 
 void show_parameters(std::ostream& o,const context_ref& C)
 {
     auto j = C.get_logged_parameters();
     simplify(j);
     j = flatten_me(j);
-    for(auto& [key,j2]: j.items())
+    for(auto& [key,j2]: j)
         o<<"   "<<key<<" = "<<j2;
     o<<"\n";
     o<<"\n";
