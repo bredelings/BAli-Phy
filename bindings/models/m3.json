@@ -6,6 +6,12 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "Double -> a<Codons<b>>",
+            "default_value": "function(w: gy94(omega=w))",
+	    "description": "The model as a function of dN/dS"
+        },
+        {
             "arg_name": "ps",
             "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n,2)",
@@ -22,12 +28,6 @@
             "arg_type": "Int",
             "default_value": "4",
 	    "description": "The number of omega categories, if not specified"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "Double -> a<Codons<b>>",
-            "default_value": "function(w: gy94(omega=w))",
-	    "description": "The model as a function of dN/dS"
         }
     ],
     "title": "The M3 model",

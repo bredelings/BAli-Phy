@@ -35,7 +35,7 @@
 # include "driver.hh"
 # include "parse.H"
 
-ptree fold_terms(const std::vector<ptree>& terms);
+ptree add_arg(const ptree& p1, const ptree& p2);
 }
 
 %define api.token.prefix {TOK_}
@@ -67,6 +67,7 @@ ptree fold_terms(const std::vector<ptree>& terms);
 
   STACK         "+>"
   ARROW         "->"
+  PLACEHOLDER   "_"
 ;
 
 %token <std::string> VARID    "VARID"
@@ -79,7 +80,7 @@ ptree fold_terms(const std::vector<ptree>& terms);
 
 %type <ptree>       exp
 %type <ptree>       term
-%type <std::vector<ptree>>       terms
+%type <ptree>       fncall
 %type <std::vector<std::pair<std::string,ptree>>> args
 %type <std::pair<std::string,ptree>> arg
 %type <std::vector<std::pair<std::string,ptree>>> ditems
@@ -111,17 +112,15 @@ start: START_EXP exp {drv.result = $2;}
 |      START_TYPE type {drv.result = $2;}
 
 
-exp: terms                                    { $$ = fold_terms($1); }
+exp: term                                     { $$ = $1; }
 |    varid "=" exp ";" exp                    { $$ = ptree("let",{{$1,$3},{"",$5}}); }
 |    varid "~" exp ";" exp                    { $$ = ptree("let",{{$1,add_sample($3)},{"",$5}}); }
 
-terms: term                 { $$.push_back($1);}
-|      terms "+>" term       { $$ = $1; $$.push_back($3);}
 
 // See parse_no_submodel( )
 term: qvarid                      { $$ = ptree($1); }
 |     "@" varid                   { $$ = ptree("@"+$2); }
-|     qvarid "(" args ")"         { $$ = ptree($1,$3); }
+|     fncall                      { $$ = $1; }
 |     "[" args "]"                { $$ = ptree("List",$2); }
 |     "[" "]"                     { $$ = ptree("List",{}); }
 |     "(" tup_args "," exp ")"    { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
@@ -136,7 +135,12 @@ term: qvarid                      { $$ = ptree($1); }
 |     term "-" term               { $$ = ptree("-",{{"",ptree($1)},{"",$3}}); }
 |     term "*" term               { $$ = ptree("*",{{"",ptree($1)},{"",$3}}); }
 |     term "/" term               { $$ = ptree("/",{{"",ptree($1)},{"",$3}}); }
+|     term "+>" fncall            { $$ = add_arg($1,$3); }
+|     term "+>" qvarid            { $$ = add_arg($1,ptree($3)); }
+|     "_"                         { $$ = ptree("_"); }
 
+
+fncall: qvarid "(" args ")"         { $$ = ptree($1,$3); }
 
 
 ditems: ditem                     { $$.push_back({"",$1}); }
@@ -202,16 +206,3 @@ zz::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message(l,m);
 }
 
-
-ptree fold_terms(const std::vector<ptree>& terms)
-{
-    std::optional<ptree> result;
-    for(auto& term: terms)
-    {
-        if (not result)
-            result = term;
-        else
-            result = add_submodel(term, *result);
-    }
-    return *result;
-}

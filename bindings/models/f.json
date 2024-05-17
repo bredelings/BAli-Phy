@@ -6,15 +6,15 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel<a>",
+	    "description": "Symmetric (exchangability) matrix"
+        },
+        {
             "arg_name": "pi",
             "arg_type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "ExchangeModel<a>",
-	    "description": "Symmetric (exchangability) matrix"
         },
         {
             "arg_name": "a",

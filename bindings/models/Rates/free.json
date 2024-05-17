@@ -6,6 +6,11 @@
     "import": ["SModel"],
     "args": [
         {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel<a>",
+	    "description": "The model to be scaled"
+        },
+        {
             "arg_name": "rates",
             "arg_type": "List<Double>",
             "default_value": "~symmetric_dirichlet(@n, 1)",
@@ -22,11 +27,6 @@
             "arg_type": "Int",
             "default_value": "4",
 	    "description": "Number of categories, if not specified"
-        },
-        {
-            "arg_name": "submodel",
-            "arg_type": "MixtureModel<a>",
-	    "description": "The model to be scaled"
         }
     ],
     "title": "Free rates model",

@@ -1,6 +1,6 @@
-[1mprint expression:1.14:[1;31m error:[0m[1m
-   • syntax error, unexpected ), expecting ;
+[1mprint expression:1.11:[1;31m error:[0m[1m
+   • syntax error, unexpected VARID
   [1;34m|[0m
-[1;34m1[0m [1;34m| [0mgtr_sym+>(x=2[1;31m)[0m+>f
-  [1;34m|[0m              [1;31m^[0m
+[1;34m1[0m [1;34m| [0mgtr_sym+>([1;31mx[0m=2)+>f
+  [1;34m|[0m           [1;31m^[0m
 
