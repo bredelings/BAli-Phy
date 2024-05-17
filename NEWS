@@ -1,4 +1,4 @@
-* 4.0-beta10 (unreleased)
+* 4.0-beta10 (May 17, 2024)
 - Features
   + Allow codon models with any genetic code.
   + Colorized help info; more readable types.
@@ -9,6 +9,14 @@
   - Use a -> b for Function<a,b> and (a,b) for Tuple<a,b>.
 - Bug fixes:
   - Fix non-standard genetic codes.
+  - Fix specifying Codons, Codons(DNA), and Codons(DNA,mt-vert) alphabets.
+- Misc:
+  - Allow `bali-phy <command> arguments` for commands print, help, run, and model.
+  - Help: show argument types instead of default values.
+  - Allow floating point numbers to be any type.
+  - Refactor Log Double.
+  - Refactor and fix Prob
+  - Add class RealFloat with checking for NaN and Inf.
 
 * 4.0-beta9 (Mar 30, 2024)
 - Bug fixes:
