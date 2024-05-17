@@ -1181,7 +1181,8 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const Matrix& Q_,
 
     // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
     double subst_rate = theta/2;
-    EMatrix Q = toEigen(Q_) * subst_rate / rate_away(pi, Q);
+    EMatrix Q = toEigen(Q_);
+    Q *= subst_rate / rate_away(pi, Q);
 
     // The rate of coalescing with another lineage is k for k other lineages.
     double coalescent_time = 1.0/k;
