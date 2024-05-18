@@ -148,8 +148,10 @@ unsigned long init_rng_and_get_seed(const variables_map& args)
 }
 
 chrono::system_clock::time_point start_time = chrono::system_clock::now();
+auto start_time_t = chrono::system_clock::to_time_t(start_time);
 
 auto start_work_time = chrono::system_clock::now();
+auto start_work_time_t = chrono::system_clock::to_time_t(start_work_time);
 auto start_work_cpu_time = total_cpu_time();
 
 void show_ending_messages()
@@ -258,14 +260,15 @@ void show_ending_messages()
         }
     }
     auto end_time = system_clock::now();
+    auto end_time_t = system_clock::to_time_t(end_time);
     auto end_cpu_time = total_cpu_time();
 
     if (log_verbose >= 1)
     {
         cout<<endl;
         cout<<"Setup:"<<endl;
-        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_time))<<endl;
-	cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(start_work_time))<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_time_t))<<endl;
+	cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(start_work_time_t))<<endl;
         cout<<"  total (elapsed) time: "<<duration_string( start_work_time-start_time )<<endl;
         cout<<"  total (CPU) time: "<<duration_string( start_work_cpu_time )<<endl;
     }
@@ -274,8 +277,8 @@ void show_ending_messages()
     {
         cout<<endl;
         cout<<"Work:"<<endl;
-        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_work_time))<<endl;
-        cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(end_time))<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_work_time_t))<<endl;
+        cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(end_time_t))<<endl;
         cout<<"  total (elapsed) time: "<<duration_string( end_time - start_work_time )<<endl;
         cout<<"  total (CPU) time: "<<duration_string( end_cpu_time - start_work_cpu_time )<<endl;
     }
