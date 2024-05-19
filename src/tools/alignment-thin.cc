@@ -76,7 +76,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("shorter-than,s",value<unsigned>(),"Remove sequences not shorter than <arg>.")
 	("cutoff,c",value<unsigned>(),"Remove similar sequences with #mismatches < cutoff.")
 	("down-to,d",value<int>(),"Remove similar sequences down to <arg> sequences.")
-	("remove-crazy",value<int>(),"Remove <arg> outlier sequences -- defined as sequences that are missing too many conserved sites.")
+	("remove-gappy",value<int>(),"Remove <arg> outlier sequences -- defined as sequences that are missing too many conserved sites.")
 	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
 	;
 
@@ -128,7 +128,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<" Remove similar sequences until we have the right number of sequences:\n";
 	cout<<"   % alignment-thin --down-to=30 file.fasta > file-30taxa.fasta\n\n";
 	cout<<" Remove dissimilar sequences that are missing conserved columns:\n";
-	cout<<"   % alignment-thin --remove-crazy=10 file.fasta > file2.fasta\n\n";
+	cout<<"   % alignment-thin --remove-gappy=10 file.fasta > file2.fasta\n\n";
 	cout<<" Protect some sequences from being removed:\n";
 	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta\n\n";
 	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=@filename > file2.fasta\n\n";
@@ -373,6 +373,46 @@ dynamic_bitset<> part_of_long_insertion(const alignment& A, int L)
     return in_long_insertion;
 }
 
+vector<int> conserved_columns(const alignment& A, const vector<int>& keep, double conserved_fraction)
+{
+    assert(keep.size() == A.n_sequences());
+
+    vector<int> conserved(A.n_sequences());
+
+    for(int i=0;i<A.length();i++)
+    {
+	int count = 0;
+	int total = 0;
+	for(int j=0; j<A.n_sequences();j++)
+	{
+	    if (keep[j] == 0) continue;
+
+	    total++;
+
+	    if (A.character(i,j))
+		count++;
+	}
+	double fraction = double(count)/total;
+
+	if (fraction >= conserved_fraction)
+	    conserved.push_back(i);
+    }
+
+    return conserved;
+}
+
+int get_score(const alignment& A, const vector<int>& columns, int seq)
+{
+    int score = 0;
+
+    for(int c: columns)
+	if (A.character(c, seq))
+	    score++;
+
+    return score;
+
+}
+
 int main(int argc,char* argv[])
 {
     try {
@@ -488,43 +528,56 @@ int main(int argc,char* argv[])
 
 	//-------------------- remove ------------------------//
 
-	if (args.count("remove-crazy"))
+	if (args.count("remove-gappy"))
 	{
-	    int n_remove = args["remove-crazy"].as<int>();
+	    int n_remove = args["remove-gappy"].as<int>();
 	    double conserved_fraction = args["conserved"].as<double>();
+	    n_remove = std::min(n_remove, A.n_sequences());
 
-	    vector<int> conserved(A.n_sequences());
-	    int n_conserved_columns=0;
-	    for(int i=0;i<A.length();i++)
+	    for(int i=0; i<n_remove; i++)
 	    {
-		double fraction = double(n_characters(A,i))/A.n_sequences();
-		if (fraction < conserved_fraction) continue;
+		auto columns = conserved_columns(A, keep, conserved_fraction);
 
-		n_conserved_columns++;
-	
+		vector<int> sequences;
+
 		for(int j=0;j<A.n_sequences();j++)
-		    if (A.character(i,j))
-			conserved[j]++;
-	    }
+		    if (keep[j] > 0)
+			sequences.push_back(j);
 
-	    vector<int> order = iota<int>(conserved.size());
-	    sort(order.begin(), order.end(), sequence_order<int>(conserved));
+		std::map<int,int> score;
+		for(int seq: sequences)
+		    score.insert({seq, get_score(A, columns, seq)});
 
-	    if (log_verbose) {
-		cerr<<"total # conserved columns = "<<n_conserved_columns<<endl;
-		cerr<<"  conserved: ";
-		cerr<<"  min = "<<conserved[order[0]];
-		cerr<<"  median = "<<conserved[order[order.size()/2]];
-		cerr<<"  max = "<<conserved[order.back()]<<endl;
-	    }
+		vector<int> order = sequences;
 
-	    for(int i=0;i<n_remove;i++) 
-		if (keep[order[i]] == 1 and keep[order[i]] != 2) {
-		    cerr<<"Remove crazy: "<<names[order[i]]<<"    "<<conserved[order[i]]<<endl;
-		    keep[order[i]] = 0;
+		std::sort(order.begin(), order.end(), [&](int i, int j) {return score[i] < score[j];});
+
+		if (log_verbose) {
+		    cerr<<"total # conserved columns = "<<columns.size()<<endl;
+		    cerr<<"  conserved: ";
+		    cerr<<"  min = "<<score[order[0]];
+		    cerr<<"  median = "<<score[order[order.size()/2]];
+		    cerr<<"  max = "<<score[order.back()]<<endl;
 		}
-		else if (n_remove < order.size())
-		    n_remove++;
+
+		bool found = true;
+		for(int seq: order)
+		{
+		    if (keep[seq] == 1)
+		    {
+			cerr<<"Remove: "<<names[seq]<<"    "<<score[seq]<<" / " <<columns.size()<<"   median = "<<score[order[order.size()/2]]<<"   max = "<<score[order.back()]<<endl;
+			keep[seq] = 0;
+			found = true;
+			break;
+		    }
+		}
+
+		if (not found)
+		{
+		    std::cerr<<"No more taxa can be dropped.\n";
+		    break;
+		}
+	    }
 	}
 
 	//------- Find the most redundant --------//
