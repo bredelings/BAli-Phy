@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/math/special_functions/beta.hpp>
 #include <boost/math/distributions.hpp>
 #include "util/myexception.H"
+#include "util/log-level.H"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -253,7 +254,7 @@ double normal_quantile(double p, double mu, double sigma)
   }
   catch(const std::exception& e)
   {
-      std::cerr<<"Warning: normal_quantile (p="<<p<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
+      if (log_verbose >= 2) std::cerr<<"Warning: normal_quantile (p="<<p<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
       return 1;
   }
 }
@@ -272,7 +273,7 @@ double cauchy_quantile(double p, double m, double s)
   }
   catch(const std::exception& e)
   {
-      std::cerr<<"Warning: cauchy_quantile (p="<<p<<", m="<<m<<", s="<<s<<"), "<<e.what()<<std::endl;
+      if (log_verbose >= 2) std::cerr<<"Warning: cauchy_quantile (p="<<p<<", m="<<m<<", s="<<s<<"), "<<e.what()<<std::endl;
       return m;
   }
 }
@@ -317,14 +318,14 @@ static double pointChi2(double prob, double v)
 
   if (p < 0.000002) 
   {
-    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.000002\n";
+    if (log_verbose >= 2) std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.000002\n";
 
     p = 0.000002;
   }
 
   if (p > 0.999998) 
   {
-    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.999998\n";
+    if (log_verbose >= 2) std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.999998\n";
 
     p = 0.999998;
   }
@@ -428,7 +429,7 @@ double gamma_quantile(double p, double a, double b)
   }
   catch(const std::exception& e)
   {
-    std::cerr<<"Warning: gamma_quantile (p="<<p<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+    if (log_verbose >= 2) std::cerr<<"Warning: gamma_quantile (p="<<p<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
     return 1;
   }
 }

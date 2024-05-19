@@ -8,6 +8,7 @@
 #include "probability/probability.H"
 #include "util/bounds.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 
 #include <boost/math/distributions.hpp>
 #include <boost/math/special_functions/gamma.hpp>
@@ -57,7 +58,7 @@ extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
     }
     catch(const std::exception& e)
     {
-        std::cerr<<"Warning: gamma_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+	if (log_verbose >= 2) std::cerr<<"Warning: gamma_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
         return { 0.0 };
     }
 }
@@ -95,7 +96,7 @@ extern "C" closure builtin_function_beta_cdf(OperationArgs& Args)
     }
     catch(const std::exception& e)
     {
-        std::cerr<<"Warning: beta_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+        if (log_verbose >= 2) std::cerr<<"Warning: beta_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
         return { 0.0 };
     }
 }
@@ -117,7 +118,7 @@ extern "C" closure builtin_function_normal_density(OperationArgs& Args)
   
     return { normal_pdf(x, a1, a2) };
 }
- 
+
 extern "C" closure builtin_function_normal_cdf(OperationArgs& Args)
 {
     double mu = Args.evaluate(0).as_double();
@@ -133,7 +134,7 @@ extern "C" closure builtin_function_normal_cdf(OperationArgs& Args)
     }
     catch(const std::exception& e)
     {
-        std::cerr<<"Warning: normal_cdf (x="<<x<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
+        if (log_verbose >= 2) std::cerr<<"Warning: normal_cdf (x="<<x<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
         return { 0.0 };
     }
 }
