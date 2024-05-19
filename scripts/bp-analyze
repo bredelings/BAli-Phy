@@ -478,7 +478,7 @@ class TreeFileRun(MCMCRun):
     def n_iterations(self):
         n = get_n_lines(self.get_trees_file())-1
         if n <= 0:
-            print(f"Error: Tree file '{self.get_tree_file()}' has no samples!")
+            print(f"Error: Tree file '{self.get_trees_file()}' has no samples!")
             exit(1)
         return n
 
