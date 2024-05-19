@@ -211,7 +211,7 @@ def get_tree_counts(filename):
     counts = []
     with open(filename, encoding='utf-8') as countfile:
         for line in countfile:
-            m = re.match('Kept (\d+) trees', line)
+            m = re.match(r'Kept (\d+) trees', line)
             if m:
                 counts.append(m.group(1))
     return counts
@@ -539,7 +539,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def translate_to_dict():
         run_info = dict()
         run_info["command"] = self.find_header_attribute("command")
-        run_info["program"]["version"] = self.find_header_attribute("VERSION").split('\s+')[0]
+        run_info["program"]["version"] = self.find_header_attribute("VERSION").split(r'\s+')[0]
         run_info["tree"]["topology"] = self.find_in_header('T:topology ')
         run_info["tree"]["lengths"] = self.find_in_header('T:lengths ')
 
@@ -1151,7 +1151,7 @@ class Analysis(object):
                 if not line:
                     i += 1
                     continue
-                m = re.search('([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)',line)
+                m = re.search(r'([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)',line)
                 if m:
                     var = m.group(1)
                     self.median[var] = m.group(2)
@@ -1159,7 +1159,7 @@ class Analysis(object):
                     self.CI_high[var] = m.group(4)
 
                     i += 1
-                    m = re.search('t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)', lines[i])
+                    m = re.search(r't @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)', lines[i])
                     if m:
                         self.ACT[var] = float(m.group(1))
                         self.ESS[var] = float(m.group(2))
@@ -1168,14 +1168,14 @@ class Analysis(object):
                             self.Burnin[var] = float(self.Burnin[var])
 
                     i += 1
-                    m = re.search('PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)',lines[i])
+                    m = re.search(r'PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)',lines[i])
                     if m:
                         self.PSRF_CI80[var] = float(m.group(1))
                         self.PSRF_RCF[var] = float(m.group(2))
                     i += 1
                     continue
 
-                m = re.search('\s+(.+) = (.+)', line)
+                m = re.search(r'\s+(.+) = (.+)', line)
                 if m:
                     var = m.group(1)
                     self.median[var] = m.group(2)
@@ -1250,33 +1250,33 @@ class Analysis(object):
         output = self.exec_show(['alignment-info',filename])
         features = dict()
         for line in output.split('\n'):
-            m = re.match('Alphabet: (.*)$', line)
+            m = re.match(r'Alphabet: (.*)$', line)
             if m:
                 features["alphabet"] = m.group(1)
                 continue
 
-            m = re.match('Alignment: (.+) columns of (.+) sequences', line)
+            m = re.match(r'Alignment: (.+) columns of (.+) sequences', line)
             if m:
                 features["length"] = m.group(1)
                 features["n_sequences"] = m.group(2)
                 continue
 
-            m = re.search('sequence lengths: ([^ ]+)-([^ ]+) ', line)
+            m = re.search(r'sequence lengths: ([^ ]+)-([^ ]+) ', line)
             if m:
                 features["min_length"] = m.group(1)
                 features["max_length"] = m.group(2)
 
-            m = re.search(' const.: ([^ ]+) \(([^ ]+)\%\)', line)
+            m = re.search(r' const.: ([^ ]+) \(([^ ]+)\%\)', line)
             if m:
                 features["n_const"] = m.group(1)
                 features["p_const"] = m.group(2)
 
-            m = re.search('inform.: ([^ ]+) \(([^ ]+)\%\)', line)
+            m = re.search(r'inform.: ([^ ]+) \(([^ ]+)\%\)', line)
             if m:
                 features["n_inform"] = m.group(1)
                 features["p_inform"] = m.group(1)
 
-            m = re.search(' ([^ ]+)% minimum sequence identity', line)
+            m = re.search(r' ([^ ]+)% minimum sequence identity', line)
             if m:
                 features["min_p_identity"] = m.group(1)
 
@@ -1564,7 +1564,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def color_scheme_for_alphabet(self,alphabet):
         if alphabet == "Amino-Acids":
             return "AA+contrast"
-        elif re.match('Numeric\[\d+\]',alphabet):
+        elif re.match(r'Numeric\[\d+\]',alphabet):
             return "plain+contrast"
         else:
             return "DNA+contrast"
@@ -1655,11 +1655,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def compute_and_draw_AU_plots(self):
         for (alignment,alphabet,name) in self.alignments:
             # Don't try and compute AU plots for ancestral sequences
-            m = re.match('^P([0-9]+).ancest.*',alignment)
+            m = re.match(r'^P([0-9]+).ancest.*',alignment)
             if m:
                 continue
 
-            m = re.match('^P([0-9]+).*',alignment)
+            m = re.match(r'^P([0-9]+).*',alignment)
             if m:
                 i = int(m.group(1))-1
                 afile = self.outdir / f"{alignment}.fasta"
@@ -2207,7 +2207,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
             section += f'<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{min_NE_partition}</td></tr>\n'
 
-            asdsf = self.get_value_from_file(self.outdir / 'partitions.bs','ASDSF\[min=0.100\] =')
+            asdsf = self.get_value_from_file(self.outdir / 'partitions.bs',r'ASDSF\[min=0.100\] =')
             if asdsf is None:
                 asdsf = "NA"
             section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
