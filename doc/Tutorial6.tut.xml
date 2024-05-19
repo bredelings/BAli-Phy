@@ -86,11 +86,6 @@ You can find out which models, distributions, and functions are available?
 You can get extended help on each command line option:
 % bali-phy help iterations     | less        // --iterations=&lt;num&gt; <emphasis>command line option</emphasis>
 % bali-phy help alphabet       | less        // --alphabet=&lt;a&gt; <emphasis>command line option</emphasis>
-
-There are additional help topics you might want to explore:
-% bali-phy help topics         | less        // to see additional help topics
-% bali-phy help parameters     | less        // setting parameters
-% bali-phy help Codons         | less        // Codons alphabets
 </para>
 
   
@@ -106,11 +101,17 @@ There are additional help topics you might want to explore:
 Let's get started by going to the examples directory:
 % cd ~/alignment_files/examples/5S-rRNA
 
-Now lets start a run.  BAli-Phy will create a directory called <filename>5d-free-1</filename> to hold output files from this analysis, as directed by the <userinput>-n 5d-free</userinput> option.  Here <userinput>-n</userinput> is short for <userinput>--name</userinput>, while <userinput>-S</userinput> is a short form of <userinput>--smodel</userinput> and specifies the substitution model.
-% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -n 5d-free &#38;
+Now lets start a run.  
+% bali-phy 5d-clustalw.fasta --smodel 'gtr +> Rates.gamma(4) +> inv' --name 5d-freeA &#38;
 
-<para>Yay!  Now you have started your first copy of the anlysis.  Let's run another copy of the same analysis, which will create another directory called <filename>5d-free-2</filename> for its own output files.  This additional run will take advantage of a second processor, and will also help detect with the runs have performed enough iterations.</para>
-% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -n 5d-free &#38;
+<para>Yay!  Now you have started your first copy of the analysis.  BAli-Phy will create a directory called <filename>5d-freeA-1</filename> to hold output files from this analysis, as directed by the <userinput>--name 5d-freeA</userinput> option.</para>
+
+<para>Let's run another copy of the same analysis:</para>
+% bali-phy 5d-clustalw.fasta --smodel 'gtr +> Rates.gamma(4) +> inv' --name 5d-freeA &#38;
+<para>
+  This command which will create another directory called <filename>5d-freeA-2</filename> for its own output files.
+  This additional run will take advantage of a second processor.  It will also allow us to determine if the two runs have performed enough iterations to agree.
+</para>
 
 You can take a look at jobs running in the background. There should be two bali-phy jobs running:
 % jobs
@@ -121,34 +122,21 @@ of the CPU:
 In order to see how many iterations have completed, check the number of lines in the log files:
 % wc -l 5d-*/C1.log
 To summarize the results generated so far, run the summary script and then view the results in a web browser:
-% bp-analyze 5d-free-1/ 5d-free-2/
+% bp-analyze 5d-freeA-1/ 5d-freeA-2/
 % firefox Results/index.html &#38;
 
-  <section><info><title>Alignment questions:</title></info>
-<itemizedlist>
-  <listitem>How much difference is there between the estimated alignment and the initial alignment? (See <emphasis>Alignment Distribution / Initial / Diff</emphasis>)</listitem>
-  <listitem>Which part of the alignment is most certain? (See <emphasis>Alignment Distribution / Best (WPD) / AU</emphasis>)</listitem>
-</itemizedlist>
-</section>
-<section><info><title>Parameter questions:</title></info>
-<itemizedlist>
-  <listitem>What is the posterior median for <userinput>inv:p_inv</userinput>? (See <emphasis>Scalar Variables</emphasis>)</listitem>
-  <listitem>What is the meaning of <userinput>inv:p_inv</userinput> parameter?   (Run <userinput>bali-phy help inv</userinput>)</listitem>
-  <listitem>What is the prior distribution on <userinput>inv:p_inv</userinput>?  (See <emphasis>Model and priors / Substitution model</emphasis>)</listitem>
-</itemizedlist>
-  </section>
 When you have about 2000 samples from each run, summarize the latest results:
 % wc -l 5d-*/C1.log
-% bp-analyze 5d-free-1/ 5d-free-2/
-% mv Results 5d-free.Results
-% firefox 5d-free.Results/index.html &#38;
+% bp-analyze 5d-freeA-1/ 5d-freeA-2/
+% mv Results 5d-freeA.Results
+% firefox 5d-freeA.Results/index.html &#38;
 Now lets kill the bali-phy processes:
 % top         // use top to find the PID (process id) for each of the bali-phy processes
 % kill <replaceable>pid1</replaceable>
 % kill <replaceable>pid2</replaceable>
 % top         // check that the jobs have stopped.
 Now let's look at the tree in figtree:
-% figtree 5d-free.Results/c50.PP.tree &#38;
+% figtree 5d-freeA.Results/c50.PP.tree &#38;
 <orderedlist>
   <listitem>When it says "Please select a name for these values", enter <userinput>PP</userinput>.</listitem>
   <listitem>Then, enable "Branch Labels".</listitem>
@@ -156,6 +144,19 @@ Now let's look at the tree in figtree:
   <listitem>You can increase the font size to make the figure more readable.</listitem>
   <listitem>You can also increase the font size of the tip labels.</listitem>
 </orderedlist>
+
+<section><info><title>Parameter questions:</title></info>
+<itemizedlist>
+  <listitem>What is the meaning of <userinput>inv:p_inv</userinput> parameter?   (Run <userinput>bali-phy help inv</userinput>)</listitem>
+  <listitem>What is the prior distribution on <userinput>inv:p_inv</userinput>?  (See <emphasis>Model and priors / Substitution model</emphasis>)</listitem>
+  <listitem>What is the posterior median for <userinput>inv:p_inv</userinput>? (See <emphasis>Scalar Variables</emphasis>)</listitem>
+</itemizedlist>
+</section>
+<section><info><title>Alignment questions:</title></info>
+<itemizedlist>
+  <listitem>Which part of the alignment is most uncertain? (See <emphasis>Alignment Distribution / Best (WPD) / AU</emphasis>)</listitem>
+</itemizedlist>
+</section>
 
 <section><info><title>Tree questions (free alignment):</title></info>
 <itemizedlist>
@@ -167,13 +168,13 @@ Now let's look at the tree in figtree:
 
 <section ><info><title>Fixed alignment</title></info>
 % cd ~/alignment_files/examples
-% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -I none -n 5d-fixed &#38;
-% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -I none -n 5d-fixed &#38;
+% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -I none -n 5d-fixedA &#38;
+% bali-phy 5d-clustalw.fasta -S 'gtr +> Rates.gamma(4) +> inv' -I none -n 5d-fixedA &#38;
 The <userinput>-I none</userinput> is a short form of <userinput>--imodel=none</userinput>, where <parameter>imodel</parameter> means the insertion-deletion model.  When there's no model of insertions and deletions, then the alignment must be kept fixed.
 
 <para>Summarize the analysis after about 2000 iterations:</para>
 % wc -l 5d-*/C1.log
-% bp-analyze 5d-fixed-1/ 5d-fixed-2
+% bp-analyze 5d-fixedA-1/ 5d-fixedA-2
 
 <para>Examine the majority consensus tree for the fixed alignment analysis:</para>
 % figtree Results/c50.PP.tree &#38;
@@ -212,11 +213,7 @@ Let's run two copies of this analysis:
 % bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta &#38;
 Since we did not specify a name for the analysis, bali-phy creates the name <filename>ITS1-5.8S-ITS2</filename> from the input file names.
 
-The mean or the median of these values can be used as an estimate of the parameter.  The variance indicates the degree of uncertainty.  Let's look at the initial parameter estimates:
-% statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log | less
-% statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log --mean | less
-
-The parameter estimates are also summarized in a table in the summary report:
+Let's analyze the results, even if the analysis has not yet converged:
 % bp-analyze ITS1-5.8S-ITS2-1/ ITS1-5.8S-ITS2-2/
 % firefox Results/index.html &#38;
 
@@ -431,6 +428,16 @@ You can also use a log_normal instead of a gamma.  log_normal+INV is sometimes b
 % bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.log_normal(4) +> inv'
 You can allow 5 different rates that are all independently estimated:
 % bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.free(n=5)'
+</para>
+</section>
+<section><info><title>Heterotachy</title></info>
+<para>
+Heterotachy occurs when the evolutionary rate changes across the tree.  One version of heterotachy is the Tuffley-Steel (1998) model, where each state alternatives between an ON and OFF state.
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Covarion.ts98'
+The Huelsenbeck (2002) model allows combining rate variation with Tuffley-Steel heterotachy:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.gamma +> Covarion.hb02'
+You can also use the Huelsenbeck model with the free-rates model:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.free +> Covarion.hb02'
 </para>
 </section>
 <section><info><title>Codon models</title></info>
