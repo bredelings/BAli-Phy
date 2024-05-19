@@ -101,10 +101,11 @@ vector<pair<string,json::value>> flatten_value(const string& name, const json::v
             for(auto& p: flatten_value(name+"["+string(name2)+"]", v2))
                 values.push_back(std::move(p));
     }
-    else if (auto array = value.if_array())
+    else if (value.is_array())
     {
-        for(int i=0;i<array->size();i++)
-            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", (*array)[i]))
+	auto& array = value.as_array();
+        for(int i=0;i<array.size();i++)
+            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", array[i]))
                 values.push_back(std::move(p));
     }
     else

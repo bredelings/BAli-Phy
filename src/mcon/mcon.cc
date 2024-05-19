@@ -87,10 +87,11 @@ json::object get_long_names_and_values_data(const std::string& prefix, const jso
 	for(auto& [key,value]: j.as_object())
 	    update( j2, get_long_names_and_values_data(prefix+'['+string(key)+']', value) );
     }
-    else if (auto array = j.if_array())
+    else if (j.is_array())
     {
-	for(int i=0; i< array->size(); i++)
-	    update( j2, get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', (array)[i]) );
+	auto& array = j.as_array();
+	for(int i=0; i< array.size(); i++)
+	    update( j2, get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', array[i]) );
     }
     else
 	j2[prefix] = j;
