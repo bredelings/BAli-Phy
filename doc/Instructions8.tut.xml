@@ -56,6 +56,13 @@ Which alignment (or alignments) is most likely?  Why?
 
 </section>
 
+<section><info><title>Try some different programs (optional)</title></info>
+% mafft test1.fasta &gt; test1.maff.fasta
+% muscle -align test1.fasta -output test1.mafft.fasta
+% fsa test1.fasta &gt; test1.fsa.fasta
+
+<para>Look at all these alignments in aliview.</para>
+</section>
 
 </section>
 <section><info><title>Exercise (MAFFT, HoT, MUSCLE)</title></info>
@@ -99,9 +106,9 @@ Which alignment (or alignments) is most likely?  Why?
 
 <section><info><title>MAFFT and HoT and Seaview</title></info>
 % cp ferns/cleaned.fasta ferns.fasta                                          // make a copy of a file
-% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                             // try a simple sequence alignment 
+% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                // try a simple sequence alignment 
 % fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
-% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;   // take a look at the two good alignments
+% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             // take a look at the two good alignments
 % compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
 % firefox ferns-compare.html                                                  // load in firefox, then shrink the font
 </section>
@@ -110,7 +117,7 @@ Which alignment (or alignments) is most likely?  Why?
 Look at the time to perform different numbers of iterations with MAFFT:
 % cd ~/alignment_files/examples
 % muscle -align ferns.fasta -output ferns-muscle.fasta                        // compute a MUSCLE alignment
-% aliview ferns-muscle.fasta &amp;                                            // compare with the MAFFT alignment
+% aliview ferns-muscle.fasta &amp;                                                // compare with the MAFFT alignment
 % alignment-info ferns-muscle.fasta | grep columns                            // How long is the alignment?
 % compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
 % firefox ferns-compare-muscle-mafft.html
@@ -132,8 +139,8 @@ Look at the time to perform different numbers of iterations with MAFFT:
 <!-- Issue the ferns introns really are unalignable! -->
 
 <section><info><title>Alignment with FSA</title></info>
-Lets run FSA with no penalty for wrong homologies, like ProbCons.
-% time fsa --fast --gapfactor 0 ferns.fasta &gt; ferns-fsa0.fasta      	// This is similar to probcons – few gaps.
+Lets run FSA with no penalty for wrong homologies, like ProbCons and Muscle v5.
+% time fsa --fast --gapfactor 0 ferns.fasta &gt; ferns-fsa0.fasta      	// This is similar to probcons/muscle5 – few gaps.
 % alignment-info ferns-fsa0.fasta | grep columns
 % aliview ferns-fsa0.fasta &#38;
 Let's run FSA with the standard penalty for wrong homologies:
@@ -161,7 +168,7 @@ How long is the PRANK alignment?  How is the shape different from the other alig
   <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
   <itemizedlist>
     <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial6.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
     <listitem>You can run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
     <listitem>You can run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
     <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs.php#manpages">online</link>.</listitem>
