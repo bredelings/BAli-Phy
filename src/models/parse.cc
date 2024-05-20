@@ -365,13 +365,14 @@ string unparse(const ptree& p)
     vector<string> args;
     optional<string> submodel;
     bool positional = true;
+    int pos = 0;
     for(const auto& [arg_name, arg]: p)
     {
 	if (arg.is_null())
             positional = false;
 
 	// Don't print submodel arguments: move out to submodel + <this>
-	else if (arg_name == "submodel")
+	else if (arg_name == "submodel" and pos == 0)
 	{
             positional = false;
 	    assert(not submodel);
@@ -384,6 +385,7 @@ string unparse(const ptree& p)
         else
             args.push_back( arg_name + "=" + unparse(arg));
 
+	pos++;
 	// With annotations, we don't print get_state[state_name] if its a default value.
     }
     while (args.size() and args.back() == "")
