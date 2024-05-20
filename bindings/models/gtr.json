@@ -33,5 +33,6 @@
         }
     ],
     "description": "The general time-reversible rate matrix:\n  Q(i,j) = sym(i,j) * pi[j]",
+    "examples": ["gtr({\"AC\":1,\"AG\":2,\"AT\":3,\"CG\":4,\"CT\":5,\"GT\":6},pi={\"A\":0.1,\"C\":0.2,\"T\":0.3,\"G\":0.4})"],
     "extract": "all"
 }
