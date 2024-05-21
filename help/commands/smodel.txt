@@ -9,7 +9,7 @@ based on the alphabet for that partition.  The defaults are:
    DNA        -> tn93
    RNA        -> tn93
    AminoAcids -> lg08
-   Triplets   -> tn93+>sym+>x3
+   Triplets   -> tn93+>x3
    Codons     -> gy94
 
 Many substitution models have parameters that can be specified.  For
@@ -35,9 +35,9 @@ partition cannot be referenced twice.
    
    --smodel=hky85
    
-   -S 'gtr+Rates.gamma +> inv'
+   -S 'gtr +> Rates.gamma +> inv'
    
-   -S '1,3:hky85 +> Rates.gamma(n=4) +> inv' -S '2:lg08+Rates.gamma +> inv'
+   -S '1,3:hky85 +> Rates.gamma(n=4) +> inv' -S '2:lg08 +> Rates.gamma +> inv'
    
 In the last example, the substitution models of partitions 1 and 3 are linked.
 
