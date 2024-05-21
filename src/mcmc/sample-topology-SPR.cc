@@ -820,6 +820,9 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
 	// 1a. For variable alignments that we aren't preserving homologies for: record the pairwise alignment A{2,3}
         if (P[i].has_pairwise_alignments())
         {
+            if (not P[i].alignment_is_random())
+                throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+
             if (P[i].variable_alignment() and not preserve_homology)
             {
                 auto b0123 = A3::get_bitpath(P[i], nodes0); 	    // The central node (nodes[0]) is mapped to bit 3!

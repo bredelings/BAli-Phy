@@ -571,7 +571,13 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     for(int i=0;i<n_data_partitions();i++)
     {
         if (get_data_partition(i).has_pairwise_alignments())
+	{
+	    if (not get_data_partition(i).alignment_is_random())
+		throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+
+
             a123456[i] = A5::get_bitpath((*this)[i], order);
+	}
     }
 
     // 3. Perform NNI
@@ -616,6 +622,8 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
         auto dp = get_data_partition(i);
         if (dp.has_pairwise_alignments())
         {
+	    if (not dp.alignment_is_random())
+		throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
             dp.set_pairwise_alignment(b04, get_pairwise_alignment_from_bits(a123456[i], 0, 4));
             dp.set_pairwise_alignment(b14, get_pairwise_alignment_from_bits(a123456[i], 1, 4));
             dp.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a123456[i], 2, 5));
@@ -682,6 +690,8 @@ void Parameters::NNI_discard_alignment(int b1, int b2)
         auto dp = get_data_partition(i);
         if (dp.has_pairwise_alignments())
         {
+	    if (not get_data_partition(i).alignment_is_random())
+		throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
             dp.unset_pairwise_alignment(b04);
             dp.unset_pairwise_alignment(b14);
             dp.unset_pairwise_alignment(b25);
