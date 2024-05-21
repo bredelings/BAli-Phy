@@ -101,7 +101,7 @@ namespace fs = std::filesystem;
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
-    return has_IModel() and P->variable_alignment();
+    return alignment_is_random() and P->variable_alignment();
 }
 
 const data_partition_constants& data_partition::DPC() const
@@ -130,7 +130,7 @@ int data_partition::subst_root() const {
     return property(0).value().as_int();
 }
 
-bool data_partition::has_IModel() const
+bool data_partition::alignment_is_random() const
 {
     return (bool)DPC().alignment_properties_reg;
 }
@@ -880,7 +880,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
 
     // set variable_alignment_
     for(int i=0;i<n_data_partitions();i++)
-        if (get_data_partition(i).has_IModel())
+        if (get_data_partition(i).alignment_is_random())
             variable_alignment_ = true;
 }
 

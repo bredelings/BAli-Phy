@@ -127,7 +127,7 @@ public:
     // get the alphabet for partition i
     std::shared_ptr<const alphabet> get_alphabet() const;
 
-    bool has_IModel() const;
+    bool alignment_is_random() const;
 
     int seqlength(int n) const;
 

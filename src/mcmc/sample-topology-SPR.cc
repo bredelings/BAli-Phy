@@ -1435,7 +1435,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     //         to keep them aligned.
     bool has_imodel = true;
     for(int i=0;i<P.n_data_partitions();i++)
-	if (not P[i].has_IModel())
+	if (not P[i].alignment_is_random())
 	    has_imodel = false;
     if (not has_imodel)
 	assert(std::abs(diff) < 1.0e-9);
