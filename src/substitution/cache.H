@@ -49,6 +49,7 @@ public:
     std::shared_ptr<const other_subst_work_t> other_subst_work;
     boost::dynamic_bitset<> bits;
     std::optional<Matrix> away_from_root_WF;
+    std::vector<int> site_mapping;
 
     bool away_from_root() const {return away_from_root_WF.has_value();}
 
@@ -59,8 +60,8 @@ public:
 
     double* scratch(int i) {assert(0 <= i and i<2); return data + matrix_size()*(n_columns() + i);}
 
-    double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
-    const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
+          double* operator[](int i)       {assert(0 <= i and i < n_columns()); return data + matrix_size()*site_mapping[i];}
+    const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*site_mapping[i];}
 
     int& scale(int i)       {assert(0 <= i and i < n_columns()); return scale_[i];}
     int  scale(int i) const {assert(0 <= i and i < n_columns()); return scale_[i];}
@@ -144,6 +145,7 @@ public:
 	std::swap(other_subst, LCB.other_subst);
 	std::swap(bits, LCB.bits);
 	std::swap(away_from_root_WF, LCB.away_from_root_WF);
+	std::swap(site_mapping, LCB.site_mapping);
     }
 
     Likelihood_Cache_Branch& operator=(const Likelihood_Cache_Branch&) = delete;
@@ -162,12 +164,14 @@ public:
 	 matrix_size_(M*S),
 	 n_states_(S),
 	 n_models_(M),
-	 n_columns_(C)
+	 n_columns_(C),
+	 site_mapping(C)
 	{
 	    for(int i=0;i<C;i++)
 	    {
 		scale_[i] = 0;
 		count_[i] = 1;
+		site_mapping[i] = i;
 	    }
 	}
     Likelihood_Cache_Branch(const boost::dynamic_bitset<>& mask, int M, int S)
