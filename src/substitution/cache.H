@@ -157,23 +157,26 @@ public:
 
     Likelihood_Cache_Branch() {}
     Likelihood_Cache_Branch(const Likelihood_Cache_Branch&) = delete;
-    Likelihood_Cache_Branch(int C,int M, int S)
-	:data(new double[(C+2)*M*S]),
-	 scale_(new int[C]),
-	 count_(new int[C]),
+    Likelihood_Cache_Branch(int C,int M, int S);
+
+    // FIXME: Only allocate memory according to the underlying cells.
+    Likelihood_Cache_Branch(const std::vector<int>& m, int M, int S)
+	:data(new double[(m.size()+2)*M*S]),
+	 scale_(new int[m.size()]),
+	 count_(new int[m.size()]),
 	 matrix_size_(M*S),
 	 n_states_(S),
 	 n_models_(M),
-	 n_columns_(C),
-	 site_mapping(C)
+	 n_columns_(m.size()),
+	 site_mapping(m)
 	{
-	    for(int i=0;i<C;i++)
+	    for(int i=0;i<m.size();i++)
 	    {
 		scale_[i] = 0;
 		count_[i] = 1;
-		site_mapping[i] = i;
 	    }
 	}
+
     Likelihood_Cache_Branch(const boost::dynamic_bitset<>& mask, int M, int S)
 	:Likelihood_Cache_Branch(mask.count(), M, S)
 	{

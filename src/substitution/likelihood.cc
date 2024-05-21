@@ -27,6 +27,7 @@
 #include <valarray>
 #include <vector>
 #include "util/set.H"
+#include "util/range.H"
 #include "math/logprod.H"
 #include "dp/hmm.H"
 #include "dp/2way.H"
@@ -64,6 +65,11 @@ using std::optional;
 // * we don't need to work in log space for a single column
 //
 // * 
+
+Likelihood_Cache_Branch::Likelihood_Cache_Branch(int C, int M, int S)
+    :Likelihood_Cache_Branch(iota(C), M, S)
+{
+}
 
 pair<int,int> sample(const Matrix& M)
 {
