@@ -1,13 +1,14 @@
-* 4.0-beta11 (unreleased)
+* 4.0-beta11 (May 22, 2024)
 - Features
   + Improve alignment-thin --remove-gappy
 - Misc
-  + JSON: read/write Infinity and NaN instead of 1e99999 and null
+  + JSON: read/write {Infinity, NaN} instead of {1e99999, null}
   + Make +> work like the R pipe operator.
 - Bug fixes:
   - Correctly compile with libfmt v10.
   - Fix warning in bp-analyze.
   - Only write warning in Rates.gamma at -V2 or higher.
+  - Complain instead of crashing when we use an imodel with --fix=alignment.
 
 * 4.0-beta10 (May 17, 2024)
 - Features
