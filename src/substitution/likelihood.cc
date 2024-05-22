@@ -67,7 +67,7 @@ using std::optional;
 // * 
 
 Likelihood_Cache_Branch::Likelihood_Cache_Branch(int C, int M, int S)
-    :Likelihood_Cache_Branch(iota(C), M, S)
+    :Likelihood_Cache_Branch(iota(C), C, M, S)
 {
 }
 

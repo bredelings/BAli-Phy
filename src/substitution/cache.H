@@ -41,6 +41,7 @@ class Likelihood_Cache_Branch: public Object
     int n_states_ = -1;
     int n_models_ = -1;
     int n_columns_ = -1;
+    int n_underlying_ = -1;
 
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
@@ -56,16 +57,24 @@ public:
     int n_states() const {return n_states_;}
     int n_models() const {return n_models_;}
     int n_columns() const {return n_columns_;}
+    int n_underlying() const {return n_underlying_;}
     int matrix_size() const {return matrix_size_;}
 
     double* scratch(int i) {assert(0 <= i and i<2); return data + matrix_size()*(n_columns() + i);}
 
-          double* operator[](int i)       {assert(0 <= i and i < n_columns()); return data + matrix_size()*site_mapping[i];}
-    const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*site_mapping[i];}
+          double* underlying(int i)       {assert(0 <= i and i < n_underlying()); return data + matrix_size()*i;}
+    const double* underlying(int i) const {assert(0 <= i and i < n_underlying()); return data + matrix_size()*i;}
 
-    int& scale(int i)       {assert(0 <= i and i < n_columns()); return scale_[i];}
-    int  scale(int i) const {assert(0 <= i and i < n_columns()); return scale_[i];}
+    int& underlying_scale(int i)       {assert(0 <= i and i < n_underlying()); return scale_[i];}
+    int  underlying_scale(int i) const {assert(0 <= i and i < n_underlying()); return scale_[i];}
 
+          double* operator[](int i)       {assert(0 <= i and i < n_columns()); return underlying( site_mapping[i] );}
+    const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return underlying( site_mapping[i] );}
+
+    int& scale(int i)       {assert(0 <= i and i < n_columns()); return underlying_scale( site_mapping[i] );}
+    int  scale(int i) const {assert(0 <= i and i < n_columns()); return underlying_scale( site_mapping[i] );}
+
+    // Should this be part of the LCB at all, or should it be something else?
     int& count(int i)       {assert(0 <= i and i < n_columns()); return count_[i];}
     int  count(int i) const {assert(0 <= i and i < n_columns()); return count_[i];}
 
@@ -160,14 +169,15 @@ public:
     Likelihood_Cache_Branch(int C,int M, int S);
 
     // FIXME: Only allocate memory according to the underlying cells.
-    Likelihood_Cache_Branch(const std::vector<int>& m, int M, int S)
-	:data(new double[(m.size()+2)*M*S]),
-	 scale_(new int[m.size()]),
+    Likelihood_Cache_Branch(const std::vector<int>& m, int U, int M, int S)
+	:data(new double[(U+2)*M*S]),
+	 scale_(new int[U]),
 	 count_(new int[m.size()]),
 	 matrix_size_(M*S),
 	 n_states_(S),
 	 n_models_(M),
 	 n_columns_(m.size()),
+	 n_underlying_(U),
 	 site_mapping(m)
 	{
 	    for(int i=0;i<m.size();i++)
