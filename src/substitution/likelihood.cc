@@ -32,6 +32,7 @@
 #include "dp/hmm.H"
 #include "dp/2way.H"
 #include <boost/dynamic_bitset.hpp>
+#include "absl/container/flat_hash_map.h"
 
 // #define DEBUG_SUBSTITUTION
 // #define DEBUG_CACHING
@@ -1318,22 +1319,40 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods(const EVector& sequence,
-				const alphabet& a,
-				const EVector& smap,
-				int n_models)
+                                const alphabet& a,
+                                const EVector& smap,
+                                int n_models)
     {
-	int n_states = smap.size();
-	int matrix_size = n_models * n_states;
+        int n_states = smap.size();
+        int matrix_size = n_models * n_states;
 
-	int L = sequence.size();
+        int L = sequence.size();
 
-	auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+        // Compress sequence
+        absl::flat_hash_map<int,int> letter_to_underlying( std::min(L, a.n_letter_classes()) );
+        std::vector<int> site_to_underlying(L);
+        std::vector<int> underlying_to_letter;
 
-        for(int i=0;i<L;i++)
-	{
-	    int letter = sequence[i].as_int();
+        for(int site=0; site<L; site++)
+        {
+            int l = sequence[site].as_int();
+            if (not letter_to_underlying.contains(l))
+            {
+                letter_to_underlying.insert({l, underlying_to_letter.size()});
+                underlying_to_letter.push_back(l);
+            }
+            assert(letter_to_underlying.contains(l));
+            site_to_underlying[site] = letter_to_underlying.at(l);
+        }
+        int n_underlying = underlying_to_letter.size();
 
-	    double* S = (*LCB)[i];
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(site_to_underlying, n_underlying, n_models, n_states));
+
+        for(int u=0;u<n_underlying;u++)
+        {
+            int letter = underlying_to_letter[u];
+
+            double* S = (*LCB).underlying(u);
 
             for(int k=0; k<matrix_size; k++)
                 S[k] = 1.0;
