@@ -180,11 +180,11 @@ public:
 	 n_underlying_(U),
 	 site_mapping(m)
 	{
-	    for(int i=0;i<m.size();i++)
-	    {
+	    for(int i=0;i<n_underlying();i++)
 		scale_[i] = 0;
+
+	    for(int i=0;i<n_columns();i++)
 		count_[i] = 1;
-	    }
 	}
 
     Likelihood_Cache_Branch(const boost::dynamic_bitset<>& mask, int M, int S)
