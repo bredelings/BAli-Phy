@@ -40,6 +40,9 @@ struct tree_record
 
     /// the internal branches for this topology
     std::vector<boost::dynamic_bitset<> > partitions;
+    // ^ These are normalized (in the constructor) so that
+    // (a) the first bit is always 1.
+    // (b) the collection is sorted.
   
     std::vector<double> branch_lengths;
 
