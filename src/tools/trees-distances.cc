@@ -130,7 +130,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, convergence, converged.")
+	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.")
 	("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch.")
 	("remove-duplicates","[matrix]: disallow zero distances  between points.")
 	("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
@@ -817,7 +817,7 @@ int main(int argc,char* argv[])
 		}
 	    }
 	}
-	else if (analysis == "compare") 
+	else if (analysis == "compare" or analysis == "closest")
 	{
 	    check_supplied_filenames(2,files);
 
@@ -828,7 +828,25 @@ int main(int argc,char* argv[])
 	    both.append_trees(trees2);
 
 	    matrix<double> D  = distances(both,metric_fn);
-	    report_compare(args, D, trees1.size(), trees2.size());
+	    if (analysis == "closest")
+	    {
+		std::pair<int,int> closest = {0,0};
+		for(int i=0;i<trees1.size();i++)
+		{
+		    for(int j=0;j<trees2.size();j++)
+		    {
+			auto [ci,cj] = closest;
+			if (D(i,j + trees1.size()) < D(ci,cj + trees1.size()))
+			{
+			    closest = {i,j};
+			}
+		    }
+		}
+		auto [i,j] = closest;
+		cout<<"closest distance = "<<D(i,j+trees1.size())<<" between trees1["<<i+1<<"] and trees2["<<j+1<<"]\n";
+	    }
+	    else
+		report_compare(args, D, trees1.size(), trees2.size());
 	}
 
 	else if (analysis == "convergence") 
