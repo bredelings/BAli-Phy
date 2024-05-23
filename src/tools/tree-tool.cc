@@ -72,7 +72,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     commands.add_options()
         ("prune",value<string>(),"Comma-separated taxa to remove")
         ("root","Find a root position")
-        ("resolve","Comma-separated taxa to remove")
+        ("resolve","Resolve polytomies")
         ("remove-root-branch","Remove single branch from root.")
         ("remove-root-branches","Ensure root is not a tip.")
         ("remove-knuckles","Remove degree-2 nodes.")
@@ -84,7 +84,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description output("Output options");
     output.add_options()
         ("length","Report the total tree length")
-        ("diameter","Report the total tree length")
+        ("diameter","Report the tree diameter")
+        ("count-leaves","Show the number of leaves")
+        ("count-nodes","Show the number of nodes")
+        ("show-leaves","Show the leaf names")
+        ("show-nodes","Show the node names")
         ;
     options_description visible("All options");
     visible.add(general).add(commands);
@@ -246,6 +250,20 @@ int main(int argc,char* argv[])
             std::cout<<tree_length(T)<<std::endl;
         else if (args.count("diameter"))
             std::cout<<tree_diameter(T)<<std::endl;
+        else if (args.count("count-leaves"))
+            std::cout<<T.n_leaves()<<std::endl;
+        else if (args.count("count-nodes"))
+            std::cout<<T.n_nodes()<<std::endl;
+        else if (args.count("show-leaves"))
+        {
+            for(auto& label: T.get_leaf_labels())
+                std::cout<<label<<std::endl;
+        }
+        else if (args.count("show-nodes"))
+        {
+            for(auto& label: T.get_labels())
+                std::cout<<label<<std::endl;
+        }
         else
             std::cout<<T<<std::endl;
     }
