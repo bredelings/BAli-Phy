@@ -1887,7 +1887,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             self.exec_show([self.fourmolu_exe, '-i', outfile,'--column-limit','120'])
         elif self.ormolu_exe:
             self.exec_show([self.ormolu_exe, '-i', outfile])
-        elif self.hindent:
+        elif self.hindent_exe:
             self.exec_show([self.hindent_exe, outfile])
 
 
