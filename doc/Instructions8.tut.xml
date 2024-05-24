@@ -163,7 +163,39 @@ How long is the PRANK alignment?  How is the shape different from the other alig
 
 </section>
 
-<section><info><title>BAli-Phy</title></info>
+<section><info><title>Aligners and Trees</title></info>
+Lets try comparing some aligners and the trees that they produce.
+% cd
+% cd alignment_files/examples/
+% cp 5S-rRNA/25.fasta 5S-25.fasta
+
+Try mafft:
+% mafft --auto 5S-25.fasta > 5S-25-mafft.fasta
+% FastTree -nt 5S-25-mafft.fasta > 5S-25-mafft.tree
+
+Try muscle:
+% muscle -align 5S-25.fasta -output 5S-25-muscle.fasta
+% FastTree -nt 5S-25-muscle.fasta > 5S-25-muscle.tree
+
+Try prank:
+% prank -d=5S-25.fasta +F -o=5S-25-prank
+% cp 5S-25-prank.best.fas 5S-25-prank.fasta
+% FastTree -nt 5S-25-prank.fasta > 5S-25-prank.tree
+
+Try fsa:
+% fsa --fast 5S-25.fasta > 5S-25-fsa.fasta
+% FastTree -nt 5S-25-fsa.fasta > 5S-25-fsa.tree
+
+Try bali-phy:
+% bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
+% bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
+
+How different are the alignments?
+
+How different are the trees?
+
+</section>
+<section><info><title>BAli-Phy (part 2)</title></info>
 
   <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
   <itemizedlist>
