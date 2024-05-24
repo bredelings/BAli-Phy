@@ -2210,11 +2210,15 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             asdsf = self.get_value_from_file(self.outdir / 'partitions.bs',r'ASDSF\[min=0.100\] =')
             if asdsf is None:
                 asdsf = "NA"
+            else:
+                asdf = asdsf.rstrip()
             section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
 
             msdsf = self.get_value_from_file(self.outdir / 'partitions.bs','MSDSF =')
             if msdsf is None:
                 msdsf = "NA"
+            else:
+                msdsf = msdsf.rstrip()
             section += f'<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{msdsf}</td></tr>'
 
         psrf_80 = 'NA'
