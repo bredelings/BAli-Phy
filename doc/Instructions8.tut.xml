@@ -189,6 +189,12 @@ Try fsa:
 Try bali-phy:
 % bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
 % bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
+%%&lt;wait some time&gt;
+% bp-analyze 5S-25-gtr-R4-gt01-1 5S-25-gtr-R4-gt01-2
+% firefox Results/index.html
+%%&lt;wait some more time&gt;
+% bp-analyze 5S-25-gtr-R4-gt01-1 5S-25-gtr-R4-gt01-2
+% firefox Results/index.html
 
 How different are the alignments?
 
