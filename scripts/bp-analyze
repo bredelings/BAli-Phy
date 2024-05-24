@@ -2297,6 +2297,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += "<th>directory</th>"
         section += "</tr>\n"
 
+        print()
         for i in range(self.n_chains()):
             section += "<tr>\n"
 
@@ -2308,6 +2309,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += f"  <td>{self.subsample}</td>\n"
 
             remaining = (self.run(i).n_iterations() - self.burnin)/self.subsample
+            print(f"RUN {i+1}: directory = {self.run(i).get_dir()}     iterations = {self.run(i).n_iterations()}     burnin = {self.burnin}")
             section += f"  <td>{remaining}</td>\n"
 
             if not all_same(commands):
