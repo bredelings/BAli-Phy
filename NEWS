@@ -1,3 +1,7 @@
+* 4.0-beta11 (May 25, 2024)
+- Bug Fixes:
+  + Fix typo in the bp-analyze script!
+
 * 4.0-beta11 (May 22, 2024)
 - Features
   + Improve alignment-thin --remove-gappy
