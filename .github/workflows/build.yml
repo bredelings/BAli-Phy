@@ -242,9 +242,11 @@ jobs:
         if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
           BALIPHY="wine bali-phy"
+          STATREPORT="wine statreport"
         else
           export PATH=$HOME/local/bin:$PATH
           BALIPHY=bali-phy
+          STATREPORT=statreport
         fi
         echo "Running tests with seed=$seed"
 
@@ -253,6 +255,9 @@ jobs:
         cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
+        ls
+        ls 5d-muscle-1
+        ${STATREPORT} 5d-muscle-1/C1.log
         bp-analyze 5d-muscle-1
         ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
 
