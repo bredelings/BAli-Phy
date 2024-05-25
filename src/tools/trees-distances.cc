@@ -179,7 +179,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"   % trees-distances diameter file1.trees --mean --median --minmax\n\n";
 
 	cout<<" Summarize distances within and between two groups of trees:\n";
-	cout<<"   % trees-distances compare file1.trees file2.trees\n\n";
+	cout<<"   % trees-distances compare file1.trees file2.trees --mean --median --minmax\n\n";
 
 	cout<<" Summarize distances within and between two groups of trees:\n";
 	cout<<"   % trees-distances closest file1.trees file2.trees\n\n";
