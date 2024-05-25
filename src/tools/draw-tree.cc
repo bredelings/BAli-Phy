@@ -80,6 +80,10 @@ using std::endl;
 using std::ostream;
 using std::abs;
 
+// cairo and/or fontconfig leak memory when drawing text.
+extern "C"
+const char* __asan_default_options() { return "detect_leaks=0"; }
+
 class cairo_plotter
 {
     double page_x_width_;
