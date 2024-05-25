@@ -298,24 +298,18 @@ namespace statistics {
     {
       double total = 0;
       for(int i=0;i<N-k;i++)
-	total += (x[i]-mean)*(x[i+k]-mean);
+        total += (x[i]-mean)*(x[i+k]-mean);
 
       rho[k] = total/(N-k);
 
-      if (rho[k] < limit) {
-	if (rho[k] < 0)
-	{
-	  rho.resize(k-1);
-	  break;
-	}
-	else if (k > 3)
-	{
-	  rho.resize(k);
-	  break;
-	}
+      if (rho[k] < 0 or (k > 3 and rho[k] < limit))
+      {
+        rho.resize(k);
+        break;
       }
     }
 
+    assert(not rho.empty());
     return rho;
   }
 
