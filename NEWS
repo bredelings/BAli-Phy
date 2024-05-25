@@ -1,6 +1,7 @@
-* 4.0-beta11 (May 25, 2024)
+* 4.0-beta12 (May 25, 2024)
 - Bug Fixes:
   + Fix typo in the bp-analyze script!
+  + Fix crash in statreport.
 
 * 4.0-beta11 (May 22, 2024)
 - Features
