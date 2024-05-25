@@ -340,11 +340,16 @@ parse_result<char> escaped_letter_(parse_input input)
 parse_result<char> unescaped_letter_(parse_input input)
 {
     auto result = get_char(input);
-    char c = result->output;
-    if (c == '\\' or c == '"' or c == ' ')
-        return {};
+    if (result)
+    {
+	char c = result->output;
+	if (c == '\\' or c == '"' or c == ' ')
+	    return {};
+	else
+	    return result;
+    }
     else
-        return result;
+	return {};
 }
 
 parser<char> escaped_letter = escaped_letter_;
