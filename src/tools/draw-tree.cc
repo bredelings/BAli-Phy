@@ -1369,12 +1369,12 @@ int node_size(const Tree& T,int n)
 vector<int> node_order(const Tree& T)
 {
     vector<int> nodes;
-    vector<int> S;
     for(int i=T.n_leaves();i<T.n_nodes();i++) 
-    {
 	nodes.push_back(i);
+
+    vector<int> S;
+    for(int i=0;i<T.n_nodes();i++) 
 	S.push_back(node_size(T,nodes.back()));
-    }
 
     std::sort(nodes.begin(), nodes.end(), sequence_order<int>(S));
     std::reverse(nodes.begin(), nodes.end());
