@@ -155,7 +155,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     p.add("analysis", 1);
     p.add("files", -1);
   
-    variables_map args;     
+    variables_map args;
     store(command_line_parser(argc, argv).
 	  options(all).positional(p).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
@@ -166,6 +166,27 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Compute autocorrelations or other functions of tree distances.\n\n";
 	cout<<"Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]\n\n";
 	cout<<visible<<"\n";
+
+	cout<<"Example:\n\n";
+
+	cout<<" Compute distance matrix between all pairs of trees in all files:\n";
+	cout<<"   % trees-distances matrix file1.trees ... fileN.trees\n\n";
+
+	cout<<" Compute average distances at increasing separation:\n";
+	cout<<"   % trees-distances autocorrelation file1.trees\n\n";
+
+	cout<<" Summarize distances within one group of trees:\n";
+	cout<<"   % trees-distances diameter file1.trees --mean --median --minmax\n\n";
+
+	cout<<" Summarize distances within and between two groups of trees:\n";
+	cout<<"   % trees-distances compare file1.trees file2.trees\n\n";
+
+	cout<<" Summarize distances within and between two groups of trees:\n";
+	cout<<"   % trees-distances closest file1.trees file2.trees\n\n";
+
+	cout<<" Summarize distances within and between two groups of trees:\n";
+	cout<<"   % trees-distances leaf-dist-matrix file1.trees\n\n";
+
 	exit(0);
     }
 
@@ -654,6 +675,46 @@ void write_distance_cvars_out(const SequenceTree& T,bool leaves) {
     std::cout<<join(lengths,',')<<endl;
 }
 
+tree_sample tree_sample_from_all_files(const variables_map& args)
+{
+    unsigned skip = args["skip"].as<unsigned>();
+
+    optional<int> last;
+    if (args.count("until"))
+	last = args["until"].as<int>();
+
+    int subsample=args["subsample"].as<int>();
+
+    optional<int> max;
+    if (args.count("max"))
+	max = args["max"].as<int>();
+
+    vector<string> files;
+    if (args.count("files"))
+	files = args["files"].as<vector<string> >();
+
+    check_supplied_filenames(1,files,false);
+
+    tree_sample all_trees;
+    for(int i=0;i<files.size();i++) 
+    {
+	int count = 0;
+	int start = all_trees.size();
+	if (files[i] == "-")
+	    count = all_trees.load_file(std::cin,skip,last,subsample,max);
+	else
+	    count = all_trees.load_file(files[i],skip,last,subsample,max);
+
+	if (log_verbose)
+	{
+	    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
+	    std::cerr<<"Kept "<<all_trees.size()-start<<" trees from '"<<files[i]<<"'"<<std::endl;
+	}
+    }
+
+    return all_trees;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try 
@@ -696,23 +757,7 @@ int main(int argc,char* argv[])
 	//----------- task "matrix" ------------//
 	if (analysis == "matrix") 
 	{
-	    check_supplied_filenames(1,files,false);
-
-	    tree_sample all_trees;
-	    for(int i=0;i<files.size();i++) 
-	    {
-		int count = 0;
-		int start = all_trees.size();
-		if (files[i] == "-")
-		    count = all_trees.load_file(std::cin,skip,last,subsample,max);
-		else
-		    count = all_trees.load_file(files[i],skip,last,subsample,max);
-		if (log_verbose)
-		{
-		    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
-		    std::cerr<<"Kept "<<all_trees.size()-start<<" trees from '"<<files[i]<<"'"<<std::endl;
-		}
-	    }
+	    auto all_trees = tree_sample_from_all_files(args);
 
 	    matrix<double> D = distances(all_trees,metric_fn);
 
