@@ -28,7 +28,7 @@ struct index_value: std::optional<std::tuple<int,T>>
 	{
 	    if (not amount() or (*this->amount() > a))
 	    {
-		operator=(index_value<T>(index,a));
+		this->operator=(index_value<T>(index,a));
 	    }
 	    return std::get<1>(this->value());
 	}
@@ -37,7 +37,7 @@ struct index_value: std::optional<std::tuple<int,T>>
 	{
 	    if (not amount() or (this->amount() < a))
 	    {
-		operator=(index_value<T>(index,a));
+		this->operator=(index_value<T>(index,a));
 	    }
 	    return std::get<1>(this->value());
 	}
