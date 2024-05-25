@@ -5,6 +5,8 @@
 
 /// Track *where* we found the max and min.
 /// Basically used for getting (max,argmax) and (min,argmin) incrementally.
+
+
 template <typename T>
 // std::tuple causes problems with gcc-10
 struct index_value: std::optional<std::pair<int,T>>
@@ -27,20 +29,20 @@ struct index_value: std::optional<std::pair<int,T>>
 
     T check_min(int index, T a) 
 	{
-	    if (not amount() or (*this->amount() > a))
+	    if (not amount() or (*amount() > a))
 	    {
 		this->operator=(index_value<T>(index,a));
 	    }
-	    return std::get<1>(this->value());
+	    return *amount();
 	}
 
     T check_max(int index, T a) 
 	{
-	    if (not amount() or (this->amount() < a))
+	    if (not amount() or (*amount() < a))
 	    {
 		this->operator=(index_value<T>(index,a));
 	    }
-	    return std::get<1>(this->value());
+	    return *amount();
 	}
 
     index_value() = default;
