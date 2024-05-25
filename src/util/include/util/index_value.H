@@ -6,7 +6,8 @@
 /// Track *where* we found the max and min.
 /// Basically used for getting (max,argmax) and (min,argmin) incrementally.
 template <typename T>
-struct index_value: std::optional<std::tuple<int,T>>
+// std::tuple causes problems with gcc-10
+struct index_value: std::optional<std::pair<int,T>>
 {
     std::optional<int> index() const
     {
@@ -43,7 +44,7 @@ struct index_value: std::optional<std::tuple<int,T>>
 	}
 
     index_value() = default;
-    index_value(int index, const T& t):std::optional<std::tuple<int,T>>({index,t}) {}
+    index_value(int index, const T& t):std::optional<std::pair<int,T>>({index,t}) {}
 };
 
 #endif
