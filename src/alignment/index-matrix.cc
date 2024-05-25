@@ -469,7 +469,10 @@ void online_topo_sort::do_add_edge(int x,int y)
 void check_empty(const vector<int>& mark)
 {
     for(int i=0;i<mark.size();i++)
+    {
+	std::cerr<<"check_empty: not empty!";
 	if (mark[i]) abort();
+    }
 }
 
 
@@ -589,7 +592,10 @@ void online_topo_sort::allow_edge(int x,int y)
 	if (mark[vn]) continue; // items MAY be on the stack twice
 
 	if (vn == y)
-	    std::abort(); // cycle - but we should have caught this above!
+	{
+	    std::cerr<<"allow_edge: cycle - but we should have caught this above!";
+	    std::abort();
+	}
 
 	mark[vn] = 1;
 	items_before_x.push_back(vn);
@@ -649,7 +655,10 @@ void online_topo_sort::check_in_edges(int x) const
 	int vn  = get(vertex_index,g,v);
     
 	if (not(order[vn] < order[x]))
+	{
+	    std::cerr<<"check_in_edges: bad order!";
 	    abort();
+	}
     }
 }
 
@@ -666,7 +675,10 @@ void online_topo_sort::check_out_edges(int x) const
 	int vn  = get(vertex_index,g,v);
     
 	if (not (order[x] < order[vn]))
+	{
+	    std::cerr<<"check_out_edges: bad order!";
 	    abort();
+	}
     }
 }
 
@@ -962,6 +974,7 @@ matrix<int> get_ordered_matrix(const index_matrix& M)
 	// skipping something, then ... we have a cycle?
 	if (c1 == -1)
 	{
+	    std::cerr<<"get_ordered_matrix: no next letter?";
 	    abort();
 	}
     

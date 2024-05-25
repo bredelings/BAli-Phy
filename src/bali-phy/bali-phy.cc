@@ -494,7 +494,10 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         *P = gen_model_program(args, L, output_dir, model_filename);
     }
     else
+    {
+	std::cerr<<"generate_program: no 'run', 'print', 'align', or 'model'";
         std::abort();
+    }
 
     //------ Write run info to C1.run.json ------//
     if ((args.count("align") or args.count("model")) and not args.count("test"))

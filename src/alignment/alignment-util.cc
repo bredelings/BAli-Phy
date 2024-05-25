@@ -484,7 +484,10 @@ void check_letters_OK(const alignment& A) {
 		cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<endl;
 	    }
     if (bad)
+    {
+	std::cerr<<"check_letters_OK: not OK!";
 	std::abort();
+    }
 }
 
 void check_leaf_sequences(const alignment& A,int n_leaves) {

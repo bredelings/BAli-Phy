@@ -196,7 +196,10 @@ int time_to_cross(const vector<double>& data, int start, double x1,double x2,int
     else if (direction == 0)
 	return time_to_cross_below(data,start,x1);
     else
+    {
+	std::cerr<<"time_to_cross: direction = "<<direction<<" not recognized\n";
 	std::abort();
+    }
 }
 
 int get_burn_in(const vector<double>& data, double alpha,int n)
