@@ -1,7 +1,9 @@
-* 4.0-beta12 (May 25, 2024)
+* 4.0-beta13 (May 25, 2024)
 - Bug Fixes:
   + Fix typo in the bp-analyze script!
   + Fix crash in statreport.
+  + Fix crash in draw-tree.
+  + Fix crash in trees-bootstrap.
 
 * 4.0-beta11 (May 22, 2024)
 - Features
