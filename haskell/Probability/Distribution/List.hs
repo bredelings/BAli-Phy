@@ -3,6 +3,7 @@ module Probability.Distribution.List where
 import Probability.Random
 import Probability.Distribution.Gamma
 import Probability.Distribution.Tuple
+import Probability.Distribution.Discrete -- Maybe move to a different module?
 import Data.Array
 import Effect
 import MCMC
@@ -133,15 +134,12 @@ iid_on items dist = IIDOn items dist
     return $ take n xs
 -}
 
-
 iid2 n dist1 dist2 = iid n $ PairDist dist1 dist2
 
-iid_mixture_dist n weight_dist item_dist = do
-    (ps, items) <- unzip <$> (sample $ iid2 n weight_dist item_dist)
-    return (map (/sum ps) ps, items)
+-- The return type should be Random (Discrete a)
+iidMixture n itemDist weightDist = normalizeMixture <$> (sample $ iid2 n (itemDist) (weightDist))
 
-dirichlet_mixture_dist n a item_dist = iid_mixture_dist n (gamma a 1) item_dist
-
+dirichletMixture n dist a = iidMixture n dist (gamma a 1)
 
 even_sorted_on_iid f n dist = do let n_all = 2*n+1
                                  xs' <- sample $ iid n_all dist

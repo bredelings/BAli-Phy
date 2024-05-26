@@ -1,0 +1,28 @@
+{
+    "name": "dirichlet_mixture",
+    "result_type": "Distribution<DiscreteDistribution<a>>",
+    "call": "dirichletMixture(@n,@dist,@alpha)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "dist",
+            "type": "Distribution<a>",
+	    "description": "The distribution on component values"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+	    "default_value": "1",
+	    "description": "The dirichlet concentration parameter"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "1 + ~geometric(0.5)",
+	    "description": "The number of components"
+        }
+    ],
+    "title": "Dirichlet mixture model",
+    "description": "A mixture model with n components where the distribution on component weights is `symmetric_dirichlet(n,alpha)`.  If `n` is unknown, this prior resembles the Dirichlet process distribution, but may have a different marginal distribution on the number of components.  The value for each component has distribution `dist`.",
+    "extract": "all"
+}
