@@ -147,7 +147,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 cairo
+          brew install boost eigen range-v3 cairo fmt
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
