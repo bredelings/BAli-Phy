@@ -83,7 +83,7 @@ endif
 # NOTE: we can't use cpp_debug_stl unless we build our own BOOST.
 # But we don't have to build it inside of bali-phy.
 
-boost = dependency('boost', modules : boost_modules).as_system()
+boost = dependency('boost', version: '>=1.81.0', modules : boost_modules).as_system()
 
 ## Handle auto / system / internal method of finding/building EIGEN
 eigen = dependency('eigen3').as_system()
