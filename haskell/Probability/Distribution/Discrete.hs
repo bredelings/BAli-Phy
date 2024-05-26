@@ -105,3 +105,6 @@ instance Monad Discrete where
        (x, px) <- xs
        (y, py) <- unpackDiscrete $ f x
        return (y, px * py)
+
+instance Show a => Show (Discrete a) where
+    show (Discrete xs) = "Discrete " ++ show xs
