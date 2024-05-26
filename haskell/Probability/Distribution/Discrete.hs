@@ -21,6 +21,9 @@ nComponents (Discrete ds) = length ds
 
 component (Discrete ds) i = fst (ds !! i)
 
+normalizeMixture unnormalized = Discrete [(x, p/total) | (x, p) <- unnormalized]
+    where total = sum $ snd <$> unnormalized
+
 -- See https://dennybritz.com/posts/probability-monads-from-scratch/
 
 -- map from a -> probability
