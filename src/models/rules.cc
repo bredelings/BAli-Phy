@@ -158,16 +158,26 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 
 	{
 	    ptree& arg_type = x.get_child("type");
+
+	    if (not arg_type.has_value<string>())
+		throw myexception()<<"In rules for '"<<name<<"', type for argument '"<<arg_name<<"' is not a string.";
+
 	    arg_type = parse_type(arg_type.get_value<string>());
 	}
 
 	if (auto default_value = x.get_child_optional("default_value"))
 	{
+	    if (not default_value->has_value<string>())
+		throw myexception()<<"In rules for '"<<name<<"', default value for argument '"<<arg_name<<"' is not a string.";
+
 	    (*default_value) = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
 
 	if (auto alphabet = x.get_child_optional("alphabet"))
 	{
+	    if (not alphabet->has_value<string>())
+		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
+
 	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
     }
