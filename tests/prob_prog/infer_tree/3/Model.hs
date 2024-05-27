@@ -15,17 +15,15 @@ smodel_prior codons = do
     pi  <- prior $ symmetric_dirichlet_on (letters nucleotides) 1.0
     ws   <- zip (letters codons) <$> prior (iid (length (letters codons)) (normal 0 1))
     let n  = 4
-    ps     <- prior $ symmetric_dirichlet n 2.0
-    omegas <- prior $ iid n (uniform 0.0 1.0)
+    omegaDist <- prior $ dirichletMixture n (uniform 0 1) 2
 
     let mut_sel_model w = gtr' sym pi nucleotides +> SModel.x3 codons +> dNdS w +> mut_sel' ws
-        m3_model = mut_sel_model +> SModel.m3 ps omegas
+        m3_model = mut_sel_model +> SModel.m3 omegaDist
 
     let loggers = ["gtr:sym" %=% sym,
                    "gtr:pi" %=% pi,
                    "mut_sel:2ns" %=% ws,
-                   "m3:ps" %=% ps,
-                   "m3:omegas" %=% omegas]
+                   "m3:omegaDist" %=% sortDist omegaDist]
 
     return (m3_model, loggers)
 
