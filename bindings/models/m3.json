@@ -14,13 +14,13 @@
         {
             "name": "omegaDist",
             "type": "DiscreteDistribution<Double>",
-            "default_value": "~dirichlet_mixture(uniform(0,1), 1, @n)",
+            "default_value": "~dirichlet_mixture(uniform(0,1), 2, @n)",
 	    "description": "The omega (i.e. dN/dS) values"
         },
         {
             "name": "n",
             "type": "Int",
-            "default_value": "1 + ~geometric(0.5)",
+            "default_value": "4",
 	    "description": "The number of omega categories, if not specified"
         }
     ],
