@@ -2,7 +2,7 @@
     "name": "Rates.free",
     "synonyms": ["DP"],
     "result_type": "MixtureModel<a>",
-    "call": "SModel.freeRates(mkDiscrete(@rates,@frequencies),@submodel)",
+    "call": "SModel.freeRates(rateDist,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -11,16 +11,10 @@
 	    "description": "The model to be scaled"
         },
         {
-            "name": "rates",
-            "type": "List<Double>",
-            "default_value": "~symmetric_dirichlet(@n, 1)",
+            "name": "rateDist",
+            "type": "DiscreteDistribution<Double>",
+            "default_value": "~dirichlet_mixture(gamma(1,1),2,@n)",
 	    "description" : "Rates for each category"
-        },
-        {
-            "name": "frequencies",
-            "type": "List<Double>",
-            "default_value": "~symmetric_dirichlet(@n, 1)",
-	    "description" : "Frequencies for each category"
         },
         {
             "name": "n",
