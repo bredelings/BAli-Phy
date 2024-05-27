@@ -159,6 +159,13 @@ bool is_loggable_type(const type_t& type)
 
     else if (type.get_value<string>() == "Double") return true;
 
+    else if (type.get_value<string>() == "DiscreteDistribution")
+    {
+        if (type.size() != 1) return false;
+
+        return is_loggable_type(type[0].second);
+    }
+
     else if (type.get_value<string>() == "List")
     {
         if (type.size() != 1) return false;
