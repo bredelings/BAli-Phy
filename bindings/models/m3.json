@@ -2,7 +2,7 @@
     "name": "m3",
     "synonyms": ["M3"],
     "result_type": "MixtureModel<a<Codons<b>>>",
-    "call": "SModel.m3(mkDiscrete(@omegas,@ps),@submodel)",
+    "call": "SModel.m3(@omegaDist,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -12,21 +12,15 @@
 	    "description": "The model as a function of dN/dS"
         },
         {
-            "name": "omegas",
-            "type": "List<Double>",
-            "default_value": "~iid(@n, uniform(0,1))",
+            "name": "omegaDist",
+            "type": "DiscreteDistribution<Double>",
+            "default_value": "~dirichlet_mixture(uniform(0,1), 1, @n)",
 	    "description": "The omega (i.e. dN/dS) values"
-        },
-        {
-            "name": "ps",
-            "type": "List<Double>",
-            "default_value": "~symmetric_dirichlet(@n,2)",
-	    "description": "The frequency of each omega"
         },
         {
             "name": "n",
             "type": "Int",
-            "default_value": "4",
+            "default_value": "1 + ~geometric(0.5)",
 	    "description": "The number of omega categories, if not specified"
         }
     ],
