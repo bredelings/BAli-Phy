@@ -2,6 +2,7 @@ module Probability.Distribution.Discrete where
 
 import Probability.Random
 import Probability.Distribution.Uniform
+import Data.JSON
 
 -- this is a join
 mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
@@ -110,3 +111,12 @@ instance Monad Discrete where
 
 instance Show a => Show (Discrete a) where
     show (Discrete xs) = "Discrete " ++ show xs
+
+instance ToJSON a => ToJSON (Discrete a) where
+    toJSON (Discrete xps) = Object [(toJSONKey "weights",toJSON weights),(toJSONKey "values",toJSON values)]
+        where (values,weights) = unzip xps
+
+-- I guess we could also merge entries with the same value, if we first sort everything...
+sortDistOn f (Discrete pairs) = Discrete $ sortOn (f . fst) pairs
+
+sortDist = sortDistOn id
