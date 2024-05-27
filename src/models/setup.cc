@@ -758,8 +758,13 @@ void perform_action_simplified(translation_result_t& block, const var& x, const 
     perform_action_simplified_(block.code, x, is_referenced, code.code);
 }
 
-void generated_code_t::log_value(const string& name, const expression_ref& value)
+void generated_code_t::log_value(const string& name, expression_ref value, const type_t& type)
 {
+    if (type.get_value<string>() == "DiscreteDistribution" and type[0].second.get_value<string>() == "Double")
+    {
+	value = {var("sortDist"),value};
+    }
+
     loggers.push_back(LogValue(name, value));
 }
 
@@ -813,8 +818,9 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
 
     // (x, log_x) <- arg_result
     perform_action_simplified(result, x, log_x, true, arg_result, var_name);
-    if (x_is_random and is_loggable_type(var_exp.get_child("type")))
-        result.code.log_value(var_name, x);
+    auto type = var_exp.get_child("type");
+    if (x_is_random and is_loggable_type(type))
+        result.code.log_value(var_name, x, type);
 
     // body_result
     use_block(result, log_body, body_result, "body");
@@ -1047,7 +1053,8 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
         use_block(result, log_x, element_result, log_name);
 
         // 3e. Maybe emit code for the element.
-        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(element.get_child("type"));
+	auto type = element.get_child("type");
+        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1057,7 +1064,7 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
 
         // 3f. Maybe log the element.
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i]);
+            result.code.log_value(log_name, argument_environment[i], type);
     }
 
     // 4. Compute the call expression.
@@ -1107,7 +1114,8 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
         use_block(result, log_x, element_result, log_name);
 
         // 3e. Maybe emit code for the element.
-        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(element.get_child("type"));
+	auto type = element.get_child("type");
+        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1117,7 +1125,7 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
 
         // 3f. Maybe log the element.
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i]);
+            result.code.log_value(log_name, argument_environment[i], type);
     }
 
     // 4. Compute the call expression.
@@ -1260,7 +1268,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
 
-        bool do_log = should_log(R, model, arg_names[i], scope) and is_loggable_type(arg.get_child("type")) and arg_models[i].lambda_vars.empty();
+	auto type = arg.get_child("type");
+        bool do_log = should_log(R, model, arg_names[i], scope) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
 
         // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg_models[i], log_names[i]);
@@ -1284,7 +1293,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         // 6c. Write the logger for the variable.
         if (do_log)
-            result.code.log_value(log_names[i], argument_environment[arg_names[i]]);
+	{
+            result.code.log_value(log_names[i], argument_environment[arg_names[i]], type);
+	}
     }
 
     if (auto computed = rule->get_child_optional("computed"))
@@ -1298,10 +1309,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
 	    // B. Each computed variable can only reference earlier computed variables.
 	    auto& value = x.get_child("value");
+	    auto x_type = ptree("unknown_type");
 	    result.code.stmts.let(x_var, make_call(value, argument_environment));
 
 	    // C. Log the computed variable
-	    result.code.log_value(x_log_name, x_var);
+	    result.code.log_value(x_log_name, x_var, x_type);
 
             // D. Put this var into the argument environment
 	    argument_environment[x_name] = x_var;

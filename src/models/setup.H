@@ -86,7 +86,7 @@ struct generated_code_t
 
     expression_ref generate() const;
 
-    void log_value(const std::string&, const expression_ref&);
+    void log_value(const std::string&, expression_ref, const ptree&);
     void log_sub(const std::string&, const var&, const Loggers&);
 
     std::string print() const {return generate().print();}
