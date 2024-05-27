@@ -23,6 +23,5 @@
         }
     ],
     "title": "Dirichlet mixture model",
-    "description": "A mixture model with n components where the distribution on component weights is `symmetric_dirichlet(n,alpha)`.  If `n` is unknown, this prior resembles the Dirichlet process distribution, but may have a different marginal distribution on the number of components.  The value for each component has distribution `dist`.",
-    "extract": "all"
+    "description": "A mixture model with n components where the distribution on component weights is `symmetric_dirichlet(n,alpha)`.  If `n` is unknown, this prior resembles the Dirichlet process distribution, but may have a different marginal distribution on the number of components.  The value for each component has distribution `dist`."
 }
