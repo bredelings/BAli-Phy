@@ -128,8 +128,8 @@ log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1+sigmaO
 
 log_normal_rates sigmaOverMu n base = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 
---dp base rates fraction = rate_mixture base dist where dist = zip fraction rates
-free_rates rates fractions base = scaled_mixture (replicate (length fractions) base) rates fractions
+-- join collapses a Discrete (Discrete a) -> Discrete a
+freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist
 
 -- * OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scaled relative to each other.
 --   ** Hmm... THAT might explain why the mixtures aren't working well!  We need to scale each of THOSE components separately.
