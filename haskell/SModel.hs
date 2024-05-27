@@ -91,7 +91,7 @@ m2a w1 f1 posP posW model_func = parameter_mixture_unit (m2a_omega_dist f1 w1 po
 
 m2a_test w1 f1 posP posW posSelection model_func = parameter_mixture_unit (m2a_test_omega_dist f1 w1 posP posW posSelection) model_func
 
-m3 ps omegas model_func = parameter_mixture_unit (m3_omega_dist ps omegas) model_func
+m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
 m3_test ps omegas posP posW posSelection model_func = parameter_mixture_unit (m3_test_omega_dist ps omegas posP posW posSelection) model_func
 

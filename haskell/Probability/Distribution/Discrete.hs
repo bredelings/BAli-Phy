@@ -6,9 +6,11 @@ import Probability.Distribution.Uniform
 -- this is a join
 mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
 
+mkDiscrete xs ps = Discrete $ zip xs ps
+
 unit_mixture x = Discrete [(x, 1)]
 
--- Should always get its own type?
+-- Should always get its own type (Always a)?
 always = unit_mixture
 
 addComponent ms (x,p) = mix [p, 1-p] [always x, ms]

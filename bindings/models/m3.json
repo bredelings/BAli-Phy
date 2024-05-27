@@ -2,7 +2,7 @@
     "name": "m3",
     "synonyms": ["M3"],
     "result_type": "MixtureModel<a<Codons<b>>>",
-    "call": "SModel.m3(@ps,@omegas,@submodel)",
+    "call": "SModel.m3(mkDiscrete(@omegas,@ps),@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -12,16 +12,16 @@
 	    "description": "The model as a function of dN/dS"
         },
         {
-            "name": "ps",
-            "type": "List<Double>",
-            "default_value": "~symmetric_dirichlet(@n,2)",
-	    "description": "The frequency of each omega"
-        },
-        {
             "name": "omegas",
             "type": "List<Double>",
             "default_value": "~iid(@n, uniform(0,1))",
 	    "description": "The omega (i.e. dN/dS) values"
+        },
+        {
+            "name": "ps",
+            "type": "List<Double>",
+            "default_value": "~symmetric_dirichlet(@n,2)",
+	    "description": "The frequency of each omega"
         },
         {
             "name": "n",
