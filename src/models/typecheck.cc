@@ -34,6 +34,23 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    model = result;
 	}
     }
+    // List<(a,Double)> -> DiscreteDistribution a
+    else if (t2.get_value<string>() == "DiscreteDistribution")
+    {
+	auto a = t2[0].second;
+	ptree Double = ptree("Double");
+	auto Tuple = ptree("Tuple",{{"",a},{"",Double}});
+	t2 = ptree("List",{{"",Tuple}});
+
+	E = convertible_to(model, t1, t2);
+	if (E)
+	{
+	    ptree result;
+	    result.put_value("discrete");
+	    result.push_back({"pairs",model});
+	    model = result;
+	}
+    }
     else if (t2.get_value<string>() == "MultiMixtureModel")
     {
 	t2.put_value("MixtureModel");
@@ -448,7 +465,16 @@ typecheck_and_annotate_list(const Rules& R, const ptree& required_type, const pt
     auto list_type = ptree("List",{ {"",a} });
     equations E = unify(list_type, required_type);
     if (not E)
-        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
+    {
+	auto model2 = model;
+	if (convertible_to(model2, list_type, required_type))
+	{
+	    auto [model3,E] = typecheck_and_annotate(R, required_type, model2, bound_vars, scope);
+	    return {{model3, E}};
+	}
+	else
+	    throw myexception()<<"Expected '"<<unparse_type(required_type)<<"', but got '"<<unparse_type(list_type)<<"'!";
+    }
 
     // 2. Analyze the body, forcing it to have type (b)
     set<string> used_args;
@@ -615,6 +641,7 @@ typecheck_and_annotate_constant(const Rules& R, const ptree& required_type, cons
 
 pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
+    assert(model.has_value<string>());
     auto name = model.get_value<string>();
     auto rule = R.require_rule_for_func(name);
     rule = freshen_type_vars(rule, bound_vars);

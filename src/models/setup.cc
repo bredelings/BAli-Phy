@@ -238,9 +238,9 @@ string default_markov_model(const alphabet& a)
     else if (dynamic_cast<const Codons*>(&a))
         return "gy94";
     else if (dynamic_cast<const Doublets*>(&a))
-        return "tn93_sym+>x2_sym+>f";
+        return "tn93_sym +> x2_sym +> f";
     else if (dynamic_cast<const Triplets*>(&a))
-        return "tn93+>x3";
+        return "tn93 +> x3";
     else
         return "";
 }
