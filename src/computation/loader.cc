@@ -162,7 +162,8 @@ shared_ptr<Module> module_loader::load_module(const string& module_name) const
     return M;
 }
 
-module_loader::module_loader(const vector<fs::path>& path_list)
+module_loader::module_loader(const optional<fs::path>& cp, const vector<fs::path>& path_list)
+    :cache_path(cp)
 {
     for(auto& path: path_list)
 	try_add_plugin_path(path.string());

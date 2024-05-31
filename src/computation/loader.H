@@ -18,6 +18,8 @@ class module_loader: public simplifier_options
 public:
     std::vector<std::filesystem::path> plugins_path;
 
+    std::optional<std::filesystem::path> cache_path;
+
     std::vector<std::string> args;
 
     bool try_add_plugin_path(const std::filesystem::path& path);
@@ -28,7 +30,7 @@ public:
     /// Add the hard-coded elements to the module.
     std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
     std::shared_ptr<Module> load_module(const std::string&) const;
-    module_loader(const std::vector<std::filesystem::path>& paths);
+    module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };
 
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& plugin_name, int n, const std::string& fname);

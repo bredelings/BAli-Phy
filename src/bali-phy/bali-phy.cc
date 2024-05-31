@@ -296,7 +296,7 @@ void show_ending_messages()
 
 std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& argv0)
 {
-    std::shared_ptr<module_loader> L (new module_loader(get_package_paths(argv0, args) ));
+    auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(argv0, args));
 
     // 4. Write out paths to C1.err
     if (log_verbose >= 1)
