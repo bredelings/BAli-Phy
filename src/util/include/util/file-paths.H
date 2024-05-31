@@ -13,4 +13,5 @@ std::string show_path(const std::vector<std::filesystem::path>& paths);
 std::filesystem::path find_exe_path(const std::filesystem::path& argv0);
 std::vector<std::filesystem::path> clean_paths(const std::vector<std::filesystem::path>& paths);
 std::optional<std::filesystem::path> get_home_dir();
+std::optional<std::filesystem::path> base_user_data_path();
 #endif

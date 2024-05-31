@@ -24,17 +24,6 @@ optional<fs::path> get_system_lib_path(const string& exe_name)
     return system_lib_path;
 }
 
-optional<fs::path> base_user_data_path()
-{
-// Possibly we should check if UNIX (including cygwin) and then use home.
-    if (getenv("HOME"))
-	return fs::path(getenv("HOME")) / ".local" / "share";
-    else if (getenv("LOCALAPPDATA"))
-	return fs::path(getenv("LOCALAPPDATA"));
-    else
-	return {};
-}
-
 optional<fs::path> user_data_path()
 {
     if (auto path = base_user_data_path())

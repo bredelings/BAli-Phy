@@ -130,3 +130,15 @@ std::optional<fs::path> get_home_dir()
 
     return {};
 }
+
+optional<fs::path> base_user_data_path()
+{
+// Possibly we should check if UNIX (including cygwin) and then use home.
+    if (getenv("HOME"))
+	return fs::path(getenv("HOME")) / ".local" / "share";
+    else if (getenv("LOCALAPPDATA"))
+	return fs::path(getenv("LOCALAPPDATA"));
+    else
+	return {};
+}
+
