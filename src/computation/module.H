@@ -87,7 +87,12 @@ public:
 
     std::shared_ptr<std::string> filename;
 
+    // For error messages, and also computing the source file SHA.
     FileContents file;
+
+    std::string all_inputs_sha(const Program& P) const;
+
+    mutable std::optional<std::string> _cached_sha;
 
     bool is_resolved() const {return resolved;}
 

@@ -32,6 +32,7 @@
 #include "computation/haskell/ids.H"
 #include "computation/varinfo.H"
 #include "util/assert.hh"
+#include <boost/compute/detail/sha1.hpp>
 
 
 namespace views = ranges::views;
@@ -1776,6 +1777,27 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
     }
 }
+
+std::string Module::all_inputs_sha(const Program& P) const
+{
+    if (not _cached_sha)
+    {
+	boost::compute::detail::sha1 sha(file.contents);
+
+	for(auto& imported_module: imports())
+	{
+	    auto& [imploc, impdecl] = imported_module;
+	    auto modid = unloc(impdecl.modid);
+	    auto M2 = P.get_module( unloc(impdecl.modid) );
+	    sha.process(M2->all_inputs_sha(P));
+	}
+
+	_cached_sha = sha;
+    }
+
+    return _cached_sha.value();
+}
+
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
