@@ -24,17 +24,39 @@ optional<fs::path> get_system_lib_path(const string& exe_name)
     return system_lib_path;
 }
 
+optional<fs::path> base_user_data_path()
+{
+// Possibly we should check if UNIX (including cygwin) and then use home.
+    if (getenv("HOME"))
+	return fs::path(getenv("HOME")) / ".local" / "share";
+    else if (getenv("LOCALAPPDATA"))
+	return fs::path(getenv("LOCALAPPDATA"));
+    else
+	return {};
+}
+
+optional<fs::path> user_data_path()
+{
+    if (auto path = base_user_data_path())
+	return *path / "bali-phy";
+    else
+	return {};
+}
+
 optional<fs::path> get_user_lib_path()
 {
-    fs::path user_lib_path;
-    if (getenv("HOME"))
-    {
-	user_lib_path = getenv("HOME");
-	user_lib_path = user_lib_path / ".local" / "share" / "bali-phy" / "packages";
+    if (auto path = user_data_path())
+	return *path / "packages";
+    else
+	return fs::path();
+}
 
-	if (not fs::exists(user_lib_path)) return {};
-    }
-    return user_lib_path;
+optional<fs::path> get_cache_path()
+{
+    if (auto path = user_data_path())
+	return *path / "cache";
+    else
+	return fs::path();
 }
 
 vector<fs::path> get_package_paths(const string& argv0, variables_map& args)
