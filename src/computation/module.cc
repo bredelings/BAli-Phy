@@ -405,7 +405,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 vector<Hs::LImpDecl> Module::imports() const
 {
     // 1. Copy the imports list
-    auto imports_list = module.impdecls;
+    auto imports_list = module_AST.impdecls;
 
     // 2. Check if we've seen the Prelude
     if (language_extensions.has_extension(LangExt::ImplicitPrelude) and name != "Prelude")
@@ -460,8 +460,8 @@ void Module::compile(const Program& P)
     perform_imports(P);
 
     Hs::ModuleDecls M;
-    if (module.topdecls)
-        M = Hs::ModuleDecls(*module.topdecls);
+    if (module_AST.topdecls)
+        M = Hs::ModuleDecls(*module_AST.topdecls);
 
     // We should create a "local fixity environment" mapping from var and Module.var -> fixity info.
     // This can supplement the symbols that we imported from other modules.
@@ -675,11 +675,11 @@ void Module::perform_exports()
     }
 
     // Currently we just export the local symbols
-    if (not module.exports or module.exports->size() == 0)
+    if (not module_AST.exports or module_AST.exports->size() == 0)
         export_module(name);
     else
     {
-        for(auto& [loc,ex]: *module.exports)
+        for(auto& [loc,ex]: *module_AST.exports)
         {
             string id = unloc(ex.symbol);
             if (ex.is_module())
@@ -1791,8 +1791,8 @@ Module::Module(const char *n)
 
 Module::Module(const Haskell::Module& M, const LanguageExtensions& le, const FileContents& f)
     :language_extensions(le),
-     module(M),
-     name(unloc(module.modid)),
+     module_AST(M),
+     name(unloc(module_AST.modid)),
      file(f)
 {
     if (not name.size())
@@ -1801,8 +1801,8 @@ Module::Module(const Haskell::Module& M, const LanguageExtensions& le, const Fil
 
 std::ostream& operator<<(std::ostream& o, const Module& M)
 {
-    if (M.module.topdecls)
-        for(const auto& decls: *M.module.topdecls)
+    if (M.module_AST.topdecls)
+        for(const auto& decls: *M.module_AST.topdecls)
             o<<decls.print()<<"\n";
 
     return o;

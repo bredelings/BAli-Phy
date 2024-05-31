@@ -72,7 +72,7 @@ public:
 
     bool do_optimize = true;
     
-    Haskell::Module module;
+    Haskell::Module module_AST;
 
     std::map<std::string, std::shared_ptr<const Module>> transitively_imported_modules;
 
