@@ -157,6 +157,8 @@ public:
 
     void declare_type(const type_info&);
 
+    void write_compile_artifact(const Program& P);
+
     void import_symbol(const const_symbol_ptr&, const std::string&, bool qualified);
 
     void import_type(const const_type_ptr&, const std::string&, bool qualified);

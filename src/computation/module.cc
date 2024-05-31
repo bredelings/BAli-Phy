@@ -4,6 +4,7 @@
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
+#include "util/io.H"
 #include "util/log-level.H"
 #include "range/v3/all.hpp"
 #include "util/range.H"
@@ -446,6 +447,25 @@ main = putStrLn (show ("a" Main.>> 'b':[]))
 -- Or, at least, in the definition, we look up and rename >> to Main.>> before we do the infix handling...
 */
 
+std::optional<std::string> read_cached_module_sha(const module_loader& loader, const std::string& modid)
+{
+    if (auto path = loader.find_cached_module(modid))
+    {
+	checked_ifstream cached_module_stream(*path, "Cached compile artifact for " + modid);
+	std::string sha;
+	if (portable_getline(cached_module_stream, sha))
+	    return sha;
+	else
+	{
+	    if (log_verbose)
+		std::cerr<<"Failure reading SHA line from cached compile artifact for "<<modid<<".\n   File = "<<*path;
+	    return {};
+	}
+    }
+    else
+	return {};
+}
+
 void Module::compile(const Program& P)
 {
     assert(not resolved);
@@ -456,6 +476,12 @@ void Module::compile(const Program& P)
 
     if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
         std::cerr<<"[ Compiling "<<name<<" ]\n";
+
+    if (all_inputs_sha(P) == read_cached_module_sha(loader, name))
+    {
+	if (log_verbose >= 1)
+	    std::cerr<<"    Cached SHA up-to-date for module "<<name<<"\n";
+    }
 
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
@@ -543,6 +569,15 @@ void Module::compile(const Program& P)
 
     // this records unfoldings.
     export_small_decls(value_decls);
+
+    write_compile_artifact(P);
+}
+
+void Module::write_compile_artifact(const Program& P)
+{
+    auto artifact = P.get_module_loader()->write_cached_module(name);
+
+    *artifact << all_inputs_sha(P);
 }
 
 void Module::perform_imports(const Program& P)
