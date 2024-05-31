@@ -10,6 +10,7 @@
 #include "haskell/extensions.H"
 
 #include "util/io.H"
+#include <boost/compute/detail/sha1.hpp>
 
 namespace fs = std::filesystem;
 
@@ -60,6 +61,36 @@ fs::path module_loader::find_module(const string& modid) const
 	e.prepend("Loading module '"+modid+"': ");
 	throw;
     }
+}
+
+optional<fs::path> module_loader::cache_path_for_module(const string& modid) const
+{
+    if (not cache_path) return {};
+
+    fs::path path = get_relative_path_from_haskell_id(modid);
+    path.replace_extension(".hs.mod");
+
+    return *cache_path / path;
+}
+
+optional<fs::path> module_loader::find_cached_module(const string& modid) const
+{
+    if (auto path = cache_path_for_module(modid); path and fs::exists(*path) and fs::is_regular_file(*path))
+	return *path;
+    else
+	return {};
+}
+
+std::shared_ptr<std::ostream> module_loader::write_cached_module(const string& modid) const
+{
+    if (auto path = cache_path_for_module(modid))
+    {
+	auto dir = path->parent_path();
+	fs::create_directories(dir);
+	return std::make_shared<checked_ofstream>(*path, "Cached module file for " + modid);
+    }
+    else
+	return {};
 }
 
 //{-# LANGUAGE NoImplicitPrelude #-}
