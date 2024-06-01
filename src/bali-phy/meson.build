@@ -16,8 +16,8 @@ endif
 
 baliphy = executable('bali-phy',
 		     baliphy_sources,
-		     include_directories: [root_inc, libutil_inc],
-		     dependencies: [boost, eigen, libdl, math_dep, librange, fmt],
+		     include_directories: [root_inc],
+		     dependencies: [boost, eigen, libdl, math_dep, librange, fmt, util],
 		     link_whole: [libutil, libmcon, libcommon, libcomputation, libbaliphy],
 		     install_rpath: extra_rpath,
 		     install: true,
