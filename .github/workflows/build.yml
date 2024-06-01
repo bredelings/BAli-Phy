@@ -12,12 +12,13 @@ jobs:
   build:
     strategy:
       matrix:
-        name: [ubuntu-gcc-10,
-               ubuntu-gcc-11,
-               ubuntu-gcc-12-debugoptimized,
-               ubuntu-gcc-12-DEBUG_MACHINE,
-               ubuntu-gcc-12-sanitize,
+        name: [ubuntu-gcc-11,
                ubuntu-gcc-12,
+               ubuntu-gcc-13-debugoptimized,
+               ubuntu-gcc-13-DEBUG_MACHINE,
+               ubuntu-gcc-13-sanitize,
+               ubuntu-gcc-13,
+               ubuntu-gcc-14,
                ubuntu-clang-17,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
@@ -25,13 +26,6 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-10
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "10"
-            buildtype: "release"
-            arch: "linux64"
-
           - name: ubuntu-gcc-11
             os: ubuntu-24.04
             compiler: gcc
@@ -39,33 +33,47 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-12-sanitize
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "12"
-            buildtype: "release"
-            sanitize: "address"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-12-debugoptimized
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "12"
-            buildtype: "debugoptimized"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-12-DEBUG_MACHINE
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "12"
-            buildtype: "debugoptimized"
-            cxxflags: "-DDEBUG_MACHINE=1"
-            arch: "linux64"
-
           - name: ubuntu-gcc-12
             os: ubuntu-24.04
             compiler: gcc
             version: "12"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-13-sanitize
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+            buildtype: "release"
+            sanitize: "address"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-13-debugoptimized
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+            buildtype: "debugoptimized"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-13-DEBUG_MACHINE
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+            buildtype: "debugoptimized"
+            cxxflags: "-DDEBUG_MACHINE=1"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-13
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-14
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
             buildtype: "release"
             arch: "linux64"
 
