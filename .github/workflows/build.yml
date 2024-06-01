@@ -13,11 +13,9 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-11,
-               ubuntu-gcc-12,
-               ubuntu-gcc-13-debugoptimized,
+               ubuntu-gcc-12-debugoptimized,
                ubuntu-gcc-13-DEBUG_MACHINE,
-               ubuntu-gcc-13-sanitize,
-               ubuntu-gcc-13,
+               ubuntu-gcc-14-sanitize,
                ubuntu-gcc-14,
                ubuntu-clang-17,
                macos-xcode-15-intel,
@@ -33,25 +31,10 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-12
+          - name: ubuntu-gcc-12-debugoptimized
             os: ubuntu-24.04
             compiler: gcc
             version: "12"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-13-sanitize
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "13"
-            buildtype: "release"
-            sanitize: "address"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-13-debugoptimized
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "13"
             buildtype: "debugoptimized"
             arch: "linux64"
 
@@ -63,18 +46,19 @@ jobs:
             cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
-          - name: ubuntu-gcc-13
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "13"
-            buildtype: "release"
-            arch: "linux64"
-
           - name: ubuntu-gcc-14
             os: ubuntu-24.04
             compiler: gcc
             version: "14"
             buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-14-sanitize
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
+            buildtype: "release"
+            sanitize: "address"
             arch: "linux64"
 
           - name: ubuntu-clang-17
