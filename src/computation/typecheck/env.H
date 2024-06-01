@@ -13,6 +13,9 @@
 #include "computation/instance_info.H"
 #include "computation/data_con_info.H"
 
+#include <cereal/types/map.hpp>
+#include <cereal/types/utility.hpp>
+
 typedef std::string ID;
 
 typedef immer::map<Hs::Var, Type> value_env;
@@ -67,6 +70,12 @@ struct TypeSynonymInfo
 
     int arity() const;
     Type expand(const std::vector<Type>&) const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(name, type_vars, result);
+    }
 };
 
 typedef std::map<std::string, TypeSynonymInfo> TypeSynonymEnv;
@@ -105,13 +114,25 @@ struct ClassInfo
 
     GIE superclass_extractors;
 
+    // Why are we storing an Hs::Var here - Would a string be sufficient?
     std::map<Hs::Var, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members
+    // Why are we storing an Hs::Var here - Would a string be sufficient?
     std::vector<std::pair<Hs::Var,Type>> fields;
 
     // Each family is associated with a single optional default instance.
     std::map<TypeCon, std::optional<TypeFamilyInstanceDecl>> associated_type_families;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	// PROBLEM: members is an immer::map, which we don't know how to serialize
+	// PROBLEM: members, default_methods, and fields contain Hs::Var, which we don't know how to serialize.
+	// PROBLEM: superclass_extractors has Core::Var, which we also don't know how to serialize.
+	// IDEA: make pair<string,optional<int>> class.
+	ar(name, type_vars, context, /*members, superclass_extractors, default_methods, fields ,*/ associated_type_families);
+    }
 };
 
 struct TypeFamEqnInfo
@@ -134,6 +155,12 @@ struct TypeFamInfo
 
     int arity() const {return args.size();}
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(args, result_kind, associated_class, closed);
+    }
+
     TypeFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
 };
 
@@ -147,6 +174,12 @@ struct DataFamInfo
     int arity() const {return args.size();}
 
     DataFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(args, result_kind, associated_class);
+    }
 };
 
 
