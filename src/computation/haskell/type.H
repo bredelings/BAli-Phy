@@ -11,6 +11,7 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 #include "core.H"
+#include "coretype.H" // for Kind
 
 namespace Haskell
 {
@@ -107,8 +108,6 @@ namespace Haskell
 
         ~Type() = default;
     };
-
-    typedef expression_ref Kind;
 
     typedef Located<Type> LType;
 

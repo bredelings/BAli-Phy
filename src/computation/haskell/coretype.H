@@ -100,7 +100,7 @@ struct Type
     ~Type() = default;
 };
 
-typedef expression_ref Kind;
+typedef Type Kind;
 
 class MetaTypeVar
 {
@@ -167,6 +167,7 @@ public:
     TypeVar(int l, const Located<std::string>& s, const Kind& k);
 };
 
+typedef TypeVar KindVar;
 
 struct TypeCon
 {

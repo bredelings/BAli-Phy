@@ -61,7 +61,7 @@ void kindchecker_state::add_substitution(const KindVar& kv, const Kind& kind)
 {
     assert(not kind_var_to_kind.count(kv));
 
-    kind_var_to_kind.insert({kv,kind});
+    kind_var_to_kind = kind_var_to_kind.insert({kv,kind});
 }
 
 
@@ -190,11 +190,12 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
             unify(a1, kind2); /// can't fail.
             return {t2,a2};
         }
-        else if (auto a = kind1.to<KindArrow>())
+        else if (auto a = is_function_type(kind1))
         {
-            if (not unify(a->arg_kind, kind2))
+	    auto& [arg_kind, result_kind] = *a;
+            if (not unify(arg_kind, kind2))
                 throw myexception()<<"In type '"<<t<<"', can't apply type ("<<Tapp.head<<" :: "<<apply_substitution(kind1)<<") to type ("<<Tapp.arg<<" :: "<<apply_substitution(kind2)<<")";
-            return {t2, a->result_kind};
+            return {t2, result_kind};
         }
         else
             throw myexception()<<"Can't apply type "<<Tapp.head<<" :: "<<kind1.print()<<" to type "<<Tapp.arg<<".";
@@ -252,8 +253,8 @@ Kind kindchecker_state::kind_for_type(const Type& t)
         auto hkind = kind_for_type(tapp->head);
 
         // The kind should be k1 -> k2
-        if (auto ka = hkind.to<KindArrow>())
-            return ka->result_kind;
+        if (auto ka = is_function_type(hkind))
+            return ka->second;
         else
             throw myexception()<<"Kind of applied tycon is not an arrow kind!";
     }
@@ -449,16 +450,15 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     for(auto& tv: desugar(data_decl.type_vars))
     {
         // the kind should be an arrow kind.
-        auto ka = kind.to<KindArrow>();
-        assert(ka);
+        auto [arg_kind, result_kind] = is_function_type(kind).value();
 
         // map the name to its kind
-        bind_type_var(tv, ka->arg_kind);
+        bind_type_var(tv, arg_kind);
 
         // set up the next iteration
-        kind = ka->result_kind;
+        kind = result_kind;
     }
-    assert(kind.is_a<KindStar>());
+    assert(is_kind_type(kind));
 
     // c. Handle the context
     for(auto& constraint: desugar(data_decl.context.constraints))
@@ -499,21 +499,20 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
     for(auto& tv: desugar(data_decl.type_vars))
     {
         // the kind should be an arrow kind.
-        auto ka = k.to<KindArrow>();
-        assert(ka);
+	auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // map the name to its kind
-        bind_type_var(tv, ka->arg_kind);
+        bind_type_var(tv, arg_kind);
 
         // record a version of the var with that contains its kind
         auto tv2 = tv;
-        tv2.kind = ka->arg_kind;
+        tv2.kind = arg_kind;
         datatype_typevars.push_back(tv2);
 
         // set up the next iteration
-        k = ka->result_kind;
+        k = result_kind;
     }
-    assert(k.is_a<KindStar>());
+    assert(is_kind_type(k));
 
     // c. handle the context
     // The context should already be type-checked.
@@ -656,16 +655,15 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     for(auto& tv: desugar(class_decl.type_vars))
     {
         // the kind should be an arrow kind.
-        auto ka = k.to<KindArrow>();
-        assert(ka);
+	auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // map the name to its kind
-        bind_type_var(tv, ka->arg_kind);
+        bind_type_var(tv, arg_kind);
 
         // set up the next iteration
-        k = ka->result_kind;
+        k = result_kind;
     }
-    assert(k.is_a<KindConstraint>());
+    assert(is_kind_constraint(k));
 
     for(auto& sig_decl: class_decl.sig_decls)
         kind_and_type_check_type(desugar(sig_decl.type));
@@ -694,16 +692,15 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     for(auto& tv: desugar(type_syn_decl.type_vars))
     {
         // the kind should be an arrow kind.
-        auto ka = k.to<KindArrow>();
-        assert(ka);
+        auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // map the name to its kind
-        bind_type_var(tv, ka->arg_kind);
+        bind_type_var(tv, arg_kind);
 
         // set up the next iteration
-        k = ka->result_kind;
+        k = result_kind;
     }
-    assert(k.is_a<KindStar>());
+    assert(is_kind_type(k));
 
     kind_check_type_of_kind( desugar(type_syn_decl.rhs_type), kind_type() );
 

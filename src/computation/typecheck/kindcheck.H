@@ -15,7 +15,11 @@ struct kindchecker_state
 
     const Module& mod;
 
-    KindVar fresh_named_kind_var(const std::string& s) {return KindVar(s,next_kvar_index++);}
+    KindVar fresh_named_kind_var(const std::string& s) {
+	auto kv = TypeVar({noloc,s});
+	kv.index = next_kvar_index++;
+	return kv;
+    }
     KindVar fresh_kind_var() {return fresh_named_kind_var("k");}
 
     // These three together form the "type context"

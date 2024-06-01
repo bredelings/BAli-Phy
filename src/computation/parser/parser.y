@@ -355,8 +355,7 @@
 %type <void> fd
 %type <void> varids0
  */
- //%type <Hs::Kind> kind
-%type <expression_ref> kind
+%type <Hs::Kind> kind
 
 %type <Hs::GADTConstructorsDecl> gadt_constrlist
 %type <Hs::GADTConstructorsDecl> gadt_constrs

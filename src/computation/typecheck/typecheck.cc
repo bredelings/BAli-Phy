@@ -1571,14 +1571,13 @@ Kind result_kind_for_type_vars(vector<Hs::LTypeVar>& type_vars, Kind k)
     for(auto& tv: type_vars)
     {
         // the kind should be an arrow kind.
-        auto ka = k.to<KindArrow>();
-        assert(ka);
+        auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // record a version of the var with that contains its kind
-        unloc(tv).kind = ka->arg_kind;
+        unloc(tv).kind = arg_kind;
 
         // set up the next iteration
-        k = ka->result_kind;
+        k = result_kind;
     }
     // This is the result kind.
     return k;
@@ -1592,7 +1591,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
             auto kind = this_mod().lookup_local_type(unloc(D.name))->kind;
-            assert(kind);
+            assert(not kind.empty());
             result_kind_for_type_vars( D.type_vars, kind);
             type_decl = D;
         }
@@ -1600,7 +1599,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
             auto kind = this_mod().lookup_local_type(unloc(C.name))->kind;
-            assert(kind);
+            assert(not kind.empty());
             result_kind_for_type_vars( C.type_vars, kind);
             type_decl = C;
         }
@@ -1608,7 +1607,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
             auto kind = this_mod().lookup_local_type(unloc(T.name))->kind;
-            assert(kind);
+            assert(not kind.empty());
             result_kind_for_type_vars( T.type_vars, kind);
             type_decl = T;
         }

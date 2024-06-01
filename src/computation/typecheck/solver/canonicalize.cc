@@ -1,6 +1,7 @@
 #include "computation/typecheck/typecheck.H"
 #include "computation/typecheck/kindcheck.H"
 #include "computation/typecheck/solver.H"
+#include "computation/haskell/desugar_type.H"
 
 #include "util/set.H"
 #include "util/variant.H"
@@ -187,9 +188,8 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
         auto kind = this_mod().lookup_local_type(unloc(tc.name))->kind;
         for(int i=0;i<args.size();i++)
         {
-            auto arrow = kind.to<KindArrow>();
-            assert(arrow);
-            kind = arrow->result_kind;
+            auto [_, result_kind] = is_function_type(kind).value();
+            kind = result_kind;
         }
 
         auto new_tv = fresh_meta_type_var("cbv", kind);

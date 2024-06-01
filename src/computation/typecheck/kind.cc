@@ -9,115 +9,33 @@ using std::vector;
 
 namespace views = ranges::views;
 
-object_ptr<KindStar> kind_type() {return new KindStar();}
+TypeCon kind_type() {return TypeCon({noloc,"Type"});}
 
-object_ptr<KindConstraint> kind_constraint() {return new KindConstraint();}
+TypeCon kind_constraint() {return TypeCon({noloc,"Constraint"});}
 
-string KindArrow::print() const
+Kind kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return make_arrow_type(k1,k2);}
+
+bool is_kind_type(const Kind& k)
 {
-    string s1 = arg_kind.print();
-    string s2 = result_kind.print();
-    if (arg_kind.is_a<KindArrow>())
-        s1 = "("+s1+")";
-    return s1+" -> "+s2;
-}
-
-object_ptr<KindArrow> kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return new KindArrow{k1,k2};}
-
-std::string KindVar::print() const {
-    string s = name;
-    if (index)
-        s += "_" + std::to_string(*index);
-    return s;
-}
-
-object_ptr<KindVar> kind_var(const std::string& s, int i) {return new KindVar(s,i);}
-
-bool KindStar::operator==(const KindStar&) const
-{
-    return true;
-}
-
-bool KindStar::operator==(const Object& o) const
-{
-    auto K = dynamic_cast<const KindStar*>(&o);
-    if (not K)
-        return false;
-
-    return (*this) == *K;
-}
-
-bool KindConstraint::operator==(const KindConstraint&) const
-{
-    return true;
-}
-
-bool KindConstraint::operator==(const Object& o) const
-{
-    auto K = dynamic_cast<const KindConstraint*>(&o);
-    if (not K)
-        return false;
-
-    return (*this) == *K;
-}
-
-bool KindArrow::operator==(const KindArrow& K2) const
-{
-    return arg_kind == K2.arg_kind and result_kind == K2.result_kind; 
-}
-
-bool KindArrow::operator==(const Object& o) const
-{
-    auto K = dynamic_cast<const KindArrow*>(&o);
-    if (not K)
-        return false;
-
-    return (*this) == *K;
-}
-
-bool KindVar::operator==(const Object& o) const
-{
-    auto K = dynamic_cast<const KindVar*>(&o);
-    if (not K)
-        return false;
-
-    return (*this) == *K;
-}
-
-bool KindVar::operator==(const KindVar& k) const
-{
-    return name == k.name and index == k.index;
-}
-
-bool KindVar::operator<(const KindVar& k) const
-{
-    if (index < k.index) return true;
-    if (index > k.index) return false;
-
-    int cmp = name.compare(k.name);
-
-    return (cmp < 0);
-}
-
-
-Hs::Kind apply_subst(const k_substitution_t& s, const Hs::Kind& k)
-{
-    if (auto kv = k.to<KindVar>())
-    {
-        auto k2 = s.find( *kv );
-        if (k2 != s.end())
-            return apply_subst(s, k2->second);
-        else
-            return k;
-    }
-    else if (auto a = k.to<KindArrow>())
-    {
-        auto arg_kind    = apply_subst(s, a->arg_kind);
-        auto result_kind = apply_subst(s, a->result_kind);
-        return kind_arrow(arg_kind,result_kind);
-    }
+    if (auto tycon = k.to<TypeCon>())
+	return *tycon == kind_type();
     else
-        return k;
+	return false;
+}
+
+bool is_kind_constraint(const Kind& k)
+{
+    if (auto tycon = k.to<TypeCon>())
+	return *tycon == kind_constraint();
+    else
+	return false;
+}
+
+TypeVar kind_var(const std::string& s, int i)
+{
+    TypeVar kv({noloc,s});
+    kv.index = i;
+    return kv;
 }
 
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
@@ -129,8 +47,8 @@ k_substitution_t compose(const k_substitution_t& s1, const k_substitution_t s2)
     for(auto& [kv,k]: s1)
     {
         if (s3.count(kv))
-            s3.erase(kv);
-        s3.insert({kv,apply_subst(s2,k)});
+            s3 = s3.erase(kv);
+        s3 = s3.insert({kv,apply_subst(s2,k)});
     }
 
     return s3;
@@ -140,27 +58,35 @@ bool occurs_check(const KindVar& kv, const Hs::Kind& k)
 {
     if (auto kv2 = k.to<KindVar>())
         return kv == *kv2;
-    else if (auto a = k.to<KindArrow>())
-    {
-        return occurs_check(kv, a->arg_kind) or occurs_check(kv, a->result_kind);
-    }
-    else
+    else if (k.to<TypeCon>())
         return false;
+    else if (auto app = k.to<TypeApp>())
+	return occurs_check(kv, app->head) or occurs_check(kv, app->arg);
+    else
+	throw myexception()<<"Kind's should only have TypeVars, TypeCons, and TypeApps at the moment";
 }
 
 std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
 {
-    if (k1.is_a<KindArrow>() and k2.is_a<KindArrow>())
+    auto k1_app = k1.to<TypeApp>();
+    auto k2_app = k2.to<TypeApp>();
+
+    if (k1_app and k2_app)
     {
-        auto A = k1.to<KindArrow>();
-        auto B = k2.to<KindArrow>();
-        auto s1 = kunify(A->arg_kind, B->arg_kind);
+        auto s1 = kunify(k1_app->head, k2_app->head);
         if (not s1) return {};
 
-        auto s2 = kunify(apply_subst(*s1, A->result_kind), apply_subst(*s1, B->result_kind));
+        auto s2 = kunify(apply_subst(*s1, k1_app->arg), apply_subst(*s1, k2_app->arg));
         if (not s2) return {};
 
         return compose(*s1,*s2);
+    }
+    else if (k1.is_a<TypeCon>() and k2.is_a<TypeCon>())
+    {
+	if (k1.as_<TypeCon>() == k2.as_<TypeCon>())
+	    return {k_substitution_t{}};
+	else
+	    return {};
     }
     else if (auto kv1 = k1.to<KindVar>())
     {
@@ -169,8 +95,7 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
         if (occurs_check(*kv1, k2)) return {};
 
         k_substitution_t s;
-        s.insert({*kv1,k2});
-        return s;
+        return s.insert({*kv1,k2});
     }
     else if (auto kv2 = k2.to<KindVar>())
     {
@@ -178,13 +103,8 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
         if (occurs_check(*kv2, k1)) return {};
 
         k_substitution_t s;
-        s.insert({*kv2,k1});
-        return s;
+        return s.insert({*kv2,k1});
     }
-    else if (k1.is_a<KindStar>() and k2.is_a<KindStar>())
-        return {k_substitution_t{}};
-    else if (k1.is_a<KindConstraint>() and k2.is_a<KindConstraint>())
-        return {k_substitution_t{}};
     else
         return {};
 }
@@ -221,16 +141,18 @@ Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
     {
         return kind_type();
     }
-    else if (auto a = k.to<KindArrow>())
+    else if (k.is_a<TypeCon>())
     {
-        auto arg_kind    = replace_kvar_with_star( a->arg_kind );
-        auto result_kind = replace_kvar_with_star( a->result_kind );
-        return kind_arrow( arg_kind, result_kind );
+        return k;
+    }
+    else if (auto a = k.to<TypeApp>())
+    {
+        auto arg_kind    = replace_kvar_with_star( a->head );
+        auto result_kind = replace_kvar_with_star( a->arg );
+        return TypeApp(arg_kind, result_kind);
     }
     else
-        return k;
-
-    std::abort();
+	std::abort();
 }
 
 optional<pair<vector<Hs::Kind>,Hs::Kind>> arg_and_result_kinds(int n, const Hs::Kind& kind)
@@ -239,11 +161,12 @@ optional<pair<vector<Hs::Kind>,Hs::Kind>> arg_and_result_kinds(int n, const Hs::
     auto k = kind;
     for(int i=0;i<n;i++)
     {
-        auto a = k.to<KindArrow>();
+        auto a = is_function_type(k);
         if (not a) return {};
+	auto [arg_kind, result_kind] = *a;
 
-        arg_kinds.push_back(a->arg_kind);
-        k = a->result_kind;
+        arg_kinds.push_back(arg_kind);
+        k = result_kind;
     }
 
     return {{arg_kinds,k}};
@@ -253,10 +176,10 @@ int num_args_for_kind(const Hs::Kind& kind)
 {
     auto k = kind;
     int n = 0;
-    while(auto a = k.to<KindArrow>())
+    while(auto a = is_function_type(k))
     {
         n++;
-        k = a->result_kind;
+        k = a->second;
     }
 
     return n;
