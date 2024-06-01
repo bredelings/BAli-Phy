@@ -6,7 +6,6 @@
 #include <map>
 #include <bitset>
 #include "immer/map.hpp" // for immer::map
-#include "kind.H"
 #include "kindcheck.H"
 #include "env.H"
 #include "substitution.H"
