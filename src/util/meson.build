@@ -26,5 +26,4 @@ libutil = static_library('util', libutil_sources,
 			 include_directories: libutil_inc,
 			 dependencies: [boost, eigen, librange, fmt, cereal])
 
-util = declare_dependency(include_directories: libutil_inc, link_with: libutil, dependencies: cereal)
 

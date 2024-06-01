@@ -125,8 +125,8 @@ libbaliphy_sources = [
   git_version_h]
 
 libbaliphy = static_library('baliphy', libbaliphy_sources, 
-			    include_directories: [root_inc],
-			    dependencies: [boost, eigen, libdl, math_dep, librange, immer, util])
+			    include_directories: [root_inc, libutil_inc],
+			    dependencies: [boost, eigen, libdl, math_dep, librange, immer, cereal])
 			    
 subdir('bali-phy')
 
