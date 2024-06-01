@@ -12,6 +12,12 @@
 #include "computation/expression/expression_ref.H"
 #include "core.H"
 
+#include <cereal/types/memory.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/optional.hpp>
+
 class MetaTypeVar;
 class TypeVar;
 struct TypeCon;
@@ -65,6 +71,9 @@ struct Type
 
 
     bool operator==(const Type& t) const;
+
+    template <class Archive>
+    void serialize(Archive& ar);
 
     template <typename T>
     bool is_a() const {return to<T>();}
@@ -127,6 +136,12 @@ public:
 
     int level() const;
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(level_, indirect, unloc(name), index, cycle_breaker, kind);
+    }
+
     MetaTypeVar(int level, const Located<std::string>& s);
     MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
 };
@@ -160,6 +175,12 @@ public:
 
     int level() const;
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(level_, unloc(name), index, kind);
+    }
+
     TypeVar();
     TypeVar(const Located<std::string>& s);
     TypeVar(int l, const Located<std::string>& s);
@@ -180,6 +201,12 @@ struct TypeCon
     std::string print() const;
     std::string print_with_kind() const;
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(unloc(name), kind);
+    }
+
     TypeCon() = default;
     TypeCon(const Located<std::string>& s):name(s) {}
     TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
@@ -192,6 +219,13 @@ struct Context
     bool operator==(const Context& t) const;
 
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(constraints);
+    }
+
     Context() = default;
     Context(const std::vector<Type>& cs): constraints(cs) {}
 };
@@ -205,6 +239,13 @@ struct TypeApp
     bool operator==(const TypeApp& t) const;
 
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(head,arg);
+    }
+
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
 };
 
@@ -228,6 +269,13 @@ struct ForallType
 
     bool operator==(const ForallType& t) const;
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(type_var_binders, type);
+    }
+
     ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
 };
 
@@ -240,6 +288,13 @@ struct ConstrainedType
 
     bool operator==(const ConstrainedType& t) const;
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(context, type);
+    }
+
     ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
 };
 
@@ -252,6 +307,13 @@ struct StrictType
 
     bool operator==(const StrictType& t) const;
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(type);
+    }
+
     StrictType(const Type& t):type(t) {}
 };
 
@@ -261,8 +323,23 @@ struct LazyType
 
     bool operator==(const LazyType& t) const;
     std::string print() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(type);
+    }
+
     LazyType(const Type& t):type(t) {}
 };
+
+
+
+template <class Archive>
+void Type::serialize(Archive& ar)
+{
+    ar(type_ptr);
+}
 
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 

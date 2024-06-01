@@ -105,6 +105,8 @@ else
   subdir('external/range-v3/')
 endif
 
+cereal = dependency('cereal').as_system()
+
 subdir('external/immer/')
 
 math_dep = cpp.find_library('m', required:false)

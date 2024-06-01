@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <memory>
 #include "util/assert.hh"
+#include <cereal/types/memory.hpp>
 
 using std::const_pointer_cast;
 
@@ -122,6 +123,12 @@ public:
   {
     data = r;
     return *this;
+  }
+
+  template <class Archive>
+  void serialize(Archive& ar)
+  {
+    ar(data);
   }
 
   cow_ptr(const cow_ptr& r) noexcept             : data(r.data) {}
