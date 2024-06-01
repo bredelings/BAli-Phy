@@ -11,7 +11,6 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 #include "core.H"
-#include "type.H"
 
 class MetaTypeVar;
 class TypeVar;
@@ -355,14 +354,6 @@ namespace std
         }
     };
 }
-
-TypeVar desugar(const Hs::LTypeVar& t);
-TypeCon desugar(const Hs::LTypeCon& t);
-Context desugar(const Hs::Context& c);
-std::vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& t);
-
-Type desugar(const Hs::LType& t);
-std::vector<Type> desugar(const std::vector<Hs::LType>& t);
 
 std::optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t);
 #endif 

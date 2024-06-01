@@ -5,6 +5,7 @@
 #include "haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
 #include <range/v3/all.hpp>
+#include "desugar_type.H"
 
 using std::string;
 using std::pair;

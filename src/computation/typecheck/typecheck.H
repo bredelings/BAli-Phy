@@ -15,6 +15,7 @@
 #include "util/cow-ptr.H"
 
 #include "computation/haskell/haskell.H"
+#include "computation/haskell/desugar_type.H"
 #include "types.H"
 #include "expected.H"
 #include "context.H"
