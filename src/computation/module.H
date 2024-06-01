@@ -12,8 +12,6 @@
 #include <iostream>
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/extensions.H"
-#include "computation/haskell/coretype.H"
-#include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier_options.H"
 #include "computation/fresh_vars.H"
 #include "computation/instance_info.H"
