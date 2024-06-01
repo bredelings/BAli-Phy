@@ -221,7 +221,7 @@ bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, c
         if (occurs_check(*mtv1, t2)) return false;
     }
 
-    // ghc does not occurs check when matching
+    // ghc does not do an occurs check when matching
     s = s.insert({btv1,t2});
 
     return true;
