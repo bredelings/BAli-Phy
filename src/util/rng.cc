@@ -52,11 +52,11 @@ uint64_t get_random_seed()
     return s;
 }
 
-std::mt19937_64 standard;
+std::mt19937_64 standard_rng;
 
 std::uint64_t myrand_init(std::uint64_t s) 
 {
-    standard.seed(s);
+    standard_rng.seed(s);
     return s;
 }
 
@@ -67,13 +67,13 @@ std::uint64_t myrand_init()
 
 double uniform() 
 {
-    return std::uniform_real_distribution<>(0.0, 1.0)(standard);
+    return std::uniform_real_distribution<>(0.0, 1.0)(standard_rng);
 }
 
 int64_t uniform_int(int64_t min, int64_t max)
 {
     assert(min <= max);
-    return std::uniform_int_distribution<std::int64_t>(min, max)(standard);
+    return std::uniform_int_distribution<std::int64_t>(min, max)(standard_rng);
 }
 
 /// returns a value in [0,max-1]
@@ -87,20 +87,20 @@ int64_t myrandom(int64_t min, int64_t max) {
 }
 
 double log_unif() {
-    return -std::exponential_distribution<>(1.0)(standard);
+    return -std::exponential_distribution<>(1.0)(standard_rng);
 }
 
 double gaussian(double mu,double sigma) 
 {
     assert(sigma > 0);
-    return std::normal_distribution<>(mu, sigma)(standard);
+    return std::normal_distribution<>(mu, sigma)(standard_rng);
 }
 
 double laplace(double mu,double sigma) 
 {
     assert(sigma > 0);
     double x = exponential(sigma);
-    auto y = standard();
+    auto y = standard_rng();
     if (y&1)
 	x = -x;
     x += mu;
@@ -108,13 +108,13 @@ double laplace(double mu,double sigma)
 }
 
 double cauchy(double l,double s) {
-    return std::cauchy_distribution<>(l,s)(standard);
+    return std::cauchy_distribution<>(l,s)(standard_rng);
 }
 
 double exponential(double mu)
 {
     assert(mu > 0);
-    return std::exponential_distribution<>(1.0/mu)(standard);
+    return std::exponential_distribution<>(1.0/mu)(standard_rng);
 }
 
 double beta(double a, double b)
@@ -130,7 +130,7 @@ double gamma(double a, double b)
 {
     assert(a > 0);
     assert(b > 0);
-    return std::gamma_distribution<>(a,b)(standard);
+    return std::gamma_distribution<>(a,b)(standard_rng);
 }
 
 unsigned poisson(double mu)
@@ -141,13 +141,13 @@ unsigned poisson(double mu)
     else
     {
 	assert(mu > 0.0);
-	return std::poisson_distribution<>(mu)(standard);
+	return std::poisson_distribution<>(mu)(standard_rng);
     }
 }
 
 unsigned geometric(double p) {
     assert(0 <= p and p <= 1);
-    return std::geometric_distribution<>(p)(standard);
+    return std::geometric_distribution<>(p)(standard_rng);
 }
 
 int negative_binomial(int r, double p)
@@ -155,7 +155,7 @@ int negative_binomial(int r, double p)
     assert(r >= 0);
     assert(0 <= p and p <= 1);
 
-    return std::negative_binomial_distribution<>(r,p)(standard);
+    return std::negative_binomial_distribution<>(r,p)(standard_rng);
 }
 
 int binomial(int n, double p) {
@@ -166,7 +166,7 @@ int binomial(int n, double p) {
     if (n == 0 or p == 0) return 0;
     if (p == 1) return n;
 
-    return std::binomial_distribution<>(n,p)(standard);
+    return std::binomial_distribution<>(n,p)(standard_rng);
 }
 
 int beta_binomial(int n, double a, double b)
