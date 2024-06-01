@@ -7,5 +7,6 @@ std::vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& t);
 
 Type desugar(const Hs::LType& t);
 std::vector<Type> desugar(const std::vector<Hs::LType>& t);
+TypeFamilyInstanceDecl desugar(const Hs::TypeFamilyInstanceDecl& decl);
 
 #endif

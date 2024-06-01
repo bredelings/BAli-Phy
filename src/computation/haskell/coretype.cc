@@ -947,3 +947,7 @@ vector<Type> desugar(const std::vector<Hs::LType>& ts1)
     return ts2;
 }
 
+TypeFamilyInstanceDecl desugar(const Hs::TypeFamilyInstanceDecl& decl)
+{
+    return TypeFamilyInstanceDecl{desugar(decl.con), desugar(decl.args), desugar(decl.rhs)};
+}

@@ -212,7 +212,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
                 throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
         // This type family has a default instance now.
-        class_info.associated_type_families.at(tf_con) = def_inst;
+        class_info.associated_type_families.at(tf_con) = desugar(def_inst);
 
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});

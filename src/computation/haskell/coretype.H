@@ -341,6 +341,19 @@ void Type::serialize(Archive& ar)
     ar(type_ptr);
 }
 
+struct TypeFamilyInstanceDecl
+{
+    TypeCon con;
+    std::vector<Type> args;
+    Type rhs;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(con, args, rhs);
+    }
+};
+
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
 Type make_arrow_type(const Type& t1, const Type& t2);

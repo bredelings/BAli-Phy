@@ -515,7 +515,7 @@ public:
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
     void default_type_instance(const TypeCon& tf_con,
-			       const std::optional<Hs::TypeFamilyInstanceDecl>& maybe_default,
+			       const std::optional<TypeFamilyInstanceDecl>& maybe_default,
 			       const substitution_t& instance_subst,
 			       const yy::location& inst_loc);
 

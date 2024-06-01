@@ -225,7 +225,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 }
 
 void TypeChecker::default_type_instance(const TypeCon& tf_con,
-					const std::optional<Hs::TypeFamilyInstanceDecl>& maybe_default,
+					const std::optional<TypeFamilyInstanceDecl>& maybe_default,
 					const substitution_t& instance_subst,
 					const yy::location& inst_loc)
 {
@@ -256,10 +256,10 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     substitution_t default_subst;
     for(int i=0; i < default_instance.args.size(); i++)
     {
-	auto tv = desugar(default_instance.args[i]).as_<TypeVar>();
+	auto tv = default_instance.args[i].as_<TypeVar>();
 	default_subst = default_subst.insert({tv, args[i]});
     }
-    auto rhs = desugar(default_instance.rhs);
+    auto rhs = default_instance.rhs;
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance

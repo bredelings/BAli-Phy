@@ -111,7 +111,7 @@ struct ClassInfo
     std::vector<std::pair<Hs::Var,Type>> fields;
 
     // Each family is associated with a single optional default instance.
-    std::map<TypeCon, std::optional<Hs::TypeFamilyInstanceDecl>> associated_type_families;
+    std::map<TypeCon, std::optional<TypeFamilyInstanceDecl>> associated_type_families;
 };
 
 struct TypeFamEqnInfo
