@@ -23,6 +23,12 @@ struct DataConInfo
     Type result_type() const;
 
     Type constructor_type() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types);
+    }
 };
 
 typedef immer::map<std::string, DataConInfo> DataConEnv;

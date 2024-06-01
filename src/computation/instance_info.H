@@ -22,6 +22,12 @@ struct InstanceInfo
     bool overlapping = false;
 
     Type type() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(/*loc, */ tvs, constraints, class_con, args, incoherent, overlapping, overlappable);
+    }
 };
 
 struct EqInstanceInfo
@@ -37,6 +43,12 @@ struct EqInstanceInfo
     Type rhs;
 
     Type type() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(/*loc, */ tvs, lhs, rhs);
+    }
 };
 
 typedef std::map<Core::Var, InstanceInfo> InstanceEnv;

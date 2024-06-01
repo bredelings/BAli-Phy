@@ -12,6 +12,12 @@ struct VarInfo
     // pragmas
     bool pragma_inline = false;
     bool pragma_inlineable = false;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(conlike, always_unfold, /* unfolding, */ pragma_inline, pragma_inlineable);
+    }
 };
 
 #endif
