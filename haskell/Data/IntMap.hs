@@ -26,7 +26,7 @@ fromListWith f ((k,v):kvs) = insertWith f k v $ fromListWith f kvs
 
 -- FromListWithKey :: (Key -> a -> a -> a) -> [(Key,a)] -> IntMap a
 
-foreign import bpcall "IntMap:insert" insert :: Key -> a -> IntMap a -> IntMap a
+foreign import bpcall "IntMap:" insert :: Key -> a -> IntMap a -> IntMap a
 
 foreign import bpcall "IntMap:" insertWith :: (a -> a -> a) -> Key -> a -> IntMap a -> IntMap a
 
@@ -34,7 +34,7 @@ foreign import bpcall "IntMap:" insertWith :: (a -> a -> a) -> Key -> a -> IntMa
 
 -- insertLookupWithKey :: (Key -> a -> a -> a) -> Key -> a -> IntMap a -> (Maybe a, IntMap a)
 
-foreign import bpcall "IntMap:delete" delete :: Key -> IntMap a -> IntMap a
+foreign import bpcall "IntMap:" delete :: Key -> IntMap a -> IntMap a
 
 -- adjust :: (a -> a) -> Key -> IntMap a -> IntMap a
 
