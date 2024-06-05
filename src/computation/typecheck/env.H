@@ -20,6 +20,29 @@ typedef std::string ID;
 
 typedef immer::map<Hs::Var, Type> value_env;
 
+template <class Archive, typename Key, typename Value>
+void save(Archive& ar, const immer::map<Key,Value>& m)
+{
+    int n = m.size();
+    ar(n);
+    for(const std::pair<Key,Value>& kv: m)
+	ar(kv);
+}
+
+template <class Archive, typename Key, typename Value>
+void load(Archive& ar, immer::map<Key,Value>& m)
+{
+    m = m.clear();
+    int n;
+    ar(n);
+    for(int i=0;i<n;i++)
+    {
+	std::pair<Key,Value> kv;
+	ar(kv);
+	m = m.insert(kv);
+    }
+}
+
 typedef value_env global_value_env;
 
 typedef value_env local_value_env;
@@ -114,11 +137,9 @@ struct ClassInfo
 
     GIE superclass_extractors;
 
-    // Why are we storing an Hs::Var here - Would a string be sufficient?
     std::map<std::string, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members
-    // Why are we storing an Hs::Var here - Would a string be sufficient?
     std::vector<std::pair<Hs::Var,Type>> fields;
 
     // Each family is associated with a single optional default instance.
@@ -127,11 +148,9 @@ struct ClassInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	// PROBLEM: members is an immer::map, which we don't know how to serialize
-	// PROBLEM: members, default_methods, and fields contain Hs::Var, which we don't know how to serialize.
-	// PROBLEM: superclass_extractors has Core::Var, which we also don't know how to serialize.
-	// IDEA: make pair<string,optional<int>> class.
-	ar(name, type_vars, context, /*members,*/ superclass_extractors, default_methods, fields, associated_type_families);
+	// PROBLEM: Should we be storing Hs::Var with all its annotations, or just a (string,int) pair?
+	// PROBLEM: Should we be storing Core::Var with all its annotations, or just a (string,int) pair?
+	ar(name, type_vars, context, members, superclass_extractors, default_methods, fields, associated_type_families);
     }
 };
 
