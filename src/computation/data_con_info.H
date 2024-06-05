@@ -1,7 +1,6 @@
-#ifndef INSTANCE_INFO_H
-#define INSTANCE_INFO_H
+#ifndef DATA_CON_INFO_H
+#define DATA_CON_INFO_H
 
-#include "immer/map.hpp" // for immer::map
 #include <vector>
 #include "haskell/core.H"
 #include "haskell/coretype.H"
@@ -14,10 +13,11 @@ struct DataConInfo
     std::vector<Type> written_constraints;
     std::vector<Type> gadt_eq_constraints;
     std::vector<Type> field_types;
+    TypeCon data_type;
+
     std::vector<Type> all_constraints() const;
     std::vector<Type> dictionary_preds() const;
     std::vector<Type> equality_preds() const;
-    TypeCon data_type;
     int dict_arity() const;
     int arity() const;
     Type result_type() const;
@@ -27,10 +27,8 @@ struct DataConInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types);
+	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, data_type);
     }
 };
-
-typedef immer::map<std::string, DataConInfo> DataConEnv;
 
 #endif
