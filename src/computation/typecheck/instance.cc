@@ -25,7 +25,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         if (loc) push_source_span( *loc );
 
         auto FD = decl.as_<Hs::FunDecl>();
-        auto dm = class_info.default_methods.at( unloc(FD.v) );
+        auto dm = class_info.default_methods.at( unloc(FD.v).name );
         unloc(FD.v) = dm;
 
         auto sig_type = this_mod().lookup_resolved_symbol( unloc(FD.v).name )->type;
@@ -559,9 +559,9 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         }
         else
         {
-            if (class_info.default_methods.count(method))
+            if (class_info.default_methods.count(method_name))
             {
-                auto dm_var = class_info.default_methods.at(method);
+                auto dm_var = class_info.default_methods.at(method_name);
 
                 FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
             }

@@ -115,7 +115,7 @@ struct ClassInfo
     GIE superclass_extractors;
 
     // Why are we storing an Hs::Var here - Would a string be sufficient?
-    std::map<Hs::Var, Hs::Var> default_methods;
+    std::map<std::string, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members
     // Why are we storing an Hs::Var here - Would a string be sufficient?
