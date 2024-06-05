@@ -67,4 +67,26 @@ namespace Core
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);
 
+// Core should have:
+
+// Exp = 
+//   Var
+//   Lambda Var Exp
+//   Apply Exp Exp
+//   Let Decl Exp
+//   Case Exp of [Alt]
+//   Constructor Var*
+//   Builtin-object
+//   Builtin-operation Var*
+
+// Decl = [(Var,Exp)]
+
+// Alt = [(Pat,Exp)]
+
+// Pat =
+//   _
+//   Con Var*
+
+// But -- at some points we need to replace expressions with annot_expression_ref<T> = (T,expression_ref).
+// We might also need to change what an ID is for a var?
 #endif
