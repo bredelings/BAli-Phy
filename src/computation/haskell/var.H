@@ -34,6 +34,15 @@ struct Var: public Object
     std::string print() const;
     std::string print_with_type() const;
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	// We should only be serializing Hs::Var for its use in defining variable names in ClassInfo
+	assert(not type);
+	assert(not info);
+	ar(name,index);
+    }
+
     Var* clone() const { return new Var(*this);}
 
     Var(const std::string& s):name(s) {}
