@@ -59,6 +59,13 @@ struct var: public Object, public occurrence_info
 
     bool is_wildcard() const {return index < 0 and not name.size();}
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	// We should only be serializing var after level / type_ / info are no longer needed.
+	ar(name,index);
+    }
+
     var(int i):index(i) {}
     explicit var(const std::string& s):var(s,0) {}
     var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
