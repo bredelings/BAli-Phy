@@ -131,7 +131,7 @@ struct ClassInfo
 	// PROBLEM: members, default_methods, and fields contain Hs::Var, which we don't know how to serialize.
 	// PROBLEM: superclass_extractors has Core::Var, which we also don't know how to serialize.
 	// IDEA: make pair<string,optional<int>> class.
-	ar(name, type_vars, context, /*members, superclass_extractors, default_methods, fields ,*/ associated_type_families);
+	ar(name, type_vars, context, /*members, superclass_extractors,*/ default_methods, fields, associated_type_families);
     }
 };
 
