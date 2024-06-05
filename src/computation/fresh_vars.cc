@@ -65,7 +65,7 @@ var FreshVarSource::get_fresh_var(const var& x)
 {
 //    assert(x.index >= 0);
     assert(not x.is_exported);
-    assert(x.index <= current_index());
+    assert(check_index(x.index));
 
     return get_fresh_var( x.name );
 }
@@ -74,7 +74,7 @@ var FreshVarSource::get_fresh_var_copy(var x)
 {
 //    assert(x.index >= 0);
     assert(not x.is_exported);
-    assert(x.index <= current_index());
+    assert(check_index(x.index));
 
     x.index = get_index();
 
@@ -102,7 +102,7 @@ Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
 {
 //    assert(x.index >= 0);
     assert(not x.is_exported);
-    assert(x.index <= current_index());
+    assert(check_index(x.index));
 
     return get_fresh_Var(x.name, qualified);
 }
@@ -158,9 +158,9 @@ TypeVar FreshVarSource::fresh_other_type_var()
     return fresh_other_type_var(std::string("t"));
 }
 
-int FreshVarSource::current_index() const
+bool FreshVarSource::check_index(int i) const
 {
-    return state.current_index();
+    return state.check_index(i);
 }
 
 int FreshVarSource::get_index()

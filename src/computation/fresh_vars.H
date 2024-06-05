@@ -15,7 +15,7 @@ class FreshVarState
 
 public:
 
-    int current_index() const {return var_index;}
+    bool check_index(int i) const {return i < var_index;}
     int get_index() {return var_index++;}
 };
 
@@ -54,7 +54,7 @@ public:
     TypeVar fresh_other_type_var(const std::string& name);
     TypeVar fresh_other_type_var();
 
-    int current_index() const;
+    bool check_index(int i) const;
     int get_index();
 
     FreshVarSource(FreshVarState& s);
