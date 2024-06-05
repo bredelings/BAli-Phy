@@ -19,6 +19,29 @@ public:
     int get_index() {return var_index++;}
 };
 
+
+class FastString
+{
+    // Should this be a shared_ptr<string>?
+    std::string name_;
+    int index_;
+public:
+    const std::string& short_name() const {return name_;}
+    const std::string long_name() const {return name_ +"_"+std::to_string(index_);}
+
+    int index() const {return index_;}
+
+    bool operator<=>(const FastString& fs) { return fs.index() - index();}
+
+    FastString& operator=(const FastString& fs) = default;
+    FastString& operator=(FastString&& fs) noexcept = default;
+
+    FastString(const FastString&) = default;
+    FastString(FastString&&) noexcept = default;
+
+    FastString(const std::string& n, int i): name_(n),index_(i) {}
+};
+
 class FreshVarSource
 {
     FreshVarState& state;
