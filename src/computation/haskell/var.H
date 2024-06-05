@@ -9,7 +9,7 @@
 #include "coretype.H"
 #include "core.H"
 
-struct symbol_info;
+struct VarInfo;
 
 namespace Haskell
 {
@@ -23,7 +23,7 @@ struct Var: public Object
 
     Core::wrapper wrap;
 
-    std::weak_ptr<const symbol_info> info;
+    std::weak_ptr<const VarInfo> info;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;

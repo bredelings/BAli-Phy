@@ -183,7 +183,7 @@ var make_var(const Hs::Var& v)
     var v2(v.name);
     
     if (auto info = v.info.lock())
-        v2.info = info->var_info;
+        v2.info = info;
     return v2;
 }
 

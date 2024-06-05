@@ -45,7 +45,7 @@ struct var: public Object, public occurrence_info
     std::shared_ptr<Type> type_;
 
     // This stores unfoldings, pragmas, etc.
-    std::weak_ptr<VarInfo> info;
+    std::weak_ptr<const VarInfo> info;
 
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
