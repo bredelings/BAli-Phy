@@ -18,6 +18,12 @@ struct fixity_info
 {
     fixity_t fixity;
     int precedence;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(fixity,precedence);
+    }
 };
 
 struct OpInfo
@@ -61,6 +67,12 @@ struct symbol_info
     // Set to false if this is just for exporting information about vars like Data.Bool.$v#55 that are created by optimization.
     // Variables like this currently have no type info.
     bool visible = true;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(name, symbol_type, parent, arity, fixity, type, var_info, con_info, instance_info, eq_instance_info, visible);
+    }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
 };
