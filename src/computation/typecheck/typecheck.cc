@@ -1708,7 +1708,7 @@ typechecker_result Module::typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls
     for(auto& [var,type]: tc_state->poly_env())
     {
         auto V = lookup_local_symbol(var.name);
-        assert(V->symbol_type != constructor_symbol);
+        assert(V->symbol_type != symbol_type_t::constructor);
         V->type = type;
     }
 

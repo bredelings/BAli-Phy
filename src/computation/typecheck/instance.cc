@@ -107,7 +107,7 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
 
     auto dvar = fresh_dvar(constraint, true);
 
-    auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
+    auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}, false, false, false} );
     S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
     S.type = S.instance_info->type();
@@ -384,7 +384,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         inst_decl.overlap_pragma == "OVERLAPS" or
         incoherent;
 
-    auto S = symbol_info(dfun.name, instance_dfun_symbol, {}, {}, {});
+    auto S = symbol_info(dfun.name, symbol_type_t::instance_dfun, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{*inst_loc, tvs, constraints, *class_con, args, incoherent, overlappable, overlapping} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
@@ -583,7 +583,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
         decls.push_back({noloc,decl2});
 
-        auto S = symbol_info(op.name, instance_method_symbol, {}, {}, {});
+        auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
         S.type = op_type;
         this_mod().add_symbol(S);
 

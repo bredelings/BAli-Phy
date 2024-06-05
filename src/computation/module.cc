@@ -140,7 +140,7 @@ void Module::declare_symbol(const symbol_info& S)
         // FIXME! We created a partially-empty symbol to hold the fixity information.
         auto& S3 = symbols.at(S2.name);
 
-        if (S3->symbol_type == unknown_symbol)
+        if (S3->symbol_type == symbol_type_t::unknown)
         {
             S2.fixity = S3->fixity;
             *S3 = S2;
@@ -194,7 +194,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = qualify_local_name(s);
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, {}, {}, {}});
+        declare_symbol({s, symbol_type_t::unknown, {}, {}, {}});
 
     symbols.at(s2)->fixity = fixity_info{fixity, precedence};
 }
@@ -593,7 +593,7 @@ void Module::export_symbol(const const_symbol_ptr& S)
 {
     assert(is_qualified_symbol(S->name));
 
-    if (S->symbol_type == default_method_symbol)
+    if (S->symbol_type == symbol_type_t::default_method)
     {
         // normal exported symbols are access by unqualified name.
         exported_symbols_.insert({S->name, S});
@@ -707,7 +707,7 @@ void Module::perform_exports()
 {
     for(auto& [name,value_info]:symbols)
     {
-        assert(value_info->symbol_type == constructor_symbol or not value_info->type.empty());
+        assert(value_info->symbol_type == symbol_type_t::constructor or not value_info->type.empty());
     }
 
     // Currently we just export the local symbols
@@ -880,7 +880,7 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
     // If there isn't a symbol, then make one.
     if (not S)
     {
-        add_symbol({var_name, variable_symbol, {}, {}, {}});
+        add_symbol({var_name, symbol_type_t::variable, {}, {}, {}});
         S = lookup_local_symbol(var_name);
         assert(S);
         S->visible = false;
@@ -1299,24 +1299,24 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     expression_ref U;
     if (name == "()")
     {
-        S = std::make_shared<symbol_info>("()", constructor_symbol, "()", 0);
+        S = std::make_shared<symbol_info>("()", symbol_type_t::constructor, "()", 0);
         U = constructor("()",0);
     }
     else if (name == "[]")
     {
-        S = std::make_shared<symbol_info>("[]", constructor_symbol, "[]", 0);
+        S = std::make_shared<symbol_info>("[]", symbol_type_t::constructor, "[]", 0);
         U = constructor("[]",0);
     }
     else if (name == ":")
     {
-        symbol_info cons(":", constructor_symbol, "[]", 2, {{right_fix,5}});
+        symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
         U = lambda_expression( right_assoc_constructor(":",2) );
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
-        S = std::make_shared<symbol_info>(name, constructor_symbol, name, arity);
+        S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
         U = lambda_expression( tuple_head(arity) );
     }
     else
@@ -1607,7 +1607,7 @@ void Module::def_function(const std::string& fname)
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
 
-    declare_symbol({fname, variable_symbol, {}, {}, {}});
+    declare_symbol({fname, symbol_type_t::variable, {}, {}, {}});
 }
 
 void Module::def_constructor(const string& cname, int arity, const string& type_name)
@@ -1618,7 +1618,7 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //    if (not is_qualified_symbol(type_name))
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
-    auto S = symbol_info(cname, constructor_symbol, qualify_local_name(type_name), arity, {});
+    auto S = symbol_info(cname, symbol_type_t::constructor, qualify_local_name(type_name), arity, {});
     S.var_info->conlike = true;
     declare_symbol( S );
 }
@@ -1679,7 +1679,7 @@ void Module::def_type_class_method(const string& method_name, const string& clas
 //    if (not is_qualified_symbol(class_name))
 //        throw myexception()<<"Locally defined type class '"<<class_name<<"' should be qualified.";
 
-    declare_symbol( {method_name, class_method_symbol, class_name, {}, {}} );
+    declare_symbol( {method_name, symbol_type_t::class_method, class_name, {}, {}} );
 }
 
 void Module::declare_fixities_(const Haskell::FixityDecl& FD)
@@ -1722,8 +1722,8 @@ void Module::maybe_def_function(const string& var_name)
     {
         auto S = loc->second;
         // Only the fixity has been declared!
-        if (S->symbol_type == unknown_symbol)
-            S->symbol_type = variable_symbol;
+        if (S->symbol_type == symbol_type_t::unknown)
+            S->symbol_type = symbol_type_t::variable;
     }
     else
         def_function(var_name);

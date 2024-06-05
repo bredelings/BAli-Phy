@@ -57,7 +57,7 @@ symbol_info seq_info()
     info->unfolding = code;
 
     // 5. create the symbol
-    auto seq = symbol_info{"seq", variable_symbol, {}, 2, fixity};
+    auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
     seq.type = type;
     seq.var_info = info;
 
