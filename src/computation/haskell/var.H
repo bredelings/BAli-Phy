@@ -23,7 +23,7 @@ struct Var: public Object
 
     Core::wrapper wrap;
 
-    std::weak_ptr<const VarInfo> info;
+    std::shared_ptr<const VarInfo> info;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;

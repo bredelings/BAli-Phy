@@ -182,8 +182,7 @@ var make_var(const Hs::Var& v)
     assert(v.wrap.is_identity());
     var v2(v.name);
     
-    if (auto info = v.info.lock())
-        v2.info = info;
+    v2.info = v.info;
     return v2;
 }
 
