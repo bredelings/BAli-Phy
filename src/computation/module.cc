@@ -1865,14 +1865,6 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-
-Hs::Var Module::get_external_var(const string& sname) const
-{
-    Hs::Var v(name);
-    v.info = lookup_external_symbol(sname);
-    return v;
-}
-
 set<string> special_prelude_symbols =
 {
     // This is kind of a secret one, used in the desugaring of strings.

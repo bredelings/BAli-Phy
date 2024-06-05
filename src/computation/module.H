@@ -218,8 +218,6 @@ public:
     type_ptr lookup_local_type(const std::string&);
     const_type_ptr lookup_external_type(const std::string&) const;
 
-    Hs::Var get_external_var(const std::string& s) const;
-
     OpInfo get_operator(const std::string& name) const;
 
     explicit Module(const std::string&);
