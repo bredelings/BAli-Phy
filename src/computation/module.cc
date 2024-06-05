@@ -35,6 +35,7 @@
 #include "util/assert.hh"
 #include <boost/compute/detail/sha1.hpp>
 
+#include <cereal/archives/binary.hpp>
 
 namespace views = ranges::views;
 
@@ -576,6 +577,11 @@ void Module::compile(const Program& P)
 void Module::write_compile_artifact(const Program& P)
 {
     auto artifact = P.get_module_loader()->write_cached_module(name);
+
+//    std::ofstream file("tmp");
+//    cereal::BinaryOutputArchive ar( file );
+//    symbol_info* c;
+//    ar(*c);
 
     *artifact << all_inputs_sha(P);
 }
