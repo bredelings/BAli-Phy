@@ -74,10 +74,11 @@ shared_ptr<CompiledModule> compiler_prim_module()
 
     // 3. Add seq.
     auto seq = seq_info();
+    CDecls value_decls;
     if (seq.var_info and seq.var_info->unfolding)
     {
         auto& code = seq.var_info->unfolding;
-        m->value_decls.push_back({var("Compiler.Prim.seq"), code});
+        value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
         auto [code2, _] = occurrence_analyzer(*m, code);
         code = code2;
@@ -88,6 +89,7 @@ shared_ptr<CompiledModule> compiler_prim_module()
     m->perform_exports();
 
     auto cm = std::make_shared<CompiledModule>(m);
+    cm->finish_value_decls(value_decls);
 
     return cm;
 }

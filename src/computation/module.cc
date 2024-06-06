@@ -547,30 +547,33 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    MM->value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
-    MM->value_decls += core_decls;
+    CDecls value_decls;
+    value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
+    value_decls += core_decls;
 
-    MM->value_decls = MM->load_builtins(loader, M.foreign_decls, MM->value_decls);
+    value_decls = MM->load_builtins(loader, M.foreign_decls, value_decls);
 
-    MM->value_decls = MM->load_constructors(M.type_decls, MM->value_decls);
+    value_decls = MM->load_constructors(M.type_decls, value_decls);
 
     if (opts.dump_desugared)
     {
         std::cerr<<"\nCore:\n";
-        for(auto& [x,rhs] : MM->value_decls)
+        for(auto& [x,rhs] : value_decls)
             std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
         std::cerr<<"\n\n";
     }
 
     // Check for duplicate top-level names.
-    check_duplicate_var(MM->value_decls);
+    check_duplicate_var(value_decls);
 
-    MM->value_decls = MM->optimize(opts, P.fresh_var_state(), MM->value_decls);
+    value_decls = MM->optimize(opts, P.fresh_var_state(), value_decls);
 
     // this records unfoldings.
-    MM->export_small_decls(MM->value_decls);
+    MM->export_small_decls(value_decls);
 
     MM->write_compile_artifact(P);
+
+    CM->finish_value_decls(value_decls);
 
     return CM;
 }
@@ -835,7 +838,7 @@ void Module::clear_symbol_table()
 }
 
 
-map<var,expression_ref> Module::code_defs() const
+map<var,expression_ref> CompiledModule::code_defs() const
 {
     map<var, expression_ref> code;
 
@@ -843,7 +846,7 @@ map<var,expression_ref> Module::code_defs() const
     {
         assert(is_qualified_symbol(x.name));
 
-        if (this->name == get_module_name(x.name))
+        if (name() == get_module_name(x.name))
         {
             // get the body for the  decl
             assert(rhs);

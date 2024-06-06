@@ -85,8 +85,6 @@ public:
     InstanceEnv local_instances;
     EqInstanceEnv local_eq_instances;
 
-    CDecls value_decls;
-
     std::vector<std::vector<expression_ref>> class_and_type_decls;
 
     std::string name;
@@ -185,8 +183,6 @@ public:
 
     void export_small_decls(const CDecls&);
 
-    std::map<var,expression_ref> code_defs() const;
-
     CDecls optimize(const simplifier_options&, FreshVarState&, CDecls);
 
     CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
@@ -229,13 +225,16 @@ class CompiledModule
 {
     std::shared_ptr<Module> mod;
 
+    CDecls value_decls;
+
 public:
+
     // Discard everything-except-code since all compilation is done.
     // This "everything-except-code" should probably be a different object.
     void clear_symbol_table() {mod->clear_symbol_table();}
 
     // Now discard the code -- what is left?
-    void clear_code() {mod->value_decls.clear();}
+    void clear_code() { value_decls.clear(); }
 
     // Where is this used?
     const std::map<std::string, std::shared_ptr<const CompiledModule>>& transitively_imported_modules() const
@@ -244,8 +243,6 @@ public:
     }
 
     std::string all_inputs_sha(const Program& P) const {return mod->all_inputs_sha(P);}
-
-    std::map<var,expression_ref> code_defs() const {return mod->code_defs();}
 
     const std::set<std::string> dependencies() const {return mod->dependencies();}
 
@@ -264,7 +261,9 @@ public:
 
     const_type_ptr lookup_local_type(const std::string& t) const {return mod->lookup_local_type(t);}
 
-    const CDecls& value_decls() const {return mod->value_decls;}
+    void finish_value_decls( CDecls& cdecls) {std::swap(value_decls, cdecls);}
+
+    std::map<var,expression_ref> code_defs() const;
 
     CompiledModule(const std::shared_ptr<Module>& m):mod(m) {};
 };
