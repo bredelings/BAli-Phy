@@ -1935,5 +1935,8 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     std::swap(exported_symbols_, m->exported_symbols_);
 
     std::swap(exported_types_, m->exported_types_);
+
+    // Why can't we clear the language extensions on m?
+    language_extensions_ = m->language_extensions;
 }
 

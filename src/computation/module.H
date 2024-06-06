@@ -245,6 +245,8 @@ class CompiledModule
 
     std::map<std::string, const_type_ptr> exported_types_;
 
+    LanguageExtensions language_extensions_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
@@ -264,7 +266,7 @@ public:
 
     const std::set<std::string>& dependencies() const {return dependencies_;}
 
-    const LanguageExtensions& language_extensions() const {return mod->language_extensions;}
+    const LanguageExtensions& language_extensions() const {return language_extensions_;}
 
     const std::string& name() const {return modid;}
 
