@@ -221,6 +221,10 @@ public:
     explicit Module(const Haskell::Module&, const LanguageExtensions& lo, const FileContents& f);
 };
 
+
+// Eliminate this_compiled_mod?
+
+// If Module builds some things, have CompiledModule steal them at the end?
 class CompiledModule
 {
     std::shared_ptr<Module> mod;
@@ -261,12 +265,14 @@ public:
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return mod->exported_types();}
 
+    // How does this relate to the exported symbols?
     const_symbol_ptr lookup_local_symbol(const std::string& s) const {return mod->lookup_local_symbol(s);}
 
     const_type_ptr lookup_local_type(const std::string& t) const {return mod->lookup_local_type(t);}
 
     void finish_value_decls( CDecls& cdecls) {std::swap(value_decls, cdecls);}
 
+    // Why do we have code that isn't for this module?
     std::map<var,expression_ref> code_defs() const;
 
     CompiledModule(const std::shared_ptr<Module>& m);
