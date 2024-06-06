@@ -436,49 +436,6 @@ set<string> Module::dependencies() const
     return modules;
 }
 
-const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const
-{
-    assert( get_module_name(symbol_name) == name());
-    auto iter = symbols.find(symbol_name);
-    if (iter == symbols.end())
-        return nullptr;
-    else
-        return iter->second;
-}
-
-const_type_ptr CompiledModule::lookup_local_type(const std::string& type_name) const
-{
-    assert( get_module_name(type_name) == name());
-    auto iter = types.find(type_name);
-    if (iter == types.end())
-        return nullptr;
-    else
-        return iter->second;
-}
-
-void CompiledModule::clear_symbol_table()
-{
-    exported_symbols_.clear();
-
-    exported_types_.clear();
-
-    mod->clear_symbol_table();
-}
-
-CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
-    :mod(m),
-     dependencies_(m->dependencies()),
-     modid(m->name)
-{
-    std::swap(symbols, m->symbols);
-
-    std::swap(types, m->types);
-
-    std::swap(exported_symbols_, m->exported_symbols_);
-
-    std::swap(exported_types_, m->exported_types_);
-}
-
 /* 
 infixr 6 >>
 
@@ -879,26 +836,6 @@ void Module::clear_symbol_table()
     transitively_imported_modules.clear();
 }
 
-
-map<var,expression_ref> CompiledModule::code_defs() const
-{
-    map<var, expression_ref> code;
-
-    for(const auto& [x,rhs]: value_decls)
-    {
-        assert(is_qualified_symbol(x.name));
-
-        if (name() == get_module_name(x.name))
-        {
-            // get the body for the  decl
-            assert(rhs);
-
-            code[x] = rhs;
-        }
-    }
-
-    return code;
-}
 
 Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M)
 {
@@ -1936,3 +1873,67 @@ bool special_prelude_symbol(const string& name)
 {
     return special_prelude_symbols.count(name) > 0;
 }
+
+map<var,expression_ref> CompiledModule::code_defs() const
+{
+    map<var, expression_ref> code;
+
+    for(const auto& [x,rhs]: value_decls)
+    {
+        assert(is_qualified_symbol(x.name));
+
+        if (name() == get_module_name(x.name))
+        {
+            // get the body for the  decl
+            assert(rhs);
+
+            code[x] = rhs;
+        }
+    }
+
+    return code;
+}
+
+const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const
+{
+    assert( get_module_name(symbol_name) == name());
+    auto iter = symbols.find(symbol_name);
+    if (iter == symbols.end())
+        return nullptr;
+    else
+        return iter->second;
+}
+
+const_type_ptr CompiledModule::lookup_local_type(const std::string& type_name) const
+{
+    assert( get_module_name(type_name) == name());
+    auto iter = types.find(type_name);
+    if (iter == types.end())
+        return nullptr;
+    else
+        return iter->second;
+}
+
+void CompiledModule::clear_symbol_table()
+{
+    exported_symbols_.clear();
+
+    exported_types_.clear();
+
+    mod->clear_symbol_table();
+}
+
+CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
+    :mod(m),
+     dependencies_(m->dependencies()),
+     modid(m->name)
+{
+    std::swap(symbols, m->symbols);
+
+    std::swap(types, m->types);
+
+    std::swap(exported_symbols_, m->exported_symbols_);
+
+    std::swap(exported_types_, m->exported_types_);
+}
+
