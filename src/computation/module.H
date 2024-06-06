@@ -300,9 +300,10 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(modid, dependencies_, symbols, types);
+	ar(modid, dependencies_, all_inputs_sha_);
     }
 
+    CompiledModule() = default;
     CompiledModule(const std::shared_ptr<Module>& m);
 };
 
