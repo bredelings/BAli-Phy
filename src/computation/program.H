@@ -55,8 +55,6 @@ public:
 
     std::shared_ptr<const CompiledModule> get_module(const std::string& module_name) const;
 
-//    std::shared_ptr<Module> get_module(const std::string& module_name);
-
     const std::shared_ptr<module_loader>& get_module_loader() const;
 
     Program(const std::shared_ptr<module_loader>&);
