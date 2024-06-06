@@ -248,8 +248,8 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 
     auto M2 = P.get_module( unloc(impdecl.modid) );
 
-    transitively_imported_modules.insert({M2->name, M2});
-    for(auto& [mod_name, mod]: M2->transitively_imported_modules)
+    transitively_imported_modules.insert({M2->name(), M2});
+    for(auto& [mod_name, mod]: M2->transitively_imported_modules())
         transitively_imported_modules.insert({mod_name, mod});
 
     auto modid = unloc(impdecl.modid);
@@ -467,37 +467,36 @@ std::optional<std::string> read_cached_module_sha(const module_loader& loader, c
 	return {};
 }
 
-void Module::compile(const Program& P)
+std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
 {
-    assert(not resolved);
-    resolved = true;
-
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
     if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
-        std::cerr<<"[ Compiling "<<name<<" ]\n";
+        std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
 
-    if (all_inputs_sha(P) == read_cached_module_sha(loader, name))
+    if (MM->all_inputs_sha(P) == read_cached_module_sha(loader, MM->name))
     {
 	if (log_verbose >= 1)
-	    std::cerr<<"    Cached SHA up-to-date for module "<<name<<"\n";
+	    std::cerr<<"    Cached SHA up-to-date for module "<<MM->name<<"\n";
     }
 
+    auto CM = std::make_shared<CompiledModule>(MM);
+
     // Scans imported modules and modifies symbol table and type table
-    perform_imports(P);
+    MM->perform_imports(P);
 
     Hs::ModuleDecls M;
-    if (module_AST.topdecls)
-        M = Hs::ModuleDecls(*module_AST.topdecls);
+    if (MM->module_AST.topdecls)
+        M = Hs::ModuleDecls(*MM->module_AST.topdecls);
 
     // We should create a "local fixity environment" mapping from var and Module.var -> fixity info.
     // This can supplement the symbols that we imported from other modules.
     // Then we can AUGMENT this local fixity environment when we encounter fixities at lower levels.
     // Currently rename_infix has to handle UNresolved top-level names, because we do it BEFORE renaming.
-    declare_fixities(M);
+    MM->declare_fixities(M);
 
-    if (language_extensions.has_extension(LangExt::FieldSelectors))
+    if (MM->language_extensions.has_extension(LangExt::FieldSelectors))
     {
         auto field_accessors = synthesize_field_accessors(M.type_decls);
         M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
@@ -508,31 +507,31 @@ void Module::compile(const Program& P)
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
     //                (4) merges adjacent function declaration lines into a Match.
-    M = ::rename_infix(*this, M);
+    M = ::rename_infix(*MM, M);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
-    add_local_symbols(M.type_decls);
+    MM->add_local_symbols(M.type_decls);
 
-    add_local_symbols(M.value_decls[0]);
+    MM->add_local_symbols(M.value_decls[0]);
 
     for(auto& f: M.foreign_decls)
-        def_function( unloc(f.function).name );
+        MM->def_function( unloc(f.function).name );
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
-    M = rename(opts, M);
+    M = MM->rename(opts, M);
 
-    auto tc_result = typecheck(P.fresh_var_state(), M);
+    auto tc_result = typecheck(P.fresh_var_state(), M, *MM, *CM);
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
     if (opts.dump_typechecked)
     {
         std::cerr<<"\nType-checked:\n";
-        for(auto& [name, sym]: symbols)
+        for(auto& [name, sym]: MM->symbols)
         {
             std::cerr<<name<<" :: "<<sym->type.print()<<"\n";
         }
@@ -544,34 +543,36 @@ void Module::compile(const Program& P)
     }
 
     // Updates exported_symols_ + exported_types_
-    perform_exports();
+    MM->perform_exports();
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    value_decls = desugar(opts, P.fresh_var_state(), hs_decls);
-    value_decls += core_decls;
+    MM->value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
+    MM->value_decls += core_decls;
 
-    value_decls = load_builtins(loader, M.foreign_decls, value_decls);
+    MM->value_decls = MM->load_builtins(loader, M.foreign_decls, MM->value_decls);
 
-    value_decls = load_constructors(M.type_decls, value_decls);
+    MM->value_decls = MM->load_constructors(M.type_decls, MM->value_decls);
 
     if (opts.dump_desugared)
     {
         std::cerr<<"\nCore:\n";
-        for(auto& [x,rhs] : value_decls)
+        for(auto& [x,rhs] : MM->value_decls)
             std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
         std::cerr<<"\n\n";
     }
 
     // Check for duplicate top-level names.
-    check_duplicate_var(value_decls);
+    check_duplicate_var(MM->value_decls);
 
-    value_decls = optimize(opts, P.fresh_var_state(), value_decls);
+    MM->value_decls = MM->optimize(opts, P.fresh_var_state(), MM->value_decls);
 
     // this records unfoldings.
-    export_small_decls(value_decls);
+    MM->export_small_decls(MM->value_decls);
 
-    write_compile_artifact(P);
+    MM->write_compile_artifact(P);
+
+    return CM;
 }
 
 void Module::write_compile_artifact(const Program& P)
@@ -1162,17 +1163,14 @@ void mark_exported_decls(CDecls& decls,
 
 CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls)
 {
-    // 1. why do we keep on re-optimizing the same module?
-    if (optimized) return cdecls;
-    optimized = true;
-
-    // 2. Graph-normalize the bodies
+    // 1. Graph-normalize the bodies
     for(auto& [x,rhs]: cdecls)
     {
         // This won't float things to the top level!
         rhs = graph_normalize( fvstate, rhs);
     }
 
+    // 2. Optimize
     if (opts.optimize)
     {
         mark_exported_decls(cdecls, local_instances, exported_symbols(), types, name);

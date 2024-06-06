@@ -47,13 +47,15 @@ struct global_tc_state
 {
     Module& this_mod; // for name lookups like Bool, Num, etc.
 
+    CompiledModule& this_compiled_mod; // for name lookups like Bool, Num, etc.
+
     KindSigEnv kind_sigs;
 
     std::vector<Type> defaults;
 
     std::optional<int> unification_level;
 
-    global_tc_state(Module& m);
+    global_tc_state(Module& m, CompiledModule& cm);
 };
 
 constexpr int occurs_definitely_bit = 0;
@@ -87,6 +89,9 @@ class TypeChecker: FreshVarSource
 public:
           Module& this_mod()        {return global_state->this_mod;}
     const Module& this_mod() const {return global_state->this_mod;}
+
+          CompiledModule& this_compiled_mod()        {return global_state->this_compiled_mod;}
+    const CompiledModule& this_compiled_mod() const {return global_state->this_compiled_mod;}
 
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
     const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
@@ -543,7 +548,7 @@ public:
 
     void get_defaults(const Hs::ModuleDecls& M);
 
-    TypeChecker(FreshVarState& fvs, const std::string& s, Module& m);
+    TypeChecker(FreshVarState& fvs, const std::string& s, Module& m, CompiledModule& cm);
 };
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Type& constraint);

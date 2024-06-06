@@ -702,13 +702,13 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     // If all arguments are variables, then we can't match an instance.
     if (not possible_instance_for(target_pred)) return {};
 
-    vector<const Module*> modules({&this_mod()});
+    vector<const CompiledModule*> modules({&this_compiled_mod()});
     for(auto& [modid, mod]: this_mod().transitively_imported_modules)
         modules.push_back(mod.get());
 
     for(auto& module: modules)
     {
-        for(auto& [dfun, info_]: module->local_instances)
+        for(auto& [dfun, info_]: module->local_instances())
         {
             if (info_.class_con != target_class) continue;
 

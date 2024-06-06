@@ -15,13 +15,13 @@ class module_loader;
 
 class Module;
 
-class Program: public std::vector<std::shared_ptr<Module>>
+class CompiledModule;
+
+class Program: public std::vector<std::shared_ptr<CompiledModule>>
 {
     std::shared_ptr<module_loader> loader;
 
     void check_dependencies();
-
-    void compile(int i);
 
     std::optional<int> find_module(const std::string& module_name) const;
 
@@ -33,7 +33,7 @@ public:
 
     std::optional<std::string> main;
 
-    std::vector<std::shared_ptr<Module>>& modules();
+    std::vector<std::shared_ptr<CompiledModule>>& modules();
 
     FreshVarState& fresh_var_state() const {return fresh_var_state_;}
 
@@ -53,9 +53,9 @@ public:
 
     bool contains_module(const std::string& module_name) const;
 
-    std::shared_ptr<const Module> get_module(const std::string& module_name) const;
+    std::shared_ptr<const CompiledModule> get_module(const std::string& module_name) const;
 
-    std::shared_ptr<Module> get_module(const std::string& module_name);
+//    std::shared_ptr<Module> get_module(const std::string& module_name);
 
     const std::shared_ptr<module_loader>& get_module_loader() const;
 

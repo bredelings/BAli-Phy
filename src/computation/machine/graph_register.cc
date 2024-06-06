@@ -3040,7 +3040,7 @@ void reg_heap::allocate_identifiers_for_program()
             set_C(R, preprocess(body) );
         }
 
-        M->value_decls.clear();
+        M->clear_code();
     }
 }
 

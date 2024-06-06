@@ -83,7 +83,7 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
         TypeCon type_eq(Located<string>({},"~"));
         for(auto& [modid, mod]: this_mod().transitively_imported_modules)
         {
-            for(auto& [dfun, info_]: mod->local_eq_instances)
+            for(auto& [dfun, info_]: mod->local_eq_instances())
             {
                 // if (info.tyfam_tycon != fam_con) continue;
                 auto info = freshen(info_);
@@ -94,7 +94,7 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
             }
         }
 
-        for(auto& [dfun, info_]: this_mod().local_eq_instances)
+        for(auto& [dfun, info_]: this_compiled_mod().local_eq_instances())
         {
             // if (info.tyfam_tycon != fam_con) continue;
             auto info = freshen(info_);

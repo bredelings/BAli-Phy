@@ -46,8 +46,18 @@ typedef std::shared_ptr<const symbol_info> const_symbol_ptr;
 typedef std::shared_ptr<type_info> type_ptr;
 typedef std::shared_ptr<const type_info> const_type_ptr;
 
+class CompiledModule;
+class Module;
+
+typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls, Module&, CompiledModule&);
+
+std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
+
 class Module
 {
+    // only to look at the symbols variable!
+    friend std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
+
     std::map<std::string, symbol_ptr> symbols;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
@@ -60,10 +70,6 @@ class Module
 
     std::map<std::string, const_type_ptr> exported_types_;
 
-    bool resolved = false;
-
-    bool optimized = false;
-
 public:
 
     std::vector<Message> messages;
@@ -74,7 +80,7 @@ public:
     
     Haskell::Module module_AST;
 
-    std::map<std::string, std::shared_ptr<const Module>> transitively_imported_modules;
+    std::map<std::string, std::shared_ptr<const CompiledModule>> transitively_imported_modules;
 
     InstanceEnv local_instances;
     EqInstanceEnv local_eq_instances;
@@ -93,10 +99,6 @@ public:
     std::string all_inputs_sha(const Program& P) const;
 
     mutable std::optional<std::string> _cached_sha;
-
-    bool is_resolved() const {return resolved;}
-
-    bool is_optimized() const {return optimized;}
 
     std::set<std::string> dependencies() const;
 
@@ -165,8 +167,6 @@ public:
 
     void import_module(const Program& P, const Hs::LImpDecl& I);
 
-    void compile(const Program&);
-
     void declare_fixities_(const Hs::FixityDecl&);
 
     void declare_fixities_(const Hs::Decls&);
@@ -176,8 +176,6 @@ public:
     void add_local_symbols(const Hs::Decls&);
 
     void perform_imports(const Program&);
-
-    typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls);
 
     void perform_exports();
 
@@ -225,6 +223,50 @@ public:
     explicit Module(const char*);
 
     explicit Module(const Haskell::Module&, const LanguageExtensions& lo, const FileContents& f);
+};
+
+class CompiledModule
+{
+    std::shared_ptr<Module> mod;
+
+public:
+    // Discard everything-except-code since all compilation is done.
+    // This "everything-except-code" should probably be a different object.
+    void clear_symbol_table() {mod->clear_symbol_table();}
+
+    // Now discard the code -- what is left?
+    void clear_code() {mod->value_decls.clear();}
+
+    // Where is this used?
+    const std::map<std::string, std::shared_ptr<const CompiledModule>>& transitively_imported_modules() const
+    {
+	return mod->transitively_imported_modules;
+    }
+
+    std::string all_inputs_sha(const Program& P) const {return mod->all_inputs_sha(P);}
+
+    std::map<var,expression_ref> code_defs() const {return mod->code_defs();}
+
+    const std::set<std::string> dependencies() const {return mod->dependencies();}
+
+    const LanguageExtensions& language_extensions() const {return mod->language_extensions;}
+
+    const std::string& name() const {return mod->name;}
+
+    const InstanceEnv& local_instances() const {return mod->local_instances;}
+    const EqInstanceEnv& local_eq_instances() const {return mod->local_eq_instances;}
+
+    const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return mod->exported_symbols();}
+
+    const std::map<std::string, const_type_ptr>& exported_types() const {return mod->exported_types();}
+
+    const_symbol_ptr lookup_local_symbol(const std::string& s) const {return mod->lookup_local_symbol(s);}
+
+    const_type_ptr lookup_local_type(const std::string& t) const {return mod->lookup_local_type(t);}
+
+    const CDecls& value_decls() const {return mod->value_decls;}
+
+    CompiledModule(const std::shared_ptr<Module>& m):mod(m) {};
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
