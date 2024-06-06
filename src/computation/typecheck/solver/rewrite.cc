@@ -80,10 +80,13 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
     {
         // auto& [fam_con, fam_args] = *tfam;
 
-        TypeCon type_eq(Located<string>({},"~"));
-        for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+        vector<const EqInstanceEnv*> eq_instance_envs({&this_mod().local_eq_instances});
+        for(auto& [_, mod]: this_mod().transitively_imported_modules)
+            eq_instance_envs.push_back(&mod->local_eq_instances());
+
+        for(auto eq_instance_env: eq_instance_envs)
         {
-            for(auto& [dfun, info_]: mod->local_eq_instances())
+            for(auto& [dfun, info_]: *eq_instance_env)
             {
                 // if (info.tyfam_tycon != fam_con) continue;
                 auto info = freshen(info_);
@@ -92,16 +95,6 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
                 if (auto S = maybe_match(info.lhs, t))
                     return rewrite(flavor, apply_subst(*S, info.rhs));
             }
-        }
-
-        for(auto& [dfun, info_]: this_compiled_mod().local_eq_instances())
-        {
-            // if (info.tyfam_tycon != fam_con) continue;
-            auto info = freshen(info_);
-                
-            // If the term matches the lhs, then return the rhs.
-            if (auto S = maybe_match(info.lhs, t))
-                return rewrite(flavor, apply_subst(*S, info.rhs));
         }
 
         for(auto& inert: inerts.tyfam_eqs)
