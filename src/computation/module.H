@@ -269,7 +269,7 @@ public:
 
     std::map<var,expression_ref> code_defs() const;
 
-    CompiledModule(const std::shared_ptr<Module>& m):mod(m) {};
+    CompiledModule(const std::shared_ptr<Module>& m);
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
