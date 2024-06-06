@@ -49,7 +49,7 @@ typedef std::shared_ptr<const type_info> const_type_ptr;
 class CompiledModule;
 class Module;
 
-typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls, Module&, CompiledModule&);
+typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls, Module&);
 
 std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
 

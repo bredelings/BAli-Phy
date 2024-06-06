@@ -465,8 +465,8 @@ TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
     return ftv;
 }
 
-global_tc_state::global_tc_state(Module& m, CompiledModule& cm)
-    :this_mod(m), this_compiled_mod(cm)
+global_tc_state::global_tc_state(Module& m)
+    :this_mod(m)
 { }
 
 
@@ -1049,10 +1049,10 @@ Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pr
     return dvar;
 }
 
-TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m, CompiledModule& cm)
+TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m)
     :FreshVarSource(fvs, s), local_state(new TypeCheckerContext)
 {
-    global_state = std::make_shared<global_tc_state>(m, cm);
+    global_state = std::make_shared<global_tc_state>(m);
 }
 
 Hs::Var TypeChecker::find_prelude_var(string name) const
@@ -1638,7 +1638,7 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
     return {all, all2};
 }
 
-typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Module& MM, CompiledModule& CM )
+typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Module& MM)
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -1662,7 +1662,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     //
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
-    auto tc_state = std::make_shared<TypeChecker>( fresh_vars, MM.name, MM, CM);
+    auto tc_state = std::make_shared<TypeChecker>( fresh_vars, MM.name, MM);
 
     // 1. Get the types for defaulting.
     tc_state->get_defaults( M );

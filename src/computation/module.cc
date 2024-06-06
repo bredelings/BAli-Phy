@@ -487,8 +487,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 	    std::cerr<<"    Cached SHA up-to-date for module "<<MM->name<<"\n";
     }
 
-    auto CM = std::make_shared<CompiledModule>(MM);
-
     // Scans imported modules and modifies symbol table and type table
     MM->perform_imports(P);
 
@@ -530,7 +528,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
-    auto tc_result = typecheck(P.fresh_var_state(), M, *MM, *CM);
+    auto tc_result = typecheck(P.fresh_var_state(), M, *MM);
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
@@ -553,8 +551,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    CDecls value_decls;
-    value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
+    CDecls value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
     value_decls += core_decls;
 
     value_decls = MM->load_builtins(loader, M.foreign_decls, value_decls);
@@ -578,6 +575,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     MM->export_small_decls(value_decls);
 
     MM->write_compile_artifact(P);
+
+    auto CM = std::make_shared<CompiledModule>(MM);
 
     CM->finish_value_decls(value_decls);
 
