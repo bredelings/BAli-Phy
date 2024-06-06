@@ -237,6 +237,10 @@ class CompiledModule
 
     CDecls value_decls;
 
+    std::map<std::string, symbol_ptr> symbols;
+
+    std::map<std::string, type_ptr> types;
+
     std::map<std::string, const_symbol_ptr> exported_symbols_;
 
     std::map<std::string, const_type_ptr> exported_types_;
@@ -272,9 +276,9 @@ public:
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
 
     // How does this relate to the exported symbols?
-    const_symbol_ptr lookup_local_symbol(const std::string& s) const {return mod->lookup_local_symbol(s);}
+    const_symbol_ptr lookup_local_symbol(const std::string& s) const;
 
-    const_type_ptr lookup_local_type(const std::string& t) const {return mod->lookup_local_type(t);}
+    const_type_ptr lookup_local_type(const std::string& t) const;
 
     void finish_value_decls( CDecls& cdecls) {std::swap(value_decls, cdecls);}
 
