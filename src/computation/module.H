@@ -225,6 +225,10 @@ class CompiledModule
 {
     std::shared_ptr<Module> mod;
 
+    std::set<std::string> dependencies_;
+
+    std::string modid;
+
     CDecls value_decls;
 
 public:
@@ -244,11 +248,11 @@ public:
 
     std::string all_inputs_sha(const Program& P) const {return mod->all_inputs_sha(P);}
 
-    const std::set<std::string> dependencies() const {return mod->dependencies();}
+    const std::set<std::string>& dependencies() const {return dependencies_;}
 
     const LanguageExtensions& language_extensions() const {return mod->language_extensions;}
 
-    const std::string& name() const {return mod->name;}
+    const std::string& name() const {return modid;}
 
     const InstanceEnv& local_instances() const {return mod->local_instances;}
     const EqInstanceEnv& local_eq_instances() const {return mod->local_eq_instances;}

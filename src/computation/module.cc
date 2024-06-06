@@ -436,6 +436,12 @@ set<string> Module::dependencies() const
     return modules;
 }
 
+CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
+    :mod(m),
+     dependencies_(m->dependencies()),
+     modid(m->name)
+{}
+
 /* 
 infixr 6 >>
 
