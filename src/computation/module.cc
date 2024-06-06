@@ -448,7 +448,7 @@ main = putStrLn (show ("a" Main.>> 'b':[]))
 -- Or, at least, in the definition, we look up and rename >> to Main.>> before we do the infix handling...
 */
 
-std::optional<std::string> read_cached_module_sha(const module_loader& loader, const std::string& modid)
+std::shared_ptr<CompiledModule> read_cached_module_sha(const module_loader& loader, const std::string& modid, const std::string& required_sha)
 {
     if (auto path = loader.find_cached_module(modid))
     {
@@ -457,9 +457,14 @@ std::optional<std::string> read_cached_module_sha(const module_loader& loader, c
 	    checked_ifstream cached_module_stream(*path, "Cached compile artifact for " + modid);
 
 	    cereal::BinaryInputArchive archive( cached_module_stream );
-	    std::string sha;
-	    archive(sha);
-	    return sha;
+	    std::string saved_sha;
+	    archive(saved_sha);
+	    if (saved_sha == required_sha)
+	    {
+		if (log_verbose >= 1)
+		    std::cerr<<"    Cached SHA up-to-date for module "<<modid<<"\n";
+	    }
+	    return {};
 	}
 	catch (...)
 	{
@@ -489,11 +494,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
         std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
 
-    if (MM->all_inputs_sha(P) == read_cached_module_sha(loader, MM->name))
-    {
-	if (log_verbose >= 1)
-	    std::cerr<<"    Cached SHA up-to-date for module "<<MM->name<<"\n";
-    }
+    read_cached_module_sha(loader, MM->name, MM->all_inputs_sha(P));
 
     // Scans imported modules and modifies symbol table and type table
     MM->perform_imports(P);
