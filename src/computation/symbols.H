@@ -7,6 +7,12 @@
 #include <variant>
 #include "computation/haskell/haskell.H"
 
+#include <cereal/types/memory.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/optional.hpp>
+#include <cereal/types/set.hpp>
+
 constexpr auto left_fix = Haskell::Fixity::infixl;
 constexpr auto right_fix = Haskell::Fixity::infixr;
 constexpr auto non_fix = Haskell::Fixity::infix;
@@ -90,21 +96,31 @@ struct type_info
     {
         std::set<std::string> methods;
         std::shared_ptr<ClassInfo> info;
+
+	template <class Archive> void serialize(Archive& ar) { ar(methods, info);}
     };
     struct data_info
     {
         std::set<std::string> constructors;
         std::set<std::string> fields;
+
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields);}
     };
     struct type_syn_info
     {
         std::shared_ptr<TypeSynonymInfo> info;
+
+	template <class Archive> void serialize(Archive& ar) { ar(info);}
     };
     struct type_fam_info {
         std::shared_ptr<TypeFamInfo> info;
+
+	template <class Archive> void serialize(Archive& ar) { ar(info);}
     };
     struct data_fam_info {
 	std::shared_ptr<DataFamInfo> info;
+
+	template <class Archive> void serialize(Archive& ar) { ar(info);}
     };
 
     bool is_type_other() const; // "->", but now also "~"
@@ -127,6 +143,7 @@ struct type_info
     // Are we using this?
     Kind kind;
 
+    template <class Archive> void serialize(Archive& ar) { ar(name,info,fixity,arity); }
 };
 
 bool operator==(const symbol_info& S1, const symbol_info& S2);
