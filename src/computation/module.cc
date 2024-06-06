@@ -458,9 +458,9 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
 
             cereal::BinaryInputArchive archive( cached_module_stream );
 
-            auto M = std::make_shared<CompiledModule>();
+	    std::shared_ptr<CompiledModule> M;
 
-            archive(*M);
+            archive(M);
 
             if (M->all_inputs_sha() == required_sha)
             {
@@ -479,9 +479,9 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
     return {};
 }
 
-void write_compile_artifact(const Program& P, const CompiledModule& CM)
+void write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& CM)
 {
-    auto artifact = P.get_module_loader()->write_cached_module( CM.name() );
+    auto artifact = P.get_module_loader()->write_cached_module( CM->name() );
 
     cereal::BinaryOutputArchive archive( *artifact );
     archive(CM);
@@ -495,7 +495,11 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
         std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
 
-    auto C = read_cached_module(loader, MM->name, MM->all_inputs_sha(P));
+    if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
+    {
+	C->inflate(P);
+	//return C;
+    }
 
     // Scans imported modules and modifies symbol table and type table
     MM->perform_imports(P);
@@ -588,7 +592,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     CM->finish_value_decls(value_decls);
 
-    write_compile_artifact(P, *CM);
+    write_compile_artifact(P, CM);
 
     CM->inflate(P);
 

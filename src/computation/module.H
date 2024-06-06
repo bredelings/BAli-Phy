@@ -303,8 +303,11 @@ public:
 	ar(modid, dependencies_, all_inputs_sha_);
     }
 
-    CompiledModule() = default;
     CompiledModule(const std::shared_ptr<Module>& m);
+
+private:
+    friend class cereal::access;
+    CompiledModule() = default;
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
