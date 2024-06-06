@@ -436,11 +436,24 @@ set<string> Module::dependencies() const
     return modules;
 }
 
+void CompiledModule::clear_symbol_table()
+{
+    exported_symbols_.clear();
+
+    exported_types_.clear();
+
+    mod->clear_symbol_table();
+}
+
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     :mod(m),
      dependencies_(m->dependencies()),
      modid(m->name)
-{}
+{
+    std::swap(exported_symbols_, m->exported_symbols_);
+
+    std::swap(exported_types_, m->exported_types_);
+}
 
 /* 
 infixr 6 >>

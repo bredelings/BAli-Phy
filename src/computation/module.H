@@ -55,6 +55,8 @@ std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>)
 
 class Module
 {
+    friend class CompiledModule;
+
     // only to look at the symbols variable!
     friend std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
 
@@ -235,11 +237,15 @@ class CompiledModule
 
     CDecls value_decls;
 
+    std::map<std::string, const_symbol_ptr> exported_symbols_;
+
+    std::map<std::string, const_type_ptr> exported_types_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
     // This "everything-except-code" should probably be a different object.
-    void clear_symbol_table() {mod->clear_symbol_table();}
+    void clear_symbol_table();
 
     // Now discard the code -- what is left?
     void clear_code() { value_decls.clear(); }
@@ -261,9 +267,9 @@ public:
     const InstanceEnv& local_instances() const {return mod->local_instances;}
     const EqInstanceEnv& local_eq_instances() const {return mod->local_eq_instances;}
 
-    const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return mod->exported_symbols();}
+    const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
 
-    const std::map<std::string, const_type_ptr>& exported_types() const {return mod->exported_types();}
+    const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
 
     // How does this relate to the exported symbols?
     const_symbol_ptr lookup_local_symbol(const std::string& s) const {return mod->lookup_local_symbol(s);}
