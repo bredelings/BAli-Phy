@@ -232,8 +232,6 @@ public:
 // If Module builds some things, have CompiledModule steal them at the end?
 class CompiledModule
 {
-    std::shared_ptr<Module> mod;
-
     std::set<std::string> dependencies_;
 
     std::string modid;

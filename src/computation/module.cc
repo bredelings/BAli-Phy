@@ -1916,11 +1916,29 @@ const_type_ptr CompiledModule::lookup_local_type(const std::string& type_name) c
 
 void CompiledModule::clear_symbol_table()
 {
+    dependencies_.clear();
+
+    // modid = keep
+
+    // value_decls = keep, for now
+
+    symbols.clear();
+
+    types.clear();
+
     exported_symbols_.clear();
 
     exported_types_.clear();
 
-    mod->clear_symbol_table();
+    // language_extensions_ = keep
+
+    local_instances_.clear();
+
+    local_eq_instances_.clear();
+
+    // all_inputs_sha_ = keep
+
+    transitively_imported_modules_.clear();
 }
 
 void CompiledModule::inflate(const Program& P)
@@ -1935,8 +1953,7 @@ void CompiledModule::inflate(const Program& P)
 }
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
-    :mod(m),
-     dependencies_(m->dependencies()),
+    :dependencies_(m->dependencies()),
      modid(m->name)
 {
     std::swap(symbols, m->symbols);
@@ -1958,5 +1975,7 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 	all_inputs_sha_ = m->_cached_sha.value();
     else
 	throw myexception()<<"Module "<<m->name<<" has no SHA!";
+
+    m->clear_symbol_table();
 }
 
