@@ -3031,8 +3031,8 @@ void reg_heap::allocate_identifiers_for_program()
             int R = loc->second;
 
 #ifdef DEBUG_OPTIMIZE
-            std::cerr<<name<<" := "<<body<<"\n\n";
-            std::cerr<<name<<" := "<<preprocess(body).exp<<"\n\n\n\n";
+            std::cerr<<"     "<<x<<" := "<<body<<"\n\n";
+            std::cerr<<"     "<<x<<" := "<<preprocess(body).exp<<"\n\n\n\n";
 #endif
 
             // load the body into the machine
