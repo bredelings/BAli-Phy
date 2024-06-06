@@ -162,8 +162,6 @@ public:
 
     void declare_type(const type_info&);
 
-    void write_compile_artifact(const Program& P);
-
     void import_symbol(const const_symbol_ptr&, const std::string&, bool qualified);
 
     void import_type(const const_type_ptr&, const std::string&, bool qualified);
@@ -232,9 +230,9 @@ public:
 // If Module builds some things, have CompiledModule steal them at the end?
 class CompiledModule
 {
-    std::set<std::string> dependencies_;
-
     std::string modid;
+
+    std::set<std::string> dependencies_;
 
     CDecls value_decls;
 
@@ -298,6 +296,12 @@ public:
     std::map<var,expression_ref> code_defs() const;
 
     void inflate(const Program& P);
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(modid, dependencies_, symbols, types);
+    }
 
     CompiledModule(const std::shared_ptr<Module>& m);
 };

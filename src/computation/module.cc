@@ -452,11 +452,16 @@ std::optional<std::string> read_cached_module_sha(const module_loader& loader, c
 {
     if (auto path = loader.find_cached_module(modid))
     {
-	checked_ifstream cached_module_stream(*path, "Cached compile artifact for " + modid);
-	std::string sha;
-	if (portable_getline(cached_module_stream, sha))
+	try
+	{
+	    checked_ifstream cached_module_stream(*path, "Cached compile artifact for " + modid);
+
+	    cereal::BinaryInputArchive archive( cached_module_stream );
+	    std::string sha;
+	    archive(sha);
 	    return sha;
-	else
+	}
+	catch (...)
 	{
 	    if (log_verbose)
 		std::cerr<<"Failure reading SHA line from cached compile artifact for "<<modid<<".\n   File = "<<*path;
@@ -465,6 +470,15 @@ std::optional<std::string> read_cached_module_sha(const module_loader& loader, c
     }
     else
 	return {};
+}
+
+void write_compile_artifact(const Program& P, const CompiledModule& CM)
+{
+    auto artifact = P.get_module_loader()->write_cached_module( CM.name() );
+
+    cereal::BinaryOutputArchive archive( *artifact );
+    archive(CM.all_inputs_sha());
+    archive(CM);
 }
 
 std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
@@ -568,27 +582,15 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // this records unfoldings.
     MM->export_small_decls(value_decls);
 
-    MM->write_compile_artifact(P);
-
     auto CM = std::make_shared<CompiledModule>(MM);
 
     CM->finish_value_decls(value_decls);
 
+    write_compile_artifact(P, *CM);
+
     CM->inflate(P);
 
     return CM;
-}
-
-void Module::write_compile_artifact(const Program& P)
-{
-    auto artifact = P.get_module_loader()->write_cached_module(name);
-
-//    std::ofstream file("tmp");
-//    cereal::BinaryOutputArchive ar( file );
-//    symbol_info* c;
-//    ar(*c);
-
-    *artifact << all_inputs_sha(P);
 }
 
 void Module::perform_imports(const Program& P)
@@ -1953,8 +1955,9 @@ void CompiledModule::inflate(const Program& P)
 }
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
-    :dependencies_(m->dependencies()),
-     modid(m->name)
+    :modid(m->name),
+     dependencies_(m->dependencies())
+     
 {
     std::swap(symbols, m->symbols);
 
