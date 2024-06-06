@@ -57,6 +57,9 @@ class Module
 {
     friend class CompiledModule;
 
+    // so that it can set _cached_sha
+    friend std::shared_ptr<CompiledModule> compiler_prim_module();
+
     // only to look at the symbols variable!
     friend std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
 
@@ -251,6 +254,8 @@ class CompiledModule
 
     EqInstanceEnv local_eq_instances_;
 
+    std::string all_inputs_sha_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
@@ -266,7 +271,7 @@ public:
 	return mod->transitively_imported_modules;
     }
 
-    std::string all_inputs_sha(const Program& P) const {return mod->all_inputs_sha(P);}
+    const std::string& all_inputs_sha() const {return all_inputs_sha_;}
 
     const std::set<std::string>& dependencies() const {return dependencies_;}
 

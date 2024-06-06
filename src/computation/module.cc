@@ -1805,12 +1805,10 @@ std::string Module::all_inputs_sha(const Program& P) const
     {
 	boost::compute::detail::sha1 sha(file.contents);
 
-	for(auto& imported_module: imports())
+	for(auto& dep_modid: dependencies())
 	{
-	    auto& [imploc, impdecl] = imported_module;
-	    auto modid = unloc(impdecl.modid);
-	    auto M2 = P.get_module( unloc(impdecl.modid) );
-	    sha.process(M2->all_inputs_sha(P));
+	    auto M2 = P.get_module( dep_modid );
+	    sha.process(M2->all_inputs_sha());
 	}
 
 	_cached_sha = sha;
@@ -1942,5 +1940,10 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     std::swap(local_instances_, m->local_instances);
 
     std::swap(local_eq_instances_, m->local_eq_instances);
+
+    if (m->_cached_sha)
+	all_inputs_sha_ = m->_cached_sha.value();
+    else
+	throw myexception()<<"Module "<<m->name<<" has no SHA!";
 }
 
