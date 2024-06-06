@@ -1938,5 +1938,9 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 
     // Why can't we clear the language extensions on m?
     language_extensions_ = m->language_extensions;
+
+    std::swap(local_instances_, m->local_instances);
+
+    std::swap(local_eq_instances_, m->local_eq_instances);
 }
 

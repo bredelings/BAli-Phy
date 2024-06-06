@@ -247,6 +247,10 @@ class CompiledModule
 
     LanguageExtensions language_extensions_;
 
+    InstanceEnv local_instances_;
+
+    EqInstanceEnv local_eq_instances_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
@@ -270,8 +274,9 @@ public:
 
     const std::string& name() const {return modid;}
 
-    const InstanceEnv& local_instances() const {return mod->local_instances;}
-    const EqInstanceEnv& local_eq_instances() const {return mod->local_eq_instances;}
+    const InstanceEnv& local_instances() const {return local_instances_;}
+
+    const EqInstanceEnv& local_eq_instances() const {return local_eq_instances_;}
 
     const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
 
