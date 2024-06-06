@@ -256,6 +256,8 @@ class CompiledModule
 
     std::string all_inputs_sha_;
 
+    std::map<std::string, std::shared_ptr<const CompiledModule>> transitively_imported_modules_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
@@ -268,7 +270,7 @@ public:
     // Where is this used?
     const std::map<std::string, std::shared_ptr<const CompiledModule>>& transitively_imported_modules() const
     {
-	return mod->transitively_imported_modules;
+	return transitively_imported_modules_;
     }
 
     const std::string& all_inputs_sha() const {return all_inputs_sha_;}
@@ -296,6 +298,8 @@ public:
 
     // Why do we have code that isn't for this module?
     std::map<var,expression_ref> code_defs() const;
+
+    void inflate(const Program& P);
 
     CompiledModule(const std::shared_ptr<Module>& m);
 };

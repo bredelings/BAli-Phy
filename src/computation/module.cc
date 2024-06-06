@@ -574,6 +574,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     CM->finish_value_decls(value_decls);
 
+    CM->inflate(P);
+
     return CM;
 }
 
@@ -1919,6 +1921,17 @@ void CompiledModule::clear_symbol_table()
     exported_types_.clear();
 
     mod->clear_symbol_table();
+}
+
+void CompiledModule::inflate(const Program& P)
+{
+    for(auto& dep_modid: dependencies())
+    {
+	auto M2 = P.get_module(dep_modid);
+	transitively_imported_modules_.insert({M2->name(), M2});
+	for(auto& [mod_name, mod]: M2->transitively_imported_modules())
+	    transitively_imported_modules_.insert({mod_name, mod});
+    }
 }
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
