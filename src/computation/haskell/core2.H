@@ -9,114 +9,122 @@
 
 namespace Core2
 {
-    struct Var;
-    template <typename Note> struct Lambda;
-    template <typename Note> struct Apply;
-    template <typename Note> struct Let;
-    template <typename Note> struct Case;
-    struct ConApp;
+    template <typename NoteV> struct Var;
+    template <typename NoteV, typename NoteE> struct Lambda;
+    template <typename NoteV, typename NoteE> struct Apply;
+    template <typename NoteV, typename NoteE> struct Let;
+    template <typename NoteV, typename NoteE> struct Case;
+    template <typename NoteV> struct ConApp;
+    template <typename NoteV> struct BuiltinOp;
     struct Constant;
-    struct BuiltinOp;
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Exp
     {
 	std::variant
 	<
 	    std::monostate,
-	    Var,
-	    cow_ptr<Lambda<Note>>,
-	    cow_ptr<Apply<Note>>,
-	    cow_ptr<Let<Note>>,
-	    cow_ptr<Case<Note>>,
-	    ConApp,
-	    Constant,
-	    BuiltinOp
+	    Var<NoteV>,
+	    cow_ptr<Lambda<NoteV,NoteE>>,
+	    cow_ptr<Apply<NoteV,NoteE>>,
+	    cow_ptr<Let<NoteV,NoteE>>,
+	    cow_ptr<Case<NoteV,NoteE>>,
+	    ConApp<NoteV>,
+	    BuiltinOp<NoteV>,
+	    Constant
 	>
 	exp_ptr;
 
-	Note note_t;
+	NoteE note_;
     };
 
 
+    template <typename NoteV = std::monostate>
     struct Var
     {
 	std::string name;
+	int index;
+
+	NoteV info;
     };
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Lambda
     {
-	std::vector<Var> vars;
-	Exp<Note> body;
+	std::vector<Var<NoteV>> vars;
+	Exp<NoteV, NoteE> body;
     };
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Apply
     {
-	Exp<Note> head;
-	std::vector<Var> args;
+	Exp<NoteV, NoteE> head;
+	std::vector<Var<NoteV>> args;
     };
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Decl
     {
-	Var x;
-	Exp<Note> body;
+	Var<NoteV> x;
+	Exp<NoteE> body;
     };
 
-    template <typename Note = std::monostate>
-    using Decls = std::vector<Decl<Note>>;
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Decls = std::vector<Decl<NoteV,NoteE>>;
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Let
     {
-	Decls<Note> decls;
-	Exp<Note> body;
+	Decls<NoteV,NoteE> decls;
+	Exp<NoteV,NoteE> body;
     };
 
     struct WildcardPat { };
 
+    template <typename NoteV = std::monostate>
     struct ConPat
     {
 	std::string head;
-	std::vector<Var> args;
+	std::vector<Var<NoteV>> args;
     };
 
-    typedef std::variant<WildcardPat, ConPat> Pattern;
+    template <typename NoteV = std::monostate>
+    using Pattern = std::variant<WildcardPat, ConPat<NoteV>>;
     
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Alt
     {
-	Pattern pat;
-	Exp<Note> body;
+	Pattern<NoteV> pat;
+	Exp<NoteV,NoteE> body;
     };
 
-    template <typename Note = std::monostate>
-    using Alts = std::vector<Alt<Note>>;
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Alts = std::vector<Alt<NoteV, NoteE>>;
 
-    template <typename Note = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Case
     {
-	Exp<Note> object;
-	Alts<Note> alts;
+	Exp<NoteV, NoteE> object;
+	Alts<NoteV, NoteE> alts;
     };
     
+    template <typename NoteV = std::monostate>
     struct ConApp
     {
 	std::string head;
-	std::vector<Var> args;
+	std::vector<Var<NoteV>> args;
+    };
+
+    template <typename NoteV = std::monostate>
+    struct BuiltinOp
+    {
+	std::tuple<std::string, std::string> op;
+	std::vector<Var<NoteV>> args;
     };
 
     struct Constant
     {
 	std::variant<char,int,double,log_double_t,std::string> value;
-    };
-
-    struct BuiltinOp
-    {
-	std::tuple<std::string, std::string> op;
-	std::vector<Var> args;
     };
 
 
