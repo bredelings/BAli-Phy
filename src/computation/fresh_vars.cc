@@ -178,7 +178,6 @@ FreshVarSource::FreshVarSource(FreshVarState& s, const string& mn)
 
 var make_var(const Hs::Var& v)
 {
-    assert(not v.index);
     assert(v.wrap.is_identity());
     var v2(v.name);
     

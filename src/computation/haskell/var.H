@@ -17,7 +17,6 @@ namespace Haskell
 struct Var: public Object
 {
     std::string name;
-    std::optional<int> index;
 
     std::optional<::Type> type;
 
@@ -40,7 +39,7 @@ struct Var: public Object
 	// We should only be serializing Hs::Var for its use in defining variable names in ClassInfo
 	assert(not type);
 	assert(not info);
-	ar(name,index);
+	ar(name);
     }
 
     Var* clone() const { return new Var(*this);}

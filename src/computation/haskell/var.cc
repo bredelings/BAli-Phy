@@ -13,11 +13,7 @@ bool Var::is_sym() const
 
 string Var::print_without_parens() const
 {
-    string uname = name;
-    if (index)
-        uname = uname +"#"+std::to_string(*index);
-
-    return uname;
+    return name;
 }
 
 string Var::print() const
@@ -51,17 +47,11 @@ bool Var::operator==(const Object& o) const
 
 bool Var::operator==(const Var& v) const
 {
-    return index == v.index and name == v.name;
+    return name == v.name;
 }
 
 bool Var::operator<(const Var& v) const
 {
-    if (index < v.index)
-        return true;
-
-    if (index > v.index)
-        return false;
-
     int cmp = name.compare(v.name);
     
     return (cmp < 0);
