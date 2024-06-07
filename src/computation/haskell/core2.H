@@ -7,6 +7,12 @@
 #include "util/cow-ptr.H"
 #include "util/math/log-double.H"
 
+#include <cereal/types/memory.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/vector.hpp>
+
 namespace Core2
 {
     template <typename NoteV> struct Var;
@@ -36,6 +42,9 @@ namespace Core2
 	exp_ptr;
 
 	NoteE note_;
+
+	template <class Archive>
+	void serialize(Archive& ar);
     };
 
 
@@ -46,6 +55,12 @@ namespace Core2
 	int index;
 
 	NoteV info;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(name, index, info);
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -53,6 +68,12 @@ namespace Core2
     {
 	std::vector<Var<NoteV>> vars;
 	Exp<NoteV, NoteE> body;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(vars, body);
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -60,6 +81,12 @@ namespace Core2
     {
 	Exp<NoteV, NoteE> head;
 	std::vector<Var<NoteV>> args;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -67,6 +94,12 @@ namespace Core2
     {
 	Var<NoteV> x;
 	Exp<NoteE> body;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(x, body);
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -77,15 +110,32 @@ namespace Core2
     {
 	Decls<NoteV,NoteE> decls;
 	Exp<NoteV,NoteE> body;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(decls, body);
+	}
     };
 
-    struct WildcardPat { };
+    struct WildcardPat
+    {
+	template <class Archive>
+	void serialize(Archive&)
+	{ }
+    };
 
     template <typename NoteV = std::monostate>
     struct ConPat
     {
 	std::string head;
 	std::vector<Var<NoteV>> args;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
     };
 
     template <typename NoteV = std::monostate>
@@ -96,6 +146,12 @@ namespace Core2
     {
 	Pattern<NoteV> pat;
 	Exp<NoteV,NoteE> body;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(pat, body);
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -106,6 +162,12 @@ namespace Core2
     {
 	Exp<NoteV, NoteE> object;
 	Alts<NoteV, NoteE> alts;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(object, alts);
+	}
     };
     
     template <typename NoteV = std::monostate>
@@ -113,6 +175,12 @@ namespace Core2
     {
 	std::string head;
 	std::vector<Var<NoteV>> args;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
     };
 
     template <typename NoteV = std::monostate>
@@ -120,12 +188,31 @@ namespace Core2
     {
 	std::tuple<std::string, std::string> op;
 	std::vector<Var<NoteV>> args;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(op, args);
+	}
     };
 
     struct Constant
     {
-	std::variant<char,int,double,log_double_t,std::string> value;
+	std::variant<char,int,double,std::string> value;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(value);
+	}
     };
+
+    template <typename NoteV, typename NoteE>
+    template <class Archive>
+    void Exp<NoteV,NoteE>::serialize(Archive& ar)
+    {
+	ar(exp_ptr, note_);
+    }
 
 
 }
