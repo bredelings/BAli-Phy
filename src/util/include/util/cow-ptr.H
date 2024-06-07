@@ -138,13 +138,14 @@ public:
   cow_ptr(const std::shared_ptr<X>& p) : data(p) { }
 
   explicit cow_ptr(X* p = 0) noexcept            : data(p) {}
-
-  explicit cow_ptr(const X& x)                  : data(new X(x)) {}
-
-  explicit cow_ptr(X&& x)                  : data(new X(std::move(x))) {}
-
   // no need for ~cow_ptr - the counted_ptr takes care of everything.
 };
+
+template <typename X>
+cow_ptr<X> make_cow_ptr(const X& x) { return cow_ptr<X>(std::make_shared<X>(x));}
+
+template <typename X>
+cow_ptr<X> make_cow_ptr(X&& x) { return cow_ptr<X>(std::make_shared<X>(std::move(x)));}
 
 template <class X>
 inline void swap(cow_ptr<X>& p1,cow_ptr<X>& p2)

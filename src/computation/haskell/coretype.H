@@ -104,7 +104,7 @@ struct Type
     Type(const Type& t) = default;
 
     template <typename T>
-    Type(const T& t):type_ptr( cow_ptr<T>(t) ) {}
+    Type(const T& t):type_ptr( make_cow_ptr<T>(t) ) {}
 
     ~Type() = default;
 };
