@@ -81,6 +81,11 @@ struct symbol_info
     }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
+
+private:
+    friend cereal::access;
+
+    symbol_info() = default;
 };
 
 struct ClassInfo;
