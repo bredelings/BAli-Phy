@@ -162,6 +162,11 @@ struct TypeFamInfo
     }
 
     TypeFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
+private:
+
+    friend cereal::access;
+
+    TypeFamInfo() = default;
 };
 
 struct DataFamInfo
@@ -180,6 +185,12 @@ struct DataFamInfo
     {
 	ar(args, result_kind, associated_class);
     }
+
+private:
+
+    friend cereal::access;
+
+    DataFamInfo() = default;
 };
 
 
