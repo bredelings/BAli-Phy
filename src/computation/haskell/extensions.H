@@ -90,6 +90,12 @@ struct LanguageExtensions
 
     std::optional<Note> set_option(const std::string& opt);
 
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(already_set); //, extension_bits);
+    }
+
     LanguageExtensions();
 };
 
