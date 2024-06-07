@@ -32,7 +32,7 @@ void save(Archive& ar, const immer::map<Key,Value>& m)
 template <class Archive, typename Key, typename Value>
 void load(Archive& ar, immer::map<Key,Value>& m)
 {
-    m = m.clear();
+    m = immer::map<Key,Value>();
     int n;
     ar(n);
     for(int i=0;i<n;i++)
