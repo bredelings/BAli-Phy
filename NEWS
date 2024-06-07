@@ -8,6 +8,9 @@
 - Bug fixes:
   + Infer the character state for N in leaf sequences with a fixed alignment.
   + bp-analyze should not fail when variables have random dimension.
+- Refactoring
+  - Kind is now an alias to Type (from coretype.H) instead of expression_ref.
+  - CompiledModule is now separate from Module.  Programs contain only CompiledModule.
 
 * 4.0-beta13 (May 25, 2024)
 - Bug Fixes:
