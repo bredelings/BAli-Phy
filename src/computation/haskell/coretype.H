@@ -144,6 +144,10 @@ public:
 
     MetaTypeVar(int level, const Located<std::string>& s);
     MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
+
+private:
+    friend cereal::access;
+    MetaTypeVar() = default;
 };
 
 std::optional<Type> filled_meta_type_var(const Type& t);
@@ -247,6 +251,10 @@ struct TypeApp
     }
 
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
+private:
+    friend cereal::access;
+
+    TypeApp() = default;
 };
 
 Type make_tyapps(const std::vector<Type>& tyapps);
@@ -277,6 +285,11 @@ struct ForallType
     }
 
     ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
+
+private:
+    friend cereal::access;
+
+    ForallType() = default;
 };
 
 Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
@@ -296,6 +309,11 @@ struct ConstrainedType
     }
 
     ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
+
+private:
+    friend cereal::access;
+
+    ConstrainedType() = default;
 };
 
 Type add_constraints(const std::vector<Type>& constraints, const Type& type);
@@ -315,6 +333,11 @@ struct StrictType
     }
 
     StrictType(const Type& t):type(t) {}
+
+private:
+    friend cereal::access;
+
+    StrictType() = default;
 };
 
 struct LazyType
@@ -331,6 +354,10 @@ struct LazyType
     }
 
     LazyType(const Type& t):type(t) {}
+private:
+    friend cereal::access;
+
+    LazyType() = default;
 };
 
 
