@@ -359,9 +359,7 @@ vector<int> site_pattern(const EVector& A, int c)
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        int x = A[j].as_<EPair>().second.as_<EVector>()[c].as_int();
-        if (x < 0) x = alphabet::gap;
-        pattern[j] = x;
+        pattern[j] = A[j].as_<EPair>().second.as_<EVector>()[c].as_int();
     }
     return pattern;
 }
