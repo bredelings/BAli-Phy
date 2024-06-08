@@ -2,12 +2,17 @@
 #include <tuple>
 #include <optional>
 #include <sstream>
+#include <variant>
+#include <boost/convert.hpp>
+#include <boost/convert/lexical_cast.hpp>
 #include <boost/algorithm/string/split.hpp>
 using std::string;
 using std::string_view;
 using std::set;
 using std::map;
 using std::vector;
+using std::tuple;
+using std::variant;
 
 namespace fs = std::filesystem;
 
@@ -216,7 +221,97 @@ vector<string> short_fields(const vector<string>& fields)
 
     return fields2;
 }
+
+json::kind collapse_kind(json::kind k)
+{
+    if (k == json::kind::int64 or k == json::kind::uint64)
+	k = json::kind::double_;
+    return k;
+}
+
+void findConstantFields(json::value& j1, const json::value& j2)
+{
+    if (j1.is_null())
+	return;
+
+    else if (collapse_kind(j1.kind()) != collapse_kind(j2.kind()))
+    {
+	j1.emplace_null();
+	return;
+    }
     
+    else if (j1.is_object())
+    {
+	auto& o1 = j1.as_object();
+	auto& o2 = j2.as_object();
+	if (o1.size() != o2.size())
+	{
+	    j1.emplace_null();
+	    return;
+	}
+	for(auto& [key,v1]: o1)
+	{
+	    if (not o2.count(key))
+	    {
+		j1.emplace_null();
+		return;
+	    }
+	    findConstantFields(v1, o2.at(key));
+	}
+    }
+
+    else if (j1.is_array())
+    {
+	auto& a1 = j1.as_array();
+	auto& a2 = j2.as_array();
+	if (a1.size() != a2.size())
+	{
+	    j1.emplace_null();
+	    return;
+	}
+	for(int i=0;i<a1.size();i++)
+	{
+	    findConstantFields(a1[i], a2[i]);
+	}
+    }
+}
+
+tuple<set<string>, set<string>> classifyFields(const vector<json::object>& samples)
+{
+    if (samples.empty()) return {{},{}};
+
+    auto fields = samples[0];
+    for(auto& sample: samples)
+    {
+	json::object fields2;
+	for(auto& [key, v1]: fields)
+	{
+	    if (v1.is_null()) continue;
+
+	    if (not sample.count(key))
+		v1.emplace_null();
+	    else
+		findConstantFields(v1, sample.at(key));
+	}
+    }
+
+    // Maybe the top level, we should keep all the common fields, instead of dropping
+    // everything if something changes?
+    auto fields2 = atomize(unnest(fields), false);
+
+    set<string> constant_fields;
+    set<string> varying_fields;
+
+    for(auto& [key,_]: fields2)
+    {
+	if (fields2.at(key).is_null())
+	    varying_fields.insert(key);
+	else
+	    constant_fields.insert(key);
+    }
+
+    return {constant_fields, varying_fields};
+}
 
 std::ostream& Log::dump_MCON(std::ostream& o) const
 {
@@ -329,55 +424,99 @@ vector<string> get_row(const map<string,int>& all_fields, const json::object& sa
 	row[index] = json::serialize(sample.at(field),{.allow_infinity_and_nan=true});
     }
     assert(sample.size() >= nfields);
-    if (sample.size() != nfields)
-    {
-	for(auto& [key,value]: sample)
-	    if (not all_fields.count(key))
-	    {
-		std::cerr<<"Error: sample";
-		if (sample_index)
-		    std::cerr<<" line "<<*sample_index;
-		std::cerr<<" has extra field '"<<key<<"'"<<std::endl;
-		std::cerr<<"  "<<sample<<"\n";
-		exit(1);
-	    }
-    }
-    assert(sample.size() == nfields);
     return row;
 }
 
-vector<string> tsv_fields(const vector<string>& first_fields, const json::object& j, bool nested)
+auto sort_key(const string& name)
 {
-    vector<string> out_fields = first_fields;
+    vector<variant<int,string>> keylist;
 
+    vector<string> path;
+    boost::split(path, name, [](char c) {return c == '[';});
+
+    auto  cnv = boost::cnv::lexical_cast();        // boost::lexical_cast-based converter
+
+    for(int i=0;i<path.size();i++)
+    {
+	auto& key = path[i];
+
+	if (i==0)
+	    keylist.push_back(key);
+	else if (key.ends_with(']'))
+	{
+	    key.resize(key.size()-1);
+	    if (auto i = boost::convert<int>(key, cnv))
+		keylist.push_back(*i);
+	    else
+		keylist.push_back(key);
+	}
+	else
+	    keylist.push_back(key);
+    }
+
+    return keylist;
+}
+
+
+// 1. Put the specified fields in front.
+// 2. Sort the remaining fields and append them.
+// 3. Only consider constant fields.
+vector<string> tsv_fields(const vector<string>& specified_fields, const json::object& j, bool nested, std::optional<set<string>> constantFields)
+{
     auto all_fields = nested?get_keys_nested(atomize(j,true)):get_keys_non_nested(atomize(j,false));
 
-    set<string> fields1;
-    for(auto& field: out_fields)
-	fields1.insert(field);
+    if (not constantFields)
+	constantFields = all_fields;
 
-    for(auto& field: fields1)
-	if (not all_fields.count(field))
+    set<string> specified_fields_set;
+    for(auto& field: specified_fields)
+	specified_fields_set.insert(field);
+
+    for(auto& specified_field: specified_fields_set)
+    {
+	if (not all_fields.count(specified_field))
 	{
-	    std::cerr<<"Error: Header: field '"<<field<<"' does not exist!\n";
+	    std::cerr<<"Error: Header: field '"<<specified_field<<"' does not exist!\n";
 	    exit(1);
 	}
+	if (not constantFields->count(specified_field))
+	{
+	    std::cerr<<"Error: Header: field '"<<specified_field<<"' does not have a fixed structure!\n";
+	    exit(1);
+	}
+    }
 
     vector<string> fields2;
-    for(auto& field: all_fields)
-	if (not fields1.contains(field))
+    for(auto& field: *constantFields)
+	if (not specified_fields_set.contains(field))
 	    fields2.push_back(field);
-    std::sort(fields2.begin(), fields2.end());
+    std::sort(fields2.begin(), fields2.end(), [](auto& s1, auto& s2) {return sort_key(s1) < sort_key(s2);});
+
+    // construct specified_fields + fields2
+    vector<string> out_fields = specified_fields;
+
     out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
-    assert(out_fields.size() == all_fields.size());
+    assert(out_fields.size() == constantFields->size());
 
     return out_fields;
 }
-    
+
 std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
 {
     if (is_nested() or not is_atomic())
     {
+	auto [cFields, vFields] = classifyFields(samples);
+	if (not vFields.empty())
+	{
+	    std::cerr<<"varying fields =";
+	    for(auto& field: vFields)
+		std::cerr<<" "<<field;
+	    std::cerr<<"\n";
+	}
+
+	// This is a hack to pass the constant fields into the copied object.
+	constantFields = cFields;
+
 	auto log2 = *this;
 	log2.unnest();
 	log2.atomize();
@@ -393,7 +532,7 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     if (fields)
 	first_fields = *fields;
 
-    vector<string> out_fields = tsv_fields(first_fields, samples[0], nested);
+    vector<string> out_fields = tsv_fields(first_fields, samples[0], nested, constantFields);
 
     map<string,int> all_fields_map;
     for(int i=0;i<out_fields.size();i++)

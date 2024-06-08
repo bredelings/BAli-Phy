@@ -45,6 +45,9 @@ class Log
     bool nested = true;
     bool atomic = false;
     std::vector<json::object> samples;
+
+    mutable std::optional<std::set<std::string>> constantFields;
+
 public:
 
     bool is_nested() const {return nested;}
@@ -61,7 +64,7 @@ public:
 
     void drop(const std::string&);
 
-    std::ostream& dump_TSV(std::ostream& o, std::optional<bool> short_names = {}) const;
+    std::ostream& dump_TSV(std::ostream& o, std::optional<bool> short_names = true) const;
 
     Log(const json::object& header);
     Log(const json::object& header, const std::vector<json::object>& samples);
