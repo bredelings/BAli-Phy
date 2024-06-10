@@ -501,43 +501,37 @@ vector<string> tsv_fields(const vector<string>& specified_fields, const json::ob
     return out_fields;
 }
 
+// TODO: Extract generic infrastructure to get out in-memory tables.
 std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
 {
-    if (is_nested() or not is_atomic())
+    if (not short_names)
+	short_names = true;
+
+    // This seems a bit wasteful if we are already non-nested and atomic.
+    // However... does non-nested and atomic mean that the top-level fields are fixed?
+    auto [constantFields, varyingFields] = classifyFields(samples);
+
+    if (not varyingFields.empty())
     {
-	auto [cFields, vFields] = classifyFields(samples);
-	if (not vFields.empty())
-	{
-	    std::cerr<<"varying fields =";
-	    for(auto& field: vFields)
-		std::cerr<<" "<<field;
-	    std::cerr<<"\n";
-	}
-
-	// This is a hack to pass the constant fields into the copied object.
-	constantFields = cFields;
-
-	auto log2 = *this;
-	log2.unnest();
-	log2.atomize();
-	if (not short_names)
-	    short_names = true;
-	return log2.dump_TSV(o, short_names);
+	std::cerr<<"varying fields =";
+	for(auto& field: varyingFields)
+	    std::cerr<<" "<<field;
+	std::cerr<<"\n";
     }
-
-    assert(not is_nested());
-    assert(is_atomic());
 
     vector<string> first_fields;
     if (fields)
 	first_fields = *fields;
 
-    vector<string> out_fields = tsv_fields(first_fields, samples[0], nested, constantFields);
+    // Does this depend on whether the samples are first nested and/or atomized?
+    // This routine needs to be simplified in multiple ways.
+    // I think the only issue really is error handling.
+    vector<string> out_fields = tsv_fields(first_fields, MCON::atomize(MCON::unnest(samples[0]), false), nested, constantFields);
 
     map<string,int> all_fields_map;
     for(int i=0;i<out_fields.size();i++)
 	all_fields_map.insert({out_fields[i],i});
-    
+
     // Log: Writing TSV: nfields fields
 
     auto printed_fields = out_fields;
@@ -548,7 +542,7 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
 
     for(int sample_index=0;sample_index<samples.size(); sample_index++)
     {
-	auto& sample = samples[sample_index];
+	auto sample = MCON::atomize(MCON::unnest(samples[sample_index]), false);
 
 	write_tsv_line(o, get_row(all_fields_map, sample, sample_index))<<"\n";
     }
