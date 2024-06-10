@@ -427,6 +427,28 @@ vector<string> get_row(const map<string,int>& all_fields, const json::object& sa
     return row;
 }
 
+vector<json::value> get_json_row(const map<string,int>& all_fields, const json::object& sample, std::optional<int> sample_index)
+{
+    int nfields = all_fields.size();
+
+    vector<json::value> row(all_fields.size());
+    for(auto& [field,index]: all_fields)
+    {
+	if (not sample.count(field))
+	{
+	    std::cerr<<"Error: sample";
+	    if (sample_index)
+		std::cerr<<" line "<<*sample_index;
+	    std::cerr<<" is missing field '"<<field<<"'"<<std::endl;
+	    std::cerr<<"  "<<sample<<"\n";
+	    exit(1);
+	}
+	row[index] = sample.at(field);
+    }
+    assert(sample.size() >= nfields);
+    return row;
+}
+
 auto sort_key(const string& name)
 {
     vector<variant<int,string>> keylist;
@@ -491,11 +513,18 @@ vector<string> sort_fields(const vector<string>& specified_fields, const set<str
     return out_fields;
 }
 
-// TODO: Extract generic infrastructure to get out in-memory tables.
-std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
+std::vector<std::string> tsv_fields(const std::vector<std::string>& first_fields, const json::object& j, bool nested)
+{
+    auto all_fields = nested?get_keys_nested(atomize(j,true)):get_keys_non_nested(atomize(j,false));
+
+    return sort_fields(first_fields, all_fields);
+}
+
+
+vector<tuple<string,vector<json::value>>> Log::dump_json_table(std::optional<bool> short_names) const
 {
     if (not short_names)
-	short_names = true;
+        short_names = true;
 
     // This seems a bit wasteful if we are already non-nested and atomic.
     // However... does non-nested and atomic mean that the top-level fields are fixed?
@@ -503,36 +532,97 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
 
     if (not varyingFields.empty())
     {
-	std::cerr<<"varying fields =";
-	for(auto& field: varyingFields)
-	    std::cerr<<" "<<field;
-	std::cerr<<"\n";
+        std::cerr<<"varying fields =";
+        for(auto& field: varyingFields)
+            std::cerr<<" "<<field;
+        std::cerr<<"\n";
     }
+
+    const int n_fields = constantFields.size();
 
     vector<string> first_fields;
     if (fields)
-	first_fields = *fields;
+        first_fields = *fields;
 
     // PROBLEM: first_fields needs to specify the long name of the fields
     vector<string> out_fields = sort_fields(first_fields, constantFields);
 
     map<string,int> all_fields_map;
-    for(int i=0;i<out_fields.size();i++)
-	all_fields_map.insert({out_fields[i],i});
+    for(int i=0;i<n_fields;i++)
+        all_fields_map.insert({out_fields[i],i});
 
     // Log: Writing TSV: nfields fields
     auto printed_fields = out_fields;
     if (short_names and *short_names)
-	printed_fields = short_fields(printed_fields);
+        printed_fields = short_fields(printed_fields);
 
     // How about quoting?
-    write_tsv_line(o, printed_fields)<<"\n";
+    vector<tuple<string,vector<json::value>>> json_table;
+    for(int i=0;i<n_fields;i++)
+        json_table.push_back({printed_fields[i], {}});
 
     for(int sample_index=0;sample_index<samples.size(); sample_index++)
     {
-	auto sample = MCON::atomize(MCON::unnest(samples[sample_index]), false);
+        auto sample = MCON::atomize(MCON::unnest(samples[sample_index]), false);
 
-	write_tsv_line(o, get_row(all_fields_map, sample, sample_index))<<"\n";
+        auto row = get_json_row(all_fields_map, sample, sample_index);
+
+        assert(row.size() == json_table.size());
+
+        for(int i=0;i<n_fields;i++)
+            std::get<1>(json_table[i]).push_back( row[i] );
+    }
+
+    return json_table;
+}
+
+vector<tuple<string, vector<double>>> Log::dump_numeric_table(bool translate_bool, std::optional<bool> short_names) const
+{
+    auto json_table = dump_json_table(short_names);
+
+    vector<tuple<string, vector<double>>> numeric_table;
+    for(auto& [field,values]: json_table)
+    {
+        if (values[0].is_number())
+        {
+            vector<double> numeric_values;
+            for(auto& value: values)
+                numeric_values.push_back( value.to_number<double>() );
+            numeric_table.push_back({field, std::move(numeric_values) });
+        }
+
+        if (values[0].is_bool() and translate_bool)
+        {
+            vector<double> numeric_values;
+            for(auto& value: values)
+                numeric_values.push_back( value.as_bool() );
+            numeric_table.push_back({field, std::move(numeric_values) });
+        }
+    }
+
+    return numeric_table;
+}
+
+// TODO: Extract generic infrastructure to get out in-memory tables.
+std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) const
+{
+    auto json_table = dump_json_table(short_names);
+    const int n_fields = json_table.size();
+
+    vector<string> fields;
+    for(auto& [field,_]: json_table)
+        fields.push_back(field);
+
+    // How about quoting?
+    write_tsv_line(o, fields)<<"\n";
+
+    for(int sample_index=0;sample_index<samples.size(); sample_index++)
+    {
+        vector<string> row(n_fields);
+        for(int i=0;i<n_fields;i++)
+            row[i] = json::serialize(std::get<1>(json_table[i])[sample_index], {.allow_infinity_and_nan=true});
+
+        write_tsv_line(o, row)<<"\n";
     }
 
     return o;

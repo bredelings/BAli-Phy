@@ -62,6 +62,10 @@ public:
 
     void drop(const std::string&);
 
+    std::vector<std::tuple<std::string,std::vector<json::value>>> dump_json_table(std::optional<bool> short_names) const;
+
+    std::vector<std::tuple<std::string,std::vector<double>>> dump_numeric_table(bool translate_bool = true, std::optional<bool> short_names = true) const;
+
     std::ostream& dump_TSV(std::ostream& o, std::optional<bool> short_names = true) const;
 
     Log(const json::object& header);
