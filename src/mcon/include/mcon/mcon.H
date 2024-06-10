@@ -46,8 +46,6 @@ class Log
     bool atomic = false;
     std::vector<json::object> samples;
 
-    mutable std::optional<std::set<std::string>> constantFields;
-
 public:
 
     bool is_nested() const {return nested;}

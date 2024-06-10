@@ -461,33 +461,23 @@ auto sort_key(const string& name)
 // 1. Put the specified fields in front.
 // 2. Sort the remaining fields and append them.
 // 3. Only consider constant fields.
-vector<string> tsv_fields(const vector<string>& specified_fields, const json::object& j, bool nested, std::optional<set<string>> constantFields)
+vector<string> sort_fields(const vector<string>& specified_fields, const set<string>& constantFields)
 {
-    auto all_fields = nested?get_keys_nested(atomize(j,true)):get_keys_non_nested(atomize(j,false));
-
-    if (not constantFields)
-	constantFields = all_fields;
-
     set<string> specified_fields_set;
     for(auto& field: specified_fields)
 	specified_fields_set.insert(field);
 
     for(auto& specified_field: specified_fields_set)
     {
-	if (not all_fields.count(specified_field))
+	if (not constantFields.count(specified_field))
 	{
-	    std::cerr<<"Error: Header: field '"<<specified_field<<"' does not exist!\n";
-	    exit(1);
-	}
-	if (not constantFields->count(specified_field))
-	{
-	    std::cerr<<"Error: Header: field '"<<specified_field<<"' does not have a fixed structure!\n";
+	    std::cerr<<"Error: Header: field '"<<specified_field<<"' is missing or does not have a fixed structure!\n";
 	    exit(1);
 	}
     }
 
     vector<string> fields2;
-    for(auto& field: *constantFields)
+    for(auto& field: constantFields)
 	if (not specified_fields_set.contains(field))
 	    fields2.push_back(field);
     std::sort(fields2.begin(), fields2.end(), [](auto& s1, auto& s2) {return sort_key(s1) < sort_key(s2);});
@@ -496,7 +486,7 @@ vector<string> tsv_fields(const vector<string>& specified_fields, const json::ob
     vector<string> out_fields = specified_fields;
 
     out_fields.insert(out_fields.end(), fields2.begin(), fields2.end());
-    assert(out_fields.size() == constantFields->size());
+    assert(out_fields.size() == constantFields.size());
 
     return out_fields;
 }
@@ -523,21 +513,19 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     if (fields)
 	first_fields = *fields;
 
-    // Does this depend on whether the samples are first nested and/or atomized?
-    // This routine needs to be simplified in multiple ways.
-    // I think the only issue really is error handling.
-    vector<string> out_fields = tsv_fields(first_fields, MCON::atomize(MCON::unnest(samples[0]), false), nested, constantFields);
+    // PROBLEM: first_fields needs to specify the long name of the fields
+    vector<string> out_fields = sort_fields(first_fields, constantFields);
 
     map<string,int> all_fields_map;
     for(int i=0;i<out_fields.size();i++)
 	all_fields_map.insert({out_fields[i],i});
 
     // Log: Writing TSV: nfields fields
-
     auto printed_fields = out_fields;
     if (short_names and *short_names)
 	printed_fields = short_fields(printed_fields);
 
+    // How about quoting?
     write_tsv_line(o, printed_fields)<<"\n";
 
     for(int sample_index=0;sample_index<samples.size(); sample_index++)
