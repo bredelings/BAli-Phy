@@ -642,7 +642,7 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
 	}
 	json::object j;
 	for(int i=0;i<nfields;i++)
-	    j[tsv_fields[i]] = json::parse(fields[i], {}, {.allow_infinity_and_nan = true}).as_object();
+	    j[tsv_fields[i]] = json::parse(fields[i], {}, {.allow_infinity_and_nan = true});
 	samples.push_back(j);
     }
     while(getline(input, line))
