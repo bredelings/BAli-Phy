@@ -39,6 +39,10 @@ std::vector<std::string> tsv_fields(const std::vector<std::string>& first_fields
 
 std::vector<std::string> get_row(const std::map<std::string,int>& all_fields, const json::object& sample, std::optional<int> sample_index={});
 
+json::object parse(const std::string&);
+
+std::string serialize(const json::value&);
+
 class Log
 {
     std::optional<std::vector<std::string>> fields;

@@ -421,7 +421,7 @@ vector<string> get_row(const map<string,int>& all_fields, const json::object& sa
 	    std::cerr<<"  "<<sample<<"\n";
 	    exit(1);
 	}
-	row[index] = json::serialize(sample.at(field),{.allow_infinity_and_nan=true});
+	row[index] = MCON::serialize(sample.at(field));
     }
     assert(sample.size() >= nfields);
     return row;
@@ -620,7 +620,7 @@ std::ostream& Log::dump_TSV(std::ostream& o, std::optional<bool> short_names) co
     {
         vector<string> row(n_fields);
         for(int i=0;i<n_fields;i++)
-            row[i] = json::serialize(std::get<1>(json_table[i])[sample_index], {.allow_infinity_and_nan=true});
+            row[i] = MCON::serialize(std::get<1>(json_table[i])[sample_index]);
 
         write_tsv_line(o, row)<<"\n";
     }
@@ -664,7 +664,7 @@ std::tuple<std::optional<string>,string> detect_format(std::istream& instream)
 
     try
     {
-	auto header = json::parse(firstline, {}, {.allow_infinity_and_nan = true}).as_object();
+	auto header = parse(firstline);
 	if (header.count("format") and header.at("format") == "MCON" and header.count("version"))
 	    return {"MCON",firstline};
 	else
@@ -679,12 +679,12 @@ std::tuple<std::optional<string>,string> detect_format(std::istream& instream)
 
 MCON::Log read_MCON(const string& firstline, std::istream& input)
 {
-    json::object header = json::parse(firstline, {}, {.allow_infinity_and_nan = true}).as_object();
+    json::object header = parse(firstline);
     vector<json::object> samples;
 
     string line;
     while(getline(input,line))
-	samples.push_back(json::parse(line, {}, {.allow_infinity_and_nan = true}).as_object());
+	samples.push_back( parse(line) );
     return MCON::Log(header, std::move(samples));
 }
 
@@ -720,7 +720,7 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
 	}
 	json::object j;
 	for(int i=0;i<nfields;i++)
-	    j[tsv_fields[i]] = json::parse(fields[i], {}, {.allow_infinity_and_nan = true});
+	    j[tsv_fields[i]] = parse(fields[i]);
 	samples.push_back(j);
     }
     while(getline(input, line))
@@ -746,6 +746,17 @@ MCON::Log read_logfile(std::istream& input, const fs::path& filename)
     else
 	std::cerr<<"Unknown format '"<<*format<<"'for file "<<filename;
     exit(1);
+}
+
+json::object parse(const std::string& line)
+{
+    return json::parse(line, {}, {.allow_infinity_and_nan = true}).as_object();
+}
+
+
+std::string serialize(const json::value& j)
+{
+    return json::serialize(j, {.allow_infinity_and_nan=true});
 }
 
 }
