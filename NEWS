@@ -1,3 +1,14 @@
+* 4.0-beta14 (unreleased)
+- Features
+  + Allow inferring the number of bins under the Rates.free and M3 models.
+  - Sort rates under Rates.free to make them identifiable.
+  - Sort omegas under M3 to make them identifiable.
+  - Allow specifying a discrete distribution as a map of {value: prob, value: prob, etc.}
+  - New distribution `dirichlet_mixture` to make variable-dimension mixtures easier.
+- Bug fixes:
+  + Infer the character state for N in leaf sequences with a fixed alignment.
+  + bp-analyze should not fail when variables have random dimension.
+
 * 4.0-beta13 (May 25, 2024)
 - Bug Fixes:
   + Fix typo in the bp-analyze script!
