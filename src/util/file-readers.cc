@@ -8,6 +8,12 @@ using std::string;
 // See tools/read-trees.{H,cc}
 // See alignment/load.{H,cc}
 
+std::istream& operator>>(std::istream& is, CompleteLine& cl)
+{
+    portable_getline(is, cl.completeLine);
+    return is;
+}
+
 void line_reader::next()
 {
     if (not done())

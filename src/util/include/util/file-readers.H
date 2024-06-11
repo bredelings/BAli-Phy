@@ -16,6 +16,15 @@
 
 #include "range/v3/all.hpp"
 
+struct CompleteLine {    // Line Proxy for the input Iterator
+    friend std::istream& operator>>(std::istream& is, CompleteLine& cl);
+    operator std::string() const { return completeLine; }  // cast operator
+    std::string completeLine;
+};
+
+inline auto lines(std::istream& input) {return ranges::istream<CompleteLine>(input);}
+
+
 // See "tools/read-trees.H" - it implements almost the same interface on either Tree or RootedTree.
 // See "alignment/load.H" - it implements alignment loading with better error handling.
 
