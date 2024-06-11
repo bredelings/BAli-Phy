@@ -161,6 +161,9 @@ Table<T>::Table(std::istream& file, int skip, int subsample, int last, const std
     load_file(file,skip,subsample,last,ignore,select);
 }
 
+template <>
+Table<double>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select);
+
 /// Load and store a table of doubles with named columns
 typedef Table<double> stats_table;
 

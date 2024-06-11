@@ -55,9 +55,10 @@ libcommon_sources = [
 
 
 libcommon = static_library('common',
-			   libcommon_sources,
-			   include_directories: libutil_inc,
-			   dependencies: [boost, eigen, librange])
+                           libcommon_sources,
+                           include_directories: [libutil_inc, libmcon_inc],
+                           dependencies: [boost, eigen, librange],
+                           link_with: libmcon)
 
 subdir('computation')
 

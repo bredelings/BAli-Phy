@@ -24,7 +24,9 @@
 #include "util/io.H"
 #include "util/string/split.H"
 #include "util/string/convert.H"
+#include "util/file-readers.H"
 #include "models/path.H"
+#include "mcon/mcon.H"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -445,3 +447,35 @@ json::object unnest_json(const json::object&& j_in)
     return j_out;
 }
 
+template <>
+Table<double>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
+{
+    using namespace ranges::view;
+    bool is_json = (file.peek() == '{');
+
+    // FIXME: check if JSON by trying to parse the header line.
+    // FIXME: implement "ignore" and "select" for json by constructing a list of fields to keep.
+    // FIXME: how can we write out "field: string" or "field: varying" for fields that we don't analyze?
+
+    if (is_json)
+    {
+        // Get the header
+        std::string header_line;
+        portable_getline(file, header_line);
+        auto header = MCON::parse(header_line);
+
+        // Get the samples
+        if (last < 0) last = INT_MAX;
+        auto samples = lines(file) | take(last) | drop(skip) | stride(subsample) | ranges::view::transform(MCON::parse) | ranges::to<vector>();
+
+        auto table = MCON::Log(header, samples).dump_numeric_table();
+
+        for(auto& [field, values]: table)
+        {
+            names_.push_back(field);
+            data_.push_back( std::move(values) );
+        }
+    }
+    else
+        load_file(file,skip,subsample,last,ignore,select);
+}
