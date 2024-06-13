@@ -46,6 +46,8 @@ struct Var: public Object
 
     Var(const std::string& s):name(s) {}
     Var(const std::string& s, const ::Type& t):name(s),type(t) {}
+
+    Var() = default;
 };
 
 typedef Located<Var> LVar;

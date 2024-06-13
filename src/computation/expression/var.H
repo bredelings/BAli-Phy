@@ -69,6 +69,8 @@ struct var: public Object, public occurrence_info
     var(int i):index(i) {}
     explicit var(const std::string& s):var(s,0) {}
     var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
+
+    var():index(0) {}
 };
 
 expression_ref wildcard();
