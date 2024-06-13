@@ -480,7 +480,7 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
 
 Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
-    if (wanteds.empty()) return {{}, {}};
+    if (wanteds.empty()) return {};
 
     for(auto& wanted: wanteds)
     {
