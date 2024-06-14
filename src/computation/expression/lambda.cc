@@ -1,6 +1,5 @@
 #include "lambda.H"
 #include "var.H"
-#include "operator.H"
 
 #include "range/v3/all.hpp"
 namespace views = ranges::views;
@@ -72,7 +71,6 @@ expression_ref lambda_n(const Object& O, int n)
 }
 
 
-expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int var_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
 

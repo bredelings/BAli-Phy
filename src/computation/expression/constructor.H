@@ -3,7 +3,6 @@
 
 #include <string>
 #include "computation/object.H"
-#include "operator.H"
 #include "expression_ref.H"
 
 struct constructor: public Object
@@ -17,11 +16,8 @@ struct constructor: public Object
 
     int n_args() const {return n_args_;}
 
-    assoc_type assoc;
-
     int prec;
 
-    assoc_type associativity() const {return assoc;}
     virtual int precedence() const {return prec;}
 
     std::string name() const {return f_name;}
@@ -32,10 +28,6 @@ struct constructor: public Object
 
     constructor(const std::string&, int n);
 };
-
-constructor left_assoc_constructor(const std::string& s,int prec=0);
-
-constructor right_assoc_constructor(const std::string& s,int prec=0);
 
 bool has_constructor(const expression_ref&, const std::string&);
 

@@ -1083,12 +1083,6 @@ CDecls rename_top_level(const CDecls& decls, const string& module_name)
     return decls2;
 }
 
-expression_ref func_type(const expression_ref& a, const expression_ref& b)
-{
-    expression_ref Arrow = right_assoc_constructor("->",1);
-    return Arrow+a+b;
-}
-
 vector<expression_ref> peel_lambdas(expression_ref& E)
 {
     vector<expression_ref> args;
@@ -1307,7 +1301,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     {
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
-        U = lambda_n( right_assoc_constructor(":",2), 2 );
+        U = lambda_n( constructor(":",2), 2 );
     }
     else if (is_tuple_name(name))
     {

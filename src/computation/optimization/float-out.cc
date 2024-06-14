@@ -10,7 +10,6 @@
 #include "computation/expression/apply.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/case.H"
-#include "computation/expression/operator.H"
 #include "computation/operation.H"
 #include "computation/module.H"
 #include "util/set.H"

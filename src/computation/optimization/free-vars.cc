@@ -4,7 +4,6 @@
 #include "computation/expression/let.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
-#include "computation/expression/operator.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/apply.H"
 #include "computation/operation.H"                // for is_non_apply_op_exp( )
