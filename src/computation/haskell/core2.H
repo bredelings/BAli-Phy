@@ -477,7 +477,7 @@ namespace Core2
 	std::vector<std::string> decls;
 	for(auto& decl: *this)
 	    decls.push_back(decl.print());
-	return "{"+join(decls,";")+"}";
+	return "{"+join(decls,"; ")+"}";
     }
 
     template <typename NoteV, typename NoteE>
