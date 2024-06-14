@@ -298,7 +298,14 @@ public:
     void inflate(const Program& P);
 
     template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& ar) const
+    {
+	ar( modid, dependencies_, /*value_decls, */ symbols, types, exported_symbols_, exported_types_ );
+	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_ );
+    }
+
+    template <class Archive>
+    void load(Archive& ar)
     {
 	ar( modid, dependencies_, /*value_decls, */ symbols, types, exported_symbols_, exported_types_ );
 	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_ );
