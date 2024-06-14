@@ -82,6 +82,11 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
     {
 	Core2::ConPat<> con_app;
 	con_app.head = P.head().as_<constructor>().f_name;
+
+	// The arity on the constructor head must match the number of arguments.
+	// We use the constructor arity to infer the number of pattern variables in indexified form.
+	assert(P.head().as_<constructor>().n_args() == P.size());
+
 	for(int i=0;i<P.size();i++)
 	{
 	    if (not is_var(P.sub()[i]))
