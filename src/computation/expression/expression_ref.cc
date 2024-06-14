@@ -205,13 +205,13 @@ string expression::print() const
     }
 
     // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.
-    if (head.is_a<Operator>())
+    if (head.is_a<constructor>())
     {
-        auto& O = head.as_<Operator>();
-	if (O.name() == ":" and size() == 2)
-	{
-	    return print_list(*this);
-	}
+        auto& c = head.as_<constructor>();
+        if (c.f_name == ":" and size() == 2)
+        {
+            return print_list(*this);
+        }
     }
 
     // Print the (unparenthesized) sub-expressions
@@ -226,9 +226,9 @@ string expression::print() const
         // Maybe do blocks should have more visible structure?
 	if (not sub[i-1].size() and not sub[i-1].is_a<do_block>()) continue;
 
-	if (sub[i-1].head().is_a<Operator>())
+	if (sub[i-1].head().is_a<constructor>())
 	{
-	    auto& O = sub[i-1].head().as_<Operator>();
+	    auto& O = sub[i-1].head().as_<constructor>();
 
 	    // Don't parenthesize tuple arguments.
 	    if (is_tuple_name(O.name()) and sub[i-1].size() == O.n_args()) continue;
@@ -239,54 +239,34 @@ string expression::print() const
 
 	pargs[i] = "(" + args[i] + ")";
     }
-  
-    if (head.is_a<Operator>())
+
+    if (head.is_a<Apply>())
     {
-	auto& O = head.as_<Operator>();
+	// Don't print @ f x y, just print f x y
+	pargs.erase(pargs.begin());
+
+	if (is_infix_expression(*this))
+	{
+	    // Don't parenthesize the operator!
+	    pargs[0] = sub[0].as_<var>().name;
+
+	    if (is_apply_exp(sub[1]) and not is_infix_expression(sub[1]))
+		pargs[1] = args[2];
+
+	    if (is_apply_exp(sub[2]) and not is_infix_expression(sub[2]))
+		pargs[2] = args[3];
+
+	    std::swap(pargs[0],pargs[1]);
+	}
+
+	return join(pargs, " ");
+    }
+    else if (head.is_a<constructor>())
+    {
+	auto& O = head.as_<constructor>();
 
 	string O_name = O.name();
-	if (head.is_a<Apply>())
-	{
-            // Don't print @ f x y, just print f x y
-	    pargs.erase(pargs.begin());
-
-            if (is_infix_expression(*this))
-            {
-                // Don't parenthesize the operator!
-                pargs[0] = sub[0].as_<var>().name;
-
-                if (is_apply_exp(sub[1]) and not is_infix_expression(sub[1]))
-                    pargs[1] = args[2];
-
-                if (is_apply_exp(sub[2]) and not is_infix_expression(sub[2]))
-                    pargs[2] = args[3];
-
-                std::swap(pargs[0],pargs[1]);
-            }
-
-	    return O.print_expression( pargs );
-	}
-	else if (O.precedence() > -1 and size() == 2)
-	{
-	    if (sub[0].size())
-	    {
-		if (sub[0].head() == O and O.associativity()==assoc_left)
-		    pargs[1] = args[1];
-		else if (sub[0].head().is_a<Operator>())
-		    if (sub[0].head().as_<Operator>().precedence() > O.precedence())
-			pargs[1] = args[1];
-	    }
-	    if (sub[1].size())
-	    {
-		if (sub[1].head() == O and O.associativity()==assoc_right)
-		    pargs[2] = args[2];
-		else if (sub[1].head().is_a<Operator>())
-		    if (sub[1].head().as_<Operator>().precedence() > O.precedence())
-			pargs[2] = args[2];
-	    }
-	    return pargs[1] + O_name + pargs[2];
-	}
-	else if (is_tuple_name(O.name()) and size() == O.n_args())
+	if (is_tuple_name(O.name()) and size() == O.n_args())
 	{
 	    // Should Tuple's parenthesis sub-expressions?
 	    vector<string> sub_names;
@@ -295,10 +275,10 @@ string expression::print() const
 	    return "(" + join(sub_names,", ") + ")";
 	}
       
-	return O.print_expression( pargs );
+	return join(pargs, " ");
     }
 
-    return print_operator_expression( pargs );
+    return join(pargs, " ");
 }
 
 bool expression::operator==(const expression& E) const
