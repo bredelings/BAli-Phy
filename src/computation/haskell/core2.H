@@ -8,6 +8,7 @@
 #include "util/string/join.H"
 #include "util/math/log-double.H"
 #include "computation/haskell/ids.H"
+#include "computation/haskell/Integer.H"
 
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
@@ -394,7 +395,7 @@ namespace Core2
 
     struct Constant
     {
-	std::variant<char,int,double,std::string> value;
+	std::variant<char,int,integer_container,std::string> value;
 
 	std::string print() const;
 
@@ -562,8 +563,8 @@ namespace Core2
 	    return (std::string("'") + std::get<char>(value) + "'");
 	else if (std::holds_alternative<int>(value))
 	    return std::to_string(std::get<int>(value));
-	else if (std::holds_alternative<double>(value))
-	    return std::to_string(std::get<double>(value));
+	else if (std::holds_alternative<integer_container>(value))
+	    return std::get<integer_container>(value).i.str();
 	else if (std::holds_alternative<std::string>(value))
 	    return (std::string("\"") + std::get<std::string>(value) + "\"");
 	else

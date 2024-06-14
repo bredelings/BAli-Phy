@@ -17,4 +17,30 @@ inline std::string Box<integer>::print() const
     return str();
 }
 
+
+struct integer_container
+{
+    integer i;
+    operator integer() {return i;}
+
+    integer_container() = default;
+    integer_container(const integer& ii):i(ii) {}
+
+    template <class Archive>
+    void load(Archive& ar)
+    {
+	std::string s;
+	ar(s);
+	integer ii(s);
+	i = ii;
+    }
+
+    template <class Archive>
+    void save(Archive& ar) const
+    {
+	std::string s = i.str();
+	ar(s);
+    }
+};
+
 #endif

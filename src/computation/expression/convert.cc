@@ -139,8 +139,7 @@ Core2::Constant to_core_constant(const expression_ref& E)
     {
 	if (auto s = E.to<Box<std::string>>()) 	return {*s};
 
-	if (auto i = E.to<Integer>())
-	    throw myexception()<<"to_core_constant: found Integer "<<E;
+	if (auto i = E.to<Integer>()) return { integer_container(*i) };
 
 	throw myexception()<<"to_core_constant: found object "<<E;
     }
