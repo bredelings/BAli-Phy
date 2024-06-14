@@ -202,7 +202,7 @@ module_loader::module_loader(const optional<fs::path>& cp, const vector<fs::path
 
 #include <dlfcn.h>
 
-expression_ref load_builtin_(const fs::path& filename, const string& symbol_name, int n, const string& fname)
+operation_fn load_builtin_(const fs::path& filename, const string& symbol_name, int n, const string& fname)
 {
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
@@ -214,23 +214,25 @@ expression_ref load_builtin_(const fs::path& filename, const string& symbol_name
 
     // reset errors
     dlerror();
-    
+
     // load the symbols
     void* fn =  dlsym(library, symbol_name.c_str());
     const char* dlsym_error = dlerror();
     if (dlsym_error)
 	throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file "<<filename<<": " << dlsym_error;
-    
-    // Create the operation
-    Operation O(n, (operation_fn)fn, fname);
 
-    // Create the function body from it.
-    return lambda_n(O, n);
+    return (operation_fn)fn;
 }
 
 expression_ref load_builtin(const string& symbol_name, const fs::path& filename, int n, const string& function_name)
 {
-    return load_builtin_(filename, symbol_name, n, function_name);
+    auto fn = load_builtin_(filename, symbol_name, n, function_name);
+
+    // Create the operation
+    Operation O(n, (operation_fn)fn, function_name);
+
+    // Create the function body from it.
+    return lambda_n(O, n);
 }
 
 fs::path module_loader::find_plugin(const string& plugin_name) const
