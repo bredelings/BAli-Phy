@@ -246,7 +246,7 @@ expression_ref to_expression_ref(const Core2::Pattern<>& P)
     else if (auto c = to<Core2::ConPat<>>(P))
     {
 	auto args = c->args | ranges::views::transform( var_to_expression_ref ) | ranges::to<vector>();
-	return expression_ref(constructor(c->head,-1),args);
+	return expression_ref(constructor(c->head, args.size()), args);
     }
     else
 	std::abort();
