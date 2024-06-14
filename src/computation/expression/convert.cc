@@ -155,10 +155,10 @@ Core2::BuiltinOp<> to_core_builtin_op(const expression_ref& E)
     assert(delim != std::string::npos);
     string libname = name.substr(0,delim);
     string funcname = name.substr(delim+1);
-    Core2::BuiltinOp<> builtin_op;
     assert(not libname.empty());
     assert(not funcname.empty());
-    builtin_op.op = {libname, funcname};
+
+    Core2::BuiltinOp<> builtin_op{libname, funcname};
     for(int i=0;i<E.size();i++)
     {
 	auto& arg = E.sub()[i];

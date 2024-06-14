@@ -381,7 +381,8 @@ namespace Core2
     template <typename NoteV = std::monostate>
     struct BuiltinOp
     {
-	std::tuple<std::string, std::string> op;
+	std::string lib_name;
+	std::string func_name;
 	std::vector<Var<NoteV>> args;
 
 	std::string print() const;
@@ -389,7 +390,7 @@ namespace Core2
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-	    ar(op, args);
+	    ar(lib_name, func_name, args);
 	}
     };
 
@@ -551,7 +552,7 @@ namespace Core2
     std::string BuiltinOp<NoteV>::print() const
     {
 	std::vector<std::string> words;
-	words.push_back(std::get<0>(op) + ":" + std::get<1>(op));
+	words.push_back(lib_name + ":" + func_name);
 	for(auto& v: args)
 	    words.push_back(v.print());
 	return join(words," ");
