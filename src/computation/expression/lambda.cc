@@ -52,11 +52,8 @@ expression_ref lambda_quantify(const std::vector<var>& vars, const expression_re
     return L;
 }
 
-expression_ref lambda_expression(const Operator& O)
+expression_ref lambda_n(const Object& O, int n)
 {
-    int n = O.n_args();
-    assert(n != -1);
-  
     expression_ref R;
     if (n == 0)
 	R = expression_ref(O.clone());
@@ -73,6 +70,7 @@ expression_ref lambda_expression(const Operator& O)
   
     return R;
 }
+
 
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int var_index, const expression_ref& E);

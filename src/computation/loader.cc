@@ -225,7 +225,7 @@ expression_ref load_builtin_(const fs::path& filename, const string& symbol_name
     Operation O(n, (operation_fn)fn, fname);
 
     // Create the function body from it.
-    return lambda_expression(O);
+    return lambda_n(O, n);
 }
 
 expression_ref load_builtin(const string& symbol_name, const fs::path& filename, int n, const string& function_name)

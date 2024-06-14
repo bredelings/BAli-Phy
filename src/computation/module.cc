@@ -1257,7 +1257,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                 assert(info);
                 int arity = info->dict_arity() + info->arity();
 
-                expression_ref body = lambda_expression( constructor(cname, arity) );
+                expression_ref body = lambda_n( constructor(cname, arity), arity );
                 cdecls.push_back( { var(cname) , body} );
             }
         }
@@ -1271,7 +1271,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                     assert(info);
                     int arity = info->dict_arity() + info->arity();
 
-                    expression_ref body = lambda_expression( constructor(cname, arity) );
+                    expression_ref body = lambda_n( constructor(cname, arity), arity );
                     cdecls.push_back( { var(cname) , body} );
                 }
         }
@@ -1307,13 +1307,13 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     {
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
-        U = lambda_expression( right_assoc_constructor(":",2) );
+        U = lambda_n( right_assoc_constructor(":",2), 2 );
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
-        U = lambda_expression( tuple_head(arity) );
+        U = lambda_n( tuple_head(arity), arity );
     }
     else
         throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";

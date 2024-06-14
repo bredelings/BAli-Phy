@@ -8,13 +8,12 @@
 
 class OperationArgs;
 
-#include "expression/operator.H"
 #include "closure.H"
 #include "type_constant.H"
 
 typedef closure (*operation_fn)(OperationArgs&);
 
-struct Operation: public Operator
+struct Operation: public Object
 {
     int n_args_;
 

@@ -6,7 +6,7 @@
 #include "operator.H"
 #include "expression_ref.H"
 
-struct constructor: public Operator
+struct constructor: public Object
 {
     constructor* clone() const {return new constructor(*this);}
 
@@ -25,6 +25,8 @@ struct constructor: public Operator
     virtual int precedence() const {return prec;}
 
     std::string name() const {return f_name;}
+
+    std::string print() const {return f_name;}
 
     type_constant type() const {return constructor_type;}
 

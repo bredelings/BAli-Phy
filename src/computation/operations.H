@@ -23,8 +23,6 @@ struct Apply: public Operation
 
     type_constant type() const {return apply_type;}
 
-    assoc_type associativity() const {return assoc_left;}
-
     Apply():Operation(-1,apply_op,"@") {}
 };
 

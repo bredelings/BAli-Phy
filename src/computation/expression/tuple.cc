@@ -31,7 +31,7 @@ constructor tuple_head(int n)
 expression_ref Tuple(int n)
 {
     assert(n >= 0);
-    return lambda_expression( tuple_head(n) );
+    return lambda_n( tuple_head(n), n );
 }
 
 expression_ref fst  = var("Data.Tuple.fst");

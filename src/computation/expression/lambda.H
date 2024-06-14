@@ -5,8 +5,6 @@
 #include "expression_ref.H"
 #include "var.H"
 
-struct Operator;
-
 struct lambda: public Object
 {
     lambda* clone() const {return new lambda(*this);}
@@ -24,7 +22,7 @@ struct lambda2: public Object
     std::string print() const;
 };
 
-expression_ref lambda_expression(const Operator& O);
+expression_ref lambda_n(const Object& O, int n);
 expression_ref lambda_quantify(int var_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
 expression_ref lambda_quantify(const std::vector<expression_ref>& var, const expression_ref& E);
