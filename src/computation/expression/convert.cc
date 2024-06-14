@@ -5,6 +5,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
+#include "computation/haskell/Integer.H"
 
 using std::set;
 using std::vector;
@@ -27,7 +28,7 @@ Core2::Lambda<> to_core_lambda(expression_ref L)
 	L = L.sub()[1];
     }
     assert(not vars.empty());
-    return Core2::Lambda<>(std::move(vars), to_core_exp(L));
+    return Core2::Lambda<>{std::move(vars), to_core_exp(L)};
 }
 
 Core2::Decls<> to_core(const CDecls& decls)
@@ -72,7 +73,7 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
     if (auto v = P.to<var>())
     {
 	if (v->is_wildcard()) return Core2::WildcardPat();
-	else return Core2::VarPat{to_core(*v)};
+	else return Core2::VarPat<>{to_core(*v)};
     }
     else
     {
@@ -137,6 +138,9 @@ Core2::Constant to_core_constant(const expression_ref& E)
     else if (E.is_object_type())
     {
 	if (auto s = E.to<Box<std::string>>()) 	return {*s};
+
+	if (auto i = E.to<Integer>())
+	    throw myexception()<<"to_core_constant: found Integer "<<E;
 
 	throw myexception()<<"to_core_constant: found object "<<E;
     }
