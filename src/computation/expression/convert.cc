@@ -6,6 +6,9 @@
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "computation/haskell/Integer.H"
+#include "util/variant.H"
+
+#include <range/v3/all.hpp>
 
 using std::set;
 using std::vector;
@@ -158,7 +161,7 @@ Core2::BuiltinOp<> to_core_builtin_op(const expression_ref& E)
     assert(not libname.empty());
     assert(not funcname.empty());
 
-    Core2::BuiltinOp<> builtin_op{libname, funcname};
+    Core2::BuiltinOp<> builtin_op{libname, funcname, {}};
     for(int i=0;i<E.size();i++)
     {
 	auto& arg = E.sub()[i];
@@ -194,24 +197,128 @@ Core2::Exp<> to_core_exp(const expression_ref& E)
 
 //----------------------------------------------------------------------//
 
-var to_expression_ref(const Core2::Var<>& V)
+var to_var(const Core2::Var<>& V)
 {
     return var(V.name, V.index);
+}
+
+expression_ref var_to_expression_ref(const Core2::Var<>& V)
+{
+    return to_var(V);
+}
+
+expression_ref to_expression_ref(const Core2::Lambda<>& L)
+{
+    vector<var> vars = L.vars | ranges::views::transform( to_var ) | ranges::to<vector>();
+
+    auto body = to_expression_ref(L.body);
+
+    return lambda_quantify(vars, body);
+}
+
+expression_ref to_expression_ref(const Core2::Apply<>& A)
+{
+    vector<expression_ref> args = A.args | ranges::views::transform( var_to_expression_ref ) | ranges::to<vector>();
+    return apply_expression(to_expression_ref(A.head), args);
 }
 
 CDecls to_expression_ref(const Core2::Decls<>& decls)
 {
     CDecls decls2;
     for(auto& [x,E]: decls)
-    {
-	decls2.push_back(std::pair<var,expression_ref>(to_expression_ref(x), to_expression_ref(E)));
-    }
-
+	decls2.push_back({to_var(x),to_expression_ref(E)});
     return decls2;
 }
+
+expression_ref to_expression_ref(const Core2::Let<>& L)
+{
+    auto decls = to_expression_ref(L.decls);
+    auto body = to_expression_ref(L.body);
+    return let_expression(decls, body);
+}
+
+expression_ref to_expression_ref(const Core2::Pattern<>& P)
+{
+    if (to<Core2::WildcardPat>(P))
+	return var(-1);
+    else if (auto v = to<Core2::VarPat<>>(P))
+	return to_var(v->var);
+    else if (auto c = to<Core2::ConPat<>>(P))
+    {
+	auto args = c->args | ranges::views::transform( var_to_expression_ref ) | ranges::to<vector>();
+	return expression_ref(constructor(c->head,-1),args);
+    }
+    else
+	std::abort();
+}
+
+Core::Alts to_expression_ref(const Core2::Alts<>& A)
+{
+    Core::Alts alts;
+    for(auto [pat,body]: A)
+	alts.push_back({to_expression_ref(pat), to_expression_ref(body)});
+    return alts;
+}
+
+expression_ref to_expression_ref(const Core2::Case<>& C)
+{
+    auto object = to_expression_ref(C.object);
+    auto alts = to_expression_ref(C.alts);
+    return make_case_expression(object, alts);
+}
+
+expression_ref to_expression_ref(const Core2::ConApp<>& C)
+{
+    vector<expression_ref> vars;
+    for(auto& v: C.args)
+	vars.push_back( to_var(v) );
+    return expression_ref(constructor(C.head,-1),vars);
+}
+
+// How can we do this?
+expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
+{
+    Operation O(0,nullptr,B.lib_name+":"+B.func_name);
+
+    vector<expression_ref> vars;
+    for(auto& v: B.args)
+	vars.push_back( to_var(v) );
+    return expression_ref(O, vars);
+}
+
+expression_ref to_expression_ref(const Core2::Constant& C)
+{
+    if (auto c = to<char>(C.value))
+	return *c;
+    else if (auto i = to<int>(C.value))
+	return *i;
+    else if (auto i = to<integer_container>(C.value))
+	return Integer(i->i);
+    else if (auto s = to<std::string>(C.value))
+	return String(*s);
+    else
+	std::abort();
+}
+
 expression_ref to_expression_ref(const Core2::Exp<>& E)
 {
-    E.print();
-    return {};
+    if (auto v = E.to_var())
+	return to_var(*v);
+    else if (auto l = E.to_lambda())
+	return to_expression_ref(*l);
+    else if (auto a = E.to_apply())
+	return to_expression_ref(*a);
+    else if (auto l = E.to_let())
+	return to_expression_ref(*l);
+    else if (auto c = E.to_case())
+	return to_expression_ref(*c);
+    else if (auto c = E.to_conApp())
+	return to_expression_ref(*c);
+    else if (auto b = E.to_builtinOp())
+	return to_expression_ref(*b);
+    else if (auto c = E.to_constant())
+	return to_expression_ref(*c);
+
+    std::abort();
 }
 
