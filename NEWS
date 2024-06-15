@@ -1,6 +1,7 @@
 * 4.0-beta14 (unreleased)
 - Features
   + Allow inferring the number of bins under the Rates.free and M3 models.
+  + Make startup faster by saving compiled modules.
   - Sort rates under Rates.free to make them identifiable.
   - Sort omegas under M3 to make them identifiable.
   - Allow specifying a discrete distribution as a map of {value: prob, value: prob, etc.}
