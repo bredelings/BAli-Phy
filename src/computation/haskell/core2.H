@@ -506,6 +506,16 @@ namespace Core2
 	words.push_back(head);
 	for(auto& v: args)
 	    words.push_back(v.print());
+
+	if (words.size() == 3 and words[0].starts_with(":"))
+	    return words[1]+words[0]+words[2];
+
+	if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
+	{
+	    words.erase(words.begin());
+	    return "("+join(words,", ")+")";
+	}
+
 	return join(words," ");
     }
 
@@ -553,6 +563,16 @@ namespace Core2
 	words.push_back(head);
 	for(auto& v: args)
 	    words.push_back(v.print());
+
+	if (words.size() == 3 and words[0].starts_with(":"))
+	    return words[1]+words[0]+words[2];
+
+	if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
+	{
+	    words.erase(words.begin());
+	    return "("+join(words,", ")+")";
+	}
+
 	return join(words," ");
     }
 
