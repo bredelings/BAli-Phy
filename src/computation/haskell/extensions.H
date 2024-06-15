@@ -83,7 +83,7 @@ struct LanguageExtensions
 {
     std::map<std::string, std::string> already_set;
 
-    boost::dynamic_bitset<> extension_bits;
+    std::vector<bool> extension_bits;
 
     bool has_extension(LangExt) const;
     void set_extension(LangExt, bool value=true);
@@ -93,7 +93,7 @@ struct LanguageExtensions
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(already_set); //, extension_bits);
+	ar(already_set, extension_bits);
     }
 
     LanguageExtensions();

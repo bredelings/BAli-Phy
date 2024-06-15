@@ -129,13 +129,13 @@ set<LangExt> default_extensions =
 
 bool LanguageExtensions::has_extension(LangExt opt) const
 {
-    return extension_bits.test(int(opt));
+    return extension_bits[int(opt)];
 }
 
 
 void LanguageExtensions::set_extension(LangExt opt, bool value)
 {
-    extension_bits.set(int(opt), value);
+    extension_bits[int(opt)] = value;
 }
 
 optional<Note> LanguageExtensions::set_option(const string& opt)
