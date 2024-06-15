@@ -38,7 +38,9 @@ public:
     std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
     std::shared_ptr<Module> load_module(const std::string&) const;
 
-    expression_ref load_builtin(const std::string& symbol_name, const std::string& plugin_name, int n) const;
+    Operation load_builtin_op(const std::string& lib_name, const std::string& func_name) const;
+
+    expression_ref load_builtin(const std::string& lib_name, const std::string& func_name, int n) const;
 
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };

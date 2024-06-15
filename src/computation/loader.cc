@@ -231,7 +231,7 @@ operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_na
     return (operation_fn)fn;
 }
 
-expression_ref module_loader::load_builtin(const string& symbol_name, const string& plugin_name, int n) const
+Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name, int n) const
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
@@ -242,11 +242,16 @@ expression_ref module_loader::load_builtin(const string& symbol_name, const stri
 
     auto fn = cached_builtins.at(op);
 
+    // Create the operation
+    return Operation( (operation_fn)fn, plugin_name + ":" + symbol_name );
+}
+
+expression_ref module_loader::load_builtin(const string& plugin_name, const string& symbol_name, int n) const
+{
+    auto O = load_builtin_op(plugin_name, symbol_name);
+
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
-
-    // Create the operation
-    Operation O((operation_fn)fn, plugin_name + ":" + symbol_name);
 
     // Create the function body from it.
     return lambda_n(O, n);

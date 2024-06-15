@@ -1181,7 +1181,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
 expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
-    return L.load_builtin(B.symbol_name, B.plugin_name, n_args);
+    return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
 }
 
 CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
