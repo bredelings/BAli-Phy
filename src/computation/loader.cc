@@ -200,10 +200,19 @@ module_loader::module_loader(const optional<fs::path>& cp, const vector<fs::path
 	try_add_plugin_path(path.string());
 }
 
+fs::path module_loader::find_plugin(const string& plugin_name) const
+{
+    return find_file_in_path(plugins_path, plugin_name + plugin_extension);
+}
+
 #include <dlfcn.h>
 
-operation_fn load_builtin_(const fs::path& filename, const string& symbol_name, int n, const string& fname)
+operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_name, int n)
 {
+    const string builtin_prefix = "builtin_function_";
+
+    string symbol_name = builtin_prefix + raw_symbol_name;
+
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
@@ -219,14 +228,14 @@ operation_fn load_builtin_(const fs::path& filename, const string& symbol_name, 
     void* fn =  dlsym(library, symbol_name.c_str());
     const char* dlsym_error = dlerror();
     if (dlsym_error)
-	throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file "<<filename<<": " << dlsym_error;
+	throw myexception() << "Cannot load symbol for builtin '"<<raw_symbol_name<<"' from file "<<filename<<": " << dlsym_error;
 
     return (operation_fn)fn;
 }
 
 expression_ref load_builtin(const string& symbol_name, const fs::path& filename, int n, const string& function_name)
 {
-    auto fn = load_builtin_(filename, symbol_name, n, function_name);
+    auto fn = load_builtin_(filename, symbol_name, n);
 
     // Create the operation
     Operation O(n, (operation_fn)fn, function_name);
@@ -235,13 +244,9 @@ expression_ref load_builtin(const string& symbol_name, const fs::path& filename,
     return lambda_n(O, n);
 }
 
-fs::path module_loader::find_plugin(const string& plugin_name) const
+expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n)
 {
-    return find_file_in_path(plugins_path, plugin_name + plugin_extension);
-}
-
-expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
-{
+    string function_name = plugin_name + ":" + symbol_name;
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = L.find_plugin(plugin_name);
     return load_builtin(symbol_name, filename, n, function_name);

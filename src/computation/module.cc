@@ -1181,11 +1181,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
 expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
-    const string builtin_prefix = "builtin_function_";
-
-    string operation_name = B.plugin_name+":"+B.symbol_name;
-
-    return load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, n_args, operation_name);
+    return load_builtin(L, B.symbol_name, B.plugin_name, n_args);
 }
 
 CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
@@ -1206,9 +1202,9 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
 
         if (is_IO_type(result_type))
         {
-            // Change IO a to RealWorld -> a
             body = parse_builtin(decl, n_args+1, L);
 
+	    // Change IO a to RealWorld -> a
             for(int i=0;i<n_args;i++)
                 body = {body,var(i)};
 

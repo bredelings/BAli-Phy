@@ -36,7 +36,7 @@ public:
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };
 
-expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& plugin_name, int n, const std::string& fname);
+expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& plugin_name, int n);
 expression_ref load_builtin(const std::string& symbol_name, const std::filesystem::path& filename, int n, const std::string& fname);
 
 extern const std::string plugin_extension;
