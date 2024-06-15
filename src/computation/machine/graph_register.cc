@@ -1383,11 +1383,6 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
 
     if (is_modifiable(C.exp))
         return R;
-    else if (is_seq(C.exp))
-    {
-        int R2 = C.reg_for_slot(1);
-        return find_update_modifiable_reg(R2);
-    }
     else
         return {};
 

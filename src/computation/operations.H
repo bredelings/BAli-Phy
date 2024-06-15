@@ -58,30 +58,4 @@ struct Let: public Operation
         {}
 };
 
-closure seq_op(OperationArgs&);
-
-struct Seq: public Operation
-{
-    virtual Seq* clone() const {return new Seq(*this);}
-
-    type_constant type() const {return seq_type;}
-
-    Seq():Operation(seq_op, "seq") {}
-};
-
-bool is_seq(const expression_ref& E);
-
-closure join_op(OperationArgs&);
-
-struct Join: public Operation
-{
-    virtual Join* clone() const {return new Join(*this);}
-
-    type_constant type() const {return join_type;}
-
-    Join():Operation(join_op, "join") {}
-};
-
-
-bool is_join(const expression_ref& E);
 #endif

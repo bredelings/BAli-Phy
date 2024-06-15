@@ -493,26 +493,6 @@ extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
     return {log_double_t(d)};
 }
 
-extern "C" closure builtin_function_seq(OperationArgs& Args)
-{
-    int x = Args.reg_for_slot(0);
-    int y = Args.reg_for_slot(1);
-
-    expression_ref E(Seq(),{index_var(1),index_var(0)});
-
-    return closure{E,{x,y}};
-}
-
-extern "C" closure builtin_function_join(OperationArgs& Args)
-{
-    int x = Args.reg_for_slot(0);
-    int y = Args.reg_for_slot(1);
-
-    expression_ref E(Join(),{index_var(1),index_var(0)});
-
-    return closure{E,{x,y}};
-}
-
 extern "C" closure builtin_function_show_int(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_int();
