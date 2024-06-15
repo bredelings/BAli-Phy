@@ -277,7 +277,7 @@ expression_ref to_expression_ref(const Core2::ConApp<>& C)
     vector<expression_ref> vars;
     for(auto& v: C.args)
 	vars.push_back( to_var(v) );
-    return expression_ref(constructor(C.head,-1),vars);
+    return expression_ref(constructor(C.head,C.args.size()),vars);
 }
 
 // How can we do this?
