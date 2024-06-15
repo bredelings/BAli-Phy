@@ -233,22 +233,17 @@ operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_na
     return (operation_fn)fn;
 }
 
-expression_ref load_builtin(const string& symbol_name, const fs::path& filename, int n, const string& function_name)
+expression_ref module_loader::load_builtin(const string& symbol_name, const string& plugin_name, int n) const
 {
+    // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
+    auto filename = find_plugin(plugin_name);
+
     auto fn = load_builtin_(filename, symbol_name, n);
 
     // Create the operation
-    Operation O(n, (operation_fn)fn, function_name);
+    Operation O(n, (operation_fn)fn, plugin_name + ":" + symbol_name);
 
     // Create the function body from it.
     return lambda_n(O, n);
-}
-
-expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n)
-{
-    string function_name = plugin_name + ":" + symbol_name;
-    // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
-    auto filename = L.find_plugin(plugin_name);
-    return load_builtin(symbol_name, filename, n, function_name);
 }
 

@@ -29,15 +29,22 @@ public:
     std::shared_ptr<std::ostream> write_cached_module(const std::string& modid) const;
     std::filesystem::path find_module(const std::string& modid) const;
     std::filesystem::path find_plugin(const std::string& plugin_name) const;
+
     /// Load the module file from disk.
     /// Add the hard-coded elements to the module.
     std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
     std::shared_ptr<Module> load_module(const std::string&) const;
+
+    expression_ref load_builtin(const std::string& symbol_name, const std::string& plugin_name, int n) const;
+
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };
 
-expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& plugin_name, int n);
-expression_ref load_builtin(const std::string& symbol_name, const std::filesystem::path& filename, int n, const std::string& fname);
+struct builtin_op: public Object
+{
+    std::string lib_name;
+    std::string func_name;
+};
 
 extern const std::string plugin_extension;
 #endif
