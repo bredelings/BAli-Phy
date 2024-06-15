@@ -8,6 +8,7 @@
 #include <filesystem>
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
 #include "computation/expression/expression_ref.H"
+#include "computation/operation.H"
 
 class Module;
 
@@ -21,6 +22,8 @@ public:
     std::optional<std::filesystem::path> cache_path;
 
     std::vector<std::string> args;
+
+    mutable std::map<std::tuple<std::string,std::string>, operation_fn> cached_builtins;
 
     bool try_add_plugin_path(const std::filesystem::path& path);
   

@@ -18,6 +18,7 @@ using std::string;
 using std::vector;
 using std::set;
 using std::map;
+using std::tuple;
 using std::optional;
 using std::shared_ptr;
 
@@ -207,14 +208,11 @@ fs::path module_loader::find_plugin(const string& plugin_name) const
 
 #include <dlfcn.h>
 
-operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_name, int n)
+operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_name)
 {
     const string builtin_prefix = "builtin_function_";
 
     string symbol_name = builtin_prefix + raw_symbol_name;
-
-    // If not, then I think its treated as being already in WHNF, and not evaluated.
-    if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
     // load the library
     void* library = dlopen(filename.string().c_str(), RTLD_LAZY);
@@ -238,7 +236,14 @@ expression_ref module_loader::load_builtin(const string& symbol_name, const stri
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
 
-    auto fn = load_builtin_(filename, symbol_name, n);
+    auto op = tuple<string,string>(plugin_name, symbol_name);
+    if (not cached_builtins.count(op))
+	cached_builtins.insert({op, load_builtin_(filename, symbol_name)});
+
+    auto fn = cached_builtins.at(op);
+
+    // If not, then I think its treated as being already in WHNF, and not evaluated.
+    if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
     // Create the operation
     Operation O(n, (operation_fn)fn, plugin_name + ":" + symbol_name);
