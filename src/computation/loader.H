@@ -23,7 +23,7 @@ public:
 
     std::vector<std::string> args;
 
-    mutable std::map<std::tuple<std::string,std::string>, operation_fn> cached_builtins;
+    mutable std::map<std::tuple<std::string,std::string>, void*> cached_builtins;
 
     bool try_add_plugin_path(const std::filesystem::path& path);
   
@@ -38,17 +38,13 @@ public:
     std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
     std::shared_ptr<Module> load_module(const std::string&) const;
 
+    void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name) const;
+
     Operation load_builtin_op(const std::string& lib_name, const std::string& func_name) const;
 
     expression_ref load_builtin(const std::string& lib_name, const std::string& func_name, int n) const;
 
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
-};
-
-struct builtin_op: public Object
-{
-    std::string lib_name;
-    std::string func_name;
 };
 
 extern const std::string plugin_extension;

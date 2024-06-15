@@ -384,11 +384,19 @@ namespace Core2
 	std::string lib_name;
 	std::string func_name;
 	std::vector<Var<NoteV>> args;
+	void* op = nullptr;
 
 	std::string print() const;
 
 	template <class Archive>
-	void serialize(Archive& ar)
+	void load(Archive& ar)
+	{
+	    ar(lib_name, func_name, args);
+	    op = nullptr;
+	}
+
+	template <class Archive>
+	void save(Archive& ar) const
 	{
 	    ar(lib_name, func_name, args);
 	}

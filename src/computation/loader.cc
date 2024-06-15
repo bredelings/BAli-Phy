@@ -208,7 +208,7 @@ fs::path module_loader::find_plugin(const string& plugin_name) const
 
 #include <dlfcn.h>
 
-operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_name)
+void* load_builtin_(const fs::path& filename, const string& raw_symbol_name)
 {
     const string builtin_prefix = "builtin_function_";
 
@@ -228,10 +228,10 @@ operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_na
     if (dlsym_error)
 	throw myexception() << "Cannot load symbol for builtin '"<<raw_symbol_name<<"' from file "<<filename<<": " << dlsym_error;
 
-    return (operation_fn)fn;
+    return fn;
 }
 
-Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name) const
+void* module_loader::load_builtin_ptr(const string& plugin_name, const string& symbol_name) const
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
@@ -240,7 +240,12 @@ Operation module_loader::load_builtin_op(const string& plugin_name, const string
     if (not cached_builtins.count(op))
 	cached_builtins.insert({op, load_builtin_(filename, symbol_name)});
 
-    auto fn = cached_builtins.at(op);
+    return cached_builtins.at(op);
+}
+
+Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name) const
+{
+    auto fn = load_builtin_ptr(plugin_name, symbol_name);
 
     // Create the operation
     return Operation( (operation_fn)fn, plugin_name + ":" + symbol_name );

@@ -166,7 +166,7 @@ Core2::BuiltinOp<> to_core_builtin_op(const expression_ref& E)
     assert(not libname.empty());
     assert(not funcname.empty());
 
-    Core2::BuiltinOp<> builtin_op{libname, funcname, {}};
+    Core2::BuiltinOp<> builtin_op{libname, funcname, {}, (void*)E.head().as_<Operation>().op};
     for(int i=0;i<E.size();i++)
     {
 	auto& arg = E.sub()[i];
@@ -283,7 +283,7 @@ expression_ref to_expression_ref(const Core2::ConApp<>& C)
 // How can we do this?
 expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
 {
-    Operation O(nullptr,B.lib_name+":"+B.func_name);
+    Operation O( (operation_fn)B.op, B.lib_name+":"+B.func_name);
 
     vector<expression_ref> vars;
     for(auto& v: B.args)
@@ -323,6 +323,77 @@ expression_ref to_expression_ref(const Core2::Exp<>& E)
 	return to_expression_ref(*b);
     else if (auto c = E.to_constant())
 	return to_expression_ref(*c);
+
+    std::abort();
+}
+
+//----------------------------------------------------------------------//
+Core2::Lambda<> load_builtins(const module_loader& loader, Core2::Lambda<> L)
+{
+    L.body = load_builtins(loader, L.body);
+    return L;
+}
+
+Core2::Apply<> load_builtins(const module_loader& loader, Core2::Apply<> A)
+{
+    A.head = load_builtins(loader, A.head);
+    return A;
+}
+
+Core2::Decls<> load_builtins(const module_loader& loader, Core2::Decls<> decls)
+{
+    for(auto& [x,E]: decls)
+	E = load_builtins(loader, E);
+    return decls;
+}
+
+Core2::Let<> load_builtins(const module_loader& loader, Core2::Let<> L)
+{
+    L.decls = load_builtins(loader, L.decls);
+    L.body = load_builtins(loader, L.body);
+    return L;
+}
+
+Core2::Alts<> load_builtins(const module_loader& loader, Core2::Alts<> alts)
+{
+    for(auto& [pat,body]: alts)
+	body = load_builtins(loader, body);
+    return alts;
+}
+
+Core2::Case<> load_builtins(const module_loader& loader, Core2::Case<> C)
+{
+    C.object = load_builtins(loader, C.object);
+    C.alts = load_builtins(loader, C.alts);
+    return C;
+}
+
+// How can we do this?
+Core2::BuiltinOp<> load_builtins(const module_loader& loader, Core2::BuiltinOp<> B)
+{
+    B.op = loader.load_builtin_ptr(B.lib_name, B.func_name);
+
+    return B;
+}
+
+Core2::Exp<> load_builtins(const module_loader& loader, const Core2::Exp<>& E)
+{
+    if (E.to_var())
+	return E;
+    else if (auto l = E.to_lambda())
+	return load_builtins(loader, *l);
+    else if (auto a = E.to_apply())
+	return load_builtins(loader, *a);
+    else if (auto l = E.to_let())
+	return load_builtins(loader, *l);
+    else if (auto c = E.to_case())
+	return load_builtins(loader, *c);
+    else if (E.to_conApp())
+	return E;
+    else if (auto b = E.to_builtinOp())
+	return load_builtins(loader, *b);
+    else if (E.to_constant())
+	return E;
 
     std::abort();
 }
