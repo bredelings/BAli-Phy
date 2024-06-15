@@ -23,6 +23,8 @@ struct Operation: public Object
 
     std::string name() const {return name_;}
 
+    std::string print() const {return name_;}
+
     bool operator==(const Object& o) const
     {
 	const Operation* O = dynamic_cast<const Operation*>(&o);
