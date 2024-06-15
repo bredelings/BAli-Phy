@@ -15,15 +15,11 @@ typedef closure (*operation_fn)(OperationArgs&);
 
 struct Operation: public Object
 {
-    int n_args_;
-
     std::string name_;
 
     operation_fn op = 0;
 
     virtual Operation* clone() const {return new Operation(*this);}
-
-    int n_args() const {return n_args_;}
 
     std::string name() const {return name_;}
 
@@ -34,15 +30,13 @@ struct Operation: public Object
 
 	if (op != O->op) return false;
 
-	if (n_args() != O->n_args()) return false;
-
 	if (name() != O->name()) return false;
 
 	return true;
     }
 
     type_constant type() const {return operation_type;}
-    Operation(int n, closure (*f)(OperationArgs&), const std::string& s):n_args_(n),name_(s),op(f) { }
+    Operation(closure (*f)(OperationArgs&), const std::string& s):name_(s),op(f) { }
 };
 
 std::string print_operator_expression(const std::vector<std::string>& arguments);

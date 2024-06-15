@@ -283,7 +283,7 @@ expression_ref to_expression_ref(const Core2::ConApp<>& C)
 // How can we do this?
 expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
 {
-    Operation O(0,nullptr,B.lib_name+":"+B.func_name);
+    Operation O(nullptr,B.lib_name+":"+B.func_name);
 
     vector<expression_ref> vars;
     for(auto& v: B.args)

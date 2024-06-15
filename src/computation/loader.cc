@@ -246,7 +246,7 @@ expression_ref module_loader::load_builtin(const string& symbol_name, const stri
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
     // Create the operation
-    Operation O(n, (operation_fn)fn, plugin_name + ":" + symbol_name);
+    Operation O((operation_fn)fn, plugin_name + ":" + symbol_name);
 
     // Create the function body from it.
     return lambda_n(O, n);

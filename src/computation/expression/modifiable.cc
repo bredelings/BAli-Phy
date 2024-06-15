@@ -48,7 +48,7 @@ closure modifiable_op(OperationArgs& Args)
 }
 
 modifiable::modifiable():
-    Operation(1, modifiable_op, "modifiable")
+    Operation(modifiable_op, "modifiable")
 {}
 
 bool is_modifiable(const expression_ref& E)

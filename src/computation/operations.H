@@ -23,7 +23,7 @@ struct Apply: public Operation
 
     type_constant type() const {return apply_type;}
 
-    Apply():Operation(-1,apply_op,"@") {}
+    Apply():Operation(apply_op,"@") {}
 };
 
 closure case_op(OperationArgs&);
@@ -34,7 +34,7 @@ struct Case: public Operation
 
     type_constant type() const {return case_type;}
 
-    Case():Operation(2,case_op, "case") {}
+    Case():Operation(case_op, "case") {}
 };
 
 closure let_op(OperationArgs&);
@@ -52,7 +52,7 @@ struct Let: public Operation
     expression_ref body;
 
     Let(const std::vector<expression_ref>& bs, const expression_ref& b)
-        :Operation(0, let_op, "let"),
+        :Operation(let_op, "let"),
          binds(bs),
          body(b)
         {}
@@ -66,7 +66,7 @@ struct Seq: public Operation
 
     type_constant type() const {return seq_type;}
 
-    Seq():Operation(2, seq_op, "seq") {}
+    Seq():Operation(seq_op, "seq") {}
 };
 
 bool is_seq(const expression_ref& E);
@@ -79,7 +79,7 @@ struct Join: public Operation
 
     type_constant type() const {return join_type;}
 
-    Join():Operation(2, join_op, "join") {}
+    Join():Operation(join_op, "join") {}
 };
 
 

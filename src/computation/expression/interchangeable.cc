@@ -69,7 +69,7 @@ closure interchangeable_op(OperationArgs& Args)
 }
 
 interchangeable::interchangeable():
-    Operation(2, interchangeable_op, "interchangeable")
+    Operation(interchangeable_op, "interchangeable")
 {}
 
 bool is_interchangeable(const expression_ref& E)
