@@ -148,7 +148,7 @@ struct type_info
     // Are we using this?
     Kind kind;
 
-    template <class Archive> void serialize(Archive& ar) { ar(name,info,fixity,arity); }
+    template <class Archive> void serialize(Archive& ar) { ar(name,info,fixity,arity,kind); }
 };
 
 bool operator==(const symbol_info& S1, const symbol_info& S2);
