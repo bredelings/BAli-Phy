@@ -231,7 +231,7 @@ operation_fn load_builtin_(const fs::path& filename, const string& raw_symbol_na
     return (operation_fn)fn;
 }
 
-Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name, int n) const
+Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name) const
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
