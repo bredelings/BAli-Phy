@@ -499,7 +499,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
     {
 	C->inflate(P);
-	//return C;
+	return C;
     }
 
     // Scans imported modules and modifies symbol table and type table
@@ -595,8 +595,16 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     write_compile_artifact(P, CM);
 
-    CM->inflate(P);
+    auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_sha(P));
+    if (CM2)
+    {
+	CM2->inflate(P);
+	return CM2;
+    }
+    else
+	std::cerr<<"Failed to write module "<<MM->name<<"!";
 
+    CM->inflate(P);
     return CM;
 }
 
