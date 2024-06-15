@@ -12,6 +12,7 @@
 #include <iostream>
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/extensions.H"
+#include "computation/haskell/core2.H"
 #include "computation/optimization/simplifier_options.H"
 #include "computation/fresh_vars.H"
 #include "computation/instance_info.H"
@@ -234,7 +235,7 @@ class CompiledModule
 
     std::set<std::string> dependencies_;
 
-    CDecls value_decls;
+    Core2::Decls<> value_decls;
 
     std::map<std::string, symbol_ptr> symbols;
 
@@ -290,7 +291,7 @@ public:
 
     const_type_ptr lookup_local_type(const std::string& t) const;
 
-    void finish_value_decls( CDecls& cdecls) {std::swap(value_decls, cdecls);}
+    void finish_value_decls( CDecls& cdecls );
 
     // Why do we have code that isn't for this module?
     std::map<var,expression_ref> code_defs() const;
@@ -300,14 +301,14 @@ public:
     template <class Archive>
     void save(Archive& ar) const
     {
-	ar( modid, dependencies_, /*value_decls, */ symbols, types, exported_symbols_, exported_types_ );
+	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
 	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_ );
     }
 
     template <class Archive>
     void load(Archive& ar)
     {
-	ar( modid, dependencies_, /*value_decls, */ symbols, types, exported_symbols_, exported_types_ );
+	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
 	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_ );
     }
 

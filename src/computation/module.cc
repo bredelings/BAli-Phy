@@ -25,6 +25,7 @@
 #include "expression/case.H"
 #include "expression/tuple.H"
 #include "expression/substitute.H"
+#include "expression/convert.H"
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"
@@ -1874,9 +1875,11 @@ bool special_prelude_symbol(const string& name)
 
 map<var,expression_ref> CompiledModule::code_defs() const
 {
+    auto value_decls2 = to_expression_ref(value_decls);
+
     map<var, expression_ref> code;
 
-    for(const auto& [x,rhs]: value_decls)
+    for(const auto& [x,rhs]: value_decls2)
     {
         assert(is_qualified_symbol(x.name));
 
@@ -1890,6 +1893,11 @@ map<var,expression_ref> CompiledModule::code_defs() const
     }
 
     return code;
+}
+
+void CompiledModule::finish_value_decls( CDecls& cdecls )
+{
+    value_decls = to_core( cdecls );
 }
 
 const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const
@@ -1948,6 +1956,8 @@ void CompiledModule::inflate(const Program& P)
 	for(auto& [mod_name, mod]: M2->transitively_imported_modules())
 	    transitively_imported_modules_.insert({mod_name, mod});
     }
+
+    value_decls = load_builtins(*P.get_module_loader(), value_decls);
 }
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
