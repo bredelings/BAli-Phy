@@ -467,7 +467,7 @@ namespace Core2
     std::string Apply<NoteV,NoteE>::print() const
     {
 	std::vector<std::string> words;
-	words.push_back("("+head.print()+")");
+	words.push_back(head.print());
 	for(auto& v: args)
 	    words.push_back(v.print());
 	return join(words," ");
