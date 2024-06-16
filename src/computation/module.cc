@@ -1,7 +1,6 @@
 #include <set>
 #include <regex>
 #include <tuple>
-#include <chrono>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
@@ -39,7 +38,6 @@
 #include <boost/compute/detail/sha1.hpp>
 
 #include <cereal/archives/binary.hpp>
-#include <format>
 
 namespace views = ranges::views;
 
@@ -1818,15 +1816,41 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     }
 }
 
+string exe_str()
+{
+    static optional<string> str;
+    if (not str)
+    {
+        auto exe_path = find_exe_path("");
+
+        std::ifstream exe_file(exe_path);
+        char file_buffer[4096];
+
+        boost::uuids::detail::sha1 h;
+
+        while (exe_file.read(file_buffer, sizeof(file_buffer)) or exe_file.gcount())
+        {
+            h.process_bytes(file_buffer, exe_file.gcount());
+        }
+
+        unsigned int digest[5];
+        h.get_digest(digest);
+
+        std::ostringstream buf;
+        for(int i = 0; i < 5; ++i)
+            buf << std::hex << std::setfill('0') << std::setw(8) << digest[i];
+
+        str = buf.str();
+    }
+
+    return *str;
+}
+
 std::string Module::all_inputs_sha(const Program& P) const
 {
     if (not _cached_sha)
     {
-	auto exe_path = find_exe_path("");
-	std::filesystem::file_time_type exe_time = std::filesystem::last_write_time(exe_path);
-	auto exe_str = std::format("{}", exe_time);
-
-	boost::compute::detail::sha1 sha(exe_str);
+	boost::compute::detail::sha1 sha(exe_str());
 
 	sha.process(file.contents);
 
