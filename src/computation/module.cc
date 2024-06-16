@@ -1,6 +1,7 @@
 #include <set>
 #include <regex>
 #include <tuple>
+#include <chrono>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
@@ -11,6 +12,7 @@
 #include "util/set.H"   // for add( , )
 #include "util/string/split.H"
 #include "util/string/join.H"
+#include "util/file-paths.H" // for exe_mtime()
 #include "program.H"
 #include "operations.H"
 #include "computation/machine/graph_register.H" // for graph_normalize( )
@@ -37,6 +39,7 @@
 #include <boost/compute/detail/sha1.hpp>
 
 #include <cereal/archives/binary.hpp>
+#include <format>
 
 namespace views = ranges::views;
 
@@ -461,12 +464,13 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
 
             std::shared_ptr<CompiledModule> M;
 
-            archive(M);
+            std::string sha;
+            archive(sha);
 
-            if (M->all_inputs_sha() == required_sha)
+            if (sha == required_sha)
             {
-                if (log_verbose >= 1)
-                    std::cerr<<"    Cached SHA up-to-date for module "<<modid<<"\n";
+                archive(M);
+                assert(sha == M->all_inputs_sha());
                 return M;
             }
         }
@@ -490,6 +494,7 @@ void write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
     auto artifact = P.get_module_loader()->write_cached_module( CM->name() );
 
     cereal::BinaryOutputArchive archive( *artifact );
+    archive(CM->all_inputs_sha());
     archive(CM);
 }
 
@@ -498,14 +503,14 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
-    if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
-        std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
-
     if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
     {
+	if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
 	C->inflate(P);
 	return C;
     }
+
+    if (log_verbose) std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
 
     // Scans imported modules and modifies symbol table and type table
     MM->perform_imports(P);
@@ -1817,7 +1822,13 @@ std::string Module::all_inputs_sha(const Program& P) const
 {
     if (not _cached_sha)
     {
-	boost::compute::detail::sha1 sha(file.contents);
+	auto exe_path = find_exe_path("");
+	std::filesystem::file_time_type exe_time = std::filesystem::last_write_time(exe_path);
+	auto exe_str = std::format("{}", exe_time);
+
+	boost::compute::detail::sha1 sha(exe_str);
+
+	sha.process(file.contents);
 
 	for(auto& dep_modid: dependencies())
 	{
