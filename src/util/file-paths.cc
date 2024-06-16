@@ -42,6 +42,11 @@ fs::path find_file_in_path(const vector<fs::path>& path_list, const fs::path& fi
 
 #ifdef _WIN32
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 #endif
 
 fs::path find_exe_path(const fs::path& argv0)
@@ -55,25 +60,37 @@ fs::path find_exe_path(const fs::path& argv0)
     GetModuleFileName( NULL, buffer, MAX_DIR_PATH );
     string path_string = buffer;
     program_location = path_string;
-#else
+#elif defined(__APPLE__)
+    constexpr int MAX_DIR_PATH = 2048;
+    char buffer[MAX_DIR_PATH];
 
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(buffer, &size) == 0)
+    {
+	path_string = buffer;
+	program_location = path_string;
+    }
+    else
+    {
+	vector<char> buf(size);
+	if (_NSGetExecutablePath(buf.data(), &size) == 0)
+	{
+	    path_string = heap_buf.data();
+	    program_location = path_string;
+	}
+	else
+	{
+	    if (log_verbose) std::cerr<<"Failed to find exe path!\n";
+	    return "";
+	}
+    }
+
+#else
     /*
       Linux: readlink /proc/self/exe
       FreeBSD: sysctl CTL_KERN KERN_PROC KERN_PROC_PATHNAME -1
-
-      Mac OS X: _NSGetExecutablePath() (man 3 dyld)
       Solaris: getexecname()
       BSD with procfs: readlink /proc/curproc/file
-      Windows: GetModuleFileName() with hModule = NULL
-    */
-
-    /* For Mac
-       char path[1024];
-       uint32_t size = sizeof(path);
-       if (_NSGetExecutablePath(path, &size) == 0)
-       printf("executable path is %s\n", path);
-       else
-       printf("buffer too small; need size %u\n", size);
     */
 
     // This only works on Linux.
