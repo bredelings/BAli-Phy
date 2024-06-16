@@ -23,7 +23,7 @@ typedef immer::map<Hs::Var, Type> value_env;
 template <class Archive, typename Key, typename Value>
 void save(Archive& ar, const immer::map<Key,Value>& m)
 {
-    int n = m.size();
+    size_t n = m.size();
     ar(n);
     for(const std::pair<Key,Value>& kv: m)
 	ar(kv);
@@ -33,9 +33,9 @@ template <class Archive, typename Key, typename Value>
 void load(Archive& ar, immer::map<Key,Value>& m)
 {
     m = immer::map<Key,Value>();
-    int n;
+    size_t n;
     ar(n);
-    for(int i=0;i<n;i++)
+    for(size_t i=0;i<n;i++)
     {
 	std::pair<Key,Value> kv;
 	ar(kv);

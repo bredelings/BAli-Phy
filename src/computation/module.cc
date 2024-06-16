@@ -455,11 +455,11 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
     {
         try
         {
-            checked_ifstream cached_module_stream(*path, "Cached compile artifact for " + modid);
+            std::ifstream cached_module_stream(*path, std::ios::binary);
 
             cereal::BinaryInputArchive archive( cached_module_stream );
 
-	    std::shared_ptr<CompiledModule> M;
+            std::shared_ptr<CompiledModule> M;
 
             archive(M);
 
@@ -470,10 +470,15 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
                 return M;
             }
         }
+        catch (std::exception& e)
+        {
+            if (log_verbose)
+                std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n  exception = "<<e.what()<<"\n";
+        }
         catch (...)
         {
             if (log_verbose)
-                std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path;
+                std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n";
         }
     }
 
@@ -602,7 +607,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 	return CM2;
     }
     else
-	std::cerr<<"Failed to write module "<<MM->name<<"!";
+	if (log_verbose) std::cerr<<"Failed to write module "<<MM->name<<"!\n";
 
     CM->inflate(P);
     return CM;

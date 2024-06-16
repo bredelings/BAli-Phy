@@ -88,7 +88,7 @@ std::shared_ptr<std::ostream> module_loader::write_cached_module(const string& m
     {
 	auto dir = path->parent_path();
 	fs::create_directories(dir);
-	return std::make_shared<checked_ofstream>(*path, "Cached module file for " + modid);
+	return std::make_shared<std::ofstream>(*path, std::ios::binary);
     }
     else
 	return {};
