@@ -1821,7 +1821,7 @@ string exe_str()
     static optional<string> str;
     if (not str)
     {
-        auto exe_path = find_exe_path("");
+        auto exe_path = find_exe_path();
 
         std::ifstream exe_file(exe_path);
         char file_buffer[4096];

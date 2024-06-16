@@ -306,7 +306,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     {
         string topic = args.count("help")?args["help"].as<string>():"basic";
 
-	auto package_paths = get_package_paths(argv[0], args);
+	auto package_paths = get_package_paths(args);
 	if (help_levels.count(topic))
 	{
 	    cout<<short_description()<<"\n";

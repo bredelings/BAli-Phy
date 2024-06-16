@@ -12,9 +12,9 @@ namespace fs = std::filesystem;
 using boost::program_options::variables_map;
 using std::optional;
 
-optional<fs::path> get_system_lib_path(const string& exe_name)
+optional<fs::path> get_system_lib_path()
 {
-    fs::path system_lib_path = find_exe_path(exe_name);
+    fs::path system_lib_path = find_exe_path();
     if (not system_lib_path.empty())
     {
 	system_lib_path = system_lib_path.parent_path() / "lib" / "bali-phy";
@@ -48,7 +48,7 @@ optional<fs::path> get_cache_path()
 	return fs::path();
 }
 
-vector<fs::path> get_package_paths(const string& argv0, variables_map& args)
+vector<fs::path> get_package_paths(variables_map& args)
 {
     vector<fs::path> paths;
 
@@ -62,7 +62,7 @@ vector<fs::path> get_package_paths(const string& argv0, variables_map& args)
         paths.push_back(*p);
 
     // 3. Finally add the default system paths
-    if (auto p = get_system_lib_path(argv0))
+    if (auto p = get_system_lib_path())
         paths.push_back(*p);
 
     return clean_paths(paths);

@@ -51,7 +51,7 @@ fs::path find_file_in_path(const vector<fs::path>& path_list, const fs::path& fi
 #include <cstring>
 #endif
 
-fs::path find_exe_path(const fs::path& argv0)
+fs::path find_exe_path()
 {
     fs::path program_location;
 
@@ -101,20 +101,6 @@ fs::path find_exe_path(const fs::path& argv0)
     // This only works on BSD with procfs.
     else if (fs::exists("/proc/curproc/file"))
 	program_location = "/proc/curproc/file";
-    // Try argv[0] - This *PROBABLY* works on windows.
-    else if (fs::exists(argv0))
-	program_location = argv0;
-    // Search $PATH for argv[0]
-    else if (not argv0.is_absolute() and getenv("PATH"))
-    {
-	string PATH = getenv("PATH");
-	vector<fs::path> paths;
-        for(auto& p: split(PATH,':'))
-            paths.push_back(p);
-	auto loc = check_file_in_path(paths, argv0);
-	if (loc)
-	    program_location = *loc;
-    }
 #endif
 
     program_location = canonical(program_location).parent_path();

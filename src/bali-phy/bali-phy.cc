@@ -296,7 +296,7 @@ void show_ending_messages()
 
 std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& argv0)
 {
-    auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(argv0, args));
+    auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(args));
 
     // 4. Write out paths to C1.err
     if (log_verbose >= 1)
@@ -429,10 +429,10 @@ expression_ref get_alphabet_expression_from_args(const variables_map& args)
     return get_alphabet_expression( *get_alphabet(anames[0]) );
 }
 
-std::unique_ptr<Program> print_program(const string& argv0, variables_map& args, const shared_ptr<module_loader>& L)
+std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<module_loader>& L)
 {
     const string mstring = args["print"].as<string>();
-    Rules R(get_package_paths(argv0, args));
+    Rules R(get_package_paths(args));
     model_t print = get_model(R,"a",mstring,"print expression", {},{{"alphabet",{"alphabet","b"}}});
 
     expression_ref a = get_alphabet_expression_from_args(args);
@@ -477,12 +477,12 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     }
     else if (args.count("print"))
     {
-        P = print_program(argv[0], args, L);
+        P = print_program(args, L);
     }
     else if (args.count("align"))
     {
         // Change this into a pointer.
-        Rules R(get_package_paths(argv[0], args));
+        Rules R(get_package_paths(args));
         auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
         update(info, j);
         *P = prog;
