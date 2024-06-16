@@ -1,6 +1,7 @@
 #include "util/file-paths.H"
 #include "util/myexception.H"
 #include "util/string/split.H"
+#include "util/string/join.H"
 #include "util/log-level.H"
 #include <vector>
 
