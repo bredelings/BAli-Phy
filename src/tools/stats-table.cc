@@ -450,7 +450,7 @@ json::object unnest_json(const json::object&& j_in)
 template <>
 Table<double>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
 {
-    using namespace ranges::view;
+    using namespace ranges::views;
     bool is_json = (file.peek() == '{');
 
     // FIXME: check if JSON by trying to parse the header line.
@@ -466,7 +466,7 @@ Table<double>::Table(std::istream& file, int skip, int subsample, int last, cons
 
         // Get the samples
         if (last < 0) last = INT_MAX;
-        auto samples = lines(file) | take(last) | drop(skip) | stride(subsample) | ranges::view::transform(MCON::parse) | ranges::to<vector>();
+        auto samples = lines(file) | take(last) | drop(skip) | stride(subsample) | ranges::views::transform(MCON::parse) | ranges::to<vector>();
 
         auto table = MCON::Log(header, samples).dump_numeric_table();
 
