@@ -4,6 +4,7 @@
 #include "util/string/join.H"
 #include "util/log-level.H"
 #include <vector>
+#include <iostream>
 
 #include <filesystem>
 
@@ -76,7 +77,7 @@ fs::path find_exe_path(const fs::path& argv0)
 	vector<char> buf(size);
 	if (_NSGetExecutablePath(buf.data(), &size) == 0)
 	{
-	    string path_string = heap_buf.data();
+	    string path_string = buf.data();
 	    program_location = path_string;
 	}
 	else
