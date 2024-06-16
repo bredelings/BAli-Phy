@@ -1,7 +1,7 @@
 #include "util/file-paths.H"
 #include "util/myexception.H"
 #include "util/string/split.H"
-#include "util/string/join.H"
+#include "util/log-level.H"
 #include <vector>
 
 #include <filesystem>
@@ -64,10 +64,10 @@ fs::path find_exe_path(const fs::path& argv0)
     constexpr int MAX_DIR_PATH = 2048;
     char buffer[MAX_DIR_PATH];
 
-    uint32_t size = sizeof(path);
+    uint32_t size = sizeof(buffer);
     if (_NSGetExecutablePath(buffer, &size) == 0)
     {
-	path_string = buffer;
+	string path_string = buffer;
 	program_location = path_string;
     }
     else
@@ -75,7 +75,7 @@ fs::path find_exe_path(const fs::path& argv0)
 	vector<char> buf(size);
 	if (_NSGetExecutablePath(buf.data(), &size) == 0)
 	{
-	    path_string = heap_buf.data();
+	    string path_string = heap_buf.data();
 	    program_location = path_string;
 	}
 	else
