@@ -1190,7 +1190,9 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, decl_groups);
 
-        cdecls = flatten(decl_groups);
+	// CSE goes here!  See ghc/compiler/GHC/Core/Opt/CSE.hs
+
+	cdecls = flatten(decl_groups);
     }
 
     return rename_top_level(cdecls, name);
