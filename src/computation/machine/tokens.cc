@@ -436,9 +436,9 @@ vector<int> reg_heap::get_used_tokens() const
 
 int reg_heap::make_child_token(int t, token_type type)
 {
-#ifdef DEBUG_MACHINE
-    check_used_regs();
-#endif
+//#ifdef DEBUG_MACHINE
+//    check_used_regs();
+//#endif
 
     assert(tokens[t].used);
 
@@ -452,9 +452,9 @@ int reg_heap::make_child_token(int t, token_type type)
 
     tokens[t].children.push_back(t2);
 
-#ifdef DEBUG_MACHINE
-    check_used_regs();
-#endif
+//#ifdef DEBUG_MACHINE
+//    check_used_regs();
+//#endif
 
     return t2;
 }
