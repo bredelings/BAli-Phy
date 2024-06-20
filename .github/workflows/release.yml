@@ -62,17 +62,17 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        name: [ubuntu-gcc-13,
+        name: [ubuntu-gcc-11,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-13
-            os: ubuntu-24.04
+          - name: ubuntu-gcc-11
+            os: ubuntu-22.04
             compiler: gcc
-            version: "13"
+            version: "11"
             buildtype: "release"
             arch: "linux64"
 
@@ -109,7 +109,7 @@ jobs:
       run: |
         sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
-        sudo apt-get install -y libboost-all-dev librange-v3-dev libeigen3-dev libcairo2-dev
+        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -124,6 +124,22 @@ jobs:
           sudo apt-get install -y clang-${{ matrix.version }}
           echo "CC=ccache clang-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
+        fi
+
+        if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
+            # 24.04 has boost.json
+            sudo apt-get install -y libboost-all-dev
+        else
+            # 22.04 and earlier do not have boost.json
+            ( cd
+              curl -O -L https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.gz
+              tar -xzvf boost_1_85_0.tar.gz
+              cd boost_1_85_0
+              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.85.0
+              ./b2 install
+              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.85.0; pwd)\n"
+              echo BOOST_ROOT=$(cd ../installed-boost-1.85.0; pwd) >> $GITHUB_ENV
+            )
         fi
 
     - name: Install (Linux -> Windows [cross])
@@ -226,6 +242,10 @@ jobs:
             echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
             cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
         done
+        # copy boost shared libs if they exist
+        if [ -n "$BOOST_ROOT" && -e "$BOOST_ROOT/lib" ] ; then
+            cp $BOOST_ROOT/lib/libboost*so* ${OUTPUT}/lib/bali-phy/
+        fi
         ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)

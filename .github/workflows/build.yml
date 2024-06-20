@@ -101,7 +101,7 @@ jobs:
       run: |
         sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
-        sudo apt-get install -y libboost-all-dev librange-v3-dev libeigen3-dev libcairo2-dev
+        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -128,7 +128,7 @@ jobs:
               tar -xzvf boost_1_85_0.tar.gz
               cd boost_1_85_0
               ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.85.0
-              ./b2 link=static install
+              ./b2 install
               echo -e "\n    BOOST root is at $(cd ../installed-boost-1.85.0; pwd)\n"
               echo BOOST_ROOT=$(cd ../installed-boost-1.85.0; pwd) >> $GITHUB_ENV
             )
@@ -234,6 +234,10 @@ jobs:
             echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
             cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
         done
+        # copy boost shared libs if they exist
+        if [ -n "$BOOST_ROOT" && -e "$BOOST_ROOT/lib" ] ; then
+            cp $BOOST_ROOT/lib/libboost*so* ${OUTPUT}/lib/bali-phy/
+        fi
         ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)
