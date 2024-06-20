@@ -121,17 +121,21 @@ jobs:
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
 
-        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+        if [ "${{ matrix.compiler }}" = "gcc" ] ; then
+          echo "Installing g++-${{ matrix.version }}"
           if ! sudo apt-get install -y g++-${{ matrix.version }} ; then
+              echo "Adding ubuntu-toolchain-r/test"
               # For newer GCCs:
               sudo add-apt-repository ppa:ubuntu-toolchain-r/test
               # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
               sudo apt-get update
+              echo "Installing g++-${{ matrix.version }} - trying again."
               sudo apt-get install -y g++-${{ matrix.version }}
           fi
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
         else
+          echo "Installing clang-${{ matrix.version }}"
           sudo apt-get install -y clang-${{ matrix.version }}
           echo "CC=ccache clang-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
