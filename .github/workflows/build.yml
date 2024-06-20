@@ -233,15 +233,14 @@ jobs:
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
             # copy boost shared libs if they exist
             cp ${BOOST_ROOT}/lib/libboost*so* ${OUTPUT}/lib/bali-phy/
-            LD_LIBRARY_PATH=${BOOST_ROOT}/lib ldd ${OUTPUT}/bin/bali-phy
         else
             # apparently this only works for system libraries.
             for libname in $(ldd ${OUTPUT}/bin/bali-phy | grep libboost | sed s'/\s*lib\(boost.*\) =>.*/\1/') ; do
                 echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
                 cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
             done
-            ldd ${OUTPUT}/bin/bali-phy
         fi
+        ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)
       if: matrix.arch == 'win64'
