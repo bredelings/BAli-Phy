@@ -278,8 +278,10 @@ jobs:
     - name: Ad hoc sign Mac executables
       if: runner.os == 'macOS'
       run: |
+        brew install findutils
         OUTPUT=$HOME/local
-        for exe in $(find ${OUTPUT} -type f -executable -exec file -i '{}' \; | grep charset=binary | sed 's/: application.*//') ; do
+        for exe in $(gfind ${OUTPUT} -type f -executable -exec file -i '{}' \; | grep charset=binary | sed 's/: application.*//') ; do
+           echo codesign -s - ${exe}
            codesign -s - ${exe}
         done
 
