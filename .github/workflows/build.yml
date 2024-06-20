@@ -92,7 +92,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+
+    - name: install python
+      if: runner.os != 'macos-13'
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
 
