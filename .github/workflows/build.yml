@@ -120,9 +120,11 @@ jobs:
         sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
+        sudo apt update
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
           echo "Installing g++-${{ matrix.version }}"
+          echo sudo apt-get install -y g++-${{ matrix.version }}
           if ! sudo apt-get install -y g++-${{ matrix.version }} ; then
               echo "Adding ubuntu-toolchain-r/test"
               # For newer GCCs:
@@ -132,6 +134,7 @@ jobs:
               echo "Installing g++-${{ matrix.version }} - trying again."
               sudo apt-get install -y g++-${{ matrix.version }}
           fi
+          g++-${{ matrix.version }} --version
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
         else
