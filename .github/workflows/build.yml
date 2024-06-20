@@ -275,6 +275,14 @@ jobs:
         done
         cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
+    - name: Ad hoc sign Mac executables
+      if: runner.os == 'macOS'
+      run: |
+        OUTPUT=$HOME/local
+        for exe in $(find ${OUTPUT} -type f -executable -exec file -i '{}' \; | grep charset=binary | sed 's/: application.*//') ; do
+           codesign -s - ${exe}
+        done
+
     - name: Test
       run: |
         export seed=$RANDOM
