@@ -122,9 +122,9 @@ jobs:
         sudo apt-get install -y r-base gnuplot
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
-          # For newer GCCs, maybe.
-          # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-          # sudo apt-get update
+          # For newer GCCs:
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          sudo apt-get update
 
           sudo apt-get install -y g++-${{ matrix.version }}
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
