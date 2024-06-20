@@ -294,7 +294,7 @@ void show_ending_messages()
     }
 }
 
-std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& argv0)
+std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
 {
     auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(args));
 
@@ -584,7 +584,7 @@ int main(int argc,char* argv[])
         }
 
         //------------- Setup module loader -------------//
-        auto L = setup_module_loader(args, argv[0]);
+        auto L = setup_module_loader(args);
         L->args = trailing_args(argc, argv, trailing_args_separator);
         L->optimize = args["optimize"].as<bool>();
 
