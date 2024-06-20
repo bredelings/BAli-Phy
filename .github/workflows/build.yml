@@ -178,14 +178,14 @@ jobs:
         fi
         CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
-          CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
+           CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
         fi
         if [ "${{ matrix.arch }}" = "win64" ]; then
-          ARGS="${ARGS} --cross-file=win64-cross.txt"
+           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
-          # Address sanitizer can't find its dylibs on OS X?
-          ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
+           # Address sanitizer can't find its dylibs on OS X?
+           ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}

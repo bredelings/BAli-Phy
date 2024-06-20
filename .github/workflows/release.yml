@@ -110,6 +110,7 @@ jobs:
         sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y libboost-all-dev librange-v3-dev libeigen3-dev libcairo2-dev
+        sudo apt-get install -y r-base gnuplot
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           # For newer GCCs, maybe.
@@ -145,8 +146,10 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 cairo
+          brew install boost eigen range-v3 cairo fmt
+          brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
@@ -242,9 +245,11 @@ jobs:
         if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
           BALIPHY="wine bali-phy"
+          STATREPORT="wine statreport"
         else
           export PATH=$HOME/local/bin:$PATH
           BALIPHY=bali-phy
+          STATREPORT=statreport
         fi
         echo "Running tests with seed=$seed"
 
@@ -252,26 +257,49 @@ jobs:
         ${BALIPHY} help
         cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
-        ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
+        ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=50
+        ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iter=50
+        ${STATREPORT} 5d-muscle-1/C1.log
+        if [ "${{ matrix.name }}" != "windows" ] ; then
+            bp-analyze 5d-muscle-1 5d-muscle-2
+        fi
         ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
 
-        echo ::group::Test suite
-        cd tests
-        ./run-tests.py ${BALIPHY} --seed=$seed
-        cd
-        echo ::endgroup::
+        # Skip the rest of the tests if this is a DEBUG_MACHINE test.
+        skip=none
+        case "${{ matrix.name }}" in
+          *-DEBUG_MACHINE) skip=some ;;
+          *-sanitize) skip=most ;;
+        esac
 
-        git clone https://gitlab.com/testiphy/testiphy.git
-        cd testiphy
-        rm -rf tests/likelihood/one-sequence
+        if [ "$skip" = "none" ] ; then
+            echo ::group::Test suite
+            cd tests
+            ./run-tests.py ${BALIPHY} --seed=$seed
+            cd
+            echo ::endgroup::
+        else
+            echo ::group::Reduced test suite
+            ( cd tests/prob_prog/demos ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            ( cd tests/prob_prog/coal_mining ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            ( cd tests/prob_prog/cluster ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            cd
+            echo ::endgroup::
+        fi
 
-        echo ::group::testiphy variable A
-        ./testiphy ${BALIPHY} --seed=$seed
-        echo ::endgroup::
+        if [ "$skip" != "most" ] ; then
+           git clone https://gitlab.com/testiphy/testiphy.git
+           cd testiphy
+           rm -rf tests/likelihood/one-sequence
 
-        echo ::group::testiphy fixed A
-        ./testiphy ${BALIPHY} --seed=$seed -Inone
-        echo ::endgroup::
+           echo ::group::testiphy variable A
+           ./testiphy ${BALIPHY} --seed=$seed
+           echo ::endgroup::
+
+             echo ::group::testiphy fixed A
+             ./testiphy ${BALIPHY} --seed=$seed -Inone
+             echo ::endgroup::
+        fi
 
     - name: Upload tests if they failed
       uses: actions/upload-artifact@v3
