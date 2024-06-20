@@ -79,9 +79,9 @@ void reg_heap::reroot_at_token(int t)
 //    for(; t2 != root_token;)
 //        t2 = release_knuckle_tokens(t2);
 
-#ifdef DEBUG_MACHINE
-    check_used_regs();
-#endif
+//#ifdef DEBUG_MACHINE
+//    check_used_regs();
+//#endif
 }
 
 
@@ -90,9 +90,9 @@ void reg_heap::reroot_at(int t)
 {
     assert(not is_root_token(t) and is_root_token(tokens[t].parent));
 
-#ifdef DEBUG_MACHINE
-    check_used_regs();
-#endif
+//#ifdef DEBUG_MACHINE
+//    check_used_regs();
+//#endif
 
     // 1. If this context isn't a direct child of the root, then make it one
     if (not is_root_token(parent_token(t)))
