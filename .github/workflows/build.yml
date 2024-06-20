@@ -124,16 +124,13 @@ jobs:
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
           echo "Installing g++-${{ matrix.version }}"
-          echo sudo apt-get install -y g++-${{ matrix.version }}
-          if ! sudo apt-get install -y g++-${{ matrix.version }} ; then
-              echo "Adding ubuntu-toolchain-r/test"
+          if [ ${{ matrix.os }} = ubuntu-20.04 ] ; then
               # For newer GCCs:
               sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-              # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
               sudo apt-get update
-              echo "Installing g++-${{ matrix.version }} - trying again."
-              sudo apt-get install -y g++-${{ matrix.version }}
           fi
+          echo sudo apt-get install -y g++-${{ matrix.version }}
+          sudo apt-get install -y g++-${{ matrix.version }}
           g++-${{ matrix.version }} --version
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
