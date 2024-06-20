@@ -6,6 +6,7 @@
 #include "case.H"
 #include "index_var.H"
 #include "apply.H"
+#include "util/variant.H"
 
 using std::pair;
 using std::vector;
@@ -135,6 +136,136 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
 expression_ref indexify(const expression_ref& E)
 {
     vector<var> variables;
+    return indexify(E,variables);
+}
+
+/// Convert to using de Bruijn indices.
+expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
+{
+    // Variable
+    if (auto V = E.to_var())
+    {
+        int index = find_index_backward(variables, *V);
+        if (index == -1)
+            throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
+        else
+            return index_var(index);
+    }
+    // Lambda expression - /\x.e
+    else if (auto L = E.to_lambda())
+    {
+	for(auto& var: L->vars)
+	    variables.push_back(var);
+
+	auto E2 = make_indexed_lambda( indexify(L->body, variables) );
+
+	for(int i=0;i<L->vars.size();i++)
+	    variables.pop_back();
+
+	return E2;
+    }
+    // Apply expression
+    else if (auto A = E.to_apply())
+    {
+	auto head = indexify(A->head, variables);
+	vector<expression_ref> args;
+	for(auto& arg: A->args)
+	    args.push_back(indexify(arg, variables));
+
+	return apply_expression(head, args);
+    }
+    // Let expression
+    else if (auto L = E.to_let())
+    {
+	for(auto& [x,_]: L->decls)
+	    variables.push_back(x);
+
+        vector<expression_ref> es;
+	for(auto& [_,e]: L->decls)
+	    es.push_back( indexify(e, variables) );
+
+        auto body = indexify(L->body, variables);
+
+	for(int i=0;i<L->decls.size();i++)
+	    variables.pop_back();
+
+	return indexed_let_expression(es, body);
+    }
+
+    // case expression
+    else if (auto C = E.to_case())
+    {
+	auto object2 = indexify(C->object, variables);
+
+	Core::Alts alts2;
+	for(auto& [pattern, body]: C->alts)
+	{
+	    // Handle C x[1..n] -> body[i]
+	    expression_ref pattern2;
+	    expression_ref body2;
+	    if (to<Core2::WildcardPat>(pattern))
+	    {
+		pattern2 = var(-1);
+		body2 = indexify(body,variables);
+	    }
+	    else if (to<Core2::VarPat<>>(pattern))
+		std::abort();
+	    else if (auto CP = to<Core2::ConPat<>>(pattern))
+	    {
+		pattern2 = constructor(CP->head, CP->args.size());
+
+		for(auto& var: CP->args)
+		    variables.push_back(var);
+
+		body2 = indexify(body, variables);
+
+		for(int j=0;j<CP->args.size();j++)
+		    variables.pop_back();
+	    }
+	    alts2.push_back({pattern2, body2});
+	}
+
+	return make_case_expression(object2, alts2);
+    }
+    else if (auto C = E.to_conApp())
+    {
+	vector<expression_ref> args;
+	for(auto& arg: C->args)
+	    args.push_back( indexify(arg, variables) );
+
+	auto c = constructor(C->head, C->args.size());
+	return expression_ref{c,args};
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+	vector<expression_ref> args;
+	for(auto& arg: B->args)
+	    args.push_back( indexify(arg, variables) );
+
+	Operation O( (operation_fn)B->op, B->lib_name+":"+B->func_name);
+
+	return expression_ref{O, args};
+    }
+    else if (auto C = E.to_constant())
+    {
+	if (auto c = to<char>(C->value))
+	    return *c;
+	else if (auto i = to<int>(C->value))
+	    return *i;
+	else if (auto i = to<integer_container>(C->value))
+	    return Integer(i->i);
+	else if (auto s = to<std::string>(C->value))
+	    return String(*s);
+	else
+	    std::abort();
+    }
+
+    std::abort();
+}
+
+expression_ref indexify(const Core2::Exp<>& E)
+{
+    vector<Core2::Var<>> variables;
     return indexify(E,variables);
 }
 
