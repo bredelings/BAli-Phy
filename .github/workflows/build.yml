@@ -113,14 +113,22 @@ jobs:
       with:
         python-version: 3.12
 
+    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
+    # The total size for all caches in a repository is 5Gb.
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+         key: ${{ matrix.name }}
+         restore-keys: |
+           ${{ matrix.name }}
+
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
         sudo apt-get install -y pandoc ccache
-        sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
-        sudo apt update
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
           echo "Installing g++-${{ matrix.version }}"
@@ -141,6 +149,7 @@ jobs:
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
         fi
 
+        sudo rm -rf /usr/local/share/boost
         if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
             # 24.04 has boost.json
             sudo apt-get install -y libboost-all-dev
@@ -188,16 +197,6 @@ jobs:
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
-
-    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
-    # The total size for all caches in a repository is 5Gb.
-
-    - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-         key: ${{ matrix.name }}
-         restore-keys: |
-           ${{ matrix.name }}
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'

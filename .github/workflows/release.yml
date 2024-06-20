@@ -62,17 +62,33 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        name: [ubuntu-gcc-11,
+        name: [ubuntu-gcc-11-20.04,
+               ubuntu-gcc-11-22.04,
+               ubuntu-gcc-14,
                macos-xcode-15-intel,
                macos-xcode-15-arm,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-11
+          - name: ubuntu-gcc-11-20.04
+            os: ubuntu-20.04
+            compiler: gcc
+            version: "11"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-11-22.04
             os: ubuntu-22.04
             compiler: gcc
             version: "11"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-14
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
             buildtype: "release"
             arch: "linux64"
 
@@ -104,28 +120,43 @@ jobs:
       with:
         python-version: 3.12
 
+    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
+    # The total size for all caches in a repository is 5Gb.
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+         key: ${{ matrix.name }}
+         restore-keys: |
+           ${{ matrix.name }}
+
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
         sudo apt-get install -y pandoc ccache
-        sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
 
-        if [ "${{ matrix.compiler }}" = "gcc" ]; then
-          # For newer GCCs, maybe.
-          # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-          # sudo apt-get update
-
+        if [ "${{ matrix.compiler }}" = "gcc" ] ; then
+          echo "Installing g++-${{ matrix.version }}"
+          if [ ${{ matrix.os }} = ubuntu-20.04 ] ; then
+              # For newer GCCs:
+              sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+              sudo apt-get update
+          fi
+          echo sudo apt-get install -y g++-${{ matrix.version }}
           sudo apt-get install -y g++-${{ matrix.version }}
+          g++-${{ matrix.version }} --version
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
         else
+          echo "Installing clang-${{ matrix.version }}"
           sudo apt-get install -y clang-${{ matrix.version }}
           echo "CC=ccache clang-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
         fi
 
+        sudo rm -rf /usr/local/share/boost
         if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
             # 24.04 has boost.json
             sudo apt-get install -y libboost-all-dev
@@ -173,16 +204,6 @@ jobs:
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
-
-    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
-    # The total size for all caches in a repository is 5Gb.
-
-    - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-         key: ${{ matrix.name }}
-         restore-keys: |
-           ${{ matrix.name }}
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
@@ -241,15 +262,14 @@ jobs:
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
             # copy boost shared libs if they exist
             cp ${BOOST_ROOT}/lib/libboost*so* ${OUTPUT}/lib/bali-phy/
-            LD_LIBRARY_PATH=${BOOST_ROOT}/lib ldd ${OUTPUT}/bin/bali-phy
         else
             # apparently this only works for system libraries.
             for libname in $(ldd ${OUTPUT}/bin/bali-phy | grep libboost | sed s'/\s*lib\(boost.*\) =>.*/\1/') ; do
                 echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
                 cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
             done
-            ldd ${OUTPUT}/bin/bali-phy
         fi
+        ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)
       if: matrix.arch == 'win64'
@@ -336,7 +356,9 @@ jobs:
       run: |
         OUTPUT=$HOME/local
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
-        TAR=${PACKAGE}-${{ matrix.arch }}.tar.gz
+        ARCH=${{ matrix.arch }}
+        if [ "$ARCH" = linux64 ] ; then ARCH=${{ matrix.os }}
+        TAR=${PACKAGE}-${ARCH}.tar.gz
         cp -a $OUTPUT $PACKAGE
         tar -zcf $TAR ${PACKAGE}
         echo "archive=${TAR}" >> $GITHUB_OUTPUT
