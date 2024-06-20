@@ -25,7 +25,7 @@ jobs:
 
         include:
           - name: ubuntu-gcc-11
-            os: ubuntu-24.04
+            os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "release"
