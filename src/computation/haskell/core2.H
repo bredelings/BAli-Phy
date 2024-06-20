@@ -1,6 +1,7 @@
 #ifndef CORE2_H
 #define CORE2_H
 
+#include <iostream>
 #include <variant>
 #include <vector>
 #include <string>
@@ -193,6 +194,12 @@ namespace Core2
 	~Exp() = default;
     };
 
+    template <typename NoteV, typename NoteE>
+    inline std::ostream& operator<<(std::ostream& o,const Core2::Exp<NoteV,NoteE>& E)
+    {
+	return o<<E.print();
+    }
+
 
     template <typename NoteV = std::monostate>
     struct Var
@@ -201,6 +208,8 @@ namespace Core2
 	int index;
 
 	NoteV info;
+
+	std::strong_ordering operator<=>(const Var<NoteV>&) const = default;
 
 	std::string print() const;
 
