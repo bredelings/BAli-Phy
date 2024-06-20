@@ -351,6 +351,14 @@ jobs:
         name: tests-${{ matrix.name }}
         path: tests
 
+    - name: Ad hoc sign Mac executables
+      if: runner.os == 'macOS'
+      run: |
+        OUTPUT=$HOME/local
+        for exe in $(find ${OUTPUT} -type f -executable -exec file -i '{}' \; | grep charset=binary | sed 's/: application.*//') ; do
+           codesign -s - ${exe}
+        done
+
     - name: Create tarball
       id: create_tarball
       run: |
