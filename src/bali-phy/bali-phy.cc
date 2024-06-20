@@ -71,6 +71,7 @@ namespace mpi = boost::mpi;
 #include "system.H"
 #include "cmd_line.H"
 #include "computation/expression/expression.H" // for parse_object( )
+#include "computation/expression/convert.H" // for to_expression_ref( )
 #include "computation/loader.H"
 
 namespace fs = std::filesystem;
@@ -604,7 +605,7 @@ int main(int argc,char* argv[])
             auto M2 = P.get_module(M->name);
             for(const auto& [name, body]: M2->code_defs())
             {
-                std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
+                std::cerr<<"size = "<<simple_size(to_expression_ref(body))<<"   "<<name<<" = "<<body<<std::endl;
             }
             exit(0);
         }

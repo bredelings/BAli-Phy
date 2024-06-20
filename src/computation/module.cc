@@ -1921,20 +1921,17 @@ bool special_prelude_symbol(const string& name)
     return special_prelude_symbols.count(name) > 0;
 }
 
-map<var,expression_ref> CompiledModule::code_defs() const
+map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
 {
-    auto value_decls2 = to_expression_ref(value_decls);
+    map<Core2::Var<>,Core2::Exp<>> code;
 
-    map<var, expression_ref> code;
-
-    for(const auto& [x,rhs]: value_decls2)
+    for(const auto& [x,rhs]: value_decls)
     {
         assert(is_qualified_symbol(x.name));
 
         if (name() == get_module_name(x.name))
         {
-            // get the body for the  decl
-            assert(rhs);
+            assert(not rhs.empty());
 
             code[x] = rhs;
         }

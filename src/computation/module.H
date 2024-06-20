@@ -294,7 +294,7 @@ public:
     void finish_value_decls( CDecls& cdecls );
 
     // Why do we have code that isn't for this module?
-    std::map<var,expression_ref> code_defs() const;
+    std::map<Core2::Var<>,Core2::Exp<>> code_defs() const;
 
     void inflate(const Program& P);
 

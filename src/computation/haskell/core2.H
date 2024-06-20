@@ -220,6 +220,13 @@ namespace Core2
 	}
     };
 
+    template <typename NoteV>
+    inline std::ostream& operator<<(std::ostream& o,const Core2::Var<NoteV>& V)
+    {
+	return o<<V.print();
+    }
+
+
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Lambda
     {

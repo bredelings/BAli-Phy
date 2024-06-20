@@ -14,6 +14,7 @@
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
+#include "computation/expression/convert.H"
 #include "computation/operations.H"
 #include "effect.H"
 #include "effects.H"
@@ -3016,10 +3017,15 @@ void reg_heap::allocate_identifiers_for_program()
     {
         // 2.1 Pre-allocate locations for all symbols in the module.
         for(const auto& [x, _]: M->code_defs())
-            add_identifier(x);
+            add_identifier(to_var(x));
 
-        for(const auto& [x, body]: M->code_defs())
+        for(const auto& [x_, body_]: M->code_defs())
         {
+	    // convert from Core2::Var<> to var
+	    auto x = to_var(x_);
+	    // convert from Core2::Exp<> to expression_ref
+	    auto body = to_expression_ref(body_);
+
             // get the root for each identifier
             auto loc = identifiers.find(x);
             assert(loc != identifiers.end());

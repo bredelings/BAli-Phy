@@ -7,6 +7,8 @@ Core2::Exp<> to_core_exp(const expression_ref& E);
 
 Core2::Decls<> to_core(const CDecls& decls);
 
+var to_var(const Core2::Var<>& V);
+
 expression_ref to_expression_ref(const Core2::Exp<>& E);
 
 CDecls to_expression_ref(const Core2::Decls<>& decls);
