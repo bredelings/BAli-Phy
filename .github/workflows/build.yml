@@ -92,9 +92,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-
-    - name: install python
-      if: runner.os != 'macos-13'
       uses: actions/setup-python@v5
       with:
         python-version: 3.12
@@ -141,6 +138,7 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pkg-config pandoc ccache coreutils
           brew install boost eigen range-v3 cairo fmt
           brew install gnuplot r
