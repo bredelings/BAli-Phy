@@ -12,8 +12,8 @@ jobs:
   build:
     strategy:
       matrix:
-        name: [ubuntu-gcc-13-20.04,
-               ubuntu-gcc-13-22.04,
+        name: [ubuntu-gcc-11-20.04,
+               ubuntu-gcc-11-22.04,
 
                ubuntu-gcc-11,
                ubuntu-gcc-12-debugoptimized,
@@ -27,17 +27,17 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-13-20.04
+          - name: ubuntu-gcc-11-20.04
             os: ubuntu-20.04
             compiler: gcc
-            version: "13"
+            version: "11"
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-13-22.04
+          - name: ubuntu-gcc-11-22.04
             os: ubuntu-22.04
             compiler: gcc
-            version: "13"
+            version: "11"
             buildtype: "release"
             arch: "linux64"
 
