@@ -357,7 +357,7 @@ jobs:
         OUTPUT=$HOME/local
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
         ARCH=${{ matrix.arch }}
-        if [ "$ARCH" = linux64 ] ; then ARCH=${{ matrix.os }}
+        if [ "$ARCH" = linux64 ] ; then ARCH=${{ matrix.os }} ; fi
         TAR=${PACKAGE}-${ARCH}.tar.gz
         cp -a $OUTPUT $PACKAGE
         tar -zcf $TAR ${PACKAGE}
