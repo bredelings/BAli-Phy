@@ -1,4 +1,4 @@
-* 4.0-beta14 (unreleased)
+* 4.0-beta14 (Jun 20, 2024)
 - Features
   + Allow inferring the number of bins under the Rates.free and M3 models.
   + Make startup faster by saving compiled modules.
