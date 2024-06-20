@@ -12,6 +12,7 @@ module SModel (module SModel,
                module SModel.Empirical,
                module SModel.MarkovModulated,
                module SModel.MutSel,
+               module SModel.BranchModel,
                frequencies_from_dict) where
 
 import Probability.Distribution.Discrete
@@ -37,6 +38,7 @@ import SModel.MixtureModels
 import SModel.Empirical
 import SModel.MarkovModulated
 import SModel.MutSel
+import SModel.BranchModel
 
 import Data.Matrix
 
@@ -116,7 +118,6 @@ branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [
 
 branch_site_test fs ws posP posW posSelection branch_cats model_func = branch_site fs ws posP posW' branch_cats model_func
     where posW' = if (posSelection == 1) then posW else 1
-
 
 gamma_rates_dist alpha = gamma alpha (1/alpha)
 
