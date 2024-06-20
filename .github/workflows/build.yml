@@ -132,6 +132,7 @@ jobs:
               echo -e "\n    BOOST root is at $(cd ../installed-boost-1.85.0; pwd)\n"
               echo BOOST_ROOT=$(cd ../installed-boost-1.85.0; pwd) >> $GITHUB_ENV
             )
+        fi
 
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
