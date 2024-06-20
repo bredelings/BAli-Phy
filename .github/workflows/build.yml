@@ -118,7 +118,7 @@ jobs:
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
         fi
 
-        if [ ${{ runner.os }} = ubuntu-24.04 ] ; then
+        if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
             # 24.04 has boost.json
             sudo apt-get install -y libboost-all-dev
         else
