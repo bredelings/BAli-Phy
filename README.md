@@ -9,13 +9,13 @@ Compiling
 ---------
 
 You will need a C++ compiler that understands C++20.
- * gcc 10 (or higher) works
- * clang 13 (or higher) works
+ * gcc 11 (or higher) works
+ * clang 14 (or higher) works
  * XCode 14 (or higher) works
 
 Install Prerequisites
 ---------------------
-On Ubuntu, you can use apt-get:
+On Ubuntu 24.04 (or higher), or on Debian testing, you can use apt-get:
 ```bash
 sudo apt-get install g++ libcairo2-dev meson libboost-all-dev
 ```
