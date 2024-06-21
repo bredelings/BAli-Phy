@@ -280,9 +280,7 @@ jobs:
       run: |
         brew install findutils file-formula
         OUTPUT=$HOME/local
-        file --help
-        gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \;
-        for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep charset=binary | sed 's/: application.*//') ; do
+        for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
            echo codesign -s - ${exe}
            codesign -s - ${exe}
         done
