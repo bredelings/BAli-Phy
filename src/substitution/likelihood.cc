@@ -1469,23 +1469,22 @@ namespace substitution {
                 continue;
             }
 
-            assert(node_branches.size() == 3);
+            // For each node that is connected to exactly 1 other node,
+            // return the branch which points to that other node.
             int count = 0;
-            int which = -1;
-            for(int j=0;j<node_branches.size();j++)
+            optional<int> which;
+            for(int b: node_branches)
             {
-                int target = t.target(node_branches[j]);
+                int target = t.target(b);
                 if (includes(nodes, target))
                 {
-                    which = j;
+                    which = b;
                     count++;
                 }
             }
       
             if (count == 1)
-                branch_list.push_back(node_branches[which]);
-            else
-                assert(count == 3);
+                branch_list.push_back(which.value());
         }
         assert(branch_list.size() == 2 or branch_list.size() == 3 or branch_list.size() == 4);
         assert(nodes.size() == 2 or nodes.size() == 4 or nodes.size() == 6);
