@@ -204,4 +204,59 @@ struct other_subst_work_t
 };
 
 
+class SparseLikelihoods: public Object
+{
+    int n_columns_ = -1;
+    int n_models_ = -1;
+    int n_states_ = -1;
+
+    mutable object_ptr<Likelihood_Cache_Branch> DenseLikelihoods_;
+
+public:
+    std::vector<double> values;
+    std::vector<int> states;
+    std::vector<int> column_offsets;
+
+    object_ptr<Likelihood_Cache_Branch> DenseLikelihoods() const;
+
+    SparseLikelihoods* clone() const {std::abort();}
+
+    boost::dynamic_bitset<> bits;
+
+    bool away_from_root() const {return false;}
+
+    int num_non_zeros() const {
+	assert(values.size() == states.size());
+	return states.size();
+    }
+
+    int n_states() const {return n_states_;}
+    int n_models() const {return n_models_;}
+    int n_columns() const {return n_columns_;}
+
+    SparseLikelihoods& operator=(const SparseLikelihoods&) = delete;
+    SparseLikelihoods& operator=(SparseLikelihoods&&) noexcept = default;
+
+    SparseLikelihoods(const SparseLikelihoods&) = delete;
+    SparseLikelihoods(SparseLikelihoods&&) noexcept = default;
+
+    SparseLikelihoods(int C, int M, int S)
+	:n_columns_(C), n_models_(M), n_states_(S)
+    {
+
+    }
+
+    SparseLikelihoods(const boost::dynamic_bitset<>& mask, int M, int S)
+	:SparseLikelihoods(mask.count(), M, S)
+	{
+	    bits = mask;
+	}
+
+    SparseLikelihoods(boost::dynamic_bitset<>&& mask, int M, int S)
+	:SparseLikelihoods(mask.count(), M, S)
+	{
+	    bits = std::move(mask);
+	}
+};
+
 #endif

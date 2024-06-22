@@ -87,6 +87,7 @@ libbaliphy_sources = [
   'mcmc/sample-tri.cc',
 
   'substitution/ops.cc',
+  'substitution/cache.cc',
   'substitution/likelihood.cc',
   'substitution/likelihoodSEV.cc',
   'substitution/parsimony.cc',
