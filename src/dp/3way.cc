@@ -40,7 +40,7 @@ using namespace A3;
 namespace A3 {
 
   vector<int> get_nodes(const TreeInterface& t,int n0) {
-    assert(t.is_internal_node(n0));
+    assert(t.degree(n0) == 3);
     
     vector<int> nodes(4);
     nodes[0] = n0;

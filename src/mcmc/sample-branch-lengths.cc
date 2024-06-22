@@ -338,11 +338,12 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
-  
+    assert(is_degree3_edge(t,b));
+
     // choose branches to alter
     if (uniform() < 0.5)
 	b = t.reverse(b);
-    if (t.is_leaf_node(t.target(b)))
+    if (t.degree(t.target(b)) != 3)
 	b = t.reverse(b);
     vector<int> branches = t.branches_after(b);
 
@@ -394,7 +395,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
     MCMC::Result result(2);
 
     auto t = PP->t();
-    if (not t.is_internal_node(n)) return;
+    if (t.degree(n) != 3) return;
 
     //-------------- Find branches ------------------//
     vector<int> branches = randomize(t.branches_out(n));

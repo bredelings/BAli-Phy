@@ -1010,3 +1010,16 @@ bool tryNNI(TreeInterface& T, int br1, int br2)
     else
 	return false;
 }
+
+bool is_degree3_edge(const TreeInterface& t, const tree_edge& e)
+{
+    int d1 = t.degree(e.node1);
+    int d2 = t.degree(e.node2);
+    return (d1 == 3 or d2 == 3);
+}
+
+bool is_degree3_edge(const TreeInterface& t, int b)
+{
+    return is_degree3_edge(t, t.edge(b));
+}
+

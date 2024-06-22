@@ -189,4 +189,9 @@ std::string write(const TreeInterface& T, const std::map<int,double>& L, const s
 std::string write(const TreeInterface& T, std::map<int,std::string>, bool print_lengths=true);
 
 bool tryNNI(TreeInterface& T, int b1, int b2);
+
+bool is_degree3_edge(const TreeInterface& t, const tree_edge& e);
+
+bool is_degree3_edge(const TreeInterface& t, int b);
+
 #endif

@@ -32,6 +32,8 @@ using std::valarray;
 using std::vector;
 using std::string;
 using std::map;
+using std::optional;
+
 
 void slide_node_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
@@ -52,6 +54,7 @@ void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b)
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
 
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -59,7 +62,7 @@ void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     tri_sample_alignment(*PP,node1,node2);
@@ -74,6 +77,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 //    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
   
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -81,7 +85,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
@@ -101,6 +105,7 @@ void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b)
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
 
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -108,7 +113,7 @@ void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     cube_sample_alignment(*PP,node1,node2);
@@ -123,6 +128,7 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 //    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
   
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -130,7 +136,7 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
@@ -156,6 +162,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 //    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
 
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -163,7 +170,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     if (tri_sample_alignment_and_parameter(*PP, node1, node2, proposal))
@@ -186,6 +193,7 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 //    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
+    assert(is_degree3_edge(t,b));
 
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
@@ -193,7 +201,7 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (t.is_leaf_node(node1))
+    if (t.degree(node1) != 3)
         std::swap(node1,node2);
     
     if (tri_sample_alignment_branch_model(*PP,node1,node2)) {
@@ -229,16 +237,21 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
 
-    vector<int> nodes = A3::get_nodes_random(PP->t(),n0);
-    int n1 = -1;
+    auto t = PP->t();
+    assert(t.degree(n0) == 3);
+
+    vector<int> nodes = A3::get_nodes_random(t,n0);
+    optional<int> n1;
     for(int i=1;i<nodes.size();i++)
-        if ((PP->t()).is_internal_node( nodes[i] )) {
+        if (t.degree(nodes[i]) == 3)
+	{
             n1 = nodes[i];
             break;
-        }
-    assert(n1 != 1);
+        };
 
-    int b = PP->t().undirected(PP->t().find_branch(n0,n1));
+    if (not n1) return;
+    
+    int b = PP->t().undirected(PP->t().find_branch(n0, *n1));
 
     sample_two_nodes(*PP,b);
 }
@@ -487,7 +500,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
     if (uniform() < 0.5)
         e = e.reverse();
 
-    if (t.is_leaf_node(e.node2))
+    if (t.degree(e.node2) != 3)
         e = e.reverse();
 
     // NOTE! This pointer might be invalidated after the tree is changed by MH!
@@ -495,7 +508,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 
     // FIXME - this might move the accumulator off of the current branch (?)
     // TEST and Check Scaling of # of branches peeled
-    if (t.n_nodes() > 2)
+    if (is_degree3_edge(t,e))
     {
         if (uniform() < 0.5)
             slide_node(P, Stats, t.find_branch(e));
@@ -653,7 +666,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             }
             std::cerr<<"\n";
         }
-        if (t.is_internal_node(node2))
+        if (t.degree(node2) == 3)
         {
             if (log_verbose >=3) std::cerr<<"     Performing 3-way alignment\n";
             tri_sample_alignment(*P.as<Parameters>(), node2, node1);
