@@ -54,22 +54,6 @@ void add_internal_labels(SequenceTree& T)
 	}
 }
 
-void clean_T(SequenceTree& T, bool internal_sequences)
-{
-
-// Later, might we WANT sub-branches???
-//    if (has_sub_branches(T))
-//	remove_sub_branches(T);
-
-    if (internal_sequences and has_polytomy(T) and T.n_leaves() > 1) {
-	assert(has_polytomy(T));
-	throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
-    }
-
-    if (internal_sequences)
-        add_internal_labels(T);
-}
-
 /// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
 ///
 /// \param A The alignment.
@@ -78,7 +62,8 @@ void clean_T(SequenceTree& T, bool internal_sequences)
 ///
 void link(alignment& A,SequenceTree& T,bool internal_sequences) 
 {
-    clean_T(T, internal_sequences);
+    if (internal_sequences)
+        add_internal_labels(T);
 
     link_A(A, T, internal_sequences);
 }
