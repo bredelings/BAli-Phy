@@ -24,6 +24,8 @@ data Attributes = Attributes [(Text,Maybe Text)]
 
 (Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
 
+emptyAttributes (Attributes l) = null l
+
 instance Show Attributes where
     show (Attributes []) = ""
     show (Attributes cs) = "[&" ++ intercalate "," (fmap go cs)  ++ "]" where
