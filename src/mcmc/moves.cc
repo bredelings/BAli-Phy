@@ -666,7 +666,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             std::cerr<<"\n\n";
         }
 
-        three_way_topology_sample(P,Stats,b);
+        // We can't do this on a fixed topology.
+        // three_way_topology_sample(P,Stats,b);
     }
     int AL1 = alignment_length(*P.as<Parameters>());
     if (log_verbose>=4) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
