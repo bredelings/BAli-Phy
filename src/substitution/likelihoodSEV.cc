@@ -596,20 +596,45 @@ namespace substitution
         {
             double* R = (*LCB)[i];
 
-	    for(int m=0;m<n_models;m++)
+	    if (nodeCLV.column_offsets[i] == nodeCLV.column_offsets[i+1])
 	    {
-		const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-		// compute the distribution at the target (parent) node - multiple letters
-		for(int s1=0;s1<n_states;s1++)
+		for(int m=0;m<n_models;m++)
+		    for(int s1=0;s1<n_states;s1++)
+			R[m*n_states + s1] = 0;
+	    }
+	    else if (nodeCLV.column_offsets[i] + 1 == nodeCLV.column_offsets[i+1])
+	    {
+		int j = nodeCLV.column_offsets[i];
+		int s2 = nodeCLV.states[j];
+		for(int m=0;m<n_models;m++)
 		{
-		    double temp=0;
-		    for(int j=nodeCLV.column_offsets[i];j<nodeCLV.column_offsets[i+1];j++)
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+		    // compute the distribution at the target (parent) node - single letters
+		    for(int s1=0;s1<n_states;s1++)
+			R[m*n_states + s1] = Q(s1,s2);
+		}
+	    }
+	    else
+	    {
+		for(int m=0;m<n_models;m++)
+		{
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+		    // compute the distribution at the target (parent) node - multiple letters
+		    for(int s1=0;s1<n_states;s1++)
 		    {
+			int j = nodeCLV.column_offsets[i];
 			int s2 = nodeCLV.states[j];
-			temp += Q(s1,s2)*nodeCLV.values[j];
+			double temp = Q(s1,s2);
+			j++;
+			for(;j<nodeCLV.column_offsets[i+1];j++)
+			{
+			    int s2 = nodeCLV.states[j];
+			    temp += Q(s1,s2);
+			}
+			R[m*n_states + s1] = temp;
 		    }
-		    R[m*n_states + s1] = temp;
 		}
 	    }
         }
