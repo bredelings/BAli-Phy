@@ -36,6 +36,7 @@
 #include "computation/varinfo.H"
 #include "util/assert.hh"
 #include <boost/compute/detail/sha1.hpp>
+#include <fmt/chrono.h>
 
 #include <cereal/archives/binary.hpp>
 
@@ -1825,24 +1826,10 @@ string exe_str()
     {
         auto exe_path = find_exe_path();
 
-        std::ifstream exe_file(exe_path);
-        char file_buffer[4096];
-
-        boost::uuids::detail::sha1 h;
-
-        while (exe_file.read(file_buffer, sizeof(file_buffer)) or exe_file.gcount())
-        {
-            h.process_bytes(file_buffer, exe_file.gcount());
-        }
-
-        unsigned int digest[5];
-        h.get_digest(digest);
-
-        std::ostringstream buf;
-        for(int i = 0; i < 5; ++i)
-            buf << std::hex << std::setfill('0') << std::setw(8) << digest[i];
-
-        str = buf.str();
+	std::filesystem::file_time_type ftime = std::filesystem::last_write_time(exe_path);
+	auto epoch = ftime.time_since_epoch();
+	auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
+	str = fmt::format("{}",nano);
     }
 
     return *str;
