@@ -22,7 +22,7 @@ object_ptr<Likelihood_Cache_Branch> SparseLikelihoods::DenseLikelihoods() const
 
 	    for(int m=0;m<n_models();m++)
 		for(int j=column_offsets[i];j<column_offsets[i+1];j++)
-		    S[m*n_states() + states[j]] = values[j];
+		    S[m*n_states() + states[j]] = 1;
 
 	    i++;
 	}

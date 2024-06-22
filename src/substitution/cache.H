@@ -203,7 +203,6 @@ class SparseLikelihoods: public Object
     mutable object_ptr<Likelihood_Cache_Branch> DenseLikelihoods_;
 
 public:
-    std::vector<double> values;
     std::vector<int> states;
     std::vector<int> column_offsets;
 
@@ -216,7 +215,6 @@ public:
     bool away_from_root() const {return false;}
 
     int num_non_zeros() const {
-	assert(values.size() == states.size());
 	return states.size();
     }
 
