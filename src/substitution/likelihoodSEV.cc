@@ -281,7 +281,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -424,7 +429,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -786,7 +796,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -884,7 +899,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -1103,7 +1123,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -1177,7 +1202,12 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	    LC.push_back(lc);
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
