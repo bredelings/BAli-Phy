@@ -1028,6 +1028,14 @@ namespace substitution
 		    }
 		}
 	    }
+	    else if (letter == alphabet::not_gap)
+	    {
+		for(int s1=0;s1<n_states;s1++)
+		{
+		    LCB->values.push_back(1.0);
+		    LCB->states.push_back(s1);
+		}
+	    }
 
 	    i++;
 	}
