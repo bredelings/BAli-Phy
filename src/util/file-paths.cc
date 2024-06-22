@@ -103,9 +103,7 @@ fs::path find_exe_path()
 	program_location = "/proc/curproc/file";
 #endif
 
-    program_location = canonical(program_location).parent_path();
-
-    return program_location;
+    return canonical(program_location);
 }
 
 vector<fs::path> clean_paths(const vector<fs::path>& paths)

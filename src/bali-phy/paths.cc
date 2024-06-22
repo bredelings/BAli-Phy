@@ -14,7 +14,7 @@ using std::optional;
 
 optional<fs::path> get_system_lib_path()
 {
-    fs::path system_lib_path = find_exe_path();
+    fs::path system_lib_path = find_exe_path().parent_path();
     if (not system_lib_path.empty())
     {
 	system_lib_path = system_lib_path.parent_path() / "lib" / "bali-phy";
