@@ -578,6 +578,57 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_SEV(const SparseLikelihoods& nodeCLV, const EVector& transition_P)
+    {
+        int L0 = nodeCLV.n_columns();
+
+        const int n_models  = transition_P.size();
+        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+
+	assert(nodeCLV.n_models() == n_models);
+	assert(nodeCLV.n_states() == n_states);
+
+        total_peel_leaf_branches++;
+
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(nodeCLV.bits, n_models, n_states));
+
+        for(int i=0;i<L0;i++)
+        {
+            double* R = (*LCB)[i];
+
+	    for(int m=0;m<n_models;m++)
+	    {
+		const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+		// compute the distribution at the target (parent) node - multiple letters
+		for(int s1=0;s1<n_states;s1++)
+		{
+		    double temp=0;
+		    for(int j=nodeCLV.column_offsets[i];j<nodeCLV.column_offsets[i+1];j++)
+		    {
+			int s2 = nodeCLV.states[j];
+			temp += Q(s1,s2)*nodeCLV.values[j];
+		    }
+		    R[m*n_states + s1] = temp;
+		}
+	    }
+        }
+
+        return LCB;
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_SEV(const expression_ref& nodeCLV, const EVector& transition_P)
+    {
+	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
+	    return peel_leaf_branch_SEV(*LCB, transition_P);
+	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
+	    return peel_leaf_branch_SEV(*SL, transition_P);
+	else
+	    throw myexception()<<"peel_leaf_branch_SEV: leaf object not recognized!";
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
                              const Likelihood_Cache_Branch& LCB2,
                              const EVector& transition_P)
@@ -698,8 +749,7 @@ namespace substitution
 	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
 	else if (LCN.size() == 1 and LCB.empty())
-	    return peel_leaf_branch_SEV(LCN[0].as_<Likelihood_Cache_Branch>(),
-					transition_P);
+	    return peel_leaf_branch_SEV(LCN[0], transition_P);
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
@@ -936,6 +986,53 @@ namespace substitution
 
 	    i++;
 	}
+
+	return LCB;
+    }
+
+    object_ptr<const SparseLikelihoods>
+    simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
+				     const alphabet& a,
+				     const EVector& smap,
+				     int n_models)
+    {
+	auto& sequence = sequence_mask.first.as_<EVector>();
+	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
+
+	int n_states = smap.size();
+
+	int L = mask.size();
+
+	auto LCB = object_ptr<SparseLikelihoods>(new SparseLikelihoods(mask, n_models, n_states));
+
+	int i=0;
+        for(int c=0;c<L;c++)
+	{
+	    if (not mask.test(c)) continue;
+
+	    // Add NNZ offset fo values/states for this column.
+	    LCB->column_offsets.push_back(LCB->num_non_zeros());
+
+	    int letter = sequence[i].as_int();
+
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int s1=0;s1<n_states;s1++)
+		{
+		    int l = smap[s1].as_int();
+		    if (ok[l])
+		    {
+			LCB->values.push_back(1.0);
+			LCB->states.push_back(s1);
+		    }
+		}
+	    }
+
+	    i++;
+	}
+
+	LCB->column_offsets.push_back(LCB->num_non_zeros());
 
 	return LCB;
     }
