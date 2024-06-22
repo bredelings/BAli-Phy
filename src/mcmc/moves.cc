@@ -258,13 +258,15 @@ std::unordered_map<int,int> get_cost(const TreeInterface& t)
 
     for(auto b: t.leaf_branches())
     {
+        // Leaf branches point away from the leaf.
+        // So b2 points toward the leaf.
         int b2 = t.reverse(b);
         cost.insert({b2,0});
         stack1.push_back(b2);
     }
 
     if (t.n_leaves() == 2)
-	return cost;
+        return cost;
     
     while(not stack1.empty())
     {
@@ -274,29 +276,45 @@ std::unordered_map<int,int> get_cost(const TreeInterface& t)
             t.append_branches_before(b, stack2);
 
         // clear 'stack1'
+        // these branches are already done -- we just needed to process the branches before them
         stack1.clear();
 
         for(int b: stack2)
-	{
+        {
+            // Skip b if we already have already processed it.
+            if (cost.contains(b)) continue;
+
             auto children = t.branches_after(b);
-            assert(children.size() == 2);
-	    int l = children[0];
-	    int r = children[1];
 
-	    if (cost.contains(l) and cost.contains(r))
-	    {
-		int cost_l = cost.at(l);
-		int cost_r = cost.at(r);
+            bool all_children_done = true;
+            int total_cost = 0;
+            int worst_cost = 0;
+            for(int b: children)
+            {
+                if (not cost.contains(b))
+                {
+                    all_children_done = false;
+                    break;
+                }
 
-                if (not t.is_leaf_branch(l)) cost_l++;
+                int child_cost = cost.at(b);
 
-                if (not t.is_leaf_branch(l)) cost_r++;
+                // It costs 1 more to cross b if it is not a leaf branch.
+                if (not t.is_leaf_branch(b)) child_cost++;
 
-                if (cost_l > cost_r)
-                    std::swap(cost_l,cost_r);
+                // Find the highest cost branch, which we will traverse only once.
+                worst_cost = std::max(worst_cost, child_cost);
 
-                cost.insert({b, 2*cost_l + cost_r});
+                total_cost += child_cost;
+            }
 
+            if (all_children_done)
+            {
+                // We traverse all branches twice, except for the worst one
+                cost.insert({b, 2*total_cost - worst_cost});
+
+                // Notify that b is now done, and we can try (or re-try) handling
+                // the branches that depend on it.
                 stack1.push_back(b);
             }
         }
@@ -304,7 +322,7 @@ std::unordered_map<int,int> get_cost(const TreeInterface& t)
 
     // check that all the costs have been calculated
     for(int b: t.directed_branches())
-	assert(cost.contains(b));
+        assert(cost.contains(b));
 
     return cost;
 }
