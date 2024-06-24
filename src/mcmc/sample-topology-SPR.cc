@@ -169,75 +169,6 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
     return choice.first;
 }
 
-// Consider penalizing lengths for being too close to equilibrium: branches couldn't get infinitely long.
-// Consider using actual substitution matrices.
-// Consider measuring similarities/differences by counting.
-// Problem: how do we handle multiple partitions?
-
-std::unordered_map<int,double> effective_lengths(const TreeInterface& t)
-{
-    std::unordered_map<int,double> lengths;
-
-    auto branches = branches_from_leaves(t);
-
-    for(int b: branches)
-    {
-	lengths[b] = t.branch_length(b);
-
-	auto pre_b = t.branches_before(b);
-
-	if (pre_b.size() > 0)
-	{
-	    double Pr_change_on_all = 1;
-	    for(int b2: pre_b)
-		Pr_change_on_all *= (1.0-exp(-lengths[b2]));
-	    double Pr_no_change_on_at_least_1 = 1.0-Pr_change_on_all;
-	    if (Pr_no_change_on_at_least_1 > 0)
-		lengths[b] += -log(Pr_no_change_on_at_least_1);
-	    assert(lengths[b] >= t.branch_length(b));
-	}
-    }
-
-    return lengths;
-}
-
-double effective_length(const TreeInterface& t, int b)
-{
-    return effective_lengths(t)[b];
-}
-
-double effective_length(const TreeInterface& T, const tree_edge& E)
-{
-    int b = T.find_branch(E);
-    return effective_length(T, b);
-}
-
-std::unordered_map<int,double> effective_lengths_min(const TreeInterface& t)
-{
-    std::unordered_map<int,double> lengths;
-
-    vector<int> branches = branches_from_leaves(t);
-
-    for(int b: branches)
-    {
-	lengths[b] = t.branch_length(b);
-
-	vector<int> pre_b = t.branches_before(b);
-
-	if (pre_b.size() > 0) 
-	{
-	    double min_prev = t.branch_length(pre_b[0]);
-	    for(int b2: pre_b)
-		min_prev = std::min(min_prev, t.branch_length(b2));
-
-	    lengths[b] += min_prev;
-	}
-    }
-
-    return lengths;
-}
-
-
 int choose_SPR_target(const TreeInterface& T1, int b1) 
 {
     //----- Select the branch to move to ------//
@@ -632,15 +563,15 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
 
     int b2 = choose_SPR_target(PP.t(),b1);
 
-    double L_effective = effective_length(PP.t(), b1);
+    double L = PP.t().branch_length(b1);
 
     if (not PP.variable_alignment() and uniform() < p) {
 	MCMC::Result result = sample_SPR(PP,b1,b2,true);
-	SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
+	SPR_inc(Stats,result,"SPR (flat/slice)",L);
     }
     else  {
 	MCMC::Result result = sample_SPR(PP,b1,b2);
-	SPR_inc(Stats,result,"SPR (flat)",L_effective);
+	SPR_inc(Stats,result,"SPR (flat)",L);
     }
 }
 
@@ -1459,11 +1390,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     // 11. Record SPR move statistics.
     MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, subtree_edge);
-    double L_effective = effective_length(P.t(), subtree_edge);
+    double LM = P.t().branch_length(P.t().find_branch(subtree_edge));
     if (sum_out_A)
-	SPR_inc(Stats, result, "SPR (all-sum)", L_effective);
+	SPR_inc(Stats, result, "SPR (all-sum)", LM);
     else
-	SPR_inc(Stats, result, "SPR (all)", L_effective);
+	SPR_inc(Stats, result, "SPR (all)", LM);
 
     // Return true if we accept a DIFFERENT tree.
     return ((C != 0) and accepted);
@@ -1487,14 +1418,6 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
 	int b1 = choose_subtree_branch_uniform2(PP.t());
 
 	sample_SPR_search_one(PP, Stats, PP.t().edge(b1));
-    }
-
-    if (P->load_value("SPR_longest", true))
-    {
-	// Try moving the longest or least-determined branch every time.
-	int least_informed_branch = argmax(effective_lengths_min(PP.t()));
-	sample_SPR_flat_one(P, Stats, least_informed_branch);
-	sample_SPR_search_one(PP, Stats, PP.t().edge(least_informed_branch));
     }
 }
 
@@ -1635,14 +1558,6 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 
 	sample_SPR_flat_one(P, Stats, b1);
     }
-
-    if (P->load_value("SPR_longest", true))
-    {
-	// Try moving the longest or least-determined branch every time.
-	int least_informed_branch = argmax(effective_lengths_min(PP.t()));
-	sample_SPR_flat_one(P, Stats, least_informed_branch);
-	sample_SPR_search_one(PP, Stats, PP.t().edge(least_informed_branch));
-    }
 }
 
 void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
@@ -1661,23 +1576,15 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
 	int b1=-1, b2=-1;
 	choose_subtree_branch_nodes(PP.t(), b1, b2);
 
-	double L_effective = effective_length(PP.t(), b1);
+	double L = PP.t().branch_length(b1);
 
 	if (not PP.variable_alignment() and uniform()< p) {
 	    MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2,true);
-	    SPR_inc(Stats,result,"SPR (path/slice)", L_effective);
+	    SPR_inc(Stats,result,"SPR (path/slice)", L);
 	}
 	else {
 	    MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
-	    SPR_inc(Stats,result,"SPR (path)", L_effective);
+	    SPR_inc(Stats,result,"SPR (path)", L);
 	}
-    }
-
-    if (P->load_value("SPR_longest", true))
-    {
-	// Try moving the longest or least-determined branch every time.
-	int least_informed_branch = argmax(effective_lengths_min(PP.t()));
-	sample_SPR_flat_one(P, Stats, least_informed_branch);
-	sample_SPR_search_one(PP, Stats, PP.t().edge(least_informed_branch));
     }
 }
