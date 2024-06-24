@@ -299,32 +299,33 @@ int TreeInterface::neighbor(int n, int i) const {
 }
 
 vector<int> TreeInterface::neighbors(int n) const {
-    vector<int> nodes(degree(n));
-    for(int i=0;i<nodes.size();i++)
-	nodes[i] = neighbor(n, i);
+    auto nodes = branches_out(n);
+    for(int& n: nodes)
+	n = target(n);
     return nodes;
 }
 
 vector<int> TreeInterface::branches_out(int n) const {
-    vector<int> branches(degree(n));
-    for(int i=0;i<branches.size();i++)
-	branches[i] = branch_out(n, i);
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    vector<int> branches;
+    for(int b: out_edges)
+	branches.push_back(b);
     return branches;
 }
 
 vector<int> TreeInterface::branches_in(int n) const {
-    vector<int> branches(degree(n));
-    for(int i=0;i<branches.size();i++)
-	branches[i] = reverse(branch_out(n, i));
+    auto branches = branches_out(n);
+    for(int& b: branches)
+	b = reverse(b);
     return branches;
 }
 
 void TreeInterface::append_branches_before(int b, vector<int>& branches) const
 {
     int n = source(b);
-    for(int i=0;i<degree(n);i++)
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    for(int b2: out_edges)
     {
-	int b2 = branch_out(n,i);
 	if (b2 != b)
 	    branches.push_back(reverse(b2));
     }
@@ -336,9 +337,9 @@ void TreeInterface::append_branches_after(int b, vector<int>& branches) const
     b = reverse(b);
   
     int n = source(b);
-    for(int i=0;i<degree(n);i++)
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    for(int b2: out_edges)
     {
-	int b2 = branch_out(n,i);
 	if (b2 != b)
 	    branches.push_back(b2);
     }
@@ -513,12 +514,10 @@ bool TreeInterface::is_internal_branch(int b) const {
 
 optional<int> TreeInterface::search_branch(int n1, int n2) const
 {
-    for(int i=0;i<degree(n1);i++)
-    {
-	int b = branch_out(n1,i);
-	int n = target(b);
-	if (n == n2) return b;
-    }
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n1).get_value(get_const_context()).as_<IntSet>();
+    for(int b: out_edges)
+	if (target(b) == n2) return b;
+
     return {};
 }
 
