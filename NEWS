@@ -1,4 +1,7 @@
 * 4.0-beta15 (unreleased)
+- Speed increases:
+  + Speed up tree operations.
+  + Don't scan the whole tree to do SPR.
 - Bug fixes:
   + Fix inferring the alignment on a fixed topology (rooted or unrooted).
   + Invalidate compiled modules if the executable changes.
