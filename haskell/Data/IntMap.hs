@@ -6,6 +6,7 @@ import qualified Data.Foldable as F
 import Foreign.Vector
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
+import Control.DeepSeq
 
 data IntMap a
 
@@ -163,3 +164,8 @@ instance Foldable IntMap where
     length = size
 
 foreign import bpcall "IntMap:" restrictKeysToVector :: IntMap a -> IntSet -> EVector a
+
+-- This will be very slow!
+-- Maybe faster would be something like (forceAll $ fmap rnf m)
+instance NFData a => NFData (IntMap a) where
+    rnf m = rnf (elems m)

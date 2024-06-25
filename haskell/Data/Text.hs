@@ -20,6 +20,7 @@ import qualified Prelude as P
 import Data.Char
 import Data.Ord
 import Data.Eq
+import Control.DeepSeq
 
 import qualified Foreign.String as FS
 
@@ -284,3 +285,5 @@ doubleToText d = Text arr 0 (FS.sizeOfString arr) where arr = doubleToCPPString 
 
 
 toCppString (Text arr off len) = FS.cppSubString arr off len
+
+instance NFData Text

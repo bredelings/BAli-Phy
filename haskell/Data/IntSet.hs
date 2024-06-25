@@ -6,6 +6,7 @@ import qualified Data.List as L
 import Foreign.Vector
 import Data.Foldable (foldr)
 import Data.Array (vectorToArray)
+import Control.DeepSeq
 
 data IntSet
 
@@ -94,3 +95,6 @@ instance Show (IntSet) where
     show m = show $ toList m
 
 foreign import bpcall "IntSet:" mapNegate :: IntSet -> IntSet
+
+instance NFData IntSet
+

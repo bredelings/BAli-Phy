@@ -1,5 +1,6 @@
 module Graph where
 
+import Control.DeepSeq
 -- see fgl: Data.Graph - https://hackage.haskell.org/package/fgl
 -- see Algebra.Graph - https://hackage.haskell.org/package/algebraic-graphs
 -- see https://hackage.haskell.org/package/graphs
@@ -21,6 +22,9 @@ type NodeIdSet = IntSet
 type EdgeIdSet = IntSet
 
 data Attributes = Attributes [(Text,Maybe Text)]
+
+instance NFData Attributes where
+    rnf (Attributes as) = rnf as
 
 (Attributes cs1) +:+ (Attributes cs2) = Attributes (cs1 ++ cs2)
 
@@ -105,6 +109,15 @@ instance Show Edge where
     show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
 
 data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+
+instance NFData Node where
+    rnf (Node x y) = x `seq` y `seq` ()
+
+instance NFData Edge where
+    rnf (Edge s t n) = s `seq` t `seq` n `seq` ()
+
+instance NFData Graph where
+    rnf (Graph nodes edges nodeAttr edgeAttr graphAttr) = rnf nodes `seq` rnf edges `seq` rnf nodeAttr `seq` rnf edgeAttr `seq` rnf graphAttr `seq` ()
 
 {- ISSUE: How to handle directed graphs?
 
