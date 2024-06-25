@@ -2,7 +2,6 @@ module Control.DeepSeq where
 
 import           Foreign.Introspection
 import           Data.Array
-import           Data.IntMap
 import           Data.Foldable
 
 -- I don't think we can use this for cyclic data structures -- it would just go on forever.
