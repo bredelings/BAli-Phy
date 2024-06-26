@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=function(w:mg94(omega=w))+>m3(n=3)
+--test codons-dna.fasta --smodel=|w:mg94(omega=w)|+>m3(n=3)

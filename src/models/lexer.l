@@ -129,6 +129,7 @@ signed       {negative}?
 
 "("      return zz::parser::make_OPAREN (loc);
 ")"      return zz::parser::make_CPAREN (loc);
+"|"      return zz::parser::make_BAR    (loc);
 "["      return zz::parser::make_OBRACK (loc);
 "]"      return zz::parser::make_CBRACK (loc);
 "<"      return zz::parser::make_OANGLE (loc);

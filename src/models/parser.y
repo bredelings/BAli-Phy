@@ -48,6 +48,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
   SEMI          ";"
   COLON         ":"
   EQUAL         "="
+  BAR           "|"
   OBRACK        "["
   CBRACK        "]"
   OANGLE        "<"
@@ -128,7 +129,7 @@ term: qvarid                      { $$ = ptree($1); }
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = ptree("List",$2); }
 |     "{" "}"                     { $$ = ptree("List",{}); }
-|    "function" "(" varid ":" exp ")"         { $$ = ptree("function",{{"",ptree($3)},{"",$5}}); }
+|    "|" varid ":" exp "|"         { $$ = ptree("function",{{"",ptree($2)},{"",$4}}); }
 |    "(" exp ")"                              { $$ = $2; }
 |     "-" term                    { $$ = ptree("negate",{{"",ptree($2)}}); }
 |     term "+" term               { $$ = ptree("+",{{"",ptree($1)},{"",$3}}); }
