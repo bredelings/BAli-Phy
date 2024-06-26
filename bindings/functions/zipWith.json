@@ -2,19 +2,24 @@
     "name": "zipWith",
     "result_type": "List<c>",
     "no_log": true,
-    "call": "zipWith(@f,@x,@y)",
+    "call": "zipWith(@f,@xs,@ys)",
     "args": [
         {
             "name": "f",
-            "type": "a -> b -> c"
+            "type": "a -> b -> c",
+	    "description": "The function f(x,y)"
         },
         {
-            "name": "x",
-            "type": "List<a>"
+            "name": "xs",
+            "type": "List<a>",
+	    "description": "The first list"
         },
         {
-            "name": "y",
-            "type": "List<b>"
+            "name": "ys",
+            "type": "List<b>",
+	    "description": "The second list"
         }
-    ]
+    ],
+    "description": "Combine corresponding pairs of two lists using a function f",
+    "examples": ["zipWith(|x y: x+y|, [1,2,3], [4,5,6])"]
 }

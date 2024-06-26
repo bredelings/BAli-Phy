@@ -2,15 +2,18 @@
     "name": "zip",
     "result_type": "List<(a,b)>",
     "no_log": true,
-    "call": "zip(@x,@y)",
+    "call": "zip(@xs,@ys)",
     "args": [
         {
-            "name": "x",
-            "type": "List<a>"
+            "name": "xs",
+            "type": "List<a>",
+	    "description": "The first list"
         },
         {
-            "name": "y",
-            "type": "List<b>"
+            "name": "ys",
+            "type": "List<b>",
+	    "description": "The second list"
         }
-    ]
+    ],
+    "description": "Combine a pair of list into a list of pairs"
 }
