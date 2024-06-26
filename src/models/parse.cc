@@ -327,8 +327,8 @@ string unparse(const ptree& p)
     }
     else if (s == "function")
     {
-	string name = p[0].first;
-	return "function("+name+":"+unparse(p[1].second)+")";
+	string name = unparse(p[0].second);
+	return "|"+name+":"+unparse(p[1].second)+"|";
     }
     else if (s == "List")
     {
@@ -433,7 +433,7 @@ string unparse_annotated(const ptree& ann)
     }
     else if (s == "function")
     {
-	return "function("+unparse_annotated(p[0].second)+":"+unparse_annotated(p[1].second)+")";
+	return "|"+unparse_annotated(p[0].second)+":"+unparse_annotated(p[1].second)+"|";
     }
     else if (s == "List")
     {

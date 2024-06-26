@@ -18,6 +18,11 @@
   # include <vector>
   # include <tuple>
   # include "util/ptree.H"
+  # include "range/v3/all.hpp"
+
+  namespace views = ranges::views;
+
+  ptree make_function(const std::vector<std::string>& vars, const ptree& body);
 
   class zz_driver;
 
@@ -94,6 +99,8 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %type <std::string> qvarid
 %type <std::string> varid
 
+%type <std::vector<std::string>> varids
+
 %type <ptree> literal
 
 %expect 0
@@ -129,8 +136,8 @@ term: qvarid                      { $$ = ptree($1); }
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = ptree("List",$2); }
 |     "{" "}"                     { $$ = ptree("List",{}); }
-|    "|" varid ":" exp "|"         { $$ = ptree("function",{{"",ptree($2)},{"",$4}}); }
-|    "(" exp ")"                              { $$ = $2; }
+|    "|" varids ":" exp "|"       { $$ = make_function($2, $4);}
+|    "(" exp ")"                  { $$ = $2; }
 |     "-" term                    { $$ = ptree("negate",{{"",ptree($2)}}); }
 |     term "+" term               { $$ = ptree("+",{{"",ptree($1)},{"",$3}}); }
 |     term "-" term               { $$ = ptree("-",{{"",ptree($1)},{"",$3}}); }
@@ -140,6 +147,9 @@ term: qvarid                      { $$ = ptree($1); }
 |     term "+>" qvarid            { $$ = add_arg($1,ptree($3)); }
 |     "_"                         { $$ = ptree("_"); }
 
+
+varids: varid           { $$.push_back($1); }
+|       varids varid    { $$ = $1; $$.push_back($2); }
 
 fncall: qvarid "(" args ")"         { $$ = ptree($1,$3); }
 
@@ -207,3 +217,10 @@ zz::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message(l,m);
 }
 
+ptree make_function(const std::vector<std::string>& vars, const ptree& body)
+{
+    ptree f = body;
+    for(auto& var: vars | views::reverse)
+	f = ptree("function",{{"",ptree(var)},{"",f}});
+    return f;
+}

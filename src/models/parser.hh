@@ -54,11 +54,16 @@
   # include <vector>
   # include <tuple>
   # include "util/ptree.H"
+  # include "range/v3/all.hpp"
+
+  namespace views = ranges::views;
+
+  ptree make_function(const std::vector<std::string>& vars, const ptree& body);
 
   class zz_driver;
 
 
-#line 62 "parser.hh"
+#line 67 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -207,7 +212,7 @@
 
 #line 6 "parser.y"
 namespace zz {
-#line 211 "parser.hh"
+#line 216 "parser.hh"
 
 
 
@@ -456,6 +461,9 @@ namespace zz {
       // tup_args
       // type_tup_args
       char dummy6[sizeof (std::vector<std::pair<std::string,ptree>>)];
+
+      // varids
+      char dummy7[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -595,17 +603,18 @@ namespace zz {
         S_start = 35,                            // start
         S_exp = 36,                              // exp
         S_term = 37,                             // term
-        S_fncall = 38,                           // fncall
-        S_ditems = 39,                           // ditems
-        S_ditem = 40,                            // ditem
-        S_args = 41,                             // args
-        S_arg = 42,                              // arg
-        S_tup_args = 43,                         // tup_args
-        S_qvarid = 44,                           // qvarid
-        S_varid = 45,                            // varid
-        S_literal = 46,                          // literal
-        S_type = 47,                             // type
-        S_type_tup_args = 48                     // type_tup_args
+        S_varids = 38,                           // varids
+        S_fncall = 39,                           // fncall
+        S_ditems = 40,                           // ditems
+        S_ditem = 41,                            // ditem
+        S_args = 42,                             // args
+        S_arg = 43,                              // arg
+        S_tup_args = 44,                         // tup_args
+        S_qvarid = 45,                           // qvarid
+        S_varid = 46,                            // varid
+        S_literal = 47,                          // literal
+        S_type = 48,                             // type
+        S_type_tup_args = 49                     // type_tup_args
       };
     };
 
@@ -677,6 +686,10 @@ namespace zz {
       case symbol_kind::S_tup_args: // tup_args
       case symbol_kind::S_type_tup_args: // type_tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_varids: // varids
+        value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
       default:
@@ -786,6 +799,20 @@ namespace zz {
       {}
 #endif
 
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
       /// Destroy the symbol.
       ~basic_symbol ()
       {
@@ -845,6 +872,10 @@ switch (yykind)
       case symbol_kind::S_tup_args: // tup_args
       case symbol_kind::S_type_tup_args: // type_tup_args
         value.template destroy< std::vector<std::pair<std::string,ptree>> > ();
+        break;
+
+      case symbol_kind::S_varids: // varids
+        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -1874,8 +1905,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 218,     ///< Last index in yytable_.
-      yynnts_ = 15,  ///< Number of nonterminal symbols.
+      yylast_ = 221,     ///< Last index in yytable_.
+      yynnts_ = 16,  ///< Number of nonterminal symbols.
       yyfinal_ = 26 ///< Termination state number.
     };
 
@@ -1982,6 +2013,10 @@ switch (yykind)
         value.copy< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_varids: // varids
+        value.copy< std::vector<std::string> > (YY_MOVE (that.value));
+        break;
+
       default:
         break;
     }
@@ -2048,6 +2083,10 @@ switch (yykind)
       case symbol_kind::S_tup_args: // tup_args
       case symbol_kind::S_type_tup_args: // type_tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_varids: // varids
+        value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -2117,7 +2156,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2121 "parser.hh"
+#line 2160 "parser.hh"
 
 
 
