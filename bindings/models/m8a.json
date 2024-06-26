@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> a<Codons<b>>",
-            "default_value": "|w: gy94(omega=w)|",
+            "default_value": "|w:gy94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {

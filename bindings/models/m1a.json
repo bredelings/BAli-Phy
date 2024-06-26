@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> a<Codons<b>>",
-            "default_value": "|w: gy94(omega=w)|",
+            "default_value": "|w:gy94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -39,7 +39,7 @@
 		"identifier": [{"type":"doi",
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
-    "examples": ["|w: gy94(omega=w,pi=f1x4)| +> m1a","|w: mg94(omega=w)| +> m1a","|w: fMutSel0(omega=w)| +> m1a"],
+    "examples": ["|w:gy94(omega=w,pi=f1x4)| +> m1a","|w:mg94(omega=w)| +> m1a","|w:fMutSel0(omega=w)| +> m1a"],
     "extract": "all",
     "see": ["m2a","m2a_test"]
 }
