@@ -164,8 +164,18 @@ instance Foldable IntMap where
     length = size
 
 foreign import bpcall "IntMap:" restrictKeysToVector :: IntMap a -> IntSet -> EVector a
+foreign import bpcall "IntMap:" forceAll :: IntMap a -> ()
 
 -- This will be very slow!
 -- Maybe faster would be something like (forceAll $ fmap rnf m)
 instance NFData a => NFData (IntMap a) where
-    rnf m = rnf (elems m)
+    rnf m = forceAll $ rnf <$> m
+
+instance NFData (IntMap Int) where
+    rnf m = forceAll m
+
+instance NFData (IntMap Double) where
+    rnf m = forceAll m
+
+instance NFData (IntMap Char) where
+    rnf m = forceAll m

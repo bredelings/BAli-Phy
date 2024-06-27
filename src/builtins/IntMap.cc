@@ -471,3 +471,13 @@ extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 
     return keys;
 }
+
+extern "C" closure builtin_function_forceAll(OperationArgs& Args)
+{
+    auto& m = Args.evaluate(0).as_<IntMap>();
+
+    for(auto& [_,r]: m)
+	Args.evaluate_reg_force(r);
+
+    return constructor("()", 0);
+}
