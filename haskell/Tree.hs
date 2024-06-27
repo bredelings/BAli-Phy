@@ -12,6 +12,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.Text (Text)
 import qualified Data.Text as T
+import Control.DeepSeq
 
 -- NOTE: Data.Tree (Rose trees) and Data.Forest (collections of Data.Tree) exist, but are records, not classes.
 
@@ -29,6 +30,9 @@ instance (HasRoots t, IsTree t) => HasRoot t where
 -- 
 
 data Tree   = Tree Forest
+
+instance NFData Tree where
+    rnf (Tree forest) = rnf forest
 
 instance IsGraph Tree where
     getNodesSet (Tree f) = getNodesSet f
