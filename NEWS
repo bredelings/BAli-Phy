@@ -5,6 +5,9 @@
 - Bug fixes:
   + Fix inferring the alignment on a fixed topology (rooted or unrooted).
   + Invalidate compiled modules if the executable changes.
+- Syntax
+  + Cmd-line functions now look like |x: x + 2|.
+  + Cmd-line functions can now take two arguments like |x y: x + y|.
 
 * 4.0-beta14 (Jun 20, 2024)
 - Features
