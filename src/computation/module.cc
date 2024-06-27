@@ -1829,7 +1829,7 @@ string exe_str()
 	std::filesystem::file_time_type ftime = std::filesystem::last_write_time(exe_path);
 	auto epoch = ftime.time_since_epoch();
 	auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
-	str = fmt::format("{}",nano);
+	str = exe_path.string() + "@" + fmt::format("{}",nano);
     }
 
     return *str;
