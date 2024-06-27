@@ -227,6 +227,9 @@ class HasBranchLengths g => CanModifyBranchLengths g where
 -- I guess it makes sense that you could construct a WithBranchLengths with arbitrary new branch lengths,
 data WithBranchLengths t = WithBranchLengths t (IntMap Double)
 
+instance NFData t => NFData (WithBranchLengths t) where
+    rnf (WithBranchLengths tree lengths) = rnf tree `seq` rnf lengths
+
 instance IsGraph t => IsGraph (WithBranchLengths t) where
     getNodesSet (WithBranchLengths t _)             = getNodesSet t
     getEdgesSet (WithBranchLengths t _)             = getEdgesSet t
@@ -270,6 +273,9 @@ class IsGraph g => HasLabels g where
     relabel :: IntMap (Maybe Text) -> g -> g
 
 data WithLabels t = WithLabels t (IntMap (Maybe Text))
+
+instance NFData t => NFData (WithLabels t) where
+    rnf (WithLabels tree labels) = rnf tree `seq` rnf labels
 
 instance IsGraph t => IsGraph (WithLabels t) where
     getNodesSet (WithLabels t _)                 = getNodesSet t
