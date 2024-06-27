@@ -11,6 +11,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.Text (Text)
 import qualified Data.Text as T
+import Control.DeepSeq
 
 class IsGraph f => IsForest f where
     type family Unrooted f
@@ -20,6 +21,9 @@ class IsGraph f => IsForest f where
     makeRooted :: f -> Rooted f
 
 data Forest = Forest Graph
+
+instance NFData Forest where
+    rnf (Forest g) = rnf g
 
 instance IsForest Forest where
     type instance Unrooted Forest = Forest
@@ -56,6 +60,9 @@ instance IsForest f => IsForest (WithBranchLengths f) where
 
 -------------------------- Rooted forests-----------------------------------
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
+
+instance NFData t => NFData (WithRoots t) where
+    rnf (WithRoots tree roots towardsRoot) = rnf tree `seq` rnf roots `seq` rnf towardsRoot
 
 class (IsDirectedAcyclicGraph t, IsForest t) => HasRoots t where
     isRoot :: t -> NodeId -> Bool
@@ -135,6 +142,9 @@ instance (HasNodeTimes t, HasRoots t) => HasRoots (WithBranchRates t) where
 -- The array stores the node times
 data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
 
+instance NFData t => NFData (WithNodeTimes t) where
+    rnf (WithNodeTimes tree times) = rnf tree `seq` rnf times
+
 instance IsGraph t => IsGraph (WithNodeTimes t) where
     getNodesSet (WithNodeTimes t _)                     = getNodesSet t
     getEdgesSet (WithNodeTimes t _)                     = getEdgesSet t
@@ -181,6 +191,9 @@ time_tree topology times = WithNodeTimes topology times
 -------------------------- Forests with branch rates------------------------
 -- The array stores the branch rates
 data WithBranchRates t = WithBranchRates t (IntMap Double)
+
+instance NFData t => NFData (WithBranchRates t) where
+    rnf (WithBranchRates tree rates) = rnf tree `seq` rnf rates
 
 instance IsGraph t => IsGraph (WithBranchRates t) where
     getNodesSet (WithBranchRates t _)                 = getNodesSet t
