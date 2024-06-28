@@ -1518,6 +1518,12 @@ optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
 
 optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 {
+    R = follow_index_var(R);
+
+    if (reg_is_constant(R)) return {};
+
+    if (reg_is_changeable(R) and is_modifiable(expression_at(R))) return R;
+
     // 2. Evaluate R in context c2, and get the first changeable reg on the path.
     auto [r, _] = incremental_evaluate_in_context(R, c1);
 
@@ -1543,6 +1549,12 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 
 int reg_heap::find_const_or_modifiable_reg_in_context(int R, int c1)
 {
+    R = follow_index_var(R);
+
+    if (reg_is_constant(R)) return R;
+
+    if (reg_is_changeable(R) and is_modifiable(expression_at(R))) return R;
+
     // 1. Evaluate R in context c2, and get the first changeable reg on the path.
     auto [r, _] = incremental_evaluate_in_context(R, c1);
 
