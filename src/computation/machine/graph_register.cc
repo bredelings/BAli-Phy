@@ -2906,6 +2906,8 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     check_used_regs();
 #endif
 
+    R = follow_index_var(R);
+
     if (reg_is_constant(R)) return {R,R};
 
     reroot_at_context(c);
