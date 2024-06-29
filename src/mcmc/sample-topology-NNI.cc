@@ -396,7 +396,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
 	double L = p[1].t().branch_length( branches[i] ) * double(factor);
 
-        if (not PP.t().can_set_branch_length(branches[i])) return;
+        if (not p[1].t().can_set_branch_length(branches[i])) return;
 	p[1].setlength(branches[i], L);
 
 	ratio *= factor;
