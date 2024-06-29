@@ -466,7 +466,7 @@ std::set<int> context_ref::tweak_and_find_affected_sampling_events(const std::fu
 {
     auto do_changes = [&]() {tweak(*this);};
     evaluate_program();
-    return memory()->find_affected_sampling_events(do_changes);
+    return memory()->find_affected_sampling_events(context_index, do_changes);
 }
 
 std::set<int> context_ref::find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)

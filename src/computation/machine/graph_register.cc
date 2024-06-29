@@ -562,7 +562,7 @@ const closure& reg_heap::get_effect(int s) const
     return closure_at(r);
 }
 
-std::set<int> reg_heap::find_affected_sampling_events(const std::function<void(void)>& do_changes)
+std::set<int> reg_heap::find_affected_sampling_events(int c, const std::function<void(void)>& do_changes)
 {
     std::set<int> downstream_sampling_events;
 
@@ -572,6 +572,7 @@ std::set<int> reg_heap::find_affected_sampling_events(const std::function<void(v
     unregister_prior_handlers.push_back(register_sampling_event);
 
     do_changes();
+    reroot_at_context(c);
     do_pending_effect_unregistrations();
 
     unregister_prior_handlers.pop_back();
