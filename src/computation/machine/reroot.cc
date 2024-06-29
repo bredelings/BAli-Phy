@@ -115,7 +115,7 @@ void reg_heap::reroot_at(int t)
     std::swap(tokens[parent].vm_result, tokens[t].vm_result);
     pivot_mapping(prog_force_counts, tokens[t].vm_force_count);
     std::swap(tokens[parent].vm_force_count, tokens[t].vm_force_count);
-
+    std::swap(tokens[parent].n_modifiables_set, tokens[t].n_modifiables_set);
     // perform the interchanges
     // -- interchangeables should never get their steps invalidated, but they could be unforced.
     // -- results, however, can definitely change.

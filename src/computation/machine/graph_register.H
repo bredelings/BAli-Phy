@@ -487,6 +487,7 @@ public:
         mapping vm_result;
         mapping vm_step;
         mapping vm_force_count;
+        int n_modifiables_set = 0;
 
         std::vector<interchange_op> interchanges;
 

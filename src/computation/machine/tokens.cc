@@ -112,6 +112,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
 
     tokens[t].vm_force_count.clear();
 
+    tokens[t].n_modifiables_set = 0;
+
     tokens[t].interchanges.clear();
 }
 
@@ -199,6 +201,7 @@ void reg_heap::release_tip_token(int t)
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
     assert(tokens[t].vm_force_count.empty());
+    assert(tokens[t].n_modifiables_set == 0);
     assert(tokens[t].interchanges.empty());
 
     Token new_token;
