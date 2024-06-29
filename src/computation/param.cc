@@ -171,8 +171,8 @@ void context_ptr::set_value(const expression_ref& v)
 
 void context_ptr::move_to_result()
 {
-    reg = C.memory()->value_for_reg(reg);
-    assert(reg != -1);
+    auto [_,result] = C.incremental_evaluate(reg);
+    reg = result;
 }
 
 bool context_ptr::move_to_modifiable()
