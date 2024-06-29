@@ -2877,7 +2877,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 int reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
     int t = token_for_context(c);
-    if (tokens[t].type != token_type::set or not tokens[t].children.empty() or tokens[t].n_context_refs > 1)
+    if (tokens[t].type != token_type::set or not tokens[t].children.empty() or tokens[t].n_context_refs > 1 or tokens[t].vm_step.delta().size() > 50)
 	t = switch_to_child_token(c, token_type::set);
     else
 	assert(tokens[t].n_context_refs == 1);
