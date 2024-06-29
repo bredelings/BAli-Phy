@@ -1115,7 +1115,7 @@ void write_token_graph(const reg_heap& C, std::ostream& o)
 	    o<<"t"<<t<<" -> t"<<c<<"\n";
 	int n_steps = C.get_token(t).vm_step.delta().size();
 	int n_results = C.get_token(t).vm_result.delta().size();
-	o<<"t"<<t<<" [label=\"T"<<t<<" steps="<<n_steps<<" results = "<<n_results<<"\"]\n";
+	o<<"t"<<t<<" [label=\"t="<<t<<"  type="<<C.get_token(t).type<<"  steps="<<n_steps<<"  results = "<<n_results<<"\"]\n";
     }
     for(int c=0;c<C.get_n_contexts();c++)
     {
