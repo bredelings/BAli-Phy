@@ -81,7 +81,7 @@ namespace sequence_format {
 
 	    // compare if expectations are met...
 	    if (line[0] != '>') 
-		throw myexception()<<"FASTA sequence doesn't start with '>'";
+		throw myexception()<<"FASTA sequence doesn't start with '>'.  Starts with '"<<line[0]<<"' ("<<int(line[0])<<"):\n '"<<line<<"'";
 
 	    // Parse the header
 	    sequence s = fasta_parse_header(line);
