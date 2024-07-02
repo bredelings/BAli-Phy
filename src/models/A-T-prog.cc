@@ -754,8 +754,13 @@ std::string generate_atmodel_program(const variables_map& args,
 
     branch_lengths = {var("IntMap.elems"),branch_lengths};
 
-    model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
-
+    if (not fixed.count("tree"))
+    {
+	if (fixed.count("topology"))
+	    model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_length_moves"), tree_var}}});
+	else
+	    model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_tree_moves"), tree_var}}});
+    }
 
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
