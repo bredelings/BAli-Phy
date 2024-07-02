@@ -66,6 +66,7 @@ int random_int_from_double(double x)
 int n_SPR_moves(const Parameters& P)
 {
     double f = P.load_value("SPR_amount",0.1);
+    if (P.t().n_branches() < 4) return 0;
     int n = random_int_from_double(P.t().n_branches()*f);
     return n+1;
 }
@@ -510,8 +511,11 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     }
 }
 
+// UNSAFE!
 int choose_subtree_branch_uniform(const TreeInterface& T) 
 {
+    assert(T.n_branches() >= 3);
+
     int b1 = -1;
     while (true)
     {
@@ -526,8 +530,10 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
     return b1;
 }
 
+// UNSAFE!
 int choose_subtree_branch_uniform2(const TreeInterface& T) 
 {
+    assert(T.n_branches() >= 4);
     int b1 = -1;
     while (true)
     {
