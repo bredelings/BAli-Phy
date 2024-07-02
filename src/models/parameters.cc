@@ -423,7 +423,8 @@ void Parameters::regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_
 
 void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
-    t().reconnect_branch(s1, t1, t2);
+    if (not t().reconnect_branch(s1, t1, t2))
+	throw myexception()<<"reconnect_branch failed!  Trying to alter a fixed topology?";
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
@@ -431,7 +432,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
 void Parameters::exchange_subtrees(int br1, int br2)
 {
     auto T = t();
-    tryNNI(T, br1, br2);
+    if (not tryNNI(T, br1, br2))
+	throw myexception()<<"exchange_subtrees failed: trying to alter a fixed topology?";
 }
 
 #include "dp/hmm.H"
