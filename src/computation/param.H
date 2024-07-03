@@ -7,8 +7,6 @@
 #include "computation/context.H"
 #include "util/bounds.H"
 
-enum class eval_strategy {unset, unchangeable, precomputed, changeable};
-
 class context_ptr
 {
     context_ref C;
@@ -54,7 +52,6 @@ class param
     std::optional<int> reg;
     std::optional<int> head;
     std::optional<expression_ref> value;
-    eval_strategy strategy=eval_strategy::unset;
 
 public:
     expression_ref ref(const context_ref& C) const;
@@ -71,10 +68,10 @@ public:
 
     param() {}
     param(const param&) = default;
-    param(const context_ptr& p, eval_strategy s=eval_strategy::changeable):reg(p.get_reg()), strategy(s) {}
-    param(const reg_var& rv, eval_strategy s=eval_strategy::changeable):reg(rv.target), strategy(s) {}
-    param(int h, eval_strategy s=eval_strategy::changeable)
-        :head(h), strategy(s)
+    param(const context_ptr& p):reg(p.get_reg()) {}
+    param(const reg_var& rv):reg(rv.target) {}
+    param(int h)
+        :head(h)
         {}
     param(const expression_ref& v):value(v) {}
 };

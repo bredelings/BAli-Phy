@@ -43,33 +43,11 @@ expression_ref param::get_value(const context_ref& C) const
 {
     if (reg)
     {
-        if (strategy == eval_strategy::changeable)
-            return C.evaluate_reg(*reg);
-        else if (strategy == eval_strategy::precomputed)
-        {
-            auto result = C.precomputed_value_for_reg(*reg);
-            assert(result);
-            return result->exp;
-        }
-        else if (strategy == eval_strategy::unchangeable)
-            std::abort();
-        else
-            std::abort();
+	return C.evaluate_reg(*reg);
     }
     else if (head)
     {
-        if (strategy == eval_strategy::changeable)
-            return C.evaluate_head(*head);
-        else if (strategy == eval_strategy::precomputed)
-        {
-            auto result = C.precomputed_value_for_head(*head);
-            assert(result);
-            return result->exp;
-        }
-        else if (strategy == eval_strategy::unchangeable)
-            return C.evaluate_head_unchangeable(*head);
-        else
-            std::abort();
+	return C.evaluate_head(*head);
     }
     else
         return *value;
