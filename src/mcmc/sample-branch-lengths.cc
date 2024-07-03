@@ -50,6 +50,16 @@ log_double_t branch_twiddle_positive(double& T,double sigma) {
 MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
 				   log_double_t (*twiddle)(double&,double)) 
 {
+    auto check = [] (owned_ptr<Model>& P)
+    {
+	auto& PP = *P.as<Parameters>();
+	for(int p=0;p<PP.n_data_partitions();p++)
+	    if (PP[p].has_pairwise_alignments())
+		for(int b: PP.t().branches())
+		    PP[p].get_pairwise_alignment(b);
+    };
+
+    check(P);
     MCMC::Result result(3);
   
     //------------ Propose new length -------------//
@@ -60,16 +70,22 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
   
     //---------- Construct proposed Tree ----------//
     owned_ptr<Model> P2  = P;
+    check(P);
+//    check(P2);
 
     P2.as<Parameters>()->select_root(b);
+//    check(P2);
     P2.as<Parameters>()->setlength(b,newlength);
+//    check(P2);
 
     //--------- Do the M-H step if OK--------------//
+    check(P);
     if (perform_MH(*P, *P2, ratio)) {
 	result.totals[0] = 1;
 	result.totals[1] = abs(length - newlength);
 	result.totals[2] = abs(log(length/newlength));
     }
+    check(P);
 
     return result;
 }
@@ -196,14 +212,27 @@ void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,i
 
 void change_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 {
+    auto check = [&] ()
+    {
+	auto& PP = *P.as<Parameters>();
+	for(int p=0;p<PP.n_data_partitions();p++)
+	    if (PP[p].has_pairwise_alignments())
+		for(int b: PP.t().branches())
+		    PP[p].get_pairwise_alignment(b);
+    };
+
     if (uniform() < 0.5)
     {
+	check();
 	double sigma = P->load_value("log_branch_sigma",0.6);
 	change_branch_length_log_scale(P, Stats, b, sigma);
+	check();
     }
     else {
+	check();
 	double sigma = P->load_value("branch_sigma",0.6);
 	change_branch_length_flat(P, Stats, b, sigma);
+	check();
     }
 }
 

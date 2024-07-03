@@ -483,16 +483,34 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
 
 void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 {
+    auto check = [&] ()
+    {
+	auto& PP = *P.as<Parameters>();
+	for(int p=0;p<PP.n_data_partitions();p++)
+	    if (PP[p].has_pairwise_alignments())
+		for(int b: PP.t().branches())
+		    PP[p].get_pairwise_alignment(b);
+    };
+
     if (log_verbose >= 3) std::cerr<<"\n\n[sample_branch_length_]\n";
     //std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
     double slice_fraction = P->load_value("branch_slice_fraction",0.9);
 
     bool do_slice = (uniform() < slice_fraction);
+    check();
     if (do_slice)
+    {
+	check();
         slice_sample_branch_length(P,Stats,b);
+	check();
+    }
     else
+    {
+	check();
         change_branch_length(P,Stats,b);
+	check();
+    }
     
     // Find a random direction of this branch, conditional on pointing to an internal node.
     const auto t = P.as<Parameters>()->t();
@@ -510,15 +528,20 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
     // TEST and Check Scaling of # of branches peeled
     if (is_degree3_edge(t,e))
     {
+	check();
         if (uniform() < 0.5)
             slide_node(P, Stats, t.find_branch(e));
         else 
             change_3_branch_lengths(P,Stats, e.node2);
+	check();
     }
 
     if (not do_slice) {
+	check();
         change_branch_length(P,Stats,b);
+	check();
         change_branch_length(P,Stats,b);
+	check();
     }
 }
 
@@ -628,6 +651,17 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 // FIXME: Realign from tips basically fails because the distance between sequences is too small!
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
+    auto check = [&] ()
+    {
+	auto& PP = *P.as<Parameters>();
+	for(int p=0;p<PP.n_data_partitions();p++)
+	    if (PP[p].has_pairwise_alignments())
+		for(int b: PP.t().branches())
+		    PP[p].get_pairwise_alignment(b);
+    };
+
+    check();
+
     int AL0 = alignment_length(*P.as<Parameters>());
 
     if (log_verbose>=3) std::cerr<<"realign_from_tips: |A0| = "<<AL0<<"\n";
@@ -666,17 +700,24 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             }
             std::cerr<<"\n";
         }
+	check();
         if (t.degree(node2) == 3)
         {
+	    check();
             if (log_verbose >=3) std::cerr<<"     Performing 3-way alignment\n";
             tri_sample_alignment(*P.as<Parameters>(), node2, node1);
+	    check();
         }
         else
         {
+	    check();
             if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
             sample_alignment(*P.as<Parameters>(), b);
+	    check();
         }
+	check();
         if (t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
+	check();
 
         if (log_verbose >= 4)
         {
@@ -700,6 +741,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
         // We can't do this on a fixed topology.
         // three_way_topology_sample(P,Stats,b);
     }
+    check();
+
     int AL1 = alignment_length(*P.as<Parameters>());
     if (log_verbose>=4) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
 
