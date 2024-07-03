@@ -2954,6 +2954,9 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     int t = token_for_context(c);
     // Write-Read coalescening.
     // If the context is a set-token that is a child of the root, then look up the value there...
+
+    optional<pair<int,int>> early;
+
     if (reg_is_changeable(R) and
 	is_modifiable(expression_at(R)) and
 	tokens[t].parent == root_token and
@@ -2991,10 +2994,13 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 	    int r2 = result_for_reg(R);
 
 	    if (r2 > 0)
-		return {R,r2};
+	    {
+		early = {{R,r2}};
+	    }
 	}
     }
 
+    if (early) return *early;
     reroot_at_context(c);
 
     // Don't create a new token for up-to-date results!
@@ -3003,7 +3009,12 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
         int r2 = result_for_reg(R);
 
         if (r2 > 0)
-            return {R,r2};
+	{
+	    pair<int,int> late = {R,r2};
+	    if (early and late != *early)
+		std::abort();
+            return late;
+	}
     }
 
     if (not execution_allowed() or is_program_execution_token(token_for_context(c)))
@@ -3024,6 +3035,9 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif
+
+    if (early and *early != p)
+	std::abort();
 
     return p;
 }
