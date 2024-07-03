@@ -39,29 +39,28 @@ using namespace A3;
 
 namespace A3 {
 
-  vector<int> get_nodes(const TreeInterface& t,int n0) {
+  vector<int> get_nodes(const TreeInterface& t,int n0)
+  {
     assert(t.degree(n0) == 3);
     
-    vector<int> nodes(4);
-    nodes[0] = n0;
+    vector<int> nodes;
+    nodes.push_back(n0);
     
-    vector<int> neighbors = t.neighbors(n0);
-    nodes[1] = neighbors[0];
-    nodes[2] = neighbors[1];
-    nodes[3] = neighbors[2];
+    for(int node: t.neighbors(n0))
+	nodes.push_back(node);
     
     return nodes;
   }
   
-  vector<int> get_nodes_random(const TreeInterface& t,int n0) {
-    vector<int> nodes = get_nodes(t,n0);
+  vector<int> get_nodes_random(const TreeInterface& t,int n0)
+  {
+    vector<int> nodes;
+    nodes.push_back(n0);
     
-    vector<int> nodes2;
-    nodes2.insert(nodes2.end(),nodes.begin()+1,nodes.end());
-    random_shuffle(nodes2);
-    nodes[1] = nodes2[0];
-    nodes[2] = nodes2[1];
-    nodes[3] = nodes2[2];
+    auto neighbors = t.neighbors(n0);
+    random_shuffle(neighbors);
+    for(int node: neighbors)
+	nodes.push_back(node);
     
     return nodes;
   }
@@ -72,29 +71,29 @@ namespace A3 {
     assert( t.is_connected(node1,node2) );
 
     vector<int> nodes = get_nodes(t,node1);
-    
-    // make sure nodes[1] == node2
-    if (node2 == nodes[1])
-      ; // good
-    else if (node2 == nodes[2])
-      std::swap(nodes[1],nodes[2]); // 
-    else if (node2 == nodes[3])
-      std::swap(nodes[1],nodes[3]);
-    else
-      std::abort();
+
+    for(int i=2;i<nodes.size();i++)
+	if (nodes[i] == node2)
+	    std::swap(nodes[i], nodes[1]);
+
+    assert(nodes[0] == node1);
+    assert(nodes[1] == node2);
     
     return nodes;
   }
 
   /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
-  vector<int> get_nodes_branch_random(const TreeInterface& t,int node1,int node2) {
+  vector<int> get_nodes_branch_random(const TreeInterface& t,int node1,int node2)
+  {
+    vector<int> nodes = get_nodes_random(t, node1);
 
-    vector<int> nodes = get_nodes_branch(t, node1, node2);
+    for(int i=2;i<nodes.size();i++)
+	if (nodes[i] == node2)
+	    std::swap(nodes[i], nodes[1]);
 
-    // randomize the order here
-    if (myrandom(2) == 1)
-      std::swap(nodes[2],nodes[3]);
-    
+    assert(nodes[0] == node1);
+    assert(nodes[1] == node2);
+
     return nodes;
   }
   
@@ -125,6 +124,8 @@ namespace A3 {
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
   {
     auto t = P.t();
+
+    assert(nodes.size() == 4);
 
     int b1 = t.find_branch(nodes[1],nodes[0]);
     int b2 = t.find_branch(nodes[0],nodes[2]);
