@@ -68,7 +68,8 @@ void param::set_value(context_ref& C, const expression_ref& v) const
 
 context_ptr context_ptr::operator[](int i) const
 {
-    int r = C.memory()->value_for_reg(reg);
+    auto [_, r] = C.incremental_evaluate(reg);
+    assert(r>0);
     auto& c = C.memory()->closure_at(r);
     if (auto& e = c.exp; e.size() == 0 and is_gcable_type(e.type()))
     {
@@ -189,13 +190,15 @@ bool context_ptr::move_to_modifiable()
 
 int context_ptr::size() const
 {
-    int r = C.memory()->value_for_reg(reg);
+    auto [_, r] = C.incremental_evaluate(reg);
+    assert(r>0);
     return C.memory()->expression_at(r).size();
 }
 
 expression_ref context_ptr::head() const
 {
-    int r = C.memory()->value_for_reg(reg);
+    auto [_, r] = C.incremental_evaluate(reg);
+    assert(r>0);
     return C.memory()->expression_at(r).head();
 }
 
