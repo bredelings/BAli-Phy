@@ -21,6 +21,7 @@
 #include <iostream>
 #include <cmath>
 #include "util/assert.hh"
+#include "util/log-level.H"
 #include "sample.H"
 #include "probability/choose.H"
 #include "util/rng.H"
@@ -136,6 +137,8 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
+    if (log_verbose >= 4) std::cerr<<"[two_way_topology_slice_sample]\n";
+
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
 
@@ -198,6 +201,8 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
+
+    if (log_verbose >= 4) std::cerr<<"[two_way_topology_sample]\n";
 
     double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
 
@@ -303,6 +308,8 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     if (PP.t().is_leaf_branch(b)) return;
     if (not PP.t().has_branch_lengths()) return;
 
+    if (log_verbose >= 4) std::cerr<<"[two_way_NNI_SPR_sample]\n";
+
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
 
@@ -368,6 +375,8 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
     if (PP.t().is_leaf_branch(b)) return;
     if (not PP.t().has_branch_lengths()) return;
 
+    if (log_verbose >= 4) std::cerr<<"[two_way_NNI_and_branches_sample]\n";
+
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
 
@@ -430,6 +439,8 @@ void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
+    if (log_verbose >= 4) std::cerr<<"[two_way_NNI_sample]\n";
+
     double U = uniform();
     if (U < 0.33333333) {
 	two_way_topology_sample(P,Stats,b);
@@ -446,6 +457,8 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
     if (PP.t().is_leaf_branch(b)) return;
 
     if (PP.variable_alignment()) return;
+
+    if (log_verbose >= 4) std::cerr<<"[three_way_topology_sample_slice]\n";
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
@@ -523,6 +536,8 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
+    if (log_verbose >= 4) std::cerr<<"[three_way_topology_sample]\n";
+
     double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
 
     if (not PP.variable_alignment() and uniform() < slice_fraction) {
@@ -590,6 +605,8 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
+
+    if (log_verbose >= 4) std::cerr<<"[three_way_topology_and_alignment_sample]\n";
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& two_way_nodes = order.nodes;
