@@ -129,6 +129,9 @@ public:
     /// Compute the probability of all possible paths through theHMM
     log_double_t Pr_sum_all_paths() const;
 
+    /// Compute the probability of all possible paths through theHMM
+    virtual log_double_t Pr_sum_all_paths_to_column(int i) const;
+
     /// Change length
     virtual void set_length(int l);
 
@@ -166,6 +169,9 @@ public:
 
     /// Compute the probability of all possible paths through theHMM
     log_double_t Pr_sum_all_paths() const;
+
+    /// Compute the probability of all possible paths through theHMM
+    log_double_t Pr_sum_all_paths_to_column(int i) const;
 
     /// Change length
     void set_length(int l);

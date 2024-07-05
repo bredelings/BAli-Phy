@@ -126,14 +126,23 @@ vector<int> DParray::sample_path() const {
     return path;
 }
 
-log_double_t DParray::Pr_sum_all_paths() const {
+log_double_t DParray::Pr_sum_all_paths() const
+{
     const int I = size()-1;
+    return Pr_sum_all_paths_to_column(I);
+}
+
+/// Compute the probability of all possible paths through theHMM
+log_double_t DParray::Pr_sum_all_paths_to_column(int i) const
+{
+    const int I = size()-1;
+    assert(i >= 0 and i <= I);
 
     double total = 0.0;
     for(int state1=0;state1<n_dp_states();state1++)
-        total += (*this)(I,state1) * GQ(state1,endstate());
+        total += (*this)(i,state1) * GQ(state1,endstate());
 
-    return pow(log_double_t(2.0),scale(I)) * total;
+    return pow(log_double_t(2.0),scale(i)) * total;
 }
 
 /// Here we set the SEQUENCE length 'l'.  This gives rise to a
@@ -314,11 +323,8 @@ inline void DParrayConstrained::forward(int i2)
     if (maximum > 0 and maximum < fp_scale::lo_cutoff) {
         int logs = -(int)log2(maximum);
         double scale_ = pow2(logs);
-        for(int s2=0;s2<states(i2).size();s2++)  
-        {
-            int S2 = states(i2)[s2];
+        for(int S2: states(i2))
             (*this)(i2,S2) *= scale_;
-        }
         scale(i2) -= logs;
     }
 }
@@ -370,14 +376,19 @@ void DParrayConstrained::prune() {
 log_double_t DParrayConstrained::Pr_sum_all_paths() const 
 {
     const int I = size()-1;
+    return Pr_sum_all_paths_to_column(I);
+}
+
+log_double_t DParrayConstrained::Pr_sum_all_paths_to_column(int i) const
+{
+    const int I = size()-1;
+    assert(i >= 0 and i <= I);
 
     double total = 0.0;
-    for(int s1=0;s1<states(I).size();s1++) {
-        int state1 = states(I)[s1];
-        total += (*this)(I,state1) * GQ(state1,endstate());
-    }
+    for(int state1: states(i))
+        total += (*this)(i,state1) * GQ(state1,endstate());
 
-    return pow(log_double_t(2.0),scale(I)) * total;
+    return pow(log_double_t(2.0),scale(i)) * total;
 }
 
 void DParrayConstrained::set_length(int l)
