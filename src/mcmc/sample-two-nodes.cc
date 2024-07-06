@@ -102,7 +102,20 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
     {
 	if (log_verbose > 0)
+	{
 	    std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
+	    for(int i=0;i<Matrices->size();i++)
+	    {
+		if (Matrices->Pr_sum_all_paths_to_column(i) <= 0)
+		{
+		    std::cerr<<"column "<<i<<"/"<<Matrices->size()<<" is the first column with probability 0\n";
+		    if (i > 0)
+			std::cerr<<"column "<<i-1<<" has probability "<<Matrices->Pr_sum_all_paths_to_column(i-1)<<"\n";
+
+		    break;
+		}
+	    }
+	}
 	return {Matrices,0};
     }
 
