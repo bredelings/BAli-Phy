@@ -30,6 +30,7 @@
 #include "math/pow2.H"
 #include "probability/choose.H"
 #include "util/mapping.H"
+#include "util/log-level.H"
 #include "alignment/alignment-constraint.H"
 #include "math/logprod.H"
 
@@ -271,7 +272,8 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
 
 	int state1 = path[l-1];
 	double p = choose_P(state1,transition);
-	assert(p > 0.0);
+	if (not (p > 0.0) and log_verbose > 1)
+	    std::cerr<<"p == "<<p<<" in DPmatrix::path_P( )\n";
 
 	if (di(state1)) i--;
 	if (dj(state1)) j--;
