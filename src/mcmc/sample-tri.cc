@@ -265,6 +265,47 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     return tri_sample_alignment_base(P, nodes, a23, bandwidth);
 }
 
+optional<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int node1, int node2, optional<int> bandwidth = {})
+{
+    auto nodes = A3::get_nodes_branch_random(P.t(),node1,node2);
+    auto a23 = A23_constraint(P, nodes, true);
+
+    auto bitpath0 = A3::get_bitpath(P,nodes);
+
+    auto [M, forward_sample_pr] = tri_sample_alignment_base(P, nodes, a23, bandwidth);
+
+    if (M->Pr_sum_all_paths() > 0)
+    {
+	auto path0 = get_path_unique(bitpath0, *M);
+
+	auto path0_g = M->generalize(path0);
+
+	auto reverse_sample_pr = M->path_P(path0_g) * M->generalize_P(path0);
+
+	return (reverse_sample_pr / forward_sample_pr);
+    }
+    else
+	return {};
+}
+
+optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, optional<int> bandwidth)
+{
+    log_double_t ratio = 1;
+    for(int j=0;j<P.n_data_partitions();j++)
+    {
+	if (P[j].has_pairwise_alignments())
+	{
+	    if (not P[j].alignment_is_random())
+		throw myexception()<<"Partition "<<j+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+
+	    if (auto r = tri_sample_alignment_ratio(P[j], node1, node2, bandwidth))
+		ratio *= r.value();
+	}
+    }
+
+    return ratio;
+}
+
 
 sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
                                                          optional<int> b)

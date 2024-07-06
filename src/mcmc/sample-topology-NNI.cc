@@ -36,6 +36,7 @@
 using MCMC::MoveStats;
 using std::string;
 using std::vector;
+using std::optional;
 
 // We are sampling from a 5-way alignment (along 5 branches)
 
@@ -529,6 +530,126 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 
     // stats are here mis-reported!
     NNI_inc(Stats,"NNI (3-way,slice)", result, L);
+}
+
+optional<log_double_t>& operator*=(optional<log_double_t>& pr1, const optional<log_double_t>& pr2)
+{
+    if (pr1)
+    {
+	if (pr2)
+	    pr1.value() *= pr2.value();
+	else
+	    pr1 = {};
+    }
+
+    return pr1;
+}
+
+optional<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
+{
+    optional<log_double_t> ratio = 1;
+    if (uniform() < 0.5)
+    {
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[0]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[1]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[2]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[3]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[4]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[5]);
+    }
+    else
+    {
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[5]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[4]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[3]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[2]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[1]);
+	if (not ratio) return {};
+	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[0]);
+    }
+    return ratio;
+}
+
+void two_way_topology_5A_sample(owned_ptr<Model>& P, MoveStats& /*Stats*/, int b)
+{
+    Parameters& PP = *P.as<Parameters>();
+    if (PP.t().is_leaf_branch(b)) return;
+
+    if (log_verbose >= 4) std::cerr<<"[two_way_topology_5A_sample]\n";
+
+    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
+    const auto& nodes = order.nodes;
+    PP.select_root(b);
+    PP.cache_likelihood_branches();
+
+    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
+    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
+
+    //------ Generate Topologies and alter caches ------///
+
+    // 1. Resample alignments on original topology and compute reverse_sampling_pr/forward_sampling_pr
+    vector< A5::hmm_order > orders(2);
+    auto P0 = PP;
+    auto Like0A = P0.likelihood();
+    auto Prob0A = P0.probability();
+    auto PrAl0A = P0.prior_alignment();
+
+    orders[0] = A5::get_nodes_random(P0.t(), b);
+    optional<log_double_t> ratio = 1;
+    ratio *= optimize(P0, orders[0].nodes);
+    if (not ratio) return;
+
+    auto Like0B = P0.likelihood();
+    auto Prob0B = P0.probability();
+    auto PrAl0B = P0.prior_alignment();
+
+    // 2. Resample alignment on new topology and compute reverse_sampling_pr/forward_sampling_pr
+    auto P1 = P0;
+    P1.NNI_discard_alignment(b1, b2);
+    // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
+    orders[1] = A5::get_nodes_random(P1.t(), b);
+
+    vector<Parameters> p({P0,P1});
+    auto ratio_tree = sample_two_nodes_ratio(p, orders, {1,1});
+    ratio *= ratio_tree;
+    if (not ratio) return;
+
+    P1 = p[1];
+
+    bool accept1 = accept_MH(P0, P1, *ratio_tree);
+
+    auto Like1A = P1.likelihood();
+    auto Prob1A = P1.probability();
+    auto PrAl1A = P1.prior_alignment();
+
+    // 3. Resampling alignments on new topology and compute reverse_sampling_pr/forward_sampling_pr
+    ratio *= optimize(P1, orders[1].nodes);
+    if (not ratio) return;
+
+    auto Like1B = P1.likelihood();
+    auto Prob1B = P1.probability();
+    auto PrAl1B = P1.prior_alignment();
+
+    // 4. Accept/reject the new topology with resampled alignments given the proposal ratio.
+    bool accept2 = perform_MH(PP, P1, *ratio);
+    std::cerr<<std::boolalpha<<"[two_way_topology_5A_sample] accept1 = "<<accept1<<"        accept2 = "<<accept2<<"\n";
+    if (accept2 and not accept1)
+    {
+	std::cerr<<"Prob0A = "<<Prob0A <<" Like0A = "<<Like0A<<" PrAl0A = "<<PrAl0A<<"\n";
+	std::cerr<<"Prob0B = "<<Prob0B <<" Like0B = "<<Like0B<<" PrAl0B = "<<PrAl0B<<"\n";
+	std::cerr<<"Prob1A = "<<Prob1A <<" Like1A = "<<Like1A<<" PrAl1A = "<<PrAl1A<<"\n";
+	std::cerr<<"Prob1B = "<<Prob1B <<" Like1B = "<<Like1B<<" PrAl1B = "<<PrAl1B<<"\n";
+	std::cerr<<"\n\n";
+    }
 }
 
 void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 

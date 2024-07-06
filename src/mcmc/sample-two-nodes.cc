@@ -143,6 +143,129 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     return {Matrices, sampling_pr};
 }
 
+struct IntegrationPrs
+{
+    log_double_t sampling = 1;
+    log_double_t correction = 1;
+    log_double_t sum_all_paths = 1;
+    log_double_t heated_prob = 1;
+    log_double_t proposal = 1;
+};
+
+///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
+vector<optional<IntegrationPrs>>
+sample_two_nodes_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
+                            const vector<log_double_t>& rho_)
+{
+    for(int i=1;i<p.size();i++)
+        for(int j=0;j<p[0].n_data_partitions();j++)
+            assert(p[0][j].variable_alignment() == p[i][j].variable_alignment());
+
+    vector<A5::hmm_order> order = order_;
+    vector<log_double_t> rho = rho_;
+    assert(p.size() == order.size());
+
+    vector<optional<vector<HMM::bitmask_t>>> a123456(p[0].n_data_partitions());
+
+    for(int j=0;j<p[0].n_data_partitions();j++)
+        if (p[0][j].has_pairwise_alignments())
+        {
+            if (not p[0][j].alignment_is_random())
+                throw myexception()<<"Partition "<<j+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+
+            a123456[j] = A5::get_bitpath(p[0][j], order[0]);
+        }
+
+    IntegrationPrs Pr0;
+    Pr0.heated_prob = p[0].heated_probability();
+    Pr0.correction = A5::correction(p[0],order[0]);
+    Pr0.proposal = rho[0];
+
+    vector<optional<IntegrationPrs>> Pr(p.size(), IntegrationPrs());
+
+    //----------- Generate the different states and Matrices ---------//
+    vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
+    for(int i=0;i<p.size();i++)
+    {
+
+#ifndef NDEBUG_DP
+        Matrices[i].resize(p[i].n_data_partitions());
+#endif
+
+        for(int j=0;j<p[i].n_data_partitions();j++)
+        {
+            if (p[i][j].variable_alignment())
+            {
+                auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+
+#ifndef NDEBUG_DP
+                Matrices[i][j] = M;
+#endif
+                if (M->Pr_sum_all_paths() <= 0.0)
+                {
+                    if (log_verbose > 0) std::cerr<<"Pr = 0: option "<<i<<", partition "<<j<<" \n";
+                    Pr[i] = {};
+
+                    // Make sure to set all the Matrices[i][j] to something non-NULL.
+                    continue;
+                }
+
+                if (Pr[i])
+                {
+                    Pr[i]->sampling *= sampling_pr;
+                    Pr[i]->correction *= A5::correction(p[i][j], order[i]);
+                    Pr[i]->sum_all_paths *= M->Pr_sum_all_paths();
+                }
+
+                if (i==0)
+                {
+                    auto path = get_path_unique(*a123456[j], *M);
+                    auto path_g = M->generalize(path);
+                    auto sampling_pr0 = M->path_P(path_g) * M->generalize_P(path);
+
+                    Pr0.sampling *= sampling_pr0;
+                    Pr0.sum_all_paths *= M->Pr_sum_all_paths();
+                }
+
+#ifndef NDEBUG_DP
+                p[i][j].likelihood();  // check the likelihood calculation
+#endif
+            }
+        }
+
+        // Don't compute the probability if the alignment wasn't resampled!
+        // Should we treat i=0 differently, since the old alignment is consistent?
+        if (Pr[i])
+        {
+            Pr[i]->heated_prob = p[i].heated_probability();
+            Pr[i]->proposal = rho[i];
+        }
+    }
+
+    Pr.push_back(Pr0);
+
+    return Pr;
+}
+
+std::optional<log_double_t> sample_two_nodes_ratio(vector<Parameters>& p, const vector<A5::hmm_order>& order, const vector<log_double_t>& rho)
+{
+    if (p.size() != 2)
+	throw myexception()<<"sample_two_nodes_ratio only takes two Parameters objects!";
+
+    auto Prs = sample_two_nodes_multi2(p, order, rho);
+
+    if (Prs[0] and Prs[1])
+    {
+	auto sample_reverse = Prs[2]->sampling;
+	auto sample_forward = Prs[1]->sampling;
+
+	return (sample_reverse/sample_forward);
+    }
+    else
+	return {};
+}
+
+
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 			   const vector<log_double_t>& rho_)
@@ -203,6 +326,8 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
                 }
 
                 Pr[i] /= sampling_pr;
+		// Wait, why do we include the correction here?
+		// We shouldn't need it to get the true distribution...
                 Pr[i] *= A5::correction(p[i][j], order[i]);
 
 #ifndef NDEBUG_DP
