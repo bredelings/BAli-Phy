@@ -112,29 +112,15 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
 
 #include "slice-sampling.H"
 
-// Notes: the two-say slice sampler is more likely to accept topologies
-//        which have a low probability without branch adjustment.
-//        
-//        If we look at the distribution for accepted changes of
-//        log(P2)-log(P1) without adjusting the branch lengths,
-//        then 1% are below -3.23 for MH and -6.3 for slice.
-
-//        Also, 2% are below -5.19 for slice, adjusting for the fact
-//        that there are fewer (half?) acceptances for slice.
-
-//        Finally, the bottom 5% for slice make up the bottom .7%
-//        (unadjusted) for slice...
-
-//        Experiment #1: load in a posterior sample, to find out what the acceptance
-//                       probability *should* be based only on the relative probabilities
-//                       of the topologies.
-//
-//        Experiment #2: for each proposal, do a long MCMC chain where we consider only two
-//                       topologies but allow branch lengths to vary, in order to find out
-//                       what the acceptance probability should be.
+/*
+ * BROKEN: Tries to integrate out the alignment length along the internal branch on TWO topologies.
+           But never actually creates an internal node states for p[1].tree.
+ */
 
 void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
+    std::abort();
+
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
