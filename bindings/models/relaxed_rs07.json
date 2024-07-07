@@ -1,0 +1,42 @@
+{
+    "name": "relaxed_rs07",
+    "perform": true,
+    "result_type": "IndelModel",
+    "title": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "citation":{"type": "article",
+		"title": "Incorporating indel information into phylogeny estimation for rapidly emerging pathogens.",
+		"year": "2007",
+		"author": [{"name": "Redelings, Benjamin D"}, {"name": "Suchard, Marc A"}],
+		"journal": {"name": "BMC Evolutionary Biology", "volume": "7", "number": "1", "pages": "40"},
+		"identifier": [{"type":"doi","id":"10.1186/1471-2148-7-40"}]
+	       },
+    "call": "IModel.relaxed_rs07(@rate,@sigma,@mean_length,@topology)",
+    "import": ["IModel"],
+    "args": [
+        {
+            "name": "rate",
+            "type": "Double",
+            "default_value": "~log_laplace(-4,0.707)",
+            "description": "The insertion-deletion rate"
+        },
+        {
+            "name": "sigma",
+            "type": "Double",
+            "default_value": "~log_laplace(-3,1)",
+            "description": "The insertion-deletion rate"
+        },
+        {
+            "name": "mean_length",
+            "type": "Double",
+            "default_value": "~shifted_exponential(10,1)",
+	    "description": "The mean indel length"
+        },
+        {
+            "name": "topology",
+            "type": "Topology",
+            "default_value": "get_state(topology)"
+        }
+    ],
+    "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
+    "extract": "all"
+}
