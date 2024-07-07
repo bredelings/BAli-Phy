@@ -129,6 +129,10 @@ YBoundaries yboundaries_everything(int I, int J)
 
 YBoundaries yboundaries_simple_band(int I, int J, int W)
 {
+    assert(I >= 0);
+    assert(J >= 0);
+    assert(W > 0);
+
     auto yboundaries = vector<pair<int,int>>(I+1);
 
     for(int i=0;i<I+1;i++)

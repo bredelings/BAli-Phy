@@ -331,7 +331,7 @@ optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vec
 	if (P[j].variable_alignment())
         {
             // This computes the sampling probability of the CHOSEN path, not the INPUT path!
-	    auto [M, sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+	    auto [M, sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], {});
             if (M->Pr_sum_all_paths() <= 0.0)
             {
                 std::cerr<<"pr_sum_out_A_tri: Pr = 0   j="<<j<<" \n";
