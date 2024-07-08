@@ -2,9 +2,13 @@
 - Speed increases:
   + Speed up tree operations.
   + Don't scan the whole tree to do SPR.
+- Models:
+  + Add relaxed-rs07 that allows rate to vary on different branches.
 - Bug fixes:
   + Fix inferring the alignment on a fixed topology (rooted or unrooted).
   + Invalidate compiled modules if the executable changes.
+  + Fix consensus-tree and branch lengths ignoring burnin when not specified as percent.
+  + Fix (unused) code that integrates out alignments when SPR-attaching on every branch.
 - Syntax
   + Cmd-line functions now look like |x: x + 2|.
   + Cmd-line functions can now take two arguments like |x y: x + y|.
