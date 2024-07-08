@@ -397,11 +397,14 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 	if (not s.empty() and s[s.size()-1] == '%')
 	{
 	    if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
+	    {
 		skip_fraction = d.value()/100;
-	    if (skip_fraction < 0 or skip_fraction > 1)
-		throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
-	    // We have to read the whole file to know how much to skip.
-	    read_skip = 0;
+		if (*skip_fraction < 0 or *skip_fraction > 1)
+		    throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
+
+		// We have to read the whole file to know how much to skip.
+		read_skip = 0;
+	    }
 	}
 	else if (auto skip_int = can_be_converted_to<int>(s))
 	{
