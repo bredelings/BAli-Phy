@@ -290,9 +290,13 @@ int tree_sample::load_file(istream& file, int skip, optional<int> last, int subs
 
 int tree_sample::load_file(const string& filename, int skip, optional<int> last, int subsample, optional<int> max, const vector<string>& prune)
 {
-    checked_ifstream file(filename,"tree samples file");
+    istream_or_ifstream file(std::cin, "-", filename, "tree samples file");
   
     int count = load_file(file,skip,last,subsample,max,prune);
+
+    // There is no message if we just open a stream.
+    if (log_verbose) std::cerr<<"Read "<<count<<" trees from '"<<filename<<"'"<<std::endl;
+
     return count;
 }
 
@@ -384,18 +388,30 @@ void scan_trees(istream& file,int skip,optional<int> last,int subsample,
 
 tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 {
-    int skip = 0;
-    double skip_fraction=0;
+    int read_skip = 0;
+    optional<int> skip;
+    optional<double> skip_fraction;
     if (args.count("skip"))
     {
 	string s = args["skip"].as<string>();
-	if (not can_be_converted_to<int>(s)) {
-	    skip = 0;
-	    if (not s.size() or s[s.size()-1] != '%')
-		throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
-	    else
-		skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
+	if (not s.empty() and s[s.size()-1] == '%')
+	{
+	    if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
+		skip_fraction = d.value()/100;
+	    if (skip_fraction < 0 or skip_fraction > 1)
+		throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
+	    // We have to read the whole file to know how much to skip.
+	    read_skip = 0;
 	}
+	else if (auto skip_int = can_be_converted_to<int>(s))
+	{
+	    skip = skip_int.value();
+	    // We can discard as we read the file.
+	    read_skip = *skip;
+	}
+
+	if (not skip and not skip_fraction)
+	    throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
     }
 
     int subsample=args["subsample"].as<int>();
@@ -410,27 +426,21 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 
     // leaf taxa to ignore
     vector<string> ignore = get_string_list(args, "ignore");
-    
-    vector<string> files;
+
+    vector<string> filenames;
     if (args.count("files"))
-	files = args["files"].as<vector<string> >();
+	filenames = args["files"].as<vector<string> >();
 
     tree_sample tree_dist;
     if (not leaf_labels.empty())
 	tree_dist = tree_sample(leaf_labels);
 
-    vector<tree_sample> trees(files.size());
+    // Load the tree samples and compute the number of trees in the smallest sample.
+    vector<tree_sample> tree_samples(filenames.size());
     optional<int> min_trees;
-    for(int i=0;i<files.size();i++) 
+    for(int i=0;i<filenames.size();i++) 
     {
-	int count = 0;
-	if (files[i] == "-")
-	    count = trees[i].load_file(std::cin,skip,last,subsample,max,ignore);
-	else
-	    count = trees[i].load_file(files[i],skip,last,subsample,max,ignore);      
-
-	if (log_verbose)
-	    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
+	int count = tree_samples[i].load_file(filenames[i],read_skip,last,subsample,max,ignore);
 
 	if (not min_trees)
 	    min_trees = count;
@@ -438,20 +448,23 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 	    min_trees = std::min(*min_trees, count);
     }
 
-    int min_skip = 0;
-    if (skip == 0)
-	min_skip = (int)(skip_fraction * (*min_trees));
+    // If we are skipping a percent, chop off the extra initial trees that we read in.
+    if (skip_fraction and min_trees)
+    {
+	int min_skip = (int)(skip_fraction.value() * min_trees.value());
 
-    if (log_verbose and min_skip > 0)
-	cerr<<"Skipping "<<skip_fraction*100<<"% of "<<*min_trees<<" = "<<min_skip<<endl;
+	if (log_verbose) cerr<<"Skipping "<<skip_fraction.value()*100<<"% of "<<*min_trees<<" = "<<min_skip<<endl;
 
-    for(int i=0;i<trees.size();i++) {
-	if (skip == 0 and skip_fraction > 0) {
-	    int my_skip = std::min<int>(min_skip, trees[i].trees.size());
-	    trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + my_skip);
+	for(auto& sample: tree_samples)
+	{
+	    int my_skip = std::min<int>(min_skip, sample.trees.size());
+	    sample.trees.erase(sample.trees.begin(), sample.trees.begin() + my_skip);
 	}
-	tree_dist.append_trees(trees[i]);
     }
+
+    // Concatenate the tree samples
+    for(auto& sample: tree_samples)
+	tree_dist.append_trees(sample);
     
     return tree_dist;
 }
