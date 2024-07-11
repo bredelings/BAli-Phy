@@ -302,7 +302,7 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
 
     Pr *= p;
 
-    assert(Pr > 0.0);
+    //assert(Pr > 0.0);
     //std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
     return Pr;
 }
