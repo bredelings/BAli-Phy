@@ -51,6 +51,9 @@ huelsenbeck_02_test s01 s10 fraction model = mix [1-fraction, fraction] [model &
                                                                          -- ^ ideally we could just put "model" here.
                                                                          model & huelsenbeck_02 s01 s10]
 
+huelsenbeck_02_two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 s01b s10b,
+                                                                                    model & huelsenbeck_02 s01a s10a]
+
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
     dist = rescale 1 model
     (models, level_probs) = unzip $ unpackDiscrete dist

@@ -1,0 +1,79 @@
+{
+    "name": "Covarion.hb02_two",
+    "synonyms": ["Covarion.huelsenbeck02"],
+    "title":"The Huelsenbeck Covarion Model",
+    "result_type": "MixtureModel<a>",
+    "call": "huelsenbeck_02_two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "MixtureModel<a>",
+	    "description": "The base model"
+        },
+        {
+            "name": "r1",
+            "type": "Double",
+	    "default_value":"~gamma(0.5,1)",
+	    "description":"s01 + s10"
+        },
+        {
+            "name": "r2",
+            "type": "Double",
+	    "default_value":"~gamma(2,1/4)",
+	    "description":"s01 + s10"
+        },
+        {
+            "name": "pi1",
+            "type": "Double",
+	    "default_value":"~beta(1,1)",
+	    "description":"Fraction of time spent in the ON state"
+        },
+        {
+            "name": "pi2",
+            "type": "Double",
+	    "default_value":"~beta(2,2)",
+	    "description":"Fraction of time spent in the ON state"
+        },
+	{
+	    "name": "fraction1",
+	    "type": "Double",
+	    "default_value": "~beta(0.5,0.5)",
+	    "description": "Fraction of sites with rate-switching"
+	}
+    ],
+    "computed": [
+	{
+	    "name": "rate1",
+	    "value": "2 * @r1 *(@pi1 * (1 - @pi1))"
+	},
+	{
+	    "name": "s01a",
+	    "value": "@r1 * @pi1"
+	},
+	{
+	    "name": "s10a",
+	    "value": "@r1 * (1 - @pi1)"
+	},
+	{
+	    "name": "rate2",
+	    "value": "2 * @r2 *(@pi2 * (1 - @pi2))"
+	},
+	{
+	    "name": "s01b",
+	    "value": "@r2 * @pi2"
+	},
+	{
+	    "name": "s10b",
+	    "value": "@r2 * (1 - @pi2)"
+	},
+	{
+	    "name": "switchingDist",
+	    "value": "sortDist(Discrete([(@rate1,1 - @fraction1),(@rate2,@fraction1)]))"
+	}
+    ],
+    "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
+    "examples": ["gtr +> Rates.gamma +> Covarion.hb02_test","gtr +> Rates.free(n=5) +> Covarion.hb02_test"],
+    "see": ["ts98","hb02"],
+    "extract": "all"
+}
