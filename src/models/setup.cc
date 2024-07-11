@@ -942,29 +942,52 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     auto name = call.get_value<string>();
     expression_ref E;
 
-    // FIXME! Here is where we are assuming that unqualified ids are arg_var_NAME variables.
-    if (name[0] == '@')
+    // Process arguments;
+    vector<expression_ref> args;
+    for(int i=0;i<call.size();i++)
+	args.push_back(make_call(call[i].second, simple_args));
+
+    // Process expression
+    if (name == "List")
     {
-        name = name.substr(1);
-        try
-        {
-            E = simple_args.at(name);
-        }
-        catch(...)
-        {
-            throw myexception()<<"cannot find argument '"<<name<<"'";
-        }
+	vector<Hs::LExp> located_args;
+	for(auto& arg: args)
+	    located_args.push_back({noloc,arg});
+	E = Hs::List(located_args);
+    }
+    else if (name == "Tuple")
+    {
+	vector<Hs::LExp> located_args;
+	for(auto& arg: args)
+	    located_args.push_back({noloc,arg});
+	E = Hs::Tuple(located_args);
     }
     else
-        E = var(name);
-
-    for(int i=0;i<call.size();i++)
     {
-        if (i == call.size()-1 and call[i].second == "@submodel")
-            E = {var("+>"), make_call(call[i].second, simple_args),E};
-        else
-            E = {E, make_call(call[i].second, simple_args)};
-    }
+	// FIXME! Here is where we are assuming that unqualified ids are arg_var_NAME variables.
+	if (name[0] == '@')
+	{
+	    name = name.substr(1);
+	    try
+	    {
+		E = simple_args.at(name);
+	    }
+	    catch(...)
+	    {
+		throw myexception()<<"cannot find argument '"<<name<<"'";
+	    }
+	}
+	else
+	    E = var(name);
+
+	for(int i=0;i<call.size();i++)
+	{
+	    if (i == call.size()-1 and call[i].second == "@submodel")
+		E = {var("+>"), args[i], E};
+	    else
+		E = {E, args[i]};
+	}
+    }	
 
     return E;
 }
