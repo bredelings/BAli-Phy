@@ -7,6 +7,11 @@
     "import": ["SModel"],
     "args": [
         {
+            "name": "submodel",
+            "type": "MixtureModel<a>",
+	    "description": "The base model"
+        },
+        {
             "name": "r",
             "type": "Double",
 	    "default_value":"~gamma(2,1/4)",
@@ -23,12 +28,7 @@
 	    "type": "Double",
 	    "default_value": "~beta(0.5,0.5)",
 	    "description": "Fraction of sites with rate-switching"
-	},
-        {
-            "name": "submodel",
-            "type": "MixtureModel<a>",
-	    "description": "The base model"
-        }
+	}
     ],
     "computed": [
 	{
