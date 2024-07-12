@@ -23,6 +23,7 @@
 #include "computation/object.H"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include <functional>
 
 constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
 constexpr double scale_min = 1.0/scale_factor;
@@ -44,9 +45,11 @@ class Likelihood_Cache_Branch: public Object
 
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
-  
+
     log_double_t other_subst = 1;
     std::shared_ptr<const other_subst_work_t> other_subst_work;
+    std::function<log_double_t(const Matrix&)> other_subst_f;
+
     boost::dynamic_bitset<> bits;
     std::optional<Matrix> away_from_root_WF;
 
