@@ -366,6 +366,7 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
         }
     }
 
+    std::cerr<<"failing to deindexify expression "<<E<<"\n";
     std::abort();
 }
 
