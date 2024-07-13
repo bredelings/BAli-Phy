@@ -167,6 +167,8 @@ public:
 	 n_models_(M),
 	 n_columns_(C)
 	{
+	    other_subst_f = [](const Matrix&) {return log_double_t(1);};
+
 	    for(int i=0;i<C;i++)
 	    {
 		scale_[i] = 0;
