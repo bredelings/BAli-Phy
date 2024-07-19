@@ -104,6 +104,28 @@ namespace substitution {
 			   const EVector& LCB,
 			   const EVector& A_,
 			   const Matrix& F);
+    //-- NonEq
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch_toward_root_non_eq(const expression_ref& LCN_,
+				   const expression_ref& LCB_,
+				   const expression_ref& A__,
+				   const expression_ref& transition_P_);
+
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_branch_away_from_root_non_eq(const EVector& LCN,
+				      const EVector& LCB,
+				      const EVector& A_,
+				      const EVector& transition_P,
+				      const Matrix& F);
+
+    log_double_t calc_prob_non_eq(const EVector& LCN,
+				  const EVector& LCB,
+				  const EVector& A_,
+				  const Matrix& F);
+
+    // -- Generic
 
     Vector<std::pair<int,int>> sample_root_sequence(const EVector& LCN,
 					       const EVector& LCB,
