@@ -44,7 +44,7 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
 
     // Check that the columns exist in the file.
     // The end column is the first character AFTER the range.
-    assert(col1 -1 <  lines[line1-1].size());
+    assert(col1 -1 <= lines[line1-1].size());
     assert(col2 -1 <= lines[line2-1].size());
 
     const string& line = lines[line1-1];
