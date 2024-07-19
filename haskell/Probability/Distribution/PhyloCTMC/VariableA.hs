@@ -204,10 +204,10 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel
       fs = frequenciesOnTree tree f transition_ps
-      cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transition_ps fs
+      cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transition_ps f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as fs subst_root
+      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f subst_root
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transition_ps f cls
 
