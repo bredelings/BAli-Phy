@@ -334,9 +334,9 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-        Pr *= LCB1.other_subst;
-        Pr *= LCB2.other_subst;
-        Pr *= LCB3.other_subst;
+        Pr *= LCB1.other_subst();
+        Pr *= LCB2.other_subst();
+        Pr *= LCB3.other_subst();
         Pr.log() += log_scale_min * scale;
         if (std::isnan(Pr.log()))
         {
@@ -453,7 +453,7 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -577,7 +577,7 @@ namespace substitution {
 
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
-	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
 
         Pr.log() += log_scale_min * total_scale;
 
@@ -851,7 +851,7 @@ namespace substitution {
         log_double_t Pr = total;
 	for(int i=0;i<n_branches_in;i++)
 	    if (i == 0)
-		Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst;
+		Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
 	    else
 		Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst_f(F);
 
@@ -1106,8 +1106,9 @@ namespace substitution {
             s2++;
         }
 
-        LCB3->other_subst = LCB1.other_subst * LCB2.other_subst * total;
-        LCB3->other_subst.log() += total_scale*log_scale_min;
+        LCB3->init_other_subst();
+        LCB3->other_subst() = LCB1.other_subst() * LCB2.other_subst() * total;
+        LCB3->other_subst().log() += total_scale*log_scale_min;
         return LCB3;
     }
 
@@ -1217,10 +1218,10 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
+        LCB_OUT->init_other_subst(total);
+        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
+	    LCB_OUT->other_subst() *= cache(j).other_subst();
         return LCB_OUT;
     }
 
@@ -1330,10 +1331,10 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
+        LCB_OUT->init_other_subst(total);
+        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
+	    LCB_OUT->other_subst() *= cache(j).other_subst();
 	LCB_OUT->away_from_root_WF = Matrix(0,0);
         return LCB_OUT;
     }
@@ -1445,10 +1446,10 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
+        LCB_OUT->init_other_subst(total);
+        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst_f(F);
+	    LCB_OUT->other_subst() *= cache(j).other_subst_f(F);
 	LCB_OUT->away_from_root_WF = propagate_frequencies(F, transition_P);
         return LCB_OUT;
     }
@@ -1738,10 +1739,10 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
+        LCB_OUT->init_other_subst(total);
+        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst *= cache(j).other_subst;
+	    LCB_OUT->other_subst() *= cache(j).other_subst();
 	LCB_OUT->away_from_root_WF = Matrix(0,0);
         return LCB_OUT;
     }
@@ -1869,16 +1870,16 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst = total;
-        LCB_OUT->other_subst.log() += total_scale*log_scale_min;
-	for(int j=0;j<n_branches_in;j++)
-	{
-	    if (j == *away_from_root_index)
-		LCB_OUT->other_subst *= cache(j).other_subst;
-	    else
-		LCB_OUT->other_subst *= cache(j).other_subst_f(F);
-	}
-	LCB_OUT->away_from_root_WF = propagate_frequencies(F, transition_P);
+        LCB_OUT->init_other_subst(total);
+        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
+        for(int j=0;j<n_branches_in;j++)
+        {
+            if (j == *away_from_root_index)
+                LCB_OUT->other_subst() *= cache(j).other_subst();
+            else
+               LCB_OUT->other_subst() *= cache(j).other_subst_f(F);
+        }
+        LCB_OUT->away_from_root_WF = propagate_frequencies(F, transition_P);
         return LCB_OUT;
     }
 
@@ -2200,7 +2201,16 @@ namespace substitution {
 
         log_double_t Pr3 = 1;
         for(int b: leaf_branch_list)
-            Pr3 *= P.cache(b)->other_subst;
+	{
+	    if (P.cache(b)->other_subst_f)
+	    {
+		int n = P.t().target(b);
+		auto F = P.WeightedFrequencyMatrix(n);
+		Pr3 *= P.cache(b)->other_subst_f(*F);
+	    }
+	    else
+		Pr3 *= P.cache(b)->other_subst();
+	}
 
         return Pr3;
     }

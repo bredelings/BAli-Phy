@@ -43,10 +43,13 @@ class Likelihood_Cache_Branch: public Object
     int n_models_ = -1;
     int n_columns_ = -1;
 
+    std::optional<log_double_t> other_subst_;
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
 
-    log_double_t other_subst = 1;
+    void init_other_subst(log_double_t p=1) {assert(not other_subst_); other_subst_ = p;}
+          log_double_t& other_subst() {return other_subst_.value();}
+    const log_double_t& other_subst() const {return other_subst_.value();}
     std::shared_ptr<const other_subst_work_t> other_subst_work;
     std::function<log_double_t(const Matrix&)> other_subst_f;
 
@@ -144,7 +147,7 @@ public:
 	std::swap(n_states_, LCB.n_states_);
 	std::swap(n_models_, LCB.n_models_);
 	std::swap(n_columns_, LCB.n_columns_);
-	std::swap(other_subst, LCB.other_subst);
+	std::swap(other_subst_, LCB.other_subst_);
 	std::swap(other_subst_f, LCB.other_subst_f);
 	std::swap(other_subst_work, LCB.other_subst_work);
 	std::swap(bits, LCB.bits);
@@ -169,8 +172,6 @@ public:
 	 n_models_(M),
 	 n_columns_(C)
 	{
-	    other_subst_f = [](const Matrix&) {return log_double_t(1);};
-
 	    for(int i=0;i<C;i++)
 	    {
 		scale_[i] = 0;
