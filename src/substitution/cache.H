@@ -29,8 +29,6 @@ constexpr double scale_factor = 115792089237316195423570985008687907853269984665
 constexpr double scale_min = 1.0/scale_factor;
 constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
 
-struct other_subst_work_t;
-
 /// An object to store cached conditional likelihoods for a single branch
 class Likelihood_Cache_Branch: public Object
 {
@@ -50,7 +48,6 @@ public:
     void init_other_subst(log_double_t p=1) {assert(not other_subst_); other_subst_ = p;}
           log_double_t& other_subst() {return other_subst_.value();}
     const log_double_t& other_subst() const {return other_subst_.value();}
-    std::shared_ptr<const other_subst_work_t> other_subst_work;
     std::function<log_double_t(const Matrix&)> other_subst_f;
 
     boost::dynamic_bitset<> bits;
@@ -149,7 +146,6 @@ public:
 	std::swap(n_columns_, LCB.n_columns_);
 	std::swap(other_subst_, LCB.other_subst_);
 	std::swap(other_subst_f, LCB.other_subst_f);
-	std::swap(other_subst_work, LCB.other_subst_work);
 	std::swap(bits, LCB.bits);
 	std::swap(away_from_root_WF, LCB.away_from_root_WF);
     }
@@ -197,19 +193,5 @@ public:
 
     ~Likelihood_Cache_Branch() {delete[] data; delete[] scale_; delete[] count_;}
 };
-
-struct other_subst_work_t
-{
-    std::shared_ptr<const Likelihood_Cache_Branch> clv1;
-    std::vector<int> cols1;
-    std::shared_ptr<const other_subst_work_t> other_subst_work1;
-
-    std::shared_ptr<const Likelihood_Cache_Branch> clv2;
-    std::vector<int> cols2;
-    std::shared_ptr<const other_subst_work_t> other_subst_work2;
-
-    Matrix P;
-};
-
 
 #endif
