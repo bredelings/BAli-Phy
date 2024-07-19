@@ -140,6 +140,48 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     return {Pr};
 }
 
+extern "C" closure builtin_function_peelBranchTowardRootNonEq(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    return substitution::peel_branch_toward_root_non_eq(arg0,        // LCN
+							arg1,        // LCB
+							arg2,        // A
+							arg3);       // transition_P
+}
+
+extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+
+    return substitution::peel_branch_away_from_root_non_eq(arg0.as_<EVector>(),        // LCN
+							   arg1.as_<EVector>(),        // LCB
+							   arg2.as_<EVector>(),        // A
+							   arg3.as_<EVector>(),        // transition_P
+							   arg4.as_<Box<Matrix>>());   // F
+}
+
+extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<EVector>(),       // LCN
+						     arg1.as_<EVector>(),       // LCB
+						     arg2.as_<EVector>(),       // A
+						     arg3.as_<Box<Matrix>>());  // F
+    return {Pr};
+}
+
 extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
