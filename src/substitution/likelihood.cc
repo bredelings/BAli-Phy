@@ -742,23 +742,24 @@ namespace substitution {
 
     log_double_t calc_prob_not_at_root_non_eq(const EVector& LCN,
 					      const EVector& LCB,
-					      const EVector& A_,
-					      const Matrix& F)
+					      const EVector& A_)
     {
         total_calc_root_prob++;
-
-        const int n_models = F.size1();
-        const int n_states = F.size2();
-        const int matrix_size = n_models * n_states;
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
         auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
 
+	auto& F = cache(0).away_from_root_WF.value();
+
 	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
 	assert(not LCN.empty() or not A_.empty());
 	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.
@@ -891,7 +892,7 @@ namespace substitution {
 		std::swap(A[0], A[*away_from_root_index]);
 	    }
 
-	    return calc_prob_not_at_root_non_eq(LCN, LCB2, A, F);
+	    return calc_prob_not_at_root_non_eq(LCN, LCB2, A);
 	}
     }
 
