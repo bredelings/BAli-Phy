@@ -450,6 +450,13 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
     int scale = 0;
     log_prod prod;
     bool at_root = not dists1.away_from_root_WF and not dists2.away_from_root_WF;
+    assert(not (dists1.away_from_root() and dists2.away_from_root()));
+
+    Matrix WF = weighted_frequencies;
+    if (dists1.away_from_root_WF)
+	WF = dists1.away_from_root_WF.value();
+    if (dists2.away_from_root_WF)
+	WF = dists2.away_from_root_WF.value();
 
     for(int i=2;i<dists1.n_columns();i++)
     {
@@ -460,7 +467,7 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 	if (dists1.away_from_root_WF)
 	    sum = dists1.sum(i);
 	else
-	    sum = dists1.dot(i, weighted_frequencies);
+	    sum = dists1.dot(i, WF);
 
 	assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
@@ -482,7 +489,7 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 	if (dists2.away_from_root_WF)
 	    sum = dists2.sum(i);
 	else
-	    sum = dists2.dot(i, weighted_frequencies);
+	    sum = dists2.dot(i, WF);
 
 	assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
@@ -496,7 +503,7 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 
 	// If we are at the root then we want the match probabilities to include WF.
 	if (at_root)
-	    dists2.mul(i, weighted_frequencies);
+	    dists2.mul(i, WF);
     }
     Pr_extra_subst = prod;
     Pr_extra_subst.log() += log_scale_min*scale;
