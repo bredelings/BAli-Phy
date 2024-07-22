@@ -1336,7 +1336,7 @@ namespace substitution {
         LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
 	    LCB_OUT->other_subst() *= cache(j).other_subst();
-	LCB_OUT->away_from_root_WF = Matrix(0,0);
+	LCB_OUT->away_from_root_WF = F;
         return LCB_OUT;
     }
 
@@ -1744,7 +1744,7 @@ namespace substitution {
         LCB_OUT->other_subst().log() += total_scale*log_scale_min;
 	for(int j=0;j<n_branches_in;j++)
 	    LCB_OUT->other_subst() *= cache(j).other_subst();
-	LCB_OUT->away_from_root_WF = Matrix(0,0);
+	LCB_OUT->away_from_root_WF = F;
         return LCB_OUT;
     }
 
@@ -1918,7 +1918,7 @@ namespace substitution {
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 	if (away_from_root_index)
-	    LCB_OUT->away_from_root_WF = Matrix(0,0);
+	    LCB_OUT->away_from_root_WF = F;
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.
