@@ -1892,8 +1892,7 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     merge_branches(const EVector& LCN,
 		   const EVector& LCB,
-		   const EVector& A_,
-		   const Matrix& F)
+		   const EVector& A_)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -1903,13 +1902,13 @@ namespace substitution {
 		away_from_root_index = j;
 	    }
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
-        const int matrix_size = n_models * n_states;
-
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
         auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+        const int n_models = LCN.empty() ? cache(0).n_models() : node_cache(0).n_models();
+        const int n_states = LCN.empty() ? cache(0).n_states() : node_cache(0).n_states();
+        const int matrix_size = n_models * n_states;
 
 	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
@@ -1917,8 +1916,13 @@ namespace substitution {
 	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+
+	Matrix F;
 	if (away_from_root_index)
+	{
+	    F = cache(*away_from_root_index).away_from_root_WF.value();
 	    LCB_OUT->away_from_root_WF = F;
+	}
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.

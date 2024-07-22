@@ -90,7 +90,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     }
 
     // Unlike with sample-tri, the order of characters at n2 is determined by the pairwise alignments.
-    auto dists2 = substitution::shift(*substitution::merge_branches(LCN, LCB, A, *F), 2);
+    auto dists2 = substitution::shift(*substitution::merge_branches(LCN, LCB, A), 2);
     
     vector<HMM::bitmask_t> state_emit(4,0);
     state_emit[0] |= (1<<1)|(1<<0);

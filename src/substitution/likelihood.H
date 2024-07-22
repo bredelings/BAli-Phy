@@ -47,8 +47,7 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     merge_branches(const EVector& LCN,
 		   const EVector& LCB,
-		   const EVector& A_,
-		   const Matrix& F);
+		   const EVector& A_);
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
