@@ -23,7 +23,7 @@ instance HasSMap m => HasSMap (MkEquilibrium m) where
 instance HasAlphabet m => HasAlphabet (MkEquilibrium m) where
     getAlphabet (Equilibrium m) = getAlphabet m
 
-instance SimpleSModel (MkEquilibrium Markov) where
+instance SimpleTransitionModel (MkEquilibrium Markov) where
     type instance IsReversible (MkEquilibrium Markov) = EquilibriumNonReversible
     branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel

@@ -68,7 +68,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
+instance (HasLabels t, HasBranchLengths t, IsTree t, SimpleTransitionModel s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment smodel scale
 
@@ -99,7 +99,7 @@ sampleComponentStates rtree alignment smodel scale =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t), SimpleTransitionModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
     sampleIO (PhyloCTMC tree alignment smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -110,7 +110,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths (Rooted t)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
+instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleTransitionModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
@@ -155,7 +155,7 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonRevers
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
+instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleTransitionModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale
 
@@ -175,7 +175,7 @@ sampleComponentStatesNonRev rtree alignment smodel scale =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumNonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleTransitionModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumNonReversible) where
     sampleIO (PhyloCTMC tree alignment smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -186,7 +186,7 @@ instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) 
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumNonReversible) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleTransitionModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumNonReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 ---------------------------------------------
@@ -230,7 +230,7 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) wher
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
+instance (HasLabels t, HasRoot t, HasBranchLengths t, IsTree t, SimpleTransitionModel s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment smodel scale
 
@@ -250,7 +250,7 @@ sampleComponentStatesNonEq rtree alignment smodel scale =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s NonEquilibrium) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleTransitionModel s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s NonEquilibrium) where
     sampleIO (PhyloCTMC tree alignment smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -261,7 +261,7 @@ instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, SimpleSModel s) 
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s NonEquilibrium) where
+instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths t, SimpleTransitionModel s) => Sampleable (PhyloCTMC t (AlignmentOnTree t) s NonEquilibrium) where
     sample dist = RanDistribution2 dist do_nothing
 
 

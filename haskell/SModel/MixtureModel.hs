@@ -47,7 +47,7 @@ baseModel model i = component model i
 instance HasAlphabet m => HasAlphabet (Discrete m) where
     getAlphabet model = getAlphabet $ baseModel model 0
 
-instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (Discrete m) where
+instance (CTMC m, HasAlphabet m, RateModel m, SimpleTransitionModel m) => SimpleTransitionModel (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
     branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model

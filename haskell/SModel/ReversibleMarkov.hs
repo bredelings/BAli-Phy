@@ -52,7 +52,7 @@ instance HasSMap m => HasSMap (MkReversible m) where
 instance HasAlphabet m => HasAlphabet (MkReversible m) where
     getAlphabet (Reversible m) = getAlphabet m
 
-instance SimpleSModel (MkReversible Markov) where
+instance SimpleTransitionModel (MkReversible Markov) where
     type instance IsReversible (MkReversible Markov) = EquilibriumReversible
     branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
         where r = rate smodel

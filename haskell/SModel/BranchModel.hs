@@ -25,7 +25,7 @@ instance Functor BranchModel where
 instance HasAlphabet (BranchModel a) where
     getAlphabet (BranchModel alphabet _ _ _) = alphabet
 
-instance CTMC a => SimpleSModel (BranchModel a) where
+instance CTMC a => SimpleTransitionModel (BranchModel a) where
     stateLetters (BranchModel _ smap _ _) = smap
     branch_transition_p (SingleBranchLengthModel tree model f) b = [qExp $ scale (branch_length tree b * f) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model

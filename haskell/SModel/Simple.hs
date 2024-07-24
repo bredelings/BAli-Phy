@@ -29,7 +29,7 @@ data EquilibriumNonReversible
 
 data NonEquilibrium
 
-class HasAlphabet m => SimpleSModel m where
+class HasAlphabet m => SimpleTransitionModel m where
     type family IsReversible m
     type instance IsReversible m = NonEquilibrium
     stateLetters :: m -> EVector Int
