@@ -47,14 +47,16 @@ baseModel model i = component model i
 instance HasAlphabet m => HasAlphabet (Discrete m) where
     getAlphabet model = getAlphabet $ baseModel model 0
 
-instance (CTMC m, HasAlphabet m, RateModel m, SimpleTransitionModel m) => SimpleTransitionModel (Discrete m) where
+instance (CTMC m, HasAlphabet m, SimpleSModel m) => SimpleSModel (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
-    branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
-        where r = rate model
     distribution model = map snd (unpackDiscrete model)
     nBaseModels model = length $ unpackDiscrete model
     stateLetters model = stateLetters $ baseModel model 0
     componentFrequencies model i = getStartFreqs $ baseModel model i
+
+instance (HasBranchLengths t, CTMC m, RateModel m, SimpleTransitionModel t m) => SimpleTransitionModel t (Discrete m) where
+    branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branch_length tree b * factor / r) component | (component,_) <- unpackDiscrete model]
+        where r = rate model
 
 instance Scalable a => Scalable (Discrete a) where
     scale x dist = fmap (scale x) dist

@@ -29,14 +29,18 @@ data EquilibriumNonReversible
 
 data NonEquilibrium
 
-class HasAlphabet m => SimpleTransitionModel m where
+class HasAlphabet m => SimpleSModel m where
     type family IsReversible m
     type instance IsReversible m = NonEquilibrium
     stateLetters :: m -> EVector Int
-    branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]
     nBaseModels :: m -> Int
     componentFrequencies :: m -> Int -> EVector Double
+
+    nBaseModels m = length $ distribution m
+
+class SimpleSModel m => SimpleTransitionModel t m where
+    branch_transition_p :: SingleBranchLengthModel t m -> Int -> [Matrix Double]
 
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double

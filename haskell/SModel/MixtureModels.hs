@@ -22,15 +22,16 @@ mmm branch_cats m = MixtureModels branch_cats [m]
 instance HasAlphabet m => HasAlphabet (MixtureModels m) where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
-instance (CTMC m, HasAlphabet m, RateModel m, SimpleTransitionModel m) => SimpleTransitionModel (MixtureModels m) where
+instance (HasAlphabet m, CTMC m, SimpleSModel m) => SimpleSModel (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
-    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
-        where mx = mms!!(branchCats IntMap.! undirectedName b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
     nBaseModels               (MixtureModels _ (m:ms)) = nBaseModels m
     stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
     componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
 
+instance (CTMC m, RateModel m, HasBranchLengths t, SimpleTransitionModel t m) => SimpleTransitionModel t (MixtureModels m) where
+    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
+        where mx = mms!!(branchCats IntMap.! undirectedName b)
 
 -- No Attribute
 getForeground Nothing = 0
