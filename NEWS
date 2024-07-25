@@ -1,9 +1,11 @@
-* 4.0-beta15 (unreleased)
+* 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
   + Speed up tree operations.
   + Don't scan the whole tree to do SPR.
 - Models:
   + Add relaxed-rs07 that allows rate to vary on different branches.
+- Infrastructure:
+  + Non-equilibrium models now work with variable alignments.
 - Bug fixes:
   + Fix inferring the alignment on a fixed topology (rooted or unrooted).
   + Invalidate compiled modules if the executable changes.
