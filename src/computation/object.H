@@ -108,16 +108,6 @@ template<> std::string Box<Matrix>::print() const;
 template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
 
 template <typename T>
-bool unshare(object_ptr<T>& ptr)
-{
-    if (ptr.unique()) return false;
-
-    ptr = object_ptr<T>(ptr->clone());
-
-    return true;
-}
-
-template <typename T>
 using Vector = Box<std::vector<T>>;
 
 template <typename T1,typename T2>

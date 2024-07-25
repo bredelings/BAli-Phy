@@ -53,7 +53,8 @@ private:
   // create a new copy of data = make a direct copy otherwise
   void copy()
   {
-    if (not data.unique()) {
+    // Note that shared_ptr<X>::use_count() isn't thread-safe.
+    if (data.use_count() > 1) {
       X* data_old = data.get();
       data = std::shared_ptr<X>(new X(*data_old));
     }
@@ -99,10 +100,6 @@ public:
   long use_count() const
   {
     return data.use_count();
-  }
-
-  bool unique() const {
-    return data.unique(); 
   }
 
   void swap(cow_ptr<X>& other) {std::swap(data,other.data);}
@@ -167,7 +164,7 @@ private:
   // create a new copy of data = make a direct copy otherwise
   void copy()
   {
-    if (not data.unique()) {
+    if (data.use_count() > 1) {
       X* data_old = data.get();
       data = std::shared_ptr<X>(data_old->clone());
     }
@@ -214,10 +211,6 @@ public:
   long use_count() const
   {
     return data.use_count();
-  }
-
-  bool unique() const {
-    return data.unique(); 
   }
 
   void swap(polymorphic_cow_ptr<X>& other) {std::swap(data,other.data);}
