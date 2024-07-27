@@ -62,6 +62,7 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
 {- For VariableA.hs, ancestral info includes:
   * ancestralComponentStateSequences: Int (node) -> VectorPairIntInt (component, state)
   * ancestral_sequences:              Int (node) -> EVector Int (state)
+  * alignedSequences alignment _:     Int (node) -> EVector Int (state)
   * stateToLetters smap _:            Int (node) -> EVector Int (letter)
   * sequenceFromTree _:               [(Text, EVector Int)]
   * ancestralSequences:               Aligned (CharacterData alphabet _)
