@@ -297,6 +297,11 @@ optional<ptree> peel_sample_annotated(ptree p)
 	return {};
 }
 
+bool is_operator(const string& s)
+{
+    return (s == "+" or s == "-" or s == "*" or s == "/");
+}
+
 string unparse(const ptree& p)
 {
     using namespace std::string_literals;
@@ -348,14 +353,11 @@ string unparse(const ptree& p)
 	return "~" + unparse(p.begin()->second);
     else if (s == "negate")
 	return "-" + unparse(p.begin()->second);
-    else if (s == "div")
-        return unparse(p[0].second) + "/" + unparse(p[1].second);
-    else if (s == "mul")
-        return unparse(p[0].second) + "*" + unparse(p[1].second);
-    else if (s == "sub")
-        return unparse(p[0].second) + "-" + unparse(p[1].second);
-    else if (s == "add")
-        return unparse(p[0].second) + "+" + unparse(p[1].second);
+    else if (is_operator(s) and p.size() == 2)
+    {
+	// sometimes we might need parenthesis, right?
+        return unparse(p[0].second) + s + unparse(p[1].second);
+    }
 
     else if (s == "intToDouble")
 	return unparse(p.get_child("x"));
@@ -474,14 +476,11 @@ string unparse_annotated(const ptree& ann)
 	return "~" + unparse_annotated(p.begin()->second);
     else if (s == "negate")
 	return "-" + unparse_annotated(p.begin()->second);
-    else if (s == "div")
-        return unparse_annotated(p[0].second) + "/" + unparse_annotated(p[1].second);
-    else if (s == "mul")
-        return unparse_annotated(p[0].second) + "*" + unparse_annotated(p[1].second);
-    else if (s == "sub")
-        return unparse_annotated(p[0].second) + "-" + unparse_annotated(p[1].second);
-    else if (s == "add")
-        return unparse_annotated(p[0].second) + "+" + unparse_annotated(p[1].second);
+    else if (is_operator(s) and p.size() == 2)
+    {
+	// sometimes we might need parenthesis, right?
+        return unparse_annotated(p[0].second) + s + unparse_annotated(p[1].second);
+    }
 
     else if (s == "intToDouble")
 	return unparse_annotated(p.get_child("x"));
