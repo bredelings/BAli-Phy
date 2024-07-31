@@ -652,18 +652,34 @@ int main(int argc,char* argv[])
 
 	double min_support = args["min-support"].as<double>();
 
-	int skip = 0;
-	double skip_fraction=0;
+	int read_skip = 0;
+	optional<int> skip;
+	optional<double> skip_fraction;
+	if (args.count("skip"))
 	{
 	    string s = args["skip"].as<string>();
-	    if (not can_be_converted_to<int>(s))
+	    if (not s.empty() and s[s.size()-1] == '%')
 	    {
-		skip = 0;
-		if (not s.size() or s[s.size()-1] != '%')
-		    throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
-		else
-		    skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
+		if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
+		{
+		    skip_fraction = d.value()/100;
+		    if (*skip_fraction < 0 or *skip_fraction > 1)
+			throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
+
+		    // We have to read the whole file to know how much to skip.
+		    read_skip = 0;
+		}
 	    }
+	    else if (auto skip_int = can_be_converted_to<int>(s))
+	    {
+		// We can discard as we read the file.
+		skip = skip_int.value();
+
+		read_skip = skip_int.value();
+	    }
+
+	    if (not skip and not skip_fraction)
+		throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
 	}
 
 
@@ -693,7 +709,7 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
-	tree_sample_collection tree_dists(filenames,skip,last,subsample,max);
+	tree_sample_collection tree_dists(filenames,read_skip,last,subsample,max);
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {
@@ -708,18 +724,18 @@ int main(int argc,char* argv[])
 	for(int i=1;i<tree_dists.n_samples();i++) 
 	    min_trees = std::min<int>( min_trees, tree_dists.sample(i).size());
 
-	int min_skip = 0;
-	if (skip == 0)
-	    min_skip = (int)(skip_fraction * min_trees);
+	optional<int> min_skip;
+	if (skip_fraction)
+	    min_skip = (int)(skip_fraction.value() * min_trees);
 
-	if (log_verbose and min_skip > 0)
-	    cerr<<"Skipping "<<skip_fraction*100<<"% of "<<min_trees<<" = "<<min_skip<<endl;
+	if (log_verbose and min_skip)
+	    cerr<<"Skipping "<<skip_fraction.value()*100<<"% of "<<min_trees<<" = "<<min_skip.value()<<endl;
 
 	for(int i=0;i<tree_dists.n_samples();i++) 
 	{
 	    tree_sample& trees = tree_dists.sample(i);
-	    if (skip == 0 and skip_fraction > 0) {
-		int my_skip = std::min<int>(min_skip, trees.trees.size());
+	    if (min_skip) {
+		int my_skip = std::min<int>(*min_skip, trees.trees.size());
 		trees.trees.erase(trees.trees.begin(), trees.trees.begin() + my_skip);
 	    }
 	}
