@@ -67,3 +67,20 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
   * sequenceFromTree _:               [(Text, EVector Int)]
   * ancestralSequences:               Aligned (CharacterData alphabet _)
 -}
+
+{- Can we separate out the alignment and the character properties?
+   The alignment could be converted into an Int (node) -> BitSet
+   * I think we could modify minimally_connect_characters uncompressedNodeSequences to do this.
+     - Should we have a type for [(Text, Bitset)]?
+     - Should we be able to apply Aligned or Unaligned to this, even though its not CharacterData?
+     - Can we use such a thing to MASK the ancestralComponentStateSequences?
+   * Can we 
+
+Then we could store site properties as Int (node) -> EVector Double
+ -}
+
+{- What does it mean to identify the ancestral rate for an ancestral character?
+   The character at a node that is ancestral to a group of observed sequences could
+      be a collection of characters.
+   We could average across such characters...
+ -}

@@ -302,6 +302,9 @@ bool is_operator(const string& s)
     return (s == "+" or s == "-" or s == "*" or s == "/");
 }
 
+// To properly parenthesize infix expressions, we could ... pass in a context argument
+// that says when they are the left or right argument of an infix operator?
+
 string unparse(const ptree& p)
 {
     using namespace std::string_literals;
