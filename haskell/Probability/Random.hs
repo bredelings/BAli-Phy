@@ -235,7 +235,16 @@ run_strict (RanInterchangeable _) = error "run_strict: RanInterchangeable"
 run_strict (PerformTKEffect _) = error "run_strict: PerformTKEffect"
 run_strict (RanOp op) = op run_strict
 
+class Monad m => AddMove m where
+    addMove :: Double -> TransitionKernel a -> m Effect
+
+instance AddMove Random where
+    addMove rate move = RanSamplingRate rate $ PerformTKEffect $ TKLiftIO $ (\rate -> register_transition_kernel rate move)
+
 add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
+
+instance AddMove TKEffects where
+    addMove rate' move = TKLiftIO $ (\rate -> register_transition_kernel (rate*rate') move)
 
 run_tk_effects :: Double -> TKEffects a -> IO a
 run_tk_effects rate (TKBind f g) = do x <- run_tk_effects rate f

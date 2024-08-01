@@ -783,8 +783,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
         if (not fixed.count("tree"))
         {
-            model.perform({var("RanSamplingRate"), 2.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_slice"), get_list(scales), branch_lengths}}}});
-            model.perform({var("RanSamplingRate"), 1.0, {var("PerformTKEffect"), {var("add_move"), {var("scale_means_only_MH"), get_list(scales), branch_lengths}}}});
+            model.perform({var("addMove"), 2, {var("scale_means_only_slice"), get_list(scales), branch_lengths}});
+	    model.perform({var("addMove"), 1, {var("scale_means_only_MH"), get_list(scales), branch_lengths}});
         }
     }
 
