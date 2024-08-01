@@ -757,9 +757,9 @@ std::string generate_atmodel_program(const variables_map& args,
     if (not fixed.count("tree"))
     {
 	if (fixed.count("topology"))
-	    model.perform({var("add_length_moves"), 1, tree_var});
+	    model.perform({var("addLengthMoves"), 1, tree_var});
 	else
-	    model.perform({var("add_tree_moves"), 1, tree_var});
+	    model.perform({var("addTreeMoves"), 1, tree_var});
     }
 
     set<string> used_states;

@@ -104,8 +104,8 @@ uniformLabelledTree taxa dist = do
   topology <- RanSamplingRate 0 $ sample $ uniform_labelled_topology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
   let tree = branch_length_tree topology branchLengths
-  add_topology_moves 2 tree
-  add_length_moves 2 tree
+  addTopologyMoves 2 tree
+  addLengthMoves 2 tree
   return tree
 
 fixedTopologyTree topology dist = do
@@ -114,23 +114,23 @@ fixedTopologyTree topology dist = do
   addMove 1 $ walk_tree_sample_branch_lengths tree
   return tree
 
-add_SPR_moves rate tree = do
+addSPRMoves rate tree = do
   addMove rate $ sample_SPR_all tree
   addMove (rate/2) $ sample_SPR_flat tree
   addMove (rate/2) $ sample_SPR_nodes tree
 
-add_topology_moves rate tree = do
-  add_SPR_moves rate tree
+addTopologyMoves rate tree = do
+  addSPRMoves rate tree
   addMove rate $ walk_tree_sample_NNI_and_branch_lengths tree
   addMove (2*rate) $ walk_tree_sample_NNI tree  -- if alignment is fixed this is really cheap -- increase weight?
   addMove (0.5*rate) $ walk_tree_sample_NNI_and_A tree
 
-add_length_moves rate tree = do
+addLengthMoves rate tree = do
   addMove rate $ walk_tree_sample_branch_lengths tree
 
-add_tree_moves rate tree = do
-  add_topology_moves (rate*2) tree
-  add_length_moves (rate*2) tree
+addTreeMoves rate tree = do
+  addTopologyMoves (rate*2) tree
+  addLengthMoves (rate*2) tree
 
 uniform_labelled_tree taxa branch_lengths_dist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
@@ -139,7 +139,7 @@ uniform_labelled_tree taxa branch_lengths_dist = do
 --  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
   branch_lengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branch_lengths_dist topology))
   let tree = WithBranchLengths topology branch_lengths
-  return tree `with_tk_effect` add_tree_moves 1
+  return tree `with_tk_effect` addTreeMoves 1
 
 ----
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
