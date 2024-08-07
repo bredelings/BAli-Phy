@@ -5,6 +5,7 @@
 #include "util/log-level.H"
 #include "util/string/join.H"
 #include "util/io/vector.H"
+#include "util/set.H"
 #include "graph_register.H"
 #include "computation/module.H"
 #include "computation/expression/core.H"
@@ -889,6 +890,8 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
 
 expression_ref reg_heap::evaluate_program(int c)
 {
+    check_tokens();
+
     if (not program_result_head)
         throw myexception()<<"No program has been set!";
 
@@ -2372,8 +2375,9 @@ void reg_heap::check_tokens() const
         int t = token_for_context(c);
         if (t >= 0)
         {
-            assert(tokens[t].is_referenced());
             assert(tokens[t].used);
+            assert(tokens[t].is_referenced());
+            assert(includes(tokens[t].context_refs, c));
 
             // Check that forward prev_prog_token edges are right.
             if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->index)
@@ -2382,7 +2386,7 @@ void reg_heap::check_tokens() const
                 int j = *tokens[t].prev_prog_token->index;
                 assert(tokens[t2].used);
 
-                auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
+                auto& prev_prog_refs = (tokens[t].context_refs.size() > 0)
                     ? tokens[t2].prev_prog_active_refs
                     : tokens[t2].prev_prog_inactive_refs;
 
@@ -2403,6 +2407,16 @@ void reg_heap::check_tokens() const
                 assert(tokens[t2].prev_prog_token->token == t);
             }
         }
+    }
+    for(int t=0;t<tokens.size();t++)
+    {
+//	if (tokens[t].parent == -1)
+//	    assert(t == root_token);
+
+	if (not tokens[t].used) continue;
+
+	for(int c: tokens[t].context_refs)
+	    assert(token_for_context(c) == t);
     }
 #endif
 }

@@ -472,12 +472,12 @@ public:
         int parent = -1;
         // Contexts that are derived from this one.
         std::vector<int> children;
-	// Order of token creation.
-	std::int64_t token_index = -1;
+        // Order of token creation.
+        std::int64_t token_index = -1;
 
         // Contexts that point here
-        int n_context_refs = 0;
-        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0 or not prev_prog_active_refs.empty();}
+        std::vector<int> context_refs;
+        bool is_referenced() const {return not context_refs.empty() or not prev_prog_active_refs.empty();}
     
         /// Mapping from closures to steps/results
         const auto& delta_force_count() const { return vm_force_count.delta(); }

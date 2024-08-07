@@ -3,6 +3,7 @@
 #include "util/range.H" // for remove_element( )
 #include "range/v3/all.hpp"
 #include "util/assert.hh"
+#include "util/set.H"
 
 namespace views = ranges::views;
 
@@ -126,7 +127,7 @@ void reg_heap::release_tip_token(int t)
 
     // Clear link to prev prog token.
     // This doesn't remove a reference, since t has no context references.
-    assert(tokens[t].n_context_refs == 0);
+    assert(tokens[t].context_refs.empty());
     unset_prev_prog_token(t);
 
     assert(tokens[t].prev_prog_active_refs.empty());
@@ -522,6 +523,7 @@ pair<int,optional<int>> reg_heap::unset_token_for_context_no_release_tips_(int c
 
     assert(t != -1);
     assert(tokens[t].is_referenced());
+    assert(includes(tokens[t].context_refs, c));
 
     optional<prev_prog_token_t> p;
     optional<int> t2;
@@ -529,7 +531,7 @@ pair<int,optional<int>> reg_heap::unset_token_for_context_no_release_tips_(int c
     // FIXME: instead of unsetting prev_prog_token, maybe just unset the index.
 
     // 1. Remove the link from the active list
-    if (tokens[t].n_context_refs == 1)
+    if (tokens[t].context_refs.size() == 1)
     {
         p = tokens[t].prev_prog_token;
         t2 = unset_prev_prog_token(t);
@@ -537,11 +539,10 @@ pair<int,optional<int>> reg_heap::unset_token_for_context_no_release_tips_(int c
 
     // 2. Decrement the reference count;
     token_for_context_[c] = -1;
-    tokens[t].n_context_refs--;
-    assert(tokens[t].n_context_refs >= 0);
+    remove_unordered(tokens[t].context_refs, c);
 
     // 3. Add the link to the inactive list
-    if (tokens[t].n_context_refs == 0)
+    if (tokens[t].context_refs.empty())
         set_prev_prog_token(t,p);
 
     return {t,t2};
@@ -557,16 +558,16 @@ void reg_heap::set_token_for_unset_context_(int c, int t)
     auto p = tokens[t].prev_prog_token;
 
     // 1. Remove the link to the inactive list
-    if (tokens[t].n_context_refs == 0)
+    if (tokens[t].context_refs.empty())
         unset_prev_prog_token(t);
 
     // 2. Increment the reference count
     token_for_context_[c] = t;
-    tokens[t].n_context_refs++;
+    tokens[t].context_refs.push_back(c);
     assert(tokens[t].is_referenced());
 
     // 3. Add the link to the active list
-    if (tokens[t].n_context_refs == 1)
+    if (tokens[t].context_refs.size() == 1)
         set_prev_prog_token(t, p);
 }
 
@@ -708,7 +709,7 @@ void reg_heap::set_prev_prog_token(int t, optional<prev_prog_token_t> prev_prog_
         return;
     }
 
-    auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
+    auto& prev_prog_refs = (tokens[t].context_refs.size() > 0)
         ? tokens[t2].prev_prog_active_refs
         : tokens[t2].prev_prog_inactive_refs;
 
@@ -750,7 +751,7 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
     assert(tokens[t2].used);
     auto j  = *tokens[t].prev_prog_token->index;
 
-    auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
+    auto& prev_prog_refs = (tokens[t].context_refs.size() > 0)
         ? tokens[t2].prev_prog_active_refs
         : tokens[t2].prev_prog_inactive_refs;
 
