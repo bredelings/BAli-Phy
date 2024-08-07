@@ -804,3 +804,58 @@ bool reg_heap::is_program_execution_token(int t) const
     auto t2 = get_prev_prog_token_for_token(t);
     return (t2 and *t2 == t);
 }
+
+void reg_heap::check_tokens() const
+{
+#ifndef NDEBUG
+    for(int c=0;c<get_n_contexts();c++)
+    {
+        int t = token_for_context(c);
+        if (t >= 0)
+        {
+            assert(tokens[t].used);
+            assert(tokens[t].is_referenced());
+            assert(includes(tokens[t].context_refs, c));
+
+            // Check that forward prev_prog_token edges are right.
+            if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->index)
+            {
+                int t2 = tokens[t].prev_prog_token->token;
+                int j = *tokens[t].prev_prog_token->index;
+                assert(tokens[t2].used);
+
+                auto& prev_prog_refs = (tokens[t].context_refs.size() > 0)
+                    ? tokens[t2].prev_prog_active_refs
+                    : tokens[t2].prev_prog_inactive_refs;
+
+                assert(prev_prog_refs[j] == t);
+            }
+
+            // Check that backward prev_prog_token edges are right.
+            for(auto t2: tokens[t].prev_prog_active_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->token == t);
+            }
+            for(auto t2: tokens[t].prev_prog_inactive_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->token == t);
+            }
+        }
+    }
+    for(int t=0;t<tokens.size();t++)
+    {
+//	if (tokens[t].parent == -1)
+//	    assert(t == root_token);
+
+	if (not tokens[t].used) continue;
+
+	for(int c: tokens[t].context_refs)
+	    assert(token_for_context(c) == t);
+    }
+#endif
+}
+
