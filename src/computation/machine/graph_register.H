@@ -566,9 +566,6 @@ public:
 
     int degree_of_token(int) const;
 
-    /// Make the context point to a token
-    void switch_to_token(int c, int t);
-
     /// Acquire a copy of a token
     int make_child_token(int c, token_type type);
 
