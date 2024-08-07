@@ -865,8 +865,16 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
 }
 
 
+
+
 expression_ref reg_heap::unshare_and_evaluate_program(int c)
 {
+    // If we reroot at the PPET, then the path towards it is always just t = tokens[t].parent
+
+    // Remove tokens of type token_type::execute until we get to a SET token.
+    // Incrementally move all contexts to the parent, which should result in deleting the token.
+    // If the final SET token has any children, then it has descendants, and we can refuse to execute.
+    // When we create the simple_set_path, we should move all contexts from the old token to the new token.
 
     // 1. Reroot to the PPET
     int t = force_simple_set_path_to_PPET(c);
