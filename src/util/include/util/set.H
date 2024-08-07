@@ -12,6 +12,25 @@ bool includes(const std::vector<T>& v, const T& t) {
     return (std::find(v.begin(),v.end(),t) != v.end());
 }
 
+/// Remove all copies of t from v
+template <typename T>
+int remove_unordered(std::vector<T>& v, const T& t)
+{
+    int total = 0;
+    for(int i=0;i<v.size();i++)
+    {
+	if (v[i] != t) continue;
+
+	total ++;
+	if (i+1 != v.size())
+	    std::swap(v[i], v.back());
+
+	v.pop_back();
+    }
+
+    return total;
+}
+
 /// Does v1 include every member of v2?
 template <typename T>
 bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
