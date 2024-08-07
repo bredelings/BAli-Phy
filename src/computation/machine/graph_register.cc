@@ -866,6 +866,7 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
 
 expression_ref reg_heap::unshare_and_evaluate_program(int c)
 {
+
     // 1. Reroot to the PPET
     int t = force_simple_set_path_to_PPET(c);
 

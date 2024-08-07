@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <cstdint>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include <utility>
@@ -463,12 +464,16 @@ public:
 
     /*----- Token manager ------*/
 
+    std::int64_t total_tokens = 0;
+
     struct Token
     {
         // The context this context is derived from.
         int parent = -1;
         // Contexts that are derived from this one.
         std::vector<int> children;
+	// Order of token creation.
+	std::int64_t token_index = -1;
 
         // Contexts that point here
         int n_context_refs = 0;
