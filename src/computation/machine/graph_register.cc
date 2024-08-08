@@ -732,7 +732,7 @@ bool reg_heap::simple_set_path_to(int child_token) const
 {
     assert(token_is_used(child_token));
 
-    for(int t = child_token; t != root_token; t = tokens[t].parent)
+    for(int t = child_token; not tokens[t].is_root(); t = parent_token(t))
     {
         if (tokens[t].type != token_type::set) return false;
 
@@ -747,7 +747,7 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
     assert(token_is_used(child_token));
 
     vector<set_interchange_op> reg_values;
-    for(int t = child_token; t != root_token; t = tokens[t].parent)
+    for(int t = child_token; not tokens[t].is_root(); t = parent_token(t))
     {
         assert(tokens[t].type != token_type::reverse_set);
         assert(tokens[t].type != token_type::reverse_set_unshare);
@@ -873,15 +873,14 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     int t = token_for_context(c);
     int PPET = tokens[t].prev_prog_token->token;
     reroot_at_token(PPET);
-    assert(tokens[t].parent > -1);
+    assert(not tokens[t].is_root());
 
     // 2. Walk back to the last SET or SET_UNSHARE token.
     while (tokens[t].type != token_type::set and tokens[t].type != token_type::set_unshare)
     {
-	assert(tokens[t].parent != root_token);
 	assert(tokens[t].n_modifiables_set == 0);
 
-	int p = tokens[t].parent;
+	int p = parent_token(t);
 	assert(not tokens[p].is_root());
 
 	auto cs = tokens[t].context_refs;
@@ -908,7 +907,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     // NOTE: This creates merged SET tokens, which violates the assumptions of find_set_regs_on_path( ).
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
     release_knuckle_tokens(t);
-    assert(tokens[t].parent == root_token);
+    assert(is_root_token(parent_token(t)));
     tokens[t].type = token_type::execute2;
 
     // 6. Unshare regs in the token.
@@ -2467,7 +2466,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     }
 
-    bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
+    bool root_child = is_root_token(parent_token(t)) and tokens[t].flags.test(0);
     std::unordered_map<int,int> reg_to_step;
     for(auto [r,step]: tokens[t].delta_step())
     {
