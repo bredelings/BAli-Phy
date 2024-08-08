@@ -2466,7 +2466,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     }
 
-    bool root_child = is_root_token(parent_token(t)) and tokens[t].flags.test(0);
+    bool root_child = not is_root_token(t) and is_root_token(parent_token(t)) and tokens[t].flags.test(0);
     std::unordered_map<int,int> reg_to_step;
     for(auto [r,step]: tokens[t].delta_step())
     {
