@@ -2123,6 +2123,9 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     assert(tokens[t].vm_result.empty());
     tokens[t].vm_result.add_value(R, non_computed_index);
 
+    assert(tokens[t].n_modifiables_set == 0);
+    tokens[t].n_modifiables_set++;
+
     assert(not children_of_token(t).size());
 
     assert(value);
