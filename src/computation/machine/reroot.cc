@@ -49,14 +49,8 @@ void reg_heap::reroot_at_token(int t)
     // 2. Get the tokens on the path to the root.
     boost::container::small_vector<int,10> path;
     path.push_back(t);
-    while(true)
-    {
-        int parent = tokens[path.back()].parent;
-        if (parent != -1)
-            path.push_back(parent);
-        else
-            break;
-    }
+    while(not is_root_token(path.back()))
+	path.push_back(parent_token(path.back()));
 
     // 3. Get the tokens on the path to the root.
     for(int i=int(path.size())-2; i>=0; i--)
@@ -88,7 +82,7 @@ void reg_heap::reroot_at_token(int t)
 // reroot_at( ) is only called from (i) itself and (ii) reroot_at_context( ).
 void reg_heap::reroot_at(int t)
 {
-    assert(not is_root_token(t) and is_root_token(tokens[t].parent));
+    assert(not is_root_token(t) and is_root_token(parent_token(t)));
 
 //#ifdef DEBUG_MACHINE
 //    check_used_regs();
@@ -974,7 +968,7 @@ void reg_heap::maybe_unshare_regs(int t)
 
         tokens[t].type = token_type::set_unshare;
     }
-    else if (tokens[t].parent != root_token or not tokens[t].flags.test(0))
+    else if (not is_root_token(parent_token(t)) or not tokens[t].flags.test(0))
         check_unshare_regs(t);
 }
 
