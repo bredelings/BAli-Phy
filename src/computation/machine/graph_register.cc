@@ -869,17 +869,41 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
 
 expression_ref reg_heap::unshare_and_evaluate_program(int c)
 {
-    // If we reroot at the PPET, then the path towards it is always just t = tokens[t].parent
-
-    // Remove tokens of type token_type::execute until we get to a SET token.
-    // Incrementally move all contexts to the parent, which should result in deleting the token.
-    // If the final SET token has any children, then it has descendants, and we can refuse to execute.
-    // When we create the simple_set_path, we should move all contexts from the old token to the new token.
-
     // 1. Reroot to the PPET
-    int t = force_simple_set_path_to_PPET(c);
+    int t = token_for_context(c);
+    int PPET = tokens[t].prev_prog_token->token;
+    reroot_at_token(PPET);
+    assert(tokens[t].parent > -1);
 
-    // 2. Merge the set tokens and all the result an execute token.
+    // 2. Walk back to the last SET or SET_UNSHARE token.
+    while (tokens[t].type != token_type::set and tokens[t].type != token_type::set_unshare)
+    {
+	assert(tokens[t].parent != root_token);
+	assert(tokens[t].n_modifiables_set == 0);
+
+	int p = tokens[t].parent;
+	assert(not tokens[p].is_root());
+
+	auto cs = tokens[t].context_refs;
+	for(auto c2: cs)
+	    set_token_for_context(c2,p);
+
+	assert(token_for_context(c) == p);
+	assert(not tokens[t].used);
+	t = p;
+    }
+
+    // 3. Refuse to execute if there are children!!!
+    if (not tokens[t].children.empty())
+    {
+	std::cerr<<"unshare_and_evaluate_program("<<c<<"): executing token "<<t<<" that has descendants!";
+	std::abort();
+    }
+
+    // 4. Reroot to the PPET
+    t = force_simple_set_path_to_PPET(c);
+
+    // 5. Merge the set tokens and all the result an execute token.
 
     // NOTE: This creates merged SET tokens, which violates the assumptions of find_set_regs_on_path( ).
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
@@ -887,7 +911,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     assert(tokens[t].parent == root_token);
     tokens[t].type = token_type::execute2;
 
-    // 3. Unshare regs in the token.
+    // 6. Unshare regs in the token.
     auto result = unshare_regs2(t);
 
     assert(get_prev_prog_token_for_context(c));
