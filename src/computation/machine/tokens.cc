@@ -14,6 +14,14 @@ using std::optional;
 using std::cerr;
 using std::endl;
 
+std::vector<int> reg_heap::Token::neighbors() const
+{
+    auto nodes = children;
+    if (not is_root())
+	nodes.push_back(parent);
+    return nodes;
+}
+
 long total_destroy_token = 0;
 long total_release_knuckle = 0;
 
@@ -855,6 +863,10 @@ void reg_heap::check_tokens() const
 
 	if (tokens[t].parent == -1)
 	    assert(t == root_token);
+
+	// At most 1 neighboring node can be younger.
+	auto younger = [&](int t2){return tokens[t2].creation_time < tokens[t].creation_time;};
+	assert(ranges::count_if(tokens[t].neighbors(), younger) <= 1);
 
 	for(int c: tokens[t].context_refs)
 	    assert(token_for_context(c) == t);
