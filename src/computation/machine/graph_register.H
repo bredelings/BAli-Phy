@@ -464,7 +464,7 @@ public:
 
     /*----- Token manager ------*/
 
-    std::int64_t total_tokens = 0;
+    std::int64_t total_tokens_created = 0;
 
     struct Token
     {
@@ -473,7 +473,7 @@ public:
         // Contexts that are derived from this one.
         std::vector<int> children;
         // Order of token creation.
-        std::int64_t token_index = -1;
+        std::int64_t creation_time = -1;
 
         // Contexts that point here
         std::vector<int> context_refs;

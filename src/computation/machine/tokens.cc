@@ -178,7 +178,7 @@ void reg_heap::release_tip_token(int t)
     tokens[t].parent = -1;
     tokens[t].used = false;
     tokens[t].type = token_type::none;
-    tokens[t].token_index = -1;
+    tokens[t].creation_time = -1;
 
     // 3. Destroy the computations
     try
@@ -663,8 +663,8 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
 
     tokens[t].used = true;
     tokens[t].type = type;
-    tokens[t].token_index = total_tokens++;
-    assert(total_tokens >= 0);
+    tokens[t].creation_time = total_tokens_created++;
+    assert(total_tokens_created >= 0);
 
     if (root_token == -1)
     {
