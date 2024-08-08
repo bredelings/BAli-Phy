@@ -372,7 +372,7 @@ int reg_heap::release_knuckle_tokens(int child_token)
         release_tip_token(t2);
     }
 
-    return tokens[child_token].parent;
+    return parent_token(child_token);
 }
 
 int reg_heap::release_unreferenced_tips(int t)
@@ -414,6 +414,7 @@ bool reg_heap::is_root_token(int t) const
 
 int reg_heap::parent_token(int t) const
 {
+    assert(tokens[t].parent != -1);
     return tokens[t].parent;
 }
 
