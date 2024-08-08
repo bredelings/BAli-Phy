@@ -478,6 +478,7 @@ public:
         // Contexts that point here
         std::vector<int> context_refs;
         bool is_referenced() const {return not context_refs.empty() or not prev_prog_active_refs.empty();}
+        bool is_root() const {return parent == -1;}
     
         /// Mapping from closures to steps/results
         const auto& delta_force_count() const { return vm_force_count.delta(); }
