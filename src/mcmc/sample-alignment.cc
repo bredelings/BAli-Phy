@@ -224,7 +224,7 @@ log_double_t sample_alignment(Parameters& P,int b)
 		OS[i].push_back( 1 );
 		OP[i].push_back( 1 );
 	    }
-  
+
     //--------- Compute path probabilities and sampling probabilities ---------//
     vector< vector<log_double_t> > PR(p.size());
 
@@ -286,6 +286,9 @@ log_double_t sample_alignment(Parameters& P,int b)
 #endif
 
     P = p[0];
+
+    // ensure that the program is executed.
+    P.evaluate_program();
 
     return total_ratio;
 }
