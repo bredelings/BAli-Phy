@@ -851,10 +851,10 @@ void reg_heap::check_tokens() const
     }
     for(int t=0;t<tokens.size();t++)
     {
-//	if (tokens[t].parent == -1)
-//	    assert(t == root_token);
-
 	if (not tokens[t].used) continue;
+
+	if (tokens[t].parent == -1)
+	    assert(t == root_token);
 
 	for(int c: tokens[t].context_refs)
 	    assert(token_for_context(c) == t);
