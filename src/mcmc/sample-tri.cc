@@ -659,6 +659,9 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
     if (C != -1) {
 	P = p[C];
     }
+
+    // Ensure that the program is executed.
+    P.evaluate_program();
 }
 
 /// Resample branch alignment, internal nodes, and branch length
