@@ -18,7 +18,7 @@ std::vector<int> reg_heap::Token::neighbors() const
 {
     auto nodes = children;
     if (not is_root())
-	nodes.push_back(parent);
+	nodes.push_back(*parent);
     return nodes;
 }
 
@@ -160,14 +160,11 @@ void reg_heap::release_tip_token(int t)
     tokens[t].prev_prog_active_refs.clear();
 
     // 1. Adjust the token tree
-    int parent = parent_token(t);
-
     unused_tokens.push_back(t);
   
-    if (parent != -1)
+    if (not is_root_token(t))
     {
         // mark token for this context unused
-        assert(not is_root_token(t));
         assert(tokens.size() - unused_tokens.size() > 0);
 
         int index = remove_element(tokens[parent_token(t)].children, t);
@@ -183,7 +180,7 @@ void reg_heap::release_tip_token(int t)
 
     // 2. Set the token to unused
 
-    tokens[t].parent = -1;
+    tokens[t].parent = {};
     tokens[t].used = false;
     tokens[t].type = token_type::none;
     tokens[t].creation_time = -1;
@@ -221,13 +218,11 @@ void reg_heap::release_tip_token(int t)
 void reg_heap::capture_parent_token(int t2)
 {
     int t1 = parent_token(t2);
-    assert(t1 != -1);
 
     int parent = parent_token(t1);
-    assert(parent != -1);
 
     // disconnect t2 from t1
-    tokens[t2].parent = -2;
+    tokens[t2].parent = {};
     int index = remove_element(tokens[t1].children, t2);
     assert(index != -1);
 
@@ -352,10 +347,10 @@ int reg_heap::release_knuckle_tokens(int child_token)
 
     vector<int> knuckle_path;
 
-    while (true)
+    while (not is_root_token(t))
     {
-        t = tokens[t].parent;
-        if (t != root_token and not tokens[t].is_referenced() and tokens[t].children.size() == 1)
+        t = parent_token(t);
+        if (not is_root_token(t) and not tokens[t].is_referenced() and tokens[t].children.size() == 1)
             knuckle_path.push_back(t);
         else
             break;
@@ -377,16 +372,23 @@ int reg_heap::release_knuckle_tokens(int child_token)
 
 int reg_heap::release_unreferenced_tips(int t)
 {
+    assert(t >= 0);
     assert(token_is_used(t));
 
-    while(t != -1 and not tokens[t].is_referenced() and tokens[t].children.empty())
+    while(not tokens[t].is_referenced() and tokens[t].children.empty())
     {
-        int parent = parent_token(t);
+	std::optional<int> parent;
+
+	if (not is_root_token(t))
+	    parent = parent_token(t);
 
         // clear only the mappings that were actually updated here.
         release_tip_token(t);
 
-        t = parent;
+        if (not parent)
+	    break;
+
+	t = *parent;
     }
 
     return t;
@@ -407,15 +409,15 @@ int reg_heap::get_root_token() const
 bool reg_heap::is_root_token(int t) const
 {
     assert(token_is_used(t));
-    assert((t==root_token) == (tokens[t].parent == -1));
+    assert((t==root_token) == (not tokens[t].parent.has_value()));
 
-    return t == root_token;
+    return not tokens[t].parent.has_value();
 }
 
 int reg_heap::parent_token(int t) const
 {
-    assert(tokens[t].parent != -1);
-    return tokens[t].parent;
+    assert(not is_root_token(t));
+    return tokens[t].parent.value();
 }
 
 const vector<int>& reg_heap::children_of_token(int t) const
@@ -683,7 +685,7 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     else
         assert(tokens.size() - unused_tokens.size() > 1);
 
-    assert(tokens[t].parent == -1);
+    assert(not tokens[t].parent.has_value());
     assert(tokens[t].children.empty());
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
@@ -862,7 +864,7 @@ void reg_heap::check_tokens() const
     {
 	if (not tokens[t].used) continue;
 
-	if (tokens[t].parent == -1)
+	if (not tokens[t].parent)
 	    assert(t == root_token);
 
 	// At most 1 neighboring node can be younger.

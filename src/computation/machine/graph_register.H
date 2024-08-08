@@ -469,7 +469,7 @@ public:
     struct Token
     {
         // The context this context is derived from.
-        int parent = -1;
+        std::optional<int> parent;
         // Contexts that are derived from this one.
         std::vector<int> children;
         // Order of token creation.
@@ -478,7 +478,7 @@ public:
         // Contexts that point here
         std::vector<int> context_refs;
         bool is_referenced() const {return not context_refs.empty() or not prev_prog_active_refs.empty();}
-        bool is_root() const {return parent == -1;}
+        bool is_root() const {return not parent.has_value();}
         std::vector<int> neighbors() const;
     
         /// Mapping from closures to steps/results

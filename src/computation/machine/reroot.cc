@@ -156,7 +156,7 @@ void reg_heap::reroot_at(int t)
     int index = remove_element(tokens[parent].children, t);
     assert(index != -1);
 
-    tokens[t].parent = -1;
+    tokens[t].parent = {};
     tokens[t].children.push_back(parent);
 
     root_token = t;
