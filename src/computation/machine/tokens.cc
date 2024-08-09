@@ -32,8 +32,6 @@ token_type reverse(token_type type)
     case token_type::none:                std::abort();
     case token_type::root:                std::abort();
 
-    case token_type::merged:              return token_type::merged;
-
     case token_type::set:                 return token_type::reverse_set;
     case token_type::set_unshare:         return token_type::reverse_set_unshare;
     case token_type::execute:             return token_type::reverse_execute;
@@ -53,11 +51,12 @@ std::ostream& operator<<(std::ostream& o, token_type type)
     {
     case token_type::none:                o<<"none";break;
     case token_type::root:                o<<"root";break;
-    case token_type::merged:              o<<"merged";break;
+
     case token_type::set:                 o<<"set";break;
     case token_type::set_unshare:         o<<"set_unshare";break;
     case token_type::execute:             o<<"execute";break;
     case token_type::execute2:            o<<"execute2";break;
+
     case token_type::reverse_set:         o<<"reverse_set";break;
     case token_type::reverse_set_unshare: o<<"reverse_set_unshare";break;
     case token_type::reverse_execute:     o<<"reverse_execute";break;
@@ -288,12 +287,15 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     // 2. Rename the tokens to type MERGED if they are not all SET.
     if (not token_type_all_set)
     {
+	std::abort();
+/*
         tokens[child_token].type = token_type::merged;
         for(int t: knuckle_tokens)
         {
             assert(tokens[t].type != token_type::set);
             tokens[t].type = token_type::merged;
         }
+*/
     }
 
     // 3. Merge and split the mappings.
