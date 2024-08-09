@@ -38,12 +38,10 @@ token_type reverse(token_type type)
     case token_type::set_unshare:         return token_type::reverse_set_unshare;
     case token_type::execute:             return token_type::reverse_execute;
     case token_type::execute2:            return token_type::reverse_execute2;
-    case token_type::unmap:               return token_type::reverse_unmap;
 
     case token_type::reverse_set:         return token_type::set;
     case token_type::reverse_set_unshare: return token_type::set_unshare;
     case token_type::reverse_execute:     return token_type::execute;
-    case token_type::reverse_unmap:       return token_type::unmap;
     case token_type::reverse_execute2:    return token_type::execute2;
     }
     std::abort();
@@ -60,12 +58,10 @@ std::ostream& operator<<(std::ostream& o, token_type type)
     case token_type::set_unshare:         o<<"set_unshare";break;
     case token_type::execute:             o<<"execute";break;
     case token_type::execute2:            o<<"execute2";break;
-    case token_type::unmap:               o<<"unmap";break;
     case token_type::reverse_set:         o<<"reverse_set";break;
     case token_type::reverse_set_unshare: o<<"reverse_set_unshare";break;
     case token_type::reverse_execute:     o<<"reverse_execute";break;
     case token_type::reverse_execute2:    o<<"reverse_execute2";break;
-    case token_type::reverse_unmap:       o<<"reverse_unmap";break;
     default:                              std::abort();
     }
     return o;
