@@ -740,7 +740,7 @@ public:
 
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
-    bool execution_allowed() const;
+    bool execution_allowed_at_root() const;
 
     std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 

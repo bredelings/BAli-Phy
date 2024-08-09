@@ -146,7 +146,7 @@ public:
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
 pair<int,int> reg_heap::incremental_evaluate1(int r)
 {
-    assert(execution_allowed());
+    assert(execution_allowed_at_root());
 
 #ifndef NDEBUG
     if (reg_is_on_stack(r))
@@ -589,7 +589,7 @@ int reg_heap::dec_count(int r)
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
 pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
 {
-    assert(execution_allowed());
+    assert(execution_allowed_at_root());
 
 #ifndef NDEBUG
     if (reg_is_on_stack(r))

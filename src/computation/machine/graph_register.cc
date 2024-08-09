@@ -2849,7 +2849,8 @@ void reg_heap::interchange_regs_in_context(int r1, int r2, int c)
     interchange_regs_in_context_(r1, r2, c);
 }
 
-bool reg_heap::execution_allowed() const
+// Is execution allowed IN THE ROOT TOKEN?
+bool reg_heap::execution_allowed_at_root() const
 {
     if (root_token < 0) return false;
 
@@ -2920,7 +2921,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
         }
     }
 
-    if (not execution_allowed() or is_program_execution_token(token_for_context(c)))
+    if (not execution_allowed_at_root() or is_program_execution_token(token_for_context(c)))
     {
         switch_to_child_token(c, token_type::execute);
 
@@ -2928,10 +2929,10 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
         reroot_at_context(c);
 
         // We can't remove t1 even if its a knuckle.
-        assert(execution_allowed());
+        assert(execution_allowed_at_root());
     }
 
-    assert(execution_allowed());
+    assert(execution_allowed_at_root());
 
     auto p = incremental_evaluate1(R);
 
