@@ -171,7 +171,7 @@ public:
 
     prob_ratios_t probability_ratios(const context_ref& C1) const;
     prob_ratios_t heated_probability_ratios(const context_ref& C1) const;
-    log_double_t heated_probability_ratio(const context&) const;
+    log_double_t heated_probability_ratio(const context_ref&) const;
 
 protected:  
     void collect_garbage() const;

@@ -618,7 +618,7 @@ log_double_t context_ref::heated_probability() const
     return prior() * heated_likelihood();
 }
 
-log_double_t context_ref::heated_probability_ratio(const context& C1) const
+log_double_t context_ref::heated_probability_ratio(const context_ref& C1) const
 {
     return heated_probability_ratios(C1).total_ratio();
 }
