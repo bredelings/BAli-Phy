@@ -2909,7 +2909,28 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
     reroot_at_context(c);
 
-    // Don't create a new token for up-to-date results!
+    // Move the context toward the single executable child token as long as there is one.
+    while (true)
+    {
+	std::optional<int> executable_child;
+	int t = token_for_context(c);
+	for(int t2: children_of_token(t))
+	    if (tokens[t2].type == token_type::execute)
+	    {
+		assert(token_younger_than(t2,t));
+		executable_child = t2;
+	    }
+
+	if (executable_child)
+	{
+	    set_token_for_context(c, *executable_child);
+	    reroot_at_context(c);
+	}
+	else
+	    break;
+    }
+
+    // Don't create a new token to find results that are already up-to-date!
     if (reg_is_changeable_or_forcing(R))
     {
         int r2 = result_for_reg(R);
