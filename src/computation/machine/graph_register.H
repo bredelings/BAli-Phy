@@ -508,6 +508,8 @@ public:
     std::optional<int> get_prev_prog_token_for_context(int c) const;
     bool is_program_execution_token(int) const;
 
+    bool token_younger_than(int t1, int t2) const;
+    bool token_older_than(int t1, int t2) const;
 private:
     int root_token = -1;
 

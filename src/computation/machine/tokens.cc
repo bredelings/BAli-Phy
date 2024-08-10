@@ -798,6 +798,22 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
     return t2;
 }
 
+bool reg_heap::token_older_than(int t1, int t2) const
+{
+    assert(tokens[t1].used);
+    assert(tokens[t2].used);
+
+    return tokens[t1].creation_time < tokens[t2].creation_time;
+}
+
+bool reg_heap::token_younger_than(int t1, int t2) const
+{
+    assert(tokens[t1].used);
+    assert(tokens[t2].used);
+
+    return tokens[t1].creation_time > tokens[t2].creation_time;
+}
+
 optional<int> reg_heap::get_prev_prog_token_for_token(int t) const
 {
     if (tokens[t].prev_prog_token)
