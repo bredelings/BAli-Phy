@@ -967,6 +967,7 @@ void reg_heap::maybe_unshare_regs(int t)
         unshare_regs1(t);
 
         tokens[t].type = token_type::set_unshare;
+        tokens[t].utype = token_type::set_unshare;
     }
     else if (not is_root_token(parent_token(t)) or not tokens[t].flags.test(0))
         check_unshare_regs(t);

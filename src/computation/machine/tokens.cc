@@ -178,6 +178,7 @@ void reg_heap::release_tip_token(int t)
     tokens[t].parent = {};
     tokens[t].used = false;
     tokens[t].type = token_type::none;
+    tokens[t].utype = token_type::none;
     tokens[t].creation_time = -1;
 
     // 3. Destroy the computations
@@ -622,6 +623,7 @@ int reg_heap::get_first_context(int r_prog, int r_log)
     int c = get_new_context();
 
     int t = get_unused_token(token_type::root, {});
+    tokens[t].utype = token_type::execute2;
     set_prev_prog_token(t, prev_prog_token_t(t,0,true));
 
     set_token_for_context(c, t);
@@ -672,6 +674,7 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
 
     tokens[t].used = true;
     tokens[t].type = type;
+    tokens[t].utype = type;
     tokens[t].creation_time = total_tokens_created++;
     assert(total_tokens_created >= 0);
 

@@ -909,6 +909,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     release_knuckle_tokens(t);
     assert(is_root_token(parent_token(t)));
     tokens[t].type = token_type::execute2;
+    tokens[t].utype = token_type::execute2;
 
     // 6. Unshare regs in the token.
     auto result = unshare_regs2(t);

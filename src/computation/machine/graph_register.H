@@ -498,6 +498,7 @@ public:
         std::optional<prev_prog_token_t> prev_prog_token;
 
         token_type type = token_type::none;
+        token_type utype = token_type::none;
         bool used = false;
         bitmask_8 flags;
     };
