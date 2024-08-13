@@ -497,7 +497,6 @@ public:
         boost::container::small_vector< int, 2> prev_prog_inactive_refs;
         std::optional<prev_prog_token_t> prev_prog_token;
 
-        token_type type = token_type::none;
         token_type utype = token_type::none;
         bool used = false;
         bitmask_8 flags;

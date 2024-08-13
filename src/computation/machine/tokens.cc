@@ -25,7 +25,6 @@ std::vector<int> reg_heap::Token::neighbors() const
 
 token_type reg_heap::directed_token_type(int t) const
 {
-#ifndef NDEBUG
     token_type type;
     if (is_root_token(t))
 	type = token_type::root;
@@ -36,10 +35,8 @@ token_type reg_heap::directed_token_type(int t) const
 	assert(token_younger_than(parent_token(t),t));
 	type = reverse(tokens[parent_token(t)].utype);
     }
-    assert(type == tokens[t].type);
-#endif
 
-    return tokens[t].type;
+    return type;
 }
 
 long total_destroy_token = 0;
@@ -197,7 +194,6 @@ void reg_heap::release_tip_token(int t)
 
     tokens[t].parent = {};
     tokens[t].used = false;
-    tokens[t].type = token_type::none;
     tokens[t].utype = token_type::none;
     tokens[t].creation_time = -1;
 
@@ -693,7 +689,6 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     assert(not token_is_used(t));
 
     tokens[t].used = true;
-    tokens[t].type = type;
     tokens[t].utype = type;
     tokens[t].creation_time = total_tokens_created++;
     assert(total_tokens_created >= 0);

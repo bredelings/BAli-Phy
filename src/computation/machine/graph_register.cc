@@ -876,7 +876,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     assert(not tokens[t].is_root());
 
     // 2. Walk back to the last SET or SET_UNSHARE token.
-    while (tokens[t].type != token_type::set and tokens[t].type != token_type::set_unshare)
+    while (directed_token_type(t) != token_type::set and directed_token_type(t) != token_type::set_unshare)
     {
 	assert(tokens[t].n_modifiables_set == 0);
 
@@ -908,7 +908,6 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
     release_knuckle_tokens(t);
     assert(is_root_token(parent_token(t)));
-    tokens[t].type = token_type::execute2;
     tokens[t].utype = token_type::execute2;
 
     // 6. Unshare regs in the token.
