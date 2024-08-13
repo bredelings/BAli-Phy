@@ -734,7 +734,7 @@ bool reg_heap::simple_set_path_to(int child_token) const
 
     for(int t = child_token; not tokens[t].is_root(); t = parent_token(t))
     {
-        if (tokens[t].type != token_type::set) return false;
+        if (directed_token_type(t) != token_type::set) return false;
 
         if (t != child_token and tokens[t].children.size() != 1) return false;
     }
@@ -749,9 +749,9 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
     vector<set_interchange_op> reg_values;
     for(int t = child_token; not tokens[t].is_root(); t = parent_token(t))
     {
-        assert(tokens[t].type != token_type::reverse_set);
-        assert(tokens[t].type != token_type::reverse_set_unshare);
-        if (tokens[t].type == token_type::set or tokens[t].type == token_type::set_unshare)
+        assert(directed_token_type(t) != token_type::reverse_set);
+        assert(directed_token_type(t) != token_type::reverse_set_unshare);
+        if (directed_token_type(t) == token_type::set or directed_token_type(t) == token_type::set_unshare)
         {
             auto [r, s] = tokens[t].vm_step.delta()[0];
 
@@ -2088,7 +2088,7 @@ void reg_heap::interchange_regs(int r1, int r2, int t)
 
     assert(not children_of_token(t).size());
     if (not is_root_token(t))
-        assert(tokens[t].type == token_type::set);
+        assert(directed_token_type(t) == token_type::set);
 
     // Check that this r1 indeed interchangeable
     if (not is_interchangeable(expression_at(r1)))
@@ -2130,7 +2130,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     assert(reg_is_changeable(R));
 
     if (not is_root_token(t))
-        assert(unsafe or tokens[t].type == token_type::set);
+        assert(unsafe or directed_token_type(t) == token_type::set);
 
     // Check that this reg is indeed settable
     if (not is_modifiable(expression_at(R)))
@@ -2406,7 +2406,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 {
     assert(token_is_used(t));
 
-    if (tokens[t].type == token_type::reverse_execute)
+    if (directed_token_type(t) == token_type::reverse_execute)
     {
         for(auto [r,result]: tokens[t].delta_result())
             assert(result < 0);
@@ -2414,7 +2414,7 @@ void reg_heap::check_used_regs_in_token(int t) const
         for(auto [r,step]: tokens[t].delta_step())
             assert(step < 0);
     }
-    else if (tokens[t].type == token_type::execute)
+    else if (directed_token_type(t) == token_type::execute)
     {
         for(auto [r,result]: tokens[t].delta_result())
             assert(result > 0);
@@ -2860,7 +2860,7 @@ bool reg_heap::execution_allowed_at_root() const
     if (tokens[root_token].children.size() == 1)
     {
         int t1 = tokens[root_token].children[0];
-        return (tokens[t1].type == reverse(token_type::execute) or tokens[t1].type == reverse(token_type::execute2));
+        return (directed_token_type(t1) == reverse(token_type::execute) or directed_token_type(t1) == reverse(token_type::execute2));
     }
 
     return false;
@@ -2916,7 +2916,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 	std::optional<int> executable_child;
 	int t = token_for_context(c);
 	for(int t2: children_of_token(t))
-	    if (tokens[t2].type == token_type::execute)
+	    if (directed_token_type(t2) == token_type::execute)
 	    {
 		assert(token_younger_than(t2,t));
 		executable_child = t2;

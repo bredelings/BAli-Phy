@@ -22,6 +22,26 @@ std::vector<int> reg_heap::Token::neighbors() const
     return nodes;
 }
 
+
+token_type reg_heap::directed_token_type(int t) const
+{
+#ifndef NDEBUG
+    token_type type;
+    if (is_root_token(t))
+	type = token_type::root;
+    else if (token_older_than(parent_token(t),t))
+	type = tokens[t].utype;
+    else
+    {
+	assert(token_younger_than(parent_token(t),t));
+	type = reverse(tokens[parent_token(t)].utype);
+    }
+    assert(type == tokens[t].type);
+#endif
+
+    return tokens[t].type;
+}
+
 long total_destroy_token = 0;
 long total_release_knuckle = 0;
 
@@ -277,11 +297,11 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 
     // 1. Determine if we are merging a sequence of SET tokens.
     bool token_type_all_set = false;
-    if (tokens[child_token].type == token_type::set)
+    if (directed_token_type(child_token) == token_type::set)
     {
         token_type_all_set = true;
         for(int t: knuckle_tokens)
-            if (tokens[t].type != token_type::set)
+            if (directed_token_type(t) != token_type::set)
                 token_type_all_set = false;
     }
 

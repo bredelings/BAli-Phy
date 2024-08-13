@@ -511,6 +511,8 @@ public:
 
     bool token_younger_than(int t1, int t2) const;
     bool token_older_than(int t1, int t2) const;
+    token_type undirected_token_type(int t) const;
+    token_type directed_token_type(int t) const;
 private:
     int root_token = -1;
 

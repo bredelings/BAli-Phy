@@ -176,7 +176,7 @@ void reg_heap::reroot_at(int t)
     total_reroot_one++;
   
     for(int t2: tokens[t].children)
-        assert(tokens[t2].type != token_type::reverse_set);
+        assert(directed_token_type(t2) != token_type::reverse_set);
 
     assert(is_root_token(t));
 }
@@ -239,7 +239,7 @@ void reg_heap::unshare_regs1(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
-    assert(tokens[t].type != token_type::reverse_set);
+    assert(directed_token_type(t) != token_type::reverse_set);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -821,7 +821,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
-    assert(tokens[t].type != token_type::reverse_set);
+    assert(directed_token_type(t) != token_type::reverse_set);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -960,9 +960,9 @@ void reg_heap::maybe_unshare_regs(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
-    assert(tokens[t].type != token_type::reverse_set);
+    assert(directed_token_type(t) != token_type::reverse_set);
 
-    if (tokens[t].type == token_type::set)
+    if (directed_token_type(t) == token_type::set)
     {
         unshare_regs1(t);
 
