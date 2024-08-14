@@ -753,23 +753,35 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
         assert(directed_token_type(t) != token_type::reverse_set_unshare);
         if (directed_token_type(t) == token_type::set or directed_token_type(t) == token_type::set_unshare)
         {
-            auto [r, s] = tokens[t].vm_step.delta()[0];
-
-            if (is_modifiable(expression_at(r)))
+            if (tokens[t].n_modifiables_set > 0)
             {
-                assert(is_modifiable(expression_at(r)));
-                assert(s > 0);
-                int call = steps[s].call;
-                auto value = closure_at(call);
-                assert(value.exp.is_atomic());
+                // If this is a set token, there shouldn't be anything else beyond n_modifiables_set entries.
+                assert(directed_token_type(t) != token_type::set or tokens[t].vm_step.delta().size() == tokens[t].n_modifiables_set);
+                // If this is a set_unshare token, there should additionally be the results of unsharing.
+                assert(directed_token_type(t) != token_type::set_unshare or tokens[t].vm_step.delta().size() >= tokens[t].n_modifiables_set);
 
-                reg_values.push_back(set_op{r, value});
+                for(int i=0;i<tokens[t].n_modifiables_set;i++)
+                {
+                    auto& [r,s] = tokens[t].vm_step.delta()[i];
+                    assert(is_modifiable(expression_at(r)));
+                    assert(s > 0);
+                    int call = steps[s].call;
+                    auto value = closure_at(call);
+                    assert(value.exp.is_atomic());
+                    reg_values.push_back(set_op{r, value});
+                }
             }
-            else if (is_interchangeable(expression_at(r)))
+            else
             {
-                int r1 = r;
-                assert(tokens[t].vm_step.delta().size() >= 2);
+                // If this is a set token, there shouldn't be anything else beyond [0] and [1].
+                assert(directed_token_type(t) != token_type::set or tokens[t].vm_step.delta().size() == 2);
+                // If this is a set_unshare token, there should additionally be the results of unsharing.
+                assert(directed_token_type(t) != token_type::set_unshare or tokens[t].vm_step.delta().size() >= 2);
+
+                auto [r1, s1] = tokens[t].vm_step.delta()[0];
+                assert(is_interchangeable(expression_at(r1)));
                 auto [r2,_] = tokens[t].vm_step.delta()[1];
+                assert(is_interchangeable(expression_at(r2)));
                 reg_values.push_back(interchange_op{r1,r2});
             }
         }
@@ -2115,33 +2127,58 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     total_set_reg_value++;
     assert(not children_of_token(t).size());
     assert(reg_is_changeable(R));
+    assert(value);
 
     if (not is_root_token(t))
         assert(unsafe or directed_token_type(t) == token_type::set);
 
-    // Check that this reg is indeed settable
+    // 1. Check that this reg is indeed settable
     if (not is_modifiable(expression_at(R)))
         throw myexception()<<"set_reg_value: reg "<<R<<" is not modifiable!";
 
     assert(not is_root_token(t));
 
-    // Finally set the new value.
-    int s = get_shared_step(R);
+    // 2. Find or create a step for reg R.
+    optional<int> found_step_for_mod;
+    for(auto& [r2,s2]: tokens[t].vm_step.delta())
+    {
+        if (r2 == R)
+        {
+            found_step_for_mod = s2;
+            break;
+        }
+    }
 
-    assert(tokens[t].vm_step.empty());
-    tokens[t].vm_step.add_value(R,s);
+    int s = -1;
+    if (found_step_for_mod)
+	s = *found_step_for_mod;
+    else
+    {
+        // Allocate a new step if we haven't allocated a step for this reg yet.
+        s = get_shared_step(R);
 
-    assert(tokens[t].vm_result.empty());
-    tokens[t].vm_result.add_value(R, non_computed_index);
+        tokens[t].vm_step.add_value(R, s);
+        tokens[t].vm_result.add_value(R, non_computed_index);
+        tokens[t].n_modifiables_set++;
+    }
 
-    assert(tokens[t].n_modifiables_set == 0);
-    tokens[t].n_modifiables_set++;
+    // 3. If the step already has a call, then reclaim the target if necessary.
+    if (steps[s].call != 0)
+    {
+	int r_call = steps[s].call;
 
-    assert(not children_of_token(t).size());
+	// We are over-writing a previously-set value.
+	clear_call(s);
 
-    assert(value);
+	if (creator_step_for_reg(r_call) == s)
+	{
+	    clear_back_edges_for_reg(r_call);
+	    assert(not reg_is_unforgettable(r_call));
+	    reclaim_used(r_call);
+	}
+    }
 
-    // If the value is a pre-existing reg_var, then call it.
+    // 4. If the value is a pre-existing reg_var, then call it.
     if (value.exp.is_index_var())
     {
         int Q = value.reg_for_index_var();
@@ -2155,7 +2192,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
         // Set the call
         set_call(s, Q, unsafe);
     }
-    // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
+    // 5. Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
     {
 	if (not unsafe)
@@ -2818,7 +2855,11 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 
 int reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
-    int t = switch_to_child_token(c, token_type::set);
+    int t = token_for_context(c);
+    if (directed_token_type(t) != token_type::set or not tokens[t].children.empty() or tokens[t].context_refs.size() > 1)
+	t = switch_to_child_token(c, token_type::set);
+    else
+	assert(tokens[t].context_refs.size() == 1);
 
     return set_reg_value(P, std::move(C), t);
 }
