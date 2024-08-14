@@ -2895,6 +2895,50 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
     if (reg_is_constant(R)) return {R,R};
 
+    int t = token_for_context(c);
+    // Write-Read coalescening.
+    // If the context is a set-token that is a child of the root, then look up the value there...
+    if (reg_is_changeable(R) and
+	is_modifiable(expression_at(R)) and
+	tokens[t].parent == root_token and
+        directed_token_type(t) == token_type::set)
+    {
+	// 1. Search the Delta for changes to the value.
+
+	int r_constant = 0;
+	for(auto& [r,s]: tokens[t].vm_step.delta())
+	{
+	    auto& E = expression_at(r);
+	    if (is_interchangeable(E))
+	    {
+		r_constant = -1;
+		break;
+	    }
+	    else
+	    {
+		assert(is_modifiable(E));
+		if (r == R)
+		{
+		    int call = steps[s].call;
+		    if (is_WHNF(expression_at(call)))
+			r_constant = call;
+		}
+	    }
+	}
+
+	// 2a. If we found the modifiable set to a constant, return the constant.
+	if (r_constant > 0)
+	    return {R, r_constant};
+	// 2b. Otherwise this is a non-interchange token, but we didn't find anything.  Look in the root token.
+	else if (r_constant == 0)
+	{
+	    int r2 = result_for_reg(R);
+
+	    if (r2 > 0)
+		return {R,r2};
+	}
+    }
+
     reroot_at_context(c);
 
     // Move the context toward the single executable child token as long as there is one.
@@ -2924,10 +2968,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
         int r2 = result_for_reg(R);
 
         if (r2 > 0)
-        {
-            assert(r2 > 0);
             return {R,r2};
-        }
     }
 
     if (not execution_allowed_at_root() or is_program_execution_token(token_for_context(c)))
