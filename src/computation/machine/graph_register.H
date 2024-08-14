@@ -510,8 +510,17 @@ public:
 
     bool token_younger_than(int t1, int t2) const;
     bool token_older_than(int t1, int t2) const;
+    std::vector<int> younger_neighbors(int t) const;
+    std::optional<int> older_child(int t) const;
+    std::optional<int> older_parent(int t) const;
+    std::optional<int> older_neighbor(int t) const;
+    std::optional<int> execution_neighbor(int t) const;
     token_type undirected_token_type(int t) const;
     token_type directed_token_type(int t) const;
+    int revert_token(int t) const;
+    std::vector<int> equivalent_tokens(int t) const;
+    std::vector<int> equivalent_contexts(int c) const;
+
 private:
     int root_token = -1;
 

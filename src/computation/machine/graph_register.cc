@@ -875,22 +875,10 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     reroot_at_token(PPET);
     assert(not tokens[t].is_root());
 
-    // 2. Walk back to the last SET or SET_UNSHARE token.
-    while (directed_token_type(t) != token_type::set and directed_token_type(t) != token_type::set_unshare)
-    {
-	assert(tokens[t].n_modifiables_set == 0);
-
-	int p = parent_token(t);
-	assert(not tokens[p].is_root());
-
-	auto cs = tokens[t].context_refs;
-	for(auto c2: cs)
-	    set_token_for_context(c2,p);
-
-	assert(token_for_context(c) == p);
-	assert(not tokens[t].used);
-	t = p;
-    }
+    // 2. Find all equivalent contexts and revert them to the most recent non-execute token.
+    t = revert_token(t);
+    for(int c2: equivalent_contexts(c))
+	set_token_for_context(c2,t);
 
     // 3. Refuse to execute if there are children!!!
     if (not tokens[t].children.empty())

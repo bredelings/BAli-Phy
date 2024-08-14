@@ -22,6 +22,70 @@ std::vector<int> reg_heap::Token::neighbors() const
     return nodes;
 }
 
+std::vector<int> reg_heap::younger_neighbors(int t) const
+{
+    vector<int> nodes;
+    if (not is_root_token(t) and token_younger_than(parent_token(t), t))
+	nodes.push_back(parent_token(t));
+
+    for(int t2: children_of_token(t))
+	if (token_younger_than(t2,t))
+	    nodes.push_back(t2);
+
+    return nodes;
+}
+
+std::optional<int> reg_heap::older_parent(int t) const
+{
+    assert(tokens[t].used);
+
+    if (not is_root_token(t) and token_older_than(parent_token(t), t))
+	return parent_token(t);
+
+    return {};
+}
+
+std::optional<int> reg_heap::older_child(int t) const
+{
+    assert(tokens[t].used);
+    for(int t2: children_of_token(t))
+	if (token_older_than(t2,t))
+	    return t2;
+
+    return {};
+}
+
+std::optional<int> reg_heap::execution_neighbor(int t) const
+{
+    auto is_execution_neighbor = [&](int t2) {return token_younger_than(t2,t) and undirected_token_type(t2) == token_type::execute;};
+
+    if (not is_root_token(t) and is_execution_neighbor(parent_token(t)))
+	return parent_token(t);
+
+    for(int t2: children_of_token(t))
+	if (is_execution_neighbor(t2))
+	    return t2;
+
+    return {};
+}
+
+std::optional<int> reg_heap::older_neighbor(int t) const
+{
+    assert(tokens[t].used);
+
+    if (auto t2 = older_parent(t))
+	return t2;
+
+    if (auto t2 = older_child(t))
+	return t2;
+
+    return {};
+}
+
+token_type reg_heap::undirected_token_type(int t) const
+{
+    return tokens[t].utype;
+}
 
 token_type reg_heap::directed_token_type(int t) const
 {
@@ -37,6 +101,42 @@ token_type reg_heap::directed_token_type(int t) const
     }
 
     return type;
+}
+
+int reg_heap::revert_token(int t) const
+{
+    assert(tokens[t].used);
+    while(undirected_token_type(t) == token_type::execute)
+    {
+	// The oldest token should not be an execute token,
+	// so this token should HAVE an older neighbor.
+	// So its safe to access the value here.
+	t = older_neighbor(t).value();
+    }
+    return t;
+}
+
+std::vector<int> reg_heap::equivalent_tokens(int t) const
+{
+    int tr = revert_token(t);
+    std::vector<int> equiv_tokens = {tr};
+    for(int i=0;i<equiv_tokens.size();i++)
+    {
+	int t2 = equiv_tokens[i];
+
+	if (auto t3 = execution_neighbor(t2))
+	    equiv_tokens.push_back(*t3);
+    }
+    return equiv_tokens;
+}
+
+std::vector<int> reg_heap::equivalent_contexts(int c) const
+{
+    std::vector<int> cs;
+    for(int t: equivalent_tokens(token_for_context(c)))
+	for(int c: tokens[t].context_refs)
+	    cs.push_back(c);
+    return cs;
 }
 
 long total_destroy_token = 0;
@@ -899,13 +999,33 @@ void reg_heap::check_tokens() const
 	if (not tokens[t].parent)
 	    assert(t == root_token);
 
-	// At most 1 neighboring node can be younger.
-	auto younger = [&](int t2){return tokens[t2].creation_time < tokens[t].creation_time;};
-	assert(ranges::count_if(tokens[t].neighbors(), younger) <= 1);
+	// Only one younger neighbor should be an execute token.
+	{
+	    int total = 0;
+	    for(int t2: younger_neighbors(t))
+	    {
+		if (undirected_token_type(t2) == token_type::execute)
+		    total++;
+	    }
+
+	    int total2 = 0;
+	    if (not is_root_token(t) and token_younger_than(parent_token(t),t) and undirected_token_type(parent_token(t)) == token_type::execute)
+		total2++;
+
+	    for(int t2: tokens[t].children)
+		if (token_younger_than(t2,t) and directed_token_type(t2) == token_type::execute)
+		    total2++;
+
+	    assert(total == total2);
+	    assert(total <= 1);
+	}
+
+	// At most 1 neighboring node can be older.
+	auto older = [&](int t2){ return token_older_than(t2,t); };
+	assert(ranges::count_if(tokens[t].neighbors(), older) <= 1);
 
 	for(int c: tokens[t].context_refs)
 	    assert(token_for_context(c) == t);
     }
 #endif
 }
-
