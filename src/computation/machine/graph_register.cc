@@ -3019,10 +3019,19 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     // Don't create a new token to find results that are already up-to-date!
     if (reg_is_changeable_or_forcing(R))
     {
+        // If we have a result, use that.
         int r2 = result_for_reg(R);
-
         if (r2 > 0)
             return {R,r2};
+
+        // If we have a call to a WHNF reg, use that.
+        int s2 = step_index_for_reg(R);
+        if (s2 > 0)
+        {
+            int call = steps[s2].call;
+            if (is_WHNF(expression_at(call)))
+                return {R, call};
+        }
     }
 
     if (not execution_allowed_at_root() or is_program_execution_token(token_for_context(c)))
