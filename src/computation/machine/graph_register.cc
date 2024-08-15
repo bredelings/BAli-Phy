@@ -2965,6 +2965,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 			r_constant = call;
 		    else
 			r_constant = -1; // Do NOT look in root program.
+		                         // (We don't currently allow modifiables to call non-WHNF expressions though).
 		}
 	    }
 	}
