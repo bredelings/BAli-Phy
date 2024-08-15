@@ -2971,16 +2971,26 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 	}
 
 	// 2a. If we found the modifiable set to a constant, return the constant.
-	if (r_constant > 0)
-	    return {R, r_constant};
-	// 2b. Otherwise this is a non-interchange token, but we didn't find anything.  Look in the root token.
-	else if (r_constant == 0)
-	{
-	    int r2 = result_for_reg(R);
+        if (r_constant > 0)
+            return {R, r_constant};
+        // 2b. Otherwise this is a non-interchange token AND we didn't find R.
+        //     Therefore we are allowed to look in the root token.
+        else if (r_constant == 0)
+        {
+            // If we have a result, use that.
+            int r2 = result_for_reg(R);
+            if (r2 > 0)
+                return {R,r2};
 
-	    if (r2 > 0)
-		return {R,r2};
-	}
+            // If we have a call to a WHNF reg, use that.
+            int s2 = step_index_for_reg(R);
+            if (s2 > 0)
+            {
+                int call = steps[s2].call;
+                if (is_WHNF(expression_at(call)))
+                    return {R,call};
+            }
+        }
     }
 
     reroot_at_context(c);
