@@ -2952,7 +2952,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 	    auto& E = expression_at(r);
 	    if (is_interchangeable(E))
 	    {
-		r_constant = -1;
+		r_constant = -1; // Do NOT look in root program.
 		break;
 	    }
 	    else
@@ -2963,6 +2963,8 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 		    int call = steps[s].call;
 		    if (is_WHNF(expression_at(call)))
 			r_constant = call;
+		    else
+			r_constant = -1; // Do NOT look in root program.
 		}
 	    }
 	}
