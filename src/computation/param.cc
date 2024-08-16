@@ -202,10 +202,23 @@ expression_ref context_ptr::head() const
     return C.memory()->expression_at(r).head();
 }
 
-context_ptr::context_ptr(const context_ref& c, int i)
+context_ptr::context_ptr(const context_ref& c, int r1)
     :C(c)
 {
-    auto [r1,_] = C.incremental_evaluate(i);
-    reg = r1;
+    // If <i> is a modifiable that calls an unevaluated expression E
+    // (e.g. E = flip alignment <reg>), then we don't need to evaluate E to point at <i>.
+
+    // Refusing to evaluate such modifiables allows us to find them and set them without evaluating them.
+
+    if (C.memory()->reg_is_changeable(r1))
+	reg = r1;
+    else
+    {
+	auto [r2,_] = C.incremental_evaluate(r1);
+	reg = r2;
+    }
+
+    // Apparently this does not look through index-var-with-force, but incremental_evaluate(i) does:
+    // int r2 = C.incremental_evaluate_unchangeable(r1);
 }
 
