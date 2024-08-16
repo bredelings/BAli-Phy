@@ -527,10 +527,8 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
-    for(int i=0;i<branches.size();i++)
+    for(int b: branches)
     {
-        int b = branches[i];
-
         double U = uniform();
 
         if (U < 0.1)
@@ -559,9 +557,8 @@ void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
-    for(int i=0;i<branches.size();i++) 
+    for(int b: branches)
     {
-        int b = branches[i];
         if (uniform() < 0.95)
             three_way_topology_sample(P,Stats,b);
         else
@@ -577,9 +574,8 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
-    for(int i=0;i<branches.size();i++) 
+    for(int b: branches)
     {
-        int b = branches[i];
         if (uniform() < NNI_A_fraction)
             three_way_topology_and_alignment_sample(P,Stats,b);
         else
@@ -598,10 +594,8 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 
     double cube_fraction = P->load_value("cube_fraction",0.00);
 
-    for(int i=0;i<branches.size();i++) 
+    for(int b: branches)
     {
-        int b = branches[i];
-
         //    std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
         if ((uniform() < 0.15) and (PP.t().n_leaves() >2))
@@ -716,10 +710,8 @@ void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
-    for(int i=0;i<branches.size();i++) 
+    for(int b: branches)
     {
-        int b = branches[i];
-
         // Do a number of changes near branch @b
         sample_branch_length_(P,Stats,b);
     }
