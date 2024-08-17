@@ -593,6 +593,9 @@ int reg_heap::make_child_token(int t, token_type type)
 // This is the *safe* interface that should leave things in a valid state when it is done.
 void reg_heap::set_token_for_context(int c, optional<int> t2)
 {
+    // Exit early if the context already points to the token.
+    if (t2 and token_for_context(c) == *t2) return;
+
     // We can't do check_tokens() here because when we create the first token, it will
     // be an unreferenced tip until we finish this routine.
 
