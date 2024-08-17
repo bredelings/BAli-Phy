@@ -407,8 +407,6 @@ vector<string> parse_tsv_line(const string& s)
 
 vector<string> get_row(const map<string,int>& all_fields, const json::object& sample, std::optional<int> sample_index)
 {
-    int nfields = all_fields.size();
-
     vector<string> row(all_fields.size());
     for(auto& [field,index]: all_fields)
     {
@@ -423,14 +421,12 @@ vector<string> get_row(const map<string,int>& all_fields, const json::object& sa
 	}
 	row[index] = MCON::serialize(sample.at(field));
     }
-    assert(sample.size() >= nfields);
+    assert(sample.size() >= all_fields.size());
     return row;
 }
 
 vector<json::value> get_json_row(const map<string,int>& all_fields, const json::object& sample, std::optional<int> sample_index)
 {
-    int nfields = all_fields.size();
-
     vector<json::value> row(all_fields.size());
     for(auto& [field,index]: all_fields)
     {
@@ -445,7 +441,7 @@ vector<json::value> get_json_row(const map<string,int>& all_fields, const json::
 	}
 	row[index] = sample.at(field);
     }
-    assert(sample.size() >= nfields);
+    assert(sample.size() >= all_fields.size());
     return row;
 }
 
