@@ -900,7 +900,10 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     }
 
     // 4. Reroot to the PPET
+    auto cs = tokens[token_for_context(c)].context_refs;
     t = force_simple_set_path_to_PPET(c);
+    for(int c: cs)
+	set_token_for_context(c, t);
 
     // 5. Merge the set tokens and all the result an execute token.
 
