@@ -2944,11 +2944,15 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     // If the context is a set-token that is a child of the root, then look up the value there...
     if (reg_is_changeable(R) and
 	is_modifiable(expression_at(R)) and
-	tokens[t].parent == root_token and
-        directed_token_type(t) == token_type::set)
+        undirected_token_type(t) == token_type::set)
     {
-	// 1. Search the Delta for changes to the value.
+	// 0. Reroot to our older neighbor.
+	int parent = older_neighbor(t).value();
+	reroot_at_token(parent);
+	assert(tokens[t].parent == root_token);
+	assert(directed_token_type(t) == token_type::set);
 
+	// 1. Search the Delta for changes to the value.
 	int r_constant = 0;
 	for(auto& [r,s]: tokens[t].vm_step.delta())
 	{
