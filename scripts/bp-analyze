@@ -1642,8 +1642,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             template = self.outdir / f"P{i+1}.max.fasta"
             if self.get_imodel_for_partition(i) is None:
                 template = self.outdir / f"P{i+1}.initial.fasta"
-            tree = self.outdir / "c50.tree"
-            cmd = ['summarize-ancestors',template,'-n',tree,'-g',tree]
+            tree = self.outdir / "greedy.tree"
+            cmd = ['summarize-ancestors',template,'-n',tree,'--nodes-min=0.1']
+#           QUESTION: Should we make a flag to log ancestors at the end of branches too?
+            if False:
+                cmd += ['-g',tree,'--groups-min=0.1']
             for dir in [run.dir for run in self.mcmc_runs]:
                 cmd += ['-A',dir / f'C1.P{i+1}.fastas',
                         '-T',dir / 'C1.trees']
