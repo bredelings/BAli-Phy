@@ -189,11 +189,24 @@ jobs:
       run: |
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 cairo fmt
+          brew install eigen range-v3 cairo fmt
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
-          if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
+
+#          brew install boost
+#          if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
+
+          # BOOST 1.86 is broken in homebrew
+          ( cd
+            curl -O -L https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.gz
+            tar -xzf boost_1_85_0.tar.gz
+            cd boost_1_85_0
+            ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.85.0
+            ./b2 install
+            echo -e "\n    BOOST root is at $(cd ../installed-boost-1.85.0; pwd)\n"
+            echo BOOST_ROOT=$(cd ../installed-boost-1.85.0; pwd) >> $GITHUB_ENV
+          )
 
     - name: Install meson
       run: |
