@@ -22,15 +22,3 @@ x2 a q = x2x2 a q q
 foreign import bpcall "SModel:rna_16a_exchange" rna_stem_16a_exchange :: DoubletAlphabet -> Double -> Double -> Double -> Double -> Double -> Matrix Double
 
 rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
-
-foreign import bpcall "SModel:" rna_editting_rates :: DoubletAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Matrix Double
-foreign import bpcall "SModel:" rna_editting_pi :: DoubletAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
-
-rna_editting a nuc_model edits = reversible $ markov a smap q pi
-    where smap = simple_smap a
-          nuc_a = getNucleotides a
-          q_nuc = getQ nuc_model
-          pi_nuc = getEqFreqs nuc_model
-          q = rna_editting_rates a q_nuc edits'
-          pi = rna_editting_pi a pi_nuc edits'
-          edits' = list_to_vector [ c_pair (find_letter nuc_a i) (find_letter nuc_a j) | (i,j) <- edits]

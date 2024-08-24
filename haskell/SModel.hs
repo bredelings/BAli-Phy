@@ -13,6 +13,7 @@ module SModel (module SModel,
                module SModel.MarkovModulated,
                module SModel.MutSel,
                module SModel.BranchModel,
+               module SModel.RNAEdit,
                frequencies_from_dict) where
 
 import Probability.Distribution.Discrete
@@ -39,6 +40,7 @@ import SModel.Empirical
 import SModel.MarkovModulated
 import SModel.MutSel
 import SModel.BranchModel
+import SModel.RNAEdit
 
 import Data.Matrix
 

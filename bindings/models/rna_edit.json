@@ -3,28 +3,34 @@
     "result_type": "RevCTMC<Doublets<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
-    "call": "SModel.rna_editting(@a,@submodel,@edits)",
+    "call": "siteEdit(@a,@submodel,@rna_rate,@edits)",
     "import": ["SModel"],
     "args": [
-        {
-            "name": "edits",
-            "type": "List<(String,String)>",
-            "description": "List of [from,to] to describe editting"
-        },
-        {
-            "name": "a",
-            "type": "Doublets<a>",
-            "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
-        },
         {
             "name": "submodel",
             "type": "RevCTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
+        },
+        {
+            "name": "edits",
+            "type": "List<(String,String)>",
+            "description": "List of [from,to] to describe editting"
+        },
+	{
+	    "name": "rna_rate",
+	    "type": "Double",
+	    "description": "scaling factor for rates that change the RNA",
+	    "default_value":"1"
+	},
+        {
+            "name": "a",
+            "type": "Doublets<a>",
+            "default_value": "get_state(alphabet)",
+	    "description": "The Doublets alphabet"
         }
     ],
-    "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["hky85 +> rna_edit({})                 # no editting",
-                 "hky85 +> rna_edit({\"C\",\"U\"})       # C->U editting"]
+    "description":"Rate matrix on a doublets, constructed from a rate matrix on nucleotides.\n\nThus model describes RNA editing (or lack thereof) at a single site.",
+    "examples": ["hky85 +> rna_edit({})                  # no editting",
+                 "hky85 +> rna_edit({\"C\":\"U\"})           # C->U editting"]
 }

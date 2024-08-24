@@ -393,6 +393,9 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
     const EVector& edit_pairs = arg2.as_<EVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
+    double rnaRate = Args.evaluate(3).as_double();
+    assert(rnaRate >= 0);
+
     object_ptr<Box<Matrix>> Q( new Box<Matrix>(n,n) );
 
     for(int i=0;i<n;i++)
@@ -416,6 +419,9 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
             if (i_ok and j_ok)
                 r = Q_nuc(i1, j1);
                 
+	    if (i2 != j2)
+		r *= rnaRate;
+
 	    (*Q)(i,j) = r;
 	    sum += r;
 	}
