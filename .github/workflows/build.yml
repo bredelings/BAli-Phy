@@ -305,6 +305,8 @@ jobs:
            echo codesign -s - ${exe}
            codesign -s - ${exe}
         done
+        otool -L ${OUTPUT}/bin/bali-phy
+        otool -l ${OUTPUT}/bin/bali-phy
 
     - name: Test
       run: |

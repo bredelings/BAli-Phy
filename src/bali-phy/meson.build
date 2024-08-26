@@ -10,8 +10,10 @@ baliphy_sources = [
 
 # maybe we don't need this if we are doing static linking
 extra_rpath = ''
-if host_machine.system() == 'linux'
+if target_machine.system() == 'linux'
   extra_rpath = '$ORIGIN/../lib/bali-phy/'
+elif target_machine.system() == 'darwin'
+  extra_rpath = '@loaderpath/../lib/bali-phy/'
 endif
 
 baliphy = executable('bali-phy',
