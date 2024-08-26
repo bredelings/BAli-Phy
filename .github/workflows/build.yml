@@ -293,10 +293,10 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         OUTPUT=$HOME/local
-
+        ls ${BOOST_ROOT}/lib
         # copy boost shared libs if they exist
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
-            cp ${BOOST_ROOT}/lib/libboost*so* ${OUTPUT}/lib/bali-phy/
+            cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
         fi
 
         # Ad hoc sign
