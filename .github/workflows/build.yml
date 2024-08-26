@@ -289,7 +289,7 @@ jobs:
         done
         cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
-    - name: Ad hoc sign Mac executables
+    - name: Copy shared libs (Mac)
       if: runner.os == 'macOS'
       run: |
         OUTPUT=$HOME/local
@@ -299,7 +299,10 @@ jobs:
             cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
         fi
 
-        # Ad hoc sign
+    - name: Ad hoc sign Mac executables
+      if: runner.os == 'macOS'
+      run: |
+        OUTPUT=$HOME/local
         brew install findutils file-formula
         for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
            echo codesign -s - ${exe}

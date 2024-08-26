@@ -195,11 +195,24 @@ jobs:
       run: |
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pkg-config pandoc ccache coreutils
-          brew install boost eigen range-v3 cairo fmt
+          brew install eigen range-v3 cairo fmt
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
-          if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
+
+          # brew install boost
+          # if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
+
+          # BOOST 1.86 is broken in homebrew
+          ( cd
+            curl -O -L https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.gz
+            tar -xzf boost_1_85_0.tar.gz
+            cd boost_1_85_0
+            ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.85.0
+            ./b2 install
+            echo -e "\n    BOOST root is at $(cd ../installed-boost-1.85.0; pwd)\n"
+            echo BOOST_ROOT=$(cd ../installed-boost-1.85.0; pwd) >> $GITHUB_ENV
+          )
 
     - name: Install meson
       run: |
@@ -282,15 +295,27 @@ jobs:
         done
         cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
+    - name: Copy shared libs (Mac)
+      if: runner.os == 'macOS'
+      run: |
+        OUTPUT=$HOME/local
+
+        # copy boost shared libs if they exist
+        if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
+            cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
+        fi
+
     - name: Ad hoc sign Mac executables
       if: runner.os == 'macOS'
       run: |
-        brew install findutils file-formula
         OUTPUT=$HOME/local
+        brew install findutils file-formula
         for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
            echo codesign -s - ${exe}
            codesign -s - ${exe}
         done
+        otool -L ${OUTPUT}/bin/bali-phy
+        # otool -l ${OUTPUT}/bin/bali-phy
 
     - name: Test
       run: |
