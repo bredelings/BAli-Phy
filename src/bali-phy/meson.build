@@ -13,6 +13,7 @@ extra_rpath = ''
 if target_machine.system() == 'linux'
   extra_rpath = '$ORIGIN/../lib/bali-phy/'
 elif target_machine.system() == 'darwin'
+  # @loader_path should be the same as @executable_path for executables
   extra_rpath = '@executable_path/../lib/bali-phy/'
 endif
 
