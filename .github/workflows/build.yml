@@ -293,7 +293,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         OUTPUT=$HOME/local
-        ls ${BOOST_ROOT}/lib
+
         # copy boost shared libs if they exist
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
             cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
@@ -306,7 +306,7 @@ jobs:
            codesign -s - ${exe}
         done
         otool -L ${OUTPUT}/bin/bali-phy
-        otool -l ${OUTPUT}/bin/bali-phy
+        # otool -l ${OUTPUT}/bin/bali-phy
 
     - name: Test
       run: |
