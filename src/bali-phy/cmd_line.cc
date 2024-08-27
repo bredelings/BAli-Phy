@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options/option.hpp>
+#include <regex>
 #include "cmd_line.H"
 #include "paths.H"
 #include "util/string/join.H"
@@ -30,6 +32,78 @@ using po::variables_map;
 const string trailing_args_separator = "--";
 
 namespace fs = std::filesystem;
+
+const std::regex rgx_simple( R""(:([^ \t]+)[ \t]+([^ \t"][^ \t]*)[^ \t]*)"" );
+const std::regex rgx_quoted( R""(:([^ \t]+)[ \t]+"([^ \t]+)"[^ \t]*)"" );
+const std::regex rgx_no_arg( R""(:([^ \t]+)[ \t]*)"" );
+
+string unescape_value(const string& line)
+{
+    std::ostringstream output;
+    for(int i=0;i<line.size();i++)
+    {
+	char c = line[i];
+	if (c == '\\')
+	{
+	    i++;
+	    c = line[i];
+	    if (c == 'n')
+		c = '\n';
+	    else if (c == 't')
+		c = '\t';
+	    else if (c == '\\')
+		;
+	    else if (c == '"')
+		;
+	    else
+		throw myexception()<<"Invalid escape sequence '\\"<<c<<"' in option value \""<<line<<"\"";
+	}
+	output<<c;
+    }
+    return output.str();
+}
+
+
+po::parsed_options bali_config_file(std::istream& file, const po::options_description& options_desc)
+{
+    std::map<string,vector<string>> options_map;
+    po::parsed_options options(&options_desc);
+    std::ostringstream model_lines;
+
+    string line;
+    while(portable_getline(file, line))
+    {
+	std::smatch m;
+
+	if (not line.starts_with(':'))
+	    model_lines<<line<<"\n";
+	else if (std::regex_match(line, m, rgx_no_arg))
+	{
+	    string key = m[1];
+	    options_map[key];
+	}
+	else if (std::regex_match(line, m, rgx_quoted))
+	{
+	    string key = m[1];
+	    string value = unescape_value(m[2]);
+	    options_map[key].push_back(value);
+	}
+	else if (std::regex_match(line, m, rgx_simple))
+	{
+	    string key = m[1];
+	    string value = m[2];
+	    options_map[key].push_back(value);
+	}
+	else
+	    throw myexception()<<"Malformed line '"<<line<<"'. It should have the form '<key> <value>' or '<key> \"<value>\"";
+    }
+    options_map["variables"].push_back(model_lines.str());
+
+    for(auto& [key,values]: options_map)
+	options.options.push_back(po::basic_option<char>(key,values));
+
+    return options;
+}
 
 /// Parse the file $HOME/.bali-phy and add the options it contains to the command line arguments.
 ///
@@ -198,13 +272,14 @@ po::options_description model_options(int level)
 
     options_description model("Model options");
     model.add_options()
-	("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
-	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
-	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
-	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
-        ("fix,F",value<vector<string>>()->composing(),"Fix topology,tree,alignment");
+        ("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
+        ("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
+        ("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
+        ("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
+        ("fix,F",value<vector<string>>()->composing(),"Fix topology,tree,alignment")
+        ("variables",value<vector<string>>()->composing(),"Variable definitions");
     if (level >= 1)
-	model.add_options()
+        model.add_options()
 	("branch-lengths,B",value<string>(),"Prior on branch lengths.");
     model.add_options()
 	("link,L",value<vector<string>>()->composing(),"Link partitions.");
@@ -345,7 +420,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	string filename = args["config"].as<string>();
 	checked_ifstream file(filename,"config file");
 
-	store(parse_config_file(file, all), args);
+	store(bali_config_file(file, all), args);
 	notify(args);
     }
 

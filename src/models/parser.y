@@ -48,6 +48,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
   END  0  "end of file"
   START_EXP 1
   START_TYPE 2
+  START_DEFS 3
 
   FUNCTION      "function"
   SEMI          ";"
@@ -92,6 +93,8 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %type <std::vector<std::pair<std::string,ptree>>> ditems
 %type <ptree> ditem
 %type <std::vector<std::pair<std::string,ptree>>> tup_args
+%type <std::pair<std::string,ptree>>              def
+%type <std::vector<std::pair<std::string,ptree>>> defs
 
 %type <ptree>       type
 %type <std::vector<std::pair<std::string,ptree>>> type_tup_args
@@ -118,11 +121,17 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %start start;
 start: START_EXP exp {drv.result = $2;}
 |      START_TYPE type {drv.result = $2;}
+|      START_DEFS defs {drv.result = ptree({},$2);}
 
+def: varid "=" exp  { $$ = {$1,$3}; }
+|    varid "~" exp  { $$ = {$1,add_sample($3)}; }
+
+defs: def { $$.push_back($1); }
+|     defs ";" def {$$ = $1; $$.push_back($3);}
+|     defs ";" {$$ = $1; }
 
 exp: term                                     { $$ = $1; }
-|    varid "=" exp ";" exp                    { $$ = ptree("let",{{$1,$3},{"",$5}}); }
-|    varid "~" exp ";" exp                    { $$ = ptree("let",{{$1,add_sample($3)},{"",$5}}); }
+|    def ";" exp                    { $$ = ptree("let",{$1,{"",$3}}); }
 
 
 // See parse_no_submodel( )

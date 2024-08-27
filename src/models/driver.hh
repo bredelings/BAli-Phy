@@ -63,5 +63,6 @@ public:
 
 ptree parse_expression(const std::string&, const std::string&);
 ptree parse_type(const std::string&, const std::string&);
+ptree parse_defs(const std::string&, const std::string&);
 #endif // ! DRIVER_HH
 

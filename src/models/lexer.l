@@ -111,6 +111,8 @@ signed       {negative}?
 	    return zz::parser::make_START_EXP (loc);
 	else if (t == 2)
 	    return zz::parser::make_START_TYPE (loc);
+	else if (t == 3)
+	    return zz::parser::make_START_DEFS (loc);
 	else
 	    std::abort();
     }

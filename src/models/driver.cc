@@ -39,6 +39,7 @@ zz_driver::parse_file (const std::string &filename, int stok)
 
 constexpr int START_EXP = 1;
 constexpr int START_TYPE = 2;
+constexpr int START_DEFS = 3;
 
 int
 zz_driver::parse_string (const string& file_contents, const std::string &input_name, int stok)
@@ -72,6 +73,13 @@ ptree parse_type(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name, 2);
+    return D.result;
+}
+
+ptree parse_defs(const string& content, const string& input_name)
+{
+    zz_driver D;
+    D.parse_string(content, input_name, 3);
     return D.result;
 }
 
