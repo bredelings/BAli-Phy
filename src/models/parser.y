@@ -121,7 +121,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %start start;
 start: START_EXP exp {drv.result = $2;}
 |      START_TYPE type {drv.result = $2;}
-|      START_DEFS defs {drv.result = ptree({},$2);}
+|      START_DEFS defs {drv.result = ptree($2);}
 
 def: varid "=" exp  { $$ = {$1,$3}; }
 |    varid "~" exp  { $$ = {$1,add_sample($3)}; }

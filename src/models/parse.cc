@@ -279,6 +279,18 @@ ptree parse(const Rules& R, const string& s, const string& what)
     return model;
 }
 
+ptree parse_defs(const Rules& R, const string& s)
+{
+    // 1. Parse the decls
+    auto defs = parse_defs(s, "declarations");
+
+    // 2. Fill in default arguments
+    auto f2 = [&](ptree& p) {handle_positional_args(p,R);};
+    for(auto& [var,value]: defs)
+	ptree_map(f2, value);
+
+    return defs;
+}
 
 optional<ptree> peel_sample(ptree p)
 {

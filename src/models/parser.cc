@@ -764,7 +764,7 @@ namespace zz {
 
   case 4: // start: START_DEFS defs
 #line 124 "parser.y"
-                       {drv.result = ptree({},yystack_[0].value.as < std::vector<std::pair<std::string,ptree>> > ());}
+                       {drv.result = ptree(yystack_[0].value.as < std::vector<std::pair<std::string,ptree>> > ());}
 #line 769 "parser.cc"
     break;
 
