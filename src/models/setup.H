@@ -130,6 +130,11 @@ model_t get_model(const Rules& R, const std::string& type, const std::string& mo
                   const std::map<std::string,std::pair<std::string,std::string>>& = {}
     );
 
+void compile_defs(const Rules& R,
+		  const std::string& prog,
+		  const std::vector<std::pair<std::string,std::string>>& scope,
+		  const std::map<std::string,std::pair<std::string,std::string>>& state);
+
 std::string print_equals_function(expression_ref E);
 
 std::string default_markov_model(const alphabet& a);

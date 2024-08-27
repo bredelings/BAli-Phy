@@ -1522,6 +1522,29 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
 
+/*
+ * A lot of work was done to allow writing x = sample(dist) instead of x <- sample(dist).
+ * Do we still want that?
+ */
+
+void compile_defs(const Rules& R,
+		  const string& prog,
+		  const vector<pair<string,string>>& scope,
+		  const map<string,pair<string,string>>& state)
+{
+    // 1. Parse declarations and substitute any default values.
+    auto vars = parse_defs(R, prog);
+
+    // 2. Typecheck.
+    // This should WORK like typecheck_and_annotate_model(let..let..let..???)
+
+    // walk the list, typechecking
+
+    // see model/setup.H:get_model( )
+    // how does this relate to how we take f(y=g(x)) and turn it into y=g(x);f(y)?
+}
+
+
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.
 //    For these things exp[~normal[0,1]] remains exp[~normal[0,1]]
 // Some things, like normal, gamma, etc. have named arguments.

@@ -3,6 +3,7 @@
 #include <filesystem>                               // for path, operator/
 #include <boost/dynamic_bitset.hpp>                 // for dynamic_bitset
 #include <boost/program_options.hpp>                // for program_options
+#include <boost/algorithm/string/join.hpp>          // for join
 #include <map>                                      // for map, map<>::mappe...
 #include <optional>                                 // for optional
 #include <set>                                      // for set
@@ -758,6 +759,13 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                                int /* proc_id */, const fs::path& dir)
 {
+    if (args.count("variables"))
+    {
+	string var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
+
+	compile_defs(R, var_str, {}, {});
+    }
+
     //------ Determine number of partitions ------//
     vector<pair<fs::path,string>> filename_ranges;
     for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
