@@ -36,6 +36,8 @@ namespace fs = std::filesystem;
 const std::regex rgx_simple( R""(:([^ \t]+)[ \t]+([^ \t"][^ \t]*)[^ \t]*)"" );
 const std::regex rgx_quoted( R""(:([^ \t]+)[ \t]+"([^ \t]+)"[^ \t]*)"" );
 const std::regex rgx_no_arg( R""(:([^ \t]+)[ \t]*)"" );
+const std::regex rgx_comment( R""([ \t]*#.*)"" );
+
 
 string unescape_value(const string& line)
 {
@@ -75,7 +77,9 @@ po::parsed_options bali_config_file(std::istream& file, const po::options_descri
     {
 	std::smatch m;
 
-	if (not line.starts_with(':'))
+	if (std::regex_match(line, m, rgx_comment))
+	    continue;
+	else if (not line.starts_with(':'))
 	    model_lines<<line<<"\n";
 	else if (std::regex_match(line, m, rgx_no_arg))
 	{
