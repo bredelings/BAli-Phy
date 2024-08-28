@@ -108,18 +108,31 @@ bool equations::add_condition(const string& x, const term_t& T)
 {
     if (is_wildcard(T)) return valid;
 
+
     if (not has_record(x))
+    {
+	// Occurs check.
+	auto fvs_T = find_variables_in_type(T);
+	if (fvs_T.count(x)) return false;
+
 	// Add x = T
 	values.push_back({set<string>{x},T});
+    }
     else
     {
-	auto xrec = find_record(x);
-	if (not xrec->second)
+	auto& [vars,value] = *find_record(x);
+	if (not value)
+	{
+	    // Occurs check.
+	    auto fvs_T = find_variables_in_type(T);
+	    if (intersects(vars, fvs_T)) return false;
+
 	    // Set x = T
-	    xrec->second = T;
+	    value = T;
+	}
 	else
 	    // If x=U then unify(U,T)
-	    unify(*xrec->second, T);
+	    unify(*value, T);
     }
 #ifndef NDEBUG
     for(auto& [names,term]: values)
@@ -140,13 +153,25 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    values.push_back({set<string>{x,y},{}});
 	else
 	{
+	    auto& [vars,T] = *find_record(x);
+
+	    // Occurs check.
+	    if (T and find_variables_in_type(*T).count(y)) return false;
+
 	    // 3. If x has a record by y does not, then add y to x's record;
-	    find_record(x)->first.insert(y);
+	    vars.insert(y);
 	}
     }
     else if (not has_record(x))
+    {
+	auto& [vars,T] = *find_record(y);
+
+	// Occurs check.
+	if (T and find_variables_in_type(*T).count(x)) return false;
+
 	// 4. If y has a record by x does not, then add x to y's record;
-	find_record(y)->first.insert(x);
+	vars.insert(x);
+    }
     else
     {
 	auto xrec = find_record(x);
@@ -369,6 +394,7 @@ map<string,term_t> alpha_rename(const set<string>& vars, FVState& fresh_var_stat
     return replace;
 }
 
+// add occurs check!
 
 equations operator&&(const equations& E1, const equations& E2)
 {
