@@ -30,14 +30,14 @@ string show(const equations& E)
     for(auto& constraint: E.get_constraints())
 	constraints.push_back(unparse_type(constraint));
     if (not constraints.empty())
-    result += join(constraints,",") + " <= ";
+	result += join(constraints,",") + "\n\n";
 
     vector<string> eqs;
     for(auto& [names,term]: E.get_values())
     {
 	string e = join(names," = ");
 	if (term)
-	    e += " = " + show(*term);
+	    e += " = " + unparse_type(*term);
 	eqs.push_back(e);
     }
     result += join(eqs,"\n");
