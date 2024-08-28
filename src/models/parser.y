@@ -126,7 +126,8 @@ start: START_EXP exp {drv.result = $2;}
 def: varid "=" exp  { $$ = {$1,$3}; }
 |    varid "~" exp  { $$ = {$1,add_sample($3)}; }
 
-defs: def { $$.push_back($1); }
+defs: %empty { }
+|     def { $$.push_back($1); }
 |     defs ";" def {$$ = $1; $$.push_back($3);}
 |     defs ";" {$$ = $1; }
 
