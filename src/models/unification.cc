@@ -379,13 +379,13 @@ equations operator&&(const equations& E1, const equations& E2)
     for(auto& constraint: E2.get_constraints())
 	solution.add_constraint(constraint);
 
-    for(const auto& value: E2.get_values())
+    for(const auto& [vars,value]: E2.get_values())
     {
-	string var0 = *value.first.begin();
-	for(const auto& var: value.first)
+	string var0 = *vars.begin();
+	for(const auto& var: vars)
 	    solution.add_var_condition(var0,var);
-	if (value.second)
-	    solution.add_condition(var0, *value.second);
+	if (value)
+	    solution.add_condition(var0, *value);
     }
 
     return solution;
