@@ -379,14 +379,8 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     auto pattern2 = typecheck_and_annotate(R, a, pattern, fv_state, scope2).first;
     auto model2 = ptree("function",{{"",pattern2},{"",body_exp2}});
 
-    auto keep = find_variables_in_type(required_type);
-    add(keep, scope.find_type_variables_from_scope());
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
-
-    substitute_in_types(S,model2);
 
     return {{model2,E}};
 }
@@ -433,14 +427,8 @@ typecheck_and_annotate_tuple(const Rules& R, const ptree& required_type, const p
     }
 
     // 3. Create the new model tree with args in correct order
-    auto keep = find_variables_in_type(required_type);
-    add(keep, scope.find_type_variables_from_scope());
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
-
-    substitute_in_types(S,model2);
 
     return {{model2,E}};
 }
@@ -489,14 +477,8 @@ typecheck_and_annotate_list(const Rules& R, const ptree& required_type, const pt
     }
 
     // 3. Create the new model tree with args in correct order
-    auto keep = find_variables_in_type(required_type);
-    add(keep, scope.find_type_variables_from_scope());
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
-
-    substitute_in_types(S,model2);
 
     return {{model2,E}};
 }
@@ -522,14 +504,8 @@ typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model,
     // ARGH: arrays with ptree are really annoying.
     auto model2 = ptree("get_state",{ {"",arg}});
 
-    auto keep = find_variables_in_type(required_type);
-    add(keep, scope.find_type_variables_from_scope());
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2,{});
-
-    substitute_in_types(S, model2);
 
     return {{model2,E}};
 }
@@ -745,17 +721,12 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 	model2.push_back({arg_name, arg_value2});
     }
 
-    auto keep = find_variables_in_type(required_type);
-    add(keep, scope.find_type_variables_from_scope());
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",result_type}});
     if (rule.get("no_log",false))
 	model2.push_back({"no_log",ptree(true)});
     if (auto extract = rule.get_child_optional("extract"))
 	model2.push_back({"extract",*extract});
 
-    substitute_in_types(S, model2);
     set_used_args(model2, used_args);
 
     return {model2,E};
