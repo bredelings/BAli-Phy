@@ -258,8 +258,7 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
 
     if (name != "let") return {}; //let[m=E,F]
 
-    string var_name = model[0].first;
-    ptree var_exp = model[0].second;
+    auto [var_name, var_exp] = model[0];
     ptree body_exp = model[1].second;
 
     auto a = fv_state.get_fresh_type_var("t");
@@ -272,7 +271,11 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     used_args = get_used_args(body_exp2);
     E = E && E_body;
     if (not E)
-        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+    {
+	auto required_type2 = required_type;
+	substitute(E, required_type2);
+        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type2)<<"!";
+    }
 
     // 2. Analyze the bound expression with type a
     substitute(E, a);
@@ -280,19 +283,16 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     add(used_args, get_used_args(var_exp2));
     E = E && E_var;
     if (not E)
+    {
+	substitute(E, a);
         throw myexception()<<"Expression '"<<unparse_annotated(var_exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
+    }
 
     // Create the new model tree with args in correct order
     auto model2 = ptree("let",{{var_name, var_exp2},{"",body_exp2}});
 
-    auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
-    auto S = E.eliminate_except(keep);
-
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
-
-    substitute_in_types(S,model2);
 
     return {{model2,E}};
 }
