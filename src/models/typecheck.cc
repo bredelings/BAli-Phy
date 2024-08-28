@@ -180,23 +180,27 @@ struct tr_name_scope_t
     map<string,ptree> identifiers;
     optional<map<string,ptree>> args;
     map<string,ptree> state;
+
+    set<string> find_type_variables_from_scope() const;
+    optional<ptree> type_for_var_in_scope(const string& name) const;
 };
 
-set<string> find_type_variables_from_scope(const tr_name_scope_t& scope)
+set<string> tr_name_scope_t::find_type_variables_from_scope() const
 {
     set<string> vars;
-    for(auto& [_, type]: scope.identifiers)
+    for(auto& [_, type]: identifiers)
 	add(vars, find_variables_in_type(type));
-    if (scope.args)
-        for(auto& [_, type]: *scope.args)
+
+    if (args)
+        for(auto& [_, type]: *args)
             add(vars, find_variables_in_type(type));
     return vars;
 }
 
-optional<ptree> type_for_var_in_scope(const string& name, const tr_name_scope_t& scope)
+optional<ptree> tr_name_scope_t::type_for_var_in_scope(const string& name) const
 {
-    if (scope.identifiers.count(name))
-        return scope.identifiers.at(name);
+    if (identifiers.count(name))
+        return identifiers.at(name);
     else
         return {};
 }
@@ -376,7 +380,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     auto model2 = ptree("function",{{"",pattern2},{"",body_exp2}});
 
     auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
+    add(keep, scope.find_type_variables_from_scope());
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
@@ -430,7 +434,7 @@ typecheck_and_annotate_tuple(const Rules& R, const ptree& required_type, const p
 
     // 3. Create the new model tree with args in correct order
     auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
+    add(keep, scope.find_type_variables_from_scope());
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
@@ -486,7 +490,7 @@ typecheck_and_annotate_list(const Rules& R, const ptree& required_type, const pt
 
     // 3. Create the new model tree with args in correct order
     auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
+    add(keep, scope.find_type_variables_from_scope());
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
@@ -519,7 +523,7 @@ typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model,
     auto model2 = ptree("get_state",{ {"",arg}});
 
     auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
+    add(keep, scope.find_type_variables_from_scope());
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
@@ -539,7 +543,7 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
 
     type_t result_type;
     set<string> used_args;
-    if (auto type = type_for_var_in_scope(name, scope))
+    if (auto type = scope.type_for_var_in_scope(name))
         result_type = *type;
     else if (not name.empty() and name[0] == '@')
     {
@@ -742,7 +746,7 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
     }
 
     auto keep = find_variables_in_type(required_type);
-    add(keep, find_type_variables_from_scope(scope));
+    add(keep, scope.find_type_variables_from_scope());
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",result_type}});
