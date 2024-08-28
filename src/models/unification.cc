@@ -1,5 +1,6 @@
 #include "unification.H"
 #include <set>
+#include <regex>
 #include "util/set.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
@@ -346,24 +347,24 @@ int find_unused_index(const set<string>& vars)
     return index+1;
 }
 
-term_t get_fresh_type_var(const set<string>& vars)
+const std::regex rgx_uniqued( R"((.+)#[0-9]+)" );
+string remove_rv_suffix(const std::string& s)
 {
-    int index = find_unused_index(vars);
-    return term_t(string("var")+convertToString(index+1));
+    std::smatch m;
+
+    if (std::regex_match(s, m, rgx_uniqued))
+	return m[1];
+    else
+	return s;
 }
 
-map<string,term_t> alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
+map<string,term_t> alpha_rename(const set<string>& vars, FVState& fresh_var_state)
 {
-    int index = std::max(find_unused_index(vars), find_unused_index(vars_to_avoid));
-
     map<string,term_t> replace;
     for(const auto& var: vars)
     {
-	if (includes(vars_to_avoid, var))
-	{
-	    string new_var = string("var") + convertToString(index++);
-	    replace.insert({var, term_t(new_var)});
-	}
+	auto new_var = fresh_var_state.get_fresh_type_var(remove_rv_suffix(var));
+	replace.insert({var, new_var});
     }
     return replace;
 }
