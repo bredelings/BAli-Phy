@@ -195,19 +195,17 @@ string ptree::show(bool pretty) const
     return ::show(*this, pretty);
 }
 
-string show(const ptree& pt, bool pretty, int depth)
+string show(const ptree& pt, std::optional<int> depth)
 {
     string result = convertToString(pt.value);
-    if (pt.has_value<string>())
-        result = "'" + result + "'";
-    if (pretty)
+
+    if (depth)
     {
-        string indent(depth,' ');
-        string indent2(depth+2,' ');
+        string indent2(*depth+2,' ');
         for(auto& [key,value]: pt)
         {
             result += "\n" + indent2 + key + " : ";
-            result += show(value,depth+4);
+            result += show(value, *depth+4);
         }
     }
     else

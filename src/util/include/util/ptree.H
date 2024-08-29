@@ -140,7 +140,7 @@ template <>  inline bool ptree::has_value<int>()    const {return value.index() 
 template <>  inline bool ptree::has_value<double>() const {return value.index() == 3;}
 template <>  inline bool ptree::has_value<std::string>() const {return value.index() == 1;}
 
-std::string show(const ptree& pt, bool pretty = false, int depth=0);
+std::string show(const ptree& pt, std::optional<int> depth = 0);
 
 inline auto index(const ptree& p, int i)
 {
