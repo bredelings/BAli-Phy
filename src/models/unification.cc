@@ -424,7 +424,15 @@ void substitute(const equations& E, term_t& T)
     {
 	string name = T.get_value<string>();
 	if (E.value_of_var(name))
+	{
 	    T = ptree(*E.value_of_var(name));
+	    substitute(E, T);
+	}
+	else if (E.has_record(name))
+	{
+	    auto& [vars,_] = *E.find_record(name);
+	    T = ptree(*vars.begin());
+	}
     }
     else
 	for(auto& child: T)
