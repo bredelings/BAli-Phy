@@ -174,11 +174,13 @@ struct tr_name_scope_t
     optional<map<string,ptree>> args;
     map<string,ptree> state;
 
-    set<string> find_type_variables_from_scope() const;
-    optional<ptree> type_for_var_in_scope(const string& name) const;
+    set<string> find_type_variables() const;
+    optional<ptree> type_for_var(const string& name) const;
+    optional<ptree> type_for_arg(const string& name) const;
+    void extend_modify_scope(const string& var, const type_t type);
 };
 
-set<string> tr_name_scope_t::find_type_variables_from_scope() const
+set<string> tr_name_scope_t::find_type_variables() const
 {
     set<string> vars;
     for(auto& [_, type]: identifiers)
@@ -190,7 +192,7 @@ set<string> tr_name_scope_t::find_type_variables_from_scope() const
     return vars;
 }
 
-optional<ptree> tr_name_scope_t::type_for_var_in_scope(const string& name) const
+optional<ptree> tr_name_scope_t::type_for_var(const string& name) const
 {
     if (identifiers.count(name))
         return identifiers.at(name);
@@ -198,21 +200,21 @@ optional<ptree> tr_name_scope_t::type_for_var_in_scope(const string& name) const
         return {};
 }
 
-optional<ptree> type_for_arg_in_scope(const string& name, const tr_name_scope_t& scope)
+optional<ptree> tr_name_scope_t::type_for_arg(const string& name) const
 {
-    if (not scope.args)
+    if (not args)
         return {};
-    else if (scope.args->count(name))
-        return scope.args->at(name);
+    else if (args->count(name))
+        return args->at(name);
     else
         return {};
 }
 
-void extend_modify_scope(tr_name_scope_t& scope, const string& var, const type_t type)
+void tr_name_scope_t::extend_modify_scope(const string& var, const type_t type)
 {
-    if (scope.identifiers.count(var))
-        scope.identifiers.erase(var);
-    scope.identifiers.insert({var,type});
+    if (identifiers.count(var))
+        identifiers.erase(var);
+    identifiers.insert({var,type});
 }
 
 tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, const type_t type)
@@ -348,7 +350,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
 
     auto scope2 = scope;
     for(auto& [var,type]: type_for_binder)
-        extend_modify_scope(scope2, var, type);
+        scope2.extend_modify_scope(var, type);
 
     auto b = fv_state.get_fresh_type_var("b");
 
@@ -511,12 +513,12 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
 
     type_t result_type;
     set<string> used_args;
-    if (auto type = scope.type_for_var_in_scope(name))
+    if (auto type = scope.type_for_var(name))
         result_type = *type;
     else if (not name.empty() and name[0] == '@')
     {
         auto arg_name = name.substr(1);
-        auto type = type_for_arg_in_scope(arg_name, scope);
+        auto type = scope.type_for_arg(arg_name);
         used_args = {arg_name};
         if (not type)
             throw myexception()<<"can't find argument '"<<name<<"'";
