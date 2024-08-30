@@ -168,7 +168,7 @@ Rule freshen_type_vars(Rule rule, FVSource& fv_state)
     return substitute_in_rule_types(renaming, rule);
 }
 
-struct tr_name_scope_t
+struct tr_name_scope_t: public FVSource
 {
     const Rules& R;
     map<string,ptree> identifiers;
@@ -271,7 +271,7 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     auto [var_name, var_exp] = model[0];
     ptree body_exp = model[1].second;
 
-    auto a = fv_state.get_fresh_type_var("t");
+    auto a = get_fresh_type_var("t");
 
     equations E;
     set<string> used_args;
@@ -363,7 +363,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
     for(auto& [var,type]: type_for_binder)
         scope2.extend_scope(var, type);
 
-    auto b = fv_state.get_fresh_type_var("b");
+    auto b = get_fresh_type_var("b");
 
     // 1. Unify required type with (a -> b)
     auto ftype = make_type_apps("Function",{a,b});
@@ -405,7 +405,7 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     vector<ptree> element_types;
     for(int i=0;i<model.size();i++)
     {
-        auto a = fv_state.get_fresh_type_var("a");
+        auto a = get_fresh_type_var("a");
         element_types.push_back(a);
     }
     auto tuple_type = make_type_apps("Tuple",element_types);
@@ -449,7 +449,7 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
 
     // 1. Unify required type with (a -> b)
 
-    auto a = fv_state.get_fresh_type_var("a");
+    auto a = get_fresh_type_var("a");
 
     auto list_type = make_type_app("List",a);
     equations E = unify(list_type, required_type);
@@ -704,7 +704,7 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
         {
             auto scope3 = *this;
             scope3.args = arg_env;
-	    auto alphabet_required_type = fv_state.get_fresh_type_var("a");
+	    auto alphabet_required_type = get_fresh_type_var("a");
             auto [alphabet_value2, E_alphabet] = scope3.typecheck_and_annotate(alphabet_required_type, *alphabet_expression, fv_state);
             E = E && E_alphabet;
             if (not E)
@@ -776,7 +776,6 @@ std::pair<ptree,equations> typecheck_and_annotate_model(const Rules& R, const pt
     tr_name_scope_t scope2(R);
     scope2.identifiers = scope;
     scope2.state = state;
-    FVSource fv_state;
-    return scope2.typecheck_and_annotate(required_type, model, fv_state);
+    return scope2.typecheck_and_annotate(required_type, model, scope2);
 }
 
