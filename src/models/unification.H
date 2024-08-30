@@ -69,13 +69,13 @@ equations unify(const term_t& T1, const term_t& T2);
 
 std::set<std::string> find_variables_in_type(const term_t& p);
 
-struct FVState
+struct FVSource
 {
-    int index = 0;
-    term_t get_fresh_type_var(const std::string& s) {return term_t(s + "#" + std::to_string(index++));}
+    mutable int index = 0;
+    term_t get_fresh_type_var(const std::string& s) const {return term_t(s + "#" + std::to_string(index++));}
 };
 
-std::map<std::string, term_t> alpha_rename(const std::set<std::string>& vars, FVState&);
+std::map<std::string, term_t> alpha_rename(const std::set<std::string>& vars, const FVSource&);
 
 void substitute(const equations& equations, term_t& T);
 

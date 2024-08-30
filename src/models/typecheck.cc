@@ -158,7 +158,7 @@ Rule substitute_in_rule_types(const equations& renaming, Rule rule)
     return rule;
 }
 
-Rule freshen_type_vars(Rule rule, FVState& fv_state)
+Rule freshen_type_vars(Rule rule, FVSource& fv_state)
 {
     // 1. Find variables in rule type
     set<string> rule_type_variables = find_rule_type_vars(rule);
@@ -180,15 +180,15 @@ struct tr_name_scope_t
     optional<ptree> type_for_arg(const string& name) const;
     void extend_scope(const string& var, const type_t type);
     tr_name_scope_t extended_scope(const string& var, const type_t type) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_let(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model, FVState& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_let(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_var(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    pair<ptree,equations> typecheck_and_annotate_function(const ptree& required_type, const ptree& model, FVState& fv_state) const;
-    pair<ptree, equations> typecheck_and_annotate(const ptree& required_type, const ptree& model, FVState& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_var(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    optional<pair<ptree,equations>> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    pair<ptree,equations> typecheck_and_annotate_function(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
+    pair<ptree, equations> typecheck_and_annotate(const ptree& required_type, const ptree& model, FVSource& fv_state) const;
 
     tr_name_scope_t(const Rules& r)
 	:R(r)
@@ -260,7 +260,7 @@ void set_used_args(ptree& model, const set<string>& used_args)
 
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -307,7 +307,7 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     return {{model2,E}};
 }
 
-pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, FVState& fv_state)
+pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, FVSource& fv_state)
 {
     if (is_nontype_variable(pattern))
     {
@@ -337,7 +337,7 @@ pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, FVState& fv_s
 
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -392,7 +392,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
 }
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -439,7 +439,7 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
 }
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -516,7 +516,7 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
 }
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -567,7 +567,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
 }
 
 optional<pair<ptree,equations>>
-tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     type_t result_type;
     optional<Rule> rule;
@@ -616,7 +616,7 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
 }
 
 pair<ptree,equations>
-tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     assert(model.has_value<string>());
     auto name = model.get_value<string>();
@@ -741,7 +741,7 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
 
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
 pair<ptree,equations>
-tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree& model, FVState& fv_state) const
+tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree& model, FVSource& fv_state) const
 {
     // 1. Get result type and the rule, if there is one.
     type_t result_type;
@@ -776,7 +776,7 @@ std::pair<ptree,equations> typecheck_and_annotate_model(const Rules& R, const pt
     tr_name_scope_t scope2(R);
     scope2.identifiers = scope;
     scope2.state = state;
-    FVState fv_state;
+    FVSource fv_state;
     return scope2.typecheck_and_annotate(required_type, model, fv_state);
 }
 

@@ -421,7 +421,7 @@ string remove_rv_suffix(const std::string& s)
 	return s;
 }
 
-map<string,term_t> alpha_rename(const set<string>& vars, FVState& fresh_var_state)
+map<string,term_t> alpha_rename(const set<string>& vars, const FVSource& fresh_var_state)
 {
     map<string,term_t> replace;
     for(const auto& var: vars)
