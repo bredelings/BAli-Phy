@@ -23,6 +23,7 @@
   namespace views = ranges::views;
 
   ptree make_function(const std::vector<std::string>& vars, const ptree& body);
+  ptree make_type_app(ptree type, const std::vector<ptree>& args);
 
   class zz_driver;
 
@@ -97,7 +98,9 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %type <std::vector<std::pair<std::string,ptree>>> defs
 
 %type <ptree>       type
-%type <std::vector<std::pair<std::string,ptree>>> type_tup_args
+%type <ptree>       atype
+%type <ptree>       btype
+%type <std::vector<ptree>> type_tup_args
 
 %type <std::string> qvarid
 %type <std::string> varid
@@ -199,14 +202,18 @@ literal: STRING      {$$ = ptree('"' + $1 + '"');}
 
 /* -------------------------------------------------------------- */
 
-type: varid                           { $$ = ptree($1); }
-|     varid "<" type_tup_args ">"     { $$ = ptree($1, $3); }
-|     "(" type ")"                    { $$ = $2; }
-|     "(" type_tup_args "," type ")"  { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
-|     type "->" type                  { $$ = ptree("Function",{{"",$1},{"",$3}});  }
+type: btype                             { $$ = $1; }
+|     btype "->" type                   { $$ = make_type_app("Function",{$1,$3});  }
 
-type_tup_args: type               { $$.push_back({"",$1});}
-|              type_tup_args "," type  { $$ = $1; $$.push_back({"",$3});}
+btype: atype                            { $$ = $1; }
+|      atype "<" type_tup_args ">"      { $$ = make_type_app($1, $3); }
+
+atype: varid                            { $$ = ptree($1); }
+|      "(" type ")"                     { $$ = $2; }
+|      "(" type_tup_args "," type ")"   { $2.push_back($4); $$ = make_type_app(ptree("Tuple"),$2); }
+
+type_tup_args: type                     { $$.push_back($1);}
+|              type_tup_args "," type   { $$ = $1; $$.push_back($3);}
 
 
        /* Without the yyerrok, the yyerror seems not to be called at the end of the file, 
@@ -233,4 +240,11 @@ ptree make_function(const std::vector<std::string>& vars, const ptree& body)
     for(auto& var: vars | views::reverse)
 	f = ptree("function",{{"",ptree(var)},{"",f}});
     return f;
+}
+
+ptree make_type_app(ptree type, const std::vector<ptree>& args)
+{
+    for(auto& arg: args)
+	type = ptree("@APP",{{"",type},{"",arg}});
+    return type;
 }

@@ -540,23 +540,26 @@ string unparse_annotated(const ptree& ann)
 
 string unparse_type(const ptree& p)
 {
-    string s = p.get_value<string>();
-    vector<string> args;
-    for(const auto& [_,t]: p)
-	args.push_back( unparse_type(t) );
-    if (s == "Tuple")
-	s = "("+join(args,",")+")";
-    else if (s == "Function")
+    auto [head,args] = get_type_apps(p);
+
+    vector<string> sargs;
+    for(const auto& arg: args)
+	sargs.push_back( unparse_type(arg) );
+
+    if (head == "Tuple")
+	return "("+join(sargs,",")+")";
+    else if (head == "Function")
     {
-	string s1 = args[0];
-	if (p[0].second.get_value<string>() == "Function")
-	    s1 = "(" + s1 + ")";
-	string s2 = args[1];
-	s = s1 + " -> " + s2;
+	assert(sargs.size() == 2);
+
+	if (args[0].size() != 0)
+	    sargs[0] = "(" + sargs[0] + ")";
+	return sargs[0] + " -> " + sargs[1];
     }
     else if (not args.empty())
-	s = s + "<" + join(args,',') + ">";
-    return s;
+	return head.get_value<string>() + "<" + join(sargs,',') + ">";
+    else
+	return head;
 }
 
 string unparse_abbrev(ptree p, int length)

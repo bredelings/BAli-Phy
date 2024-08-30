@@ -376,7 +376,10 @@ set<string> equations::referenced_vars() const
 
 bool is_variable(const ptree& p)
 {
+    if (p.size()) return false;
+
     if (not p.has_value<string>()) return false;
+
     const string& s = p.get_value<string>();
     char first_letter = s[0];
     return (first_letter >= 97 and first_letter <= 122);
@@ -505,26 +508,19 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     else if (is_variable(T2))
 	// 4. var2 = T1
 	return add_condition(T2, T1);
-
-    // 5. If the heads don't match then unification fails
-    if (T1.value != T2.value)
+    else if (T1.size() == 0)
+    {
+	if (T2.size() != 0 or T1.value != T2.value)
+	    valid = false;
+    }
+    else if (T1.size() == 2 and T2.size() == 2)
+    {
+	unify(T1[0].second, T2[0].second) && unify(T1[1].second, T2[1].second);
+    }
+    else
+    {
 	valid = false;
-
-    // 6. If the arity doesn't match then unification fails
-    if (T1.size() != T2.size())
-	valid = false;
-
-    if (not valid) return false;
-
-    // 7. Walk the arguments (children) of the T1 and T2 and unify them.
-    //    -- but unifying things might result in reallocating the vector, and thus invalidating the entries.
-    auto x = T1.begin();
-    auto y = T2.begin();
-    for(int i=0; i<T1.size(); i++, x++, y++)
-	if (not unify(x->second, y->second))
-	    break;
-
-    // 8. If we got here, then we succeeded!
+    }
     return valid;
 }
 
@@ -538,4 +534,40 @@ equations unify(const term_t& T1, const term_t& T2)
     equations E;
     E.unify(T1, T2);
     return E;
+}
+
+std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type)
+{
+    std::vector<term_t> args;
+
+    while(type.size() > 0)
+    {
+	args.push_back(type[1].second);
+	auto next = type[0].second;
+	type = next;
+    }
+    std::reverse(args.begin(), args.end());
+
+    return {type, args};
+}
+
+term_t make_type_app(const term_t& t1, const term_t& t2)
+{
+    return ptree("@APP",{{"",t1},{"",t2}});
+}
+
+term_t make_type_apps(term_t type, const std::vector<term_t>& args)
+{
+    for(auto& arg: args)
+    {
+	auto tmp = type;
+	type = make_type_app(tmp, arg);
+    }
+    return type;
+}
+
+ptree get_type_head(term_t type)
+{
+    auto [head,args] = get_type_apps(type);
+    return head;
 }

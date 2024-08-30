@@ -153,30 +153,32 @@ model_t::model_t(const ptree& d, const set<string>& i, const ptree&t, const std:
 
 bool is_loggable_type(const type_t& type)
 {
-    if (type.get_value<string>() == "String") return true;
+    auto [head,args] = get_type_apps(type);
 
-    else if (type.get_value<string>() == "Int") return true;
+    if (head == "String") return true;
 
-    else if (type.get_value<string>() == "Double") return true;
+    else if (head == "Int") return true;
 
-    else if (type.get_value<string>() == "DiscreteDistribution")
+    else if (head == "Double") return true;
+
+    else if (head == "DiscreteDistribution")
     {
-        if (type.size() != 1) return false;
+        if (args.size() != 1) return false;
 
-        return is_loggable_type(type[0].second);
+        return is_loggable_type(args[0]);
     }
 
-    else if (type.get_value<string>() == "List")
+    else if (head == "List")
     {
-        if (type.size() != 1) return false;
+        if (args.size() != 1) return false;
 
-        return is_loggable_type(type[0].second);
+        return is_loggable_type(args[0]);
     }
 
-    else if (type.get_value<string>() == "Tuple")
+    else if (head == "Tuple")
     {
-        for(auto& [_,type2]: type)
-            if (not is_loggable_type(type2)) return false;
+        for(auto& arg: args)
+            if (not is_loggable_type(arg)) return false;
         return true;
     }
 
@@ -760,7 +762,8 @@ void perform_action_simplified(translation_result_t& block, const var& x, const 
 
 void generated_code_t::log_value(const string& name, expression_ref value, const type_t& type)
 {
-    if (type.get_value<string>() == "DiscreteDistribution" and type[0].second.get_value<string>() == "Double")
+    auto [head,args] = get_type_apps(type);
+    if (head == "DiscreteDistribution" and args[0] == "Double")
     {
 	value = {var("sortDist"),value};
     }
@@ -1519,7 +1522,14 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
         lambda_vars.push_back(x);
     }
 
-    return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
+    set<ptree> constraints;
+    for(auto constraint: equations.get_constraints())
+    {
+	substitute(equations, constraint);
+	constraints.insert(constraint);
+    }
+
+    return get_model(R, required_type, constraints, model, names_in_scope);
 }
 
 /*

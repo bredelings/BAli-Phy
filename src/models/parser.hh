@@ -59,11 +59,12 @@
   namespace views = ranges::views;
 
   ptree make_function(const std::vector<std::string>& vars, const ptree& body);
+  ptree make_type_app(ptree type, const std::vector<ptree>& args);
 
   class zz_driver;
 
 
-#line 67 "parser.hh"
+#line 68 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -212,7 +213,7 @@
 
 #line 6 "parser.y"
 namespace zz {
-#line 216 "parser.hh"
+#line 217 "parser.hh"
 
 
 
@@ -443,6 +444,8 @@ namespace zz {
       // ditem
       // literal
       // type
+      // btype
+      // atype
       char dummy3[sizeof (ptree)];
 
       // def
@@ -457,15 +460,17 @@ namespace zz {
       // varid
       char dummy5[sizeof (std::string)];
 
+      // type_tup_args
+      char dummy6[sizeof (std::vector<ptree>)];
+
       // defs
       // ditems
       // args
       // tup_args
-      // type_tup_args
-      char dummy6[sizeof (std::vector<std::pair<std::string,ptree>>)];
+      char dummy7[sizeof (std::vector<std::pair<std::string,ptree>>)];
 
       // varids
-      char dummy7[sizeof (std::vector<std::string>)];
+      char dummy8[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -620,7 +625,9 @@ namespace zz {
         S_varid = 49,                            // varid
         S_literal = 50,                          // literal
         S_type = 51,                             // type
-        S_type_tup_args = 52                     // type_tup_args
+        S_btype = 52,                            // btype
+        S_atype = 53,                            // atype
+        S_type_tup_args = 54                     // type_tup_args
       };
     };
 
@@ -671,6 +678,8 @@ namespace zz {
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
         value.move< ptree > (std::move (that.value));
         break;
 
@@ -688,11 +697,14 @@ namespace zz {
         value.move< std::string > (std::move (that.value));
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<ptree> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-      case symbol_kind::S_type_tup_args: // type_tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (std::move (that.value));
         break;
 
@@ -794,6 +806,20 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ptree>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ptree>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<std::pair<std::string,ptree>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -859,6 +885,8 @@ switch (yykind)
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
         value.template destroy< ptree > ();
         break;
 
@@ -876,11 +904,14 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.template destroy< std::vector<ptree> > ();
+        break;
+
       case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-      case symbol_kind::S_type_tup_args: // type_tup_args
         value.template destroy< std::vector<std::pair<std::string,ptree>> > ();
         break;
 
@@ -1931,8 +1962,8 @@ switch (yykind)
     enum
     {
       yylast_ = 234,     ///< Last index in yytable_.
-      yynnts_ = 18,  ///< Number of nonterminal symbols.
-      yyfinal_ = 32 ///< Termination state number.
+      yynnts_ = 20,  ///< Number of nonterminal symbols.
+      yyfinal_ = 34 ///< Termination state number.
     };
 
 
@@ -2015,6 +2046,8 @@ switch (yykind)
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
         value.copy< ptree > (YY_MOVE (that.value));
         break;
 
@@ -2032,11 +2065,14 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.copy< std::vector<ptree> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-      case symbol_kind::S_type_tup_args: // type_tup_args
         value.copy< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (that.value));
         break;
 
@@ -2089,6 +2125,8 @@ switch (yykind)
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
         value.move< ptree > (YY_MOVE (s.value));
         break;
 
@@ -2106,11 +2144,14 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<ptree> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-      case symbol_kind::S_type_tup_args: // type_tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (s.value));
         break;
 
@@ -2185,7 +2226,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2189 "parser.hh"
+#line 2230 "parser.hh"
 
 
 

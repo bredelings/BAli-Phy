@@ -589,13 +589,15 @@ compute_logged_quantities(do_block& model,
 
 bool is_reversible(const ptree& t)
 {
-    if (t.get_value<string>() == "RevCTMC")
+    return true;
+
+    if (get_type_head(t) == "RevCTMC")
 	return true;
-    else if (t.get_value<string>() == "CTMC")
+    else if (get_type_head(t) == "CTMC")
 	return false;
-    else if (t.get_value<string>() == "MixtureModel")
+    else if (get_type_head(t) == "MixtureModel")
 	return is_reversible(t[0].second);
-    else if (t.get_value<string>() == "MultiMixtureModel")
+    else if (get_type_head(t) == "MultiMixtureModel")
 	return is_reversible(t[0].second);
     else
 	throw myexception()<<"is_reversible: unrecognized type "<<unparse_type(t)<<"!";

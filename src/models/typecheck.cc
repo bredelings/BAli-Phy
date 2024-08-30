@@ -22,9 +22,11 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     if (E)
 	return E;
 
-    if (t2.get_value<string>() == "Double")
+    auto [head2,args2] = get_type_apps(t2);
+
+    if (head2 == "Double")
     {
-	t2.put_value("Int");
+	t2 = ptree("Int");
 	E = convertible_to(model, t1, t2);
 	if (E)
 	{
@@ -35,12 +37,10 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	}
     }
     // List<(a,Double)> -> DiscreteDistribution a
-    else if (t2.get_value<string>() == "DiscreteDistribution")
+    else if (head2 == "DiscreteDistribution" and args2.size() == 1)
     {
-	auto a = t2[0].second;
-	ptree Double = ptree("Double");
-	auto Tuple = ptree("Tuple",{{"",a},{"",Double}});
-	t2 = ptree("List",{{"",Tuple}});
+	auto a = args2[0];
+	t2 = make_type_app("List", make_type_apps("Tuple",{a,"Double"}));
 
 	E = convertible_to(model, t1, t2);
 	if (E)
@@ -51,9 +51,11 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    model = result;
 	}
     }
-    else if (t2.get_value<string>() == "MultiMixtureModel")
+    else if (head2 == "MultiMixtureModel" and args2.size() == 1)
     {
-	t2.put_value("MixtureModel");
+	auto a = args2[0];
+	t2 = make_type_app("MixtureModel",a);
+
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
@@ -63,9 +65,11 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    model = result;
 	}
     }
-    else if (t2.get_value<string>() == "MixtureModel")
+    else if (head2 == "MixtureModel" and args2.size() == 1)
     {
-	t2.put_value("RevCTMC");
+	auto a = args2[0];
+	t2 = make_type_app("CTMC",a);
+
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
@@ -74,22 +78,11 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    result.push_back({"submodel",model});
 	    model = result;
 	}
-	else
-	{
-	    t2.put_value("CTMC");
-	    E = convertible_to(model,t1,t2);
-	    if (E)
-	    {
-		ptree result;
-		result.put_value("unit_mixture");
-		result.push_back({"submodel",model});
-		model = result;
-	    }
-	}
     }
-    else if (t2.get_value<string>() == "RevCTMC")
+    else if (head2 == "CTMC" and args2.size() == 1)
     {
-	t2.put_value("ExchangeModel");
+	auto a = args2[0];
+	t2 = make_type_app("ExchangeModel", a);
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
@@ -357,10 +350,10 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     for(auto& [var,type]: type_for_binder)
         extend_modify_scope(scope2, var, type);
 
-    auto b = fv_state.get_fresh_type_var("a");
+    auto b = fv_state.get_fresh_type_var("b");
 
     // 1. Unify required type with (a -> b)
-    auto ftype = ptree("Function",{ {"",a},{"",b} });
+    auto ftype = make_type_apps("Function",{a,b});
     equations E = unify(ftype, required_type);
     if (not E)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
@@ -392,18 +385,17 @@ typecheck_and_annotate_tuple(const Rules& R, const ptree& required_type, const p
 
     auto name = model.get_value<string>();
 
-    if (name != "Tuple") return {}; //Tuple[x,y,z,...]
+    if (name != "Tuple") return {}; //Tuple(x,y,z,...)
 
-    // 1. Unify required type with Tuple[a,b,c,...]
+    // 1. Unify required type with Tuple(a,b,c,...)
 
     vector<ptree> element_types;
-    ptree tuple_type("Tuple",{});
     for(int i=0;i<model.size();i++)
     {
         auto a = fv_state.get_fresh_type_var("a");
-        tuple_type.push_back({"",a});
         element_types.push_back(a);
     }
+    auto tuple_type = make_type_apps("Tuple",element_types);
 
     equations E = unify(tuple_type, required_type);
     if (not E)
@@ -446,7 +438,7 @@ typecheck_and_annotate_list(const Rules& R, const ptree& required_type, const pt
 
     auto a = fv_state.get_fresh_type_var("a");
 
-    auto list_type = ptree("List",{ {"",a} });
+    auto list_type = make_type_app("List",a);
     equations E = unify(list_type, required_type);
     if (not E)
     {
@@ -698,7 +690,8 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
         {
             auto scope3 = scope;
             scope3.args = arg_env;
-            auto [alphabet_value2, E_alphabet] = typecheck_and_annotate(R, arg_required_type, *alphabet_expression, fv_state, scope3);
+	    auto alphabet_required_type = fv_state.get_fresh_type_var("a");
+            auto [alphabet_value2, E_alphabet] = typecheck_and_annotate(R, alphabet_required_type, *alphabet_expression, fv_state, scope3);
             E = E && E_alphabet;
             if (not E)
                 throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";

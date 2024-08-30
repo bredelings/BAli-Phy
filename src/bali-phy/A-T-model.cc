@@ -511,11 +511,6 @@ model_t get_smodel(const Rules& R, const std::string& model, const string& what)
                                                      {"branch_categories",{"branch_categories","List<Int>"}}};
 
     try {
-        return get_model(R, "RevCTMC<a>", model, what, {}, smodel_states);
-    }
-    catch (myexception& e) {};
-
-    try {
         return get_model(R, "CTMC<a>", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
@@ -557,17 +552,16 @@ int get_num_models(const vector<optional<int>>& mapping)
 
 string get_alphabet_type(ptree type)
 {
-    if (type.get_value<string>() == "MixtureModel" or type.get_value<string>() == "MultiMixtureModel")
-    {
-	ptree tmp = type[0].second;
-	type = tmp;
-    }
+    auto [head,args] = get_type_apps(type);
 
-    ptree alphabet_type;
-    if (type.get_value<string>() == "RevCTMC" or type.get_value<string>() == "CTMC")
-	alphabet_type = type.begin()->second;
-
-    return alphabet_type.get_value<string>();
+    if (head == "MultiMixtureModel")
+	return get_type_head(args[0]);
+    else if (head == "MixtureModel")
+	return get_type_head(args[0]);
+    else if (head == "CTMC")
+	return get_type_head(args[0]);
+    else
+	throw myexception()<<"get_alphabet_type: I don't understand type "<<type.show();
 }
 
 std::vector<string> get_default_alphabet_names(const shared_items<string>& smodel_names_mapping, const vector<model_t>& full_smodels, const shared_items<string>& alphabet_names_mapping)
@@ -622,18 +616,19 @@ std::vector<string> get_default_alphabet_names(const shared_items<string>& smode
         else
         {
             bool triplet_constraint = false;
+            bool doublet_constraint = false;
             for(auto& constraint: constraints)
-                if (constraint.get_value<string>() == "Triplets" and constraint.begin()->second.get_value<string>() == "a")
+	    {
+		auto [head,args] = get_type_apps(constraint);
+                if (head == "Triplets" and args[0] == alphabet_type)
                     triplet_constraint = true;
+                if (head == "Doublets" and args[0] == alphabet_type)
+                    doublet_constraint = true;
+	    }
 
             if (triplet_constraint)
                 for(int j: smodel_names_mapping.partitions_for_item[i])
                     alphabet_names[j] = "Triplets";
-
-            bool doublet_constraint = false;
-            for(auto& constraint: constraints)
-                if (constraint.get_value<string>() == "Doublets" and constraint.begin()->second.get_value<string>() == "a")
-                    doublet_constraint = true;
 
             if (doublet_constraint)
                 for(int j: smodel_names_mapping.partitions_for_item[i])

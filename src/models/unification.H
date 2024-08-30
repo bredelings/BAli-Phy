@@ -87,4 +87,10 @@ bool is_wildcard(const ptree& p);
 
 std::string show(const equations& E);
 
+std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type);
+term_t make_type_app(const term_t& t1, const term_t& t2);
+term_t make_type_apps(term_t type, const std::vector<term_t>& args);
+
+ptree get_type_head(term_t type);
+
 #endif
