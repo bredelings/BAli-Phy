@@ -177,7 +177,8 @@ struct tr_name_scope_t
     set<string> find_type_variables() const;
     optional<ptree> type_for_var(const string& name) const;
     optional<ptree> type_for_arg(const string& name) const;
-    void extend_modify_scope(const string& var, const type_t type);
+    void extend_scope(const string& var, const type_t type);
+    tr_name_scope_t extended_scope(const string& var, const type_t type) const;
 };
 
 set<string> tr_name_scope_t::find_type_variables() const
@@ -210,20 +211,18 @@ optional<ptree> tr_name_scope_t::type_for_arg(const string& name) const
         return {};
 }
 
-void tr_name_scope_t::extend_modify_scope(const string& var, const type_t type)
+void tr_name_scope_t::extend_scope(const string& var, const type_t type)
 {
     if (identifiers.count(var))
         identifiers.erase(var);
     identifiers.insert({var,type});
 }
 
-tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, const type_t type)
+tr_name_scope_t tr_name_scope_t::extended_scope(const string& var, const type_t type) const
 {
-    auto scope2 = scope;
-    if (scope2.identifiers.count(var))
-        scope2.identifiers.erase(var);
-    scope2.identifiers.insert({var,type});
-    return scope2;
+    auto scope = *this;
+    scope.extend_scope(var,type);
+    return scope;
 }
 
 set<string> get_used_args(const ptree& model)
@@ -266,7 +265,7 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     set<string> used_args;
 
     // 1. Analyze the body, forcing it to have the required type
-    auto [body_exp2, E_body] = typecheck_and_annotate(R, required_type, body_exp, fv_state, extend_scope(scope, var_name, a));
+    auto [body_exp2, E_body] = typecheck_and_annotate(R, required_type, body_exp, fv_state, scope.extended_scope(var_name, a));
     used_args = get_used_args(body_exp2);
     E = E && E_body;
     if (not E)
@@ -350,7 +349,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
 
     auto scope2 = scope;
     for(auto& [var,type]: type_for_binder)
-        scope2.extend_modify_scope(var, type);
+        scope2.extend_scope(var, type);
 
     auto b = fv_state.get_fresh_type_var("b");
 
