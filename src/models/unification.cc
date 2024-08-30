@@ -14,7 +14,6 @@ using std::set;
 using std::string;
 using std::optional;
 
-
 bool is_wildcard(const ptree& p)
 {
     return p == "_";
@@ -104,16 +103,30 @@ list<pair<set<string>,optional<term_t>>>::iterator equations::find_record(const 
     std::abort();
 }
 
+bool equations::occurs_check() const
+{
+    for(auto& [vars,value]: values)
+    {
+	if (value)
+	    if (intersects(vars, find_variables_in_type(*value))) return true;
+    }
+    return false;
+}
+
+
 bool equations::add_condition(const string& x, const term_t& T)
 {
     if (is_wildcard(T)) return valid;
-
 
     if (not has_record(x))
     {
 	// Occurs check.
 	auto fvs_T = find_variables_in_type(T);
-	if (fvs_T.count(x)) return false;
+	if (fvs_T.count(x))
+	{
+	    valid = false;
+	    return valid;
+	}
 
 	// Add x = T
 	values.push_back({set<string>{x},T});
@@ -125,7 +138,11 @@ bool equations::add_condition(const string& x, const term_t& T)
 	{
 	    // Occurs check.
 	    auto fvs_T = find_variables_in_type(T);
-	    if (intersects(vars, fvs_T)) return false;
+	    if (intersects(vars, fvs_T))
+	    {
+		valid = false;
+		return valid;
+	    }
 
 	    // Set x = T
 	    value = T;
@@ -138,6 +155,7 @@ bool equations::add_condition(const string& x, const term_t& T)
     for(auto& [names,term]: values)
 	assert(term or names.size() > 1);
 #endif
+    assert(not valid or not occurs_check());
     return valid;
 }
 
@@ -156,7 +174,11 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    auto& [vars,T] = *find_record(x);
 
 	    // Occurs check.
-	    if (T and find_variables_in_type(*T).count(y)) return false;
+	    if (T and find_variables_in_type(*T).count(y))
+	    {
+		valid = false;
+		return valid;
+	    }
 
 	    // 3. If x has a record by y does not, then add y to x's record;
 	    vars.insert(y);
@@ -167,7 +189,11 @@ bool equations::add_var_condition(const string& x, const string& y)
 	auto& [vars,T] = *find_record(y);
 
 	// Occurs check.
-	if (T and find_variables_in_type(*T).count(x)) return false;
+	if (T and find_variables_in_type(*T).count(x))
+	{
+	    valid = false;
+	    return valid;
+	}
 
 	// 4. If y has a record by x does not, then add x to y's record;
 	vars.insert(x);
@@ -178,31 +204,40 @@ bool equations::add_var_condition(const string& x, const string& y)
 	auto yrec = find_record(y);
 
 	// If the two variables are already equal then we are done
-	if (xrec == yrec)
-	    return valid;
+	if (xrec == yrec) return valid;
+
 	// Otherwise we need to merge the two records
-	else
+
+	// Keep the one with the body
+	if (yrec->second and not xrec->second)
+	    std::swap(xrec,yrec);
+
+	// Add the variables in y's record to x's record.
+	add(xrec->first, yrec->first);
+	// Do an occurs check.
+	if (xrec->second and intersects(xrec->first, find_variables_in_type(*xrec->second)))
 	{
-	    // Add the variables in y's record to x's record.
-	    add(xrec->first, yrec->first);
-	    // Save the body in the y record.
-	    auto y_body = yrec->second;
-	    // Remove the y record
-	    values.erase(yrec);
+	    valid = false;
+	    return valid;
+	}
 
-	    // If x doesn't have a value, then just use y's value;
-	    if (not xrec->second)
-		xrec->second = y_body;
-	    // Otherwise unify the two values
-	    else if (y_body)
-		unify(*xrec->second, *y_body);
+	// Save the body of the y record.
+	auto y_body = yrec->second;
+	// Remove the y record
+	values.erase(yrec);
 
+        // If both records have a body, then unify them.
+	if (y_body)
+	{
+	    assert(xrec->second);
+	    unify(*xrec->second, *y_body);
 	}
     }
 #ifndef NDEBUG
     for(auto& [names,term]: values)
 	assert(term or names.size() > 1);
 #endif
+    assert(not valid or not occurs_check());
     return valid;
 }
 
