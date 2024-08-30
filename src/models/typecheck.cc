@@ -192,6 +192,7 @@ struct tr_name_scope_t
     optional<pair<ptree,equations>> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
     pair<ptree,equations> typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
     pair<ptree, equations> typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
+    pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern) const;
 
     tr_name_scope_t(const Rules& r, const FVSource& fv)
 	:R(r),fv_source(fv)
@@ -310,11 +311,11 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     return {{model2,E}};
 }
 
-pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, const FVSource& fv_state)
+pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& pattern) const
 {
     if (is_nontype_variable(pattern))
     {
-        auto type = fv_state.get_fresh_type_var("p");
+        auto type = get_fresh_type_var("p");
         return {type,{{string(pattern),type}}};
     }
     else if (is_tuple(pattern))
@@ -323,7 +324,7 @@ pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, const FVSourc
         map<string,ptree> var_to_type;
         for(auto& [_,value]: pattern)
         {
-            auto [slot_type, slot_vars] = parse_pattern(value, fv_state);
+            auto [slot_type, slot_vars] = parse_pattern(value);
             type.push_back(pair(string(""),slot_type));
             for(auto& [var_name,var_type]: slot_vars)
             {
@@ -360,7 +361,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
     // 0. Compute the type (a -> b) of the function.
 
     // This generates fresh type variables and adds them to fv_state.
-    auto [a, type_for_binder] = parse_pattern(model[0].second, fv_source);
+    auto [a, type_for_binder] = parse_pattern(model[0].second);
 
     auto scope2 = *this;
     for(auto& [var,type]: type_for_binder)
