@@ -1,6 +1,6 @@
 {
     "name": "mut_sel_aa",
-    "result_type": "RevCTMC<Codons<a>>",
+    "result_type": "CTMC<Codons<a>>",
     "synonyms": ["mut_sel0"],
     "constraints": ["Nucleotides<a>"],
     "title": "Mutation-selection model with fitness values for amino-acids",
@@ -9,7 +9,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "RevCTMC<Codons<a>>",
+            "type": "CTMC<Codons<a>>",
 	    "description": "Model of neutral mutation"
         },
         {

@@ -1,6 +1,6 @@
 {
     "name": "rna_edit",
-    "result_type": "RevCTMC<Doublets<a>>",
+    "result_type": "CTMC<Doublets<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
     "call": "siteEdit(@a,@submodel,@rna_rate,@edits)",
@@ -8,7 +8,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "RevCTMC<b>",
+            "type": "CTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },

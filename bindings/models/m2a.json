@@ -1,13 +1,13 @@
 {
     "name": "m2a",
     "synonyms": ["M2a"],
-    "result_type": "MixtureModel<a<Codons<b>>>",
+    "result_type": "MixtureModel<Codons<a>>",
     "call": "SModel.m2a(@omega0,@p0,@posP,@posW,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "Double -> a<Codons<b>>",
+            "type": "Double -> CTMC<Codons<a>>",
             "default_value": "|w:gy94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },

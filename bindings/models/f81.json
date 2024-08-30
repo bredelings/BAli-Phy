@@ -1,7 +1,7 @@
 {
     "name": "f81",
     "synonyms": ["F81"],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "call": "f81(frequencies_from_dict(@a,@pi),@a)",
     "import": ["SModel"],
     "args": [

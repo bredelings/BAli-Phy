@@ -6,7 +6,7 @@
     "args": [
         {
             "name": "q",
-            "type": "RevCTMC<a>"
+            "type": "CTMC<a>"
         }
     ]
 }

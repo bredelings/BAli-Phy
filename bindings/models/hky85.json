@@ -2,7 +2,7 @@
     "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "deprecated-synonyms": ["HKY","hky","HKY85"],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
 		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",

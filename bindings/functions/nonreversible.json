@@ -6,7 +6,7 @@
     "args": [
         {
             "name": "x",
-            "type": "RevCTMC<a>"
+            "type": "CTMC<a>"
         }
     ],
     "title": "The exponential function"

@@ -1,13 +1,13 @@
 {
     "name": "m3",
     "synonyms": ["M3"],
-    "result_type": "MixtureModel<a<Codons<b>>>",
+    "result_type": "MixtureModel<Codons<a>>",
     "call": "SModel.m3(@omegaDist,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "Double -> a<Codons<b>>",
+            "type": "Double -> CTMC<Codons<a>>",
             "default_value": "|w:gy94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },

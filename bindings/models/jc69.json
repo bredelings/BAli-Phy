@@ -1,7 +1,7 @@
 {
     "name": "jc69",
     "deprecated-synonyms": ["JC","jc","JC69"],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "call": "jukes_cantor(@a)",
     "import": ["SModel"],
     "args": [

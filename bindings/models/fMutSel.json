@@ -1,12 +1,12 @@
 {
     "name": "fMutSel",
-    "result_type": "RevCTMC<Codons<a>>",
+    "result_type": "CTMC<Codons<a>>",
     "call": "SModel.fMutSel'(@a,@ss,@omega,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "RevCTMC<a>",
+            "type": "CTMC<a>",
             "default_value": "gtr",
 	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"

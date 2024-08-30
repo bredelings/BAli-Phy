@@ -2,7 +2,7 @@
     "name": "RNA.m16a",
     "synonyms": ["shh01_m16a","RNA.shh01_m16a"],
     "constraints": [ "Doublets<a,b>" ],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
     "call": "rna_stem_16a(@a,@aS,@aD,@b,@g,@e,frequencies_from_dict(@a,@pi))",
     "import": ["SModel"],

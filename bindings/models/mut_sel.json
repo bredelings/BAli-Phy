@@ -1,13 +1,13 @@
 {
     "name": "mut_sel",
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
     "title": "Mutation-selection model with fitness values for codons",
     "args": [
         {
             "name": "submodel",
-            "type": "RevCTMC<a>",
+            "type": "CTMC<a>",
 	    "description": "Model of neutral mutation"
         },
         {

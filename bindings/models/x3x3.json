@@ -1,32 +1,32 @@
 {
     "name": "x3x3",
-    "constraints": [ "Triplets<a,b>" ],
-    "result_type": "RevCTMC<a>",
+    "constraints": [ "Triplets<t,n>" ],
+    "result_type": "CTMC<t>",
     "title": "Rate matrix constructed from rate matrices on each triplet position",
     "call": "SModel.x3x3(@a,@rates1,@rates2,@rates3)",
     "import": ["SModel"],
     "args": [
         {
             "name": "rates1",
-            "type": "RevCTMC<b>",
+            "type": "CTMC<n>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 1"
         },
         {
             "name": "rates2",
-            "type": "RevCTMC<b>",
+            "type": "CTMC<n>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 2"
         },
         {
             "name": "rates3",
-            "type": "RevCTMC<b>",
+            "type": "CTMC<n>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 3"
         },
         {
             "name": "a",
-            "type": "a",
+            "type": "t",
             "default_value": "get_state(alphabet)",
 	    "description": "The Triplets alphabet"
         }

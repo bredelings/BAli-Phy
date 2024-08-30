@@ -1,13 +1,13 @@
 {
     "name": "mg94_ext",
-    "result_type": "RevCTMC<Codons<a>>",
-    "constraints": ["Nucleotides<a>"],
+    "result_type": "CTMC<Codons<n>>",
+    "constraints": ["Nucleotides<n>"],
     "call": "mg94_ext(@a,@omega,@nuc_model)",
     "import": ["SModel"],
     "args": [
         {
             "name": "nuc_model",
-            "type": "RevCTMC<a>",
+            "type": "CTMC<n>",
             "alphabet": "getNucleotides(@a)",
             "description": "Nucleotide substitution rate matrix"
         },
@@ -19,7 +19,7 @@
         },
         {
             "name": "a",
-            "type": "a",
+            "type": "Codons<n>",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }

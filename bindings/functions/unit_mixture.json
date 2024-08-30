@@ -8,7 +8,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "a"
+            "type": "CTMC<a>"
         }
     ]
 }

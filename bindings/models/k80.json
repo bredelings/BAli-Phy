@@ -3,7 +3,7 @@
     "title": "The Kimura (1980) rate matrix",
     "synonyms": ["k2p"],
     "deprecated-synonyms": ["K80","K2P"],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "constraints": ["Nucleotides<a>"],
     "call": "k80(@a,@kappa)",
     "import": ["SModel"],

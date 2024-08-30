@@ -1,7 +1,7 @@
 {
     "name": "f",
     "synonyms": ["F"],
-    "result_type": "RevCTMC<a>",
+    "result_type": "CTMC<a>",
     "call": "SModel.plus_f'(@a,@pi,@submodel)",
     "import": ["SModel"],
     "args": [

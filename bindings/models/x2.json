@@ -1,6 +1,6 @@
 {
     "name": "x2",
-    "result_type": "RevCTMC<Doublets<a>>",
+    "result_type": "CTMC<Doublets<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "Rate matrix on doublets constructed from nucleotide rates",
     "call": "SModel.x2(@a,@submodel)",
@@ -8,7 +8,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "RevCTMC<b>",
+            "type": "CTMC<b>",
             "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },

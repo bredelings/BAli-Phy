@@ -1,8 +1,8 @@
 {
     "name": "mg94",
     "deprecated-synonyms": ["MG94"],
-    "result_type": "RevCTMC<Codons<a>>",
-    "constraints": ["Nucleotides<a>"],
+    "result_type": "CTMC<Codons<n>>",
+    "constraints": ["Nucleotides<n>"],
     "title": "The Muse & Gaut (1994) model of dN/dS.",
     "call": "mg94(@a,frequencies_from_dict(getNucleotides(@a),@pi),@omega)",
     "import": ["SModel","Bio.Alphabet"],
@@ -21,7 +21,7 @@
         },
         {
             "name": "a",
-            "type": "a",
+            "type": "Codons<n>",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
