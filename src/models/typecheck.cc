@@ -186,7 +186,7 @@ struct tr_name_scope_t
     void extend_scope(const string& var, const type_t type);
     tr_name_scope_t extended_scope(const string& var, const type_t type) const;
     optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
@@ -348,7 +348,7 @@ pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& patte
 }
 
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -379,18 +379,18 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
 
     // 1. Unify required type with (a -> b)
     auto ftype = make_type_apps("Function",{a,b});
-    equations E = unify(ftype, required_type);
-    if (not E)
+    eqs = unify(ftype, required_type);
+    if (not eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
     // 2. Analyze the body, forcing it to have type (b)
-    if (auto btype = E.value_of_var(b))
+    if (auto btype = eqs.value_of_var(b))
         b = *btype;
 
     auto [body_exp2, E_body] =  scope2.typecheck_and_annotate(b, body_exp);
-    E = E && E_body;
+    eqs = eqs && E_body;
     auto used_args = get_used_args(body_exp2);
-    if (not E)
+    if (not eqs)
         throw myexception()<<"Expression '"<<unparse(model)<<"' is not of required type "<<unparse_type(required_type)<<"!";
 
     // 3. Create the new model tree with args in correct order
@@ -400,7 +400,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {{model2,E}};
+    return {model2};
 }
 
 optional<pair<ptree,equations>>
@@ -773,7 +773,9 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
     }
 
     else if (auto lambda = typecheck_and_annotate_lambda(required_type, model))
-        return *lambda;
+    {
+        return {*lambda, eqs};
+    }
 
     else if (auto list = typecheck_and_annotate_list(required_type, model))
         return *list;
