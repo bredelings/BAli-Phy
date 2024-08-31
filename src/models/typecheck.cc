@@ -187,8 +187,8 @@ struct tr_name_scope_t
     tr_name_scope_t extended_scope(const string& var, const type_t type) const;
     optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
     optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
     optional<ptree> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
     optional<ptree> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
     optional<ptree> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
@@ -403,7 +403,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
     return {model2};
 }
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -422,8 +422,8 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     }
     auto tuple_type = make_type_apps("Tuple",element_types);
 
-    equations E = unify(tuple_type, required_type);
-    if (not E)
+    eqs = unify(tuple_type, required_type);
+    if (not eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
     // 2. Analyze the body, forcing it to have type (b)
@@ -433,11 +433,11 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     {
         auto element = array_index(model,i);
         auto element_required_type = element_types[i];
-        substitute(E, element_required_type);
+        substitute(eqs, element_required_type);
         auto [element2, E_element] =  typecheck_and_annotate(element_required_type, element);
         add(used_args, get_used_args(element2));
-        E = E && E_element;
-        if (not E)
+        eqs = eqs && E_element;
+        if (not eqs)
             throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
         element2.push_back({"is_default_value",ptree(false)}); // Do we need to add this annotation?
         model2.push_back({"",element2});
@@ -447,10 +447,10 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {{model2,E}};
+    return {model2};
 }
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -464,14 +464,15 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
     auto a = get_fresh_type_var("a");
 
     auto list_type = make_type_app("List",a);
-    equations E = unify(list_type, required_type);
-    if (not E)
+    eqs = unify(list_type, required_type);
+    if (not eqs)
     {
 	auto model2 = model;
 	if (convertible_to(model2, list_type, required_type))
 	{
 	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-	    return {{model3, E}};
+	    eqs = E;
+	    return {model3};
 	}
 	else
 	    throw myexception()<<"Expected '"<<unparse_type(required_type)<<"', but got '"<<unparse_type(list_type)<<"'!";
@@ -483,11 +484,11 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
     for(auto& [_,element]: model)
     {
         auto element_required_type = a;
-        substitute(E, element_required_type);
+        substitute(eqs, element_required_type);
         auto [element2, E_element] =  typecheck_and_annotate(element_required_type, element);
         add(used_args, get_used_args(element2));
-        E = E && E_element;
-        if (not E)
+        eqs = eqs && E_element;
+        if (not eqs)
             throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
         element2.push_back({"is_default_value",ptree(false)}); // Do we need to add this annotation?
         model2.push_back({"",element2});
@@ -497,7 +498,7 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {{model2,E}};
+    return {model2};
 }
 
 optional<ptree>
@@ -781,10 +782,14 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
     }
 
     else if (auto list = typecheck_and_annotate_list(required_type, model))
-        return *list;
+    {
+        return {*list, eqs};
+    }
 
     else if (auto tuple = typecheck_and_annotate_tuple(required_type, model))
-        return *tuple;
+    {
+        return {*tuple, eqs};
+    }
 
     else if (auto get_state = typecheck_and_annotate_get_state(required_type, model))
     {
