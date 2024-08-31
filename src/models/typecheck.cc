@@ -175,9 +175,11 @@ struct tr_name_scope_t
     optional<map<string,ptree>> args;
     map<string,ptree> state;
     const FVSource& fv_source;
+    mutable equations eqs;
 
     term_t get_fresh_type_var(const std::string& s) const { return fv_source.get_fresh_type_var(s);}
 
+    tr_name_scope_t copy_no_equations() const;
     set<string> find_type_variables() const;
     optional<ptree> type_for_var(const string& name) const;
     optional<ptree> type_for_arg(const string& name) const;
@@ -198,6 +200,13 @@ struct tr_name_scope_t
 	:R(r),fv_source(fv)
     { }
 };
+
+tr_name_scope_t tr_name_scope_t::copy_no_equations() const
+{
+    auto scope2 = *this;
+    scope2.eqs.clear();
+    return scope2;
+}
 
 set<string> tr_name_scope_t::find_type_variables() const
 {
