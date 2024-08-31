@@ -34,7 +34,7 @@ const string trailing_args_separator = "--";
 namespace fs = std::filesystem;
 
 const std::regex rgx_simple( R""(:([^ \t]+)[ \t]+([^ \t"][^ \t]*)[ \t]*)"" );
-const std::regex rgx_quoted( R""(:([^ \t]+)[ \t]+"(.*)"[ \t]*)"" );
+const std::regex rgx_quoted( R""(:([^ \t]+)[ \t]+"(([^\\"]|\\.)*)"[ \t]*)"" );
 const std::regex rgx_no_arg( R""(:([^ \t]+)[ \t]*)"" );
 const std::regex rgx_comment( R""([ \t]*#.*)"" );
 
