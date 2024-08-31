@@ -1543,12 +1543,12 @@ void compile_defs(const Rules& R,
 		  const map<string,pair<string,string>>& state)
 {
     // 1. Parse declarations and substitute any default values.
-    auto vars = parse_defs(R, prog);
+    auto decls = parse_defs(R, prog);
 
     // 2. Typecheck.
-    // This should WORK like typecheck_and_annotate_model(let..let..let..???)
-
-    // walk the list, typechecking
+    FVSource fv_source;
+    tr_name_scope_t scope2(R,fv_source);
+    auto decls2 = scope2.typecheck_and_annotate_decls(decls);
 
     // see model/setup.H:get_model( )
     // how does this relate to how we take f(y=g(x)) and turn it into y=g(x);f(y)?

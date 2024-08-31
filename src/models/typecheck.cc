@@ -168,49 +168,17 @@ Rule freshen_type_vars(Rule rule, const FVSource& fv_state)
     return substitute_in_rule_types(renaming, rule);
 }
 
-struct tr_name_scope_t
+ptree convert_to(const equations& eqs, ptree model, type_t type, type_t required_type)
 {
-    const Rules& R;
-    map<string,ptree> identifiers;
-    optional<map<string,ptree>> args;
-    map<string,ptree> state;
-    const FVSource& fv_source;
-    mutable equations eqs;
-
-    term_t get_fresh_type_var(const std::string& s) const { return fv_source.get_fresh_type_var(s);}
-
-    tr_name_scope_t copy_no_equations() const;
-    set<string> find_type_variables() const;
-    optional<ptree> type_for_var(const string& name) const;
-    optional<ptree> type_for_arg(const string& name) const;
-    void extend_scope(const string& var, const type_t type);
-    tr_name_scope_t extended_scope(const string& var, const type_t type) const;
-    optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
-    optional<ptree> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
-    ptree typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
-    ptree typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
-    pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern) const;
-
-    optional<ptree> unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const;
-
-    tr_name_scope_t(const Rules& r, const FVSource& fv)
-	:R(r),fv_source(fv)
-    { }
-};
-
-ptree convert_to(const ptree& model, const type_t& type, const type_t& required_type)
-{
-    auto model2 = model;
-    if (not convertible_to(model2, type, required_type))
+    substitute(eqs, type);
+    substitute(eqs, required_type);
+    if (not (eqs && convertible_to(model, type, required_type)))
+    {
 	throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(type)
 			   <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+    }
 
-    return model2;
+    return model;
 }
 
 optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
@@ -222,7 +190,7 @@ optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type
 	return {};
     }
     else
-	return convert_to(model, type, required_type);
+	return convert_to(eqs, model, type, required_type);
 }
 
 tr_name_scope_t tr_name_scope_t::copy_no_equations() const
@@ -293,6 +261,27 @@ void set_used_args(ptree& model, const set<string>& used_args)
         *p = p_used_args;
     else
         model.push_back({"used_args",p_used_args});
+}
+
+ptree tr_name_scope_t::typecheck_and_annotate_decls(const ptree& decls)
+{
+    set<string> used_args;
+    ptree decls2;
+    
+    for(auto& [name, exp]: decls)
+    {
+	auto a = get_fresh_type_var("a");
+	extend_scope(name,a);
+	auto exp2 = typecheck_and_annotate(a, exp);
+	add(used_args, get_used_args(exp2));
+	if (not eqs)
+	{
+	    substitute(eqs,a);
+	    throw myexception()<<"Expression '"<<unparse_annotated(exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
+	}
+	decls2.push_back({name,exp2});
+    }
+    return decls2;
 }
 
 
