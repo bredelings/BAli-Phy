@@ -215,7 +215,7 @@ ptree convert_to(const ptree& model, const type_t& type, const type_t& required_
 
 optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
 {
-    auto tmp_eqs = unify(type, required_type);
+    auto tmp_eqs = eqs && unify(type, required_type);
     if (tmp_eqs)
     {
 	eqs = tmp_eqs;
@@ -404,7 +404,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
 
     // 1. Unify required type with (a -> b)
     auto ftype = make_type_apps("Function",{a,b});
-    eqs = unify(ftype, required_type);
+    eqs = eqs && unify(ftype, required_type);
     if (not eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
@@ -447,7 +447,7 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     }
     auto tuple_type = make_type_apps("Tuple",element_types);
 
-    eqs = unify(tuple_type, required_type);
+    eqs = eqs && unify(tuple_type, required_type);
     if (not eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
@@ -524,7 +524,7 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
     if (not state.count(state_name))
         throw myexception()<<"translate: no state '"<<state_name<<"'!";
     auto result_type = state.at(state_name);
-    auto eqs = unify(result_type, required_type);
+    eqs = eqs && unify(result_type, required_type);
     if (not eqs)
         throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
 
@@ -726,8 +726,6 @@ ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_typ
 
 ptree tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree& model) const
 {
-    auto eqs_orig = eqs;
-
     ptree result;
     // 1. Get result type and the rule, if there is one.
     if (auto constant = typecheck_and_annotate_constant(required_type, model))
@@ -753,8 +751,6 @@ ptree tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const 
 
     else
 	result = typecheck_and_annotate_function(required_type, model);
-
-    eqs = eqs_orig && eqs;
 
     return result;
 }
