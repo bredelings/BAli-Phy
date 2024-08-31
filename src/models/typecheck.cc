@@ -341,7 +341,7 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {model2};
+    return model2;
 }
 
 pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& pattern) const
@@ -425,7 +425,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {model2};
+    return model2;
 }
 
 optional<ptree>
@@ -471,7 +471,7 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {model2};
+    return model2;
 }
 
 optional<ptree>
@@ -535,7 +535,7 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2,{});
 
-    return {model2};
+    return model2;
 }
 
 optional<ptree>
@@ -573,7 +573,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
     auto model2 = ptree({{"value",model},{"type",result_type}});
     set_used_args(model2, used_args);
 
-    return {model2};
+    return model2;
 }
 
 optional<ptree>
@@ -610,7 +610,7 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
     auto model2 = ptree({{"value",model},{"type",result_type}});
     set_used_args(model2,{});
 
-    return {model2};
+    return model2;
 }
 
 ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
