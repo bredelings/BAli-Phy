@@ -197,10 +197,34 @@ struct tr_name_scope_t
     ptree typecheck_and_annotate2(const ptree& required_type, const ptree& model) const;
     pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern) const;
 
+    optional<ptree> unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const;
+
     tr_name_scope_t(const Rules& r, const FVSource& fv)
 	:R(r),fv_source(fv)
     { }
 };
+
+ptree convert_to(const ptree& model, const type_t& type, const type_t& required_type)
+{
+    auto model2 = model;
+    if (not convertible_to(model2, type, required_type))
+	throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(type)
+			   <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+
+    return model2;
+}
+
+optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
+{
+    auto tmp_eqs = unify(type, required_type);
+    if (tmp_eqs)
+    {
+	eqs = tmp_eqs;
+	return {};
+    }
+    else
+	return convert_to(model, type, required_type);
+}
 
 tr_name_scope_t tr_name_scope_t::copy_no_equations() const
 {
@@ -460,24 +484,11 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
 
     if (name != "List") return {}; //List[x,y,z,...]
 
-    // 1. Unify required type with (a -> b)
-
+    // 1. Unify required type or add conversion function.
     auto a = get_fresh_type_var("a");
-
     auto list_type = make_type_app("List",a);
-    eqs = unify(list_type, required_type);
-    if (not eqs)
-    {
-	auto model2 = model;
-	if (convertible_to(model2, list_type, required_type))
-	{
-	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-	    eqs = E;
-	    return {model3};
-	}
-	else
-	    throw myexception()<<"Expected '"<<unparse_type(required_type)<<"', but got '"<<unparse_type(list_type)<<"'!";
-    }
+    if (auto model2 = unify_or_convert(model, list_type, required_type))
+	return typecheck_and_annotate2(required_type, *model2);
 
     // 2. Analyze the body, forcing it to have type (b)
     set<string> used_args;
@@ -498,7 +509,7 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {model2};
+    return model2;
 }
 
 optional<ptree>
@@ -551,8 +562,9 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
     else
         return {};
 
-    // 2. Unify required type with rule result type
-    eqs = unify(result_type, required_type);
+    // 2. Unify required type or add conversion function.
+    if (auto model2 = unify_or_convert(model, result_type, required_type))
+	return typecheck_and_annotate2(required_type, *model2);
 
     // 3. Attempt a conversion if the result_type and the required_type don't match.
     if (not eqs)
