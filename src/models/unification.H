@@ -34,6 +34,8 @@ class equations
     void remove_record_for(const std::string& x);
 
 public:
+    void clear();
+
     bool occurs_check() const;
 
     friend void substitute(const equations& E, term_t& T);

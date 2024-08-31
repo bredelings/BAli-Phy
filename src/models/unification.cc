@@ -44,6 +44,12 @@ string show(const equations& E)
     return result;
 }
 
+void equations::clear()
+{
+    values.clear();
+    constraints.clear();
+}
+
 bool equations::has_record(const std::string& x) const
 {
     for(auto& [names,term]: values)
