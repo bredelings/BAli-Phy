@@ -185,15 +185,15 @@ struct tr_name_scope_t
     optional<ptree> type_for_arg(const string& name) const;
     void extend_scope(const string& var, const type_t type);
     tr_name_scope_t extended_scope(const string& var, const type_t type) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
-    pair<ptree,equations> typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
-    pair<ptree, equations> typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
+    ptree typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
+    pair<ptree,equations> typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
     pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern) const;
 
     tr_name_scope_t(const Rules& r, const FVSource& fv)
@@ -272,7 +272,7 @@ void set_used_args(ptree& model, const set<string>& used_args)
 }
 
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -286,28 +286,27 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
 
     auto a = get_fresh_type_var("t");
 
-    equations E;
     set<string> used_args;
 
     // 1. Analyze the body, forcing it to have the required type
     auto [body_exp2, E_body] =  extended_scope(var_name, a).typecheck_and_annotate(required_type, body_exp);
     used_args = get_used_args(body_exp2);
-    E = E && E_body;
-    if (not E)
+    eqs = eqs && E_body;
+    if (not eqs)
     {
 	auto required_type2 = required_type;
-	substitute(E, required_type2);
+	substitute(eqs, required_type2);
         throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type2)<<"!";
     }
 
     // 2. Analyze the bound expression with type a
-    substitute(E, a);
+    substitute(eqs, a);
     auto [var_exp2, E_var] = typecheck_and_annotate(a, var_exp);
     add(used_args, get_used_args(var_exp2));
-    E = E && E_var;
-    if (not E)
+    eqs = eqs && E_var;
+    if (not eqs)
     {
-	substitute(E, a);
+	substitute(eqs, a);
         throw myexception()<<"Expression '"<<unparse_annotated(var_exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
     }
 
@@ -317,7 +316,7 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 
-    return {{model2,E}};
+    return {model2};
 }
 
 pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& pattern) const
@@ -628,8 +627,7 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
     return {{model2,E}};
 }
 
-pair<ptree,equations>
-tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
+ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
 {
     assert(model.has_value<string>());
     auto name = model.get_value<string>();
@@ -642,18 +640,19 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
     auto result_type = rule.get_child("result_type");
 
     // 2. Unify required type with rule result type
-    auto E = unify(result_type, required_type);
+    eqs = unify(result_type, required_type);
     for(const auto& constraint: rule.get_child("constraints"))
-        E.add_constraint(constraint.second);
+        eqs.add_constraint(constraint.second);
     
     // 3. Attempt a conversion if the result_type and the required_type don't match.
-    if (not E)
+    if (not eqs)
     {
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
 	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-            return {model3,E};
+	    eqs = E;
+            return model3;
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
@@ -661,7 +660,7 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
     }
 
     // 5.1 Update required type and rules with discovered constraints
-    rule = substitute_in_rule_types(E, rule);
+    rule = substitute_in_rule_types(eqs, rule);
 
     // Create the new model tree with args in correct order
     ptree model2;
@@ -695,7 +694,7 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
 	string arg_name = argument.get<string>("name");
 
 	auto arg_required_type = argument.get_child("type");
-	substitute(E, arg_required_type);
+	substitute(eqs, arg_required_type);
 	ptree arg_value;
 	bool is_default = false;
 	if (model.count(arg_name))
@@ -719,8 +718,8 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
             scope3.args = arg_env;
 	    auto alphabet_required_type = get_fresh_type_var("a");
             auto [alphabet_value2, E_alphabet] = scope3.typecheck_and_annotate(alphabet_required_type, *alphabet_expression);
-            E = E && E_alphabet;
-            if (not E)
+            eqs = eqs && E_alphabet;
+            if (not eqs)
                 throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
             auto alphabet_type = alphabet_value2.get_child("type");
             scope2.state["alphabet"] = alphabet_type;
@@ -730,8 +729,8 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
 	auto [arg_value2, E_arg] = scope2.typecheck_and_annotate(arg_required_type, arg_value);
         if (not is_default)
             add(used_args, get_used_args(arg_value2));
-        E = E && E_arg;
-	if (not E)
+        eqs = eqs && E_arg;
+	if (not eqs)
 	    throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	for(auto& x: argument)
 	    arg_value2.push_back(x);
@@ -749,7 +748,7 @@ tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, con
 
     set_used_args(model2, used_args);
 
-    return {model2,E};
+    return model2;
 }
 
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
@@ -757,6 +756,7 @@ pair<ptree,equations>
 tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree& model) const
 {
     // 1. Get result type and the rule, if there is one.
+    auto scope2 = copy_no_equations();
     type_t result_type;
     if (auto constant = typecheck_and_annotate_constant(required_type, model))
         return *constant;
@@ -765,7 +765,9 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
         return *variable;
 
     else if (auto let = typecheck_and_annotate_let(required_type, model))
-        return *let;
+    {
+        return {*let, eqs};
+    }
 
     else if (auto lambda = typecheck_and_annotate_lambda(required_type, model))
         return *lambda;
@@ -779,7 +781,8 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
     else if (auto get_state = typecheck_and_annotate_get_state(required_type, model))
         return *get_state;
 
-    return typecheck_and_annotate_function(required_type, model);
+    auto func = typecheck_and_annotate_function(required_type, model);
+    return {func, eqs};
 }
 
 std::pair<ptree,equations> typecheck_and_annotate_model(const Rules& R, const ptree& required_type, ptree model,
