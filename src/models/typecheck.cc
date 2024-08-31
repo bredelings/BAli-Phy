@@ -566,22 +566,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
     if (auto model2 = unify_or_convert(model, result_type, required_type))
 	return typecheck_and_annotate2(required_type, *model2);
 
-    // 3. Attempt a conversion if the result_type and the required_type don't match.
-    if (not eqs)
-    {
-        auto model2 = model;
-	if (convertible_to(model2, result_type, required_type))
-        {
-	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-	    eqs = E;
-            return {model3};
-        }
-	else
-	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
-			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
-    }
-
-    // 4. If this is a constant or variable, then we are done here.
+    // 3. If this is a constant or variable, then we are done here.
     if (not model.empty())
         throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
                            <<"' should not have arguments!";
