@@ -290,9 +290,11 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     set<string> used_args;
 
     // 1. Analyze the body, forcing it to have the required type
-    auto [body_exp2, E_body] =  extended_scope(var_name, a).typecheck_and_annotate(required_type, body_exp);
+    auto scope2 = copy_no_equations();
+    scope2.extend_scope(var_name,a);
+    auto body_exp2 =  scope2.typecheck_and_annotate2(required_type, body_exp);
     used_args = get_used_args(body_exp2);
-    eqs = eqs && E_body;
+    eqs = eqs && scope2.eqs;
     if (not eqs)
     {
 	auto required_type2 = required_type;
@@ -394,7 +396,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
         throw myexception()<<"Expression '"<<unparse(model)<<"' is not of required type "<<unparse_type(required_type)<<"!";
 
     // 3. Create the new model tree with args in correct order
-    auto pattern2 = scope2.typecheck_and_annotate(a, pattern).first;
+    auto pattern2 = scope2.typecheck_and_annotate2(a, pattern);
     auto model2 = ptree("function",{{"",pattern2},{"",body_exp2}});
 
     model2 = ptree({{"value",model2},{"type",required_type}});
