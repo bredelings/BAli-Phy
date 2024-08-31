@@ -189,8 +189,8 @@ struct tr_name_scope_t
     optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
     optional<ptree> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
     ptree typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
     pair<ptree,equations> typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
@@ -500,7 +500,7 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
     return {{model2,E}};
 }
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -513,8 +513,8 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
     if (not state.count(state_name))
         throw myexception()<<"translate: no state '"<<state_name<<"'!";
     auto result_type = state.at(state_name);
-    auto E = unify(result_type, required_type);
-    if (not E)
+    auto eqs = unify(result_type, required_type);
+    if (not eqs)
         throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
 
     auto arg = ptree({{"value",ptree(state_name)},{"type","String"}});
@@ -524,10 +524,10 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2,{});
 
-    return {{model2,E}};
+    return {model2};
 }
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
@@ -551,16 +551,17 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
         return {};
 
     // 2. Unify required type with rule result type
-    auto E = unify(result_type, required_type);
+    eqs = unify(result_type, required_type);
 
     // 3. Attempt a conversion if the result_type and the required_type don't match.
-    if (not E)
+    if (not eqs)
     {
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
 	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-            return {{model3,E}};
+	    eqs = E;
+            return {model3};
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
@@ -575,7 +576,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
     auto model2 = ptree({{"value",model},{"type",result_type}});
     set_used_args(model2, used_args);
 
-    return {{model2,E}};
+    return {model2};
 }
 
 optional<ptree>
@@ -765,7 +766,9 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
     }
 
     else if (auto variable = typecheck_and_annotate_var(required_type, model))
-        return *variable;
+    {
+        return {*variable, eqs};
+    }
 
     else if (auto let = typecheck_and_annotate_let(required_type, model))
     {
@@ -784,7 +787,9 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
         return *tuple;
 
     else if (auto get_state = typecheck_and_annotate_get_state(required_type, model))
-        return *get_state;
+    {
+        return {*get_state, eqs};
+    }
 
     auto func = typecheck_and_annotate_function(required_type, model);
     return {func, eqs};
