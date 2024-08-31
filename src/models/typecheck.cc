@@ -191,7 +191,7 @@ struct tr_name_scope_t
     optional<pair<ptree,equations>> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
     optional<pair<ptree,equations>> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
-    optional<pair<ptree,equations>> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
+    optional<ptree> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
     ptree typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
     pair<ptree,equations> typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
     pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern) const;
@@ -578,7 +578,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
     return {{model2,E}};
 }
 
-optional<pair<ptree,equations>>
+optional<ptree>
 tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const
 {
     type_t result_type;
@@ -600,16 +600,17 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
     }
 
     // 2. Unify required type with rule result type
-    auto E = unify(result_type, required_type);
+    eqs = unify(result_type, required_type);
 
     // 3. Attempt a conversion if the result_type and the required_type don't match.
-    if (not E)
+    if (not eqs)
     {
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
 	    auto [model3,E] = typecheck_and_annotate(required_type, model2);
-            return {{model3,E}};
+	    eqs = E;
+            return {model3};
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
@@ -624,7 +625,7 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
     auto model2 = ptree({{"value",model},{"type",result_type}});
     set_used_args(model2,{});
 
-    return {{model2,E}};
+    return {model2};
 }
 
 ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
@@ -759,7 +760,9 @@ tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree&
     auto scope2 = copy_no_equations();
     type_t result_type;
     if (auto constant = typecheck_and_annotate_constant(required_type, model))
-        return *constant;
+    {
+        return {*constant, eqs};
+    }
 
     else if (auto variable = typecheck_and_annotate_var(required_type, model))
         return *variable;
