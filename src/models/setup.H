@@ -10,6 +10,8 @@
 #include "unification.H"                            // for term_t, less
 #include "util/json.hh"                             // for json
 #include "util/ptree.H"                             // for ptree
+#include "models/typecheck.H"
+
 class Rules;
 
 class pretty_model_t
@@ -122,11 +124,14 @@ public:
     model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
-
 json::object convert_to_json(const pretty_model_t& m);
 
-model_t get_model(const Rules& R, ptree required_type, const std::string& model, const std::string& what,
-                  const std::vector<std::pair<std::string,ptree>>& = {},
+TypecheckingState makeTypechecker(const Rules& R,
+				  const std::vector<std::pair<std::string,ptree>>& scope,
+				  const std::map<std::string,std::pair<std::string,ptree>>& state);
+
+model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const std::string& model, const std::string& what,
+		  const std::vector<std::pair<std::string,ptree>>& = {},
                   const std::map<std::string,std::pair<std::string,ptree>>& = {}
     );
 

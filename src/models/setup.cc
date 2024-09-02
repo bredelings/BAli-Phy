@@ -92,7 +92,6 @@
 #include "util/myexception.H"
 #include "models/rules.H"
 #include "models/parse.H"
-#include "models/typecheck.H"
 #include "models/path.H"
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"
@@ -1450,37 +1449,50 @@ void substitute_annotated(const equations& equations, ptree& model)
         substitute_annotated(equations, value);
 }
 
-model_t get_model(const Rules& R, ptree required_type, const string& model_string, const string& what,
-                  const vector<pair<string,ptree>>& scope,
-                  const map<string,pair<string,ptree>>& state)
+TypecheckingState makeTypechecker(const Rules& R,
+				  const vector<pair<string,ptree>>& scope,
+				  const map<string,pair<string,ptree>>& state)
 {
-    auto model_rep = parse(R, model_string, what);
-//    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
+    FVSource fv_source;
 
     map<string,ptree> typed_scope;
     for(auto& [name,type]: scope)
         typed_scope.insert({name, type});
+
     map<string,ptree> typed_state;
     for(auto& [state_name,p]: state)
     {
         auto& [_, var_type] = p;
         typed_state.insert({state_name,var_type});
     }
-    FVSource fv_source;
-    TypecheckingState typechecker(R, fv_source, typed_scope, typed_state);
-    auto model = typechecker.typecheck_and_annotate(required_type, model_rep);
-    auto equations = typechecker.eqs;
+
+    return TypecheckingState(R, fv_source, typed_scope, typed_state);
+}
+
+
+// QUESTION: How do we keep track of names_in_scope across (say) models?
+// QUESTION: In decls, we WANT the same (non-haskell) name to override previous instances of the same name.
+//           But for lifted arguments of cmdline-language expressions, maybe we don't?
+// QUESTION: Can/should we have a pre-processing state where we lift monadic arguments into named prior expressions?
+model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const string& model_string, const string& what,
+                  const vector<pair<string,ptree>>& scope,
+                  const map<string,pair<string,ptree>>& state)
+{
+    auto model_rep = parse(R, model_string, what);
+//    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
+
+    auto model = TC.typecheck_and_annotate(required_type, model_rep);
 
     model_rep = extract_value(model);
 
-    substitute(equations, model_rep);
-    substitute(equations, required_type);
-    substitute_annotated(equations, model);
+    substitute(TC.eqs, model_rep);
+    substitute(TC.eqs, required_type);
+    substitute_annotated(TC.eqs, model);
     if (log_verbose >= 2)
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
-        std::cout<<"equations: "<<show(equations)<<std::endl;
+        std::cout<<"equations: "<<show(TC.eqs)<<std::endl;
         std::cout<<"structure = "<<show(model_rep)<<std::endl;
         std::cout<<"annotated structure = "<<show(model)<<std::endl;
         std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
@@ -1505,9 +1517,9 @@ model_t get_model(const Rules& R, ptree required_type, const string& model_strin
     }
 
     set<ptree> constraints;
-    for(auto constraint: equations.get_constraints())
+    for(auto constraint: TC.eqs.get_constraints())
     {
-	substitute(equations, constraint);
+	substitute(TC.eqs, constraint);
 	constraints.insert(constraint);
     }
 

@@ -173,7 +173,8 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
     {
         string what = "indel model " + std::to_string(i+1);
-        imodels.push_back( get_model(R, parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
+        auto TC = makeTypechecker(R,  {}, imodel_states);
+        imodels.push_back( get_model(R, TC, parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
     }
     return imodels;
 }
@@ -512,16 +513,19 @@ model_t get_smodel(const Rules& R, const std::string& model, const string& what)
 						    {"branch_categories",{"branch_categories",parse_type("List<Int>")}}};
 
     try {
-        return get_model(R, parse_type("CTMC<a>"), model, what, {}, smodel_states);
+        auto TC = makeTypechecker(R, {}, smodel_states);
+        return get_model(R, TC, parse_type("CTMC<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        return get_model(R, parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
+        auto TC = makeTypechecker(R, {}, smodel_states);
+        return get_model(R, TC, parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
-    return get_model(R, parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
+    auto TC = makeTypechecker(R, {}, smodel_states);
+    return get_model(R, TC, parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
 }
 
 
@@ -877,7 +881,8 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             else
                 scale_model = "~gamma(0.5, 2)";
         }
-        full_scale_models[i] = get_model(R, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
+	auto TC = makeTypechecker(R, {}, {});
+        full_scale_models[i] = get_model(R, TC, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
     }
 
     // 12. Default and compile branch length model
@@ -889,7 +894,8 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
         else
             M = "~iidMap(branches(tree), gamma(0.5, 2.0/num_branches(tree)))";
 
-        branch_length_model = get_model(R, parse_type("IntMap<Double>"), M, "branch length model", {{"tree",parse_type("Tree")}});
+	auto TC = makeTypechecker(R, {{"tree",parse_type("Tree")}}, {});
+        branch_length_model = get_model(R, TC, parse_type("IntMap<Double>"), M, "branch length model", {{"tree",parse_type("Tree")}});
         branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);
     }
 
