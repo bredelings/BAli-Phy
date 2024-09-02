@@ -1486,7 +1486,10 @@ model_t get_model(const Rules& R, ptree required_type, const string& model_strin
         auto& [_, var_type] = p;
         typed_state.insert({state_name,var_type});
     }
-    auto [model, equations] = typecheck_and_annotate_model(R, required_type, model_rep, typed_scope, typed_state);
+    FVSource fv_source;
+    tr_name_scope_t typechecker(R, fv_source, typed_scope, typed_state);
+    auto model = typechecker.typecheck_and_annotate(required_type, model_rep);
+    auto equations = typechecker.eqs;
 
     model_rep = extract_value(model);
 

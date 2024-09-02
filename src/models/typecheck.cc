@@ -743,14 +743,3 @@ ptree tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const 
 
     return result;
 }
-
-std::pair<ptree,equations> typecheck_and_annotate_model(const Rules& R, const ptree& required_type, ptree model,
-                                           const map<string,term_t>& scope,
-                                           const map<string,term_t>& state)
-{
-    FVSource fv_source;
-    tr_name_scope_t scope2(R, fv_source, scope, state);
-    auto result = scope2.typecheck_and_annotate(required_type, model);
-    return {result, scope2.eqs};
-}
-
