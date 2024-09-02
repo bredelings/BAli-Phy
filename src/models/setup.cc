@@ -1510,6 +1510,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 }
 
 
+// QUESTION: How can we move the smodel definitions into the decls?
 // QUESTION: How do we keep track of names_in_scope across (say) models?
 // QUESTION: In decls, we WANT the same (non-haskell) name to override previous instances of the same name.
 //           But for lifted arguments of cmdline-language expressions, maybe we don't?
