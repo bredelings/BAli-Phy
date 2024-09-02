@@ -23,6 +23,7 @@
 #include "models/A-T-prog.H"                        // for gen_atmodel_program
 #include "models/rules.H"                           // for Rules
 #include "models/setup.H"                           // for model_t, get_model
+#include "models/parse.H"                           // for parse_type( )
 #include "sequence/alphabet.H"                      // for alphabet
 #include "sequence/doublets.H"                      // for Doublets
 #include "sequence/codons.H"                        // for Codons
@@ -166,13 +167,13 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 vector<model_t>
 get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
 {
-    map<string,pair<string,string>> imodel_states = {{"topology",{"topology","Topology"}}};
+    map<string,pair<string,ptree>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
 
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
     {
         string what = "indel model " + std::to_string(i+1);
-        imodels.push_back( get_model(R, "IndelModel", imodel_names_mapping.unique(i), what, {}, imodel_states) );
+        imodels.push_back( get_model(R, parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
     }
     return imodels;
 }
@@ -507,20 +508,20 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 
 model_t get_smodel(const Rules& R, const std::string& model, const string& what)
 {
-    map<string,pair<string,string>> smodel_states = {{"alphabet",{"alpha","a"}},
-                                                     {"branch_categories",{"branch_categories","List<Int>"}}};
+    map<string,pair<string,ptree>> smodel_states = {{"alphabet",{"alpha",parse_type("a")}},
+						    {"branch_categories",{"branch_categories",parse_type("List<Int>")}}};
 
     try {
-        return get_model(R, "CTMC<a>", model, what, {}, smodel_states);
+        return get_model(R, parse_type("CTMC<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        return get_model(R, "MixtureModel<a>", model, what, {}, smodel_states);
+        return get_model(R, parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
-    return get_model(R, "MultiMixtureModel<a>", model, what, {}, smodel_states);
+    return get_model(R, parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
 }
 
 
@@ -876,7 +877,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             else
                 scale_model = "~gamma(0.5, 2)";
         }
-        full_scale_models[i] = get_model(R, "Double", scale_model, "scale model " + std::to_string(i+1));
+        full_scale_models[i] = get_model(R, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
     }
 
     // 12. Default and compile branch length model
@@ -888,7 +889,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
         else
             M = "~iidMap(branches(tree), gamma(0.5, 2.0/num_branches(tree)))";
 
-        branch_length_model = get_model(R, "IntMap<Double>", M, "branch length model", {{"tree","Tree"}});
+        branch_length_model = get_model(R, parse_type("IntMap<Double>"), M, "branch length model", {{"tree",parse_type("Tree")}});
         branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);
     }
 

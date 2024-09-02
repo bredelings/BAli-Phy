@@ -125,15 +125,15 @@ public:
 
 json::object convert_to_json(const pretty_model_t& m);
 
-model_t get_model(const Rules& R, const std::string& type, const std::string& model, const std::string& what,
-                  const std::vector<std::pair<std::string,std::string>>& = {},
-                  const std::map<std::string,std::pair<std::string,std::string>>& = {}
+model_t get_model(const Rules& R, ptree required_type, const std::string& model, const std::string& what,
+                  const std::vector<std::pair<std::string,ptree>>& = {},
+                  const std::map<std::string,std::pair<std::string,ptree>>& = {}
     );
 
 void compile_defs(const Rules& R,
 		  const std::string& prog,
-		  const std::vector<std::pair<std::string,std::string>>& scope,
-		  const std::map<std::string,std::pair<std::string,std::string>>& state);
+		  const std::vector<std::pair<std::string,ptree>>& scope,
+		  const std::map<std::string,std::pair<std::string,ptree>>& state);
 
 std::string print_equals_function(expression_ref E);
 

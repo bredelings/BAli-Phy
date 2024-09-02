@@ -1470,22 +1470,21 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return model_t{model_rep, imports, type, constraints, code};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model_string, const string& what,
-                  const vector<pair<string,string>>& scope,
-                  const map<string,pair<string,string>>& state)
+model_t get_model(const Rules& R, ptree required_type, const string& model_string, const string& what,
+                  const vector<pair<string,ptree>>& scope,
+                  const map<string,pair<string,ptree>>& state)
 {
-    auto required_type = parse_type(type);
     auto model_rep = parse(R, model_string, what);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     map<string,ptree> typed_scope;
     for(auto& [name,type]: scope)
-        typed_scope.insert({name, parse_type(type)});
+        typed_scope.insert({name, type});
     map<string,ptree> typed_state;
     for(auto& [state_name,p]: state)
     {
-        auto& [_, var_type_string] = p;
-        typed_state.insert({state_name,parse_type(var_type_string)});
+        auto& [_, var_type] = p;
+        typed_state.insert({state_name,var_type});
     }
     auto [model, equations] = typecheck_and_annotate_model(R, required_type, model_rep, typed_scope, typed_state);
 
@@ -1539,8 +1538,8 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 
 void compile_defs(const Rules& R,
 		  const string& prog,
-		  const vector<pair<string,string>>& scope,
-		  const map<string,pair<string,string>>& state)
+		  const vector<pair<string,ptree>>& scope,
+		  const map<string,pair<string,ptree>>& state)
 {
     // 1. Parse declarations and substitute any default values.
     auto decls = parse_defs(R, prog);
