@@ -944,6 +944,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
                                     L, dir,
                                     program_filename,
                                     alphabet_exps, filename_ranges, A[0].n_sequences(),
+                                    decls,
                                     full_smodels, smodel_mapping,
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,

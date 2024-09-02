@@ -616,6 +616,7 @@ std::string generate_atmodel_program(const variables_map& args,
                                      int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<fs::path,string>>& filename_ranges,
+                                     const model_t& decls,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
                                      const vector<model_t>& IMs,
@@ -725,6 +726,18 @@ std::string generate_atmodel_program(const variables_map& args,
     // We could fix the whole tree or just the topology.
     auto tree_var = var("tree");
     expression_ref branch_lengths = var("IntMap.empty");
+
+    // M1. Declarations
+    // model_t decl = { imports, type, constraints, code, used_args }
+    // generated_code_t = {lambda_vars, stmts, E, loggers, perform_function, used_states }
+    for(auto& stmt: decls.code.stmts)
+    {
+	model.get_stmts().push_back(stmt);
+    }
+    //  auto [x, x_loggers] = bind_model(prefix,model);
+    // if (auto l = logger(prefix, x, x_loggers, do_log) )
+    //         loggers.push_back(l);
+    //    return x;
 
     // M2. Topology
     auto topology_var = var("topology");
@@ -1012,6 +1025,7 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                             const vector<expression_ref>& alphabet_exps,
                             const vector<pair<fs::path,string>>& filename_ranges,
                             int n_leaves,
+			    const model_t& decls,
                             const vector<model_t>& SMs,
                             const vector<optional<int>>& s_mapping,
                             const vector<model_t>& IMs,
@@ -1028,6 +1042,7 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                                                n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
+					       decls,
                                                SMs, s_mapping,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
