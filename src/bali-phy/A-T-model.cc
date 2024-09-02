@@ -754,6 +754,20 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                                int /* proc_id */, const fs::path& dir)
 {
+    // 1. --- Determine number of partitions
+    vector<pair<fs::path,string>> filename_ranges;
+    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
+        filename_ranges.push_back( {fs::path(filename), range});
+
+    const int n_partitions = filename_ranges.size();
+
+    // 2. --- Find out what is fixed
+    set<string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+            fixed.insert(f);
+
+    // 3. --- Compile declarations
     if (args.count("variables"))
     {
 	string var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
@@ -761,47 +775,26 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 	compile_defs(R, var_str, {}, {});
     }
 
-    //------ Determine number of partitions ------//
-    vector<pair<fs::path,string>> filename_ranges;
-    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
-        filename_ranges.push_back( {fs::path(filename), range});
-
-    const int n_partitions = filename_ranges.size();
-
-    //------------- Get smodel names -------------------
+    // 4. --- Get smodels for all SPECIFIED smodel names 
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
     auto& smodel_mapping = smodel_names_mapping.item_for_partition;
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
 
-    //------------- Find out what is fixed -------------
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
-
-    // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
             full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
 
-    // 2. Get default alphabet names from specifed substitution model types
+    // 5. --- Get unspecified alphabet names from specified substitution models types.
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
 
     vector<string> alphabet_names = get_default_alphabet_names(smodel_names_mapping, full_smodels, alphabet_names_mapping);
 
-    // 3. -- Load alignments (for SPECIFIED, UNSPECIFIED, and PARTIALLY SPECIFIED alphabets)
+    // 6. -- Load alignments and determine alphabets (for SPECIFIED, UNSPECIFIED, and PARTIALLY SPECIFIED alphabets)
+    //       The ONLY thing we use these alignments for is their alphabet.
     vector<alignment> A = read_alignments(filename_ranges, alphabet_names);
 
-    // 4. --------- Set up indel model --------//
-    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
-    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
-
-    get_default_imodels(imodel_names_mapping, A);
-
-    auto full_imodels = get_imodels(R, imodel_names_mapping);
-
-    // 5. ----- Check that all smodel-linked partitions end up with the same alphabet. -----
+    // 7. --- Check that all smodel-linked partitions end up with the same alphabet.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
 	int first_partition = smodel_names_mapping.partitions_for_item[i][0];
@@ -818,7 +811,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     }
 
-    // 6. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
+    // 8. --- Default unspecified substitution models based on the alphabet, compile them.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (smodel_names_mapping.unique(i).empty())
         {
@@ -834,7 +827,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
         }
 
-    // 7. Check that alignment alphabet fits requirements from smodel.
+    // 9. Check that alignment alphabet fits requirements from smodel.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
         int first_index = smodel_names_mapping.partitions_for_item[i][0];
@@ -858,7 +851,15 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
     }
 
-    //-------------- Which partitions share a scale? -----------//
+    // 10. --- Default and compile indel models
+    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
+
+    get_default_imodels(imodel_names_mapping, A);
+
+    auto full_imodels = get_imodels(R, imodel_names_mapping);
+
+    // 11. --- Default and compile scale models
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
 
     auto scale_mapping = scale_names_mapping.item_for_partition;
@@ -878,7 +879,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
         full_scale_models[i] = get_model(R, "Double", scale_model, "scale model " + std::to_string(i+1));
     }
 
-    //-------------- Branch length model --------------------//
+    // 12. Default and compile branch length model
     model_t branch_length_model;
     {
         string M;
