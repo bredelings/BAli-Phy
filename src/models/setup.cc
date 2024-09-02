@@ -1450,26 +1450,6 @@ void substitute_annotated(const equations& equations, ptree& model)
         substitute_annotated(equations, value);
 }
 
-/// \brief Constrict a substitution::MultiModel for a specific alphabet
-///
-/// \param model_name The name of the substitution model.
-/// \param a The alphabet.
-/// \param frequencies The initial letter frequencies in the model.
-///
-model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
-{
-    // --------- Convert model to MultiMixtureModel ------------//
-    auto [code, imports, _1, _2] = get_model_as(R, model_rep, scope);
-
-    if (log_verbose >= 3)
-        std::cout<<"full_model = "<<code.print()<<std::endl;
-
-    for(const string& state_name: code.used_states)
-        code.lambda_vars.push_back( scope.state.at(state_name) );
-
-    return model_t{model_rep, imports, type, constraints, code};
-}
-
 model_t get_model(const Rules& R, ptree required_type, const string& model_string, const string& what,
                   const vector<pair<string,ptree>>& scope,
                   const map<string,pair<string,ptree>>& state)
@@ -1531,7 +1511,16 @@ model_t get_model(const Rules& R, ptree required_type, const string& model_strin
 	constraints.insert(constraint);
     }
 
-    return get_model(R, required_type, constraints, model, names_in_scope);
+    // --------- Convert model to MultiMixtureModel ------------//
+    auto [code, imports, _1, _2] = get_model_as(R, model, names_in_scope);
+
+    if (log_verbose >= 3)
+        std::cout<<"full_model = "<<code.print()<<std::endl;
+
+    for(const string& state_name: code.used_states)
+        code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
+
+    return model_t{model, imports, required_type, constraints, code};
 }
 
 /*
