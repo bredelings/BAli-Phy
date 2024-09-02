@@ -130,15 +130,17 @@ TypecheckingState makeTypechecker(const Rules& R,
 				  const std::vector<std::pair<std::string,ptree>>& scope,
 				  const std::map<std::string,std::pair<std::string,ptree>>& state);
 
-model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const std::string& model, const std::string& what,
+model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type,
+		  const std::string& model,
+		  const std::string& what,
 		  const std::vector<std::pair<std::string,ptree>>& = {},
                   const std::map<std::string,std::pair<std::string,ptree>>& = {}
     );
 
-void compile_defs(const Rules& R,
-		  const std::string& prog,
-		  const std::vector<std::pair<std::string,ptree>>& scope,
-		  const std::map<std::string,std::pair<std::string,ptree>>& state);
+model_t compile_decls(const Rules& R, TypecheckingState& TC,
+		      const std::string& decls,
+		      const std::vector<std::pair<std::string,ptree>>& scope,
+		      const std::map<std::string,std::pair<std::string,ptree>>& state);
 
 std::string print_equals_function(expression_ref E);
 

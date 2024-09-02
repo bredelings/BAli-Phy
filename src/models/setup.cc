@@ -831,6 +831,46 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     return result;
 }
 
+/*
+ *
+ * do
+ *   pair_var1 <- var1_body
+ *   let var1_name = fst pair_var1
+ *   loggers = [("var_name",(Nothing,[(var_name,pair_x)]))]
+ */
+translation_result_t get_model_decls(const Rules& R, const ptree& model, const name_scope_t& scope)
+{
+    translation_result_t result;
+
+    auto scope2 = scope;
+    for(auto& [var_name, var_exp]: model)
+    {
+	var x = scope2.get_var(var_name);
+	var log_x = scope2.get_var("log_" + var_name);
+	bool x_is_random = is_random(var_exp, scope);
+	var_info_t var_info(x, x_is_random);
+
+	// 1. Perform the variable expression
+	auto arg_result = get_model_as(R, var_exp, scope2);
+
+	if (arg_result.lambda_vars.size())
+	    var_info.depends_on_lambda = true;
+
+	// 3. Construct code.
+	result.vars = scope2.vars;
+
+	// (x, log_x) <- arg_result
+	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
+	auto type = var_exp.get_child("type");
+	if (x_is_random and is_loggable_type(type))
+	    result.code.log_value(var_name, x, type);
+
+	// 4. Put x into the scope for the next decl.
+	scope2 = extend_scope(scope2, var_name, var_info);
+    }
+    return result;
+}
+
 expression_ref eta_reduce(expression_ref E)
 {
     while(is_lambda_exp(E) and E.sub()[0].is_a<var>())
@@ -1540,21 +1580,51 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
  * Do we still want that?
  */
 
-void compile_defs(const Rules& R,
-		  const string& prog,
-		  const vector<pair<string,ptree>>& scope,
-		  const map<string,pair<string,ptree>>& state)
+model_t compile_decls(const Rules& R,
+		      TypecheckingState& TC,
+		      const string& prog,
+		      const vector<pair<string,ptree>>& scope,
+		      const map<string,pair<string,ptree>>& state)
 {
     // 1. Parse declarations and substitute any default values.
     auto decls = parse_defs(R, prog);
 
     // 2. Typecheck.
-    FVSource fv_source;
-    TypecheckingState scope2(R,fv_source);
-    auto decls2 = scope2.typecheck_and_annotate_decls(decls);
+    auto decls2 = TC.typecheck_and_annotate_decls(decls);
 
-    // see model/setup.H:get_model( )
-    // how does this relate to how we take f(y=g(x)) and turn it into y=g(x);f(y)?
+    vector<var> lambda_vars;
+
+    name_scope_t names_in_scope;
+    for(auto& [name,type]: scope)
+    {
+        auto x = names_in_scope.get_var(name);
+        names_in_scope.identifiers.insert({name, var_info_t(x)});
+    }
+
+    for(auto& [state_name,p]: state)
+    {
+        auto& [var_name, _] = p;
+        auto x = names_in_scope.get_var(var_name);
+        names_in_scope.set_state(state_name,x);
+        lambda_vars.push_back(x);
+    }
+
+    set<ptree> constraints;
+    for(auto constraint: TC.eqs.get_constraints())
+    {
+	substitute(TC.eqs, constraint);
+	constraints.insert(constraint);
+    }
+
+    auto [code, imports, _1, _2] = get_model_decls(R, decls2, {});
+
+    if (log_verbose >= 3)
+        std::cout<<"full_model = "<<code.print()<<std::endl;
+
+    for(const string& state_name: code.used_states)
+        code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
+
+    return model_t{decls2, imports, {}, constraints, code};
 }
 
 

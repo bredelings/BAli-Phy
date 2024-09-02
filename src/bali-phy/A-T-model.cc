@@ -773,11 +773,13 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             fixed.insert(f);
 
     // 3. --- Compile declarations
+    model_t decls;
+    auto TC = makeTypechecker(R, {}, {});
     if (args.count("variables"))
     {
 	string var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
 
-	compile_defs(R, var_str, {}, {});
+	decls = compile_decls(R, TC, var_str, {}, {});
     }
 
     // 4. --- Get smodels for all SPECIFIED smodel names 
