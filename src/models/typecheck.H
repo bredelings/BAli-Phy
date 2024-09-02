@@ -9,7 +9,7 @@
 
 class Rules;
 
-struct tr_name_scope_t
+struct TypecheckingState
 {
     const Rules& R;
     const FVSource& fv_source;
@@ -20,12 +20,12 @@ struct tr_name_scope_t
 
     term_t get_fresh_type_var(const std::string& s) const { return fv_source.get_fresh_type_var(s);}
 
-    tr_name_scope_t copy_no_equations() const;
+    TypecheckingState copy_no_equations() const;
     std::set<std::string> find_type_variables() const;
     std::optional<ptree> type_for_var(const std::string& name) const;
     std::optional<ptree> type_for_arg(const std::string& name) const;
     void extend_scope(const std::string& var, const ptree type);
-    tr_name_scope_t extended_scope(const std::string& var, const ptree type) const;
+    TypecheckingState extended_scope(const std::string& var, const ptree type) const;
     std::optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
     std::optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
     std::optional<ptree> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
@@ -41,7 +41,7 @@ struct tr_name_scope_t
 
     std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
 
-    tr_name_scope_t(const Rules& r, const FVSource& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
+    TypecheckingState(const Rules& r, const FVSource& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
 	:R(r),fv_source(fv), identifiers(id), state(st)
     { }
 };

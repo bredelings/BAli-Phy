@@ -1467,7 +1467,7 @@ model_t get_model(const Rules& R, ptree required_type, const string& model_strin
         typed_state.insert({state_name,var_type});
     }
     FVSource fv_source;
-    tr_name_scope_t typechecker(R, fv_source, typed_scope, typed_state);
+    TypecheckingState typechecker(R, fv_source, typed_scope, typed_state);
     auto model = typechecker.typecheck_and_annotate(required_type, model_rep);
     auto equations = typechecker.eqs;
 
@@ -1538,7 +1538,7 @@ void compile_defs(const Rules& R,
 
     // 2. Typecheck.
     FVSource fv_source;
-    tr_name_scope_t scope2(R,fv_source);
+    TypecheckingState scope2(R,fv_source);
     auto decls2 = scope2.typecheck_and_annotate_decls(decls);
 
     // see model/setup.H:get_model( )

@@ -181,7 +181,7 @@ ptree convert_to(const equations& eqs, ptree model, type_t type, type_t required
     return model;
 }
 
-optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
+optional<ptree> TypecheckingState::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
 {
     auto tmp_eqs = eqs && unify(type, required_type);
     if (tmp_eqs)
@@ -193,14 +193,14 @@ optional<ptree> tr_name_scope_t::unify_or_convert(const ptree& model, const type
 	return convert_to(eqs, model, type, required_type);
 }
 
-tr_name_scope_t tr_name_scope_t::copy_no_equations() const
+TypecheckingState TypecheckingState::copy_no_equations() const
 {
     auto scope2 = *this;
     scope2.eqs.clear();
     return scope2;
 }
 
-set<string> tr_name_scope_t::find_type_variables() const
+set<string> TypecheckingState::find_type_variables() const
 {
     set<string> vars;
     for(auto& [_, type]: identifiers)
@@ -212,7 +212,7 @@ set<string> tr_name_scope_t::find_type_variables() const
     return vars;
 }
 
-optional<ptree> tr_name_scope_t::type_for_var(const string& name) const
+optional<ptree> TypecheckingState::type_for_var(const string& name) const
 {
     if (identifiers.count(name))
         return identifiers.at(name);
@@ -220,7 +220,7 @@ optional<ptree> tr_name_scope_t::type_for_var(const string& name) const
         return {};
 }
 
-optional<ptree> tr_name_scope_t::type_for_arg(const string& name) const
+optional<ptree> TypecheckingState::type_for_arg(const string& name) const
 {
     if (not args)
         return {};
@@ -230,14 +230,14 @@ optional<ptree> tr_name_scope_t::type_for_arg(const string& name) const
         return {};
 }
 
-void tr_name_scope_t::extend_scope(const string& var, const type_t type)
+void TypecheckingState::extend_scope(const string& var, const type_t type)
 {
     if (identifiers.count(var))
         identifiers.erase(var);
     identifiers.insert({var,type});
 }
 
-tr_name_scope_t tr_name_scope_t::extended_scope(const string& var, const type_t type) const
+TypecheckingState TypecheckingState::extended_scope(const string& var, const type_t type) const
 {
     auto scope = *this;
     scope.extend_scope(var,type);
@@ -263,7 +263,7 @@ void set_used_args(ptree& model, const set<string>& used_args)
         model.push_back({"used_args",p_used_args});
 }
 
-ptree tr_name_scope_t::typecheck_and_annotate_decls(const ptree& decls)
+ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)
 {
     set<string> used_args;
     ptree decls2;
@@ -286,7 +286,7 @@ ptree tr_name_scope_t::typecheck_and_annotate_decls(const ptree& decls)
 
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -333,7 +333,7 @@ tr_name_scope_t::typecheck_and_annotate_let(const ptree& required_type, const pt
     return model2;
 }
 
-pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& pattern) const
+pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const ptree& pattern) const
 {
     if (is_nontype_variable(pattern))
     {
@@ -363,7 +363,7 @@ pair<ptree, map<string,ptree>> tr_name_scope_t::parse_pattern(const ptree& patte
 
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -418,7 +418,7 @@ tr_name_scope_t::typecheck_and_annotate_lambda(const ptree& required_type, const
 }
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -464,7 +464,7 @@ tr_name_scope_t::typecheck_and_annotate_tuple(const ptree& required_type, const 
 }
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -501,7 +501,7 @@ tr_name_scope_t::typecheck_and_annotate_list(const ptree& required_type, const p
 }
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -528,7 +528,7 @@ tr_name_scope_t::typecheck_and_annotate_get_state(const ptree& required_type, co
 }
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const
 {
     if (not model.has_value<string>()) return {};
 
@@ -566,7 +566,7 @@ tr_name_scope_t::typecheck_and_annotate_var(const ptree& required_type, const pt
 }
 
 optional<ptree>
-tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const
+TypecheckingState::typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const
 {
     // 1. Determine result type from literal.
     type_t result_type;
@@ -602,7 +602,7 @@ tr_name_scope_t::typecheck_and_annotate_constant(const ptree& required_type, con
     return model2;
 }
 
-ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
+ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const
 {
     assert(model.has_value<string>());
     auto name = model.get_value<string>();
@@ -713,7 +713,7 @@ ptree tr_name_scope_t::typecheck_and_annotate_function(const ptree& required_typ
     return model2;
 }
 
-ptree tr_name_scope_t::typecheck_and_annotate(const ptree& required_type, const ptree& model) const
+ptree TypecheckingState::typecheck_and_annotate(const ptree& required_type, const ptree& model) const
 {
     ptree result;
     // 1. Get result type and the rule, if there is one.
