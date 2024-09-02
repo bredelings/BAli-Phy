@@ -1493,7 +1493,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 				  const vector<pair<string,ptree>>& scope,
 				  const map<string,pair<string,ptree>>& state)
 {
-    FVSource fv_source;
+    auto fv_source = std::make_shared<FVSource>();
 
     map<string,ptree> typed_scope;
     for(auto& [name,type]: scope)

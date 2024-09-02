@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <memory>
 #include "unification.H"
 #include "util/ptree.H"
 
@@ -12,13 +13,13 @@ class Rules;
 struct TypecheckingState
 {
     const Rules& R;
-    const FVSource& fv_source;
+    std::shared_ptr<const FVSource> fv_source;
     std::map<std::string,ptree> identifiers;
     std::map<std::string,ptree> state;
     std::optional<std::map<std::string,ptree>> args;
     mutable equations eqs;
 
-    term_t get_fresh_type_var(const std::string& s) const { return fv_source.get_fresh_type_var(s);}
+    term_t get_fresh_type_var(const std::string& s) const { return fv_source->get_fresh_type_var(s);}
 
     TypecheckingState copy_no_equations() const;
     std::set<std::string> find_type_variables() const;
@@ -41,7 +42,7 @@ struct TypecheckingState
 
     std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
 
-    TypecheckingState(const Rules& r, const FVSource& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
+    TypecheckingState(const Rules& r, const std::shared_ptr<const FVSource>& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
 	:R(r),fv_source(fv), identifiers(id), state(st)
     { }
 };

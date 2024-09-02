@@ -607,7 +607,7 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
     assert(model.has_value<string>());
     auto name = model.get_value<string>();
     auto rule = R.require_rule_for_func(name);
-    rule = freshen_type_vars(rule, fv_source);
+    rule = freshen_type_vars(rule, *fv_source);
     // Record any new variables that we are using as bound variables
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
