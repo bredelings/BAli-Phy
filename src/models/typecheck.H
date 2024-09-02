@@ -12,10 +12,10 @@ class Rules;
 struct tr_name_scope_t
 {
     const Rules& R;
-    std::map<std::string,ptree> identifiers;
-    std::optional<std::map<std::string,ptree>> args;
-    std::map<std::string,ptree> state;
     const FVSource& fv_source;
+    std::map<std::string,ptree> identifiers;
+    std::map<std::string,ptree> state;
+    std::optional<std::map<std::string,ptree>> args;
     mutable equations eqs;
 
     term_t get_fresh_type_var(const std::string& s) const { return fv_source.get_fresh_type_var(s);}
@@ -41,8 +41,8 @@ struct tr_name_scope_t
 
     std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
 
-    tr_name_scope_t(const Rules& r, const FVSource& fv)
-	:R(r),fv_source(fv)
+    tr_name_scope_t(const Rules& r, const FVSource& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
+	:R(r),fv_source(fv), identifiers(id), state(st)
     { }
 };
 

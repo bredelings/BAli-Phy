@@ -749,9 +749,7 @@ std::pair<ptree,equations> typecheck_and_annotate_model(const Rules& R, const pt
                                            const map<string,term_t>& state)
 {
     FVSource fv_source;
-    tr_name_scope_t scope2(R, fv_source);
-    scope2.identifiers = scope;
-    scope2.state = state;
+    tr_name_scope_t scope2(R, fv_source, scope, state);
     auto result = scope2.typecheck_and_annotate(required_type, model);
     return {result, scope2.eqs};
 }
