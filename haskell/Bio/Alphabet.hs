@@ -67,3 +67,6 @@ type SMap = EVector Int
 
 class HasAlphabet x => HasSMap x where
     get_smap :: x -> SMap
+
+instance Show Alphabet where
+    show a = show (letters a)
