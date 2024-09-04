@@ -1,0 +1,13 @@
+{
+    "name": "getAlphabet",
+    "result_type": "a",
+    "no_log": true,
+    "call": "getAlphabet(@x)",
+    "args": [
+        {
+            "name": "x",
+            "type": "m<a>"
+        }
+    ],
+    "title": "The alphabet accessor"
+}

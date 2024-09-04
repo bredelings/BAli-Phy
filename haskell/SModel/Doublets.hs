@@ -21,4 +21,4 @@ x2 a q = x2x2 a q q
 
 foreign import bpcall "SModel:rna_16a_exchange" rna_stem_16a_exchange :: DoubletAlphabet -> Double -> Double -> Double -> Double -> Double -> Matrix Double
 
-rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
+rna_stem_16a a aS aD b g e pi = gtr (ExchangeModel a (rna_stem_16a_exchange a aS aD b g e)) pi

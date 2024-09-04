@@ -13,18 +13,27 @@ import           SModel.Simple
 import           SModel.Rate
 import           Tree (branch_length)
 
-equ a = Markov.equ (alphabetSize a) 1.0
+data ExchangeModel a = ExchangeModel Alphabet a
 
-gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
+instance Show a => Show (ExchangeModel a) where
+    show (ExchangeModel _ x) = show x
 
-gtr a s pi = reversible $ markov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
+equ a = ExchangeModel a (Markov.equ (alphabetSize a) 1)
 
-f81     pi a = gtr a (equ a) pi
-jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
+gtr_sym exchange a = ExchangeModel a (Markov.gtr_sym (alphabetSize a) exchange)
 
-gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
+instance HasAlphabet (ExchangeModel a) where
+    getAlphabet (ExchangeModel a _) = a
+
+gtr (ExchangeModel a s) pi = reversible $ markov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
+
+f81     pi a = gtr (equ a) pi
+jukes_cantor a = gtr (equ a) (uniform_frequencies a)
+
+gtr' s'    pi a = gtr (gtr_sym' s'    a) (frequencies_from_dict a pi)
 
 letter_pair_names a = pairNames $ Markov.all_pairs (letters a)
+
 
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
@@ -36,12 +45,12 @@ gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (letters a)
                                          else
                                              error $ "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"
 
-plus_f   a pi s   = gtr a s pi
-plus_fe  a s      = plus_f a (uniform_frequencies a) s
-plus_gwf a pi f s = reversible $ markov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
+plus_f   pi s   = gtr s pi
+plus_fe  s      = plus_f (uniform_frequencies a) s where a = getAlphabet s
+plus_gwf pi f (ExchangeModel a s) = reversible $ markov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
 
-plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
-plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
+plus_f'  pi s   = plus_f (frequencies_from_dict a pi) s where a = getAlphabet s
+plus_gwf' pi f s = plus_gwf (frequencies_from_dict a pi) f s where a = getAlphabet s
 
 type ReversibleMarkov = MkReversible Markov
 

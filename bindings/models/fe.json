@@ -2,7 +2,7 @@
     "name": "fe",
     "deprecated-synonyms": ["fq,FE,FQ"],
     "result_type": "CTMC<a>",
-    "call": "plus_fe(@a,@submodel)",
+    "call": "plus_fe(@submodel)",
     "import": ["SModel"],
     "args": [
         {

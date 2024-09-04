@@ -31,9 +31,9 @@ f1x4_frequencies a pi = f3x4_frequencies a pi pi pi
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi
 
-gy94_ext  sym w pi a = gtr a (m0 a sym w) pi
+gy94_ext  sym w pi a = gtr (ExchangeModel a (m0 a sym w)) pi
 
-gy94  k w pi a = gy94_ext  sym w pi a where sym = hky85_sym (getNucleotides a) k
+gy94  k w pi a = gy94_ext  sym w pi a where (ExchangeModel _ sym) = hky85_sym (getNucleotides a) k
 
 mg94_ext a w q = q & x3 a & dNdS w
 mg94k a k pi w  = hky85 nuc_a k pi & mg94_ext a w where nuc_a = getNucleotides a
@@ -44,7 +44,7 @@ x3x3 a m1 m2 m3 = reversible $ markov a smap q pi where
     q = singlet_to_triplet_rates a (getQ m1) (getQ m2) (getQ m3)
     pi = f3x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2) (getEqFreqs m3)
 
-x3_sym a s = singlet_to_triplet_rates a s s s
+x3_sym a (ExchangeModel _ s) = ExchangeModel a (singlet_to_triplet_rates a s s s)
 x3 a q = x3x3 a q q q
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.

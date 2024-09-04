@@ -2,7 +2,7 @@
     "name": "f",
     "synonyms": ["F"],
     "result_type": "CTMC<a>",
-    "call": "SModel.plus_f'(@a,@pi,@submodel)",
+    "call": "SModel.plus_f'(@pi,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -13,14 +13,8 @@
         {
             "name": "pi",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+            "default_value": "~symmetric_dirichlet_on(letters(getAlphabet(@submodel)),1)",
 	    "description": "Letter frequencies"
-        },
-        {
-            "name": "a",
-            "type": "a",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
         }
     ],
     "title": "The +F frequency model",
