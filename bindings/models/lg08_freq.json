@@ -2,16 +2,9 @@
     "title": "The LG amino-acid frequencies",
     "name": "lg08_freq",
     "result_type": "List<(String,Double)>",
-    "call": "lg_frequencies(@a)",
+    "call": "lg_frequencies",
     "import": ["SModel"],
-    "args": [
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-            "description": "The alphabet"
-        }
-    ],
+    "args": [ ],
     "description": "A fixed frequency vector from the dataset in the WAG paper.",
     "citation":{"type": "article",
 		"title": "An Improved General Amino Acid Replacement Matrix",

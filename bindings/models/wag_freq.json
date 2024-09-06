@@ -2,16 +2,9 @@
     "title": "The WAG amino-acid frequencies",
     "name": "wag_freq",
     "result_type": "List<(String,Double)>",
-    "call": "wag_frequencies(@a)",
+    "call": "wag_frequencies",
     "import": ["SModel"],
-    "args": [
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-            "description": "The alphabet"
-        }
-    ],
+    "args": [ ],
     "description": "A fixed frequency vector from the dataset in the WAG paper.",
     "citation":{"type": "article",
 		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",

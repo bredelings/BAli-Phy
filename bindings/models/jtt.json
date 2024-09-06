@@ -2,16 +2,9 @@
     "name": "jtt",
     "deprecated-synonyms": ["JTT"],
     "result_type": "ExchangeModel<AA>",
-    "call": "jtt(@a)",
+    "call": "jtt",
     "import": ["SModel"],
-    "args": [
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-            "description": "The alphabet."
-        }
-    ],
+    "args": [ ],
     "description": "Empirically derived exchangability matrix for general proteins",
     "citation":{"type": "article",
 		"title": "The rapid generation of mutation data matrices from protein sequences",

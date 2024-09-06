@@ -14,13 +14,13 @@ foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: Alphabet
 foreign import bpcall "SModel:lg" lg_raw :: Alphabet -> Matrix Double
 
 
-pam a = ExchangeModel a (pam_raw a)
-jtt a = ExchangeModel a (jtt_raw a)
-wag a = ExchangeModel a (wag_raw a)
-lg a = ExchangeModel a (lg_raw a)
+pam = ExchangeModel aa (pam_raw aa)
+jtt = ExchangeModel aa (jtt_raw aa)
+wag = ExchangeModel aa (wag_raw aa)
+lg = ExchangeModel aa (lg_raw aa)
 
 empirical a filename = ExchangeModel a (builtin_empirical a (list_to_string filename))
 
-wag_frequencies a = zip (letters a) (list_from_vector $ builtin_wag_frequencies a)
-lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
+wag_frequencies = zip (letters aa) (list_from_vector $ builtin_wag_frequencies aa)
+lg_frequencies = zip (letters aa) (list_from_vector $ builtin_lg_frequencies aa)
 

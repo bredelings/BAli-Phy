@@ -2,16 +2,9 @@
     "name": "lg08",
     "deprecated-synonyms": ["lg,LG,LG08"],
     "result_type": "ExchangeModel<AA>",
-    "call": "SModel.lg(@a)",
+    "call": "SModel.lg",
     "import": ["SModel"],
-    "args": [
-        {
-            "name": "a",
-            "type": "AA",
-            "default_value": "get_state(alphabet)",
-            "description": "The alphabet"
-        }
-    ],
+    "args": [ ],
     "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the LG08 model, not the frequencies.  Frequencies are added by using the ` +> f` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using ` +> f(lg08_freq)`.",
     "citation":{"type": "article",
 		"title": "An Improved General Amino Acid Replacement Matrix",

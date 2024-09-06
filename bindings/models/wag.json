@@ -2,16 +2,9 @@
     "name": "wag",
     "deprecated-synonyms": ["WAG"],
     "result_type": "ExchangeModel<AA>",
-    "call": "wag(@a)",
+    "call": "wag",
     "import": ["SModel"],
-    "args": [
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-            "description": "The alphabet"
-        }
-    ],
+    "args": [ ],
     "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the WAG model, not the frequencies.  Frequencies are added by using the ` +> f` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using ` +> f(wag_freq)`.",
     "citation":{"type": "article",
 		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",

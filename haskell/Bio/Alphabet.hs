@@ -39,10 +39,12 @@ rna = builtin_rna ()
 foreign import bpcall "Alphabet:aa" builtin_aa  :: () -> Alphabet
 aa  = builtin_aa  ()
 amino_acids = builtin_aa
+aminoAcids = builtin_aa
 
 foreign import bpcall "Alphabet:aaWithStop" builtin_aaWithStop :: () -> Alphabet
 aaWithStop = builtin_aaWithStop ()
-amino_acids_with_stop = builtin_aaWithStop ()
+aminoAcidsWithStop = aaWithStop
+amino_acids_with_stop = aminoAcidsWithStop
 
 foreign import bpcall "Alphabet:" mkNumeric :: Int -> Alphabet
 
@@ -51,7 +53,8 @@ foreign import bpcall "Alphabet:" geneticCodeByNumber :: Int -> GeneticCode
 foreign import bpcall "Alphabet:" geneticCodeRaw :: CPPString -> GeneticCode
 geneticCode name = geneticCodeRaw (pack_cpp_string name)
 
-standard_code = geneticCodeByNumber 1
+standardCode = geneticCodeByNumber 1
+standard_code = standardCode
 
 foreign import bpcall "Alphabet:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
 sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s
