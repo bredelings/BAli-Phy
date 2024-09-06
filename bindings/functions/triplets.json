@@ -1,0 +1,13 @@
+{
+    "name": "tripletsOf",
+    "result_type": "Triplets<a>",
+    "call": "mkTriplets(@nucleotides)",
+    "import": ["Bio.Alphabet"],
+    "args": [
+        {
+            "name": "nucleotides",
+            "type": "a"
+        }
+    ],
+    "title": "The triplets alphabet"
+}
