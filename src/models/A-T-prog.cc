@@ -767,8 +767,6 @@ std::string generate_atmodel_program(const variables_map& args,
 	model.let(tree_var, tree_exp);
     }
 
-    branch_lengths = {var("IntMap.elems"),branch_lengths};
-
     if (not fixed.count("tree"))
     {
 	if (fixed.count("topology"))
