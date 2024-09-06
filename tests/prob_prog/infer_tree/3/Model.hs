@@ -37,7 +37,7 @@ model seqData = do
 
     tree <- prior $ uniform_labelled_tree taxa branch_length_dist
 
-    (smodel, sloggers    ) <- smodel_prior (codons dna standard_code)
+    (smodel, sloggers    ) <- smodel_prior (mkCodons dna standard_code)
 
     let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
 

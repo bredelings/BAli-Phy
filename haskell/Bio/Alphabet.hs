@@ -24,11 +24,11 @@ find_letter a letter = builtin_find_letter a (list_to_string letter)
 
 foreign import bpcall "Alphabet:" translate :: Alphabet -> Int -> Int
 
-foreign import bpcall "Alphabet:" doublets :: Alphabet -> Alphabet
+foreign import bpcall "Alphabet:" mkDoublets :: Alphabet -> Alphabet
 
-foreign import bpcall "Alphabet:" triplets :: Alphabet -> Alphabet
+foreign import bpcall "Alphabet:" mkTriplets :: Alphabet -> Alphabet
 
-foreign import bpcall "Alphabet:" codons :: Alphabet -> GeneticCode -> Alphabet
+foreign import bpcall "Alphabet:" mkCodons :: Alphabet -> GeneticCode -> Alphabet
 
 foreign import bpcall "Alphabet:dna" builtin_dna :: () -> Alphabet
 dna = builtin_dna ()

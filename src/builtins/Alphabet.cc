@@ -70,17 +70,17 @@ extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
 	throw myexception()<<"getAminoAcids: object "<<a.print()<<" is not a Codons alphabet.";
 }
 
-extern "C" closure builtin_function_doublets(OperationArgs& Args)
+extern "C" closure builtin_function_mkDoublets(OperationArgs& Args)
 {
     auto arg0  = Args.evaluate(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
 	return Alphabet(new Doublets(*n));
     else
-	throw myexception()<<"doublets: object "<<a.print()<<" is not a Nucleotides alphabet.";
+	throw myexception()<<"mkDoublets: object "<<a.print()<<" is not a Nucleotides alphabet.";
 }
 
-extern "C" closure builtin_function_triplets(OperationArgs& Args)
+extern "C" closure builtin_function_mkTriplets(OperationArgs& Args)
 {
     auto arg0  = Args.evaluate(0);
     const alphabet& a = *arg0.as_<Alphabet>();
@@ -88,20 +88,20 @@ extern "C" closure builtin_function_triplets(OperationArgs& Args)
     if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
 	return Alphabet(new Triplets(*n));
     else
-	throw myexception()<<"triplets: object "<<a.print()<<" is not a Nucleotides alphabet.";
+	throw myexception()<<"mkTriplets: object "<<a.print()<<" is not a Nucleotides alphabet.";
 }
 
-extern "C" closure builtin_function_codons(OperationArgs& Args)
+extern "C" closure builtin_function_mkCodons(OperationArgs& Args)
 {
     auto arg0  = Args.evaluate(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     auto nuc = dynamic_cast<const Nucleotides*>(&a);
     if (not nuc)
-	throw myexception()<<"codons: object "<<a.print()<<"is not a Nucleotides alphabet.";
+	throw myexception()<<"mkCodons: object "<<a.print()<<"is not a Nucleotides alphabet.";
 
     auto arg1 = Args.evaluate(1);
     if (not arg1.is_a<Box<Genetic_Code>>())
-	throw myexception()<<"codons: object "<<arg1.print()<<"is not a Genetic_Code object.";
+	throw myexception()<<"mkCodons: object "<<arg1.print()<<"is not a Genetic_Code object.";
     auto code = arg1.as_<Box<Genetic_Code>>();
 
     return Alphabet(new Codons(*nuc, AminoAcids(), code));

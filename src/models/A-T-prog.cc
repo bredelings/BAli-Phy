@@ -53,17 +53,17 @@ expression_ref get_alphabet_expression(const alphabet& a)
     {
         auto nucs = get_alphabet_expression(codons->getNucleotides());
         auto code = get_genetic_code_expression(codons->getGenetic_Code());
-        return {var("codons"), nucs, code};
+        return {var("mkCodons"), nucs, code};
     }
     else if (auto triplets = dynamic_cast<const Triplets*>(&a))
     {
         auto nucs = get_alphabet_expression(triplets->getNucleotides());
-        return {var("triplets"),nucs};
+        return {var("mkTriplets"),nucs};
     }
     else if (auto doublets = dynamic_cast<const Doublets*>(&a))
     {
         auto nucs = get_alphabet_expression(doublets->getNucleotides());
-        return {var("doublets"),nucs};
+        return {var("mkDoublets"),nucs};
     }
     else if (auto num = dynamic_cast<const Numeric*>(&a))
     {

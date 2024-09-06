@@ -1,8 +1,7 @@
 {
-    "name": "codons",
-    "synonyms": [ "Codons" ],
+    "name": "codonsOf",
     "result_type": "Codons<a>",
-    "call": "codons(@nucleotides,@code)",
+    "call": "mkCodons(@nucleotides,@code)",
     "import": ["Bio.Alphabet"],
     "args": [
         {

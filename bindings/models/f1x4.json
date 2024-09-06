@@ -21,7 +21,7 @@
     ],
     "title": "F1x4 codon frequencies",
     "description": "The F1x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi:\n   pi'[ijk] = pi[i]*pi[l]*pi[k].",
-    "examples": ["gy94(pi=f1x4)","f1x4(a=codons(dna))"],
+    "examples": ["gy94(pi=f1x4)","f1x4(a=codonsOf(dna))"],
     "see": ["f3x4","gy94"],
     "extract": "all"
 }
