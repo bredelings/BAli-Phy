@@ -429,7 +429,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable_raw(Ope
 }
 
 // slice_sample_real_random_variable x context state
-extern "C" closure builtin_function_scale_means_only_slice(OperationArgs& Args)
+extern "C" closure builtin_function_scale_means_only_slice_raw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -482,7 +482,7 @@ extern "C" closure builtin_function_scale_means_only_slice(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_scale_means_only_proposal(OperationArgs& Args)
+extern "C" closure builtin_function_scale_means_only_proposal_raw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 

@@ -7,6 +7,7 @@ import Tree
 import Numeric.LogDouble
 import qualified Data.Text as T
 import Data.JSON
+import Data.Foldable (toList)
 
 type ContextIndex = Int
 
@@ -80,9 +81,9 @@ foreign import bpcall "MCMC:" accept_MH :: ContextIndex -> ContextIndex -> LogDo
 --       So... we need some kind of ContextPtr object that holds a reference to the context
 --       until the ContextPtr is destroyed?
 
-foreign import bpcall "MCMC:" scale_means_only_slice :: [Double] -> [Double] -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" scale_means_only_slice_raw :: [Double] -> [Double] -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" scale_means_only_proposal :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" scale_means_only_proposal_raw :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
 
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 
@@ -95,6 +96,10 @@ foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
 
+scale_means_only_slice xs ys = scale_means_only_slice_raw (toList xs) (toList ys)
+
+scale_means_only_proposal xs ys = scale_means_only_proposal_raw (toList xs) (toList ys)
+                                           
 scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
 
 metropolis_hastings :: Proposal -> ContextIndex -> IO Bool
