@@ -7,8 +7,7 @@
     "args": [
         {
             "name": "a",
-            "type": "a",
-	    "default_value": "get_state(alphabet)"
+            "type": "a"
         }
     ]
 }
