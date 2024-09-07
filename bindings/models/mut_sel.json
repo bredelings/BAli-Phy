@@ -19,7 +19,7 @@
 	{
 	    "name": "a",
 	    "type": "a",
-	    "default_value": "get_state(alphabet)",
+	    "default_value": "getAlphabet(@submodel)",
 	    "description": "The alphabet"
 	}
     ],
