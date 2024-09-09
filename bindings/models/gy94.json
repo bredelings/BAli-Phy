@@ -27,9 +27,15 @@
 	    "description": "Letter frequencies"
         },
         {
+            "name": "code",
+            "type": "GeneticCode",
+	    "description": "The genetic code",
+	    "default_value": "standard_code"
+        },
+        {
             "name": "a",
             "type": "Codons<n>",
-	    "default_value": "get_state(alphabet)",
+	    "default_value": "codonsOf(dna,@code)",
 	    "description": "The codon alphabet"
         }
     ],

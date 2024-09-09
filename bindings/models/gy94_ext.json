@@ -9,7 +9,6 @@
         {
             "name": "nuc_model",
             "type": "ExchangeModel<n>",
-            "alphabet": "getNucleotides(@a)",
             "description": "Symmetric exchange rates on nucleotides"
         },
         {
@@ -25,9 +24,15 @@
 	    "description": "Letter frequencies"
         },
         {
+            "name": "code",
+            "type": "GeneticCode",
+	    "description": "Genetic code",
+	    "default_value": "standard_code"
+        },
+        {
             "name": "a",
             "type": "Codons<n>",
-	    "default_value": "get_state(alphabet)",
+	    "default_value": "codonsOf(getAlphabet(@nuc_model),@code)",
 	    "description": "The codon alphabet"
         }
     ],
