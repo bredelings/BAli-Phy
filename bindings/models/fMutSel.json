@@ -1,36 +1,41 @@
 {
     "name": "fMutSel",
     "result_type": "CTMC<Codons<a>>",
-    "call": "SModel.fMutSel'(@a,@ss,@omega,@submodel)",
+    "call": "SModel.fMutSel'(@ss,@omega,@code,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "CTMC<a>",
             "default_value": "gtr",
-	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
         {
             "name": "omega",
             "type": "Double",
             "default_value": "~uniform(0,1)",
-	    "description": "Excess dN/dS"
+            "description": "Excess dN/dS"
         },
         {
             "name": "ss",
             "type": "List<(String,Double)>",
             "default_value": "~iid_on(letters(@a),laplace(0,0.1))",
-	    "description": "Scaled selection coefficients (2Ns) of codons"
+            "description": "Scaled selection coefficients (2Ns) of codons"
         },
-	{
-	    "name": "a",
-	    "type": "Codons<a>",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
-	}
+        {
+            "name": "code",
+            "type": "GeneticCode",
+            "description": "Genetic code",
+            "default_value": "standard_code"
+        },
+        {
+            "name": "a",
+            "type": "Codons<a>",
+            "default_value": "codonsOf(getAlphabet(@submodel),@code)",
+            "description": "The alphabet"
+        }
     ],
-    "description": "The fMutSel model is identical to gtr +> x3 +> mut_sel +> dNdS",
+    "description": "The fMutSel model is identical to gtr +> x3c +> mut_sel +> dNdS",
     "extract": "all",
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",

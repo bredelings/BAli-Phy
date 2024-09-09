@@ -1,17 +1,23 @@
 {
-    "name": "x3_sym",
-    "result_type": "ExchangeModel<Triplets<n>>",
+    "name": "x3c_sym",
+    "result_type": "ExchangeModel<Codons<n>>",
     "title": "Exchangability matrix on triplets/codon constructed from nucleotide exchange rates",
-    "call": "SModel.x3_sym(@submodel)",
+    "call": "SModel.x3c_sym(@code,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "ExchangeModel<n>",
 	    "description": "The singlet exchange model"
+        },
+        {
+            "name": "code",
+            "type": "GeneticCode",
+	    "description": "Genetic code",
+	    "default_value": "standard_code"
         }
     ],
     "description": "Exchangability matrix on triplets or codons constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["hky85_sym +> x3_sym +> f","gtr_sym +> x3_sym +> f","x3_sym(hky85_sym)"],
-    "see": ["gy94","gy94_ext","x3c_sym","x3"]
+    "examples": ["hky85_sym +> x3c_sym +> f +> dNdS      // equivalent to gy94","gtr_sym +> x3c_sym +> f","x3c_sym(hky85_sym)"],
+    "see": ["gy94","gy94_ext","x3_sym","x3c"]
 }

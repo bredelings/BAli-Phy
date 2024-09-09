@@ -23,31 +23,33 @@ mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (letters a) w' "fitnesses"
     a = getAlphabet q0
 
-mut_sel_aa ws q@(Reversible (Markov codon_a _ _ _)) = mut_sel (aa_to_codon codon_a ws) q
+mut_sel_aa ws q@(Reversible (Markov codonA _ _ _)) = mut_sel (aaToCodon codonA ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
-    ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"
-    codon_alphabet = getAlphabet q0
-    amino_alphabet = getAminoAcids codon_alphabet
+    ws = get_ordered_elements (letters aminoA) ws' "fitnesses"
+    codonA = getAlphabet q0
+    aminoA = getAminoAcids codonA
 
-fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & mut_sel codon_w
+fMutSel fitnesses omega code nucModel = nucModel & x3c code & dNdS omega & mut_sel fitnesses
 
-fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
-    where codon_ws = get_ordered_elements (letters codon_a) codon_ws' "fitnesses"
+fMutSel' fitnesses' omega code nucModel = fMutSel fitnesses omega code nucModel
+    where fitnesses = get_ordered_elements (letters codonA) fitnesses' "fitnesses"
+          codonA = mkCodons (getAlphabet nucModel) code
 
-aa_to_codon codon_a xs = [xs_array!aa | codon <- codons, let aa = translate codon_a codon]
-    where xs_array = listArray' xs
-          codons = take n_letters [0..]
-          n_letters = alphabetSize codon_a
+aaToCodon codonA xs = [xsArray!aa | codon <- codons, let aa = translate codonA codon]
+    where xsArray = listArray' xs
+          codons = take (alphabetSize codonA) [0..]
 
 -- \#1->let {w' = listAray' #1} in \#2 #3->fMutSel #0 codon_w #2 #3
 -- The whole body of the function is let-floated up in round 2, and w' is eliminated.
-fMutSel0 codon_a aa_w omega nuc_q  = fMutSel codon_a codon_w omega nuc_q
-    where codon_w = aa_to_codon codon_a aa_w
+fMutSel0 aaFitnesses omega code nucQ = fMutSel fitnesses omega code nucQ
+    where fitnesses = aaToCodon codonA aaFitnesses
+          codonA = mkCodons (getAlphabet nucQ) code
 
-fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
-                                               where amino_ws = get_ordered_elements (letters amino_a) amino_ws' "fitnesses"
-                                                     amino_a = getAminoAcids codon_a
+fMutSel0' aaFitnesses' omega code nucQ = fMutSel0 aaFitnesses omega code nucQ
+    where aaFitnesses = get_ordered_elements (letters aminoA) aaFitnesses' "fitnesses"
+          aminoA = getAminoAcids codonA
+          codonA = mkCodons (getAlphabet nucQ) code
 
 -- Issue: bad mixing on fMutSel model
 

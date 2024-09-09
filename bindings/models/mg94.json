@@ -4,7 +4,7 @@
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "The Muse & Gaut (1994) model of dN/dS.",
-    "call": "mg94(@a,frequencies_from_dict(getNucleotides(@a),@pi),@omega)",
+    "call": "mg94(@a,frequencies_from_dict(getNucleotides(@a),@pi),@omega,@code)",
     "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
@@ -20,9 +20,15 @@
 	    "description": "Nucleotide frequencies"
         },
         {
+            "name": "code",
+            "type": "GeneticCode",
+            "description": "Genetic code",
+            "default_value": "standard_code"
+        },
+        {
             "name": "a",
             "type": "Codons<n>",
-            "default_value": "get_state(alphabet)",
+            "default_value": "codonsOf(dna,@code)",
 	    "description": "The alphabet"
         }
     ],

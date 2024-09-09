@@ -11,16 +11,16 @@ import           System.Environment  -- for getArgs
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
-    sym <- prior $ symmetric_dirichlet_on (letter_pair_names nucleotides) 1.0
+    er <- prior $ symmetric_dirichlet_on (letter_pair_names nucleotides) 1.0
     pi  <- prior $ symmetric_dirichlet_on (letters nucleotides) 1.0
     ws   <- zip (letters codons) <$> prior (iid (length (letters codons)) (normal 0 1))
     let n  = 4
     omegaDist <- prior $ dirichletMixture n (uniform 0 1) 2
 
-    let mut_sel_model w = gtr' sym pi nucleotides +> SModel.x3 codons +> dNdS w +> mut_sel' ws
+    let mut_sel_model w = gtr' er pi nucleotides +> SModel.x3c standard_code +> dNdS w +> mut_sel' ws
         m3_model = mut_sel_model +> SModel.m3 omegaDist
 
-    let loggers = ["gtr:sym" %=% sym,
+    let loggers = ["gtr:er" %=% er,
                    "gtr:pi" %=% pi,
                    "mut_sel:2ns" %=% ws,
                    "m3:omegaDist" %=% sortDist omegaDist]

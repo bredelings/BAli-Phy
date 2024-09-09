@@ -1,14 +1,13 @@
 {
     "name": "fMutSel0",
     "result_type": "CTMC<Codons<a>>",
-    "call": "fMutSel0'(@a,@ss,@omega,@submodel)",
+    "call": "fMutSel0'(@ss,@omega,@code,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "CTMC<a>",
             "default_value": "gtr",
-	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
         {
@@ -21,14 +20,20 @@
             "name": "ss",
             "type": "List<(String,Double)>",
             "default_value": "~iid_on(letters(getAminoAcids(@a)),laplace(0,0.1))",
-	    "description": "Scaled selection coefficients (2Ns) of amino acids"
+            "description": "Scaled selection coefficients (2Ns) of amino acids"
         },
-	{
-	    "name": "a",
-	    "type": "Codons<a>",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
-	}
+        {
+            "name": "code",
+            "type": "GeneticCode",
+            "description": "Genetic code",
+            "default_value": "standard_code"
+        },
+        {
+            "name": "a",
+            "type": "Codons<a>",
+            "default_value": "codonsOf(getAlphabet(@submodel),@code)",
+            "description": "The alphabet"
+        }
     ],
     "extract": "all",
     "citation":{"type": "article",

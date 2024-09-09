@@ -35,17 +35,30 @@ gy94_ext  sym w pi a = gtr (ExchangeModel a (m0 a sym w)) pi
 
 gy94  k w pi a = gy94_ext  sym w pi a where (ExchangeModel _ sym) = hky85_sym (getNucleotides a) k
 
-mg94_ext a w q = q & x3 a & dNdS w
-mg94k a k pi w  = hky85 nuc_a k pi & mg94_ext a w where nuc_a = getNucleotides a
-mg94  a   pi w  = f81     pi nuc_a & mg94_ext a w where nuc_a = getNucleotides a
+mg94_ext w code q = q & x3c code & dNdS w
+mg94k a k pi w code = hky85 nuc_a k pi & mg94_ext w code where nuc_a = getNucleotides a
+mg94  a   pi w code = f81     pi nuc_a & mg94_ext w code where nuc_a = getNucleotides a
 
-x3x3 a m1 m2 m3 = reversible $ markov a smap q pi where
+x3x3 m1 m2 m3 = reversible $ markov a smap q pi where
+    a = mkTriplets (getAlphabet m1)
     smap = simple_smap a
     q = singlet_to_triplet_rates a (getQ m1) (getQ m2) (getQ m3)
     pi = f3x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2) (getEqFreqs m3)
 
-x3_sym a (ExchangeModel _ s) = ExchangeModel a (singlet_to_triplet_rates a s s s)
-x3 a q = x3x3 a q q q
+x3x3c code m1 m2 m3 = reversible $ markov a smap q pi where
+    a = mkCodons (getAlphabet m1) code
+    smap = simple_smap a
+    q = singlet_to_triplet_rates a (getQ m1) (getQ m2) (getQ m3)
+    pi = f3x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2) (getEqFreqs m3)
+
+x3_sym (ExchangeModel nucA s) = ExchangeModel a (singlet_to_triplet_rates a s s s)
+    where a = mkTriplets nucA
+
+x3c_sym code (ExchangeModel nucA s) = ExchangeModel a (singlet_to_triplet_rates a s s s)
+    where a = mkCodons nucA code
+
+x3 q = x3x3 q q q
+x3c code q = x3x3c code q q q
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS omega m@(Reversible (Markov a s _ r)) = reversible $ markov a s q pi where

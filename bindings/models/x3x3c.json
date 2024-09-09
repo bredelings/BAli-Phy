@@ -1,8 +1,8 @@
 {
-    "name": "x3x3",
-    "result_type": "CTMC<Triplets<n>>",
+    "name": "x3x3c",
+    "result_type": "CTMC<Codons<n>>",
     "title": "Rate matrix constructed from rate matrices on each triplet position",
-    "call": "SModel.x3x3(@rates1,@rates2,@rates3)",
+    "call": "SModel.x3x3c(@code,@rates1,@rates2,@rates3)",
     "import": ["SModel"],
     "args": [
         {
@@ -19,10 +19,15 @@
             "name": "rates3",
             "type": "CTMC<n>",
 	    "description": "Rates for position 3"
+        },
+        {
+            "name": "code",
+            "type": "GeneticCode",
+	    "description": "Genetic code",
+	    "default_value": "standard_code"
         }
-
     ],
     "description":"A triplet rate matrix constructed from separate nucleotide rate matrices for the first, second, and third codon position",
-    "examples": ["q=hky85; x3x3(q,q,q)"],
-    "see": ["x3"]
+    "examples": ["q=hky85; x3x3c(q,q,q)"],
+    "see": ["x3c"]
 }

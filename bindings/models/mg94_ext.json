@@ -2,13 +2,12 @@
     "name": "mg94_ext",
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
-    "call": "mg94_ext(@a,@omega,@nuc_model)",
+    "call": "mg94_ext(@omega,@code,@nuc_model)",
     "import": ["SModel"],
     "args": [
         {
             "name": "nuc_model",
             "type": "CTMC<n>",
-            "alphabet": "getNucleotides(@a)",
             "description": "Nucleotide substitution rate matrix"
         },
         {
@@ -18,10 +17,10 @@
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
-            "name": "a",
-            "type": "Codons<n>",
-            "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
+            "name": "code",
+            "type": "GeneticCode",
+            "description": "Genetic code",
+            "default_value": "standard_code"
         }
     ],
     "title": "An extended version of the Muse & Gaut (1994) model of codon substitution.",

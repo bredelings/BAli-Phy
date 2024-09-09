@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=tn93+>x3+>dNdS
+--test codons-dna.fasta --smodel=tn93+>x3c+>dNdS

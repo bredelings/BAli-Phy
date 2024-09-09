@@ -1,17 +1,23 @@
 {
-    "name": "x3",
-    "result_type": "CTMC<Triplets<n>>",
+    "name": "x3c",
+    "result_type": "CTMC<Codons<n>>",
     "title": "Rate matrix on triplets/codon constructed from nucleotide rates",
-    "call": "SModel.x3(@submodel)",
+    "call": "SModel.x3c(@code,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "CTMC<n>",
 	    "description": "Nucleotide rates"
+        },
+        {
+            "name": "code",
+            "type": "GeneticCode",
+	    "description": "Genetic code",
+	    "default_value": "standard_code"
         }
     ],
     "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["f81 +> x3","gtr +> x3"],
-    "see": ["mg94","mg94_ext", "x3c"]
+    "examples": ["f81 +> x3c +> dNdS      // equivalent to mg94","gtr +> x3c"],
+    "see": ["mg94","mg94_ext", "x3"]
 }
