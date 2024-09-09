@@ -8,13 +8,14 @@
         {
             "name": "rates",
             "type": "List<(String,Double)>",
-	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
-	    "description":"rate matrix"
+            "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
+            "description":"rate matrix"
         },
         {
             "name": "a",
             "type": "a",
-	    "description": "The alphabet"
+            "description": "The alphabet",
+            "default_value": "dna"
         }
     ],
     "computed": [

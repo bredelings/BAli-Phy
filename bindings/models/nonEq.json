@@ -15,12 +15,13 @@
             "name": "pi",
             "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
-	    "description": "Letter frequencies"
+            "description": "Letter frequencies"
         },
         {
             "name": "a",
             "type": "a",
-	    "description": "The alphabet"
+            "description": "The alphabet",
+            "default_value": "dna"
         }
     ],
     "computed": [
