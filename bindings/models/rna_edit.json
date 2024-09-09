@@ -9,7 +9,6 @@
         {
             "name": "submodel",
             "type": "CTMC<b>",
-            "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },
         {
@@ -26,7 +25,7 @@
         {
             "name": "a",
             "type": "Doublets<a>",
-            "default_value": "get_state(alphabet)",
+            "default_value": "doubletsOf(getAlphabet(@submodel))",
 	    "description": "The Doublets alphabet"
         }
     ],

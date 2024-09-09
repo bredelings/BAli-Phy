@@ -3,20 +3,13 @@
     "result_type": "CTMC<Doublets<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "Rate matrix on doublets constructed from nucleotide rates",
-    "call": "SModel.x2(@a,@submodel)",
+    "call": "SModel.x2(@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "CTMC<b>",
-            "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
-        },
-        {
-            "name": "a",
-            "type": "Doublets<a>",
-            "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",

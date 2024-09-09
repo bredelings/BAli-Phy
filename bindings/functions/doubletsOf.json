@@ -1,0 +1,13 @@
+{
+    "name": "doubletsOf",
+    "result_type": "Doublets<n>",
+    "call": "mkDoublets(@nucleotides)",
+    "import": ["Bio.Alphabet"],
+    "args": [
+        {
+            "name": "nucleotides",
+            "type": "n"
+        }
+    ],
+    "title": "The doublets alphabet"
+}

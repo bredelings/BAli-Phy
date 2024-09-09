@@ -3,20 +3,13 @@
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "ExchangeModel<a>",
     "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
-    "call": "SModel.x2_sym(@a,@submodel)",
+    "call": "SModel.x2_sym(@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
             "type": "ExchangeModel<b>",
-            "alphabet": "getNucleotides(@a)",
 	    "description": "The singlet exchange model"
-        },
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
         }
     ],
     "description": "Exchangability matrix on doublets constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",

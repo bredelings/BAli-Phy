@@ -3,26 +3,18 @@
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "CTMC<a>",
     "title": "Rate matrix constructed from rate matrices on each doublet position",
-    "call": "x2x2(@a,@rates1,@rates2)",
+    "call": "x2x2(@rates1,@rates2)",
     "import": ["SModel"],
     "args": [
         {
             "name": "rates1",
             "type": "CTMC<b>",
-            "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 1"
         },
         {
             "name": "rates2",
             "type": "CTMC<b>",
-            "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 2"
-        },
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-	    "description": "The Triplets alphabet"
         }
     ],
     "description":"A doublet rate matrix constructed from separate nucleotide rate matrices for the first and second doublet positions",
