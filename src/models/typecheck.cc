@@ -673,21 +673,6 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
         if (is_default)
             scope2.args = arg_env;
 
-        optional<ptree> alphabet_value;
-        if (auto alphabet_expression = argument.get_child_optional("alphabet"))
-        {
-            auto scope3 = *this;
-            scope3.args = arg_env;
-	    auto alphabet_required_type = get_fresh_type_var("a");
-            auto alphabet_value2= scope3.typecheck_and_annotate(alphabet_required_type, *alphabet_expression);
-            eqs = eqs && scope3.eqs;
-            if (not eqs)
-                throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
-            auto alphabet_type = alphabet_value2.get_child("type");
-            scope2.state["alphabet"] = alphabet_type;
-            alphabet_value = alphabet_value2;
-        }
-
 	auto arg_value2 = scope2.typecheck_and_annotate(arg_required_type, arg_value);
         if (not is_default)
             add(used_args, get_used_args(arg_value2));
@@ -697,8 +682,6 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
 	for(auto& x: argument)
 	    arg_value2.push_back(x);
 	arg_value2.push_back({"is_default_value",ptree(is_default)});
-        if (alphabet_value)
-            *arg_value2.get_child_optional("alphabet") = *alphabet_value;
 	model2.push_back({arg_name, arg_value2});
     }
 

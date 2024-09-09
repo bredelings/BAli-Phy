@@ -172,14 +172,6 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 
 	    (*default_value) = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
-
-	if (auto alphabet = x.get_child_optional("alphabet"))
-	{
-	    if (not alphabet->has_value<string>())
-		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
-
-	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": default value for '"+arg_name+"'");
-	}
     }
 
     // Handle optional element "computed".

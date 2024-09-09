@@ -1248,9 +1248,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         // We only count references from the argument if its a default value.
         if (is_default_value)
             used_args_for_arg[i] = get_used_args(arg);
-        // However, the alphabet always references the current arguments.
-        if (auto alphabet_exp = arg.get_child_optional("alphabet"))
-            add(used_args_for_arg[i], get_used_args(*alphabet_exp));
 
         auto var_name = arg_names[i];
         if (var_name == "submodel")
@@ -1283,41 +1280,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         auto arg = model_rep.get_child(arg_names[i]);
 
-        optional<var> alphabet;
-        if (auto alphabet_expression = arg.get_child_optional("alphabet"))
-        {
-            string var_name = "alpha";
-            if (alphabet_expression->get_child("value").has_value<string>() and alphabet_expression->get_child("value").get_value<string>() == "getNucleotides")
-                var_name = "nucs";
-            auto x = scope2.get_var(var_name);
-            auto log_x = scope2.get_var("log_"+arg_names[i]+"_alpha");
-
-            auto alphabet_scope = scope2;
-            alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = get_model_as(R, *alphabet_expression, alphabet_scope);
-            if (alphabet_result.lambda_vars.size())
-                throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-
-            assert(not alphabet_result.code.has_loggers());
-            assert(not alphabet_result.code.perform_function);
-            use_block(result, log_x, alphabet_result, log_names[i]+":alphabet");
-
-            if (is_var(alphabet_result.code.E))
-                alphabet = alphabet_result.code.E.as_<var>();
-            else
-            {
-                alphabet = x;
-                result.code.stmts.let(x, alphabet_result.code.E);
-            }
-        }
-
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
 
         auto scope3 = scope2;
         if (is_default_value)
             scope3.arg_env = {{name,arg_names[i],argument_environment}};
-        if (alphabet)
-            scope3.set_state("alphabet", *alphabet);
 
         arg = model_rep.get_child(arg_names[i]);
         arg_models[i] = get_model_as(R, arg, scope3);
