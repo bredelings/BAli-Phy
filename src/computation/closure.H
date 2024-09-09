@@ -121,7 +121,7 @@ closure get_trimmed(closure&& C);
 
 void do_trim(closure& C);
 
-closure trim_unnormalize(closure C);
+closure trim_unnormalize(const closure& C);
 
 expression_ref deindexify(const closure& C);
 
