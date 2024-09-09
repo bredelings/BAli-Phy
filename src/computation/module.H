@@ -76,6 +76,8 @@ class Module
 
     std::map<std::string, const_type_ptr> exported_types_;
 
+    std::shared_ptr<FreshVarState> fresh_var_state_;
+
 public:
 
     std::vector<Message> messages;
@@ -99,6 +101,12 @@ public:
 
     // For error messages, and also computing the source file SHA.
     FileContents file;
+
+    const FreshVarState& fresh_var_state() const {return *fresh_var_state_;}
+
+          FreshVarState& fresh_var_state() {return *fresh_var_state_;}
+
+    std::shared_ptr<FreshVarState> fresh_var_state_ptr() {return fresh_var_state_;}
 
     std::string all_inputs_sha(const Program& P) const;
 
@@ -255,6 +263,8 @@ class CompiledModule
 
     std::map<std::string, std::shared_ptr<const CompiledModule>> transitively_imported_modules_;
 
+    std::shared_ptr<FreshVarState> fresh_var_state_;
+
 public:
 
     // Discard everything-except-code since all compilation is done.
@@ -263,6 +273,12 @@ public:
 
     // Now discard the code -- what is left?
     void clear_code() { value_decls.clear(); }
+
+    const FreshVarState& fresh_var_state() const {return *fresh_var_state_;}
+
+          FreshVarState& fresh_var_state()       {return *fresh_var_state_;}
+
+    std::shared_ptr<FreshVarState> fresh_var_state_ptr() {return fresh_var_state_;}
 
     // Where is this used?
     const std::map<std::string, std::shared_ptr<const CompiledModule>>& transitively_imported_modules() const
@@ -302,7 +318,7 @@ public:
     void serialize(Archive& ar)
     {
 	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
-	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_ );
+	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_, fresh_var_state_ );
     }
 
     CompiledModule(const std::shared_ptr<Module>& m);

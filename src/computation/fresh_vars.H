@@ -17,6 +17,15 @@ public:
 
     bool check_index(int i) const {return i < var_index;}
     int get_index() {return var_index++;}
+
+    void after(int i) { var_index = std::max(var_index, i);}
+    void after(const FreshVarState& fv) { after(fv.var_index); }
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar( var_index );
+    }
 };
 
 

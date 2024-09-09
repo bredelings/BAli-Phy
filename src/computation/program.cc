@@ -95,6 +95,14 @@ shared_ptr<CompiledModule> compiler_prim_module()
     return cm;
 }
 
+std::shared_ptr<FreshVarState> Program::fresh_var_state() const
+{
+    auto state = std::make_shared<FreshVarState>();
+    for(auto& m: *this)
+	state->after(m->fresh_var_state());
+    return state;
+}
+
 
 Program::Program(const std::shared_ptr<module_loader>& L)
     :loader(L)

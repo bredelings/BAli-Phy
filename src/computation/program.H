@@ -27,15 +27,13 @@ class Program: public std::vector<std::shared_ptr<CompiledModule>>
 
     int count_module(const std::string& module_name) const;
 
-    mutable FreshVarState fresh_var_state_;
-
 public:
 
     std::optional<std::string> main;
 
     std::vector<std::shared_ptr<CompiledModule>>& modules();
 
-    FreshVarState& fresh_var_state() const {return fresh_var_state_;}
+    std::shared_ptr<FreshVarState> fresh_var_state() const;
 
     void add(const std::shared_ptr<Module>& M);
 

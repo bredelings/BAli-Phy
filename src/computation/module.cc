@@ -251,6 +251,8 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 
     auto M2 = P.get_module( unloc(impdecl.modid) );
 
+    fresh_var_state().after(M2->fresh_var_state());
+
     transitively_imported_modules.insert({M2->name(), M2});
     for(auto& [mod_name, mod]: M2->transitively_imported_modules())
         transitively_imported_modules.insert({mod_name, mod});
@@ -552,7 +554,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
-    auto tc_result = typecheck(P.fresh_var_state(), M, *MM);
+    auto tc_result = typecheck(MM->fresh_var_state(), M, *MM);
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
@@ -575,7 +577,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    CDecls value_decls = MM->desugar(opts, P.fresh_var_state(), hs_decls);
+    CDecls value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
     value_decls += core_decls;
 
     value_decls = MM->load_builtins(loader, M.foreign_decls, value_decls);
@@ -593,7 +595,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    value_decls = MM->optimize(opts, P.fresh_var_state(), value_decls);
+    value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
     // this records unfoldings.
     MM->export_small_decls(value_decls);
@@ -1858,7 +1860,8 @@ std::string Module::all_inputs_sha(const Program& P) const
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
-    :name(n)
+    :fresh_var_state_(std::make_shared<FreshVarState>()),
+     name(n)
 {
     if (not name.size())
         throw myexception()<<"Module name may not be empty!";
@@ -1869,7 +1872,8 @@ Module::Module(const char *n)
 { }
 
 Module::Module(const Haskell::Module& M, const LanguageExtensions& le, const FileContents& f)
-    :language_extensions(le),
+    :fresh_var_state_(std::make_shared<FreshVarState>()),
+     language_extensions(le),
      module_AST(M),
      name(unloc(module_AST.modid)),
      file(f)
@@ -1996,9 +2000,11 @@ void CompiledModule::inflate(const Program& P)
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     :modid(m->name),
-     dependencies_(m->dependencies())
-     
+     dependencies_(m->dependencies()),
+     fresh_var_state_(m->fresh_var_state_ptr())
 {
+    assert(fresh_var_state_);
+
     std::swap(symbols, m->symbols);
 
     std::swap(types, m->types);
