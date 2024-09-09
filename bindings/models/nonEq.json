@@ -20,7 +20,6 @@
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
     ],
