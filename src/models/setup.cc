@@ -506,7 +506,7 @@ struct translation_result_t
     set<var> haskell_vars;
 };
 
-struct name_scope_t
+struct CodeGenState
 {
     const Rules* R;
     map<string,var_info_t> identifiers;
@@ -537,8 +537,8 @@ struct name_scope_t
         state.insert({name,x});
     }
 
-    name_scope_t extend_scope(const string& var, const var_info_t& var_info) const;
-    name_scope_t& extend_modify_scope(const string& var, const var_info_t& var_info);
+    CodeGenState extend_scope(const string& var, const var_info_t& var_info) const;
+    CodeGenState& extend_modify_scope(const string& var, const var_info_t& var_info);
 
     translation_result_t get_model_decls(const ptree& model) const;
     optional<translation_result_t> get_variable_model(const ptree& model) const;
@@ -550,10 +550,10 @@ struct name_scope_t
     translation_result_t get_model_function(const ptree& model) const;
     translation_result_t get_model_as(const ptree& model_rep) const;
 
-    name_scope_t(const Rules& r):R(&r) {}
+    CodeGenState(const Rules& r):R(&r) {}
 };
 
-bool name_scope_t::is_random(const ptree& model_) const
+bool CodeGenState::is_random(const ptree& model_) const
 {
     auto model = model_.get_child("value");
 
@@ -576,7 +576,7 @@ bool name_scope_t::is_random(const ptree& model_) const
     return false;
 }
 
-bool name_scope_t::is_unlogged_random(const ptree& model_) const
+bool CodeGenState::is_unlogged_random(const ptree& model_) const
 {
     auto model = model_.get_child("value");
 
@@ -603,7 +603,7 @@ bool name_scope_t::is_unlogged_random(const ptree& model_) const
     return false;
 }
 
-bool name_scope_t::should_log(const ptree& model_, const string& arg_name) const
+bool CodeGenState::should_log(const ptree& model_, const string& arg_name) const
 {
     auto model = model_.get_child("value");
 
@@ -621,13 +621,13 @@ bool name_scope_t::should_log(const ptree& model_, const string& arg_name) const
         return false;
 }
 
-name_scope_t name_scope_t::extend_scope(const string& var, const var_info_t& var_info) const
+CodeGenState CodeGenState::extend_scope(const string& var, const var_info_t& var_info) const
 {
     auto scope = *this;
     return scope.extend_modify_scope(var, var_info);
 }
 
-name_scope_t& name_scope_t::extend_modify_scope(const string& var, const var_info_t& var_info)
+CodeGenState& CodeGenState::extend_modify_scope(const string& var, const var_info_t& var_info)
 {
     if (identifiers.count(var))
         identifiers.erase(var);
@@ -675,7 +675,7 @@ optional<translation_result_t> get_constant_model(const ptree& model)
         return {};
 }
 
-optional<translation_result_t> name_scope_t::get_variable_model(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_variable_model(const ptree& model) const
 {
     auto E = model.get_child("value");
 
@@ -799,7 +799,7 @@ void generated_code_t::log_sub(const string& name, const var& log_var, const Log
  *   pair_body <- let_body
  *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
-optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) const
 {
     auto scope2 = *this;
 
@@ -853,7 +853,7 @@ optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) c
  *   let var1_name = fst pair_var1
  *   loggers = [("var_name",(Nothing,[(var_name,pair_x)]))]
  */
-translation_result_t name_scope_t::get_model_decls(const ptree& model) const
+translation_result_t CodeGenState::get_model_decls(const ptree& model) const
 {
     translation_result_t result;
 
@@ -939,7 +939,7 @@ set<string> find_vars_in_pattern(const ptree& pattern0)
 }
 
 
-optional<translation_result_t> name_scope_t::get_model_lambda(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_model_lambda(const ptree& model) const
 {
     auto scope2 = *this;
 
@@ -1095,7 +1095,7 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_model_list(const ptree& model) const
 {
     auto scope2 = *this;
     auto model_rep = model.get_child("value");
@@ -1155,7 +1155,7 @@ optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) 
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_model_tuple(const ptree& model) const
 {
     auto scope2 = *this;
     auto model_rep = model.get_child("value");
@@ -1215,7 +1215,7 @@ optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model)
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-translation_result_t name_scope_t::get_model_function(const ptree& model) const
+translation_result_t CodeGenState::get_model_function(const ptree& model) const
 {
     auto scope2 = *this;
     auto model_rep = model.get_child("value");
@@ -1417,7 +1417,7 @@ translation_result_t name_scope_t::get_model_function(const ptree& model) const
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> name_scope_t::get_model_state(const ptree& model) const
+optional<translation_result_t> CodeGenState::get_model_state(const ptree& model) const
 {
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
@@ -1447,7 +1447,7 @@ optional<translation_result_t> name_scope_t::get_model_state(const ptree& model)
         return {};
 }
 
-translation_result_t name_scope_t::get_model_as(const ptree& model_rep) const
+translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -1523,7 +1523,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 
 
 // QUESTION: How can we move the smodel definitions into the decls?
-// QUESTION: How do we keep track of names_in_scope across (say) models?
+// QUESTION: How do we keep track of code_gen_state across (say) models?
 // QUESTION: In decls, we WANT the same (non-haskell) name to override previous instances of the same name.
 //           But for lifted arguments of cmdline-language expressions, maybe we don't?
 // QUESTION: Can/should we have a pre-processing state where we lift monadic arguments into named prior expressions?
@@ -1566,29 +1566,29 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    name_scope_t names_in_scope(R);
+    CodeGenState code_gen_state(R);
     for(auto& [name,type]: scope)
     {
-        auto x = names_in_scope.get_var(name);
-        names_in_scope.identifiers.insert({name, var_info_t(x)});
+        auto x = code_gen_state.get_var(name);
+        code_gen_state.identifiers.insert({name, var_info_t(x)});
     }
 
     for(auto& [state_name,p]: state)
     {
         auto& [var_name, _] = p;
-        auto x = names_in_scope.get_var(var_name);
-        names_in_scope.set_state(state_name,x);
+        auto x = code_gen_state.get_var(var_name);
+        code_gen_state.set_state(state_name,x);
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _lambda_vars, _vars] = names_in_scope.get_model_as(model);
+    auto [code, imports, _lambda_vars, _vars] = code_gen_state.get_model_as(model);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
 
     // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
-        code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
+        code.lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
     return model_t{model, imports, required_type, constraints, code};
 }
@@ -1621,29 +1621,29 @@ model_t compile_decls(const Rules& R,
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    name_scope_t names_in_scope(R);
+    CodeGenState code_gen_state(R);
     for(auto& [name,type]: scope)
     {
-        auto x = names_in_scope.get_var(name);
-        names_in_scope.identifiers.insert({name, var_info_t(x)});
+        auto x = code_gen_state.get_var(name);
+        code_gen_state.identifiers.insert({name, var_info_t(x)});
     }
 
     for(auto& [state_name,p]: state)
     {
         auto& [var_name, _] = p;
-        auto x = names_in_scope.get_var(var_name);
-        names_in_scope.set_state(state_name,x);
+        auto x = code_gen_state.get_var(var_name);
+        code_gen_state.set_state(state_name,x);
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _1, _2] = names_in_scope.get_model_decls(decls2);
+    auto [code, imports, _1, _2] = code_gen_state.get_model_decls(decls2);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
 
     // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
-        code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
+        code.lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
     return model_t{decls2, imports, {}, constraints, code};
 }
