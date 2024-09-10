@@ -546,6 +546,8 @@ struct name_scope_t
     optional<translation_result_t> get_model_lambda(const ptree& model) const;
     optional<translation_result_t> get_model_list(const ptree& model) const;
     optional<translation_result_t> get_model_tuple(const ptree& model) const;
+    optional<translation_result_t> get_model_state(const ptree& model) const;
+    translation_result_t get_model_function(const ptree& model) const;
 
     name_scope_t(const Rules& r):R(&r) {}
 };
@@ -1214,16 +1216,16 @@ optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model)
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-translation_result_t get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
+translation_result_t name_scope_t::get_model_function(const ptree& model) const
 {
-    auto scope2 = scope;
+    auto scope2 = *this;
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
 
     translation_result_t result;
 
     // 1. Get the rule for the function
-    auto rule = R.get_rule_for_func(name);
+    auto rule = R->get_rule_for_func(name);
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
     if (auto rule_imports = rule->get_child_optional("import"))
@@ -1305,7 +1307,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = get_model_as(R, *alphabet_expression, alphabet_scope);
+            auto alphabet_result = get_model_as(*R, *alphabet_expression, alphabet_scope);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
 
@@ -1331,7 +1333,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             scope3.set_state("alphabet", *alphabet);
 
         arg = model_rep.get_child(arg_names[i]);
-        arg_models[i] = get_model_as(R, arg, scope3);
+        arg_models[i] = get_model_as(*R, arg, scope3);
 
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1345,7 +1347,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto log_x = log_vars[i];
 
 	auto type = arg.get_child("type");
-        bool do_log = scope.should_log(model, arg_names[i]) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
+        bool do_log = should_log(model, arg_names[i]) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
 
         // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg_models[i], log_names[i]);
@@ -1416,7 +1418,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> get_model_state(const Rules&, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_model_state(const ptree& model) const
 {
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
@@ -1431,9 +1433,9 @@ optional<translation_result_t> get_model_state(const Rules&, const ptree& model,
 
     if (state_name)
     {
-        if (scope.state.count(*state_name))
+        if (state.count(*state_name))
         {
-            auto x = scope.state.at(*state_name);
+            auto x = state.at(*state_name);
             translation_result_t result;
             result.code.E = x;
             result.code.used_states = {*state_name};
@@ -1484,11 +1486,11 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *list;
 
     // 8. get_state[state] expressions.
-    else if (auto state = get_model_state(R, model_rep, scope))
+    else if (auto state = scope.get_model_state(model_rep))
         return *state;
 
     // 9. Functions
-    return get_model_function(R, model_rep, scope);
+    return scope.get_model_function(model_rep);
 }
 
 void substitute_annotated(const equations& equations, ptree& model)
