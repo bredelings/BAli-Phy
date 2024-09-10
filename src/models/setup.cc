@@ -1519,27 +1519,39 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
                   const vector<pair<string,ptree>>& scope,
                   const map<string,pair<string,ptree>>& state)
 {
+    // 1. Parse
     auto model_rep = parse(R, model_string, what);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
+    // 2. Typecheck
     auto model = TC.typecheck_and_annotate(required_type, model_rep);
 
-    model_rep = extract_value(model);
-
-    substitute(TC.eqs, model_rep);
     substitute(TC.eqs, required_type);
     substitute_annotated(TC.eqs, model);
+
+    set<ptree> constraints;
+    for(auto constraint: TC.eqs.get_constraints())
+    {
+	substitute(TC.eqs, constraint);
+	constraints.insert(constraint);
+    }
+
     if (log_verbose >= 2)
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
         std::cout<<"equations: "<<show(TC.eqs)<<std::endl;
+
+	model_rep = extract_value(model);
+	substitute(TC.eqs, model_rep);
         std::cout<<"structure = "<<show(model_rep)<<std::endl;
+
         std::cout<<"annotated structure = "<<show(model)<<std::endl;
         std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
         std::cout<<std::endl;
     }
 
+    // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
     name_scope_t names_in_scope;
@@ -1557,19 +1569,12 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
         lambda_vars.push_back(x);
     }
 
-    set<ptree> constraints;
-    for(auto constraint: TC.eqs.get_constraints())
-    {
-	substitute(TC.eqs, constraint);
-	constraints.insert(constraint);
-    }
-
-    // --------- Convert model to MultiMixtureModel ------------//
-    auto [code, imports, _1, _2] = get_model_as(R, model, names_in_scope);
+    auto [code, imports, _lambda_vars, _vars] = get_model_as(R, model, names_in_scope);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
 
+    // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
         code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
 
@@ -1581,6 +1586,7 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
  * Do we still want that?
  */
 
+// This is being called from bali-phy/A-T-model.cc: create_A_and_T_model( ).
 model_t compile_decls(const Rules& R,
 		      TypecheckingState& TC,
 		      const string& prog,
@@ -1593,6 +1599,14 @@ model_t compile_decls(const Rules& R,
     // 2. Typecheck.
     auto decls2 = TC.typecheck_and_annotate_decls(decls);
 
+    set<ptree> constraints;
+    for(auto constraint: TC.eqs.get_constraints())
+    {
+	substitute(TC.eqs, constraint);
+	constraints.insert(constraint);
+    }
+
+    // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
     name_scope_t names_in_scope;
@@ -1610,18 +1624,12 @@ model_t compile_decls(const Rules& R,
         lambda_vars.push_back(x);
     }
 
-    set<ptree> constraints;
-    for(auto constraint: TC.eqs.get_constraints())
-    {
-	substitute(TC.eqs, constraint);
-	constraints.insert(constraint);
-    }
-
     auto [code, imports, _1, _2] = get_model_decls(R, decls2, {});
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
 
+    // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
         code.lambda_vars.push_back( names_in_scope.state.at(state_name) );
 
