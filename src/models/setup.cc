@@ -515,6 +515,8 @@ struct name_scope_t
     map<string, var> state;
 
     bool is_random(const ptree&) const;
+    bool is_unlogged_random(const ptree& model) const;
+    bool should_log(const ptree& model_, const string& arg_name) const;
 
     var get_var(string name)
     {
@@ -564,7 +566,7 @@ bool name_scope_t::is_random(const ptree& model_) const
     return false;
 }
 
-bool is_unlogged_random(const Rules& R, const ptree& model_, const name_scope_t& scope)
+bool name_scope_t::is_unlogged_random(const ptree& model_) const
 {
     auto model = model_.get_child("value");
 
@@ -581,17 +583,17 @@ bool is_unlogged_random(const Rules& R, const ptree& model_, const name_scope_t&
     //    if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
-    if (is_loggable_function(R, name)) return false;
+    if (is_loggable_function(*R, name)) return false;
 
     // 4. Otherwise check if children are random and unlogged
-    for(const auto& p: model)
-        if (is_unlogged_random(R, p.second, scope))
+    for(const auto& [_,child]: model)
+        if (is_unlogged_random(child))
             return true;
 
     return false;
 }
 
-bool should_log(const Rules& R, const ptree& model_, const string& arg_name, const name_scope_t& scope)
+bool name_scope_t::should_log(const ptree& model_, const string& arg_name) const
 {
     auto model = model_.get_child("value");
 
@@ -599,11 +601,11 @@ bool should_log(const Rules& R, const ptree& model_, const string& arg_name, con
 
     auto name = model.get_value<string>();
 
-    if (not is_loggable_function(R, name)) return false;
+    if (not is_loggable_function(*R, name)) return false;
 
     auto arg = model.get_child(arg_name);
 
-    if (is_unlogged_random(R, arg, scope))
+    if (is_unlogged_random(arg))
         return true;
     else
         return false;
@@ -1127,7 +1129,7 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
 
         // 3e. Maybe emit code for the element.
 	auto type = element.get_child("type");
-        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(type);
+        bool do_log = scope.is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1188,7 +1190,7 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
 
         // 3e. Maybe emit code for the element.
 	auto type = element.get_child("type");
-        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(type);
+        bool do_log = scope.is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1342,7 +1344,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto log_x = log_vars[i];
 
 	auto type = arg.get_child("type");
-        bool do_log = should_log(R, model, arg_names[i], scope) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
+        bool do_log = scope.should_log(model, arg_names[i]) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
 
         // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg_models[i], log_names[i]);
