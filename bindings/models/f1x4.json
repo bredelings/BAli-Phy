@@ -1,27 +1,32 @@
 {
     "name": "f1x4",
     "synonyms": [ "F1x4" ],
-    "result_type": "List<(String,Double)>",
+    "result_type": "CTMC<a>",
     "constraints": "Triplets<a,b>",
-    "call": "f1x4'_frequencies(@a,@pi)",
+    "call": "plus_f1x4(@pi,@submodel)",
     "import": ["SModel"],
     "args": [
+	{
+	    "name": "submodel",
+	    "type": "ExchangeModel<a>",
+	    "description": "Symmetric (exchangeability) matrix"
+	},
         {
             "name": "pi",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1)",
 	    "description": "Nucleotide frequencies"
         },
         {
             "name": "a",
             "type": "a",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The (codon) alphabet"
+            "default_value":"getAlphabet(@submodel)",
+	    "description": "The (triplets) alphabet"
         }
     ],
     "title": "F1x4 codon frequencies",
     "description": "The F1x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi:\n   pi'[ijk] = pi[i]*pi[l]*pi[k].",
-    "examples": ["gy94(pi=f1x4)","f1x4(a=codonsOf(dna))"],
+    "examples": ["gy94 +> f1x4"],
     "see": ["f3x4","gy94"],
     "extract": "all"
 }

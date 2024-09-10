@@ -1,18 +1,16 @@
 {
     "name": "gy94",
-    "synonyms": ["m0"],
-    "deprecated-synonyms": ["M0","GY94"],
-    "result_type": "CTMC<Codons<n>>",
+    "result_type": "ExchangeModel<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
-    "call": "gy94(@kappa,@omega,frequencies_from_dict(@a,@pi),@a)",
-    "import": ["SModel","Bio.Alphabet"],
+    "call": "gy94(@submodel,@omega,@code)",
+    "import": ["SModel"],
     "args": [
         {
-            "name": "kappa",
-            "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
-            "description": "Transition\/transversion ratio"
+            "name": "submodel",
+            "type": "ExchangeModel<n>",
+            "description": "Symmetric exchange rates on nucleotides",
+	    "default_value": "hky85_sym"
         },
         {
             "name": "omega",
@@ -21,25 +19,14 @@
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
-            "name": "pi",
-            "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
-	    "description": "Letter frequencies"
-        },
-        {
             "name": "code",
             "type": "GeneticCode",
-	    "description": "The genetic code",
+	    "description": "Genetic code",
 	    "default_value": "standard_code"
-        },
-        {
-            "name": "a",
-            "type": "Codons<n>",
-	    "default_value": "codonsOf(dna,@code)",
-	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["gy94(kappa=2,omega=2)","gy94(pi=f1x4)","gy94(pi=f3x4)"],
+    "description": "This is a version of the gy94 model that has been extended to use user-supplied exchangabilty matrix `submodel` on nucleotides.  The original gy94 model distinguishes only between transitions and transversions, and is equivalent to `gy94_ext(hky85_sym)`.",
+    "examples": ["gy94_ext(hky85_sym(kappa=2),omega=2)","gy94_ext(gtr_sym,pi=f1x4)"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
@@ -50,6 +37,6 @@
 		 "year":"1994",
 		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
 		},
-    "see": ["gy94_ext","mg94"],
+    "see": ["mg94"],
     "extract": "all"
 }

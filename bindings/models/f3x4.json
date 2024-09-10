@@ -1,34 +1,39 @@
 {
     "name": "f3x4",
     "synonyms": [ "F3x4" ],
-    "result_type": "List<(String,Double)>",
+    "result_type": "CTMC<a>",
     "constraints": "Triplets<a,b>",
-    "call": "f3x4'_frequencies(@a,@pi1,@pi2,@pi3)",
+    "call": "plus_f3x4(@pi1,@pi2,@pi3,@submodel)",
     "import": ["SModel"],
     "args": [
+	{
+	    "name": "submodel",
+	    "type": "ExchangeModel<a>",
+	    "description": "Symmetric (exchangeability) matrix"
+	},
         {
             "name": "pi1",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1)",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
             "name": "pi2",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1)",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
             "name": "pi3",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1)",
 	    "description": "Nucleotide frequencies for position 3"
         },
         {
             "name": "a",
             "type": "a",
-            "default_value":"get_state(alphabet)",
-	    "description": "The (codon) alphabet"
+            "default_value":"getAlphabet(@submodel)",
+	    "description": "The (triplets) alphabet"
         }
     ],
     "description": "The F3x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi1, pi2, and pi3:\n   pi'[ijk] = pi1[i]*pi2[l]*pi3[k].",

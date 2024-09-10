@@ -20,20 +20,23 @@ f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
                                      pi3' = list_to_vector pi3
                                   in list_from_vector $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
-f3x4'_frequencies a pi1 pi2 pi3 = zip (letters a) (f3x4_frequencies a pi1' pi2' pi3')
+f3x4'_frequencies a pi1 pi2 pi3 = f3x4_frequencies a pi1' pi2' pi3'
     where pi1' = get_ordered_elements nuc_letters pi1 "frequencies"
           pi2' = get_ordered_elements nuc_letters pi2 "frequencies"
           pi3' = get_ordered_elements nuc_letters pi3 "frequencies"
           nuc_letters = letters a_nuc
           a_nuc = getNucleotides a
 
+plus_f3x4 pi1 pi2 pi3 sym = gtr sym (f3x4'_frequencies a pi1 pi2 pi3) where a = getAlphabet sym
+
 f1x4_frequencies a pi = f3x4_frequencies a pi pi pi
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi
 
-gy94_ext  sym w pi a = gtr (ExchangeModel a (m0 a sym w)) pi
+plus_f1x4 pi sym = gtr sym (f1x4'_frequencies a pi) where a = getAlphabet sym
 
-gy94  k w pi a = gy94_ext  sym w pi a where (ExchangeModel _ sym) = hky85_sym (getNucleotides a) k
+gy94 (ExchangeModel nucA nucSym) w code = ExchangeModel codonA (m0 codonA nucSym w)
+    where codonA = mkCodons nucA code
 
 mg94_ext w code q = q & x3c code & dNdS w
 mg94k a k pi w code = hky85 nuc_a k pi & mg94_ext w code where nuc_a = getNucleotides a

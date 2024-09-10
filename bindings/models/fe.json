@@ -9,12 +9,6 @@
             "name": "submodel",
             "type": "ExchangeModel<a>",
 	    "description": "Symmetric (exchangability) matrix"
-        },
-        {
-            "name": "a",
-            "type": "a",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
         }
     ],
     "title": "The +FE frequency model",

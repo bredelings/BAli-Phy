@@ -6,8 +6,7 @@
     "args": [
         {
             "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)"
+            "type": "a"
         }
     ],
     "examples": ["hky85[pi=Frequencies.uniform]"],

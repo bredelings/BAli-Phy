@@ -1,20 +1,23 @@
 {
     "name": "f61",
     "synonyms": [ "F61" ],
-    "result_type": "List<(String,Double)>",
-    "constraints": "Triplets<a,b>",
-    "call": "id(@pi)",
+    "result_type": "CTMC<Codons<n>>",
+    "call": "SModel.plus_f'(@pi,@submodel)",
+    "import": ["SModel"],
     "args": [
+        {
+            "name": "submodel",
+            "type": "ExchangeModel<a>",
+	    "description": "Symmetric (exchangability) matrix"
+        },
         {
             "name": "pi",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1.0)"
-        },
-        {
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "~symmetric_dirichlet_on(letters(getAlphabet(@submodel)),1)",
+	    "description": "Letter frequencies"
         }
     ],
+    "title": "The +F61 frequency model",
+    "examples": ["gy94 +> f61"],
     "extract": "all"
 }
