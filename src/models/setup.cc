@@ -548,6 +548,7 @@ struct name_scope_t
     optional<translation_result_t> get_model_tuple(const ptree& model) const;
     optional<translation_result_t> get_model_state(const ptree& model) const;
     translation_result_t get_model_function(const ptree& model) const;
+    translation_result_t get_model_as(const ptree& model_rep) const;
 
     name_scope_t(const Rules& r):R(&r) {}
 };
@@ -646,8 +647,6 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     }
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
-
-translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
 
 expression_ref parse_constant(const ptree& model)
 {
@@ -822,13 +821,13 @@ optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) c
     var log_body = scope2.get_var("log_body");
 
     // 1. Perform the variable expression
-    auto arg_result = get_model_as(*R, var_exp, *this);
+    auto arg_result = get_model_as(var_exp);
 
     if (arg_result.lambda_vars.size())
         var_info.depends_on_lambda = true;
 
     // 2. Perform the body with var_name in scope
-    auto body_result = get_model_as(*R, body_exp, scope2.extend_scope(var_name, var_info));
+    auto body_result = scope2.extend_scope(var_name, var_info).get_model_as(body_exp);
 
     // 3. Construct code.
     translation_result_t result;
@@ -867,7 +866,7 @@ translation_result_t name_scope_t::get_model_decls(const ptree& model) const
 	var_info_t var_info(x, x_is_random);
 
 	// 1. Perform the variable expression
-	auto arg_result = get_model_as(*R, var_exp, scope2);
+	auto arg_result = scope2.get_model_as(var_exp);
 
 	if (arg_result.lambda_vars.size())
 	    var_info.depends_on_lambda = true;
@@ -965,7 +964,7 @@ optional<translation_result_t> name_scope_t::get_model_lambda(const ptree& model
         var_info_t var_info(x,false,true);
         scope2.extend_modify_scope(var_name, var_info);
     }
-    auto body_result = get_model_as(*R, body_model, scope2);
+    auto body_result = scope2.get_model_as(body_model);
 
     // 4. Remove pattern variables from the lambda vars.
     for(auto& var_name: var_names)
@@ -973,7 +972,7 @@ optional<translation_result_t> name_scope_t::get_model_lambda(const ptree& model
             body_result.lambda_vars.erase(var_name);
 
     // 5. Add the lambda in front of the expression
-    auto pattern2 = get_model_as(*R, pattern, scope2);
+    auto pattern2 = scope2.get_model_as(pattern);
     body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
 
     // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
@@ -1122,7 +1121,7 @@ optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) 
 
         // 3b. Generate code for the list element
         auto element = array_index(model_rep, i);
-        auto element_result = get_model_as(*R, element, scope2);
+        auto element_result = scope2.get_model_as(element);
 
         // 3c. Avoid re-using any haskell vars.
         add(scope2.vars, element_result.vars);
@@ -1182,7 +1181,7 @@ optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model)
 
         // 3b. Generate code for the list element
         auto element = array_index(model_rep, i);
-        auto element_result = get_model_as(*R, element, scope2);
+        auto element_result = scope2.get_model_as(element);
 
         // 3c. Avoid re-using any haskell vars.
         add(scope2.vars, element_result.vars);
@@ -1307,7 +1306,7 @@ translation_result_t name_scope_t::get_model_function(const ptree& model) const
 
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = get_model_as(*R, *alphabet_expression, alphabet_scope);
+            auto alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
 
@@ -1333,7 +1332,7 @@ translation_result_t name_scope_t::get_model_function(const ptree& model) const
             scope3.set_state("alphabet", *alphabet);
 
         arg = model_rep.get_child(arg_names[i]);
-        arg_models[i] = get_model_as(*R, arg, scope3);
+        arg_models[i] = scope3.get_model_as(arg);
 
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1448,7 +1447,7 @@ optional<translation_result_t> name_scope_t::get_model_state(const ptree& model)
         return {};
 }
 
-translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
+translation_result_t name_scope_t::get_model_as(const ptree& model_rep) const
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -1466,31 +1465,31 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *constant;
 
     // 3. Handle variables
-    else if (auto variable = scope.get_variable_model(model_rep))
+    else if (auto variable = get_variable_model(model_rep))
         return *variable;
 
     // 4. Let expressions
-    else if (auto let = scope.get_model_let(model_rep))
+    else if (auto let = get_model_let(model_rep))
         return *let;
 
     // 5. Lambda expressions
-    else if (auto lambda = scope.get_model_lambda(model_rep))
+    else if (auto lambda = get_model_lambda(model_rep))
         return *lambda;
 
     // 6. get_state[state] expressions.
-    else if (auto list = scope.get_model_list(model_rep))
+    else if (auto list = get_model_list(model_rep))
         return *list;
 
     // 7. get_state[state] expressions.
-    else if (auto list = scope.get_model_tuple(model_rep))
+    else if (auto list = get_model_tuple(model_rep))
         return *list;
 
     // 8. get_state[state] expressions.
-    else if (auto state = scope.get_model_state(model_rep))
+    else if (auto state = get_model_state(model_rep))
         return *state;
 
     // 9. Functions
-    return scope.get_model_function(model_rep);
+    return get_model_function(model_rep);
 }
 
 void substitute_annotated(const equations& equations, ptree& model)
@@ -1582,7 +1581,7 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _lambda_vars, _vars] = get_model_as(R, model, names_in_scope);
+    auto [code, imports, _lambda_vars, _vars] = names_in_scope.get_model_as(model);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
