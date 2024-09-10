@@ -498,12 +498,23 @@ struct arg_env_t
     { };
 };
 
+struct translation_result_t
+{
+    generated_code_t code;
+    set<string> imports;
+    set<string> lambda_vars;
+    set<var> vars;
+};
+
 struct name_scope_t
 {
+    const Rules* R;
     map<string,var_info_t> identifiers;
     set<var> vars;
     optional<arg_env_t> arg_env;
     map<string, var> state;
+
+    bool is_random(const ptree&) const;
 
     var get_var(string name)
     {
@@ -523,9 +534,14 @@ struct name_scope_t
             state.erase(name);
         state.insert({name,x});
     }
+
+    translation_result_t get_model_decls(const ptree& model) const;
+    optional<translation_result_t> get_model_let(const ptree& model) const;
+
+    name_scope_t(const Rules& r):R(&r) {}
 };
 
-bool is_random(const ptree& model_, const name_scope_t& scope)
+bool name_scope_t::is_random(const ptree& model_) const
 {
     auto model = model_.get_child("value");
 
@@ -538,11 +554,11 @@ bool is_random(const ptree& model_, const name_scope_t& scope)
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-        if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
+        if (identifiers.count(name) and identifiers.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
-        if (is_random(p.second, scope))
+        if (is_random(p.second))
             return true;
 
     return false;
@@ -621,14 +637,6 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     }
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
-
-struct translation_result_t
-{
-    generated_code_t code;
-    set<string> imports;
-    set<string> lambda_vars;
-    set<var> vars;
-};
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
 
@@ -783,9 +791,9 @@ void generated_code_t::log_sub(const string& name, const var& log_var, const Log
  *   pair_body <- let_body
  *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
-optional<translation_result_t> get_model_let(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) const
 {
-    auto scope2 = scope;
+    auto scope2 = *this;
 
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
@@ -798,20 +806,20 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
 
     var x = scope2.get_var(var_name);
     var log_x = scope2.get_var("log_" + var_name);
-    bool x_is_random = is_random(var_exp, scope);
+    bool x_is_random = is_random(var_exp);
     var_info_t var_info(x, x_is_random);
 
     var body = scope2.get_var("body");
     var log_body = scope2.get_var("log_body");
 
     // 1. Perform the variable expression
-    auto arg_result = get_model_as(R, var_exp, scope);
+    auto arg_result = get_model_as(*R, var_exp, *this);
 
     if (arg_result.lambda_vars.size())
         var_info.depends_on_lambda = true;
 
     // 2. Perform the body with var_name in scope
-    auto body_result = get_model_as(R, body_exp, extend_scope(scope2, var_name, var_info));
+    auto body_result = get_model_as(*R, body_exp, extend_scope(scope2, var_name, var_info));
 
     // 3. Construct code.
 
@@ -838,20 +846,20 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
  *   let var1_name = fst pair_var1
  *   loggers = [("var_name",(Nothing,[(var_name,pair_x)]))]
  */
-translation_result_t get_model_decls(const Rules& R, const ptree& model, const name_scope_t& scope)
+translation_result_t name_scope_t::get_model_decls(const ptree& model) const
 {
     translation_result_t result;
 
-    auto scope2 = scope;
+    auto scope2 = *this;
     for(auto& [var_name, var_exp]: model)
     {
 	var x = scope2.get_var(var_name);
 	var log_x = scope2.get_var("log_" + var_name);
-	bool x_is_random = is_random(var_exp, scope);
+	bool x_is_random = is_random(var_exp);
 	var_info_t var_info(x, x_is_random);
 
 	// 1. Perform the variable expression
-	auto arg_result = get_model_as(R, var_exp, scope2);
+	auto arg_result = get_model_as(*R, var_exp, scope2);
 
 	if (arg_result.lambda_vars.size())
 	    var_info.depends_on_lambda = true;
@@ -1457,7 +1465,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *variable;
 
     // 4. Let expressions
-    else if (auto let = get_model_let(R, model_rep, scope))
+    else if (auto let = scope.get_model_let(model_rep))
         return *let;
 
     // 5. Lambda expressions
@@ -1554,7 +1562,7 @@ model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_ty
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    name_scope_t names_in_scope;
+    name_scope_t names_in_scope(R);
     for(auto& [name,type]: scope)
     {
         auto x = names_in_scope.get_var(name);
@@ -1609,7 +1617,7 @@ model_t compile_decls(const Rules& R,
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    name_scope_t names_in_scope;
+    name_scope_t names_in_scope(R);
     for(auto& [name,type]: scope)
     {
         auto x = names_in_scope.get_var(name);
@@ -1624,7 +1632,7 @@ model_t compile_decls(const Rules& R,
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _1, _2] = get_model_decls(R, decls2, {});
+    auto [code, imports, _1, _2] = names_in_scope.get_model_decls(decls2);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
