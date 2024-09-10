@@ -503,14 +503,14 @@ struct translation_result_t
     generated_code_t code;
     set<string> imports;
     set<string> lambda_vars;
-    set<var> vars;
+    set<var> haskell_vars;
 };
 
 struct name_scope_t
 {
     const Rules* R;
     map<string,var_info_t> identifiers;
-    set<var> vars;
+    set<var> haskell_vars;
     optional<arg_env_t> arg_env;
     map<string, var> state;
 
@@ -523,15 +523,15 @@ struct name_scope_t
         if (name.empty() or not std::islower(name[0]))
             name = "_"+name;
         var x(name);
-        for(int i=2; vars.count(x); i++)
+        for(int i=2; haskell_vars.count(x); i++)
             x = var(name+"_"+std::to_string(i));
-        vars.insert(x);
+        haskell_vars.insert(x);
         return x;
     }
 
     void set_state(const string& name, const var& x)
     {
-        assert(vars.count(x));
+        assert(haskell_vars.count(x));
         if (state.count(name))
             state.erase(name);
         state.insert({name,x});
@@ -632,7 +632,7 @@ name_scope_t& name_scope_t::extend_modify_scope(const string& var, const var_inf
     if (identifiers.count(var))
         identifiers.erase(var);
     identifiers.insert({var, var_info});
-    vars.insert(var_info.x);
+    haskell_vars.insert(var_info.x);
     return *this;
 }
 
@@ -759,7 +759,7 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
 {
     add(block.imports, code.imports);
     add(block.lambda_vars, code.lambda_vars);
-    add(block.vars, code.vars);
+    add(block.haskell_vars, code.haskell_vars);
     add(block.code.used_states, code.code.used_states);
 
     for(auto& stmt: code.code.stmts)
@@ -831,7 +831,7 @@ optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) c
 
     // 3. Construct code.
     translation_result_t result;
-    result.vars = scope2.vars;
+    result.haskell_vars = scope2.haskell_vars;
 
     // (x, log_x) <- arg_result
     perform_action_simplified(result, x, log_x, true, arg_result, var_name);
@@ -872,7 +872,7 @@ translation_result_t name_scope_t::get_model_decls(const ptree& model) const
 	    var_info.depends_on_lambda = true;
 
 	// 3. Construct code.
-	result.vars = scope2.vars;
+	result.haskell_vars = scope2.haskell_vars;
 
 	// (x, log_x) <- arg_result
 	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
@@ -1124,7 +1124,7 @@ optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) 
         auto element_result = scope2.get_model_as(element);
 
         // 3c. Avoid re-using any haskell vars.
-        add(scope2.vars, element_result.vars);
+        add(scope2.haskell_vars, element_result.haskell_vars);
 
         // 3d. Include stmts and dependencies
         auto log_x = scope2.get_var("log"+var_name);
@@ -1149,7 +1149,7 @@ optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) 
     result.code.E = get_list(argument_environment);
 
     // 5. Make sure not to re-use any vars adding do this code.
-    add(result.vars, scope2.vars);
+    add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
@@ -1184,7 +1184,7 @@ optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model)
         auto element_result = scope2.get_model_as(element);
 
         // 3c. Avoid re-using any haskell vars.
-        add(scope2.vars, element_result.vars);
+        add(scope2.haskell_vars, element_result.haskell_vars);
 
         // 3d. Include stmts and dependencies
         auto log_x = scope2.get_var("log"+var_name);
@@ -1209,7 +1209,7 @@ optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model)
     result.code.E = get_tuple(argument_environment);
 
     // 5. Make sure not to re-use any vars adding do this code.
-    add(result.vars, scope2.vars);
+    add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
@@ -1339,7 +1339,7 @@ translation_result_t name_scope_t::get_model_function(const ptree& model) const
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
         // Avoid re-using any haskell vars.
-        add(scope2.vars, arg_models[i].vars);
+        add(scope2.haskell_vars, arg_models[i].haskell_vars);
 
         // (x, logger) <- arg
         auto x = arg_vars[i];
@@ -1411,7 +1411,7 @@ translation_result_t name_scope_t::get_model_function(const ptree& model) const
     }
 
     // 8. Make sure not to re-use any vars adding do this code.
-    add(result.vars, scope2.vars);
+    add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
