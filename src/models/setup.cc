@@ -543,6 +543,9 @@ struct name_scope_t
     translation_result_t get_model_decls(const ptree& model) const;
     optional<translation_result_t> get_variable_model(const ptree& model) const;
     optional<translation_result_t> get_model_let(const ptree& model) const;
+    optional<translation_result_t> get_model_lambda(const ptree& model) const;
+    optional<translation_result_t> get_model_list(const ptree& model) const;
+    optional<translation_result_t> get_model_tuple(const ptree& model) const;
 
     name_scope_t(const Rules& r):R(&r) {}
 };
@@ -826,7 +829,6 @@ optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) c
     auto body_result = get_model_as(*R, body_exp, scope2.extend_scope(var_name, var_info));
 
     // 3. Construct code.
-
     translation_result_t result;
     result.vars = scope2.vars;
 
@@ -936,9 +938,9 @@ set<string> find_vars_in_pattern(const ptree& pattern0)
 }
 
 
-optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_model_lambda(const ptree& model) const
 {
-    auto scope2 = scope;
+    auto scope2 = *this;
 
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
@@ -955,14 +957,13 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     ptree body_model = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
-
     for(auto& var_name: var_names)
     {
         auto x = scope2.get_var(var_name);
         var_info_t var_info(x,false,true);
         scope2.extend_modify_scope(var_name, var_info);
     }
-    auto body_result = get_model_as(R, body_model, scope2);
+    auto body_result = get_model_as(*R, body_model, scope2);
 
     // 4. Remove pattern variables from the lambda vars.
     for(auto& var_name: var_names)
@@ -970,7 +971,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
             body_result.lambda_vars.erase(var_name);
 
     // 5. Add the lambda in front of the expression
-    auto pattern2 = get_model_as(R, pattern, scope2);
+    auto pattern2 = get_model_as(*R, pattern, scope2);
     body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
 
     // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
@@ -1093,12 +1094,11 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> get_model_list(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_model_list(const ptree& model) const
 {
-    auto scope2 = scope;
+    auto scope2 = *this;
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
-
 
     // 1. If the phrase is not a lambda, then we are done.
     if (name != "List") return {};
@@ -1120,7 +1120,7 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
 
         // 3b. Generate code for the list element
         auto element = array_index(model_rep, i);
-        auto element_result = get_model_as(R, element, scope2);
+        auto element_result = get_model_as(*R, element, scope2);
 
         // 3c. Avoid re-using any haskell vars.
         add(scope2.vars, element_result.vars);
@@ -1131,7 +1131,7 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
 
         // 3e. Maybe emit code for the element.
 	auto type = element.get_child("type");
-        bool do_log = scope.is_unlogged_random(element) and is_loggable_type(type);
+        bool do_log = is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1154,14 +1154,13 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
 }
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_model_tuple(const ptree& model) const
 {
-    auto scope2 = scope;
+    auto scope2 = *this;
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
 
-
-    // 1. If the phrase is not a lambda, then we are done.
+    // 1. If the phrase is not a tuple, then we are done.
     if (name != "Tuple") return {};
 
     int N = model_rep.size();
@@ -1181,7 +1180,7 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
 
         // 3b. Generate code for the list element
         auto element = array_index(model_rep, i);
-        auto element_result = get_model_as(R, element, scope2);
+        auto element_result = get_model_as(*R, element, scope2);
 
         // 3c. Avoid re-using any haskell vars.
         add(scope2.vars, element_result.vars);
@@ -1192,7 +1191,7 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
 
         // 3e. Maybe emit code for the element.
 	auto type = element.get_child("type");
-        bool do_log = scope.is_unlogged_random(element) and is_loggable_type(type);
+        bool do_log = is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1473,15 +1472,15 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *let;
 
     // 5. Lambda expressions
-    else if (auto func = get_model_lambda(R, model_rep, scope))
-        return *func;
+    else if (auto lambda = scope.get_model_lambda(model_rep))
+        return *lambda;
 
     // 6. get_state[state] expressions.
-    else if (auto list = get_model_list(R, model_rep, scope))
+    else if (auto list = scope.get_model_list(model_rep))
         return *list;
 
     // 7. get_state[state] expressions.
-    else if (auto list = get_model_tuple(R, model_rep, scope))
+    else if (auto list = scope.get_model_tuple(model_rep))
         return *list;
 
     // 8. get_state[state] expressions.
