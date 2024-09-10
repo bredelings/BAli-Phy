@@ -537,7 +537,11 @@ struct name_scope_t
         state.insert({name,x});
     }
 
+    name_scope_t extend_scope(const string& var, const var_info_t& var_info) const;
+    name_scope_t& extend_modify_scope(const string& var, const var_info_t& var_info);
+
     translation_result_t get_model_decls(const ptree& model) const;
+    optional<translation_result_t> get_variable_model(const ptree& model) const;
     optional<translation_result_t> get_model_let(const ptree& model) const;
 
     name_scope_t(const Rules& r):R(&r) {}
@@ -611,21 +615,19 @@ bool name_scope_t::should_log(const ptree& model_, const string& arg_name) const
         return false;
 }
 
-name_scope_t extend_scope(name_scope_t scope, const string& var, const var_info_t& var_info)
+name_scope_t name_scope_t::extend_scope(const string& var, const var_info_t& var_info) const
 {
-    if (scope.identifiers.count(var))
-        scope.identifiers.erase(var);
-    scope.identifiers.insert({var, var_info});
-    scope.vars.insert(var_info.x);
-    return scope;
+    auto scope = *this;
+    return scope.extend_modify_scope(var, var_info);
 }
 
-void extend_modify_scope(name_scope_t& scope, const string& var, const var_info_t& var_info)
+name_scope_t& name_scope_t::extend_modify_scope(const string& var, const var_info_t& var_info)
 {
-    if (scope.identifiers.count(var))
-        scope.identifiers.erase(var);
-    scope.identifiers.insert({var, var_info});
-    scope.vars.insert(var_info.x);
+    if (identifiers.count(var))
+        identifiers.erase(var);
+    identifiers.insert({var, var_info});
+    vars.insert(var_info.x);
+    return *this;
 }
 
 int get_index_for_arg_name(const ptree& rule, const string& arg_name)
@@ -669,7 +671,7 @@ optional<translation_result_t> get_constant_model(const ptree& model)
         return {};
 }
 
-optional<translation_result_t> get_variable_model(const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> name_scope_t::get_variable_model(const ptree& model) const
 {
     auto E = model.get_child("value");
 
@@ -681,10 +683,10 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     if (not name.empty() and name[0] == '@')
     {
         name = name.substr(1);
-        if (not scope.arg_env)
+        if (not arg_env)
             throw myexception()<<"Looking up argument '"<<name<<"' in an empty environment!";
 
-        auto& env = *scope.arg_env;
+        auto& env = *arg_env;
         if (not env.code_for_arg.count(name))
             throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
 
@@ -696,9 +698,9 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     }
 
     // 1. If the name is not in scope then we are done.
-    if (not scope.identifiers.count(name)) return {};
+    if (not identifiers.count(name)) return {};
 
-    var_info_t var_info = scope.identifiers.at(name);
+    var_info_t var_info = identifiers.at(name);
 
     translation_result_t result;
     result.code.E = var_info.x;
@@ -821,7 +823,7 @@ optional<translation_result_t> name_scope_t::get_model_let(const ptree& model) c
         var_info.depends_on_lambda = true;
 
     // 2. Perform the body with var_name in scope
-    auto body_result = get_model_as(*R, body_exp, extend_scope(scope2, var_name, var_info));
+    auto body_result = get_model_as(*R, body_exp, scope2.extend_scope(var_name, var_info));
 
     // 3. Construct code.
 
@@ -876,7 +878,7 @@ translation_result_t name_scope_t::get_model_decls(const ptree& model) const
 	    result.code.log_value(var_name, x, type);
 
 	// 4. Put x into the scope for the next decl.
-	scope2 = extend_scope(scope2, var_name, var_info);
+	scope2.extend_modify_scope(var_name, var_info);
     }
     return result;
 }
@@ -958,7 +960,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     {
         auto x = scope2.get_var(var_name);
         var_info_t var_info(x,false,true);
-        extend_modify_scope(scope2, var_name, var_info);
+        scope2.extend_modify_scope(var_name, var_info);
     }
     auto body_result = get_model_as(R, body_model, scope2);
 
@@ -1463,7 +1465,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *constant;
 
     // 3. Handle variables
-    else if (auto variable = get_variable_model(model_rep, scope))
+    else if (auto variable = scope.get_variable_model(model_rep))
         return *variable;
 
     // 4. Let expressions
