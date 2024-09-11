@@ -352,6 +352,8 @@ model_t compile_decls(const Rules& R,
     // 2. Typecheck.
     auto decls2 = TC.typecheck_and_annotate_decls(decls);
 
+    for(auto& [var,value]: decls2)
+	substitute_annotated(TC.eqs, value);
     set<ptree> constraints;
     for(auto constraint: TC.eqs.get_constraints())
     {
