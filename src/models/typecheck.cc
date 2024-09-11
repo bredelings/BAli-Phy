@@ -534,6 +534,7 @@ TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const 
 
     auto name = model.get_value<string>();
 
+    // 1. Get var type
     type_t result_type;
     set<string> used_args;
     if (auto type = type_for_var(name))
@@ -550,16 +551,43 @@ TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const 
     else
         return {};
 
-    // 2. Unify required type or add conversion function.
+    // 2. Check argument applications.
+    ptree model2;
+    model2.value = name;
+    int arity = 0;
+    for(auto& [arg_name, arg]: model)
+    {
+	// 2a. Complain about named arguments.
+	if (not arg_name.empty()) throw myexception()<<"Named arguments node allowed in functions that are variables";
+
+	// 2b. Check that function takes this many arguments.
+	auto a = get_fresh_type_var("a");
+	auto b = get_fresh_type_var("b");
+	auto ftype = make_type_apps("Function",{a,b});
+	eqs = eqs && unify(result_type, ftype);
+	if (not eqs)
+	{
+	    if (arity == 0)
+		throw myexception()<<"Treating non-function variable '"<<name<<"' as function!";
+	    else
+		throw myexception()<<"Supplying "<<model.size()<<" arguments to function '"<<name<<"', but it only takes "<<arity<<"!";
+	}
+
+	// 2c. Typecheck the argument
+	auto arg2 = typecheck_and_annotate(a, arg);
+
+	model2.push_back({"",arg2});
+
+	// 2d. The expression taking the next argument has type 'b'
+	result_type = b;
+	arity++;
+    }
+
+    // 3. Unify required type or add conversion function.
     if (auto model2 = unify_or_convert(model, result_type, required_type))
 	return typecheck_and_annotate(required_type, *model2);
 
-    // 3. If this is a constant or variable, then we are done here.
-    if (not model.empty())
-        throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
-                           <<"' should not have arguments!";
-
-    auto model2 = ptree({{"value",model},{"type",result_type}});
+    model2 = ptree({{"value",model2},{"type",result_type}});
     set_used_args(model2, used_args);
 
     return model2;
