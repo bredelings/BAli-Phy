@@ -434,9 +434,10 @@ expression_ref eta_reduce(expression_ref E)
 
         if (is_apply_exp(body) and body.sub().back() == x)
         {
+	    expression_ref E2;
             // ($) f x  ==> f
             if (body.size() == 2)
-                E = body.sub()[0];
+                E2 = body.sub()[0];
             // ($) f y x ==> ($) f y
             else
             {
@@ -444,8 +445,12 @@ expression_ref eta_reduce(expression_ref E)
                 assert(body.size() > 2);
                 object_ptr<expression> body2 = body.as_expression().clone();
                 body2->sub.pop_back();
-                E = body2;
+                E2 = body2;
             }
+	    if (get_free_indices(E2).count(x))
+		break;
+	    else
+		E = E2;
         }
         else
             break;
