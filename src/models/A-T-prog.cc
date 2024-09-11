@@ -156,6 +156,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 
 	auto code = scaleMs[i].code;
 	expression_ref E = var(scaleM_function_for_index[i]);
+	E = code.add_arguments(E, {});
 
 	// This should still log sub-loggers of the scales, I think.
 	auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
@@ -196,18 +197,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
         auto code = SMs[i].code;
 
         expression_ref smodel = var(SM_function_for_index[i]);
-        for(auto& state_name: code.used_states)
-        {
-            if (state_name == "alphabet")
-                smodel = {smodel, alphabet_exps[*first_partition]};
-            else if (state_name == "branch_categories")
-            {
-                assert(branch_categories);
-                smodel = {smodel, branch_categories};
-            }
-            else
-                throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
-        }
+        smodel = code.add_arguments(smodel, {{"alphabet",alphabet_exps[*first_partition]}, {"branch_categories",branch_categories}});
 
         auto smodel_var = var("smodel" + suffix);
         auto log_smodel = var("log_"+smodel_var.name);
@@ -234,11 +224,7 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
         auto code = IMs[i].code;
 
         expression_ref imodel = var(IM_function_for_index[i]);
-        for(auto& state_name: code.used_states)
-        {
-            if (state_name == "topology")
-                imodel = {imodel, tree_var};
-        }
+        imodel = code.add_arguments(imodel, {{"topology",tree_var}});
 
         auto imodel_var = var("imodel" + suffix);
         auto log_imodel = var("log_"+imodel_var.name);
@@ -749,9 +735,12 @@ std::string generate_atmodel_program(const variables_map& args,
     if (n_branches > 0 and not fixed.count("tree"))
     {
         string var_name = "branch_lengths";
+
         auto code = branch_length_model.code;
 
         expression_ref E = var("sample_"+var_name);
+        E = code.add_arguments(E,{{"topology",topology_var}});
+
         E = {var("RanSamplingRate"),0.0,E};
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
