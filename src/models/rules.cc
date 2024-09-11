@@ -5,7 +5,7 @@
 #include "util/string/join.H"
 #include "util/io.H"
 #include "util/json.hh"
-#include "models/setup.H"
+#include "models/compile.H"
 #include "models/parse.H" // for is_constant( )
 #include "models/driver.hh" // for parse_expression( )
 

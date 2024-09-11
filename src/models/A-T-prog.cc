@@ -5,7 +5,7 @@
 
 #include "util/set.H"
 #include "util/io.H"
-#include "models/setup.H"   // for model_t
+#include "models/compile.H"   // for model_t
 #include "models/parse.H"   // for unparse_type
 
 #include "computation/loader.H"

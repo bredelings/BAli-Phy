@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 /**
- * @file setup.H
+ * @file compile.H
  *
  * @brief This file contains routines for parsing the command line and
  *        loading information from files in order to start the MCMC

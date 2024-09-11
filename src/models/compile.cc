@@ -27,7 +27,7 @@
 
 #include "util/graph.H"
 
-#include "models/setup.H"
+#include "models/compile.H"
 #include "sequence/doublets.H"
 #include "sequence/codons.H"
 #include "util/string/join.H"

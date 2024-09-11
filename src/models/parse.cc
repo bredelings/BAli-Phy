@@ -7,7 +7,7 @@
 #include "util/string/join.H"
 #include "util/range.H" // for reverse( )
 #include "rules.H"
-#include "setup.H"
+#include "compile.H"
 #include "models/driver.hh"
 
 using std::vector;

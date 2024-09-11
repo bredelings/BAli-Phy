@@ -56,7 +56,7 @@
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"
-#include "models/setup.H"
+#include "models/compile.H"
 #include "tree-align/link2.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/gcobject.H"

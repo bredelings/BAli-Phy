@@ -5,7 +5,7 @@
 #include "rules.H"
 #include "util/myexception.H"
 #include <iostream>
-#include "setup.H"
+#include "compile.H"
 #include "util/set.H"
 
 using std::vector;

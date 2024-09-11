@@ -120,4 +120,7 @@ struct CodeGenState
 };
 
 expression_ref simplify_intToDouble(const expression_ref& E);
+void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
+void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
+
 #endif

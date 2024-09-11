@@ -95,22 +95,21 @@ libbaliphy_sources = [
   'math/eigenvalue.cc',
   'math/pow2.cc',
 
+  'models/model.cc',
+  'models/TreeInterface.cc',
   'models/parameters.cc',
   'models/A-T-prog.cc',
-  'models/TreeInterface.cc',
-  'models/setup.cc',
+
   'models/rules.cc',
   'models/parse.cc',
-  'models/logger.cc',
-
   'models/driver.cc',
   'models/parser.cc',
   'models/lexer.cc',
-
+  'models/compile.cc',
   'models/typecheck.cc',
   'models/unification.cc',
-  'models/model.cc',
   'models/code-generation.cc',
+  'models/logger.cc',
 
   'tree-align/link2.cc',
 

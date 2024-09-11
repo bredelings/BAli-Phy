@@ -22,7 +22,7 @@
 #include "models/parameters.H"                      // for Parameters, param...
 #include "models/A-T-prog.H"                        // for gen_atmodel_program
 #include "models/rules.H"                           // for Rules
-#include "models/setup.H"                           // for model_t, compile_model
+#include "models/compile.H"                           // for model_t, compile_model
 #include "models/parse.H"                           // for parse_type( )
 #include "sequence/alphabet.H"                      // for alphabet
 #include "sequence/doublets.H"                      // for Doublets

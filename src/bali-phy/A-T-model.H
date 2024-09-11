@@ -9,7 +9,7 @@
 #include <boost/program_options.hpp>
 #include "link-partitions.H"
 #include "models/rules.H"                           // for Rules
-#include "models/setup.H"
+#include "models/compile.H"
 #include "util/owned-ptr.H"
 #include "util/json.hh"
 #include "tree/sequencetree.H"                      // for SequenceTree

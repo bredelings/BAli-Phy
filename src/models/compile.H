@@ -1,5 +1,5 @@
-#ifndef SMODEL_SETUP_H
-#define SMODEL_SETUP_H
+#ifndef MODELS_COMPILE_H
+#define MODELS_COMPILE_H
 #include <set>                                      // for set
 #include <string>                                   // for string
 #include <utility>                                  // for pair
@@ -28,9 +28,6 @@ public:
 
     pretty_model_t(const ptree& m);
 };
-
-void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
-void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
 
 void maybe_log(std::vector<expression_ref>& logger_bits,
                const std::string& name,
