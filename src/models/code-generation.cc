@@ -552,6 +552,17 @@ optional<translation_result_t> CodeGenState::get_model_lambda(const ptree& model
 
     ptree body_model = model_rep[1].second;
 
+    // We don't have to worry about avoiding any haskell variables that correspond
+    // to scripting language variables with names that are lambda vars.
+    for(auto& var_name: var_names)
+    {
+	if (identifiers.count(var_name))
+	{
+	    auto x = identifiers.at(var_name).x;
+	    scope2.haskell_vars.erase(x);
+	}
+    }
+
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     for(auto& var_name: var_names)
     {
