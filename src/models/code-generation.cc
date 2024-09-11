@@ -314,7 +314,7 @@ optional<translation_result_t> CodeGenState::get_variable_model(const ptree& mod
     result.code.E = var_info.x;
     if (var_info.depends_on_lambda)
         result.lambda_vars = {name};
-    result.code.free_vars.insert(name);
+    result.code.free_vars.insert({name, var_info.x});
     return result;
 }
 
@@ -506,8 +506,9 @@ optional<translation_result_t> CodeGenState::get_model_lambda(const ptree& model
 
     // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
     body_result.code.E = eta_reduce(body_result.code.E);
-    remove(body_result.code.free_vars, var_names);
-    
+    for(auto& var_name: var_names)
+	body_result.code.free_vars.erase(var_name);
+
     return body_result;
 }
 

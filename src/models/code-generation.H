@@ -27,7 +27,7 @@ struct generated_code_t
 
     // Which states were actually used.
     std::set<std::string> used_states;
-    std::set<std::string> free_vars;
+    std::map<std::string,var> free_vars;
 
     // Under these circumstances, we will return a monadic action
     bool is_action() const {return perform_function or not stmts.empty();}
