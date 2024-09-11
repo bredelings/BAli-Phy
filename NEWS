@@ -1,6 +1,7 @@
 * 4.0-beta16 (unreleased)
 - Speed: further speed up tree operations.
 - Output: simplify results from ancestral sequence reconstruction.
+- Input: allow defining models using multiple lines.
 
 * 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
