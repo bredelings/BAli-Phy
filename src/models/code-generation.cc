@@ -229,10 +229,7 @@ bool CodeGenState::should_log(const ptree& model_, const string& arg_name) const
 
     auto arg = model.get_child(arg_name);
 
-    if (is_unlogged_random(arg))
-        return true;
-    else
-        return false;
+    return is_unlogged_random(arg);
 }
 
 CodeGenState CodeGenState::extend_scope(const string& var, const var_info_t& var_info) const
@@ -291,11 +288,11 @@ optional<translation_result_t> get_constant_model(const ptree& model)
 
 optional<translation_result_t> CodeGenState::get_variable_model(const ptree& model) const
 {
-    auto E = model.get_child("value");
+    auto model_rep = model.get_child("value");
 
-    if (not E.is_a<string>()) return {};
+    if (not model_rep.has_value<string>()) return {};
 
-    auto name = E.get_value<string>();
+    auto name = model_rep.get_value<string>();
 
     // 1. Translate the default arg or variable
     translation_result_t result;
@@ -327,6 +324,57 @@ optional<translation_result_t> CodeGenState::get_variable_model(const ptree& mod
     else
 	return {};
 
+    auto scope2 = *this;
+
+    // 2. Handle argument arguments
+    int i=0;
+    for(auto& [arg_name, arg]: model_rep)
+    {
+	string var_name = name + "_" + std::to_string(i+1);
+	string log_name = name + ":" + std::to_string(i+1);
+
+	auto arg_model = scope2.get_model_as(arg);
+	auto arg_code = arg_model.code;
+
+	// Avoid re-using any haskell vars
+	add(scope2.haskell_vars, arg_model.haskell_vars);
+
+	// (x, logger) <- arg
+	var x = scope2.get_var(var_name);
+	var log_x = scope2.get_var("log_" + var_name);
+
+	auto type = arg.get_child("type");
+        bool do_log = is_unlogged_random(arg) and is_loggable_type(type) and arg_model.lambda_vars.empty();
+
+	// Emit x <- or x= fo the variable, or prepare to substitute for it
+	use_block(result, log_x, arg_model, log_name);
+	expression_ref applied_arg = arg_code.E;
+	if (arg_code.perform_function)
+	{
+	    applied_arg = log_x;
+	    result.code.stmts.perform(x, arg_code.E);
+	    assert(arg_model.lambda_vars.empty());
+	}
+	else if (do_log and not is_var(arg_code.E))
+	{
+	    applied_arg = log_x;
+	    result.code.stmts.let(x, arg_code.E);
+	    assert(arg_model.lambda_vars.empty());
+	}
+
+
+	// Log the value if we are saving it.
+	if (do_log) result.code.log_value(log_name, applied_arg, type);
+	
+	// Make the call expression
+	result.code.E = {result.code.E, applied_arg};
+
+	i++;
+    }
+
+    result.code.E = simplify_intToDouble(result.code.E);
+
+    add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
