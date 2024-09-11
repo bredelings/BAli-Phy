@@ -22,10 +22,11 @@
 
   namespace views = ranges::views;
 
+  class zz_driver;
+
   ptree make_function(const std::vector<std::string>& vars, const ptree& body);
   ptree make_type_app(ptree type, const std::vector<ptree>& args);
-
-  class zz_driver;
+  std::pair<std::string,ptree> make_function_def(zz_driver&, const yy::location&, const ptree& fncall, const ptree& body);
 
 }
 
@@ -126,16 +127,17 @@ start: START_EXP exp {drv.result = $2;}
 |      START_TYPE type {drv.result = $2;}
 |      START_DEFS defs {drv.result = ptree($2);}
 
-def: varid "=" exp  { $$ = {$1,$3}; }
-|    varid "~" exp  { $$ = {$1,add_sample($3)}; }
+def: varid                      "=" exp  { $$ = {$1,$3}; }
+|    fncall                     "=" exp  { $$ = make_function_def(drv,@1,$1,$3); }
+|    varid                      "~" exp  { $$ = {$1,add_sample($3)}; }
 
 defs: %empty { }
 |     def { $$.push_back($1); }
 |     defs ";" def {$$ = $1; $$.push_back($3);}
 |     defs ";" {$$ = $1; }
 
-exp: term                                     { $$ = $1; }
-|    def ";" exp                    { $$ = ptree("let",{$1,{"",$3}}); }
+exp: term                         { $$ = $1; }
+|    def ";" exp                  { $$ = ptree("let",{$1,{"",$3}}); }
 
 
 // See parse_no_submodel( )
@@ -165,7 +167,6 @@ varids: varid           { $$.push_back($1); }
 |       varids varid    { $$ = $1; $$.push_back($2); }
 
 fncall: qvarid "(" args ")"         { $$ = ptree($1,$3); }
-
 
 ditems: ditem                     { $$.push_back({"",$1}); }
 |       ditems "," ditem          { $$ = $1; $$.push_back({"",$3}); }
@@ -247,4 +248,29 @@ ptree make_type_app(ptree type, const std::vector<ptree>& args)
     for(auto& arg: args)
 	type = ptree("@APP",{{"",type},{"",arg}});
     return type;
+}
+
+std::pair<std::string,ptree> make_function_def(zz_driver& drv, const yy::location& l, const ptree& fncall, const ptree& body)
+{
+    assert(fncall.has_value<string>());
+
+    // 1. Get the function name
+    auto fname = fncall.get_value<string>();
+    if (fname.find('.') != string::npos)
+	drv.push_error_message(l, "Function name cannot contain '.'");
+
+    // 2. Get the argument names
+    vector<string> vars;
+    for(auto& [name,value]: fncall)
+    {
+	if (not name.empty())
+	    drv.push_error_message(l, "Named arguments not allowed in function definitions");
+
+	if (not value.is_a<string>())
+	    drv.push_error_message(l, "Arguments in function definition must be variables");
+	else
+	    vars.push_back(value.get_value<string>());
+    }
+    
+    return {fname, make_function(vars, body)};
 }

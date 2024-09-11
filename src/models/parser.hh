@@ -58,13 +58,14 @@
 
   namespace views = ranges::views;
 
-  ptree make_function(const std::vector<std::string>& vars, const ptree& body);
-  ptree make_type_app(ptree type, const std::vector<ptree>& args);
-
   class zz_driver;
 
+  ptree make_function(const std::vector<std::string>& vars, const ptree& body);
+  ptree make_type_app(ptree type, const std::vector<ptree>& args);
+  std::pair<std::string,ptree> make_function_def(zz_driver&, const yy::location&, const ptree& fncall, const ptree& body);
 
-#line 68 "parser.hh"
+
+#line 69 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -213,7 +214,7 @@
 
 #line 6 "parser.y"
 namespace zz {
-#line 217 "parser.hh"
+#line 218 "parser.hh"
 
 
 
@@ -1961,9 +1962,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 234,     ///< Last index in yytable_.
+      yylast_ = 241,     ///< Last index in yytable_.
       yynnts_ = 20,  ///< Number of nonterminal symbols.
-      yyfinal_ = 34 ///< Termination state number.
+      yyfinal_ = 35 ///< Termination state number.
     };
 
 
@@ -2226,7 +2227,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2230 "parser.hh"
+#line 2231 "parser.hh"
 
 
 
