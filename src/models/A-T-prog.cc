@@ -456,6 +456,7 @@ do_block generate_main(const variables_map& args,
 
 
 void write_header(std::ostream& program_file,
+		  const model_t& decls,
 		  const vector<model_t>& SMs,
 		  const vector<model_t>& IMs,
 		  const vector<model_t>& scaleMs,
@@ -467,6 +468,7 @@ void write_header(std::ostream& program_file,
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Tree.Newick");                           // for write_newick
+    add(imports, decls.imports);
     for(auto& m: SMs)
         add(imports, m.imports);
     for(auto& m: IMs)
@@ -634,7 +636,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // Write pragmas, module, imports.
     std::ostringstream program_file;
-    write_header(program_file, SMs, IMs, scaleMs, branch_length_model);
+    write_header(program_file, decls, SMs, IMs, scaleMs, branch_length_model);
     program_file<<"\n\n";
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
@@ -713,7 +715,7 @@ std::string generate_atmodel_program(const variables_map& args,
     auto tree_var = var("tree");
     expression_ref branch_lengths = var("IntMap.empty");
 
-    // M1. Declarations
+    // M1. Declarations -- This is similar to use_block(model, ??, decls, "decls");
     for(auto& stmt: decls.code.stmts)
 	model.get_stmts().push_back(stmt);
     auto decl_loggers = decls.code.loggers;
