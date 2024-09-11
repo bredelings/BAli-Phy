@@ -687,17 +687,17 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
             alphabet_value = alphabet_value2;
         }
 
-	auto arg_value2 = scope2.typecheck_and_annotate(arg_required_type, arg_value);
+        auto arg_value2 = scope2.typecheck_and_annotate(arg_required_type, arg_value);
+        eqs = eqs && scope2.eqs;
+        if (not eqs)
+            throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+
+        if (alphabet_value)
+            arg_value2.push_back({"alphabet",*alphabet_value});
+        arg_value2.push_back({"is_default_value",ptree(is_default)});
         if (not is_default)
             add(used_args, get_used_args(arg_value2));
-        eqs = eqs && scope2.eqs;
-	if (not eqs)
-	    throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-	for(auto& x: argument)
-	    arg_value2.push_back(x);
-	arg_value2.push_back({"is_default_value",ptree(is_default)});
-        if (alphabet_value)
-            *arg_value2.get_child_optional("alphabet") = *alphabet_value;
+
 	model2.push_back({arg_name, arg_value2});
     }
 
