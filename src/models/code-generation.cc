@@ -360,8 +360,7 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // 3. Construct code.
     translation_result_t result;
     result.haskell_vars = scope2.haskell_vars;
-    result.code.free_vars = minus(plus(arg_result.code.free_vars, body_result.code.free_vars),{var_name});
-    
+
     // (x, log_x) <- arg_result
     perform_action_simplified(result, x, log_x, true, arg_result, var_name);
     auto type = var_exp.get_child("type");
@@ -371,6 +370,8 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // body_result
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
+
+    result.code.free_vars.erase(var_name);
 
     return result;
 }
