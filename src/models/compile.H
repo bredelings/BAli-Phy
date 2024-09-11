@@ -56,14 +56,17 @@ public:
     model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
-model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree required_type,
-		  const std::string& model,
-		  const std::string& what,
-		  const std::vector<std::pair<std::string,ptree>>& = {},
-                  const std::map<std::string,std::pair<std::string,ptree>>& = {}
+model_t compile_model(const Rules& R,
+		      const TypecheckingState& TC, CodeGenState code_gen_state,
+		      ptree required_type,
+		      const std::string& model,
+		      const std::string& what,
+		      const std::vector<std::pair<std::string,ptree>>& = {},
+		      const std::map<std::string,std::pair<std::string,ptree>>& = {}
     );
 
-model_t compile_decls(const Rules& R, TypecheckingState& TC,
+model_t compile_decls(const Rules& R,
+		      TypecheckingState& TC, CodeGenState& code_gen_state,
 		      const std::string& decls,
 		      const std::vector<std::pair<std::string,ptree>>& scope,
 		      const std::map<std::string,std::pair<std::string,ptree>>& state);

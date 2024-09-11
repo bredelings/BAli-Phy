@@ -262,9 +262,12 @@ TypecheckingState makeTypechecker(const Rules& R,
 // QUESTION: In decls, we WANT the same (non-haskell) name to override previous instances of the same name.
 //           But for lifted arguments of cmdline-language expressions, maybe we don't?
 // QUESTION: Can/should we have a pre-processing state where we lift monadic arguments into named prior expressions?
-model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const string& model_string, const string& what,
-                  const vector<pair<string,ptree>>& scope,
-                  const map<string,pair<string,ptree>>& state)
+model_t compile_model(const Rules& R,
+		      const TypecheckingState& TC,
+		      CodeGenState code_gen_state,
+		      ptree required_type, const string& model_string, const string& what,
+		      const vector<pair<string,ptree>>& scope,
+		      const map<string,pair<string,ptree>>& state)
 {
     // 1. Parse
     auto model_rep = parse(R, model_string, what);
@@ -301,7 +304,6 @@ model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree require
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    CodeGenState code_gen_state(R);
     for(auto& [name,type]: scope)
     {
         auto x = code_gen_state.get_var(name);
@@ -336,6 +338,7 @@ model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree require
 // This is being called from bali-phy/A-T-model.cc: create_A_and_T_model( ).
 model_t compile_decls(const Rules& R,
 		      TypecheckingState& TC,
+		      CodeGenState& code_gen_state,
 		      const string& prog,
 		      const vector<pair<string,ptree>>& scope,
 		      const map<string,pair<string,ptree>>& state)
@@ -356,7 +359,6 @@ model_t compile_decls(const Rules& R,
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;
 
-    CodeGenState code_gen_state(R);
     for(auto& [name,type]: scope)
     {
         auto x = code_gen_state.get_var(name);
