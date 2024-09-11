@@ -631,9 +631,8 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
 
     // 6. Check that we didn't supply unreferenced arguments.
     map<string,int> arg_count;
-    for(const auto& supplied_arg: model)
+    for(const auto& [arg_name,_]: model)
     {
-	string arg_name = supplied_arg.first;
 	if (not maybe_get_arg(rule, arg_name))
 	    throw myexception()<<"Function '"<<name<<"' has no argument '"<<arg_name<<"' in term:\n"<<model.show();
 	arg_count[arg_name]++;
