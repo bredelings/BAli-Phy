@@ -101,6 +101,7 @@ libbaliphy_sources = [
   'models/setup.cc',
   'models/rules.cc',
   'models/parse.cc',
+  'models/logger.cc',
 
   'models/driver.cc',
   'models/parser.cc',
@@ -109,6 +110,7 @@ libbaliphy_sources = [
   'models/typecheck.cc',
   'models/unification.cc',
   'models/model.cc',
+  'models/code-generation.cc',
 
   'tree-align/link2.cc',
 

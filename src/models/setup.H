@@ -11,6 +11,7 @@
 #include "util/json.hh"                             // for json
 #include "util/ptree.H"                             // for ptree
 #include "models/typecheck.H"
+#include "models/code-generation.H"
 
 class Rules;
 
@@ -26,72 +27,6 @@ public:
     std::string show_extracted() const;
 
     pretty_model_t(const ptree& m);
-};
-
-struct LoggerObj
-{
-    virtual std::string get_name() const = 0;
-    virtual LoggerObj* clone() const = 0;
-    virtual ~LoggerObj() {};
-};
-
-typedef owned_ptr<LoggerObj> Logger;
-
-typedef std::vector<Logger> Loggers;
-
-struct LogValue: public LoggerObj
-{
-    std::string name;
-    expression_ref value;
-
-    LogValue* clone() const {return new LogValue(*this);}
-
-    std::string get_name() const {return name;}
-
-    LogValue(const std::string& s, const expression_ref& e)
-        :name(s),value(e)
-    {}
-};
-
-struct LogSub: public LoggerObj
-{
-    std::string prefix;
-    var log_var; // we might emit logger_var = loggers, and then do prefix %>% logger_var
-    Loggers loggers;
-
-    LogSub* clone() const {return new LogSub(*this);}
-
-    std::string get_name() const {return prefix+"/";}
-
-    LogSub(const std::string& s, const var& v, const Loggers& ls)
-        :prefix(s), log_var(v), loggers(ls)
-    {}
-};
-
-expression_ref generate_loggers(do_block& code, const Loggers& Loggers);
-
-struct generated_code_t
-{
-    std::vector<var> lambda_vars;
-
-    Stmts stmts;
-    expression_ref E;
-    Loggers loggers;
-    bool perform_function = false;
-
-    // Which states were actually used.
-    std::set<std::string> used_states;
-
-    // Under these circumstances, we will return a monadic action
-    bool is_action() const {return perform_function or not stmts.empty();}
-    bool has_loggers() const {return not loggers.empty();}
-
-    expression_ref generate() const;
-
-    void log_value(const std::string&, expression_ref, const ptree&);
-    void log_sub(const std::string&, const var&, const Loggers&);
-
-    std::string print() const {return generate().print();}
 };
 
 void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
@@ -124,12 +59,6 @@ public:
     model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
-json::object convert_to_json(const pretty_model_t& m);
-
-TypecheckingState makeTypechecker(const Rules& R,
-				  const std::vector<std::pair<std::string,ptree>>& scope,
-				  const std::map<std::string,std::pair<std::string,ptree>>& state);
-
 model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type,
 		  const std::string& model,
 		  const std::string& what,
@@ -141,6 +70,12 @@ model_t compile_decls(const Rules& R, TypecheckingState& TC,
 		      const std::string& decls,
 		      const std::vector<std::pair<std::string,ptree>>& scope,
 		      const std::map<std::string,std::pair<std::string,ptree>>& state);
+
+json::object convert_to_json(const pretty_model_t& m);
+
+TypecheckingState makeTypechecker(const Rules& R,
+				  const std::vector<std::pair<std::string,ptree>>& scope,
+				  const std::map<std::string,std::pair<std::string,ptree>>& state);
 
 std::string print_equals_function(expression_ref E);
 
