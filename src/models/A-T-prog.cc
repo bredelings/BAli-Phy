@@ -714,17 +714,14 @@ std::string generate_atmodel_program(const variables_map& args,
     expression_ref branch_lengths = var("IntMap.empty");
 
     // M1. Declarations
-    // model_t decl = { imports, type, constraints, code, used_args }
-    // generated_code_t = {lambda_vars, stmts, E, loggers, perform_function, used_states }
     for(auto& stmt: decls.code.stmts)
-    {
 	model.get_stmts().push_back(stmt);
-    }
+    auto decl_loggers = decls.code.loggers;
+    simplify(decl_loggers);
+    for(auto& logger: generate_loggers(model, decl_loggers))
+	model_loggers.push_back(logger);
+
     model.empty_stmt();
-    //  auto [x, x_loggers] = bind_model(prefix,model);
-    // if (auto l = logger(prefix, x, x_loggers, do_log) )
-    //         loggers.push_back(l);
-    //    return x;
 
     // M2. Topology
     auto topology_var = var("topology");
