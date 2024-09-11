@@ -74,6 +74,7 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
     add(block.lambda_vars, code.lambda_vars);
     add(block.haskell_vars, code.haskell_vars);
     add(block.code.used_states, code.code.used_states);
+    add(block.code.free_vars, code.code.free_vars);
 
     for(auto& stmt: code.code.stmts)
         block.code.stmts.push_back(stmt);
