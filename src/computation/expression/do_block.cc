@@ -68,9 +68,19 @@ Stmts& Stmts::let(const Binds& binds)
     return *this;
 }
 
-Stmts& Stmts::let(const expression_ref& pattern, const expression_ref& E)
+Stmts& Stmts::let(expression_ref pattern, expression_ref body, bool lambda_to_function)
 {
-    Decl decl{pattern,E};
+    if (lambda_to_function)
+    {
+	assert(pattern.is_a<var>());
+	while(is_lambda_exp(body))
+	{
+	    pattern = {pattern, body.sub()[0]};
+	    body = body.sub()[1];
+	}
+    }
+
+    Decl decl{pattern,body};
     return let(Binds({decl}));
 }
 

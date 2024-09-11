@@ -80,7 +80,7 @@ struct Stmts: public Box<std::vector<expression_ref>>
 
     Stmts& let(const Binds&);
 
-    Stmts& let(const expression_ref& pattern, const expression_ref& E);
+    Stmts& let(expression_ref pattern, expression_ref body, bool lambda_to_function = true);
 
     Stmts& rec(const do_block& rec_block);
 
