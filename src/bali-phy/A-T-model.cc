@@ -165,7 +165,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 */
 
 vector<model_t>
-get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
+compile_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
 {
     map<string,pair<string,ptree>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
 
@@ -507,7 +507,7 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 }
 
 
-model_t get_smodel(const Rules& R, const std::string& model, const string& what)
+model_t compile_smodel(const Rules& R, const std::string& model, const string& what)
 {
     map<string,pair<string,ptree>> smodel_states = {{"alphabet",{"alpha",parse_type("a")}},
 						    {"branch_categories",{"branch_categories",parse_type("List<Int>")}}};
@@ -791,7 +791,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
+            full_smodels[i] = compile_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
 
     // 5. --- Get unspecified alphabet names from specified substitution models types.
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
@@ -832,7 +832,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             if (smodel_names_mapping.unique(i) == "")
                 throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
+            full_smodels[i] = compile_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
         }
 
     // 9. Check that alignment alphabet fits requirements from smodel.
@@ -865,7 +865,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     get_default_imodels(imodel_names_mapping, A);
 
-    auto full_imodels = get_imodels(R, imodel_names_mapping);
+    auto full_imodels = compile_imodels(R, imodel_names_mapping);
 
     // 11. --- Default and compile scale models
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
