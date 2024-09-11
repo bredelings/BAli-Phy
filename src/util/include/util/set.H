@@ -70,10 +70,30 @@ void add(std::set<T>& S1, const std::set<T>& S2)
     }
 }
 
+template <typename T,typename U>
+void add(std::map<T,U>& S1, const std::map<T,U>& S2)
+{
+    if (S1.empty())
+        S1 = S2;
+    else
+    {
+        for(const auto& s:S2)
+            S1.insert(s);
+    }
+}
+
 template <typename T>
 std::set<T> plus(const std::set<T>& S1, const std::set<T>& S2)
 {
     std::set<T> S3(S1);
+    add(S3, S2);
+    return S3;
+}
+
+template <typename T, typename U>
+std::map<T,U> plus(const std::map<T,U>& S1, const std::map<T,U>& S2)
+{
+    std::map<T,U> S3(S1);
     add(S3, S2);
     return S3;
 }
@@ -108,9 +128,20 @@ void remove(std::set<T>& S1, const std::set<T>& S2)
 }
 
 template <typename T>
-std::set<T> minus(const std::set<T>& S1, const std::set<T>& S2)
+void remove(T& S1, const T& S2)
 {
-    std::set<T> S3(S1);
+    T result;
+    std::set_difference(S1.begin(), S1.end(),
+			S2.begin(), S2.end(),
+			std::inserter(result, result.begin())
+	);
+    S1.swap(result);
+}
+
+template <typename T>
+T minus(const T& S1, const T& S2)
+{
+    T S3(S1);
     remove(S3, S2);
     return S3;
 }
