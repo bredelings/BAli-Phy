@@ -157,6 +157,16 @@ optional<string> get_func_name(const ptree& model)
         return {};
 }
 
+expression_ref generated_code_t::add_arguments(const expression_ref& F, const std::map<std::string,expression_ref>& state_values) const
+{
+    auto E = F;
+    for(auto& state: used_states)
+	E = {E, state_values.at(state)};
+    for(auto& [_,x]: free_vars)
+	E = {E, x};
+    return E;
+}
+
 bool CodeGenState::is_random(const ptree& model_) const
 {
     auto model = model_.get_child("value");
