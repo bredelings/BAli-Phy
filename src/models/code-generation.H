@@ -106,7 +106,7 @@ struct CodeGenState
     CodeGenState extend_scope(const std::string& var, const var_info_t& var_info) const;
     CodeGenState& extend_modify_scope(const std::string& var, const var_info_t& var_info);
 
-    translation_result_t get_model_decls(const ptree& model) const;
+    translation_result_t get_model_decls(const ptree& model);
     std::optional<translation_result_t> get_variable_model(const ptree& model) const;
     std::optional<translation_result_t> get_model_let(const ptree& model) const;
     std::optional<translation_result_t> get_model_lambda(const ptree& model) const;

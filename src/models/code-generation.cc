@@ -381,26 +381,25 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
  *   let var1_name = fst pair_var1
  *   loggers = [("var_name",(Nothing,[(var_name,pair_x)]))]
  */
-translation_result_t CodeGenState::get_model_decls(const ptree& model) const
+translation_result_t CodeGenState::get_model_decls(const ptree& model)
 {
     translation_result_t result;
 
-    auto scope2 = *this;
     for(auto& [var_name, var_exp]: model)
     {
-	var x = scope2.get_var(var_name);
-	var log_x = scope2.get_var("log_" + var_name);
+	var x = get_var(var_name);
+	var log_x = get_var("log_" + var_name);
 	bool x_is_random = is_random(var_exp);
 	var_info_t var_info(x, x_is_random);
 
 	// 1. Perform the variable expression
-	auto arg_result = scope2.get_model_as(var_exp);
+	auto arg_result = get_model_as(var_exp);
 
 	if (arg_result.lambda_vars.size())
 	    var_info.depends_on_lambda = true;
 
 	// 3. Construct code.
-	result.haskell_vars = scope2.haskell_vars;
+	add(result.haskell_vars, haskell_vars);
 
 	// (x, log_x) <- arg_result
 	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
@@ -409,7 +408,7 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model) const
 	    result.code.log_value(var_name, x, type);
 
 	// 4. Put x into the scope for the next decl.
-	scope2.extend_modify_scope(var_name, var_info);
+	extend_modify_scope(var_name, var_info);
     }
     return result;
 }
