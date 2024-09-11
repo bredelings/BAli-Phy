@@ -462,7 +462,7 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model)
 	    var_info.depends_on_lambda = true;
 
 	// 3. Construct code.
-	add(result.haskell_vars, haskell_vars);
+	add(haskell_vars, arg_result.haskell_vars);
 
 	// (x, log_x) <- arg_result
 	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
@@ -473,6 +473,9 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model)
 	// 4. Put x into the scope for the next decl.
 	extend_modify_scope(var_name, var_info);
     }
+
+    result.haskell_vars = haskell_vars;
+
     return result;
 }
 
