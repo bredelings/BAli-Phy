@@ -224,6 +224,14 @@ void handle_positional_args(ptree& model, const Rules& R)
         return;
     }
 
+    if (not R.get_rule_for_func(head))
+    {
+	for(auto& [arg_name,value]: model)
+	    if (not arg_name.empty())
+		throw myexception()<<"Named argument '"<<arg_name<<"' not allowed for function '"<<head<<"' with no rule.";
+	return;
+    }
+
     auto rule = R.require_rule_for_func(head);
 
     int i=0;
