@@ -734,6 +734,7 @@ std::string generate_atmodel_program(const variables_map& args,
     {
 	model.get_stmts().push_back(stmt);
     }
+    model.empty_stmt();
     //  auto [x, x_loggers] = bind_model(prefix,model);
     // if (auto l = logger(prefix, x, x_loggers, do_log) )
     //         loggers.push_back(l);
