@@ -537,9 +537,7 @@ TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const 
     // 1. Get var type
     type_t result_type;
     set<string> used_args;
-    if (auto type = type_for_var(name))
-        result_type = *type;
-    else if (not name.empty() and name[0] == '@')
+    if (not name.empty() and name[0] == '@')
     {
         auto arg_name = name.substr(1);
         auto type = type_for_arg(arg_name);
@@ -548,6 +546,8 @@ TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const 
             throw myexception()<<"can't find argument '"<<name<<"'";
         result_type = *type;
     }
+    else if (auto type = type_for_var(name))
+        result_type = *type;
     else
         return {};
 

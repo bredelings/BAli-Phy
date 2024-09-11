@@ -293,13 +293,15 @@ optional<translation_result_t> CodeGenState::get_variable_model(const ptree& mod
 {
     auto E = model.get_child("value");
 
-    if (E.size() or not E.is_a<string>()) return {};
+    if (not E.is_a<string>()) return {};
 
     auto name = E.get_value<string>();
 
-    // 0. Handle references to other arguments in default_value and alphabet
+    // 1. Translate the default arg or variable
+    translation_result_t result;
     if (not name.empty() and name[0] == '@')
     {
+	// Handle references to other arguments in default_value and alphabet
         name = name.substr(1);
         if (not arg_env)
             throw myexception()<<"Looking up argument '"<<name<<"' in an empty environment!";
@@ -310,21 +312,22 @@ optional<translation_result_t> CodeGenState::get_variable_model(const ptree& mod
 
         expression_ref V = env.code_for_arg.at(name);
 
-        translation_result_t result;
         result.code.E = V;
-        return result;
     }
+    else if (identifiers.count(name))
+    {
+	var_info_t var_info = identifiers.at(name);
 
-    // 1. If the name is not in scope then we are done.
-    if (not identifiers.count(name)) return {};
+	if (var_info.depends_on_lambda)
+	    result.lambda_vars = {name};
+	result.code.free_vars.insert({name, var_info.x});
 
-    var_info_t var_info = identifiers.at(name);
+	result.code.E = var_info.x;
+    }
+    else
+	return {};
 
-    translation_result_t result;
-    result.code.E = var_info.x;
-    if (var_info.depends_on_lambda)
-        result.lambda_vars = {name};
-    result.code.free_vars.insert({name, var_info.x});
+
     return result;
 }
 
