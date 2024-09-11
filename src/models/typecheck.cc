@@ -743,3 +743,12 @@ ptree TypecheckingState::typecheck_and_annotate(const ptree& required_type, cons
 
     return result;
 }
+
+void TypecheckingState::add_states(const std::map<string,std::pair<std::string,ptree>>& state_info)
+{
+    for(auto& [state_name,p]: state_info)
+    {
+	auto& [_, state_type] = p;
+	state.insert({state_name, state_type});
+    }
+}

@@ -165,7 +165,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 */
 
 vector<model_t>
-compile_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping)
+compile_imodels(const Rules& R, TypecheckingState TC, const shared_items<string>& imodel_names_mapping)
 {
     map<string,pair<string,ptree>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
 
@@ -173,8 +173,10 @@ compile_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
     {
         string what = "indel model " + std::to_string(i+1);
-        auto TC = makeTypechecker(R,  {}, imodel_states);
-        imodels.push_back( compile_model(R, TC, CodeGenState(R), parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
+
+        auto TC2 = TC;
+        TC2.add_states(imodel_states);
+        imodels.push_back( compile_model(R, TC2, CodeGenState(R), parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
     }
     return imodels;
 }
@@ -865,7 +867,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     get_default_imodels(imodel_names_mapping, A);
 
-    auto full_imodels = compile_imodels(R, imodel_names_mapping);
+    auto full_imodels = compile_imodels(R, TC, imodel_names_mapping);
 
     // 11. --- Default and compile scale models
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
