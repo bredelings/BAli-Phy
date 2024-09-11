@@ -48,7 +48,8 @@ struct LogSub: public LoggerObj
     {}
 };
 
-expression_ref generate_loggers(do_block& code, const Loggers& Loggers);
+std::vector<expression_ref> generate_loggers(do_block& code, const Loggers& Loggers);
+expression_ref generate_loggers_list(do_block& code, const Loggers& Loggers);
 
 void simplify(Loggers& loggers);
 

@@ -112,7 +112,7 @@ void simplify(Loggers& loggers)
 }
 
 
-expression_ref generate_loggers(do_block& code, const Loggers& loggers)
+vector<expression_ref> generate_loggers(do_block& code, const Loggers& loggers)
 {
     vector<expression_ref> simple_loggers;
     for(auto& l: loggers)
@@ -120,7 +120,7 @@ expression_ref generate_loggers(do_block& code, const Loggers& loggers)
         if (auto lsub = l.as<LogSub>())
         {
             auto log_x = lsub->log_var;
-            auto logger_list = generate_loggers(code,lsub->loggers);
+            auto logger_list = generate_loggers_list(code,lsub->loggers);
             code.let(log_x,logger_list);
             simple_loggers.push_back({var("%>%"),String(lsub->prefix),log_x});
         }
@@ -129,7 +129,11 @@ expression_ref generate_loggers(do_block& code, const Loggers& loggers)
         else
             std::abort();
     }
-    return get_list(simple_loggers);
+    return simple_loggers;
 }
 
+expression_ref generate_loggers_list(do_block& code, const Loggers& loggers)
+{
+    return get_list(generate_loggers(code,loggers));
+}
 
