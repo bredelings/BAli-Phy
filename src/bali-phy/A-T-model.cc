@@ -897,11 +897,10 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
         if (args.count("branch-lengths"))
             M = args["branch-lengths"].as<string>();
         else
-            M = "~iidMap(branches(tree), gamma(0.5, 2.0/num_branches(tree)))";
+            M = "~iidMap(branches(topology), gamma(0.5, 2.0/num_branches(topology)))";
 
-	auto TC = makeTypechecker(R, {{"tree",parse_type("Tree")}}, {});
-        branch_length_model = compile_model(R, TC, CodeGenState(R), parse_type("IntMap<Double>"), M, "branch length model", {{"tree",parse_type("Tree")}});
-        branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);
+	auto TC = makeTypechecker(R, {{"topology",parse_type("Tree")}}, {});
+        branch_length_model = compile_model(R, TC, CodeGenState(R), parse_type("IntMap<Double>"), M, "branch length model", {{"topology",parse_type("Tree")}});
     }
 
     //-------------- Likelihood calculator types -----------//
