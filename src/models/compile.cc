@@ -327,6 +327,9 @@ model_t compile_model(const Rules& R,
     for(const string& state_name: code.used_states)
         code.lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
+    for(auto& [var_name, x]: code.free_vars)
+	code.lambda_vars.push_back( x );
+
     return model_t{model, imports, required_type, constraints, code};
 }
 

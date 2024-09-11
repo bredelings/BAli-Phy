@@ -750,7 +750,8 @@ std::string generate_atmodel_program(const variables_map& args,
     {
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
-        expression_ref E = {var("sample_"+var_name),topology_var};
+
+        expression_ref E = var("sample_"+var_name);
         E = {var("RanSamplingRate"),0.0,E};
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
