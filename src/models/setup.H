@@ -59,7 +59,7 @@ public:
     model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
-model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type,
+model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree required_type,
 		  const std::string& model,
 		  const std::string& what,
 		  const std::vector<std::pair<std::string,ptree>>& = {},

@@ -435,7 +435,7 @@ std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<mod
     const string mstring = args["print"].as<string>();
     Rules R(get_package_paths(args));
     auto TC = makeTypechecker(R, {}, {{"alphabet",{"alphabet","b"}}});
-    model_t print = get_model(R, TC, "a", mstring, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
+    model_t print = compile_model(R, TC, "a", mstring, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
 
     expression_ref a = get_alphabet_expression_from_args(args);
     {

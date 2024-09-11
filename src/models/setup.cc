@@ -262,7 +262,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 // QUESTION: In decls, we WANT the same (non-haskell) name to override previous instances of the same name.
 //           But for lifted arguments of cmdline-language expressions, maybe we don't?
 // QUESTION: Can/should we have a pre-processing state where we lift monadic arguments into named prior expressions?
-model_t get_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const string& model_string, const string& what,
+model_t compile_model(const Rules& R, const TypecheckingState& TC, ptree required_type, const string& model_string, const string& what,
                   const vector<pair<string,ptree>>& scope,
                   const map<string,pair<string,ptree>>& state)
 {
