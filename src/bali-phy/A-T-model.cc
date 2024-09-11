@@ -165,9 +165,11 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 */
 
 vector<model_t>
-compile_imodels(const Rules& R, TypecheckingState TC, const shared_items<string>& imodel_names_mapping)
+compile_imodels(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const shared_items<string>& imodel_names_mapping)
 {
     map<string,pair<string,ptree>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
+
+    TC.add_states(imodel_states);
 
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
@@ -175,8 +177,7 @@ compile_imodels(const Rules& R, TypecheckingState TC, const shared_items<string>
         string what = "indel model " + std::to_string(i+1);
 
         auto TC2 = TC;
-        TC2.add_states(imodel_states);
-        imodels.push_back( compile_model(R, TC2, CodeGenState(R), parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
+        imodels.push_back( compile_model(R, TC2, code_gen_state, parse_type("IndelModel"), imodel_names_mapping.unique(i), what, {}, imodel_states) );
     }
     return imodels;
 }
@@ -509,25 +510,27 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 }
 
 
-model_t compile_smodel(const Rules& R, const std::string& model, const string& what)
+model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const std::string& model, const string& what)
 {
     map<string,pair<string,ptree>> smodel_states = {{"alphabet",{"alpha",parse_type("a")}},
 						    {"branch_categories",{"branch_categories",parse_type("List<Int>")}}};
 
+    TC.add_states(smodel_states);
+
     try {
-        auto TC = makeTypechecker(R, {}, smodel_states);
-        return compile_model(R, TC, CodeGenState(R), parse_type("CTMC<a>"), model, what, {}, smodel_states);
+        auto TC2 = TC;
+        return compile_model(R, TC2, code_gen_state, parse_type("CTMC<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        auto TC = makeTypechecker(R, {}, smodel_states);
-        return compile_model(R, TC, CodeGenState(R), parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
+        auto TC2 = TC;
+        return compile_model(R, TC2, code_gen_state, parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
-    auto TC = makeTypechecker(R, {}, smodel_states);
-    return compile_model(R, TC, CodeGenState(R), parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
+    auto TC2 = TC;
+    return compile_model(R, TC, code_gen_state, parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
 }
 
 
@@ -793,7 +796,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = compile_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
+            full_smodels[i] = compile_smodel(R, TC, code_gen_state, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
 
     // 5. --- Get unspecified alphabet names from specified substitution models types.
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
@@ -834,7 +837,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             if (smodel_names_mapping.unique(i) == "")
                 throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-            full_smodels[i] = compile_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
+            full_smodels[i] = compile_smodel(R, TC, code_gen_state, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
         }
 
     // 9. Check that alignment alphabet fits requirements from smodel.
@@ -867,7 +870,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     get_default_imodels(imodel_names_mapping, A);
 
-    auto full_imodels = compile_imodels(R, TC, imodel_names_mapping);
+    auto full_imodels = compile_imodels(R, TC, code_gen_state, imodel_names_mapping);
 
     // 11. --- Default and compile scale models
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
