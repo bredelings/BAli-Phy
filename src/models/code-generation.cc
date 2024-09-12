@@ -698,7 +698,7 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
             throw myexception()<<"Must specify at least one of: "<<join(loop_names,',');
         }
     }
-    
+
     auto order = topo_sort(G);
 //    std::reverse(order.begin(), order.end());
     return order;
@@ -906,44 +906,50 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
 
         auto arg = model_rep.get_child(arg_names[i]);
 
-        optional<var> alphabet;
+        auto scope3 = scope2;
+        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
+        if (is_default_value)
+            scope3.arg_env = {{name,arg_names[i],argument_environment}};
+
+	optional<translation_result_t> alphabet_result;
+	optional<var> alphabet_var;
+	optional<var> log_alphabet;
         if (auto alphabet_expression = arg.get_child_optional("alphabet"))
         {
             string var_name = "alpha";
             if (alphabet_expression->get_child("value").has_value<string>() and alphabet_expression->get_child("value").get_value<string>() == "getNucleotides")
                 var_name = "nucs";
-            auto x = scope2.get_var(var_name);
-            auto log_x = scope2.get_var("log_"+arg_names[i]+"_alpha");
+            alphabet_var = scope2.get_var(var_name);
+            log_alphabet = scope2.get_var("log_"+arg_names[i]+"_alpha");
 
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
-            if (alphabet_result.lambda_vars.size())
+            alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
+            if (alphabet_result->lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
+            add(scope2.haskell_vars, alphabet_result->haskell_vars);
 
-            assert(not alphabet_result.code.has_loggers());
-            assert(not alphabet_result.code.perform_function);
-            use_block(result, log_x, alphabet_result, log_names[i]+":alphabet");
-
-            if (is_var(alphabet_result.code.E))
-                alphabet = alphabet_result.code.E.as_<var>();
+            if (is_var(alphabet_result->code.E))
+                scope3.set_state("alphabet", alphabet_result->code.E.as_<var>());
             else
-            {
-                alphabet = x;
-                result.code.stmts.let(x, alphabet_result.code.E);
-            }
+                scope3.set_state("alphabet", *alphabet_var);
         }
 
-        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
-
-        auto scope3 = scope2;
-        if (is_default_value)
-            scope3.arg_env = {{name,arg_names[i],argument_environment}};
-        if (alphabet)
-            scope3.set_state("alphabet", *alphabet);
-
+        // Generate code for the argument.
         arg = model_rep.get_child(arg_names[i]);
         arg_models[i] = scope3.get_model_as(arg);
+
+        // Only generate code for the argument argument if the argument does get_state(alphabet).
+        if (arg_models[i].code.used_states.count("alphabet") and alphabet_result)
+        {
+            assert(not alphabet_result->code.has_loggers());
+            assert(not alphabet_result->code.perform_function);
+            use_block(result, *log_alphabet, *alphabet_result, log_names[i]+":alphabet");
+
+            var alphabet;
+            if (not is_var(alphabet_result->code.E))
+                result.code.stmts.let(*alphabet_var, alphabet_result->code.E);
+        }
 
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
