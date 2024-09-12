@@ -925,9 +925,9 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
             alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
+            add(scope3.haskell_vars, alphabet_result->haskell_vars);
             if (alphabet_result->lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            add(scope3.haskell_vars, alphabet_result->haskell_vars);
 
             if (is_var(alphabet_result->code.E))
                 scope3.set_state("alphabet", alphabet_result->code.E.as_<var>());
@@ -938,6 +938,7 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
         // Generate code for the argument.
         arg = model_rep.get_child(arg_names[i]);
         arg_models[i] = scope3.get_model_as(arg);
+        add(scope3.haskell_vars, arg_models[i].haskell_vars);
 
         // Only generate code for the argument argument if the argument does get_state(alphabet).
         if (arg_models[i].code.used_states.count("alphabet") and alphabet_result)
@@ -954,9 +955,6 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
-
-        // Avoid re-using any haskell vars.
-        add(scope3.haskell_vars, arg_models[i].haskell_vars);
 
         // (x, logger) <- arg
         auto x = arg_vars[i];
