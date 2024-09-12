@@ -906,10 +906,10 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
 
         auto arg = model_rep.get_child(arg_names[i]);
 
-        auto scope3 = scope2;
+        auto arg_scope = scope2;
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
         if (is_default_value)
-            scope3.arg_env = {{name,arg_names[i],argument_environment}};
+            arg_scope.arg_env = {{name,arg_names[i],argument_environment}};
 
 	optional<translation_result_t> alphabet_result;
 	optional<var> alphabet_var;
@@ -925,20 +925,20 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
             alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
-            add(scope3.haskell_vars, alphabet_result->haskell_vars);
+            add(arg_scope.haskell_vars, alphabet_result->haskell_vars);
             if (alphabet_result->lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
 
             if (is_var(alphabet_result->code.E))
-                scope3.set_state("alphabet", alphabet_result->code.E.as_<var>());
+                arg_scope.set_state("alphabet", alphabet_result->code.E.as_<var>());
             else
-                scope3.set_state("alphabet", *alphabet_var);
+                arg_scope.set_state("alphabet", *alphabet_var);
         }
 
         // Generate code for the argument.
         arg = model_rep.get_child(arg_names[i]);
-        arg_models[i] = scope3.get_model_as(arg);
-        add(scope3.haskell_vars, arg_models[i].haskell_vars);
+        arg_models[i] = arg_scope.get_model_as(arg);
+        add(arg_scope.haskell_vars, arg_models[i].haskell_vars);
 
         // Only generate code for the argument argument if the argument does get_state(alphabet).
         if (arg_models[i].code.used_states.count("alphabet") and alphabet_result)
@@ -989,7 +989,7 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
             result.code.log_value(log_names[i], argument_environment[arg_names[i]], type);
 	}
 
-	add(scope2.haskell_vars, scope3.haskell_vars);
+	add(scope2.haskell_vars, arg_scope.haskell_vars);
     }
 
     if (auto computed = rule->get_child_optional("computed"))
