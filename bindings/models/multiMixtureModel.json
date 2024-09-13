@@ -8,7 +8,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>"
+            "type": "DiscreteDist<CTMC<a>>"
         },
         {
             "name": "branch_cats",

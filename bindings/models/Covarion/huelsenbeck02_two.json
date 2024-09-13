@@ -2,13 +2,13 @@
     "name": "Covarion.hb02_two",
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "huelsenbeck_02_two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
 	    "description": "The base model"
         },
         {

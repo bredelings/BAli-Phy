@@ -525,7 +525,7 @@ model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_g
 
     try {
         auto TC2 = TC;
-        return compile_model(R, TC2, code_gen_state, parse_type("MixtureModel<a>"), model, what, {}, smodel_states);
+        return compile_model(R, TC2, code_gen_state, parse_type("DiscreteDist<CTMC<a>>"), model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
@@ -566,8 +566,8 @@ string get_alphabet_type(ptree type)
 
     if (head == "MultiMixtureModel")
 	return get_type_head(args[0]);
-    else if (head == "MixtureModel")
-	return get_type_head(args[0]);
+    else if (head == "DiscreteDist")
+	return get_alphabet_type(args[0]);
     else if (head == "CTMC")
 	return get_type_head(args[0]);
     else

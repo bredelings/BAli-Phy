@@ -113,7 +113,7 @@ bool is_loggable_type(const type_t& type)
 
     else if (head == "Double") return true;
 
-    else if (head == "DiscreteDistribution")
+    else if (head == "DiscreteDist")
     {
         if (args.size() != 1) return false;
 

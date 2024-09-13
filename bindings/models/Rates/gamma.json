@@ -1,13 +1,13 @@
 {
     "name": "Rates.gamma",
     "synonyms": ["Rates.Gamma"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.gamma_rates(@alpha,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
             "description": "The model being scaled"
         },
         {

@@ -1,13 +1,13 @@
 {
     "name": "inv",
     "synonyms": ["INV"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "plus_inv(@p_inv,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>"
+            "type": "DiscreteDist<CTMC<a>>"
         },
         {
             "name": "p_inv",

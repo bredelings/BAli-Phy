@@ -2,7 +2,7 @@
     "name": "Covarion.hb02",
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "huelsenbeck_02(@s01,@s10,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -15,7 +15,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
 	    "description": "The base model"
         },
         {

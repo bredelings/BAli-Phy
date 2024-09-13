@@ -1,7 +1,7 @@
 {
     "name": "unit_mixture",
     "synonyms": ["UnitMixture"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "no_log": true,
     "call": "unit_mixture(@submodel)",
     "import": ["SModel"],

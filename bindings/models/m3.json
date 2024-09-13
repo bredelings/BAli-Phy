@@ -1,7 +1,7 @@
 {
     "name": "m3",
     "synonyms": ["M3"],
-    "result_type": "MixtureModel<Codons<a>>",
+    "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m3(@omegaDist,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -13,7 +13,7 @@
         },
         {
             "name": "omegaDist",
-            "type": "DiscreteDistribution<Double>",
+            "type": "DiscreteDist<Double>",
             "default_value": "~dirichlet_mixture(uniform(0,1), 2, @n)",
 	    "description": "The omega (i.e. dN/dS) values"
         },

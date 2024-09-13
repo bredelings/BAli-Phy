@@ -1,6 +1,6 @@
 {
     "name": "discrete",
-    "result_type": "DiscreteDistribution<a>",
+    "result_type": "DiscreteDist<a>",
     "no_log": true,
     "call": "Discrete(@pairs)",
     "import": ["Probability"],

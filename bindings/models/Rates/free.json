@@ -1,18 +1,18 @@
 {
     "name": "Rates.free",
     "synonyms": ["DP"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.freeRates(@rateDist,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
 	    "description": "The model to be scaled"
         },
         {
             "name": "rateDist",
-            "type": "DiscreteDistribution<Double>",
+            "type": "DiscreteDist<Double>",
             "default_value": "~dirichlet_mixture(gamma(1,1),2,@n)",
 	    "description" : "Rates for each category"
         },

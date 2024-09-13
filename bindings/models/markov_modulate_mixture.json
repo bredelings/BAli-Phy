@@ -6,7 +6,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
 	    "description": "The base mixture model"
         },
         {

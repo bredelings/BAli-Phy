@@ -37,44 +37,50 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	}
     }
     // List<(a,Double)> -> DiscreteDistribution a
-    else if (head2 == "DiscreteDistribution" and args2.size() == 1)
+    else if (head2 == "DiscreteDist" and args2.size() == 1)
     {
-	auto a = args2[0];
-	t2 = make_type_app("List", make_type_apps("Tuple",{a,"Double"}));
-
-	E = convertible_to(model, t1, t2);
-	if (E)
+	// CTMC<a> -> DiscreteDist<CTMC<a>>
+	auto [head3,args3] = get_type_apps(args2[0]);
+	if (head3 == "CTMC")
 	{
-	    ptree result;
-	    result.put_value("discrete");
-	    result.push_back({"pairs",model});
-	    model = result;
+	    auto a = args3[0];
+	    t2 = make_type_app("CTMC",a);
+
+	    E = convertible_to(model,t1,t2);
+	    if (E)
+	    {
+		ptree result;
+		result.put_value("unit_mixture");
+		result.push_back({"submodel",model});
+		model = result;
+	    }
+	}
+	else
+	{
+	    // List<(a,Double)> -> DiscreteDist<a>
+	    auto a = args2[0];
+	    t2 = make_type_app("List", make_type_apps("Tuple",{a,"Double"}));
+
+	    E = convertible_to(model, t1, t2);
+	    if (E)
+	    {
+		ptree result;
+		result.put_value("discrete");
+		result.push_back({"pairs",model});
+		model = result;
+	    }
 	}
     }
     else if (head2 == "MultiMixtureModel" and args2.size() == 1)
     {
 	auto a = args2[0];
-	t2 = make_type_app("MixtureModel",a);
+	t2 = make_type_app("DiscreteDist",make_type_app("CTMC",a));
 
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
 	    ptree result;
 	    result.put_value("multiMixtureModel");
-	    result.push_back({"submodel",model});
-	    model = result;
-	}
-    }
-    else if (head2 == "MixtureModel" and args2.size() == 1)
-    {
-	auto a = args2[0];
-	t2 = make_type_app("CTMC",a);
-
-	E = convertible_to(model,t1,t2);
-	if (E)
-	{
-	    ptree result;
-	    result.put_value("unit_mixture");
 	    result.push_back({"submodel",model});
 	    model = result;
 	}

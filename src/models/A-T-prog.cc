@@ -583,7 +583,7 @@ bool is_reversible(const ptree& t)
 	return true;
     else if (get_type_head(t) == "CTMC")
 	return false;
-    else if (get_type_head(t) == "MixtureModel")
+    else if (get_type_head(t) == "DiscreteDist")
 	return is_reversible(t[0].second);
     else if (get_type_head(t) == "MultiMixtureModel")
 	return is_reversible(t[0].second);

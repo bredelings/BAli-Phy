@@ -218,7 +218,7 @@ void maybe_log(vector<expression_ref>& loggers,
 void generated_code_t::log_value(const string& name, expression_ref value, const type_t& type)
 {
     auto [head,args] = get_type_apps(type);
-    if (head == "DiscreteDistribution" and args[0] == "Double")
+    if (head == "DiscreteDist" and args[0] == "Double")
     {
 	value = {var("sortDist"),value};
     }

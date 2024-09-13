@@ -1,13 +1,13 @@
 {
     "name": "multi_rate",
     "synonyms": ["MultiRate"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "rate_mixture_unif_bins(@dist,@n_bins,@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>"
+            "type": "DiscreteDist<CTMC<a>>"
         },
         {
             "name": "dist",

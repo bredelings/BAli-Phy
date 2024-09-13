@@ -2,7 +2,7 @@
     "name": "Covarion.wssr07",
     "synonyms": ["Covarion.wang07"],
     "title":"The WSSR (2007) Covarion Model",
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "wssr07(@s01,@s10,@nu,@pi,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -19,7 +19,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "MixtureModel<a>",
+            "type": "DiscreteDist<CTMC<a>>",
 	    "description": "The base mixture model"
         },
         {

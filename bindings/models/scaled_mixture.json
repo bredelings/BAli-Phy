@@ -1,13 +1,13 @@
 {
     "name": "scaled_mixture",
     "synonyms":["Mixture"],
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.scaled_mixture(@models,@rates,@frequencies)",
     "import": ["SModel"],
     "args": [
         {
             "name": "models",
-            "type": "List<MixtureModel<a>>",
+            "type": "List<DiscreteDist<CTMC<a>>>",
 	    "description": "The models to mix"
         },
         {

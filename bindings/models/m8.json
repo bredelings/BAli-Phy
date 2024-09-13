@@ -1,7 +1,7 @@
 {
     "name": "m8",
     "synonyms": ["M8"],
-    "result_type": "MixtureModel<Codons<a>>",
+    "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m8(@mu,@gamma,@n,@posP,@posW,@submodel)",
     "import": ["SModel"],
     "args": [

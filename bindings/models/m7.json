@@ -1,7 +1,7 @@
 {
     "name": "m7",
     "synonyms": ["M7"],
-    "result_type": "MixtureModel<Codons<a>>",
+    "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m7(@mu,@gamma,@n,@submodel)",
     "import": ["SModel"],
     "args": [

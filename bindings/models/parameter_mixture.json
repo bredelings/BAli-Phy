@@ -1,12 +1,12 @@
 {
     "name": "parameter_mixture",
-    "result_type": "MixtureModel<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.parameter_mixture(Discrete(zip(@values,@frequencies)),@submodel)",
     "import": ["SModel"],
     "args": [
         {
             "name": "submodel",
-            "type": "b -> MixtureModel<a>",
+            "type": "b -> DiscreteDist<CTMC<a>>",
 	    "description": "The models to mix"
         },
         {
