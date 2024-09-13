@@ -17,7 +17,7 @@
         {
             "name": "frequencies",
             "type": "List<Double>",
-            "default_value": "let(n=length(@values),replicate(n, 1.0 / intToDouble(n)))",
+            "default_value": "{n=length(@values); replicate(n, 1.0 / intToDouble(n))}",
 	    "description": "The frequencies for each model"
         }
     ],

@@ -266,7 +266,7 @@ void set_used_args(ptree& model, const set<string>& used_args)
 ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)
 {
     set<string> used_args;
-    ptree decls2;
+    ptree decls2("!Decls");
     
     for(auto& [name, exp]: decls)
     {
@@ -292,41 +292,26 @@ TypecheckingState::typecheck_and_annotate_let(const ptree& required_type, const 
 
     auto name = model.get_value<string>();
 
-    if (name != "let") return {}; //let[m=E,F]
+    if (name != "!let") return {}; //let[m=E,F]
 
-    auto [var_name, var_exp] = model[0];
-    ptree body_exp = model[1].second;
-
-    auto a = get_fresh_type_var("t");
+    ptree decls = model[0].second;
+    ptree body  = model[1].second;
 
     set<string> used_args;
 
-    // 1. Analyze the body, forcing it to have the required type
-    auto scope2 = copy_no_equations();
-    scope2.extend_scope(var_name,a);
-    auto body_exp2 =  scope2.typecheck_and_annotate(required_type, body_exp);
-    used_args = get_used_args(body_exp2);
-    eqs = eqs && scope2.eqs;
-    if (not eqs)
-    {
-	auto required_type2 = required_type;
-	substitute(eqs, required_type2);
-        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type2)<<"!";
-    }
+    // 1. Analyze the decls
+    auto scope2 = *this;
+    auto decls2 = scope2.typecheck_and_annotate_decls(decls);
+    for(auto& [name,exp]: decls2)
+	add(used_args, get_used_args(exp));
 
-    // 2. Analyze the bound expression with type a
-    substitute(eqs, a);
-    auto var_exp2 = typecheck_and_annotate(a, var_exp);
-    add(used_args, get_used_args(var_exp2));
-    if (not eqs)
-    {
-	substitute(eqs, a);
-        throw myexception()<<"Expression '"<<unparse_annotated(var_exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
-    }
+    // 2. Analyze the body, forcing it to have the required type
+    auto body2 =  scope2.typecheck_and_annotate(required_type, body);
+    add(used_args, get_used_args(body2));
+    eqs = scope2.eqs;
 
     // Create the new model tree with args in correct order
-    auto model2 = ptree("let",{{var_name, var_exp2},{"",body_exp2}});
-
+    auto model2 = ptree("!let",{{"decls", decls2},{"body",body2}});
     model2 = ptree({{"value",model2},{"type",required_type}});
     set_used_args(model2, used_args);
 

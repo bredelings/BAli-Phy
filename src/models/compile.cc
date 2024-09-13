@@ -230,6 +230,13 @@ void generated_code_t::log_sub(const string& name, const var& log_var, const Log
 
 void substitute_annotated(const equations& equations, ptree& model)
 {
+    if (model.has_value<string>() and model.get_value<string>() == "!Decls")
+    {
+	for(auto& [name,exp]: model)
+	    substitute_annotated(equations, exp);
+	return;
+    }
+
     auto& type = model.get_child("type");
     substitute(equations, type);
 
@@ -433,7 +440,7 @@ bool do_extract(const ptree& func, const ptree& arg)
 
     string func_name = func.get_child("value").get_value<string>();
     // 1b. Don't pull anything out of "let"
-    if (func_name == "let") return false;
+    if (func_name == "!let") return false;
     // 1c. Don't pull anything out of lambdas
     if (func_name == "function") return false;
     // 1d. Don't pull anything out of lambdas
@@ -479,18 +486,20 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     ptree& value = m.get_child("value");
 
     vector<pair<string,ptree>> extracted;
-    if (value.has_value<string>() and value.get_value<string>() == "let")
+    if (value.has_value<string>() and value.get_value<string>() == "!let")
     {
         assert(value.size() == 2);
+	auto decls = value[0].second;
+	auto body  = value[1].second;
 
-        string var_name = value[0].first;
-        ptree tmp1;
-        std::swap(tmp1,value[0].second);
-        ptree tmp2;
-        std::swap(tmp2,value[1].second);
-        auto extracted = extract_terms(tmp2);
-        extracted.insert(extracted.begin(),{var_name,tmp1});
-        std::swap(tmp2,m);
+        auto extracted = extract_terms(body);
+        m = body;
+
+	for(auto& [var_name, exp]: decls)
+	{
+	    extracted.insert(extracted.begin(),{var_name,exp});
+	}
+
         return extracted;
     }
 

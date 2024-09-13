@@ -439,6 +439,7 @@ namespace zz {
       // "INTEGER"
       char dummy2[sizeof (int)];
 
+      // defs
       // exp
       // term
       // fncall
@@ -464,7 +465,6 @@ namespace zz {
       // type_tup_args
       char dummy6[sizeof (std::vector<ptree>)];
 
-      // defs
       // ditems
       // args
       // tup_args
@@ -673,6 +673,7 @@ namespace zz {
         value.move< int > (std::move (that.value));
         break;
 
+      case symbol_kind::S_defs: // defs
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -702,7 +703,6 @@ namespace zz {
         value.move< std::vector<ptree> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
@@ -880,6 +880,7 @@ switch (yykind)
         value.template destroy< int > ();
         break;
 
+      case symbol_kind::S_defs: // defs
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -909,7 +910,6 @@ switch (yykind)
         value.template destroy< std::vector<ptree> > ();
         break;
 
-      case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
@@ -1662,7 +1662,7 @@ switch (yykind)
 
 
     /// Stored state numbers (used for stacks).
-    typedef signed char state_type;
+    typedef unsigned char state_type;
 
     /// The arguments of the error message.
     int yy_syntax_error_arguments_ (const context& yyctx,
@@ -1718,7 +1718,7 @@ switch (yykind)
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const signed char yytable_[];
+    static const unsigned char yytable_[];
 
     static const signed char yycheck_[];
 
@@ -1962,7 +1962,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 241,     ///< Last index in yytable_.
+      yylast_ = 262,     ///< Last index in yytable_.
       yynnts_ = 20,  ///< Number of nonterminal symbols.
       yyfinal_ = 35 ///< Termination state number.
     };
@@ -2041,6 +2041,7 @@ switch (yykind)
         value.copy< int > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_defs: // defs
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -2070,7 +2071,6 @@ switch (yykind)
         value.copy< std::vector<ptree> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
@@ -2120,6 +2120,7 @@ switch (yykind)
         value.move< int > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_defs: // defs
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -2149,7 +2150,6 @@ switch (yykind)
         value.move< std::vector<ptree> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_defs: // defs
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args

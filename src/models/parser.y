@@ -96,7 +96,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %type <ptree> ditem
 %type <std::vector<std::pair<std::string,ptree>>> tup_args
 %type <std::pair<std::string,ptree>>              def
-%type <std::vector<std::pair<std::string,ptree>>> defs
+%type <ptree> defs
 
 %type <ptree>       type
 %type <ptree>       atype
@@ -125,19 +125,20 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %start start;
 start: START_EXP exp {drv.result = $2;}
 |      START_TYPE type {drv.result = $2;}
-|      START_DEFS defs {drv.result = ptree($2);}
+|      START_DEFS defs {drv.result = $2;}
 
 def: varid                      "=" exp  { $$ = {$1,$3}; }
 |    fncall                     "=" exp  { $$ = make_function_def(drv,@1,$1,$3); }
 |    varid                      "~" exp  { $$ = {$1,add_sample($3)}; }
 
-defs: %empty { }
-|     def { $$.push_back($1); }
-|     defs ";" def {$$ = $1; $$.push_back($3);}
-|     defs ";" {$$ = $1; }
+defs: %empty       { $$ = ptree("!Decls"); }
+|     def          { $$ = ptree("!Decls", {$1}); }
+|     defs ";" def { $$ = $1; $$.push_back($3); }
+|     defs ";"     { $$ = $1; }
 
 exp: term                         { $$ = $1; }
-|    def ";" exp                  { $$ = ptree("let",{$1,{"",$3}}); }
+|    "{" defs ";" exp "}"         { $$ = ptree("!let",{{"decls",$2},{"body",$4}}); }
+|    "{" defs ";" exp ";" "}"     { $$ = ptree("!let",{{"decls",$2},{"body",$4}}); }
 
 
 // See parse_no_submodel( )

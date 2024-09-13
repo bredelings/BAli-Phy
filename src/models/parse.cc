@@ -187,17 +187,9 @@ void handle_positional_args(ptree& model, const Rules& R)
 
     auto head = model.get_value<string>();
 
-    if (head == "let")
-    {
-	if (model.size() != 2)
-	    throw myexception()<<"let: got "<<model.size()<<" arguments, 2 arguments required.\n  "<<model.show();
-	if (model[0].first.empty())
-	    throw myexception()<<"let: first argument must have variable name!\n  "<<model.show();
-	if (not model[1].first.empty())
-	    throw myexception()<<"let: second argument must not have a variable name!\n  "<<model.show();
-	model[1].first = "body";
-	return;
-    }
+    if (head == "!let") return;
+
+    if (head == "!Decls") return;
 
     if (is_function(model)) return;
 
@@ -348,7 +340,7 @@ string unparse(const ptree& p)
 
     assert(p.has_value<string>());
     string s = p.get_value<string>();
-    if (s == "let")
+    if (s == "!let")
     {
 	string name = p[0].first;
 	return name+show_model(p[0].second)+";"+unparse(p[1].second);
@@ -451,7 +443,7 @@ string unparse_annotated(const ptree& ann)
 	return p.get_value<string>();
 
     string s = p.get_value<string>();
-    if (s == "let")
+    if (s == "!let")
     {
 	string name = p[0].first;
 	return name+show_model_annotated(p[0].second)+";"+unparse_annotated(p[1].second);

@@ -32,7 +32,7 @@ bool is_loggable_function(const Rules& R, const string& name)
     // * let[k=random,k+2]         # OK    : we assume that if k is random, the whole thing is random.
     // * let[k=random,hky85[k]]    # Not OK: we assume that if k is random, the whole thing is random.
     // Probably we should track whether the result is an unlogged random in translation_result_t.
-    if (name == "let") return false;
+    if (name == "!let") return false;
 
     if (name == "function") return true;
 
@@ -183,9 +183,18 @@ bool CodeGenState::is_random(const ptree& model_) const
         if (identifiers.count(name) and identifiers.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
-    for(const auto& p: model)
-        if (is_random(p.second))
-            return true;
+    if (name == "!let")
+    {
+	for (auto& [var,exp]: model[0].second)
+	    if (is_random(exp))
+		return true;
+    }
+    else
+    {
+	for(const auto& [arg,exp]: model)
+	    if (is_random(exp))
+		return true;
+    }
 
     return false;
 }
@@ -396,44 +405,32 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     auto name = model_rep.get_value<string>();
 
     // 1. If the phrase is not a let, then we are done.
-    if (name != "let") return {};
+    if (name != "!let") return {};
 
-    auto [var_name , var_exp ] = model_rep[0];
-    auto [body_name, body_exp] = model_rep[1];
-
-    var x = scope2.get_var(var_name);
-    var log_x = scope2.get_var("log_" + var_name);
-    bool x_is_random = is_random(var_exp);
-    var_info_t var_info(x, x_is_random);
+    auto [decls_name, decls   ] = model_rep[0];
+    auto [body_name , body_exp] = model_rep[1];
 
     var body = scope2.get_var("body");
     var log_body = scope2.get_var("log_body");
 
-    // 1. Perform the variable expression
-    auto arg_result = get_model_as(var_exp);
+    // Let-variables can be lifted out, so
+    // * we need to avoid prior haskell variables.
+    // * later code needs to avoid out haskell variables.
 
-    if (arg_result.lambda_vars.size())
-        var_info.depends_on_lambda = true;
+    // 2. Generate code for the decls
+    auto result = scope2.get_model_decls(decls);
 
-    // 2. Perform the body with var_name in scope
-    auto body_result = scope2.extend_scope(var_name, var_info).get_model_as(body_exp);
+    // 3. Generate code for the body -- with decl variables in scope
+    auto body_result = scope2.get_model_as(body_exp);
 
-    // 3. Construct code.
-    translation_result_t result;
-    result.haskell_vars = scope2.haskell_vars;
-
-    // (x, log_x) <- arg_result
-    perform_action_simplified(result, x, log_x, true, arg_result, var_name);
-    auto type = var_exp.get_child("type");
-    if (x_is_random and is_loggable_type(type))
-        result.code.log_value(var_name, x, type);
-
-    // body_result
+    // 4. Append body result to decls result
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
 
-    result.code.free_vars.erase(var_name);
-
+    // 5. Declared variables are not in scope outside the let.
+    for(auto& [var_name,_]: decls)
+	result.code.free_vars.erase(var_name);
+    
     return result;
 }
 
@@ -463,6 +460,7 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model)
 
 	// 3. Construct code.
 	add(haskell_vars, arg_result.haskell_vars);
+	add(result.lambda_vars, arg_result.lambda_vars);
 
 	// (x, log_x) <- arg_result
 	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
