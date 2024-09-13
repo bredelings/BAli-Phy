@@ -1,8 +1,8 @@
 {
     "name": "map",
-    "result_type": "List<b>",
+    "result_type": "m<b>",
     "no_log": true,
-    "call": "map(@f,@xs)",
+    "call": "fmap(@f,@xs)",
     "args": [
         {
             "name": "f",
@@ -10,7 +10,7 @@
         },
         {
             "name": "xs",
-            "type": "List<a>"
+            "type": "m<a>"
         }
     ]
 }
