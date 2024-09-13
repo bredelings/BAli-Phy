@@ -10,6 +10,7 @@
 #include "util/ptree.H"                             // for ptree
 #include "models/typecheck.H"
 #include "computation/expression/var.H"             // for var
+#include "computation/expression/let.H"             // for CDecls
 #include "computation/expression/do_block.H"        // for Stmts
 
 #include "logger.H"
@@ -18,10 +19,13 @@ class Rules;
 
 struct generated_code_t
 {
-    std::vector<var> lambda_vars;
-
     Stmts stmts;
+    CDecls decls;
+
+    // We prefix by these lambda vars at the end?
+    std::vector<var> haskell_lambda_vars;
     expression_ref E;
+
     Loggers loggers;
     bool perform_function = false;
 

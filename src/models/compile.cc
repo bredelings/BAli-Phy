@@ -44,6 +44,9 @@
 #include "computation/haskell/ids.H"
 #include "computation/expression/lambda.H"  // for is_lambda_exp( )
 #include "computation/expression/tuple.H"   // for Tuple( )
+#include "range/v3/all.hpp"
+
+namespace views = ranges::views;
 
 extern int log_verbose;
 
@@ -193,8 +196,8 @@ expression_ref generated_code_t::generate() const
     // if is_action() is false, we should not have a do_block()
     assert(is_action() or not R.is_a<do_block>());
 
-    for(int i=lambda_vars.size()-1; i>=0; i--)
-        R = lambda_quantify(lambda_vars[i],R);
+    for(auto& x : haskell_lambda_vars | views::reverse)
+        R = lambda_quantify(x,R);
 
     return R;
 }
@@ -332,10 +335,10 @@ model_t compile_model(const Rules& R,
 
     // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
-        code.lambda_vars.push_back( code_gen_state.state.at(state_name) );
+        code.haskell_lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
     for(auto& [var_name, x]: code.free_vars)
-	code.lambda_vars.push_back( x );
+	code.haskell_lambda_vars.push_back( x );
 
     return model_t{model, imports, required_type, constraints, code};
 }
@@ -392,7 +395,7 @@ model_t compile_decls(const Rules& R,
 
     // 4. Hack to make sure we generate Haskell arguments to pass in the state variables.
     for(const string& state_name: code.used_states)
-        code.lambda_vars.push_back( code_gen_state.state.at(state_name) );
+        code.haskell_lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
     return model_t{decls2, imports, {}, constraints, code};
 }

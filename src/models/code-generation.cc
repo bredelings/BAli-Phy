@@ -17,6 +17,9 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/do_block.H"
+#include "range/v3/all.hpp"
+
+namespace views = ranges::views;
 
 using std::string;
 using std::vector;
@@ -60,12 +63,20 @@ void perform_action_simplified(Stmts& block, const var& x, const var& log_x, boo
     }
 }
 
-void perform_action_simplified_(generated_code_t& block, const var& x, bool is_referenced, const generated_code_t& code)
+void perform_action_simplified_(generated_code_t& block, const var& x, bool is_referenced, const generated_code_t& code, bool depends_on_lambda)
 {
     if (code.perform_function)
+    {
+	assert(not depends_on_lambda);
         block.stmts.perform(x,code.E);
+    }
     else if (is_referenced or code.is_action())
-        block.stmts.let(x, code.E);
+    {
+	if (not depends_on_lambda)
+	    block.stmts.let(x, code.E);
+	else
+	    block.decls.push_back({x, code.E});
+    }
 }
 
 void use_block(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
@@ -79,6 +90,9 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
     for(auto& stmt: code.code.stmts)
         block.code.stmts.push_back(stmt);
 
+    for(auto& decl: code.code.decls)
+        block.code.decls.push_back(decl);
+
     if (code.code.has_loggers())
         block.code.log_sub(name, log_x, code.code.loggers);
 }
@@ -86,7 +100,7 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
 void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
 {
     use_block(block, log_x, code, name);
-    perform_action_simplified_(block.code, x, is_referenced, code.code);
+    perform_action_simplified_(block.code, x, is_referenced, code.code, not code.lambda_vars.empty());
 }
 
 bool is_loggable_type(const type_t& type)
@@ -426,10 +440,18 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // 4. Append body result to decls result
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
+    for(auto& [x,E]: result.code.decls | views::reverse)
+    {
+	result.code.E = let_expression({{x,E}},result.code.E);
+    }
+    result.code.decls.clear();
 
     // 5. Declared variables are not in scope outside the let.
     for(auto& [var_name,_]: decls)
+    {
 	result.code.free_vars.erase(var_name);
+	result.lambda_vars.erase(var_name);
+    }
     
     return result;
 }
