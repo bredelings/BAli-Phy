@@ -49,6 +49,54 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
     return U;
 }
 
+extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const alphabet& a = *arg0.as_<Alphabet>();
+
+    int N = a.size();
+    auto U = new Box<matrix<int>>(N, N, 1);
+
+    if (auto C = arg0.poly_cast<alphabet,Codons>())
+	*U = amino_acid_cost_matrix(*C);
+    else
+	throw myexception()<<"Can't compute an amino-acid cost matrix for non-Codon alphabet '"<<a.name<<"'";
+
+    return U;
+}
+
+extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const alphabet& a = *arg0.as_<Alphabet>();
+
+    int N = a.size();
+    auto U = new Box<matrix<int>>(N, N, 1);
+
+    if (auto D = arg0.poly_cast<alphabet,Doublets>())
+	*U = pos1_cost_matrix(*D);
+    else
+	throw myexception()<<"Can't compute a position-1 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
+
+    return U;
+}
+
+extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const alphabet& a = *arg0.as_<Alphabet>();
+
+    int N = a.size();
+    auto U = new Box<matrix<int>>(N, N, 1);
+
+    if (auto D = arg0.poly_cast<alphabet,Doublets>())
+	*U = pos2_cost_matrix(*D);
+    else
+	throw myexception()<<"Can't compute a position-2 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
+
+    return U;
+}
+
 
 object_ptr<ParsimonyCacheBranch>
 peel_muts(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);

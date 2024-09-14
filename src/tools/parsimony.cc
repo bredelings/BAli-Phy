@@ -93,6 +93,35 @@ matrix<int> amino_acid_cost_matrix(const Codons& C)
   return cost;
 }
 
+matrix<int> pos1_cost_matrix(const Doublets& D)
+{
+    matrix<int> cost(D.size(), D.size());
+
+    for(int i=0;i<cost.size1();i++)
+        for(int j=0;j<cost.size2();j++)
+            if (D.sub_nuc(i,0) == D.sub_nuc(j,0))
+                cost(i,j) = 0;
+            else
+                cost(i,j) = 1;
+
+    return cost;
+}
+
+matrix<int> pos2_cost_matrix(const Doublets& D)
+{
+    matrix<int> cost(D.size(), D.size());
+
+    for(int i=0;i<cost.size1();i++)
+        for(int j=0;j<cost.size2();j++)
+            if (D.sub_nuc(i,1) == D.sub_nuc(j,1))
+                cost(i,j) = 0;
+            else
+                cost(i,j) = 1;
+
+    return cost;
+}
+
+
 template <class B>
 B row_min(const matrix<B>& M,int row)
 {

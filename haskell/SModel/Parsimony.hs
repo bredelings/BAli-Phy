@@ -20,6 +20,10 @@ data CondPars
 type MutCosts = Matrix Int
 
 foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:" aminoAcidCostMatrix :: Alphabet -> MutCosts
+
+foreign import bpcall "Parsimony:" pos1CostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:" pos2CostMatrix :: Alphabet -> MutCosts
 
 foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> CondPars
 foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int

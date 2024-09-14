@@ -33,6 +33,10 @@ matrix<int> nucleotide_cost_matrix(const Triplets& T);
 
 matrix<int> nucleotide_cost_matrix(const Doublets& D);
 
+matrix<int> pos1_cost_matrix(const Doublets& D);
+
+matrix<int> pos2_cost_matrix(const Doublets& D);
+
 matrix<int> amino_acid_cost_matrix(const Codons& C);
 
 template <class B>
