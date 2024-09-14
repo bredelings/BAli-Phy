@@ -97,6 +97,27 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     return pi;
 }
 
+extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+
+    auto arg1 = Args.evaluate(1);
+    auto pi = (vector<double>)arg1.as_<EVector>();
+
+    return { checkStationary(Q,pi) };
+}
+
+extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+
+    auto arg1 = Args.evaluate(1);
+    auto pi = (vector<double>)arg1.as_<EVector>();
+
+    return { checkReversible(Q,pi) };
+}
 
 extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 {
