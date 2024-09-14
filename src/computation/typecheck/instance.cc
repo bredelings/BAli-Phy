@@ -25,6 +25,11 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         if (loc) push_source_span( *loc );
 
         auto FD = decl.as_<Hs::FunDecl>();
+	if (not class_info.default_methods.count(unloc(FD.v).name ))
+	{
+            // We already get an error message for this somewhere else.
+	    continue;
+	}
         auto dm = class_info.default_methods.at( unloc(FD.v).name );
         unloc(FD.v) = dm;
 
