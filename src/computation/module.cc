@@ -606,14 +606,18 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     write_compile_artifact(P, CM);
 
-    auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_sha(P));
-    if (CM2)
+    // Check the compile artifact
+    if (log_verbose)
     {
-	CM2->inflate(P);
-	return CM2;
+	if (auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
+	{
+	    CM2->inflate(P);
+	    if (CM2->all_inputs_sha() != CM->all_inputs_sha())
+		std::cerr<<"Compiled module "<<MM->name<<" changed between writing and rereading!";
+	}
+	else
+	    std::cerr<<"Failed to write compiled module "<<MM->name<<"!\n";
     }
-    else
-	if (log_verbose) std::cerr<<"Failed to write module "<<MM->name<<"!\n";
 
     CM->inflate(P);
     return CM;
