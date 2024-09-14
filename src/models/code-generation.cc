@@ -440,10 +440,24 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // 4. Append body result to decls result
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
-    for(auto& [x,E]: result.code.decls | views::reverse)
+
+    vector<CDecls> decls_groups(1);
+    set<var> prev_free_vars;
+    for(auto& [x,E]: result.code.decls)
     {
-	result.code.E = let_expression({{x,E}},result.code.E);
+	if (prev_free_vars.count(x))
+	{
+	    decls_groups.push_back({});
+	    prev_free_vars.clear();
+	}
+	decls_groups.back().push_back({x,E});
+	// Don't capture any references to x.
+	// Although since we uniquify the variables, that is unlikely to happen.
+	add(prev_free_vars, get_free_indices(E));
+	// Also don't define the same variable twice in the same declaration group.
+	prev_free_vars.insert(x);
     }
+    result.code.E = let_expression(decls_groups, result.code.E);
     result.code.decls.clear();
 
     // 5. Declared variables are not in scope outside the let.
