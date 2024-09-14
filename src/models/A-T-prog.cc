@@ -500,7 +500,7 @@ compute_logged_quantities(do_block& model,
 			  const expression_ref& tree,
 			  const expression_ref& alignment_on_tree,
 			  const expression_ref& properties,
-			  const expression_ref& alphabet,
+			  const expression_ref& alphabet_exp,
 			  const expression_ref& sequence_data,
 			  std::optional<int> imodel_index,
 			  vector<expression_ref>& alignment_lengths,
@@ -567,13 +567,30 @@ compute_logged_quantities(do_block& model,
 	}
 
 	var substs("substs"+part_suffix);
-	expression_ref costs = {var("unitCostMatrix"),alphabet};
+	expression_ref costs = {var("unitCostMatrix"),alphabet_exp};
 	expression_ref aligned_data = sequence_data;
 	if (imodel_index)
 	    aligned_data = Tuple(sequence_data, alignment_on_tree);
 
 	model.let(substs, {var("parsimony"), tree, aligned_data, costs});
 	sub_loggers.push_back({var("%=%"), String("#substs"), substs });
+	if (alphabet_exp.print().starts_with("mkDoublets"))
+	{
+	    string suffix = part_suffix;
+	    if (not suffix.empty())
+		suffix = "_"+suffix;
+
+	    var substs_pos1("substs_pos1"+suffix);
+	    expression_ref costs_pos1 = {var("pos1CostMatrix"),alphabet_exp};
+	    model.let(substs_pos1, {var("parsimony"), tree, aligned_data, costs_pos1});
+	    sub_loggers.push_back({var("%=%"), String("#substs_pos1"), substs_pos1 });
+
+	    var substs_pos2("substs_pos2"+suffix);
+	    expression_ref costs_pos2 = {var("pos2CostMatrix"),alphabet_exp};
+	    model.let(substs_pos2, {var("parsimony"), tree, aligned_data, costs_pos2});
+	    sub_loggers.push_back({var("%=%"), String("#substs_pos2"), substs_pos2 });
+	}
+
 	total_substs.push_back(substs);
     }
 
