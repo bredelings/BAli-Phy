@@ -468,6 +468,7 @@ void write_header(std::ostream& program_file,
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Tree.Newick");                           // for write_newick
+    imports.insert("SModel.Parsimony");                      // for parsimony
     add(imports, decls.imports);
     for(auto& m: SMs)
         add(imports, m.imports);
