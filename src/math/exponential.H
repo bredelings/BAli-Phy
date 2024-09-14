@@ -43,6 +43,9 @@ Eigen::MatrixXd toEigen(const Matrix& Q);
 Matrix fromEigen(const Eigen::MatrixXd& EM);
 
 std::vector<double> compute_stationary_freqs(const Matrix& Q);
+bool checkStationary(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
+bool checkStationary(const Matrix& Q, const std::vector<double>& pi, double tol = 1.0e-9);
 
-
+bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
+bool checkReversible(const Matrix& Q, const std::vector<double>& pi, double tol = 1.0e-9);
 #endif

@@ -328,3 +328,67 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
     return pi;
 }
 
+bool checkStationary(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol)
+{
+    assert(tol >= 0);
+    assert(Q.rows() == Q.cols());
+    assert(Q.rows() == pi.rows());
+    assert(std::abs(pi.sum() - 1.0) < tol);
+
+    // 1. Treat different multiples of Q the same.
+    double scale = Q.cwiseAbs().sum();
+
+    // 2. pi'[j] = \sum_i Q(j,i)*pi(i) = 0
+    double err = (Q.transpose()*pi).cwiseAbs().sum()/scale;
+    assert(err >= 0);
+
+    // 3. Check the error tolerance.
+    return (err < tol);
+}
+
+bool checkStationary(const Matrix& Q, const std::vector<double>& pi, double tol)
+{
+    int n = Q.size1();
+    assert(Q.size2() == n);
+
+    // 1. Q2 = Q
+    Eigen::MatrixXd Q2 = toEigen(Q);
+
+    // 2. pi2 = pi
+    Eigen::VectorXd pi2(n);
+    for(int i=0;i<n;i++)
+        pi2[i] = pi[i];
+
+    return checkStationary(Q2, pi2, tol);
+}
+
+bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol)
+{
+    // S(i,j) = pi[i]*Q(i,j) should be symmetric.
+
+    auto S = pi.asDiagonal()*Q;
+
+    double scale = S.cwiseAbs().sum();
+
+    double error = (S - S.transpose()).cwiseAbs().sum() / scale;
+
+    return (error < tol);
+}
+
+bool checkReversible(const Matrix& Q, const std::vector<double>& pi, double tol)
+{
+    int n = Q.size1();
+    assert(Q.size2() == n);
+    assert(pi.size() == n);
+
+    // 1. Q2 = Q
+    Eigen::MatrixXd Q2 = toEigen(Q);
+
+    // 2. pi2 = pi
+    Eigen::VectorXd pi2(n);
+    for(int i=0;i<n;i++)
+        pi2[i] = pi[i];
+
+    return checkReversible(Q2, pi2, tol);
+}
+
