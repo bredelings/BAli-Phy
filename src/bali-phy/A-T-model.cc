@@ -22,10 +22,11 @@
 #include "models/parameters.H"                      // for Parameters, param...
 #include "models/A-T-prog.H"                        // for gen_atmodel_program
 #include "models/rules.H"                           // for Rules
-#include "models/compile.H"                           // for model_t, compile_model
+#include "models/compile.H"                         // for model_t, compile_model
 #include "models/parse.H"                           // for parse_type( )
 #include "sequence/alphabet.H"                      // for alphabet
 #include "sequence/doublets.H"                      // for Doublets
+#include "sequence/RNAEdits.H"                      // for RNAEdits
 #include "sequence/codons.H"                        // for Codons
 #include "sequence/sequence-format.H"               // for load_from_file
 #include "sequence/sequence.H"                      // for sequence, select
@@ -613,6 +614,11 @@ std::vector<string> get_default_alphabet_names(const shared_items<string>& smode
             for(int j: smodel_names_mapping.partitions_for_item[i])
                 alphabet_names[j] = "Codons";
         }
+        else if (alphabet_type == "RNAEdits")
+        {
+            for(int j: smodel_names_mapping.partitions_for_item[i])
+                alphabet_names[j] = "RNAEdits";
+        }
         else if (alphabet_type == "Triplets")
         {
             for(int j: smodel_names_mapping.partitions_for_item[i])
@@ -859,6 +865,9 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
         if (alphabet_type == "Doublets" and not dynamic_cast<const Doublets*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a doublet alphabet, but sequences are '"<<a.name<<"'";;
+
+        if (alphabet_type == "RNAEdits" and not dynamic_cast<const RNAEdits*>(&a))
+            throw myexception()<<"Substitution model S"<<i+1<<" requires a RNAEdits alphabet, but sequences are '"<<a.name<<"'";;
 
         if (alphabet_type == "AA" and not dynamic_cast<const AminoAcids*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;

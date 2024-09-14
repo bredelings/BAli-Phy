@@ -442,6 +442,7 @@ shared_ptr<const Nucleotides> get_nucleotides(const string& name)
 }
 
 #include "doublets.H"
+#include "RNAEdits.H"
 #include "triplets.H"
 #include "codons.H"
 
@@ -480,6 +481,15 @@ shared_ptr<const alphabet> get_alphabet(const string& name_)
 	auto N = get_nucleotides(arguments[0]);
 
 	return shared_ptr<const alphabet>(new Doublets(*N));
+    }
+    else if (name == "RNAEdits")
+    {
+	if (arguments.size() != 1 or arguments[0].empty())
+	    throw myexception()<<"RNAEdits needs one argument specifying the nucleotide alphabet: e.g. Doublets(RNA).";
+
+	auto N = get_nucleotides(arguments[0]);
+
+	return shared_ptr<const alphabet>(new RNAEdits(*N));
     }
     else if (name == "Numeric")
     {

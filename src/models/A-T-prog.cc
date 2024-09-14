@@ -17,6 +17,7 @@
 #include "sequence/genetic_code.H"
 #include "sequence/codons.H"
 #include "sequence/doublets.H"
+#include "sequence/RNAEdits.H"
 #include "bali-phy/cmd_line.H"                                // for get_log_formats
 
 using std::vector;
@@ -64,6 +65,11 @@ expression_ref get_alphabet_expression(const alphabet& a)
     {
         auto nucs = get_alphabet_expression(doublets->getNucleotides());
         return {var("mkDoublets"),nucs};
+    }
+    else if (auto doublets = dynamic_cast<const RNAEdits*>(&a))
+    {
+        auto nucs = get_alphabet_expression(doublets->getNucleotides());
+        return {var("mkRNAEdits"),nucs};
     }
     else if (auto num = dynamic_cast<const Numeric*>(&a))
     {

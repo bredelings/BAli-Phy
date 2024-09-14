@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "sequence/alphabet.H"
 #include "sequence/doublets.H"
+#include "sequence/RNAEdits.H"
 #include "sequence/codons.H"
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
@@ -33,9 +34,9 @@ matrix<int> nucleotide_cost_matrix(const Triplets& T);
 
 matrix<int> nucleotide_cost_matrix(const Doublets& D);
 
-matrix<int> pos1_cost_matrix(const Doublets& D);
+matrix<int> pos1_cost_matrix(const RNAEdits& E);
 
-matrix<int> pos2_cost_matrix(const Doublets& D);
+matrix<int> pos2_cost_matrix(const RNAEdits& E);
 
 matrix<int> amino_acid_cost_matrix(const Codons& C);
 

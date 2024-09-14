@@ -379,7 +379,7 @@ vector<int> make_edit_map(const EVector& edit_pairs, int n)
 extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    auto& D = *arg0.poly_as_<alphabet,RNAEdits>();
     const int n = D.size();
     assert(D.getNucleotides().size() == 4);
 
@@ -435,7 +435,7 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
 extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    auto& D = *arg0.poly_as_<alphabet,RNAEdits>();
     const int n = D.size();
 
     auto arg1 = Args.evaluate(1);

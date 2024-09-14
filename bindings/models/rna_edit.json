@@ -1,6 +1,6 @@
 {
     "name": "rna_edit",
-    "result_type": "CTMC<Doublets<a>>",
+    "result_type": "CTMC<RNAEdits<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
     "call": "siteEdit(@a,@submodel,@rna_rate,@edits)",
@@ -25,9 +25,9 @@
 	},
         {
             "name": "a",
-            "type": "Doublets<a>",
+            "type": "RNAEdits<a>",
             "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
+	    "description": "The RNAEdits alphabet"
         }
     ],
     "description":"Rate matrix on a doublets, constructed from a rate matrix on nucleotides.\n\nThus model describes RNA editing (or lack thereof) at a single site.",

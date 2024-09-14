@@ -1,6 +1,6 @@
 {
     "name": "rnaEditsOf",
-    "result_type": "Doublets<n>",
+    "result_type": "RNAEdits<n>",
     "call": "mkRNAEdits(@nucleotides)",
     "import": ["Bio.Alphabet"],
     "args": [

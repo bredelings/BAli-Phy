@@ -57,6 +57,8 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
 	return Alphabet(t->getNucleotides().clone());
     if (auto d = arg0.poly_cast<alphabet,Doublets>())
 	return Alphabet(d->getNucleotides().clone());
+    if (auto e = arg0.poly_cast<alphabet,RNAEdits>())
+	return Alphabet(e->getNucleotides().clone());
     else
 	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Doublets or Triplets alphabet.";
 }

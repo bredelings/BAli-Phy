@@ -5,6 +5,7 @@
 #include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
 #include "sequence/doublets.H"
+#include "sequence/RNAEdits.H"
 #include "sequence/codons.H"
 #include "util/io.H"
 #include <valarray>
@@ -43,6 +44,8 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
 	*U = nucleotide_cost_matrix(*T);
     else if (auto D = arg0.poly_cast<alphabet,Doublets>())
 	*U = nucleotide_cost_matrix(*D);
+    else if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
+	*U = pos1_cost_matrix(*E);
     else
         *U = unit_cost_matrix(a);
 
@@ -73,8 +76,8 @@ extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
     int N = a.size();
     auto U = new Box<matrix<int>>(N, N, 1);
 
-    if (auto D = arg0.poly_cast<alphabet,Doublets>())
-	*U = pos1_cost_matrix(*D);
+    if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
+	*U = pos1_cost_matrix(*E);
     else
 	throw myexception()<<"Can't compute a position-1 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
@@ -89,8 +92,8 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
     int N = a.size();
     auto U = new Box<matrix<int>>(N, N, 1);
 
-    if (auto D = arg0.poly_cast<alphabet,Doublets>())
-	*U = pos2_cost_matrix(*D);
+    if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
+	*U = pos2_cost_matrix(*E);
     else
 	throw myexception()<<"Can't compute a position-2 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
