@@ -2,6 +2,10 @@
 - Speed: further speed up tree operations.
 - Output: simplify results from ancestral sequence reconstruction.
 - Input: allow defining models using multiple lines.
+- Models:
+  + speed up and improve RNA editing model.
+- Bug fixes:
+  + Fix for using previously compiled modules.
 
 * 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
