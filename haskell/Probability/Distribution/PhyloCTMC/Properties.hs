@@ -45,8 +45,7 @@ data PhyloCTMCProperties = PhyloCTMCProperties {
       prop_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
       prop_alphabet :: Alphabet,
       prop_n_states :: Int,
-      prop_n_base_models :: Int,
-      prop_n_muts :: Int                                            -- This shouldn't be here.
+      prop_n_base_models :: Int
     }
 
 

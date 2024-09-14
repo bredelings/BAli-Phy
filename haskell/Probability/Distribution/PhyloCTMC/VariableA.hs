@@ -53,13 +53,11 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
 
       ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
-      n_muts = parsimony tree (sequenceData,alignment) (unitCostMatrix alphabet)
-
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel)
 
   return ([likelihood], prop)
 
@@ -140,13 +138,11 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale sequenceData = do
 
       ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
-      n_muts = parsimony tree (sequenceData,alignment) (unitCostMatrix alphabet)
-
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel)
 
   return ([likelihood], prop)
 
@@ -215,13 +211,11 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
 
       ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
 
-      n_muts = parsimony tree (sequenceData,alignment) (unitCostMatrix alphabet)
-
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = (PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) n_muts)
+  let prop = PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel)
 
   return ([likelihood], prop)
 

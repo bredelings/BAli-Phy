@@ -496,8 +496,10 @@ compute_logged_quantities(do_block& model,
 			  const set<string>& fixed,
 			  const map<string,json::value>& keys,
 			  int i,
+			  const expression_ref& tree,
 			  const expression_ref& alignment_on_tree,
 			  const expression_ref& properties,
+			  const expression_ref& alphabet,
 			  const expression_ref& sequence_data,
 			  std::optional<int> imodel_index,
 			  vector<expression_ref>& alignment_lengths,
@@ -564,7 +566,12 @@ compute_logged_quantities(do_block& model,
 	}
 
 	var substs("substs"+part_suffix);
-	model.let(substs, {var("prop_n_muts"), properties});
+	expression_ref costs = {var("unitCostMatrix"),alphabet};
+	expression_ref aligned_data = sequence_data;
+	if (imodel_index)
+	    aligned_data = Tuple(sequence_data, alignment_on_tree);
+
+	model.let(substs, {var("parsimony"), tree, aligned_data, costs});
 	sub_loggers.push_back({var("%=%"), String("#substs"), substs });
 	total_substs.push_back(substs);
     }
@@ -864,8 +871,10 @@ std::string generate_atmodel_program(const variables_map& args,
 						     fixed,
 						     keys,
 						     i,
+						     tree_var,
 						     alignment_on_tree,
 						     properties,
+						     alphabet_exps[i],
 						     sequence_data,
 						     imodel_index,
 						     alignment_lengths,
