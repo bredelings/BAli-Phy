@@ -289,3 +289,37 @@ Doublets::Doublets(const Nucleotides& a)
 { }
 
 
+void RNAEdits::setup_table()
+{
+    // Remove edits that are not C->U or U->C
+    for(int i=size()-1; i>=0; i--) 
+    {
+	int n1 = sub_nuc(i,0);
+	int n2 = sub_nuc(i,1);
+
+	// No edit
+	if (n1 == n2) continue;
+
+	// C -> U
+	if (n1 == N->C() and n2 == N->T()) continue;
+
+	// U -> C
+	if (n1 == N->T() and n2 == N->C()) continue;
+
+	remove(i);
+    }
+}
+
+RNAEdits::RNAEdits(const string& s,const Nucleotides& a)
+    :Doublets(s,a)
+{
+    setup_table();
+    setup_sub_nuc_table();
+    setup_letter_classes();
+}
+
+RNAEdits::RNAEdits(const Nucleotides& a)
+    :RNAEdits(string("RNAEdits(")+a.name+")",a)
+{ }
+
+

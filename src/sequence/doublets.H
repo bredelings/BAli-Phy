@@ -46,4 +46,17 @@ public:
     Doublets(const std::string& s,const Nucleotides& N);
 };
 
+/// An alphabet of triplets of nucleotides
+class RNAEdits: public Doublets {
+protected:
+    void setup_table();
+public:
+    virtual RNAEdits* clone() const {return new RNAEdits(*this);}
+
+    virtual std::string letter_name() const {return "RNAEdit";};
+
+    RNAEdits(const Nucleotides& N);
+    RNAEdits(const std::string& s,const Nucleotides& N);
+};
+
 #endif

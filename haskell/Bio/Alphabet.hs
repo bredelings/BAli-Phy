@@ -26,6 +26,8 @@ foreign import bpcall "Alphabet:" translate :: Alphabet -> Int -> Int
 
 foreign import bpcall "Alphabet:" mkDoublets :: Alphabet -> Alphabet
 
+foreign import bpcall "Alphabet:" mkRNAEdits :: Alphabet -> Alphabet
+
 foreign import bpcall "Alphabet:" mkTriplets :: Alphabet -> Alphabet
 
 foreign import bpcall "Alphabet:" mkCodons :: Alphabet -> GeneticCode -> Alphabet

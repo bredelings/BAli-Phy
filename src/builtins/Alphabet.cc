@@ -80,6 +80,16 @@ extern "C" closure builtin_function_mkDoublets(OperationArgs& Args)
 	throw myexception()<<"mkDoublets: object "<<a.print()<<" is not a Nucleotides alphabet.";
 }
 
+extern "C" closure builtin_function_mkRNAEdits(OperationArgs& Args)
+{
+    auto arg0  = Args.evaluate(0);
+    const alphabet& a = *arg0.as_<Alphabet>();
+    if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
+	return Alphabet(new RNAEdits(*n));
+    else
+	throw myexception()<<"mkRNAEdits: object "<<a.print()<<" is not a Nucleotides alphabet.";
+}
+
 extern "C" closure builtin_function_mkTriplets(OperationArgs& Args)
 {
     auto arg0  = Args.evaluate(0);
