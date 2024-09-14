@@ -136,7 +136,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 
     double W = a.width();
 
-    if (auto E = arg0.poly_as_<alphabet,RNAEdits>())
+    if (dynamic_cast<const RNAEdits*>(&a))
 	W = 1;
 
     return {scale/W};
