@@ -33,9 +33,14 @@ class Scalable c => CTMC c where
     getStartFreqs :: c -> EVector Double
     getEqFreqs :: c -> EVector Double
     qExp :: c -> Matrix Double
+    isReversible :: c -> Bool
+    isStationary :: c -> Bool
 
     getEqFreqs m = builtin_getEqFreqs (getQ m)
     qExp m = mexp (getQ m) 1
+
+    isReversible m = checkReversible (getQ m) (getEqFreqs m)
+    isStationary m = checkStationary (getQ m) (getStartFreqs m)
 
 -- Should I add gtr, equ n x, and f81 to this class? Probably...
 
