@@ -1,6 +1,7 @@
 module SModel.Parsimony where
 
 import Tree
+import Bio.Sequence
 import Bio.Alphabet
 import Bio.Alignment
 import Data.BitVector
@@ -24,6 +25,10 @@ foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet
 foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
 
 
+class Parsimony a where
+    parsimony :: (IsTree t, HasLabels t) => t -> a -> MutCosts -> Int
+
+
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
                                                    pcf b = let inEdges = edgesBeforeEdgeSet t b
                                                                cpsIn = IntMap.restrictKeysToVector pc inEdges
@@ -39,9 +44,16 @@ peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
                                              sequences = maybeToList $ seqs IntMap.! root
                                          in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
 
-parsimony t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
-                                     root = head $ getNodes t
-                                 in peel_muts t pc as root seqs alpha cost
+parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
+                                          root = head $ getNodes t
+                                      in peel_muts t pc as root seqs alpha cost
+
+instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
+    parsimony tree (sequenceData,alignment) costs = let as = pairwise_alignments alignment
+                                                        alphabet = getAlphabet sequenceData
+                                                        maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+                                                    in parsimony_root tree maybeNodeSequences as alphabet costs
+
 ----
 type ColumnCounts = EVector Int
 
@@ -65,6 +77,13 @@ peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNo
 parsimony_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
                                                  root = head $ getNodes t
                                              in peel_muts_fixed_A t pc root seqs alpha cost counts
+
+parsimony_fixed_A' tree alignment cost = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
+                                             maybeNodeISequences = labelToNodeMap tree isequences
+                                             maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+                                             alphabet = getAlphabet alignment
+                                         in parsimony_fixed_A tree maybeNodeSeqsBits alphabet cost column_counts
+
 {-
 parsimony_SEV :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
 parsimony_SEV t seqs as alpha cost = let pc = cached_conditional_muts_SEV t seqs as alpha cost
