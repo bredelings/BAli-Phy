@@ -134,7 +134,12 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 	}
     }
 
-    return {scale/a.width()};
+    double W = a.width();
+
+    if (auto E = arg0.poly_as_<alphabet,RNAEdits>())
+	W = 1;
+
+    return {scale/W};
 }
 
 extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
