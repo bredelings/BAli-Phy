@@ -72,7 +72,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
 
       ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
-      n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
+      n_muts = parsimony tree sequenceData (unitCostMatrix alphabet)
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -153,7 +153,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
 
       ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
 
-      n_muts = parsimony_fixed_A tree maybeNodeSeqsBits alphabet (unitCostMatrix alphabet) column_counts
+      n_muts = parsimony tree sequenceData (unitCostMatrix alphabet)
 
   in_edge "tree" tree
   in_edge "smodel" smodel

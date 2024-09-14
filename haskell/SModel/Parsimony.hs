@@ -74,15 +74,16 @@ peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNo
                                                          sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
                                                      in mutsRootFixedA (list_to_vector sequences) alpha clsIn cost counts
 
-parsimony_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
-                                                 root = head $ getNodes t
-                                             in peel_muts_fixed_A t pc root seqs alpha cost counts
+parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
+                                                      root = head $ getNodes t
+                                                  in peel_muts_fixed_A t pc root seqs alpha cost counts
 
-parsimony_fixed_A' tree alignment cost = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
-                                             maybeNodeISequences = labelToNodeMap tree isequences
-                                             maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
-                                             alphabet = getAlphabet alignment
-                                         in parsimony_fixed_A tree maybeNodeSeqsBits alphabet cost column_counts
+instance Parsimony AlignedCharacterData where
+    parsimony tree alignment cost = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
+                                        maybeNodeISequences = labelToNodeMap tree isequences
+                                        maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+                                        alphabet = getAlphabet alignment
+                                    in parsimony_root_fixed_A tree maybeNodeSeqsBits alphabet cost column_counts
 
 {-
 parsimony_SEV :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
