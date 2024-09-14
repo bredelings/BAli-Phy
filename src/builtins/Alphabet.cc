@@ -2,6 +2,7 @@
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
 #include "sequence/doublets.H"
+#include "sequence/RNAEdits.H"
 #include "sequence/codons.H"
 
 using Alphabet = PtrBox<alphabet>;

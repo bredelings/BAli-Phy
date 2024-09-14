@@ -20,6 +20,7 @@ libcommon_sources = [
 
   'sequence/alphabet.cc',
   'sequence/doublets.cc',
+  'sequence/RNAEdits.cc',
   'sequence/triplets.cc',
   'sequence/genetic_code.cc',
   'sequence/codons.cc',
