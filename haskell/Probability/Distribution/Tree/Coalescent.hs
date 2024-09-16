@@ -47,13 +47,13 @@ sample_coalescent_tree theta n_leaves = do
 -- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
 coalescent_tree_effect tree = do
-  sequence_ [ add_move $ sliceSample (node_time tree node) (above 0.0)
+  sequence_ [ addMove 1 $ sliceSample (node_time tree node) (above 0)
             | node <- internal_nodes tree]
 
-  sequence_ [ add_move $ metropolis_hastings $ fnpr_unsafe_proposal tree node
+  sequence_ [ addMove 1 $ metropolis_hastings $ fnpr_unsafe_proposal tree node
             | node <- getNodes tree]
 
-  sequence_ [ add_move $ tnni_on_branch_unsafe tree branch
+  sequence_ [ addMove 1 $ tnni_on_branch_unsafe tree branch
             | branch <- getEdges tree]
 
 -------------------------------------------------------------
