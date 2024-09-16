@@ -9,10 +9,10 @@ import qualified Data.IntMap as IntMap
 import           MCMC
 
 data CoalEvent = Leaf | Internal | RateShift Double
-node_type tree node = if is_leaf_node tree node then Leaf else Internal
+nodeType tree node = if is_leaf_node tree node then Leaf else Internal
 
-coalescent_tree_pr_factors theta n_leaves tree = go 0 0 (2/theta) 1 times: parent_before_child_prs n_leaves tree
-    where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree - 1]]
+coalescentTreePrFactors theta n_leaves tree = go 0 0 (2/theta) 1 times: parent_before_child_prs n_leaves tree
+    where times = sortOn fst [ (node_time tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
               let delta_t = time - prev_time
@@ -31,7 +31,7 @@ coalescent_tree_pr_factors theta n_leaves tree = go 0 0 (2/theta) 1 times: paren
 -- add the Internal events (effectively -- we would also need to
 -- Or should it be (name,time) pairs?
 
-sample_coalescent_tree theta n_leaves = do
+sampleCoalescentTree theta n_leaves = do
   topology <- sample_uniform_ordered_tree n_leaves
 
   let rate = 2/theta
@@ -44,7 +44,7 @@ sample_coalescent_tree theta n_leaves = do
 -------------------------------------------------------------
 
 -- FIXME: check that numLeaves tree is not changeable?
-coalescent_tree_effect tree = do
+coalescentTreeEffect tree = do
   -- Resample all the node times, including the root...
   -- But what if some node times are fixed?
   -- FIXME: check that leaf times are fixed?
@@ -67,9 +67,9 @@ instance Dist CoalescentTree where
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree theta n) tree = return (coalescent_tree_pr_factors theta n tree, ())
+    annotated_densities (CoalescentTree theta n) tree = return (coalescentTreePrFactors theta n tree, ())
 
 instance Sampleable CoalescentTree where
-    sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n)
+    sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescentTreeEffect triggered_modifiable_time_tree (sampleCoalescentTree theta n)
 
-coalescent_tree theta n = CoalescentTree theta n
+coalescentTree theta n = CoalescentTree theta n

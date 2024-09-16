@@ -23,7 +23,7 @@ smodel_prior nucleotides =  do
 tree_prior taxa = do
 
     theta <- sample $ log_laplace (-5.0) 2.0
-    tree <- add_labels taxa <$> sample (coalescent_tree theta (length taxa))
+    tree <- add_labels taxa <$> sample (coalescentTree theta (length taxa))
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)
