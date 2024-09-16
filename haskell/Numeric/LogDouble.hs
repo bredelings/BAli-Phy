@@ -60,3 +60,18 @@ instance FloatConvert Int LogDouble where
 
 instance FloatConvert Integer LogDouble where
     toFloating i = toFloating (toFloating i :: Double)
+
+class ToLogDouble a where
+    toLogDouble :: a -> LogDouble
+
+instance ToLogDouble Double where
+    toLogDouble x = doubleToLogDouble x
+
+instance ToLogDouble LogDouble where
+    toLogDouble x = x
+
+instance ToLogDouble Int where
+    toLogDouble x = doubleToLogDouble $ fromIntegral x
+
+instance ToLogDouble Integer where
+    toLogDouble x = doubleToLogDouble $ fromIntegral x
