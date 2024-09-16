@@ -43,14 +43,20 @@ sample_coalescent_tree theta n_leaves = do
 
 -------------------------------------------------------------
 
--- Add moves for internal-node times INCLUDING the root.
--- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
 coalescent_tree_effect tree = do
+  -- Resample all the node times, including the root...
+  -- But what if some node times are fixed?
+  -- FIXME: check that leaf times are fixed?
   sequence_ [ addMove 1 $ sliceSample (node_time tree node) (above 0) | node <- internal_nodes tree]
 
+  -- This allow attaching at the same level OR more rootward.
+  -- FIXME: but it doesn't allow becoming the root!
+  -- QUESTION: Could we slice sample the root location?
+  -- QUESTION: Could we somehow propose a root location based on the likelihood/posterior?
   sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
 
+  -- Exchange sibling branches with children?
   sequence_ [ addMove 1 $ tnni_on_branch_unsafe tree branch | branch <- getEdges tree]
 
 -------------------------------------------------------------
