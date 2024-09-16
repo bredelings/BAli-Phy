@@ -10,20 +10,9 @@ import           Data.Array
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 
+import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Tree.Modifiable    
 import           Probability.Distribution.Tree.Moves
-
-xrange start end | start < end = start : xrange (start + 1) end
-                 | otherwise   = []
-
-pick_index 0 (h : t) = (h, t)
-pick_index 0 []      = error "Trying to pick from empty list!"
-pick_index i (h : t) = let (x, t2) = pick_index (i - 1) t in (x, h : t2)
-
-remove_one []   = error "Cannot remove one from empty list"
-remove_one list = do
-    i <- sample $ uniform_int 0 (length list - 1)
-    return $ pick_index i list
 
 -- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
 uniform_topology_edges [l1]     _        = return []
