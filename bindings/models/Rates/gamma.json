@@ -19,7 +19,7 @@
         {
             "name": "alpha",
             "type": "Double",
-            "default_value": "~log_laplace(6,2)",
+            "default_value": "~logLaplace(6,2)",
             "description": "The shape parameter for the Gamma distribution"
         }
     ],

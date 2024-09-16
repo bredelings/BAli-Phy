@@ -17,8 +17,8 @@ model seqData = do
     tree   <- add_labels taxa <$> sample (uniform_time_tree age (length taxa))
 
     freqs  <- sample $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
-    kappa1 <- sample $ log_normal 0 1
-    kappa2 <- sample $ log_normal 0 1
+    kappa1 <- sample $ logNormal 0 1
+    kappa2 <- sample $ logNormal 0 1
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 

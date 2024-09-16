@@ -33,7 +33,7 @@
             "name": "posW",
             "type": "Double",
             "description": "The dN\/dS value for positively selected sites",
-            "default_value": "~log_gamma(4,0.25)"
+            "default_value": "~logGamma(4,0.25)"
         },
         {
             "name": "posSelection",

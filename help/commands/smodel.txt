@@ -16,7 +16,7 @@ Many substitution models have parameters that can be specified.  For
 example the HKY model has an optional kappa parameter.  Optional
 parameters have default priors.  For example hky85 defaults to:
 
-   hky85(kappa~log_normal(log(2),0.25))
+   hky85(kappa~logNormal(log(2),0.25))
 
 See help on "parameters" for information on specifying priors or values.
 

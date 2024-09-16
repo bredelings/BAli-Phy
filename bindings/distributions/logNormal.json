@@ -1,8 +1,8 @@
 {
-    "name": "log_normal",
+    "name": "logNormal",
     "synonyms": [ "logNormal" ],
     "result_type": "Distribution<Double>",
-    "call": "log_normal(@lmu,@lsigma)",
+    "call": "logNormal(@lmu,@lsigma)",
     "import": ["Probability"],
     "args": [
         {
@@ -17,6 +17,6 @@
         }
     ],
     "title": "The log-normal distribution",
-    "examples": ["~log_normal(0,1)","~iid(10, log_normal(0,1))"],
+    "examples": ["~logNormal(0,1)","~iid(10, logNormal(0,1))"],
     "description": "A variable X is log-normal if log(X) is normal."
 }

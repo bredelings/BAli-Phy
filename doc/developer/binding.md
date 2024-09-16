@@ -25,7 +25,7 @@ The JSON looks like this:
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
             "description": "Transition\/transversion ratio"
         },
         {

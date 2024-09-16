@@ -17,31 +17,31 @@
         {
             "name": "aS",
             "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 change, match <-> match"
         },
         {
             "name": "aD",
             "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transitions"
         },
         {
             "name": "b",
             "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transversions"
         },
         {
             "name": "g",
             "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, match <-> mismatch"
         },
         {
             "name": "e",
             "type": "Double",
-            "default_value": "~log_normal(log(2),0.25)",
+            "default_value": "~logNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, mismatch <-> mismatch"
         },
         {

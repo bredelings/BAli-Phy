@@ -14,11 +14,11 @@ For example, the Tamura-Nei (tn93) model has 3 parameters, `kappaPur`,
 parameter, the following are the same:
 
      tn93
-     tn93(kappaPur~log_normal(log(2),0.5))
+     tn93(kappaPur~logNormal(log(2),0.5))
 
 It is also possible to specify parameter values by position only:
 
-     tn93(2,~log_normal(log(1),0.5))
+     tn93(2,~logNormal(log(1),0.5))
 
 The parameter names, order, type and default values for any function
 can be found by giving that function name to the `help` command.

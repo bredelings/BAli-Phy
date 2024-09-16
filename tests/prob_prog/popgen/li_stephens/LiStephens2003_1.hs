@@ -10,7 +10,7 @@ import           PopGen              -- for li_stephens_2003
 
 model locs sequence_data = do
 
-  rho <- sample $ log_laplace 0.01 2
+  rho <- sample $ logLaplace 0.01 2
 
   let len = 1 + fromIntegral (last locs)
 

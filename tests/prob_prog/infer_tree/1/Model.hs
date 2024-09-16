@@ -21,14 +21,14 @@ model seq_data = do
     tree  <- prior $ uniform_labelled_tree taxa branch_length_dist
 
     -- Indel model
-    indel_rate   <- prior $ log_laplace (-4) 0.707
+    indel_rate   <- prior $ logLaplace (-4) 0.707
     mean_length <- (1 +) <$> sample (exponential 10)
     let imodel = rs07 indel_rate mean_length tree
 
     -- Substitution model
     freqs  <- prior $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
-    kappa1 <- prior $ log_normal 0 1
-    kappa2 <- prior $ log_normal 0 1
+    kappa1 <- prior $ logNormal 0 1
+    kappa2 <- prior $ logNormal 0 1
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
     -- Alignment

@@ -4,15 +4,15 @@ Priors on model parameters are specified by giving a random value.
 Random values can be obtained from distributions using the function
 `sample`.  For example, this places a log-normal prior on kappa:
 
-   hky85(kappa=sample(log_normal(1,1)))
+   hky85(kappa=sample(logNormal(1,1)))
 
 You can write `~Dist` as a shorthand for `sample(Dist)`:
 
-   hky85(kappa=~log_normal(1,1))
+   hky85(kappa=~logNormal(1,1))
 
 The `=~` can be further shortened to just `~`:
 
-   hky85(kappa~log_normal(1,1))
+   hky85(kappa~logNormal(1,1))
 
 It also is possible to use random values as inputs to other functions:
 

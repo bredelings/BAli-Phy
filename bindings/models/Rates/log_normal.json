@@ -1,8 +1,8 @@
 {
-    "name": "Rates.log_normal",
-    "synonyms": ["Rates.log_normal"],
+    "name": "Rates.logNormal",
+    "synonyms": ["Rates.logNormal"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "SModel.log_normal_rates(@lsigma,@n,@submodel)",
+    "call": "SModel.logNormal_rates(@lsigma,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -20,8 +20,8 @@
             "name": "lsigma",
             "type": "Double",
             "description": "The standard deviation parameter",
-            "default_value": "~log_laplace(-3,1)"
+            "default_value": "~logLaplace(-3,1)"
         }
     ],
-    "examples": ["gtr +> Rates.log_normal(4) +> inv"]
+    "examples": ["gtr +> Rates.logNormal(4) +> inv"]
 }

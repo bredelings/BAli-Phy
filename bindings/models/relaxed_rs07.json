@@ -16,13 +16,13 @@
         {
             "name": "rate",
             "type": "Double",
-            "default_value": "~log_laplace(-4,0.707)",
+            "default_value": "~logLaplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {
             "name": "sigma",
             "type": "Double",
-            "default_value": "~log_laplace(-3,1)",
+            "default_value": "~logLaplace(-3,1)",
             "description": "The insertion-deletion rate"
         },
         {

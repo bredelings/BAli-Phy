@@ -125,11 +125,11 @@ gamma_rates_dist alpha = gamma alpha (1/alpha)
 
 gamma_rates alpha n base = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
 
-log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1+sigmaOverMu^2)
-                                                                lmu = -0.5*x
-                                                                lsigma = sqrt x
+logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
+                                                            lmu = -0.5*x
+                                                            lsigma = sqrt x
 
-log_normal_rates sigmaOverMu n base = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
+logNormalRates sigmaOverMu n base = rate_mixture_unif_bins base (logNormalRatesDist sigmaOverMu) n
 
 -- join collapses a Discrete (Discrete a) -> Discrete a
 freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist

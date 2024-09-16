@@ -2029,7 +2029,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.log_normal</userinput></para>
+		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.logNormal</userinput></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the logNormal distribution</para>
@@ -2220,7 +2220,7 @@ If the genetic code is not specified, then the standard code is used:
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting>rs07(log_rate~log_laplace(-4,0.707),mean_length=2)</programlisting>
+<programlisting>rs07(log_rate~logLaplace(-4,0.707),mean_length=2)</programlisting>
 	</para>
 
     </section>
@@ -2274,11 +2274,11 @@ This allows a simple method for combining models, when one model is an argument 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
 <para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85(kappa=sample(log_normal(1,1)))</programlisting>
+<programlisting>hky85(kappa=sample(logNormal(1,1)))</programlisting>
 You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample(Dist)</userinput>:
-<programlisting>hky85(kappa = ~log_normal(1,1))</programlisting>
+<programlisting>hky85(kappa = ~logNormal(1,1))</programlisting>
 The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85(kappa ~ log_normal(1,1))</programlisting>
+<programlisting>hky85(kappa ~ logNormal(1,1))</programlisting>
 </para>
 </section>
 
@@ -2311,8 +2311,8 @@ Some function arguments have default values.  For example, the <userinput>Rates.
 <programlisting>hky85 +> Rates.gamma(n=4) +> inv
 hky85 +> Rates.gamma +> inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal(log(2),0.25)</userinput>, so the following are equivalent:
-<programlisting>hky85(kappa~log_normal(log(2),0.25))
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~logNormal(log(2),0.25)</userinput>, so the following are equivalent:
+<programlisting>hky85(kappa~logNormal(log(2),0.25))
 hky85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>

@@ -11,7 +11,7 @@ rs07 and rs05 have optional parameters.  These parameters have
 default priors that come into play if the parameters are not
 specified.  For example, rs07 defaults to:
 
-   rs07[log_lambda~laplace[-4,0.707],mean_length=~exponential[10,1]]
+   rs07(rate~logLaplace(-4,0.707),mean_length=~exponential(10,1)]
 
 See help on "parameters" for information on specifying priors or
 values.

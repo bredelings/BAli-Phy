@@ -11,8 +11,8 @@ import           System.Environment  -- for getArgs
 
 smodel_prior nucleotides =  do
     freqs  <- sample $ symmetric_dirichlet_on (letters nucleotides) 1.0
-    kappa1 <- sample $ log_normal (log 2.0) 0.25
-    kappa2 <- sample $ log_normal (log 2.0) 0.25
+    kappa1 <- sample $ logNormal (log 2.0) 0.25
+    kappa2 <- sample $ logNormal (log 2.0) 0.25
 
     let tn93_model = tn93' nucleotides kappa1 kappa2 freqs
     let loggers    = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "frequencies" %=% freqs]
@@ -22,8 +22,8 @@ smodel_prior nucleotides =  do
 
 tree_prior taxa = do
 
-    theta <- sample $ log_laplace (-5.0) 2.0
-    tree <- add_labels taxa <$> sample (coalescentTree theta (length taxa))
+    theta <- sample $ logLaplace (-5.0) 2.0
+    tree <- add_labels taxa <$> sample (coalescentTree theta (length taxa) [])
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)

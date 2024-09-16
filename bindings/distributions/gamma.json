@@ -23,5 +23,5 @@
 		 "quantile(gamma(0.5, 2), 0.95)",
 		 "density(gamma(0.5,2), 0.95)"
 		],
-    "see": ["shifted_gamma","log_gamma"]
+    "see": ["shifted_gamma","logGamma"]
 }

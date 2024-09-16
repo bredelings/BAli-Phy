@@ -35,7 +35,7 @@ relaxed_rs07 rate sigma mean_length tree = do
    -- If we have a whole bunch of factors with the same sigma, then we can't change sigma
    -- without changing all the factors as well!
    -- Also, its hard to know if the rates cluster in (say) two groups or not.
-   factors <- fmap (**sigma) <$> (sample $ iidMap branches $ log_normal 0 1)
+   factors <- fmap (**sigma) <$> (sample $ iidMap branches $ logNormal 0 1)
 
    return $ (\ds b -> rs07_branch_HMM epsilon (rate * (ds IntMap.! b) * (factors IntMap.! b)) 1 False, rs07_lengthp epsilon)
 

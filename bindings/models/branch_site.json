@@ -40,7 +40,7 @@
         {
             "name": "posW",
             "type": "Double",
-            "default_value": "~log_gamma(4,0.25)",
+            "default_value": "~logGamma(4,0.25)",
 	    "description": "The dN/dS ratio for positively selected sites on the foreground branches."
         },
         {

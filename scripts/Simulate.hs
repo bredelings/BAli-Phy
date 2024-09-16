@@ -30,9 +30,9 @@ getStartLength args = read startLength' :: Int
 
 -- Sample substitution model parameters and define the substitution model
 getSmodel = do
-  kappaPur <- sample $ log_normal (log 2) 0.25
+  kappaPur <- sample $ logNormal (log 2) 0.25
 
-  kappaPyr <- sample $ log_normal (log 2) 0.25
+  kappaPyr <- sample $ logNormal (log 2) 0.25
 
   pi <- sample $ symmetric_dirichlet_on (letters dna) 2
 

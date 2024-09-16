@@ -21,13 +21,13 @@
         {
             "name": "rate1",
             "type": "Double",
-            "default_value": "~log_laplace(-4,0.707)",
+            "default_value": "~logLaplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {
             "name": "rate2",
             "type": "Double",
-            "default_value": "~log_laplace(-4,0.707)",
+            "default_value": "~logLaplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {

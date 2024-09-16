@@ -381,7 +381,7 @@ align = protein.fasta
 smodel = 1,2,3:gtr +> Rates.free(n=4)
 imodel = 1,2,3:rs07
 
-smodel = 4:lg08 +> Rates.log_normal(n=4)
+smodel = 4:lg08 +> Rates.logNormal(n=4)
 imodel = 4:none
 </programlisting>
 % bali-phy -c options3.txt --test
@@ -424,8 +424,8 @@ Here the <userinput>-S gtr</userinput> is a short form of <userinput>--smodel=gt
 <para>
 You can also allow different sites to evolve at 5 different rates using the gamma[4] + INV model of rate heterogeneity:
 % bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.gamma(4) +> inv'
-You can also use a log_normal instead of a gamma.  log_normal+INV is sometimes better behaved than gamma+INV, because the smallest rate bin under log_normal is not quite as close to 0.
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.log_normal(4) +> inv'
+You can also use a logNormal instead of a gamma.  logNormal+INV is sometimes better behaved than gamma+INV, because the smallest rate bin under logNormal is not quite as close to 0.
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.logNormal(4) +> inv'
 You can allow 5 different rates that are all independently estimated:
 % bali-phy 5S-rRNA/25-muscle.fasta --test -S 'gtr +> Rates.free(n=5)'
 </para>

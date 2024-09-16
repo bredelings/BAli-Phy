@@ -1,16 +1,16 @@
 {
-    "name": "log_laplace",
-    "synonyms": ["logLaplace"],
+    "name": "logGamma",
+    "synonyms": ["logGamma"],
     "result_type": "Distribution<Double>",
-    "call": "log_laplace(@lm,@ls)",
+    "call": "logGamma(@a,@b)",
     "import": ["Probability"],
     "args": [
         {
-            "name": "lm",
+            "name": "a",
             "type": "Double"
         },
         {
-            "name": "ls",
+            "name": "b",
             "type": "Double"
         }
     ]

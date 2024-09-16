@@ -4,7 +4,7 @@ module Probability.Distribution.Changepoints where
 import Probability.Random
 import Probability.Distribution.Uniform
 import Probability.Distribution.Poisson
-import Probability.Distribution.Transform (log_laplace)
+import Probability.Distribution.Transform (logLaplace)
 import Probability.Distribution.List (iid2)
 
 data Changepoints d = Changepoints Double (Double,Double) d
@@ -104,7 +104,7 @@ getChangePoints lambda = do
   if count == 0 then
       return $ Constant
   else do
-    ratio <- sample $ log_laplace 0 1
+    ratio <- sample $ logLaplace 0 1
     pos <- sample $ uniform 0 1
     let lambda1 = pos * lambda
         lambda2 = (1-pos) * lambda

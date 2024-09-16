@@ -20,8 +20,8 @@ model seqData = do
     tree   <- prior $ uniform_labelled_tree taxa branch_length_dist
 
     freqs  <- prior $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
-    kappa1 <- prior $ log_normal 0 1
-    kappa2 <- prior $ log_normal 0 1
+    kappa1 <- prior $ logNormal 0 1
+    kappa2 <- prior $ logNormal 0 1
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 

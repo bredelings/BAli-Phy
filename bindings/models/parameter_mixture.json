@@ -26,7 +26,7 @@
     "examples":
     [
         "|k:hky85(kappa=k)| +> parameter_mixture([1.0,2.0],[0.5,0.5])",
-        "|k:hky85(k)| +> parameter_mixture(~iid(4,log_normal(0,1)),~symmetric_dirichlet(4,1))"
+        "|k:hky85(k)| +> parameter_mixture(~iid(4,logNormal(0,1)),~symmetric_dirichlet(4,1))"
     ],
     "extract": "all"
 }
