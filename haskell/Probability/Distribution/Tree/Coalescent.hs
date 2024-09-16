@@ -14,16 +14,15 @@ nodeType tree node = if isLeafNode tree node then Leaf else Internal
 coalescentTreePrFactors theta nLeaves tree = go 0 0 (2/theta) 1 times: parentBeforeChildPrs nLeaves tree
     where times = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
           go prev_time n rate pr [] = pr
-          go prev_time n rate pr ((time,event):events) =
-              let delta_t = time - prev_time
-                  n_choose_2 = fromIntegral $ (n*(n-1)) `div` 2
-                  rate_all = rate * n_choose_2
-                  pr_nothing = doubleToLogDouble $ exp $ (-rate_all * delta_t)
-                  pr' = pr * pr_nothing
-              in case event of Leaf     -> go time (n+1) rate pr' events
-                               -- For Internal, we divided out the n_choose2
-                               Internal -> go time (n-1) rate (pr' * (doubleToLogDouble rate)) events
-                               RateShift new_rate -> go time n new_rate pr' events
+          go t1 n rate pr ((t2,event):events) =
+              let nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
+                  totalRate = rate * nChoose2
+                  prNothing = expToLogDouble $ (-totalRate * (t2-t1))
+                  pr'       = pr * prNothing
+              in case event of Leaf     -> go t2 (n+1) rate pr' events
+                               -- For Internal, the nChoose2 from the rate cancels with the one from the topology
+                               Internal -> go t2 (n-1) rate (pr' * toLogDouble rate) events
+                               RateShift new_rate -> go t2 n new_rate pr' events
 
 -------------------------------------------------------------
 
