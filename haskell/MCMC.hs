@@ -100,10 +100,10 @@ scale_means_only_slice xs ys = scale_means_only_slice_raw (toList xs) (toList ys
 
 scale_means_only_proposal xs ys = scale_means_only_proposal_raw (toList xs) (toList ys)
                                            
-scale_means_only_MH scales lengths = metropolis_hastings $ scale_means_only_proposal scales lengths
+scale_means_only_MH scales lengths = metropolisHastings $ scale_means_only_proposal scales lengths
 
-metropolis_hastings :: Proposal -> ContextIndex -> IO Bool
-metropolis_hastings proposal c1 = do
+metropolisHastings :: Proposal -> ContextIndex -> IO Bool
+metropolisHastings proposal c1 = do
   c2 <- copy_context c1
   ratio <- proposal c2
   accept <- accept_MH c1 c2 ratio
