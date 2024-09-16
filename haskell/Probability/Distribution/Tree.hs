@@ -1,4 +1,7 @@
-module Probability.Distribution.Tree where
+module Probability.Distribution.Tree (module Probability.Distribution.Tree,
+                                      module Probability.Distribution.Tree.UniformTopology,
+                                      module Probability.Distribution.Tree.Moves)
+    where
 
 import           Tree
 import           Probability.Random
@@ -10,136 +13,15 @@ import           Data.Array
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 
-xrange start end | start < end = start : xrange (start + 1) end
-                 | otherwise   = []
-
-pick_index 0 (h : t) = (h, t)
-pick_index 0 []      = error "Trying to pick from empty list!"
-pick_index i (h : t) = let (x, t2) = pick_index (i - 1) t in (x, h : t2)
-
-remove_one []   = error "Cannot remove one from empty list"
-remove_one list = do
-    i <- sample $ uniform_int 0 (length list - 1)
-    return $ pick_index i list
+import           Probability.Distribution.Tree.Moves
+import           Probability.Distribution.Tree.Modifiable
+import           Probability.Distribution.Tree.UniformTopology
 
 remove_n 0 list = return ([], list)
 remove_n n list = do
     (x , list_minus_1) <- remove_one list
     (xs, list_minus_n) <- remove_n (n - 1) list_minus_1
     return ((x : xs), list_minus_n)
-
--- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
-uniform_topology_edges [l1]     _        = return []
-uniform_topology_edges [l1, l2] _        = return [(l1, l2)]
-uniform_topology_edges (l : ls) (i : is) = do
-    es1           <- uniform_topology_edges ls is
-    ((x, y), es2) <- remove_one es1
-    return $ [(l, i), (x, i), (i, y)] ++ es2
-
--- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.singleton 0 noAttributes) (Attributes [])
-sample_uniform_topology n = do
-    let num_nodes = 2 * n - 2
-    edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
-    return $ tree_from_edges [0..num_nodes-1] edges
-
-{- Note: What the modifiable structure assumes.
-
-   Our current modifiable tree structure requires that
-   1. the name for the reverse edge doesn't change.
-   2. the nodes and edges in the tree don't change.
-
-   We could add `modf` in front of `r` to change (1).
-
-   We could add `modf` in from of nodesMap and branchesMap to change (2).
-   But we'd have to handle changes in the keysSet of node attributes (`na`) and edge attributes (`ea`).
-
-   In both cases, adding more `modf` leads to:
-   A. a slowdown
-   B. a error saying that something isn't a modifiable value.
--}
-
-modifiable_tree :: (forall a.a->a) -> Tree -> Tree
-modifiable_tree modf tree@(Tree (Forest (Graph nodes0 branches0 na ea ta))) = (Tree (Forest (Graph nodesMap branchesMap na ea ta))) where
-    nodesMap = fmap (\(Node node branches_out) -> Node node (modf branches_out)) nodes0
-    branchesMap = fmap (\(Edge s t b) -> Edge (modf s) (modf t) b ) branches0
-
-{-
-   leaves   nodes  branches
-   1        1      0
-   2        2      1
-   3        4      3
-   4        6      5
-   5        8      7
-   ..       ..     ..
--}
-uniform_topology_pr 1 = 1
-uniform_topology_pr 2 = 1
-uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
-
--- The *triggered* tree is lazy: when we access anything that is modifiable, it triggers all effects,
--- which includes forcing all the modifiables in the *untriggered* tree.
-
--- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
--- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree = triggered_modifiable_structure modifiable_tree
-
-uniform_topology_effect tree = do
-  -- SPR moves aren't added here because they depend on branch lengths.
-  -- Note that we could in theory have multiple branch-length-trees with the same topology.
-  add_move $ walk_tree_sample_NNI tree -- Q: does this handle situations with no data partitions?
-
-uniform_labelled_topology taxa = do
-  topology <- sample $ uniformTopology (length taxa)
-  return $ add_labels (zip [0..] taxa) topology
-
-
-{-
-tree ~ uniformLabelledTree(taxa, function(topology: gamma(0.5, 2/numBranches(topology))))
-
-tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2/numBranches(topology) ) ) )
--}
-
-uniformLabelledTree taxa dist = do
-  topology <- RanSamplingRate 0 $ sample $ uniform_labelled_topology taxa
-  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
-  let tree = branch_length_tree topology branchLengths
-  addTopologyMoves 2 tree
-  addLengthMoves 2 tree
-  return tree
-
-fixedTopologyTree topology dist = do
-  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
-  let tree = branch_length_tree topology branchLengths
-  addMove 1 $ walk_tree_sample_branch_lengths tree
-  return tree
-
-addSPRMoves rate tree = do
-  addMove rate $ sample_SPR_all tree
-  addMove (rate/2) $ sample_SPR_flat tree
-  addMove (rate/2) $ sample_SPR_nodes tree
-
-addTopologyMoves rate tree = do
-  addSPRMoves rate tree
-  addMove rate $ walk_tree_sample_NNI_and_branch_lengths tree
-  addMove (2*rate) $ walk_tree_sample_NNI tree  -- if alignment is fixed this is really cheap -- increase weight?
-  addMove (0.5*rate) $ walk_tree_sample_NNI_and_A tree
-
-addLengthMoves rate tree = do
-  addMove rate $ walk_tree_sample_branch_lengths tree
-
-addTreeMoves rate tree = do
-  addTopologyMoves (rate*2) tree
-  addLengthMoves (rate*2) tree
-
-uniform_labelled_tree taxa branch_lengths_dist = do
-  -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
-  topology <- RanSamplingRate 0.0 $ uniform_labelled_topology taxa
-  -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
---  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
-  branch_lengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branch_lengths_dist topology))
-  let tree = WithBranchLengths topology branch_lengths
-  return tree `with_tk_effect` addTreeMoves 1
 
 ----
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
@@ -266,22 +148,6 @@ sample_coalescent_tree theta n_leaves = do
   let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
       node_times = IntMap.fromList $ zip [0..] times
   return (time_tree topology node_times)
-
--------------------------------------------------------------
-data UniformTopology = UniformTopology Int
-
-instance Dist UniformTopology where
-    type Result UniformTopology = Tree
-    dist_name _ = "uniform_topology"
-
-instance HasAnnotatedPdf UniformTopology where
-    annotated_densities (UniformTopology n) _ = return ([uniform_topology_pr n], ())
-
-instance Sampleable UniformTopology where
-    sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n)
-
-uniformTopology n = UniformTopology n
-
 
 
 -------------------------------------------------------------
