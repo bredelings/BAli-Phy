@@ -4,7 +4,7 @@ module Probability.Distribution.Tree (module Probability.Distribution.Tree,
                                       module Probability.Distribution.Tree.UniformTimeTree,
                                       module Probability.Distribution.Tree.Coalescent,
                                       module Tree,
-                                      module Probability.Random,
+                                      module Probability.Random
                                      )
     where
 
