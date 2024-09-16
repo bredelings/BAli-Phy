@@ -45,5 +45,5 @@ binomial n p = Binomial n (toFloating p)
 binomial_bounds n = integer_between 0 n
 
 binomial_effect n x = do
-  add_move $ slice_sample_integer_random_variable x (binomial_bounds n)
+  add_move $ sliceSampleInteger x (binomial_bounds n)
   add_move $ inc_dec_mh x (binomial_bounds n)

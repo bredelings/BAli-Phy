@@ -35,7 +35,7 @@ foreign import bpcall "MCMC:" slice_sample_real_random_variable_raw :: Double ->
 slice_sample_real_random_variable x bnds c = slice_sample_real_random_variable_raw x (c_range bnds) c
 
 foreign import bpcall "MCMC:" slice_sample_integer_random_variable_raw :: Int -> BuiltinBounds -> ContextIndex -> IO ()
-slice_sample_integer_random_variable x bnds c = slice_sample_integer_random_variable_raw x (c_range bnds) c
+sliceSampleInteger x bnds c = slice_sample_integer_random_variable_raw x (c_range bnds) c
 
 foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: t -> ContextIndex -> EVector Int
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c

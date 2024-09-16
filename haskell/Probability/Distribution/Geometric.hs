@@ -48,7 +48,7 @@ instance Sampleable Geometric where
 geometric_bounds = integer_above 0
 
 geometric_effect x = do
-  add_move $ slice_sample_integer_random_variable x geometric_bounds
+  add_move $ sliceSampleInteger x geometric_bounds
   add_move $ inc_dec_mh x geometric_bounds
 
 geometric :: Double -> Geometric

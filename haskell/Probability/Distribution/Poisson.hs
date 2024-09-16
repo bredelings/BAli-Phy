@@ -45,7 +45,7 @@ instance Sampleable Poisson where
 poisson_bounds = integer_above 0
 
 poisson_effect x = do
-   add_move $ slice_sample_integer_random_variable x poisson_bounds
+   add_move $ sliceSampleInteger x poisson_bounds
    add_move $ inc_dec_mh x poisson_bounds
 
 poisson mu = Poisson mu
