@@ -19,7 +19,7 @@ uniform_topology_edges [l1]     _        = return []
 uniform_topology_edges [l1, l2] _        = return [(l1, l2)]
 uniform_topology_edges (l : ls) (i : is) = do
     es1           <- uniform_topology_edges ls is
-    ((x, y), es2) <- remove_one es1
+    ((x, y), es2) <- removeOne es1
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
