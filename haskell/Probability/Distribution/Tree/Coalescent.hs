@@ -9,10 +9,10 @@ import qualified Data.IntMap as IntMap
 import           MCMC
 
 data CoalEvent = Leaf | Internal | RateShift Double
-nodeType tree node = if is_leaf_node tree node then Leaf else Internal
+nodeType tree node = if isLeafNode tree node then Leaf else Internal
 
-coalescentTreePrFactors theta n_leaves tree = go 0 0 (2/theta) 1 times: parent_before_child_prs n_leaves tree
-    where times = sortOn fst [ (node_time tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
+coalescentTreePrFactors theta nLeaves tree = go 0 0 (2/theta) 1 times: parentBeforeChildPrs nLeaves tree
+    where times = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
               let delta_t = time - prev_time
@@ -38,8 +38,8 @@ sampleCoalescentTree theta n_leaves = do
   dts <- sequence [ sample $ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
                                                                     let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
   let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
-      node_times = IntMap.fromList $ zip [0..] times
-  return (time_tree topology node_times)
+      nodeTimes = IntMap.fromList $ zip [0..] times
+  return (time_tree topology nodeTimes)
 
 -------------------------------------------------------------
 
@@ -48,7 +48,7 @@ coalescentTreeEffect tree = do
   -- Resample all the node times, including the root...
   -- But what if some node times are fixed?
   -- FIXME: check that leaf times are fixed?
-  sequence_ [ addMove 1 $ sliceSample (node_time tree node) (above 0) | node <- internal_nodes tree]
+  sequence_ [ addMove 1 $ sliceSample (nodeTime tree node) (above 0) | node <- internalNodes tree]
 
   -- This allow attaching at the same level OR more rootward.
   -- FIXME: but it doesn't allow becoming the root!
@@ -64,7 +64,7 @@ data CoalescentTree = CoalescentTree Double Int
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
-    dist_name _ = "uniform_time_tree"
+    dist_name _ = "coalescentTree"
 
 instance HasAnnotatedPdf CoalescentTree where
     annotated_densities (CoalescentTree theta n) tree = return (coalescentTreePrFactors theta n tree, ())

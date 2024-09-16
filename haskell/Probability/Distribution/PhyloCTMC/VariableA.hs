@@ -29,7 +29,7 @@ import Data.Maybe (fromJust)
 import Control.Monad.Fix -- for rec
 
 annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
-  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
@@ -114,7 +114,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, HasBranchLengths t, HasBran
 
 -----------
 annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale sequenceData = do
-  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
@@ -187,7 +187,7 @@ instance (IsTree t, HasRoot t, HasLabels t, HasBranchLengths t, HasBranchLengths
 
 ---------------------------------------------
 annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
-  let subst_root = modifiable (head $ internal_nodes tree ++ leaf_nodes tree)
+  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment

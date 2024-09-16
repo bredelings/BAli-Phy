@@ -51,7 +51,7 @@ instance IsForest Tree where
     type instance Rooted Tree = WithRoots Tree
 
     unroot t = t
-    makeRooted t = add_root root t where root = head $ (internal_nodes t ++ leaf_nodes t)
+    makeRooted t = add_root root t where root = head $ (internalNodes t ++ leafNodes t)
 
 instance IsTree Tree
 

@@ -80,7 +80,7 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
 
 alignment_pr_top as tree hmms = product [ alignment_branch_pr as hmms b | b <- getUEdges tree]
-alignment_pr_bot as tree (_, lengthp) = (product $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
+alignment_pr_bot as tree (_, lengthp) = (product $ map (lengthp . seqlength as tree) (internalNodes tree)) ^ 2
 alignment_pr1 length (_, lengthp) = lengthp length
 
 -- FIXME: Maybe the alignment argument should be last?
@@ -89,7 +89,7 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
                                                             | numNodes tree == 1 = alignment_pr1 (ls IntMap.! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
-alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internal_nodes tree)
+alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internalNodes tree)
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) (getUEdges tree)
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls IntMap.! 0) model]

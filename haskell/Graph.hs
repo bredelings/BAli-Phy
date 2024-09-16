@@ -175,17 +175,17 @@ edgesAfterEdgeArray t b = IntSet.toArray $ edgesAfterEdgeSet t b
 edgesBeforeEdge t b = IntSet.toList $ edgesBeforeEdgeSet t b
 edgesAfterEdge t b = IntSet.toList $ edgesAfterEdgeSet t b
 
-is_leaf_node t n = (nodeDegree t n < 2)
-is_internal_node t n = not $ is_leaf_node t n
-is_internal_branch t b = is_internal_node t (sourceNode t b) && is_internal_node t (targetNode t b)
-is_leaf_branch t b = not $ is_internal_branch t b
+isLeafNode t n = (nodeDegree t n < 2)
+isInternalNode t n = not $ isLeafNode t n
+isInternalBranch t b = isInternalNode t (sourceNode t b) && isInternalNode t (targetNode t b)
+isLeafBranch t b = not $ isInternalBranch t b
 
 nodes t = getNodes t
-leaf_nodes t = filter (is_leaf_node t) (nodes t)
-internal_nodes t = filter (is_internal_node t) (nodes t)
+leafNodes t = filter (isLeafNode t) (nodes t)
+internalNodes t = filter (isInternalNode t) (nodes t)
 
 -- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
-numLeaves t = length $ leaf_nodes t
+numLeaves t = length $ leafNodes t
 
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size

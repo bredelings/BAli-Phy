@@ -119,7 +119,7 @@ foreign import bpcall "Alignment:" extractStates :: VectorPairIntInt -> EVector 
   Right now, I think the node names still correspond to the input alignment names.
   But when the node names stop being [0..n_sequences-1], we will need a way to
   1. construct the alignment from a list of Sequence objects
-  2. get a list (leaf_nodes ++ internal_nodes)
+  2. get a list (leafNodes ++ internalNodes)
   3. for each node, get the leaf label
   4. use smap to project the state to an alphabet letter.
   5. turn the list of Sequence objects into an alignment.
@@ -176,7 +176,7 @@ getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
 
-sequencesFromTree tree isequences = [(label, isequence) | n <- leaf_nodes tree ++ internal_nodes tree,
+sequencesFromTree tree isequences = [(label, isequence) | n <- leafNodes tree ++ internalNodes tree,
                                                              let label = add_ancestral_label n (get_labels tree),
                                                              let isequence = isequences IntMap.! n]
 

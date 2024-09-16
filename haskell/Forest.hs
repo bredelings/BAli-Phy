@@ -165,16 +165,16 @@ instance (IsDirectedAcyclicGraph t, IsForest t) => IsForest (WithNodeTimes t) wh
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
 
 class IsDirectedAcyclicGraph g => HasNodeTimes g where
-    node_time :: g -> Int -> Double
+    nodeTime :: g -> Int -> Double
 
 instance IsDirectedAcyclicGraph g => HasNodeTimes (WithNodeTimes g) where
-    node_time (WithNodeTimes _ hs) node = hs IntMap.! node
+    nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
 
 instance HasNodeTimes t => HasNodeTimes (WithLabels t) where
-    node_time (WithLabels tt _) node = node_time tt node
+    nodeTime (WithLabels tt _) node = nodeTime tt node
 
 instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
-    node_time (WithBranchRates g _) node = node_time g node
+    nodeTime (WithBranchRates g _) node = nodeTime g node
 
 instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
@@ -182,7 +182,7 @@ instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
 instance IsDirectedAcyclicGraph t => HasBranchLengths (WithNodeTimes t) where
     branch_length tree b = branch_duration tree b
 
-branch_duration t b = abs (node_time t source - node_time t target)
+branch_duration t b = abs (nodeTime t source - nodeTime t target)
     where source = sourceNode t b
           target = targetNode t b
 

@@ -37,25 +37,25 @@ sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n
   times <- sort <$> (sample $ iid (n-2) (uniform 0.0 age))
   let all_times = replicate n 0.0 ++ times ++ [age]
-      all_node_times = IntMap.fromList $ zip [0..] all_times
-  return $ time_tree topology all_node_times
+      allNodeTimes = IntMap.fromList $ zip [0..] all_times
+  return $ time_tree topology allNodeTimes
 
 possible = 1 :: LogDouble
 impossible = 0 :: LogDouble
 require p = if p then possible else impossible
 
-parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
-    where time = node_time tree
+parentBeforeChildPrs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
+    where time = nodeTime tree
           factor n = case parentNode tree n of Nothing -> possible
                                                Just p  -> require $ time n <= time p
 
-uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_leaves tree
+uniform_time_tree_pr age n_leaves tree = factor0 : parentBeforeChildPrs n_leaves tree
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
 -- Add moves for non-root internal-node times.
 -- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
-uniform_time_tree_effect tree = sequence_ [ add_move $ sliceSample (node_time tree node) (above 0.0)
+uniform_time_tree_effect tree = sequence_ [ add_move $ sliceSample (nodeTime tree node) (above 0.0)
                                           | node <- [numLeaves tree..numNodes tree - 1], node /= root tree
                                           ]
 

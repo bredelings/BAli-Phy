@@ -117,15 +117,15 @@ reverseEdge :: Edge a -> Edge a
 reverseEdge (Edge node FromRoot) = Edge node ToRoot
 reverseEdge (Edge node ToRoot) = Edge node FromRoot
 
-is_leaf_node (Right (Next _ Finish _ _)) = True
-is_leaf_node (Right (Next _ Death  _ _)) = True
-is_leaf_node _                         = False
+isLeafNode (Right (Next _ Finish _ _)) = True
+isLeafNode (Right (Next _ Death  _ _)) = True
+isLeafNode _                         = False
 
-is_internal_node n = not $ is_leaf_node n
+isInternalNode n = not $ isLeafNode n
 
-is_internal_branch b = is_internal_node (sourceNode b) && is_internal_node (targetNode b)
+isInternalBranch b = isInternalNode (sourceNode b) && isInternalNode (targetNode b)
 
-is_leaf_branch b = not $ is_internal_branch b
+isLeafBranch b = not $ isInternalBranch b
 
 away_from_root (Edge _ FromRoot) = True
 away_from_root _                 = False
@@ -157,11 +157,11 @@ undirected_edges tree = [ Edge node ToRoot | Right node <- nodes tree ]
 root tree = Left tree
 numBranches tree = length $ undirected_edges tree
 
-node_time node (Left (Start1 t _)) = t
-node_time node (Left (Start2 t _ _)) = t
-node_time node (Right (Next t _ _ _)) = t
+nodeTime node (Left (Start1 t _)) = t
+nodeTime node (Left (Start2 t _ _)) = t
+nodeTime node (Right (Next t _ _ _)) = t
 
-branch_duration edge = abs (node_time (sourceNode edge) - node_time (targetNode edge))
+branch_duration edge = abs (nodeTime (sourceNode edge) - nodeTime (targetNode edge))
 
 branch_length edge = branch_duration edge
 
@@ -172,10 +172,10 @@ nodes node@(Right (Next _ (Sample next) _ _)) = node:nodes (Right next)
 nodes node@(Right (Next _ Finish _ _)) = [node]
 nodes node@(Right (Next _ Death _ _)) = [node]
 
-leaf_nodes t = filter is_leaf_node (nodes t)
-internal_nodes t = filter is_internal_node (nodes t)
+leafNodes t = filter isLeafNode (nodes t)
+internalNodes t = filter isInternalNode (nodes t)
 
-numLeaves tree = length $ leaf_nodes tree
+numLeaves tree = length $ leafNodes tree
 
 tree_length tree = sum [ branch_length b | b <- undirected_edges tree ]
 
