@@ -10,7 +10,7 @@ foreign import bpcall "Distribution:" cauchy_quantile :: Double -> Double -> Dou
 foreign import bpcall "Distribution:" sample_cauchy :: Double -> Double -> IO Double
 
 cauchy_bounds = realLine
-cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds
+cauchy_effect x = add_move $ sliceSample x cauchy_bounds
 
 data Cauchy = Cauchy Double Double
 

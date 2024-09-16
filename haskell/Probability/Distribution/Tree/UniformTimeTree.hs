@@ -55,7 +55,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
 -- Add moves for non-root internal-node times.
 -- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
-uniform_time_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
+uniform_time_tree_effect tree = sequence_ [ add_move $ sliceSample (node_time tree node) (above 0.0)
                                           | node <- [numLeaves tree..numNodes tree - 1], node /= root tree
                                           ]
 

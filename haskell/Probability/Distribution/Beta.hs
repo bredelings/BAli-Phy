@@ -1,7 +1,7 @@
 module Probability.Distribution.Beta where
 
 import Probability.Random
-import MCMC (slice_sample_real_random_variable)
+import MCMC (sliceSample)
 
 foreign import bpcall "Distribution:"  beta_density   :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:"  beta_cdf       :: Double -> Double -> Double -> Double
@@ -48,6 +48,6 @@ instance Sampleable Beta where
     sample dist@(Beta a b) = RanDistribution2 dist beta_effect
 
 beta_bounds = between 0 1
-beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds
+beta_effect x = add_move $ sliceSample x beta_bounds
 
 beta a b = Beta a b

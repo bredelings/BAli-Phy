@@ -52,7 +52,7 @@ instance Sampleable Uniform where
 uniform l u = Uniform l u
 
 uniform_bounds l u = between l u
-uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
+uniform_effect l u x = add_move $ sliceSample x (uniform_bounds l u)
 
 ------------------------------------
 foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> LogDouble

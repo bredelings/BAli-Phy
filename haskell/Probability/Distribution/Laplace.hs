@@ -44,6 +44,6 @@ instance Sampleable Laplace where
     sample dist@(Laplace mu sigma) = RanDistribution2 dist laplace_effect
 
 laplace_bounds = realLine
-laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
+laplace_effect x = add_move $ sliceSample x laplace_bounds
 
 laplace m s = Laplace m s

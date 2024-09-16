@@ -32,7 +32,7 @@ foreign import bpcall "MCMC:" inc_dec_mh_raw :: Int -> BuiltinBounds -> Int -> I
 inc_dec_mh x bnds c = inc_dec_mh_raw x (c_range bnds) c
 
 foreign import bpcall "MCMC:" slice_sample_real_random_variable_raw :: Double -> BuiltinBounds -> ContextIndex -> IO ()
-slice_sample_real_random_variable x bnds c = slice_sample_real_random_variable_raw x (c_range bnds) c
+sliceSample x bnds c = slice_sample_real_random_variable_raw x (c_range bnds) c
 
 foreign import bpcall "MCMC:" slice_sample_integer_random_variable_raw :: Int -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSampleInteger x bnds c = slice_sample_integer_random_variable_raw x (c_range bnds) c

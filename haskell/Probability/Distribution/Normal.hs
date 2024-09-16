@@ -57,7 +57,7 @@ instance Sampleable Normal where
     sample dist@(Normal mu sigma) = RanDistribution2 dist normal_effect
 
 normal_bounds = realLine
-normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
+normal_effect x = add_move $ sliceSample x normal_bounds
 
 normal mu sigma = Normal mu sigma
 
