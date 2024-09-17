@@ -290,8 +290,8 @@ run_strict' rate (RanOp op) = op (run_strict' rate)
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
-triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
-triggered_modifiable_structure mod_structure value effect = triggered_x
+triggeredModifiableStructure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
+triggeredModifiableStructure mod_structure value effect = triggered_x
     where raw_x       = mod_structure modifiable value
           effect'     = unsafePerformIO $ effect raw_x
           triggered_x = mod_structure (withEffect effect') raw_x
@@ -299,8 +299,8 @@ triggered_modifiable_structure mod_structure value effect = triggered_x
 apply_modifier :: (forall a.a -> a) -> b -> b
 apply_modifier x y = x y
 
-modifiable_structure :: b -> (b -> IO ()) -> b
-modifiable_structure = triggered_modifiable_structure apply_modifier
+modifiableStructure :: b -> (b -> IO ()) -> b
+modifiableStructure = triggeredModifiableStructure apply_modifier
 
 foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
 
@@ -383,7 +383,7 @@ foldt f z xs  = foldt f z (pair_apply f xs)
 
 balanced_product xs = foldt (*) 1 xs
 
--- maybe I should rename this to (modifiable_list_n n f value) or something.
+-- maybe I should rename this to (modifiableList_n n f value) or something.
 mapn n f xs = go 0 where
     go i | i==n      = []
          | otherwise = f (xs!!i):go (i+1)

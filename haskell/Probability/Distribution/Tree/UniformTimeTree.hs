@@ -75,7 +75,7 @@ instance HasAnnotatedPdf UniformTimeTree where
     annotated_densities (UniformTimeTree age n) tree = return (uniform_time_tree_pr age n tree, ())
 
 instance Sampleable UniformTimeTree where
-    sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n)
+    sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniform_time_tree_effect triggeredModifiableTimeTree (sample_uniform_time_tree age n)
 
 uniform_time_tree age n = UniformTimeTree age n
 

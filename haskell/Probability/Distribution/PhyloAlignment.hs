@@ -20,8 +20,8 @@ type IModel = (IntMap Double -> Int -> PairHMM, Int -> LogDouble)
 
 -- If we change the number of tip sequences, then we need to update the modifiable node sequence lengths {ls'}.
 
-modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
-modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
+modifiableAlignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
+modifiableAlignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
   where
     as' = fmap modifiable as
     ls' = modifiable ls
@@ -97,8 +97,8 @@ alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1
 
 --FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
-triggered_modifiable_alignment value effect = triggered_a where
-    raw_a       = modifiable_alignment value
+triggeredModifiableAlignment value effect = triggered_a where
+    raw_a       = modifiableAlignment value
     effect'     = unsafePerformIO $ effect raw_a
     triggered_a = withEffect effect' raw_a
 
@@ -136,7 +136,7 @@ instance Dist (PhyloAlignment t) where
     dist_name _ = "PhyloAlignment"
 
 instance Sampleable (PhyloAlignment t) where
-    sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
+    sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggeredModifiableAlignment (sample_alignment tree hmms tip_lengths)
 
 instance HasAnnotatedPdf (PhyloAlignment t) where
     type DistProperties (PhyloAlignment t) = PhyloAlignmentProperties

@@ -94,10 +94,10 @@ sample_crp alpha n d = do v <- sample_crp_vector alpha n d
                           return $ list_from_vector_of_size v n
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
 
-triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
-                                               effect' = unsafePerformIO $ effect raw_list
-                                               triggered_list = mapn n (withEffect effect') raw_list
-                                           in triggered_list
+triggeredModifiableList n value effect = let raw_list = mapn n modifiable value
+                                             effect' = unsafePerformIO $ effect raw_list
+                                             triggered_list = mapn n (withEffect effect') raw_list
+                                         in triggered_list
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
@@ -125,7 +125,7 @@ instance HasAnnotatedPdf CRP where
     annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable CRP where
-    sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggered_modifiable_list n) (ran_sample_crp alpha n d)
+    sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggeredModifiableList n) (ran_sample_crp alpha n d)
 
 crp = CRP
 
