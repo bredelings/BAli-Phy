@@ -13,24 +13,25 @@ merge cmp xs [] = xs
 merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
                                 | otherwise = y:merge cmp xxs ys
 
-data CoalEvent = Leaf | Internal | RateShift Double
-nodeType tree node = if isLeafNode tree node then Leaf else Internal
+data CoalEvent = Leaf Int | Internal Int | RateShift Double
+nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 
-coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 0 (2/theta) 1 events: parentBeforeChildPrs nLeaves tree
+coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 events 0 (2/theta) 1: parentBeforeChildPrs nLeaves tree
     where nLeaves = length leafTimes
           nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
           shifts = [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
-          go prev_time n rate pr [] = pr
-          go t1 n rate pr ((t2,event):events) =
-              let nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
-                  totalRate = rate * nChoose2
-                  prNothing = expToLogDouble $ (-totalRate * (t2-t1))
-                  pr'       = pr * prNothing
-              in case event of Leaf     -> go t2 (n+1) rate pr' events
-                               -- For Internal, the nChoose2 from the rate cancels with the one from the topology
-                               Internal -> go t2 (n-1) rate (pr' * toLogDouble rate) events
-                               RateShift new_rate -> go t2 n new_rate pr' events
+          go t1 []                  n rate pr = pr
+          go t1 ((t2,event):events) n rate pr =
+              case event of
+                RateShift newRate -> go t2 events n     newRate pr'
+                Leaf _            -> go t2 events (n+1) rate    pr'
+                Internal _        -> go t2 events (n-1) rate    (pr' * toLogDouble rate)
+                        -- the nChoose2 from the rate cancels with the one from the topology
+              where nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
+                    totalRate = rate * nChoose2
+                    prNothing = expToLogDouble $ (-totalRate * (t2-t1))
+                    pr'       = pr * prNothing
 
 -------------------------------------------------------------
 
@@ -39,6 +40,9 @@ coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 0 (2/theta) 1 eve
 -- Or should it be (name,time) pairs?
 
 sampleCoalescentTree theta leafTimes rateShifts = do
+  let nodes  =  [(time, Leaf node) | (time, node) <- sortOn fst leafTimes]
+      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+  
   let n_leaves = length leafTimes
   topology <- sample_uniform_ordered_tree n_leaves
 
@@ -69,7 +73,7 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree Double [Double] [(Double,Double)]
+data CoalescentTree = CoalescentTree Double [(Double,Int)] [(Double,Double)]
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
