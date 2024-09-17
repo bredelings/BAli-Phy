@@ -132,9 +132,11 @@ coalescentTree theta leafTimes rateShifts = CoalescentTree theta leafTimes rateS
 --   invalidating all the CLs if the number of nodes
 -- * (BAD)  it might be hard to create a wrapper tree that looks like this tree plus a
 --           modifiation (e.g. deleting a tip).
-data RootedTreeNode = RTNode Int Double [RootedTreeNode] (Maybe RootedTreeNode)
+data RootedTreeNode = RTNode Int Double [RootedTreeNode] [RootedTreeNode]
+-- ^ By allowing multiple in-edges, we can implement DAGs and Directed Forests, not just Trees.
 
-type NodeNoParent = Maybe RootedTreeNode -> RootedTreeNode
+-- When we don't know the node's parent yet, we store a function from parent(s) to node.
+type NodeNoParent = [RootedTreeNode] -> RootedTreeNode
 
 sampleCoalescentTree2 theta leafTimes rateShifts = do
 
@@ -158,7 +160,7 @@ sampleCoalescentTree2 theta leafTimes rateShifts = do
           where nextNode' = coalNode+1
                 activeSubtrees' :: [NodeNoParent]
                 activeSubtrees' = let node :: NodeNoParent
-                                      node p = let node2 = RTNode coalNode t2 [n1 (Just node2), n2 (Just node2)] p in node2
+                                      node p = let node2 = RTNode coalNode t2 [n1 [node2], n2 [node2]] p in node2
                                   in node:rest
 
       goEvent rate nextNode activeSubtrees (t2, (Leaf node      , events)) = go t2 rate  nextNode activeSubtrees' events
@@ -167,20 +169,23 @@ sampleCoalescentTree2 theta leafTimes rateShifts = do
 
   trees <- go 0 (2/theta) firstInternal [] events
 
-  case trees of [tree] -> return (tree Nothing);
+  case trees of [tree] -> return (tree [])
                 _      -> error ("Sampling coalescence ended with " ++ show (length trees) ++ "subtrees!")
 
-data RootedTree2 = RootedTree2 {
+data RootedTree = RootedTree {
       getRoot :: RootedTreeNode,
+
       getNode :: (Array Int RootedTreeNode),
       getOrderedNode :: (Array Int Int)       -- cached the order of the nodes
 }
 
-instance Show RootedTree2 where
+instance Show RootedTree where
     show tree = show (getRoot tree)
 
 instance Show RootedTreeNode where
     show (RTNode name time children maybeParent) = childrenStr ++ show name ++ branchStr
-        where branchStr = case maybeParent of Nothing -> ";" ; Just (RTNode _ pTime _ _) -> ":" ++ show (pTime - time)
+        where branchStr = case maybeParent of []                   -> ";"
+                                              [RTNode _ pTime _ _] -> ":" ++ show (pTime - time)
+                                              _                    -> error "Multiple parents -- not a tree!"
               childrenStr = case children of [] -> ""
                                              _  -> "(" ++ (intercalate "," (map show children)) ++ ")"
