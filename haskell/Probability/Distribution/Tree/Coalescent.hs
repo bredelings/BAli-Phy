@@ -87,13 +87,7 @@ sampleCoalescentTree theta leafTimes rateShifts = do
   (nodes, edges, nodeTimes) <- go 0 (2/theta) firstInternal [] events ([], [], [])
   let root = head nodes
       topology = add_root root (tree_from_edges nodes edges)
-{-
-  let nodeTimes = [(2,1),(1,0),(0,0)]
-      nodes = [2,1,0]
-      edges = [(0,2),(1,2)]
-      root = head nodes
-      topology = add_root root (tree_from_edges nodes edges)
--}
+
   return (time_tree topology (IntMap.fromList nodeTimes))
 
 -------------------------------------------------------------
