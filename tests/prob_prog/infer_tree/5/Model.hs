@@ -25,7 +25,7 @@ tree_prior taxa = do
     theta <- sample $ logLaplace (-5) 2.0
 
     let nTaxa = length taxa
-        leafTimes = replicate nTaxa 0 -- (0::Double)
+        leafTimes = zip (replicate nTaxa 0) [0..]
         rateShifts = []
 
     tree <- add_labels taxa <$> sample (coalescentTree theta leafTimes rateShifts)

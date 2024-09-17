@@ -16,8 +16,10 @@ removeOne list = do
     i <- sample $ uniform_int 0 (length list - 1)
     return $ pickIndex i list
 
-remove 0 list = return ([], list)
-remove n list = do
-    (x , list_minus_1) <- removeOne list
-    (xs, list_minus_n) <- remove (n - 1) list_minus_1
-    return ((x : xs), list_minus_n)
+remove n list | n < 0           = error $ "Trying to remove " ++ show n ++ "entries from list"
+              | n > length list = return Nothing
+              | otherwise       = Just <$> go n list
+    where go 0 list = return ([],list)
+          go n list = do (x , list_minus_1) <- removeOne list
+                         (xs, list_minus_n) <- go (n - 1) list_minus_1
+                         return (x:xs, list_minus_n)

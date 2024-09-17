@@ -2,8 +2,9 @@ module Probability.Distribution.Tree.Coalescent where
 
 import           Tree
 import           Probability.Random
-import           Probability.Distribution.Tree.UniformTimeTree
 import           Probability.Distribution.Tree.Modifiable
+import           Probability.Distribution.Tree.UniformTimeTree
+import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
 import           MCMC
@@ -39,19 +40,61 @@ coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 events 0 (2/theta
 -- add the Internal events (effectively -- we would also need to
 -- Or should it be (name,time) pairs?
 
-sampleCoalescentTree theta leafTimes rateShifts = do
-  let nodes  =  [(time, Leaf node) | (time, node) <- sortOn fst leafTimes]
-      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
-  
-  let n_leaves = length leafTimes
-  topology <- sample_uniform_ordered_tree n_leaves
+getCoalescent t rate nodes = do
+  let n = length nodes
+      nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
+      totalRate = nChoose2 * rate
+  coal <- remove 2 nodes
+  case coal of Nothing -> return Nothing
+               Just ([n1,n2],rest) -> do dt <- sample $ exponential (1/totalRate)
+                                         return $ Just (t+dt,(n1,n2,rest))
+getEvent [] = return Nothing
+getEvent ((t,e):es) = return $ Just (t,(e,es))
 
-  let rate = 2/theta
-  dts <- sequence [ sample $ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
-                                                                    let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
-  let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
-      nodeTimes = IntMap.fromList $ zip [0..] times
-  return (time_tree topology nodeTimes)
+getNextEvent Nothing        Nothing                  = Nothing
+getNextEvent Nothing       (Just (t2,y))             = Just (t2, Right y)
+getNextEvent (Just (t1,x)) Nothing                   = Just (t1, Left x)
+getNextEvent (Just (t1,x)) (Just (t2,y)) | t1 < t2   = Just (t1, Left x)
+                                         | otherwise = Just (t2, Right y)
+
+sampleCoalescentTree theta leafTimes rateShifts = do
+
+  let nLeaves = length leafTimes
+      firstInternal = 1 + maximum [node | (time,node) <- leafTimes]
+      nodes  =  [(time, Leaf node)      | (time, node) <- sortOn fst leafTimes]
+      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+      events = merge (\x y -> fst x < fst y) nodes shifts
+
+  let go :: Double -> Double -> Int -> [Int] -> [(Double,CoalEvent)] -> ([Int],[(Int,Int)],[(Int,Double)]) -> Random ([Int], [(Int,Int)], [(Int,Double)])
+      go t1 rate nextNode activeNodes nextEvents (nodes, edges, nodeTimes) = do
+         coal <- getCoalescent t1 rate activeNodes
+         event <- getEvent nextEvents
+         case getNextEvent coal event of
+           Nothing -> return (nodes, edges, nodeTimes)
+           Just (t2, Left (n1, n2, rest)) -> goCoal  rate nextNode             nextEvents  (nodes, edges, nodeTimes) (t2, (n1,n2,rest))
+           Just (t2, Right (e,es))        -> goEvent rate nextNode activeNodes             (nodes, edges, nodeTimes) (t2, (e, es))
+
+      goCoal rate (coalNode::Int) nextEvents (nodes,edges,nodeTimes) (t2,(n1,n2,rest)) =  go t2 rate nextNode' activeNodes' nextEvents (nodes', edges', nodeTimes')
+          where nextNode' = coalNode+1
+                activeNodes' = coalNode:rest
+                nodes' = coalNode:nodes
+                edges' = (n1,coalNode):(n2,coalNode):edges
+                nodeTimes' = (coalNode,t2):nodeTimes
+
+      goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (Leaf node      , events)) = go t2 rate  nextNode (node:activeNodes) events (node:nodes, edges, (node,t2):nodeTimes)
+      goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (RateShift rate2, events)) = go t2 rate2 nextNode activeNodes        events (nodes, edges, nodeTimes)
+
+  (nodes, edges, nodeTimes) <- go 0 (2/theta) firstInternal [] events ([], [], [])
+  let root = head nodes
+      topology = add_root root (tree_from_edges nodes edges)
+{-
+  let nodeTimes = [(2,1),(1,0),(0,0)]
+      nodes = [2,1,0]
+      edges = [(0,2),(1,2)]
+      root = head nodes
+      topology = add_root root (tree_from_edges nodes edges)
+-}
+  return (time_tree topology (IntMap.fromList nodeTimes))
 
 -------------------------------------------------------------
 
