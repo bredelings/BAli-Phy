@@ -8,11 +8,18 @@ import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
 import           MCMC
 
+merge cmp [] ys = ys
+merge cmp xs [] = xs
+merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
+                                | otherwise = y:merge cmp xxs ys
+
 data CoalEvent = Leaf | Internal | RateShift Double
 nodeType tree node = if isLeafNode tree node then Leaf else Internal
 
-coalescentTreePrFactors theta nLeaves tree = go 0 0 (2/theta) 1 times: parentBeforeChildPrs nLeaves tree
-    where times = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
+coalescentTreePrFactors theta nLeaves tree rateShifts = go 0 0 (2/theta) 1 events: parentBeforeChildPrs nLeaves tree
+    where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
+          shifts = [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+          events = merge (\x y -> fst x < fst y) nodes shifts
           go prev_time n rate pr [] = pr
           go t1 n rate pr ((t2,event):events) =
               let nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
@@ -30,7 +37,7 @@ coalescentTreePrFactors theta nLeaves tree = go 0 0 (2/theta) 1 times: parentBef
 -- add the Internal events (effectively -- we would also need to
 -- Or should it be (name,time) pairs?
 
-sampleCoalescentTree theta n_leaves = do
+sampleCoalescentTree theta n_leaves rateShifts = do
   topology <- sample_uniform_ordered_tree n_leaves
 
   let rate = 2/theta
@@ -59,16 +66,17 @@ coalescentTreeEffect tree = do
   sequence_ [ addMove 1 $ tnni_on_branch_unsafe tree branch | branch <- getEdges tree]
 
 -------------------------------------------------------------
-data CoalescentTree = CoalescentTree Double Int
+
+data CoalescentTree = CoalescentTree Double Int [(Double,Double)]
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
     dist_name _ = "coalescentTree"
 
 instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree theta n) tree = return (coalescentTreePrFactors theta n tree, ())
+    annotated_densities (CoalescentTree theta n rateShifts) tree = return (coalescentTreePrFactors theta n tree rateShifts, ())
 
 instance Sampleable CoalescentTree where
-    sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescentTreeEffect triggered_modifiable_time_tree (sampleCoalescentTree theta n)
+    sample dist@(CoalescentTree theta n rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree theta n rateShifts)
 
-coalescentTree theta n = CoalescentTree theta n
+coalescentTree theta n rateShifts = CoalescentTree theta n rateShifts
