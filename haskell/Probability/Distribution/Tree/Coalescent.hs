@@ -8,6 +8,7 @@ import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
 import           MCMC
+import           Data.Array
 
 merge cmp [] ys = ys
 merge cmp xs [] = xs
@@ -36,9 +37,6 @@ coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 events 0 (2/theta
 
 -------------------------------------------------------------
 
--- We would sort and merge the Leaf and RateShift r events, and then
--- add the Internal events (effectively -- we would also need to
--- Or should it be (name,time) pairs?
 
 getCoalescent t rate nodes = do
   let n = length nodes
@@ -123,3 +121,66 @@ instance Sampleable CoalescentTree where
     sample dist@(CoalescentTree theta leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree theta leafTimes rateShifts)
 
 coalescentTree theta leafTimes rateShifts = CoalescentTree theta leafTimes rateShifts
+
+
+
+
+----------- Alternative coalescent sampling -----------------
+-- This version references neighboring node structures directly, instead of just
+-- recording their (integer) NAME.
+-- * (GOOD) it doesn't require an array to map from integer names to nodes; this may avoid
+--   invalidating all the CLs if the number of nodes
+-- * (BAD)  it might be hard to create a wrapper tree that looks like this tree plus a
+--           modifiation (e.g. deleting a tip).
+data RootedTreeNode = RTNode Int Double [RootedTreeNode] (Maybe RootedTreeNode)
+
+type NodeNoParent = Maybe RootedTreeNode -> RootedTreeNode
+
+sampleCoalescentTree2 theta leafTimes rateShifts = do
+
+  let nLeaves = length leafTimes
+      firstInternal = 1 + maximum [node | (time,node) <- leafTimes]
+      nodes  =  [(time, Leaf node)      | (time, node) <- sortOn fst leafTimes]
+      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+      events = merge (\x y -> fst x < fst y) nodes shifts
+
+  let go :: Double -> Double -> Int -> [NodeNoParent] -> [(Double, CoalEvent)] -> Random [NodeNoParent]
+      go t1 rate nextNode activeSubtrees nextEvents = do
+         coal <- getCoalescent t1 rate activeSubtrees
+         event <- getEvent nextEvents
+         case getNextEvent coal event of
+           Nothing -> return activeSubtrees
+           Just (t2, Left (n1, n2, rest)) -> goCoal  rate nextNode                nextEvents  (t2, (n1,n2,rest))
+           Just (t2, Right (e,es))        -> goEvent rate nextNode activeSubtrees             (t2, (e, es))
+
+      goCoal :: Double -> Int -> [(Double,CoalEvent)] -> (Double,(NodeNoParent,NodeNoParent,[NodeNoParent])) -> Random [NodeNoParent]
+      goCoal rate coalNode nextEvents (t2,(n1,n2,rest)) =  go t2 rate nextNode' activeSubtrees' nextEvents
+          where nextNode' = coalNode+1
+                activeSubtrees' :: [NodeNoParent]
+                activeSubtrees' = let node :: NodeNoParent
+                                      node p = let node2 = RTNode coalNode t2 [n1 (Just node2), n2 (Just node2)] p in node2
+                                  in node:rest
+
+      goEvent rate nextNode activeSubtrees (t2, (Leaf node      , events)) = go t2 rate  nextNode activeSubtrees' events
+          where activeSubtrees' = (RTNode node t2 []):activeSubtrees
+      goEvent rate nextNode activeSubtrees (t2, (RateShift rate', events)) = go t2 rate' nextNode activeSubtrees  events
+
+  trees <- go 0 (2/theta) firstInternal [] events
+
+  case trees of [tree] -> return (tree Nothing);
+                _      -> error ("Sampling coalescence ended with " ++ show (length trees) ++ "subtrees!")
+
+data RootedTree2 = RootedTree2 {
+      getRoot :: RootedTreeNode,
+      getNode :: (Array Int RootedTreeNode),
+      getOrderedNode :: (Array Int Int)       -- cached the order of the nodes
+}
+
+instance Show RootedTree2 where
+    show tree = show (getRoot tree)
+
+instance Show RootedTreeNode where
+    show (RTNode name time children maybeParent) = childrenStr ++ show name ++ branchStr
+        where branchStr = case maybeParent of Nothing -> ";" ; Just (RTNode _ pTime _ _) -> ":" ++ show (pTime - time)
+              childrenStr = case children of [] -> ""
+                                             _  -> "(" ++ (intercalate "," (map show children)) ++ ")"
