@@ -15,18 +15,18 @@ import           Probability.Distribution.Tree.Modifiable
 import           Probability.Distribution.Tree.Moves
 
 -- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
-uniform_topology_edges [l1]     _        = return []
-uniform_topology_edges [l1, l2] _        = return [(l1, l2)]
-uniform_topology_edges (l : ls) (i : is) = do
-    es1           <- uniform_topology_edges ls is
+uniformTopologyEdges [l1]     _        = return []
+uniformTopologyEdges [l1, l2] _        = return [(l1, l2)]
+uniformTopologyEdges (l : ls) (i : is) = do
+    es1           <- uniformTopologyEdges ls is
     ((x, y), es2) <- removeOne es1
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.singleton 0 noAttributes) (Attributes [])
-sample_uniform_topology n = do
+sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.singleton 0 noAttributes) (Attributes [])
+sampleUniformTopology n = do
     let num_nodes = 2 * n - 2
-    edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
+    edges <- uniformTopologyEdges [0 .. n - 1] [n .. num_nodes - 1]
     return $ tree_from_edges [0..num_nodes-1] edges
 
 uniform_labelled_topology taxa = do
@@ -35,7 +35,7 @@ uniform_labelled_topology taxa = do
 
 
 
-uniform_topology_effect tree = do
+uniformTopologyEffect tree = do
   -- SPR moves aren't added here because they depend on branch lengths.
   -- Note that we could in theory have multiple branch-length-trees with the same topology.
   add_move $ walk_tree_sample_NNI tree -- Q: does this handle situations with no data partitions?
@@ -51,9 +51,9 @@ uniform_topology_effect tree = do
    5        8      7
    ..       ..     ..
 -}
-uniform_topology_pr 1 = 1
-uniform_topology_pr 2 = 1
-uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
+uniformTopologyPr 1 = 1
+uniformTopologyPr 2 = 1
+uniformTopologyPr n = uniformTopologyPr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -------------------------------------------------------------
 data UniformTopology = UniformTopology Int
@@ -63,10 +63,10 @@ instance Dist UniformTopology where
     dist_name _ = "uniform_topology"
 
 instance HasAnnotatedPdf UniformTopology where
-    annotated_densities (UniformTopology n) _ = return ([uniform_topology_pr n], ())
+    annotated_densities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
 
 instance Sampleable UniformTopology where
-    sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggeredModifiableTree (sample_uniform_topology n)
+    sample dist@(UniformTopology n) = RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (sampleUniformTopology n)
 
 uniformTopology n = UniformTopology n
 
