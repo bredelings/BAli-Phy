@@ -30,8 +30,8 @@ sample_uniform_ordered_tree n = do
   let num_nodes = 2 * n - 1
   edges <- uniform_ordered_tree_edges [0..n-1] [n..]
   -- The number of edges should be 2*n-1, unchangably.
-  let utree = tree_from_edges [0..num_nodes-1] edges
-  return $ add_root (num_nodes - 1) utree
+  let utree = treeFromEdges [0..num_nodes-1] edges
+  return $ addRoot (num_nodes - 1) utree
 
 sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n

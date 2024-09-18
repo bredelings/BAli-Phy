@@ -7,7 +7,7 @@ import           Control.Monad.Fix
 
 model = do
     tree <- sample $ uniformTopology 5
-    let rtree = add_root 0 tree
+    let rtree = addRoot 0 tree
 
     let ps    = map (show . parentNode rtree) [0 .. 5]
 

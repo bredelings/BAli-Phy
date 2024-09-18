@@ -40,7 +40,7 @@ triggeredModifiableTree = triggeredModifiableStructure modifiableTree
 -- 3        5      4
 -- 4        7      6
 modifiableRootedTree :: (forall a.a -> a) -> WithRoots Tree -> WithRoots Tree
-modifiableRootedTree modf (WithRoots tree [root_node] _) = add_root root_node $ modifiableTree modf tree
+modifiableRootedTree modf (WithRoots tree [root_node] _) = addRoot root_node $ modifiableTree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
 triggeredModifiableRootedTree = triggeredModifiableStructure modifiableRootedTree

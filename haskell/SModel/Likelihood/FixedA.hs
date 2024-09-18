@@ -76,7 +76,7 @@ peel_likelihood nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTow
                                                           in calcProbAtRoot nodeCLs clsIn f counts
 
 sample_ancestral_sequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
-    let rt = add_root root t
+    let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
         ancestor_for_branch n Nothing = let nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! n

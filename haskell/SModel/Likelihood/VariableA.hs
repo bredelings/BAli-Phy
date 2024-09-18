@@ -101,7 +101,7 @@ frequenciesOnTree t f ps = let fs = getNodesSet t & IntMap.fromSet getF
                            in fs
 
 sample_ancestral_sequences t root nodeCLVs as ps f cl =
-    let rt = add_root root t
+    let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
 
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)

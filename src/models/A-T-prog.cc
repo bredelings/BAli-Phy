@@ -679,7 +679,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // F5. Topology
     if (not fixed.count("topology") and not fixed.count("tree"))
-        program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
+        program_file<<"\nsample_topology taxa = uniformLabelledTopology taxa\n";
 
     /* --------------------------------------------------------------- */
     do_block model;
@@ -778,7 +778,7 @@ std::string generate_atmodel_program(const variables_map& args,
 	if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
 	{
 	    model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
-	    tree_exp = {var("add_root"),var("root"),tree_exp};
+	    tree_exp = {var("addRoot"),var("root"),tree_exp};
 	}
 	model.let(tree_var, tree_exp);
     }

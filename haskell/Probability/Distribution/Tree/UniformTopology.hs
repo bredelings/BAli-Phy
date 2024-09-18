@@ -27,9 +27,9 @@ sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (No
 sampleUniformTopology n = do
     let num_nodes = 2 * n - 2
     edges <- uniformTopologyEdges [0 .. n - 1] [n .. num_nodes - 1]
-    return $ tree_from_edges [0..num_nodes-1] edges
+    return $ treeFromEdges [0..num_nodes-1] edges
 
-uniform_labelled_topology taxa = do
+uniformLabelledTopology taxa = do
   topology <- sample $ uniformTopology (length taxa)
   return $ add_labels (zip [0..] taxa) topology
 
@@ -79,7 +79,7 @@ tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2
 -}
 
 uniformLabelledTree taxa dist = do
-  topology <- RanSamplingRate 0 $ sample $ uniform_labelled_topology taxa
+  topology <- RanSamplingRate 0 $ sample $ uniformLabelledTopology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
   let tree = branch_length_tree topology branchLengths
   addTopologyMoves 2 tree
@@ -92,12 +92,12 @@ fixedTopologyTree topology dist = do
   addMove 1 $ walk_tree_sample_branch_lengths tree
   return tree
 
-uniform_labelled_tree taxa branch_lengths_dist = do
+uniform_labelled_tree taxa branchLengthsDist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
-  topology <- RanSamplingRate 0.0 $ uniform_labelled_topology taxa
+  topology <- RanSamplingRate 0.0 $ uniformLabelledTopology taxa
   -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
 --  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
-  branch_lengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branch_lengths_dist topology))
-  let tree = WithBranchLengths topology branch_lengths
+  branchLengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
+  let tree = WithBranchLengths topology branchLengths
   return tree `with_tk_effect` addTreeMoves 1
 

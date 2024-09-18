@@ -51,7 +51,7 @@ instance IsForest Tree where
     type instance Rooted Tree = WithRoots Tree
 
     unroot t = t
-    makeRooted t = add_root root t where root = head $ (internalNodes t ++ leafNodes t)
+    makeRooted t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
 
 instance IsTree Tree
 
@@ -65,12 +65,12 @@ instance HasRoot t => IsTree (WithNodeTimes t)
 
 instance (IsTree t, HasNodeTimes t) => IsTree (WithBranchRates t)
 
-tree_from_edges nodes edges = Tree $ forest_from_edges nodes edges
+treeFromEdges nodes edges = Tree $ forest_from_edges nodes edges
 
 allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
 
--- add_root :: IsTree t => NodeId -> t -> Rooted t
-add_root r t = addRoots [r] t
+-- addRoot :: IsTree t => NodeId -> t -> Rooted t
+addRoot r t = addRoots [r] t
 
 -- Should this go somewhere else?
 weightedAverage weights values | length weights == length values = go weights values 0 0

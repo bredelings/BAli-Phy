@@ -243,7 +243,7 @@ newickToTree (NewickTree treeAttributes node) = do
       nodeAttributes = IntMap.fromList (i_nodeAttributes info)
       edgeAttributes = IntMap.fromList (i_edgeAttributes info)
       tree = Tree $ Forest $ Graph nodes edges nodeAttributes edgeAttributes treeAttributes
-      rooted_tree = add_root rootId tree
+      rooted_tree = addRoot rootId tree
       labelled_tree = WithLabels rooted_tree labels
 
   return (labelled_tree, lengths)
