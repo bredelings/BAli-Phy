@@ -70,7 +70,7 @@ sampleCoalescentTree theta leafTimes rateShifts = do
          case getNextEvent coal event of
            Nothing -> return (nodes, edges, nodeTimes)
            Just (t2, Left (n1, n2, rest)) -> goCoal  rate nextNode             nextEvents  (nodes, edges, nodeTimes) (t2, (n1,n2,rest))
-           Just (t2, Right (e,es))        -> goEvent rate nextNode activeNodes             (nodes, edges, nodeTimes) (t2, (e, es))
+           Just (t2, Right (event,events))        -> goEvent rate nextNode activeNodes             (nodes, edges, nodeTimes) (t2, (event, events))
 
       goCoal rate (coalNode::Int) nextEvents (nodes,edges,nodeTimes) (t2,(n1,n2,rest)) =  go t2 rate nextNode' activeNodes' nextEvents (nodes', edges', nodeTimes')
           where nextNode' = coalNode+1
@@ -132,7 +132,7 @@ coalescentTree theta leafTimes rateShifts = CoalescentTree theta leafTimes rateS
 --   invalidating all the CLs if the number of nodes
 -- * (BAD)  it might be hard to create a wrapper tree that looks like this tree plus a
 --           modifiation (e.g. deleting a tip).
-data RootedTreeNode = RTNode Int Double [RootedTreeNode] [RootedTreeNode]
+data RootedTreeNode = RTNode { rTnodeName :: Int, rTnodeTime :: Double, rToutEdges :: [RootedTreeNode], rTinEdges :: [RootedTreeNode] }
 -- ^ By allowing multiple in-edges, we can implement DAGs and Directed Forests, not just Trees.
 
 -- When we don't know the node's parent yet, we store a function from parent(s) to node.
