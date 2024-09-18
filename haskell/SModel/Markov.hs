@@ -67,7 +67,7 @@ instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
 instance SimpleSModel Markov where
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
+    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branchLength tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1

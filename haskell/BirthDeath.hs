@@ -163,7 +163,7 @@ nodeTime node (Right (Next t _ _ _)) = t
 
 branch_duration edge = abs (nodeTime (sourceNode edge) - nodeTime (targetNode edge))
 
-branch_length edge = branch_duration edge
+branchLength edge = branch_duration edge
 
 nodes node@(Left (Start1 _ next)) = node:nodes (Right next)
 nodes node@(Left (Start2 _ next1 next2)) = node:nodes (Right next1) ++ nodes (Right next2)
@@ -177,7 +177,7 @@ internalNodes t = filter isInternalNode (nodes t)
 
 numLeaves tree = length $ leafNodes tree
 
-tree_length tree = sum [ branch_length b | b <- undirected_edges tree ]
+treeLength tree = sum [ branchLength b | b <- undirected_edges tree ]
 
 allEdgesAfterEdge b = b:concatMap allEdgesAfterEdge (edgesAfterEdge b)
 allEdgesFromNode n = concatMap allEdgesAfterEdge (edgesOutOfNode n)

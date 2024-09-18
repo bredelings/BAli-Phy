@@ -148,7 +148,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 {
     // define tree_length
     var tree_length_var("tlength");
-    model.let(tree_length_var, {var("tree_length"),tree_var});
+    model.let(tree_length_var, {var("treeLength"),tree_var});
     // log |T|
     model_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
 
@@ -998,7 +998,7 @@ std::string generate_atmodel_program(const variables_map& args,
             model.empty_stmt();
 	    expression_ref scaled_tree = tree_var;
 	    if (n_branches > 0)
-		scaled_tree = {var("scale_branch_lengths"),var("scale"), scaled_tree};
+		scaled_tree = {var("scaleBranchLengths"),var("scale"), scaled_tree};
             model.perform({var("$"),var("addLogger"),{treeLogger,{var("addInternalLabels"), scaled_tree}}});
         }
 

@@ -55,19 +55,19 @@ instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
     node_info (WithBranchLengths tree lengths) node = node_info tree node
 
-    branch_info blt (Just b) = T.doubleToText (branch_length blt b)
+    branch_info blt (Just b) = T.doubleToText (branchLength blt b)
     branch_info _   Nothing  = T.empty
 
 instance (HasRoot t, WriteNewickNode t) => WriteNewickNode (WithNodeTimes t) where
     node_info (WithNodeTimes tree _) node = node_info tree node
 
-    branch_info nht (Just b) = T.doubleToText (branch_length nht b)
+    branch_info nht (Just b) = T.doubleToText (branchLength nht b)
     branch_info _   Nothing  = T.empty
 
 instance (HasNodeTimes t, WriteNewickNode t) => WriteNewickNode (WithBranchRates t) where
     node_info (WithBranchRates tree _) node = node_info tree node
 
-    branch_info rtt (Just b) = T.doubleToText (branch_length rtt b)
+    branch_info rtt (Just b) = T.doubleToText (branchLength rtt b)
     branch_info _    Nothing  = T.empty
 
 write_newick_rooted tree = let nodes = write_newick_node tree (root tree)
@@ -235,8 +235,8 @@ newickToTree (NewickTree treeAttributes node) = do
   ids <- initIdSupply 'n'
 
   let (rootId, info) = getNode ids node Nothing
-      nodes = IntMap.fromList [(node_name node, node) | node <- i_nodes info]
-      edges = IntMap.fromList [(edge_name edge, edge) | edge <- i_edges info]
+      nodes = IntMap.fromList [(nodeName node, node) | node <- i_nodes info]
+      edges = IntMap.fromList [(edgeName edge, edge) | edge <- i_edges info]
       -- These SHOULD have all the nodes / edges... but maybe we should use (getNodesSet tree & fromSet _) to make sure.
       labels = IntMap.fromList (i_labels info) -- this is IntMap (Maybe Double)
       lengths = IntMap.fromList (i_lengths info)

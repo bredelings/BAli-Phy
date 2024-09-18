@@ -27,7 +27,7 @@ instance HasAlphabet (BranchModel a) where
 
 instance CTMC a => SimpleSModel (BranchModel a) where
     stateLetters (BranchModel _ smap _ _) = smap
-    branch_transition_p (SingleBranchLengthModel tree model f) b = [qExp $ scale (branch_length tree b * f) (ratesForBranch b)]
+    branch_transition_p (SingleBranchLengthModel tree model f) b = [qExp $ scale (branchLength tree b * f) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
     distribution _ = [1]
     nBaseModels _ = 1

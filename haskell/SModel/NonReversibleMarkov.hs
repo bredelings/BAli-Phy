@@ -11,7 +11,7 @@ import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
 import           SModel.Rate
-import           Tree (branch_length)
+import           Tree (branchLength)
 
 -- The only guarantee is that we are at equilibrium
 type NonReversibleMarkov = MkEquilibrium Markov
@@ -25,7 +25,7 @@ instance HasAlphabet m => HasAlphabet (MkEquilibrium m) where
 
 instance SimpleSModel (MkEquilibrium Markov) where
     type instance IsReversible (MkEquilibrium Markov) = EquilibriumNonReversible
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
+    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branchLength tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1

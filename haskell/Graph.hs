@@ -96,17 +96,17 @@ isSink g n = null (outEdges g n)
 
 class IsDirectedGraph g => IsDirectedAcyclicGraph g
 
-data Node = Node { node_name :: Int, node_out_edges:: IntSet}
+data Node = Node { nodeName :: Int, nodeOutEdges:: IntSet}
 
 instance Show Node where
-    show (Node name out_edges) = "Node{node_name = " ++ show name ++ ", node_out_edges = " ++ show out_edges ++ "}"
+    show (Node name outEdges) = "Node{nodeName = " ++ show name ++ ", nodeOutEdges = " ++ show outEdges ++ "}"
 
--- ideally e_source_node and e_target_node would be of type Node,
+-- ideally eSourceNode and eTargetNode would be of type Node,
 --   and e_reverse would be of type Edge
-data Edge = Edge { e_source_node, e_target_node, edge_name :: Int }
+data Edge = Edge { eSourceNode, eTargetNode, edgeName :: Int }
 
 instance Show Edge where
-    show (Edge source target name) = "Edge{e_source_node = " ++ show source ++ ", e_target_node = " ++ show target ++ ", edge_name = " ++ show name ++ "}"
+    show (Edge source target name) = "Edge{eSourceNode = " ++ show source ++ ", eTargetNode = " ++ show target ++ ", edgeName = " ++ show name ++ "}"
 
 data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
 
@@ -147,9 +147,9 @@ instance IsGraph Graph where
     getNodesSet (Graph nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
     getEdgesSet (Graph _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
-    edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = node_out_edges $ (nodesMap IntMap.! nodeId)
-    sourceNode (Graph _ edgesMap _ _ _) edge = e_source_node $ (edgesMap IntMap.! edge)
-    targetNode (Graph _ edgesMap _ _ _) edge = e_target_node $ (edgesMap IntMap.! edge)
+    edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = nodeOutEdges $ (nodesMap IntMap.! nodeId)
+    sourceNode (Graph _ edgesMap _ _ _) edge = eSourceNode $ (edgesMap IntMap.! edge)
+    targetNode (Graph _ edgesMap _ _ _) edge = eTargetNode $ (edgesMap IntMap.! edge)
 
     getNodeAttributes (Graph _ _ a _ _) node     = a IntMap.! node
     getEdgeAttributes (Graph _ _ _ a _) edge     = a IntMap.! edge
@@ -209,15 +209,15 @@ undirectedName e  = max e (reverseEdge e)
 edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
-tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
+treeLength tree = sum [ branchLength tree b | b <- getUEdges tree ]
 
 ------------------ Branch Lengths ----------------
 
 class IsGraph g => HasBranchLengths g where
-    branch_length :: g -> Int -> Double
+    branchLength :: g -> Int -> Double
 
-branchLengths g = branch_length g <$> getUEdges g
-branchLengthsSet g = getUEdgesSet g & IntMap.fromSet (branch_length g)
+branchLengths g = branchLength g <$> getUEdges g
+branchLengthsSet g = getUEdgesSet g & IntMap.fromSet (branchLength g)
 
 --   but could not do this for WithNodeTimes...
 class HasBranchLengths g => CanModifyBranchLengths g where
@@ -242,21 +242,19 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
     getAttributes (WithBranchLengths t _)              = getAttributes t
 
-scale_branch_lengths factor g = modifyBranchLengths (\b -> factor * branch_length g b) g
+scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
 
 instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
-    branch_length (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
+    branchLength (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
 
 instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
     modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.keysSet ds & IntMap.fromSet f)
 
 instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
-    branch_length (WithLabels tree _) b = branch_length tree b
+    branchLength (WithLabels tree _) b = branchLength tree b
 
 instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
     modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
-
-branch_lengths (WithBranchLengths _ ds) = ds
 
 branchLengthTree topology lengths = WithBranchLengths topology lengths
 

@@ -11,7 +11,7 @@ import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
 import           SModel.Rate
-import           Tree (branch_length)
+import           Tree (branchLength)
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -54,7 +54,7 @@ instance HasAlphabet m => HasAlphabet (MkReversible m) where
 
 instance SimpleSModel (MkReversible Markov) where
     type instance IsReversible (MkReversible Markov) = EquilibriumReversible
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branch_length tree b * factor / r) smodel]
+    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branchLength tree b * factor / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
