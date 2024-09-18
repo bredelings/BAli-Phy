@@ -33,8 +33,9 @@ Core::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expecte
 //                                      return (wrapper, {x :: sigma1})
 //
 
-void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::LVar& LV, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
+    auto& [loc,V] = LV;
     auto& name = V.name;
     Type type;
 
@@ -74,12 +75,12 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
     pop_binder();
 }
 
-void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::LVar& v, const SigmaType& exp_type, const signature_env& sigs)
 {
     return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, TypeChecker&){});
 }
 
-Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const signature_env& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::LVar& V, const signature_env& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, V, exp_type, sigs, [](local_value_env&, TypeChecker&){});
@@ -129,7 +130,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         // See GHC/Core/DataCon.hs > mkData
         auto Con = *con;
 
-        auto info = constructor_info(Con.head);
+        auto info = constructor_info(unloc(Con.head));
         auto constraints = info.written_constraints;
         for(auto& constraint: info.gadt_eq_constraints)
             constraints.push_back(constraint);
@@ -291,15 +292,17 @@ void TypeChecker::checkPat(local_value_env& penv, Hs::LPat& pat, const SigmaType
 }
 
 
-Hs::Var
-rename_var_from_bindinfo(const Hs::Var& v, const map<Hs::Var, Hs::BindInfo>& bind_info_for_ids)
+Hs::LVar
+rename_var_from_bindinfo(Hs::LVar lv, const map<Hs::Var, Hs::BindInfo>& bind_info_for_ids)
 {
+    auto& [loc,v] = lv;
 
     // QUESTION: if there is a wrapper on the outer id, is it already on the inner id?
     // Perhaps any such wrapper should be part of the bindinfo and go from the inner id to the outer id?
     // Should there be a separate wrapper for the inner id?
 
-    return bind_info_for_ids.at(v).inner_id;
+    v = bind_info_for_ids.at(v).inner_id;
+    return lv;
 }
 
 // Figure 24. Rules for patterns

@@ -67,17 +67,17 @@ std::string parenthesize_pattern(const LPat& p);
 
 struct VarPattern: public Object
 {
-    Var var;
+    LVar var;
 
     VarPattern* clone() const { return new VarPattern(*this);}
     std::string print() const;
 
-    VarPattern(const Var& v):var(v) {}
+    VarPattern(const LVar& v):var(v) {}
 };
 
 struct ConPattern: public Object
 {
-    Con head;
+    LCon head;
     LPats args;
 
     // Extra stuff for typechecking
@@ -89,7 +89,7 @@ struct ConPattern: public Object
     // get given variables for dictionaries only (nothing for type equalities)
     ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
-    ConPattern(const Con& h, const LPats& as):head(h),args(as) {}
+    ConPattern(const LCon& h, const LPats& as):head(h),args(as) {}
 };
 
 
@@ -163,16 +163,16 @@ struct StrictPattern: public Object
 
 struct AsPattern: public Object
 {
-    Var var;
+    LVar var;
     LPat pattern;
 
     AsPattern* clone() const { return new AsPattern(*this);}
     std::string print() const;
-    AsPattern(const Var& v, const LPat& p):var(v),pattern(p) {}
+    AsPattern(const LVar& v, const LPat& p):var(v),pattern(p) {}
 };
 
-std::set<Var> vars_in_pattern(const LPat& pat);
-std::set<Var> vars_in_patterns(const LPats& pats);
+std::set<LVar> vars_in_pattern(const LPat& pat);
+std::set<LVar> vars_in_patterns(const LPats& pats);
 
 ConPattern to_con_pat(const TuplePattern& T);
 ConPattern to_con_pat(const ListPattern& L);

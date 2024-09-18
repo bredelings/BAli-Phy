@@ -350,11 +350,11 @@ public:
     // takes and returns sigma types
     void checkPat(local_value_env& penv, Hs::LPat& pat, const SigmaType&, const signature_env& sigs = {});
 
-    Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
+    Type inferPat(local_value_env& penv, Hs::LVar& lv, const signature_env& sigs = {});
 
-    void tcPat(local_value_env& penv, Hs::Var& v, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>&);
+    void tcPat(local_value_env& penv, Hs::LVar& lv, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>&);
 
-    void checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& exp_type, const signature_env& sigs);
+    void checkPat(local_value_env& penv, Hs::LVar& lv, const SigmaType& exp_type, const signature_env& sigs);
 
     Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
 
@@ -553,10 +553,9 @@ LIE apply_subst(const substitution_t& s, const LIE& env1);
 
 std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
-Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
+Hs::LVar rename_var_from_bindinfo(Hs::LVar V, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
-Hs::LPat
-rename_pattern_from_bindinfo(Hs::LPat pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
+Hs::LPat rename_pattern_from_bindinfo(Hs::LPat pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 

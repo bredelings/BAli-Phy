@@ -66,7 +66,7 @@ Hs::LPat unapply(Hs::LExp LE)
         for(auto& arg: args)
             pat_args.push_back(unapply(arg));
 
-        P = Hs::ConPattern(*con, pat_args);
+        P = Hs::ConPattern({head.loc,*con}, pat_args);
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
@@ -78,9 +78,9 @@ Hs::LPat unapply(Hs::LExp LE)
     else if (auto l = E.to<Hs::Literal>())
         P = Hs::LiteralPattern(*l);
     else if (auto c = E.to<Hs::Con>())
-        P = Hs::ConPattern(*c, {});
+        P = Hs::ConPattern({LE.loc,*c}, {});
     else if (auto v = E.to<Hs::Var>())
-        P = Hs::VarPattern(*v);
+        P = Hs::VarPattern({LE.loc,*v});
     else if (E.is_a<Hs::WildcardPattern>())
         P = Hs::WildcardPattern();
     else {
@@ -167,7 +167,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     }
     else if (auto v = pat.to<Hs::VarPattern>())
     {
-        auto id = v->var.name;
+        auto id = unloc(v->var).name;
 
 	if (is_qualified_symbol(id))
         {
@@ -183,7 +183,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     // If its a constructor pattern!
     else if (auto c = pat.to<Hs::ConPattern>())
     {
-        auto id = c->head.name;
+        auto id = unloc(c->head).name;
 
         if (not m.is_declared(id))
             error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
@@ -207,8 +207,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-bound_var_info renamer_state::rename_var_pattern(const optional<yy::location>& loc, Hs::Var& V, bool top)
+bound_var_info renamer_state::rename_var_pattern(Hs::LVar& LV, bool top)
 {
+    auto& [loc,V] = LV;
     auto id = V.name;
 
     if (is_qualified_symbol(id))
@@ -268,7 +269,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         auto AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
-	auto bound = rename_var_pattern(loc, AP.var, false);
+	auto bound = rename_var_pattern(AP.var, false);
 	bool overlap = not disjoint_add(bound, rename_pattern(AP.pattern, false));
         if (overlap)
             error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
@@ -297,7 +298,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     else if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        auto bound = rename_var_pattern(loc, V.var, top);
+        auto bound = rename_var_pattern(V.var, top);
         pat = V;
 	return bound;
     }
@@ -320,7 +321,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         if (overlap)
             error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
 
-        auto id = C.head.name;
+        auto id = unloc(C.head).name;
 
         // 7. Resolve constructor name if identifier is a constructor
         if (not m.is_declared(id))
@@ -336,8 +337,8 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
             if (*S->arity != c->args.size())
                 error(loc, Note()<<"Constructor '"<<id<<"' arity "<<*S->arity<<" doesn't match pattern '"<<pat<<"'!");
 
-            C.head.name = S->name;
-            C.head.arity = *S->arity;
+            unloc(C.head).name = S->name;
+            unloc(C.head).arity = *S->arity;
 
             // 10. Construct the renamed pattern
             pat = C;

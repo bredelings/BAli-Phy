@@ -131,9 +131,9 @@ string AsPattern::print() const
 }
 
 
-std::set<Var> vars_in_patterns(const LPats& pats)
+std::set<LVar> vars_in_patterns(const LPats& pats)
 {
-    std::set<Var> vars;
+    std::set<LVar> vars;
 
     for(auto& pat: pats)
         add(vars, vars_in_pattern(pat));
@@ -141,7 +141,7 @@ std::set<Var> vars_in_patterns(const LPats& pats)
     return vars;
 }
 
-std::set<Var> vars_in_pattern(const LPat& lpat)
+std::set<LVar> vars_in_pattern(const LPat& lpat)
 {
     auto& pat = unloc(lpat);
 
@@ -172,22 +172,22 @@ std::set<Var> vars_in_pattern(const LPat& lpat)
 
 ConPattern TruePat()
 {
-    return {Hs::True(), {}};
+    return {{noloc,Hs::True()}, {}};
 }
 
 ConPattern FalsePat()
 {
-    return {Hs::False(), {}};
+    return {{noloc,Hs::False()}, {}};
 }
 
 ConPattern ConsPat(const LPat& p, const LPat& ps)
 {
-    return {Hs::ConsCon(),{p, ps}};
+    return {{noloc,Hs::ConsCon()},{p, ps}};
 }
 
 ConPattern NilPat()
 {
-    return {Hs::Nil(),{}};
+    return {{noloc,Hs::Nil()},{}};
 }
 
 ConPattern to_con_pat(const ListPattern& L)
@@ -211,7 +211,7 @@ ConPattern to_con_pat(const std::string& s)
 ConPattern to_con_pat(const TuplePattern& T)
 {
     int n = T.elements.size();
-    return {TupleCon(n), T.elements};
+    return {{noloc,TupleCon(n)}, T.elements};
 }
 
 }

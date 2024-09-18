@@ -186,7 +186,7 @@ rename_from_bindinfo(Hs::LDecl ldecl, const map<Hs::Var, Hs::BindInfo>& bind_inf
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        unloc(FD.v) = rename_var_from_bindinfo(unloc(FD.v), bind_infos);
+        FD.v = rename_var_from_bindinfo(FD.v, bind_infos);
         decl = FD;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
@@ -324,7 +324,7 @@ TypeChecker::infer_lhs_type(Hs::LDecl& ldecl, const signature_env& signatures)
         assert(not signatures.count(unloc(FD.v)));
 
         local_value_env lve;
-        auto type = inferPat(lve, unloc(FD.v));
+        auto type = inferPat(lve, FD.v);
         decl = FD;
         return {type, lve};
     }
@@ -447,9 +447,9 @@ tuple< map<Hs::Var, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::
     return {mono_ids, mono_binder_env};
 }
 
-bool any_sigs_for_vars(const signature_env& sigs, const std::set<Hs::Var>& vars)
+bool any_sigs_for_vars(const signature_env& sigs, const std::set<Hs::LVar>& vars)
 {
-    for(auto& var: vars)
+    for(auto& [_,var]: vars)
         if (sigs.count(var)) return true;
     return false;
 }

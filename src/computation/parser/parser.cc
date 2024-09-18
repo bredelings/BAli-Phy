@@ -3981,7 +3981,7 @@ namespace yy {
 
   case 291: // aexp: qvar TIGHT_INFIX_AT aexp
 #line 1181 "parser.y"
-                                            {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::AsPattern(Hs::Var(yystack_[2].value.as < std::string > ()),yystack_[0].value.as < Located<expression_ref> > ())}; }
+                                            {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::AsPattern({yystack_[2].location,Hs::Var(yystack_[2].value.as < std::string > ())},yystack_[0].value.as < Located<expression_ref> > ())}; }
 #line 3986 "parser.cc"
     break;
 

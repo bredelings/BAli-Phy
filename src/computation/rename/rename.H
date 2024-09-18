@@ -44,7 +44,7 @@ struct renamer_state
     void qualify_name(Hs::TypeCon& v) const;
 
     bound_var_info rename_patterns(Hs::LPats& pat, bool top = false);
-    bound_var_info rename_var_pattern(const std::optional<yy::location>&, Hs::Var&, bool top = false);
+    bound_var_info rename_var_pattern(Hs::LVar&, bool top = false);
     bound_var_info rename_pattern(Hs::LPat& pat, bool top = false);
 
     bound_var_info find_vars_in_patterns(const Hs::LPats& pats, bool top = false);
@@ -108,7 +108,7 @@ typedef std::set<std::string> bound_var_info;
 const bound_var_info& get_rhs_free_vars(const expression_ref& decl);
 std::vector<Hs::Decls> split_decls(const Hs::Decls& decls, const std::vector< std::vector<int> >& referenced_decls);
 
-std::tuple<std::map<std::string,int>, std::map<Hs::Var,std::vector<Hs::Var>>>
+std::tuple<std::map<std::string,int>, std::map<Hs::Var,std::vector<Hs::LVar>>>
 get_indices_for_names(const Hs::Decls& decls);
 
 #endif

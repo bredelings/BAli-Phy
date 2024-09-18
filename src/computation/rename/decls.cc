@@ -318,27 +318,28 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
 // maps names in a declaration group to a declaration in the group.
-std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(const Hs::Decls& decls)
+std::tuple<map<string,int>, map<Hs::Var,vector<Hs::LVar>>> get_indices_for_names(const Hs::Decls& decls)
 {
     map<string,int> index_for_name;
-    map<Hs::Var,std::vector<Hs::Var>> duplicate_defs;
+    map<Hs::Var,std::vector<Hs::LVar>> duplicate_defs;
 
     for(int i=0;i<decls.size();i++)
     {
         auto& [loc,decl] = decls[i];
 
         // Get the binder vars introduced by this declaration
-        set<Hs::Var> vars;
+        set<Hs::LVar> vars;
         if (auto fd = decl.to<Hs::FunDecl>())
-            vars.insert({unloc(fd->v)});
+            vars.insert({fd->v});
         else if (auto pd = decl.to<Hs::PatDecl>())
             vars = Hs::vars_in_pattern( pd->lhs );
         else
             std::abort();
 
         // Record the index for each of those vars
-        for(auto& var: vars)
+        for(auto& lvar: vars)
         {
+	    auto& [loc,var] = lvar;
             auto iter = duplicate_defs.find(var);
 
             if (iter == duplicate_defs.end())
@@ -346,12 +347,12 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(
                 // Record the index for each of those vars
                 index_for_name.insert({var.name, i});
                 // Create an empty list of duplicates.
-                duplicate_defs.insert({var,{}});
+                duplicate_defs.insert({var,{lvar}});
             }
             else
             {
                 // Record a duplicate
-                iter->second.push_back(var);
+                iter->second.push_back(lvar);
             }
         }
     }
@@ -395,13 +396,17 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
     auto [index_for_name, duplicate_defs] = get_indices_for_names(decls);
     for(auto& [first_def, second_defs]: duplicate_defs)
     {
-        for(auto& second_def: second_defs)
+        for(int j=1;j<second_defs.size();j++)
         {
+//	    auto& [loc1, first_def] = second_defs[0];
+	    auto& [loc , extra_def] = second_defs[j];
+
             Note note;
-            note<<"Name `"<<second_def.name<<"` redefined.";
+            note<<"Name `"<<extra_def.name<<"` redefined.";
+//            How do we attach a reference to the first def w/o adding another error?	   
 //            if (first_def.name.loc)
 //                note<<"\nFirst definition at "<<*first_def.name.loc;
-            error( /*second_def.name.loc,*/ note);
+            error( loc, note);
         }
     }
 

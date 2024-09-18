@@ -49,7 +49,7 @@ Hs::VarPattern make_VarPattern(const var& v)
 {
     assert(v.index == 0);
     Hs::Var V(v.name);
-    return {V};
+    return {{noloc,V}};
 }
 
 bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
@@ -66,7 +66,7 @@ bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
 	return true;
     else if (auto cp = P.to<Hs::ConPattern>())
     {
-	auto& con_name = cp->head.name;
+	auto& con_name = unloc(cp->head).name;
 	auto C = m.lookup_resolved_symbol(con_name);
 	string pattern_type = C->parent.value();
 	auto T = m.lookup_resolved_type(pattern_type);
@@ -187,7 +187,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             {
                 // Special-case for top-level as-patterns
                 // This isn't needed, but generates simpler code.
-                z = make_var(unloc(pat).as_<Hs::AsPattern>().var);
+                z = make_var(unloc(unloc(pat).as_<Hs::AsPattern>().var));
                 pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
@@ -195,7 +195,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
-	    for(auto& v: Hs::vars_in_pattern( pat ) )
+	    for(auto& [_,v]: Hs::vars_in_pattern( pat ) )
             {
                 auto x = make_var(v);
 		std::ostringstream o;

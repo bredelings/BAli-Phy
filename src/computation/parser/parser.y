@@ -1178,7 +1178,7 @@ fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
 |     aexp                       {$$ = $1;}
 
 /* EP */
-aexp: qvar TIGHT_INFIX_AT aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1),$3)}; }
+aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::AsPattern({@1,Hs::Var($1)},$3)}; }
 |     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
 |     PREFIX_BANG  aexp          {$$ = {@$, Hs::StrictPattern($2)}; }
 |     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }

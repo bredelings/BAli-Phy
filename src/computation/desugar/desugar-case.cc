@@ -176,7 +176,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	auto con_pat = equations[j].patterns[0].to<Hs::ConPattern>();
         assert(con_pat);
 
-	auto C = con_pat->head;
+	auto C = unloc(con_pat->head);
 	auto which = find_object(constants, C);
 
 	if (not which)
@@ -415,7 +415,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
     if (auto v = pat1.to<Hs::VarPattern>())
     {
-	auto y = make_var(v->var);
+	auto y = make_var(unloc(v->var));
 	rhs.add_binding({{y, x}});
 	pat1 = Hs::WildcardPattern();
     }
@@ -426,7 +426,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	CDecls binds = {};
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
-            auto y = make_var(v);
+            auto y = make_var(unloc(v));
 	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(Core::error("lazy pattern: failed pattern match"))});
         }
 	rhs.add_binding(binds);
@@ -459,7 +459,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
     else if (pat1.is_a<Haskell::AsPattern>())
     {
         auto& AP = pat1.as_<Haskell::AsPattern>();
-	auto y = make_var(AP.var);
+	auto y = make_var(unloc(AP.var));
 	rhs.add_binding({{y, x}});
 	pat1 = unloc(AP.pattern);
     }
