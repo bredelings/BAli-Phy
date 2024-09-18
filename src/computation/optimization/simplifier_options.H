@@ -11,8 +11,9 @@ struct dump_options
 {
     bool dump_parsed = false;
     bool dump_renamed = false;
-    bool dump_desugared = false;
     bool dump_typechecked = false;
+    bool dump_desugared = false;
+    bool dump_optimized = false;
 };
 
 struct simplifier_options: public pass_options, public dump_options

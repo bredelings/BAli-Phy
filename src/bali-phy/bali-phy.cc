@@ -370,6 +370,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
     L->dump_renamed = args.count("dump-rn");
     L->dump_typechecked = args.count("dump-tc");
     L->dump_desugared = args.count("dump-ds");
+    L->dump_optimized = args.count("dump-opt");
 
     return L;
 }

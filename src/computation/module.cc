@@ -597,6 +597,14 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
+    if (opts.dump_optimized)
+    {
+        std::cerr<<"\nOptimized Core:\n";
+        for(auto& [x,rhs] : value_decls)
+            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
+        std::cerr<<"\n\n";
+    }
+
     // this records unfoldings.
     MM->export_small_decls(value_decls);
 
