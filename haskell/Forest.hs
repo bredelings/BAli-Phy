@@ -255,4 +255,4 @@ addRoots roots t = rt
           nb = numBranches t * 2
           rt = WithRoots t roots (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
-forest_from_edges nodes edges = Forest $ graph_from_edges nodes edges
+forestFromEdges nodes edges = Forest $ graphFromEdges nodes edges

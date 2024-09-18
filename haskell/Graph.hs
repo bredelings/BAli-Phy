@@ -323,7 +323,7 @@ dropInternalLabels t = relabel newLabels t where
     newLabels = getNodesSet t & IntMap.fromSet (\node -> if nodeDegree t node <= 1 then labels IntMap.! node else Nothing)
 
 ---------------------------- Creating a graph from a list of edges ---------------------------
-graph_from_edges nodes edges = Graph nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
+graphFromEdges nodes edges = Graph nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
 
     num_nodes = length nodes
 

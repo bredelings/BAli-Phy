@@ -65,7 +65,7 @@ instance HasRoot t => IsTree (WithNodeTimes t)
 
 instance (IsTree t, HasNodeTimes t) => IsTree (WithBranchRates t)
 
-treeFromEdges nodes edges = Tree $ forest_from_edges nodes edges
+treeFromEdges nodes edges = Tree $ forestFromEdges nodes edges
 
 allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
 
