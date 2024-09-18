@@ -79,11 +79,19 @@ tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2
 -}
 
 uniformLabelledTree taxa dist = do
-  topology <- RanSamplingRate 0 $ sample $ uniformLabelledTopology taxa
+  topology <- RanSamplingRate 0 $ uniformLabelledTopology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
   let tree = branchLengthTree topology branchLengths
-  addTopologyMoves 2 tree
-  addLengthMoves 2 tree
+  addTreeMoves 1 tree
+  return tree
+
+-- If we put the branch lengths under SamplingRate 0.0 then the maybe-polytomy trees won't work.
+-- How can we do walk_tree and then run the MCMC kernels that affect a given branch?
+uniform_labelled_tree taxa branchLengthsDist = do
+  topology <- RanSamplingRate 0.0 $ uniformLabelledTopology taxa
+  branchLengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
+  let tree = WithBranchLengths topology branchLengths
+  addTreeMoves 1 tree
   return tree
 
 fixedTopologyTree topology dist = do
@@ -91,13 +99,4 @@ fixedTopologyTree topology dist = do
   let tree = branchLengthTree topology branchLengths
   addMove 1 $ walk_tree_sample_branch_lengths tree
   return tree
-
-uniform_labelled_tree taxa branchLengthsDist = do
-  -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
-  topology <- RanSamplingRate 0.0 $ uniformLabelledTopology taxa
-  -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
---  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
-  branchLengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
-  let tree = WithBranchLengths topology branchLengths
-  return tree `with_tk_effect` addTreeMoves 1
 
