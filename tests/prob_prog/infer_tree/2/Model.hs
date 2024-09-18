@@ -32,8 +32,8 @@ model seqData = do
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,
             "tn93:frequencies" %=% freqs,
-            "|T|" %=% tree_length tree,
-            "scale*|T|" %=% scale * tree_length tree]
+            "|T|" %=% treeLength tree,
+            "scale*|T|" %=% scale * treeLength tree]
 
 main = do
     [filename] <- getArgs

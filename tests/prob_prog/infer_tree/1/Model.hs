@@ -45,8 +45,8 @@ model seq_data = do
         , "kappa2" %=% kappa2
         , "frequencies" %=% freqs
         , "scale" %=% scale
-        , "|T|" %=% tree_length tree
-        , "scale*|T|" %=% tree_length tree * scale
+        , "|T|" %=% treeLength tree
+        , "scale*|T|" %=% treeLength tree * scale
         , "|A|" %=% alignmentLength alignment
         ]
 
