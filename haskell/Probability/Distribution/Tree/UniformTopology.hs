@@ -81,14 +81,14 @@ tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2
 uniformLabelledTree taxa dist = do
   topology <- RanSamplingRate 0 $ sample $ uniformLabelledTopology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
-  let tree = branch_length_tree topology branchLengths
+  let tree = branchLengthTree topology branchLengths
   addTopologyMoves 2 tree
   addLengthMoves 2 tree
   return tree
 
 fixedTopologyTree topology dist = do
   branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
-  let tree = branch_length_tree topology branchLengths
+  let tree = branchLengthTree topology branchLengths
   addMove 1 $ walk_tree_sample_branch_lengths tree
   return tree
 

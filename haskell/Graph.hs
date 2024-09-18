@@ -258,7 +258,7 @@ instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
 
 branch_lengths (WithBranchLengths _ ds) = ds
 
-branch_length_tree topology lengths = WithBranchLengths topology lengths
+branchLengthTree topology lengths = WithBranchLengths topology lengths
 
 ------------------ Labels ----------------
 

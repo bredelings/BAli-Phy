@@ -774,7 +774,7 @@ std::string generate_atmodel_program(const variables_map& args,
     // M4. Branch-length tree
     if (not fixed.count("tree"))
     {
-	expression_ref tree_exp = {var("branch_length_tree"),topology_var,branch_lengths};
+	expression_ref tree_exp = {var("branchLengthTree"),topology_var,branch_lengths};
 	if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
 	{
 	    model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
