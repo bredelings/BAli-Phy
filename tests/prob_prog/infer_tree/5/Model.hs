@@ -28,7 +28,7 @@ tree_prior taxa = do
         leafTimes = zip (replicate nTaxa 0) [0..]
         rateShifts = []
 
-    tree <- add_labels taxa <$> sample (coalescentTree theta leafTimes rateShifts)
+    tree <- addLabels taxa <$> sample (coalescentTree theta leafTimes rateShifts)
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)

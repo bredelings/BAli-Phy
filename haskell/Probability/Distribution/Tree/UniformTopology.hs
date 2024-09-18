@@ -31,7 +31,7 @@ sampleUniformTopology n = do
 
 uniformLabelledTopology taxa = do
   topology <- sample $ uniformTopology (length taxa)
-  return $ add_labels (zip [0..] taxa) topology
+  return $ addLabels (zip [0..] taxa) topology
 
 
 

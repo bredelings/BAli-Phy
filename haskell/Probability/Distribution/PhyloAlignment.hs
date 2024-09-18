@@ -29,7 +29,7 @@ modifiableAlignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
   where
-    length_for_node node = case get_label tree node of
+    length_for_node node = case getLabel tree node of
                              Just label -> ls Map.! label
                              Nothing    -> 0
 
@@ -50,7 +50,7 @@ left_aligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make
   where
     internal_sequence_length = median $ Map.elems $ ls
 
-    length_for_node node = case get_label tree node of
+    length_for_node node = case getLabel tree node of
                              Just label -> ls Map.! label
                              Nothing    -> internal_sequence_length
 
@@ -74,8 +74,8 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
     ls       = IntMap.fromList $ mapMaybes maybeLength (getNodes tree)
     as       = left_aligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
-    maybeLength node = case get_label tree node of Just label -> Just (node, tip_lengths Map.! label)
-                                                   _          -> Nothing
+    maybeLength node = case getLabel tree node of Just label -> Just (node, tip_lengths Map.! label)
+                                                  _          -> Nothing
 
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
 

@@ -48,8 +48,9 @@ foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
 
 instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
-    node_info   tree node                         = case get_label tree node of Just label -> quoteLabel label
-                                                                                Nothing -> T.empty
+    node_info   tree node                         = case getLabel tree node of
+                                                      Just label -> quoteLabel label
+                                                      Nothing -> T.empty
     branch_info (WithLabels tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where

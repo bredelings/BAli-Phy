@@ -219,18 +219,18 @@ class HasNodeTimes t => HasBranchRates t where
     branch_rate :: t -> Int -> Double
 
 instance (IsDirectedAcyclicGraph t, HasLabels t) => HasLabels (WithNodeTimes t) where
-    get_label (WithNodeTimes t _) node          = get_label t node
-    get_labels (WithNodeTimes t _) = get_labels t
+    getLabel (WithNodeTimes t _) node          = getLabel t node
+    getLabels (WithNodeTimes t _) = getLabels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
 
 instance (HasNodeTimes t, HasLabels t) => HasLabels (WithBranchRates t) where
-    get_label (WithBranchRates t _) node      = get_label t node
-    get_labels (WithBranchRates t _) = get_labels t
+    getLabel (WithBranchRates t _) node      = getLabel t node
+    getLabels (WithBranchRates t _) = getLabels t
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
 
 instance HasLabels t => HasLabels (WithRoots t) where
-    get_label (WithRoots t _ _) node               = get_label t node
-    get_labels (WithRoots t _ _)                   = get_labels t
+    getLabel (WithRoots t _ _) node               = getLabel t node
+    getLabels (WithRoots t _ _)                   = getLabels t
     relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
 
 instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where

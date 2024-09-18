@@ -16,7 +16,7 @@ allTexts = fmap Text.pack allStrings
 model = do
     tree <- sample $ uniform_time_tree 1.0 n_leaves
     let labels = take n_leaves $ zip [0..] allTexts
-        ltree = add_labels labels tree
+        ltree = addLabels labels tree
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree
 
     let ps    = map (\n -> show (n, parentNode tree n)) [0 .. numNodes tree - 1]

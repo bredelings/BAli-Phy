@@ -14,7 +14,7 @@ model seqData = do
     let taxa = zip [0..] $ getTaxa seqData
 
     age    <- sample $ gamma 0.5 2
-    tree   <- add_labels taxa <$> sample (uniform_time_tree age (length taxa))
+    tree   <- addLabels taxa <$> sample (uniform_time_tree age (length taxa))
 
     freqs  <- sample $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
     kappa1 <- sample $ logNormal 0 1

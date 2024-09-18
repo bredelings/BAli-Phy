@@ -261,13 +261,13 @@ branchLengthTree topology lengths = WithBranchLengths topology lengths
 ------------------ Labels ----------------
 
 class IsGraph g => HasLabels g where
-    get_label :: g -> Int -> Maybe Text
+    getLabel :: g -> Int -> Maybe Text
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
     -- indexes on nodes...
     -- TODO: make the C++ code handle this...
     
-    get_labels :: g -> IntMap (Maybe Text)
+    getLabels :: g -> IntMap (Maybe Text)
     relabel :: IntMap (Maybe Text) -> g -> g
 
 data WithLabels t = WithLabels t (IntMap (Maybe Text))
@@ -288,13 +288,13 @@ instance IsGraph t => IsGraph (WithLabels t) where
     getAttributes (WithLabels t _)               = getAttributes t
 
 instance IsGraph t => HasLabels (WithLabels t) where
-    get_label  (WithLabels _ labels) node = labels IntMap.! node
-    get_labels (WithLabels _ labels) = labels
+    getLabel  (WithLabels _ labels) node = labels IntMap.! node
+    getLabels (WithLabels _ labels) = labels
     relabel newLabels (WithLabels t _) = WithLabels t newLabels
 
 instance HasLabels t => HasLabels (WithBranchLengths t) where
-    get_label  (WithBranchLengths t _) node = get_label t node
-    get_labels (WithBranchLengths t _) = get_labels t
+    getLabel  (WithBranchLengths t _) node = getLabel t node
+    getLabels (WithBranchLengths t _) = getLabels t
     relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
 
 instance IsDirectedGraph g => IsDirectedGraph (WithLabels g) where
@@ -302,24 +302,24 @@ instance IsDirectedGraph g => IsDirectedGraph (WithLabels g) where
 
 instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithLabels g)
 
-add_labels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
+addLabels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 
 -- These two functions shouldn't go here -- but where should they go?
 addInternalLabels tree = WithLabels tree newLabels where
-    oldLabels = get_labels tree
+    oldLabels = getLabels tree
     newLabels = getNodesSet tree & IntMap.fromSet newLabel
 
     newLabel node = case (oldLabels IntMap.! node) of
                       Just label -> Just label
                       Nothing -> Just $ T.append (T.singleton 'A') (T.pack (show node))
 
-add_ancestral_label node labels = case (labels IntMap.! node) of
-                                    Just l -> l
-                                    Nothing -> T.append (T.singleton 'A') (T.pack (show node))
+addAncestralLabel node labels = case (labels IntMap.! node) of
+                                  Just l -> l
+                                  Nothing -> T.append (T.singleton 'A') (T.pack (show node))
 
 
 dropInternalLabels t = relabel newLabels t where
-    labels = get_labels t
+    labels = getLabels t
     newLabels = getNodesSet t & IntMap.fromSet (\node -> if nodeDegree t node <= 1 then labels IntMap.! node else Nothing)
 
 ---------------------------- Creating a graph from a list of edges ---------------------------

@@ -154,7 +154,7 @@ find_sequence label sequences = find (\s -> fst s == label) sequences
 -- Complain if a labeled node doesn't have a corresponding entry in the Map.
 labelToNodeMap :: HasLabels t => t -> [(Text, v)] -> IntMap (Maybe v)
 labelToNodeMap tree things = getNodesSet tree & IntMap.fromSet objectForNode where
-    objectForNode node = case get_label tree node of
+    objectForNode node = case getLabel tree node of
                            Nothing -> Nothing
                            Just label ->
                                case lookup label things of
@@ -163,7 +163,7 @@ labelToNodeMap tree things = getNodesSet tree & IntMap.fromSet objectForNode whe
 
 getSequencesOnTree :: HasLabels t => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
-    sequence_for_node node = case get_label tree node of
+    sequence_for_node node = case getLabel tree node of
                                Nothing ->  Nothing
                                Just label ->
                                    case find_sequence label sequence_data of
@@ -172,12 +172,12 @@ getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequen
 
 getLabelled :: HasLabels t => t -> (Text -> a -> b) -> IntMap a -> [b]
 getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
-    go (node, thing) = case get_label tree node of
+    go (node, thing) = case getLabel tree node of
                          Just label -> Just $ f label thing
                          Nothing -> Nothing
 
 sequencesFromTree tree isequences = [(label, isequence) | n <- leafNodes tree ++ internalNodes tree,
-                                                             let label = add_ancestral_label n (get_labels tree),
+                                                             let label = addAncestralLabel n (getLabels tree),
                                                              let isequence = isequences IntMap.! n]
 
 foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
