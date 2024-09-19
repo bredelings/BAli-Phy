@@ -90,7 +90,7 @@ uniformLabelledTree taxa dist = do
 uniform_labelled_tree taxa branchLengthsDist = do
   topology <- RanSamplingRate 0.0 $ uniformLabelledTopology taxa
   branchLengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
-  let tree = WithBranchLengths topology branchLengths
+  let tree = branchLengthTree topology branchLengths
   addTreeMoves 1 tree
   return tree
 
