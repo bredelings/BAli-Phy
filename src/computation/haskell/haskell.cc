@@ -553,7 +553,7 @@ std::string ConstructorDecl::print() const
     if (fields.index() == 0)
     {
         for(auto& arg_type: std::get<0>(fields))
-            result += " " + parenthesize_type(arg_type);
+            result += " " + parenthesize_type(arg_type, true);
     }
     else
         result += " " + std::get<1>(fields).print();

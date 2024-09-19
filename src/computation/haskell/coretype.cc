@@ -449,11 +449,13 @@ Type remove_top_gen(Type type)
     return type;
 }
 
-string parenthesize_type(Type t)
+string parenthesize_type(Type t, bool parenthesize_type_app)
 {
     t = follow_meta_type_var(t);
 
     if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
+        return t.print();
+    else if (not parenthesize_type_app and t.is_a<TypeApp>() and not is_type_op(t))
         return t.print();
     else
         return "(" + t.print() + ")";
@@ -682,14 +684,10 @@ string TypeApp::print() const
     {
         auto [tycon, arg1, arg2] = *type_op;
 
-        string arg1s = is_type_op(arg1) ? parenthesize_type(arg1) : arg1.print();
-        string arg2s = arg2.print();
-        if (is_function_type(*this) and is_function_type(arg2))
-            ;
-        else if (is_type_op(arg2))
-            arg2s = parenthesize_type(arg2);
-
-        return arg1s + " " + tycon.print() + " "+ arg2s;
+	if (is_function_type(*this) and is_function_type(arg2))
+	    return parenthesize_type(arg1, false) + " " + tycon.print() + " "+ arg2.print();
+	else
+	    return parenthesize_type(arg1, false) + " " + tycon.print() + " "+ parenthesize_type(arg2, false);
     }
     else if (auto element_type = is_list_type(*this))
         return "[" + element_type->print() +"]";
@@ -701,7 +699,7 @@ string TypeApp::print() const
         return "(" + join(parts,", ") +")";
     }
 
-    return head.print() + " " + parenthesize_type(arg);
+    return head.print() + " " + parenthesize_type(arg, true);
 }
 
 Type make_tyapps(const std::vector<Type>& tyapps)

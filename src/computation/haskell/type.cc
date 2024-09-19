@@ -149,10 +149,26 @@ int type_arity(LType t)
     return a;
 }
 
-string parenthesize_type(const LType& lt)
+optional< std::tuple<LTypeCon, LType, LType> > is_type_op(const Type& t)
+{
+    auto [head,args] = decompose_type_apps({noloc,t});
+
+    if (args.size() != 2) return {};
+
+    auto tc = unloc(head).to<TypeCon>();
+
+    if (tc and is_haskell_sym(tc->name))
+        return {{{head.loc,*tc}, args[0], args[1]}};
+    else
+        return {};
+}
+
+string parenthesize_type(const LType& lt, bool parenthesize_type_app)
 {
     auto& t = unloc(lt);
     if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<ListType>() or t.is_a<TupleType>())
+        return t.print();
+    else if (not parenthesize_type_app and t.is_a<TypeApp>() and not is_type_op(t))
         return t.print();
     else
         return "(" + t.print() + ")";
@@ -236,32 +252,19 @@ bool TypeApp::operator==(const TypeApp& t) const
     return (head == t.head) and (arg == t.arg);
 }
 
-optional< std::tuple<LTypeCon, LType, LType> > is_type_op(const Type& t)
-{
-    auto [head,args] = decompose_type_apps({noloc,t});
-
-    if (args.size() != 2) return {};
-
-    auto tc = unloc(head).to<TypeCon>();
-
-    if (tc and is_haskell_sym(tc->name))
-        return {{{head.loc,*tc}, args[0], args[1]}};
-    else
-        return {};
-}
-
 string TypeApp::print() const
 {
     if (auto type_op = is_type_op(*this))
     {
         auto& [tycon, arg1, arg2] = *type_op;
-        if (is_type_op(unloc(arg1)))
-            return parenthesize_type(arg1) + " " + tycon.print() + " "+ arg2.print();
+
+        if (is_function_type({noloc,*this}) and is_function_type(arg2))
+            return parenthesize_type(arg1, false) + " " + tycon.print() + " "+ arg2.print();
         else
-            return arg1.print() + " " + tycon.print() + " "+ arg2.print();
+            return parenthesize_type(arg1, false) + " " + tycon.print() + " "+ parenthesize_type(arg2, false);
     }
 
-    return head.print() + " " + parenthesize_type(arg);
+    return head.print() + " " + parenthesize_type(arg,true);
 }
 
 LType make_tyapps(const std::vector<LType>& tyapps)

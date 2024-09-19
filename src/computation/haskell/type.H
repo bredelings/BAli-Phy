@@ -270,7 +270,7 @@ struct TypeOfKind
     TypeOfKind(const LType& t, const Kind& k):type(t), kind(k) {}
 };
 
-std::string parenthesize_type(const LType& t);
+std::string parenthesize_type(const LType& t, bool parenthesize_type_apps);
 
 std::pair<LType,std::vector<LType>> decompose_type_apps(LType t);
 

@@ -387,7 +387,7 @@ Type make_arrow_type(const Type& t1, const Type& t2);
 
 Type make_equality_pred(const Type& t1, const Type& t2);
 
-std::string parenthesize_type(Type t);
+std::string parenthesize_type(Type t, bool parenthesize_type_app);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
