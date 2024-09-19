@@ -19,7 +19,7 @@ model seqData = do
 
     tree   <- prior $ uniform_labelled_tree taxa branch_length_dist
 
-    freqs  <- prior $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
+    freqs  <- prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
     kappa1 <- prior $ logNormal 0 1
     kappa2 <- prior $ logNormal 0 1
 

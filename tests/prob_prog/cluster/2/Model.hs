@@ -15,7 +15,7 @@ model xs = do
 
   clusters <- sample $ iid n cluster_dist
 
-  ps <- sample $ symmetric_dirichlet n 0.5
+  ps <- sample $ symmetricDirichlet n 0.5
 
   let n_points = length xs
       dists = [normal mean sigma | (mean,sigma) <- clusters]

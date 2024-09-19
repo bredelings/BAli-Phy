@@ -17,7 +17,7 @@ model xs = do
 
   let n_components = 3
 
-  w <- sample $ symmetric_dirichlet n_components 1
+  w <- sample $ symmetricDirichlet n_components 1
   mu <- sort <$> sample (iid n_components (cauchy 0 1))
   tau <- sample $ iid n_components (gamma 1 1)
 

@@ -34,7 +34,7 @@ getSmodel = do
 
   kappaPyr <- sample $ logNormal (log 2) 0.25
 
-  pi <- sample $ symmetric_dirichlet_on (letters dna) 2
+  pi <- sample $ symmetricDirichletOn (letters dna) 2
 
   return $ tn93' dna kappaPur kappaPyr pi
 

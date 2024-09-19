@@ -7,10 +7,10 @@ vocabulary = ["bear", "wolf", "python", "prolog"];
 
 ntopics = 2
 
-word_frequencies_dist = sample $ symmetric_dirichlet_on vocabulary 1.0
+word_frequencies_dist = sample $ symmetricDirichletOn vocabulary 1.0
 
 word_dist_for_doc word_frequencies_for_topic nwords = do
-  topic_frequencies <- sample $ symmetric_dirichlet ntopics 1
+  topic_frequencies <- sample $ symmetricDirichlet ntopics 1
   topics  <- sample $ iid nwords $ categorical topic_frequencies
   let word_dist = independent [ categorical_on $ word_frequencies_for_topic!!topic | topic <- topics ]
   return (word_dist, topic_frequencies)

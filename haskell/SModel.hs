@@ -88,7 +88,7 @@ m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins 
 m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW
 
 --  w1 <- uniform 0 1
---  [f1, f2] <- symmetric_dirichlet 2 1
+--  [f1, f2] <- symmetricDirichlet 2 1
 m1a w1 f1 model_func = parameter_mixture_unit (m1a_omega_dist f1 w1) model_func
 
 m2a w1 f1 posP posW model_func = parameter_mixture_unit (m2a_omega_dist f1 w1 posP posW) model_func
