@@ -23,6 +23,7 @@ module Probability (module Probability,
                     module Probability.Distribution.Discrete,
                     module Probability.Distribution.Transform,
 
+                    module Probability.Distribution.Independent,
                     module Probability.Distribution.List,
                     module Probability.Distribution.Tuple,
                     module Probability.Distribution.Markov,
@@ -61,6 +62,7 @@ import Probability.Distribution.Uniform
 import Probability.Distribution.Discrete
 import Probability.Distribution.Transform
 
+import Probability.Distribution.Independent
 import Probability.Distribution.List
 import Probability.Distribution.Tuple
 import Probability.Distribution.Markov

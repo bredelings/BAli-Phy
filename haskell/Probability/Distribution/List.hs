@@ -1,6 +1,7 @@
 module Probability.Distribution.List where
 
 import Probability.Random
+import Probability.Distribution.Independent
 import Probability.Distribution.Gamma
 import Probability.Distribution.Tuple
 import Probability.Distribution.Discrete -- Maybe move to a different module?
@@ -12,31 +13,25 @@ import qualified Data.IntMap as IM
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
 
-independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
-independent_densities [] []         = []
-independent_densities _  _          = [doubleToLogDouble 0.0]
-
-independent_pdf (d:ds) (x:xs) = pdf d x * independent_pdf ds xs
-independent_pdf [] []         = 1
-independent_pdf _  _          = 0
-
-plate n dist_f = independent $ map dist_f [0..n-1]
-
 {-
  Can we generalize this to something that works for IntMap a as well as List a?
 
-type Range :: Type -> Type
-type family Range m
-type instance Range [] = Int
-type instance Range IntMap = IntSet
+type Domain :: Type -> Type
+type family Domain k
+type instance Domain Int     = []
+type instance Domain IntSet  = IntMap
+type instance Domain (Set a) = Map a  -- Data.Set requires Ord a.
+type instance Domain [a]     = [(a,)] -- This can't be applied to b.
+                                         So it can't be a Functor.
+                                         Would it work to make Domain into a 2-arg type family?
 
-data IID m d = IID (Range m) d
+data IID k d = IID k d
 
 instance Dist d => dist (IID m d) where
-    type Result (IID m d) = m (Result d)
+    type Result (IID k d) = (Domain m) (Result d)
 
 instance IOSampleable d => (IOSampleable (IID m d)) where
-   sampleIO (IID range dist) = fmap (
+   sampleIO (IID keys dist) = sampleIO $ independent ( ??? )
 
 instance IOSampleable d => (IOSampleable (IID [] d)) where
    sampleIO (IID Int dist) = take n <$> (sequence $ repeat $ sampleIO dist)
@@ -44,6 +39,26 @@ instance IOSampleable d => (IOSampleable (IID [] d)) where
 
 instance IOSampleable d => (IOSampleable (IID IntMap d)) where
    sampleIO (IID rangeSet dist) = sequence $ fromSet (\d -> sampleIO dist) range
+
+For sampling, we need to be able to convert each key set into an (f dist) for some f.
+
+iid (()::())       dist -> repeat dist
+   iidInf
+iid (n::Int)       dist -> take n (repeat dist) == replicate n dist
+   iidN
+iid (keys::[k])    dist -> fmap (\key -> (key,) <$> dist) keys
+   iidOn
+iid (keys::IntSet) dist -> IntMap.fromSet keys (const dist)
+   iidOnSet
+
+for computing the probability, then
+a) if we can extract a finite list of values `values'`, and if possible then return (map (density dist) values')
+b) return zero if we cannot extract the list
+
+iidProb ()                                                 = values' = error "Can't observe an infinite number of values"
+iidProb (n::int)       dist (values::[Result dist])        = values' = values if (length values == n)
+iidProb (keys::[k])    dist (values::[(k,Result dist)]     = values' = map snd values if (the key sets are the same.)
+iidProb (keys::IntSet) dist (values::IntMap (Result dist)) = values' = IntMap.elems values' if (the keysets are the same).
 -}
 
 
@@ -83,33 +98,6 @@ iidMap set dist = independent $ IM.fromSet (const dist) set
 -- that DOES make sense...
 
 -- So we can do this...  but then we only get access to the "dist" part.
-data Independent f d = Independent (f d)
-
-instance Dist d => Dist (Independent f d) where
-    type Result (Independent f d) = f (Result d)
-    dist_name dist = "independent"
-
-instance (Functor f, IOSampleable d) => IOSampleable (Independent f d) where
-    sampleIO (Independent dists) = return $ fmap (unsafePerformIO . sampleIO) dists
-
-instance HasPdf d => HasPdf (Independent [] d) where
-    pdf (Independent ds) xs = independent_pdf ds xs
-
-instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d) where
-    annotated_densities (Independent dists) = make_densities' $ independent_densities dists
-
---instance Sampleable d => Sampleable (Independent [] d) where
---    sample (Independent dists) = lazy $ sequence $ map sample dists
-
---instance Sampleable d => Sampleable (Independent IntMap d) where
---    sample (Independent dists) = RanOp (\interp -> return $ fmap (unsafePerformIO . interp . sample) dists)
-
-instance (Functor f, Sampleable d) => Sampleable (Independent f d) where
-    sample (Independent dists) = RanOp (\interp -> return $ fmap (unsafePerformIO . interp . sample) dists)
-
-
-independent dists = Independent dists
-
 -----
 data IIDOn a d = IIDOn [a] d
 

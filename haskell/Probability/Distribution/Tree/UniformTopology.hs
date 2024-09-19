@@ -3,6 +3,7 @@ module Probability.Distribution.Tree.UniformTopology where
 import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
+import           Probability.Distribution.Independent
 import           Probability.Distribution.List
 import           Probability.Distribution.Exponential
 import           MCMC
