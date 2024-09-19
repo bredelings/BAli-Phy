@@ -123,7 +123,7 @@ instance Sampleable d => Sampleable (IIDOn a d) where
                                   xs <- sequence $ repeat $ dist
                                   return $ zip vs xs
 
-iid_on items dist = IIDOn items dist
+iidOn items dist = IIDOn items dist
 
 {-
   could we do i.e.

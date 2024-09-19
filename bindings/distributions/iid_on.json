@@ -1,7 +1,7 @@
 {
     "name": "iid_on",
     "result_type": "Distribution<List<(a,b)>>",
-    "call": "iid_on(@xs,@dist)",
+    "call": "iidOn(@xs,@dist)",
     "import": ["Probability"],
     "args": [
         {
