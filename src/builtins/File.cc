@@ -7,6 +7,7 @@
 #include <fstream>
 #include "util/io.H"   // for portable_getline( ).
 #include "computation/haskell/Integer.H" // for Integer
+#include "bali-phy/files.H" // for create_unique_dir
 
 namespace fs = std::filesystem;
 using std::fstream;
@@ -265,3 +266,26 @@ extern "C" closure builtin_function_combine(OperationArgs& Args)
 
     return String( path3.string() );
 }
+
+// FilePath -> IO ()
+extern "C" closure builtin_function_createDirectoryRaw(OperationArgs& Args)
+{
+    fs::path dirname = Args.evaluate(0).as_<String>().value();
+
+    std::error_code ec;
+    if (not fs::create_directory(dirname))
+        throw myexception()<<"createDirectory: directory "<<dirname<<" already exists.";
+
+    return constructor("()",0);
+}
+
+// FilePath -> IO FilePath
+extern "C" closure builtin_function_createUniqueDirectoryRaw(OperationArgs& Args)
+{
+    fs::path prefix = Args.evaluate(0).as_<String>().value();
+
+    auto dir_path = create_unique_dir(prefix);
+
+    return String(dir_path);
+}
+
