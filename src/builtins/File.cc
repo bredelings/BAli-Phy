@@ -286,6 +286,6 @@ extern "C" closure builtin_function_createUniqueDirectoryRaw(OperationArgs& Args
 
     auto dir_path = create_unique_dir(prefix);
 
-    return String(dir_path);
+    return String(dir_path.string());
 }
 
