@@ -777,7 +777,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
     model_t decls;
     vector<pair<string,ptree>> extra_vars = {{"taxa",parse_type("List<Text>")}};
     if (fixed.count("topology"))
-	extra_vars.push_back({"topology",parse_type("Tree")});
+	extra_vars.push_back({"topology",parse_type("Tree<Nothing>")});
 
     auto TC = makeTypechecker(R, extra_vars, {});
     CodeGenState code_gen_state(R);
@@ -906,7 +906,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
         else
             M = "~uniform_tree(taxa, gamma(0.5, 2/length(taxa)))";
 
-        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree"), M, "tree model", {});
+        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<Lengths>"), M, "tree model", {});
     }
 
     //-------------- Likelihood calculator types -----------//
