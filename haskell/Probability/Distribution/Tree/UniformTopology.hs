@@ -6,6 +6,7 @@ import           Probability.Distribution.Uniform
 import           Probability.Distribution.Independent
 import           Probability.Distribution.List
 import           Probability.Distribution.Exponential
+import           Probability.Distribution.Categorical
 import           MCMC
 import           Data.Array
 import qualified Data.IntMap as IntMap
@@ -111,3 +112,13 @@ fixedTopologyTree topology dist = do
   let tree = branchLengthTree topology branchLengths
   addLengthMoves 1 tree
   return tree
+
+uniformRootedTopology n = do
+  topology <- sample $ uniformTopology n
+  root <- sample $ uniformCategoricalOn (nodes topology)
+  return $ addRoot root topology
+
+uniformRootedTree taxa branchLengthsDist = do
+  tree <- uniformLabelledTree taxa branchLengthsDist
+  root <- sample $ uniformCategoricalOn (nodes tree)
+  return $ addRoot root tree
