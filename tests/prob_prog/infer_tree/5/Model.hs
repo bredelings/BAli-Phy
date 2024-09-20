@@ -22,20 +22,19 @@ smodel_prior nucleotides =  do
 
 tree_prior taxa = do
 
-    theta <- sample $ logLaplace (-5) 2.0
+    theta <- sample $ logLaplace (-5) 2
 
-    let nTaxa = length taxa
-        leafTimes = zip (replicate nTaxa 0) [0..]
-        rateShifts = []
+    let taxonTimes = [(taxon, 0.0) | taxon <- taxa]
+        rateShifts = [(0.0, theta)]
 
-    tree <- addLabels taxa <$> sample (coalescentTree theta leafTimes rateShifts)
+    tree <- sample (labelledCoalescentTree taxonTimes rateShifts)
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)
 
 
 model seqData = do
-    let taxa = zip [0..] $ getTaxa seqData
+    let taxa = getTaxa seqData
 
     (tree  , tree_loggers) <- tree_prior taxa
 
