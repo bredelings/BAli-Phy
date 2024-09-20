@@ -24,19 +24,20 @@ namespace fs = std::filesystem;
 namespace po = boost::program_options;
 using po::variables_map;
 
-fs::path open_dir(const string& dirbase)
+fs::path create_unique_dir(const std::filesystem::path& dirbase)
 {
     // FIXME. Maybe the ability to create arbitrary files should not be allowed?
 
     // 1. Create the parent directory.
-    auto parent = fs::path(dirbase).parent_path();
+    auto parent = dirbase.parent_path();
     if (not parent.empty())
 	fs::create_directories(parent);
 
     // 2. Try to create the child directory
     for(int i=1;;i++)
     {
-	string dirname = dirbase + "-" + convertToString(i);
+	auto dirname = dirbase;
+	dirname += "-" + convertToString(i);
 
 	// 3. Ensure a unique owner.
 	if (fs::create_directory(dirname))
@@ -85,7 +86,7 @@ fs::path init_dir(const variables_map& args)
 {
     string name = run_name(args);
     
-    fs::path dir = open_dir(name);
+    fs::path dir = create_unique_dir(name);
     cerr<<"Created directory "<<dir<<" for output files."<<endl;
     return dir;
 }
