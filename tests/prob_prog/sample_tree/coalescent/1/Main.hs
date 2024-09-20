@@ -10,7 +10,7 @@ model taxa = do
     theta <- sample $ logLaplace (-5) 2.0
 
     let nTaxa = length taxa
-        leafTimes = zip (replicate nTaxa 0) [0..]
+        leafTimes = zip [0..] (replicate nTaxa 0)
         rateShifts = [(0,theta)]
 
     tree <- addLabels taxa <$> sample (coalescentTree leafTimes rateShifts)

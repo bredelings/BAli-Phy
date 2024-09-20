@@ -60,8 +60,8 @@ getNextEvent (Just (t1,x)) (Just (t2,y)) | t1 < t2   = Just (t1, Left x)
 sampleCoalescentTree leafTimes ((t0,theta0):rateShifts) = do
 
   let nLeaves = length leafTimes
-      firstInternal = 1 + maximum [node | (time,node) <- leafTimes]
-      nodes  =  [(time, Leaf node)      | (time, node) <- sortOn fst leafTimes]
+      firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
+      nodes  =  [(time, Leaf node)      | (node, time) <- sortOn fst leafTimes]
       shifts =  [(time, RateShift rate) | (time, rate) <- rateShifts]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
@@ -110,7 +110,7 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree [(Time,Int)] [(Time,Double)]
+data CoalescentTree = CoalescentTree [(Int,Time)] [(Time,Double)]
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
@@ -140,8 +140,8 @@ type NodeNoParent = [RootedTreeNode] -> RootedTreeNode
 sampleCoalescentTree2 theta leafTimes rateShifts = do
 
   let nLeaves = length leafTimes
-      firstInternal = 1 + maximum [node | (time,node) <- leafTimes]
-      nodes  =  [(time, Leaf node)      | (time, node) <- sortOn fst leafTimes]
+      firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
+      nodes  =  [(time, Leaf node)      | (node, time) <- sortOn fst leafTimes]
       shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
