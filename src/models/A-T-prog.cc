@@ -765,7 +765,6 @@ std::string generate_atmodel_program(const variables_map& args,
     }
 
     // We could fix the whole tree or just the topology.
-    auto tree_var = var("tree");
     expression_ref branch_lengths = var("IntMap.empty");
 
     // M1. Declarations -- This is similar to use_block(model, ??, decls, "decls");
@@ -779,6 +778,7 @@ std::string generate_atmodel_program(const variables_map& args,
     model.empty_stmt();
 
     // M4. Branch-length tree
+    auto tree_var = var("tree");
     if (not fixed.count("tree"))
     {
 //      if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
@@ -794,7 +794,8 @@ std::string generate_atmodel_program(const variables_map& args,
         expression_ref E = var("sampleTree");
         E = code.add_arguments(E,{{"taxa",taxon_names_var}});
 
-        expression_ref tree_exp = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
+        tree_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
+        branch_lengths = {var("branchLengths"), tree_var};
     }
 
     set<string> used_states;
