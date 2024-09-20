@@ -771,10 +771,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
     const int n_partitions = filename_ranges.size();
 
     // 2. --- Find out what is fixed
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
+    auto fixed = get_fixed(args);
 
     // 3. --- Compile declarations
     model_t decls;

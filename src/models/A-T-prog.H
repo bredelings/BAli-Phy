@@ -43,4 +43,6 @@ Program gen_model_program(const boost::program_options::variables_map& args,
 
 expression_ref get_alphabet_expression(const alphabet& a);
 
+std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args);
+
 #endif

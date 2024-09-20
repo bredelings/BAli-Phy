@@ -5,6 +5,7 @@
 
 #include "util/set.H"
 #include "util/io.H"
+#include "util/string/split.H"
 #include "models/compile.H"   // for model_t
 #include "models/parse.H"   // for unparse_type
 
@@ -36,6 +37,28 @@ namespace fs = std::filesystem;
 
 namespace po = boost::program_options;
 using po::variables_map;
+
+std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args)
+{
+    map<string, string> fixed;
+    if (args.count("fix"))
+        for(auto& f: args.at("fix").as<vector<string>>())
+	{
+	    auto [key,value] = split_on_first('=',f);
+	    fixed.insert({key,value});
+	}
+
+    for(auto& [key,value]: fixed)
+        if (key != "topology" and key != "tree" and key != "alignment")
+            throw myexception()<<"--fix: parameter '"<<key<<"' not recognized";
+
+    if (fixed.count("tree") and args.count("tree")) throw myexception()<<"Can't specify --tree=<prior> if it is fixed!";
+    if (fixed.count("tree") and fixed.count("topology")) throw myexception()<<"Can't fix both 'tree' and 'topology'";
+    if (fixed.count("tree") and fixed.at("tree").empty())  throw myexception()<<"Fixed tree but did not specify tree file!  Use --fix topology=<filename>";
+    if (fixed.count("topology") and fixed.at("topology").empty())  throw myexception()<<"Fixed topology but did not specify tree file!  Use --fix topology=<filename>";
+
+    return fixed;
+}
 
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
 {
@@ -259,10 +282,7 @@ do_block generate_main(const variables_map& args,
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
 
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
+    auto fixed = get_fixed(args);
 
     auto log_formats = get_log_formats(args, args.count("align"));
 
@@ -363,8 +383,10 @@ do_block generate_main(const variables_map& args,
         }
     }
     optional<fs::path> tree_filename;
-    if (args.count("tree"))
-	tree_filename = args.at("tree").as<string>();
+    if (fixed.count("tree"))
+	tree_filename = fixed.at("tree");
+    else if (fixed.count("topology"))
+	tree_filename = fixed.at("topology");
 
     if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
     {
@@ -500,7 +522,7 @@ vector<expression_ref>
 compute_logged_quantities(do_block& model,
 			  int n_branches,
 			  int n_partitions,
-			  const set<string>& fixed,
+			  const map<string,string>& fixed,
 			  const map<string,json::value>& keys,
 			  int i,
 			  const expression_ref& tree,
@@ -644,14 +666,7 @@ std::string generate_atmodel_program(const variables_map& args,
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
 
-    set<string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
-            fixed.insert(f);
-
-    for(auto& f: fixed)
-        if (f != "topology" and f != "tree" and f != "alignment")
-            throw myexception()<<"--fix: parameter '"<<f<<"' not recognized";
+    auto fixed = get_fixed(args);
 
     auto log_formats = get_log_formats(args, args.count("align"));
 
