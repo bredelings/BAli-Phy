@@ -452,6 +452,9 @@ class MCMCRun(object):
     def get_branch_length_prior(self):
         return None
 
+    def get_tree_prior(self):
+        return None
+
     def get_code(self):
         return []
 
@@ -526,8 +529,14 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
         self.command = ' '.join([shlex.quote(word) for word in self.run_info["command"]])
         self.version = self.run_info["program"]["version"]
-        self.topology_prior = self.run_info["tree"]["topology"]
-        self.branch_prior = self.run_info["tree"]["lengths"]
+        if (isinstance(self.run_info["tree"],str)):
+            self.topology_prior = None
+            self.branch_prior = None
+            self.tree_prior = self.run_info["tree"]
+        else:
+            self.topology_prior = self.run_info["tree"]["topology"]
+            self.branch_prior = self.run_info["tree"]["lengths"]
+            self.tree_prior = None
 
         self.code = []
         for file_path in os.listdir( self.get_dir() ):
@@ -601,6 +610,9 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def get_branch_length_prior(self):
         return self.branch_prior
+
+    def get_tree_prior(self):
+        return self.tree_prior
 
     def get_n_sequences(self,p):
         features = self.get_alignment_info( self.dir / "C1.P{p+1}.initial.fasta")
@@ -930,6 +942,9 @@ class Analysis(object):
 
     def get_scale_model_for_partition(self,p):
         return first_all_same([run.get_scale_model_for_partition(p) for run in self.mcmc_runs])
+
+    def get_tree_prior(self):
+        return first_all_same([run.get_tree_prior() for run in self.mcmc_runs])
 
     def get_topology_prior(self):
         return first_all_same([run.get_topology_prior() for run in self.mcmc_runs])
@@ -2336,6 +2351,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += f'<tr><td class="modelname">topology</td><td>{self.get_topology_prior()}</td></tr>'
         if self.get_branch_length_prior():
             section += f'<tr><td class="modelname">branch lengths</td><td>{self.get_branch_length_prior()}</td></tr>'
+        if self.get_tree_prior():
+            section += f'<tr><td class="modelname">tree</td><td>{self.get_tree_prior()}</td></tr>'
         section += '</table>\n'
 
         section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'
