@@ -16,6 +16,9 @@ using std::vector;
 
 namespace views = ranges::views;
 
+/*
+ * See Note: Error messages from the kind checker.
+ */
 
 bool kindchecker_state::type_var_in_scope(const TypeVar& tv) const
 {
@@ -617,8 +620,11 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
  * Typically we also do check_type(desugar(type)).
  * - We should probably do this in one step.
  * - We could remove locations from core types.
- *
+ * - We could make kinds mandatory in Core types.
+ * - Do we need to eliminate default-constructed types/kinds (NOTYPE)?
+ *   - We might need to make some types optional<Type>, e.g. the parser.
  */
+
 Type kindchecker_state::kind_and_type_check_type(const Type& type)
 {
     return kind_and_type_check_type_(type, kind_type() );
@@ -628,14 +634,6 @@ Type kindchecker_state::kind_and_type_check_constraint(const Type& type)
 {
     return kind_and_type_check_type_(type, kind_constraint() );
 }
-
-/*
-  So.... how would we kind check a forall-type? 
-  - If it was top-level, we'd bind the forall variables to fresh kind vars, and estimate the kind...
-  - I guess we could record the kind on the forall variables themselves.
-  - Then after we decide what all the kind variables are, we could go replace all the kind variables with
-    their final substituted type.
- */
 
 vector<TypeVar> kindchecker_state::unbound_free_type_variables(const Type& type)
 {
