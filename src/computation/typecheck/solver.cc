@@ -85,7 +85,9 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
     if (class_name == "~") return {};
 
     // Fixme... since we know the class name, can we simplify superclass_extractors???
-    for(auto& [dvar, type]: info_for_class(class_name)->superclass_extractors)
+    auto info = info_for_class(class_name);
+    assert(info);
+    for(auto& [dvar, type]: info->superclass_extractors)
     {
         // forall a.Klass a => Superklass a
         auto [tvs, preds, superclass_constraint] = peel_top_gen(type);
