@@ -1,0 +1,19 @@
+{
+    "name": "fixed_topology_tree",
+    "result_type": "Distribution<Tree>",
+    "call": "fixedTopologyTree(@topology,@branch_length_dist)",
+    "import": ["Probability"],
+    "title": "The uniform_topology distribution on trees",
+    "args": [
+        {
+            "name": "topology",
+            "type": "Tree",
+	    "description": "The topology for the tree"
+        },
+	{
+	    "name": "branch_length_dist",
+	    "type": "Distribution<Double>",
+	    "description": "The distribution for branch lengths"
+	}
+    ]
+}
