@@ -607,6 +607,18 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
     return types;
 }
 
+/* NOTE: Error messages from the kind checker.
+ *
+ * Currently error messages don't have locations information.
+ * In order to get better error messages, we need to:
+ * - pass a mutable reference to the typechecker (maybe?)
+ * - have location information.
+ *
+ * Typically we also do check_type(desugar(type)).
+ * - We should probably do this in one step.
+ * - We could remove locations from core types.
+ *
+ */
 Type kindchecker_state::kind_and_type_check_type(const Type& type)
 {
     return kind_and_type_check_type_(type, kind_type() );
