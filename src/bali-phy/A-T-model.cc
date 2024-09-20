@@ -229,9 +229,6 @@ json::object log_summary(const vector<model_t>& IModels,
                          const vector<string>& alphabet_names,
                          const variables_map& args)
 {
-    json::object info;
-    json::array partitions;
-
     string tree;
     if (n_sequences >= 2 and not tree_model.empty())
     {
@@ -246,6 +243,7 @@ json::object log_summary(const vector<model_t>& IModels,
     for(auto& [filename,range]: split_on_last(':',filename_ranges))
         alignment_files.push_back( {fs::path(filename), range} );
 
+    json::array partitions;
     for(int i=0;i<n_data_partitions;i++)
     {
 	json::object partition;
@@ -314,6 +312,7 @@ json::object log_summary(const vector<model_t>& IModels,
             cout<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
     }
 
+    json::object info;
     info["partitions"] = partitions;
     info["smodels"] = smodels;
     info["imodels"] = imodels;
