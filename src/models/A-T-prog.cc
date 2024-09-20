@@ -505,7 +505,7 @@ void write_header(std::ostream& program_file,
 		  const vector<model_t>& SMs,
 		  const vector<model_t>& IMs,
 		  const vector<model_t>& scaleMs,
-		  const model_t& branch_length_model)
+		  const model_t& tree_model)
 {
     set<string> imports;
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
@@ -523,7 +523,7 @@ void write_header(std::ostream& program_file,
         add(imports, m.imports);
     for(auto& m: scaleMs)
         add(imports, m.imports);
-    add(imports, branch_length_model.imports);
+    add(imports, tree_model.imports);
 
     program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
     program_file<<"module Main where";
@@ -716,7 +716,6 @@ std::string generate_atmodel_program(const variables_map& args,
     // FIXME: Can we load the alignments as SEQUENCES first?
     var taxon_names_var("taxa");
 
-    // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
     vector<expression_ref> model_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
