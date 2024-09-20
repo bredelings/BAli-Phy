@@ -87,7 +87,7 @@ fs::path init_dir(const variables_map& args)
     string name = run_name(args);
     
     fs::path dir = create_unique_dir(name);
-    cerr<<"Created directory "<<dir<<" for output files."<<endl;
+    cerr<<"Created directory "<<dir<<" for output files."<<endl<<endl;
     return dir;
 }
 
