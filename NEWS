@@ -4,6 +4,7 @@
 - Input: allow defining models using multiple lines.
 - Models:
   + speed up and improve RNA editing model.
+  + refactor coalescent tree model
 - Bug fixes:
   + Fix for using previously compiled modules.
 
