@@ -144,7 +144,7 @@ SOLUTION: Make a "direction" that is either a forward or reverse edge:
 
 
 instance IsGraph Graph where
-    getNodesSet (Graph nodesMap _  _ _ _)             = IntMap.keysSet nodesMap
+    getNodesSet (Graph nodesMap _  _ _ _)            = IntMap.keysSet nodesMap
     getEdgesSet (Graph _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
 
     edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = nodeOutEdges $ (nodesMap IntMap.! nodeId)
