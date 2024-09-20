@@ -9,4 +9,5 @@ std::vector<std::string> split(const std::string& line,char c);
 std::vector<std::string> split(const std::string& line,const std::string& s);
 std::vector<std::string> resplit(const std::string& line,const std::string& s);
 std::pair<std::string,std::string> split_on_last(char, const std::string&);
+std::pair<std::string,std::string> split_on_first(char, const std::string&);
 #endif

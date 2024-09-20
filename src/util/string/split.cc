@@ -82,8 +82,21 @@ pair<string,string> split_on_last(char sep, const string& s)
     auto pos = s1.rfind(sep);
     if (pos != string::npos)
     {
+	s1 = s.substr(0,pos);
 	s2 = s.substr(pos+1);
-	s1 = s1.substr(0,pos);
+    }
+    return {s1,s2};
+}
+
+pair<string,string> split_on_first(char sep, const string& s)
+{
+    string s1 = s;
+    string s2;
+    auto pos = s1.find(sep);
+    if (pos != string::npos)
+    {
+	s1 = s.substr(0,pos);
+	s2 = s.substr(pos+1);
     }
     return {s1,s2};
 }
