@@ -283,9 +283,6 @@ po::options_description model_options(int level)
         ("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
         ("fix,F",value<vector<string>>()->composing(),"Fix topology,tree,alignment")
         ("variables",value<vector<string>>()->composing(),"Variable definitions");
-    if (level >= 1)
-        model.add_options()
-	("branch-lengths,B",value<string>(),"Prior on branch lengths.");
     model.add_options()
 	("link,L",value<vector<string>>()->composing(),"Link partitions.");
 
