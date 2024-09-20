@@ -33,7 +33,7 @@ TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
     auto& [loc, qual ] = lqual;
     if (loc) push_source_span(*loc);
 
-	// FILTER
+    // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
