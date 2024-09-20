@@ -18,10 +18,10 @@ merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
 data CoalEvent = Leaf Int | Internal Int | RateShift Double
 nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 
-coalescentTreePrFactors theta leafTimes tree rateShifts = go 0 events 0 (2/theta) 1: parentBeforeChildPrs nLeaves tree
+coalescentTreePrFactors leafTimes ((t0,theta0):rateShifts) tree = go t0 events 0 (2/theta0) 1: parentBeforeChildPrs nLeaves tree
     where nLeaves = length leafTimes
           nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
-          shifts = [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+          shifts = [(time, RateShift (2/theta)) | (time, theta) <- rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
           go t1 []                  n rate pr = pr
           go t1 ((t2,event):events) n rate pr =
@@ -55,12 +55,12 @@ getNextEvent (Just (t1,x)) Nothing                   = Just (t1, Left x)
 getNextEvent (Just (t1,x)) (Just (t2,y)) | t1 < t2   = Just (t1, Left x)
                                          | otherwise = Just (t2, Right y)
 
-sampleCoalescentTree theta leafTimes rateShifts = do
+sampleCoalescentTree leafTimes ((t0,theta0):rateShifts) = do
 
   let nLeaves = length leafTimes
       firstInternal = 1 + maximum [node | (time,node) <- leafTimes]
       nodes  =  [(time, Leaf node)      | (time, node) <- sortOn fst leafTimes]
-      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+      shifts =  [(time, RateShift rate) | (time, rate) <- rateShifts]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
   let go :: Double -> Double -> Int -> [Int] -> [(Double,CoalEvent)] -> ([Int],[(Int,Int)],[(Int,Double)]) -> Random ([Int], [(Int,Int)], [(Int,Double)])
@@ -82,7 +82,7 @@ sampleCoalescentTree theta leafTimes rateShifts = do
       goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (Leaf node      , events)) = go t2 rate  nextNode (node:activeNodes) events (node:nodes, edges, (node,t2):nodeTimes)
       goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (RateShift rate2, events)) = go t2 rate2 nextNode activeNodes        events (nodes, edges, nodeTimes)
 
-  (nodes, edges, nodeTimes) <- go 0 (2/theta) firstInternal [] events ([], [], [])
+  (nodes, edges, nodeTimes) <- go t0 (2/theta0) firstInternal [] events ([], [], [])
   let root = head nodes
       topology = addRoot root (treeFromEdges nodes edges)
 
@@ -108,22 +108,19 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree Double [(Double,Int)] [(Double,Double)]
+data CoalescentTree = CoalescentTree [(Double,Int)] [(Double,Double)]
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
     dist_name _ = "coalescentTree"
 
 instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree theta leafTimes rateShifts) tree = return (coalescentTreePrFactors theta leafTimes tree rateShifts, ())
+    annotated_densities (CoalescentTree leafTimes rateShifts) tree = return (coalescentTreePrFactors leafTimes rateShifts tree, ())
 
 instance Sampleable CoalescentTree where
-    sample dist@(CoalescentTree theta leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree theta leafTimes rateShifts)
+    sample dist@(CoalescentTree leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes rateShifts)
 
-coalescentTree theta leafTimes rateShifts = CoalescentTree theta leafTimes rateShifts
-
-
-
+coalescentTree leafTimes rateShifts = CoalescentTree leafTimes rateShifts
 
 ----------- Alternative coalescent sampling -----------------
 -- This version references neighboring node structures directly, instead of just

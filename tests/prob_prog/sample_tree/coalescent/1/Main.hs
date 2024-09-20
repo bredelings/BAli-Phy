@@ -11,9 +11,9 @@ model taxa = do
 
     let nTaxa = length taxa
         leafTimes = zip (replicate nTaxa 0) [0..]
-        rateShifts = []
+        rateShifts = [(0,theta)]
 
-    tree <- addLabels taxa <$> sample (coalescentTree theta leafTimes rateShifts)
+    tree <- addLabels taxa <$> sample (coalescentTree leafTimes rateShifts)
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)
@@ -28,4 +28,3 @@ main = do
 
      (tree,loggers) <- run_strict (model taxa)
      putStrLn $ show $ J.Object loggers
-
