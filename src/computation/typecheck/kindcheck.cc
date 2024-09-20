@@ -207,7 +207,8 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
         for(auto& constraint: C.context.constraints)
         {
             auto [c2,k2] = kind_check_type(constraint);
-            unify(kind_constraint(), k2);
+            if (not unify(kind_constraint(), k2))
+		throw myexception()<<"Constraint '"<<constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
             constraint = c2;
         }
         auto [cc,k] = kind_check_type(C.type);
@@ -417,12 +418,14 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
     {
         auto [t2,k2] = kind_check_type(field_type);
         field_type = t2;
-        unify(kind_type(), k2);
+        if (not unify(kind_type(), k2))
+	    throw myexception()<<"Field type '"<<field_type.print()<<"' should be a Type, but has kind "<<k2.print();
     }
     for(auto& constraint: info.written_constraints)
     {
         auto [t2,k2] = kind_check_type(constraint);
-        unify(kind_constraint(), k2);
+        if (not unify(kind_constraint(), k2))
+	    throw myexception()<<"Constraint '"<<constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
         constraint = t2;
     }
     
