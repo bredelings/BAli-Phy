@@ -38,6 +38,22 @@ namespace fs = std::filesystem;
 namespace po = boost::program_options;
 using po::variables_map;
 
+/* NOTE: Fixing the alignment
+ *
+ * Currently we compute a fixed alignment on the tree using `alignmentOnTreeFromSequences`.
+ * This assumes the leaf characters are minimally connected (I think) in each column,
+ * instead of actually inferring whether internal nodes have gaps or not.  Also, currently
+ * the alignment isn't modifiable, and walk_tree_sample_NNI_and_A complains and crashes.
+ *
+ * In order to do this correctly, we would need to draw the alignment from some kind of
+ * "fixedAlignment(aligned_sequences,tree)" distribution.  The pairwise alignments would need
+ * to be modifiables, but we need to only change them in ways that don't alter the
+ * projection to the leaves.
+ *
+ * - How would the MCMC moves detect that they shouldn't change the (projected) alignment?
+ * - How can we do SPR moves without changing the projected alignment?
+ */
+
 std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args)
 {
     map<string, string> fixed;
@@ -56,6 +72,7 @@ std::map<std::string, std::string> get_fixed(const boost::program_options::varia
     if (fixed.count("tree") and fixed.count("topology")) throw myexception()<<"Can't fix both 'tree' and 'topology'";
     if (fixed.count("tree") and fixed.at("tree").empty())  throw myexception()<<"Fixed tree but did not specify tree file!  Use --fix topology=<filename>";
     if (fixed.count("topology") and fixed.at("topology").empty())  throw myexception()<<"Fixed topology but did not specify tree file!  Use --fix topology=<filename>";
+    if (fixed.count("alignment") and not args.count("test")) throw myexception()<<"Currently --fix=alignment only works with --test.\n  You can fix the alignment for MCMC by disabling the indel model with -Inone, which disables the indel model.\n  Using the indel information from a fixed alignment during MCMC is not implemented.";
 
     return fixed;
 }
