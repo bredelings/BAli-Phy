@@ -497,6 +497,7 @@ void write_header(std::ostream& program_file,
     imports.insert("MCMC");                                  // for scale_means_only_slice
     imports.insert("Tree.Newick");                           // for write_newick
     imports.insert("SModel.Parsimony");                      // for parsimony
+    imports.insert("Probability.Random");                    // for makeMCMCModel
     add(imports, decls.imports);
     for(auto& m: SMs)
         add(imports, m.imports);
