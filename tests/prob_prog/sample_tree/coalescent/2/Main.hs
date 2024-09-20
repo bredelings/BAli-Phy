@@ -10,11 +10,10 @@ model taxa = do
     theta <- sample $ logLaplace (-5) 2.0
 
     let nTaxa = length taxa
-        leafTimes = zip [0..] (replicate nTaxa 0)
+        taxonTimes = zip taxa (replicate nTaxa 0)
         rateShifts = [(0,theta)]
-        taxonIndices = zip [0..] taxa
 
-    tree <- addLabels taxonIndices <$> sample (coalescentTree leafTimes rateShifts)
+    tree <- sample (labelledCoalescentTree taxonTimes rateShifts)
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)
@@ -25,7 +24,7 @@ name i | i < 26 = [chr(65+i)]
 
 main = do
      let n = 20
-         taxa = (fmap T.pack $ fmap name [0..n-1])
+         taxa = fmap T.pack $ fmap name [0..n-1]
 
      (tree,loggers) <- run_strict (model taxa)
      putStrLn $ show $ J.Object loggers

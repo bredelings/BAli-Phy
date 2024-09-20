@@ -44,12 +44,12 @@ possible = 1 :: LogDouble
 impossible = 0 :: LogDouble
 require p = if p then possible else impossible
 
-parentBeforeChildPrs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
+parentBeforeChildPrs tree = [factor n | n <- getNodes tree]
     where time = nodeTime tree
           factor n = case parentNode tree n of Nothing -> possible
                                                Just p  -> require $ time n <= time p
 
-uniform_time_tree_pr age n_leaves tree = factor0 : parentBeforeChildPrs n_leaves tree
+uniform_time_tree_pr age n_leaves tree = factor0 : parentBeforeChildPrs tree
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
 -- Add moves for non-root internal-node times.
