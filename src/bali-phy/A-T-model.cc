@@ -233,7 +233,7 @@ json::object log_summary(const vector<model_t>& IModels,
     json::array partitions;
 
     string tree;
-    if (n_sequences >= 2)
+    if (n_sequences >= 2 and not tree_model.empty())
     {
         cout<<"tree "<<tree_model.show()<<endl<<endl;
         tree = tree_model.show(false);
