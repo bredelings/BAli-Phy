@@ -30,9 +30,10 @@ TypeChecker::infer_quals_type(vector<Located<Hs::Qual>>& quals)
 void
 TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
 {
-    auto& qual = unloc(lqual);
+    auto& [loc, qual ] = lqual;
+    if (loc) push_source_span(*loc);
 
-    // FILTER
+	// FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
@@ -63,13 +64,16 @@ TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
     }
     else
         std::abort();
+
+    if (loc) pop_source_span();
 }
 
 
 void
 TypeChecker::infer_guard_type(Located<Hs::Qual>& lguard)
 {
-    auto& guard = unloc(lguard);
+    auto& [loc, guard] = lguard;
+    if (loc) push_source_span(*loc);
 
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
@@ -98,6 +102,8 @@ TypeChecker::infer_guard_type(Located<Hs::Qual>& lguard)
     }
     else
         std::abort();
+
+    if (loc) pop_source_span();
 }
 
 
