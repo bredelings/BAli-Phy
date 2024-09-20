@@ -232,12 +232,11 @@ json::object log_summary(const vector<model_t>& IModels,
     json::object info;
     json::array partitions;
 
-    json::object tree;
-
+    string tree;
     if (n_sequences >= 2)
     {
         cout<<"tree "<<tree_model.show()<<endl<<endl;
-        tree["tree"] = tree_model.show(false);
+        tree = tree_model.show(false);
     }
 
     //-------- Log some stuff -----------//
@@ -900,10 +899,11 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     // 12. Default and compile branch length model
     model_t tree_model;
+    if (not fixed.count("tree"))
     {
         string M;
-        if (args.count("branch-lengths"))
-            M = args["branch-lengths"].as<string>();
+        if (args.count("tree"))
+            M = args["tree"].as<string>();
         else if (fixed.count("topology"))
             M = "~fixed_topology_tree(topology, gamma(0.5, 2/length(taxa)))";
         else
