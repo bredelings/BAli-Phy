@@ -10,6 +10,8 @@ import qualified Data.IntMap as IntMap
 import           MCMC
 import           Data.Array
 
+type Time = Double
+
 merge cmp [] ys = ys
 merge cmp xs [] = xs
 merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
@@ -108,7 +110,7 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree [(Double,Int)] [(Double,Double)]
+data CoalescentTree = CoalescentTree [(Time,Int)] [(Time,Double)]
 
 instance Dist CoalescentTree where
     type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
@@ -129,7 +131,7 @@ coalescentTree leafTimes rateShifts = CoalescentTree leafTimes rateShifts
 --   invalidating all the CLs if the number of nodes
 -- * (BAD)  it might be hard to create a wrapper tree that looks like this tree plus a
 --           modifiation (e.g. deleting a tip).
-data RootedTreeNode = RTNode { rTnodeName :: Int, rTnodeTime :: Double, rToutEdges :: [RootedTreeNode], rTinEdges :: [RootedTreeNode] }
+data RootedTreeNode = RTNode { rTnodeName :: Int, rTnodeTime :: Time, rToutEdges :: [RootedTreeNode], rTinEdges :: [RootedTreeNode] }
 -- ^ By allowing multiple in-edges, we can implement DAGs and Directed Forests, not just Trees.
 
 -- When we don't know the node's parent yet, we store a function from parent(s) to node.
