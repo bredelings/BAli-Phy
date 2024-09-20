@@ -637,7 +637,7 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const vector<optional<int>>& i_mapping,
                                      const vector<model_t>& scaleMs,
                                      const vector<optional<int>>& scale_mapping,
-                                     const model_t& branch_length_model,
+                                     const model_t& tree_model,
                                      const std::vector<int>& like_calcs)
 {
     Model::key_map_t keys;
@@ -662,24 +662,18 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // Write pragmas, module, imports.
     std::ostringstream program_file;
-    write_header(program_file, decls, SMs, IMs, scaleMs, branch_length_model);
+    write_header(program_file, decls, SMs, IMs, scaleMs, tree_model);
     program_file<<"\n\n";
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
     auto IM_function_for_index = print_models("sample_imodel", IMs, program_file);
     vector<string> scaleM_function_for_index;
     if (n_branches > 0)
-    {
         scaleM_function_for_index = print_models("sample_scale", scaleMs, program_file);
 
-        // F4. Branch lengths
-        if (not fixed.count("tree"))
-            program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
-    }
-
-    // F5. Topology
-    if (not fixed.count("topology") and not fixed.count("tree"))
-        program_file<<"\nsample_topology taxa = uniformLabelledTopology taxa\n";
+    // F5. Topology / Tree
+    if (not fixed.count("tree"))
+	program_file<<"sampleTree"<<print_equals_function(tree_model.code.generate())<<"\n";
 
     /* --------------------------------------------------------------- */
     do_block model;
@@ -751,44 +745,23 @@ std::string generate_atmodel_program(const variables_map& args,
 
     model.empty_stmt();
 
-    // M2. Topology
-    auto topology_var = var("topology");
-    if (not fixed.count("topology") and not fixed.count("tree"))
-        model.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
-
-    // M3. Branch lengths
-    if (n_branches > 0 and not fixed.count("tree"))
-    {
-        string var_name = "branch_lengths";
-
-        auto code = branch_length_model.code;
-
-        expression_ref E = var("sample_"+var_name);
-        E = code.add_arguments(E,{{"topology",topology_var}});
-
-        E = {var("RanSamplingRate"),0.0,E};
-
-        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
-    }
-
     // M4. Branch-length tree
     if (not fixed.count("tree"))
     {
-	expression_ref tree_exp = {var("branchLengthTree"),topology_var,branch_lengths};
-	if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
-	{
-	    model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
-	    tree_exp = {var("addRoot"),var("root"),tree_exp};
-	}
-	model.let(tree_var, tree_exp);
-    }
+//      if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
+//      {
+//          model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
+//          tree_exp = {var("addRoot"),var("root"),tree_exp};
+//      }
 
-    if (not fixed.count("tree"))
-    {
-	if (fixed.count("topology"))
-	    model.perform({var("addLengthMoves"), 1, tree_var});
-	else
-	    model.perform({var("addTreeMoves"), 1, tree_var});
+        string var_name = "tree";
+
+        auto code = tree_model.code;
+
+        expression_ref E = var("sampleTree");
+        E = code.add_arguments(E,{{"taxa",taxon_names_var}});
+
+        expression_ref tree_exp = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
     }
 
     set<string> used_states;
@@ -1048,7 +1021,7 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                             const vector<optional<int>>& i_mapping,
                             const vector<model_t>& scaleMs,
                             const vector<optional<int>>& scale_mapping,
-                            const model_t& branch_length_model,
+                            const model_t& tree_model,
                             const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
@@ -1062,7 +1035,7 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                                                SMs, s_mapping,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
-                                               branch_length_model,
+                                               tree_model,
                                                like_calcs);
     }
 

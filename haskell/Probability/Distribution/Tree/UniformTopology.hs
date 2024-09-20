@@ -9,7 +9,9 @@ import           Probability.Distribution.Exponential
 import           MCMC
 import           Data.Array
 import qualified Data.IntMap as IntMap
+import           Data.IntMap (IntMap)
 import qualified Data.IntSet as IntSet
+import           Data.Text (Text)
 
 import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Tree.Modifiable    
@@ -79,25 +81,33 @@ tree ~ uniformLabelledTree(taxa, function(topology: gamma(0.5, 2/numBranches(top
 tree ~ fixedTopologyTree(readTopology(filename), function(topology: gamma(0.5, 2/numBranches(topology) ) ) )
 -}
 
-uniformLabelledTree taxa dist = do
+uniformLabelledTree taxa branchLengthsDist = do
   topology <- RanSamplingRate 0 $ uniformLabelledTopology taxa
-  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
+  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) branchLengthsDist
+  let tree = branchLengthTree topology branchLengths
+  addTreeMoves 1 tree
+  return tree
+
+uniformLabelledTree' :: [Text] -> (forall t. IsTree t => t -> Random (IntMap Double)) -> Random (WithBranchLengths (WithLabels Tree))
+uniformLabelledTree' taxa dist = do
+  topology <- RanSamplingRate 0 $ uniformLabelledTopology taxa
+  branchLengths <- RanSamplingRate 0 $ sample $ (dist topology)
   let tree = branchLengthTree topology branchLengths
   addTreeMoves 1 tree
   return tree
 
 -- If we put the branch lengths under SamplingRate 0.0 then the maybe-polytomy trees won't work.
 -- How can we do walk_tree and then run the MCMC kernels that affect a given branch?
-uniform_labelled_tree taxa branchLengthsDist = do
+-- The branch dist here depends on both the topology and the branch index.
+uniformLabelledTree'' taxa branchLengthsDist = do
   topology <- RanSamplingRate 0.0 $ uniformLabelledTopology taxa
-  branchLengths <- sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
+  branchLengths <- {- No RanSamplingRate 0-} sample $ independent $ (getUEdgesSet topology & IntMap.fromSet (branchLengthsDist topology))
   let tree = branchLengthTree topology branchLengths
   addTreeMoves 1 tree
   return tree
 
 fixedTopologyTree topology dist = do
-  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) (dist topology)
+  branchLengths <- RanSamplingRate 0 $ sample $ iidMap (getUEdgesSet topology) dist
   let tree = branchLengthTree topology branchLengths
-  addMove 1 $ walk_tree_sample_branch_lengths tree
+  addLengthMoves 1 tree
   return tree
-

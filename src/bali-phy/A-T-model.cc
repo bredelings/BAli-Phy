@@ -221,7 +221,7 @@ string show_model(const model_t& m)
 json::object log_summary(const vector<model_t>& IModels,
 			 const vector<model_t>& SModels,
 			 const vector<model_t>& ScaleModels,
-			 const model_t& branch_length_model,
+			 const model_t& tree_model,
 			 std::vector<std::optional<int>>& smodel_index_for_partition,
 			 std::vector<std::optional<int>>& imodel_index_for_partition,
 			 std::vector<std::optional<int>>& scale_index_for_partition,
@@ -233,17 +233,11 @@ json::object log_summary(const vector<model_t>& IModels,
     json::array partitions;
 
     json::object tree;
-    if (n_sequences >= 3)
-    {
-        cout<<"T:topology ~ uniform on tree topologies\n";
-        tree["topology"] = "uniform";
-    }
-
 
     if (n_sequences >= 2)
     {
-        cout<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
-        tree["lengths"] = branch_length_model.show(false);
+        cout<<"tree "<<tree_model.show()<<endl<<endl;
+        tree["tree"] = tree_model.show(false);
     }
 
     //-------- Log some stuff -----------//
@@ -785,14 +779,17 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
 
     // 3. --- Compile declarations
     model_t decls;
-    auto TC = makeTypechecker(R, {}, {});
-    CodeGenState code_gen_state(R);
-    if (args.count("variables"))
-    {
-	string var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
+    vector<pair<string,ptree>> extra_vars = {{"taxa",parse_type("List<Text>")}};
+    if (fixed.count("topology"))
+	extra_vars.push_back({"topology",parse_type("Tree")});
 
-	decls = compile_decls(R, TC, code_gen_state, var_str, {}, {});
-    }
+    auto TC = makeTypechecker(R, extra_vars, {});
+    CodeGenState code_gen_state(R);
+    string var_str;
+    if (args.count("variables"))
+	var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
+
+    decls = compile_decls(R, TC, code_gen_state, var_str, extra_vars, {});
 
     // 4. --- Get smodels for all SPECIFIED smodel names 
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -898,21 +895,21 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
             else
                 scale_model = "~gamma(0.5, 2)";
         }
-	auto TC = makeTypechecker(R, {}, {});
-        full_scale_models[i] = compile_model(R, TC, CodeGenState(R), parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
+        full_scale_models[i] = compile_model(R, TC, code_gen_state, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
     }
 
     // 12. Default and compile branch length model
-    model_t branch_length_model;
+    model_t tree_model;
     {
         string M;
         if (args.count("branch-lengths"))
             M = args["branch-lengths"].as<string>();
+        else if (fixed.count("topology"))
+            M = "~fixed_topology_tree(topology, gamma(0.5, 2/length(taxa)))";
         else
-            M = "~iidMap(branches(topology), gamma(0.5, 2.0/num_branches(topology)))";
+            M = "~uniform_tree(taxa, gamma(0.5, 2/length(taxa)))";
 
-	auto TC = makeTypechecker(R, {{"topology",parse_type("Tree")}}, {});
-        branch_length_model = compile_model(R, TC, CodeGenState(R), parse_type("IntMap<Double>"), M, "branch length model", {{"topology",parse_type("Tree")}});
+        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree"), M, "tree model", {});
     }
 
     //-------------- Likelihood calculator types -----------//
@@ -962,7 +959,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
                                     full_smodels, smodel_mapping,
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,
-                                    branch_length_model,
+                                    tree_model,
                                     likelihood_calculators);
 
     // check that smodel mapping has correct size.
@@ -982,7 +979,7 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
     }
 
     //-------------------- Log model -------------------------//
-    auto info = log_summary(full_imodels, full_smodels, full_scale_models, branch_length_model,
+    auto info = log_summary(full_imodels, full_smodels, full_scale_models, tree_model,
                             smodel_mapping, imodel_mapping, scale_mapping,
                             A[0].n_sequences(), filename_ranges.size(),
                             alphabet_names,

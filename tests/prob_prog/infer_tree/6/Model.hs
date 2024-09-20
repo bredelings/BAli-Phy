@@ -31,7 +31,7 @@ model seqData = do
 
     scale  <- prior $ gamma 0.5 2
 
-    tree   <- prior $ uniform_labelled_tree taxa (branch_length_dist zero_p)
+    tree   <- prior $ uniformLabelledTree'' taxa (branch_length_dist zero_p)
 
     freqs  <- prior $ symmetricDirichletOn (letters dna) 1
 

@@ -18,7 +18,7 @@ model seq_data = do
 
     -- Tree
     scale <- prior $ gamma (1/2) 2
-    tree  <- prior $ uniform_labelled_tree taxa branch_length_dist
+    tree  <- prior $ uniformLabelledTree'' taxa branch_length_dist
 
     -- Indel model
     indel_rate   <- prior $ logLaplace (-4) 0.707

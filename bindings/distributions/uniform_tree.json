@@ -1,0 +1,19 @@
+{
+    "name": "uniform_tree",
+    "result_type": "Distribution<Tree>",
+    "call": "uniformLabelledTree(@taxa,@branch_length_dist)",
+    "import": ["Probability"],
+    "title": "The uniform_topology distribution on trees",
+    "args": [
+        {
+            "name": "taxa",
+            "type": "List<Text>",
+	    "description": "The taxa for the tree"
+        },
+	{
+	    "name": "branch_length_dist",
+	    "type": "Distribution<Double>",
+	    "description": "The distribution for branch lengths"
+	}
+    ]
+}

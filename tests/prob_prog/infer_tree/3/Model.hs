@@ -35,7 +35,7 @@ model seqData = do
 
     scale <- prior $ gamma 0.5 2.0
 
-    tree <- prior $ uniform_labelled_tree taxa branch_length_dist
+    tree <- prior $ uniformLabelledTree'' taxa branch_length_dist
 
     (smodel, sloggers    ) <- smodel_prior (mkCodons dna standard_code)
 
