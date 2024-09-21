@@ -13,6 +13,50 @@ import           Data.Array
 
 type Time = Double
 
+{- NOTE: Time scaling in the coalescent.
+
+Time scale      Coalescent    Mutation     Generation       Time
+
+generations       1/N          mu[g]         1              1/tau
+
+coalescent         1          N*mu[g]        N              N/tau
+                   1          theta/2        N              N/tau
+
+phylogenetic    1/(N*mu[g])      1         1/mu[g]         1/mu[t]
+                 2/(theta)       1         1/mu[g]         1/mu[t]
+
+time units        tau/N        mu[t]        tau              1
+
+Definitions:
+
+  * mu[g] = mutation rate per generation (mu/gen)
+  * mu[t] = mutatation rate per time unit = mu[g] * tau  (mu/time)
+  * tau   = generation time (time/gen)
+  * theta = 2*N*mu[g]  (individuals * mu / gen)
+
+For a diploid model, replace N with 2N.
+
+1. The natural scale is in generations.
+
+2. The coalescent timescale allows one to derive the coalescent process as N->\infty.
+   But it does creates complications when different populations have different sizes.
+
+   Estimate: theta
+
+3. The phylogenetic scale sets the rate of mutation to 1.
+   This works well for multiple populations with different sizes.
+   It also works well when we have no time information from serial samples / fossils.
+
+   Estimate: theta
+
+4. If we have serial samples / fossils, we need to use the time scale of the samples.
+   We now need to estimates the mutation rate per time.
+
+   Estimate: tau/N, mu[t]
+
+-}
+
+
 merge cmp [] ys = ys
 merge cmp xs [] = xs
 merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
