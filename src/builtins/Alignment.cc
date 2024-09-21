@@ -12,6 +12,7 @@
 #include "util/cmdline.H"
 #include "util/range.H"
 #include "util/rng.H"
+#include <regex>                                  // to use in getTaxonNamesRaw
 
 using std::string;
 using std::vector;
@@ -1263,4 +1264,58 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
     }
 
     return s;
+}
+
+// taxonTimesRaw :: EVector CPPString -> CPPString -> Int (0/1) -> EVector Double
+extern "C" closure builtin_function_getTaxonTimesRaw(OperationArgs& Args)
+{
+    auto labels = Args.evaluate(0).as_<EVector>();
+    int n = labels.size();
+
+    string pattern = Args.evaluate(1).as_<String>();
+    std::regex rpattern(pattern);
+
+    // 0 = forward
+    // 1 = backward
+    int direction = Args.evaluate(2).as_int();
+
+    std::vector<double> times(n,0);
+
+    for(int i=0;i<n;i++)
+    {
+	std::smatch m;
+
+	const string& label = labels[i].as_<String>();
+	if (std::regex_search(label, m, rpattern))
+	{
+	    string mvalue = m[1];
+	    auto value = can_be_converted_to<double>(mvalue);
+	    if (not value)
+		throw myexception()<<"Label '"<<label<<"' yields time '"<<mvalue<<"' which is not a number!";
+	    times[i] = *value;
+	}
+	else
+	    throw myexception()<<"Label '"<<label<<"' does not match regex '"<<pattern<<"'";
+    }
+
+    if (direction == 0)
+    {
+	// We need to convert these to ages (backwards in time).
+	double oldest_time = max(times);
+	for(auto& time: times)
+	    time = oldest_time - time;
+    }
+    else
+    {
+	// What if we want to normalize things to a non-zero age?
+	double youngest_time = min(times);
+	for(auto& time: times)
+	    time = time - youngest_time;
+    }
+
+    EVector result(n);
+    for(int i=0;i<n;i++)
+	result[i] = times[i];
+
+    return result;
 }

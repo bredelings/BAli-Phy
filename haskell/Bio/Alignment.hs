@@ -235,3 +235,17 @@ instance Alignment AlignedCharacterData where
     alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
     numSequences (Aligned (CharacterData _ seqs)) = length seqs
     sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ strip_gaps $ snd $ (seqs !! index)
+
+
+-- In both cases we normalize the oldest taxon to have time 0.
+-- Would we ever want to specify the present as being older that the oldest taxon?
+data TimeDirection = Forward | Backward
+
+foreign import bpcall "Alignment:" getTaxonTimesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
+
+getTaxonTimes labels regex direction = zip labels (vector_to_list $ getTaxonTimesRaw cppLabels cppRegex cppDirection)
+    where cppLabels = list_to_vector (map Text.toCppString labels)
+          cppRegex = pack_cpp_string regex
+          convert Forward  = 0
+          convert Backward = 1
+          cppDirection = convert direction
