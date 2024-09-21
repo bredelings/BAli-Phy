@@ -52,9 +52,11 @@ triggeredModifiableRootedTree = triggeredModifiableStructure modifiableRootedTre
 modifiableTimeTree :: (forall a.a -> a) -> WithNodeTimes (WithRoots Tree) -> WithNodeTimes (WithRoots Tree)
 modifiableTimeTree modf (WithNodeTimes rooted_tree' times') = WithNodeTimes rooted_tree times where
     rooted_tree = modifiableRootedTree modf rooted_tree'
-    maybe_modf :: Int -> a -> a
-    maybe_modf node x | node < numLeaves rooted_tree'   = x
-                      | otherwise                       = modf x
-    times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybe_modf node (times' IntMap.! node))
+    maybeModf :: Int -> a -> a
+    maybeModf node x | node < numLeaves rooted_tree'   = x
+                     | otherwise                       = modf x
+    times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybeModf node (times' IntMap.! node))
 
 triggeredModifiableTimeTree = triggeredModifiableStructure modifiableTimeTree
+
+
