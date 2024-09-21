@@ -110,38 +110,38 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree [(Int,Time)] [(Time,Double)]
+data UnlabelledCoalescentTree = UnlabelledCoalescentTree [(Int,Time)] [(Time,Double)]
 
-instance Dist CoalescentTree where
-    type Result CoalescentTree = WithNodeTimes (WithRoots Tree)
+instance Dist UnlabelledCoalescentTree where
+    type Result UnlabelledCoalescentTree = WithNodeTimes (WithRoots Tree)
     dist_name _ = "coalescentTree"
 
-instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree leafTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
+instance HasAnnotatedPdf UnlabelledCoalescentTree where
+    annotated_densities (UnlabelledCoalescentTree leafTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
 
-instance Sampleable CoalescentTree where
-    sample dist@(CoalescentTree leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes rateShifts)
+instance Sampleable UnlabelledCoalescentTree where
+    sample dist@(UnlabelledCoalescentTree leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes rateShifts)
 
-coalescentTree leafTimes rateShifts = CoalescentTree leafTimes rateShifts
+unlabelledCoalescentTree leafTimes rateShifts = UnlabelledCoalescentTree leafTimes rateShifts
 
 -------------------------------------------------------------
 
-data LabelledCoalescentTree = LabelledCoalescentTree [(Text,Time)] [(Time,Double)]
+data CoalescentTree = CoalescentTree [(Text,Time)] [(Time,Double)]
 
-instance Dist LabelledCoalescentTree where
-    type Result LabelledCoalescentTree = WithLabels (WithNodeTimes (WithRoots Tree))
-    dist_name _ = "labelledCoalescentTree"
+instance Dist CoalescentTree where
+    type Result CoalescentTree = WithLabels (WithNodeTimes (WithRoots Tree))
+    dist_name _ = "CoalescentTree"
 
-instance HasAnnotatedPdf LabelledCoalescentTree where
-    annotated_densities (LabelledCoalescentTree taxonTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
+instance HasAnnotatedPdf CoalescentTree where
+    annotated_densities (CoalescentTree taxonTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
 
-instance Sampleable LabelledCoalescentTree where
-    sample dist@(LabelledCoalescentTree taxonTimes rateShifts) = addLabels leafIndices <$> (sample $ coalescentTree leafTimes rateShifts)
+instance Sampleable CoalescentTree where
+    sample dist@(CoalescentTree taxonTimes rateShifts) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes rateShifts)
         where taxonTimeIndices = zip taxonTimes [0..] 
               leafTimes = [(node,time) | ((name,time),node) <- taxonTimeIndices]
               leafIndices = [(node,name) | ((name,time),node) <- taxonTimeIndices]
 
-labelledCoalescentTree taxonTimes rateShifts = LabelledCoalescentTree taxonTimes rateShifts
+coalescentTree taxonTimes rateShifts = CoalescentTree taxonTimes rateShifts
 
 ----------- Alternative coalescent sampling -----------------
 -- This version references neighboring node structures directly, instead of just

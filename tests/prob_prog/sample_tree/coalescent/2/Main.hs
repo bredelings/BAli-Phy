@@ -13,7 +13,7 @@ model taxa = do
         taxonTimes = zip taxa (replicate nTaxa 0)
         rateShifts = [(0,theta)]
 
-    tree <- sample (labelledCoalescentTree taxonTimes rateShifts)
+    tree <- sample $ coalescentTree taxonTimes rateShifts
 
     let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
     return (tree, loggers)
