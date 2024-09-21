@@ -54,6 +54,8 @@ class Enum a where
 instance Enum Char where
     toEnum n = intToChar n
     fromEnum n = charToInt n
+    succ x = x + 1
+    pred x = x - 1
 
     enumFromThen from next = enumByFrom (next-from) from
 
@@ -62,6 +64,8 @@ instance Enum Char where
 instance Enum Int where
     toEnum n = n
     fromEnum n = n
+    succ x = x + 1
+    pred x = x - 1
 
     enumFromThen from next = enumByFrom (next-from) from
 
@@ -70,6 +74,8 @@ instance Enum Int where
 instance Enum Integer where
     toEnum n = intToInteger n
     fromEnum n = integerToInt n
+    succ x = x + 1
+    pred x = x - 1
 
     enumFromThen from next = enumByFrom (next-from) from
 
@@ -77,7 +83,9 @@ instance Enum Integer where
 
 instance Enum Double where
     toEnum n = intToDouble n
-    fromEnum x = error "fromEnum: Double"
+    fromEnum x = doubleToInt x
+    succ x = x + 1
+    pred x = x - 1
 
     enumFromThen from next = enumByFrom (next-from) from
 

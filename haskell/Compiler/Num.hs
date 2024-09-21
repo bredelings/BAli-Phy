@@ -76,7 +76,7 @@ foreign import bpcall "Num:" multiply_double :: Double -> Double -> Double
 foreign import bpcall "Num:" abs_double :: Double -> Double
 foreign import bpcall "Num:" negate_double :: Double -> Double
 foreign import bpcall "Num:" signum_double :: Double -> Double
---foreign import bpcall "Num:" intToDouble :: Int -> Double
+--foreign import bpcall "Num:" intToDouble :: Int -> Double -- used by Enum Double
 foreign import bpcall "Num:" integerToDouble :: Integer -> Double
 
 instance Num Double where
@@ -91,4 +91,5 @@ instance Num Double where
 -- These may get used in other modules...
 foreign import bpcall "Num:" intToInteger :: Int -> Integer
 foreign import bpcall "Num:" intToDouble :: Int -> Double
+foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
 
