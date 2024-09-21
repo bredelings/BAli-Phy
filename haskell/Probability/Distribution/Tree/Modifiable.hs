@@ -40,22 +40,38 @@ triggeredModifiableTree = triggeredModifiableStructure modifiableTree
 -- 3        5      4
 -- 4        7      6
 modifiableRootedTree :: (forall a.a -> a) -> WithRoots Tree -> WithRoots Tree
-modifiableRootedTree modf (WithRoots tree [root_node] _) = addRoot root_node $ modifiableTree modf tree
+modifiableRootedTree modf (WithRoots tree [rootNode] _) = addRoot rootNode $ modifiableTree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
 triggeredModifiableRootedTree = triggeredModifiableStructure modifiableRootedTree
 
--- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
+---------- Coalescent time tree --------------
 
--- maybe modf has type (forall a . a -> a)?
--- we should be able to apply it to both Int and Double...
+{- NOTE: Coalescent versus birth-death.
+
+This function doesn't add a modifiable to the leaf node times.  Such a procedure
+makes sense for the coalescent, where the leaf node times are an input to the coalescent.
+
+For a birth-death-sampling tree, the times of the PAST samples are random, I think,
+since they assume sampling at a certain rate?  And they can convert between leaf and internal too.
+
+-}
+
+{- NOTE: Coalescent versus uniform-ordered-history.
+
+For a coalescent, the nodes have times, and we get an order by ordering those times.
+
+For an ordered-history, we might need to add an integer order to each node to preserve
+the order when we remove the times.
+-}
+
 modifiableTimeTree :: (forall a.a -> a) -> WithNodeTimes (WithRoots Tree) -> WithNodeTimes (WithRoots Tree)
-modifiableTimeTree modf (WithNodeTimes rooted_tree' times') = WithNodeTimes rooted_tree times where
-    rooted_tree = modifiableRootedTree modf rooted_tree'
+modifiableTimeTree modf (WithNodeTimes rootedTree' times') = WithNodeTimes rootedTree times where
+    rootedTree = modifiableRootedTree modf rootedTree'
     maybeModf :: Int -> a -> a
-    maybeModf node x | node < numLeaves rooted_tree'   = x
-                     | otherwise                       = modf x
-    times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybeModf node (times' IntMap.! node))
+    maybeModf node x | isLeafNode rootedTree' node = x
+                     | otherwise                   = modf x
+    times     = (IntMap.keysSet times') & IntMap.fromSet (\node -> maybeModf node (times' IntMap.! node))
 
 triggeredModifiableTimeTree = triggeredModifiableStructure modifiableTimeTree
 
