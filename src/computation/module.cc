@@ -511,7 +511,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 	return C;
     }
 
-    if (log_verbose) std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
+    if (log_verbose)
+	std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
 
     // Scans imported modules and modifies symbol table and type table
     MM->perform_imports(P);

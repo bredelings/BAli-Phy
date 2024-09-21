@@ -1041,22 +1041,23 @@ std::string generate_atmodel_program(const variables_map& args,
     return program_file.str();
 }
 
-Program gen_atmodel_program(const boost::program_options::variables_map& args,
-                            const std::shared_ptr<module_loader>& L,
-                            const fs::path& output_directory,
-                            const fs::path& program_filename,
-                            const vector<expression_ref>& alphabet_exps,
-                            const vector<pair<fs::path,string>>& filename_ranges,
-                            int n_leaves,
-			    const model_t& decls,
-                            const vector<model_t>& SMs,
-                            const vector<optional<int>>& s_mapping,
-                            const vector<model_t>& IMs,
-                            const vector<optional<int>>& i_mapping,
-                            const vector<model_t>& scaleMs,
-                            const vector<optional<int>>& scale_mapping,
-                            const model_t& tree_model,
-                            const std::vector<int>& like_calcs)
+std::unique_ptr<Program>
+gen_atmodel_program(const boost::program_options::variables_map& args,
+		    const std::shared_ptr<module_loader>& L,
+		    const fs::path& output_directory,
+		    const fs::path& program_filename,
+		    const vector<expression_ref>& alphabet_exps,
+		    const vector<pair<fs::path,string>>& filename_ranges,
+		    int n_leaves,
+		    const model_t& decls,
+		    const vector<model_t>& SMs,
+		    const vector<optional<int>>& s_mapping,
+		    const vector<model_t>& IMs,
+		    const vector<optional<int>>& i_mapping,
+		    const vector<model_t>& scaleMs,
+		    const vector<optional<int>>& scale_mapping,
+		    const model_t& tree_model,
+		    const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
@@ -1073,10 +1074,8 @@ Program gen_atmodel_program(const boost::program_options::variables_map& args,
                                                like_calcs);
     }
 
-    Program P(L);
-    auto m = P.get_module_loader()->load_module_from_file(program_filename);
-    P.add(m);
-    P.main = "Main.main";
+    auto m = L->load_module_from_file(program_filename);
+    auto P = std::make_unique<Program>(L,vector{m}, "Main.main");
     L->args = {output_directory.string()};
     return P;
 }
@@ -1162,10 +1161,11 @@ string generate_model_program(const boost::program_options::variables_map& args,
 
 }
 
-Program gen_model_program(const boost::program_options::variables_map& args,
-                          const std::shared_ptr<module_loader>& L,
-                          const fs::path& output_directory,
-                          const fs::path& model_filepath)
+std::unique_ptr<Program>
+gen_model_program(const boost::program_options::variables_map& args,
+		  const std::shared_ptr<module_loader>& L,
+		  const fs::path& output_directory,
+		  const fs::path& model_filepath)
 {
     // 1. Check that the model filepath is valid.
     if (not fs::exists(model_filepath))
@@ -1190,23 +1190,19 @@ Program gen_model_program(const boost::program_options::variables_map& args,
 	fs::copy_file(model_filepath, dest_model_filepath);
 
     // 3. Load the model module.
-    Program P(L);
-    auto m = P.get_module_loader()->load_module_from_file(model_filepath);
-    if (m->name == "Main")
+    auto model_module = L->load_module_from_file(model_filepath);
+    if (model_module->name == "Main")
         throw myexception()<<"The module name for the model file "<<model_filepath<<" may not be 'Main'\n";
-    P.add(m);
 
     // 4. Generate and write the Main module.
     auto program_filepath = output_directory / main_file;
     {
         checked_ofstream program_file(program_filepath);
-        program_file<<generate_model_program(args, m->name, output_directory);
+        program_file<<generate_model_program(args, model_module->name, output_directory);
     }
 
     // 5. Load the Main module.
-    auto m2 = P.get_module_loader()->load_module_from_file(program_filepath);
-    P.add(m2);
-    P.main = "Main.main";
+    auto main_module = L->load_module_from_file(program_filepath);
 
-    return P;
+    return std::make_unique<Program>(L, vector{model_module, main_module}, "Main.main");
 }

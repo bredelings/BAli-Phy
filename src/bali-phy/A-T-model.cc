@@ -759,8 +759,9 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 }
 
 
-std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-                                               int /* proc_id */, const fs::path& dir)
+std::tuple<std::unique_ptr<Program>, json::object>
+create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
+		     int /* proc_id */, const fs::path& dir)
 {
     // 1. --- Determine number of partitions
     vector<pair<fs::path,string>> filename_ranges;
@@ -942,22 +943,6 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
 
-    fs::path program_filename = dir / "BAliPhy.Main.hs";
-    vector<expression_ref> alphabet_exps;
-    for(int i=0;i<n_partitions;i++)
-        alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
-
-    auto prog = gen_atmodel_program(args,
-                                    L, dir,
-                                    program_filename,
-                                    alphabet_exps, filename_ranges, A[0].n_sequences(),
-                                    decls,
-                                    full_smodels, smodel_mapping,
-                                    full_imodels, imodel_mapping,
-                                    full_scale_models, scale_mapping,
-                                    tree_model,
-                                    likelihood_calculators);
-
     // check that smodel mapping has correct size.
     if (smodel_mapping.size() != filename_ranges.size())
         throw myexception()<<"There are "<<filename_ranges.size()
@@ -984,7 +969,24 @@ std::tuple<Program, json::object> create_A_and_T_model(const Rules& R, variables
     //------------------- Handle heating ---------------------//
     // setup_heating(proc_id, args, M);
 
-    return {prog, info};
+    //------------------- create the program -----------------//
+    fs::path program_filename = dir / "BAliPhy.Main.hs";
+    vector<expression_ref> alphabet_exps;
+    for(int i=0;i<n_partitions;i++)
+        alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
+
+    auto prog = gen_atmodel_program(args,
+                                    L, dir,
+                                    program_filename,
+                                    alphabet_exps, filename_ranges, A[0].n_sequences(),
+                                    decls,
+                                    full_smodels, smodel_mapping,
+                                    full_imodels, imodel_mapping,
+                                    full_scale_models, scale_mapping,
+                                    tree_model,
+                                    likelihood_calculators);
+
+    return {std::move(prog), info};
 }
 
 void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)

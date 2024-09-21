@@ -27,13 +27,7 @@ class Program: public std::vector<std::shared_ptr<CompiledModule>>
 
     int count_module(const std::string& module_name) const;
 
-public:
-
     std::optional<std::string> main;
-
-    std::vector<std::shared_ptr<CompiledModule>>& modules();
-
-    std::shared_ptr<FreshVarState> fresh_var_state() const;
 
     void add(const std::shared_ptr<Module>& M);
 
@@ -42,6 +36,14 @@ public:
     void add(const std::string& name);
 
     void add(const std::vector<std::string>& module_names);
+
+public:
+
+    std::shared_ptr<FreshVarState> fresh_var_state() const;
+
+    std::optional<std::string> get_main_name() const;
+
+    std::vector<std::shared_ptr<CompiledModule>>& modules();
 
     std::vector<std::string> module_names() const;
 
@@ -55,7 +57,8 @@ public:
 
     const std::shared_ptr<module_loader>& get_module_loader() const;
 
-    Program(const std::shared_ptr<module_loader>&);
+    Program(const std::shared_ptr<module_loader>&, const std::vector<std::shared_ptr<Module>>&);
+    Program(const std::shared_ptr<module_loader>&, const std::vector<std::shared_ptr<Module>>&, const std::string& m);
 };
 
 std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);

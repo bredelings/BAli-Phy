@@ -470,7 +470,7 @@ std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int a
 std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map& args, const shared_ptr<module_loader>& L,
                                           int proc_id, const fs::path& output_dir, json::object info)
 {
-    auto P = std::make_unique<Program>(L);
+    std::unique_ptr<Program> P;
 
     if (args.count("run"))
     {
@@ -488,13 +488,13 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         Rules R(get_package_paths(args));
         auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
         update(info, j);
-        *P = prog;
+        P = std::move(prog);
     }
     else if (args.count("model"))
     {
         auto [model_filename, args_v] = extract_prog_args(args, argc, argv, "model");
         L->args = args_v;
-        *P = gen_model_program(args, L, output_dir, model_filename);
+        P = gen_model_program(args, L, output_dir, model_filename);
     }
     else
     {
@@ -602,8 +602,7 @@ int main(int argc,char* argv[])
             string filename = args["test-module"].as<string>();
             auto M = L->load_module_from_file(filename);
 
-            Program P(L);
-            P.add(M);
+            Program P(L,{M});
             auto M2 = P.get_module(M->name);
             for(const auto& [name, body]: M2->code_defs())
             {

@@ -3193,14 +3193,11 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
      prog_temp(1),
      prog_unshare(1)
 {
-    if (not program->size())
-        program->add("Prelude");
-
     allocate_identifiers_for_program();
 
-    if (program->main)
+    if (program->get_main_name())
     {
-        expression_ref M = var( *program->main );
+        expression_ref M = var( *program->get_main_name() );
         main_head = add_compute_expression( Core::unsafePerformIO(M) );
     }
 

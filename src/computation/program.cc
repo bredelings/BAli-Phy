@@ -104,10 +104,32 @@ std::shared_ptr<FreshVarState> Program::fresh_var_state() const
 }
 
 
-Program::Program(const std::shared_ptr<module_loader>& L)
+std::optional<std::string> Program::get_main_name() const
+{
+    return main;
+}
+
+Program::Program(const std::shared_ptr<module_loader>& L, const std::vector<std::shared_ptr<Module>>& Ms)
     :loader(L)
 {
+    // Do we want to assert this?
+    assert(Ms.size());
+
     modules().push_back( compiler_prim_module() );
+
+    for(auto& M: Ms)
+	add(M);
+
+    if (not size())
+	add("Prelude");
+    else
+	main = Ms.back()->name + ".main";
+}
+
+Program::Program(const std::shared_ptr<module_loader>& L, const std::vector<std::shared_ptr<Module>>& Ms, const string& m)
+    :Program(L,Ms)
+{
+    main = m;
 }
 
 optional<int> Program::find_module(const string& module_name) const
@@ -467,11 +489,7 @@ std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loa
 {
     auto m = L->load_module_from_file(filename);
 
-    auto P = std::make_unique<Program>(L);
-    P->add(m);
-    P->main = m->name + ".main";
-
-    return P;
+    return std::make_unique<Program>(L,vector{m});
 }
 
 void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
