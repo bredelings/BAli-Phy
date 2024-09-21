@@ -38,7 +38,7 @@ model seq_data = do
     observe seq_data $ phyloCTMC tree alignment tn93_model scale
 
     return
-        [ "tree" %=% write_newick tree
+        [ "tree" %=% writeNewick tree
         , "log(indel_rate)" %=% log indel_rate
         , "mean_length" %=% mean_length
         , "kappa1" %=% kappa1

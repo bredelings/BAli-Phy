@@ -39,7 +39,7 @@ model seqData = do
 
     (smodel, sloggers    ) <- smodel_prior (mkCodons dna standard_code)
 
-    let loggers = ["tree" %=% write_newick tree, "scale" %=% scale, "S1" %>% sloggers]
+    let loggers = ["tree" %=% writeNewick tree, "scale" %=% scale, "S1" %>% sloggers]
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel scale
 

@@ -29,7 +29,7 @@ tree_prior taxa = do
 
     tree <- sample (coalescentTree taxonTimes rateShifts)
 
-    let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
+    let loggers   = ["tree" %=% writeNewick tree, "theta" %=% theta]
     return (tree, loggers)
 
 

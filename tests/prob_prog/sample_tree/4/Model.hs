@@ -27,7 +27,7 @@ model = do
         xs <- sample $ independent [ normal (mu node) 1.0 | node <- nodes tree ]
   -- can we _observe_ from this? -- why or why not?
 
-    return ["tree" %=% write_newick tree] --,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]
+    return ["tree" %=% writeNewick tree] --,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]
 
 main = do
   return model

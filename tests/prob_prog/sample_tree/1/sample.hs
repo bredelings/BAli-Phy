@@ -7,7 +7,7 @@ import           Tree.Newick
 
 model = do
     tree <- sample $ uniformTopology 5
-    return ["tree" %=% write_newick tree]
+    return ["tree" %=% writeNewick tree]
 
 main = do
   return model

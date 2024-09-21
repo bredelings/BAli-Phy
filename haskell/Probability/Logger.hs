@@ -83,7 +83,7 @@ writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $
                                                           hFlush file
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
-writeTree file tree iter _ _ _ = do T.hPutStrLn file $ write_newick tree
+writeTree file tree iter _ _ _ = do T.hPutStrLn file $ writeNewick tree
                                     hFlush file
 
 foreign import bpcall "Foreign:tsvHeaderAndMapping" builtinTsvHeaderAndMapping :: EVector CPPString -> J.CJSON -> EPair CPPString ColumnNames

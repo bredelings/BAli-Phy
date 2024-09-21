@@ -15,7 +15,7 @@ model taxa = do
 
     tree <- sample $ coalescentTree taxonTimes rateShifts
 
-    let loggers   = ["tree" %=% write_newick tree, "theta" %=% theta]
+    let loggers   = ["tree" %=% writeNewick tree, "theta" %=% theta]
     return (tree, loggers)
 
 name i | i < 26 = [chr(65+i)]

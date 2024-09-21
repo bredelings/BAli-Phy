@@ -24,7 +24,7 @@ model seqData = do
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) tn93_model 1
 
-    return ["tree" %=% write_newick tree,
+    return ["tree" %=% writeNewick tree,
             "age" %=% age,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,
