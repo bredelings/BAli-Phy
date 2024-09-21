@@ -65,8 +65,11 @@ merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
 data CoalEvent = Leaf Int | Internal Int | RateShift Double
 nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 
+-- QUESTION: Can we arrange that the degree of nodes does not change?
+--           That would at least allow (leafNodes tree) to remain constant.
+
 coalescentTreePrFactors ((t0,theta0):rateShifts) tree = go t0 events 0 (2/theta0) 1: parentBeforeChildPrs tree
-    where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- [0..numNodes tree - 1]]
+    where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- leafNodes tree]
           shifts = [(time, RateShift (2/theta)) | (time, theta) <- rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
           go t1 []                  n rate pr = pr
@@ -105,7 +108,7 @@ sampleCoalescentTree leafTimes ((t0,theta0):rateShifts) = do
 
   let nLeaves = length leafTimes
       firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
-      nodes  =  [(time, Leaf node)      | (node, time) <- sortOn fst leafTimes]
+      nodes  =  [(time, Leaf node)      | (node, time) <- sortOn snd leafTimes]
       shifts =  [(time, RateShift rate) | (time, rate) <- rateShifts]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
