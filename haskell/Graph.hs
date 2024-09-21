@@ -127,6 +127,17 @@ make a derived class IsUndirectedGraph with method reverseEdge.
 
 -}
 
+{- QUESTION: How to handle "partially directed" graphs?
+
+For Phylogenetic networks, we have nodes with a edge groups [(source,target) | target <- sources],
+but only one source can be active at a given time.  So if we choose a source for each edge, we
+yet again get a normal graph.
+
+In probabilistic terms, each target is associated with a probability.
+
+-}
+
+
 {- ISSUE: Should we store in-edges as well as out-edges? -}
 
 {- ISSUE: Undirected graphs with a preferred direction aren't quite the same as directed graphs.
