@@ -552,6 +552,34 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
 }
 
 
+void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& Stats)
+{
+    Parameters& PP = *P.as<Parameters>();
+    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+
+    for(int b: branches)
+    {
+	int n1 = PP.t().source(b);
+	int n2 = PP.t().target(b);
+        double U = uniform();
+
+        if (U < 0.1)
+	{
+            slice_sample_node_time(P,Stats,n1);
+            slice_sample_node_time(P,Stats,n2);
+	}
+
+	three_way_time_tree_NNI_sample(P,Stats,b);
+
+        if (U > 0.9)
+	{
+            slice_sample_node_time(P,Stats,n2);
+            slice_sample_node_time(P,Stats,n1);
+	}
+    }
+}
+
+
 void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 {
     Parameters& PP = *P.as<Parameters>();

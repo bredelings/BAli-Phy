@@ -86,6 +86,7 @@ std::vector<int> walk_tree_path(const TreeInterface& t, int root);
 void walk_tree_sample_alignments(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_branch_lengths(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>&, MCMC::MoveStats&);
+void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI_and_A(owned_ptr<Model>&, MCMC::MoveStats&);
 void realign_from_tips(owned_ptr<Model>&, MCMC::MoveStats&);
