@@ -140,7 +140,7 @@ void branch_length_slice_function::set_value(double l)
 
 double branch_length_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(C).t().branch_length(b);
+    return static_cast<const Parameters&>(C).t().branch_length(b);
 }
 
 branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
@@ -148,6 +148,25 @@ branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
 { 
     set_lower_bound(0);
 }
+
+// ******************************* node time length slice function *************************************** //
+
+void node_time_slice_function::set_value(double t)
+{
+    static_cast<Parameters&>(C).t().set_node_time(n,t);
+}
+
+double node_time_slice_function::current_value() const
+{
+    return static_cast<Parameters&>(C).t().node_time(n);
+}
+
+node_time_slice_function::node_time_slice_function(Parameters& P,int n_)
+    :context_slice_function(P),n(n_)
+{
+}
+
+// ******************************* branch length slice function *************************************** //
 
 double alignment_branch_length_slice_function::operator()(double x)
 {

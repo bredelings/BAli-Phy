@@ -139,6 +139,18 @@ struct branch_length_slice_function: public context_slice_function
 };
 
 /// A slice_function for slice-sampling a single branch length
+struct node_time_slice_function: public context_slice_function
+{
+    int n;
+
+    void set_value(double);
+
+    double current_value() const;
+
+    node_time_slice_function(Parameters&,int);
+};
+
+/// A slice_function for slice-sampling a single branch length
 struct alignment_branch_length_slice_function: public context_slice_function
 {
     log_double_t alignment_sum_ratio_0;
