@@ -57,6 +57,8 @@ foreign import bpcall "MCMC:" walk_tree_sample_NNI_and_A :: t -> ContextIndex ->
 
 foreign import bpcall "MCMC:" walk_tree_sample_NNI_and_branch_lengths :: t -> ContextIndex -> IO ()
 
+foreign import bpcall "MCMC:" walkTimeTreeSampleNNIandNodeTimes :: t -> ContextIndex -> IO ()
+
 foreign import bpcall "MCMC:" walk_tree_sample_branch_lengths :: t -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" sample_SPR_all :: t -> ContextIndex -> IO ()
