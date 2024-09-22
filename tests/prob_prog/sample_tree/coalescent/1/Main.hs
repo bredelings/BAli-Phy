@@ -10,10 +10,10 @@ model taxa = do
     theta <- sample $ logLaplace (-5) 2.0
 
     let nTaxa = length taxa
-        taxonTimes = zip taxa (replicate nTaxa 0)
+        taxonAges = zip taxa (replicate nTaxa 0)
         rateShifts = [(0,theta)]
 
-    tree <- sample $ coalescentTree taxonTimes rateShifts
+    tree <- sample $ coalescentTree taxonAges rateShifts
 
     let loggers   = ["tree" %=% writeNewick tree, "theta" %=% theta]
     return (tree, loggers)

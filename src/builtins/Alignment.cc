@@ -1266,8 +1266,8 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
     return s;
 }
 
-// taxonTimesRaw :: EVector CPPString -> CPPString -> Int (0/1) -> EVector Double
-extern "C" closure builtin_function_getTaxonTimesRaw(OperationArgs& Args)
+// taxonAgesRaw :: EVector CPPString -> CPPString -> Int (0/1) -> EVector Double
+extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 {
     auto labels = Args.evaluate(0).as_<EVector>();
     int n = labels.size();

@@ -25,7 +25,7 @@ tree_prior taxa = do
 
     theta <- sample $ logLaplace 2 2
 
-    let taxonAges = getTaxonTimes taxa "s(\\d+)$" Forward
+    let taxonAges = getTaxonAges taxa "s(\\d+)$" Forward
         rateShifts = [(0, theta)]
 
     tree <- sample $ coalescentTree taxonAges rateShifts

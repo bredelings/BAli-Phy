@@ -24,10 +24,10 @@ tree_prior taxa = do
 
     theta <- sample $ logLaplace (-5) 2
 
-    let taxonTimes = [(taxon, 0.0) | taxon <- taxa]
+    let taxonAges = [(taxon, 0.0) | taxon <- taxa]
         rateShifts = [(0.0, theta)]
 
-    tree <- sample (coalescentTree taxonTimes rateShifts)
+    tree <- sample (coalescentTree taxonAges rateShifts)
 
     let loggers   = ["tree" %=% writeNewick tree, "theta" %=% theta]
     return (tree, loggers)

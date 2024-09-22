@@ -241,9 +241,9 @@ instance Alignment AlignedCharacterData where
 -- Would we ever want to specify the present as being older that the oldest taxon?
 data TimeDirection = Forward | Backward
 
-foreign import bpcall "Alignment:" getTaxonTimesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
+foreign import bpcall "Alignment:" getTaxonAgesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
 
-getTaxonTimes labels regex direction = zip labels (vector_to_list $ getTaxonTimesRaw cppLabels cppRegex cppDirection)
+getTaxonAges labels regex direction = zip labels (vector_to_list $ getTaxonAgesRaw cppLabels cppRegex cppDirection)
     where cppLabels = list_to_vector (map Text.toCppString labels)
           cppRegex = pack_cpp_string regex
           convert Forward  = 0

@@ -180,15 +180,15 @@ instance Dist CoalescentTree where
     dist_name _ = "CoalescentTree"
 
 instance HasAnnotatedPdf CoalescentTree where
-    annotated_densities (CoalescentTree taxonTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
+    annotated_densities (CoalescentTree taxonAges rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
 
 instance Sampleable CoalescentTree where
-    sample dist@(CoalescentTree taxonTimes rateShifts) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes rateShifts)
-        where taxonTimeIndices = zip taxonTimes [0..] 
-              leafTimes = [(node,time) | ((name,time),node) <- taxonTimeIndices]
-              leafIndices = [(node,name) | ((name,time),node) <- taxonTimeIndices]
+    sample dist@(CoalescentTree taxonAges rateShifts) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes rateShifts)
+        where taxonAgeIndices = zip taxonAges [0..] 
+              leafTimes = [(node,time) | ((name,time),node) <- taxonAgeIndices]
+              leafIndices = [(node,name) | ((name,time),node) <- taxonAgeIndices]
 
-coalescentTree taxonTimes rateShifts = CoalescentTree taxonTimes rateShifts
+coalescentTree taxonAges rateShifts = CoalescentTree taxonAges rateShifts
 
 ----------- Alternative coalescent sampling -----------------
 -- This version references neighboring node structures directly, instead of just
