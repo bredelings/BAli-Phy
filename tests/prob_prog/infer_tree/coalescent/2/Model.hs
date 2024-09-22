@@ -23,14 +23,14 @@ smodel_prior nucleotides =  do
 
 tree_prior taxa = do
 
-    theta <- sample $ logLaplace 2 2
+    popSize <- sample $ logLaplace 2 2
 
     let taxonAges = getTaxonAges taxa "s(\\d+)$" Forward
-        rateShifts = [(0, theta)]
+        rateShifts = [(0, popSize)]
 
     tree <- sample $ coalescentTree taxonAges rateShifts
 
-    let loggers   = ["theta" %=% theta, "|T|" %=% treeLength tree]
+    let loggers   = ["N/tau" %=% popSize]
 
     return (tree, loggers)
 
@@ -45,9 +45,14 @@ model seqData logTree = do
 
     mu <- sample $ logLaplace (-4) 1
 
-    let loggers = tree_loggers ++ ["tn93" %>% sloggers,
-                                   "mu" %=% mu,
-                                   "#substs" %=% parsimony tree seqData (unitCostMatrix dna)]
+    let tlength = treeLength tree
+        substs = parsimony tree seqData (unitCostMatrix dna)
+        loggers = ["tree" %>% tree_loggers,
+                   "tn93" %>% sloggers,
+                   "|T|" %=% tlength,
+                   "mu*|T|" %=% tlength * mu,
+                   "mu" %=% mu,
+                   "#substs" %=% substs]
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel mu
 
