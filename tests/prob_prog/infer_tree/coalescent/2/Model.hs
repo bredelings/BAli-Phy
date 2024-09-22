@@ -10,6 +10,16 @@ import           Tree.Newick
 import           SModel
 import           System.Environment  -- for getArgs
 
+{- Problems:
+
+ 1. The population size has these jumps to really large values. (So 1/N just to really small values).
+ 2. The large jumps seem not to affect the prior.
+ 3. N/tau prints as tau
+ 4. There's bad mixing between mu and |T| -- how to handle this?
+    - We could try to scale the node times, but we don't want to move the tip nodes...
+
+-}
+
 smodel_prior nucleotides =  do
     freqs  <- sample $ symmetricDirichletOn (letters nucleotides) 1
     kappa1 <- sample $ logNormal (log 2) (1/4)
