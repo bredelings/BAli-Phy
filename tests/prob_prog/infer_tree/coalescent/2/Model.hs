@@ -43,7 +43,7 @@ model seqData logTree = do
 
     (smodel, sloggers    ) <- smodel_prior dna
 
-    mu <- sample $ logLaplace (-4) 1
+    mu <- sample $ logLaplace (-5) 1
 
     let tlength = treeLength tree
         substs = parsimony tree seqData (unitCostMatrix dna)
