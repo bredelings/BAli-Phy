@@ -153,7 +153,7 @@ coalescentTreeEffect tree = do
   sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
 
   -- Exchange sibling branches with children?
-  sequence_ [ addMove 1 $ tnni_on_branch_unsafe tree branch | branch <- getEdges tree]
+  addMove 1 $ walkTimeTreeSampleNNIandNodeTimes tree
 
 -------------------------------------------------------------
 
