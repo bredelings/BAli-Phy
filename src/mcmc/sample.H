@@ -102,6 +102,7 @@ void sample_node_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void sample_two_nodes_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
 
 void three_way_topology_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
+void three_way_time_tree_NNI_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_topology_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_NNI_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_NNI_and_branches_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
