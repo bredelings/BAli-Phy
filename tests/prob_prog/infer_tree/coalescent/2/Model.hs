@@ -47,10 +47,12 @@ model seqData logTree = do
 
     let tlength = treeLength tree
         substs = parsimony tree seqData (unitCostMatrix dna)
+        rootAge = nodeTime tree (root tree)
         loggers = ["tree" %>% tree_loggers,
                    "tn93" %>% sloggers,
                    "|T|" %=% tlength,
                    "mu*|T|" %=% tlength * mu,
+                   "rootAge" %=% rootAge,
                    "mu" %=% mu,
                    "#substs" %=% substs]
 
