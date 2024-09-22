@@ -638,28 +638,10 @@ void two_way_topology_5A_sample(owned_ptr<Model>& P, MoveStats& /*Stats*/, int b
     }
 }
 
-void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2, int b3)
 {
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
-
-    if (log_verbose >= 4) std::cerr<<"[three_way_topology_sample]\n";
-
-    double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
-
-    if (not PP.variable_alignment() and uniform() < slice_fraction) {
-	three_way_topology_sample_slice(P,Stats,b);
-	return;
-    }
-
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& nodes = order.nodes;
     PP.select_root(b);
     PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
-    int b3 = PP.t().find_branch(nodes[5],nodes[3]);
 
     //------ Generate Topologies and alter caches ------///
     vector<Parameters> p(3,PP);
@@ -706,6 +688,105 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;
     }
+}
+
+void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+{
+    Parameters& PP = *P.as<Parameters>();
+    if (PP.t().is_leaf_branch(b)) return;
+
+    if (log_verbose >= 4) std::cerr<<"[three_way_topology_sample]\n";
+
+    double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
+
+    if (not PP.variable_alignment() and uniform() < slice_fraction)
+    {
+	three_way_topology_sample_slice(P, Stats, b);
+    }
+    else
+    {
+	A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
+	const auto& nodes = order.nodes;
+
+	int b1 = PP.t().find_branch(nodes[4],nodes[1]);
+	int b2 = PP.t().find_branch(nodes[5],nodes[2]);
+	int b3 = PP.t().find_branch(nodes[5],nodes[3]);
+
+        three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
+    }
+}
+
+/* Like NNI, except
+ * + we can only swap branches pointing away from the root
+ * + we need to avoid children being older than their parents.
+ * + there is a degree 2 node.
+ *
+ * Specificially, we need u to be younger than y.
+ *
+ *                       v
+ *                       |
+ *                    ---x---
+ *                    |     |
+ *                  --y--   |
+ *                  |   |   |
+ *                  z   w   u
+ *
+ *
+ * Here, tipward_branches[0] = (y,z)
+ *       tipward_branches[1] = (y,w)
+ *       other_branches[0]   = (x,u)
+ *       other_branches[1]   = (x,v)
+ *       b           = (x,y)
+ */
+
+
+void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
+{
+    if (log_verbose >= 4) std::cerr<<"[three_way_time_tree_NNI_sample]\n";
+
+    Parameters& PP = *P.as<Parameters>();
+    auto T = PP.t();
+
+    // 1. Point branch away from root.
+    if (not T.away_from_root(b)) b = T.reverse(b);
+
+    // 2. Skip if this is not an internal branch
+    if (T.is_leaf_branch(b)) return;
+
+    int x = T.source(b);
+    int y = T.target(b);
+
+    // 3. Skip if x is the root.
+    if (T.root() == x) return;
+
+    assert(T.degree(x) == 3);
+    assert(T.degree(y) == 3);
+
+    // 4. Get branches to child nodes z and w
+    auto tipward_branches = T.branches_after(b);
+    assert(tipward_branches.size() == 2);
+    int b2 = tipward_branches[0]; // (y,z)
+    int b3 = tipward_branches[1]; // (y,w)
+
+    // 5. Get branch to sibling node u
+    auto other_branches = T.branches_after(T.reverse(b));
+    assert(other_branches.size() == 2);
+
+    if (not T.away_from_root(other_branches[0])) std::swap(other_branches[0],other_branches[1]);
+
+    assert(T.away_from_root(other_branches[0]));
+    assert(not T.away_from_root(other_branches[1]));
+
+    int b1 = other_branches[0]; // (x,u)
+    int u = T.target(other_branches[0]);
+
+    // 6. Check that node u is YOUNGER THAN node y
+    if (T.node_time(u) > T.node_time(y)) return;
+
+    // 7. Actually do the NNI
+
+    // We consider interchanging b1 <-> b2 and b1 <-> b3
+    three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
 }
 
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
