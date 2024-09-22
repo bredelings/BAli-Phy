@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 void slide_node(owned_ptr<Model>& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void slice_sample_branch_length(owned_ptr<Model>&, MCMC::MoveStats&, int);
+void slice_sample_node_time(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void alignment_slice_sample_branch_length(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void change_branch_length_multi(owned_ptr<Model>&, MCMC::MoveStats&, int);
 
