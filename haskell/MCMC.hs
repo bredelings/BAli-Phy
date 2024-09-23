@@ -100,6 +100,8 @@ foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
 
 scaleGroupsSlice xs ys = scaleGroupsSliceRaw (toList xs) (toList ys)
 
+scaleGroupSlice xs = scaleGroupsSlice xs []
+
 scaleGroupsProposal xs ys = scaleGroupsProposalRaw (toList xs) (toList ys)
                                            
 scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys

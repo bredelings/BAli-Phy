@@ -5,6 +5,7 @@ import           Probability.Logger
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
+import           MCMC (scaleGroupsSlice)
 import           Tree
 import           Tree.Newick
 import           SModel
@@ -54,6 +55,9 @@ model seqData logTree = do
     (smodel, sloggers    ) <- smodel_prior dna
 
     mu <- sample $ logLaplace (-5) 1
+
+    -- We can't inverse-scale mu because it is exp(modifiable), not directly modifiable.
+    addMove 1 $ scaleGroupSlice [ nodeTime tree node | node <- internalNodes tree ]
 
     let tlength = treeLength tree
         substs = parsimony tree seqData (unitCostMatrix dna)
