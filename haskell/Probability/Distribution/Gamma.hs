@@ -44,12 +44,12 @@ instance HasAnnotatedPdf Gamma where
                                         return ([gamma_density a b x], ())
 
 instance Sampleable Gamma where
-    sample dist@(Gamma a b) = RanDistribution2 dist gamma_effect
+    sample dist@(Gamma a b) = RanDistribution2 dist gammaEffect
 
 -- do we need a "shifted" gamma so that slice sampling doesn't crash?
 -- do we need it so that changing the "shift" parameter doesn't affect variables sampled from it?
                               
-gamma_bounds = above 0
-gamma_effect x = add_move $ sliceSample x gamma_bounds
+gammaBounds = above 0
+gammaEffect x = add_move $ sliceSample x gammaBounds
 
 gamma a b = Gamma a b
