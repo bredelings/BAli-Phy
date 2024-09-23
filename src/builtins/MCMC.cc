@@ -466,7 +466,7 @@ extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
     }
 
 
-    scale_means_only_slice_function2 logp(C, r_scales, r_branch_lengths);
+    scale_groups_slice_function logp(C, r_scales, r_branch_lengths);
 
     // Tuning this would be better.
     // However, we now find slice boundaries by doubling instead of stepping out.

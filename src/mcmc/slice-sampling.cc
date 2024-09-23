@@ -253,7 +253,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2
  * Joint scaling of branch lengths and scales so that the T*R=D remains constant.
  */
 
-void scale_means_only_slice_function2::set_value(double t)
+void scale_groups_slice_function::set_value(double t)
 {
     log_current_factor = t;
     double scale = exp(log_current_factor);
@@ -267,23 +267,23 @@ void scale_means_only_slice_function2::set_value(double t)
 	C.set_modifiable_value(r_branch_lengths[b], initial_branch_lengths[b]/scale);
 }
 
-double scale_means_only_slice_function2::log_average_scale() const
+double scale_groups_slice_function::log_average_scale() const
 {
     return log(initial_average_scale) + log_current_factor;
 }
 
-double scale_means_only_slice_function2::operator()()
+double scale_groups_slice_function::operator()()
 {
     // return pi * (\sum_i \mu_i)^(n-B)
     return context_slice_function::operator()() + log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
 }
 
-double scale_means_only_slice_function2::current_value() const
+double scale_groups_slice_function::current_value() const
 {
     return log_current_factor;
 }
 
-scale_means_only_slice_function2::scale_means_only_slice_function2(context_ref& C, const std::vector<int>& ss, const std::vector<int>& ls)
+scale_groups_slice_function::scale_groups_slice_function(context_ref& C, const std::vector<int>& ss, const std::vector<int>& ls)
     :context_slice_function(C),
      r_scales(ss),
      r_branch_lengths(ls)

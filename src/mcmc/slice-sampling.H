@@ -191,7 +191,7 @@ struct slide_node_slice_function: public context_slice_function
 ///   n = the number of means,
 ///   B = the number of branch lengths.
 ///
-struct scale_means_only_slice_function2: public context_slice_function
+struct scale_groups_slice_function: public context_slice_function
 {
     std::vector<int> r_scales;
     std::vector<int> r_branch_lengths;
@@ -217,7 +217,7 @@ struct scale_means_only_slice_function2: public context_slice_function
 
     double current_value() const;
 
-    scale_means_only_slice_function2(context_ref&, const std::vector<int>&, const std::vector<int>&);
+    scale_groups_slice_function(context_ref&, const std::vector<int>&, const std::vector<int>&);
 };
 
 /// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
