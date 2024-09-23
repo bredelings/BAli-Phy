@@ -65,11 +65,13 @@ merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
 data CoalEvent = Leaf Int | Internal Int | RateShift Double
 nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 
--- QUESTION: Can we arrange that the degree of nodes does not change?
---           That would at least allow (leafNodes tree) to remain constant.
+instance Show CoalEvent where
+    show (Leaf n ) = "Leaf " ++ show n
+    show (Internal n ) = "Internal " ++ show n
+    show (RateShift r ) = "RateShift " ++ show r
 
 coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) 1: parentBeforeChildPrs tree
-    where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- leafNodes tree]
+    where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
           go t1 []                  n rate pr = pr
