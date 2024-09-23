@@ -9,7 +9,7 @@ import           MCMC (scaleGroupSlice)
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment  -- for getArgs
+import           System.Environment (getArgs)
 import           System.FilePath
 
 {- Problems:
