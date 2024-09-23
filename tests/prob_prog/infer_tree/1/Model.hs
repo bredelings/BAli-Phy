@@ -50,7 +50,7 @@ model seq_data = do
         , "|A|" %=% alignmentLength alignment
         ]
 
-main = do
+main logDir = do
     [filename] <- getArgs
 
     seq_data <- mkUnalignedCharacterData dna <$> load_sequences filename

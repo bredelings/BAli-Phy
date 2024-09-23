@@ -10,5 +10,5 @@ model = do
 
     return ["p" %=% p, "n" %=% n]
 
-main = do
+main logDir = do
   return model

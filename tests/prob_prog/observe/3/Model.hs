@@ -8,5 +8,5 @@ model = do
   y <- sample $ normal x 1
   return []
 
-main = do
+main logDir = do
   return model

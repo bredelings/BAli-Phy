@@ -32,7 +32,7 @@ model floor_values county_code_values log_radon_data = do
 
   return loggers
 
-main = do
+main logDir = do
 
   radon <- readTable "radon.csv"
 

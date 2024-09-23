@@ -37,5 +37,5 @@ model = do
 
     return ["p" %=% p, "n" %=% n, "q" %=% q, "x" %=% x, "w" %=% w, "y" %=% y, "z" %=% z]
 
-main = do
+main logDir = do
   return model

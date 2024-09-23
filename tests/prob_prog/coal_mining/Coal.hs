@@ -34,7 +34,7 @@ model (t1,t2) times = do
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
 
-main = do
+main dirname = do
 
   frame <- readTable "coal-times.csv"
 

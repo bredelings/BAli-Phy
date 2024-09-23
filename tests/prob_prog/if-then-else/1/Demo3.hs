@@ -9,5 +9,5 @@ model = do
     let x = if i == 1 then y else z
     return ["x" %=% x]
 
-main = do
+main logDir = do
   return model

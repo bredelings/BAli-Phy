@@ -5,11 +5,12 @@ import           Probability.Logger
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
-import           MCMC (scaleGroupsSlice)
+import           MCMC (scaleGroupSlice)
 import           Tree
 import           Tree.Newick
 import           SModel
 import           System.Environment  -- for getArgs
+import           System.FilePath
 
 {- Problems:
 
@@ -76,12 +77,13 @@ model seqData logTree = do
 
     return loggers
 
-main = do
+main logDir = do
     [filename] <- getArgs
 
     seqData <- mkAlignedCharacterData dna <$> load_sequences filename
 
-    logTree <- treeLogger "C1.trees"
+    -- This is placed in the wrong directory.
+    logTree <- treeLogger $ logDir </> "C1.trees"
 
     return $ model seqData logTree
 

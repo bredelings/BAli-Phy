@@ -35,7 +35,7 @@ model seqData = do
             "|T|" %=% treeLength tree,
             "scale*|T|" %=% scale * treeLength tree]
 
-main = do
+main logDir = do
     [filename] <- getArgs
 
     seqData <- mkAlignedCharacterData dna <$> load_sequences filename

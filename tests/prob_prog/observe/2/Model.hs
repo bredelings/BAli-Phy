@@ -9,7 +9,7 @@ observe_data z' = do
     observe z'$ normal y 1
     return ["x" %=% x, "y" %=% y]
 
-main = do
+main logDir = do
   let model = observe_data 1
 
   return model

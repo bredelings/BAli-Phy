@@ -17,5 +17,5 @@ model x = do
     observe x $ normal total 1
     return loggers
 
-main = do
+main logDir = do
   return $ model 20

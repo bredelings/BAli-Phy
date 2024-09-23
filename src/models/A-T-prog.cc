@@ -1111,7 +1111,7 @@ string generate_model_program(const boost::program_options::variables_map& args,
 	    addLogCmds += "addLogger $ logParamsJSON j;";
 	}
     }
-    program_file<<"  model <- Model.main\n";
+    program_file<<"  model <- Model.main "<<output_directory<<"\n";
     program_file<<"\n";
     if (args.count("test"))
     {

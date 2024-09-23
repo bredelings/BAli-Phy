@@ -9,5 +9,5 @@ model x = do
   observe x $ normal mu sigma
   return [ "mu" %=% mu, "sigma" %=% sigma]
 
-main = do
+main logDir = do
   return $ model 1

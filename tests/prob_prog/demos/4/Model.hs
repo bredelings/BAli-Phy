@@ -11,5 +11,5 @@ model = do
     let ys = [ xs !! (categories !! i) | i <- [0 .. 9] ]
     return ["ys" %=% ys]
 
-main = do
+main logDir = do
   return model

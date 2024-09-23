@@ -30,7 +30,7 @@ model seqData = do
             "tn93:kappa2" %=% kappa2,
             "tn93:frequencies" %=% freqs]
 
-main = do
+main logDir = do
     [filename] <- getArgs
 
     seqData <- mkAlignedCharacterData dna <$> load_sequences filename

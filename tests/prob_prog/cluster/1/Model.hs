@@ -29,7 +29,7 @@ model xs = do
   return loggers
 
 
-main = do
+main logDir = do
   [filename] <- getArgs
 
   xtable <- readTable filename

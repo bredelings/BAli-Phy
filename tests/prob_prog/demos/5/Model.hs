@@ -21,5 +21,5 @@ model = do
 
     return ["xs" %=% xs]
 
-main = do
+main logDir = do
   return model

@@ -9,5 +9,5 @@ model z' = do
     observe z' $ normal (zs !! 2) 1
     return ["zs" %=% zs]
 
-main = do
+main logDir = do
   return $ model 10

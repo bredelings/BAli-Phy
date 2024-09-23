@@ -18,5 +18,5 @@ model = do
   states <- gaussianRandomWalk 100 2
   return ["states" %=% states]
 
-main = do
+main logDir = do
   return model

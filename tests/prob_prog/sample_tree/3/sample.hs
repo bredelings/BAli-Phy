@@ -20,5 +20,5 @@ model = do
 
     return ["tree" %=% writeNewick rtree, "xs" %=% xs, "ps" %=% ps]
 
-main = do
+main logDir = do
   return model

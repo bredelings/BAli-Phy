@@ -52,7 +52,7 @@ model seqData = do
         , "frequencies" %=% freqs
         ]
 
-main = do
+main logDir = do
     [filename] <- getArgs
 
     seqData <- mkAlignedCharacterData dna <$> load_sequences filename

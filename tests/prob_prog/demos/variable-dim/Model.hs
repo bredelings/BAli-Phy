@@ -8,5 +8,5 @@ model = do
     observe 3 $ normal (sum ys) 1
     return ["n" %=% n, "ys" %=% ys]
 
-main = do
+main logDir = do
   return model

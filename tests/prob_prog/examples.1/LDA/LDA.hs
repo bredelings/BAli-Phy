@@ -37,5 +37,5 @@ docs = map words [
         "python prolog python prolog python prolog python prolog python prolog",
         "bear wolf bear python bear wolf bear wolf bear wolf"]
 
-main = do
+main logDir = do
   return $ model docs

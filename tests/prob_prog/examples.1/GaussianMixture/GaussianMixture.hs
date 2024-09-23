@@ -24,5 +24,5 @@ model = do
 
   return ["x" %=% x]
 
-main = do
+main logName = do
   return model

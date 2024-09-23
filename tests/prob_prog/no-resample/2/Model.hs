@@ -12,4 +12,4 @@ model x = do
 
     return ["n" %=% n, "y" %=% y]
 
-main = return $ model 3
+main logDir = return $ model 3

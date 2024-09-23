@@ -18,7 +18,7 @@ model locs sequence_data = do
 
   return ["rho" %=% rho ]
 
-main = do
+main logDir = do
 
   (seq_filename:locs_filename:_) <- getArgs
 

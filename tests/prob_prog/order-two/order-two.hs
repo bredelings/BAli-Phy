@@ -15,5 +15,5 @@ model = do
     let xs = take 100 walk
     return ["x" %=% xs]
 
-main = do
+main logDir = do
   return model

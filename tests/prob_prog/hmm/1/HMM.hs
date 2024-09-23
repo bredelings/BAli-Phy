@@ -28,5 +28,5 @@ model n = do
           "diff-true" %=% n_diffs hidden_states true_hidden_states,
           "diff-obs" %=% n_diffs hidden_states observations]
 
-main = do
+main logDir = do
   return $ model 100

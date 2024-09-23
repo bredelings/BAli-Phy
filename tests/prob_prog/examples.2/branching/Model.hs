@@ -15,5 +15,5 @@ model n = do
   observe n $ (poisson $ fromIntegral l)
   return ["r" %=% r]
 
-main = do
+main logDir = do
   return $ model 6

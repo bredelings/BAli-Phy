@@ -17,7 +17,7 @@ model xs ys = do
 
     return ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 
-main = do
+main logDir = do
   xy_data <- readTable "xy.csv"
 
   let xs = xy_data $$ "x" :: [Double]

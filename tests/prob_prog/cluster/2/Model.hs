@@ -24,7 +24,7 @@ model xs = do
 
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 
-main = do
+main logDir = do
   [filename] <- getArgs
 
   xtable <- readTable filename

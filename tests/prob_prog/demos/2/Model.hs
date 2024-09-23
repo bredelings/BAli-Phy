@@ -10,5 +10,5 @@ model = do
 
     return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
 
-main = do
+main logDir = do
   return model

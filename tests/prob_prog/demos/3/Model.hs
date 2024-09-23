@@ -8,6 +8,6 @@ model = do
     let x = if (i == 1) then y else 0.0
     return ["i" %=% i, "x" %=% x]
 
-main = do
+main logDir = do
   return model
       

@@ -9,5 +9,5 @@ model = do
     tree <- sample $ uniformTopology 5
     return ["tree" %=% writeNewick tree]
 
-main = do
+main logDir = do
   return model

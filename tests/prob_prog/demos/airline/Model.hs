@@ -16,7 +16,7 @@ model fatalities = do
 
     return loggers
 
-main = do
+main logDir = do
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
 
   return $ model fatalities
