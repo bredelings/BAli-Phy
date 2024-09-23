@@ -511,7 +511,7 @@ void write_header(std::ostream& program_file,
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
-    imports.insert("MCMC");                                  // for scale_means_only_slice
+    imports.insert("MCMC");                                  // for scaleGroups{Slice,MH}
     imports.insert("Tree.Newick");                           // for write_newick
     imports.insert("SModel.Parsimony");                      // for parsimony
     imports.insert("Probability");                           // for prop_likelihood, dropInternalLabels(?)
@@ -819,8 +819,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
         if (not fixed.count("tree"))
         {
-            model.perform({var("addMove"), 2, {var("scale_means_only_slice"), get_list(scales), branch_lengths}});
-	    model.perform({var("addMove"), 1, {var("scale_means_only_MH"), get_list(scales), branch_lengths}});
+            model.perform({var("addMove"), 2, {var("scaleGroupsSlice"), get_list(scales), branch_lengths}});
+	    model.perform({var("addMove"), 1, {var("scaleGroupsMH"), get_list(scales), branch_lengths}});
         }
     }
 

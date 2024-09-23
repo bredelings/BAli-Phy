@@ -68,7 +68,6 @@ namespace fs = std::filesystem;
 //--- Up to here, just do it.
 
 // TODO: fix compilation with recent boost.
-// TODO: change scale_means_only -> scale_all_branches
 
 // TODO: move logging, scale_factor, prefixing, etc. out of models.
 
@@ -104,13 +103,10 @@ namespace fs = std::filesystem;
 
 // TODO: rewrite tree reader/writer functions to use lambdas.
 
-// TODO: allow addition/subtraction?
 // ? TODO: clean up loggers.{H,C} to use lambda functions
 // ? TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
-// Q: fmutsel version of m3, etc.
-// Q: how to share GTR between genes in gtr+gwf?
 
 ptree parse_constraints(const ptree& cc)
 {

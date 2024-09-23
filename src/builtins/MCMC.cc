@@ -429,11 +429,11 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable_raw(Ope
 }
 
 // slice_sample_real_random_variable x context state
-extern "C" closure builtin_function_scale_means_only_slice_raw(OperationArgs& Args)
+extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
-    if (log_verbose >= 3) std::cerr<<"\n\n[scale_means_only_slice2]\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[scaleGroupsSlice]\n";
 
     auto& M = Args.memory();
 
@@ -482,11 +482,11 @@ extern "C" closure builtin_function_scale_means_only_slice_raw(OperationArgs& Ar
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_scale_means_only_proposal_raw(OperationArgs& Args)
+extern "C" closure builtin_function_scaleGroupsProposalRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
-    if (log_verbose >= 3) std::cerr<<"\n\n[scale_means_only_proposal]\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[scaleGroupsProposalRaw]\n";
 
     auto& M = Args.memory();
 

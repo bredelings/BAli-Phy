@@ -40,7 +40,7 @@ tree_prior taxa = do
 
     tree <- sample $ coalescentTree taxonAges rateShifts
 
-    let loggers   = ["N/tau" %=% popSize]
+    let loggers   = ["N_over_tau" %=% popSize]
 
     return (tree, loggers)
 

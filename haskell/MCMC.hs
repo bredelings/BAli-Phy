@@ -83,9 +83,9 @@ foreign import bpcall "MCMC:" accept_MH :: ContextIndex -> ContextIndex -> LogDo
 --       So... we need some kind of ContextPtr object that holds a reference to the context
 --       until the ContextPtr is destroyed?
 
-foreign import bpcall "MCMC:" scale_means_only_slice_raw :: [Double] -> [Double] -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" scaleGroupsSliceRaw :: [Double] -> [Double] -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" scale_means_only_proposal_raw :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" scaleGroupsProposalRaw :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
 
 foreign import bpcall "MCMC:" runMCMC :: Int -> ContextIndex -> IO ()
 
@@ -98,11 +98,11 @@ foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
 
-scale_means_only_slice xs ys = scale_means_only_slice_raw (toList xs) (toList ys)
+scaleGroupsSlice xs ys = scaleGroupsSliceRaw (toList xs) (toList ys)
 
-scale_means_only_proposal xs ys = scale_means_only_proposal_raw (toList xs) (toList ys)
+scaleGroupsProposal xs ys = scaleGroupsProposalRaw (toList xs) (toList ys)
                                            
-scale_means_only_MH scales lengths = metropolisHastings $ scale_means_only_proposal scales lengths
+scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
 
 metropolisHastings :: Proposal -> ContextIndex -> IO Bool
 metropolisHastings proposal c1 = do

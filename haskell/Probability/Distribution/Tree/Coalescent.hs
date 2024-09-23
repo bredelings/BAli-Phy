@@ -68,9 +68,9 @@ nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 -- QUESTION: Can we arrange that the degree of nodes does not change?
 --           That would at least allow (leafNodes tree) to remain constant.
 
-coalescentTreePrFactors ((t0,theta0):rateShifts) tree = go t0 events 0 (2/theta0) 1: parentBeforeChildPrs tree
+coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) 1: parentBeforeChildPrs tree
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- leafNodes tree]
-          shifts = [(time, RateShift (2/theta)) | (time, theta) <- rateShifts]
+          shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
           go t1 []                  n rate pr = pr
           go t1 ((t2,event):events) n rate pr =
@@ -104,7 +104,7 @@ getNextEvent (Just (t1,x)) Nothing                   = Just (t1, Left x)
 getNextEvent (Just (t1,x)) (Just (t2,y)) | t1 < t2   = Just (t1, Left x)
                                          | otherwise = Just (t2, Right y)
 
-sampleCoalescentTree leafTimes ((t0,theta0):rateShifts) = do
+sampleCoalescentTree leafTimes ((t0,popSize0):rateShifts) = do
 
   let nLeaves = length leafTimes
       firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
@@ -131,7 +131,7 @@ sampleCoalescentTree leafTimes ((t0,theta0):rateShifts) = do
       goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (Leaf node      , events)) = go t2 rate  nextNode (node:activeNodes) events (node:nodes, edges, (node,t2):nodeTimes)
       goEvent rate nextNode activeNodes (nodes, edges, nodeTimes) (t2, (RateShift rate2, events)) = go t2 rate2 nextNode activeNodes        events (nodes, edges, nodeTimes)
 
-  (nodes, edges, nodeTimes) <- go t0 (2/theta0) firstInternal [] events ([], [], [])
+  (nodes, edges, nodeTimes) <- go t0 (1/popSize0) firstInternal [] events ([], [], [])
   let root = head nodes
       topology = addRoot root (treeFromEdges nodes edges)
 
