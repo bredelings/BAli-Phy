@@ -82,8 +82,7 @@ coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popS
                 Internal _        -> go t2 events (n-1) rate    (pr' * toLogDouble rate)
                         -- the nChoose2 from the rate cancels with the one from the topology
               where nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
-                    totalRate = rate * nChoose2
-                    prNothing = expToLogDouble $ (-totalRate * (t2-t1))
+                    prNothing = expToLogDouble $ (-rate * nChoose2 * (t2-t1))
                     pr'       = pr * prNothing
 
 -------------------------------------------------------------
