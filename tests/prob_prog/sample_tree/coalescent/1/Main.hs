@@ -26,5 +26,5 @@ main = do
      let n = 20
          taxa = fmap T.pack $ fmap name [0..n-1]
 
-     (tree,loggers) <- run_strict (model taxa)
+     (tree,loggers) <- runRandomStrict (model taxa)
      putStrLn $ show $ J.Object loggers

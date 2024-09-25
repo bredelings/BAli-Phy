@@ -381,7 +381,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
 
     program_file<<"-- Use the program `ormolu` (or `brittany` or `hindent`) to indent this file for readability\n";
     set<string> imports;
-    imports.insert("Probability.Random");     // for run_lazy
+    imports.insert("Probability.Random");     // for runRandomLazy
     imports.insert("Bio.Alphabet");               // for dna
     add(imports, print.imports);
     for(auto& mod: imports)
@@ -407,7 +407,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     }
 
     if (print.code.is_action())
-        program_file<<"  result <- run_lazy ("<<E<<")\n";
+        program_file<<"  result <- runRandomLazy ("<<E<<")\n";
     else
         program_file<<"  let result = "<<E<<"\n";
 

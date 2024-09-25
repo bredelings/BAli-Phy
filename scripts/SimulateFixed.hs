@@ -57,7 +57,7 @@ main = do
 
   let startLength = getStartLength args
 
-  alignedSequences <- run_lazy $ model rootedTree startLength
+  alignedSequences <- runRandomLazy $ model rootedTree startLength
 
   T.putStr $ toFasta $ alignedSequences
 

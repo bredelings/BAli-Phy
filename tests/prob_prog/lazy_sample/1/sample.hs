@@ -8,5 +8,5 @@ model = do
     return $ (x * x) : (take 10 ys)
 
 main = do
-    y <- run_strict $ sample $ normal 0 1
+    y <- runRandomStrict $ sample $ normal 0 1
     putStrLn $ show y
