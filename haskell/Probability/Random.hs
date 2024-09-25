@@ -93,14 +93,7 @@ instance Sampleable (Random a) where
 
 prior = sample
 
--- Maybe we would just define `normal mu sigma = sample $ Normal mu sigma`?
--- How about the effect?
-
-
-
--- FIXME: the Random constructor here seems a bit weird.
---        presumably this indicates that its an IO action versus a Random a
---        but its only used inside Distribution...
+---------------------------- TKEffects --------------------------
 
 data TKEffects a = SamplingRate Double (TKEffects a)
                  | TKLiftIO (Double -> IO a)
@@ -121,6 +114,8 @@ instance Monad TKEffects where
     return x = TKReturn x
     f >>= g  = TKBind f g
 
+--------------------------- Random a ----------------------------
+
 data Random a where
     RanOp :: ((forall b.Random b -> IO b) -> IO a) -> Random a
     RanBind :: Random b -> (b -> Random a) -> Random a
@@ -131,6 +126,7 @@ data Random a where
     RanDistribution3 :: HasAnnotatedPdf d => d -> ((Result d)->TKEffects b) -> ((Result d) -> ((Result d) -> IO ()) -> (Result d)) -> Random (Result d) -> Random (Result d)
     RanSamplingRate :: Double -> Random a -> Random a
     RanInterchangeable :: Random b -> Random (Random b)
+
 {-
 We need the non-RanOp constructors because they behave differently in the different interpreters.
 - RanOp: does the same thing in all interpreters.
@@ -161,6 +157,8 @@ instance Monad Random where
 
 instance MonadFix Random where
     mfix f   = RanOp (\interp -> mfix $ interp . f)
+
+-------------------------------------------------------------------------
 
 register_dist_properties event props = register_dist_property event props "properties"
 
@@ -283,38 +281,15 @@ runMCMCStrict rate ix@(RanInterchangeable r) = runMCMCLazy rate ix
 runMCMCStrict rate dist@(RanDistribution2 _ _) = runMCMCLazy rate dist
 runMCMCStrict rate dist@(RanDistribution3 _ _ _ _) = runMCMCLazy rate dist
 runMCMCStrict rate e@(WithTKEffect _ _) = runMCMCLazy rate e
-runMCMCStrict rate (Lazy r) = unsafeInterleaveIO $ runMCMCLazy rate r
+runMCMCStrict rate (Lazy r) = unsafeInterleaveIO $ runMCMCLazy rate r -- See Note below.
 runMCMCStrict rate (RanOp op) = op (runMCMCStrict rate)
 
--- NOTE: In order for (runMCMCLazy) to actually be lazy, we need to avoid returning
---       SOMETHING `seq` result.  And this means that we need to frequently
---       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
+{- NOTE: unsafeInterleaveIO $ runMCMCLazy
 
-triggeredModifiableStructure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
-triggeredModifiableStructure modStructure value effect = triggered_x
-    where raw_x       = modStructure modifiable value
-          effect'     = unsafePerformIO $ effect raw_x
-          triggered_x = modStructure (withEffect effect') raw_x
-
-applyModifier :: (forall a.a -> a) -> b -> b
-applyModifier x y = x y
-
-modifiableStructure :: b -> (b -> IO ()) -> b
-modifiableStructure = triggeredModifiableStructure applyModifier
-
-foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
-
-foreign import bpcall "MCMC:" interchange_entries :: Int -> ContextIndex -> IO ()
-
-foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
-
-foreign import bpcall "Modifiables:interchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
-
-interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
-                           in register_interchangeable id e `seq` e
-
--- It seems like we could return raw_x in most cases, except the case of a tree.
--- But in the tree case, we could return triggered_x.
+In order for (runMCMCLazy) to actually be lazy, we need to avoid returning
+SOMETHING `seq` result.  And this means that we need to frequently
+intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
+-}
 
 -- Note on unsafeInterleaveIO:
 --       Simply using runRandomLazy does not guarantee that the result of runRandomLazy
@@ -387,4 +362,35 @@ balanced_product xs = foldt (*) 1 xs
 mapn n f xs = go 0 where
     go i | i==n      = []
          | otherwise = f (xs!!i):go (i+1)
+
+
+------------------------ Modifiable structures --------------------------
+                       
+triggeredModifiableStructure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
+triggeredModifiableStructure modStructure value effect = triggered_x
+    where raw_x       = modStructure modifiable value
+          effect'     = unsafePerformIO $ effect raw_x
+          triggered_x = modStructure (withEffect effect') raw_x
+
+applyModifier :: (forall a.a -> a) -> b -> b
+applyModifier x y = x y
+
+modifiableStructure :: b -> (b -> IO ()) -> b
+modifiableStructure = triggeredModifiableStructure applyModifier
+
+-- It seems like we could return raw_x in most cases, except the case of a tree.
+-- But in the tree case, we could return triggered_x.
+
+------------------------- Interchangeables ---------------------------
+                       
+foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
+
+foreign import bpcall "MCMC:" interchange_entries :: Int -> ContextIndex -> IO ()
+
+foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
+
+foreign import bpcall "Modifiables:interchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
+
+interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
+                           in register_interchangeable id e `seq` e
 
