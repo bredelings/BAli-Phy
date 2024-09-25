@@ -53,12 +53,12 @@ get_densities (ADBind f g) = let x = get_densities f in get_densities (g x)
 get_densities (InEdge _ x) = ()
 
 
-make_edges :: Effect -> AnnotatedDensity a -> IO a
-make_edges event (ADReturn x) = return x
-make_edges event (ADBind f g) = do x <- make_edges event f
-                                   make_edges event (g x)
-make_edges event (InEdge name node) = do register_in_edge node event name
-                                         return ()
+makeEdges :: Effect -> AnnotatedDensity a -> IO a
+makeEdges event (ADReturn x) = return x
+makeEdges event (ADBind f g) = do x <- makeEdges event f
+                                  makeEdges event (g x)
+makeEdges event (InEdge name node) = do register_in_edge node event name
+                                        return ()
 
 -- Define the Distribution type
 densities dist x = fst $ get_densities $ annotated_densities dist x
@@ -174,7 +174,7 @@ This is nearly the same between sampling and observe events.
 sample_effect_props rate dist tk_effect x = do
   s <- register_dist_sample (dist_name dist)
   register_out_edge s x
-  (density_terms, props) <- make_edges s $ annotated_densities dist x
+  (density_terms, props) <- makeEdges s $ annotated_densities dist x
   register_dist_properties s props
   sequence_ [register_prior s term | term <- density_terms]
 
@@ -189,7 +189,7 @@ sample_effect rate dist tk_effect x = do
 observe datum dist = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
                        register_out_edge s datum
-                       (density_terms, props) <- make_edges s $ annotated_densities dist datum
+                       (density_terms, props) <- makeEdges s $ annotated_densities dist datum
                        register_dist_properties s props
                        sequence_ [register_likelihood s term | term <- density_terms]
 
@@ -291,16 +291,16 @@ run_strict' rate (RanOp op) = op (run_strict' rate)
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
 triggeredModifiableStructure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
-triggeredModifiableStructure mod_structure value effect = triggered_x
-    where raw_x       = mod_structure modifiable value
+triggeredModifiableStructure modStructure value effect = triggered_x
+    where raw_x       = modStructure modifiable value
           effect'     = unsafePerformIO $ effect raw_x
-          triggered_x = mod_structure (withEffect effect') raw_x
+          triggered_x = modStructure (withEffect effect') raw_x
 
-apply_modifier :: (forall a.a -> a) -> b -> b
-apply_modifier x y = x y
+applyModifier :: (forall a.a -> a) -> b -> b
+applyModifier x y = x y
 
 modifiableStructure :: b -> (b -> IO ()) -> b
-modifiableStructure = triggeredModifiableStructure apply_modifier
+modifiableStructure = triggeredModifiableStructure applyModifier
 
 foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
 
