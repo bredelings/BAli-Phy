@@ -25,6 +25,8 @@ import qualified Data.Text.IO as TIO
 
 import Probability.Dist
 
+-------------------------- AnnotatedDensity ------------------------
+
 data AnnotatedDensity a where
     InEdge :: String -> b -> AnnotatedDensity ()
     ADBind :: AnnotatedDensity b -> (b -> AnnotatedDensity a) -> AnnotatedDensity a
@@ -60,12 +62,6 @@ makeEdges event (ADBind f g) = do x <- makeEdges event f
 makeEdges event (InEdge name node) = do register_in_edge node event name
                                         return ()
 
--- Define the Distribution type
-densities dist x = fst $ get_densities $ annotated_densities dist x
-density dist x = balanced_product (densities dist x)
-
--- can we change all of these ^^ functions into member functions?
-
 -- We can observe from these.
 -- PROBLEM: What if observing from a distribution is supposed to update
 --          a summary statistic?  Can we then register a properties object for each
@@ -75,23 +71,9 @@ class Dist d => HasAnnotatedPdf d where
     type DistProperties d = ()
     annotated_densities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
 
--- We know how to sample from these -- theres a default effect?
-class Dist d => Sampleable d where
-    sample :: d -> Random (Result d)
+densities dist x = fst $ get_densities $ annotated_densities dist x
+density dist x = balanced_product (densities dist x)
 
-class (Sampleable d, HasAnnotatedPdf d) => SampleableWithProps d where
-    sampleWithProps :: d -> Random (Result d, DistProperties d)
-
-instance Dist (Random a) where
-    type Result (Random a) = a
-
-instance IOSampleable (Random a) where
-    sampleIO dist = runRandomLazy dist
-
-instance Sampleable (Random a) where
-    sample r = r
-
-prior = sample
 
 ---------------------------- TKEffects --------------------------
 
@@ -157,6 +139,30 @@ instance Monad Random where
 
 instance MonadFix Random where
     mfix f   = RanOp (\interp -> mfix $ interp . f)
+
+
+
+instance Dist (Random a) where
+    type Result (Random a) = a
+
+instance IOSampleable (Random a) where
+    sampleIO dist = runRandomLazy dist
+
+--------------------------- class Sampleable -----------------------------
+
+-- These objects have a corresponding Random action.
+class Dist d => Sampleable d where
+    sample :: d -> Random (Result d)
+
+prior = sample
+
+instance Sampleable (Random a) where
+    sample r = r
+
+--------------------------- class SampleableWithProps -------------------
+
+class (Sampleable d, HasAnnotatedPdf d) => SampleableWithProps d where
+    sampleWithProps :: d -> Random (Result d, DistProperties d)
 
 -------------------------------------------------------------------------
 
