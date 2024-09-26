@@ -255,7 +255,7 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
-        ninja -C test
+        ninja -C build test
 
     - name: Get version
       id: get_version
