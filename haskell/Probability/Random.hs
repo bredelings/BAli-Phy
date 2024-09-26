@@ -257,7 +257,7 @@ instance AddMove TKEffects where
 
 runTkEffects :: Double -> TKEffects a -> IO a
 runTkEffects rate (TKBind f g) = do x <- runTkEffects rate f
-                                      runTkEffects rate $ g x
+                                    runTkEffects rate $ g x
 runTkEffects rate (TKReturn v) = return v
 runTkEffects rate (TKLiftIO action) = action rate
 runTkEffects rate (SamplingRate rate2 a) = runTkEffects (rate*rate2) a
