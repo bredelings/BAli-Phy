@@ -70,20 +70,19 @@ instance Show CoalEvent where
     show (Internal n ) = "Internal " ++ show n
     show (RateShift r ) = "RateShift " ++ show r
 
-coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) 1: parentBeforeChildPrs tree
+coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- rateShifts]
           events = merge (\x y -> fst x < fst y) nodes shifts
-          go t1 []                  n rate pr = pr
-          go t1 ((t2,event):events) n rate pr =
+          go t1 []                  n rate factors = factors
+          go t1 ((t2,event):events) n rate factors =
               case event of
-                RateShift newRate -> go t2 events n     newRate pr'
-                Leaf _            -> go t2 events (n+1) rate    pr'
-                Internal _        -> go t2 events (n-1) rate    (pr' * toLogDouble rate)
+                RateShift newRate -> go t2 events n     newRate (prNothing: factors)
+                Leaf _            -> go t2 events (n+1) rate    (prNothing: factors)
+                Internal _        -> go t2 events (n-1) rate    (prNothing * toLogDouble rate: factors)
                         -- the nChoose2 from the rate cancels with the one from the topology
               where nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
                     prNothing = expToLogDouble $ (-rate * nChoose2 * (t2-t1))
-                    pr'       = pr * prNothing
 
 -------------------------------------------------------------
 
@@ -145,7 +144,7 @@ coalescentTreeEffect tree = do
   -- Resample all the node times, including the root...
   -- But what if some node times are fixed?
   -- FIXME: check that leaf times are fixed?
-  sequence_ [ addMove 1 $ sliceSample (nodeTime tree node) (above 0) | node <- internalNodes tree]
+  -- sequence_ [ addMove 1 $ sliceSample (nodeTime tree node) (above 0) | node <- internalNodes tree]
 
   -- This allow attaching at the same level OR more rootward.
   -- FIXME: but it doesn't allow becoming the root!
