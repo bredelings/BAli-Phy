@@ -40,10 +40,6 @@ sample_uniform_time_tree age n = do
       allNodeTimes = IntMap.fromList $ zip [0..] all_times
   return $ time_tree topology allNodeTimes
 
-possible = 1 :: LogDouble
-impossible = 0 :: LogDouble
-require p = if p then possible else impossible
-
 parentBeforeChildPrs tree = [factor n | n <- getNodes tree]
     where time = nodeTime tree
           factor n = case parentNode tree n of Nothing -> possible

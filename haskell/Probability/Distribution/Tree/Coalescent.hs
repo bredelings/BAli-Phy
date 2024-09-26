@@ -11,8 +11,6 @@ import           Data.Text (Text)
 import           MCMC
 import           Data.Array
 
-type Time = Double
-
 {- NOTE: Time scaling in the coalescent.
 
 Time scale      Coalescent    Mutation     Generation       Time

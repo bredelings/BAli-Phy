@@ -4,11 +4,14 @@ import Probability.Random
 import Probability.Distribution.Uniform
 import Probability.Distribution.Exponential
 
+type Time = Double
+type Rate = Double
+
 xrange start end | start < end = start : xrange (start + 1) end
                  | otherwise   = []
 
+pickIndex _ []      = error "Trying to pick from empty list!"
 pickIndex 0 (h : t) = (h, t)
-pickIndex 0 []      = error "Trying to pick from empty list!"
 pickIndex i (h : t) = let (x, t2) = pickIndex (i - 1) t in (x, h : t2)
 
 removeOne []   = error "Cannot remove one from empty list"
@@ -23,3 +26,9 @@ remove n list | n < 0           = error $ "Trying to remove " ++ show n ++ "entr
           go n list = do (x , list_minus_1) <- removeOne list
                          (xs, list_minus_n) <- go (n - 1) list_minus_1
                          return (x:xs, list_minus_n)
+
+
+possible = 1 :: LogDouble
+impossible = 0 :: LogDouble
+require p = if p then possible else impossible
+
