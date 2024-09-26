@@ -231,6 +231,7 @@ branchLengths g = branchLength g <$> getUEdges g
 branchLengthsSet g = getUEdgesSet g & IntMap.fromSet (branchLength g)
 
 --   but could not do this for WithNodeTimes...
+--   QUESTION: should this just be (Double->Double)?  Or (Int->Double->Double)?
 class HasBranchLengths g => CanModifyBranchLengths g where
     modifyBranchLengths :: (Int -> Double) -> g -> g
 

@@ -166,15 +166,24 @@ instance (IsDirectedAcyclicGraph t, IsForest t) => IsForest (WithNodeTimes t) wh
 
 class IsDirectedAcyclicGraph g => HasNodeTimes g where
     nodeTime :: g -> Int -> Double
+    nodeTimes :: g -> IntMap Double
+    modifyNodeTimes :: g -> (Double -> Double) -> g
 
+-- We could separate out modifyNodeTimes out into a separate class CanModifyNodeTimes, like with CanModifyBranchLengths
 instance IsDirectedAcyclicGraph g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
+    nodeTimes (WithNodeTimes _ hs) = hs
+    modifyNodeTimes (WithNodeTimes tree hs) f = WithNodeTimes tree (fmap f hs)
 
 instance HasNodeTimes t => HasNodeTimes (WithLabels t) where
     nodeTime (WithLabels tt _) node = nodeTime tt node
+    nodeTimes (WithLabels tt _) = nodeTimes tt
+    modifyNodeTimes (WithLabels tt ls) f = WithLabels (modifyNodeTimes tt f) ls
 
 instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
-    nodeTime (WithBranchRates g _) node = nodeTime g node
+    nodeTime (WithBranchRates tt _) node = nodeTime tt node
+    nodeTimes (WithBranchRates tt _) = nodeTimes tt
+    modifyNodeTimes (WithBranchRates tt rs) f = WithBranchRates (modifyNodeTimes tt f) rs
 
 instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
