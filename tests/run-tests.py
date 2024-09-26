@@ -406,6 +406,11 @@ def print_test_matrix(rows):
     for row in rows:
         print(','.join(row))
 
+def print_existing_tests(rows):
+    for row in rows:
+        if [ status for status in row[1:] if status == "X"]:
+            print(row[0])
+
 def prog_name(pathname):
     import re
     filename = os.path.basename(pathname)
@@ -431,21 +436,28 @@ if __name__ == '__main__':
         exit(1)
 
     if cmd[0] == 'test':
-        cmd = cmd[1:]
+        progs = cmd[1:]
     elif cmd[0] == 'coverage':
         progs = cmd[1:]
         print_test_matrix(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
+        exit(1)
+    elif cmd[0] == 'list':
+        progs = cmd[1:]
+        print_existing_tests(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
         exit(1)
     elif cmd[0] == 'results':
         progs = cmd[1:]
         print_test_matrix(test_matrix_from_dict(results_dict(top_test_dir, data_dir, progs),progs))
         exit(1)
+    elif cmd[0] == 'run':
+        top_test_dir = cmd[1]
+        progs = cmd[2:]
 
-    method = get_test_method(cmd)
+    method = get_test_method(progs)
 
     print("Running tests for '{}':\n".format(method.name))
-    if os.path.isabs(cmd[0]) and not os.path.exists(cmd[0]):
-        print("Executable '{}' not found!".format(cmd[0]))
+    if os.path.isabs(progs[0]) and not os.path.exists(progs[0]):
+        print("Executable '{}' not found!".format(progs[0]))
         exit(1)
 
     tester = Tester(top_test_dir, data_dir, method)
