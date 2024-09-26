@@ -350,6 +350,11 @@ jobs:
             ./run-tests.py ${BALIPHY} --seed=$seed
             cd
             echo ::endgroup::
+
+            echo ::group::Meson tests
+            cd ../build
+            ninja test
+            echo ::endgroup::
         else
             echo ::group::Reduced test suite
             ( cd tests/prob_prog/demos ; ../../run-tests.py ${BALIPHY} --seed=$seed )
