@@ -255,6 +255,7 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
+        ninja -C test
 
     - name: Get version
       id: get_version
@@ -349,11 +350,6 @@ jobs:
             cd tests
             ./run-tests.py ${BALIPHY} --seed=$seed
             cd
-            echo ::endgroup::
-
-            echo ::group::Meson tests
-            cd ../build
-            ninja test
             echo ::endgroup::
         else
             echo ::group::Reduced test suite
