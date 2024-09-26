@@ -123,11 +123,14 @@ subdir('doc')
 # Run internal tests
 run_tests = find_program(meson.project_source_root()/'tests/run-tests.py')
 
-test('bali-phy testsuite',
-     run_tests,
-     timeout: 3000,
-     workdir: meson.project_source_root()/'tests',
-     args:[baliphy.full_path(), packagepath])
+test_list = run_command(run_tests,'list').stdout().split()
+foreach test: test_list
+  test('bali-phy testsuite ' + test,
+       run_tests,
+       timeout: 300,
+       workdir: meson.project_source_root()/'tests',
+       args:['run', test, baliphy.full_path(), '-V', packagepath])
+endforeach
 
 # Install non-executable files
 
