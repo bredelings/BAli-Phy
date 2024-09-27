@@ -51,6 +51,7 @@ int get_n_lambdas1(Occ::Exp E)
     while(auto lam = E.to_lambda())
     {
 	n++;
+	auto tmp = E;
 	E = lam->body;
     }
     return n;
