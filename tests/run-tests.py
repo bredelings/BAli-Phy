@@ -452,6 +452,8 @@ if __name__ == '__main__':
     elif cmd[0] == 'run':
         top_test_dir = cmd[1]
         progs = cmd[2:]
+    else:
+        progs = cmd
 
     method = get_test_method(progs)
 
