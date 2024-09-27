@@ -1033,7 +1033,6 @@ Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
             name += class_arg_name(class_arg);
     }
     auto dvar = get_fresh_var(name, qualified);
-    dvar.type_ = std::make_shared<Type>(pred);
     return dvar;
 }
 

@@ -21,9 +21,6 @@ struct var: public Object, public occurrence_info
 
     std::optional<int> level;
 
-    // We use this only to print dvar :: constraint
-    std::shared_ptr<Type> type_;
-
     // This stores unfoldings, pragmas, etc.
     std::weak_ptr<const VarInfo> info;
 
@@ -31,7 +28,6 @@ struct var: public Object, public occurrence_info
     bool operator==(const Object& o) const;
     var* clone() const {return new var(*this);}
     std::string print() const;
-    std::string print_with_type() const;
   
     bool operator<(const var&) const;
 

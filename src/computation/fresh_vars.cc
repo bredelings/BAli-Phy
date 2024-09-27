@@ -93,9 +93,7 @@ Hs::Var FreshVarSource::get_fresh_Var(const std::string& name, bool qualified)
 
 Hs::Var FreshVarSource::get_fresh_Var(const Hs::Var& x, bool qualified)
 {
-    auto x2 = get_fresh_Var(x.name, qualified);
-    x2.type = x.type;
-    return x2;
+    return get_fresh_Var(x.name, qualified);
 }
 
 Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)

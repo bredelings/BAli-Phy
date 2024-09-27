@@ -18,8 +18,6 @@ struct Var: public Object
 {
     std::string name;
 
-    std::optional<::Type> type;
-
     Core::wrapper wrap;
 
     std::shared_ptr<const VarInfo> info;
@@ -31,13 +29,11 @@ struct Var: public Object
     bool is_sym() const;
     std::string print_without_parens() const;
     std::string print() const;
-    std::string print_with_type() const;
 
     template <class Archive>
     void serialize(Archive& ar)
     {
 	// We should only be serializing Hs::Var for its use in defining variable names in ClassInfo
-	assert(not type);
 	assert(not info);
 	ar(name);
     }
@@ -45,7 +41,6 @@ struct Var: public Object
     Var* clone() const { return new Var(*this);}
 
     Var(const std::string& s):name(s) {}
-    Var(const std::string& s, const ::Type& t):name(s),type(t) {}
 
     Var() = default;
 };

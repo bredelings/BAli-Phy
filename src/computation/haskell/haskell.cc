@@ -1010,7 +1010,7 @@ string GenBind::print() const
 
     vector<string> ds;
     for(auto& darg: dict_args)
-        ds.push_back( darg.print_with_type() );
+        ds.push_back( darg.print() );
 
     string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
     s += print_cdecls(*dict_decls)+"\n";

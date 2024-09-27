@@ -26,16 +26,6 @@ string Var::print() const
     return uname;
 }
 
-string Var::print_with_type() const
-{
-    string uname = print();
-
-    if (type)
-        uname = "("+uname + " :: " + (*type).print()+")";
-
-    return uname;
-}
-
 bool Var::operator==(const Object& o) const
 {
     auto V = dynamic_cast<const Var*>(&o);

@@ -65,7 +65,6 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LVar& LV, const Expected& exp
             type = exp_type.check_type();
     }
 
-    V.type = type;
     local_value_env lve;
     lve = lve.insert({V,type});
     penv += lve;
