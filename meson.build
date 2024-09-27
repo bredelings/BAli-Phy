@@ -124,13 +124,18 @@ subdir('doc')
 run_tests = find_program(meson.project_source_root()/'tests/run-tests.py')
 test_dir = meson.project_source_root()/'tests'
 
-test_list = run_command(run_tests, 'listdir', test_dir, 'bali-phy', check: false).stdout().split()
+wrapper = []
+if host_machine.system() == 'windows'
+  wrapper = ['wine']
+endif
+
+test_list = run_command(run_tests, 'listdir', test_dir, baliphy.full_path(), check: false).stdout().split()
 foreach test: test_list
   test('bali-phy testsuite ' + test,
        run_tests,
        timeout: 300,
        workdir: test_dir,
-       args:['run', test, baliphy.full_path(), '-V', packagepath])
+       args:['run', test, wrapper, baliphy.full_path(), '-V', packagepath])
 endforeach
 
 # Install non-executable files
