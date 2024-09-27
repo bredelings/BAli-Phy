@@ -255,12 +255,12 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
-        # if [ "${{ runner.os }}" != "macOS" ] ; then
-        #     if [ -n "${BOOST_ROOT}" ] ; then
-        #        export LD_LIBRARY_PATH="${BOOST_ROOT}/lib" ;
-        #     fi
-        #     ninja -C build test
-        # fi
+        if [ "${{ runner.os }}" != "macOS" ] ; then
+            if [ -n "${BOOST_ROOT}" ] ; then
+               export LD_LIBRARY_PATH="${BOOST_ROOT}/lib" ;
+            fi
+            ninja -C build test
+        fi
 
     - name: Get version
       id: get_version
