@@ -87,7 +87,10 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
 	{
 	    if (not is_var(P.sub()[i]))
 		throw myexception()<<"to_core_pattern: constructor argument is not a var: "<<P;
-	    con_app.args.push_back( to_core(P.sub()[i].as_<var>()) );
+	    auto x = P.sub()[i].as_<var>();
+	    if (x.is_wildcard())
+		throw myexception()<<"to_core_pattern: constructor argument has wildcard arg: "<<P;
+	    con_app.args.push_back( to_core(x) );
 	}
 	return con_app;
     }
@@ -403,7 +406,10 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
 	{
 	    if (not is_var(P.sub()[i]))
 		throw myexception()<<"to_occ_pattern: constructor argument is not a var: "<<P;
-	    con_app.args.push_back( to_occ(P.sub()[i].as_<var>()) );
+	    auto x = P.sub()[i].as_<var>();
+	    if (x.is_wildcard())
+		throw myexception()<<"to_core_pattern: constructor argument has wildcard arg: "<<P;
+	    con_app.args.push_back( to_occ(x) );
 	}
 	return con_app;
     }
