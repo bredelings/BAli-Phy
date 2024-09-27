@@ -261,7 +261,7 @@ namespace Core2
     struct Decl
     {
 	Var<NoteV> x;
-	Exp<NoteE> body;
+	Exp<NoteV, NoteE> body;
 
 	std::string print() const;
 
