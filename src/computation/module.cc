@@ -495,6 +495,9 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
 
 void write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& CM)
 {
+    // See notes on write_cached_module about handling the situation where two processes
+    // try to write to the file at the same time.
+
     auto artifact = P.get_module_loader()->write_cached_module( CM->name() );
 
     cereal::BinaryOutputArchive archive( *artifact );
