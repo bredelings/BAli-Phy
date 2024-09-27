@@ -82,25 +82,6 @@ optional<fs::path> module_loader::find_cached_module(const string& modid) const
 	return {};
 }
 
-std::shared_ptr<std::ostream> module_loader::write_cached_module(const string& modid) const
-{
-    /* We need to avoid the situation where two processes write the module at the same time.
-     * We were getting aliases to partial names - e.g. 'Compiler.RealFloat.RealFloa'
-     * We handle this by truncating the file when it is open.  I think only the last opener
-     * gets to write the file in that case.
-     * We could try to create a unique filename, write it, and then rename it to the correct
-     * location, but this is simpler and seems to be working.
-     */
-    if (auto path = cache_path_for_module(modid))
-    {
-	auto dir = path->parent_path();
-	fs::create_directories(dir);
-	return std::make_shared<std::ofstream>(*path, std::ios::binary | std::ios::trunc);
-    }
-    else
-	return {};
-}
-
 //{-# LANGUAGE NoImplicitPrelude #-}
 static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
 

@@ -11,6 +11,7 @@
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/expression.H" // for is_WHNF( )
+#include "computation/expression/convert.H" // for Occ::Exp, to_occ_exp
 #include "occurrence.H"
 #include "inliner.H"
 #include "simplifier.H"
@@ -90,57 +91,45 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
-int simple_size(const expression_ref& E)
+int simple_size(const Occ::Exp& E)
 {
-    if (is_var(E))
+    if (E.to_var())
 	return 0;
 
-    else if (is_apply_exp(E))
+    else if (auto app = E.to_apply())
     {
-	int n_args = (int)E.size()-1;
+	int n_args = app->args.size();
 	assert(n_args > 0);
-	return simple_size(E.sub()[0]) + n_args;
+	return simple_size(app->head) + n_args;
     }
 
-    else if (is_lambda_exp(E))
-	return simple_size(E.sub()[1]);
+    else if (auto lam = E.to_lambda())
+	return simple_size(lam->body);
 
-    else if (is_let_expression(E))
+    else if (auto let = E.to_let())
     {
-        auto& L = E.as_<let_exp>();
-	int size = simple_size(L.body);
+	int size = simple_size(let->body);
 
-	for(auto& [x,e]: L.binds)
+	for(auto& [x,e]: let->decls)
 	    size += simple_size(e);
 
 	return size;
     }
-    else if (auto C = parse_case_expression(E))
+    else if (auto C = E.to_case())
     {
-        auto& [object, alts] = *C;
-
         int alts_size = 0;
-	for(auto& [pattern, body]: alts)
+	for(auto& [pattern, body]: C->alts)
             alts_size = std::max(alts_size, simple_size(body));
 
-	return 1 + simple_size(object) + alts_size;
+	return 1 + simple_size(C->object) + alts_size;
     }
-    else if (is_non_apply_op_exp(E))
-    {
-	for(auto& x: E.sub())
-	    assert(is_var(x));
+    else
 	return 1;
-    }
-    else if (E.size() == 0)
-	return 1;
-    else if (is_constructor_exp(E))
-    {
-	for(auto& x: E.sub())
-	    assert(is_var(x));
-	return 1;
-    }
+}
 
-    std::abort();
+int simple_size(const expression_ref& E)
+{
+    return simple_size(to_occ_exp(E));
 }
 
 inline_context remove_arguments(inline_context context, int n)

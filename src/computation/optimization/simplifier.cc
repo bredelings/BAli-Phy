@@ -45,17 +45,21 @@ using std::optional;
 using std::cerr;
 using std::endl;
 
-int get_n_lambdas1(const expression_ref& E)
+int get_n_lambdas1(const Occ::Exp& E)
 {
-    expression_ref E2 = E;
+    auto E2 = E;
     int n = 0;
-    assert(E2.head().type() != lambda2_type);
-    while(E2.head().type() == lambda_type)
+    while(auto lam = E2.to_lambda())
     {
-	E2 = E2.sub()[1];
-	n++;
+	n += lam->vars.size();
+	E2 = lam->body;
     }
     return n;
+}
+
+int get_n_lambdas1(const expression_ref& E)
+{
+    return get_n_lambdas1(to_occ_exp(E));
 }
 
 expression_ref peel_n_lambdas1(const expression_ref& E, int n)

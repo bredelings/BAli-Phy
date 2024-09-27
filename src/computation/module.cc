@@ -1,6 +1,7 @@
 #include <set>
 #include <regex>
 #include <tuple>
+#include <fstream>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
@@ -493,16 +494,72 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
     return {};
 }
 
-void write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& CM)
+#ifdef _WIN32
+#include <processthreadsapi.h>
+#else
+#include <unistd.h>
+#endif
+
+bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& CM)
 {
-    // See notes on write_cached_module about handling the situation where two processes
-    // try to write to the file at the same time.
+    namespace fs = std::filesystem;
+    /* We need to avoid the situation where two processes write the module at the same time.
+     * We were getting aliases to partial names - e.g. 'Compiler.RealFloat.RealFloa'
+     * We tried to handle this by truncating the file when it is open.
 
-    auto artifact = P.get_module_loader()->write_cached_module( CM->name() );
+     * But we also need to avoid trying to load a cereal archive that isn't finished being written.
+     * So we first write the archive to a temporary file and the move it into place.
+     * We can rename from /tmp on Linux, because that is renaming across filesystems.
+     */
 
-    cereal::BinaryOutputArchive archive( *artifact );
-    archive(CM->all_inputs_sha());
-    archive(CM);
+#ifdef _WIN32
+    int pid = GetCurrentProcessId();
+#else
+    int pid = getpid();
+#endif
+
+    auto modid = CM->name();
+
+    if (auto mod_path = P.get_module_loader()->cache_path_for_module(modid))
+    {
+        // Get a tmp file to write to that is unique to this process.
+        fs::path tmp_path = *mod_path;
+        tmp_path +="-" + std::to_string(pid);
+
+        try
+        {
+            // Create parent directories if needed.
+            fs::create_directories(mod_path->parent_path());
+
+            // Write the archive to the temporary file.
+            std::ofstream tmp_file(tmp_path, std::ios::binary | std::ios::trunc);
+
+            if (not tmp_file)
+                throw myexception()<<"Could not open file!";
+
+            cereal::BinaryOutputArchive archive( tmp_file );
+            archive(CM->all_inputs_sha());
+            archive(CM);
+            tmp_file.close();
+
+            // Move the temporary file to the correct location.
+            fs::rename(tmp_path, *mod_path);
+
+	    return true;
+        }
+        catch (std::exception& e)
+        {
+            if (log_verbose)
+                std::cerr<<"  Failure writing cached compile artifact for "<<modid<<": "<<e.what()<<"\n    file = "<<*mod_path<<"\n";
+        }
+        catch (...)
+        {
+            if (log_verbose)
+                std::cerr<<"  Failure writing cached compile artifact for "<<modid<<"\n    file = "<<*mod_path<<"\n";
+        }
+    }
+
+    return false;
 }
 
 std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
@@ -619,7 +676,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     CM->finish_value_decls(value_decls);
 
-    write_compile_artifact(P, CM);
+    bool ok = write_compile_artifact(P, CM);
 
     // Check the compile artifact
     if (log_verbose)
@@ -630,8 +687,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 	    if (CM2->all_inputs_sha() != CM->all_inputs_sha())
 		std::cerr<<"Compiled module "<<MM->name<<" changed between writing and rereading!";
 	}
-	else
-	    std::cerr<<"Failed to write compiled module "<<MM->name<<"!\n";
+	else if (ok)
+	    std::cerr<<" Failed to read compiled module "<<MM->name<<"!\n";
     }
 
     CM->inflate(P);

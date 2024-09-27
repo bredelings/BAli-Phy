@@ -29,7 +29,6 @@ public:
   
     std::optional<std::filesystem::path> cache_path_for_module(const std::string& modid) const;
     std::optional<std::filesystem::path> find_cached_module(const std::string& modid) const;
-    std::shared_ptr<std::ostream> write_cached_module(const std::string& modid) const;
     std::filesystem::path find_module(const std::string& modid) const;
     std::filesystem::path find_plugin(const std::string& plugin_name) const;
 
