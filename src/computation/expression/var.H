@@ -6,28 +6,8 @@
 #include <optional>
 #include <functional>
 #include "computation/object.H"
+#include "computation/optimization/occurrence_info.H"
 #include "expression_ref.H"
-
-enum class amount_t {Unknown, None, Once, Many};
-
-enum class var_context {unknown, argument};
-
-struct occurrence_info
-{
-    amount_t work_dup = amount_t::Unknown;
-
-    amount_t code_dup = amount_t::Unknown;
-
-    var_context context = var_context::unknown;
-
-    bool is_loop_breaker = false;
-
-    bool top_level = false;
-
-    bool is_exported = false;
-
-    bool pre_inline() const;
-};
 
 struct VarInfo;
 struct Type;
