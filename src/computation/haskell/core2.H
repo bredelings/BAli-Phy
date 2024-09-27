@@ -230,15 +230,15 @@ namespace Core2
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Lambda
     {
-	std::vector<Var<NoteV>> vars;
+	Var<NoteV> x;
 	Exp<NoteV, NoteE> body;
 
 	std::string print() const;
 
 	template <class Archive>
 	void serialize(Archive& ar)
-	{
-	    ar(vars, body);
+	    {
+	    ar(x, body);
 	}
     };
 
@@ -474,9 +474,14 @@ namespace Core2
     std::string Lambda<NoteV,NoteE>::print() const
     {
 	std::vector<std::string> svars;
-	for(auto& x: vars)
-	    svars.push_back(x.print());
-	return "\\"+join(svars," ") + " -> " + body.print();
+	svars.push_back(x.print());
+	auto body2 = body;
+	while(auto l = body2.to_lambda())
+	{
+	    svars.push_back(l->x.print());
+	    body2 = l->body;
+	}
+	return "\\"+join(svars," ") + " -> " + body2.print();
     }
 
     template <typename NoteV, typename NoteE>

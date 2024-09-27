@@ -45,14 +45,13 @@ using std::optional;
 using std::cerr;
 using std::endl;
 
-int get_n_lambdas1(const Occ::Exp& E)
+int get_n_lambdas1(Occ::Exp E)
 {
-    auto E2 = E;
     int n = 0;
-    while(auto lam = E2.to_lambda())
+    while(auto lam = E.to_lambda())
     {
-	n += lam->vars.size();
-	E2 = lam->body;
+	n++;
+	E = lam->body;
     }
     return n;
 }

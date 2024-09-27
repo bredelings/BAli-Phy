@@ -154,13 +154,11 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
     // Lambda expression - /\x.e
     else if (auto L = E.to_lambda())
     {
-	for(auto& var: L->vars)
-	    variables.push_back(var);
+	variables.push_back(L->x);
 
 	auto E2 = make_indexed_lambda( indexify(L->body, variables) );
 
-	for(int i=0;i<L->vars.size();i++)
-	    variables.pop_back();
+	variables.pop_back();
 
 	return E2;
     }

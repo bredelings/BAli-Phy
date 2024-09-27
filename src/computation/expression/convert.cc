@@ -24,14 +24,10 @@ Core2::Lambda<> to_core_lambda(expression_ref L)
 {
     assert(is_lambda_exp(L));
 
-    std::vector<Core2::Var<>> vars;
-    while(is_lambda_exp(L))
-    {
-	vars.push_back(to_core(L.sub()[0].as_<var>()));
-	L = L.sub()[1];
-    }
-    assert(not vars.empty());
-    return Core2::Lambda<>{std::move(vars), to_core_exp(L)};
+    auto x = to_core(L.sub()[0].as_<var>());
+    auto body = to_core_exp(L.sub()[1]);
+
+    return Core2::Lambda<>{x,body};
 }
 
 Core2::Decls<> to_core(const CDecls& decls)
@@ -214,11 +210,7 @@ expression_ref var_to_expression_ref(const Core2::Var<>& V)
 
 expression_ref to_expression_ref(const Core2::Lambda<>& L)
 {
-    vector<var> vars = L.vars | ranges::views::transform( to_var ) | ranges::to<vector>();
-
-    auto body = to_expression_ref(L.body);
-
-    return lambda_quantify(vars, body);
+    return lambda_quantify(to_var(L.x), to_expression_ref(L.body));
 }
 
 expression_ref to_expression_ref(const Core2::Apply<>& A)
@@ -346,14 +338,10 @@ Occ::Lambda to_occ_lambda(expression_ref L)
 {
     assert(is_lambda_exp(L));
 
-    std::vector<Occ::Var> vars;
-    while(is_lambda_exp(L))
-    {
-	vars.push_back(to_occ(L.sub()[0].as_<var>()));
-	L = L.sub()[1];
-    }
-    assert(not vars.empty());
-    return Occ::Lambda{std::move(vars), to_occ_exp(L)};
+    auto x = to_occ(L.sub()[0].as_<var>());
+    auto body = to_occ_exp(L.sub()[1]);
+
+    return Occ::Lambda{x,body};
 }
 
 Occ::Decls to_occ(const CDecls& decls)
@@ -541,11 +529,7 @@ expression_ref occ_var_to_expression_ref(const Occ::Var& V)
 
 expression_ref occ_to_expression_ref(const Occ::Lambda& L)
 {
-    vector<var> vars = L.vars | ranges::views::transform( occ_to_var ) | ranges::to<vector>();
-
-    auto body = occ_to_expression_ref(L.body);
-
-    return lambda_quantify(vars, body);
+    return lambda_quantify(occ_to_var(L.x), occ_to_expression_ref(L.body));
 }
 
 expression_ref occ_to_expression_ref(const Occ::Apply& A)
