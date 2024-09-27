@@ -6,7 +6,7 @@
   + speed up and improve RNA editing model.
   + refactor coalescent tree model
 - Bug fixes:
-  + Fix for using previously compiled modules.
+  + Multiple fixes to avoid reading or writing corrupted compiled-module files.
 
 * 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
