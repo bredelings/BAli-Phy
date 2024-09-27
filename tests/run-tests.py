@@ -272,7 +272,6 @@ class Tester:
     def test_xfail(self, test_subdir):
         filename1 = self.top_test_dir / test_subdir / self.method.name / 'xfail'
         filename2 = self.top_test_dir / test_subdir / 'xfail'
-        print(f"looking for {filename1} or {filename2}",file=sys.stderr)
         return os.path.exists(filename1) or os.path.exists(filename2)
 
     def check_test_output(self,test_subdir):
