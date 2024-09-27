@@ -54,7 +54,7 @@ symbol_info seq_info()
     // 4. always unfold to code.
     auto info = std::make_shared<VarInfo>();
     info->always_unfold = true;
-    info->unfolding = code;
+    info->unfolding = to_occ_exp(code);
 
     // 5. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
@@ -77,11 +77,11 @@ shared_ptr<CompiledModule> compiler_prim_module()
     CDecls value_decls;
     if (seq.var_info and seq.var_info->unfolding)
     {
-        auto& code = seq.var_info->unfolding;
+        auto code = occ_to_expression_ref(seq.var_info->unfolding);
         value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
-        auto [code2, _] = occurrence_analyzer(*m, code);
-        code = code2;
+        auto [occ_code, _] = occurrence_analyzer(*m, code);
+        seq.var_info->unfolding = to_occ_exp(occ_code);
     }
     m->declare_symbol(seq);
 

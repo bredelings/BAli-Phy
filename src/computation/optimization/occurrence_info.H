@@ -20,6 +20,12 @@ struct occurrence_info
     bool is_exported = false;
 
     bool pre_inline() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(work_dup, code_dup, context, is_loop_breaker, top_level, is_exported);
+    }
 };
 
 #endif

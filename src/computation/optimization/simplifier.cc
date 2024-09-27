@@ -139,14 +139,14 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
     {
         auto S = this_mod.lookup_builtin_symbol(x.name);
         assert(S);
-        unfolding = S->var_info->unfolding;
+        unfolding = occ_to_expression_ref(S->var_info->unfolding);
     }
     else
     {
         assert(is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name);
 
         if (auto S = this_mod.lookup_external_symbol(x.name))
-            unfolding = S->var_info->unfolding;
+            unfolding = occ_to_expression_ref(S->var_info->unfolding);
         else if (not special_prelude_symbol(x.name))
             throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
     }
@@ -159,8 +159,8 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
     auto info = x.info.lock();
     if (unfolding and do_inline(unfolding, occ_info, context))
         return simplify(unfolding, {}, bound_vars, context);
-    else if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(info->unfolding)))
-        return simplify(info->unfolding, {}, bound_vars, context);
+    else if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(occ_to_expression_ref(info->unfolding))))
+        return simplify(occ_to_expression_ref(info->unfolding), {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }

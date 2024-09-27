@@ -2,12 +2,13 @@
 #define VAR_INFO_H
 
 #include "haskell/core.H"
+#include "expression/convert.H"
 
 struct VarInfo
 {
     bool conlike = false;
     bool always_unfold = false;
-    Core::Exp unfolding;
+    std::optional<Occ::Exp> unfolding;
 
     // pragmas
     bool pragma_inline = false;
@@ -16,7 +17,7 @@ struct VarInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(conlike, always_unfold, /* unfolding, */ pragma_inline, pragma_inlineable);
+	ar(conlike, always_unfold, unfolding, pragma_inline, pragma_inlineable);
     }
 };
 
