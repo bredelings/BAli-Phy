@@ -255,7 +255,9 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
-        if [ "${{ runner.os }}" != "macOS" ] then ninja -C build test ; fi
+        if [ "${{ runner.os }}" != "macOS" ] ; then
+            ninja -C build test
+        fi
 
     - name: Get version
       id: get_version
