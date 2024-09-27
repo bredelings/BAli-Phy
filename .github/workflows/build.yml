@@ -255,7 +255,7 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
-        if [ -n "${BOOST_ROOT}" -a "${{ matrix.name }}" != "windows" ] ; then
+        if [ -n "${BOOST_ROOT}" ] ; then
             if [ "${{ runner.os }}" == "macOS" ] ; then
                export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
             else
