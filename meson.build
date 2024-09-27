@@ -122,13 +122,14 @@ subdir('doc')
 
 # Run internal tests
 run_tests = find_program(meson.project_source_root()/'tests/run-tests.py')
+test_dir = meson.project_source_root()/'tests'
 
-test_list = run_command(run_tests,'list').stdout().split()
+test_list = run_command(run_tests, 'listdir', test_dir, 'bali-phy', check: false).stdout().split()
 foreach test: test_list
   test('bali-phy testsuite ' + test,
        run_tests,
        timeout: 300,
-       workdir: meson.project_source_root()/'tests',
+       workdir: test_dir,
        args:['run', test, baliphy.full_path(), '-V', packagepath])
 endforeach
 
