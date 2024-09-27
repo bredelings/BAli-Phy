@@ -20,8 +20,6 @@ struct Var: public Object
 
     Core::wrapper wrap;
 
-    std::shared_ptr<const VarInfo> info;
-
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;
     bool operator<(const Var&) const;
@@ -34,7 +32,6 @@ struct Var: public Object
     void serialize(Archive& ar)
     {
 	// We should only be serializing Hs::Var for its use in defining variable names in ClassInfo
-	assert(not info);
 	ar(name);
     }
 

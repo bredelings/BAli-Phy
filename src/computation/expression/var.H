@@ -21,9 +21,6 @@ struct var: public Object, public occurrence_info
 
     std::optional<int> level;
 
-    // This stores unfoldings, pragmas, etc.
-    std::weak_ptr<const VarInfo> info;
-
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
     var* clone() const {return new var(*this);}
@@ -38,7 +35,7 @@ struct var: public Object, public occurrence_info
     template <class Archive>
     void serialize(Archive& ar)
     {
-	// We should only be serializing var after level / type_ / info are no longer needed.
+	// We should only be serializing var after level is on longer needed.
 	ar(name,index);
     }
 
