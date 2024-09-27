@@ -40,7 +40,7 @@ cpp = ['ccache','x86_64-w64-mingw32-g++-posix']
 ar = 'x86_64-w64-mingw32-ar'
 strip = 'x86_64-w64-mingw32-strip'
 pkg-config = 'pkg-config'
-exe_wrapper = 'wine64' # A command used to run generated executables.
+exe_wrapper = 'wine' # A command used to run generated executables.
 
 # why do we still need these? shouldn't they get added automatically if we find boost?
 [built-in options]
