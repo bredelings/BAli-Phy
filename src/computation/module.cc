@@ -531,12 +531,13 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
 
-            // Write the archive to the temporary file.
+            // Create and open the temporary file.
             std::ofstream tmp_file(tmp_path, std::ios::binary | std::ios::trunc);
 
             if (not tmp_file)
                 throw myexception()<<"Could not open file!";
 
+	    // Write the archive to the temporary file.
             cereal::BinaryOutputArchive archive( tmp_file );
             archive(CM->all_inputs_sha());
             archive(CM);
