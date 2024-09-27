@@ -182,6 +182,60 @@ namespace Core2
 		return nullptr;
 	}
 
+	bool operator==(const Exp<NoteV,NoteE>& E2) const
+	{
+	    if (exp_ptr.index() != E2.exp_ptr.index()) return false;
+
+	    if (empty())
+		return true;
+	    else if (auto v= to_var())
+		return *v == *E2.to_var();
+	    else if (auto lam = to_lambda())
+		return *lam == *E2.to_lambda();
+	    else if (auto app = to_apply())
+		return *app == *E2.to_apply();
+	    else if (auto let = to_let())
+		return *let == *E2.to_let();
+	    else if (auto c = to_case())
+		return *c == *E2.to_case();
+	    else if (auto con = to_conApp())
+		return *con == *E2.to_conApp();
+	    else if (auto b = to_builtinOp())
+		return *b == *E2.to_builtinOp();
+	    else if (auto constant = to_constant())
+		return *constant == *E2.to_constant();
+	    else
+		std::abort();
+	}
+
+	std::strong_ordering operator<=>(const Var<NoteV>& E2) const
+	{
+	    auto cmp1 = exp_ptr.index() <=> E2.exp_ptr.index();
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    if (empty())
+		return cmp1;
+	    else if (auto v= to_var())
+		return *v <=> *E2.to_var();
+	    else if (auto lam = to_lambda())
+		return *lam <=> *E2.to_lambda();
+	    else if (auto app = to_apply())
+		return *app <=> *E2.to_apply();
+	    else if (auto let = to_let())
+		return *let <=> *E2.to_let();
+	    else if (auto c = to_case())
+		return *c <=> *E2.to_case();
+	    else if (auto con = to_conApp())
+		return *con <=> *E2.to_conApp();
+	    else if (auto b = to_builtinOp())
+		return *b <=> *E2.to_builtinOp();
+	    else if (auto constant = to_constant())
+		return *constant <=> *E2.to_constant();
+	    else
+		std::abort();
+	}
+
 	template <class Archive>
 	void serialize(Archive& ar);
 
@@ -211,16 +265,16 @@ namespace Core2
 
 	bool operator==(const Var<NoteV>& v2) const
 	{
-	    return name == v2.name and index == v2.index;
+	    return index == v2.index and name == v2.name;
 	}
 
 	std::strong_ordering operator<=>(const Var<NoteV>& v2) const
 	{
-	    auto cmp1 = name <=> v2.name;
+	    auto cmp1 = index <=> v2.index;
 
 	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
 
-	    return (index <=> v2.index);
+	    return (name <=> v2.name);
 	}
 
 	std::string print() const;
@@ -247,6 +301,19 @@ namespace Core2
 
 	std::string print() const;
 
+	bool operator==(const Lambda<NoteV,NoteE>& v2) const
+	{
+	    return x == v2.x and body == v2.body;
+	}
+
+	std::strong_ordering operator<=>(const Lambda<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = x <=> v2.x;
+	    if (cmp1 != std::strong_ordering::equivalent) return  cmp1;
+
+	    return body <=> v2.body;
+	}
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	    {
@@ -262,6 +329,20 @@ namespace Core2
 
 	std::string print() const;
 
+	bool operator==(const Apply<NoteV,NoteE>& a2) const
+	{
+	    return head == a2.head and args = a2.args;
+	}
+
+	std::strong_ordering operator<=>(const Apply<NoteV,NoteE>& a2) const
+	{
+	    auto cmp = head <=> a2.head;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return args <=> a2.args;
+	}
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
@@ -276,6 +357,20 @@ namespace Core2
 	Exp<NoteV, NoteE> body;
 
 	std::string print() const;
+
+	bool operator==(const Decl<NoteV,NoteE>& decl) const
+	{
+	    return x == decl.x and body = decl.body;
+	}
+
+	std::strong_ordering operator<=>(const Decl<NoteV,NoteE>& decl) const
+	{
+	    auto cmp = x <=> decl.x;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return body <=> decl.body;
+	}
 
 	template <class Archive>
 	void serialize(Archive& ar)
@@ -298,6 +393,20 @@ namespace Core2
 	Decls<NoteV,NoteE> decls;
 	Exp<NoteV,NoteE> body;
 
+	bool operator==(const Let<NoteV,NoteE>& let) const
+	{
+	    return decls = let.decls and body = let.body;
+	}
+
+	std::strong_ordering operator<=>(const Let<NoteV,NoteE>& let) const
+	{
+	    auto cmp = decls <=> let.decls;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return body <=> let.body;
+	}
+
 	std::string print() const;
 
 	template <class Archive>
@@ -311,6 +420,8 @@ namespace Core2
     {
 	std::string print() const;
 
+	std::strong_ordering operator<=>(const WildcardPat&) const = default;
+
 	template <class Archive>
 	void serialize(Archive&)
 	{ }
@@ -321,6 +432,20 @@ namespace Core2
     {
 	std::string head;
 	std::vector<Var<NoteV>> args;
+
+	bool operator==(const ConPat<NoteV>& v2) const
+	{
+	    return head == v2.head and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const ConPat<NoteV>& v2) const
+	{
+	    auto cmp1 = head <=> v2.head;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return args <=> v2.args;
+	}
 
 	std::string print() const;
 
@@ -338,6 +463,8 @@ namespace Core2
 
 	std::string print() const;
 
+	std::strong_ordering operator<=>(const VarPat<NoteV>&) const = default;
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
@@ -351,6 +478,8 @@ namespace Core2
 	std::string print() const;
 
 	using std::variant<std::monostate, WildcardPat, VarPat<NoteV>, ConPat<NoteV>>::variant;
+
+	std::strong_ordering operator<=>(const Pattern<NoteV>&) const = default;
 
 	bool is_wildcard_pat() const
 	{
@@ -382,6 +511,20 @@ namespace Core2
 
 	std::string print() const;
 
+	bool operator==(const Alt<NoteV,NoteE>& v2) const
+	{
+	    return pat == v2.pat and body == v2.body;
+	}
+
+	std::strong_ordering operator<=>(const Alt<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = pat <=> v2.pat;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return body <=> v2.body;
+	}
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
@@ -394,6 +537,8 @@ namespace Core2
     {
 	std::string print() const;
 
+	std::strong_ordering operator<=>(const Alts<NoteV,NoteE>& v2) const = default;
+
 	using std::vector<Alt<NoteV,NoteE>>::vector;
     };
 
@@ -402,6 +547,20 @@ namespace Core2
     {
 	Exp<NoteV, NoteE> object;
 	Alts<NoteV, NoteE> alts;
+
+	bool operator==(const Case<NoteV,NoteE>& v2) const
+	{
+	    return object == v2.object and alts == v2.alts;
+	}
+
+	std::strong_ordering operator<=>(const Case<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = object <=> v2.object;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return alts <=> v2.alts;
+	}
 
 	std::string print() const;
 
@@ -420,6 +579,20 @@ namespace Core2
 
 	std::string print() const;
 
+	bool operator==(const ConApp<NoteV>& v2) const
+	{
+	    return head == v2.head and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const ConApp<NoteV>& v2) const
+	{
+	    auto cmp1 = head <=> v2.head;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return args <=> v2.args;
+	}
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
@@ -436,6 +609,24 @@ namespace Core2
 	void* op = nullptr;
 
 	std::string print() const;
+
+	bool operator==(const BuiltinOp<NoteV>& v2) const
+	{
+	    return lib_name == v2.lib_name and func_name == v2.func_name and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const BuiltinOp<NoteV>& v2) const
+	{
+	    auto cmp1 = lib_name <=> v2.lib_name;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    auto cmp2 = func_name <=> v2.func_name;
+
+	    if (cmp2 != std::strong_ordering::equivalent) return cmp2;
+
+	    return args <=> v2.args;
+	}
 
 	template <class Archive>
 	void load(Archive& ar)
@@ -456,6 +647,8 @@ namespace Core2
 	std::variant<char,int,integer_container,std::string> value;
 
 	std::string print() const;
+
+	std::strong_ordering operator<=>(const Constant& v2) const = default;
 
 	template <class Archive>
 	void serialize(Archive& ar)
