@@ -209,7 +209,19 @@ namespace Core2
 
 	NoteV info;
 
-	std::strong_ordering operator<=>(const Var<NoteV>&) const = default;
+	bool operator==(const Var<NoteV>& v2) const
+	{
+	    return name == v2.name and index == v2.index;
+	}
+
+	std::strong_ordering operator<=>(const Var<NoteV>& v2) const
+	{
+	    auto cmp1 = name <=> v2.name;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return (index <=> v2.index);
+	}
 
 	std::string print() const;
 
