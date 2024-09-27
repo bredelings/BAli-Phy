@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import subprocess
 import re
+import pathlib
 
 from collections import defaultdict
 
@@ -173,18 +174,18 @@ class hyphymp(Program):
 
 class Tester:
     def __init__(self, top_test_dir, data_dir, method):
-        self.top_test_dir = top_test_dir
-        self.data_dir = data_dir
+        self.top_test_dir = pathlib.Path(top_test_dir)
+        self.data_dir = pathlib.Path(data_dir)
         self.method = method
         self.NUM_TESTS = 0
         self.FAILED_TESTS = []
         self.XFAILED_TESTS = []
 
     def dir_for_test(self, test_subdir):
-        return os.path.join(self.top_test_dir, test_subdir)
+        return self.top_test_dir / test_subdir
 
     def rundir_for_test(self, test_subdir):
-        return os.path.join(self.top_test_dir, test_subdir)
+        return self.top_test_dir / test_subdir
 
     def get_test_dirs(self):
         test_dirs = []
@@ -197,9 +198,9 @@ class Tester:
     def run_test_cmd(self,test_subdir):
         rundir = self.rundir_for_test(test_subdir)
         prefix = self.method.prefix() + "obtained-"
-        obt_outf = os.path.join(rundir, prefix + 'output')
-        obt_errf = os.path.join(rundir, prefix + 'error')
-        obt_exitf = os.path.join(rundir, prefix +'exit')
+        obt_outf = rundir / (prefix + 'output')
+        obt_errf = rundir / (prefix + 'error')
+        obt_exitf = rundir / (prefix +'exit')
 
         cmd = self.method.cmdline(self, test_subdir)
         stdin = self.method.stdin(self, test_subdir)
@@ -215,8 +216,8 @@ class Tester:
                     obt_exit.write('{e:d}\n'.format(e=exit_code))
 
     def read_expected(self, test_subdir, name):
-        test_dir = os.path.join(self.top_test_dir, test_subdir)
-        pathname = os.path.join(test_dir, name)
+        test_dir = self.top_test_dir / test_subdir
+        pathname = test_dir / name
         if not os.path.exists(pathname):
             if name == 'exit':
                 return "0"
@@ -227,7 +228,7 @@ class Tester:
     def read_obtained(self, test_subdir, name):
         rundir = self.rundir_for_test(test_subdir)
         prefix = self.method.prefix()+"obtained-"
-        outputf   = os.path.join(rundir, prefix+name)
+        outputf   = rundir / (prefix+name)
         return codecs.open(outputf  , 'r', encoding='utf-8').read().rstrip()
 
     def check_expected(self, test_subdir, name):
@@ -269,12 +270,13 @@ class Tester:
                 return "likelihood error: absolute={}, relative={} (Got {} but expected {})".format(diff,rel_diff,obtained_likelihood,expected_likelihood)
 
     def test_xfail(self, test_subdir):
-        if os.path.exists(os.path.join(test_subdir, self.method.name, 'xfail')):
-            return True;
-        return os.path.exists(os.path.join(test_subdir,'xfail'))
+        filename1 = self.top_test_dir / test_subdir / self.method.name / 'xfail'
+        filename2 = self.top_test_dir / test_subdir / 'xfail'
+        print(f"looking for {filename1} or {filename2}",file=sys.stderr)
+        return os.path.exists(filename1) or os.path.exists(filename2)
 
     def check_test_output(self,test_subdir):
-        test_dir = os.path.join(self.top_test_dir, test_subdir)
+        test_dir = self.top_test_dir /  test_subdir
         failures = []
         message = ""
         exit_test_failed = False
@@ -424,9 +426,9 @@ if __name__ == '__main__':
     import sys
 
     script_dir = os.path.split(sys.argv[0])[0]
-    script_dir = os.path.abspath(script_dir)
+    script_dir = pathlib.Path(os.path.abspath(script_dir))
 
-    data_dir = os.path.join(script_dir, 'data')
+    data_dir = script_dir / 'data'
 
     top_test_dir = os.getcwd()
 
@@ -443,6 +445,11 @@ if __name__ == '__main__':
         exit(1)
     elif cmd[0] == 'list':
         progs = cmd[1:]
+        print_existing_tests(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
+        exit(1)
+    elif cmd[0] == 'listdir':
+        top_test_dir = cmd[1]
+        progs = cmd[2:]
         print_existing_tests(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
         exit(1)
     elif cmd[0] == 'results':
