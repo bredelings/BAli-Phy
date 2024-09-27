@@ -137,34 +137,37 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
     assert(not x.name.empty());
 
     // FIXME -- why is x.info->var_info empty?  Why can't we just use x.info->var_info->unfolding?
-    expression_ref unfolding;
 
+    std::shared_ptr<VarInfo> var_info;
     if (is_haskell_builtin_con_name(x.name))
     {
         auto S = this_mod.lookup_builtin_symbol(x.name);
         assert(S);
-        unfolding = occ_to_expression_ref(S->var_info->unfolding);
+	var_info = S->var_info;
     }
     else
     {
         assert(is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name);
 
         if (auto S = this_mod.lookup_external_symbol(x.name))
-            unfolding = occ_to_expression_ref(S->var_info->unfolding);
+	    var_info = S->var_info;
         else if (not special_prelude_symbol(x.name))
             throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
     }
+
+    expression_ref unfolding;
+    if (var_info)
+	unfolding = occ_to_expression_ref(var_info->unfolding);
 
     occurrence_info occ_info;
     occ_info.work_dup = amount_t::Many;
     occ_info.code_dup = amount_t::Many;
 
     // FIXME -- pass var_info to do_inline( ).
-    auto info = x.info.lock();
     if (unfolding and do_inline(unfolding, occ_info, context))
         return simplify(unfolding, {}, bound_vars, context);
-    else if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(occ_to_expression_ref(info->unfolding))))
-        return simplify(occ_to_expression_ref(info->unfolding), {}, bound_vars, context);
+    else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(unfolding)))
+        return simplify(unfolding, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }
