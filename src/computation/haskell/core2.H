@@ -339,6 +339,27 @@ namespace Core2
 	std::string print() const;
 
 	using std::variant<std::monostate, WildcardPat, VarPat<NoteV>, ConPat<NoteV>>::variant;
+
+	bool is_wildcard_pat() const
+	{
+	    return (this->index() == 1);
+	}
+
+	VarPat<NoteV>* to_var_pat() const
+	{
+	    if (this->index() == 2)
+		return &std::get<VarPat<NoteV>>(*this);
+	    else
+		return nullptr;
+	}
+
+	ConPat<NoteV>* to_con_pat() const
+	{
+	    if (this->index() == 3)
+		return &std::get<ConPat<NoteV>>(*this);
+	    else
+		return nullptr;
+	}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
