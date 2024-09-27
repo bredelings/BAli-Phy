@@ -327,6 +327,14 @@ expression_ref to_expression_ref(const Core2::Exp<>& E)
     std::abort();
 }
 
+expression_ref to_expression_ref(const std::optional<Core2::Exp<>>& E)
+{
+    if (not E)
+	return {};
+    else
+	return to_expression_ref(*E);
+}
+
 //----------------------------------------------------------------------//
 Core2::Lambda<> load_builtins(const module_loader& loader, Core2::Lambda<> L)
 {

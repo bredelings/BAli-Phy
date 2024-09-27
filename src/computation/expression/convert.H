@@ -11,6 +11,8 @@ var to_var(const Core2::Var<>& V);
 
 expression_ref to_expression_ref(const Core2::Exp<>& E);
 
+expression_ref to_expression_ref(const std::optional<Core2::Exp<>>& E);
+
 CDecls to_expression_ref(const Core2::Decls<>& decls);
 
 Core2::Exp<> load_builtins(const module_loader& L, const Core2::Exp<>& E);
