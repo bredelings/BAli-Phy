@@ -471,8 +471,11 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
             if (sha == required_sha)
             {
                 archive(M);
-                assert(sha == M->all_inputs_sha());
-                return M;
+
+                if (sha == M->all_inputs_sha())
+                    return M;
+
+                throw myexception()<<"Beginning and ending SHAs do not match!";
             }
         }
         catch (std::exception& e)

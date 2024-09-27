@@ -318,7 +318,10 @@ public:
     void serialize(Archive& ar)
     {
 	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
-	ar( language_extensions_, local_instances_, local_eq_instances_, all_inputs_sha_, fresh_var_state_ );
+	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
+	ar( all_inputs_sha_ );
+
+	// Maybe we should write the SHA at both beginning and end and then check them when we read it back.
     }
 
     CompiledModule(const std::shared_ptr<Module>& m);
