@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "computation/expression/var.H" // for var
+#include "computation/expression/convert.H" // for Core2::Var<>, Occ::Var
 #include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 #include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
 
@@ -63,6 +64,8 @@ public:
     var get_fresh_var(const std::string& name, bool qualified);
     var get_fresh_var(const var& x);
     var get_fresh_var_copy(var x);
+    Occ::Var get_fresh_occ_var(const std::string& name);
+    Occ::Var get_fresh_var_copy(Occ::Var x);
     var get_fresh_var(const Hs::Var& x);
 
     std::string qualified_name(const std::string&) const;

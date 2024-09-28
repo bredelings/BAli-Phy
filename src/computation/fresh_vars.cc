@@ -50,6 +50,13 @@ var FreshVarSource::get_fresh_var(const std::string& name)
     return var(name, get_index() );
 }
 
+Occ::Var FreshVarSource::get_fresh_occ_var(const std::string& name)
+{
+    assert(not is_haskell_builtin_con_name(name));
+//    assert(name.empty() or not is_qualified_symbol(name));
+    return Occ::Var{name, get_index(), {}};
+}
+
 var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
 {
     assert(not is_haskell_builtin_con_name(name));
@@ -74,6 +81,17 @@ var FreshVarSource::get_fresh_var_copy(var x)
 {
 //    assert(x.index >= 0);
     assert(not x.is_exported);
+    assert(check_index(x.index));
+
+    x.index = get_index();
+
+    return x;
+}
+
+Occ::Var FreshVarSource::get_fresh_var_copy(Occ::Var x)
+{
+//    assert(x.index >= 0);
+    assert(not x.info.is_exported);
     assert(check_index(x.index));
 
     x.index = get_index();
