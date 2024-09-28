@@ -159,15 +159,15 @@ bool is_trivial(const Occ::Exp& E)
     return (E.to_var());
 }
 
-bool no_size_increase(const expression_ref& rhs, const inline_context& context)
+bool no_size_increase(const Occ::Exp& rhs, const inline_context& context)
 {
     // If rhs is a variable, then there's no size increase
-    if (is_trivial(to_occ_exp(rhs))) return true;
+    if (is_trivial(rhs)) return true;
 
     // If we are inlining a constant into a case object, then there will eventually be no size increase... right?
     if (context.is_case_context() and is_WHNF(rhs))
     {
-	assert(not rhs.is_a<lambda>());
+	assert(not rhs.to_lambda());
 	return true;
     }
 
@@ -177,11 +177,11 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
     {
 	int n_args_supplied = num_arguments(context);
 	assert(n_args_supplied >= 1);
-	int n_args_needed = get_n_lambdas1(to_occ_exp(rhs));
+	int n_args_needed = get_n_lambdas1(rhs);
 	int n_args_used = std::min(n_args_needed, n_args_supplied);
 
 	int size_of_call = 1 + n_args_supplied;
-	auto body = peel_n_lambdas1(to_occ_exp(rhs), n_args_used);
+	auto body = peel_n_lambdas1(rhs, n_args_used);
 	int size_of_body = simple_size(body);
 
 	if (size_of_body <= size_of_call) return true;
@@ -201,13 +201,13 @@ bool very_boring(const inline_context& context)
 }
 
 
-bool boring(const expression_ref& rhs, const inline_context& context)
+bool boring(const Occ::Exp& rhs, const inline_context& context)
 {
     // if the rhs is applied only to variables with unknown value AND ...
 
     // ... after consuming all the arguments we need, the result is very_boring.
     {
-	int n_args_needed = get_n_lambdas1(to_occ_exp(rhs));
+	int n_args_needed = get_n_lambdas1(rhs);
 	if (num_arguments(context) >= n_args_needed)
 	{
 	    auto context2 = remove_arguments(context, n_args_needed);
@@ -219,7 +219,7 @@ bool boring(const expression_ref& rhs, const inline_context& context)
     return true;
 }
 
-bool SimplifierState::small_enough(const expression_ref& rhs, const inline_context& context)
+bool SimplifierState::small_enough(const Occ::Exp& rhs, const inline_context& context)
 {
     double body_size = simple_size(rhs);
 
@@ -230,23 +230,13 @@ bool SimplifierState::small_enough(const expression_ref& rhs, const inline_conte
     return (body_size - size_of_call - options.keenness*discounts <= options.inline_threshhold);
 }
 
-bool SimplifierState::do_inline_multi(const expression_ref& rhs, const inline_context& context)
+bool SimplifierState::do_inline_multi(const Occ::Exp& rhs, const inline_context& context)
 {
     if (no_size_increase(rhs,context)) return true;
 
     if (boring(rhs,context)) return false;
 
     return small_enough(rhs, context);
-}
-
-bool evaluates_to_bottom(const expression_ref& /* rhs */)
-{
-    return false;
-}
-
-bool whnf_or_bottom(const expression_ref& rhs)
-{
-    return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
 bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
@@ -268,7 +258,7 @@ bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info
 	return false;
 
     // Function and constructor arguments
-    else if (context.is_stop_context() and not is_trivial(to_occ_exp(rhs)))
+    else if (context.is_stop_context() and not is_trivial(rhs2))
 	return false;
 
     // OnceSafe
@@ -281,24 +271,24 @@ bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.
-    if (is_literal_type(rhs.head().type()) or is_constructor_exp(rhs))
+    if (rhs2.to_constant() or rhs2.to_conApp())
 	return true;
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return do_inline_multi(rhs, context);
+	return do_inline_multi(rhs2, context);
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
-	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
+	return whnf_or_bottom(rhs2) and (no_size_increase(rhs2,context) or not very_boring(context));
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
-	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
+	return whnf_or_bottom(rhs2) and (no_size_increase(rhs2,context) or not very_boring(context));
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
+	return whnf_or_bottom(rhs2) and do_inline_multi(rhs2, context);
 
     std::abort();
 }

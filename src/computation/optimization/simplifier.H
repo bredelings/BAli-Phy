@@ -43,11 +43,11 @@ public:
     Occ::Var rename_var(const Occ::Var& x, simplifier::substitution& S, const in_scope_set& bound_vars);
     Occ::Var rename_and_bind_var(const Occ::Var& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
 
-    bool small_enough(const expression_ref& rhs, const inline_context& context);
+    bool small_enough(const Occ::Exp& rhs, const inline_context& context);
 
     bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
 
-    bool do_inline_multi(const expression_ref& rhs, const inline_context& context);
+    bool do_inline_multi(const Occ::Exp& rhs, const inline_context& context);
 
     expression_ref
     consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
