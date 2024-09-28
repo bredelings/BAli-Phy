@@ -208,7 +208,7 @@ namespace Core2
 		std::abort();
 	}
 
-	std::strong_ordering operator<=>(const Var<NoteV>& E2) const
+	std::strong_ordering operator<=>(const Exp<NoteV,NoteE>& E2) const
 	{
 	    auto cmp1 = exp_ptr.index() <=> E2.exp_ptr.index();
 
