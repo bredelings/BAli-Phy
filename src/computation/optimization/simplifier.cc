@@ -317,19 +317,23 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 }
 
 
-optional<tuple<expression_ref,substitution>>
-find_constant_case_body(const expression_ref& object, const Core::Alts& alts, const substitution& S)
+optional<tuple<Occ::Exp,substitution>>
+find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const substitution& S)
 {
+    auto obj_con = object.to_conApp();
+
     for(auto& [pattern, body]: alts)
     {
-        if (is_var(pattern))
+        assert(not pattern.to_var_pat());
+
+        if (pattern.is_wildcard_pat())
         {
-            assert(is_wildcard(pattern));
             return {{body, S}};
         }
-        else if (pattern.head() == object.head())
+        else if (auto pat_con = pattern.to_con_pat(); pat_con and obj_con and pat_con->head == obj_con->head)
         {
-            assert(pattern.size() == object.size());
+            int N = pat_con->args.size();
+            assert(N == obj_con->args.size());
 
             // 2. Rename and bind pattern variables
             // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
@@ -340,18 +344,15 @@ find_constant_case_body(const expression_ref& object, const Core::Alts& alts, co
             //   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
             // Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
 
-            auto S2 = S;       
-            for(int j=0;j<pattern.size();j++)
+            auto S2 = S;
+            for(int j=0;j<N;j++)
             {
-                auto pat_var = pattern.sub()[j];
-                auto& x = pat_var.as_<var>();
-                if (not is_wildcard(pat_var))
+                auto x = pat_con->args[j].to_var_pat_var();
+                if (x)
                 {
-                    auto obj_var = object.sub()[j];
-                    assert(is_var(obj_var) and not is_wildcard(obj_var));
-                    assert(is_var(pat_var) and not is_wildcard(pat_var));
-                    S2.erase(to_occ_var(x));
-                    S2.insert({to_occ_var(x),obj_var});
+                    auto obj_var = obj_con->args[j];
+                    S2.erase(*x);
+                    S2.insert({*x, occ_to_expression_ref(obj_var)});
                 }
             }
             return {{body, S2}};
@@ -505,9 +506,9 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 //    }
 
     // 1. Take a specific branch if the object is a constant
-    if (is_WHNF(object) and not is_var(object))
+    if (is_WHNF(object_) and not object_.to_var())
     {
-        if (auto found = find_constant_case_body(object, alts, S))
+        if (auto found = find_constant_case_body(object_, alts_, S))
         {
             auto& [body, S2] = *found;
             return simplify(body, S2, bound_vars, make_ok_context());            
