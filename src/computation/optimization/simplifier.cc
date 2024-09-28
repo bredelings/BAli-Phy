@@ -301,12 +301,8 @@ vector<var> get_used_vars(const expression_ref& pattern)
 {
     vector<var> used;
 
-    if (is_used_var(pattern))
-	used.push_back(pattern.as_<var>());
-    else if (pattern.is_expression())
-	for(auto& Evar: pattern.sub())
-	    if (is_used_var(Evar.as_<var>()))
-		used.push_back(Evar.as_<var>());
+    for(auto& x: get_used_vars(to_occ_pattern(pattern)))
+	used.push_back(occ_to_var(x));
 
     return used;
 }
@@ -381,7 +377,7 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
     return {};
 }
 
-expression_ref case_of_case(const expression_ref& object, Core::Alts alts, FreshVarSource& fresh_vars)
+expression_ref case_of_case(const expression_ref& object, Occ::Alts alts, FreshVarSource& fresh_vars)
 {
     auto C = parse_case_expression(object);
     auto [object2, alts2] = *C;
@@ -390,25 +386,25 @@ expression_ref case_of_case(const expression_ref& object, Core::Alts alts, Fresh
     //
     // case object2 of C x y -> E   => let f x y = E in case object2 of C x y -> f x y
     //
-    CDecls cc_decls;
+    Occ::Decls cc_decls;
     for(auto& [pattern, body]: alts)
     {
         // Don't both factoring out trivial expressions
-        if (is_trivial(pattern)) continue;
+        if (pattern.is_irrefutable()) continue;
 
-        vector<var> used_vars = get_used_vars(pattern);
+        vector<Occ::Var> used_vars2 = get_used_vars(pattern);
 
-        auto f = fresh_vars.get_fresh_var("_cc");
-        f.work_dup = amount_t::Many;
-        f.code_dup = amount_t::Many;
+        auto f = fresh_vars.get_fresh_occ_var("_cc");
+        f.info.work_dup = amount_t::Many;
+        f.info.code_dup = amount_t::Many;
 
         // f = \x y .. -> body
-        cc_decls.push_back({f, lambda_quantify(used_vars, body)});
+        cc_decls.push_back({f, lambda_quantify(used_vars2, body)});
 
         // body = f x y ...
-        body = ::apply(f, used_vars);
+        body = make_apply(Occ::Exp(f), used_vars2);
     }
-
+    
     // 2. The actual case-of-case transformation.
     //
     //      case (case object2 of patterns2 -> bodies2) of patterns => bodies
@@ -416,10 +412,10 @@ expression_ref case_of_case(const expression_ref& object, Core::Alts alts, Fresh
     //      case object2 of patterns2 -> case bodies2 of patterns => bodies
     //
     for(auto& [pattern2, body2]: alts2)
-        body2 = make_case_expression(body2,alts);
+        body2 = make_case_expression(body2,occ_to_expression_ref(alts));
 
     // 3. Reconstruct the case expression and add lets.
-    return let_expression(cc_decls, make_case_expression(object2,alts2));
+    return let_expression(occ_to_cdecls(cc_decls), make_case_expression(object2,alts2));
 }
 
 tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, const in_scope_set& bound_vars_in)
@@ -652,7 +648,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 	E2 = object;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (is_case(object) and options.case_of_case)
-        E2 = case_of_case(object, alts, *this);
+        E2 = case_of_case(object, to_occ_alts(alts), *this);
     else
         E2 = make_case_expression(object, alts);
 
