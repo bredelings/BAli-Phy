@@ -368,12 +368,18 @@ Occ::Lambda to_occ_lambda(expression_ref L)
     return Occ::Lambda{x,body};
 }
 
+Occ::Decl to_occ(const CDecl& decl)
+{
+    auto [x,E] = decl;
+    return {to_occ_var(x), to_occ_exp(E)};
+}
+
 Occ::Decls to_occ(const CDecls& decls)
 {
     Occ::Decls decls2;
-    for(auto& [x,E]: decls)
+    for(auto& decl: decls)
     {
-	decls2.push_back(Occ::Decl{to_occ_var(x), to_occ_exp(E)});
+	decls2.push_back(to_occ(decl));
     }
 
     return decls2;

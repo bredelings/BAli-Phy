@@ -642,22 +642,22 @@ expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
 substitution
-SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
+SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
     const int n_decls = orig_decls.size();
 
-    CDecls new_decls;
-    vector<var> new_names;
+    Occ::Decls new_decls;
+    vector<Occ::Var> new_names;
 
     // 5.1 Rename and bind all variables.
     //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
     //     Renaming them is necessary to correctly simplify the bodies.
     for(int i=0;i<n_decls;i++)
     {
-	var x = orig_decls[i].first;
-	var x2 = rename_and_bind_var(x, S2, bound_vars);
+	auto& x = orig_decls[i].x;
+	auto x2 = rename_and_bind_var(x, S2, bound_vars);
 	new_names.push_back(x2);
     }
 
@@ -666,28 +666,28 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
     {
 	// If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
 	//                                     E[i] can only reference EARLIER x[k] and loop breakers.
-	var x  = orig_decls[i].first;
-	auto F   = orig_decls[i].second;
+	auto x  = orig_decls[i].x;
+	auto F  = occ_to_expression_ref(orig_decls[i].body);
 
-	var x2 = new_names[i];
+	auto x2 = new_names[i];
 
-	if (x.is_exported) assert(x == x2);
+	if (x.info.is_exported) assert(x == x2);
 
 	// 1. Any references to x in F must be to the x bound in this scope.
 	// 2. F can only contain references to x if x is a loop breaker.
 	// 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
 	// 4. Therefore S2 is a good substitution for F.
-	assert(x.is_loop_breaker or not get_free_indices(F).count(x));
+	assert(x.info.is_loop_breaker or not get_free_indices(F).count(occ_to_var(x)));
 
 	// A. Suspended substitutions created by pre-inlining won't be affected if we include unconditionally inlining later-occurring variables.
 	//   A.1 This is because substitutions for later-occuring variables that are loop-breakers has already been done.
 	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (x.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
+	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.info.is_exported)
 	{
-	    S2.erase(to_occ_var(x));
-	    S2.insert({to_occ_var(x),{F,S2}});
+	    S2.erase(x);
+	    S2.insert({x,{F,S2}});
 	}
 	else
 	{
@@ -722,19 +722,19 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 		    for(auto& decl: decls)
 		    {
 			bound_vars = bind_var(bound_vars, decl.first, decl.second);
-			new_names.push_back(decl.first);
-			new_decls.push_back(decl);
+			new_names.push_back(to_occ_var(decl.first));
+			new_decls.push_back(to_occ(decl));
 		    }
 
 	    // what are the conditions for post-inlining unconditionally?
-	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.is_loop_breaker)
+	    if (is_trivial(F) and options.post_inline_unconditionally and not x.info.is_exported and not x.info.is_loop_breaker)
 	    {
-		S2.erase(to_occ_var(x));
-		S2.insert({to_occ_var(x),F});
+		S2.erase(x);
+		S2.insert({x,F});
 	    }
 	    else
 	    {
-		new_decls.push_back({x2,F});
+		new_decls.push_back({x2,to_occ_exp(F)});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
 		bound_vars = rebind_var(bound_vars, x2, F);
@@ -918,14 +918,13 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
     //
     // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
     // 
-    else if (is_let_expression(E))
+    else if (auto let = OE.to_let())
     {
-        auto L = E.as_<let_exp>();
-
-	auto S2 = simplify_decls(L.binds, S, bound_vars, false);
+	auto decls = let->decls;
+	auto S2 = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(L.binds, L.body, S2, bound_vars, context);
+	return rebuild_let(occ_to_cdecls(decls), occ_to_expression_ref(let->body), S2, bound_vars, context);
     }
 
      // Do we need something to handle WHNF variables?
@@ -984,7 +983,9 @@ SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
     vector<substitution> S(1);
     for(auto& decls: decl_groups)
     {
-	auto s = simplify_decls(decls, S.back(), bound_vars, true);
+	auto decls2 = to_occ(decls);
+	auto s = simplify_decls(decls2, S.back(), bound_vars, true);
+	decls = occ_to_cdecls(decls2);
 	S.push_back( s );
 	bound_vars = bind_decls(bound_vars, decls);
     }

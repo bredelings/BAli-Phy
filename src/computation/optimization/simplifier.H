@@ -81,7 +81,7 @@ public:
     rebuild_let(const CDecls& decls, expression_ref E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     simplifier::substitution
-    simplify_decls(CDecls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+    simplify_decls(Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
     
     std::vector<CDecls>
     simplify_module_one(const std::vector<CDecls>& decl_groups);
