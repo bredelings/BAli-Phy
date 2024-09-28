@@ -377,7 +377,7 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
     return {};
 }
 
-expression_ref case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& fresh_vars)
+Occ::Exp case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& fresh_vars)
 {
     auto& object2 = object.object;
     auto alts2 = object.alts;
@@ -419,7 +419,7 @@ expression_ref case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSou
 	E = Occ::Let{cc_decls,E};
 
     // 3. Reconstruct the case expression and add lets.
-    return occ_to_expression_ref(E);
+    return E;
 }
 
 tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, const in_scope_set& bound_vars_in)
@@ -647,17 +647,20 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
-    expression_ref E2;
+    Occ::Exp E2;
     if (is_identity_case(object, alts))
-	E2 = object;
+	E2 = object_;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object_.to_case(); C and options.case_of_case)
         E2 = case_of_case(*C, to_occ_alts(alts), *this);
     else
-        E2 = make_case_expression(object, alts);
+        E2 = Occ::Case{object_, to_occ_alts(alts)};
 
     // 6. If we floated anything out, put it here.
-    return let_expression(default_decls, E2);
+    for(auto& d: default_decls | views::reverse)
+	E2 = Occ::Let{to_occ(d),E2};
+
+    return occ_to_expression_ref(E2);
 }
 
 expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
