@@ -160,19 +160,19 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
             throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
     }
 
-    expression_ref unfolding;
+    optional<Occ::Exp> unfolding;
     if (var_info)
-	unfolding = maybe_occ_to_expression_ref(var_info->unfolding);
+	unfolding = var_info->unfolding;
 
     occurrence_info occ_info;
     occ_info.work_dup = amount_t::Many;
     occ_info.code_dup = amount_t::Many;
 
     // FIXME -- pass var_info to do_inline( ).
-    if (unfolding and do_inline(unfolding, occ_info, context))
-        return simplify(unfolding, {}, bound_vars, context);
-    else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(unfolding)))
-        return simplify(unfolding, {}, bound_vars, context);
+    if (unfolding and do_inline(occ_to_expression_ref(*unfolding), occ_info, context))
+        return simplify(*unfolding, {}, bound_vars, context);
+    else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(occ_to_expression_ref(*unfolding))))
+        return simplify(*unfolding, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }
@@ -784,24 +784,25 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
 
 expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
 {
-    return rebuild(occ_to_expression_ref(E), bound_vars,context);
-}
-
-expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
-{
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(E, occ_to_expression_ref(cc->alts), cc->subst, bound_vars, cc->next);
+        return rebuild_case(occ_to_expression_ref(E), occ_to_expression_ref(cc->alts), cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
         // FIXME: Should we lift let's out of E here?
 
-        auto x = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
-        return rebuild({E,x}, bound_vars, ac->next);
+        auto x = to_occ_var(simplify(ac->arg, ac->subst, bound_vars, make_stop_context()).as_<var>());
+
+        return rebuild(make_apply(E,x) , bound_vars, ac->next);
     }
     else
-        return E;
+        return occ_to_expression_ref(E);
+}
+
+expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
+{
+    return rebuild(to_occ_exp(E), bound_vars,context);
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -892,7 +893,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
         //     depend on x here, so this SHOULD be safe...
         auto E2 = maybe_eta_reduce2( L );
 
-        return rebuild(occ_to_expression_ref(E2), bound_vars, context);
+        return rebuild(E2, bound_vars, context);
     }
 
     // 6. Case
