@@ -234,25 +234,84 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
     return x2;
 }
 
-bool is_identity_case(const expression_ref& object, const Core::Alts& alts)
+// Convert the pattern to an expression if it contains no wildcards.
+std::optional<Occ::Exp> pattern_to_expression(const Occ::ConPat& con_pat)
+{
+    Occ::ConApp con_app;
+    for(auto& arg: con_pat.args)
+    {
+	if (auto x = arg.to_var_pat_var())
+	    con_app.args.push_back(*x);
+	else
+	    return {};
+    }
+    con_app.head = con_pat.head;
+    return con_app;
+}
+
+// Convert the pattern to an expression if it contains no wildcards.
+std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
+{
+    if (pattern.is_wildcard_pat())
+	return {};
+    else if (auto x = pattern.to_var_pat_var())
+	return *x;
+    else
+    {
+	auto con_pat = pattern.to_con_pat();
+	assert(con_pat);
+	return pattern_to_expression(*con_pat);
+    }
+}
+
+bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
 {
     for(auto& [pattern, body]: alts)
     {
-	if (is_wildcard(pattern))
-	{
-	    if (body != object) return false;
-	}
-	else if (is_var(pattern.head()))
-	{
-	    assert(not pattern.size());
-	    if (body != pattern and body != object) return false;
-	}
-	else if (pattern != body) return false;
+	// For each branch, the body must equal the object or the pattern.
+
+	// If the object equals the body, then this branch is OK.
+	if (object == body) continue;
+
+	// If the pattern has no wildcards and equations the body, then this branch is OK.
+	if (auto pattern_expression = pattern_to_expression(pattern))
+	    if (*pattern_expression == body) continue;
+
+	// Otherwise this branch is not OK.
+	return false;
     }
 
     return true;
 }
 
+/*
+bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
+{
+    for(auto& [pattern, body]: alts)
+    {
+	if (pattern.is_wildcard_pat())
+	{
+	    if (body != object) return false;
+	}
+	else if (auto x = pattern.to_var_pat_var())
+	{
+	    if (body != *x and body != object) return false;
+	}
+	else if (auto pat_con = pattern.to_con_pat())
+	{
+	    auto obj_con = object.to_conApp();
+	    if (not obj_con) return false;
+
+	    assert(pat_con->args.size() == obj_con->args.size());
+
+	    for(int i=0; i< pat_con->args.size(); i++)
+		if (auto x = pat_con->args[i].to_var_pat_var())
+		    if (*x != obj_con->args[i]) return false;
+	}
+    }
+    return true;
+}
+*/
 
 void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 {
@@ -647,14 +706,15 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
+    auto alts2 = to_occ_alts(alts);
     Occ::Exp E2;
-    if (is_identity_case(object, alts))
+    if (is_identity_case(object_, alts2))
 	E2 = object_;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object_.to_case(); C and options.case_of_case)
-        E2 = case_of_case(*C, to_occ_alts(alts), *this);
+        E2 = case_of_case(*C, alts2, *this);
     else
-        E2 = Occ::Case{object_, to_occ_alts(alts)};
+        E2 = Occ::Case{object_, alts2};
 
     // 6. If we floated anything out, put it here.
     for(auto& d: default_decls | views::reverse)
