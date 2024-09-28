@@ -236,16 +236,6 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
     return x2;
 }
 
-var SimplifierState::rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
-{
-    return occ_to_var(rename_var(to_occ_var(Evar.as_<var>()), S, bound_vars));
-}
-
-var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
-{
-    return occ_to_var(rename_and_bind_var(to_occ_var(Evar.as_<var>()), S, bound_vars));
-}
-
 bool is_identity_case(const expression_ref& object, const Core::Alts& alts)
 {
     for(auto& [pattern, body]: alts)
@@ -439,9 +429,9 @@ tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_
                 Evar = wild;
             }
 
-            var x2 = rename_and_bind_var(Evar, S2, bound_vars);
-            Evar = x2;
-            pat_decls.push_back({x2, {}});
+            auto x2 = rename_and_bind_var(to_occ_var(Evar.as_<var>()), S2, bound_vars);
+            Evar = occ_to_var(x2);
+            pat_decls.push_back({occ_to_var(x2), {}});
         }
         pattern = pattern2;
     }

@@ -45,9 +45,6 @@ public:
     Occ::Var rename_var(const Occ::Var& x, simplifier::substitution& S, const in_scope_set& bound_vars);
     Occ::Var rename_and_bind_var(const Occ::Var& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
 
-    var rename_var(const expression_ref& Evar, simplifier::substitution& S, const in_scope_set& bound_vars);
-    var rename_and_bind_var(const expression_ref& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
-
     bool small_enough(const expression_ref& rhs, const inline_context& context);
 
     bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
