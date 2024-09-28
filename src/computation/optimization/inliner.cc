@@ -161,7 +161,7 @@ bool is_trivial(const Occ::Exp& E)
 bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 {
     // If rhs is a variable, then there's no size increase
-    if (is_trivial(rhs)) return true;
+    if (is_trivial(to_occ_exp(rhs))) return true;
 
     // If we are inlining a constant into a case object, then there will eventually be no size increase... right?
     if (context.is_case_context() and is_WHNF(rhs))
@@ -176,11 +176,11 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
     {
 	int n_args_supplied = num_arguments(context);
 	assert(n_args_supplied >= 1);
-	int n_args_needed = get_n_lambdas1(rhs);
+	int n_args_needed = get_n_lambdas1(to_occ_exp(rhs));
 	int n_args_used = std::min(n_args_needed, n_args_supplied);
 
 	int size_of_call = 1 + n_args_supplied;
-	auto body = peel_n_lambdas1(rhs, n_args_used);
+	auto body = peel_n_lambdas1(to_occ_exp(rhs), n_args_used);
 	int size_of_body = simple_size(body);
 
 	if (size_of_body <= size_of_call) return true;
@@ -206,7 +206,7 @@ bool boring(const expression_ref& rhs, const inline_context& context)
 
     // ... after consuming all the arguments we need, the result is very_boring.
     {
-	int n_args_needed = get_n_lambdas1(rhs);
+	int n_args_needed = get_n_lambdas1(to_occ_exp(rhs));
 	if (num_arguments(context) >= n_args_needed)
 	{
 	    auto context2 = remove_arguments(context, n_args_needed);
@@ -267,7 +267,7 @@ bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info
 	return false;
 
     // Function and constructor arguments
-    else if (context.is_stop_context() and not is_trivial(rhs))
+    else if (context.is_stop_context() and not is_trivial(to_occ_exp(rhs)))
 	return false;
 
     // OnceSafe

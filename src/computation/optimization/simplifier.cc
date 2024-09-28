@@ -66,16 +66,14 @@ int get_n_lambdas1(const expression_ref& E)
     return get_n_lambdas1(to_occ_exp(E));
 }
 
-expression_ref peel_n_lambdas1(const expression_ref& E, int n)
+Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 {
-    expression_ref E2 = E;
-    for(int i=0;i<n;i++)
-    {
-	assert(E2.head().type() == lambda_type);
-	assert(E2.head().type() != lambda2_type);
-	E2 = E2.sub()[1];
-    }
-    return E2;
+     for(int i=0;i<n;i++)
+     {
+	 auto tmp = E;
+	 E = E.to_lambda()->body;
+     }
+     return E;
 }
 
 // This should be "variables and literals", but we don't currently allow literals as function arguments.

@@ -88,4 +88,5 @@ inline_context make_case_context(const Occ::Case& C, const simplifier::substitut
 
 int simple_size(const expression_ref& E);
 
+bool is_trivial(const Occ::Exp& E);
 #endif

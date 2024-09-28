@@ -21,11 +21,9 @@ typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
 
 typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 
-int get_n_lambdas1(const expression_ref& E);
+int get_n_lambdas1(Occ::Exp E);
 
-expression_ref peel_n_lambdas1(const expression_ref& E, int n);
-
-bool is_trivial(const expression_ref& E);
+Occ::Exp peel_n_lambdas1(Occ::Exp E, int n);
 
 class Module;
 
