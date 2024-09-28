@@ -74,8 +74,6 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
     return E2;
 }
 
-typedef pair<expression_ref,occurrence_info> bound_variable_info;
-
 // This should be "variables and literals", but we don't currently allow literals as function arguments.
 // So, we only allow variables to be "trivial".
 bool is_trivial(const expression_ref& E)
