@@ -929,20 +929,35 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
 
      // Do we need something to handle WHNF variables?
 
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size())
-        return rebuild(E, bound_vars, context);
+    // 5. Literal constant.  Treat as 0-arg constructor.
+    else if (OE.to_constant())
+        return rebuild(OE, bound_vars, context);
 
-    // 4. Constructor or Operation
-    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
+    // 4. Constructor
+    else if (auto con = OE.to_conApp())
     {
-	object_ptr<expression> E2 = E.as_expression().clone();
-	for(int i=0;i<E.size();i++)
-	{
-	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, make_stop_context());
-	}
-	return rebuild(E2, bound_vars, context);
+	Occ::ConApp C = *con;
+	for(auto& arg: C.args)
+	    arg = to_occ_var(simplify(arg, S, bound_vars, make_stop_context()).as_<var>());
+
+	return rebuild(C, bound_vars, context);
+    }
+
+    // 4. Builtin
+    else if (auto builtin = OE.to_builtinOp())
+    {
+	Occ::BuiltinOp builtin2;
+	builtin2.lib_name = builtin->lib_name;
+	builtin2.func_name = builtin->func_name;
+	builtin2.op = builtin->op;
+
+	for(auto& arg: builtin->args)
+ 	{
+	    auto arg2 = simplify(arg, S, bound_vars, make_stop_context()).as_<var>();
+	    builtin2.args.push_back(to_occ_var(arg2));
+ 	}
+
+	return rebuild(builtin2, bound_vars, context);
     }
 
     std::abort();
