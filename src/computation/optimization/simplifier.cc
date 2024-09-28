@@ -939,7 +939,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	auto new_body = simplify(lam->body, S2, bound_vars_x, make_ok_context());
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
-        auto L = Occ::Lambda(x2, to_occ_exp(new_body));
+        auto L = Occ::Lambda{x2, to_occ_exp(new_body)};
 
         // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
