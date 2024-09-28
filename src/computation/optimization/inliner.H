@@ -55,10 +55,10 @@ public:
 
 struct apply_context
 {
-    expression_ref arg;
+    Occ::Var arg;
     const simplifier::substitution& subst;
     inline_context next;
-    apply_context(const expression_ref& e, const simplifier::substitution& s, const inline_context& i):arg(e), subst(s), next(i) {}
+    apply_context(const Occ::Var& x, const simplifier::substitution& s, const inline_context& i):arg(x), subst(s), next(i) {}
 };
 
 struct case_context
@@ -80,11 +80,11 @@ struct stop_context
 };
 
 
-std::shared_ptr<const stop_context> make_stop_context();
-std::shared_ptr<const ok_context> make_ok_context();
-std::shared_ptr<const apply_context> make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const expression_ref& arg);
-std::shared_ptr<const apply_context> make_apply_context(const expression_ref E, const simplifier::substitution& S, inline_context context);
-std::shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context);
+inline_context make_stop_context();
+inline_context make_ok_context();
+inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const Occ::Var& arg);
+inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, inline_context context);
+inline_context make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context);
 
 int simple_size(const expression_ref& E);
 

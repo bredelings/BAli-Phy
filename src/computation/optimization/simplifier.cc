@@ -908,12 +908,10 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
     }
 
     // ?. Apply
-    else if (is_apply_exp(E))
+    else if (auto app = OE.to_apply())
     {
         // Simplify the function
-        auto f = E.sub()[0];
-
-	return simplify(f, S, bound_vars, make_apply_context(E, S, context));
+	return simplify(app->head, S, bound_vars, make_apply_context(*app, S, context));
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
