@@ -148,7 +148,8 @@ inline_context remove_arguments(inline_context context, int n)
 
 bool is_WHNF(const Occ::Exp& E)
 {
-    return (E.to_var() or E.to_lambda() or E.to_conApp() or E.to_constant());
+    // Should we allow variables?  The expression_ref definition does not.
+    return (E.to_lambda() or E.to_conApp() or E.to_constant());
 }
 
 // Can be substituted into a function argument position -- variable or unlifted constant like 1#.
