@@ -242,9 +242,15 @@ namespace Core2
 	Exp() = default;
 	Exp(const Exp<NoteV,NoteE>& e) = default;
 
-	template <typename E>
-	Exp(const E& e):exp_ptr( make_cow_ptr<E>(e) ) {}
-	
+	Exp(const Var<NoteV>& v):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ) {}
+	Exp(const Lambda<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ) {}
+	Exp(const Apply<NoteV,NoteE>& a):exp_ptr( make_cow_ptr<Apply<NoteV,NoteE>>(a) ) {}
+	Exp(const Let<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ) {}
+	Exp(const Case<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ) {}
+	Exp(const ConApp<NoteV>& c):exp_ptr( make_cow_ptr<ConApp<NoteV>>(c) ) {}
+	Exp(const BuiltinOp<NoteV>& b):exp_ptr( make_cow_ptr<BuiltinOp<NoteV>>(b) ) {}
+	Exp(const Constant& c):exp_ptr( make_cow_ptr<Constant>(c) ) {}
+
 	~Exp() = default;
     };
 
