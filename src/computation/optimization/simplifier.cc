@@ -756,39 +756,31 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 //                     \x2 ->               ($) f x2  ===>              f
 //                 We don't do this (could perform more allocation):
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-expression_ref maybe_eta_reduce2(const expression_ref& E)
+Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
 {
-    assert(is_lambda_exp(E));
-    auto& x    = E.sub()[0].as_<var>();
-    auto& body = E.sub()[1];
-
     // 1. Check that we have \x -> ($) ...
-    if (not is_apply_exp(body)) return E;
+    auto app = L.body.to_apply();
+    if (not app) return L;
 
     // 2. Check that we have \x -> ($) ... x
-    if (body.as_expression().sub.back() != x) return E;
+    if (app->args.back() != L.x) return L;
 
-    // 3. Check that the function is a variable (and so cannot contain x)
-    if (not is_var(body.sub()[0])) return E;
+    // 3. Check that the function is a variable different from x (and so cannot contain x)
+    if (not app->head.to_var() or app->head == L.x) return L;
 
     // 4. Check that all entries are vars and are not x: \x -> ($) f a b c x
-    for(int i=0;i<body.size()-1;i++)
-    {
-        assert(is_var(body.sub()[i]));
-
-        if (body.sub()[i].as_<var>() == x) return E;
-    }
+    for(int i=0;i<app->args.size()-1;i++)
+        if (app->args[i] == L.x) return L;
 
     // ($) f x  ==> f
-    if (body.size() == 2)
-        return body.sub()[0];
+    if (app->args.size() == 1)
+        return app->head;
     // ($) f y x ==> ($) f y
     else
     {
-        assert(body.size() > 2);
-        object_ptr<expression> body2 = body.as_expression().clone();
-        body2->sub.pop_back();
-        return body2;
+        auto app2 = *app;
+        app2.args.pop_back();
+        return app2;
     }
 }
 
@@ -898,14 +890,14 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
 	auto new_body = simplify(lam->body, S2, bound_vars_x, make_ok_context());
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
-        auto E2 = lambda_quantify(occ_to_var(x2), new_body);
+        auto L = Occ::Lambda(x2, to_occ_exp(new_body));
 
         // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
         //     depend on x here, so this SHOULD be safe...
-        E2 = maybe_eta_reduce2( E2 );
+        auto E2 = maybe_eta_reduce2( L );
 
-        return rebuild(E2, bound_vars, context);
+        return rebuild(occ_to_expression_ref(E2), bound_vars, context);
     }
 
     // 6. Case
