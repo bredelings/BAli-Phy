@@ -377,10 +377,10 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
     return {};
 }
 
-expression_ref case_of_case(const expression_ref& object, Occ::Alts alts, FreshVarSource& fresh_vars)
+expression_ref case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& fresh_vars)
 {
-    auto C = parse_case_expression(object);
-    auto [object2, alts2] = *C;
+    auto& object2 = object.object;
+    auto alts2 = object.alts;
 
     // 1. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
     //
@@ -412,10 +412,14 @@ expression_ref case_of_case(const expression_ref& object, Occ::Alts alts, FreshV
     //      case object2 of patterns2 -> case bodies2 of patterns => bodies
     //
     for(auto& [pattern2, body2]: alts2)
-        body2 = make_case_expression(body2,occ_to_expression_ref(alts));
+        body2 = Occ::Case{body2,alts};
+
+    Occ::Exp E = Occ::Case{object2,alts2};
+    if (not cc_decls.empty())
+	E = Occ::Let{cc_decls,E};
 
     // 3. Reconstruct the case expression and add lets.
-    return let_expression(occ_to_cdecls(cc_decls), make_case_expression(object2,alts2));
+    return occ_to_expression_ref(E);
 }
 
 tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, const in_scope_set& bound_vars_in)
@@ -647,8 +651,8 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     if (is_identity_case(object, alts))
 	E2 = object;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
-    else if (is_case(object) and options.case_of_case)
-        E2 = case_of_case(object, to_occ_alts(alts), *this);
+    else if (auto C = object_.to_case(); C and options.case_of_case)
+        E2 = case_of_case(*C, to_occ_alts(alts), *this);
     else
         E2 = make_case_expression(object, alts);
 
