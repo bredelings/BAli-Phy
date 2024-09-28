@@ -501,6 +501,8 @@ namespace Core2
 	    else
 		return nullptr;
 	}
+
+	bool is_irrefutable() const {return to_var_pat() or is_wildcard_pat();}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
