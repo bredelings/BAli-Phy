@@ -61,7 +61,13 @@ public:
     simplify(const expression_ref& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
+    simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+
+    expression_ref
     rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context);
+
+    expression_ref
+    rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<CDecls,simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(expression_ref& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 

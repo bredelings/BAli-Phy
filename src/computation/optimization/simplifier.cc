@@ -792,6 +792,11 @@ expression_ref maybe_eta_reduce2(const expression_ref& E)
     }
 }
 
+expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
+{
+    return rebuild(occ_to_expression_ref(E), bound_vars,context);
+}
+
 expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
@@ -814,8 +819,13 @@ expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
 expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
-    assert(E);
-    auto OE = to_occ_exp(E);
+    return simplify(to_occ_exp(E), S, bound_vars, context);
+}
+
+expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+{
+    assert(not OE.empty());
+    auto E = occ_to_expression_ref(OE);
 
     // 1. Var (x)
     if (auto x = OE.to_var())
@@ -859,8 +869,7 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
             // return simplify(E2, S, bound_vars, context);
         // }
 
-	auto Evar = occ_to_var(lam->x);
-        auto Ebody = E.sub()[1];
+	auto Ebody = E.sub()[1];
 
         auto S2 = S;
 
@@ -872,24 +881,24 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
             {
                 S2.erase(x);
                 S2.insert({x,arg});
-                return simplify(Ebody, S2, bound_vars, ac->next);
+                return simplify(lam->body, S2, bound_vars, ac->next);
             }
             else
             {
-                auto x2 = rename_var(Evar, S2, bound_vars);
+                auto x2 = occ_to_var(rename_var(lam->x, S2, bound_vars));
                 return rebuild_let({{x2,arg}}, Ebody, S2, bound_vars, ac->next);
             }
         }
 
 	// 2.2. Get the new name, possibly adding a substitution
         auto bound_vars_x = bound_vars;
-	var x2 = rename_and_bind_var(Evar, S2, bound_vars_x);
+	auto x2 = rename_and_bind_var(lam->x, S2, bound_vars_x);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(Ebody, S2, bound_vars_x, make_ok_context());
+	auto new_body = simplify(lam->body, S2, bound_vars_x, make_ok_context());
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
-        auto E2 = lambda_quantify(x2, new_body);
+        auto E2 = lambda_quantify(occ_to_var(x2), new_body);
 
         // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
@@ -900,12 +909,10 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
     }
 
     // 6. Case
-    if (is_case(E))
+    if (auto C = OE.to_case())
     {
 	// Simplfy the object
-        auto object = E.sub()[0];
-
-	return simplify(object, S, bound_vars, make_case_context(E, S, context));
+	return simplify(C->object, S, bound_vars, make_case_context(E, S, context));
     }
 
     // ?. Apply
