@@ -587,17 +587,17 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
         // 2.2 Define x = pattern in this branch only
-	if (is_var(object) and not is_wildcard(pattern))
+	if (auto v = object_.to_var(); v and not is_wildcard(pattern))
         {
-            auto x = object.as_<var>();
+            auto x = *v;
             if (is_local_symbol(x.name, this_mod.name))
                 bound_vars2 = rebind_var(bound_vars2, x, pattern);
             else
             {
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
-                x.work_dup = amount_t::Many;
-                x.code_dup = amount_t::Many;
-                if (bound_vars2.count(to_occ_var(x)))
+                x.info.work_dup = amount_t::Many;
+                x.info.code_dup = amount_t::Many;
+                if (bound_vars2.count(x))
                     bound_vars2 = rebind_var(bound_vars2, x, pattern);
                 else
                     bound_vars2 = bind_var(bound_vars2, x, pattern);
