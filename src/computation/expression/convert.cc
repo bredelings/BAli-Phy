@@ -76,8 +76,8 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
     }
     else
     {
-	Core2::ConPat<> con_app;
-	con_app.head = P.head().as_<constructor>().f_name;
+	Core2::ConPat<> con_pat;
+	con_pat.head = P.head().as_<constructor>().f_name;
 
 	// The arity on the constructor head must match the number of arguments.
 	// We use the constructor arity to infer the number of pattern variables in indexified form.
@@ -89,10 +89,11 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
 		throw myexception()<<"to_core_pattern: constructor argument is not a var: "<<P;
 	    auto x = P.sub()[i].as_<var>();
 	    if (x.is_wildcard())
-		throw myexception()<<"to_core_pattern: constructor argument has wildcard arg: "<<P;
-	    con_app.args.push_back( to_core(x) );
+		con_pat.args.push_back( Core2::WildcardPat() );
+	    else
+		con_pat.args.push_back( Core2::VarPat<>(to_core(x)) );
 	}
-	return con_app;
+	return con_pat;
     }
 }
 
@@ -211,6 +212,16 @@ expression_ref var_to_expression_ref(const Core2::Var<>& V)
     return to_var(V);
 }
 
+expression_ref patarg_to_expression_ref(const Core2::VarOrWildcardPattern<>& V)
+{
+    if (V.is_wildcard_pat())
+	return var(-1);
+    else if (auto vp = V.to_var_pat())
+	return to_var(vp->var);
+    else
+	std::abort();
+}
+
 expression_ref to_expression_ref(const Core2::Lambda<>& L)
 {
     return lambda_quantify(to_var(L.x), to_expression_ref(L.body));
@@ -245,9 +256,19 @@ expression_ref to_expression_ref(const Core2::Pattern<>& P)
 	return to_var(v->var);
     else if (auto c = to<Core2::ConPat<>>(P))
     {
-	auto args = c->args | ranges::views::transform( var_to_expression_ref ) | ranges::to<vector>();
+	auto args = c->args | ranges::views::transform( patarg_to_expression_ref ) | ranges::to<vector>();
 	return expression_ref(constructor(c->head, args.size()), args);
     }
+    else
+	std::abort();
+}
+
+expression_ref to_expression_ref(const Core2::VarOrWildcardPattern<>& P)
+{
+    if (to<Core2::WildcardPat>(P))
+	return var(-1);
+    else if (auto v = to<Core2::VarPat<>>(P))
+	return to_var(v->var);
     else
 	std::abort();
 }
@@ -408,8 +429,9 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
 		throw myexception()<<"to_occ_pattern: constructor argument is not a var: "<<P;
 	    auto x = P.sub()[i].as_<var>();
 	    if (x.is_wildcard())
-		throw myexception()<<"to_core_pattern: constructor argument has wildcard arg: "<<P;
-	    con_app.args.push_back( to_occ(x) );
+		con_app.args.push_back( Occ::WildcardPat() );
+	    else
+		con_app.args.push_back( Occ::VarPat(to_occ(x)) );
 	}
 	return con_app;
     }
@@ -533,6 +555,16 @@ expression_ref occ_var_to_expression_ref(const Occ::Var& V)
     return occ_to_var(V);
 }
 
+expression_ref occ_patarg_to_expression_ref(const Occ::VarOrWildcardPattern& V)
+{
+    if (V.is_wildcard_pat())
+	return var(-1);
+    else if (auto vp = V.to_var_pat())
+	return occ_to_var(vp->var);
+    else
+	std::abort();
+}
+
 expression_ref occ_to_expression_ref(const Occ::Lambda& L)
 {
     return lambda_quantify(occ_to_var(L.x), occ_to_expression_ref(L.body));
@@ -554,7 +586,7 @@ CDecls occ_to_cdecls(const Occ::Decls& decls)
 
 expression_ref occ_to_expression_ref(const Occ::Let& L)
 {
-    auto decls = occ_to_expression_ref(L.decls);
+    auto decls = occ_to_cdecls(L.decls);
     auto body = occ_to_expression_ref(L.body);
     return let_expression(decls, body);
 }
@@ -567,9 +599,19 @@ expression_ref occ_to_expression_ref(const Occ::Pattern& P)
 	return occ_to_var(v->var);
     else if (auto c = to<Occ::ConPat>(P))
     {
-	auto args = c->args | ranges::views::transform( occ_var_to_expression_ref ) | ranges::to<vector>();
+	auto args = c->args | ranges::views::transform( occ_patarg_to_expression_ref ) | ranges::to<vector>();
 	return expression_ref(constructor(c->head, args.size()), args);
     }
+    else
+	std::abort();
+}
+
+expression_ref occ_to_expression_ref(const Occ::VarOrWildcardPattern& P)
+{
+    if (to<Occ::WildcardPat>(P))
+	return var(-1);
+    else if (auto v = to<Occ::VarPat>(P))
+	return occ_to_var(v->var);
     else
 	std::abort();
 }

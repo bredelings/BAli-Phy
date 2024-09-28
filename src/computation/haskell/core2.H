@@ -316,11 +316,12 @@ namespace Core2
 
 	template <class Archive>
 	void serialize(Archive& ar)
-	    {
+	{
 	    ar(x, body);
 	}
     };
 
+    // FIXME: Change this to a single arg.
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Apply
     {
@@ -428,35 +429,6 @@ namespace Core2
     };
 
     template <typename NoteV = std::monostate>
-    struct ConPat
-    {
-	std::string head;
-	std::vector<Var<NoteV>> args;
-
-	bool operator==(const ConPat<NoteV>& v2) const
-	{
-	    return head == v2.head and args == v2.args;
-	}
-
-	std::strong_ordering operator<=>(const ConPat<NoteV>& v2) const
-	{
-	    auto cmp1 = head <=> v2.head;
-
-	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
-
-	    return args <=> v2.args;
-	}
-
-	std::string print() const;
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-	    ar(head, args);
-	}
-    };
-
-    template <typename NoteV = std::monostate>
     struct VarPat
     {
 	Var<NoteV> var;
@@ -473,6 +445,79 @@ namespace Core2
     };
     
     template <typename NoteV = std::monostate>
+    struct VarOrWildcardPattern: public std::variant<std::monostate, WildcardPat, VarPat<NoteV>>
+    {
+	std::string print() const;
+
+	using std::variant<std::monostate, WildcardPat, VarPat<NoteV>>::variant;
+
+	std::strong_ordering operator<=>(const VarOrWildcardPattern<NoteV>&) const = default;
+
+	bool is_wildcard_pat() const
+	{
+	    return (this->index() == 1);
+	}
+
+	const VarPat<NoteV>* to_var_pat() const
+	{
+	    if (this->index() == 2)
+		return &std::get<VarPat<NoteV>>(*this);
+	    else
+		return nullptr;
+	}
+
+	const Var<NoteV>* to_var_pat_var() const
+	{
+	    if (this->index() == 2)
+		return &std::get<VarPat<NoteV>>(*this).var;
+	    else
+		return nullptr;
+	}
+    };
+
+    template <typename NoteV = std::monostate>
+    struct ConPat
+    {
+	std::string head;
+	std::vector<VarOrWildcardPattern<NoteV>> args;
+
+	bool operator==(const ConPat<NoteV>& v2) const
+	{
+	    return head == v2.head and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const ConPat<NoteV>& v2) const
+	{
+	    auto cmp1 = head <=> v2.head;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return args <=> v2.args;
+	}
+
+	std::optional<std::vector<Var<NoteV>>> all_args_vars() const
+	{
+	    std::vector<Var<NoteV>> arg_vars;
+	    for(auto& arg_pat: args)
+	    {
+		if (auto x = arg_pat.to_var_pat_var())
+		    arg_vars.push_back(*x);
+		else
+		    return {};
+	    }
+	    return arg_vars;
+	}
+
+	std::string print() const;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
+    };
+
+    template <typename NoteV = std::monostate>
     struct Pattern: public std::variant<std::monostate, WildcardPat, VarPat<NoteV>, ConPat<NoteV>>
     {
 	std::string print() const;
@@ -486,7 +531,7 @@ namespace Core2
 	    return (this->index() == 1);
 	}
 
-	VarPat<NoteV>* to_var_pat() const
+	const VarPat<NoteV>* to_var_pat() const
 	{
 	    if (this->index() == 2)
 		return &std::get<VarPat<NoteV>>(*this);
@@ -494,7 +539,7 @@ namespace Core2
 		return nullptr;
 	}
 
-	ConPat<NoteV>* to_con_pat() const
+	const ConPat<NoteV>* to_con_pat() const
 	{
 	    if (this->index() == 3)
 		return &std::get<ConPat<NoteV>>(*this);
@@ -772,6 +817,15 @@ namespace Core2
     std::string VarPat<NoteV>::print() const
     {
 	return var.print();
+    }
+
+    template <typename NoteV>
+    std::string VarOrWildcardPattern<NoteV>::print() const
+    {
+	if (this->index() == 0) return "NOPATVW";
+	else if (this->index() == 1) return std::get<WildcardPat>(*this).print();
+	else if (this->index() == 2) return std::get<VarPat<NoteV>>(*this).print();
+	else std::abort();
     }
 
     template <typename NoteV>

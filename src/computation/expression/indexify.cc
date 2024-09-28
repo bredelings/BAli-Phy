@@ -213,12 +213,14 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 		pattern2 = constructor(CP->head, CP->args.size());
 
 		for(auto& var: CP->args)
-		    variables.push_back(var);
+		    if (auto vp = var.to_var_pat())
+			variables.push_back(vp->var);
 
 		body2 = indexify(body, variables);
 
-		for(int j=0;j<CP->args.size();j++)
-		    variables.pop_back();
+		for(auto& var: CP->args)
+		    if (var.to_var_pat())
+			variables.pop_back();
 	    }
 	    alts2.push_back({pattern2, body2});
 	}
