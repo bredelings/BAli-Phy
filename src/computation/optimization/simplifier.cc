@@ -814,13 +814,12 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
     return simplify(to_occ_exp(E), S, bound_vars, context);
 }
 
-expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
-    assert(not OE.empty());
-    auto E = occ_to_expression_ref(OE);
+    assert(not E.empty());
 
     // 1. Var (x)
-    if (auto x = OE.to_var())
+    if (auto x = E.to_var())
     {
 	// 1.1 If there's a substitution x -> E
 	if (S.count(*x))
@@ -843,12 +842,12 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return consider_inline(E, bound_vars, context);
+	    return consider_inline(occ_to_expression_ref(E), bound_vars, context);
 	}
     }
 
     // 2. Lambda (E = \x -> body)
-    if (auto lam = OE.to_lambda())
+    if (auto lam = E.to_lambda())
     {
         // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
         //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
@@ -860,8 +859,6 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
 	    // Since maybe_eta_reduce( ) uses occurrence info to check that x is only used once, we have to do this *before* we simplify E (below).
             // return simplify(E2, S, bound_vars, context);
         // }
-
-	auto Ebody = E.sub()[1];
 
         auto S2 = S;
 
@@ -878,7 +875,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
             else
             {
                 auto x2 = occ_to_var(rename_var(lam->x, S2, bound_vars));
-                return rebuild_let({{x2,arg}}, Ebody, S2, bound_vars, ac->next);
+                return rebuild_let({{x2,arg}}, occ_to_expression_ref(lam->body), S2, bound_vars, ac->next);
             }
         }
 
@@ -901,14 +898,14 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
     }
 
     // 6. Case
-    if (auto C = OE.to_case())
+    if (auto C = E.to_case())
     {
 	// Simplfy the object
-	return simplify(C->object, S, bound_vars, make_case_context(E, S, context));
+	return simplify(C->object, S, bound_vars, make_case_context(occ_to_expression_ref(E), S, context));
     }
 
     // ?. Apply
-    else if (auto app = OE.to_apply())
+    else if (auto app = E.to_apply())
     {
         // Simplify the function
 	return simplify(app->head, S, bound_vars, make_apply_context(*app, S, context));
@@ -918,7 +915,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
     //
     // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
     // 
-    else if (auto let = OE.to_let())
+    else if (auto let = E.to_let())
     {
 	auto decls = let->decls;
 	auto S2 = simplify_decls(decls, S, bound_vars, false);
@@ -930,11 +927,11 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
      // Do we need something to handle WHNF variables?
 
     // 5. Literal constant.  Treat as 0-arg constructor.
-    else if (OE.to_constant())
-        return rebuild(OE, bound_vars, context);
+    else if (E.to_constant())
+        return rebuild(E, bound_vars, context);
 
     // 4. Constructor
-    else if (auto con = OE.to_conApp())
+    else if (auto con = E.to_conApp())
     {
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
@@ -944,7 +941,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& OE, const substitution&
     }
 
     // 4. Builtin
-    else if (auto builtin = OE.to_builtinOp())
+    else if (auto builtin = E.to_builtinOp())
     {
 	Occ::BuiltinOp builtin2;
 	builtin2.lib_name = builtin->lib_name;
