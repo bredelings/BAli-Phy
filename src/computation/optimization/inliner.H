@@ -63,10 +63,10 @@ struct apply_context
 
 struct case_context
 {
-    Core::Alts alts;
+    Occ::Alts alts;
     const simplifier::substitution& subst;
     inline_context next;
-    case_context(const Core::Alts& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
+    case_context(const Occ::Alts& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
 };
 
 // It is allowed to inline here.
@@ -84,7 +84,7 @@ inline_context make_stop_context();
 inline_context make_ok_context();
 inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const Occ::Var& arg);
 inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, inline_context context);
-inline_context make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context);
+inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context);
 
 int simple_size(const expression_ref& E);
 

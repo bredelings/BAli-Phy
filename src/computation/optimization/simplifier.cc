@@ -791,7 +791,7 @@ expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_
 {
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
+        return rebuild_case(E, occ_to_expression_ref(cc->alts), cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
@@ -899,7 +899,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
     if (auto C = E.to_case())
     {
 	// Simplfy the object
-	return simplify(C->object, S, bound_vars, make_case_context(occ_to_expression_ref(E), S, context));
+	return simplify(C->object, S, bound_vars, make_case_context(*C, S, context));
     }
 
     // ?. Apply

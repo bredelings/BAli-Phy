@@ -1,5 +1,6 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
+#include "computation/expression/case.H"
 #include "computation/haskell/core2.H"
 #include "computation/loader.H"
 #include "computation/optimization/occurrence_info.H"
@@ -51,6 +52,8 @@ Occ::Decl to_occ(const CDecl& decl);
 var occ_to_var(const Occ::Var& V);
 
 expression_ref occ_to_expression_ref(const Occ::Exp& E);
+
+Core::Alts occ_to_expression_ref(const Occ::Alts& A);
 
 expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
 

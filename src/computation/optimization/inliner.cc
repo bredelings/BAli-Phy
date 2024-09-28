@@ -54,10 +54,9 @@ int num_arguments(inline_context context)
     return num;
 }
 
-inline_context make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context)
+inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context)
 {
-    assert(is_case(E));
-    return std::make_shared<const case_context>(E.sub()[1].as_<Core::Alts>(), S, context);
+    return std::make_shared<const case_context>(C.alts, S, context);
 }
 
 inline_context make_apply_context_one_arg(const Occ::Var& x, const simplifier::substitution& S, const inline_context& context)
