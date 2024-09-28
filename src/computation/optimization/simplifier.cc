@@ -267,6 +267,11 @@ void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 	    get_pattern_dummies(y, vars);
 }
 
+bool is_used_var(const Occ::Var& x)
+{
+    return (x.info.code_dup != amount_t::None);
+}
+
 bool is_used_var(const var& x)
 {
     return (not x.is_wildcard() and x.code_dup != amount_t::None);
@@ -276,6 +281,20 @@ bool is_used_var(const expression_ref& x)
 {
     if (not is_var(x)) return false;
     return is_used_var(x.as_<var>());
+}
+
+vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
+{
+    vector<Occ::Var> used;
+
+    if (auto x = pattern.to_var_pat_var(); x and is_used_var(*x))
+	used.push_back(*x);
+    else if (auto con_pat = pattern.to_con_pat())
+	for(auto& arg_pat: con_pat->args)
+	    if (auto x = arg_pat.to_var_pat_var(); x and is_used_var(*x))
+		used.push_back(*x);
+
+    return used;
 }
 
 vector<var> get_used_vars(const expression_ref& pattern)
