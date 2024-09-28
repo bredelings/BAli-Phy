@@ -124,13 +124,11 @@ bool is_trivial(const expression_ref& E)
 }
 
 // Do we have to explicitly skip loop breakers here?
-expression_ref SimplifierState::consider_inline(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
-    var x = E.as_<var>();
-
     if (is_local_symbol(x.name, this_mod.name))
     {
-        const auto& [rhs,occ_info] = bound_vars.at(to_occ_var(x));
+        const auto& [rhs,occ_info] = bound_vars.at(x);
 
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
@@ -138,7 +136,7 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
         if (rhs and do_inline(rhs, occ_info, context))
             return simplify(rhs, {}, bound_vars, context);
         else
-            return rebuild(E, bound_vars, context);
+            return rebuild(x, bound_vars, context);
     }
 
     assert(not x.name.empty());
@@ -842,7 +840,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return consider_inline(occ_to_expression_ref(E), bound_vars, context);
+	    return consider_inline(*x, bound_vars, context);
 	}
     }
 

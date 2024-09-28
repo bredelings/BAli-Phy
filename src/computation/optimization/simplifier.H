@@ -55,7 +55,7 @@ public:
     bool do_inline_multi(const expression_ref& rhs, const inline_context& context);
 
     expression_ref
-    consider_inline(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context);
+    consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
     simplify(const expression_ref& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
