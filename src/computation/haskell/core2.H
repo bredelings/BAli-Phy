@@ -17,6 +17,8 @@
 #include <cereal/types/variant.hpp>
 #include <cereal/types/vector.hpp>
 
+#include "range/v3/all.hpp"
+
 namespace Core2
 {
     template <typename NoteV> struct Var;
@@ -474,8 +476,8 @@ namespace Core2
 
 	const Var<NoteV>* to_var_pat_var() const
 	{
-	    if (this->index() == 2)
-		return &std::get<VarPat<NoteV>>(*this).var;
+	    if (auto vp = to_var_pat())
+		return &vp->var;
 	    else
 		return nullptr;
 	}
@@ -541,6 +543,14 @@ namespace Core2
 	{
 	    if (this->index() == 2)
 		return &std::get<VarPat<NoteV>>(*this);
+	    else
+		return nullptr;
+	}
+
+	const Var<NoteV>* to_var_pat_var() const
+	{
+	    if (auto vp = to_var_pat())
+		return &vp->var;
 	    else
 		return nullptr;
 	}
@@ -947,6 +957,15 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std
 	E2 = make_apply(E2,x);
 
     return E2;
+}
+
+template <typename NoteV, typename NoteE>
+Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& xs, Core2::Exp<NoteV, NoteE> E)
+{
+    for(auto& x: xs | ranges::views::reverse)
+	E = Core2::Lambda<NoteV,NoteE>{x, E};
+
+    return E;
 }
 
 #endif
