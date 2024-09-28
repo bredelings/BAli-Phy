@@ -146,6 +146,18 @@ inline_context remove_arguments(inline_context context, int n)
     return context;
 }
 
+bool is_WHNF(const Occ::Exp& E)
+{
+    return (E.to_var() or E.to_lambda() or E.to_conApp() or E.to_constant());
+}
+
+// Can be substituted into a function argument position -- variable or unlifted constant like 1#.
+bool is_trivial(const Occ::Exp& E)
+{
+    // I think unlifted constants could be trivial as well, but we don't have those.
+    return (E.to_var());
+}
+
 bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 {
     // If rhs is a variable, then there's no size increase
@@ -236,8 +248,20 @@ bool whnf_or_bottom(const expression_ref& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
+bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
+{
+    return false;
+}
+
+bool whnf_or_bottom(const Occ::Exp& rhs)
+{
+    return is_WHNF(rhs) or evaluates_to_bottom(rhs);
+}
+
 bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
 {
+    auto rhs2 = to_occ_exp(rhs);
+
     // LoopBreaker
     if (occur.is_loop_breaker)
 	return false;
