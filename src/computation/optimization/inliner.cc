@@ -249,16 +249,14 @@ bool whnf_or_bottom(const Occ::Exp& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
-bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
+bool SimplifierState::do_inline(const Occ::Exp& rhs, const occurrence_info& occur, const inline_context& context)
 {
-    auto rhs2 = to_occ_exp(rhs);
-
     // LoopBreaker
     if (occur.is_loop_breaker)
 	return false;
 
     // Function and constructor arguments
-    else if (context.is_stop_context() and not is_trivial(rhs2))
+    else if (context.is_stop_context() and not is_trivial(rhs))
 	return false;
 
     // OnceSafe
@@ -271,24 +269,24 @@ bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.
-    if (rhs2.to_constant() or rhs2.to_conApp())
+    if (rhs.to_constant() or rhs.to_conApp())
 	return true;
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return do_inline_multi(rhs2, context);
+	return do_inline_multi(rhs, context);
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
-	return whnf_or_bottom(rhs2) and (no_size_increase(rhs2,context) or not very_boring(context));
+	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
-	return whnf_or_bottom(rhs2) and (no_size_increase(rhs2,context) or not very_boring(context));
+	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-	return whnf_or_bottom(rhs2) and do_inline_multi(rhs2, context);
+	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
 
     std::abort();
 }

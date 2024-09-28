@@ -149,7 +149,7 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
         // 1. If there's a binding x = E, and E = y for some variable y
-        if (rhs and do_inline(rhs, occ_info, context))
+        if (rhs and do_inline(to_occ_exp(rhs), occ_info, context))
             return simplify(rhs, {}, bound_vars, context);
         else
             return rebuild(x, bound_vars, context);
@@ -185,9 +185,9 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
     occ_info.code_dup = amount_t::Many;
 
     // FIXME -- pass var_info to do_inline( ).
-    if (unfolding and do_inline(occ_to_expression_ref(*unfolding), occ_info, context))
+    if (unfolding and do_inline(*unfolding, occ_info, context))
         return simplify(*unfolding, {}, bound_vars, context);
-    else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(occ_to_expression_ref(*unfolding))))
+    else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(*unfolding)))
         return simplify(*unfolding, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);

@@ -45,7 +45,7 @@ public:
 
     bool small_enough(const Occ::Exp& rhs, const inline_context& context);
 
-    bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
+    bool do_inline(const Occ::Exp& rhs, const occurrence_info& occur, const inline_context& context);
 
     bool do_inline_multi(const Occ::Exp& rhs, const inline_context& context);
 
