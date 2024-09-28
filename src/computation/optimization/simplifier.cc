@@ -81,23 +81,32 @@ bool is_trivial(const expression_ref& E)
     return is_reglike(E);
 }
 
-[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const var& x, const expression_ref& E)
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const expression_ref& E)
 {
     assert(x.index >= 0);
-    assert(not is_wildcard(E));
-    assert(not bound_vars.count(to_occ_var(x)));
-    assert(x.work_dup != amount_t::Unknown);
-    assert(x.code_dup != amount_t::Unknown);
-    return bound_vars.insert({to_occ_var(x),{E,x}});
+    assert(not bound_vars.count(x));
+    assert(x.info.work_dup != amount_t::Unknown);
+    assert(x.info.code_dup != amount_t::Unknown);
+    return bound_vars.insert({x,{E,x.info}});
+}
+
+[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const expression_ref& E)
+{
+    bound_variable_info old_binding = bound_vars.at(x);
+    bound_vars = bound_vars.erase(x);
+    Occ::Var x2 = x;
+    x2.info = old_binding.second;
+    return bind_var(bound_vars,x2,E);
+}
+
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const var& x, const expression_ref& E)
+{
+    return bind_var(bound_vars, to_occ_var(x), E);
 }
 
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const var& x, const expression_ref& E)
 {
-    bound_variable_info old_binding = bound_vars.at(to_occ_var(x));
-    bound_vars = bound_vars.erase(to_occ_var(x));
-    var x2 = x;
-    static_cast<occurrence_info&>(x2) = old_binding.second;
-    return bind_var(bound_vars,x2,E);
+    return rebind_var(bound_vars, to_occ_var(x), E);
 }
 
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const CDecls& decls)
@@ -170,47 +179,55 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
         return rebuild(x, bound_vars, context);
 }
 
-var SimplifierState::get_new_name(var x, const in_scope_set& bound_vars)
+Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
 {
-    if (bound_vars.count(to_occ_var(x)))
+    if (bound_vars.count(x))
     {
         x = get_fresh_var_copy(x);
 
-        assert(not bound_vars.count(to_occ_var(x)));
+        assert(not bound_vars.count(x));
     }
 
     return x;
 }
 
-var SimplifierState::rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
+Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const in_scope_set& bound_vars)
 {
-    var x = Evar.as_<var>();
-    assert(x.code_dup != amount_t::Unknown);
-    assert(not is_wildcard(x));
-    var x2 = get_new_name(x, bound_vars);
+    assert(x.info.code_dup != amount_t::Unknown);
+    auto x2 = get_new_name(x, bound_vars);
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (x == x2)
-	S.erase(to_occ_var(x));
+	S.erase(x);
     // 2. If x IS in the bound set, add a substitution from x --> x2 then erase x from the substitution (if it's there)
     else
     {
-	S.erase(to_occ_var(x));
-	S.insert({to_occ_var(x), expression_ref(x2)});
+	S.erase(x);
+	S.insert({x, expression_ref(occ_to_var(x2))});
     }
 
-    if (x.is_exported) assert(x == x2);
+    if (x.info.is_exported) assert(x == x2);
 
     return x2;
 }
 
-var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
+Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& S, in_scope_set& bound_vars)
 {
-    var x2 = rename_var(Evar, S, bound_vars);
+    auto x2 = rename_var(x1, S, bound_vars);
 
     bound_vars = bind_var(bound_vars, x2, {});
 
     return x2;
+}
+
+var SimplifierState::rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
+{
+    return occ_to_var(rename_var(to_occ_var(Evar.as_<var>()), S, bound_vars));
+}
+
+var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
+{
+    return occ_to_var(rename_and_bind_var(to_occ_var(Evar.as_<var>()), S, bound_vars));
 }
 
 bool is_identity_case(const expression_ref& object, const Core::Alts& alts)
@@ -798,15 +815,15 @@ expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_
 expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(E);
+    auto OE = to_occ_exp(E);
 
     // 1. Var (x)
-    if (is_var(E))
+    if (auto x = OE.to_var())
     {
-	var x = E.as_<var>();
 	// 1.1 If there's a substitution x -> E
-	if (S.count(to_occ_var(x)))
+	if (S.count(*x))
 	{
-	    auto it = S.find(to_occ_var(x));
+	    auto it = S.find(*x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
 		return simplify(it->second.E, *(it->second.S), bound_vars, context);
@@ -817,22 +834,20 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
 	{
-            if (is_haskell_builtin_con_name(x.name))
+            if (is_haskell_builtin_con_name(x->name))
                 ;
-            else if (is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name)
+            else if (is_qualified_symbol(x->name) and get_module_name(x->name) != this_mod.name)
                 ;
-	    else if (not bound_vars.count(to_occ_var(x)))
-		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
+	    else if (not bound_vars.count(*x))
+		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
 	    return consider_inline(E, bound_vars, context);
 	}
     }
 
     // 2. Lambda (E = \x -> body)
-    if (is_lambda_exp(E))
+    if (auto lam = OE.to_lambda())
     {
-	assert(E.size() == 2);
-
         // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
         //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
 
@@ -844,19 +859,19 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
             // return simplify(E2, S, bound_vars, context);
         // }
 
-	auto Evar = E.sub()[0];
+	auto Evar = occ_to_var(lam->x);
         auto Ebody = E.sub()[1];
 
         auto S2 = S;
 
         if (auto ac = context.is_apply_context())
         {
-            auto x = Evar.as_<var>();
+            auto x = lam->x;
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
-            if (x.pre_inline() and options.pre_inline_unconditionally)
+            if (x.info.pre_inline() and options.pre_inline_unconditionally)
             {
-                S2.erase(to_occ_var(x));
-                S2.insert({to_occ_var(x),arg});
+                S2.erase(x);
+                S2.insert({x,arg});
                 return simplify(Ebody, S2, bound_vars, ac->next);
             }
             else
