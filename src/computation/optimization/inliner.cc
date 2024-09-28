@@ -254,7 +254,7 @@ bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.
-    if (is_literal_type(rhs.type()) or is_constructor(rhs))
+    if (is_literal_type(rhs.head().type()) or is_constructor_exp(rhs))
 	return true;
 
     // MultiSafe
