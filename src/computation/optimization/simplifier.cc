@@ -21,6 +21,10 @@
 
 #include "util/assert.hh"
 
+#include "range/v3/all.hpp"
+
+namespace views = ranges::views;
+
 using namespace simplifier;
 
 // TODO: when building let expressions to bind variables, pass those expressions into the simplifier
@@ -124,6 +128,13 @@ bool is_trivial(const expression_ref& E)
 }
 
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const vector<CDecls>& decl_groups)
+{
+    for(auto& decls: decl_groups)
+	bound_vars = bind_decls(bound_vars, decls);
+    return bound_vars;
+}
+
+[[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const vector<Occ::Decls>& decl_groups)
 {
     for(auto& decls: decl_groups)
 	bound_vars = bind_decls(bound_vars, decls);
@@ -461,6 +472,27 @@ optional<string> con_name_for_pattern(const expression_ref& pattern)
     return con->f_name;
 }
 
+Occ::Exp multi_let_body(Occ::Exp E)
+ {
+    while(auto let = E.to_let())
+    {
+	auto tmp = E;
+	E = let->body;
+    }
+    return E;
+}
+ 
+std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
+{
+    std::vector<Occ::Decls> decl_groups;
+    while(auto let = E.to_let())
+    {
+	decl_groups.push_back(let->decls);
+	auto tmp = E;
+	E = let->body;
+    }
+    return decl_groups;
+}
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, const in_scope_set& bound_vars)
@@ -618,19 +650,20 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
     return let_expression(default_decls, E2);
 }
 
-expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
 
     auto bound_vars2 = bind_decls(bound_vars, decls);
     
-    auto E2 = rebuild_case_inner(object, alts, S, bound_vars2);
+    auto E2 = to_occ_exp(rebuild_case_inner(occ_to_expression_ref(object), occ_to_expression_ref(alts), S, bound_vars2));
 
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-    E2 = let_expression(decls, E2);
+    for(auto& d: decls | views::reverse)
+	E2 = Occ::Let{d, E2};
 
-    return rebuild(E2, bound_vars, context);
+    return rebuild(occ_to_expression_ref(E2), bound_vars, context);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
@@ -793,7 +826,7 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
 {
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(occ_to_expression_ref(E), occ_to_expression_ref(cc->alts), cc->subst, bound_vars, cc->next);
+        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
