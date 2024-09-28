@@ -933,4 +933,14 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Cor
 	return Core2::Apply<NoteV,NoteE>{E,{x}};
 }
 
+template <typename NoteV, typename NoteE>
+Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std::vector<Core2::Var<NoteV>>& xs)
+{
+    auto E2 = E;
+    for(auto& x: xs)
+	E2 = make_apply(E2,x);
+
+    return E2;
+}
+
 #endif
