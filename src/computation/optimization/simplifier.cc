@@ -483,8 +483,10 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, const in_scope_set& bound_vars)
+expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts alts_, const substitution& S, const in_scope_set& bound_vars)
 {
+    expression_ref object = occ_to_expression_ref(object_);
+    Core::Alts alts = occ_to_expression_ref(alts_);
     assert(not is_let_expression(object));
 
     //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
@@ -645,7 +647,7 @@ expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& a
 
     auto bound_vars2 = bind_decls(bound_vars, decls);
     
-    auto E2 = to_occ_exp(rebuild_case_inner(occ_to_expression_ref(object), occ_to_expression_ref(alts), S, bound_vars2));
+    auto E2 = to_occ_exp(rebuild_case_inner(object, alts, S, bound_vars2));
 
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: decls | views::reverse)

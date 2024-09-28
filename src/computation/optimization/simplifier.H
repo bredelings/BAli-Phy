@@ -70,7 +70,7 @@ public:
     rebuild_case(Occ::Exp object, const Occ::Alts& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
-    rebuild_case_inner(expression_ref object, Core::Alts alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
+    rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     expression_ref
     rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
