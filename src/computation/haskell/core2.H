@@ -846,6 +846,22 @@ namespace Core2
 	else
 	    std::abort();
     }
+}
+
+
+namespace std
+{
+    template <typename NoteV>
+    class hash < Core2::Var<NoteV> >{
+    public :
+        size_t operator()(const Core2::Var<NoteV> &x) const
+        {
+            size_t h =   std::hash<int>()(x.index) ^ std::hash<std::string>()(x.name);
+            return  h ;
+        }
+    };
+
+};
 
 }
 
