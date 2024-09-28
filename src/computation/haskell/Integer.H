@@ -26,6 +26,8 @@ struct integer_container
     integer_container() = default;
     integer_container(const integer& ii):i(ii) {}
 
+    std::strong_ordering operator<=>(const integer_container&) const = default;
+
     template <class Archive>
     void load(Archive& ar)
     {
