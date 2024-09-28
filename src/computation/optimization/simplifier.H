@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/convert.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 
@@ -18,7 +19,7 @@ class module_loader;
 
 typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
 
-typedef immer::map<var, bound_variable_info> in_scope_set;
+typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 
 int get_n_lambdas1(const expression_ref& E);
 

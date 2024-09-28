@@ -353,7 +353,7 @@ expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E)
 
 //------------------------------------------------------------------------------------------------------------
 
-Occ::Var to_occ(const var& V)
+Occ::Var to_occ_var(const var& V)
 {
     return Occ::Var{V.name, V.index, (occurrence_info&)V};
 }
@@ -362,7 +362,7 @@ Occ::Lambda to_occ_lambda(expression_ref L)
 {
     assert(is_lambda_exp(L));
 
-    auto x = to_occ(L.sub()[0].as_<var>());
+    auto x = to_occ_var(L.sub()[0].as_<var>());
     auto body = to_occ_exp(L.sub()[1]);
 
     return Occ::Lambda{x,body};
@@ -373,7 +373,7 @@ Occ::Decls to_occ(const CDecls& decls)
     Occ::Decls decls2;
     for(auto& [x,E]: decls)
     {
-	decls2.push_back(Occ::Decl{to_occ(x), to_occ_exp(E)});
+	decls2.push_back(Occ::Decl{to_occ_var(x), to_occ_exp(E)});
     }
 
     return decls2;
@@ -390,7 +390,7 @@ Occ::Apply to_occ_apply(expression_ref A)
 	if (not arg.is_a<var>())
 	    throw myexception()<<"to_occ_apply: Argument "<<i<<" of apply is not a variable!";
 
-	A2.args.push_back(to_occ(arg.as_<var>()));
+	A2.args.push_back(to_occ_var(arg.as_<var>()));
     }
     return A2;
 }
@@ -412,7 +412,7 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
     if (auto v = P.to<var>())
     {
 	if (v->is_wildcard()) return Occ::WildcardPat();
-	else return Occ::VarPat{to_occ(*v)};
+	else return Occ::VarPat{to_occ_var(*v)};
     }
     else
     {
@@ -431,7 +431,7 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
 	    if (x.is_wildcard())
 		con_app.args.push_back( Occ::WildcardPat() );
 	    else
-		con_app.args.push_back( Occ::VarPat{to_occ(x)} );
+		con_app.args.push_back( Occ::VarPat{to_occ_var(x)} );
 	}
 	return con_app;
     }
@@ -469,7 +469,7 @@ Occ::ConApp to_occ_con_app(const expression_ref& E)
 	if (not arg.is_a<var>())
 	    throw myexception()<<"to_occ_con_app: Argument "<<i+1<<" is not a variable!";
 
-	con_app.args.push_back(to_occ(arg.as_<var>()));
+	con_app.args.push_back(to_occ_var(arg.as_<var>()));
     }
     return con_app;
 }
@@ -513,7 +513,7 @@ Occ::BuiltinOp to_occ_builtin_op(const expression_ref& E)
 	if (not arg.is_a<var>())
 	    throw myexception()<<"to_occ_builtin_op: Argument "<<i+1<<" is not a variable!";
 
-	builtin_op.args.push_back(to_occ(arg.as_<var>()));
+	builtin_op.args.push_back(to_occ_var(arg.as_<var>()));
     }
     return builtin_op;
 }
@@ -521,7 +521,7 @@ Occ::BuiltinOp to_occ_builtin_op(const expression_ref& E)
 Occ::Exp to_occ_exp(const expression_ref& E)
 {
     if (auto v = E.to<var>())
-	return to_occ(*v);
+	return to_occ_var(*v);
     else if (is_lambda_exp(E))
 	return to_occ_lambda(E);
     else if (is_apply_exp(E))

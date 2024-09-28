@@ -40,6 +40,8 @@ namespace Occ
     using Exp = Core2::Exp<occurrence_info>;
 };
 
+Occ::Var to_occ_var(const var& V);
+
 Occ::Exp to_occ_exp(const expression_ref& E);
 
 Occ::Decls to_occ(const CDecls& decls);

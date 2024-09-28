@@ -85,16 +85,16 @@ bool is_trivial(const expression_ref& E)
 {
     assert(x.index >= 0);
     assert(not is_wildcard(E));
-    assert(not bound_vars.count(x));
+    assert(not bound_vars.count(to_occ_var(x)));
     assert(x.work_dup != amount_t::Unknown);
     assert(x.code_dup != amount_t::Unknown);
-    return bound_vars.insert({x,{E,x}});
+    return bound_vars.insert({to_occ_var(x),{E,x}});
 }
 
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const var& x, const expression_ref& E)
 {
-    bound_variable_info old_binding = bound_vars.at(x);
-    bound_vars = bound_vars.erase(x);
+    bound_variable_info old_binding = bound_vars.at(to_occ_var(x));
+    bound_vars = bound_vars.erase(to_occ_var(x));
     var x2 = x;
     static_cast<occurrence_info&>(x2) = old_binding.second;
     return bind_var(bound_vars,x2,E);
@@ -121,7 +121,7 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
 
     if (is_local_symbol(x.name, this_mod.name))
     {
-        const auto& [rhs,occ_info] = bound_vars.at(x);
+        const auto& [rhs,occ_info] = bound_vars.at(to_occ_var(x));
 
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
@@ -172,11 +172,11 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
 
 var SimplifierState::get_new_name(var x, const in_scope_set& bound_vars)
 {
-    if (bound_vars.count(x))
+    if (bound_vars.count(to_occ_var(x)))
     {
         x = get_fresh_var_copy(x);
 
-        assert(not bound_vars.count(x));
+        assert(not bound_vars.count(to_occ_var(x)));
     }
 
     return x;
@@ -533,7 +533,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
                 x.work_dup = amount_t::Many;
                 x.code_dup = amount_t::Many;
-                if (bound_vars2.count(x))
+                if (bound_vars2.count(to_occ_var(x)))
                     bound_vars2 = rebind_var(bound_vars2, x, pattern);
                 else
                     bound_vars2 = bind_var(bound_vars2, x, pattern);
@@ -821,7 +821,7 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
                 ;
             else if (is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name)
                 ;
-	    else if (not bound_vars.count(x))
+	    else if (not bound_vars.count(to_occ_var(x)))
 		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
 
 	    return consider_inline(E, bound_vars, context);
