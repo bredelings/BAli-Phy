@@ -78,7 +78,7 @@ public:
     rebuild_case_inner(expression_ref object, Core::Alts alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     expression_ref
-    rebuild_let(const CDecls& decls, expression_ref E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+    rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     simplifier::substitution
     simplify_decls(Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);

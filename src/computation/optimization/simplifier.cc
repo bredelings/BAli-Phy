@@ -116,6 +116,13 @@ bool is_trivial(const expression_ref& E)
     return bound_vars;
 }
 
+[[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const Occ::Decls& decls)
+{
+    for(const auto& [x,rhs]: decls)
+	bound_vars = bind_var(bound_vars, x, occ_to_expression_ref(rhs));
+    return bound_vars;
+}
+
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const vector<CDecls>& decl_groups)
 {
     for(auto& decls: decl_groups)
@@ -627,14 +634,14 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anything special here.
     auto bound_vars2 = bind_decls(bound_vars, decls);
 
-    E = simplify(E, S, bound_vars2, context);
+    auto E2 = simplify(E, S, bound_vars2, context);
 
-    return let_expression(decls, E);
+    return let_expression(occ_to_cdecls(decls), E2);
 }
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
@@ -873,8 +880,8 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
             }
             else
             {
-                auto x2 = occ_to_var(rename_var(lam->x, S2, bound_vars));
-                return rebuild_let({{x2,arg}}, occ_to_expression_ref(lam->body), S2, bound_vars, ac->next);
+                auto x2 = rename_var(lam->x, S2, bound_vars);
+                return rebuild_let({{x2,to_occ_exp(arg)}}, lam->body, S2, bound_vars, ac->next);
             }
         }
 
@@ -920,7 +927,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	auto S2 = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(occ_to_cdecls(decls), occ_to_expression_ref(let->body), S2, bound_vars, context);
+	return rebuild_let(decls, let->body, S2, bound_vars, context);
     }
 
      // Do we need something to handle WHNF variables?
