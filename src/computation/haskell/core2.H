@@ -331,7 +331,7 @@ namespace Core2
 
 	bool operator==(const Apply<NoteV,NoteE>& a2) const
 	{
-	    return head == a2.head and args = a2.args;
+	    return head == a2.head and args == a2.args;
 	}
 
 	std::strong_ordering operator<=>(const Apply<NoteV,NoteE>& a2) const
@@ -360,7 +360,7 @@ namespace Core2
 
 	bool operator==(const Decl<NoteV,NoteE>& decl) const
 	{
-	    return x == decl.x and body = decl.body;
+	    return x == decl.x and body == decl.body;
 	}
 
 	std::strong_ordering operator<=>(const Decl<NoteV,NoteE>& decl) const
@@ -395,7 +395,7 @@ namespace Core2
 
 	bool operator==(const Let<NoteV,NoteE>& let) const
 	{
-	    return decls = let.decls and body = let.body;
+	    return decls == let.decls and body == let.body;
 	}
 
 	std::strong_ordering operator<=>(const Let<NoteV,NoteE>& let) const
