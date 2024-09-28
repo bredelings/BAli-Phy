@@ -45,6 +45,10 @@ Occ::Var to_occ_var(const var& V);
 
 Occ::Exp to_occ_exp(const expression_ref& E);
 
+Occ::Pattern to_occ_pattern(const expression_ref& P);
+
+Occ::Alts to_occ_alts(const expression_ref& E);
+
 Occ::Decls to_occ(const CDecls& decls);
 
 Occ::Decl to_occ(const CDecl& decl);
