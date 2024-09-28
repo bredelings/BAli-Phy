@@ -191,12 +191,12 @@ var SimplifierState::rename_var(const expression_ref& Evar, substitution& S, con
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (x == x2)
-	S.erase(x);
+	S.erase(to_occ_var(x));
     // 2. If x IS in the bound set, add a substitution from x --> x2 then erase x from the substitution (if it's there)
     else
     {
-	S.erase(x);
-	S.insert({x, expression_ref(x2)});
+	S.erase(to_occ_var(x));
+	S.insert({to_occ_var(x), expression_ref(x2)});
     }
 
     if (x.is_exported) assert(x == x2);
@@ -329,8 +329,8 @@ find_constant_case_body(const expression_ref& object, const Core::Alts& alts, co
                     auto obj_var = object.sub()[j];
                     assert(is_var(obj_var) and not is_wildcard(obj_var));
                     assert(is_var(pat_var) and not is_wildcard(pat_var));
-                    S2.erase(x);
-                    S2.insert({x,obj_var});
+                    S2.erase(to_occ_var(x));
+                    S2.insert({to_occ_var(x),obj_var});
                 }
             }
             return {{body, S2}};
@@ -669,8 +669,8 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
 	if (x.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
 	{
-	    S2.erase(x);
-	    S2.insert({x,{F,S2}});
+	    S2.erase(to_occ_var(x));
+	    S2.insert({to_occ_var(x),{F,S2}});
 	}
 	else
 	{
@@ -712,8 +712,8 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 	    // what are the conditions for post-inlining unconditionally?
 	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.is_loop_breaker)
 	    {
-		S2.erase(x);
-		S2.insert({x,F});
+		S2.erase(to_occ_var(x));
+		S2.insert({to_occ_var(x),F});
 	    }
 	    else
 	    {
@@ -804,9 +804,9 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
     {
 	var x = E.as_<var>();
 	// 1.1 If there's a substitution x -> E
-	if (S.count(x))
+	if (S.count(to_occ_var(x)))
 	{
-	    auto it = S.find(x);
+	    auto it = S.find(to_occ_var(x));
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
 		return simplify(it->second.E, *(it->second.S), bound_vars, context);
@@ -855,8 +855,8 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
             if (x.pre_inline() and options.pre_inline_unconditionally)
             {
-                S2.erase(x);
-                S2.insert({x,arg});
+                S2.erase(to_occ_var(x));
+                S2.insert({to_occ_var(x),arg});
                 return simplify(Ebody, S2, bound_vars, ac->next);
             }
             else

@@ -3,12 +3,14 @@
 
 #include <map>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/convert.H"
 
 namespace simplifier
 {
 
 struct substitution_range;
-struct substitution: public std::map<var, substitution_range>
+
+struct substitution: public std::map<Occ::Var, substitution_range>
 {
     using map::map;
 };
