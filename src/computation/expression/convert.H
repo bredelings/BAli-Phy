@@ -12,7 +12,7 @@ var to_var(const Core2::Var<>& V);
 
 expression_ref to_expression_ref(const Core2::Exp<>& E);
 
-expression_ref to_expression_ref(const std::optional<Core2::Exp<>>& E);
+expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E);
 
 CDecls to_expression_ref(const Core2::Decls<>& decls);
 
@@ -47,9 +47,9 @@ var occ_to_var(const Occ::Var& V);
 
 expression_ref occ_to_expression_ref(const Occ::Exp& E);
 
-expression_ref occ_to_expression_ref(const std::optional<Occ::Exp>& E);
+expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
 
-CDecls occ_to_expression_ref(const Occ::Decl& decls);
+CDecls occ_to_cdecls(const Occ::Decls& decls);
 
 //-----------------------------------------------------------------------
 

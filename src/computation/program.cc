@@ -77,7 +77,7 @@ shared_ptr<CompiledModule> compiler_prim_module()
     CDecls value_decls;
     if (seq.var_info and seq.var_info->unfolding)
     {
-        auto code = occ_to_expression_ref(seq.var_info->unfolding);
+        auto code = maybe_occ_to_expression_ref(seq.var_info->unfolding);
         value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
         auto [occ_code, _] = occurrence_analyzer(*m, code);

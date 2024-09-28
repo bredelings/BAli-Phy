@@ -322,7 +322,7 @@ expression_ref to_expression_ref(const Core2::Exp<>& E)
     std::abort();
 }
 
-expression_ref to_expression_ref(const std::optional<Core2::Exp<>>& E)
+expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E)
 {
     if (not E)
 	return {};
@@ -544,7 +544,7 @@ expression_ref occ_to_expression_ref(const Occ::Apply& A)
     return apply_expression(occ_to_expression_ref(A.head), args);
 }
 
-CDecls occ_to_expression_ref(const Occ::Decls& decls)
+CDecls occ_to_cdecls(const Occ::Decls& decls)
 {
     CDecls decls2;
     for(auto& [x,E]: decls)
@@ -644,7 +644,7 @@ expression_ref occ_to_expression_ref(const Occ::Exp& E)
     std::abort();
 }
 
-expression_ref occ_to_expression_ref(const std::optional<Occ::Exp>& E)
+expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E)
 {
     if (not E)
 	return {};

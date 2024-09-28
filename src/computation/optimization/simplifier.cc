@@ -157,7 +157,7 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, const i
 
     expression_ref unfolding;
     if (var_info)
-	unfolding = occ_to_expression_ref(var_info->unfolding);
+	unfolding = maybe_occ_to_expression_ref(var_info->unfolding);
 
     occurrence_info occ_info;
     occ_info.work_dup = amount_t::Many;
