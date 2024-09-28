@@ -91,7 +91,7 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
 	    if (x.is_wildcard())
 		con_pat.args.push_back( Core2::WildcardPat() );
 	    else
-		con_pat.args.push_back( Core2::VarPat<>(to_core(x)) );
+		con_pat.args.push_back( Core2::VarPat<>{to_core(x)} );
 	}
 	return con_pat;
     }
@@ -431,7 +431,7 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
 	    if (x.is_wildcard())
 		con_app.args.push_back( Occ::WildcardPat() );
 	    else
-		con_app.args.push_back( Occ::VarPat(to_occ(x)) );
+		con_app.args.push_back( Occ::VarPat{to_occ(x)} );
 	}
 	return con_app;
     }
