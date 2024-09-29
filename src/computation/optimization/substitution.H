@@ -17,10 +17,10 @@ struct substitution: public std::map<Occ::Var, substitution_range>
 
 struct substitution_range
 {
-    expression_ref E;
+    Occ::Exp E;
     const substitution* S = nullptr;
-    substitution_range(const expression_ref& e):E(e) {}
-    substitution_range(const expression_ref& e, const substitution& s):E(e),S(&s) {}
+    substitution_range(const Occ::Exp& e):E(e) {}
+    substitution_range(const Occ::Exp& e, const substitution& s):E(e),S(&s) {}
 };
 }
 

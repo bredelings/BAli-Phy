@@ -301,7 +301,7 @@ Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const i
     else
     {
 	S.erase(x);
-	S.insert({x, expression_ref(occ_to_var(x2))});
+	S.insert({x, {x2}});
     }
 
     if (x.info.is_exported) assert(x == x2);
@@ -458,7 +458,7 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
                 {
                     auto obj_var = obj_con->args[j];
                     S2.erase(*x);
-                    S2.insert({*x, occ_to_expression_ref(obj_var)});
+                    S2.insert({*x, {obj_var}});
                 }
             }
             return {{body, S2}};
@@ -821,7 +821,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.info.is_exported)
 	{
 	    S2.erase(x);
-	    S2.insert({x,{F,S2}});
+	    S2.insert({x,{to_occ_exp(F),S2}});
 	}
 	else
 	{
@@ -864,7 +864,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	    if (is_trivial(F) and options.post_inline_unconditionally and not x.info.is_exported and not x.info.is_loop_breaker)
 	    {
 		S2.erase(x);
-		S2.insert({x,F});
+		S2.insert({x,to_occ_exp(F)});
 	    }
 	    else
 	    {
@@ -952,10 +952,10 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	    auto it = S.find(*x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
-		return simplify(to_occ_exp(it->second.E), *(it->second.S), bound_vars, context);
+		return simplify(it->second.E, *(it->second.S), bound_vars, context);
 	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
 	    else
-		return simplify(to_occ_exp(it->second.E), {}, bound_vars, context);
+		return simplify(it->second.E, {}, bound_vars, context);
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
@@ -994,7 +994,7 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
             if (x.info.pre_inline() and options.pre_inline_unconditionally)
             {
                 S2.erase(x);
-                S2.insert({x,arg});
+                S2.insert({x,to_occ_exp(arg)});
                 return simplify(lam->body, S2, bound_vars, ac->next);
             }
             else
