@@ -97,18 +97,6 @@ bool is_trivial(const expression_ref& E)
     return bind_var(bound_vars,x2,E);
 }
 
-[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const var& x, const expression_ref& E)
-{
-    return bind_var(bound_vars, to_occ_var(x), E);
-}
-
-[[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const CDecls& decls)
-{
-    for(const auto& [x,rhs]: decls)
-	bound_vars = bind_var(bound_vars, x, rhs);
-    return bound_vars;
-}
-
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const Occ::Decls& decls)
 {
     for(const auto& [x,rhs]: decls)
@@ -1107,7 +1095,7 @@ SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
 	auto s = simplify_decls(decls2, S.back(), bound_vars, true);
 	decls = occ_to_cdecls(decls2);
 	S.push_back( s );
-	bound_vars = bind_decls(bound_vars, decls);
+	bound_vars = bind_decls(bound_vars, decls2);
     }
 
     return decl_groups;
