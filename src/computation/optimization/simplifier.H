@@ -17,7 +17,7 @@
 
 class module_loader;
 
-typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
+typedef std::pair<std::optional<Occ::Exp>,occurrence_info> bound_variable_info;
 
 typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 

@@ -79,21 +79,13 @@ bool is_trivial(const expression_ref& E)
     return is_reglike(E);
 }
 
-[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const expression_ref& E)
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const std::optional<Occ::Exp>& E)
 {
     assert(x.index >= 0);
     assert(not bound_vars.count(x));
     assert(x.info.work_dup != amount_t::Unknown);
     assert(x.info.code_dup != amount_t::Unknown);
     return bound_vars.insert({x,{E,x.info}});
-}
-
-[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const std::optional<Occ::Exp>& E)
-{
-    if (E)
-	return bind_var(bound_vars, x, occ_to_expression_ref(*E));
-    else
-	return bind_var(bound_vars, x, expression_ref{});
 }
 
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Occ::Exp& E)
@@ -207,13 +199,13 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 {
     if (is_local_symbol(x.name, this_mod.name))
     {
-        const auto& [rhs,occ_info] = bound_vars.at(x);
+        const auto& [rhs, occ_info] = bound_vars.at(x);
 
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
         // 1. If there's a binding x = E, and E = y for some variable y
-        if (rhs and do_inline(to_occ_exp(rhs), occ_info, context))
-            return simplify(to_occ_exp(rhs), {}, bound_vars, context);
+        if (rhs and do_inline(*rhs, occ_info, context))
+            return simplify(*rhs, {}, bound_vars, context);
         else
             return rebuild(x, bound_vars, context);
     }
@@ -292,7 +284,7 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
 {
     auto x2 = rename_var(x1, S, bound_vars);
 
-    bound_vars = bind_var(bound_vars, x2, expression_ref{});
+    bound_vars = bind_var(bound_vars, x2, {});
 
     return x2;
 }
