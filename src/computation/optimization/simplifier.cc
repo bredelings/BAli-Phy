@@ -88,19 +88,27 @@ bool is_trivial(const expression_ref& E)
     return bound_vars.insert({x,{E,x.info}});
 }
 
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const std::optional<Occ::Exp>& E)
+{
+    if (E)
+	return bind_var(bound_vars, x, occ_to_expression_ref(*E));
+    else
+	return bind_var(bound_vars, x, expression_ref{});
+}
+
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Occ::Exp& E)
 {
     bound_variable_info old_binding = bound_vars.at(x);
     bound_vars = bound_vars.erase(x);
     Occ::Var x2 = x;
     x2.info = old_binding.second;
-    return bind_var(bound_vars,x2,occ_to_expression_ref(E));
+    return bind_var(bound_vars,x2,E);
 }
 
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const Occ::Decls& decls)
 {
     for(const auto& [x,rhs]: decls)
-	bound_vars = bind_var(bound_vars, x, occ_to_expression_ref(rhs));
+	bound_vars = bind_var(bound_vars, x, rhs);
     return bound_vars;
 }
 
@@ -284,7 +292,7 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
 {
     auto x2 = rename_var(x1, S, bound_vars);
 
-    bound_vars = bind_var(bound_vars, x2, {});
+    bound_vars = bind_var(bound_vars, x2, expression_ref{});
 
     return x2;
 }
@@ -656,7 +664,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
                 if (bound_vars2.count(x))
                     bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, occ_to_expression_ref(pattern_expression));
+                    bound_vars2 = bind_var(bound_vars2, x, pattern_expression);
             }
         }
 
@@ -826,7 +834,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
-			bound_vars = bind_var(bound_vars, decl.x, occ_to_expression_ref(decl.body));
+			bound_vars = bind_var(bound_vars, decl.x, decl.body);
 			new_names.push_back(decl.x);
 			new_decls.push_back(decl);
 		    }
