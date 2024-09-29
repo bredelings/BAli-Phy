@@ -667,15 +667,15 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
-    auto alts2 = to_occ_alts(alts);
+    auto alts__ = to_occ_alts(alts);
     Occ::Exp E2;
-    if (is_identity_case(object_, alts2))
+    if (is_identity_case(object_, alts__))
 	E2 = object_;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object_.to_case(); C and options.case_of_case)
-        E2 = case_of_case(*C, alts2, *this);
+        E2 = case_of_case(*C, alts__, *this);
     else
-        E2 = Occ::Case{object_, alts2};
+        E2 = Occ::Case{object_, alts__};
 
     // 6. If we floated anything out, put it here.
     for(auto& d: default_decls | views::reverse)
