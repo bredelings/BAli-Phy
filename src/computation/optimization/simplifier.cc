@@ -88,13 +88,13 @@ bool is_trivial(const expression_ref& E)
     return bound_vars.insert({x,{E,x.info}});
 }
 
-[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const expression_ref& E)
+[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Occ::Exp& E)
 {
     bound_variable_info old_binding = bound_vars.at(x);
     bound_vars = bound_vars.erase(x);
     Occ::Var x2 = x;
     x2.info = old_binding.second;
-    return bind_var(bound_vars,x2,E);
+    return bind_var(bound_vars,x2,occ_to_expression_ref(E));
 }
 
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const Occ::Decls& decls)
@@ -644,7 +644,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
         // 2.2 Define x = pattern in this branch only
 	if (auto v = object.to_var(); v and not pattern.is_irrefutable())
         {
-	    auto pattern_expression = occ_to_expression_ref(pattern_to_expression(pattern).value());
+	    auto pattern_expression = pattern_to_expression(pattern).value();
             auto x = *v;
             if (is_local_symbol(x.name, this_mod.name))
                 bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
@@ -656,7 +656,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
                 if (bound_vars2.count(x))
                     bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, pattern_expression);
+                    bound_vars2 = bind_var(bound_vars2, x, occ_to_expression_ref(pattern_expression));
             }
         }
 
@@ -842,7 +842,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		bound_vars = rebind_var(bound_vars, x2, occ_to_expression_ref(F));
+		bound_vars = rebind_var(bound_vars, x2, F);
 	    }
 	}
     }
