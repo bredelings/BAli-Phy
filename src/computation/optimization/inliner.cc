@@ -2,16 +2,6 @@
 #include <unordered_map>
 #include "computation/operations.H"
 #include "computation/loader.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/var.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/indexify.H"
-#include "computation/expression/expression.H" // for is_WHNF( )
-#include "computation/expression/convert.H" // for Occ::Exp, to_occ_exp
 #include "occurrence.H"
 #include "inliner.H"
 #include "simplifier.H"
@@ -82,17 +72,6 @@ inline_context make_ok_context()
     return std::make_shared<const ok_context>();
 }
 
-int nodes_size(const expression_ref& E)
-{
-    int total = 1;
-
-    if (E.is_expression())
-	for(const auto& e:E.sub())
-	    total += nodes_size(e);
-
-    return total;
-}
-
 int simple_size(const Occ::Exp& E)
 {
     if (E.to_var())
@@ -129,9 +108,40 @@ int simple_size(const Occ::Exp& E)
 	return 1;
 }
 
-int simple_size(const expression_ref& E)
+int simple_size(const Core2::Exp<>& E)
 {
-    return simple_size(to_occ_exp(E));
+    if (E.to_var())
+	return 0;
+
+    else if (auto app = E.to_apply())
+    {
+	int n_args = app->args.size();
+	assert(n_args > 0);
+	return simple_size(app->head) + n_args;
+    }
+
+    else if (auto lam = E.to_lambda())
+	return simple_size(lam->body);
+
+    else if (auto let = E.to_let())
+    {
+	int size = simple_size(let->body);
+
+	for(auto& [x,e]: let->decls)
+	    size += simple_size(e);
+
+	return size;
+    }
+    else if (auto C = E.to_case())
+    {
+        int alts_size = 0;
+	for(auto& [pattern, body]: C->alts)
+            alts_size = std::max(alts_size, simple_size(body));
+
+	return 1 + simple_size(C->object) + alts_size;
+    }
+    else
+	return 1;
 }
 
 inline_context remove_arguments(inline_context context, int n)

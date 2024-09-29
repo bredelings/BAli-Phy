@@ -2,8 +2,7 @@
 #define SIMPLIFIER_SUBSTITUTION_H
 
 #include <map>
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/convert.H"
+#include "computation/optimization/occurrence.H"
 
 namespace simplifier
 {

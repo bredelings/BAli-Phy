@@ -1,22 +1,10 @@
 #include <iostream>
 #include "util/range.H" // for reverse( )
 #include "util/set.H" // for add( )
-#include <unordered_map>
 #include "computation/operations.H"
-#include "computation/loader.H"
-#include "computation/expression/expression.H" // is_reglike( ) and is_WHNF( )
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/var.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/indexify.H"
-#include "computation/expression/constructor.H"
 #include "occurrence.H"
 #include "computation/varinfo.H"
 #include "computation/module.H"
-#include "computation/haskell/ids.H"
 
 #include "simplifier.H"
 
@@ -70,13 +58,6 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 	 E = E.to_lambda()->body;
      }
      return E;
-}
-
-// This should be "variables and literals", but we don't currently allow literals as function arguments.
-// So, we only allow variables to be "trivial".
-bool is_trivial(const expression_ref& E)
-{
-    return is_reglike(E);
 }
 
 [[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const std::optional<Occ::Exp>& E)

@@ -61,6 +61,7 @@ namespace mpi = boost::mpi;
 #include "math/pow2.H"
 #include "version.H"
 #include "computation/module.H"
+#include "computation/optimization/inliner.H" // for simple_size( )
 #include "computation/program.H"
 #include "models/A-T-prog.H" // for gen_model_program( )
 
@@ -446,8 +447,6 @@ std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<mod
     return load_program_from_file(L, "Print.Main.hs");
 }
 
-int simple_size(const expression_ref& E);
-
 std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int argc, char* argv[], const string& cmd)
 {
     auto args_v = args[cmd].as<vector<string>>();
@@ -606,7 +605,7 @@ int main(int argc,char* argv[])
             auto M2 = P.get_module(M->name);
             for(const auto& [name, body]: M2->code_defs())
             {
-                std::cerr<<"size = "<<simple_size(to_expression_ref(body))<<"   "<<name<<" = "<<body<<std::endl;
+                std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
             }
             exit(0);
         }

@@ -4,11 +4,8 @@
 #include <set>
 #include <map>
 #include <utility>
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/convert.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
 
+#include "computation/optimization/occurrence.H"
 #include "computation/fresh_vars.H"
 #include "immer/map.hpp"
 #include "simplifier_options.H"

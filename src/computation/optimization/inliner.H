@@ -5,7 +5,6 @@
 #include <string>
 #include <variant>
 #include <memory>
-#include "computation/expression/expression_ref.H"
 #include "substitution.H"
 
 struct ok_context;
@@ -86,9 +85,11 @@ inline_context make_apply_context_one_arg(const inline_context& context, const s
 inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, inline_context context);
 inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context);
 
-int simple_size(const expression_ref& E);
-
 bool is_trivial(const Occ::Exp& E);
+
+int simple_size(const Occ::Exp& E);
+
+int simple_size(const Core2::Exp<>& E);
 
 bool is_WHNF(const Occ::Exp& E);
 #endif

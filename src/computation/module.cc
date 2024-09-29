@@ -998,7 +998,7 @@ void Module::export_small_decls(const CDecls& cdecls)
         assert(not x.name.empty());
         assert(get_module_name(x.name) == name);
 
-        if (simple_size(rhs) <= 5)
+        if (simple_size(to_core_exp(rhs)) <= 5)
         {
             // Add the unfolding for this variable.
             auto S = lookup_make_local_symbol(x.name);

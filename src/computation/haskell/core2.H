@@ -2,6 +2,7 @@
 #define CORE2_H
 
 #include <iostream>
+#include <optional>
 #include <variant>
 #include <vector>
 #include <string>
