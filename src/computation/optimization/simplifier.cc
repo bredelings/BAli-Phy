@@ -773,6 +773,8 @@ expression_ref SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E,
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
+// FIXME - Cache free vars on expressions!
+
 substitution
 SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
