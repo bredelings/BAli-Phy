@@ -1,5 +1,6 @@
 #include <iostream>
 #include "util/range.H" // for reverse( )
+#include "util/set.H" // for add( )
 #include <unordered_map>
 #include "computation/operations.H"
 #include "computation/loader.H"
@@ -137,6 +138,89 @@ bool is_trivial(const expression_ref& E)
     for(auto& decls: decl_groups)
 	bound_vars = bind_decls(bound_vars, decls);
     return bound_vars;
+}
+
+set<Occ::Var> get_free_vars(const Occ::Pattern& pattern)
+{
+    if (auto x = pattern.to_var_pat_var())
+	return {*x};
+    else if (auto cp = pattern.to_con_pat())
+    {
+	set<Occ::Var> vars;
+	for(auto& arg: cp->args)
+	    if (auto x = arg.to_var_pat_var())
+		vars.insert(*x);
+	return vars;
+    }
+    else
+	return {};
+}
+
+set<Occ::Var> get_free_vars(const Occ::Exp& E)
+{
+    // fv x = { x }
+    if (auto v = E.to_var())
+    {
+        return { *v };
+    }
+
+    // for case expressions get_bound_indices doesn't work correctly.
+    // .. we need to handle each Alt separately.
+    else if (auto C = E.to_case())
+    {
+        auto free = get_free_vars(C->object);
+ 
+        for(auto& [pattern, body]: C->alts)
+        {
+            auto free_alt = get_free_vars(body);
+            for(auto& x: get_free_vars(pattern))
+                free_alt.erase(x);
+            add(free, free_alt);
+        }
+
+        return free;
+    }
+    else if (auto lam = E.to_lambda())
+    {
+        auto free = get_free_vars(lam->body);
+        free.erase(lam->x);
+        return free;
+        
+    }
+    else if (auto let = E.to_let())
+    {
+        auto free = get_free_vars(let->body);
+        for(auto& [x,body]: let->decls)
+            add(free, get_free_vars(body));
+        for(auto& [x,_]: let->decls)
+            free.erase(x);
+        return free;
+    }
+    else if (auto app = E.to_apply())
+    {
+        auto free = get_free_vars(app->head);
+        for(auto& x: app->args)
+            free.insert(x);
+        return free;
+    }
+    else if (auto con = E.to_conApp())
+    {
+        set<Occ::Var> free;
+        for(auto& x: con->args)
+            free.insert(x);
+        return free;
+    }
+    else if (auto builtin = E.to_builtinOp())
+    {
+        set<Occ::Var> free;
+        for(auto& x: builtin->args)
+            free.insert(x);
+        return free;
+    }
+    else if (E.to_constant())
+        return {};
+    else
+        std::abort();
 }
 
 // Do we have to explicitly skip loop breakers here?
@@ -282,19 +366,6 @@ bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
     }
 
     return true;
-}
-
-void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
-{
-    if (is_var(pattern))
-    {
-	auto& x = pattern.as_<var>();
-	if (not x.is_wildcard())
-	    vars.insert(x);
-    }
-    else if (pattern.size() > 0)
-	for(auto& y: pattern.sub())
-	    get_pattern_dummies(y, vars);
 }
 
 bool is_used_var(const Occ::Var& x)
@@ -738,7 +809,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	// 2. F can only contain references to x if x is a loop breaker.
 	// 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
 	// 4. Therefore S2 is a good substitution for F.
-	assert(x.info.is_loop_breaker or not get_free_indices(F).count(occ_to_var(x)));
+	assert(x.info.is_loop_breaker or not get_free_vars(to_occ_exp(F)).count(x));
 
 	// A. Suspended substitutions created by pre-inlining won't be affected if we include unconditionally inlining later-occurring variables.
 	//   A.1 This is because substitutions for later-occuring variables that are loop-breakers has already been done.
