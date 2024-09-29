@@ -523,9 +523,7 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
 // case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts alts_, const substitution& S, const in_scope_set& bound_vars)
 {
-    expression_ref object = occ_to_expression_ref(object_);
-    Core::Alts alts = occ_to_expression_ref(alts_);
-    assert(not is_let_expression(object));
+    assert(not object_.to_let());
 
     //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
 
@@ -551,7 +549,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
             return simplify(body, S2, bound_vars, make_ok_context());            
         }
         else
-	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, alts)<<"'";
+	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object_,alts_}.print()<<"'";
     }
 
     // 2. Simplify each alternative
@@ -560,12 +558,10 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     optional<string> object_type;
     set<string> seen_constructors;
     set<string> unseen_constructors;
-    for(auto& [pattern, body]: alts)
+    for(auto& [pattern_, body_]: alts_)
     {
 	// 2.1. Rename and bind pattern variables
-	auto pattern_ = to_occ_pattern(pattern);
 	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern_, S, bound_vars);
-	pattern = occ_to_expression_ref(pattern_);
 
         auto con_pat = pattern_.to_con_pat();
 
@@ -623,7 +619,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
 	// 2.3. Simplify the alternative body
-	body = simplify(body, S2, bound_vars2, make_ok_context());
+	body_ = to_occ_exp(simplify(body_, S2, bound_vars2, make_ok_context()));
 
         if (pattern_.is_irrefutable() or unseen_constructors.empty())
         {
@@ -633,12 +629,12 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 
         index++;
     }
-    if (last_index and *last_index + 1 < alts.size())
-        alts.resize(*last_index + 1);
+    if (last_index and *last_index + 1 < alts_.size())
+        alts_.resize(*last_index + 1);
 
     // 3. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
-    auto alts__ = to_occ_alts(alts);
+    auto alts__ = alts_;
     vector<Occ::Decls> default_decls;
     if (alts__.back().pat.is_wildcard_pat())
     {
@@ -650,7 +646,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         // We could do this even if the object isn't a variable, right?
         if (auto C = body.to_case(); C and C->object.to_var() and C->object == object_)
         {
-            alts.pop_back();
+            alts__.pop_back();
             for(auto& [pattern2,body2]: C->alts)
             {
                 if (not redundant_pattern(alts__, pattern2))
