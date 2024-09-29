@@ -801,7 +801,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	// If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
 	//                                     E[i] can only reference EARLIER x[k] and loop breakers.
 	auto x  = orig_decls[i].x;
-	auto F  = occ_to_expression_ref(orig_decls[i].body);
+	auto F  = orig_decls[i].body;
 
 	auto x2 = new_names[i];
 
@@ -811,7 +811,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	// 2. F can only contain references to x if x is a loop breaker.
 	// 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
 	// 4. Therefore S2 is a good substitution for F.
-	assert(x.info.is_loop_breaker or not get_free_vars(to_occ_exp(F)).count(x));
+	assert(x.info.is_loop_breaker or not get_free_vars(F).count(x));
 
 	// A. Suspended substitutions created by pre-inlining won't be affected if we include unconditionally inlining later-occurring variables.
 	//   A.1 This is because substitutions for later-occuring variables that are loop-breakers has already been done.
@@ -821,7 +821,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.info.is_exported)
 	{
 	    S2.erase(x);
-	    S2.insert({x,{to_occ_exp(F),S2}});
+	    S2.insert({x,{F,S2}});
 	}
 	else
 	{
@@ -846,32 +846,32 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(to_occ_exp(F), S2, bound_vars, make_ok_context());
+	    F = to_occ_exp(simplify(F, S2, bound_vars, make_ok_context()));
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
 	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and (is_constructor_exp(multi_let_body(F)) or is_lambda_exp(multi_let_body(F)) or is_top_level))
+	    if (options.let_float_from_let and (multi_let_body(F).to_conApp() or multi_let_body(F).to_lambda() or is_top_level))
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
-			bound_vars = bind_var(bound_vars, decl.first, decl.second);
-			new_names.push_back(to_occ_var(decl.first));
-			new_decls.push_back(to_occ(decl));
+			bound_vars = bind_var(bound_vars, decl.x, occ_to_expression_ref(decl.body));
+			new_names.push_back(decl.x);
+			new_decls.push_back(decl);
 		    }
 
 	    // what are the conditions for post-inlining unconditionally?
 	    if (is_trivial(F) and options.post_inline_unconditionally and not x.info.is_exported and not x.info.is_loop_breaker)
 	    {
 		S2.erase(x);
-		S2.insert({x,to_occ_exp(F)});
+		S2.insert({x,F});
 	    }
 	    else
 	    {
-		new_decls.push_back({x2,to_occ_exp(F)});
+		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		bound_vars = rebind_var(bound_vars, x2, F);
+		bound_vars = rebind_var(bound_vars, x2, occ_to_expression_ref(F));
 	    }
 	}
     }
