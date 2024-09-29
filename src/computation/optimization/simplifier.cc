@@ -284,35 +284,6 @@ bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
     return true;
 }
 
-/*
-bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
-{
-    for(auto& [pattern, body]: alts)
-    {
-	if (pattern.is_wildcard_pat())
-	{
-	    if (body != object) return false;
-	}
-	else if (auto x = pattern.to_var_pat_var())
-	{
-	    if (body != *x and body != object) return false;
-	}
-	else if (auto pat_con = pattern.to_con_pat())
-	{
-	    auto obj_con = object.to_conApp();
-	    if (not obj_con) return false;
-
-	    assert(pat_con->args.size() == obj_con->args.size());
-
-	    for(int i=0; i< pat_con->args.size(); i++)
-		if (auto x = pat_con->args[i].to_var_pat_var())
-		    if (*x != obj_con->args[i]) return false;
-	}
-    }
-    return true;
-}
-*/
-
 void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 {
     if (is_var(pattern))
