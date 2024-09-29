@@ -60,10 +60,10 @@ public:
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
-    expression_ref
+    Occ::Exp
     rebuild_case(Occ::Exp object, const Occ::Alts& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    expression_ref
+    Occ::Exp
     rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     Occ::Exp

@@ -592,7 +592,7 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const substitution& S, const in_scope_set& bound_vars)
+Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not object.to_let());
 
@@ -617,7 +617,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts al
         if (auto found = find_constant_case_body(object, alts, S))
         {
             auto& [body, S2] = *found;
-            return occ_to_expression_ref( simplify(body, S2, bound_vars, make_ok_context()) ); 
+            return simplify(body, S2, bound_vars, make_ok_context()); 
         }
         else
 	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -741,23 +741,23 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts al
     for(auto& d: default_decls | views::reverse)
 	E2 = Occ::Let{d,E2};
 
-    return occ_to_expression_ref(E2);
+    return E2;
 }
 
-expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
 
     auto bound_vars2 = bind_decls(bound_vars, decls);
     
-    auto E2 = to_occ_exp(rebuild_case_inner(object, alts, S, bound_vars2));
+    auto E2 = rebuild_case_inner(object, alts, S, bound_vars2);
 
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: decls | views::reverse)
 	E2 = Occ::Let{d, E2};
 
-    return rebuild(E2, bound_vars, context);
+    return to_occ_exp( rebuild(E2, bound_vars, context) );
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
@@ -922,7 +922,7 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
 {
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
+        return occ_to_expression_ref( rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next) );
     }
     else if (auto ac = context.is_apply_context())
     {
