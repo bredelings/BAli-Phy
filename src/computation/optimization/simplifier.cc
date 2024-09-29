@@ -477,15 +477,24 @@ tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_
     return {pat_decls, S2, bound_vars};
 }
 
-bool redundant_pattern(const Core::Alts& alts, const expression_ref& pattern)
+// If we add pattern2 add the end of alts, would we never get to it?
+bool redundant_pattern(const Occ::Alts& alts, const Occ::Pattern& pattern2)
 {
-    for(auto& [p,_]: alts)
-    {
-        if (is_var(p) and is_var(pattern))
-            return true;
+    auto con_pat2 = pattern2.to_con_pat();
 
-        if (not is_var(p) and p.head() == pattern.head())
-            return true;
+    for(auto& [pattern1,_]: alts)
+    {
+	// If any pattern in alts is irrefutable, we could never get past the end.
+        if (pattern1.is_irrefutable())
+	    return true;
+	// If any pattern in alts is is a ConPat with the same head, then we would never get to pattern2
+	else
+	{
+	    auto con_pat1 = pattern1.to_con_pat();
+	    assert(con_pat1);
+	    if (con_pat2 and con_pat1->head == con_pat2->head)
+		return true;
+	}
     }
     return false;
 }
@@ -638,27 +647,26 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     if (last_index and *last_index + 1 < alts.size())
         alts.resize(*last_index + 1);
 
-    // 3. Merge case x of {...; _ -> let default_decls in case x of ...}
-    vector<CDecls> default_decls;
-    if (is_var(alts.back().pattern))
+    // 3. If the _ branch cases on the same object, then we can lift
+    //    out any cases not covered into the upper case and drop the others.
+    auto alts__ = to_occ_alts(alts);
+    vector<Occ::Decls> default_decls;
+    if (alts__.back().pat.is_wildcard_pat())
     {
-        assert(is_wildcard(alts.back().pattern));
-        auto& body = alts.back().body;
+        auto& body = alts__.back().body;
 
-        default_decls = strip_multi_let( body );
+	// We can always lift any declarations out of the case body because they can't contain any pattern variables.
+	default_decls = strip_multi_let( body );
 
-        expression_ref object2;
-        Core::Alts alts2;
-        if (auto C = parse_case_expression(body))
+        if (auto C = body.to_case())
         {
-            auto& [object2, alts2] = *C;
-            if (is_var(object2) and object2 == object)
+            if (C->object.to_var() and C->object == object_)
             {
                 alts.pop_back();
-                for(auto& [pattern2,body2]: alts2)
+                for(auto& [pattern2,body2]: C->alts)
                 {
-                    if (not redundant_pattern(alts, pattern2))
-                        alts.push_back({pattern2, body2});
+                    if (not redundant_pattern(alts__, pattern2))
+                        alts__.push_back({pattern2, body2});
                 }
             }
         }
@@ -667,7 +675,6 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
-    auto alts__ = to_occ_alts(alts);
     Occ::Exp E2;
     if (is_identity_case(object_, alts__))
 	E2 = object_;
@@ -679,7 +686,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 
     // 6. If we floated anything out, put it here.
     for(auto& d: default_decls | views::reverse)
-	E2 = Occ::Let{to_occ(d),E2};
+	E2 = Occ::Let{d,E2};
 
     return occ_to_expression_ref(E2);
 }
