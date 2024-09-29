@@ -968,4 +968,13 @@ Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& x
     return E;
 }
 
+template <typename NoteV, typename NoteE>
+Core2::Exp<NoteV, NoteE> make_let(const Core2::Decls<NoteV,NoteE>& decls, const Core2::Exp<NoteV, NoteE>& body)
+{
+    if (decls.empty())
+	return body;
+    else
+	return Core2::Let<NoteV,NoteE>{decls,body};
+}
+
 #endif
