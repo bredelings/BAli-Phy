@@ -498,16 +498,6 @@ bool redundant_pattern(const Occ::Alts& alts, const Occ::Pattern& pattern2)
     return false;
 }
 
-optional<string> con_name_for_pattern(const expression_ref& pattern)
-{
-    if (is_var(pattern))
-        return {};
-
-    auto con = pattern.head().to<constructor>();
-    assert(con);
-    return con->f_name;
-}
-
 Occ::Exp multi_let_body(Occ::Exp E)
  {
     while(auto let = E.to_let())
@@ -577,12 +567,12 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern_, S, bound_vars);
 	pattern = occ_to_expression_ref(pattern_);
 
-        auto con_name = con_name_for_pattern(pattern);
+        auto con_pat = pattern_.to_con_pat();
 
         // Get type and its constructors
-        if (con_name)
+        if (con_pat)
         {
-            auto C = this_mod.lookup_resolved_symbol(*con_name);
+            auto C = this_mod.lookup_resolved_symbol(con_pat->head);
 
             string pattern_type = *C->parent;
             if (object_type)
@@ -600,14 +590,14 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
         // Remove this constructors from the total list of constructors
-        if (con_name)
+        if (con_pat)
         {
-            if (unseen_constructors.count(*con_name))
+            if (unseen_constructors.count(con_pat->head))
             {
-                unseen_constructors.erase(*con_name);
-                seen_constructors.insert(*con_name);
+                unseen_constructors.erase(con_pat->head);
+                seen_constructors.insert(con_pat->head);
             }
-            else if (seen_constructors.count(*con_name))
+            else if (seen_constructors.count(con_pat->head))
             {
                 // we should ignore this branch!
                 // and this shouldn't happen.
