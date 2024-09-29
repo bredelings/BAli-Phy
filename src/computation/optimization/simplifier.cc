@@ -686,7 +686,7 @@ expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& a
     for(auto& d: decls | views::reverse)
 	E2 = Occ::Let{d, E2};
 
-    return rebuild(occ_to_expression_ref(E2), bound_vars, context);
+    return rebuild(E2, bound_vars, context);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
