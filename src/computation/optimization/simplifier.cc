@@ -357,12 +357,6 @@ bool is_used_var(const var& x)
     return (not x.is_wildcard() and x.code_dup != amount_t::None);
 }
 
-bool is_used_var(const expression_ref& x)
-{
-    if (not is_var(x)) return false;
-    return is_used_var(x.as_<var>());
-}
-
 vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
 {
     vector<Occ::Var> used;
@@ -376,31 +370,6 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
 
     return used;
 }
-
-bool has_used_vars(const expression_ref& pattern)
-{
-    if (is_used_var(pattern))
-	return true;
-    else if (pattern.is_expression())
-	for(auto& Evar: pattern.sub())
-	    if (is_used_var(Evar.as_<var>()))
-		return true;
-
-    return false;
-}
-
-// Check if all case branches refer to the same constant expression that does not reference any pattern variables.
-bool is_constant_case(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
-{
-    assert(patterns.size() == bodies.size());
-    for(int i=0;i<patterns.size();i++)
-    {
-	if (has_used_vars(patterns[i])) return false;
-	if (i > 0 and bodies[i] != bodies[0]) return false;
-    }
-    return true;
-}
-
 
 optional<tuple<Occ::Exp,substitution>>
 find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const substitution& S)
