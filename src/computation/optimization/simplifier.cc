@@ -62,11 +62,6 @@ int get_n_lambdas1(Occ::Exp E)
     return n;
 }
 
-int get_n_lambdas1(const expression_ref& E)
-{
-    return get_n_lambdas1(to_occ_exp(E));
-}
-
 Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 {
      for(int i=0;i<n;i++)
