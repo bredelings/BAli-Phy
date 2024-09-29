@@ -234,7 +234,7 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
 
         // 1. If there's a binding x = E, and E = y for some variable y
         if (rhs and do_inline(to_occ_exp(rhs), occ_info, context))
-            return simplify(rhs, {}, bound_vars, context);
+            return simplify(to_occ_exp(rhs), {}, bound_vars, context);
         else
             return rebuild(x, bound_vars, context);
     }
@@ -846,7 +846,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(F, S2, bound_vars, make_ok_context());
+	    F = simplify(to_occ_exp(F), S2, bound_vars, make_ok_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -936,19 +936,9 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
         return occ_to_expression_ref(E);
 }
 
-expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
-{
-    return rebuild(to_occ_exp(E), bound_vars,context);
-}
-
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
-{
-    return simplify(to_occ_exp(E), S, bound_vars, context);
-}
-
 expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(not E.empty());
@@ -962,10 +952,10 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	    auto it = S.find(*x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
-		return simplify(it->second.E, *(it->second.S), bound_vars, context);
+		return simplify(to_occ_exp(it->second.E), *(it->second.S), bound_vars, context);
 	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
 	    else
-		return simplify(it->second.E, {}, bound_vars, context);
+		return simplify(to_occ_exp(it->second.E), {}, bound_vars, context);
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else

@@ -53,13 +53,7 @@ public:
     consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
-    simplify(const expression_ref& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
-
-    expression_ref
     simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
-
-    expression_ref
-    rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
