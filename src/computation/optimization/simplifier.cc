@@ -224,7 +224,7 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
 }
 
 // Do we have to explicitly skip loop breakers here?
-expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (is_local_symbol(x.name, this_mod.name))
     {
@@ -236,7 +236,7 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
         if (rhs and do_inline(to_occ_exp(rhs), occ_info, context))
             return simplify(to_occ_exp(rhs), {}, bound_vars, context);
         else
-            return rebuild(x, bound_vars, context);
+            return to_occ_exp( rebuild(x, bound_vars, context) );
     }
 
     assert(not x.name.empty());
@@ -274,7 +274,7 @@ expression_ref SimplifierState::consider_inline(const Occ::Var& x, const in_scop
     else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(*unfolding)))
         return simplify(*unfolding, {}, bound_vars, context);
     else
-        return rebuild(x, bound_vars, context);
+        return to_occ_exp( rebuild(x, bound_vars, context) );
 }
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
@@ -617,7 +617,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts al
         if (auto found = find_constant_case_body(object, alts, S))
         {
             auto& [body, S2] = *found;
-            return simplify(body, S2, bound_vars, make_ok_context());            
+            return occ_to_expression_ref( simplify(body, S2, bound_vars, make_ok_context()) ); 
         }
         else
 	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -690,7 +690,7 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts al
         }
 
 	// 2.3. Simplify the alternative body
-	body = to_occ_exp(simplify(body, S2, bound_vars2, make_ok_context()));
+	body = simplify(body, S2, bound_vars2, make_ok_context());
 
         if (pattern.is_irrefutable() or unseen_constructors.empty())
         {
@@ -761,14 +761,14 @@ expression_ref SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& a
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anything special here.
     auto bound_vars2 = bind_decls(bound_vars, decls);
 
     auto E2 = simplify(E, S, bound_vars2, context);
 
-    return let_expression(occ_to_cdecls(decls), E2);
+    return make_let(decls, E2);
 }
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
@@ -846,7 +846,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = to_occ_exp(simplify(F, S2, bound_vars, make_ok_context()));
+	    F = simplify(F, S2, bound_vars, make_ok_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -928,7 +928,7 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
     {
         // FIXME: Should we lift let's out of E here?
 
-        auto x = to_occ_var(simplify(ac->arg, ac->subst, bound_vars, make_stop_context()).as_<var>());
+        auto x = *simplify(ac->arg, ac->subst, bound_vars, make_stop_context()).to_var();
 
         return rebuild(make_apply(E,x) , bound_vars, ac->next);
     }
@@ -939,7 +939,7 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(not E.empty());
 
@@ -994,13 +994,13 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
             if (x.info.pre_inline() and options.pre_inline_unconditionally)
             {
                 S2.erase(x);
-                S2.insert({x,to_occ_exp(arg)});
+                S2.insert({x,arg});
                 return simplify(lam->body, S2, bound_vars, ac->next);
             }
             else
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
-                return rebuild_let({{x2,to_occ_exp(arg)}}, lam->body, S2, bound_vars, ac->next);
+                return rebuild_let({{x2,arg}}, lam->body, S2, bound_vars, ac->next);
             }
         }
 
@@ -1012,14 +1012,14 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 	auto new_body = simplify(lam->body, S2, bound_vars_x, make_ok_context());
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
-        auto L = Occ::Lambda{x2, to_occ_exp(new_body)};
+        auto L = Occ::Lambda{x2, new_body};
 
         // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
         //     depend on x here, so this SHOULD be safe...
         auto E2 = maybe_eta_reduce2( L );
 
-        return rebuild(E2, bound_vars, context);
+        return to_occ_exp( rebuild(E2, bound_vars, context) );
     }
 
     // 6. Case
@@ -1053,16 +1053,16 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 
     // 5. Literal constant.  Treat as 0-arg constructor.
     else if (E.to_constant())
-        return rebuild(E, bound_vars, context);
+        return to_occ_exp( rebuild(E, bound_vars, context) );
 
     // 4. Constructor
     else if (auto con = E.to_conApp())
     {
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
-	    arg = to_occ_var(simplify(arg, S, bound_vars, make_stop_context()).as_<var>());
+	    arg = *simplify(arg, S, bound_vars, make_stop_context()).to_var();
 
-	return rebuild(C, bound_vars, context);
+	return to_occ_exp( rebuild(C, bound_vars, context) );
     }
 
     // 4. Builtin
@@ -1075,11 +1075,11 @@ expression_ref SimplifierState::simplify(const Occ::Exp& E, const substitution& 
 
 	for(auto& arg: builtin->args)
  	{
-	    auto arg2 = simplify(arg, S, bound_vars, make_stop_context()).as_<var>();
-	    builtin2.args.push_back(to_occ_var(arg2));
+	    auto arg2 = *simplify(arg, S, bound_vars, make_stop_context()).to_var();
+	    builtin2.args.push_back(arg2);
  	}
 
-	return rebuild(builtin2, bound_vars, context);
+	return to_occ_exp( rebuild(builtin2, bound_vars, context) );
     }
 
     std::abort();

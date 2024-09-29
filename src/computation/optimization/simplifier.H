@@ -49,10 +49,10 @@ public:
 
     bool do_inline_multi(const Occ::Exp& rhs, const inline_context& context);
 
-    expression_ref
+    Occ::Exp
     consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
 
-    expression_ref
+    Occ::Exp
     simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
@@ -66,7 +66,7 @@ public:
     expression_ref
     rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
-    expression_ref
+    Occ::Exp
     rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     simplifier::substitution
