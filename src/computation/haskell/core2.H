@@ -20,6 +20,13 @@
 
 #include "range/v3/all.hpp"
 
+/* TODO:
+ *
+ * 1. Remove VarPat -- we should only have ConPat and WildCardPat
+ * 2. Remove VarOrWildcardPat -- arguments to ConPat should never be wildcards.
+ * 3. Make Apply take exactly one argument.
+ */
+
 namespace Core2
 {
     template <typename NoteV> struct Var;
