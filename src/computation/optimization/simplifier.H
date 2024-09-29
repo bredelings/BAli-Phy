@@ -55,7 +55,7 @@ public:
     Occ::Exp
     simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    expression_ref
+    Occ::Exp
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);

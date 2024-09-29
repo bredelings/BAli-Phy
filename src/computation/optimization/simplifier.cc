@@ -236,7 +236,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
         if (rhs and do_inline(to_occ_exp(rhs), occ_info, context))
             return simplify(to_occ_exp(rhs), {}, bound_vars, context);
         else
-            return to_occ_exp( rebuild(x, bound_vars, context) );
+            return rebuild(x, bound_vars, context);
     }
 
     assert(not x.name.empty());
@@ -274,7 +274,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     else if (var_info and var_info->always_unfold and (not context.is_stop_context() or is_trivial(*unfolding)))
         return simplify(*unfolding, {}, bound_vars, context);
     else
-        return to_occ_exp( rebuild(x, bound_vars, context) );
+        return rebuild(x, bound_vars, context);
 }
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
@@ -757,7 +757,7 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, c
     for(auto& d: decls | views::reverse)
 	E2 = Occ::Let{d, E2};
 
-    return to_occ_exp( rebuild(E2, bound_vars, context) );
+    return rebuild(E2, bound_vars, context);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
@@ -918,11 +918,11 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
     }
 }
 
-expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
     {
-        return occ_to_expression_ref( rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next) );
+        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
@@ -933,7 +933,7 @@ expression_ref SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& b
         return rebuild(make_apply(E,x) , bound_vars, ac->next);
     }
     else
-        return occ_to_expression_ref(E);
+        return E;
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -1019,7 +1019,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         //     depend on x here, so this SHOULD be safe...
         auto E2 = maybe_eta_reduce2( L );
 
-        return to_occ_exp( rebuild(E2, bound_vars, context) );
+        return rebuild(E2, bound_vars, context);
     }
 
     // 6. Case
@@ -1053,7 +1053,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 
     // 5. Literal constant.  Treat as 0-arg constructor.
     else if (E.to_constant())
-        return to_occ_exp( rebuild(E, bound_vars, context) );
+        return rebuild(E, bound_vars, context);
 
     // 4. Constructor
     else if (auto con = E.to_conApp())
@@ -1062,7 +1062,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	for(auto& arg: C.args)
 	    arg = *simplify(arg, S, bound_vars, make_stop_context()).to_var();
 
-	return to_occ_exp( rebuild(C, bound_vars, context) );
+	return rebuild(C, bound_vars, context);
     }
 
     // 4. Builtin
@@ -1079,7 +1079,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	    builtin2.args.push_back(arg2);
  	}
 
-	return to_occ_exp( rebuild(builtin2, bound_vars, context) );
+	return rebuild(builtin2, bound_vars, context);
     }
 
     std::abort();
