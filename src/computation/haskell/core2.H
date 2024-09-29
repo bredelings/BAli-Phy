@@ -25,7 +25,7 @@
  * 1. Remove VarPat -- we should only have ConPat and WildCardPat
  * 2. Remove VarOrWildcardPat -- arguments to ConPat should never be wildcards.
  * 3. Make Apply take exactly one argument.
- * 4. Don't allow empty Exp -- use optional<Exp> where we need that.
+ * 4. Don't allow empty Exp -- actually this prevents cereal from serializing it.
  */
 
 namespace Core2
