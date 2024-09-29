@@ -327,16 +327,6 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
     return used;
 }
 
-vector<var> get_used_vars(const expression_ref& pattern)
-{
-    vector<var> used;
-
-    for(auto& x: get_used_vars(to_occ_pattern(pattern)))
-	used.push_back(occ_to_var(x));
-
-    return used;
-}
-
 bool has_used_vars(const expression_ref& pattern)
 {
     if (is_used_var(pattern))
