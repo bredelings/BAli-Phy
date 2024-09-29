@@ -521,9 +521,9 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts alts_, const substitution& S, const in_scope_set& bound_vars)
+expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const substitution& S, const in_scope_set& bound_vars)
 {
-    assert(not object_.to_let());
+    assert(not object.to_let());
 
     //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
 
@@ -541,15 +541,15 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 //    }
 
     // 1. Take a specific branch if the object is a constant
-    if (is_WHNF(object_) and not object_.to_var())
+    if (is_WHNF(object) and not object.to_var())
     {
-        if (auto found = find_constant_case_body(object_, alts_, S))
+        if (auto found = find_constant_case_body(object, alts, S))
         {
             auto& [body, S2] = *found;
             return simplify(body, S2, bound_vars, make_ok_context());            
         }
         else
-	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object_,alts_}.print()<<"'";
+	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
     }
 
     // 2. Simplify each alternative
@@ -558,12 +558,12 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     optional<string> object_type;
     set<string> seen_constructors;
     set<string> unseen_constructors;
-    for(auto& [pattern_, body_]: alts_)
+    for(auto& [pattern, body]: alts)
     {
 	// 2.1. Rename and bind pattern variables
-	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern_, S, bound_vars);
+	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
-        auto con_pat = pattern_.to_con_pat();
+        auto con_pat = pattern.to_con_pat();
 
         if (con_pat)
         {
@@ -600,9 +600,9 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
         // 2.2 Define x = pattern in this branch only
-	if (auto v = object_.to_var(); v and not pattern_.is_irrefutable())
+	if (auto v = object.to_var(); v and not pattern.is_irrefutable())
         {
-	    auto pattern_expression = occ_to_expression_ref(pattern_to_expression(pattern_).value());
+	    auto pattern_expression = occ_to_expression_ref(pattern_to_expression(pattern).value());
             auto x = *v;
             if (is_local_symbol(x.name, this_mod.name))
                 bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
@@ -619,9 +619,9 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
 	// 2.3. Simplify the alternative body
-	body_ = to_occ_exp(simplify(body_, S2, bound_vars2, make_ok_context()));
+	body = to_occ_exp(simplify(body, S2, bound_vars2, make_ok_context()));
 
-        if (pattern_.is_irrefutable() or unseen_constructors.empty())
+        if (pattern.is_irrefutable() or unseen_constructors.empty())
         {
             last_index = index;
             break;
@@ -629,28 +629,27 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 
         index++;
     }
-    if (last_index and *last_index + 1 < alts_.size())
-        alts_.resize(*last_index + 1);
+    if (last_index and *last_index + 1 < alts.size())
+        alts.resize(*last_index + 1);
 
     // 3. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
-    auto alts__ = alts_;
     vector<Occ::Decls> default_decls;
-    if (alts__.back().pat.is_wildcard_pat())
+    if (alts.back().pat.is_wildcard_pat())
     {
-        auto& body = alts__.back().body;
+        auto& body = alts.back().body;
 
         // We can always lift any declarations out of the case body because they can't contain any pattern variables.
         default_decls = strip_multi_let( body );
 
         // We could do this even if the object isn't a variable, right?
-        if (auto C = body.to_case(); C and C->object.to_var() and C->object == object_)
+        if (auto C = body.to_case(); C and C->object.to_var() and C->object == object)
         {
-            alts__.pop_back();
+            alts.pop_back();
             for(auto& [pattern2,body2]: C->alts)
             {
-                if (not redundant_pattern(alts__, pattern2))
-                    alts__.push_back({pattern2, body2});
+                if (not redundant_pattern(alts, pattern2))
+                    alts.push_back({pattern2, body2});
             }
         }
     }
@@ -659,13 +658,13 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
     Occ::Exp E2;
-    if (is_identity_case(object_, alts__))
-	E2 = object_;
+    if (is_identity_case(object, alts))
+	E2 = object;
     // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
-    else if (auto C = object_.to_case(); C and options.case_of_case)
-        E2 = case_of_case(*C, alts__, *this);
+    else if (auto C = object.to_case(); C and options.case_of_case)
+        E2 = case_of_case(*C, alts, *this);
     else
-        E2 = Occ::Case{object_, alts__};
+        E2 = Occ::Case{object, alts};
 
     // 6. If we floated anything out, put it here.
     for(auto& d: default_decls | views::reverse)
