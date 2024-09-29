@@ -569,9 +569,9 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
 
         auto con_pat = pattern_.to_con_pat();
 
-        // Get type and its constructors
         if (con_pat)
         {
+	    // Get type and its constructors
             auto C = this_mod.lookup_resolved_symbol(con_pat->head);
 
             string pattern_type = *C->parent;
@@ -587,11 +587,8 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
                 unseen_constructors = D->constructors;
                 assert(not unseen_constructors.empty());
             }
-        }
 
-        // Remove this constructors from the total list of constructors
-        if (con_pat)
-        {
+            // Remove this constructors from the total list of constructors
             if (unseen_constructors.count(con_pat->head))
             {
                 unseen_constructors.erase(con_pat->head);
@@ -607,27 +604,28 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
         }
 
         // 2.2 Define x = pattern in this branch only
-	if (auto v = object_.to_var(); v and not is_wildcard(pattern))
+	if (auto v = object_.to_var(); v and not pattern_.is_irrefutable())
         {
+	    auto pattern_expression = occ_to_expression_ref(pattern_to_expression(pattern_).value());
             auto x = *v;
             if (is_local_symbol(x.name, this_mod.name))
-                bound_vars2 = rebind_var(bound_vars2, x, pattern);
+                bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
             else
             {
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
                 x.info.work_dup = amount_t::Many;
                 x.info.code_dup = amount_t::Many;
                 if (bound_vars2.count(x))
-                    bound_vars2 = rebind_var(bound_vars2, x, pattern);
+                    bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, pattern);
+                    bound_vars2 = bind_var(bound_vars2, x, pattern_expression);
             }
         }
 
 	// 2.3. Simplify the alternative body
 	body = simplify(body, S2, bound_vars2, make_ok_context());
 
-        if (is_var(pattern) or unseen_constructors.empty())
+        if (pattern_.is_irrefutable() or unseen_constructors.empty())
         {
             last_index = index;
             break;
