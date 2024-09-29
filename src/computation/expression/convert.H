@@ -59,6 +59,8 @@ expression_ref occ_to_expression_ref(const Occ::Exp& E);
 
 Core::Alts occ_to_expression_ref(const Occ::Alts& A);
 
+expression_ref occ_to_expression_ref(const Occ::Pattern& P);
+
 expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
 
 CDecls occ_to_cdecls(const Occ::Decls& decls);

@@ -442,39 +442,38 @@ Occ::Exp case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& f
     return E;
 }
 
-tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, const in_scope_set& bound_vars_in)
+tuple<substitution, in_scope_set>
+SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const substitution& S, const in_scope_set& bound_vars_in)
 {
+    assert(not pattern.to_var_pat());
+
     auto S2 = S;
-    CDecls pat_decls;
     auto bound_vars = bound_vars_in;
 
-    if (pattern.size())
+    if (auto con_pat = pattern.to_con_pat())
     {
-        object_ptr<expression> pattern2 = pattern.as_expression().clone();
-        for(int j=0; j<pattern2->size(); j++)
+	Occ::ConPat pattern2 = *con_pat;
+	for(auto& arg: pattern2.args)
         {
-            expression_ref& Evar = pattern2->sub[j];
-            assert(is_var(Evar));
+	    Occ::Var x1;
 
             // Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
-            if (is_wildcard(Evar))
-            {
-                auto wild = get_fresh_var("__");
-                wild.code_dup = amount_t::None;
-                wild.work_dup = amount_t::None;
-                wild.is_loop_breaker = false;
-                wild.context = var_context::unknown;
-                Evar = wild;
+	    if (arg.is_wildcard_pat())
+	    {
+                x1 = get_fresh_occ_var("__");
+                x1.info.code_dup = amount_t::None;
+                x1.info.work_dup = amount_t::None;
             }
+	    else if (auto x = arg.to_var_pat_var())
+		x1 = *x;
 
-            auto x2 = rename_and_bind_var(to_occ_var(Evar.as_<var>()), S2, bound_vars);
-            Evar = occ_to_var(x2);
-            pat_decls.push_back({occ_to_var(x2), {}});
+            auto x2 = rename_and_bind_var(x1, S2, bound_vars);
+	    arg = Occ::VarPat{x2};
         }
         pattern = pattern2;
     }
 
-    return {pat_decls, S2, bound_vars};
+    return {S2, bound_vars};
 }
 
 // If we add pattern2 add the end of alts, would we never get to it?
@@ -484,17 +483,17 @@ bool redundant_pattern(const Occ::Alts& alts, const Occ::Pattern& pattern2)
 
     for(auto& [pattern1,_]: alts)
     {
-	// If any pattern in alts is irrefutable, we could never get past the end.
+        // If any pattern in alts is irrefutable, we could never get past the end.
         if (pattern1.is_irrefutable())
-	    return true;
-	// If any pattern in alts is is a ConPat with the same head, then we would never get to pattern2
-	else
-	{
-	    auto con_pat1 = pattern1.to_con_pat();
-	    assert(con_pat1);
-	    if (con_pat2 and con_pat1->head == con_pat2->head)
-		return true;
-	}
+            return true;
+        // If any pattern in alts is is a ConPat with the same head, then we would never get to pattern2
+        else
+        {
+            auto con_pat1 = pattern1.to_con_pat();
+            assert(con_pat1);
+            if (con_pat2 and con_pat1->head == con_pat2->head)
+                return true;
+        }
     }
     return false;
 }
@@ -574,7 +573,9 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     for(auto& [pattern, body]: alts)
     {
 	// 2.1. Rename and bind pattern variables
-	auto [pat_decls, S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+	auto pattern_ = to_occ_pattern(pattern);
+	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern_, S, bound_vars);
+	pattern = occ_to_expression_ref(pattern_);
 
         auto con_name = con_name_for_pattern(pattern);
 
@@ -655,19 +656,17 @@ expression_ref SimplifierState::rebuild_case_inner(Occ::Exp object_, Occ::Alts a
     {
         auto& body = alts__.back().body;
 
-	// We can always lift any declarations out of the case body because they can't contain any pattern variables.
-	default_decls = strip_multi_let( body );
+        // We can always lift any declarations out of the case body because they can't contain any pattern variables.
+        default_decls = strip_multi_let( body );
 
-        if (auto C = body.to_case())
+        // We could do this even if the object isn't a variable, right?
+        if (auto C = body.to_case(); C and C->object.to_var() and C->object == object_)
         {
-            if (C->object.to_var() and C->object == object_)
+            alts.pop_back();
+            for(auto& [pattern2,body2]: C->alts)
             {
-                alts.pop_back();
-                for(auto& [pattern2,body2]: C->alts)
-                {
-                    if (not redundant_pattern(alts__, pattern2))
-                        alts__.push_back({pattern2, body2});
-                }
+                if (not redundant_pattern(alts__, pattern2))
+                    alts__.push_back({pattern2, body2});
             }
         }
     }

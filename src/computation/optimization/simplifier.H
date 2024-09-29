@@ -64,7 +64,7 @@ public:
     expression_ref
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<CDecls,simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(expression_ref& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
+    std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     expression_ref
     rebuild_case(Occ::Exp object, const Occ::Alts& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
