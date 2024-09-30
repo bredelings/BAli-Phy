@@ -8,6 +8,7 @@ import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
 import           Data.Text (Text)
+import           Data.Maybe (isJust, fromJust)
 import           MCMC
 import           Data.Array
 
@@ -15,8 +16,9 @@ yulePrFactors :: HasNodeTimes t => Int -> Rate -> t -> [LogDouble]
 yulePrFactors n lambda tree = require (numLeaves tree == n)
                               : pow (toLogDouble lambda) (fromIntegral (n-2))
                               : [ expToLogDouble (-lambda * deltaT ) * require (deltaT >= 0) | node <- getNodes tree,
-                                                                                               let Just p = parentNode tree n,
-                                                                                               let deltaT = (nodeTime tree p - nodeTime tree n)]
+                                                                                               let parent = parentNode tree node,
+                                                                                               isJust parent,
+                                                                                               let deltaT = (nodeTime tree (fromJust parent) - nodeTime tree node)]
 
 -------------------------------------------------------------
 timesToAges tree = modifyNodeTimes tree (\t -> maxTime - t) where maxTime = maximum (nodeTimes tree)
