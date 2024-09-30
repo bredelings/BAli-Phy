@@ -353,27 +353,19 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
-        auto enumFrom = desugar(L->enumFromOp);
-
-        return {enumFrom, desugar(L->from)};
+        return desugar(Hs::apply({noloc,L->enumFromOp},{L->from}));
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
-        auto enumFromTo = desugar(L->enumFromToOp);
-
-        return {enumFromTo, desugar(L->from), desugar(L->to)};
+        return desugar(Hs::apply({noloc,L->enumFromToOp},{L->from, L->to}));
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
-        auto enumFromThen = desugar(L->enumFromThenOp);
-
-        return {enumFromThen, desugar(L->from), desugar(L->then)};
+        return desugar(Hs::apply({noloc,L->enumFromThenOp},{L->from, L->then}));
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
-        auto enumFromThenTo = desugar(L->enumFromThenToOp);
-
-        return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
+        return desugar(Hs::apply({noloc,L->enumFromThenToOp},{L->from, L->then, L->to}));
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
