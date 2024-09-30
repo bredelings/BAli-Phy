@@ -321,6 +321,7 @@ Core2::Exp<> desugar_state::desugar2(const Hs::Exp& E)
 
 Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
+    Core2::Exp<> CE;
     if (E.is_a<Hs::ClassDecl>())
     {
 	std::abort();
@@ -329,13 +330,21 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     {
 	std::abort();
     }
-    else if (E.is_a<Hs::List>())
+    else if (auto L = E.to<Hs::List>())
     {
-        auto L = E.as_<Hs::List>();
-        vector<Core::Exp> elements;
-        for(auto& element: L.elements)
-            elements.push_back(desugar(element));
-        return get_list(elements);
+        // CE = []
+        CE = Core2::ConApp<>("[]",{});
+        for(auto element: L->elements | views::reverse)
+	{
+	    Core2::Exp<> element2 = desugar2(element);
+
+	    auto x = get_fresh_core_var("$l");
+	    auto y = get_fresh_core_var("$l");
+
+	    // CE = let {x=element2;y=E2} in x:y
+	    CE = Core2::Let<>{{{x,element2},{y,CE}}, Core2::ConApp<>{":",{x,y}}};
+	}
+	return to_expression_ref(CE);
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
