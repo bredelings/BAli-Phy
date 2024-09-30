@@ -205,6 +205,15 @@ class Tester:
         cmd = self.method.cmdline(self, test_subdir)
         stdin = self.method.stdin(self, test_subdir)
 
+        test_data_dir = rundir / 'data'
+        if os.path.exists(test_data_dir) and os.path.islink(test_data_dir):
+            os.unlink(test_data_dir)
+
+        if os.path.exists(test_data_dir):
+            raise RuntimeError(f"In test directory {rundir}, cannot make a symlink 'data' because 'data' already exists (and is not a symlink).")
+
+        os.symlink(self.data_dir, test_data_dir)
+
         with codecs.open(obt_outf, 'w', encoding='utf-8') as obt_out:
             with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
     #            invocation = '"{}"'.format('" "'.join(cmd))
@@ -214,6 +223,9 @@ class Tester:
                 exit_code = p.wait()
                 with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
                     obt_exit.write('{e:d}\n'.format(e=exit_code))
+
+        if os.path.exists(test_data_dir) and os.path.islink(test_data_dir):
+            os.unlink(test_data_dir)
 
     def read_expected(self, test_subdir, name):
         test_dir = self.top_test_dir / test_subdir
