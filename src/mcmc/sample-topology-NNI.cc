@@ -638,6 +638,7 @@ void two_way_topology_5A_sample(owned_ptr<Model>& P, MoveStats& /*Stats*/, int b
     }
 }
 
+// Interchange b1 <-> b2 and b1 <-> b3.
 void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2, int b3)
 {
     PP.select_root(b);
@@ -747,7 +748,7 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b
     Parameters& PP = *P.as<Parameters>();
     auto T = PP.t();
 
-    // 1. Point branch away from root.
+    // 1. Point branch away b = (x,y) away from root.
     if (not T.away_from_root(b)) b = T.reverse(b);
 
     // 2. Skip if this is not an internal branch
@@ -757,6 +758,12 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b
     int y = T.target(b);
 
     // 3. Skip if x is the root.
+    //    FIXME: This means that we can never change the topology around the root!
+    //           On a 3-taxon tree, this move will never do anything.
+    //
+    //           We could create moves to resample the alignment on 2 adjacent branches.
+    //           We could create motes to resample the alignment on 4 adjacent branches.
+    //           We should do both.
     if (T.root() == x) return;
 
     assert(T.degree(x) == 3);
