@@ -274,20 +274,19 @@ jobs:
           *-sanitize) skip=most ;;
         esac
 
-        # if [ "${skip}" = "none" ] ; then
-        #   if [ -n "${BOOST_ROOT}" ] ; then
-        #       if [ "${{ runner.os }}" == "macOS" ] ; then
-        #          export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-        #       else
-        #          export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-        #       fi
-        #   fi
-        #   if [ "${{ matrix.name }}" = "windows" ] ; then
-        #     export WINEPATH=$(winepath -w $HOME/local/bin)
-        #   fi
-        #
-        #   ninja -C build test
-        # fi
+        if [ "${skip}" = "none" ] ; then
+          if [ -n "${BOOST_ROOT}" ] ; then
+              if [ "${{ runner.os }}" == "macOS" ] ; then
+                 export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+              else
+                 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+              fi
+          fi
+          if [ "${{ matrix.name }}" = "windows" ] ; then
+            export WINEPATH=$(winepath -w $HOME/local/bin)
+          fi
+          ninja -C build test
+        fi
 
     - name: Get version
       id: get_version
