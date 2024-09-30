@@ -65,6 +65,7 @@ public:
     var get_fresh_var(const var& x);
     var get_fresh_var_copy(var x);
     Occ::Var get_fresh_occ_var(const std::string& name);
+    Core2::Var<> get_fresh_core_var(const std::string& name);
     Occ::Var get_fresh_var_copy(Occ::Var x);
     var get_fresh_var(const Hs::Var& x);
 
