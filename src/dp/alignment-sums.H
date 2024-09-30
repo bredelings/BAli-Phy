@@ -49,10 +49,10 @@ log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes)
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
+int sample_A5_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
 			   const std::vector<log_double_t>& rho);
 
-std::optional<log_double_t> sample_two_nodes_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order, const std::vector<log_double_t>& rho);
+std::optional<log_double_t> sample_A5_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order, const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,

@@ -49,7 +49,7 @@ using std::pair;
 using boost::dynamic_bitset;
 
 pair<shared_ptr<DParrayConstrained>, log_double_t>
-sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0)
+sample_A5_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0)
 {
     assert(P.variable_alignment());
     HMM m12345 = A5::get_HMM(P,order);
@@ -103,7 +103,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     {
 	if (log_verbose > 0)
 	{
-	    std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
+	    std::cerr<<"sample_A5_base( ): All paths have probability 0!"<<std::endl;
 	    for(int i=0;i<Matrices->size();i++)
 	    {
 		if (Matrices->Pr_sum_all_paths_to_column(i) <= 0)
@@ -154,7 +154,7 @@ struct IntegrationPrs
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 vector<optional<IntegrationPrs>>
-sample_two_nodes_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
+sample_A5_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
                             const vector<log_double_t>& rho_)
 {
     for(int i=1;i<p.size();i++)
@@ -196,7 +196,7 @@ sample_two_nodes_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order
         {
             if (p[i][j].variable_alignment())
             {
-                auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+                auto [M, sampling_pr] = sample_A5_base(p[i][j], *a123456[j], order[i], order[0]);
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
@@ -247,12 +247,12 @@ sample_two_nodes_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order
     return Pr;
 }
 
-std::optional<log_double_t> sample_two_nodes_ratio(vector<Parameters>& p, const vector<A5::hmm_order>& order, const vector<log_double_t>& rho)
+std::optional<log_double_t> sample_A5_ratio(vector<Parameters>& p, const vector<A5::hmm_order>& order, const vector<log_double_t>& rho)
 {
     if (p.size() != 2)
-	throw myexception()<<"sample_two_nodes_ratio only takes two Parameters objects!";
+	throw myexception()<<"sample_A5_ratio only takes two Parameters objects!";
 
-    auto Prs = sample_two_nodes_multi2(p, order, rho);
+    auto Prs = sample_A5_multi2(p, order, rho);
 
     if (Prs[0] and Prs[1])
     {
@@ -267,7 +267,7 @@ std::optional<log_double_t> sample_two_nodes_ratio(vector<Parameters>& p, const 
 
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
+int sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 			   const vector<log_double_t>& rho_)
 {
     for(int i=1;i<p.size();i++)
@@ -311,7 +311,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
         {
 	    if (p[i][j].variable_alignment())
 	    {
-                auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+                auto [M, sampling_pr] = sample_A5_base(p[i][j], *a123456[j], order[i], order[0]);
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
@@ -451,7 +451,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 }
 
 
-void sample_two_nodes(Parameters& P,int b) 
+void sample_A5(Parameters& P,int b) 
 {
     vector<Parameters> p(1,P);
 
@@ -460,7 +460,7 @@ void sample_two_nodes(Parameters& P,int b)
 
     vector<log_double_t> rho(1,1);
 
-    int C = sample_two_nodes_multi(p,order,rho);
+    int C = sample_A5_multi(p,order,rho);
 
     if (C != -1) {
 	P = p[C];

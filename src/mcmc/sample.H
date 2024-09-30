@@ -68,7 +68,7 @@ bool cube_sample_alignment_branch_model(Parameters&,
 void sample_node(Parameters&,int node);
 
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
-void sample_two_nodes(Parameters& P,int b);
+void sample_A5(Parameters& P,int b);
 
 /// Resample between 3 NNI topologies around branch b
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
@@ -100,7 +100,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>&, MCMC::MoveStats
 void sample_tri_branch_type_one(owned_ptr<Model>&, MCMC::MoveStats&, int);
 
 void sample_node_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
-void sample_two_nodes_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
+void sample_A5_move(owned_ptr<Model>&, MCMC::MoveStats&, int);
 
 void three_way_topology_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void three_way_time_tree_NNI_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);

@@ -232,7 +232,7 @@ void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node)
     sample_node(*PP,node);
 }
 
-void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0) 
+void sample_A5_move(owned_ptr<Model>& P, MoveStats&,int n0) 
 {
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
@@ -253,7 +253,7 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
     
     int b = PP->t().undirected(PP->t().find_branch(n0, *n1));
 
-    sample_two_nodes(*PP,b);
+    sample_A5(*PP,b);
 }
 
 // cost[b] should be the cost to visit all the branches after b.

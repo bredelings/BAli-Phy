@@ -80,7 +80,7 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,double L)
 	Stats.inc(name+"-2.0+", result);
 }
 
-// Do we need the different sample_two_nodes_base routines to use the same
+// Do we need the different sample_A5_base routines to use the same
 // sub-alignment ordering for different topologies?  No.
 //  o Sub-alignment order should affect only which paths are considered
 //  o We are essentially considering a set of paths for each topology
@@ -100,7 +100,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
     orders[1] = A5::get_nodes_random(p[1].t(), b);
 
     try {
-	return sample_two_nodes_multi(p,orders,rho);
+	return sample_A5_multi(p,orders,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -256,7 +256,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
     int C = -1;
     try {
-	C = sample_two_nodes_multi(p,orders,rho);
+	C = sample_A5_multi(p,orders,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -605,7 +605,7 @@ void two_way_topology_5A_sample(owned_ptr<Model>& P, MoveStats& /*Stats*/, int b
     orders[1] = A5::get_nodes_random(P1.t(), b);
 
     vector<Parameters> p({P0,P1});
-    auto ratio_tree = sample_two_nodes_ratio(p, orders, {1,1});
+    auto ratio_tree = sample_A5_ratio(p, orders, {1,1});
     ratio *= ratio_tree;
     if (not ratio) return;
 
@@ -666,7 +666,7 @@ void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b
     //------ Resample alignments and select topology -----//
 
     try {
-	int C = sample_two_nodes_multi(p,orders,rho);
+	int C = sample_A5_multi(p,orders,rho);
 
         if (C != -1) {
             PP = p[C];
