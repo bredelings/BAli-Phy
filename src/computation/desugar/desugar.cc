@@ -316,17 +316,11 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
     if (E.is_a<Hs::ClassDecl>())
     {
-        auto C = E.as_<Hs::ClassDecl>();
-//        if (C.decls)
-//            unloc(*C.decls) = desugar_decls(unloc(*C.decls));
-        return C;
+	std::abort();
     }
     else if (E.is_a<Hs::InstanceDecl>())
     {
-        auto I = E.as_<Hs::InstanceDecl>();
-//        if (I.decls)
-//            unloc(*I.decls) = desugar_decls(unloc(*I.decls));
-        return I;
+	std::abort();
     }
     else if (E.is_a<Hs::List>())
     {
