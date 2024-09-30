@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file sample-two-nodes.C
+/// \file sample-A5.C
 ///
 /// \brief Contains routines for resampling the sequence at two adjacent internal nodes (5way).
 ///
