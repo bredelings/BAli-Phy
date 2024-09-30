@@ -1,1 +1,1 @@
--m Model RSV2.fasta --iter=5 --name ignore
+-m Model data/RSV2.fasta --iter=5 --name ignore
