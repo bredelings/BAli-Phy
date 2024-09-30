@@ -82,6 +82,7 @@ struct desugar_state: public FreshVarSource
     std::vector<equation_info_t> desugar_matches(const Hs::Matches& matches);
 
     Core2::Exp<> desugar2(const Hs::Exp& E);
+    Core2::Exp<> desugar2(const Hs::LExp& E);
     Core::Exp desugar(const Hs::Exp& E);
     Core::Exp desugar(const Hs::LExp& E);
     CDecls desugar_decls(const Haskell::Decls&);

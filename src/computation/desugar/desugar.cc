@@ -319,6 +319,11 @@ Core2::Exp<> desugar_state::desugar2(const Hs::Exp& E)
     return to_core_exp(graph_normalize(*this,desugar(E)));
 }
 
+Core2::Exp<> desugar_state::desugar2(const Hs::LExp& E)
+{
+    return to_core_exp(graph_normalize(*this,desugar(E)));
+}
+
 Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
     Core2::Exp<> CE;
