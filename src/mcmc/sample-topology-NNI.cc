@@ -791,7 +791,7 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b
     }
     else
     {
-	if (log_verbose >=2) std::cerr << "three_way_time_tree_NNI_sample: doing nothing at the root!";
+	if (log_verbose >=2) std::cerr << "three_way_time_tree_NNI_sample: doing nothing at the root!\n";
 	// 6b. x is the root.
 
 	// We could create moves to resample the alignment on 2 adjacent branches.
