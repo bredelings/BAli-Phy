@@ -397,9 +397,9 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         else
         {
             // Pop the next qual from the FRONT of the list
-            expression_ref B = unloc(L.quals[0]);
+            auto B = unloc(L.quals[0]);
             L.quals.erase(L.quals.begin());
-            expression_ref E2 = L;
+            auto E2 = L;
 
             // [ e | b, Q   ]  =  if b then [ e | Q ] else []
             if (auto cond = B.to<Hs::SimpleQual>())
@@ -418,28 +418,28 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 		    //              =  map (\p -> e) l
 		    if (L.quals.empty())
 		    {
-			expression_ref f = Hs::LambdaExp({PQ->bindpat}, L.body);
-			return desugar( {Hs::Var("Data.OldList.map"), f, unloc(PQ->exp)} );
+			auto f = Hs::LambdaExp({PQ->bindpat}, L.body);
+			return desugar( Hs::apply({noloc,Hs::Var("Data.OldList.map")}, {{noloc,f}, PQ->exp}) );
 		    }
 		    // [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
 		    else
 		    {
-			expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
-			return desugar( {concatMap, f, unloc(PQ->exp)} );
+			auto f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
+			return desugar( Hs::apply({noloc,concatMap}, {{noloc,f}, PQ->exp} ) );
 		    }
                 }
                 else
                 {
                     // let {ok bindpat = L; ok _ = []} in concatMap ok PQ->exp
                     auto ok = get_fresh_Var("ok", false);
-                    expression_ref fail = Hs::List({});
+                    auto fail = Hs::List({});
                     auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                     auto rule1 = Hs::MRule{ { PQ->bindpat }, Hs::SimpleRHS({noloc, L})        };
                     auto rule2 = Hs::MRule{ { _ },           Hs::SimpleRHS({noloc, fail})     };
                     auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
-                    expression_ref body = {concatMap, ok, unloc(PQ->exp)};
-                    return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body}) );
+		    auto body = Hs::apply({noloc,concatMap}, {{noloc,ok}, PQ->exp});
+                    return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, body) );
                 }
             }
         }
