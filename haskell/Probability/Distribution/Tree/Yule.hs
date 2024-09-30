@@ -73,7 +73,7 @@ yuleEffect tree = do
   -- FIXME: but it doesn't allow becoming the root!
   -- QUESTION: Could we slice sample the root location?
   -- QUESTION: Could we somehow propose a root location based on the likelihood/posterior?
-  sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
+  -- sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
 
   -- Exchange sibling branches with children?
   addMove 1 $ walkTimeTreeSampleNNIandNodeTimes tree
