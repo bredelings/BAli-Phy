@@ -348,28 +348,25 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
-        Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
-        enumFrom = desugar(L->enumFromOp);
+        auto enumFrom = desugar(L->enumFromOp);
 
         return {enumFrom, desugar(L->from)};
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
-        expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
-        enumFromTo = desugar(L->enumFromToOp);
+        auto enumFromTo = desugar(L->enumFromToOp);
 
         return {enumFromTo, desugar(L->from), desugar(L->to)};
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
-        expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
-        enumFromThen = desugar(L->enumFromThenOp);
+        auto enumFromThen = desugar(L->enumFromThenOp);
+
         return {enumFromThen, desugar(L->from), desugar(L->then)};
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
-        expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
-        enumFromThenTo = desugar(L->enumFromThenToOp);
+        auto enumFromThenTo = desugar(L->enumFromThenToOp);
 
         return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
     }
