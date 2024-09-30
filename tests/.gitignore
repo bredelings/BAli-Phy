@@ -1,5 +1,11 @@
 obtained-*
 token*.dot
-ignore-*
 *-obtained-*
 history.txt
+
+ignore-*
+Main-*
+Model-*
+
+Results-*
+Results
