@@ -719,23 +719,22 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 /* Like NNI, except
  * + we can only swap branches pointing away from the root
  * + we need to avoid children being older than their parents.
- * + there is a degree 2 node.
+ * + there may be a degree 2 node.
  *
  * Specificially, we need u to be younger than y.
  *
  *                       v
  *                       |
- *                    ---x---
- *                    |     |
- *                  --y--   |
- *                  |   |   |
- *                  z   w   u
- *
+ *                    ---x---           ---x---
+ *                    |     |           |     |
+ *                  --y--   |    OR   --y--   |
+ *                  |   |   |         |   |   |
+ *                  z   w   u         z   w   u
  *
  * Here, tipward_branches[0] = (y,z)
  *       tipward_branches[1] = (y,w)
  *       other_branches[0]   = (x,u)
- *       other_branches[1]   = (x,v)
+ *       other_branches[1]   = (x,v) if x not the root
  *       b           = (x,y)
  */
 
@@ -747,46 +746,57 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b
     Parameters& PP = *P.as<Parameters>();
     auto T = PP.t();
 
-    // 1. Point branch away from root.
-    if (not T.away_from_root(b)) b = T.reverse(b);
-
-    // 2. Skip if this is not an internal branch
+    // 1. Skip if this is not an internal branch
     if (T.is_leaf_branch(b)) return;
+
+    // 2. Point branch away b = (x,y) away from root.
+    if (not T.away_from_root(b)) b = T.reverse(b);
 
     int x = T.source(b);
     int y = T.target(b);
 
-    // 3. Skip if x is the root.
-    if (T.root() == x) return;
-
-    assert(T.degree(x) == 3);
+    assert(T.degree(x) == 2 or T.degree(x) == 3);
+    // We shouldn't be seeing degree-2 nodes except on the root branch.
     assert(T.degree(y) == 3);
 
-    // 4. Get branches to child nodes z and w
+    // 3. Get branches to child nodes z and w
     auto tipward_branches = T.branches_after(b);
     assert(tipward_branches.size() == 2);
     int b2 = tipward_branches[0]; // (y,z)
     int b3 = tipward_branches[1]; // (y,w)
 
-    // 5. Get branch to sibling node u
+    // 4. Get branch to sibling node u
     auto other_branches = T.branches_after(T.reverse(b));
-    assert(other_branches.size() == 2);
-
-    if (not T.away_from_root(other_branches[0])) std::swap(other_branches[0],other_branches[1]);
-
-    assert(T.away_from_root(other_branches[0]));
-    assert(not T.away_from_root(other_branches[1]));
+    assert(other_branches.size() == 1 or other_branches.size() == 2);
+    if (other_branches.size() == 2)
+    {
+	if (not T.away_from_root(other_branches[0]))
+	    std::swap(other_branches[0],other_branches[1]);
+	assert(not T.away_from_root(other_branches[1]));
+    }
 
     int b1 = other_branches[0]; // (x,u)
     int u = T.target(other_branches[0]);
+    assert(T.away_from_root(b1));
 
-    // 6. Check that node u is YOUNGER THAN node y
+    // 5. Check that node u is YOUNGER THAN node y
     if (T.node_time(u) > T.node_time(y)) return;
 
-    // 7. Actually do the NNI
+    if (other_branches.size() == 2)
+    {
+	// 6a. x is NOT the root.
 
-    // We consider interchanging b1 <-> b2 and b1 <-> b3
-    three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
+	// We consider interchanging b1 <-> b2 and b1 <-> b3
+	three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
+    }
+    else
+    {
+	if (log_verbose >=2) std::cerr << "three_way_time_tree_NNI_sample: doing nothing at the root!";
+	// 6b. x is the root.
+
+	// We could create moves to resample the alignment on 2 adjacent branches.
+	// We could create motes to resample the alignment on 4 adjacent branches.
+    }
 }
 
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
