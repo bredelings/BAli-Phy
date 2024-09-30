@@ -72,6 +72,7 @@ libbaliphy_sources = [
   'dp/dp-cube.cc',
   'dp/2way.cc',
   'dp/3way.cc',
+  'dp/4way.cc',
   'dp/5way.cc',
   'dp/alignment-sums.cc',
 
