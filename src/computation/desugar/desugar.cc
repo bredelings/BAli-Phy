@@ -447,12 +447,15 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return expression_ref({desugar(S->op), desugar(S->l_arg)});
+        return desugar(Hs::apply({S->op, S->l_arg}));
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
-        auto x = get_fresh_var();
-        return lambda_quantify(x, {desugar(S->op), x, desugar(S->r_arg)} );
+        auto x = get_fresh_Var("rs$",false);
+        Hs::LVar lx = {noloc,x};
+        Hs::LPat px = {noloc, Hs::VarPattern(lx)};
+        //  \x -> op x r_arg
+        return desugar(Hs::LambdaExp({px}, Hs::apply({S->op, lx, S->r_arg})) );
     }
     else if (E.is_a<Hs::Tuple>())
     {
@@ -497,53 +500,51 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 
         auto first = unloc(stmts[0]);
         stmts.erase(stmts.begin());
-        expression_ref do_stmts = Hs::Do(Hs::Stmts(stmts));
-        expression_ref result;
+        auto do_stmts = Hs::Do(Hs::Stmts(stmts));
 
         // do {e ; stmts }  =>  e >> do { stmts }
         if (auto sq = first.to<Hs::SimpleQual>())
         {
-            expression_ref e = unloc(first.as_<Hs::SimpleQual>().exp);
-            result = {sq->andThenOp, e, do_stmts};
+            auto e = first.as_<Hs::SimpleQual>().exp;
+            return desugar(Hs::apply({noloc, sq->andThenOp}, {e, {noloc,do_stmts}}));
         }
 
         // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
         // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
         else if (first.is_a<Hs::PatQual>())
         {
+            expression_ref result;
             auto& PQ = first.as_<Hs::PatQual>();
 
             if (is_irrefutable_pat(m, PQ.bindpat))
             {
-                expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
-                result = {PQ.bindOp, unloc(PQ.exp), lambda};
+                auto lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
+                return desugar( {PQ.bindOp, unloc(PQ.exp), lambda} );
             }
             else
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {Hs::Var("Control.Monad.fail"), Hs::Literal(Hs::String("Fail!"))};
+                Hs::LExp fail = Hs::apply({{noloc,Hs::Var("Control.Monad.fail")}, {noloc,Hs::Literal(Hs::String("Fail!"))}});
                 if (PQ.failOp)
-                    fail = *PQ.failOp;
+                    fail = {noloc,*PQ.failOp};
                 auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                 auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
-                auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };
+                auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS(fail)             };
                 auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
-                expression_ref body = {PQ.bindOp, unloc(PQ.exp), ok};
-                result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});
+                auto body = Hs::apply({{noloc,PQ.bindOp}, PQ.exp, {noloc,ok}});
+                return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, body) );
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}
         else if (first.is_a<Hs::LetQual>())
         {
             auto& LQ = first.as_<Hs::LetQual>();
-            result = Hs::LetExp( LQ.binds, {noloc, do_stmts});
+            return desugar( Hs::LetExp( LQ.binds, {noloc, do_stmts}) );
         }
-        else
-            std::abort();
 
-        return desugar(result);
+        std::abort();
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
