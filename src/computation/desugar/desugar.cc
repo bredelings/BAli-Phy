@@ -550,11 +550,9 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     {
         return texp->wrap( desugar( texp->exp) );
     }
-    else if (E.is_a<Hs::LambdaExp>())
+    else if (auto L = E.to<Hs::LambdaExp>())
     {
-        auto L = E.as_<Hs::LambdaExp>();
-
-        auto equation = desugar_match(L.match);
+        auto equation = desugar_match(L->match);
 	// what top-level function is the lambda in?
 	// what line is it on?
         expression_ref otherwise = Core::error(m.name + " lambda: pattern match failure");
