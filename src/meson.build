@@ -83,6 +83,7 @@ libbaliphy_sources = [
   'mcmc/sample-alignment.cc',
   'mcmc/sample-topology-SPR.cc',
   'mcmc/sample-topology-NNI.cc',
+  'mcmc/sample-A4.cc',
   'mcmc/sample-A5.cc',
   'mcmc/sample-node.cc',
   'mcmc/sample-cube.cc',
