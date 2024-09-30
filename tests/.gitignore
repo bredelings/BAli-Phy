@@ -6,6 +6,7 @@ history.txt
 ignore-*
 Main-*
 Model-*
+Test.Main.hs
 
 Results-*
 Results
