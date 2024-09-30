@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/convert.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 #include "computation/fresh_vars.H"
@@ -80,6 +81,7 @@ struct desugar_state: public FreshVarSource
     equation_info_t desugar_match(const Hs::MRule& matches);
     std::vector<equation_info_t> desugar_matches(const Hs::Matches& matches);
 
+    Core2::Exp<> desugar2(const Hs::Exp& E);
     Core::Exp desugar(const Hs::Exp& E);
     Core::Exp desugar(const Hs::LExp& E);
     CDecls desugar_decls(const Haskell::Decls&);

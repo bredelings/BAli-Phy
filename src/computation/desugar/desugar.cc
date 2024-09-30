@@ -312,6 +312,13 @@ Core::Exp desugar_state::desugar(const Hs::LExp& LE)
     return desugar(unloc(LE));
 }
 
+expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E);
+
+Core2::Exp<> desugar_state::desugar2(const Hs::Exp& E)
+{
+    return to_core_exp(graph_normalize(*this,desugar(E)));
+}
+
 Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
     if (E.is_a<Hs::ClassDecl>())
