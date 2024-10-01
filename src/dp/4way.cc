@@ -95,7 +95,7 @@ namespace A4 {
     log_double_t correction(const data_partition& P,const hmm_order& order) 
     {
 	if (P.variable_alignment())
-	    return pow( P.sequence_length_pr(order.nodes[3]), 2 ) * P.sequence_length_pr(order.nodes[5]);
+	    return pow( P.sequence_length_pr(order.nodes[3]), 2 ) * P.sequence_length_pr(order.nodes[4]);
 	else
 	    return 1;
     }
