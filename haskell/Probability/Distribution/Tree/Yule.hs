@@ -110,7 +110,7 @@ instance HasAnnotatedPdf Yule where
 instance Sampleable Yule where
     sample dist@(Yule taxa lambda) = do
                                tree <- sample $ unlabelledYule (length taxa) lambda
-                               let leafIndices = zip (leafNodes tree) taxa
+                               leafIndices <- zip (leafNodes tree) <$> shuffle taxa
                                return $ addLabels leafIndices tree
 
 yule taxa lambda = Yule taxa lambda
