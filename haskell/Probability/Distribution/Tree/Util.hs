@@ -32,3 +32,8 @@ possible = 1 :: LogDouble
 impossible = 0 :: LogDouble
 require p = if p then possible else impossible
 
+shuffle [] = return []
+shuffle xs = do
+  (first,rest) <- removeOne xs
+  restShuffled <- shuffle rest
+  return (first:restShuffled)
