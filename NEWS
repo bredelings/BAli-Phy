@@ -4,9 +4,22 @@
 - Input: allow defining models using multiple lines.
 - Models:
   + speed up and improve RNA editing model.
-  + refactor coalescent tree model
+  + refactor coalescent tree distribution.
+  + add Yule tree distribution.
+  + allow '--tree=~uniform_tree(taxa,gamma(0.5,2/length(taxa)))'
+- MCMC:
+  + Allow time-tree-NNI to interchange around the root.
+  + Allow time-tree-NNI to resample alignments.
 - Bug fixes:
-  + Multiple fixes to avoid reading or writing corrupted compiled-module files.
+  + Module loading.
+    - Don't crash when multiple copies of bali-phy write the same module archive simultaneously.
+    - Avoid reading partially-overwritten files by writing a unique file, then renaming.
+    - Perform an integrity check on the archive contents.
+- Tests:
+  + Refactor tests so that `ninja test` runs each testsuite test seprately.
+  + Add CI for `ninja test`.
+- Haskell:
+  + Make [1 ..] and [1.5 .. ] work for floating point.
 
 * 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
