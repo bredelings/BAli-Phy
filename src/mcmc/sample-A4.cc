@@ -130,7 +130,7 @@ sample_A4_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345, c
     int b03 = P.t().find_branch(nodes[0],nodes[3]);
     int b13 = P.t().find_branch(nodes[1],nodes[3]);
     int b24 = P.t().find_branch(nodes[2],nodes[4]);
-    int b34 = P.t().find_branch(nodes[3],nodes[5]);
+    int b34 = P.t().find_branch(nodes[3],nodes[4]);
     P.set_pairwise_alignment(b03, get_pairwise_alignment_from_path(path, *Matrices, 0, 3));
     P.set_pairwise_alignment(b13, get_pairwise_alignment_from_path(path, *Matrices, 1, 3));
     P.set_pairwise_alignment(b24, get_pairwise_alignment_from_path(path, *Matrices, 2, 4));
