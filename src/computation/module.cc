@@ -460,9 +460,14 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
     {
         try
         {
-            std::ifstream cached_module_stream(*path, std::ios::binary);
+            std::ifstream infile(*path, std::ios::binary);
+            std::string data = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
+            string archive_sha = boost::compute::detail::sha1(data);
+            if (log_verbose >= 2)
+                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
 
-            cereal::BinaryInputArchive archive( cached_module_stream );
+            std::istringstream data2(data);
+            cereal::BinaryInputArchive archive( data2 );
 
             std::shared_ptr<CompiledModule> M;
 
@@ -538,7 +543,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             string archive_sha = boost::compute::detail::sha1(data);
 
             if (log_verbose >= 2)
-                std::cerr<<"Writing archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
+                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
 
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
