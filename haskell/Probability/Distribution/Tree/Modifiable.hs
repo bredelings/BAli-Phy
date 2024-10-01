@@ -76,3 +76,8 @@ modifiableTimeTree modf (WithNodeTimes rootedTree' times') = WithNodeTimes roote
 triggeredModifiableTimeTree = triggeredModifiableStructure modifiableTimeTree
 
 
+-- The labels aren't modifiable.
+modifiableLabeledTimeTree :: (forall a.a -> a) -> WithLabels (WithNodeTimes (WithRoots Tree)) -> WithLabels (WithNodeTimes (WithRoots Tree))
+modifiableLabeledTimeTree modf (WithLabels tree labels) = WithLabels (modifiableTimeTree modf tree) labels
+
+triggeredModifiableLabeledTimeTree = triggeredModifiableStructure modifiableLabeledTimeTree

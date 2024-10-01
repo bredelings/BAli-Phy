@@ -105,6 +105,18 @@ instance Sampleable UnlabelledYule where
 unlabelledYule n lambda = UnlabelledYule n lambda
 
 -------------------------------------------------------------
+{-
+   We need the random shuffling to be performed in the IO monad (which doesn't remember anything)
+   during the initial sample.
+
+   We do NOT want the shuffle to be performed in the Random monad, because we don't want its
+   random choices to be remembered and then resampled during MCMC.
+ -}
+
+sampleLabeledYule labels lambda = do
+  tree <- sample $ unlabelledYule (length labels) lambda
+  leafIndices <- zip (leafNodes tree) <$> shuffle labels
+  return $ addLabels leafIndices tree
 
 data Yule = Yule [Text] Rate
 
@@ -116,9 +128,6 @@ instance HasAnnotatedPdf Yule where
     annotated_densities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
 
 instance Sampleable Yule where
-    sample dist@(Yule taxa lambda) = do
-                               tree <- sample $ unlabelledYule (length taxa) lambda
-                               leafIndices <- zip (leafNodes tree) <$> shuffle taxa
-                               return $ addLabels leafIndices tree
+    sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableLabeledTimeTree (sampleLabeledYule taxa lambda)
 
 yule taxa lambda = Yule taxa lambda
