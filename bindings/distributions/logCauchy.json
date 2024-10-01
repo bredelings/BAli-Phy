@@ -1,0 +1,21 @@
+{
+    "name": "logCauchy",
+    "result_type": "Distribution<Double>",
+    "call": "logCauchy(@lmu,@lscale)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "lmu",
+            "type": "Double",
+	    "description": "The mean parameter (log scale)"
+        },
+        {
+            "name": "lscale",
+            "type": "Double",
+	    "description": "The standard deviation parameter (log scale)"
+        }
+    ],
+    "title": "The log-cauchy distribution",
+    "examples": ["~logCauchy(0,1)","~iid(10, logCauchy(0,1))"],
+    "description": "A variable X is log-cauchy if log(X) is cauchy."
+}
