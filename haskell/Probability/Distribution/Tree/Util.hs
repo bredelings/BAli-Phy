@@ -15,6 +15,7 @@ pickIndex 0 (h : t) = (h, t)
 pickIndex i (h : t) = let (x, t2) = pickIndex (i - 1) t in (x, h : t2)
 
 removeOne []   = error "Cannot remove one from empty list"
+removeOne [x]  = return (x,[])
 removeOne list = do
     i <- sample $ uniform_int 0 (length list - 1)
     return $ pickIndex i list
