@@ -20,6 +20,8 @@
   + Add CI for `ninja test`.
 - Haskell:
   + Make [1 ..] and [1.5 .. ] work for floating point.
+- Internal:
+  + Rewrite the simplifier optimization pass to use the Core2 AST representation.
 
 * 4.0-beta15 (Jul 25, 2024)
 - Speed increases:
