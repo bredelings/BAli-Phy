@@ -442,17 +442,22 @@ set<string> Module::dependencies() const
     return modules;
 }
 
-/* 
-infixr 6 >>
+std::string extract_sha(std::string& data)
+{
+    // 1. Check that we have 40 chars followed by a newline.
+    if (data[40] != '\n') throw myexception()<<"archive failed integrity check: failed to read stored SHA";
 
-x >> y : z = x
+    // 2. Get the 40 chars and check that they are all hex digits.
+    string stored_archive_sha = data.substr(0,40);
+    stored_archive_sha.resize(40);
+    for(char c: stored_archive_sha)
+	if (not std::isxdigit(c)) throw myexception()<<"archive failed integrity check: failed to read stored SHA";
 
-main = putStrLn (show ("a" Main.>> 'b':[]))
+    // 3. Drop the first 41 chars -- 40 hex digits plus newline.
+    data = data.substr(41);
 
--- This compiles, which proves that infix expressions are NOT handled exactly the same way
--- in declaration LHSs as they are in expressions.
--- Or, at least, in the definition, we look up and rename >> to Main.>> before we do the infix handling...
-*/
+    return stored_archive_sha;
+}
 
 std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_sha)
 {
@@ -462,9 +467,14 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
         {
             std::ifstream infile(*path, std::ios::binary);
             std::string data = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
-            string archive_sha = boost::compute::detail::sha1(data);
+            string stored_archive_sha = extract_sha(data);
+
+            string computed_archive_sha = boost::compute::detail::sha1(data);
             if (log_verbose >= 2)
-                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
+                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_sha = "<<stored_archive_sha<<"     computed_archive_sha = "<<computed_archive_sha<<"\n";
+
+            if (stored_archive_sha != computed_archive_sha)
+                throw myexception()<<"archive failed integrity check: stored and computed archive SHAs did not match.";
 
             std::istringstream data2(data);
             cereal::BinaryInputArchive archive( data2 );
@@ -481,7 +491,7 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
                 if (sha == M->all_inputs_sha())
                     return M;
 
-                throw myexception()<<"Beginning and ending SHAs do not match!";
+                throw myexception()<<"Beginning and ending SHAs inside the archive do not match!";
             }
         }
         catch (std::exception& e)
@@ -554,6 +564,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             if (not tmp_file) throw myexception()<<"Could not open file!";
 
             // Write the archive to the temporary file.
+            tmp_file<<archive_sha<<"\n";
             tmp_file.write(data.c_str(),data.size());
             tmp_file.close();
 
