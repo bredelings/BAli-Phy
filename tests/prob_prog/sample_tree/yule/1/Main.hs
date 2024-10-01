@@ -5,6 +5,7 @@ import qualified Data.Text as T
 import Tree.Newick
 import Data.JSON as J
 import Data.Char
+import System.Environment (getArgs)
 
 model taxa = do
     lambda <- sample $ logLaplace 0 2
@@ -19,7 +20,8 @@ name i | i < 26 = [chr(65+i)]
     where (d,m) = divMod i 26
 
 main = do
-     let n = 20
+     [args] <- getArgs
+     let n = read args :: Int
          taxa = fmap T.pack $ fmap name [0..n-1]
 
      (tree,loggers) <- runRandomStrict (model taxa)
