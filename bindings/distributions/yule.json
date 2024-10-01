@@ -1,0 +1,20 @@
+{
+    "name": "yule",
+    "result_type": "Distribution<Tree<Times>>",
+    "call": "yule(@taxa,@lambda)",
+    "import": ["Probability"],
+    "title": "The uniform_topology distribution on trees",
+    "args": [
+        {
+            "name": "taxa",
+            "type": "List<Text>",
+	    "description": "The taxa for the tree"
+        },
+	{
+	    "name": "lambda",
+	    "type": "Double",
+	    "description": "The distribution for branch lengths",
+	    "default_value": "~logCauchy(0,1)"
+	}
+    ]
+}
