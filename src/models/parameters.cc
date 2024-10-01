@@ -542,11 +542,15 @@ void Parameters::NNI(const tree_edge& B1, const tree_edge& B2, bool allow_discon
 // The (possibly) disconnected subtree is the sibling of b1.
 void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 {
+    assert(b1 != b2);
+
     int s1 = t().source(b1);
     int t1 = t().target(b1);
 
     int s2 = t().source(b2);
     int t2 = t().target(b2);
+    assert(s1 != s2);
+    assert(t1 != t2);
 
     assert(t().is_connected(s1,s2));
     int b45 = t().find_branch(s1,s2);
@@ -639,11 +643,7 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 // The (possibly) disconnected subtree is the sibling of b1.
 void Parameters::NNI_discard_alignment(int b1, int b2)
 {
-    if (not variable_alignment())
-    {
-        NNI(b1,b2);
-        return;
-    }
+    assert(b1 != b2);
 
 #ifndef NDEBUG
     int s1 = t().source(b1);
@@ -652,53 +652,32 @@ void Parameters::NNI_discard_alignment(int b1, int b2)
     int s2 = t().source(b2);
     int t2 = t().target(b2);
 
+    assert(s1 != s2);
+    assert(t1 != t2);
     assert(t().is_connected(s1,s2));
-    int b45 = t().find_branch(s1,s2);
+    int s1_s2 = t().find_branch(s1,s2);
 
-    // 1. Get alignments of sequences 123456
-    auto order = A5::get_nodes(t(),b45);
-    auto& nodes = order.nodes;
-    assert(nodes[4] == s1);
-    assert(nodes[5] == s2);
-
-    if (nodes[0] != t1) std::swap(nodes[0],nodes[1]);
-    assert(nodes[0] == t1);
-  
-    if (nodes[2] != t2) std::swap(nodes[2],nodes[3]);
-    assert(nodes[2] == t2);
-
-    // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
-    int b04 = t().find_branch(nodes[0],nodes[4]);
-    int b14 = t().find_branch(nodes[1],nodes[4]);
-    int b25 = t().find_branch(nodes[2],nodes[5]);
-    int b35 = t().find_branch(nodes[3],nodes[5]);
+    vector<int> branches;
+    branches.push_back(s1_s2);
+    t().append_branches_before(s1_s2, branches);
+    t().append_branches_after(s1_s2, branches);
+    assert(branches.size() == 4 or branches.size() == 5);
 #endif
 
-    // 3. Perform NNI
     exchange_subtrees(b1, b2);  // alter tree
+
 #ifndef NDEBUG
-    std::swap(nodes[0],nodes[2]); // alter nodes
-    std::swap(b04, b25);
 
-    assert(b04 == t().find_branch(nodes[0],nodes[4]));
-    assert(b14 == t().find_branch(nodes[1],nodes[4]));
-    assert(b25 == t().find_branch(nodes[2],nodes[5]));
-    assert(b35 == t().find_branch(nodes[3],nodes[5]));
-    assert(b45 == t().find_branch(nodes[4],nodes[5]));
-
-    // 5. Set the pairwise alignments.
+    // discard the pairwise alignments.
     for(int i=0;i<n_data_partitions();i++)
     {
         auto dp = get_data_partition(i);
         if (dp.has_pairwise_alignments())
         {
-	    if (not get_data_partition(i).alignment_is_random())
-		throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
-            dp.unset_pairwise_alignment(b04);
-            dp.unset_pairwise_alignment(b14);
-            dp.unset_pairwise_alignment(b25);
-            dp.unset_pairwise_alignment(b35);
-            dp.unset_pairwise_alignment(b45);
+            if (not get_data_partition(i).alignment_is_random())
+                throw myexception()<<"Partition "<<i+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+            for(int b: branches)
+                dp.unset_pairwise_alignment(b);
         }
     }
 #endif
