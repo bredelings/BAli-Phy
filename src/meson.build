@@ -139,11 +139,11 @@ subdir('builtins')
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])
-test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath])
 # When running on very slow autobuilders these tests could take a long time.
-test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', '-V', packagepath], timeout: 180)
-test('bali-phy 48 +A 3', baliphy, args:[big_fasta,'--iter=3', '-V', packagepath], timeout: 360)
-test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', '-V', packagepath, '-Inone'], timeout:120)
+test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath], timeout: 300)
+test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', '-V', packagepath], timeout: 300)
+test('bali-phy 48 +A 3', baliphy, args:[big_fasta,'--iter=3', '-V', packagepath], timeout: 600)
+test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', '-V', packagepath, '-Inone'], timeout:300)
 
 all_progs = ['bali-phy']
 
