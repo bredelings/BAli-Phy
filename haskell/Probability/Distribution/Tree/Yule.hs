@@ -25,6 +25,14 @@ yulePrFactors n lambda tree = require (numLeaves tree == n)
 -------------------------------------------------------------
 timesToAges tree = modifyNodeTimes tree (maxTime -) where maxTime = maximum (nodeTimes tree)
 
+-- This way of constructing the tree -- from the root to the tips, ensures that the tip
+--    labels will look like 1,(3,4) or (3,4),2 when we have 3 leaves.
+-- When a node i splits into two new nodes, we need to use i as the internal node name
+--    because we already have a branch connected to it.
+-- We could additionally sample integer labels [0..n-1] and randomly assign them to the tips.
+--    When we hit the present we can shuffle the existing node numbers to assign labels [0..n]
+-- Alternatively, we could also try arrange that the labels for each tip are actually a function
+--    that passes additional labels to the ancestor.
 
 sampleYule n lambda = do 
 
