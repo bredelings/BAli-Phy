@@ -528,25 +528,34 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
 
         try
         {
+            std::ostringstream buffer;
+            {
+                cereal::BinaryOutputArchive archive( buffer );
+                archive(CM->all_inputs_sha());
+                archive(CM);
+            }
+            string data = buffer.str();
+            string archive_sha = boost::compute::detail::sha1(data);
+
+            if (log_verbose >= 2)
+                std::cerr<<"Writing archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
+
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
 
             // Create and open the temporary file.
             std::ofstream tmp_file(tmp_path, std::ios::binary | std::ios::trunc);
 
-            if (not tmp_file)
-                throw myexception()<<"Could not open file!";
+            if (not tmp_file) throw myexception()<<"Could not open file!";
 
-	    // Write the archive to the temporary file.
-            cereal::BinaryOutputArchive archive( tmp_file );
-            archive(CM->all_inputs_sha());
-            archive(CM);
+            // Write the archive to the temporary file.
+            tmp_file.write(data.c_str(),data.size());
             tmp_file.close();
 
             // Move the temporary file to the correct location.
             fs::rename(tmp_path, *mod_path);
 
-	    return true;
+            return true;
         }
         catch (std::exception& e)
         {
