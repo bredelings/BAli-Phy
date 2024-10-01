@@ -1,6 +1,5 @@
 {
     "name": "logNormal",
-    "synonyms": [ "logNormal" ],
     "result_type": "Distribution<Double>",
     "call": "logNormal(@lmu,@lsigma)",
     "import": ["Probability"],

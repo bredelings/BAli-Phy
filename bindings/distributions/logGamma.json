@@ -1,6 +1,5 @@
 {
     "name": "logGamma",
-    "synonyms": ["logGamma"],
     "result_type": "Distribution<Double>",
     "call": "logGamma(@a,@b)",
     "import": ["Probability"],
