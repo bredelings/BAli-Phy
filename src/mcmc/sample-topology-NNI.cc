@@ -25,6 +25,7 @@
 #include "sample.H"
 #include "probability/choose.H"
 #include "util/rng.H"
+#include "dp/4way.H"
 #include "dp/5way.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"
@@ -53,8 +54,6 @@ using std::optional;
 
 using std::abs;
 using std::valarray;
-
-using namespace A5;
 
 
 /// Update statistics counters for an NNI move.
@@ -690,6 +689,57 @@ void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b
     }
 }
 
+void three_way_NNI_A4_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2, int b3)
+{
+    PP.select_root(b);
+    PP.cache_likelihood_branches();
+
+    //------ Generate Topologies and alter caches ------///
+    vector<Parameters> p(3,PP);
+
+    double L0 = 1;
+    if (PP.t().has_branch_lengths())
+        L0 = PP.t().branch_length(b);
+
+    vector< A4::hmm_order > orders(3);
+    orders[0] = A4::get_nodes_random(p[0].t(), b);
+
+    // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
+    p[1].NNI_discard_alignment(b1, b2);
+    orders[1] = A4::get_nodes_random(p[1].t(), b);
+
+    // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
+    p[2].NNI_discard_alignment(b1, b3);
+    orders[2] = A4::get_nodes_random(p[2].t(), b);
+
+    const vector<log_double_t> rho(3,1);
+
+    //------ Resample alignments and select topology -----//
+
+    try {
+        int C = sample_A4_multi(p,orders,rho);
+
+        if (C != -1) {
+            PP = p[C];
+        }
+
+        MCMC::Result result(2);
+
+        result.totals[0] = (C>0)?1:0;
+        // This gives us the average length of branches prior to successful swaps
+        if (C>0)
+            result.totals[1] = L0;
+        else
+            result.counts[1] = 0;
+
+        NNI_inc(Stats,"NNI (3-way)", result, L0);
+    }
+    catch (choose_exception<log_double_t>& c)
+    {
+        c.prepend(__PRETTY_FUNCTION__);
+        throw c;
+    }
+}
 void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();

@@ -39,6 +39,7 @@
 #endif
 class Parameters;
 class data_partition;
+namespace A4 { struct hmm_order; }
 namespace A5 { struct hmm_order; }
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
@@ -47,6 +48,12 @@ log_double_t other_subst(const data_partition& P, const std::vector<int>& nodes)
 /// Sum of branch priors for branches not connected to no
 log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes);
 
+
+/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
+int sample_A4_multi(std::vector<Parameters>& p,const std::vector< A4::hmm_order >& orders,
+			   const std::vector<log_double_t>& rho);
+
+std::optional<log_double_t> sample_A4_ratio(std::vector<Parameters>& p, const std::vector<A4::hmm_order>& order, const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_A5_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
