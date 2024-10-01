@@ -142,7 +142,7 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 		continue;
 	}
 
-	p /= pow(P.sequence_length_pr(n) , 2.0);
+	p /= pow(P.sequence_length_pr(n) , t.degree(n)-1);
     }
 
     return p;

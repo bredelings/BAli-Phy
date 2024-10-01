@@ -89,13 +89,18 @@ namespace A5 {
   // What happens if we care about alignments that aren't part of the 3way?
   // Does this block stuff?  I think it did...
 
-  log_double_t correction(const data_partition& P,const hmm_order& order) 
-  {
-    if (P.variable_alignment())
-      return pow( P.sequence_length_pr(order.nodes[4]) * P.sequence_length_pr(order.nodes[5]), 2);
-    else
-      return 1;
-  }
+    log_double_t correction(const data_partition& P,const hmm_order& order) 
+    {
+        if (P.variable_alignment())
+        {
+            auto T = P.t();
+            int n4 = order.nodes[4];
+            int n5 = order.nodes[5];
+            return pow( P.sequence_length_pr(n4), T.degree(n4)-1) * pow(P.sequence_length_pr(n5), T.degree(n5)-1);
+        }
+        else
+            return 1;
+    }
 
 
   log_double_t correction(const Parameters& P,const hmm_order& order) 

@@ -94,10 +94,15 @@ namespace A4 {
 
     log_double_t correction(const data_partition& P,const hmm_order& order) 
     {
-	if (P.variable_alignment())
-	    return pow( P.sequence_length_pr(order.nodes[3]), 2 ) * P.sequence_length_pr(order.nodes[4]);
-	else
-	    return 1;
+        if (P.variable_alignment())
+        {
+            auto T = P.t();
+            int n3 = order.nodes[3];
+            int n4 = order.nodes[4];
+            return pow(P.sequence_length_pr(n3), T.degree(n3)-1) * pow(P.sequence_length_pr(n4), T.degree(n4)-1);
+        }
+        else
+            return 1;
     }
 
 

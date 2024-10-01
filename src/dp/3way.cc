@@ -97,15 +97,17 @@ namespace A3 {
     return nodes;
   }
   
-  log_double_t correction(const data_partition& P,const vector<int>& nodes) 
-  {
-    if (P.variable_alignment())
+    log_double_t correction(const data_partition& P,const vector<int>& nodes) 
     {
-      return pow(P.sequence_length_pr(nodes[0]), 2);
+        if (P.variable_alignment())
+        {
+            auto T = P.t();
+            int n = nodes[0];
+            return pow(P.sequence_length_pr(n), P.t().degree(n)-1);
+        }
+        else
+            return 1;
     }
-    else
-      return 1;
-  }
 
   log_double_t correction(const Parameters& P,const vector<int>& nodes) 
   {
