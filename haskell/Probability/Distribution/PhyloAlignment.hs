@@ -89,7 +89,10 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
                                                             | numNodes tree == 1 = alignment_pr1 (ls IntMap.! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
-alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internalNodes tree)
+alignment_prs_bot as tree (_, lengthp) = [ pow pr (1-n) | node <- internalNodes tree,
+                                                          let pr = lengthp $ seqlength as tree node,
+                                                          let n = fromIntegral $ nodeDegree tree node
+                                         ]
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) (getUEdges tree)
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls IntMap.! 0) model]
