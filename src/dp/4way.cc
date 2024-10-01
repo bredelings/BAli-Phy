@@ -57,7 +57,8 @@ namespace A4 {
 
 	vector<int> branches;
 	t.append_branches_after(b, branches);
-	t.append_branches_after(b, branches);
+	t.append_branches_after(t.reverse(b),branches);
+	assert(branches.size() == 3);
 
 	vector<int> nodes(5);
 
