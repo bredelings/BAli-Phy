@@ -15,3 +15,13 @@ import Data.OldList hiding (all, any, and, concat, concatMap, elem, find,
                             maximum, minimum, -- maximumBy, minimumBy,
                             length, notElem, null, or, product, sum)
 
+import Data.Semigroup
+import Data.Monoid
+
+instance Semigroup [a] where
+    (<>) = (++)
+
+instance Monoid [a] where
+    mempty = []
+    mconcat xss = [x | xs <- xss, x <- xs]
+
