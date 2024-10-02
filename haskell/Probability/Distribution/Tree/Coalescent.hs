@@ -13,17 +13,17 @@ import           Data.Array
 
 {- NOTE: Time scaling in the coalescent.
 
-Time scale      Coalescent    Mutation     Generation       Time
+Time scale      Coalescent    Mutation     Recombination    Generation       Time
 
-generations       1/N          mu[g]         1              1/tau
+generations       1/N          mu[g]         r[g]              1              1/tau
 
-coalescent         1          N*mu[g]        N              N/tau
-                   1          theta/2        N              N/tau
+coalescent         1          N*mu[g]       N*r[g]             N              N/tau
+                   1          theta/2        rho/2             N              N/tau
 
-phylogenetic    1/(N*mu[g])      1         1/mu[g]         1/mu[t]
-                 2/(theta)       1         1/mu[g]         1/mu[t]
+phylogenetic    1/(N*mu[g])      1           r/g             1/mu[g]         1/mu[t]
+                 2/(theta)       1         rho/theta         1/mu[g]         1/mu[t]
 
-time units        tau/N        mu[t]        tau              1
+time units        tau/N        mu[t]         r[t]              tau              1
 
 Definitions:
 
