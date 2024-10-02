@@ -205,6 +205,13 @@ void reg_heap::destroy_step_and_created_regs(int s)
             assert(has_step1(r));
             int s2 = step_index_for_reg(r);
             destroy_step_and_created_regs(s2);
+
+	    // Most steps that we destroy are in a tip token, not in the root.
+	    // For the last step for an unforgettable reg will be in the root, not in the tip token.
+	    // Therefore we need to unmap it from the root.
+	    // See also reg_heap::clear_step( ).  It appears to be completely unused, though.
+	    prog_steps[r] = non_computed_index;
+	    assert(not has_step1(r));
         }
         reclaim_used(r);                      // This clears the reg.
     }
