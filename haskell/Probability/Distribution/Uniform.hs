@@ -89,8 +89,11 @@ uniform_int_quantile l u x | x <= l     = 0
                            | otherwise  = fromIntegral (x-l) / fromIntegral (u-l+1)
 
 uniform_int_bounds l u = integer_between l u
-uniform_int_effect l u x = add_move $ sliceSampleInteger x (uniform_int_bounds l u)
-
+uniform_int_effect l u x = do
+  -- the slice sampling move refuses to add or remove variables.
+  addMove (1/3) $ sliceSampleInteger x (uniform_int_bounds l u)
+  addMove (1/3) $ discrete_uniform_avoid_mh x l u
+  addMove (1/3) $ inc_dec_mh x (uniform_int_bounds l u)
 
 uniform_int l u = UniformInt l u
 
