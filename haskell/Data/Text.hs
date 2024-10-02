@@ -20,6 +20,8 @@ import qualified Prelude as P
 import Data.Char
 import Data.Ord
 import Data.Eq
+import Data.Semigroup
+import Data.Monoid
 import Control.DeepSeq
 
 import qualified Foreign.String as FS
@@ -287,3 +289,10 @@ doubleToText d = Text arr 0 (FS.sizeOfString arr) where arr = doubleToCPPString 
 toCppString (Text arr off len) = FS.cppSubString arr off len
 
 instance NFData Text
+
+instance Semigroup Text where
+    (<>) = append
+
+instance Monoid Text where
+    mempty = empty
+    mconcat = concat
