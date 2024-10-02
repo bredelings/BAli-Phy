@@ -157,6 +157,7 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 
 void slice_sample_node_time(owned_ptr<Model>& P,MoveStats& Stats,int n)
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n  [slice_sample_node_time]\n";
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_node_time(n))
         return;

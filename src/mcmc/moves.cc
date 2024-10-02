@@ -554,6 +554,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
 
 void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& Stats)
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
