@@ -10,11 +10,13 @@
 - MCMC:
   + Allow time-tree-NNI to interchange around the root.
   + Allow time-tree-NNI to resample alignments.
+  + Diversify transition kernels for uniform_int distribution.
 - Bug fixes:
   + Module loading.
     - Don't crash when multiple copies of bali-phy write the same module archive simultaneously.
     - Avoid reading partially-overwritten files by writing a unique file, then renaming.
     - Perform an integrity check on the archive contents.
+  + Fix assertion failure when destroying an unforgettable modifiable.
 - Tests:
   + Refactor tests so that `ninja test` runs each testsuite test seprately.
   + Add CI for `ninja test`.
