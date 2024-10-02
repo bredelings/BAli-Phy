@@ -93,9 +93,30 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     }
 
     // 2b. Kind-check the type vars
+    bool ok = true;
     for(int i=0; i<eqn.args.size(); i++)
-        K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
-    K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+    {
+        try {
+            // FIXME: we don't have location information on args[i], because default_type_instance doesn't have it.
+            K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
+        }
+        catch (std::exception& e)
+        {
+            record_error(Note()<<e.what());
+            ok = false;
+        }
+    }
+    try
+    {
+        // FIXME: we don't have location information on rhs, because default_type_instance doesn't have it.
+        K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+    }
+    catch (std::exception& e)
+    {
+        record_error(Note()<<e.what());
+        ok = false;
+    }
+    if (not ok) return;
 
     // 2c. Record the final kinds for the free type vars
     for(int i=0; i<eqn.args.size(); i++)
@@ -358,7 +379,14 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     //  -- new -- //
     Type inst_type = add_constraints(desugar(inst_decl.context.constraints), constraint);
-    inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
+    try {
+	inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
+    }
+    catch (std::exception& e)
+    {
+	// We should already have an error from add_type_instance( ) above, so don't issue one here.
+	return {};
+    }
 
     // -- break down the inst_type into pieces. -- //
     auto tt = inst_type;
