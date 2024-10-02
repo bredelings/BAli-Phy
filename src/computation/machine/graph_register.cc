@@ -443,7 +443,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             double rate = expression_at(r).sub()[0].as_double();
             int r_kernel = closure_at(r).reg_for_slot(1);
             if (log_verbose >= 5)
-                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: REGISTER!\n";
+                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: REGISTER!\n";
             register_transition_kernel(r, s);
         }
         else if (has_constructor(E, "Effect.Logger"))
@@ -511,7 +511,7 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             double rate = expression_at(r).sub()[0].as_double();
             int r_kernel = closure_at(r).reg_for_slot(1);
             if (log_verbose >= 5)
-                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: UNREGISTER!\n";
+                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: UNREGISTER!\n";
             unregister_transition_kernel(r, s);
         }
         else if (has_constructor(E, "Effect.Logger"))
