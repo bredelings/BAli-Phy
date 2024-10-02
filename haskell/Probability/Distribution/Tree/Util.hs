@@ -3,6 +3,8 @@ module Probability.Distribution.Tree.Util where
 import Probability.Random
 import Probability.Distribution.Uniform
 import Probability.Distribution.Exponential
+import Data.Maybe (isJust)
+import Tree
 
 type Time = Double
 type Rate = Double
@@ -38,3 +40,8 @@ shuffle xs = do
   (first,rest) <- removeOne xs
   restShuffled <- shuffle rest
   return (first:restShuffled)
+
+parentBeforeChildPrs tree = [factor n | n <- getNodes tree, isJust (parentNode tree n)]
+    where time = nodeTime tree
+          factor n = case parentNode tree n of Just p  -> require $ time n <= time p
+

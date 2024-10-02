@@ -40,11 +40,6 @@ sample_uniform_time_tree age n = do
       allNodeTimes = IntMap.fromList $ zip [0..] all_times
   return $ time_tree topology allNodeTimes
 
-parentBeforeChildPrs tree = [factor n | n <- getNodes tree]
-    where time = nodeTime tree
-          factor n = case parentNode tree n of Nothing -> possible
-                                               Just p  -> require $ time n <= time p
-
 uniform_time_tree_pr age n_leaves tree = factor0 : parentBeforeChildPrs tree
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
