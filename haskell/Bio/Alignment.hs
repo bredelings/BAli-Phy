@@ -152,16 +152,16 @@ find_sequence label sequences = find (\s -> fst s == label) sequences
 
 -- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
 -- Complain if a labeled node doesn't have a corresponding entry in the Map.
-labelToNodeMap :: HasLabels t => t -> [(Text, v)] -> IntMap (Maybe v)
+labelToNodeMap :: (HasLabels t, Eq (LabelType t)) => t -> [(LabelType t, v)] -> IntMap (Maybe v)
 labelToNodeMap tree things = getNodesSet tree & IntMap.fromSet objectForNode where
     objectForNode node = case getLabel tree node of
                            Nothing -> Nothing
                            Just label ->
                                case lookup label things of
                                  Just object -> Just object
-                                 Nothing -> error $ "No object for node labeled " ++ Text.unpack label
+                                 Nothing -> error $ "No object for node with a certain label"
 
-getSequencesOnTree :: HasLabels t => [Sequence] -> t -> IntMap (Maybe Sequence)
+getSequencesOnTree :: (HasLabels t, LabelType t ~ Text) => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
     sequence_for_node node = case getLabel tree node of
                                Nothing ->  Nothing
@@ -170,7 +170,7 @@ getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequen
                                      Just sequence -> Just sequence
                                      Nothing -> error $ "No such sequence " ++ Text.unpack label
 
-getLabelled :: HasLabels t => t -> (Text -> a -> b) -> IntMap a -> [b]
+getLabelled :: HasLabels t => t -> (LabelType t -> a -> b) -> IntMap a -> [b]
 getLabelled tree f things = catMaybes $ fmap go $ IntMap.toList things where
     go (node, thing) = case getLabel tree node of
                          Just label -> Just $ f label thing

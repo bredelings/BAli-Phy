@@ -262,10 +262,10 @@ instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
 instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
     modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.keysSet ds & IntMap.fromSet f)
 
-instance HasBranchLengths t => HasBranchLengths (WithLabels t) where
+instance HasBranchLengths t => HasBranchLengths (WithLabels t l) where
     branchLength (WithLabels tree _) b = branchLength tree b
 
-instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t) where
+instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t l) where
     modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
 
 branchLengthTree topology lengths = WithBranchLengths topology lengths
@@ -273,21 +273,22 @@ branchLengthTree topology lengths = WithBranchLengths topology lengths
 ------------------ Labels ----------------
 
 class IsGraph g => HasLabels g where
-    getLabel :: g -> Int -> Maybe Text
+    type family LabelType g
+    getLabel :: g -> Int -> Maybe (LabelType g)
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
     -- indexes on nodes...
     -- TODO: make the C++ code handle this...
     
-    getLabels :: g -> IntMap (Maybe Text)
-    relabel :: IntMap (Maybe Text) -> g -> g
+    getLabels :: g -> IntMap (Maybe (LabelType g))
+    relabel :: IntMap (Maybe (LabelType g)) -> g -> g
 
-data WithLabels t = WithLabels t (IntMap (Maybe Text))
+data WithLabels t l = WithLabels t (IntMap (Maybe l))
 
-instance NFData t => NFData (WithLabels t) where
+instance (NFData t, NFData l) => NFData (WithLabels t l) where
     rnf (WithLabels tree labels) = rnf tree `seq` rnf labels
 
-instance IsGraph t => IsGraph (WithLabels t) where
+instance IsGraph t => IsGraph (WithLabels t l) where
     getNodesSet (WithLabels t _)                 = getNodesSet t
     getEdgesSet (WithLabels t _)                 = getEdgesSet t
 
@@ -299,20 +300,22 @@ instance IsGraph t => IsGraph (WithLabels t) where
     getEdgeAttributes (WithLabels t _) edge      = getEdgeAttributes t edge
     getAttributes (WithLabels t _)               = getAttributes t
 
-instance IsGraph t => HasLabels (WithLabels t) where
+instance IsGraph t => HasLabels (WithLabels t l) where
+    type instance LabelType (WithLabels t l) = l
     getLabel  (WithLabels _ labels) node = labels IntMap.! node
     getLabels (WithLabels _ labels) = labels
     relabel newLabels (WithLabels t _) = WithLabels t newLabels
 
 instance HasLabels t => HasLabels (WithBranchLengths t) where
+    type instance LabelType (WithBranchLengths t) = LabelType t
     getLabel  (WithBranchLengths t _) node = getLabel t node
     getLabels (WithBranchLengths t _) = getLabels t
     relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
 
-instance IsDirectedGraph g => IsDirectedGraph (WithLabels g) where
+instance IsDirectedGraph g => IsDirectedGraph (WithLabels g l) where
     isForward (WithLabels g _) e = isForward g e
 
-instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithLabels g)
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithLabels g l)
 
 addLabels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
 

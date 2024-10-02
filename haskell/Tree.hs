@@ -57,7 +57,7 @@ instance IsTree Tree
 
 instance IsTree t => IsTree (WithRoots t)
 
-instance IsTree t => IsTree (WithLabels t)
+instance IsTree t => IsTree (WithLabels t l)
 
 instance IsTree t => IsTree (WithBranchLengths t)
 

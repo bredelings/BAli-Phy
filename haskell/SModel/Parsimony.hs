@@ -11,6 +11,7 @@ import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
 import Data.Maybe (maybeToList)
+import Data.Text (Text)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -30,7 +31,7 @@ foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet
 
 
 class Parsimony a where
-    parsimony :: (IsTree t, HasLabels t) => t -> a -> MutCosts -> Int
+    parsimony :: (IsTree t, HasLabels t, LabelType t ~ Text) => t -> a -> MutCosts -> Int
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t

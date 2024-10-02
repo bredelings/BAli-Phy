@@ -171,16 +171,16 @@ unlabelledCoalescentTree leafTimes rateShifts = UnlabelledCoalescentTree leafTim
 
 -------------------------------------------------------------
 
-data CoalescentTree = CoalescentTree [(Text,Time)] [(Time,Double)]
+data CoalescentTree l = CoalescentTree [(l,Time)] [(Time,Double)]
 
-instance Dist CoalescentTree where
-    type Result CoalescentTree = WithLabels (WithNodeTimes (WithRoots Tree))
+instance Dist (CoalescentTree l) where
+    type Result (CoalescentTree l) = WithLabels (WithNodeTimes (WithRoots Tree)) l
     dist_name _ = "CoalescentTree"
 
-instance HasAnnotatedPdf CoalescentTree where
+instance HasAnnotatedPdf (CoalescentTree l) where
     annotated_densities (CoalescentTree taxonAges rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
 
-instance Sampleable CoalescentTree where
+instance Sampleable (CoalescentTree l) where
     sample dist@(CoalescentTree taxonAges rateShifts) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes rateShifts)
         where taxonAgeIndices = zip taxonAges [0..] 
               leafTimes = [(node,time) | ((name,time),node) <- taxonAgeIndices]

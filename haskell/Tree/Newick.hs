@@ -22,6 +22,7 @@ import Data.Unique.Id
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import Data.Array
+import Data.Text.Display
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
@@ -47,9 +48,9 @@ instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
 foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
 
-instance WriteNewickNode t => WriteNewickNode (WithLabels t) where
+instance (WriteNewickNode t, Display l) => WriteNewickNode (WithLabels t l) where
     node_info   tree node                         = case getLabel tree node of
-                                                      Just label -> quoteLabel label
+                                                      Just label -> quoteLabel (display label)
                                                       Nothing -> T.empty
     branch_info (WithLabels tree labels) branch = branch_info tree branch
 

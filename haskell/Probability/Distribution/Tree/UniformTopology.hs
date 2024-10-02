@@ -89,7 +89,7 @@ uniformLabelledTree taxa branchLengthsDist = do
   addTreeMoves 1 tree
   return tree
 
-uniformLabelledTree' :: [Text] -> (forall t. IsTree t => t -> Random (IntMap Double)) -> Random (WithBranchLengths (WithLabels Tree))
+uniformLabelledTree' :: [l] -> (forall t. IsTree t => t -> Random (IntMap Double)) -> Random (WithBranchLengths (WithLabels Tree l))
 uniformLabelledTree' taxa dist = do
   topology <- RanSamplingRate 0 $ uniformLabelledTopology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ (dist topology)

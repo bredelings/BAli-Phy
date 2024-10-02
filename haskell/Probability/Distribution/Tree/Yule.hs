@@ -118,16 +118,16 @@ sampleLabeledYule labels lambda = do
   leafIndices <- zip (leafNodes tree) <$> shuffle labels
   return $ addLabels leafIndices tree
 
-data Yule = Yule [Text] Rate
+data Yule l = Yule [l] Rate
 
-instance Dist Yule where
-    type Result Yule = WithLabels (WithNodeTimes (WithRoots Tree))
+instance Dist (Yule l) where
+    type Result (Yule l) = WithLabels (WithNodeTimes (WithRoots Tree)) l
     dist_name _ = "Yule"
 
-instance HasAnnotatedPdf Yule where
+instance HasAnnotatedPdf (Yule l) where
     annotated_densities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
 
-instance Sampleable Yule where
+instance Sampleable (Yule l) where
     sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableLabeledTimeTree (sampleLabeledYule taxa lambda)
 
 yule taxa lambda = Yule taxa lambda

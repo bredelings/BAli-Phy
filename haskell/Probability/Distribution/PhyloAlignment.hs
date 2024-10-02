@@ -132,7 +132,7 @@ alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
   SamplingRate 0.1 $ add_move $ realign_from_tips tree as
 
-data PhyloAlignment t = (HasLabels t, IsTree t) => PhyloAlignment t IModel (Map.Map Text Int) (IntMap PairHMM)
+data PhyloAlignment t = (HasLabels t, IsTree t, Eq (LabelType t)) => PhyloAlignment t IModel (Map.Map (LabelType t) Int) (IntMap PairHMM)
 
 instance Dist (PhyloAlignment t) where
     type Result (PhyloAlignment t) = AlignmentOnTree t
