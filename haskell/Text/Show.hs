@@ -5,10 +5,6 @@ import Foreign.String
 import Data.List
 import Data.Function
 
-foreign import bpcall "Prelude:" show_int :: Int -> CPPString
-foreign import bpcall "Prelude:" show_integer :: Integer -> CPPString
-foreign import bpcall "Prelude:" show_double :: Double -> CPPString
-
 class Show a where
     show :: a -> [Char]
     showList :: [a] -> [Char]
