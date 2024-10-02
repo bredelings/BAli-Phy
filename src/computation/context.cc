@@ -327,6 +327,7 @@ void context_ref::run_transition_kernels()
         auto [s, t, _] = get_next_transition_kernel(tk_groups);
 
         // Run the T.K.
+        if (log_verbose >= 4) std::cerr<<"context::run_transition_kernels: executing TK registered by step s = "<<s<<"\n";
         perform_transition_kernel(s);
 
         // Handle differences here.
