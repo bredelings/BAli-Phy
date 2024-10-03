@@ -37,9 +37,9 @@ tree_prior taxa = do
     popSize <- sample $ logLaplace 0 1  -- Favor small population sizes -> high coalescent rates -> more recent root age.
 
     let taxonAges = getTaxonAges taxa "s(\\d+)$" Forward
-        rateShifts = [(0, popSize)]
+        popSizes = [(0, popSize)]
 
-    tree <- sample $ coalescentTree taxonAges rateShifts
+    tree <- sample $ coalescentTree taxonAges popSizes
 
     let loggers   = ["N_over_tau" %=% popSize]
 
