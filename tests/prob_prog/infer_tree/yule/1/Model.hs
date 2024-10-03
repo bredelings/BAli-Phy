@@ -48,7 +48,7 @@ model seqData logTree = do
     addMove 1 $ scaleGroupSlice [ nodeTime tree node | node <- internalNodes tree ]
 
     let tlength = treeLength tree
-        substs = parsimony tree seqData (unitCostMatrix dna)
+        substs = parsimony tree (unitCostMatrix dna) seqData
         rootAge = nodeTime tree (root tree)
         loggers = ["tree" %>% tree_loggers,
                    "tn93" %>% sloggers,

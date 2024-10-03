@@ -34,14 +34,15 @@ smodel_prior nucleotides =  do
 
 tree_prior taxa = do
 
-    popSize <- sample $ logLaplace 0 1  -- Favor small population sizes -> high coalescent rates -> more recent root age.
+    popSize <- sample $ logNormal 3 2  -- Favor small population sizes -> high coalescent rates -> more recent root age.
 
     let taxonAges = getTaxonAges taxa "s(\\d+)$" Forward
         popSizes = [(0, popSize)]
 
     tree <- sample $ coalescentTree taxonAges popSizes
 
-    let loggers   = ["N_over_tau" %=% popSize]
+    let loggers   = ["N_over_tau" %=% popSize,
+                     "coalescentPr" %=% ln (density (coalescentTree taxonAges popSizes) tree)]
 
     return (tree, loggers)
 
@@ -54,13 +55,13 @@ model seqData logTree = do
 
     (smodel, sloggers    ) <- smodel_prior dna
 
-    mu <- sample $ logLaplace 1 1  -- Favor high mutation rates -> more recent root age.
+    mu <- sample $ logNormal (-5) 1.25  -- Favor high mutation rates -> more recent root age.
 
     -- We can't inverse-scale mu because it is exp(modifiable), not directly modifiable.
     addMove 1 $ scaleGroupSlice [ nodeTime tree node | node <- internalNodes tree ]
 
     let tlength = treeLength tree
-        substs = parsimony tree seqData (unitCostMatrix dna)
+        substs = parsimony tree (unitCostMatrix dna) seqData
         rootAge = nodeTime tree (root tree)
         loggers = ["tree" %>% tree_loggers,
                    "tn93" %>% sloggers,

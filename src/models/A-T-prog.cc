@@ -619,7 +619,7 @@ compute_logged_quantities(do_block& model,
 	if (imodel_index)
 	    aligned_data = Tuple(sequence_data, alignment_on_tree);
 
-	model.let(substs, {var("parsimony"), tree, aligned_data, costs});
+	model.let(substs, {var("parsimony"), tree, costs, aligned_data});
 	sub_loggers.push_back({var("%=%"), String("#substs"), substs });
 	if (alphabet_exp.print().starts_with("mkRNA"))
 	{
@@ -629,7 +629,7 @@ compute_logged_quantities(do_block& model,
 
 	    var substs_pos2("substsRNA"+suffix);
 	    expression_ref costs_pos2 = {var("pos2CostMatrix"),alphabet_exp};
-	    model.let(substs_pos2, {var("parsimony"), tree, aligned_data, costs_pos2});
+	    model.let(substs_pos2, {var("parsimony"), tree, costs_pos2, aligned_data});
 	    sub_loggers.push_back({var("%=%"), String("#substsRNA"), substs_pos2 });
 	}
 

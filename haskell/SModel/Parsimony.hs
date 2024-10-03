@@ -31,7 +31,7 @@ foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet
 
 
 class Parsimony a where
-    parsimony :: (IsTree t, HasLabels t, LabelType t ~ Text) => t -> a -> MutCosts -> Int
+    parsimony :: (IsTree t, HasLabels t, LabelType t ~ Text) => t -> MutCosts -> a -> Int
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t
@@ -54,7 +54,7 @@ parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as
                                       in peel_muts t pc as root seqs alpha cost
 
 instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
-    parsimony tree (sequenceData,alignment) costs = let as = pairwise_alignments alignment
+    parsimony tree costs (sequenceData,alignment) = let as = pairwise_alignments alignment
                                                         alphabet = getAlphabet sequenceData
                                                         maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
                                                     in parsimony_root tree maybeNodeSequences as alphabet costs
@@ -84,7 +84,7 @@ parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_mu
                                                   in peel_muts_fixed_A t pc root seqs alpha cost counts
 
 instance Parsimony AlignedCharacterData where
-    parsimony tree alignment cost = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
+    parsimony tree cost alignment = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
                                         maybeNodeISequences = labelToNodeMap tree isequences
                                         maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
                                         alphabet = getAlphabet alignment
