@@ -108,9 +108,9 @@ Then we can express the probability as
 Here `rate node` would (1/popSize(t)) for coalescent nodes, and 1 for all other nodes.
 
 We could also do                                                  
-    product [ Pr(nothing happens in (t!node1, t!node2)) * rate (t!node) order | order <- [0..num Nodestree-2],
-                                                                                let node1 = n!order,
-                                                                                node2 = n!(order+1)
+    product [ prNothingHappensIn (t!node1) (t!node2) * rate (t!node) (nNodes t!node) | order <- [0..num Nodestree-2],
+                                                                                       let node1 = n!order,
+                                                                                       node2 = n!(order+1)
             ]
 
 The population size model then needs to be able to calculate
@@ -125,6 +125,23 @@ instantaneous coalescent rate would be affected by the order.  But we can requir
 the same time as another node.
 
 -}
+
+{- NOTE: Expressing coalescent tree probabilities, Part II
+
+   Suppose we pass in a demographic model that gives N(t).
+   In theory we can then compute the integral of (1/N(t)) from t1 to t2 under the model, to give Pr(nothing happens in t1, t2).
+   In theory can we can also determine the time til the next coalescent event starting from time t.
+   But how do we determine the number of tips alive at time t?
+   I guess for node of rank r, we have \sum i=0 to r-1 is_leaf(i) - is_internal(i) = n_leaves_before(t) - n_coalescents_before(t)
+
+   Also, this doesn't handle:
+   - multiple demes
+   - migration events
+
+   Trees are automatically labeled with coalescent events.  But they aren't automatically labeled with migration events.
+   Maybe we should assume they are?
+   At population merge times, we also need to relabel 
+ -}
 
 coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
