@@ -462,6 +462,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	auto y = make_var(unloc(AP.var));
 	rhs.add_binding({{y, x}});
 	pat1 = unloc(AP.pattern);
+	clean_up_pattern(x, eqn);
     }
     // case x of (pat::type) -> rhs  => case wrap(x) of pat -> rhs
     else if (auto tp = pat1.to<Haskell::TypedPattern>())
