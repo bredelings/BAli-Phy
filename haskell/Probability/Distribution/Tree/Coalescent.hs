@@ -78,10 +78,7 @@ lists/arrays could be reallocated.
 The merge algorithm as written above makes it impossible to know that the final
 size is independent of the sorting order.
 
-One possibility would be to compute a rank-order.  Let's assume that for IntMaps
-we first convert them to two arrays values!i and keys!i.  Then we can recompute
-the IntMap from \i -> (keys!i, values!i) and we also get the order via
-\i -> (keys!i, order!i).
+One possibility would be to compute a rank-order from an array of values [2].
 
 - Say we divide the original set of indices into pairs.  We can compute the rank
   order for each index within its pair.
@@ -95,6 +92,9 @@ the IntMap from \i -> (keys!i, values!i) and we also get the order via
   order for N elements, and computing each rank order takes log(N) time.
   So the total order would be N*log^2(N).
 
+[2] Let's assume that for IntMaps we first convert them to two arrays values!i
+    and keys!i.  Then we can compute the order from \i -> (keys!i, order!i).
+
 -}
 
 {- NOTE: Expressing coalescent tree probabilities
@@ -104,21 +104,39 @@ node n (Int->Node) for each rank order the rank order is the number of nodes
 that are ranked earlier [1].
 
 Then we can express the probability as
-    product [ Pr(nothing happens in [t!node,t!(n!((o!node)-1))]) * rate node | node <- getNodes tree ]
+
+    product [ prNothingHappensIn (t!node1) (t!node2) * rate node | node1 <- getNodes tree,
+                                                                   let node2 = n!((o!node)-1)
+                                                  ]
+
 Here `rate node` would (1/popSize(t)) for coalescent nodes, and 1 for all other nodes.
 
 We could also do                                                  
+
     product [ prNothingHappensIn (t!node1) (t!node2) * rate (t!node) (nNodes t!node) | order <- [0..num Nodestree-2],
                                                                                        let node1 = n!order,
-                                                                                       node2 = n!(order+1)
+                                                                                           node2 = n!(order+1)
             ]
 
 The population size model then needs to be able to calculate
  * Pr(nothing happens in [t1,t2])
  * the instantneous rate of coalescence at time t.
- * the number of lineages alive at time t.
  * -- if simulating -- the time til the next coalescent event.
 
+But how do we determine the number of tips alive at time t?
+I guess for node of rank r, we have \sum i=0 to r-1 is_leaf(i) - is_internal(i) = n_leaves_before(t) - n_coalescents_before(t)
+Suppose the number of leaves at time t is L(t).  Then
+
+  order <- [1..numNodes] -- If there are numNodes *nodes*, then there are numNodes-1 *intervals*.
+  let node1 = n!(order-1)
+      node2 = n!order
+      leafEvents = nLeavesAfter (t!node1)
+      eventsInInterval = order
+      coalescentEvents = events - leafEvents
+      activeNodes = leafEvents - coalescentEvents
+                  = leafEvents - (events - leafEvents)
+                  = 2*leafEvents - events
+      
 [1] "ranked earlier" means younger, or the same age and ordered earlier.  Does the order for same-age nodes matter?
 Well, Pr(nothing happens) in the middle should always be 1.  But if one of the nodes is a coalescent node, then the
 instantaneous coalescent rate would be affected by the order.  But we can require that coalescent nodes never have
@@ -126,22 +144,15 @@ the same time as another node.
 
 -}
 
-{- NOTE: Expressing coalescent tree probabilities, Part II
-
-   Suppose we pass in a demographic model that gives N(t).
-   In theory we can then compute the integral of (1/N(t)) from t1 to t2 under the model, to give Pr(nothing happens in t1, t2).
-   In theory can we can also determine the time til the next coalescent event starting from time t.
-   But how do we determine the number of tips alive at time t?
-   I guess for node of rank r, we have \sum i=0 to r-1 is_leaf(i) - is_internal(i) = n_leaves_before(t) - n_coalescents_before(t)
+{- NOTE: Expressing coalescent tree probabilities: multiple populations
 
    Also, this doesn't handle:
    - multiple demes
    - migration events
 
    Trees are automatically labeled with coalescent events.  But they aren't automatically labeled with migration events.
-   Maybe we should assume they are?
-   At population merge times, we also need to relabel 
- -}
+   At population merge/split times, we also need to relabel times by deme transitions.
+-}
 
 coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
