@@ -40,11 +40,11 @@ void parse_simple_range(const string& range,int L,int& begin,int& end)
 	throw myexception()<<"Malformed range '"<<range<<"'";
     else {
 	begin = 0;
-	if (R[0].size())
+	if (R[0].size() and R[0] != ".")
 	    begin = convertTo<int>(R[0])-1;
 
 	end = L-1;
-	if (R[1].size())
+	if (R[1].size() and R[1] != ".")
 	    end = convertTo<int>(R[1])-1;
     }
     
@@ -74,7 +74,12 @@ void parse_simple_range(const string& range,int L,int& begin,int& end)
 ///
 void parse_modulo_range(const string& range,int L,int& begin, int& end, int& step)
 {
-    vector<string> R = split(range,'/');
+    // Note that PAUP has ranges like '4-457 662-.'
+    // First check for '\' like PAUP.
+    vector<string> R = split(range,'\\');
+
+    if (R.size() == 1)
+	R = split(range,'/');
 
     if (R.size() == 1) 
 	step = 1;
@@ -102,6 +107,7 @@ void parse_modulo_range(const string& range,int L,int& begin, int& end, int& ste
 ///
 vector<int> parse_multi_range(const string& range,int L)
 {
+    // PAUP splits on ranges on whitespace, and uses commas to separate multi-ranges.
     vector<string> ranges = split(range,',');
 
     vector<int> columns;
