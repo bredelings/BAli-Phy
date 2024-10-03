@@ -188,12 +188,12 @@ getNextEvent (Just (t1,x)) Nothing                   = Just (t1, Left x)
 getNextEvent (Just (t1,x)) (Just (t2,y)) | t1 < t2   = Just (t1, Left x)
                                          | otherwise = Just (t2, Right y)
 
-sampleCoalescentTree leafTimes ((t0,popSize0):rateShifts) = do
+sampleCoalescentTree leafTimes ((t0,popSize0):popSizes) = do
 
   let nLeaves = length leafTimes
       firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
       nodes  =  [(time, Leaf node)      | (node, time) <- sortOn snd leafTimes]
-      shifts =  [(time, RateShift rate) | (time, rate) <- rateShifts]
+      shifts =  [(time, RateShift (1/popSize)) | (time, popSize) <- popSizes]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
   let go :: Double -> Double -> Int -> [Int] -> [(Double,CoalEvent)] -> ([Int],[(Int,Int)],[(Int,Double)]) -> Random ([Int], [(Int,Int)], [(Int,Double)])
