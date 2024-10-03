@@ -47,9 +47,9 @@ tree_prior taxa = do
     return (tree, loggers)
 
 
-model seqData logTree = do
+model seqData@[seqData1,seqData2,seqData3] logTree = do
 
-    let taxa = getTaxa seqData
+    let taxa = getTaxa seqData1
 
     (tree  , tree_loggers) <- tree_prior taxa
 
@@ -60,27 +60,43 @@ model seqData logTree = do
     -- We can't inverse-scale mu because it is exp(modifiable), not directly modifiable.
     addMove 1 $ scaleGroupSlice [ nodeTime tree node | node <- internalNodes tree ]
 
+    weights <- map (3*) <$> (sample $ symmetricDirichlet 3 3)
+
+    let [mu1,mu2,mu3] = map (mu*) weights
+
+    observe seqData1 $ phyloCTMC tree (alignmentLength seqData1) smodel mu1
+
+    observe seqData2 $ phyloCTMC tree (alignmentLength seqData2) smodel mu2
+
+    observe seqData3 $ phyloCTMC tree (alignmentLength seqData3) smodel mu3
+
+    addLogger $ logTree (addInternalLabels tree)
+
     let tlength = treeLength tree
-        substs = parsimony tree (unitCostMatrix dna) seqData
+        substs = map (parsimony tree (unitCostMatrix dna)) seqData
         rootAge = nodeTime tree (root tree)
         loggers = ["tree" %>% tree_loggers,
                    "tn93" %>% sloggers,
                    "|T|" %=% tlength,
                    "mu*|T|" %=% tlength * mu,
                    "rootAge" %=% rootAge,
+                   "weights" %=% weights,
                    "mu" %=% mu,
-                   "#substs" %=% substs]
-
-    observe seqData $ phyloCTMC tree (alignmentLength seqData) smodel mu
-
-    addLogger $ logTree (addInternalLabels tree)
+                   "mu1" %=% mu1,
+                   "mu2" %=% mu2,
+                   "mu3" %=% mu3,
+                   "#substs" %=% substs,
+                   "#total_substs" %=% sum substs]
 
     return loggers
 
 main logDir = do
+
     [filename] <- getArgs
 
-    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
+    sequences <- load_sequences filename
+
+    let seqData = [ mkAlignedCharacterData dna $ select_range range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 
     -- This is placed in the wrong directory.
     logTree <- treeLogger $ logDir </> "C1.trees"
