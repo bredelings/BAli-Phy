@@ -180,14 +180,20 @@ We could actually factor out the common parts if we could pass a constant Sample
 
 -}
 
+{- This runs as a SEQUENCE of operations in the IO monad.
+ - The sequence can in theory be changeable, if it depends (for example) on the number of density terms.
+ - It would seem that the coalescent probability, which has a fixed number of terms but gets them by sorting,
+   appears to have a changeable list of density terms.
+ -}
+
 sampleEffectProps rate dist tk_effect x = do
+  runTkEffects rate $ tk_effect x
   s <- register_dist_sample (dist_name dist)
   register_out_edge s x
   (densityTerms, props) <- makeEdges s $ annotated_densities dist x
   registerDistProperties s props
   sequence_ [register_prior s term | term <- densityTerms]
 
-  runTkEffects rate $ tk_effect x
 
   return props
 
