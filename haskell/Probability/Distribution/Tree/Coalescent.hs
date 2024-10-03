@@ -120,7 +120,7 @@ We could also do
 
 The population size model then needs to be able to calculate
  * Pr(nothing happens in [t1,t2])
- * the instantneous rate of coalescence at time t.
+ * the instantaneous rate of coalescence at time t.
  * -- if simulating -- the time til the next coalescent event.
 
 But how do we determine the number of tips alive at time t?
@@ -136,7 +136,7 @@ Suppose the number of leaves at time t is L(t).  Then
       activeNodes = leafEvents - coalescentEvents
                   = leafEvents - (events - leafEvents)
                   = 2*leafEvents - events
-      
+
 [1] "ranked earlier" means younger, or the same age and ordered earlier.  Does the order for same-age nodes matter?
 Well, Pr(nothing happens) in the middle should always be 1.  But if one of the nodes is a coalescent node, then the
 instantaneous coalescent rate would be affected by the order.  But we can require that coalescent nodes never have
