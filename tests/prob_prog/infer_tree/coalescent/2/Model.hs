@@ -14,11 +14,10 @@ import           System.FilePath
 
 {- Problems:
 
- 1. The population size has these jumps to really large values. (So 1/N just to really small values).
- 2. The large jumps seem not to affect the prior.
+ 1. We can explain the data ignoring the sample ages if we have high low mutation rates and deep coalescence times.
+    - We want the prior to favor high mutation rates.
+    - We want the prior to favor a recent root age => high coalescent rates => small population sizes.
  3. N/tau prints as tau
- 4. There's bad mixing between mu and |T| -- how to handle this?
-    - We could try to scale the node times, but we don't want to move the tip nodes...
 
 -}
 
@@ -35,7 +34,7 @@ smodel_prior nucleotides =  do
 
 tree_prior taxa = do
 
-    popSize <- sample $ logLaplace 2 2
+    popSize <- sample $ logLaplace 0 1  -- Favor small population sizes -> high coalescent rates -> more recent root age.
 
     let taxonAges = getTaxonAges taxa "s(\\d+)$" Forward
         rateShifts = [(0, popSize)]
@@ -55,7 +54,7 @@ model seqData logTree = do
 
     (smodel, sloggers    ) <- smodel_prior dna
 
-    mu <- sample $ logLaplace (-5) 1
+    mu <- sample $ logLaplace 1 1  -- Favor high mutation rates -> more recent root age.
 
     -- We can't inverse-scale mu because it is exp(modifiable), not directly modifiable.
     addMove 1 $ scaleGroupSlice [ nodeTime tree node | node <- internalNodes tree ]
