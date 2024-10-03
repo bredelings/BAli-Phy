@@ -68,6 +68,64 @@ instance Show CoalEvent where
     show (Internal n ) = "Internal " ++ show n
     show (RateShift r ) = "RateShift " ++ show r
 
+{- NOTE: On changeable sorting
+
+We want an algorithm where the size of intermediate and result lists/arrays is not
+changeable when the size of the input list/array is not changeable.  If we don't
+do that, then the registration of probability factors can be invalidated, and also
+lists/arrays could be reallocated.
+
+The merge algorithm as written above makes it impossible to know that the final
+size is independent of the sorting order.
+
+One possibility would be to compute a rank-order.  Let's assume that for IntMaps
+we first convert them to two arrays values!i and keys!i.  Then we can recompute
+the IntMap from \i -> (keys!i, values!i) and we also get the order via
+\i -> (keys!i, order!i).
+
+- Say we divide the original set of indices into pairs.  We can compute the rank
+  order for each index within its pair.
+- We could then merge the rank-order for two adjacent ranges [a,b],(b,c] by
+  doing something like:
+  - rank2!i = rank1!i + numLowerElements i l u
+       where (l,u) = bounds of paired subrange
+             numLowerElements i l u = binary search for (x!i,i) within l and u
+
+- This should lead to log(N) levels, and at each level we compute an sub-rank
+  order for N elements, and computing each rank order takes log(N) time.
+  So the total order would be N*log^2(N).
+
+-}
+
+{- NOTE: Expressing coalescent tree probabilities
+
+What we really want to know is the order o (NodeId -> Int) of the nodes and the
+node n (Int->Node) for each rank order the rank order is the number of nodes
+that are ranked earlier [1].
+
+Then we can express the probability as
+    product [ Pr(nothing happens in [t!node,t!(n!((o!node)-1))]) * rate node | node <- getNodes tree ]
+Here `rate node` would (1/popSize(t)) for coalescent nodes, and 1 for all other nodes.
+
+We could also do                                                  
+    product [ Pr(nothing happens in (t!node1, t!node2)) * rate (t!node) order | order <- [0..num Nodestree-2],
+                                                                                let node1 = n!order,
+                                                                                node2 = n!(order+1)
+            ]
+
+The population size model then needs to be able to calculate
+ * Pr(nothing happens in [t1,t2])
+ * the instantneous rate of coalescence at time t.
+ * the number of lineages alive at time t.
+ * -- if simulating -- the time til the next coalescent event.
+
+[1] "ranked earlier" means younger, or the same age and ordered earlier.  Does the order for same-age nodes matter?
+Well, Pr(nothing happens) in the middle should always be 1.  But if one of the nodes is a coalescent node, then the
+instantaneous coalescent rate would be affected by the order.  But we can require that coalescent nodes never have
+the same time as another node.
+
+-}
+
 coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- rateShifts]
