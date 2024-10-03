@@ -154,11 +154,12 @@ the same time as another node.
    At population merge/split times, we also need to relabel times by deme transitions.
 -}
 
-coalescentTreePrFactors ((t0,popSize0):rateShifts) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
+coalescentTreePrFactors ((t0,popSize0):popSizes) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
-          shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- rateShifts]
+          shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- popSizes]
           events = merge (\x y -> fst x < fst y) nodes shifts
-          go t1 []                  n rate factors = factors
+          go t1 []                  n rate factors | n == 1    = factors
+                                                   | otherwise = error $ "coalescent n == " ++ show n
           go t1 ((t2,event):events) n rate factors =
               case event of
                 RateShift newRate -> go t2 events n     newRate (prNothing: factors)
@@ -248,12 +249,12 @@ instance Dist UnlabelledCoalescentTree where
     dist_name _ = "coalescentTree"
 
 instance HasAnnotatedPdf UnlabelledCoalescentTree where
-    annotated_densities (UnlabelledCoalescentTree leafTimes rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
+    annotated_densities (UnlabelledCoalescentTree leafTimes popSizes) tree = return (coalescentTreePrFactors popSizes tree, ())
 
 instance Sampleable UnlabelledCoalescentTree where
-    sample dist@(UnlabelledCoalescentTree leafTimes rateShifts) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes rateShifts)
+    sample dist@(UnlabelledCoalescentTree leafTimes popSizes) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes popSizes)
 
-unlabelledCoalescentTree leafTimes rateShifts = UnlabelledCoalescentTree leafTimes rateShifts
+unlabelledCoalescentTree leafTimes popSizes = UnlabelledCoalescentTree leafTimes popSizes
 
 -------------------------------------------------------------
 
@@ -264,15 +265,15 @@ instance Dist (CoalescentTree l) where
     dist_name _ = "CoalescentTree"
 
 instance HasAnnotatedPdf (CoalescentTree l) where
-    annotated_densities (CoalescentTree taxonAges rateShifts) tree = return (coalescentTreePrFactors rateShifts tree, ())
+    annotated_densities (CoalescentTree taxonAges popSizes) tree = return (coalescentTreePrFactors popSizes tree, ())
 
 instance Sampleable (CoalescentTree l) where
-    sample dist@(CoalescentTree taxonAges rateShifts) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes rateShifts)
+    sample dist@(CoalescentTree taxonAges popSizes) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes popSizes)
         where taxonAgeIndices = zip taxonAges [0..] 
               leafTimes = [(node,time) | ((name,time),node) <- taxonAgeIndices]
               leafIndices = [(node,name) | ((name,time),node) <- taxonAgeIndices]
 
-coalescentTree taxonAges rateShifts = CoalescentTree taxonAges rateShifts
+coalescentTree taxonAges popSizes = CoalescentTree taxonAges popSizes
 
 ----------- Alternative coalescent sampling -----------------
 -- This version references neighboring node structures directly, instead of just
@@ -287,12 +288,12 @@ data RootedTreeNode = RTNode { rTnodeName :: Int, rTnodeTime :: Time, rToutEdges
 -- When we don't know the node's parent yet, we store a function from parent(s) to node.
 type NodeNoParent = [RootedTreeNode] -> RootedTreeNode
 
-sampleCoalescentTree2 theta leafTimes rateShifts = do
+sampleCoalescentTree2 theta leafTimes popSizes = do
 
   let nLeaves = length leafTimes
       firstInternal = 1 + maximum [node | (node, time) <- leafTimes]
-      nodes  =  [(time, Leaf node)      | (node, time) <- sortOn fst leafTimes]
-      shifts =  [(time, RateShift rate) | (time, rate) <- sortOn fst rateShifts]
+      nodes  =  [(time, Leaf node)             | (node, time) <- sortOn fst leafTimes]
+      shifts =  [(time, RateShift (1/popSize)) | (time, popSize) <- sortOn fst popSizes]
       events = merge (\x y -> fst x < fst y) nodes shifts
 
   let go :: Double -> Double -> Int -> [NodeNoParent] -> [(Double, CoalEvent)] -> Random [NodeNoParent]
