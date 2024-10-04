@@ -719,6 +719,8 @@ void Parameters::cache_likelihood_branches() const
 
 void Parameters::select_root(int b) const
 {
+    if (n_data_partitions() == 0) return;
+
     if (t().source(b) == subst_root() or t().target(b) == subst_root())
         return;
   
@@ -758,7 +760,12 @@ int Parameters::subst_root(int i) const
 
 int Parameters::subst_root() const
 {
-    return subst_root(0);
+    assert(t().n_nodes() > 0);
+
+    if (n_data_partitions() > 0)
+	return subst_root(0);
+    else
+	return t().nodes()[0];
 }
 
 void Parameters::setlength_unsafe(int b,double l) 

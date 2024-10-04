@@ -525,7 +525,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
     {
@@ -556,7 +556,7 @@ void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& St
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
     {
@@ -584,7 +584,7 @@ void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& St
 void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 {
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
     {
@@ -601,7 +601,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
     double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
 
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
     {
@@ -619,7 +619,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
 void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     double cube_fraction = P->load_value("cube_fraction",0.00);
 
@@ -737,7 +737,7 @@ void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats)
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_tree_sample_branch_lengths]\n";
 
     Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
+    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
     {
