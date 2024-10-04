@@ -442,6 +442,9 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
             best_leaf_branch = b;
     }
 
+    // If the tree has no branches, then quit here.
+    if (not best_leaf_branch) return {};
+
     b_stack.push_back(*best_leaf_branch);
 
     while(not b_stack.empty())
