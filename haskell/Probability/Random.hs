@@ -193,13 +193,13 @@ sampleEffectProps rate dist tk_effect x = do
   (densityTerms, props) <- makeEdges s $ annotated_densities dist x
   registerDistProperties s props
   sequence_ [register_prior s term | term <- densityTerms]
-
-
   return props
 
 sampleEffect rate dist tk_effect x = do
   sampleEffectProps rate dist tk_effect x
   return () 
+
+infix 0 `observe`
 
 observe datum dist = liftIO $ do
   s <- register_dist_observe (dist_name dist)
@@ -207,10 +207,12 @@ observe datum dist = liftIO $ do
   (densityTerms, props) <- makeEdges s $ annotated_densities dist datum
   registerDistProperties s props
   sequence_ [register_likelihood s term | term <- densityTerms]
-
   return props
 
-infix 0 `observe`
+require cond = liftIO $ do
+  s <- register_dist_observe "require"
+  register_likelihood s (if cond then 1 :: LogDouble else 0 :: LogDouble)
+  return ()
 
 {-  So, how do we do an action that samples and returns properties?
     Constructors like RanDistribution2/3 need to specify a return value -- Random x or Random (x,properties).
