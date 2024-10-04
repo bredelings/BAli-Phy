@@ -748,9 +748,12 @@ void Parameters::set_root_(int node) const
 
 void Parameters::set_root(int node) const
 {
-    if (subst_root() != node)
-        set_root_(node);
-    assert(subst_root() == node);
+    if (n_data_partitions() > 0)
+    {
+	if (subst_root() != node)
+	    set_root_(node);
+	assert(subst_root() == node);
+    }
 }
 
 int Parameters::subst_root(int i) const
