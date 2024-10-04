@@ -65,9 +65,12 @@ double context_slice_function::operator()(double x)
     // How can we automate this so that it is called only once?
     auto ratio = C.heated_probability_ratios(C0);
     if (ratio.variables_changed)
+    {
         throw variables_changed_exception("Variable changed during slice sampling!");
-
-    current_fn_value = ratio.total_ratio();
+        current_fn_value = 0;
+    }
+    else
+        current_fn_value = ratio.total_ratio();
 
     return operator()();
 }
