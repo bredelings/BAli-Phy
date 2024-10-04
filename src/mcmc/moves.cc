@@ -278,7 +278,7 @@ std::unordered_map<int,int> get_cost(const TreeInterface& t)
         stack1.push_back(b2);
     }
 
-    if (t.n_leaves() == 2)
+    if (t.n_nodes() == 2)
         return cost;
     
     while(not stack1.empty())
