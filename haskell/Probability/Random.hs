@@ -209,9 +209,13 @@ observe datum dist = liftIO $ do
   sequence_ [register_likelihood s term | term <- densityTerms]
   return props
 
-require cond = liftIO $ do
-  s <- register_dist_observe "require"
-  register_likelihood s (if cond then 1 :: LogDouble else 0 :: LogDouble)
+possible = 1
+impossible = 0
+require p = if p then possible else impossible
+
+condition cond = liftIO $ do
+  s <- register_dist_observe "condition"
+  register_likelihood s (require cond)
   return ()
 
 {-  So, how do we do an action that samples and returns properties?

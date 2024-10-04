@@ -31,10 +31,6 @@ remove n list | n < 0           = error $ "Trying to remove " ++ show n ++ "entr
                          return (x:xs, list_minus_n)
 
 
-possible = 1 :: LogDouble
-impossible = 0 :: LogDouble
-require p = if p then possible else impossible
-
 shuffle [] = return []
 shuffle xs = do
   (first,rest) <- removeOne xs
@@ -44,4 +40,5 @@ shuffle xs = do
 parentBeforeChildPrs tree = [factor n | n <- getNodes tree, isJust (parentNode tree n)]
     where time = nodeTime tree
           factor n = case parentNode tree n of Just p  -> require $ time n <= time p
+
 
