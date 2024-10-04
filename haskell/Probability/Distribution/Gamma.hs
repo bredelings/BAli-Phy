@@ -50,6 +50,7 @@ instance Sampleable Gamma where
 -- do we need it so that changing the "shift" parameter doesn't affect variables sampled from it?
                               
 gammaBounds = above 0
-gammaEffect x = add_move $ sliceSample x gammaBounds
+gammaEffect x = do
+  addMove 1 $ sliceSample x gammaBounds
 
 gamma a b = Gamma a b
