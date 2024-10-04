@@ -926,11 +926,8 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg, {as_reg})));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_tree_sample_alignments(P,Stats);
-        C1 = *P;
-    }
+    walk_tree_sample_alignments(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -952,11 +949,8 @@ extern "C" closure builtin_function_realign_from_tips(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg, {as_reg})));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        realign_from_tips(P,Stats);
-        C1 = *P;
-    }
+    realign_from_tips(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -980,11 +974,8 @@ extern "C" closure builtin_function_sample_SPR_flat(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        sample_SPR_flat(P,Stats);
-        C1 = *P;
-    }
+    sample_SPR_flat(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1005,11 +996,8 @@ extern "C" closure builtin_function_sample_SPR_nodes(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        sample_SPR_nodes(P,Stats);
-        C1 = *P;
-    }
+    sample_SPR_nodes(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1029,11 +1017,8 @@ extern "C" closure builtin_function_sample_SPR_all(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        sample_SPR_all(P,Stats);
-        C1 = *P;
-    }
+    sample_SPR_all(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1054,11 +1039,8 @@ extern "C" closure builtin_function_walk_tree_sample_branch_lengths(OperationArg
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_tree_sample_branch_lengths(P,Stats);
-        C1 = *P;
-    }
+    walk_tree_sample_branch_lengths(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1079,11 +1061,8 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(Oper
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_tree_sample_NNI_and_branch_lengths(P,Stats);
-        C1 = *P;
-    }
+    walk_tree_sample_NNI_and_branch_lengths(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1103,11 +1082,8 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimes(OperationA
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_time_tree_sample_NNI_and_node_times(P,Stats);
-        C1 = *P;
-    }
+    walk_time_tree_sample_NNI_and_node_times(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1127,11 +1103,8 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_tree_sample_NNI(P,Stats);
-        C1 = *P;
-    }
+    walk_tree_sample_NNI(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
@@ -1151,11 +1124,8 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_A(OperationArgs& Ar
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    if (P.as<Parameters>()->n_data_partitions())
-    {
-        walk_tree_sample_NNI_and_A(P,Stats);
-        C1 = *P;
-    }
+    walk_tree_sample_NNI_and_A(P,Stats);
+    C1 = *P;
 
     return constructor("()",0);
 }
