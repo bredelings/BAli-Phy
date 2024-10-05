@@ -129,8 +129,8 @@ annotated_alignment_prs tree hmms model alignment = do
   return $ (prs, props)
 
 alignment_effect (AlignmentOnTree tree n ls as) = do
-  SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree as
-  SamplingRate 0.1 $ add_move $ realign_from_tips tree as
+  SamplingRate 1 $ add_move $ walkTreeSampleAlignments tree as
+  SamplingRate 0.1 $ add_move $ realignFromTips tree as
 
 data PhyloAlignment t = (HasLabels t, IsTree t, Eq (LabelType t)) => PhyloAlignment t IModel (Map.Map (LabelType t) Int) (IntMap PairHMM)
 
@@ -155,7 +155,7 @@ instance SampleableWithProps (PhyloAlignment t) where
 
 phyloAlignment tree model scale tip_lengths = PhyloAlignment tree model tip_lengths (branch_hmms model tree scale)
 
-foreign import bpcall "MCMC:" walk_tree_sample_alignments :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleAlignments :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" realign_from_tips :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" realignFromTips :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
 

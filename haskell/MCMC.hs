@@ -45,35 +45,28 @@ sliceSample x bnds c = sliceSampleRaw x (c_range bnds) c
 foreign import bpcall "MCMC:" sliceSampleIntegerRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSampleInteger x bnds c = sliceSampleIntegerRaw x (c_range bnds) c
 
-foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: Modifiable t -> ContextIndex -> EVector Int
-walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
+foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> EVector Int
+walk_tree_path tree c = vector_to_list $ walkTreePathRaw tree c
 
 -- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:" nni_on_branch_unsafe :: Modifiable t -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" fnprUnsafeProposalRaw :: Modifiable t -> Int -> ContextIndex -> IO LogDouble
+fnprUnsafeProposal tree branch = Proposal $ fnprUnsafeProposalRaw tree branch
 
--- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:" tnni_on_branch_unsafe :: Modifiable t -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleNNI :: Modifiable t -> ContextIndex -> IO ()
 
--- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:" fnpr_unsafe_proposal :: Modifiable t -> Int -> ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" walkTreeSampleNNIandA :: Modifiable t -> ContextIndex -> IO ()
 
-walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
-
-foreign import bpcall "MCMC:" walk_tree_sample_NNI :: Modifiable t -> ContextIndex -> IO ()
-
-foreign import bpcall "MCMC:" walk_tree_sample_NNI_and_A :: Modifiable t -> ContextIndex -> IO ()
-
-foreign import bpcall "MCMC:" walk_tree_sample_NNI_and_branch_lengths :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleNNIandBranchLengths :: Modifiable t -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" walkTimeTreeSampleNNIandNodeTimes :: Modifiable t -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" walk_tree_sample_branch_lengths :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleBranchLengths :: Modifiable t -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" sample_SPR_all :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" sampleSPRAll :: Modifiable t -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" sample_SPR_nodes :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" sampleSPRNodes :: Modifiable t -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" sample_SPR_flat :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" sampleSPRFlat :: Modifiable t -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" copyContext :: ContextIndex -> IO ContextIndex
 

@@ -795,7 +795,7 @@ void FNPR_move(context_ref& c, int tree_reg, int n)
 }
 
 
-extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -824,7 +824,7 @@ extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
     return v;
 }
 
-extern "C" closure builtin_function_fnpr_unsafe_proposal(OperationArgs& Args)
+extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -844,72 +844,7 @@ extern "C" closure builtin_function_fnpr_unsafe_proposal(OperationArgs& Args)
     return {log_double_t(1.0)};
 }
 
-extern "C" closure builtin_function_nni_on_branch_unsafe(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
-
-    //------------- 1a. Get argument X -----------------//
-    int tree_reg = Args.evaluate_slot_unchangeable(0);
-
-    int b = Args.evaluate(1).as_int();
-
-    int c1 = Args.evaluate(2).as_int();
-
-    //------------ 2. Make a TreeInterface -------------//
-    context_ref C1(M, c1);
-
-    NNI_move(C1, tree_reg, b);
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_tnni_on_branch_unsafe(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
-
-    //------------- 1a. Get argument X -----------------//
-    int tree_reg = Args.evaluate_slot_unchangeable(0);
-
-    int b = Args.evaluate(1).as_int();
-
-    int c1 = Args.evaluate(2).as_int();
-
-    //------------ 2. Make a TreeInterface -------------//
-    context_ref C1(M, c1);
-
-    TT_NNI_move(C1, tree_reg, b);
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
-{
-    // int b = evaluate(1).as_int();
-
-    // int c = evaluate( ).as_int()
-
-    // hmm = context(c).get_branch_HMM(b)
-
-    // 0. get the original context
-
-    // 1. P.select_root(b)
-
-    // 2. If b points to a leaf node, reverse it
-
-    // 3. #if debug #then copy the initial context -> P0 #endif
-
-    // 4. For each partition,
-    //       [matrix,ratio] <- sample the alignment
-    //       total_ratio *= ratio
-
-    // 5. the end (do we really do anything with the total_ratio?)
-    return constructor("()",0);
-}
-
-
-extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleAlignments(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -932,7 +867,7 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_realign_from_tips(OperationArgs& Args)
+extern "C" closure builtin_function_realignFromTips(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -959,7 +894,7 @@ extern "C" closure builtin_function_realign_from_tips(OperationArgs& Args)
 
 /// sample_two_nodes
 
-extern "C" closure builtin_function_sample_SPR_flat(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRFlat(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -981,7 +916,7 @@ extern "C" closure builtin_function_sample_SPR_flat(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_sample_SPR_nodes(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRNodes(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1002,7 +937,7 @@ extern "C" closure builtin_function_sample_SPR_nodes(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_sample_SPR_all(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRAll(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1024,7 +959,7 @@ extern "C" closure builtin_function_sample_SPR_all(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_walk_tree_sample_branch_lengths(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleBranchLengths(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1046,7 +981,7 @@ extern "C" closure builtin_function_walk_tree_sample_branch_lengths(OperationArg
 }
 
 
-extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengths(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1088,7 +1023,7 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimes(OperationA
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNI(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1109,7 +1044,7 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walk_tree_sample_NNI_and_A(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNIandA(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();

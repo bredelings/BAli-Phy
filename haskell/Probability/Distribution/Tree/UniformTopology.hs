@@ -42,7 +42,7 @@ uniformLabelledTopology taxa = do
 uniformTopologyEffect tree = do
   -- SPR moves aren't added here because they depend on branch lengths.
   -- Note that we could in theory have multiple branch-length-trees with the same topology.
-  add_move $ walk_tree_sample_NNI tree -- Q: does this handle situations with no data partitions?
+  add_move $ walkTreeSampleNNI tree -- Q: does this handle situations with no data partitions?
 
 -------------------------------------------------------------
 
