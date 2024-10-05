@@ -72,7 +72,7 @@ class Dist d => HasAnnotatedPdf d where
     annotated_densities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
 
 densities dist x = fst $ get_densities $ annotated_densities dist x
-density dist x = balanced_product (densities dist x)
+density dist x = balancedProduct (densities dist x)
 
 
 ---------------------------- TKEffects --------------------------
@@ -379,7 +379,7 @@ foldt f z []  = z
 foldt f _ [x] = x
 foldt f z xs  = foldt f z (pair_apply f xs)
 
-balanced_product xs = foldt (*) 1 xs
+balancedProduct xs = foldt (*) 1 xs
 
 -- maybe I should rename this to (modifiableList_n n f value) or something.
 mapn n f xs = go 0 where
