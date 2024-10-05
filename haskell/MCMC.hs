@@ -20,7 +20,7 @@ type TransitionKernel a = ContextIndex -> IO a
 type LoggerAction = Int -> Double -> Double -> Double -> IO ()
 
 -- data Proposal = Proposal (ContextIndex -> IO LogDouble)
-type Proposal = ContextIndex -> IO LogDouble
+data Proposal = Proposal (ContextIndex -> IO LogDouble)
 
 -- It is unfortunate that modifiable-ness is not visible at the type level.
 type Modifiable a = a
@@ -110,12 +110,12 @@ scaleGroupsSlice xs ys = scaleGroupsSliceRaw (toList xs) (toList ys)
 
 scaleGroupSlice xs = scaleGroupsSlice xs []
 
-scaleGroupsProposal xs ys = scaleGroupsProposalRaw (toList xs) (toList ys)
-                                           
+scaleGroupsProposal xs ys = Proposal $ scaleGroupsProposalRaw (toList xs) (toList ys)
+
 scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
 
 metropolisHastings :: Proposal -> ContextIndex -> IO Bool
-metropolisHastings proposal c1 = do
+metropolisHastings (Proposal proposal) c1 = do
   c2 <- copyContext c1
   ratio <- proposal c2
   accept <- acceptMH c1 c2 ratio
@@ -126,8 +126,8 @@ metropolisHastings proposal c1 = do
 foreign import bpcall "MCMC:" getAtomicModifiableValueInContext :: Modifiable a -> ContextIndex -> IO a
 foreign import bpcall "MCMC:" setAtomicModifiableValueInContext :: Modifiable a -> a -> ContextIndex -> IO ()
 
-propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
-propose x dist c = do
+propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> Proposal
+propose x dist = Proposal $ \c -> do
   x1 <- getAtomicModifiableValueInContext x c -- This is guaranteed to be an Int, Double, LogDouble, Char, or Object.
                                               -- x has to be an atomic modifiable.  We can't use it to propose trees...
   x2 <- sampleIO (dist x1)
@@ -136,3 +136,4 @@ propose x dist c = do
       rho21 = pdf (dist x2) x1
       hastingsRatio = rho21/rho12
   return hastingsRatio
+
