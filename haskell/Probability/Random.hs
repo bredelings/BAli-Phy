@@ -353,7 +353,7 @@ runMCMCLazy rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   return (withEffect effect result)
 runMCMCLazy rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId
-  registerTransitionKernel rate $ interchange_entries id
+  registerTransitionKernel rate $ interchangeEntries id
   return $ liftIO $ IO (\s -> (s, interchangeableIO id (runMCMCLazy rate r) s))
 runMCMCLazy rate (RanOp op) = op (runMCMCLazy rate)
 
@@ -414,12 +414,13 @@ modifiableStructure = triggeredModifiableStructure applyModifier
                        
 foreign import bpcall "MCMC:" getInterchangeableId :: IO Int
 
-foreign import bpcall "MCMC:" interchange_entries :: Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" interchangeEntriesRaw :: Int -> ContextIndex -> IO ()
+interchangeEntries id = TransitionKernel $ interchangeEntriesRaw id
 
-foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
+foreign import bpcall "MCMC:" registerInterchangeable :: Int -> a -> Effect
 
-foreign import bpcall "Modifiables:interchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
+foreign import bpcall "Modifiables:interchangeable" interchangeableRaw :: (a->b) -> a -> c -> b
 
-interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
-                           in register_interchangeable id e `seq` e
+interchangeableIO id x s = let e = interchangeableRaw unsafePerformIO x s
+                           in registerInterchangeable id e `seq` e
 

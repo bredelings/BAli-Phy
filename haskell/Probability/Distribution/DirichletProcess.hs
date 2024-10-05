@@ -99,7 +99,7 @@ triggeredModifiableList n value effect = let raw_list = mapn n modifiable value
                                              triggered_list = mapn n (withEffect effect') raw_list
                                          in triggered_list
 
-crp_effect n d x = addMove 1 (\c -> mapM_ (\l-> gibbsSampleCategorical (x!!l) (n+d) c) [0..n-1])
+crp_effect n d x = addMove 1 $ TransitionKernel (\c -> mapM_ (\l-> runTK c $ gibbsSampleCategorical (x!!l) (n+d)) [0..n-1])
 
 safe_exp x = if (x < (-20)) then
                exp (-20)

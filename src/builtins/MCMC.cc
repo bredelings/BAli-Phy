@@ -25,7 +25,7 @@ using std::optional;
 using std::vector;
 using std::shared_ptr;
 
-extern "C" closure builtin_function_registerTransitionKernel(OperationArgs& Args)
+extern "C" closure builtin_function_registerTransitionKernelRaw(OperationArgs& Args)
 {
     double rate = Args.evaluate(0).as_double();
 
@@ -139,7 +139,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 }
 
 // gibbs_sample_categorical x n pr
-extern "C" closure builtin_function_gibbsSampleCategorical(OperationArgs& Args)
+extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Args)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[gibbs_sample_categorical]\n";
 
@@ -246,7 +246,7 @@ bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
 
 
 // gibbs_sample_categorical x n pr
-extern "C" closure builtin_function_discreteUniformAvoidMH(OperationArgs& Args)
+extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -844,7 +844,7 @@ extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)
     return {log_double_t(1.0)};
 }
 
-extern "C" closure builtin_function_walkTreeSampleAlignments(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleAlignmentsRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -867,7 +867,7 @@ extern "C" closure builtin_function_walkTreeSampleAlignments(OperationArgs& Args
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_realignFromTips(OperationArgs& Args)
+extern "C" closure builtin_function_realignFromTipsRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -894,7 +894,7 @@ extern "C" closure builtin_function_realignFromTips(OperationArgs& Args)
 
 /// sample_two_nodes
 
-extern "C" closure builtin_function_sampleSPRFlat(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRFlatRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -916,7 +916,7 @@ extern "C" closure builtin_function_sampleSPRFlat(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_sampleSPRNodes(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRNodesRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -937,7 +937,7 @@ extern "C" closure builtin_function_sampleSPRNodes(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_sampleSPRAll(OperationArgs& Args)
+extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -959,7 +959,7 @@ extern "C" closure builtin_function_sampleSPRAll(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_walkTreeSampleBranchLengths(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleBranchLengthsRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -981,7 +981,7 @@ extern "C" closure builtin_function_walkTreeSampleBranchLengths(OperationArgs& A
 }
 
 
-extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengths(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengthsRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1002,7 +1002,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengths(OperationA
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimes(OperationArgs& Args)
+extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimesRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1023,7 +1023,7 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimes(OperationA
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walkTreeSampleNNI(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNIRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1044,7 +1044,7 @@ extern "C" closure builtin_function_walkTreeSampleNNI(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walkTreeSampleNNIandA(OperationArgs& Args)
+extern "C" closure builtin_function_walkTreeSampleNNIandARaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -1195,7 +1195,7 @@ extern "C" closure builtin_function_getInterchangeableId(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_register_interchangeable(OperationArgs& Args)
+extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
 {
     // 1. Get the interchangeable id.
     int id = Args.evaluate(0).as_int();
@@ -1252,7 +1252,7 @@ pair<int,int> random_different_element_pair(const vector<int>& v)
 }
 
 
-extern "C" closure builtin_function_interchange_entries(OperationArgs& Args)
+extern "C" closure builtin_function_interchangeEntriesRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();

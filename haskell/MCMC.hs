@@ -13,8 +13,9 @@ import Probability.Dist
 -- data ContextIndex = ContextIndex Int
 type ContextIndex = Int
 
--- TransitionKernel a = TransitionKernel (ContextIndex -> IO a)
-type TransitionKernel = ContextIndex -> IO ()
+data TransitionKernel = TransitionKernel (ContextIndex -> IO ())
+
+runTK c (TransitionKernel kernel) = kernel c
 
 --- The first four arguments allow giving the logger the generation number, prior, likelihood, and probability.
 type LoggerAction = Int -> Double -> Double -> Double -> IO ()
@@ -24,25 +25,28 @@ data Proposal = Proposal (ContextIndex -> IO LogDouble)
 -- It is unfortunate that modifiable-ness is not visible at the type level.
 type Modifiable a = a
 
-foreign import bpcall "MCMC:" registerTransitionKernel :: Double -> TransitionKernel -> IO Effect
+foreign import bpcall "MCMC:" registerTransitionKernelRaw :: Double -> (ContextIndex -> IO ()) -> IO Effect
+registerTransitionKernel rate (TransitionKernel kernel) = registerTransitionKernelRaw rate kernel                                                             
 
 foreign import bpcall "MCMC:" registerLogger :: LoggerAction -> IO Effect
 
 -- Transition kernel: Perform gibbs sampling on modifiable x, which takes values [0..n-1], in context c
-foreign import bpcall "MCMC:" gibbsSampleCategorical :: Modifiable Int -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" gibbsSampleCategoricalRaw :: Modifiable Int -> Int -> ContextIndex -> IO ()
+gibbsSampleCategorical i n = TransitionKernel (gibbsSampleCategoricalRaw i n)                                                           
 
-foreign import bpcall "MCMC:" discreteUniformAvoidMH :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" discreteUniformAvoidMHRaw :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
+discreteUniformAvoidMH i l u = TransitionKernel (discreteUniformAvoidMHRaw i l u)
 
 -- It would be nice if we could (i) seq x and bounds HERE, and (ii) convert range to bounds HERE.
 -- But the seq needs to be done during changeable execution, and we execute the IO unchangeably.
-foreign import bpcall "MCMC:" incDecMHRaw :: Modifiable Int -> BuiltinBounds -> Int -> IO ()
-incDecMH x bnds c = incDecMHRaw x (c_range bnds) c
+foreign import bpcall "MCMC:" incDecMHRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
+incDecMH x bnds = TransitionKernel $ incDecMHRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" sliceSampleRaw :: Modifiable Double -> BuiltinBounds -> ContextIndex -> IO ()
-sliceSample x bnds c = sliceSampleRaw x (c_range bnds) c
+sliceSample x bnds = TransitionKernel $ sliceSampleRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" sliceSampleIntegerRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
-sliceSampleInteger x bnds c = sliceSampleIntegerRaw x (c_range bnds) c
+sliceSampleInteger x bnds = TransitionKernel $ sliceSampleIntegerRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> EVector Int
 walk_tree_path tree c = vector_to_list $ walkTreePathRaw tree c
@@ -51,21 +55,28 @@ walk_tree_path tree c = vector_to_list $ walkTreePathRaw tree c
 foreign import bpcall "MCMC:" fnprUnsafeProposalRaw :: Modifiable t -> Int -> ContextIndex -> IO LogDouble
 fnprUnsafeProposal tree branch = Proposal $ fnprUnsafeProposalRaw tree branch
 
-foreign import bpcall "MCMC:" walkTreeSampleNNI :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleNNIRaw :: Modifiable t -> ContextIndex -> IO ()
+walkTreeSampleNNI tree = TransitionKernel $ walkTreeSampleNNIRaw tree
 
-foreign import bpcall "MCMC:" walkTreeSampleNNIandA :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleNNIandARaw :: Modifiable t -> ContextIndex -> IO ()
+walkTreeSampleNNIandA tree = TransitionKernel $ walkTreeSampleNNIandARaw tree
 
-foreign import bpcall "MCMC:" walkTreeSampleNNIandBranchLengths :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleNNIandBranchLengthsRaw :: Modifiable t -> ContextIndex -> IO ()
+walkTreeSampleNNIandBranchLengths tree = TransitionKernel $ walkTreeSampleNNIandBranchLengthsRaw tree
 
-foreign import bpcall "MCMC:" walkTimeTreeSampleNNIandNodeTimes :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTimeTreeSampleNNIandNodeTimesRaw :: Modifiable t -> ContextIndex -> IO ()
+walkTimeTreeSampleNNIandNodeTimes tree = TransitionKernel $ walkTimeTreeSampleNNIandNodeTimesRaw tree
 
-foreign import bpcall "MCMC:" walkTreeSampleBranchLengths :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" walkTreeSampleBranchLengthsRaw :: Modifiable t -> ContextIndex -> IO ()
+walkTreeSampleBranchLengths tree = TransitionKernel $ walkTreeSampleBranchLengthsRaw tree                                                             
+foreign import bpcall "MCMC:" sampleSPRAllRaw :: Modifiable t -> ContextIndex -> IO ()
+sampleSPRAll tree = TransitionKernel $ sampleSPRAllRaw tree
 
-foreign import bpcall "MCMC:" sampleSPRAll :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" sampleSPRNodesRaw :: Modifiable t -> ContextIndex -> IO ()
+sampleSPRNodes tree = TransitionKernel $ sampleSPRNodesRaw tree
 
-foreign import bpcall "MCMC:" sampleSPRNodes :: Modifiable t -> ContextIndex -> IO ()
-
-foreign import bpcall "MCMC:" sampleSPRFlat :: Modifiable t -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" sampleSPRFlatRaw :: Modifiable t -> ContextIndex -> IO ()
+sampleSPRFlat tree = TransitionKernel $ sampleSPRFlatRaw tree
 
 foreign import bpcall "MCMC:" copyContext :: ContextIndex -> IO ContextIndex
 
@@ -98,16 +109,18 @@ foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
 
-scaleGroupsSlice xs ys = scaleGroupsSliceRaw (toList xs) (toList ys)
+scaleGroupsSlice xs ys = TransitionKernel $ scaleGroupsSliceRaw (toList xs) (toList ys)
 
 scaleGroupSlice xs = scaleGroupsSlice xs []
 
 scaleGroupsProposal xs ys = Proposal $ scaleGroupsProposalRaw (toList xs) (toList ys)
 
+scaleGroupProposal xs = scaleGroupsProposal xs []
+
 scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
 
-metropolisHastings :: Proposal -> ContextIndex -> IO ()
-metropolisHastings (Proposal proposal) c1 = do
+metropolisHastings :: Proposal -> TransitionKernel
+metropolisHastings (Proposal proposal) = TransitionKernel $ \c1 -> do
   c2 <- copyContext c1
   ratio <- proposal c2
   accept <- acceptMH c1 c2 ratio
