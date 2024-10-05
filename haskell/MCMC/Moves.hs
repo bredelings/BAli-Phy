@@ -2,13 +2,16 @@ module MCMC.Moves (module MCMC.Moves,
                    module MCMC.Moves.MH,
                    module MCMC.Moves.Integer,
                    module MCMC.Moves.Real,
-                   module MCMC.Moves.Tree)
+                   module MCMC.Moves.Tree,
+                   module MCMC.Moves.Alignment
+                  )
     where
 
 import MCMC.Moves.MH
 import MCMC.Moves.Integer
 import MCMC.Moves.Real
 import MCMC.Moves.Tree
+import MCMC.Moves.Alignment
 
 import MCMC.Types -- for registerTransitionKernel
 import Effect     -- for registerTransitionKernel

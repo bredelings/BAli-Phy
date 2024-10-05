@@ -14,9 +14,6 @@ fnprUnsafeProposal tree branch = Proposal $ fnprUnsafeProposalRaw tree branch
 foreign import bpcall "MCMC:" walkTreeSampleNNIRaw :: Modifiable t -> ContextIndex -> IO ()
 walkTreeSampleNNI tree = TransitionKernel $ walkTreeSampleNNIRaw tree
 
-foreign import bpcall "MCMC:" walkTreeSampleNNIandARaw :: Modifiable t -> ContextIndex -> IO ()
-walkTreeSampleNNIandA tree = TransitionKernel $ walkTreeSampleNNIandARaw tree
-
 foreign import bpcall "MCMC:" walkTreeSampleNNIandBranchLengthsRaw :: Modifiable t -> ContextIndex -> IO ()
 walkTreeSampleNNIandBranchLengths tree = TransitionKernel $ walkTreeSampleNNIandBranchLengthsRaw tree
 

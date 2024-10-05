@@ -154,9 +154,3 @@ instance SampleableWithProps (PhyloAlignment t) where
       return (x, props)
 
 phyloAlignment tree model scale tip_lengths = PhyloAlignment tree model tip_lengths (branch_hmms model tree scale)
-
-foreign import bpcall "MCMC:" walkTreeSampleAlignmentsRaw :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
-walkTreeSampleAlignments tree as = TransitionKernel $ walkTreeSampleAlignmentsRaw tree as
-
-foreign import bpcall "MCMC:" realignFromTipsRaw :: t -> IntMap PairwiseAlignment -> ContextIndex -> IO ()
-realignFromTips tree as = TransitionKernel $ realignFromTipsRaw tree as
