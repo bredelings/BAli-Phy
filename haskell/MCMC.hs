@@ -19,7 +19,6 @@ type TransitionKernel a = ContextIndex -> IO a
 --- The first four arguments allow giving the logger the generation number, prior, likelihood, and probability.
 type LoggerAction = Int -> Double -> Double -> Double -> IO ()
 
--- data Proposal = Proposal (ContextIndex -> IO LogDouble)
 data Proposal = Proposal (ContextIndex -> IO LogDouble)
 
 -- It is unfortunate that modifiable-ness is not visible at the type level.
