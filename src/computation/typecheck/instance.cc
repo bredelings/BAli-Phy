@@ -250,6 +250,33 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     pop_note();
 }
 
+// NOTE: Location info in associated type family default instances
+//
+// Default type synonym instances can only have type variables on the LHS, and all variables
+// on the RHS must occur on the LHS. LHS variables don't have to occur in the class
+// declaration for the type family.  For example:
+//
+// class C a where
+//     type family F1 a b
+//     type instance F1 a b = a -> b
+//
+//     type family F2 a c :: Type -> Type
+//
+// When we have a class instance with no type instance, then we use the default type instance.
+// This is obtained by substituting into the default instance.
+//
+// instance C Int where
+//     type F2 Int c = c
+//
+//     -- the default instance for F1 looks like this:
+//     type F1 Int b = Int -> b
+//
+// QUESTION: What kind of location information do we have for kind-checking the default instance for F1?
+// - We have the original instance and its locations.
+// - We have the substitutions of the original type variables such as a -> Int.
+// - I guess in "a -> Int" the "a" could have the location in "class C a" and the "Int" could have
+//   the location from "instance C Int".
+
 void TypeChecker::default_type_instance(const TypeCon& tf_con,
 					const std::optional<TypeFamilyInstanceDecl>& maybe_default,
 					const substitution_t& instance_subst,

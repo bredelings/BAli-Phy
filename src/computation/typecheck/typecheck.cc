@@ -624,6 +624,10 @@ void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
     }
 }
 
+
+// NOTE: K.infer_kinds( ) can fail kind checking.
+//       But currently it doesn't have good location information,
+//          so we get bad error messages.
 void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 {
     // First get standalone kind signatures
