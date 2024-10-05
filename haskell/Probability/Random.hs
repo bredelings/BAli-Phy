@@ -263,7 +263,7 @@ runRandomStrict (PerformTKEffect _) = error "runRandomStrict: PerformTKEffect"
 runRandomStrict (RanOp op) = op runRandomStrict
 
 class Monad m => AddMove m where
-    addMove :: Double -> TransitionKernel a -> m Effect
+    addMove :: Double -> TransitionKernel -> m Effect
 
 instance AddMove Random where
     addMove rate move = RanSamplingRate rate $ PerformTKEffect $ TKLiftIO $ (\rate -> registerTransitionKernel rate move)

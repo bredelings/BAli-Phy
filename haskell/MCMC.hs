@@ -14,7 +14,7 @@ import Probability.Dist
 type ContextIndex = Int
 
 -- TransitionKernel a = TransitionKernel (ContextIndex -> IO a)
-type TransitionKernel a = ContextIndex -> IO a
+type TransitionKernel = ContextIndex -> IO ()
 
 --- The first four arguments allow giving the logger the generation number, prior, likelihood, and probability.
 type LoggerAction = Int -> Double -> Double -> Double -> IO ()
@@ -24,7 +24,7 @@ data Proposal = Proposal (ContextIndex -> IO LogDouble)
 -- It is unfortunate that modifiable-ness is not visible at the type level.
 type Modifiable a = a
 
-foreign import bpcall "MCMC:" registerTransitionKernel :: Double -> TransitionKernel a -> IO Effect
+foreign import bpcall "MCMC:" registerTransitionKernel :: Double -> TransitionKernel -> IO Effect
 
 foreign import bpcall "MCMC:" registerLogger :: LoggerAction -> IO Effect
 
@@ -106,14 +106,14 @@ scaleGroupsProposal xs ys = Proposal $ scaleGroupsProposalRaw (toList xs) (toLis
 
 scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
 
-metropolisHastings :: Proposal -> ContextIndex -> IO Bool
+metropolisHastings :: Proposal -> ContextIndex -> IO ()
 metropolisHastings (Proposal proposal) c1 = do
   c2 <- copyContext c1
   ratio <- proposal c2
   accept <- acceptMH c1 c2 ratio
   if accept then switchToContext c1 c2 else return ()
   releaseContext c2
-  return accept
+  return ()              -- Should we allow `return accept`?
 
 foreign import bpcall "MCMC:" getAtomicModifiableValueInContext :: Modifiable a -> ContextIndex -> IO a
 foreign import bpcall "MCMC:" setAtomicModifiableValueInContext :: Modifiable a -> a -> ContextIndex -> IO ()
