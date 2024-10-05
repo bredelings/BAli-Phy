@@ -134,5 +134,5 @@ propose x dist c = do
   setAtomicModifiableValueInContext x x2 c
   let rho12 = pdf (dist x1) x2
       rho21 = pdf (dist x2) x1
-      hastingsRatio = rho21/rho21
+      hastingsRatio = rho21/rho12
   return hastingsRatio
