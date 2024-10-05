@@ -1137,6 +1137,54 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_A(OperationArgs& Ar
 
 // gibbs_sample_categorical x n pr
 
+extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto& M = Args.memory();
+
+    int x_reg = Args.evaluate_slot_unchangeable(0);
+
+    int context_index = Args.evaluate(1).as_int();
+
+    context_ref C(M, context_index);
+
+    auto x_mod_reg = C.find_modifiable_reg(x_reg);
+    if (not x_mod_reg)
+	throw myexception()<<"getValueInContext: reg "<<x_reg<<" not modifiable!";
+
+    expression_ref x_value = C.get_reg_value(*x_mod_reg);
+    if (x_value.is_expression())
+	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
+
+    return x_value;
+}
+
+extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto& M = Args.memory();
+
+    int x_reg = Args.evaluate_slot_unchangeable(0);
+
+    auto value = Args.evaluate(1);
+
+    int context_index = Args.evaluate(2).as_int();
+
+    context_ref C(M, context_index);
+
+    auto x_mod_reg = C.find_modifiable_reg(x_reg);
+    if (not x_mod_reg)
+	throw myexception()<<"getValueInContext: reg "<<x_reg<<" not modifiable!";
+
+    if (value.is_expression())
+	throw myexception()<<"getValueInContext got non-atomic value '"<<value<<"'";
+
+    C.set_reg_value(*x_mod_reg, value);
+
+    return constructor("()",0);
+}
 
 extern "C" closure builtin_function_copy_context(OperationArgs& Args)
 {
