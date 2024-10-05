@@ -39,13 +39,13 @@ foreign import bpcall "MCMC:" discrete_uniform_avoid_mh :: Modifiable Int -> Int
 foreign import bpcall "MCMC:" inc_dec_mh_raw :: Modifiable Int -> BuiltinBounds -> Int -> IO ()
 inc_dec_mh x bnds c = inc_dec_mh_raw x (c_range bnds) c
 
-foreign import bpcall "MCMC:" slice_sample_real_random_variable_raw :: Double -> BuiltinBounds -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" slice_sample_real_random_variable_raw :: Modifiable Double -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSample x bnds c = slice_sample_real_random_variable_raw x (c_range bnds) c
 
-foreign import bpcall "MCMC:" slice_sample_integer_random_variable_raw :: Int -> BuiltinBounds -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" slice_sample_integer_random_variable_raw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSampleInteger x bnds c = slice_sample_integer_random_variable_raw x (c_range bnds) c
 
-foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: t -> ContextIndex -> EVector Int
+foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: Modifiable t -> ContextIndex -> EVector Int
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
 
 -- This is "unsafe" because it doesn't update alignments
