@@ -154,7 +154,7 @@ the same time as another node.
    At population merge/split times, we also need to relabel times by deme transitions.
 -}
 
-coalescentTreePrFactors ((t0,popSize0):popSizes) tree = go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree)
+coalescentTreePrFactors ((t0,popSize0):popSizes) tree = [balancedProduct $ go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree) ]
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- popSizes]
           events = merge (\x y -> fst x < fst y) nodes shifts
