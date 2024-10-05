@@ -218,17 +218,23 @@ condition cond = liftIO $ do
   register_likelihood s (require cond)
   return ()
 
-{-  So, how do we do an action that samples and returns properties?
-    Constructors like RanDistribution2/3 need to specify a return value -- Random x or Random (x,properties).
-    We COULD make this return Random (Result d, DistProperties d), since (HasAnnotatedPdf d) is a constraint...
-       but does that mean that we would have to use an undefined value for the properties if we sample outside
-       of the mcmc interpreter?
-    Maybe not.  The annotated_densities function IS able to return the properties.
-    So, if we use the annotated_densities function, we COULD compute and return the properties
+{- NOTE: Problems with lists of probability factors.
 
+In order to determine whether a PDF term corresponds to a newly sampled variable,
+we check if the term has been newly registered.  However, if the list of factors
+is itself changeable  (as in the coalescent pdf which does an internal sort), we
+can end up registering new terms (I think), which are then ignored in the ratio
+(I think).
 
--}
-    
+An alternative would be to look not at the individual terms, but at the
+distribution identifier created in `s <- register_dist_*`.  This shouldn't get
+invalidated if the PDF terms change.
+
+However, this leaves the question of what to do if the coalescent tree itself
+changes dimension.
+
+ -}
+
 instance MonadIO Random where
     liftIO io = RanOp (\interp -> io)
 
