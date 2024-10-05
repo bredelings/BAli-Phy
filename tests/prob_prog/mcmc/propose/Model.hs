@@ -12,7 +12,7 @@ model = do
   condition (x > 0 || x <= 0)
 
   -- Try out the generic proposal for atomic objects.
-  addMove 10 $ metropolisHastings $ propose x (\x -> logNormal (log x) 1)
+  addMove 10 $ metropolisHastings $ propose x (\x -> normal (x+1) 1)
 
   -- Log x
   return ["x" %=% x]
