@@ -264,4 +264,19 @@ readBranchLengthTree filename = do
   text <- readFile filename
   newickToBranchLengthTree (parse_newick text)
 
+-- Perhaps we should try and strip off the WithBranchLengths from a general tree...
+-- We would need a type family like Unrooted to walk all the modifiers.
+readTimeTree filename = do
+  text <- readFile filename
+  (tree, lengths) <- newickToTree (parse_newick text)
+  let lengths2 = fmap (fromMaybe 0) lengths
+      nodeTimes = getNodesSet tree & IntMap.fromSet nodeTime
+      nodeTime node = case branchToParent tree node of
+                        Nothing -> 0
+                        Just b -> let p = targetNode tree b
+                                  in (nodeTimes IntMap.! p) + (lengths2 IntMap.! b)
+      present = maximum nodeTimes
+      nodeAges = fmap (\t -> present - t) nodeTimes
 
+  -- Put labels on the outside to match Result CoalescentTree
+  return $ case tree of WithLabels tree1 labels -> WithLabels (WithNodeTimes tree1 nodeAges) labels
