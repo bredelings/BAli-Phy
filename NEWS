@@ -3,10 +3,11 @@
 - Output: simplify results from ancestral sequence reconstruction.
 - Input: allow defining models using multiple lines.
 - Models:
-  + speed up and improve RNA editing model.
-  + refactor coalescent tree distribution.
-  + add Yule tree distribution.
-  + allow '--tree=~uniform_tree(taxa,gamma(0.5,2/length(taxa)))'
+  + Speed up and improve RNA editing model.
+  + Refactor coalescent tree distribution.
+  + Add Yule tree distribution.
+  + Allow '--tree=~uniform_tree(taxa,gamma(0.5,2/length(taxa)))'
+  + Allow trees to be labeled with things besides Text.
 - MCMC:
   + Allow time-tree-NNI to interchange around the root.
   + Allow time-tree-NNI to resample alignments.
@@ -22,6 +23,9 @@
   + Add CI for `ninja test`.
 - Haskell:
   + Make [1 ..] and [1.5 .. ] work for floating point.
+  + Add function `display` that converts things to Text.
+  + Fill out Data.Semigroup and Data.Monoid
+  + Add hand-written proposal for atomic objects.
 - Internal:
   + Rewrite the simplifier optimization pass to use the Core2 AST representation.
 
