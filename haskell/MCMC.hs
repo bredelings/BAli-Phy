@@ -126,7 +126,7 @@ metropolisHastings proposal c1 = do
 foreign import bpcall "MCMC:" getAtomicModifiableValueInContext :: Modifiable a -> ContextIndex -> IO a
 foreign import bpcall "MCMC:" setAtomicModifiableValueInContext :: Modifiable a -> a -> ContextIndex -> IO ()
 
-propose :: (Show a, Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
+propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
 propose x dist c = do
   x1 <- getAtomicModifiableValueInContext x c -- This is guaranteed to be an Int, Double, LogDouble, Char, or Object.
                                               -- x has to be an atomic modifiable.  We can't use it to propose trees...
