@@ -243,7 +243,7 @@ interchangeable = RanInterchangeable
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
-addLogger logger = liftIO $ register_logger logger
+addLogger logger = liftIO $ registerLogger logger
 
 do_nothing _ = return ()
 
@@ -266,12 +266,12 @@ class Monad m => AddMove m where
     addMove :: Double -> TransitionKernel a -> m Effect
 
 instance AddMove Random where
-    addMove rate move = RanSamplingRate rate $ PerformTKEffect $ TKLiftIO $ (\rate -> register_transition_kernel rate move)
+    addMove rate move = RanSamplingRate rate $ PerformTKEffect $ TKLiftIO $ (\rate -> registerTransitionKernel rate move)
 
-add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
+add_move m = TKLiftIO $ (\rate -> registerTransitionKernel rate m)
 
 instance AddMove TKEffects where
-    addMove rate' move = TKLiftIO $ (\rate -> register_transition_kernel (rate*rate') move)
+    addMove rate' move = TKLiftIO $ (\rate -> registerTransitionKernel (rate*rate') move)
 
 runTkEffects :: Double -> TKEffects a -> IO a
 runTkEffects rate (TKBind f g) = do x <- runTkEffects rate f
@@ -353,7 +353,7 @@ runMCMCLazy rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   return (withEffect effect result)
 runMCMCLazy rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId
-  register_transition_kernel rate $ interchange_entries id
+  registerTransitionKernel rate $ interchange_entries id
   return $ liftIO $ IO (\s -> (s, interchangeableIO id (runMCMCLazy rate r) s))
 runMCMCLazy rate (RanOp op) = op (runMCMCLazy rate)
 

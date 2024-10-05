@@ -41,7 +41,7 @@ negative_binomial_bounds = integer_above 0
 
 negative_binomial_effect r x = do
     add_move $ sliceSampleInteger x negative_binomial_bounds
-    add_move $ inc_dec_mh x negative_binomial_bounds
+    add_move $ incDecMH x negative_binomial_bounds
 
 negativeBinomial :: Int -> Double -> NegativeBinomial
 negativeBinomial r p = NegativeBinomial r (toFloating p)

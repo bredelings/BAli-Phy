@@ -46,7 +46,7 @@ poisson_bounds = integer_above 0
 
 poisson_effect x = do
    add_move $ sliceSampleInteger x poisson_bounds
-   add_move $ inc_dec_mh x poisson_bounds
+   add_move $ incDecMH x poisson_bounds
 
 poisson mu = Poisson mu
 

@@ -25,25 +25,25 @@ data Proposal = Proposal (ContextIndex -> IO LogDouble)
 -- It is unfortunate that modifiable-ness is not visible at the type level.
 type Modifiable a = a
 
-foreign import bpcall "MCMC:" register_transition_kernel :: Double -> TransitionKernel a -> IO Effect
+foreign import bpcall "MCMC:" registerTransitionKernel :: Double -> TransitionKernel a -> IO Effect
 
-foreign import bpcall "MCMC:" register_logger :: LoggerAction -> IO Effect
+foreign import bpcall "MCMC:" registerLogger :: LoggerAction -> IO Effect
 
 -- Transition kernel: Perform gibbs sampling on modifiable x, which takes values [0..n-1], in context c
-foreign import bpcall "MCMC:" gibbs_sample_categorical :: Modifiable Int -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" gibbsSampleCategorical :: Modifiable Int -> Int -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" discrete_uniform_avoid_mh :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" discreteUniformAvoidMH :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
 
 -- It would be nice if we could (i) seq x and bounds HERE, and (ii) convert range to bounds HERE.
 -- But the seq needs to be done during changeable execution, and we execute the IO unchangeably.
-foreign import bpcall "MCMC:" inc_dec_mh_raw :: Modifiable Int -> BuiltinBounds -> Int -> IO ()
-inc_dec_mh x bnds c = inc_dec_mh_raw x (c_range bnds) c
+foreign import bpcall "MCMC:" incDecMHRaw :: Modifiable Int -> BuiltinBounds -> Int -> IO ()
+incDecMH x bnds c = incDecMHRaw x (c_range bnds) c
 
-foreign import bpcall "MCMC:" slice_sample_real_random_variable_raw :: Modifiable Double -> BuiltinBounds -> ContextIndex -> IO ()
-sliceSample x bnds c = slice_sample_real_random_variable_raw x (c_range bnds) c
+foreign import bpcall "MCMC:" sliceSampleRaw :: Modifiable Double -> BuiltinBounds -> ContextIndex -> IO ()
+sliceSample x bnds c = sliceSampleRaw x (c_range bnds) c
 
-foreign import bpcall "MCMC:" slice_sample_integer_random_variable_raw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
-sliceSampleInteger x bnds c = slice_sample_integer_random_variable_raw x (c_range bnds) c
+foreign import bpcall "MCMC:" sliceSampleIntegerRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
+sliceSampleInteger x bnds c = sliceSampleIntegerRaw x (c_range bnds) c
 
 foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: Modifiable t -> ContextIndex -> EVector Int
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c

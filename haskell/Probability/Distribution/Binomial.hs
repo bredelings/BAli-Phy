@@ -46,4 +46,4 @@ binomial_bounds n = integer_between 0 n
 
 binomial_effect n x = do
   add_move $ sliceSampleInteger x (binomial_bounds n)
-  add_move $ inc_dec_mh x (binomial_bounds n)
+  add_move $ incDecMH x (binomial_bounds n)

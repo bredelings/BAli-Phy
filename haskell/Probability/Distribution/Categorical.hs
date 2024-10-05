@@ -7,7 +7,7 @@ import MCMC
 
 import Foreign.Vector
 
-categorical_effect n x = add_move $ gibbs_sample_categorical x n
+categorical_effect n x = addMove 1 $ gibbsSampleCategorical x n
 foreign import bpcall "Distribution:sample_categorical" builtin_sample_categorical :: EVector Double -> IO Int
 sample_categorical ps = builtin_sample_categorical (array_to_vector ps)
 

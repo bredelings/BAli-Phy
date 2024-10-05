@@ -53,7 +53,7 @@ instance HasAnnotatedPdf Bernoulli where
 instance Sampleable Bernoulli where
     sample dist = RanDistribution2 dist bernoulli_effect
 
-bernoulli_effect x = add_move $ discrete_uniform_avoid_mh x 0 1
+bernoulli_effect x = addMove 1 $ discreteUniformAvoidMH x 0 1
 
 bernoulli :: Double -> Bernoulli
 bernoulli p = Bernoulli (toFloating p)

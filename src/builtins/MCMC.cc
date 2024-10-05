@@ -25,7 +25,7 @@ using std::optional;
 using std::vector;
 using std::shared_ptr;
 
-extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
+extern "C" closure builtin_function_registerTransitionKernel(OperationArgs& Args)
 {
     double rate = Args.evaluate(0).as_double();
 
@@ -40,7 +40,7 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
     return {index_var(0), {r_effect}};
 }
 
-extern "C" closure builtin_function_register_logger(OperationArgs& Args)
+extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
 {
     int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(0));
 
@@ -139,7 +139,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 }
 
 // gibbs_sample_categorical x n pr
-extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args)
+extern "C" closure builtin_function_gibbsSampleCategorical(OperationArgs& Args)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[gibbs_sample_categorical]\n";
 
@@ -210,12 +210,12 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
                // 1. Find the modifiable
                auto x_mod_reg = C.find_modifiable_reg(x_reg);
                if (not x_mod_reg)
-                   throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
+                   throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
                // 2. Get the current value
                int x1 = C.get_reg_value(*x_mod_reg).as_int();
                if (x1 < a or x1 > b)
-                   throw myexception()<<"discrete_uniform_avoid_mh: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
+                   throw myexception()<<"discreteUniformAvoidMH: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
 
                // 3. Propose a new value
                int x2 = uniform_int(a,b-1);
@@ -246,7 +246,7 @@ bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
 
 
 // gibbs_sample_categorical x n pr
-extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Args)
+extern "C" closure builtin_function_discreteUniformAvoidMH(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -281,7 +281,7 @@ Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
                // 1. Find the modifiable
                auto x_mod_reg = C.find_modifiable_reg(x_reg);
                if (not x_mod_reg)
-                   throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
+                   throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
                // 2. Get the current value
                int x1 = C.get_reg_value(*x_mod_reg).as_int();
@@ -312,7 +312,7 @@ template <typename T>
 using Bounds = Box<bounds<T>>;
 
 // inc_dec_mh x bounds context state
-extern "C" closure builtin_function_inc_dec_mh_raw(OperationArgs& Args)
+extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -320,7 +320,7 @@ extern "C" closure builtin_function_inc_dec_mh_raw(OperationArgs& Args)
     //------------- 1a. Get the proposal ---------------
     int x_reg = Args.evaluate_slot_unchangeable(0);
 
-    if (log_verbose >= 3) std::cerr<<"\n\n[inc_dec_mh] <"<<x_reg<<">\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[incDecMH] <"<<x_reg<<">\n";
 
     //------------- 1b. Get context index --------------
     auto range = Args.evaluate(1).as_<Bounds<int>>();
@@ -343,7 +343,7 @@ extern "C" closure builtin_function_inc_dec_mh_raw(OperationArgs& Args)
 }
 
 // slice_sample_real_random_variable x context state
-extern "C" closure builtin_function_slice_sample_real_random_variable_raw(OperationArgs& Args)
+extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -359,9 +359,9 @@ extern "C" closure builtin_function_slice_sample_real_random_variable_raw(Operat
     if (auto x_mod_reg = C.find_modifiable_reg(x_reg))
         x_reg = *x_mod_reg;
     else
-        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a modifiable!";
+        throw myexception()<<"sliceSample: reg "<<x_reg<<" is not a modifiable!";
 
-    if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_real_random_variable] <"<<x_reg<<">\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[sliceSample] <"<<x_reg<<">\n";
 
     // 1. bounds
     auto bnds = evaluate_slot(1);
@@ -387,7 +387,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable_raw(Operat
 }
 
 // slice_sample_integer_random_variable x context state
-extern "C" closure builtin_function_slice_sample_integer_random_variable_raw(OperationArgs& Args)
+extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();

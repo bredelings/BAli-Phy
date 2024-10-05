@@ -49,7 +49,7 @@ geometric_bounds = integer_above 0
 
 geometric_effect x = do
   add_move $ sliceSampleInteger x geometric_bounds
-  add_move $ inc_dec_mh x geometric_bounds
+  add_move $ incDecMH x geometric_bounds
 
 geometric :: Double -> Geometric
 geometric p_success = Geometric (toFloating p_success)
