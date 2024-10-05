@@ -27,11 +27,21 @@ uniformTopologyEdges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.singleton 0 noAttributes) (Attributes [])
+sampleUniformTopology 0 = return $ Tree $ Forest $ Graph (IntMap.empty) (IntMap.empty) (IntMap.empty) (IntMap.empty) (Attributes [])
+sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.empty) (Attributes [])
 sampleUniformTopology n = do
     let num_nodes = 2 * n - 2
     edges <- uniformTopologyEdges [0 .. n - 1] [n .. num_nodes - 1]
     return $ treeFromEdges [0..num_nodes-1] edges
+
+{- NOTE: No shuffling of taxa in uniformLabelledTopology
+
+I think we don't need to shuffle the taxa here because the
+locations of the node ids are already exchangeable.
+
+Also, shuffling the taxa is probably something we don't want
+to be MCMC resampling.
+-}
 
 uniformLabelledTopology taxa = do
   topology <- sample $ uniformTopology (length taxa)
