@@ -8,6 +8,24 @@ import Probability.Distribution.Laplace
 import Probability.Distribution.Cauchy
 import Data.Floating.Types
 
+{- NOTE: Turn these into atomic distributions.
+
+Right now, then aren't modifiable, and cannot be modified by e.g. sliceSampleGroup.
+
+To fix this, we need to do something like:
+
+instance (Dist1D d, IOSampleable d, Result d ~ Double) => Sampleable (ExpTransform d)where
+    sample dist = RanDistribution2 dist (expTransformEffect bounds)
+        where bounds = OpenInterval (lower_bound dist) (upper_bound dist)
+
+To make that work, we need to:
+- provide an effect on the new scale, since we are dropping the old effect.
+- provide an AnnotatedDensity instance.
+
+-}
+
+
+
 data ExpTransform d = ExpTransform d
 
 instance (Dist d, Result d ~ Double) => Dist (ExpTransform d) where
