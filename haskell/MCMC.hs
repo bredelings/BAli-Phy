@@ -75,15 +75,15 @@ foreign import bpcall "MCMC:" sample_SPR_nodes :: Modifiable t -> ContextIndex -
 
 foreign import bpcall "MCMC:" sample_SPR_flat :: Modifiable t -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" copy_context :: ContextIndex -> IO ContextIndex
+foreign import bpcall "MCMC:" copyContext :: ContextIndex -> IO ContextIndex
 
-foreign import bpcall "MCMC:" release_context :: ContextIndex -> IO ()
+foreign import bpcall "MCMC:" releaseContext :: ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" switch_to_context :: ContextIndex -> ContextIndex -> IO ()
+foreign import bpcall "MCMC:" switchToContext :: ContextIndex -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" accept_MH :: ContextIndex -> ContextIndex -> LogDouble -> IO Bool
+foreign import bpcall "MCMC:" acceptMH :: ContextIndex -> ContextIndex -> LogDouble -> IO Bool
 
--- TODO: What if copy_context returns a Box<context>?
+-- TODO: What if copyContext returns a Box<context>?
 --       Then if memory is tight, we would destroy the context object, and release the  context.
 --       This might take a while though if garbage-collection didn't happen immediately.
 --       And we might need to pivot back to c2 later to release it later.
@@ -116,17 +116,17 @@ scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
 
 metropolisHastings :: Proposal -> ContextIndex -> IO Bool
 metropolisHastings proposal c1 = do
-  c2 <- copy_context c1
+  c2 <- copyContext c1
   ratio <- proposal c2
-  accept <- accept_MH c1 c2 ratio
-  if accept then switch_to_context c1 c2 else return ()
-  release_context c2
+  accept <- acceptMH c1 c2 ratio
+  if accept then switchToContext c1 c2 else return ()
+  releaseContext c2
   return accept
 
 foreign import bpcall "MCMC:" getAtomicModifiableValueInContext :: Modifiable a -> ContextIndex -> IO a
 foreign import bpcall "MCMC:" setAtomicModifiableValueInContext :: Modifiable a -> a -> ContextIndex -> IO ()
 
-propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
+propose :: (Show a, Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> ContextIndex -> IO LogDouble
 propose x dist c = do
   x1 <- getAtomicModifiableValueInContext x c -- This is guaranteed to be an Int, Double, LogDouble, Char, or Object.
                                               -- x has to be an atomic modifiable.  We can't use it to propose trees...

@@ -1186,7 +1186,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_copy_context(OperationArgs& Args)
+extern "C" closure builtin_function_copyContext(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -1200,7 +1200,7 @@ extern "C" closure builtin_function_copy_context(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_release_context(OperationArgs& Args)
+extern "C" closure builtin_function_releaseContext(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -1213,7 +1213,7 @@ extern "C" closure builtin_function_release_context(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_switch_to_context(OperationArgs& Args)
+extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -1229,7 +1229,7 @@ extern "C" closure builtin_function_switch_to_context(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_accept_MH(OperationArgs& Args)
+extern "C" closure builtin_function_acceptMH(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
