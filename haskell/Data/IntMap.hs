@@ -168,7 +168,7 @@ foreign import bpcall "IntMap:" forceAll :: IntMap a -> ()
 
 -- This will be very slow!
 -- Maybe faster would be something like (forceAll $ fmap rnf m)
-instance NFData a => NFData (IntMap a) where
+instance {-# OVERLAPPABLE #-} NFData a => NFData (IntMap a) where
     rnf m = forceAll $ rnf <$> m
 
 instance NFData (IntMap Int) where

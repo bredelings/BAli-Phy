@@ -201,7 +201,7 @@ instance FloatConvert Double Prob where
     toFloating = toProb
 
 -- Handle Int, Integer, and anything else that we can get a double from.
-instance FloatConvert a Double => FloatConvert a Prob where
+instance {-# OVERLAPPABLE #-} FloatConvert a Double => FloatConvert a Prob where
     toFloating i = toFloating (toFloating i :: Double)
 
 foreign import bpcall "Real:" integerToInvLogOdds :: Integer -> Double

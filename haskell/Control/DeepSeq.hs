@@ -61,5 +61,5 @@ instance NFData a => NFData [a] where
 -- * the called reg IS referenced only by an index-var-with-force
 
 
-instance (Foldable f, NFData e) => NFData (f e) where
+instance {-# OVERLAPPABLE #-} (Foldable f, NFData e) => NFData (f e) where
     rnf = foldr seq ()

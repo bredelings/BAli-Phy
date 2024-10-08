@@ -754,7 +754,7 @@ EqInstanceInfo TypeChecker::freshen(EqInstanceInfo info)
 // FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
 optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
-    vector<tuple<pair<Core::Exp, LIE>,Type,Type>> matching_instances;
+    vector<tuple<pair<Core::Exp, LIE>,Type,Type,InstanceInfo>> matching_instances;
 
     vector<InstanceInfo> unifying_instances;
 
@@ -789,7 +789,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
                 
                 auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
-                matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
+                matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }
             else if (auto subst = maybe_unify(instance_head, target_pred))
             {
@@ -802,20 +802,20 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<tuple<pair<Core::Exp, LIE>,Type,Type>> surviving_instances;
+    vector<tuple<pair<Core::Exp, LIE>,Type,Type,InstanceInfo>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {
-        auto& [_1,_2, type_i] = matching_instances[i];
+        auto& [_1, _2, type_i, info_i] = matching_instances[i];
 
         bool keep = true;
         for(int j=0;keep and j<matching_instances.size();j++)
         {
             if (i == j) continue;
 
-            auto& [_3, _4, type_j] = matching_instances[j];
+            auto& [_3, _4, type_j, info_j] = matching_instances[j];
 
-            if (more_specific_than(type_j, type_i))
+            if (more_specific_than(type_j, type_i) and (info_i.overlappable or info_j.overlapping))
                 keep = false;
         }
 
@@ -828,8 +828,11 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     if (surviving_instances.size() > 1)
     {
         auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
-        for(auto& [_,type1,type2]: surviving_instances)
-            n<<"  "<<remove_top_gen(type1)<<"\n";
+        for(auto& [_,type1,type2,info]: surviving_instances)
+	{
+	    auto instance_head = type_apply(info.class_con, info.args);
+            n<<"  "<<remove_top_gen(instance_head)<<" at " <<info.loc<<"\n";
+	}
         record_error(n);
     }
 
