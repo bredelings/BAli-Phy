@@ -22,8 +22,8 @@ import qualified Data.IntSet as IntSet
    A. a slowdown
    B. a error saying that something isn't a modifiable value.  -}
 
-modifiableTree :: (forall a.a->a) -> Tree -> Tree
-modifiableTree modf tree@(Tree (Forest (Graph nodes0 branches0 na ea ta))) = (Tree (Forest (Graph nodesMap branchesMap na ea ta))) where
+modifiableTree :: (forall a.a->a) -> (Tree l) -> (Tree l)
+modifiableTree modf tree@(Tree (Forest (Graph nodes0 branches0 labels na ea ta))) = (Tree (Forest (Graph nodesMap branchesMap labels na ea ta))) where
     nodesMap = fmap (\(Node node branches_out) -> Node node (modf branches_out)) nodes0
     branchesMap = fmap (\(Edge s t b) -> Edge (modf s) (modf t) b ) branches0
 
@@ -39,7 +39,7 @@ triggeredModifiableTree = triggeredModifiableStructure modifiableTree
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
-modifiableRootedTree :: (forall a.a -> a) -> WithRoots Tree -> WithRoots Tree
+modifiableRootedTree :: (forall a.a -> a) -> WithRoots (Tree l) -> WithRoots (Tree l)
 modifiableRootedTree modf (WithRoots tree [rootNode] _) = addRoot rootNode $ modifiableTree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
@@ -65,7 +65,7 @@ For an ordered-history, we might need to add an integer order to each node to pr
 the order when we remove the times.
 -}
 
-modifiableTimeTree :: (forall a.a -> a) -> WithNodeTimes (WithRoots Tree) -> WithNodeTimes (WithRoots Tree)
+modifiableTimeTree :: (forall a.a -> a) -> WithNodeTimes (WithRoots (Tree l)) -> WithNodeTimes (WithRoots (Tree l))
 modifiableTimeTree modf (WithNodeTimes rootedTree' times') = WithNodeTimes rootedTree times where
     rootedTree = modifiableRootedTree modf rootedTree'
     maybeModf :: Int -> a -> a
@@ -74,10 +74,3 @@ modifiableTimeTree modf (WithNodeTimes rootedTree' times') = WithNodeTimes roote
     times     = (IntMap.keysSet times') & IntMap.fromSet (\node -> maybeModf node (times' IntMap.! node))
 
 triggeredModifiableTimeTree = triggeredModifiableStructure modifiableTimeTree
-
-
--- The labels aren't modifiable.
-modifiableLabeledTimeTree :: (forall a.a -> a) -> WithLabels (WithNodeTimes (WithRoots Tree)) l -> WithLabels (WithNodeTimes (WithRoots Tree)) l
-modifiableLabeledTimeTree modf (WithLabels tree labels) = WithLabels (modifiableTimeTree modf tree) labels
-
-triggeredModifiableLabeledTimeTree = triggeredModifiableStructure modifiableLabeledTimeTree

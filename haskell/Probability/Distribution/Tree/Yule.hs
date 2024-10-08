@@ -90,16 +90,16 @@ yuleEffect tree = do
 
 -------------------------------------------------------------
 
-data UnlabelledYule = UnlabelledYule Int Rate
+data UnlabelledYule l = UnlabelledYule Int Rate
 
-instance Dist UnlabelledYule where
-    type Result UnlabelledYule = WithNodeTimes (WithRoots Tree)
+instance Dist (UnlabelledYule l) where
+    type Result (UnlabelledYule l) = WithNodeTimes (WithRoots (Tree l))
     dist_name _ = "yule"
 
-instance HasAnnotatedPdf UnlabelledYule where
+instance HasAnnotatedPdf (UnlabelledYule l) where
     annotated_densities (UnlabelledYule n lambda) tree = return (yulePrFactors n lambda tree, ())
 
-instance Sampleable UnlabelledYule where
+instance Sampleable (UnlabelledYule l) where
     sample dist@(UnlabelledYule n lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleYule n lambda)
 
 unlabelledYule n lambda = UnlabelledYule n lambda
@@ -121,13 +121,13 @@ sampleLabeledYule labels lambda = do
 data Yule l = Yule [l] Rate
 
 instance Dist (Yule l) where
-    type Result (Yule l) = WithLabels (WithNodeTimes (WithRoots Tree)) l
+    type Result (Yule l) = WithNodeTimes (WithRoots (Tree l))
     dist_name _ = "Yule"
 
 instance HasAnnotatedPdf (Yule l) where
     annotated_densities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
 
 instance Sampleable (Yule l) where
-    sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableLabeledTimeTree (sampleLabeledYule taxa lambda)
+    sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleLabeledYule taxa lambda)
 
 yule taxa lambda = Yule taxa lambda

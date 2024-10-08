@@ -85,7 +85,7 @@ instance Dist (PhyloCTMC t Int s EquilibriumReversible) where
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, LabelType t ~ Text, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumReversible) where
+instance (LabelType t ~ Text, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t Int s EquilibriumReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length smodel scale
 
@@ -106,7 +106,7 @@ sampleComponentStatesFixed rtree rootLength smodel scale =  do
   return stateSequences
 
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, LabelType t ~ Text, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s EquilibriumReversible) where
+instance (IsTree t, HasRoot (Rooted t), LabelType t ~ Text, HasBranchLengths (Rooted t), SimpleSModel s) => IOSampleable (PhyloCTMC t Int s EquilibriumReversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -117,7 +117,7 @@ instance (IsTree t, HasRoot (Rooted t), HasLabels t, LabelType t ~ Text, HasBran
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot (Rooted t), HasLabels t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s EquilibriumReversible) where
+instance (IsTree t, HasRoot (Rooted t), LabelType t ~ Text, HasBranchLengths t, HasBranchLengths (Rooted t), SimpleSModel s) => Sampleable (PhyloCTMC t Int s EquilibriumReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
@@ -164,7 +164,7 @@ instance Dist (PhyloCTMC t Int s EquilibriumNonReversible) where
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumNonReversible) where
+instance (LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumNonReversible) where
     type DistProperties (PhyloCTMC t Int s EquilibriumNonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
@@ -185,7 +185,7 @@ sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
 -- Should hasRoots t imply HasRoots (Rooted t)?
 -- Where is (Rooted t) coming up?  Can we remove it?
 
-instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
+instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -196,7 +196,7 @@ instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
+instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
@@ -207,7 +207,7 @@ instance Dist (PhyloCTMC t Int s NonEquilibrium) where
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!                  -
-instance (HasLabels t, LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonEquilibrium) where
+instance (LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSModel s) => HasAnnotatedPdf (PhyloCTMC t Int s NonEquilibrium) where
     type DistProperties (PhyloCTMC t Int s NonEquilibrium) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
@@ -228,7 +228,7 @@ sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
 -- Should hasRoots t imply HasRoots (Rooted t)?
 -- Where is (Rooted t) coming up?  Can we remove it?
 
-instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
+instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
@@ -239,7 +239,7 @@ instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths
 
       return $ Aligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (IsTree t, HasRoot t, HasLabels t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonEquilibrium) where
+instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, SimpleSModel s) => Sampleable (PhyloCTMC t Int s NonEquilibrium) where
     sample dist = RanDistribution2 dist do_nothing
 
 

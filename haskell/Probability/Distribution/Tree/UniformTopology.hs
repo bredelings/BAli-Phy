@@ -27,8 +27,8 @@ uniformTopologyEdges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sampleUniformTopology 0 = return $ Tree $ Forest $ Graph (IntMap.empty) (IntMap.empty) (IntMap.empty) (IntMap.empty) (Attributes [])
-sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.empty) (Attributes [])
+sampleUniformTopology 0 = return $ Tree $ Forest $ Graph (IntMap.empty) (IntMap.empty) (IntMap.empty) (IntMap.empty) (IntMap.empty) (Attributes [])
+sampleUniformTopology 1 = return $ Tree $ Forest $ Graph (IntMap.singleton 0 (Node 0 IntSet.empty)) (IntMap.empty) (IntMap.empty) (IntMap.singleton 0 noAttributes) (IntMap.empty) (Attributes [])
 sampleUniformTopology n = do
     let num_nodes = 2 * n - 2
     edges <- uniformTopologyEdges [0 .. n - 1] [n .. num_nodes - 1]
@@ -70,16 +70,16 @@ uniformTopologyPr 2 = 1
 uniformTopologyPr n = uniformTopologyPr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -------------------------------------------------------------
-data UniformTopology = UniformTopology Int
+data UniformTopology l = UniformTopology Int
 
-instance Dist UniformTopology where
-    type Result UniformTopology = Tree
+instance Dist (UniformTopology l) where
+    type Result (UniformTopology l) = Tree l
     dist_name _ = "uniform_topology"
 
-instance HasAnnotatedPdf UniformTopology where
+instance HasAnnotatedPdf (UniformTopology l) where
     annotated_densities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
 
-instance Sampleable UniformTopology where
+instance Sampleable (UniformTopology l) where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (sampleUniformTopology n)
 
 uniformTopology n = UniformTopology n
@@ -99,7 +99,7 @@ uniformLabelledTree taxa branchLengthsDist = do
   addTreeMoves 1 tree
   return tree
 
-uniformLabelledTree' :: [l] -> (forall t. IsTree t => t -> Random (IntMap Double)) -> Random (WithBranchLengths (WithLabels Tree l))
+uniformLabelledTree' :: [l] -> (forall t. IsTree t => t -> Random (IntMap Double)) -> Random (WithBranchLengths (Tree l))
 uniformLabelledTree' taxa dist = do
   topology <- RanSamplingRate 0 $ uniformLabelledTopology taxa
   branchLengths <- RanSamplingRate 0 $ sample $ (dist topology)

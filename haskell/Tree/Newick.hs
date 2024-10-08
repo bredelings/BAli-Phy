@@ -38,8 +38,10 @@ get_branch_label t branch@(Just edge) = let text = (branch_info t branch) `T.app
                                         in if T.null text then text else T.singleton ':' `T.append` text
 get_branch_label t Nothing = T.empty
 
-instance WriteNewickNode Tree where
-    node_info tree node = T.pack $ show node
+instance Display l => WriteNewickNode (Tree l) where
+    node_info   tree node                         = case getLabel tree node of
+                                                      Just label -> quoteLabel (display label)
+                                                      Nothing -> T.empty
 
 instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
     node_info (WithRoots tree _ _) = node_info tree
@@ -47,12 +49,6 @@ instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
 
 foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
-
-instance (WriteNewickNode t, Display l) => WriteNewickNode (WithLabels t l) where
-    node_info   tree node                         = case getLabel tree node of
-                                                      Just label -> quoteLabel (display label)
-                                                      Nothing -> T.empty
-    branch_info (WithLabels tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where
     node_info (WithBranchLengths tree lengths) node = node_info tree node
@@ -244,11 +240,10 @@ newickToTree (NewickTree treeAttributes node) = do
       lengths = IntMap.fromList (i_lengths info)
       nodeAttributes = IntMap.fromList (i_nodeAttributes info)
       edgeAttributes = IntMap.fromList (i_edgeAttributes info)
-      tree = Tree $ Forest $ Graph nodes edges nodeAttributes edgeAttributes treeAttributes
+      tree = Tree $ Forest $ Graph nodes edges labels nodeAttributes edgeAttributes treeAttributes
       rooted_tree = addRoot rootId tree
-      labelled_tree = WithLabels rooted_tree labels
 
-  return (labelled_tree, lengths)
+  return (rooted_tree, lengths)
 
 newickToBranchLengthTree newick = do
   (tree, lengths) <- newickToTree newick
@@ -278,5 +273,4 @@ readTimeTree filename = do
       present = maximum nodeTimes
       nodeAges = fmap (\t -> present - t) nodeTimes
 
-  -- Put labels on the outside to match Result CoalescentTree
-  return $ case tree of WithLabels tree1 labels -> WithLabels (WithNodeTimes tree1 nodeAges) labels
+  return tree

@@ -84,6 +84,15 @@ class IsGraph g where
     getEdgeAttributes :: g -> EdgeId -> Attributes
     getAttributes :: g -> Attributes
 
+    type family LabelType g
+    getLabel :: g -> Int -> Maybe (LabelType g)
+    -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
+    -- this would map integers to labels, and labels to integers, even if get_label
+    -- indexes on nodes...
+    -- TODO: make the C++ code handle this...
+
+    getLabels :: g -> IntMap (Maybe (LabelType g))
+    relabel :: IntMap (Maybe (LabelType g)) -> g -> g
 
 class IsGraph g => IsDirectedGraph g where
     isForward :: g -> EdgeId -> Bool
@@ -108,7 +117,14 @@ data Edge = Edge { eSourceNode, eTargetNode, edgeName :: Int }
 instance Show Edge where
     show (Edge source target name) = "Edge{eSourceNode = " ++ show source ++ ", eTargetNode = " ++ show target ++ ", edgeName = " ++ show name ++ "}"
 
-data Graph = Graph (IntMap Node) (IntMap Edge) (IntMap Attributes) (IntMap Attributes) (Attributes)
+data Graph l = Graph {
+      graphNodes :: IntMap Node,
+      graphEdges :: IntMap Edge,
+      graphLabels :: IntMap (Maybe l),
+      graphNodeAttributes :: IntMap Attributes,
+      graphEdgeAttributes :: IntMap Attributes,
+      graphAttributes :: Attributes
+    }
 
 instance NFData Node where
     rnf (Node x y) = x `seq` y `seq` ()
@@ -116,8 +132,9 @@ instance NFData Node where
 instance NFData Edge where
     rnf (Edge s t n) = s `seq` t `seq` n `seq` ()
 
-instance NFData Graph where
-    rnf (Graph nodes edges nodeAttr edgeAttr graphAttr) = rnf nodes `seq` rnf edges `seq` rnf nodeAttr `seq` rnf edgeAttr `seq` rnf graphAttr `seq` ()
+--FIXME: `instance NFData Graph` does not complain, but makes no sense!
+instance NFData l => NFData (Graph l) where
+    rnf (Graph nodes edges labels nodeAttr edgeAttr graphAttr) = rnf nodes `seq` rnf edges `seq` rnf labels `seq` rnf nodeAttr `seq` rnf edgeAttr `seq` rnf graphAttr `seq` ()
 
 {- ISSUE: How to handle directed graphs?
 
@@ -154,17 +171,25 @@ SOLUTION: Make a "direction" that is either a forward or reverse edge:
 -}
 
 
-instance IsGraph Graph where
-    getNodesSet (Graph nodesMap _  _ _ _)            = IntMap.keysSet nodesMap
-    getEdgesSet (Graph _  edgesMap _ _ _)            = IntMap.keysSet edgesMap
+instance IsGraph (Graph l) where
+    getNodesSet (Graph nodesMap _ _  _ _ _)            = IntMap.keysSet nodesMap
+    getEdgesSet (Graph _  edgesMap _ _ _ _)            = IntMap.keysSet edgesMap
 
-    edgesOutOfNodeSet (Graph nodesMap _ _ _ _) nodeId = nodeOutEdges $ (nodesMap IntMap.! nodeId)
-    sourceNode (Graph _ edgesMap _ _ _) edge = eSourceNode $ (edgesMap IntMap.! edge)
-    targetNode (Graph _ edgesMap _ _ _) edge = eTargetNode $ (edgesMap IntMap.! edge)
+    edgesOutOfNodeSet (Graph nodesMap _ _ _ _ _) nodeId = nodeOutEdges $ (nodesMap IntMap.! nodeId)
+    sourceNode (Graph _ edgesMap _ _ _ _) edge = eSourceNode $ (edgesMap IntMap.! edge)
+    targetNode (Graph _ edgesMap _ _ _ _) edge = eTargetNode $ (edgesMap IntMap.! edge)
 
-    getNodeAttributes (Graph _ _ a _ _) node     = a IntMap.! node
-    getEdgeAttributes (Graph _ _ _ a _) edge     = a IntMap.! edge
-    getAttributes (Graph _ _ _ _ a)              = a
+    getNodeAttributes (Graph _ _ _ a _ _) node     = a IntMap.! node
+    getEdgeAttributes (Graph _ _ _ _ a _) edge     = a IntMap.! edge
+    getAttributes (Graph _ _ _ _ _ a)              = a
+
+
+    -- What this does NOT say how to do is to fmap the labels to a new type
+    -- labelMap display graph
+    type instance LabelType (Graph l) = l
+    getLabel graph node = (graphLabels graph) IntMap.! node
+    getLabels graph = graphLabels graph
+    relabel newLabels (Graph nodes edges _ na ea a) = Graph nodes edges newLabels na ea a
 
 ------------------ Derived Operations ------------
 edgesTowardNodeSet t node = reverseEdgesSet $ edgesOutOfNodeSet t node
@@ -254,6 +279,11 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
     getAttributes (WithBranchLengths t _)              = getAttributes t
 
+    type instance LabelType (WithBranchLengths t) = LabelType t
+    getLabel  (WithBranchLengths t _) node = getLabel t node
+    getLabels (WithBranchLengths t _) = getLabels t
+    relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
+
 scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
 
 instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
@@ -262,65 +292,15 @@ instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
 instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
     modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.keysSet ds & IntMap.fromSet f)
 
-instance HasBranchLengths t => HasBranchLengths (WithLabels t l) where
-    branchLength (WithLabels tree _) b = branchLength tree b
-
-instance CanModifyBranchLengths t => CanModifyBranchLengths (WithLabels t l) where
-    modifyBranchLengths f (WithLabels tree labels) = WithLabels (modifyBranchLengths f tree) labels
-
 branchLengthTree topology lengths = WithBranchLengths topology lengths
 
 ------------------ Labels ----------------
 
-class IsGraph g => HasLabels g where
-    type family LabelType g
-    getLabel :: g -> Int -> Maybe (LabelType g)
-    -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
-    -- this would map integers to labels, and labels to integers, even if get_label
-    -- indexes on nodes...
-    -- TODO: make the C++ code handle this...
-    
-    getLabels :: g -> IntMap (Maybe (LabelType g))
-    relabel :: IntMap (Maybe (LabelType g)) -> g -> g
-
-data WithLabels t l = WithLabels t (IntMap (Maybe l))
-
-instance (NFData t, NFData l) => NFData (WithLabels t l) where
-    rnf (WithLabels tree labels) = rnf tree `seq` rnf labels
-
-instance IsGraph t => IsGraph (WithLabels t l) where
-    getNodesSet (WithLabels t _)                 = getNodesSet t
-    getEdgesSet (WithLabels t _)                 = getEdgesSet t
-
-    edgesOutOfNodeSet (WithLabels t _) nodeId    = edgesOutOfNodeSet t nodeId
-    sourceNode (WithLabels t _) edgeId           = sourceNode t edgeId
-    targetNode (WithLabels t _) edgeId           = targetNode t edgeId
-
-    getNodeAttributes (WithLabels t _) node      = getNodeAttributes t node
-    getEdgeAttributes (WithLabels t _) edge      = getEdgeAttributes t edge
-    getAttributes (WithLabels t _)               = getAttributes t
-
-instance IsGraph t => HasLabels (WithLabels t l) where
-    type instance LabelType (WithLabels t l) = l
-    getLabel  (WithLabels _ labels) node = labels IntMap.! node
-    getLabels (WithLabels _ labels) = labels
-    relabel newLabels (WithLabels t _) = WithLabels t newLabels
-
-instance HasLabels t => HasLabels (WithBranchLengths t) where
-    type instance LabelType (WithBranchLengths t) = LabelType t
-    getLabel  (WithBranchLengths t _) node = getLabel t node
-    getLabels (WithBranchLengths t _) = getLabels t
-    relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
-
-instance IsDirectedGraph g => IsDirectedGraph (WithLabels g l) where
-    isForward (WithLabels g _) e = isForward g e
-
-instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithLabels g l)
-
-addLabels labels t = WithLabels t (getNodesSet t & IntMap.fromSet (\node -> lookup node labels))
+addLabels labels t = relabel newLabels t
+    where newLabels = getNodesSet t & IntMap.fromSet (\node -> lookup node labels)
 
 -- These two functions shouldn't go here -- but where should they go?
-addInternalLabels tree = WithLabels tree newLabels where
+addInternalLabels tree = relabel newLabels tree where
     oldLabels = getLabels tree
     newLabels = getNodesSet tree & IntMap.fromSet newLabel
 
@@ -338,7 +318,7 @@ dropInternalLabels t = relabel newLabels t where
     newLabels = getNodesSet t & IntMap.fromSet (\node -> if nodeDegree t node <= 1 then labels IntMap.! node else Nothing)
 
 ---------------------------- Creating a graph from a list of edges ---------------------------
-graphFromEdges nodes edges = Graph nodesMap branchesMap (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
+graphFromEdges nodes edges = Graph nodesMap branchesMap labels (noAttributesOn nodesSet) (noAttributesOn branchesSet) noAttributes where
 
     num_nodes = length nodes
 
@@ -364,3 +344,4 @@ graphFromEdges nodes edges = Graph nodesMap branchesMap (noAttributesOn nodesSet
     branchesSet = IntSet.fromList [1..num_branches] `IntSet.union` IntSet.fromList (map negate [1..num_branches])
     branchesMap = branchesSet & IntMap.fromSet (\b -> let Just (s,t) = find_branch b in Edge s t b)
 
+    labels = nodesSet & IntMap.fromSet (\n -> Nothing)

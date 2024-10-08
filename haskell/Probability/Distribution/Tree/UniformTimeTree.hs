@@ -59,7 +59,7 @@ uniform_time_tree_effect tree = sequence_ [ add_move $ sliceSample (nodeTime tre
 data UniformTimeTree = UniformTimeTree Double Int
 
 instance Dist UniformTimeTree where
-    type Result UniformTimeTree = WithNodeTimes (WithRoots Tree)
+    type Result UniformTimeTree = WithNodeTimes (WithRoots (Tree ()))
     dist_name _ = "uniform_time_tree"
 
 instance HasAnnotatedPdf UniformTimeTree where

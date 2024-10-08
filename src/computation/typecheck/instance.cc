@@ -411,7 +411,8 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     }
     catch (std::exception& e)
     {
-	// We should already have an error from add_type_instance( ) above, so don't issue one here.
+	// Sometimes we get an error from add_type_instance( ) above... but not always.
+	record_error(Note()<<e.what());
 	return {};
     }
 

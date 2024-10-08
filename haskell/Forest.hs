@@ -20,19 +20,19 @@ class IsGraph f => IsForest f where
     unroot :: f -> Unrooted f
     makeRooted :: f -> Rooted f
 
-data Forest = Forest Graph
+data Forest l = Forest (Graph l)
 
-instance NFData Forest where
+instance NFData (Graph l) => NFData (Forest l) where
     rnf (Forest g) = rnf g
 
-instance IsForest Forest where
-    type instance Unrooted Forest = Forest
-    type instance Rooted Forest = WithRoots Forest
+instance IsForest (Forest l) where
+    type instance Unrooted (Forest l) = Forest l
+    type instance Rooted (Forest l) = WithRoots (Forest l)
 
     unroot f = f
     makeRooted f = addRoots roots f where roots = error "Implement finding connected components!"
 
-instance IsGraph Forest where
+instance IsGraph (Forest l) where
     getNodesSet (Forest g) = getNodesSet g
     getEdgesSet (Forest g) = getEdgesSet g
 
@@ -44,12 +44,10 @@ instance IsGraph Forest where
     getEdgeAttributes (Forest g) edge = getEdgeAttributes g edge
     getAttributes (Forest g) = getAttributes g
 
-instance IsForest f => IsForest (WithLabels f l) where
-    type Unrooted (WithLabels f l) = WithLabels (Unrooted f) l
-    type Rooted (WithLabels f l) = WithLabels (Rooted f) l
-
-    unroot (WithLabels t labels) = WithLabels (unroot t) labels
-    makeRooted (WithLabels t labels) = WithLabels (makeRooted t) labels
+    type instance LabelType (Forest l) = l
+    getLabel (Forest g) node = getLabel g node
+    getLabels (Forest g) = getLabels g
+    relabel newLabels (Forest g) = Forest (relabel newLabels g)
 
 instance IsForest f => IsForest (WithBranchLengths f) where
     type Unrooted (WithBranchLengths f) = WithBranchLengths (Unrooted f)
@@ -80,10 +78,6 @@ instance IsForest t => HasRoots (WithRoots t) where
     roots (WithRoots _ rs _) = rs
     isRoot (WithRoots _ rs _) node = node `elem` rs
 
-instance HasRoots t => HasRoots (WithLabels t l) where
-    roots (WithLabels t _) = roots t
-    isRoot (WithLabels t _) node = isRoot t node
-
 instance IsDirectedGraph g => IsDirectedGraph (WithNodeTimes g) where
     isForward (WithNodeTimes g _) e = isForward g e
 
@@ -104,6 +98,11 @@ instance IsGraph t => IsGraph (WithRoots t) where
     getNodeAttributes (WithRoots t _ _) node         = getNodeAttributes t node
     getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
     getAttributes (WithRoots t _ _)              = getAttributes t
+
+    type instance LabelType (WithRoots t) = LabelType t
+    getLabel (WithRoots t _ _) node               = getLabel t node
+    getLabels (WithRoots t _ _)                   = getLabels t
+    relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
 
 instance IsForest t => IsForest (WithRoots t) where
     type Unrooted (WithRoots t) = Unrooted t
@@ -157,6 +156,11 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getEdgeAttributes (WithNodeTimes t _) edge     = getEdgeAttributes t edge
     getAttributes (WithNodeTimes t _)              = getAttributes t
 
+    type instance LabelType (WithNodeTimes t) = LabelType t
+    getLabel (WithNodeTimes t _) node          = getLabel t node
+    getLabels (WithNodeTimes t _) = getLabels t
+    relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
+
 instance (IsDirectedAcyclicGraph t, IsForest t) => IsForest (WithNodeTimes t) where
     type Unrooted (WithNodeTimes t) = WithBranchLengths (Unrooted t)
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
@@ -174,11 +178,6 @@ instance IsDirectedAcyclicGraph g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
     nodeTimes (WithNodeTimes _ hs) = hs
     modifyNodeTimes (WithNodeTimes tree hs) f = WithNodeTimes tree (fmap f hs)
-
-instance HasNodeTimes t => HasNodeTimes (WithLabels t l) where
-    nodeTime (WithLabels tt _) node = nodeTime tt node
-    nodeTimes (WithLabels tt _) = nodeTimes tt
-    modifyNodeTimes (WithLabels tt ls) f = WithLabels (modifyNodeTimes tt f) ls
 
 instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
     nodeTime (WithBranchRates tt _) node = nodeTime tt node
@@ -216,6 +215,11 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     getEdgeAttributes (WithBranchRates t _) edge         = getEdgeAttributes t edge
     getAttributes (WithBranchRates t _)                  = getAttributes t
 
+    type instance LabelType (WithBranchRates t) = LabelType t
+    getLabel (WithBranchRates t _) node      = getLabel t node
+    getLabels (WithBranchRates t _) = getLabels t
+    relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
+
 instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
     type Unrooted (WithBranchRates t) = WithBranchLengths (Unrooted t)
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
@@ -226,24 +230,6 @@ instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
 
 class HasNodeTimes t => HasBranchRates t where
     branch_rate :: t -> Int -> Double
-
-instance (IsDirectedAcyclicGraph t, HasLabels t) => HasLabels (WithNodeTimes t) where
-    type instance LabelType (WithNodeTimes t) = LabelType t
-    getLabel (WithNodeTimes t _) node          = getLabel t node
-    getLabels (WithNodeTimes t _) = getLabels t
-    relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
-
-instance (HasNodeTimes t, HasLabels t) => HasLabels (WithBranchRates t) where
-    type instance LabelType (WithBranchRates t) = LabelType t
-    getLabel (WithBranchRates t _) node      = getLabel t node
-    getLabels (WithBranchRates t _) = getLabels t
-    relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
-
-instance HasLabels t => HasLabels (WithRoots t) where
-    type instance LabelType (WithRoots t) = LabelType t
-    getLabel (WithRoots t _ _) node               = getLabel t node
-    getLabels (WithRoots t _ _)                   = getLabels t
-    relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
 
 instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
     branchLength tree b = branch_duration tree b * branch_rate tree b

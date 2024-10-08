@@ -31,7 +31,7 @@ foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet
 
 
 class Parsimony a where
-    parsimony :: (IsTree t, HasLabels t, LabelType t ~ Text) => t -> MutCosts -> a -> Int
+    parsimony :: (IsTree t, LabelType t ~ Text) => t -> MutCosts -> a -> Int
 
 
 cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ getEdgesSet t

@@ -29,12 +29,12 @@ instance (HasRoots t, IsTree t) => HasRoot t where
 -- OK, so should we store attributes inside the tree?
 -- 
 
-data Tree   = Tree Forest
+data Tree l  = Tree (Forest l)
 
-instance NFData Tree where
+instance NFData (Forest l) => NFData (Tree l) where
     rnf (Tree forest) = rnf forest
 
-instance IsGraph Tree where
+instance IsGraph (Tree l) where
     getNodesSet (Tree f) = getNodesSet f
     getEdgesSet (Tree f) = getEdgesSet f
 
@@ -46,18 +46,21 @@ instance IsGraph Tree where
     getEdgeAttributes (Tree f) edge = getEdgeAttributes f edge
     getAttributes (Tree f) = getAttributes f
 
-instance IsForest Tree where
-    type instance Unrooted Tree = Tree
-    type instance Rooted Tree = WithRoots Tree
+    type instance LabelType (Tree l) = l
+    getLabel (Tree f) node = getLabel f node
+    getLabels (Tree f) = getLabels f
+    relabel newLabels (Tree f) = Tree (relabel newLabels f)
+
+instance IsForest (Tree l) where
+    type instance Unrooted (Tree l) = (Tree l)
+    type instance Rooted (Tree l) = WithRoots (Tree l)
 
     unroot t = t
     makeRooted t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
 
-instance IsTree Tree
+instance IsTree (Tree l)
 
 instance IsTree t => IsTree (WithRoots t)
-
-instance IsTree t => IsTree (WithLabels t l)
 
 instance IsTree t => IsTree (WithBranchLengths t)
 

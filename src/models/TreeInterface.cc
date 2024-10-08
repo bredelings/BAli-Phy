@@ -59,17 +59,6 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Graph.WithLabels"))
-	{
-	    assert(tree.size() == 2);
-	    // FIXME - set labels!
-
-	    // Use the outermost set of labels.
-	    if (not labels_reg)
-		labels_reg = tree[1].get_reg();
-	    tree = tree[0];
-	}
-
 	if (has_constructor(tree.head(), "Forest.WithRoots"))
 	{
 	    assert(tree.size() == 3);
@@ -95,7 +84,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     assert(has_constructor(tree.head(),"Graph.Graph"));
-    assert(tree.size() == 5);
+    assert(tree.size() == 6);
 
     auto edges_out_of_node = tree[0];
     expression_ref tmp = edges_out_of_node.value();
@@ -121,6 +110,8 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
         parameters_for_tree_branch.insert({edge, {m_source, m_target} });
     }
+
+    labels_reg = tree[2].get_reg();
 }
 
 std::optional<int> TreeInterface::branch_durations_reg() const
