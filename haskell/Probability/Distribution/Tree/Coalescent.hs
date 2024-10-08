@@ -242,16 +242,16 @@ coalescentTreeEffect tree = do
 
 -------------------------------------------------------------
 
-data UnlabelledCoalescentTree l = UnlabelledCoalescentTree [(Int,Time)] [(Time,Double)]
+data UnlabelledCoalescentTree = UnlabelledCoalescentTree [(Int,Time)] [(Time,Double)]
 
-instance Dist (UnlabelledCoalescentTree l) where
-    type Result (UnlabelledCoalescentTree l) = WithNodeTimes (WithRoots (Tree l))
+instance Dist UnlabelledCoalescentTree where
+    type Result UnlabelledCoalescentTree = WithNodeTimes (WithRoots (Tree ()))
     dist_name _ = "coalescentTree"
 
-instance HasAnnotatedPdf (UnlabelledCoalescentTree l) where
+instance HasAnnotatedPdf UnlabelledCoalescentTree where
     annotated_densities (UnlabelledCoalescentTree leafTimes popSizes) tree = return (coalescentTreePrFactors popSizes tree, ())
 
-instance Sampleable (UnlabelledCoalescentTree l) where
+instance Sampleable UnlabelledCoalescentTree where
     sample dist@(UnlabelledCoalescentTree leafTimes popSizes) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes popSizes)
 
 unlabelledCoalescentTree leafTimes popSizes = UnlabelledCoalescentTree leafTimes popSizes

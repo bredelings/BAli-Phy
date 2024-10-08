@@ -85,6 +85,8 @@ class IsGraph g where
     getAttributes :: g -> Attributes
 
     type family LabelType g
+    type family NewLabelType g l
+
     getLabel :: g -> Int -> Maybe (LabelType g)
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
@@ -92,7 +94,7 @@ class IsGraph g where
     -- TODO: make the C++ code handle this...
 
     getLabels :: g -> IntMap (Maybe (LabelType g))
-    relabel :: IntMap (Maybe (LabelType g)) -> g -> g
+    relabel :: IntMap (Maybe l) -> g -> NewLabelType g l
 
 class IsGraph g => IsDirectedGraph g where
     isForward :: g -> EdgeId -> Bool
@@ -187,6 +189,7 @@ instance IsGraph (Graph l) where
     -- What this does NOT say how to do is to fmap the labels to a new type
     -- labelMap display graph
     type instance LabelType (Graph l) = l
+    type instance NewLabelType (Graph l) a = Graph a
     getLabel graph node = (graphLabels graph) IntMap.! node
     getLabels graph = graphLabels graph
     relabel newLabels (Graph nodes edges _ na ea a) = Graph nodes edges newLabels na ea a
@@ -280,6 +283,7 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getAttributes (WithBranchLengths t _)              = getAttributes t
 
     type instance LabelType (WithBranchLengths t) = LabelType t
+    type instance NewLabelType (WithBranchLengths t) a = WithBranchLengths (NewLabelType t a)
     getLabel  (WithBranchLengths t _) node = getLabel t node
     getLabels (WithBranchLengths t _) = getLabels t
     relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths

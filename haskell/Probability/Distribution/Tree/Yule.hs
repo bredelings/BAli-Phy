@@ -90,16 +90,16 @@ yuleEffect tree = do
 
 -------------------------------------------------------------
 
-data UnlabelledYule l = UnlabelledYule Int Rate
+data UnlabelledYule = UnlabelledYule Int Rate
 
-instance Dist (UnlabelledYule l) where
-    type Result (UnlabelledYule l) = WithNodeTimes (WithRoots (Tree l))
+instance Dist UnlabelledYule where
+    type Result UnlabelledYule = WithNodeTimes (WithRoots (Tree ()))
     dist_name _ = "yule"
 
-instance HasAnnotatedPdf (UnlabelledYule l) where
+instance HasAnnotatedPdf UnlabelledYule where
     annotated_densities (UnlabelledYule n lambda) tree = return (yulePrFactors n lambda tree, ())
 
-instance Sampleable (UnlabelledYule l) where
+instance Sampleable UnlabelledYule where
     sample dist@(UnlabelledYule n lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleYule n lambda)
 
 unlabelledYule n lambda = UnlabelledYule n lambda

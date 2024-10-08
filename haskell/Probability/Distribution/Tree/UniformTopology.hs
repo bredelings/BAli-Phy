@@ -70,16 +70,16 @@ uniformTopologyPr 2 = 1
 uniformTopologyPr n = uniformTopologyPr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -------------------------------------------------------------
-data UniformTopology l = UniformTopology Int
+data UniformTopology = UniformTopology Int
 
-instance Dist (UniformTopology l) where
-    type Result (UniformTopology l) = Tree l
+instance Dist UniformTopology where
+    type Result UniformTopology = Tree ()
     dist_name _ = "uniform_topology"
 
-instance HasAnnotatedPdf (UniformTopology l) where
+instance HasAnnotatedPdf UniformTopology where
     annotated_densities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
 
-instance Sampleable (UniformTopology l) where
+instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (sampleUniformTopology n)
 
 uniformTopology n = UniformTopology n

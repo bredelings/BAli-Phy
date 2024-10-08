@@ -45,6 +45,7 @@ instance IsGraph (Forest l) where
     getAttributes (Forest g) = getAttributes g
 
     type instance LabelType (Forest l) = l
+    type instance NewLabelType (Forest l) a = Forest a
     getLabel (Forest g) node = getLabel g node
     getLabels (Forest g) = getLabels g
     relabel newLabels (Forest g) = Forest (relabel newLabels g)
@@ -100,6 +101,7 @@ instance IsGraph t => IsGraph (WithRoots t) where
     getAttributes (WithRoots t _ _)              = getAttributes t
 
     type instance LabelType (WithRoots t) = LabelType t
+    type instance NewLabelType (WithRoots t) a = WithRoots (NewLabelType t a)
     getLabel (WithRoots t _ _) node               = getLabel t node
     getLabels (WithRoots t _ _)                   = getLabels t
     relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
@@ -157,6 +159,7 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getAttributes (WithNodeTimes t _)              = getAttributes t
 
     type instance LabelType (WithNodeTimes t) = LabelType t
+    type instance NewLabelType (WithNodeTimes t) a = WithNodeTimes (NewLabelType t a)
     getLabel (WithNodeTimes t _) node          = getLabel t node
     getLabels (WithNodeTimes t _) = getLabels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
@@ -216,6 +219,7 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     getAttributes (WithBranchRates t _)                  = getAttributes t
 
     type instance LabelType (WithBranchRates t) = LabelType t
+    type instance NewLabelType (WithBranchRates t) a = WithBranchRates (NewLabelType t a)
     getLabel (WithBranchRates t _) node      = getLabel t node
     getLabels (WithBranchRates t _) = getLabels t
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates

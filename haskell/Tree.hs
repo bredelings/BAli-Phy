@@ -47,6 +47,7 @@ instance IsGraph (Tree l) where
     getAttributes (Tree f) = getAttributes f
 
     type instance LabelType (Tree l) = l
+    type instance NewLabelType (Tree l) a = Tree a
     getLabel (Tree f) node = getLabel f node
     getLabels (Tree f) = getLabels f
     relabel newLabels (Tree f) = Tree (relabel newLabels f)
