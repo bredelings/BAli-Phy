@@ -13,10 +13,13 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Control.DeepSeq
 
+data MaybeRooted f = Unrooted | HasRoots f => Rooted
+
 class IsGraph f => IsForest f where
     type family Rooted f
 
     makeRooted :: f -> Rooted f
+    isRooted :: f -> MaybeRooted f
 
 data Forest l = Forest (Graph l)
 
@@ -27,6 +30,7 @@ instance IsForest (Forest l) where
     type instance Rooted (Forest l) = WithRoots (Forest l)
 
     makeRooted f = addRoots roots f where roots = error "Implement finding connected components!"
+    isRooted f = Unrooted
 
 instance IsGraph (Forest l) where
     getNodesSet (Forest g) = getNodesSet g
@@ -50,6 +54,8 @@ instance IsForest f => IsForest (WithBranchLengths f) where
     type Rooted (WithBranchLengths f) = WithBranchLengths (Rooted f)
 
     makeRooted (WithBranchLengths t lengths) = WithBranchLengths (makeRooted t) lengths
+    isRooted (WithBranchLengths t _) = case isRooted t of Unrooted -> Unrooted
+                                                          Rooted -> Rooted
 
 -------------------------- Rooted forests-----------------------------------
 data WithRoots t = WithRoots t [NodeId] (IntMap Bool)
@@ -104,6 +110,7 @@ instance IsForest t => IsForest (WithRoots t) where
     type Rooted   (WithRoots t) = WithRoots t
 
     makeRooted t = t
+    isRooted f = Rooted
 
 toward_root rt b = not $ isForward rt b
 
@@ -156,18 +163,19 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getLabels (WithNodeTimes t _) = getLabels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
 
-instance (IsDirectedAcyclicGraph t, IsForest t) => IsForest (WithNodeTimes t) where
+instance (HasRoots t, IsForest t) => IsForest (WithNodeTimes t) where
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
+    isRooted f = Rooted
 
-class IsDirectedAcyclicGraph g => HasNodeTimes g where
+class HasRoots g => HasNodeTimes g where
     nodeTime :: g -> Int -> Double
     nodeTimes :: g -> IntMap Double
     modifyNodeTimes :: g -> (Double -> Double) -> g
 
 -- We could separate out modifyNodeTimes out into a separate class CanModifyNodeTimes, like with CanModifyBranchLengths
-instance IsDirectedAcyclicGraph g => HasNodeTimes (WithNodeTimes g) where
+instance HasRoots g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
     nodeTimes (WithNodeTimes _ hs) = hs
     modifyNodeTimes (WithNodeTimes tree hs) f = WithNodeTimes tree (fmap f hs)
@@ -180,7 +188,7 @@ instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
 instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
-instance IsDirectedAcyclicGraph t => HasBranchLengths (WithNodeTimes t) where
+instance HasRoots t => HasBranchLengths (WithNodeTimes t) where
     branchLength tree b = branch_duration tree b
 
 branch_duration t b = abs (nodeTime t source - nodeTime t target)
@@ -218,7 +226,7 @@ instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
     makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
-
+    isRooted f = Rooted
 
 class HasNodeTimes t => HasBranchRates t where
     branch_rate :: t -> Int -> Double

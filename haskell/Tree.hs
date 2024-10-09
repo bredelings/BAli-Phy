@@ -56,6 +56,7 @@ instance IsForest (Tree l) where
     type instance Rooted (Tree l) = WithRoots (Tree l)
 
     makeRooted t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
+    isRooted (Tree f) = Unrooted
 
 instance IsTree (Tree l)
 
