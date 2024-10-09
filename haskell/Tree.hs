@@ -53,10 +53,8 @@ instance IsGraph (Tree l) where
     relabel newLabels (Tree f) = Tree (relabel newLabels f)
 
 instance IsForest (Tree l) where
-    type instance Unrooted (Tree l) = (Tree l)
     type instance Rooted (Tree l) = WithRoots (Tree l)
 
-    unroot t = t
     makeRooted t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
 
 instance IsTree (Tree l)
