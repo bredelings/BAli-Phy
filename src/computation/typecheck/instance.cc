@@ -760,8 +760,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
     TypeCon target_class = get_class_for_constraint(target_pred);
 
-    // If all arguments are variables, then we can't match an instance.
-    if (not possible_instance_for(target_pred)) return {};
+    // It IS possible to have an instance like (HasRoots t, IsTree t) => HasRoot t.
+    // So we can't bail just because all the arguments in target_pred are type variables.
 
     vector<const InstanceEnv*> instance_envs({&this_mod().local_instances});
     for(auto& [modid, mod]: this_mod().transitively_imported_modules)
