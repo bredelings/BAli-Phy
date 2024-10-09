@@ -13,6 +13,23 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Control.DeepSeq
 
+{- Class hierarchy.
+
+Functions:
+   parent: (a) single node closer to the root. Requires that there is a root.
+           (b) the single in-edge. requires that there are 0 or 1 in-edges.
+
+Types:
+   oriented tree: not the same as a rooted tree!
+   directed tree: same?
+
+   rooted tree: a tree plus a root.
+
+   rooted directed tree: arborescence = all edges point away from root.
+                         all edges point toward root.
+-}
+
+
 data MaybeRooted f = Unrooted | HasRoots f => Rooted
 
 class IsGraph f => IsForest f where
