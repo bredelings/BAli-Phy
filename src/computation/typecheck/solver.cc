@@ -496,9 +496,9 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         work_list.push_back( NonCanonical(given) );
     }
 
-//    std::cerr<<"---------------\n";
-//    for(auto& w: work_list)
-//        std::cerr<<"  "<<w.print()<<"\n";
+//   std::cerr<<"---------------\n";
+//   for(auto& w: work_list)
+//       std::cerr<<"  "<<w.print()<<"\n";
 
     while(not work_list.empty())
     {
@@ -588,9 +588,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
             wanteds.push_back(P.constraint());
     }
 
-//    std::cerr<<" residual wanteds = \n";
-//    for(auto& [v,c]: residual_wanteds)
-//        std::cerr<<"  "<<v.print()<<" :  "<<c.print()<<"\n";
+//    if (not wanteds.empty())
+//	std::cerr<<" residual wanteds = \n";
+//    for(auto& c: wanteds)
+//        std::cerr<<"  "<<c.print()<<"\n";
 
     return decls;
 }
