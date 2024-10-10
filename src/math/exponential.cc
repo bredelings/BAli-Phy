@@ -285,9 +285,22 @@ double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
 
 std::vector<double> compute_stationary_freqs(const Matrix& Q)
 {
-    assert(Q.size1() == Q.size2());
+    constexpr double tol = 1.0e-7;
 
+    assert(Q.size1() == Q.size2());
     int n = Q.size1();
+
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	    if (i != j)
+	    {
+		sum += Q(i,j);
+		assert(Q(i,j) >= 0);
+	    }
+	assert(std::abs(sum + Q(i,i)) < tol);
+    }
 
     // We start with pi * Q = 0, sum(pi) = 1.
     // We transpose to get Q * pi = 0.
