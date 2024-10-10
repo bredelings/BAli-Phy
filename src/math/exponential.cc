@@ -296,8 +296,18 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
     // 1. QQ = Q, but with an extra row of 1's
     Eigen::MatrixXd QQ(n+1,n);
     for(int i=0;i<n;i++)
+    {
         for(int j=0;j<n;j++)
             QQ(i,j) = Q(j,i);
+
+        // Must be initialized for normalization below.
+        QQ(n,i) = 0;
+    }
+
+    // Treat different multiples of Q the same.
+    // This necessary to avoid ignoring the sum(pi)=1 constraint for large |Q|.
+    QQ /= QQ.cwiseAbs().sum();
+
     // This sets up the sum(pi)
     for(int j=0;j<n;j++)
         QQ(n,j) = 1;
