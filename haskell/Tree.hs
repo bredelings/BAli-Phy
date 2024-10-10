@@ -53,9 +53,6 @@ instance IsGraph (Tree l) where
     relabel newLabels (Tree f) = Tree (relabel newLabels f)
 
 instance IsForest (Tree l) where
-    type instance Rooted (Tree l) = WithRoots (Tree l)
-
-    makeRooted t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
     isRooted (Tree f) = Unrooted
 
 instance IsTree (Tree l)
@@ -72,8 +69,11 @@ treeFromEdges nodes edges = Tree $ forestFromEdges nodes edges
 
 allEdgesFromRoot tree = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree (root tree))
 
--- addRoot :: IsTree t => NodeId -> t -> Rooted t
+-- Just don't do this if we already have a root.
 addRoot r t = addRoots [r] t
+
+-- What if we refuse to add a root to a rooted tree?  We could rename this 'makeRooted'
+addRootAnywhere t = addRoot root t where root = head $ (internalNodes t ++ leafNodes t)
 
 -- Should this go somewhere else?
 weightedAverage weights values | length weights == length values = go weights values 0 0

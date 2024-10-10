@@ -33,9 +33,6 @@ Types:
 data MaybeRooted f = Unrooted | HasRoots f => Rooted
 
 class IsGraph f => IsForest f where
-    type family Rooted f
-
-    makeRooted :: f -> Rooted f
     isRooted :: f -> MaybeRooted f
 
 data Forest l = Forest (Graph l)
@@ -44,9 +41,6 @@ instance NFData (Graph l) => NFData (Forest l) where
     rnf (Forest g) = rnf g
 
 instance IsForest (Forest l) where
-    type instance Rooted (Forest l) = WithRoots (Forest l)
-
-    makeRooted f = addRoots roots f where roots = error "Implement finding connected components!"
     isRooted f = Unrooted
 
 instance IsGraph (Forest l) where
@@ -68,9 +62,6 @@ instance IsGraph (Forest l) where
     relabel newLabels (Forest g) = Forest (relabel newLabels g)
 
 instance IsForest f => IsForest (WithBranchLengths f) where
-    type Rooted (WithBranchLengths f) = WithBranchLengths (Rooted f)
-
-    makeRooted (WithBranchLengths t lengths) = WithBranchLengths (makeRooted t) lengths
     isRooted (WithBranchLengths t _) = case isRooted t of Unrooted -> Unrooted
                                                           Rooted -> Rooted
 
@@ -124,9 +115,6 @@ instance IsGraph t => IsGraph (WithRoots t) where
     relabel newLabels (WithRoots t roots forward)  = WithRoots (relabel newLabels t) roots forward
 
 instance IsForest t => IsForest (WithRoots t) where
-    type Rooted   (WithRoots t) = WithRoots t
-
-    makeRooted t = t
     isRooted f = Rooted
 
 toward_root rt b = not $ isForward rt b
@@ -181,9 +169,6 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
 
 instance (HasRoots t, IsForest t) => IsForest (WithNodeTimes t) where
-    type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
-
-    makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
     isRooted f = Rooted
 
 class HasRoots g => HasNodeTimes g where
@@ -240,9 +225,6 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
 
 instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
-    type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
-
-    makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
     isRooted f = Rooted
 
 class HasNodeTimes t => HasBranchRates t where
