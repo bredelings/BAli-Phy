@@ -8,7 +8,7 @@ import Tree
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
-import Markov (CTMC)
+import Markov (CTMC,CheckReversible(..))
 
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
 -- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
@@ -23,7 +23,6 @@ instance HasAlphabet m => HasAlphabet (MixtureModels m) where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
 instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (MixtureModels m) where
-    type instance IsReversible (MixtureModels m) = IsReversible m
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
         where mx = mms!!(branchCats IntMap.! undirectedName b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
@@ -31,6 +30,11 @@ instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (M
     stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
     componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
 
+-- Right now we are basically guaranteeing that the models for the different branches have the SAME equilibrium.
+-- While allows this to be reversible.
+instance CheckReversible m => CheckReversible (MixtureModels m) where
+    isReversible (MixtureModels _ ms) = and $ fmap isReversible ms
+    isStationary (MixtureModels _ ms) = and $ fmap isStationary ms
 
 -- No Attribute
 getForeground Nothing = 0

@@ -1,7 +1,7 @@
 module SModel.BranchModel where
 
 import qualified Markov
-import           Markov (CTMC(..))
+import           Markov (CTMC(..),CheckReversible(..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -32,3 +32,7 @@ instance CTMC a => SimpleSModel (BranchModel a) where
     distribution _ = [1]
     nBaseModels _ = 1
     componentFrequencies (BranchModel _ _ pi _) i = [pi] !! i
+
+instance CheckReversible (BranchModel a) where
+    isReversible _ = False
+    isStationary _ = False

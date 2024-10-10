@@ -1,7 +1,16 @@
-module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
+module SModel.Markov (module SModel.Markov,
+                      module SModel.Frequency,
+                      module Data.Matrix,
+                      module Markov
+                     ) where
 
 import qualified Markov
-import           Markov (CTMC(..))
+import           Markov (CTMC(..),
+                         CheckReversible(..),
+                         checkReversible,
+                         checkStationary,
+                         reversible,
+                         equilibriumReversible)
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -50,6 +59,10 @@ instance CTMC Markov where
     getStartFreqs (Markov _ _ m _) = getStartFreqs m
     getEqFreqs (Markov _ _ m _) = getEqFreqs m
     getQ (Markov _ _ m  _) = getQ m
+
+instance CheckReversible Markov where
+    isReversible m = checkReversible (getQ m) (getEqFreqs m)
+    isStationary m = checkStationary (getQ m) (getStartFreqs m)
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 

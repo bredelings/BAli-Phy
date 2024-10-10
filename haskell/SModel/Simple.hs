@@ -5,6 +5,7 @@ import Bio.Alphabet
 import Tree
 import Data.Matrix
 import qualified Data.IntMap as IntMap (fromSet)
+import Markov (CheckReversible(..))
 
 data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
 get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
@@ -23,15 +24,7 @@ get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_
    would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector EVector Double.
 -}
 
-data EquilibriumReversible
-
-data EquilibriumNonReversible
-
-data NonEquilibrium
-
-class HasAlphabet m => SimpleSModel m where
-    type family IsReversible m
-    type instance IsReversible m = NonEquilibrium
+class (CheckReversible m, HasAlphabet m) => SimpleSModel m where
     stateLetters :: m -> EVector Int
     branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
     distribution :: m -> [Double]

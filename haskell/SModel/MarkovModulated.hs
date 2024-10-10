@@ -94,7 +94,7 @@ covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between leve
 
 covarion_gtr nu exchange pi model = parameter_mixture_unit (Discrete [(0,1-pi), (nu, pi)]) (\nu' -> covarion_gtr_ssrv nu' exchange model)
 
-covarion_gtr_sym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
+covarion_gtr_sym :: Matrix Double -> Discrete Markov -> Markov
 covarion_gtr_sym sym model = modulated_markov models rates_between level_probs where
     dist = rescale 1 model
     (models, level_probs) = unzip $ unpackDiscrete dist
