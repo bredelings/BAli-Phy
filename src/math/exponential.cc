@@ -306,7 +306,8 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
 
     // 2. Treat different multiples of Q the same.
     //    This necessary to avoid ignoring the sum(pi)=1 constraint for large |Q|.
-    QQ /= QQ.cwiseAbs().sum();
+    double scale = QQ.cwiseAbs().sum();
+    QQ /= scale;
 
     // 3. This sets up the sum(pi)
     for(int j=0;j<n;j++)
@@ -325,9 +326,22 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
 
     double err = (QQ * epi - b).cwiseAbs().sum();
 
-    if (err > 1.0e-5)
+    double err_neg = 0;
+    for(int i=0;i<n;i++)
     {
-        std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"\n";
+        err_neg = std::min(err_neg,epi[i]);
+        epi[i] = std::max<double>(epi[i],0);
+    }
+
+    double sum = epi.sum();
+    epi /= sum;
+
+    double err2 = (QQ * epi - b).cwiseAbs().sum();
+
+    double tol = 1.0e-9;
+    if (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
+    {
+        std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
 
     // 5. Copy back to an EVector double;
