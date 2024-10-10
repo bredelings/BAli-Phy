@@ -1043,7 +1043,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
+extern "C" closure builtin_function_fixupDiagonalRates(OperationArgs& Args)
 {
     auto arg1 = Args.evaluate(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();

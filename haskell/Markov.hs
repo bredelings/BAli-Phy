@@ -5,7 +5,7 @@ import SModel.Rate
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
-foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
+foreign import bpcall "SModel:" fixupDiagonalRates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
@@ -61,11 +61,11 @@ data Markov = Markov (Matrix Double) (EVector Double) Double
 
 -- can I hide the Markov constructor?
 -- should I rename this function to ctmc?
-markov q pi = Markov q_fixed pi 1 where
-    q_fixed = fixup_diagonal_rates q
+markov q pi = Markov qFixed pi 1 where
+    qFixed = fixupDiagonalRates q
 
-markov' q = Markov q_fixed (builtin_getEqFreqs q_fixed) 1 where
-    q_fixed = fixup_diagonal_rates q
+markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 where
+    qFixed = fixupDiagonalRates q
 
 non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
 
