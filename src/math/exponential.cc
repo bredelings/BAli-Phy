@@ -351,7 +351,6 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
 
     double err2 = (QQ * epi - b).cwiseAbs().sum();
 
-    double tol = 1.0e-9;
     if (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
     {
         std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
