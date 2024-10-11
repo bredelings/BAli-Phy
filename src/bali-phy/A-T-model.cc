@@ -906,7 +906,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         else
             M = "~uniform_tree(taxa, gamma(0.5, 2/length(taxa)))";
 
-        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<Lengths>"), M, "tree model", {});
+        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<t>"), M, "tree model", {});
     }
 
     //-------------- Likelihood calculator types -----------//
