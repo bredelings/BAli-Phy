@@ -25,8 +25,8 @@ Types:
 
    rooted tree: a tree plus a root.
 
-   rooted directed tree: arborescence = all edges point away from root.
-                         all edges point toward root.
+   rooted directed tree:      arborescence = all edges point away from root.
+                         anti-arborescence = all edges point toward root.
 -}
 
 
@@ -136,8 +136,9 @@ towardRoot rt b = not $ isForward rt b
 branchToParent rtree node = find (towardRoot rtree) (edgesOutOfNode rtree node)
 branchFromParent rtree node = reverseEdge <$> branchToParent rtree node
 
-parentNode rooted_tree n = case branchToParent rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
-                                                                Nothing -> Nothing
+parentNode rooted_tree n = case branchToParent rooted_tree n of
+                             Just b  -> Just $ targetNode rooted_tree b
+                             Nothing -> Nothing
 
 instance IsDirectedGraph g => IsDirectedGraph (WithBranchLengths g) where
     isForward (WithBranchLengths g _) e = isForward g e
