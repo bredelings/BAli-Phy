@@ -43,7 +43,7 @@ data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where
-    get_smap (Markov _ s _ _) = s
+    getSMap (Markov _ s _ _) = s
 
 instance CTMC Markov where
     qExp (Markov _ _ m _) = qExp m
@@ -71,7 +71,7 @@ instance SimpleSModel Markov where
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
-    stateLetters rm = get_smap rm
+    stateLetters rm = getSMap rm
     componentFrequencies smodel i = [getStartFreqs smodel]!!i
 
 instance Scalable Markov where

@@ -18,7 +18,7 @@ type NonReversibleMarkov = MkEquilibrium Markov
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap m => HasSMap (MkEquilibrium m) where
-    get_smap (Equilibrium m) = get_smap m
+    getSMap (Equilibrium m) = getSMap m
 
 instance HasAlphabet m => HasAlphabet (MkEquilibrium m) where
     getAlphabet (Equilibrium m) = getAlphabet m
@@ -29,7 +29,7 @@ instance SimpleSModel (MkEquilibrium Markov) where
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
-    stateLetters rm = get_smap rm
+    stateLetters rm = getSMap rm
     componentFrequencies smodel i = [getStartFreqs smodel]!!i
 
 instance RateModel NonReversibleMarkov where

@@ -47,7 +47,7 @@ type ReversibleMarkov = MkReversible Markov
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap m => HasSMap (MkReversible m) where
-    get_smap (Reversible m) = get_smap m
+    getSMap (Reversible m) = getSMap m
 
 instance HasAlphabet m => HasAlphabet (MkReversible m) where
     getAlphabet (Reversible m) = getAlphabet m
@@ -58,7 +58,7 @@ instance SimpleSModel (MkReversible Markov) where
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
-    stateLetters rm = get_smap rm
+    stateLetters rm = getSMap rm
     componentFrequencies smodel i = [getStartFreqs smodel]!!i
 
 instance RateModel ReversibleMarkov where

@@ -14,7 +14,7 @@ instance HasAlphabet (MultiFrequency i e n) where
     getAlphabet (MultiFrequency a _ _ _ _ _) = a
 
 instance HasSMap (MultiFrequency i e n) where
-    get_smap (MultiFrequency _ s _ _ _ _) = s
+    getSMap (MultiFrequency _ s _ _ _ _) = s
 
 instance RateModel (MultiFrequency i e n) where
     rate (MultiFrequency _ _ r _ _ _) = r
@@ -39,7 +39,7 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 
 instance (RateModel m, CTMC m) => SimpleSModel (MultiFrequency i m (EVector Double)) where
     distribution model = [1]
-    stateLetters model = get_smap model
+    stateLetters model = getSMap model
     branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (factor * branchLength tree b / rate q) $ q]
         where q = edgeProp model tree b
     componentFrequencies model 0 = nodeProp model 0 -- (root tree)
