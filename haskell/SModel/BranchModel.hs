@@ -9,6 +9,11 @@ import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
 
+{-
+  This model is for PAML's branch-model, where every branch can have a different Q matrix
+  BUT they must all have the same equilibrium frequencies.
+ -}
+
 -- Should this also take a tree?
 -- Should we just have a bare function?
 -- Should we have an IntMap?
@@ -25,10 +30,13 @@ instance Functor BranchModel where
 instance HasAlphabet (BranchModel a) where
     getAlphabet (BranchModel alphabet _ _ _) = alphabet
 
-instance CTMC a => SimpleSModel (BranchModel a) where
-    stateLetters (BranchModel _ smap _ _) = smap
-    branch_transition_p (SingleBranchLengthModel tree model f) b = [qExp $ scale (branchLength tree b * f) (ratesForBranch b)]
+instance HasSMap (BranchModel a) where
+    getSMap (BranchModel _ smap _ _) = smap
+
+instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel m) where
+    stateLetters (SModelOnTree tree model _) = getSMap model
+    branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (branchLength tree b * factor) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
     distribution _ = [1]
     nBaseModels _ = 1
-    componentFrequencies (BranchModel _ _ pi _) i = [pi] !! i
+    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _) _) i = [pi] !! i

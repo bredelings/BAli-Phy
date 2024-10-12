@@ -31,11 +31,16 @@ parameter_mixture_unit values model_fn = parameter_mixture values (unit_mixture 
 
 rate_mixture m d = parameter_mixture d (\x->scale x m)
 
-average_frequency ms = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix ms
+wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
+                        dist =  list_to_vector [p | (m,p) <- ms ]
+                    in builtin_weighted_frequency_matrix dist freqs
 
-plus_inv p_inv mm = addComponent mm (scale 0 $ f81 pi a, p_inv)
-    where a  = getAlphabet mm
-          pi = average_frequency mm
+averageFrequency ms = list_from_vector $ builtin_average_frequency $ wfm ms
+
+plus_inv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
+plus_inv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
+    where a  = getAlphabet ms
+          pi = averageFrequency ms
 
 rate_mixture_unif_bins base dist n_bins = rate_mixture base $ uniformDiscretize dist n_bins
 
@@ -47,14 +52,16 @@ baseModel model i = component model i
 instance HasAlphabet m => HasAlphabet (Discrete m) where
     getAlphabet model = getAlphabet $ baseModel model 0
 
-instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (Discrete m) where
+instance HasSMap m => HasSMap (Discrete m) where
+    getSMap model = getSMap $ baseModel model 0
+
+instance (HasBranchLengths t, CTMC m, HasSMap m, RateModel m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
-    branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (branchLength tree b * factor / r) component | (component,_) <- unpackDiscrete model]
+    branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (factor * branchLength tree b / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
-    distribution model = map snd (unpackDiscrete model)
-    nBaseModels model = length $ unpackDiscrete model
-    stateLetters model = stateLetters $ baseModel model 0
-    componentFrequencies model i = getStartFreqs $ baseModel model i
+    distribution (SModelOnTree _ model _) = map snd (unpackDiscrete model)
+    componentFrequencies (SModelOnTree _ model _) i = getStartFreqs $ baseModel model i
+    stateLetters (SModelOnTree _ model _) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where
     scale x dist = fmap (scale x) dist

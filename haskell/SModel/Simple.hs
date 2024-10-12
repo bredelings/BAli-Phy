@@ -6,10 +6,17 @@ import Tree
 import Data.Matrix
 import qualified Data.IntMap as IntMap (fromSet)
 
-data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
-get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
+data SingleBranchLengthModel a = SingleBranchLengthModel a Double
 
-
+data SModelOnTree t m = SModelOnTree t m Double
+{-
+  SModelOnTree t (SingleBranchLengthModel Markov
+  SModelOnTree t ReversibleMarkov
+  SModelOnTree t (Discrete Markov)
+  SModelOnTree t (Discrete ReversibleMarkov)
+  SModelOnTree t (MixtureModels Markov)
+  SModelOnTree t (MixtureModels ReversibleMarkov)
+-}
 
 -- See LikelihoodMixtureModel
 
@@ -31,15 +38,24 @@ data EquilibriumNonReversible
 
 data NonEquilibrium
 
-class HasAlphabet m => SimpleSModel m where
+{-
+TODO: Remove stateLetters from SimpleSModel and just use getSMap directly?
+TODO: Rename to e.g. PhyloLikelihood?
+-}
+
+class SimpleSModel t m where
     type family IsReversible m
     type instance IsReversible m = NonEquilibrium
-    stateLetters :: m -> EVector Int
-    branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> EdgeId -> [Matrix Double]
-    distribution :: m -> [Double]
-    nBaseModels :: m -> Int
-    componentFrequencies :: m -> Int -> EVector Double
+
+    getTree :: (SModelOnTree t m) -> t
+    stateLetters :: (SModelOnTree t m) -> EVector Int
+    branch_transition_p :: (SModelOnTree t m) -> EdgeId -> [Matrix Double]
+    distribution :: (SModelOnTree t m) -> [Double]
+    nBaseModels :: (SModelOnTree t m) -> Int
+    componentFrequencies :: (SModelOnTree t m) -> Int -> EVector Double
+
     nBaseModels m = length (distribution m)
+    getTree (SModelOnTree tree _ _) = tree
 
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
@@ -53,4 +69,4 @@ frequency_matrix model = builtin_frequency_matrix $ list_to_vector $ map (compon
 nStates m = vector_size (stateLetters m)
 
 transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
-    edges = getEdgesSet $ get_tree' smodel_on_tree
+    edges = getEdgesSet $ getTree smodel_on_tree

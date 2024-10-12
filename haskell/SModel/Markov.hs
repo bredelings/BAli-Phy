@@ -66,13 +66,13 @@ markov' a smap q = Markov a smap rm rate where
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
-instance SimpleSModel Markov where
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branchLength tree b * factor / r) smodel]
+instance HasBranchLengths t => SimpleSModel t Markov where
+    branch_transition_p (SModelOnTree tree smodel factor) b = [qExp $ scale (factor * branchLength tree b / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
-    stateLetters rm = getSMap rm
-    componentFrequencies smodel i = [getStartFreqs smodel]!!i
+    stateLetters (SModelOnTree _ rm _) = getSMap rm
+    componentFrequencies (SModelOnTree _ smodel _) i = [getStartFreqs smodel]!!i
 
 instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)

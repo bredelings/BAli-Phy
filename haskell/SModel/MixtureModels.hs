@@ -22,14 +22,14 @@ mmm branch_cats m = MixtureModels branch_cats [m]
 instance HasAlphabet m => HasAlphabet (MixtureModels m) where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
-instance (CTMC m, HasAlphabet m, RateModel m, SimpleSModel m) => SimpleSModel (MixtureModels m) where
+instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
-    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branchCats mms) factor) b = branch_transition_p (SingleBranchLengthModel tree mx factor) b
+    branch_transition_p (SModelOnTree tree smodel@(MixtureModels branchCats mms) f) b = branch_transition_p (SModelOnTree tree mx f) b
         where mx = mms!!(branchCats IntMap.! undirectedName b)
-    distribution              (MixtureModels _ (m:ms)) = distribution m
-    nBaseModels               (MixtureModels _ (m:ms)) = nBaseModels m
-    stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
-    componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
+    distribution           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = distribution (SModelOnTree tree m f)
+    nBaseModels            (SModelOnTree tree (MixtureModels _ (m:ms)) f) = nBaseModels (SModelOnTree tree m f)
+    stateLetters           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = stateLetters (SModelOnTree tree m f)
+    componentFrequencies   (SModelOnTree tree (MixtureModels _ (m:ms)) f) i = componentFrequencies (SModelOnTree tree m f) i
 
 
 -- No Attribute

@@ -11,7 +11,7 @@ import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
 import           SModel.Rate
-import           Tree (branchLength)
+import           Tree (HasBranchLengths(..))
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -52,15 +52,16 @@ instance HasSMap m => HasSMap (MkReversible m) where
 instance HasAlphabet m => HasAlphabet (MkReversible m) where
     getAlphabet (Reversible m) = getAlphabet m
 
-instance SimpleSModel (MkReversible Markov) where
+instance RateModel ReversibleMarkov where
+    rate (Reversible m) = rate m
+
+instance HasBranchLengths t => SimpleSModel t (MkReversible Markov) where
     type instance IsReversible (MkReversible Markov) = EquilibriumReversible
-    branch_transition_p (SingleBranchLengthModel tree smodel factor) b = [qExp $ scale (branchLength tree b * factor / r) smodel]
+    branch_transition_p (SModelOnTree tree smodel factor) b = [qExp $ scale (factor * branchLength tree b / r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     nBaseModels _ = 1
-    stateLetters rm = getSMap rm
-    componentFrequencies smodel i = [getStartFreqs smodel]!!i
+    stateLetters (SModelOnTree _ rm _) = getSMap rm
+    componentFrequencies (SModelOnTree tree smodel factor) i = [getStartFreqs smodel]!!i
 
-instance RateModel ReversibleMarkov where
-    rate (Reversible m) = rate m
 
