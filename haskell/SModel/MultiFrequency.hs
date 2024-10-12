@@ -7,16 +7,16 @@ import SModel.Rate
 import Tree
 import Markov (CTMC, qExp)
 
--- The node information (i) is used to construct a node property (np) and an edge property (ep).
-data MultiFrequency i ep np = MultiFrequency Alphabet (EVector Int) Double (NodeId -> i) (i -> np) (i -> ep)
+-- The node information (i) is used to construct a node property (n) and an edge property (e).
+data MultiFrequency i n e = MultiFrequency Alphabet (EVector Int) Double (NodeId -> i) (i -> n) (i -> e)
 
-instance HasAlphabet (MultiFrequency i e n) where
+instance HasAlphabet (MultiFrequency i n e) where
     getAlphabet (MultiFrequency a _ _ _ _ _) = a
 
-instance HasSMap (MultiFrequency i e n) where
+instance HasSMap (MultiFrequency i n e) where
     getSMap (MultiFrequency _ s _ _ _ _) = s
 
-instance RateModel (MultiFrequency i e n) where
+instance RateModel (MultiFrequency i n e) where
     rate (MultiFrequency _ _ r _ _ _) = r
 
 instance Scalable (MultiFrequency i e n) where
@@ -37,10 +37,10 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 -- Question: How do we attach Rates.gamma to one of these models?
 -- * we need to be able to rescale the model to have the specified rates, which means that it need to have a rate.
 
-instance (RateModel m, CTMC m) => SimpleSModel (MultiFrequency i m (EVector Double)) where
+instance (HasRoot t, HasBranchLengths t, RateModel m, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
     distribution model = [1]
-    stateLetters model = getSMap model
-    branch_transition_p (SingleBranchLengthModel tree model factor) b = [qExp $ scale (factor * branchLength tree b / rate q) $ q]
+    stateLetters (SModelOnTree _ model _) = getSMap model
+    branch_transition_p (SModelOnTree tree model f) b = [qExp $ scale (f * branchLength tree b / rate q) $ q]
         where q = edgeProp model tree b
-    componentFrequencies model 0 = nodeProp model 0 -- (root tree)
+    componentFrequencies (SModelOnTree tree model _) 0 = nodeProp model (root tree)
     componentFrequencies _ _ = error "MultiFrequency: only 1 component"
