@@ -68,7 +68,7 @@ cachedConditionalLikelihoodsEqNonRev t nodeCLVs as ps f = let lc    = getEdgesSe
                                                                           nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
                                                                           branchCLVs = IntMap.restrictKeysToVector lc inEdges
                                                                           asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                      in peelBranch nodeCLV branchCLVs asIn p f (toward_root t b)
+                                                                      in peelBranch nodeCLV branchCLVs asIn p f (towardRoot t b)
                                                           in lc
 
 peelLikelihoodEqNonRev t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t root
@@ -85,7 +85,7 @@ cachedConditionalLikelihoodsNonEq t nodeCLVs as ps rootF = let lc    = getEdgesS
                                                                            nodeCLV = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
                                                                            branchCLVs = IntMap.restrictKeysToVector lc inEdges
                                                                            asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                       in peelBranchNonEq nodeCLV branchCLVs asIn p rootF (toward_root t b)
+                                                                       in peelBranchNonEq nodeCLV branchCLVs asIn p rootF (towardRoot t b)
                                                            in lc
 
 peelLikelihoodNonEq t nodeCLVs cls as rootF root = let inEdges = edgesTowardNodeSet t root

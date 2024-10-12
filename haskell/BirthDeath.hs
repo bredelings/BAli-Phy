@@ -130,7 +130,7 @@ isLeafBranch b = not $ isInternalBranch b
 away_from_root (Edge _ FromRoot) = True
 away_from_root _                 = False
 
-toward_root = not . away_from_root
+towardRoot = not . away_from_root
 
 parentBranch (Left _) = Nothing
 parentBranch (Right node) = Just $ Edge node ToRoot

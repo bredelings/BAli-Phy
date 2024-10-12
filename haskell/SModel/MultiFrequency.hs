@@ -25,7 +25,7 @@ instance Scalable (MultiFrequency i e n) where
 nodeInfo (MultiFrequency _ _ _ f _ _) node      = f node  -- get the node info
 nodeProp (MultiFrequency _ _ _ f g _) node      = g $ f $ node  -- get the node property
 edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node property
-    where edge' | toward_root tree edge = reverseEdge edge
+    where edge' | towardRoot tree edge = reverseEdge edge
                 | otherwise = edge
           node = targetNode tree edge'
 
