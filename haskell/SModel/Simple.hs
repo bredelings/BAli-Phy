@@ -37,6 +37,7 @@ class HasAlphabet m => SimpleSModel m where
     distribution :: m -> [Double]
     nBaseModels :: m -> Int
     componentFrequencies :: m -> Int -> EVector Double
+    nBaseModels m = length (distribution m)
 
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
