@@ -129,6 +129,8 @@ instance IsForest t => IsForest (WithRoots t) where
     makeRooted t = t
     isRooted f = Rooted
 
+-- isForward only implies a direction.  toward_root needs to the direction to have certain properties.
+toward_root :: HasRoots t => t -> EdgeId -> Bool
 toward_root rt b = not $ isForward rt b
 
 branchToParent rtree node = find (toward_root rtree) (edgesOutOfNode rtree node)
