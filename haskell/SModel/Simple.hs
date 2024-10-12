@@ -9,6 +9,8 @@ import qualified Data.IntMap as IntMap (fromSet)
 data SingleBranchLengthModel t a = SingleBranchLengthModel t a Double
 get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
 
+
+
 -- See LikelihoodMixtureModel
 
 {-
@@ -33,7 +35,7 @@ class HasAlphabet m => SimpleSModel m where
     type family IsReversible m
     type instance IsReversible m = NonEquilibrium
     stateLetters :: m -> EVector Int
-    branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
+    branch_transition_p :: HasBranchLengths t => SingleBranchLengthModel t m -> EdgeId -> [Matrix Double]
     distribution :: m -> [Double]
     nBaseModels :: m -> Int
     componentFrequencies :: m -> Int -> EVector Double
