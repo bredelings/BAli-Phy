@@ -12,6 +12,7 @@ module SModel (module SModel,
                module SModel.Empirical,
                module SModel.MarkovModulated,
                module SModel.MutSel,
+               module SModel.MultiFrequency,
                module SModel.BranchModel,
                module SModel.RNAEdit,
                frequencies_from_dict) where
@@ -38,6 +39,7 @@ import SModel.MixtureModel
 import SModel.MixtureModels
 import SModel.Empirical
 import SModel.MarkovModulated
+import SModel.MultiFrequency
 import SModel.MutSel
 import SModel.BranchModel
 import SModel.RNAEdit
