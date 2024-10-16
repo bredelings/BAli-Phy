@@ -168,29 +168,12 @@ instance (LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSMo
     type DistProperties (PhyloCTMC t Int s EquilibriumNonReversible) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
-
-sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
-  let ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
-      f = (weighted_frequency_matrix smodel)
-
-  rec let simulateSequenceForNode node = case branchToParent rtree node of
-                                   Nothing -> simulateRootSequence rootLength f
-                                   Just b' -> let b = reverseEdge b'
-                                                  parent = sourceNode rtree b
-                                             in simulateFixedSequenceFrom (stateSequences IntMap.! parent) (ps IntMap.! b) f
-      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
-  return stateSequences
-
-
--- Should hasRoots t imply HasRoots (Rooted t)?
--- Where is (Rooted t) coming up?  Can we remove it?
-
 instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStatesFixedNonRev tree rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -211,29 +194,12 @@ instance (LabelType t ~ Text, HasRoot t, HasBranchLengths t, IsTree t, SimpleSMo
     type DistProperties (PhyloCTMC t Int s NonEquilibrium) = PhyloCTMCProperties
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
-
-sampleComponentStatesFixedNonRev rtree rootLength smodel scale =  do
-  let ps = transition_ps_map (SingleBranchLengthModel rtree smodel scale)
-      f = (weighted_frequency_matrix smodel)
-
-  rec let simulateSequenceForNode node = case branchToParent rtree node of
-                                   Nothing -> simulateRootSequence rootLength f
-                                   Just b' -> let b = reverseEdge b'
-                                                  parent = sourceNode rtree b
-                                             in simulateFixedSequenceFrom (stateSequences IntMap.! parent) (ps IntMap.! b) f
-      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
-  return stateSequences
-
-
--- Should hasRoots t imply HasRoots (Rooted t)?
--- Where is (Rooted t) coming up?  Can we remove it?
-
 instance (IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, SimpleSModel s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
     sampleIO (PhyloCTMC tree rootLength smodel scale) = do
       let alphabet = getAlphabet smodel
           smap = stateLetters smodel
 
-      stateSequences <- sampleComponentStatesFixedNonRev tree rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
