@@ -83,6 +83,7 @@ instance NFData t => NFData (WithRoots t) where
 class (IsDirectedAcyclicGraph t, IsForest t) => HasRoots t where
     isRoot :: t -> NodeId -> Bool
     roots :: t -> [NodeId]
+    setRoots :: [NodeId] -> t -> t
 
     isRoot f n = isSource f n
     roots f = filter (isRoot f) (getNodes f)
@@ -95,6 +96,7 @@ instance IsForest f => IsDirectedAcyclicGraph (WithRoots f)
 instance IsForest t => HasRoots (WithRoots t) where
     roots (WithRoots _ rs _) = rs
     isRoot (WithRoots _ rs _) node = node `elem` rs
+    setRoots rs (WithRoots t _ _) = addRoots rs t
 
 instance IsDirectedGraph g => IsDirectedGraph (WithNodeTimes g) where
     isForward (WithNodeTimes g _) e = isForward g e
@@ -104,6 +106,7 @@ instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithNodeTimes g)
 instance HasRoots t => HasRoots (WithNodeTimes t) where
     roots (WithNodeTimes t _)     = roots t
     isRoot (WithNodeTimes t _) node = isRoot t node
+    setRoots rs (WithNodeTimes t nts)  = WithNodeTimes (setRoots rs t) nts
 
 instance IsGraph t => IsGraph (WithRoots t) where
     getNodesSet (WithRoots t _ _)                 = getNodesSet t
@@ -148,6 +151,7 @@ instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchLengths g
 instance HasRoots t => HasRoots (WithBranchLengths t) where
     roots (WithBranchLengths tree _) = roots tree
     isRoot (WithBranchLengths t _) node = isRoot t node
+    setRoots rs (WithBranchLengths t ls) = WithBranchLengths (setRoots rs t) ls
 
 instance IsDirectedGraph g => IsDirectedGraph (WithBranchRates g) where
     isForward (WithBranchRates g _) e = isForward g e
@@ -157,6 +161,7 @@ instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchRates g)
 instance (HasNodeTimes t, HasRoots t) => HasRoots (WithBranchRates t) where
     roots (WithBranchRates t _) = roots t
     isRoot (WithBranchRates t _) node = isRoot t node
+    setRoots rs (WithBranchRates t rates) = WithBranchRates (setRoots rs t) rates
 
 -------------------------- Forests with node times--------------------------
 -- The array stores the node times

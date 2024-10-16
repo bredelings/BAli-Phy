@@ -20,6 +20,8 @@ class IsForest t => IsTree t
 
 class (HasRoots t, IsTree t) => HasRoot t where
     root :: t -> NodeId
+    setRoot :: NodeId -> t -> t
+    setRoot r t = setRoots [r] t
 
 instance (HasRoots t, IsTree t) => HasRoot t where
     root tree = case roots tree of [] -> error "root: Tree has no roots!"
