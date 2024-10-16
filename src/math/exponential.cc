@@ -309,31 +309,54 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
     // 1. QQ = Q, but with an extra row of 1's
     Eigen::MatrixXd QQ(n+1,n);
     for(int i=0;i<n;i++)
+    {
         for(int j=0;j<n;j++)
             QQ(i,j) = Q(j,i);
-    // This sets up the sum(pi)
+
+        // Must be initialized for normalization below.
+        QQ(n,i) = 0;
+    }
+
+    // 2. Treat different multiples of Q the same.
+    //    This necessary to avoid ignoring the sum(pi)=1 constraint for large |Q|.
+    double scale = QQ.cwiseAbs().sum();
+    QQ /= scale;
+
+    // 3. This sets up the sum(pi)
     for(int j=0;j<n;j++)
         QQ(n,j) = 1;
 
-    // 2. b = 0*n + 1
+    // 3. b = 0*n + 1
     Eigen::VectorXd b(n+1);
     for(int i=0;i<n;i++)
         b[i] = 0;
     // This sets up the result of sum(pi)
     b[n] = 1;
 
-    // 3. Solve the equations
+    // 4. Solve the equations
     // Eigen::VectorXd epi = QQ.ColPivHouseholderQr.solve(b);  Maybe faster?
     Eigen::VectorXd epi = QQ.fullPivLu().solve(b);
 
     double err = (QQ * epi - b).cwiseAbs().sum();
 
-    if (err > 1.0e-5)
+    double err_neg = 0;
+    for(int i=0;i<n;i++)
     {
-        std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"\n";
+        err_neg = std::min(err_neg,epi[i]);
+        epi[i] = std::max<double>(epi[i],0);
     }
 
-    // 4. Copy back to an EVector double;
+    double sum = epi.sum();
+    epi /= sum;
+
+    double err2 = (QQ * epi - b).cwiseAbs().sum();
+
+    if (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
+    {
+        std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
+    }
+
+    // 5. Copy back to an EVector double;
     std::vector<double> pi(n);
     for(int i=0;i<n;i++)
         pi[i] = epi[i];
