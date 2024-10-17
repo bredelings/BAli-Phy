@@ -49,7 +49,7 @@ well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
 annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
-  let rtree = makeRooted tree
+  let rtree = setRoot subst_root (makeRooted tree)
       subst_root = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
