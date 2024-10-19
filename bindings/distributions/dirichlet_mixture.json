@@ -1,7 +1,7 @@
 {
     "name": "dirichlet_mixture",
     "result_type": "Distribution<DiscreteDist<a>>",
-    "call": "dirichletMixture(@n,@dist,@alpha)",
+    "call": "dirichletMixture(@n,@alpha,@dist)",
     "import": ["Probability"],
     "args": [
         {

@@ -15,7 +15,7 @@ smodel_prior codons = do
     pi  <- prior $ symmetricDirichletOn (letters nucleotides) 1.0
     ws   <- zip (letters codons) <$> prior (iid (length (letters codons)) (normal 0 1))
     let n  = 4
-    omegaDist <- prior $ dirichletMixture n (uniform 0 1) 2
+    omegaDist <- prior $ dirichletMixture n 2 $ uniform 0 1
 
     let mut_sel_model w = gtr' sym pi nucleotides +> SModel.x3 codons +> dNdS w +> mut_sel' ws
         m3_model = mut_sel_model +> SModel.m3 omegaDist
