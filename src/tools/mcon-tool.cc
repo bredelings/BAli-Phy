@@ -25,6 +25,7 @@ po::variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("unnest", "file with alignment to annotate")
 	("atomize","file with tree")
+	("split",value<string>(),"split and write to filenames with prefix=arg")
 	("drop",value<vector<string>>()->multitoken(),"paths to drop")
 	("output,O",value<string>()->default_value("MCON"),"output format (TSV or MCON)")
 	;
@@ -91,6 +92,32 @@ int main(int argc,char* argv[])
 	    logfile.atomize();
 
 	auto output = args.at("output").as<string>();
+
+	if (args.count("split"))
+	{
+	    std::filesystem::path split_filename = args.at("split").as<string>();
+	    auto logs = logfile.split();
+	    for(int i=0;i<logs.size();i++)
+	    {
+		auto tmp_filename = split_filename;
+		tmp_filename += "." + std::to_string(i+1);
+		if (output == "mcon" or output=="MCON")
+		{
+		    tmp_filename += ".json";
+		    std::ofstream outfile(tmp_filename);
+		    logs[i].dump_MCON(outfile);
+		    outfile.close();
+		}
+		else if (output == "tsv" or output == "TSV")
+		{
+		    tmp_filename += ".tsv";
+		    std::ofstream outfile(tmp_filename);
+		    logs[i].dump_TSV(outfile);
+		    outfile.close();
+		}
+	    }
+	}
+
 	if (output == "mcon" or output == "MCON")
 	    logfile.dump_MCON(std::cout);
 	else if (output == "tsv" or output == "TSV")
