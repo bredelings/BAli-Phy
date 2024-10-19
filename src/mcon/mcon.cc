@@ -276,11 +276,120 @@ void findConstantFields(json::value& j1, const json::value& j2)
     }
 }
 
+void write_shape(std::ostream& o, const json::value& j)
+{
+    if (j.is_null())
+	o<<'0';
+    else if (j.is_bool())
+	o<<'1';
+    else if (j.is_string())
+	o<<'2';
+    else if (j.is_number())
+	o<<'3';
+    else if (j.is_array())
+    {
+	o<<'[';
+	for(auto& v: j.as_array())
+	{
+	    write_shape(o,v);
+	    o<<',';
+	}
+	o<<']';
+    }
+    else if (j.is_object())
+    {
+	o<<'{';
+	for(auto& [k,v]: j.as_object())
+	{
+	    // escape : as :: to ensure that the final : separator doesn't come FROM the key.
+	    for(int j=0;j<k.size();j++)
+	    {
+		char c = k[j];
+		if (c == ':')
+		    o<<':';
+		o<<c;
+	    }
+	    write_shape(o,v);
+	    o<<',';
+	}
+	o<<'}';
+    }
+    else
+	std::abort();
+}
+
+string get_shape(const json::value& j)
+{
+    std::ostringstream o;
+    write_shape(o,j);
+    return o.str();
+}
+
+std::vector<vector<int>> get_shapes(const vector<json::object>& samples)
+{
+    std::map<std::string, std::pair<int,std::vector<int>>> samples_for_shape;
+    int n_shapes = 0;
+    for(int i=0;i<samples.size();i++)
+    {
+	auto shape = get_shape(samples[i]);
+	auto iter = samples_for_shape.find(shape);
+	if (iter == samples_for_shape.end())
+	{
+	    samples_for_shape.insert({shape,{n_shapes,{i}}});
+	    n_shapes++;
+	}
+	else
+	{
+	    iter->second.second.push_back(i);
+	}
+    }
+
+    vector<vector<int>> samples_for_shape_array(n_shapes);
+    for(auto& [_,v]: samples_for_shape)
+    {
+	auto& [shape,indices] = v;
+	samples_for_shape_array[shape] = std::move(indices);
+    }
+
+    vector<int> indices;
+    for(int i;i<n_shapes;i++)
+	indices.push_back(i);
+
+    std::sort(indices.begin(), indices.end(), [&](int i, int j) { return samples_for_shape_array[i].size() > samples_for_shape_array[j].size();});
+
+    vector<vector<int>> results(n_shapes);
+    for(int i=0;i<n_shapes;i++)
+	results[i] = std::move(samples_for_shape_array[indices[i]]);
+
+    return results;
+}
+
+vector<Log> Log::split() const
+{
+    auto groups = get_shapes(samples);
+    vector<Log> logs;
+    for(auto& group: groups)
+    {
+	vector<json::object> subsamples;
+	for(int i: group)
+	    subsamples.push_back(samples[i]);
+//	logs.push_back(Log(nested,atomic,fields,std::move(subsamples)));
+	logs.emplace_back(nested,atomic,fields,std::move(subsamples));
+    }
+    return logs;
+}
+
+Log::Log(bool n, bool a, const std::optional<std::vector<std::string>>& f, std::vector<json::object>&& s)
+    :fields(f),nested(n),atomic(a),samples(std::move(s))
+{
+}
+
 tuple<set<string>, set<string>> classifyFields(const vector<json::object>& samples)
 {
     if (samples.empty()) return {{},{}};
 
     auto fields = samples[0];
+
     for(auto& sample: samples)
     {
 	json::object fields2;
@@ -294,7 +403,7 @@ tuple<set<string>, set<string>> classifyFields(const vector<json::object>& sampl
 		findConstantFields(v1, sample.at(key));
 	}
     }
-
+    
     // Maybe the top level, we should keep all the common fields, instead of dropping
     // everything if something changes?
     auto fields2 = atomize(unnest(fields), false);

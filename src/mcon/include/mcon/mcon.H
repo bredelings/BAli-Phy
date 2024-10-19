@@ -66,15 +66,24 @@ public:
 
     void drop(const std::string&);
 
+    std::vector<Log> split() const;
+
     std::vector<std::tuple<std::string,std::vector<json::value>>> dump_json_table(std::optional<bool> short_names) const;
 
     std::vector<std::tuple<std::string,std::vector<double>>> dump_numeric_table(bool translate_bool = true, std::optional<bool> short_names = true) const;
 
     std::ostream& dump_TSV(std::ostream& o, std::optional<bool> short_names = true) const;
 
+    Log(bool n, bool a, const std::optional<std::vector<std::string>>& f, std::vector<json::object>&& samples);
     Log(const json::object& header);
     Log(const json::object& header, const std::vector<json::object>& samples);
     Log(const json::object& header, std::vector<json::object>&& samples);
+
+    Log(Log&&) noexcept = default;
+    Log(const Log&) noexcept = default;
+
+    Log& operator=(const Log&) = default;
+    Log& operator=(Log&&) = default;
 };
 
 MCON::Log read_logfile(std::istream& input, const std::filesystem::path& filename);
