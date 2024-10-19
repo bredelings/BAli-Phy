@@ -7,6 +7,7 @@ import Foreign.Vector
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Control.DeepSeq
+import qualified Data.JSON as J
 
 data IntMap a
 
@@ -162,6 +163,9 @@ instance Show a => Show (IntMap a) where
 instance Foldable IntMap where
     toList = elems
     length = size
+
+instance J.ToJSON a => J.ToJSON (IntMap a) where
+    toJSON im = J.toJSON [ (key, im!key) | key <- keys im]
 
 foreign import bpcall "IntMap:" restrictKeysToVector :: IntMap a -> IntSet -> EVector a
 foreign import bpcall "IntMap:" forceAll :: IntMap a -> ()
