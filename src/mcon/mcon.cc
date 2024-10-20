@@ -476,6 +476,16 @@ void Log::atomize()
 void Log::drop(const string& name)
 {
     auto path = mcon_path(name);
+    if (fields)
+    {
+	std::optional<int> index;
+	for(int i=0;i<fields->size();i++)
+	    if ((*fields)[i] == name)
+		index = i;
+	if (index)
+	    fields->erase(fields->begin()+*index);
+    }
+
     for(auto& sample: samples)
 	drop_path(sample, path);
 }
