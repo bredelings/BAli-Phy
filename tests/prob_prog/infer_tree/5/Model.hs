@@ -9,11 +9,14 @@ import           Tree.Newick
 import           SModel
 import           System.Environment  -- for getArgs
 import qualified Data.IntMap as IntMap
+import           Probability.Logger
+import           System.FilePath ( (</>) )
 
-model seqData nucs = do
+model seqData nucs logTree = do
 
     let taxa = getTaxa seqData
-        n = 3
+
+    n <- (1+) <$> sample (geometric 0.5)
 
     tree   <- sample $ uniformRootedTree taxa (gamma 0.5 (1/fromIntegral (length taxa)))
     scale <- sample $ gamma 0.5 2
@@ -37,15 +40,15 @@ model seqData nucs = do
     let tlength = treeLength tree
         substs = parsimony tree (unitCostMatrix nucs) seqData
 
-    return ["tree" %=% writeNewick tree,
---            "nodeMap" %=% nodeMap,
+    addLogger $ logTree (addInternalLabels $ scaleBranchLengths scale tree)
+
+    return ["nFreqs" %=% n,
             "scale" %=% scale,
             "scale*|T|" %=% scale * tlength,
             "#substs" %=% substs,
-            "freqs" %=% freqs,
+            "multiFreq:freqs" %=% freqs,
             "tn93:kappa1" %=% kappa1,
-            "tn93:kappa2" %=% kappa2,
-            "tn93:frequencies" %=% freqs]
+            "tn93:kappa2" %=% kappa2]
 
 main logDir = do
     [filename] <- getArgs
@@ -54,5 +57,7 @@ main logDir = do
 
     seqData <- mkAlignedCharacterData nucs <$> load_sequences filename
 
-    return $ model seqData nucs
+    logTree <- treeLogger (logDir </> "C1.tree")
+
+    return $ model seqData nucs logTree
 
