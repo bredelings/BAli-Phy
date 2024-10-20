@@ -352,7 +352,7 @@ std::vector<vector<int>> get_shapes(const vector<json::object>& samples)
     }
 
     vector<int> indices;
-    for(int i;i<n_shapes;i++)
+    for(int i=0;i<n_shapes;i++)
 	indices.push_back(i);
 
     std::sort(indices.begin(), indices.end(), [&](int i, int j) { return samples_for_shape_array[i].size() > samples_for_shape_array[j].size();});
