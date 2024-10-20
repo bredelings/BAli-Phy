@@ -27,6 +27,7 @@ po::variables_map parse_cmd_line(int argc,char* argv[])
 	("atomize","file with tree")
 	("split",value<string>(),"split and write to filenames with prefix=arg")
 	("drop",value<vector<string>>()->multitoken(),"paths to drop")
+	("add-time-field,T",value<string>(),"add field indicating the record number")
 	("output,O",value<string>()->default_value("MCON"),"output format (TSV or MCON)")
 	;
 
@@ -99,6 +100,9 @@ int main(int argc,char* argv[])
 	    auto logs = logfile.split();
 	    for(int i=0;i<logs.size();i++)
 	    {
+		if (args.count("add-time-field"))
+		    logs[i].add_time_field(args["add-time-field"].as<string>());
+
 		auto tmp_filename = split_filename;
 		tmp_filename += "." + std::to_string(i+1);
 		if (output == "mcon" or output=="MCON")
@@ -118,6 +122,8 @@ int main(int argc,char* argv[])
 	    }
 	}
 
+	if (args.count("add-time-field"))
+	    logfile.add_time_field(args["add-time-field"].as<string>());
 	if (output == "mcon" or output == "MCON")
 	    logfile.dump_MCON(std::cout);
 	else if (output == "tsv" or output == "TSV")

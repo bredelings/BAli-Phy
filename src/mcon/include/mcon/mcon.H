@@ -66,6 +66,8 @@ public:
 
     void drop(const std::string&);
 
+    void add_time_field(const std::string& time_field);
+
     std::vector<Log> split() const;
 
     std::vector<std::tuple<std::string,std::vector<json::value>>> dump_json_table(std::optional<bool> short_names) const;

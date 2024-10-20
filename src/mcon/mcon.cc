@@ -379,6 +379,27 @@ vector<Log> Log::split() const
     return logs;
 }
 
+void Log::add_time_field(const string& time_field)
+{
+    if (not fields)
+	fields = vector<string>(1,time_field);
+    else
+    {
+	auto& f = fields.value();
+	f.insert(f.begin(), time_field);
+    }
+
+    for(int i=0;i<samples.size();i++)
+    {
+	auto& sample = samples[i];
+
+	if (sample.count(time_field))
+	    throw std::runtime_error("field '" + time_field + "' already exists at sample index " + std::to_string(i));
+
+	sample[time_field] = i;
+    }
+}
+
 Log::Log(bool n, bool a, const std::optional<std::vector<std::string>>& f, std::vector<json::object>&& s)
     :fields(f),nested(n),atomic(a),samples(std::move(s))
 {
