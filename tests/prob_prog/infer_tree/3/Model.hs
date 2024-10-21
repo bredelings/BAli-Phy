@@ -12,8 +12,8 @@ import           System.Environment  -- for getArgs
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
     sym <- prior $ symmetricDirichletOn (letter_pair_names nucleotides) 1.0
-    pi  <- prior $ symmetricDirichletOn (letters nucleotides) 1.0
-    ws   <- zip (letters codons) <$> prior (iid (length (letters codons)) (normal 0 1))
+    pi  <- prior $ symmetricDirichletOn (getLetters nucleotides) 1.0
+    ws   <- zip (getLetters codons) <$> prior (iid (length (getLetters codons)) (normal 0 1))
     let n  = 4
     omegaDist <- prior $ dirichletMixture n 2 $ uniform 0 1
 

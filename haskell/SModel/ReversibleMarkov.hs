@@ -24,12 +24,12 @@ jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
 
 gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
 
-letter_pair_names a = pairNames $ Markov.all_pairs (letters a)
+letter_pair_names a = pairNames $ Markov.all_pairs (getLetters a)
 
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
 -- clean up f1x4 and f3x4?
-gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (letters a)
+gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (getLetters a)
                                     es :: [Double]
                                     es = if length lpairs == length es' then
                                              [Markov.get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]

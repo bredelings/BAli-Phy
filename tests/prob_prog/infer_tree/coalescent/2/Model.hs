@@ -22,7 +22,7 @@ import           System.FilePath
 -}
 
 smodel_prior nucleotides =  do
-    freqs  <- sample $ symmetricDirichletOn (letters nucleotides) 1
+    freqs  <- sample $ symmetricDirichletOn (getLetters nucleotides) 1
     kappa1 <- sample $ logNormal (log 2) (1/4)
     kappa2 <- sample $ logNormal (log 2) (1/4)
 

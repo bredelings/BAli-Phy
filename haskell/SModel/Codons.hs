@@ -20,11 +20,11 @@ f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
                                      pi3' = list_to_vector pi3
                                   in list_from_vector $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
-f3x4'_frequencies a pi1 pi2 pi3 = zip (letters a) (f3x4_frequencies a pi1' pi2' pi3')
+f3x4'_frequencies a pi1 pi2 pi3 = zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')
     where pi1' = get_ordered_elements nuc_letters pi1 "frequencies"
           pi2' = get_ordered_elements nuc_letters pi2 "frequencies"
           pi3' = get_ordered_elements nuc_letters pi3 "frequencies"
-          nuc_letters = letters a_nuc
+          nuc_letters = getLetters a_nuc
           a_nuc = getNucleotides a
 
 f1x4_frequencies a pi = f3x4_frequencies a pi pi pi

@@ -37,11 +37,11 @@ instance RateModel NonReversibleMarkov where
 
 nonRev a rates = Markov.Equilibrium $ markov' a smap q
     where smap = simple_smap a
-          n = length $ letters a
+          n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
 
 nonRev' a rates' = nonRev a rs
-    where lPairs = allOrderedPairs (letters a)
+    where lPairs = allOrderedPairs (getLetters a)
           rs = if length lPairs == length rates' then
                    [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
                else

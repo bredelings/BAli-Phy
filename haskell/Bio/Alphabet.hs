@@ -17,10 +17,10 @@ foreign import bpcall "Alphabet:" getAminoAcids :: Alphabet -> Alphabet
 foreign import bpcall "Alphabet:" alphabetSize :: Alphabet -> Int
 
 foreign import bpcall "Alphabet:alphabet_letters" builtin_letters :: Alphabet -> EVector CPPString
-letters a = map listFromString (list_from_vector (builtin_letters a) )
+getLetters a = map listFromString (list_from_vector (builtin_letters a) )
 
 foreign import bpcall "Alphabet:find_letter" builtin_find_letter :: Alphabet -> CPPString -> Int
-find_letter a letter = builtin_find_letter a (list_to_string letter)
+findLetter a letter = builtin_find_letter a (list_to_string letter)
 
 foreign import bpcall "Alphabet:" translate :: Alphabet -> Int -> Int
 
@@ -71,4 +71,4 @@ class HasAlphabet x => HasSMap x where
     getSMap :: x -> SMap
 
 instance Show Alphabet where
-    show a = show (letters a)
+    show a = show (getLetters a)

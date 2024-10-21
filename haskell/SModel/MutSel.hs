@@ -20,20 +20,20 @@ mut_sel ws' m0@(Reversible (Markov a smap _ _)) = reversible $ markov a smap q p
     pi = mut_sel_pi pi0 ws
 
 mut_sel' w' q0 = mut_sel w q0 where
-    w = get_ordered_elements (letters a) w' "fitnesses"
+    w = get_ordered_elements (getLetters a) w' "fitnesses"
     a = getAlphabet q0
 
 mut_sel_aa ws q@(Reversible (Markov codon_a _ _ _)) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
-    ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"
+    ws = get_ordered_elements (getLetters amino_alphabet) ws' "fitnesses"
     codon_alphabet = getAlphabet q0
     amino_alphabet = getAminoAcids codon_alphabet
 
 fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & mut_sel codon_w
 
 fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
-    where codon_ws = get_ordered_elements (letters codon_a) codon_ws' "fitnesses"
+    where codon_ws = get_ordered_elements (getLetters codon_a) codon_ws' "fitnesses"
 
 aa_to_codon codon_a xs = [xs_array!aa | codon <- codons, let aa = translate codon_a codon]
     where xs_array = listArray' xs
@@ -46,7 +46,7 @@ fMutSel0 codon_a aa_w omega nuc_q  = fMutSel codon_a codon_w omega nuc_q
     where codon_w = aa_to_codon codon_a aa_w
 
 fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
-                                               where amino_ws = get_ordered_elements (letters amino_a) amino_ws' "fitnesses"
+                                               where amino_ws = get_ordered_elements (getLetters amino_a) amino_ws' "fitnesses"
                                                      amino_a = getAminoAcids codon_a
 
 -- Issue: bad mixing on fMutSel model

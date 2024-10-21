@@ -16,7 +16,7 @@ model seqData nucs logTree = do
 
     let taxa = getTaxa seqData
 
-    n <- (1+) <$> sample (geometric 0.5)
+    n <- (min 10) <$> (1+) <$> sample (geometric 0.5)
 
     tree   <- sample $ uniformRootedTree taxa (gamma 0.5 (1/fromIntegral (length taxa)))
     scale <- sample $ gamma 0.5 2
@@ -26,7 +26,7 @@ model seqData nucs logTree = do
 
     let tn93Model freqs = tn93' nucs kappa1 kappa2 freqs
 
-    freqs  <- sample $ dirichletMixture n 1 $ symmetricDirichletOn (letters nucs) 1
+    freqs  <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
     nodeMap <- sample $ iidMap (getNodesSet tree) freqs
     let nodeInfo n = nodeMap IntMap.! n
         nodeProp freqs = list_to_vector $ frequencies_from_dict nucs freqs
@@ -34,19 +34,20 @@ model seqData nucs logTree = do
         smap = list_to_vector [0..3]
         rate = 1
         multiFreqModel = MultiFrequency nucs smap rate nodeInfo nodeProp edgeProp
+        freqs3 = sortDist freqs
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) multiFreqModel scale
 
     let tlength = treeLength tree
         substs = parsimony tree (unitCostMatrix nucs) seqData
 
-    addLogger $ logTree (addInternalLabels $ scaleBranchLengths scale tree)
+    addLogger $ logTree $ addInternalLabels $ scaleBranchLengths scale $ tree
 
     return ["nFreqs" %=% n,
             "scale" %=% scale,
             "scale*|T|" %=% scale * tlength,
             "#substs" %=% substs,
-            "multiFreq:freqs" %=% freqs,
+            "freqs" %=% freqs3,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2]
 

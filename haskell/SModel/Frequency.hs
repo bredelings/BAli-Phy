@@ -12,7 +12,7 @@ foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Ma
 -- pi is [Double] here
 uniform_frequencies a = Markov.uniform_frequencies $ alphabetSize a
 
-uniform_frequencies_dict a = zip (letters a) (uniform_frequencies a)
+uniform_frequencies_dict a = zip (getLetters a) (uniform_frequencies a)
 
 -- pi is [(String,Double)] here
 select_element key dict = case lookup key dict of Just value -> value
@@ -25,4 +25,4 @@ get_ordered_elements xs xps plural = if length xs == length xps
                                      else error $ "Expected "++show (length xs)++" "++plural
                                               ++" but got "++ show (length xps)++"!"
 
-frequencies_from_dict a pi = get_ordered_elements (letters a) pi "frequencies"
+frequencies_from_dict a pi = get_ordered_elements (getLetters a) pi "frequencies"

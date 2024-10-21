@@ -91,27 +91,27 @@ instance Show Markov where
 
 nonEq a rates pi = markov a smap q pi
     where smap = simple_smap a
-          n = length $ letters a
+          n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
 
 pairNames ls = [l1 ++ l2 | (l1,l2) <- ls]
 
 allOrderedPairs l = [(x,y) | x <- l, y <- l, x /= y]
 
-orderedLetterPairNames a = pairNames $ allOrderedPairs (letters a)
+orderedLetterPairNames a = pairNames $ allOrderedPairs (getLetters a)
 
 nonEq' a rates' pi' = nonEq a rs pi
-    where lPairs = allOrderedPairs (letters a)
+    where lPairs = allOrderedPairs (getLetters a)
           rs = if length lPairs == length rates' then
                    [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
                else
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
           pi = list_to_vector $ frequencies_from_dict a pi'
 
-labelledEqFrequencies m = zip (letters a) frequencies
+labelledEqFrequencies m = zip (getLetters a) frequencies
     where frequencies = list_from_vector $ getEqFreqs m
           a = getAlphabet m
 
-labelledStartFrequencies m = zip (letters a) frequencies
+labelledStartFrequencies m = zip (getLetters a) frequencies
     where frequencies = list_from_vector $ getStartFreqs m
           a = getAlphabet m
