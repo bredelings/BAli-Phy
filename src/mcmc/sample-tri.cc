@@ -87,29 +87,26 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     m123.hidden_bits.set(3);
     m123.B = P.get_beta();
 
-    //------------- Compute sequence properties --------------//
+    /*---------- Compute sequence properties -----------*/
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
 
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b1), 2);
     auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), *F, 2);
 
-    //-------------- Create alignment matrices ---------------//
+    //-------------- Create matrix shape -----------------//
 
-    vector<int> branches(3);
-    for(int i=0;i<3;i++)
-	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
-
-    // This includes the 2 columns of padding that we asked for above.
-    MatrixSize matrix_size{dists1.n_columns(), dists23.n_columns()};
-
-    //-------------- Compute ymin and ymax for each x --------------//
     auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists23.n_columns()-2);
 
     if (bandwidth)
         yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists23.n_columns()-2, *bandwidth);
+
+    // This includes the 2 columns of padding that we asked for above.
+    MatrixSize matrix_size{dists1.n_columns(), dists23.n_columns()};
+
     MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
 
+    //-------------- Create alignment matrices ---------------//
     auto Matrices = std::make_shared<DPmatrixConstrained>
                     (
                         std::move(matrix_shape),
