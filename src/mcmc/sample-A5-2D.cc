@@ -23,7 +23,6 @@
 /// \brief Contains routines for resampling the sequence at two adjacent internal nodes (5way).
 ///
 
-#include "util/bitmask.H"                           // for bitmask
 #include "substitution/likelihood.H"                // for get_column_likeli...
 #include <iostream>
 #include <cmath>
@@ -33,11 +32,12 @@
 #include "util/mapping.H"
 #include "util/rng.H"
 #include "util/log-level.H"
-#include "dp/hmm.H"                                 // for HMM::bitmask_t, HMM
 #include "dp/2way.H"
 #include "dp/5way.H"
-#include "dp/dp-matrix.H"                           // for DPmatrixConstrained
+#include "dp/hmm.H"                                 // for HMM::bitmask_t, HMM
 #include "dp/alignment-sums.H"
+#include "dp/dp-engine.H"                           // for DPengine
+#include "dp/dp-matrix.H"                           // for DPmatrixConstrained
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
