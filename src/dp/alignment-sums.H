@@ -74,6 +74,12 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
 		      const std::vector<log_double_t>& rho);
 
+std::optional<log_double_t> sample_A5_2D_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order,
+					       const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
+
+int sample_A5_2D_multi(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order_,
+                       const std::vector<log_double_t>& rho_, std::optional<int> bandwidth);
+
 std::optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, std::optional<int> bandwidth = {});
 
 struct sample_A3_multi_calculation
