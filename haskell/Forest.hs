@@ -281,3 +281,10 @@ addRoots roots t = rt
           rt = WithRoots t roots (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 forestFromEdges nodes edges = Forest $ graphFromEdges nodes edges
+
+-- NOTE: For scaleBranchLengths, we previously had
+--           scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
+--       But that didn't work for time trees.
+--       Since we're only scaling this for output at the moment, adding rates should be OK.
+
+scaleBranchLengths factor g = WithBranchRates g (getEdgesSet g & IntMap.fromSet (\_ -> factor))

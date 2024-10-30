@@ -288,8 +288,6 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getLabels (WithBranchLengths t _) = getLabels t
     relabel newLabels (WithBranchLengths t lengths) = WithBranchLengths (relabel newLabels t) lengths
 
-scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
-
 instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
     branchLength (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
 
