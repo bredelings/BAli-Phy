@@ -107,7 +107,7 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_topology_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_NNI_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void two_way_NNI_and_branches_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
-void three_way_topology_and_alignment_sample(owned_ptr<Model>&, MCMC::MoveStats&, int);
+void three_way_topology_and_alignment_sample(owned_ptr<Model>&, MCMC::MoveStats&, int, std::optional<int> bandwidth = {});
 
 void sample_SPR_all(owned_ptr<Model>&, MCMC::MoveStats&);
 void sample_SPR_search_all(owned_ptr<Model>&, MCMC::MoveStats&);

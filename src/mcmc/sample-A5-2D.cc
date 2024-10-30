@@ -65,10 +65,12 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 
     auto a123456_remapped = remap_bitpath(a123456, compute_mapping(order0.nodes, order.nodes));
 
-    HMM::bitmask_t bits234;
+    HMM::bitmask_t bits34;
+    bits34.set(2);
+    bits34.set(3);
+    HMM::bitmask_t bits234 = bits34;
     bits234.set(1);
-    bits234.set(2);
-    bits234.set(3);
+
     vector<HMM::bitmask_t> a234 = remove_silent(a123456_remapped, bits234);
 
     /*---------- Compute sequence properties -----------*/
@@ -83,16 +85,34 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b04), 2);
-    auto dists23 = substitution::get_column_likelihoods(P, {b14, b54}, get_indices_from_bitpath_w(a234, {1,2,3}, bits234), *F, 2);
+
+    // FIX: We need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
+    //      We need to rely on a234 instead.
+    //      This involves 23->5 and 15->4.
+    //      We need to include root frequencies in the subtree if the root is not at node 4.
+    //      We also need to consider root direction too.
+
+    // How can we factor the work into pieces that can be re-used to do what we want?
+    // - dp/hmm.cc: get_indices_from_bitpath
+    //   + only keep columns with the specified bits -- drop columns that only have hidden states?
+    //   + otherwise just get indices.
+    // - substitution/likelihood.cc: get_column_likelihoods
+    //   + Can we use LCB objects as inputs, instead of branches?
+    //   + Can we first get the emission probs for 2,3, and 4 separately?
+    //   + Can we then combine 3 and 4, possibly with root frequencies?
+    //   + ??
+    // auto dists34 = substitution::get_column_likelihoods(P, {b25, 35}, get_indices_from_bitpath_w(a234, {2,3}, bits34), *F, 2);
+
+    auto dists234 = substitution::get_column_likelihoods(P, {b14, b54}, get_indices_from_bitpath_w(a234, {1,2,3}, bits234), *F, 2);
 
     /*------------- Create matrix shape ----------------*/
-    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists23.n_columns()-2);
+    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists234.n_columns()-2);
 
     if (bandwidth)
-        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists23.n_columns()-2, *bandwidth);
+        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists234.n_columns()-2, *bandwidth);
 
     // This includes the 2 columns of padding that we asked for above.
-    MatrixSize matrix_size{dists1.n_columns(), dists23.n_columns()};
+    MatrixSize matrix_size{dists1.n_columns(), dists234.n_columns()};
 
     MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
 
@@ -102,7 +122,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
         std::move(matrix_shape),
         m12345,
         std::move(dists1),
-        std::move(dists23),
+        std::move(dists234),
         *F
         );
     Matrices->emit1 = 1;
