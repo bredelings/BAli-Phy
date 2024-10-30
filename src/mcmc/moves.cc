@@ -601,7 +601,7 @@ void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 
 void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats) 
 {
-    double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
+    double NNI_A_fraction = P->load_value("NNI+A_fraction",1);
 
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
