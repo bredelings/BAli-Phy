@@ -153,16 +153,6 @@ instance HasRoots t => HasRoots (WithBranchLengths t) where
     isRoot (WithBranchLengths t _) node = isRoot t node
     setRoots rs (WithBranchLengths t ls) = WithBranchLengths (setRoots rs t) ls
 
-instance IsDirectedGraph g => IsDirectedGraph (WithBranchRates g) where
-    isForward (WithBranchRates g _) e = isForward g e
-
-instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchRates g)
-
-instance (HasNodeTimes t, HasRoots t) => HasRoots (WithBranchRates t) where
-    roots (WithBranchRates t _) = roots t
-    isRoot (WithBranchRates t _) node = isRoot t node
-    setRoots rs (WithBranchRates t rates) = WithBranchRates (setRoots rs t) rates
-
 -------------------------- Forests with node times--------------------------
 -- The array stores the node times
 data WithNodeTimes t  = WithNodeTimes t (IntMap Double)
@@ -188,19 +178,20 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getLabels (WithNodeTimes t _) = getLabels t
     relabel newLabels (WithNodeTimes t nodeHeights) = WithNodeTimes (relabel newLabels t) nodeHeights
 
-instance (HasRoots t, IsForest t) => IsForest (WithNodeTimes t) where
+instance IsForest t => IsForest (WithNodeTimes t) where
     type Rooted   (WithNodeTimes t) = WithNodeTimes (Rooted t)
 
     makeRooted (WithNodeTimes t node_heights) = WithNodeTimes (makeRooted t) node_heights
-    isRooted f = Rooted
+    isRooted (WithNodeTimes tree _) = case isRooted tree of Rooted -> Rooted
+                                                            Unrooted -> Unrooted
 
-class HasRoots g => HasNodeTimes g where
+class IsGraph g => HasNodeTimes g where
     nodeTime :: g -> Int -> Double
     nodeTimes :: g -> IntMap Double
     modifyNodeTimes :: g -> (Double -> Double) -> g
 
 -- We could separate out modifyNodeTimes out into a separate class CanModifyNodeTimes, like with CanModifyBranchLengths
-instance HasRoots g => HasNodeTimes (WithNodeTimes g) where
+instance IsGraph g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
     nodeTimes (WithNodeTimes _ hs) = hs
     modifyNodeTimes (WithNodeTimes tree hs) f = WithNodeTimes tree (fmap f hs)
@@ -210,7 +201,7 @@ instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
     nodeTimes (WithBranchRates tt _) = nodeTimes tt
     modifyNodeTimes (WithBranchRates tt rs) f = WithBranchRates (modifyNodeTimes tt f) rs
 
-instance HasNodeTimes t => HasBranchRates (WithBranchRates t) where
+instance HasBranchRates (WithBranchRates t) where
     branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
 instance HasRoots t => HasBranchLengths (WithNodeTimes t) where
@@ -247,17 +238,28 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     getLabels (WithBranchRates t _) = getLabels t
     relabel newLabels (WithBranchRates t branchRates) = WithBranchRates (relabel newLabels t) branchRates
 
-instance (HasNodeTimes t, IsForest t) => IsForest (WithBranchRates t) where
+instance IsDirectedGraph g => IsDirectedGraph (WithBranchRates g) where
+    isForward (WithBranchRates g _) e = isForward g e
+
+instance IsDirectedAcyclicGraph g => IsDirectedAcyclicGraph (WithBranchRates g)
+
+instance HasRoots t => HasRoots (WithBranchRates t) where
+    roots (WithBranchRates t _) = roots t
+    isRoot (WithBranchRates t _) node = isRoot t node
+    setRoots rs (WithBranchRates t rates) = WithBranchRates (setRoots rs t) rates
+
+instance IsForest t => IsForest (WithBranchRates t) where
     type Rooted (WithBranchRates t) = WithBranchRates (Rooted t)
 
     makeRooted (WithBranchRates t branchRates) = WithBranchRates (makeRooted t) branchRates
-    isRooted f = Rooted
+    isRooted (WithBranchRates tree _) = case isRooted tree of Rooted -> Rooted
+                                                              Unrooted -> Unrooted
 
-class HasNodeTimes t => HasBranchRates t where
+class HasBranchRates t where
     branch_rate :: t -> Int -> Double
 
-instance HasNodeTimes t => HasBranchLengths (WithBranchRates t) where
-    branchLength tree b = branch_duration tree b * branch_rate tree b
+instance HasBranchLengths t => HasBranchLengths (WithBranchRates t) where
+    branchLength (WithBranchRates tree rates) b = branchLength tree b * (rates IntMap.! b)
 
 instance HasBranchLengths t => HasBranchLengths (WithRoots t) where
     branchLength (WithRoots t _ _) b   = branchLength t b

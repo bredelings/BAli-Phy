@@ -12,7 +12,7 @@ import           Data.Maybe (isJust, fromJust)
 import           MCMC
 import           Data.Array
 
-yulePrFactors :: HasNodeTimes t => Int -> Rate -> t -> [LogDouble]
+yulePrFactors :: (HasRoots t, HasNodeTimes t) => Int -> Rate -> t -> [LogDouble]
 yulePrFactors n lambda tree = require (numLeaves tree == n)
                               : pow (toLogDouble lambda) (fromIntegral (n-2))
                               : [ expToLogDouble (-lambda * deltaT ) * require (deltaT >= 0)

@@ -62,7 +62,7 @@ instance (HasRoot t, WriteNewickNode t) => WriteNewickNode (WithNodeTimes t) whe
     branch_info nht (Just b) = T.doubleToText (branchLength nht b)
     branch_info _   Nothing  = T.empty
 
-instance (HasNodeTimes t, WriteNewickNode t) => WriteNewickNode (WithBranchRates t) where
+instance (HasBranchLengths t, WriteNewickNode t) => WriteNewickNode (WithBranchRates t) where
     node_info (WithBranchRates tree _) node = node_info tree node
 
     branch_info rtt (Just b) = T.doubleToText (branchLength rtt b)

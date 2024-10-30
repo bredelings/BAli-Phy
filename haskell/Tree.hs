@@ -66,9 +66,9 @@ instance IsTree t => IsTree (WithRoots t)
 
 instance IsTree t => IsTree (WithBranchLengths t)
 
-instance HasRoot t => IsTree (WithNodeTimes t)
+instance IsTree t => IsTree (WithNodeTimes t)
 
-instance (IsTree t, HasNodeTimes t) => IsTree (WithBranchRates t)
+instance IsTree t => IsTree (WithBranchRates t)
 
 treeFromEdges nodes edges = Tree $ forestFromEdges nodes edges
 
