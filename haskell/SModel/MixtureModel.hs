@@ -13,23 +13,23 @@ import Markov (CTMC(..))
 
 import SModel.ReversibleMarkov
 
-scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
+scaleMMs rs ms = [scale r m | (r,m) <- zip' rs ms]
 
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 mixture ms fs = mix fs ms
 
 -- Note that this scales the models BY rs instead of TO rs.
-scaled_mixture ms rs fs = mix fs (scale_MMs rs ms)
+scaledMixture ms rs fs = mix fs (scaleMMs rs ms)
 
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
-parameter_mixture values model_fn = Discrete [ (m, f*p) | (x, p) <- unpackDiscrete values,
-                                                          let dist =  model_fn x,
-                                                          (m, f) <- unpackDiscrete dist]
+parameterMixture values model_fn = Discrete [ (m, f*p) | (x, p) <- unpackDiscrete values,
+                                                         let dist =  model_fn x,
+                                                         (m, f) <- unpackDiscrete dist]
 
--- parameter_mixture_unit :: (a -> ReversibleMarkov) -> [a] -> MixtureModel ReversibleMarkov
-parameter_mixture_unit values model_fn = parameter_mixture values (unit_mixture . model_fn)
+-- parameterMixture_unit :: (a -> ReversibleMarkov) -> [a] -> MixtureModel ReversibleMarkov
+parameterMixtureUnit values modelFn = parameterMixture values (unitMixture . modelFn)
 
-rate_mixture m d = parameter_mixture d (\x->scale x m)
+rateMixture m d = parameterMixture d (\x->scale x m)
 
 wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
                         dist =  list_to_vector [p | (m,p) <- ms ]
@@ -37,12 +37,12 @@ wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
 
 averageFrequency ms = list_from_vector $ builtin_average_frequency $ wfm ms
 
-plus_inv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
-plus_inv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
+plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
+plusInv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
     where a  = getAlphabet ms
           pi = averageFrequency ms
 
-rate_mixture_unif_bins base dist n_bins = rate_mixture base $ uniformDiscretize dist n_bins
+rateMixtureUnifBins base dist nBins = rateMixture base $ uniformDiscretize dist nBins
 
 -- If we had a mixture of mixtures.
 baseModel model i = component model i

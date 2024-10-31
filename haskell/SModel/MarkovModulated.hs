@@ -42,8 +42,8 @@ tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0 q, q] rates_betw
 
 tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 
-tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (rescale 1 q) & unit_mixture,
-                                                                       tuffley_steel_98_unscaled s01 s10 (rescale 1 q) & unit_mixture]
+tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (rescale 1 q) & unitMixture,
+                                                                       tuffley_steel_98_unscaled s01 s10 (rescale 1 q) & unitMixture]
 
 huelsenbeck_02 s01 s10 model = fmap (tuffley_steel_98_unscaled s01 s10) (rescale 1 model)
 
@@ -61,11 +61,11 @@ galtier_01_ssrv nu model = modulated_markov models rates_between level_probs whe
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (Markov.equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier_01 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> galtier_01_ssrv nu' model)
+galtier_01 nu pi model = parameterMixtureUnit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> galtier_01_ssrv nu' model)
 
 wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model
 
-wssr07 s01 s10 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> wssr07_ssrv s01 s10 nu' model)
+wssr07 s01 s10 nu pi model = parameterMixtureUnit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> wssr07_ssrv s01 s10 nu' model)
 
 -- a -> HB02
 -- b -> GT01 if no HB02
@@ -92,7 +92,7 @@ covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between leve
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     rates_between = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-covarion_gtr nu exchange pi model = parameter_mixture_unit (Discrete [(0,1-pi), (nu, pi)]) (\nu' -> covarion_gtr_ssrv nu' exchange model)
+covarion_gtr nu exchange pi model = parameterMixtureUnit (Discrete [(0,1-pi), (nu, pi)]) (\nu' -> covarion_gtr_ssrv nu' exchange model)
 
 covarion_gtr_sym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
 covarion_gtr_sym sym model = modulated_markov models rates_between level_probs where

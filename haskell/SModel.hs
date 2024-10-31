@@ -91,47 +91,47 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 --  w1 <- uniform 0 1
 --  [f1, f2] <- symmetricDirichlet 2 1
-m1a w1 f1 model_func = parameter_mixture_unit (m1a_omega_dist f1 w1) model_func
+m1a w1 f1 model_func = parameterMixtureUnit (m1a_omega_dist f1 w1) model_func
 
-m2a w1 f1 posP posW model_func = parameter_mixture_unit (m2a_omega_dist f1 w1 posP posW) model_func
+m2a w1 f1 posP posW model_func = parameterMixtureUnit (m2a_omega_dist f1 w1 posP posW) model_func
 
-m2a_test w1 f1 posP posW posSelection model_func = parameter_mixture_unit (m2a_test_omega_dist f1 w1 posP posW posSelection) model_func
+m2a_test w1 f1 posP posW posSelection model_func = parameterMixtureUnit (m2a_test_omega_dist f1 w1 posP posW posSelection) model_func
 
 m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
-m3_test ps omegas posP posW posSelection model_func = parameter_mixture_unit (m3_test_omega_dist ps omegas posP posW posSelection) model_func
+m3_test ps omegas posP posW posSelection model_func = parameterMixtureUnit (m3_test_omega_dist ps omegas posP posW posSelection) model_func
 
-m7 mu gamma n_bins model_func =  parameter_mixture_unit (m7_omega_dist mu gamma n_bins) model_func
+m7 mu gamma n_bins model_func =  parameterMixtureUnit (m7_omega_dist mu gamma n_bins) model_func
 
-m8 mu gamma n_bins posP posW model_func = parameter_mixture_unit (m8_omega_dist mu gamma n_bins posP posW) model_func
+m8 mu gamma n_bins posP posW model_func = parameterMixtureUnit (m8_omega_dist mu gamma n_bins posP posW) model_func
 
-m8a mu gamma n_bins posP model_func = parameter_mixture_unit  (m8a_omega_dist mu gamma n_bins posP) model_func
+m8a mu gamma n_bins posP model_func = parameterMixtureUnit  (m8a_omega_dist mu gamma n_bins posP) model_func
 
-m8a_test mu gamma n_bins posP posW posSelection model_func = parameter_mixture_unit (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) model_func
+m8a_test mu gamma n_bins posP posW posSelection model_func = parameterMixtureUnit (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) model_func
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
-branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [bg_mixture,fg_mixture]
+branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [bgMixture,fgMixture]
 -- background omega distribution -- where the last omega is 1 (neutral)
     where bg_dist = Discrete $ zip (ws ++ [1]) fs
 -- accelerated omega distribution -- posW for all categories
           accel_dist = Discrete $ zip (repeat posW) fs
 -- background branches always use the background omega distribution              
-          bg_mixture = parameter_mixture_unit (mix [1-posP, posP] [bg_dist, bg_dist]) model_func
+          bgMixture = parameterMixtureUnit (mix [1-posP, posP] [bg_dist, bg_dist]) model_func
 -- foreground branches use the foreground omega distribution with probability posP
-          fg_mixture = parameter_mixture_unit (mix [1-posP, posP] [bg_dist, accel_dist]) model_func
+          fgMixture = parameterMixtureUnit (mix [1-posP, posP] [bg_dist, accel_dist]) model_func
 
 branch_site_test fs ws posP posW posSelection branch_cats model_func = branch_site fs ws posP posW' branch_cats model_func
     where posW' = if (posSelection == 1) then posW else 1
 
 gamma_rates_dist alpha = gamma alpha (1/alpha)
 
-gamma_rates alpha n base = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
+gamma_rates alpha n base = rateMixtureUnifBins base (gamma_rates_dist alpha) n
 
 logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                             lmu = -0.5*x
                                                             lsigma = sqrt x
 
-logNormalRates sigmaOverMu n base = rate_mixture_unif_bins base (logNormalRatesDist sigmaOverMu) n
+logNormalRates sigmaOverMu n base = rateMixtureUnifBins base (logNormalRatesDist sigmaOverMu) n
 
 -- join collapses a Discrete (Discrete a) -> Discrete a
 freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist
@@ -154,7 +154,7 @@ freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist
 --   MixtureModels branch_cats MixtureModel    -- per-branch mixture of rate matrices, where component i always has the same frequencies.
 
 -- We can construct mixtures of these things with e.g. gamma rate models.
---   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unit_mixture now.
+--   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unitMixture now.
 --   We should also be able to constructing mixtures of mixtures of rate matrices -> mixtures of rate matrices.  This sounds like the join operation.
 
 -- class SModelOnTree a where

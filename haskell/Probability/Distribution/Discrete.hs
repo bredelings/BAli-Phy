@@ -9,10 +9,10 @@ mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete 
 
 mkDiscrete xs ps = Discrete $ zip xs ps
 
-unit_mixture x = Discrete [(x, 1)]
+unitMixture x = Discrete [(x, 1)]
 
 -- Should always get its own type (Always a)?
-always = unit_mixture
+always = unitMixture
 
 addComponent ms (x,p) = mix [p, 1-p] [always x, ms]
 

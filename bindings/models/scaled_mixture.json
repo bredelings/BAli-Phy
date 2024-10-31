@@ -2,7 +2,7 @@
     "name": "scaled_mixture",
     "synonyms":["Mixture"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "SModel.scaled_mixture(@models,@rates,@frequencies)",
+    "call": "SModel.scaledMixture(@models,@rates,@frequencies)",
     "import": ["SModel"],
     "args": [
         {

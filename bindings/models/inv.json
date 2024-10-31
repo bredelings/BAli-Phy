@@ -2,7 +2,7 @@
     "name": "inv",
     "synonyms": ["INV"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "plus_inv(@p_inv,@submodel)",
+    "call": "plusInv(@p_inv,@submodel)",
     "import": ["SModel"],
     "args": [
         {
