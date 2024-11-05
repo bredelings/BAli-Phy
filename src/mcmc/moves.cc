@@ -218,7 +218,7 @@ void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
 
-    if (uniform() < alignment_plus_branch_length_fraction)
+    if (PP->t().has_branch_lengths() and uniform() < alignment_plus_branch_length_fraction)
         alignment_slice_sample_branch_length(P, Stats, b);
     else
         sample_alignment(*PP,b);
@@ -534,7 +534,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
     {
         double U = uniform();
 
-        if (U < 0.1)
+        if (PP.t().has_branch_lengths() and U < 0.1)
             slice_sample_branch_length(P,Stats,b);
 
         if (PP.t().is_internal_branch(b)) 
@@ -549,7 +549,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
                 two_way_NNI_sample(P,Stats,b);
         }
 
-        if (U > 0.9)
+        if (PP.t().has_branch_lengths() and U > 0.9)
             slice_sample_branch_length(P,Stats,b);
     }
 }
@@ -630,7 +630,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
     {
         //    std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
-        if ((uniform() < 0.15) and (PP.t().n_leaves() >2))
+        if ((uniform() < 0.15) and is_degree3_edge(PP.t(),b))
         {
             // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
             if (uniform() < 0.5 or true)
@@ -666,7 +666,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
     for(int b: branches)
     {
         auto t = P.as<Parameters>()->t();
-        if (t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
+        if (t.has_branch_lengths() and t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
         int node1 = t.source(b);
         int node2 = t.target(b);
         if (log_verbose >=4)
@@ -702,7 +702,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
             sample_alignment(*P.as<Parameters>(), b);
         }
-        if (t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
+        if (t.has_branch_lengths() and t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
 
         if (log_verbose >= 4)
         {
@@ -740,6 +740,8 @@ void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats)
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_tree_sample_branch_lengths]\n";
 
     Parameters& PP = *P.as<Parameters>();
+    assert(PP.t().has_branch_lengths());
+
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
     for(int b: branches)
