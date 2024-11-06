@@ -72,6 +72,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     bits234.set(1);
 
     vector<HMM::bitmask_t> a234 = remove_silent(a123456_remapped, bits234);
+    vector<HMM::bitmask_t> a23 = remove_silent(a234, bits34);
 
     /*---------- Compute sequence properties -----------*/
     const auto t = P.t();
@@ -85,7 +86,9 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b04), 2);
-
+    auto dists2 = P.cache(b14);
+    auto dists3 = P.cache(b25);
+    auto dists4 = P.cache(b35);
     // FIX: We need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
     //      We need to rely on a234 instead.
     //      This involves 23->5 and 15->4.
@@ -101,9 +104,9 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     //   + Can we first get the emission probs for 2,3, and 4 separately?
     //   + Can we then combine 3 and 4, possibly with root frequencies?
     //   + ??
-    // auto dists34 = substitution::get_column_likelihoods(P, {b25, 35}, get_indices_from_bitpath_w(a234, {2,3}, bits34), *F, 2);
-
-    auto dists234 = substitution::get_column_likelihoods(P, {b14, b54}, get_indices_from_bitpath_w(a234, {1,2,3}, bits234), *F, 2);
+    object_ptr<Likelihood_Cache_Branch> dists34(new Likelihood_Cache_Branch(substitution::get_column_likelihoods({dists3, dists4}, get_indices_from_bitpath_w(a23, {2,3}, bits34), *F, 0)));
+    // Now we have to PROPAGATE across the branch!
+    auto dists234 = substitution::get_column_likelihoods({dists2, dists34}, get_indices_from_bitpath_w(a234, {1,2,3}, bits234), *F, 2);
 
     /*------------- Create matrix shape ----------------*/
     auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists234.n_columns()-2);
