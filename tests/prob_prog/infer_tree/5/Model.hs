@@ -58,7 +58,7 @@ main logDir = do
 
     seqData <- mkAlignedCharacterData nucs <$> load_sequences filename
 
-    logTree <- treeLogger (logDir </> "C1.tree")
+    logTree <- treeLogger (logDir </> "C1.trees")
 
     return $ model seqData nucs logTree
 
