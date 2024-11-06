@@ -92,7 +92,9 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b1), 2);
-    auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), *F, 2);
+    auto dists2 = P.cache(b2);
+    auto dists3 = P.cache(b3);
+    auto dists23 = substitution::get_column_likelihoods({dists2, dists3}, get_indices_from_bitpath_w(a23, {1,2}, m23), *F, 2);
 
     //-------------- Create matrix shape -----------------//
 

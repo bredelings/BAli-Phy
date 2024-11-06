@@ -2083,21 +2083,15 @@ namespace substitution {
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
     Likelihood_Cache_Branch
-    get_column_likelihoods(const data_partition& P, const vector<int>& branches, const matrix<int>& indices, const Matrix& F, int delta)
+    get_column_likelihoods(const vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& indices, const Matrix& F, int delta)
     {
-        auto t = P.t();
-
         //------ Check that the number of branches matches the number of rows -----------//
-	int B = branches.size();
-	assert(indices.size2() == B);
-        assert(B);
+        int B = cache.size();
+        assert(indices.size2() == B);
+        assert(B > 0);
 
-        //------ Check that all branches point to a 'root' node -----------//
-        for(int i=1;i<B;i++)
-            assert(t.target(branches[i]) == t.target(branches[0]));
-
-        const int n_models = P.n_base_models();
-        const int n_states = P.n_states();
+        const int n_models = cache[0]->n_models();
+        const int n_states = cache[1]->n_states();
         const int matrix_size = n_models * n_states;
         Likelihood_Cache_Branch LCB(indices.size1() + delta, n_models, n_states);
 
@@ -2108,19 +2102,18 @@ namespace substitution {
 	    LCB.scale(i) = 0;
 	}
 
-        vector<object_ptr<const Likelihood_Cache_Branch>> cache;
-	optional<int> root_branch_index;
-        for(int i=0;i<branches.size();i++)
+        optional<int> root_branch_index;
+        int i=0;
+        for(auto& L: cache)
 	{
-	    int b = branches[i];
-            cache.push_back(P.cache(b));
-	    if (cache.back()->away_from_root_WF)
+	    if (L->away_from_root_WF)
 	    {
 		assert(not LCB.away_from_root_WF);
-		LCB.away_from_root_WF = cache.back()->away_from_root_WF;
+		LCB.away_from_root_WF = L->away_from_root_WF;
 		assert(not root_branch_index);
 		root_branch_index = i;
 	    }
+	    i++;
 	}
 
         // For each column in the indices (e.g. for each present character at node 'root')
