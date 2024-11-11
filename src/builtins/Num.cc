@@ -132,7 +132,7 @@ extern "C" closure builtin_function_add_char(OperationArgs& Args)
     auto x = Args.evaluate(0).as_char();
     auto y = Args.evaluate(1).as_char();
 
-    return { x + y };
+    return { char(x + y) };
 }
 
 extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
@@ -140,7 +140,7 @@ extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
     auto x = Args.evaluate(0).as_char();
     auto y = Args.evaluate(1).as_char();
 
-    return { x - y };
+    return { char(x - y) };
 }
 
 extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
@@ -148,14 +148,14 @@ extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
     auto x = Args.evaluate(0).as_char();
     auto y = Args.evaluate(1).as_char();
 
-    return { x * y };
+    return { char(x * y) };
 }
 
 extern "C" closure builtin_function_abs_char(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_char();
 
-    return { std::abs(x) };
+    return { char(std::abs(x)) };
 }
 
 
@@ -163,7 +163,7 @@ extern "C" closure builtin_function_negate_char(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_char();
 
-    return { -x };
+    return { char(-x) };
 }
 
 extern "C" closure builtin_function_signum_char(OperationArgs& Args)
@@ -172,7 +172,7 @@ extern "C" closure builtin_function_signum_char(OperationArgs& Args)
 
     auto result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
 
-    return { result };
+    return { char(result) };
 }
 
 
