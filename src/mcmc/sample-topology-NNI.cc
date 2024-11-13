@@ -980,6 +980,10 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 
 void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
-    three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
+    double NNI_A5_fraction = get_setting_or("A5_fraction",0.0);
+    if (uniform() < NNI_A5_fraction)
+        three_way_topology_and_A5_2D_sample(P, Stats, b, bandwidth);
+    else
+        three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
 }
 
