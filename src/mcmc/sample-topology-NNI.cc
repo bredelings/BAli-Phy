@@ -979,6 +979,9 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<Model>& P, MoveStats& Stats, 
 
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
-    three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
+    if (uniform() < 0.5)
+        three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
+    else
+        three_way_topology_and_A5_2D_sample(P, Stats, b, bandwidth);
 }
 
