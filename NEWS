@@ -1,31 +1,29 @@
 * 4.0-beta16 (unreleased)
 - Speed: further speed up tree operations.
-- Output: simplify results from ancestral sequence reconstruction.
++ Output: simplify results from ancestral sequence reconstruction.
 - Input: allow defining models using multiple lines.
 - Models:
   + Speed up and improve RNA editing model.
   + Refactor coalescent tree distribution.
   + Add Yule tree distribution.
   + Allow '--tree=~uniform_tree(taxa,gamma(0.5,2/length(taxa)))'
-  + Allow trees to be labeled with things besides Text.
+  - Allow trees to be labeled with things besides Text.
 - MCMC:
   + Allow time-tree-NNI to interchange around the root.
   + Allow time-tree-NNI to resample alignments.
-  + Diversify transition kernels for uniform_int distribution.
+  + Use multiple transition kernels for uniform_int distribution.
+  + Allow hand-written Metropolis-Hastings proposals for numbers/atomic objects.
 - Bug fixes:
-  + Module loading.
-    - Don't crash when multiple copies of bali-phy write the same module archive simultaneously.
-    - Avoid reading partially-overwritten files by writing a unique file, then renaming.
-    - Perform an integrity check on the archive contents.
-  + Fix assertion failure when destroying an unforgettable modifiable.
+  + Fix crashes by in module writing/reading.
 - Tests:
-  + Refactor tests so that `ninja test` runs each testsuite test seprately.
-  + Add CI for `ninja test`.
+  - Refactor tests so that `ninja test` runs each testsuite test seprately.
+  - Add CI for `ninja test`.
 - Haskell:
-  + Make [1 ..] and [1.5 .. ] work for floating point.
-  + Add function `display` that converts things to Text.
-  + Fill out Data.Semigroup and Data.Monoid
-  + Add hand-written proposal for atomic objects.
+  - Make [1 ..] and [1.5 .. ] work for floating point.
+  - Make ['a'..'j'] work for characters.
+  - Add function `display` that converts things to Text.
+  - Fill out Data.Semigroup and Data.Monoid
+  - Handle annotations of overlapping instances.
 - Internal:
   + Rewrite the simplifier optimization pass to use the Core2 AST representation.
 
