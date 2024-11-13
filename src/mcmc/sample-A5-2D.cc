@@ -100,8 +100,8 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // But we need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
 
     // Combining dists3 + dists4 -> dists34 need2 to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
+    P.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a234, 2, 5));
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a234, 3, 5));
-    P.set_pairwise_alignment(b45, get_pairwise_alignment_from_bits(a234, 4, 5));
     auto dists34 = P.cache(b54);
 
     // Q: How do we specify that dists34 corresponds to both bits 2 and 3?
@@ -155,7 +155,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     Matrices->states(0) = Matrices->dp_order();
 
     // Determine which states are allowed to match (c2)
-    for(int c2=0;c2<Matrices->dists2.n_columns()-1;c2++)
+    for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++)
     {
         auto mask=(a234[c2-1]&Matrices->emit2).raw();
         mask >>= 1;
