@@ -65,16 +65,23 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 
     auto a123456_remapped = remap_bitpath(a123456, compute_mapping(order0.nodes, order.nodes));
 
-    HMM::bitmask_t bits34;
-    bits34.set(2);
-    bits34.set(3);
-    HMM::bitmask_t bits234 = bits34;
+    HMM::bitmask_t bits234;
+    bits234.set(2);
+    bits234.set(3);
     bits234.set(1);
 
     // Only keep columns with bits234 set, and also clear other bits.
     vector<HMM::bitmask_t> a234 = remove_silent(a123456_remapped, bits234);
-    // Only keep columns with bits34 set, and also clear other bits.
-    vector<HMM::bitmask_t> a23 = remove_silent(a234, bits34);
+    // Then reset bits 4 and 5
+    for(auto& mask: a234)
+    {
+	// 5 = 2 | 4
+	if (mask.test(2) or mask.test(3))
+	    mask.set(5);
+	// 4 = 1 | 2 | 3
+	if (mask.test(1) or mask.test(5))
+	    mask.set(4);
+    }
 
     /*---------- Compute sequence properties -----------*/
     const auto t = P.t();
@@ -88,29 +95,19 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b04), 2);
-    auto dists2 = P.cache(b14);
-    auto dists3 = P.cache(b25);
-    auto dists4 = P.cache(b35);
-    // FIX: We need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
-    //      This is equivalent to setting bit 5 if a34 and bit 4 if a234.
-    //      We need to include root frequencies in the subtree if the root is not at node 4.
-    //      We also need to consider root direction too.
 
-    // How can we factor the work into pieces that can be re-used to do what we want?
-    // - dp/hmm.cc: get_indices_from_bitpath
-    //   + only keep columns with the specified bits -- drop columns that only have hidden states?
-    //   + otherwise just get indices.
-    // - substitution/likelihood.cc: get_column_likelihoods
-    //   + Use LCB objects as inputs, instead of branches?
-    //   + Get the emission probs for 2,3, and 4 separately?
-    //   + Combine dists3 and dists4, including root frequencies behind those if necessary.
-    //   + THEN PROPAGATE FROM 4 to 5, including possible root frequencies at 5.
-    //   + Finally combine dists2 and dists34 to get dists234.
-    //   + ??
-    object_ptr<Likelihood_Cache_Branch> dists34(new Likelihood_Cache_Branch(substitution::get_column_likelihoods({dists3, dists4}, get_indices_from_bitpath_w(a23, {2,3}, bits34), *F, 0)));
-    // Now we have to PROPAGATE across the branch!
-    // How do we specify that dists34 corresponds to both bits 2 and 3?
-    auto dists234 = substitution::get_column_likelihoods({dists2, dists34}, get_indices_from_bitpath_w(a234, {1,2,3}, bits234), *F, 2);
+    // We need to combine dists3+dists4 -> dists34, then combine dists2+dists34 -> dists234.
+    // But we need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
+
+    // Combining dists3 + dists4 -> dists34 need2 to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
+    P.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a234, 3, 5));
+    P.set_pairwise_alignment(b45, get_pairwise_alignment_from_bits(a234, 4, 5));
+    auto dists34 = P.cache(b54);
+
+    // Q: How do we specify that dists34 corresponds to both bits 2 and 3?
+    // A: We set bit 5 when bit 2 or 3 are set.
+    auto dists2 = P.cache(b14);
+    auto dists234 = substitution::get_column_likelihoods({dists2, dists34}, get_indices_from_bitpath_w(a234, {1,5}, bits234), *F, 2);
 
     /*------------- Create matrix shape ----------------*/
     auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists234.n_columns()-2);
