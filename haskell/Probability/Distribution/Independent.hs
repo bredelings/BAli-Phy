@@ -1,6 +1,7 @@
 module Probability.Distribution.Independent where
 
 import Probability.Random
+import qualified Data.IntMap as IntMap
 
 -- The `independent` distribution relies on Functor f to go from
 --        f (Random a) -> Random (f a)
@@ -46,4 +47,4 @@ instance (Functor f, Sampleable d) => Sampleable (Independent f d) where
 
 independent dists = Independent dists
 
-                 
+independentMap set func = independent $ (set & IntMap.fromSet func)
