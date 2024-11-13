@@ -99,7 +99,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // We need to combine dists3+dists4 -> dists34, then combine dists2+dists34 -> dists234.
     // But we need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
 
-    // Combining dists3 + dists4 -> dists34 need2 to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
+    // Combining dists3 + dists4 -> dists34 needs to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
     P.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a234, 2, 5));
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a234, 3, 5));
     auto dists34 = P.cache(b54);
