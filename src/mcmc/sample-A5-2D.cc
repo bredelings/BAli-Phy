@@ -153,7 +153,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
         }
     }
 
-    Matrices->states(0) = Matrices->dp_order();
+    Matrices->states(1) = Matrices->dp_order();
 
     // Determine which states are allowed to match (c2)
     for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++)
