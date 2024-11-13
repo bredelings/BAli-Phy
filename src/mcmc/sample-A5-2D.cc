@@ -108,6 +108,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // A: We set bit 5 when bit 2 or 3 are set.
     auto dists2 = P.cache(b14);
     auto dists234 = substitution::get_column_likelihoods({dists2, dists34}, get_indices_from_bitpath_w(a234, {1,5}, bits234), *F, 2);
+    assert(dists234.n_columns() == a234.size()+2);
 
     /*------------- Create matrix shape ----------------*/
     auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists234.n_columns()-2);
