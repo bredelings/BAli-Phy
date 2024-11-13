@@ -98,7 +98,6 @@ main logDir = do
 
     let seqData = [ mkAlignedCharacterData dna $ select_range range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 
-    -- This is placed in the wrong directory.
     logTree <- treeLogger $ logDir </> "C1.trees"
 
     return $ model seqData logTree
