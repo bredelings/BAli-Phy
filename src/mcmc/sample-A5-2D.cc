@@ -439,7 +439,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             {
                 paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]) );
 
-                auto OS = p[i][j].likelihood();
+                auto OS = other_subst(p[i][j],order[i].nodes);
                 auto OP = other_prior(p[i][j],order[i].nodes) / A5::correction(p[i][j],order[i]);
 
                 check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
