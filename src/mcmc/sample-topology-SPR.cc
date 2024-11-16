@@ -32,7 +32,7 @@
 #include "probability/choose.H"
 #include "probability/probability.H"
 #include "util/log-level.H"                         // for log_verbose
-#include "util/settings.H"                          // for get_setting( )
+#include "util/settings.H"                          // for get_setting_or( )
 
 #include "dp/3way.H"
 #include "tree/tree-util.H"
@@ -66,7 +66,7 @@ int random_int_from_double(double x)
 
 int n_SPR_moves(const Parameters& P)
 {
-    double f = get_setting("SPR_amount",0.1);
+    double f = get_setting_or("SPR_amount",0.1);
     if (P.t().n_branches() < 4) return 0;
     int n = random_int_from_double(P.t().n_branches()*f);
     return n+1;
@@ -564,9 +564,9 @@ void sample_SPR_flat_one(owned_ptr<context>& P,MoveStats& Stats,int b1)
     if (PP.t().is_leaf_node(PP.t().target(b1))) return;
 
     // Allow turning off these moves.
-    if (not get_setting("SPR-jump",true)) return;
+    if (not get_setting_or("SPR-jump",true)) return;
 
-    double p = get_setting("SPR_slice_fraction",-0.25);
+    double p = get_setting_or("SPR_slice_fraction",-0.25);
 
     int b2 = choose_SPR_target(PP.t(),b1);
 
@@ -1147,7 +1147,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     vector< vector<int> > nodes(2);
     nodes[0] = nodes_for_branch.at(I.initial_edge);                                 // If p[1].t() == p[0].t() then nodes[0] == nodes[1]
     nodes[1] = nodes_for_branch.at(I.attachment_branch_pairs[C].edge);              // in this formulation.
-    bool do_cube = (uniform() < get_setting("cube_fraction",0.0));
+    bool do_cube = (uniform() < get_setting_or("cube_fraction",0.0));
 
     optional<int> bandwidth;
     if (setting_exists("simple_bandwidth"))
@@ -1289,7 +1289,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     if (P.t().is_leaf_node(subtree_edge.node2)) return false;
 
-    sum_out_A = sum_out_A or (uniform() < get_setting("spr_sum_out_A",0.0));
+    sum_out_A = sum_out_A or (uniform() < get_setting_or("spr_sum_out_A",0.0));
 
     // 1. Always peel up to attachment node to calculate the likelihood.
     // * The attachment node keeps its name as we regraft on different branches.
@@ -1417,7 +1417,7 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    // double p = get_setting("SPR_slice_fraction",-0.25);
+    // double p = get_setting_or("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) 
     {
@@ -1557,7 +1557,7 @@ void sample_SPR_flat(owned_ptr<context>& P,MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    //  double p = get_setting("SPR_slice_fraction",-0.25);
+    //  double p = get_setting_or("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) 
     {
@@ -1572,11 +1572,11 @@ void sample_SPR_nodes(owned_ptr<context>& P,MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
 
     // Allow turning off these moves.
-    if (not get_setting("SPR-jump",true)) return;
+    if (not get_setting_or("SPR-jump",true)) return;
 
     int n = n_SPR_moves(PP);
 
-    double p = get_setting("SPR_slice_fraction",-0.25);
+    double p = get_setting_or("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) {
 

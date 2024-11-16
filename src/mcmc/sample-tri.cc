@@ -43,7 +43,7 @@
 #include "util/math/log-double.H"                   // for log_double_t, ope...
 #include "util/log-level.H"                         // for log_verbose
 #include "util/myexception.H"                       // for myexception
-#include "util/settings.H"                          // for get_setting( )
+#include "util/settings.H"                          // for get_setting_or( )
 #include "util/rng.H"                               // for uniform
 
 //Assumptions:
@@ -556,7 +556,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
     try {
 	shared_ptr<sample_A3_multi_calculation> tri;
-	if (uniform() < get_setting("cube_fraction",0.0))
+	if (uniform() < get_setting_or("cube_fraction",0.0))
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
 	else
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));

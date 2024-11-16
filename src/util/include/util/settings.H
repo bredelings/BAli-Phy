@@ -39,7 +39,7 @@ typedef std::map<std::string, json::value> key_map_t;
 extern key_map_t global_settings;
 
 template<typename T>
-T get_setting(const std::string& key, const T& t)
+T get_setting_or(const std::string& key, const T& t)
 { 
     auto loc = global_settings.find(key);
     if (loc != global_settings.end())

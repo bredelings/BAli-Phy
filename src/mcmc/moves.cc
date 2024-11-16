@@ -21,7 +21,7 @@
 #include "util/range.H"
 #include "util/rng.H"
 #include "util/log-level.H"
-#include "util/settings.H"       // for get_setting( )
+#include "util/settings.H"       // for get_setting_or( )
 #include <algorithm>
 #include "dp/3way.H"
 #include "util/permute.H"
@@ -215,7 +215,7 @@ void sample_tri_branch_type_one(owned_ptr<context>& P, MoveStats& Stats,int b)
 
 void sample_alignments_one(owned_ptr<context>& P, MoveStats& Stats, int b)
 {
-    double alignment_plus_branch_length_fraction = get_setting("alignment_plus_branch_length_fraction",0.01);
+    double alignment_plus_branch_length_fraction = get_setting_or("alignment_plus_branch_length_fraction",0.01);
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
 
@@ -490,7 +490,7 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
     if (log_verbose >= 3) std::cerr<<"\n\n[sample_branch_length_]\n";
     //std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
-    double slice_fraction = get_setting("branch_slice_fraction",0.9);
+    double slice_fraction = get_setting_or("branch_slice_fraction",0.9);
 
     bool do_slice = (uniform() < slice_fraction);
     if (do_slice)
@@ -602,7 +602,7 @@ void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 
 void walk_tree_sample_NNI_and_A(owned_ptr<context>& P, MoveStats& Stats) 
 {
-    double NNI_A_fraction = get_setting("NNI+A_fraction",0.01);
+    double NNI_A_fraction = get_setting_or("NNI+A_fraction",0.01);
 
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
@@ -625,7 +625,7 @@ void walk_tree_sample_alignments(owned_ptr<context>& P, MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
-    double cube_fraction = get_setting("cube_fraction",0.00);
+    double cube_fraction = get_setting_or("cube_fraction",0.00);
 
     for(int b: branches)
     {

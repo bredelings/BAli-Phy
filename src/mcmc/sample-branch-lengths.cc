@@ -19,7 +19,7 @@
 
 #include "util/log-level.H"
 #include "util/rng.H"
-#include "util/settings.H"              // for get_setting( )
+#include "util/settings.H"              // for get_setting_or( )
 #include "sample.H"
 #include "util/permute.H"
 #include "dp/5way.H"
@@ -134,7 +134,7 @@ void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
     MCMC::Result result(3);
   
     //------------- Find new length --------------//
-    double sigma = get_setting("slice_branch_sigma",1.5);
+    double sigma = get_setting_or("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     branch_length_slice_function logp(PP,b);
@@ -169,7 +169,7 @@ void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
     const double mu = PP.branch_mean();
 
     //------------- Find new length --------------//
-    double sigma = get_setting("slice_branch_sigma",1.5);
+    double sigma = get_setting_or("slice_branch_sigma",1.5);
 
     double w = sigma;
 
@@ -193,7 +193,7 @@ void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats
 
     //------------- Find new length --------------//
 
-    double sigma = get_setting("slice_branch_sigma",1.5);
+    double sigma = get_setting_or("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     alignment_branch_length_slice_function logp(PP,b);
@@ -219,11 +219,11 @@ void change_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     if (uniform() < 0.5)
     {
-	double sigma = get_setting("log_branch_sigma",0.6);
+	double sigma = get_setting_or("log_branch_sigma",0.6);
 	change_branch_length_log_scale(P, Stats, b, sigma);
     }
     else {
-	double sigma = get_setting("branch_sigma",0.6);
+	double sigma = get_setting_or("branch_sigma",0.6);
 	change_branch_length_flat(P, Stats, b, sigma);
     }
 }
@@ -342,7 +342,7 @@ bool slide_node(owned_ptr<context>& P,
     lengths[0] = t.branch_length(branches[0]);
     lengths[1] = t.branch_length(branches[1]);
 
-    double sigma = get_setting("slide_node_sigma",0.3);
+    double sigma = get_setting_or("slide_node_sigma",0.3);
     auto ratio = slide(lengths,sigma);
 
     //---------------- Propose new lengths ---------------//
@@ -373,11 +373,11 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 
     PP->set_root(t.target(b));
 
-    double p = get_setting("branch_slice_fraction",0.9);
+    double p = get_setting_or("branch_slice_fraction",0.9);
     if (uniform() < p)
     {
 	slide_node_slice_function logp(*PP,b);
-	double w = (logp.x0 + logp.y0) * get_setting("slide_branch_slice_window",0.3);
+	double w = (logp.x0 + logp.y0) * get_setting_or("slide_branch_slice_window",0.3);
 	double L1b = slice_sample(logp,w,50);
     
 	MCMC::Result result(2);
@@ -431,7 +431,7 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
     double S31 = T3 + T1;
 
     //----------- Propose new distances -------------//
-    double sigma = get_setting("log_branch_sigma",0.6)/2.0;
+    double sigma = get_setting_or("log_branch_sigma",0.6)/2.0;
     log_double_t ratio = 1.0;
 
     double T1_ = T1;

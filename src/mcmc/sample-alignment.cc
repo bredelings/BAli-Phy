@@ -31,7 +31,7 @@
 #include "substitution/likelihood.H"
 #include "dp/dp-matrix.H"
 #include "util/log-level.H"                         // for log_verbose
-#include "util/settings.H"                          // for get_setting( )
+#include "util/settings.H"                          // for get_setting_or( )
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric

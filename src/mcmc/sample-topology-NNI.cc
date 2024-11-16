@@ -191,7 +191,7 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_sample]\n";
 
-    double slice_fraction = get_setting("NNI_slice_fraction",-0.25);
+    double slice_fraction = get_setting_or("NNI_slice_fraction",-0.25);
 
     if (not PP.variable_alignment() and uniform() < slice_fraction) {
 	two_way_topology_slice_sample(P,Stats,b);
@@ -749,7 +749,7 @@ void three_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_sample]\n";
 
-    double slice_fraction = get_setting("NNI_slice_fraction",-0.25);
+    double slice_fraction = get_setting_or("NNI_slice_fraction",-0.25);
 
     if (not PP.variable_alignment() and uniform() < slice_fraction)
     {

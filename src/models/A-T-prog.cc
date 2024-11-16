@@ -6,7 +6,7 @@
 #include "util/set.H"
 #include "util/io.H"
 #include "util/string/split.H"
-#include "util/settings.H"    // for get_setting( )
+#include "util/settings.H"    // for get_setting_or( )
 #include "models/compile.H"   // for model_t
 #include "models/parse.H"   // for unparse_type
 
@@ -599,10 +599,10 @@ compute_logged_quantities(do_block& model,
 
     if (n_branches > 0)
     {
-	if (imodel_index or get_setting("write-fixed-alignments",false))
+	if (imodel_index or get_setting_or("write-fixed-alignments",false))
 	{
 	    // This should affect whether we allow modifying leaf sequences.
-	    // bool infer_ambiguous_observed = get_setting(keys, "infer-ambiguous-observed",false);
+	    // bool infer_ambiguous_observed = get_setting_or(keys, "infer-ambiguous-observed",false);
 
 	    var anc_alignment("anc_alignment"+part_suffix);
 	    model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
