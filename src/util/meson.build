@@ -18,7 +18,9 @@ libutil_sources = [
   'text.cc',
   'myexception.cc',
   'time.cc',
-  'file-readers.cc']
+  'file-readers.cc',
+  'settings.cc'
+]
 
 libutil_inc = include_directories('include')
 

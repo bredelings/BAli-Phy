@@ -40,7 +40,6 @@
 #include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/object.H"                     // for Object, intrusive...
 #include "computation/param.H"                      // for param
-#include "models/model.H"                           // for Model::key_map_t
 #include "sequence/sequence.H"                      // for sequence
 #include "tools/partition.H"                        // for Partition
 #include "tree/sequencetree.H"                      // for SequenceTree

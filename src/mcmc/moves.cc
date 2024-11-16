@@ -21,6 +21,7 @@
 #include "util/range.H"
 #include "util/rng.H"
 #include "util/log-level.H"
+#include "util/settings.H"       // for get_setting( )
 #include <algorithm>
 #include "dp/3way.H"
 #include "util/permute.H"

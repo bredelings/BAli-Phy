@@ -32,6 +32,7 @@
 #include "probability/choose.H"
 #include "probability/probability.H"
 #include "util/log-level.H"                         // for log_verbose
+#include "util/settings.H"                          // for get_setting( )
 
 #include "dp/3way.H"
 #include "tree/tree-util.H"

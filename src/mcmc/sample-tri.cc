@@ -36,7 +36,6 @@
 #include "dp/dp-matrix.H"                           // for DPmatrixConstrained
 #include "dp/hmm.H"                                 // for HMM::bitmask_t, HMM
 #include "models/TreeInterface.H"                   // for TreeInterface
-#include "models/model.H"                           // for show_parameters
 #include "models/parameters.H"                      // for Parameters, mutab...
 #include "probability/choose.H"                     // for choose_MH_P, choo...
 #include "substitution/likelihood.H"                // for get_column_likeli...
@@ -44,6 +43,7 @@
 #include "util/math/log-double.H"                   // for log_double_t, ope...
 #include "util/log-level.H"                         // for log_verbose
 #include "util/myexception.H"                       // for myexception
+#include "util/settings.H"                          // for get_setting( )
 #include "util/rng.H"                               // for uniform
 
 //Assumptions:

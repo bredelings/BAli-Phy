@@ -99,7 +99,6 @@ libbaliphy_sources = [
   'math/eigenvalue.cc',
   'math/pow2.cc',
 
-  'models/model.cc',
   'models/TreeInterface.cc',
   'models/parameters.cc',
   'models/A-T-prog.cc',

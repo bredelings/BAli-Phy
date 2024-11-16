@@ -40,6 +40,7 @@
 #include "util/matrix.H"                            // for matrix
 #include "util/myexception.H"                       // for myexception
 #include "util/ptree.H"                             // for ptree
+#include "util/settings.H"                          // for get_setting( )
 #include "util/string/convert.H"                    // for convertTo, conver...
 #include "util/string/join.H"                       // for join
 #include "util/string/split.H"                      // for split, split_on_last

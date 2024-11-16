@@ -36,6 +36,7 @@
 #include "substitution/likelihood.H"                // for get_column_likeli...
 #include "util/assert.hh"                           // for assert
 #include "util/math/log-double.H"                   // for log_double_t, ope...
+#include "util/settings.H"                          // for get_setting( )
 #include "util/rng.H"                               // for uniform
 class DPengine;
 

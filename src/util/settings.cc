@@ -17,21 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <set>
-#include <map>
+#include "util/settings.H"
 
-#include "util/ptree.H"
-
-#include "util/string/join.H"
 #include "util/string/split.H"
 #include "util/myexception.H"
-#include "models/model.H"
-#include "models/path.H"
-#include "computation/program.H"
-#include "computation/module.H"
-#include "computation/loader.H"
-
-#include "tools/stats-table.H"              // for has_children( )
 
 using std::vector;
 using std::string;

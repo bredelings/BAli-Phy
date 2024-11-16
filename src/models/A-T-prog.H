@@ -11,7 +11,6 @@
 #include "computation/program.H"                    // for Program
 
 #include "computation/expression/expression_ref.H"  // for expression_ref
-#include "models/model.H"
 
 class model_t;
 class module_loader;

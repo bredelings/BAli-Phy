@@ -19,6 +19,7 @@
 
 #include "util/log-level.H"
 #include "util/rng.H"
+#include "util/settings.H"              // for get_setting( )
 #include "sample.H"
 #include "util/permute.H"
 #include "dp/5way.H"

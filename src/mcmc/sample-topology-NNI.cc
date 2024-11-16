@@ -22,6 +22,7 @@
 #include <cmath>
 #include "util/assert.hh"
 #include "util/log-level.H"
+#include "util/settings.H"
 #include "sample.H"
 #include "probability/choose.H"
 #include "util/rng.H"

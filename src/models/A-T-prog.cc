@@ -6,6 +6,7 @@
 #include "util/set.H"
 #include "util/io.H"
 #include "util/string/split.H"
+#include "util/settings.H"    // for get_setting( )
 #include "models/compile.H"   // for model_t
 #include "models/parse.H"   // for unparse_type
 
