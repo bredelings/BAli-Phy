@@ -14,6 +14,7 @@
 #include "util/rng.H"
 #include "util/log-level.H"
 #include "util/permute.H"
+#include "tools/stats-table.H" /// for has_children( )
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -25,6 +26,7 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using std::multiset;
 using std::unordered_set;
 using std::unique_ptr;
 using boost::dynamic_pointer_cast;
@@ -826,8 +828,109 @@ bool perform_MH(context_ref& C1,const context_ref& C2,log_double_t rho)
 }
 
 
-void simplify(json::object& j);
-json::object flatten_me(const json::object& j);
+// This me be a good candidate for the range library.
+vector<pair<string,json::value>> flatten_value(const string& name, const json::value& value)
+{
+    vector<pair<string,json::value>> values;
+    if (auto* object = value.if_object())
+    {
+        for(auto& [name2,v2]: *object)
+            for(auto& p: flatten_value(name+"["+string(name2)+"]", v2))
+                values.push_back(std::move(p));
+    }
+    else if (value.is_array())
+    {
+	auto& array = value.as_array();
+        for(int i=0;i<array.size();i++)
+            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", array[i]))
+                values.push_back(std::move(p));
+    }
+    else
+        values = {{name,value}};
+    return values;
+}
+
+// Kind of like unnesting, but we call flatten_value on children.
+json::object flatten_me(const json::object& j)
+{
+    json::object j2;
+    for(auto& [name, obj]: j)
+    {
+        if (has_children(name))
+        {
+            auto c = flatten_me(obj.as_object());
+            for(auto& [name2,j3]: c)
+                j2[string(name)+string(name2)] = std::move(j3);
+        }
+        else // Without this transofmration, we are just unnesting.
+            for(auto& [name2,value2]: flatten_value(name, obj))
+                j2[name2] = std::move(value2);
+    }
+    return j2;
+}
+
+
+void simplify(json::object& j)
+{
+    if (j.empty()) return;
+
+    // 1. First we simplify all the levels below this level.
+    for(auto& [key, value]: j)
+        if (has_children(key))
+            simplify(value.as_object());
+
+    // 2. In order to move child-level names up to the top level, we have to avoid
+    //   a. clashing with the same name at the top level
+    //   b. clashing with the same name a sibling.
+    // We therefore count which names at these levels occur twice and avoid them.
+    // NOTE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}.
+    multiset<string> names;
+    for(auto& [name, value]: j)
+    {
+        names.insert(name);
+        if (has_children(name))
+            for(auto& [name2, j2]: value.as_object())
+                names.insert(name2);
+    }
+
+    // 3. Check if we can move the children for each key up to the top level
+    //    names in that entry up to the top level.
+    vector<pair<string,json::value>> moved;
+    for(auto iter = j.begin(); iter != j.end(); )
+    {
+        auto& [name,value] = *iter;
+
+        if (has_children(name))
+        {
+            bool collision = false;
+            for(auto& [name2, _]: value.as_object())
+            {
+                if (names.count(name2) > 1)
+                {
+                    collision = true;
+                    break;
+                }
+            }
+
+            if (not collision)
+            {
+                for(auto& [name2, j2]: value.as_object())
+                {
+                    moved.push_back({name2,std::move(j2)});
+                }
+                iter = j.erase(iter);
+            }
+            else
+                ++iter;
+        }
+        else
+            ++iter;
+    }
+
+    for(auto& [name,obj]: moved)
+        j[name] = std::move(obj);
+}
+
 
 void show_parameters(std::ostream& o,const context_ref& C)
 {

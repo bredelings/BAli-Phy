@@ -860,7 +860,7 @@ extern "C" closure builtin_function_walkTreeSampleAlignmentsRaw(OperationArgs& A
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg, {as_reg})));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg, {as_reg})));
     walk_tree_sample_alignments(P,Stats);
     C1 = *P;
 
@@ -883,7 +883,7 @@ extern "C" closure builtin_function_realignFromTipsRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg, {as_reg})));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg, {as_reg})));
     realign_from_tips(P,Stats);
     C1 = *P;
 
@@ -908,7 +908,7 @@ extern "C" closure builtin_function_sampleSPRFlatRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     sample_SPR_flat(P,Stats);
     C1 = *P;
 
@@ -930,7 +930,7 @@ extern "C" closure builtin_function_sampleSPRNodesRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     sample_SPR_nodes(P,Stats);
     C1 = *P;
 
@@ -951,7 +951,7 @@ extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     sample_SPR_all(P,Stats);
     C1 = *P;
 
@@ -973,7 +973,7 @@ extern "C" closure builtin_function_walkTreeSampleBranchLengthsRaw(OperationArgs
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     walk_tree_sample_branch_lengths(P,Stats);
     C1 = *P;
 
@@ -995,7 +995,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengthsRaw(Operati
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     walk_tree_sample_NNI_and_branch_lengths(P,Stats);
     C1 = *P;
 
@@ -1016,7 +1016,7 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimesRaw(Operati
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     walk_time_tree_sample_NNI_and_node_times(P,Stats);
     C1 = *P;
 
@@ -1037,7 +1037,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     walk_tree_sample_NNI(P,Stats);
     C1 = *P;
 
@@ -1058,7 +1058,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandARaw(OperationArgs& Args
     context_ref C1(M, c1);
 
     MCMC::MoveStats Stats;
-    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    owned_ptr<context> P(claim(new Parameters(C1, tree_reg)));
     walk_tree_sample_NNI_and_A(P,Stats);
     C1 = *P;
 

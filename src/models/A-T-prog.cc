@@ -295,10 +295,6 @@ do_block generate_main(const variables_map& args,
 		       const expression_ref& model_fn,
 		       vector<tuple<int,expression_ref,expression_ref>>& alignments)
 {
-    Model::key_map_t keys;
-    if (args.count("set"))
-        keys = parse_key_map(args["set"].as<vector<string> >());
-
     auto fixed = get_fixed(args);
 
     auto log_formats = get_log_formats(args, args.count("align"));
@@ -542,7 +538,6 @@ compute_logged_quantities(do_block& model,
 			  int n_branches,
 			  int n_partitions,
 			  const map<string,string>& fixed,
-			  const map<string,json::value>& keys,
 			  int i,
 			  const expression_ref& tree,
 			  const expression_ref& alignment_on_tree,
@@ -603,10 +598,10 @@ compute_logged_quantities(do_block& model,
 
     if (n_branches > 0)
     {
-	if (imodel_index or load_value(keys,"write-fixed-alignments",false))
+	if (imodel_index or get_setting("write-fixed-alignments",false))
 	{
 	    // This should affect whether we allow modifying leaf sequences.
-	    // bool infer_ambiguous_observed = load_value(keys, "infer-ambiguous-observed",false);
+	    // bool infer_ambiguous_observed = get_setting(keys, "infer-ambiguous-observed",false);
 
 	    var anc_alignment("anc_alignment"+part_suffix);
 	    model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
@@ -681,10 +676,6 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const model_t& tree_model,
                                      const std::vector<int>& like_calcs)
 {
-    Model::key_map_t keys;
-    if (args.count("set"))
-        keys = parse_key_map(args["set"].as<vector<string> >());
-
     auto fixed = get_fixed(args);
 
     auto log_formats = get_log_formats(args, args.count("align"));
@@ -895,7 +886,6 @@ std::string generate_atmodel_program(const variables_map& args,
 						     n_branches,
 						     n_partitions,
 						     fixed,
-						     keys,
 						     i,
 						     tree_var,
 						     alignment_on_tree,

@@ -65,7 +65,7 @@ int random_int_from_double(double x)
 
 int n_SPR_moves(const Parameters& P)
 {
-    double f = P.load_value("SPR_amount",0.1);
+    double f = get_setting("SPR_amount",0.1);
     if (P.t().n_branches() < 4) return 0;
     int n = random_int_from_double(P.t().n_branches()*f);
     return n+1;
@@ -556,16 +556,16 @@ int choose_subtree_branch_uniform2(const TreeInterface& T)
 }
 
 
-void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1) 
+void sample_SPR_flat_one(owned_ptr<context>& P,MoveStats& Stats,int b1) 
 {
     Parameters& PP = *P.as<Parameters>();
 
     if (PP.t().is_leaf_node(PP.t().target(b1))) return;
 
     // Allow turning off these moves.
-    if (not PP.load_value("SPR-jump",true)) return;
+    if (not get_setting("SPR-jump",true)) return;
 
-    double p = P->load_value("SPR_slice_fraction",-0.25);
+    double p = get_setting("SPR_slice_fraction",-0.25);
 
     int b2 = choose_SPR_target(PP.t(),b1);
 
@@ -1146,11 +1146,11 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     vector< vector<int> > nodes(2);
     nodes[0] = nodes_for_branch.at(I.initial_edge);                                 // If p[1].t() == p[0].t() then nodes[0] == nodes[1]
     nodes[1] = nodes_for_branch.at(I.attachment_branch_pairs[C].edge);              // in this formulation.
-    bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
+    bool do_cube = (uniform() < get_setting("cube_fraction",0.0));
 
     optional<int> bandwidth;
-    if (P.contains_key("simple_bandwidth"))
-        bandwidth  = P.lookup_key("simple_bandwidth").as_int64();
+    if (setting_exists("simple_bandwidth"))
+        bandwidth  = lookup_setting("simple_bandwidth").as_int64();
 
     shared_ptr<sample_A3_multi_calculation> tri;
     if (do_cube)
@@ -1288,7 +1288,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     if (P.t().is_leaf_node(subtree_edge.node2)) return false;
 
-    sum_out_A = sum_out_A or (uniform() < P.load_value("spr_sum_out_A",0.0));
+    sum_out_A = sum_out_A or (uniform() < get_setting("spr_sum_out_A",0.0));
 
     // 1. Always peel up to attachment node to calculate the likelihood.
     // * The attachment node keeps its name as we regraft on different branches.
@@ -1411,12 +1411,12 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     return sample_SPR_search_one(P, Stats, subtree_edge, spr_full_range(P.t(), subtree_edge), sum_out_A);
 }
 
-void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    // double p = P.load_value("SPR_slice_fraction",-0.25);
+    // double p = get_setting("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) 
     {
@@ -1427,7 +1427,7 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
     }
 }
 
-void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats, bool sum_out_A) 
+void sample_SPR_search_all(owned_ptr<context>& P,MoveStats& Stats, bool sum_out_A) 
 {
     auto branches = P.as<Parameters>()->t().branches();
     for(int b: branches)
@@ -1440,12 +1440,12 @@ void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats, bool sum_out_A)
     }
 }
 
-void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_search_all(owned_ptr<context>& P,MoveStats& Stats) 
 {
     sample_SPR_search_all(P, Stats, false);
 }
 
-void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_A_search_all(owned_ptr<context>& P,MoveStats& Stats) 
 {
     sample_SPR_search_all(P, Stats, true);
 }
@@ -1551,12 +1551,12 @@ void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2)
     b2 = T.undirected(T.find_branch(path[C2],path[C3]));
 }
 
-void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_flat(owned_ptr<context>& P,MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    //  double p = P->load_value("SPR_slice_fraction",-0.25);
+    //  double p = get_setting("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) 
     {
@@ -1566,16 +1566,16 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
     }
 }
 
-void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_nodes(owned_ptr<context>& P,MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
 
     // Allow turning off these moves.
-    if (not PP.load_value("SPR-jump",true)) return;
+    if (not get_setting("SPR-jump",true)) return;
 
     int n = n_SPR_moves(PP);
 
-    double p = P->load_value("SPR_slice_fraction",-0.25);
+    double p = get_setting("SPR_slice_fraction",-0.25);
 
     for(int i=0;i<n;i++) {
 

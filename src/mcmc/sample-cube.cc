@@ -185,8 +185,8 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho) 
 {
     optional<int> bandwidth;
-    if (p[0].contains_key("simple_bandwidth"))
-        bandwidth  = p[0].lookup_key("simple_bandwidth").as_int64();
+    if (setting_exists("simple_bandwidth"))
+        bandwidth  = lookup_setting("simple_bandwidth").as_int64();
 
     try {
 	sample_cube_multi_calculation tri(p, nodes, bandwidth);
@@ -260,7 +260,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 void cube_sample_alignment(Parameters& P,int node1,int node2) 
 {
-    int bandwidth = P.load_value("bandwidth", -1);
+    int bandwidth = get_setting("bandwidth", -1);
 
     P.set_root(node1);
 

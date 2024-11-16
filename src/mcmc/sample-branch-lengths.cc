@@ -47,7 +47,7 @@ log_double_t branch_twiddle_positive(double& T,double sigma) {
     return ratio;
 }
 
-MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
+MCMC::Result change_branch_length_(owned_ptr<context>& P,int b,double sigma,
 				   log_double_t (*twiddle)(double&,double)) 
 {
     MCMC::Result result(3);
@@ -59,7 +59,7 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
     auto ratio = twiddle(newlength,sigma);
   
     //---------- Construct proposed Tree ----------//
-    owned_ptr<Model> P2  = P;
+    owned_ptr<context> P2  = P;
 
     P2.as<Parameters>()->select_root(b);
     P2.as<Parameters>()->setlength(b,newlength);
@@ -75,7 +75,7 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
 }
 
 
-void change_branch_length_flat(owned_ptr<Model>& P,
+void change_branch_length_flat(owned_ptr<context>& P,
 			       MoveStats& Stats,int b,double sigma)
 {
     Parameters& PP = *P.as<Parameters>();
@@ -96,7 +96,7 @@ void change_branch_length_flat(owned_ptr<Model>& P,
 	Stats.inc("branch-length 4",result);
 }
 
-void change_branch_length_log_scale(owned_ptr<Model>& P,
+void change_branch_length_log_scale(owned_ptr<context>& P,
 				    MoveStats& Stats,
 				    int b,
 				    double sigma)
@@ -119,7 +119,7 @@ void change_branch_length_log_scale(owned_ptr<Model>& P,
 
 #include "slice-sampling.H"
 
-void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
+void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_branch_length(b))
@@ -133,7 +133,7 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
     MCMC::Result result(3);
   
     //------------- Find new length --------------//
-    double sigma = P->load_value("slice_branch_sigma",1.5);
+    double sigma = get_setting("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     branch_length_slice_function logp(PP,b);
@@ -155,7 +155,7 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 	Stats.inc("branch-length (slice) 4",result);
 }
 
-void slice_sample_node_time(owned_ptr<Model>& P,MoveStats& Stats,int n)
+void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n  [slice_sample_node_time]\n";
     Parameters& PP = *P.as<Parameters>();
@@ -168,7 +168,7 @@ void slice_sample_node_time(owned_ptr<Model>& P,MoveStats& Stats,int n)
     const double mu = PP.branch_mean();
 
     //------------- Find new length --------------//
-    double sigma = P->load_value("slice_branch_sigma",1.5);
+    double sigma = get_setting("slice_branch_sigma",1.5);
 
     double w = sigma;
 
@@ -177,7 +177,7 @@ void slice_sample_node_time(owned_ptr<Model>& P,MoveStats& Stats,int n)
     double T2 = slice_sample(T, logp, w, 50);
 }
 
-void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
+void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_branch_length(b)) return;
@@ -192,7 +192,7 @@ void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,i
 
     //------------- Find new length --------------//
 
-    double sigma = P->load_value("slice_branch_sigma",1.5);
+    double sigma = get_setting("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     alignment_branch_length_slice_function logp(PP,b);
@@ -214,20 +214,20 @@ void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,i
 	Stats.inc("alignment-branch-length (slice) 4",result);
 }
 
-void change_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
+void change_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     if (uniform() < 0.5)
     {
-	double sigma = P->load_value("log_branch_sigma",0.6);
+	double sigma = get_setting("log_branch_sigma",0.6);
 	change_branch_length_log_scale(P, Stats, b, sigma);
     }
     else {
-	double sigma = P->load_value("branch_sigma",0.6);
+	double sigma = get_setting("branch_sigma",0.6);
 	change_branch_length_flat(P, Stats, b, sigma);
     }
 }
 
-void change_branch_length_multi(owned_ptr<Model>& P,MoveStats& Stats,int b) 
+void change_branch_length_multi(owned_ptr<context>& P,MoveStats& Stats,int b) 
 {
     const int n=3;
 
@@ -235,7 +235,7 @@ void change_branch_length_multi(owned_ptr<Model>& P,MoveStats& Stats,int b)
 	change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b) 
+void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     MCMC::Result result(5,0);
@@ -254,7 +254,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
 	result.counts[3] = 1;
 
 	//---------- Construct proposed Tree ----------//
-	owned_ptr<Model> P2 = P;
+	owned_ptr<context> P2 = P;
 
 	P2.as<Parameters>()->select_root(b);
 	P2.as<Parameters>()->setlength(b,newlength);
@@ -326,7 +326,7 @@ log_double_t slide_node_expand_branch(vector<double>& lengths,double sigma)
     return ratio*ratio;
 }
 
-bool slide_node(owned_ptr<Model>& P,
+bool slide_node(owned_ptr<context>& P,
 		const vector<int>& branches,
 		log_double_t (*slide)(vector<double>&,double)
     ) 
@@ -341,11 +341,11 @@ bool slide_node(owned_ptr<Model>& P,
     lengths[0] = t.branch_length(branches[0]);
     lengths[1] = t.branch_length(branches[1]);
 
-    double sigma = P->load_value("slide_node_sigma",0.3);
+    double sigma = get_setting("slide_node_sigma",0.3);
     auto ratio = slide(lengths,sigma);
 
     //---------------- Propose new lengths ---------------//
-    owned_ptr<Model> P2 = P;
+    owned_ptr<context> P2 = P;
 
     P2.as<Parameters>()->setlength(branches[0], lengths[0]);
     P2.as<Parameters>()->setlength(branches[1], lengths[1]);
@@ -354,7 +354,7 @@ bool slide_node(owned_ptr<Model>& P,
 }
 
 
-void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
+void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
@@ -372,11 +372,11 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
     PP->set_root(t.target(b));
 
-    double p = P->load_value("branch_slice_fraction",0.9);
+    double p = get_setting("branch_slice_fraction",0.9);
     if (uniform() < p)
     {
 	slide_node_slice_function logp(*PP,b);
-	double w = (logp.x0 + logp.y0) * P->load_value("slide_branch_slice_window",0.3);
+	double w = (logp.x0 + logp.y0) * get_setting("slide_branch_slice_window",0.3);
 	double L1b = slice_sample(logp,w,50);
     
 	MCMC::Result result(2);
@@ -407,7 +407,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 }
 
 /// Propose three neighboring branch lengths all anti-correlated
-void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n) 
+void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n) 
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[change_3_branch_lengths]\n";
 
@@ -430,7 +430,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
     double S31 = T3 + T1;
 
     //----------- Propose new distances -------------//
-    double sigma = P->load_value("log_branch_sigma",0.6)/2.0;
+    double sigma = get_setting("log_branch_sigma",0.6)/2.0;
     log_double_t ratio = 1.0;
 
     double T1_ = T1;
@@ -459,7 +459,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
     if (T1_ <= 0.0 or T2_ <= 0.0 or T3_ <= 0.0) return;
 
     //----------- Construct proposed Tree -----------//
-    owned_ptr<Model> P2 = P;
+    owned_ptr<context> P2 = P;
     P2.as<Parameters>()->set_root(n);
     P2.as<Parameters>()->setlength(branches[0], T1_);
     P2.as<Parameters>()->setlength(branches[1], T2_);

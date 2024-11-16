@@ -18,13 +18,13 @@ The weight determines how many times the sub-move is run each iteration.
 To add a generic MCMC move, create an `MCMC::SingleMove` with one of the following constructors:
 
 ``` C++
-SingleMove(void (*move)(owned_ptr<Model>&,MoveStats&), const std::string& name);
-SingleMove(void (*move)(owned_ptr<Model>&,MoveStats&), const std::string& name, const std::string& attributes);
+SingleMove(void (*move)(owned_ptr<context>&,MoveStats&), const std::string& name);
+SingleMove(void (*move)(owned_ptr<context>&,MoveStats&), const std::string& name, const std::string& attributes);
 ```
 
-You can pass in a function with signature `void(owned_ptr<Model>&,MoveStats&)` that performs the move.  This is how moves that alter alignments are defined.
+You can pass in a function with signature `void(owned_ptr<context>&,MoveStats&)` that performs the move.  This is how moves that alter alignments are defined.
 
-We use an `owned_ptr<>` so that we can treat Model& polymorphically.
+We use an `owned_ptr<>` so that we can treat context& polymorphically.
 
 ## `MCMC::MH_Move`
 
@@ -45,18 +45,18 @@ Proposals are generally defined as functions that alter the MCMC state and then 
 class Proposal: public Object {
 public:
     Proposal* clone() const =0;
-    virtual log_double_t operator()(Model& P) const=0;
+    virtual log_double_t operator()(context& P) const=0;
 };
 ```
 
-Here `Model&` is the current state of the MCMC object.  The type `log_double_t` is a probability (or probability_density) represented on the log scale.
+Here `context&` is the current state of the MCMC object.  The type `log_double_t` is a probability (or probability_density) represented on the log scale.
 
 ### Proposal2
 
 The Proposal2 class has constructor:
 
 ``` C++
-Proposal2(const Proposal_Fn& p, const std::vector<std::string>& s, const std::vector<std::string>& v, const Model& P);
+Proposal2(const Proposal_Fn& p, const std::vector<std::string>& s, const std::vector<std::string>& v, const context& P);
 ```
 
 The names in `s` are names of variables to modify, and the names in `v` are names of keys to look up to find tunable parameters such as jump sizes.

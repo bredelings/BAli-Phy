@@ -798,7 +798,7 @@ double Parameters::branch_mean() const
  */
 
 Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int>& alignments_regs)
-    :Model(C)
+    :context(C)
 {
 /*
  * FIXME: If we are given the alignments_regs, should we try to use properties(3) to access them?

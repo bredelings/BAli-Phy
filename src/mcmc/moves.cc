@@ -35,22 +35,22 @@ using std::map;
 using std::optional;
 
 
-void slide_node_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void slide_node_move(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     slide_node(P,Stats,b);
 }
 
-void change_branch_length_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void change_branch_length_move(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_multi_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void change_branch_length_multi_move(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     change_branch_length_multi(P,Stats,b);
 }
 
-void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b) 
+void sample_tri_one(owned_ptr<context>& P, MoveStats&,int b) 
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
@@ -68,7 +68,7 @@ void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b)
     tri_sample_alignment(*PP,node1,node2);
 }
 
-void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void sample_tri_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     Parameters* PP = P.as<Parameters>();
 
@@ -101,7 +101,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     Stats.inc("sample_tri_branch",result);
 }
 
-void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b) 
+void sample_cube_one(owned_ptr<context>& P, MoveStats&,int b) 
 {
     Parameters* PP = P.as<Parameters>();
     auto t = PP->t();
@@ -119,7 +119,7 @@ void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b)
     cube_sample_alignment(*PP,node1,node2);
 }
 
-void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void sample_cube_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     Parameters* PP = P.as<Parameters>();
 
@@ -153,7 +153,7 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 }
 
 
-void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& Stats, int b, const Proposal& proposal)
+void sample_parameter_and_alignment_on_branch(owned_ptr<context>& P, MoveStats& Stats, int b, const Proposal& proposal)
 {
     Parameters* PP = P.as<Parameters>();
 
@@ -184,7 +184,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 }
 
 
-void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void sample_tri_branch_type_one(owned_ptr<context>& P, MoveStats& Stats,int b) 
 {
     Parameters* PP = P.as<Parameters>();
 
@@ -212,9 +212,9 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 }
 
 
-void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
+void sample_alignments_one(owned_ptr<context>& P, MoveStats& Stats, int b)
 {
-    double alignment_plus_branch_length_fraction = P->load_value("alignment_plus_branch_length_fraction",0.01);
+    double alignment_plus_branch_length_fraction = get_setting("alignment_plus_branch_length_fraction",0.01);
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
 
@@ -224,7 +224,7 @@ void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
         sample_alignment(*PP,b);
 }
 
-void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node) 
+void sample_node_move(owned_ptr<context>& P, MoveStats&,int node) 
 {
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
@@ -232,7 +232,7 @@ void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node)
     sample_node(*PP,node);
 }
 
-void sample_A5_move(owned_ptr<Model>& P, MoveStats&,int n0) 
+void sample_A5_move(owned_ptr<context>& P, MoveStats&,int n0) 
 {
     Parameters* PP = P.as<Parameters>();
 //    assert(PP->variable_alignment()); 
@@ -484,12 +484,12 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
     return branches2;
 }
 
-void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
+void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[sample_branch_length_]\n";
     //std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
-    double slice_fraction = P->load_value("branch_slice_fraction",0.9);
+    double slice_fraction = get_setting("branch_slice_fraction",0.9);
 
     bool do_slice = (uniform() < slice_fraction);
     if (do_slice)
@@ -525,7 +525,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
     }
 }
 
-void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
+void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
@@ -555,7 +555,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
 }
 
 
-void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& Stats)
+void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& Stats)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
     Parameters& PP = *P.as<Parameters>();
@@ -584,7 +584,7 @@ void walk_time_tree_sample_NNI_and_node_times(owned_ptr<Model>& P, MoveStats& St
 }
 
 
-void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
+void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 {
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
@@ -599,9 +599,9 @@ void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 }
 
 
-void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats) 
+void walk_tree_sample_NNI_and_A(owned_ptr<context>& P, MoveStats& Stats) 
 {
-    double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
+    double NNI_A_fraction = get_setting("NNI+A_fraction",0.01);
 
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
@@ -619,12 +619,12 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
 }
 
 
-void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats) 
+void walk_tree_sample_alignments(owned_ptr<context>& P, MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
     vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
 
-    double cube_fraction = P->load_value("cube_fraction",0.00);
+    double cube_fraction = get_setting("cube_fraction",0.00);
 
     for(int b: branches)
     {
@@ -652,7 +652,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 
 
 // FIXME: Realign from tips basically fails because the distance between sequences is too small!
-void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
+void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats) 
 {
     int AL0 = alignment_length(*P.as<Parameters>());
 
@@ -735,7 +735,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
     Stats.inc("realign_from_tips",result);
 }
 
-void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
+void walk_tree_sample_branch_lengths(owned_ptr<context>& P, MoveStats& Stats) 
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_tree_sample_branch_lengths]\n";
 

@@ -162,7 +162,7 @@ struct parameters_constants: public Object
 };
 
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public Model
+class Parameters: public context
 {
     friend class data_partition;
     friend class ParametersTreeInterface;
@@ -222,7 +222,7 @@ public:
 
     std::string name() const {return "Full Model";}
 
-    Parameters* clone() const {return new Parameters(*this);}
+    Parameters* clone() const override {return new Parameters(*this);}
 
     Parameters& operator=(const Parameters&) = default;
     Parameters& operator=(Parameters&&) = default;

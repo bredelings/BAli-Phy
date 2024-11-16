@@ -551,12 +551,12 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho) 
 {
     optional<int> bandwidth;
-    if (p[0].contains_key("simple_bandwidth"))
-        bandwidth  = p[0].lookup_key("simple_bandwidth").as_int64();
+    if (setting_exists("simple_bandwidth"))
+        bandwidth  = lookup_setting("simple_bandwidth").as_int64();
 
     try {
 	shared_ptr<sample_A3_multi_calculation> tri;
-	if (uniform() < p[0].load_value("cube_fraction",0.0))
+	if (uniform() < get_setting("cube_fraction",0.0))
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
 	else
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));

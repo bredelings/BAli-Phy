@@ -116,7 +116,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
            But never actually creates an internal node states for p[1].tree.
  */
 
-void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void two_way_topology_slice_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     std::abort();
 
@@ -183,14 +183,14 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     NNI_inc(Stats,"NNI (2-way,slice)", result, L);
 }
 
-void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_sample]\n";
 
-    double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
+    double slice_fraction = get_setting("NNI_slice_fraction",-0.25);
 
     if (not PP.variable_alignment() and uniform() < slice_fraction) {
 	two_way_topology_slice_sample(P,Stats,b);
@@ -288,7 +288,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 	NNI_inc(Stats,"NNI (2-way stupid)", result, L0);
 }
 
-void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_SPR_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -355,7 +355,7 @@ vector<int> NNI_branches(const TreeInterface& t, int b)
     return branches;
 }
 
-void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -420,7 +420,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
     NNI_inc(Stats,"NNI (2-way) + branches", result, p[0].t().branch_length(b));
 }
 
-void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -437,7 +437,7 @@ void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 	two_way_NNI_and_branches_sample(P,Stats,b);
 }
 
-void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void three_way_topology_sample_slice(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -564,7 +564,7 @@ optional<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
     return ratio;
 }
 
-void two_way_topology_5A_sample(owned_ptr<Model>& P, MoveStats& /*Stats*/, int b)
+void two_way_topology_5A_sample(owned_ptr<context>& P, MoveStats& /*Stats*/, int b)
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -741,14 +741,14 @@ void three_way_NNI_A4_sample(Parameters& PP, MoveStats& Stats, int b, int b1, in
     }
 }
 
-void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
+void three_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_sample]\n";
 
-    double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
+    double slice_fraction = get_setting("NNI_slice_fraction",-0.25);
 
     if (not PP.variable_alignment() and uniform() < slice_fraction)
     {
@@ -790,7 +790,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
  */
 
 
-void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
+void three_way_time_tree_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 {
     if (log_verbose >= 3) std::cerr<<"[three_way_time_tree_NNI_sample]\n";
 
@@ -849,7 +849,7 @@ void three_way_time_tree_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b
     }
 }
 
-void three_way_topology_and_A5_2D_sample(owned_ptr<Model>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
+void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
     Parameters& PP = *P.as<Parameters>();
     auto t = PP.t();
@@ -914,7 +914,7 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<Model>& P, MoveStats& Stats, 
     NNI_inc(Stats,"NNI (5-way) + A", result, L0);
 }
 
-void three_way_topology_and_A3_2D_sample(owned_ptr<Model>& P, MoveStats& Stats, int b, std::optional<int> bandwidth) 
+void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
@@ -977,7 +977,7 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<Model>& P, MoveStats& Stats, 
     NNI_inc(Stats,"NNI (3-way) + A", result, L0);
 }
 
-void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
+void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
     three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
 }

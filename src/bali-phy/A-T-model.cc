@@ -939,9 +939,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                 throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
 
     //--------------- Create the Parameters object---------------//
-    Model::key_map_t keys;
     if (args.count("set"))
-        keys = parse_key_map(args["set"].as<vector<string> >());
+        load_settings(args["set"].as<vector<string> >());
 
     // check that smodel mapping has correct size.
     if (smodel_mapping.size() != filename_ranges.size())

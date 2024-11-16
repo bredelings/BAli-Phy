@@ -215,7 +215,7 @@ class context: public context_ref
 {
 
 public:
-//    context* clone() const {return new context(*this);}
+    virtual context* clone() const {return new context(*this);}
 
     context& operator=(const context&) = default;
 
@@ -241,4 +241,9 @@ bool perform_MH(context_ref& C1, const context_ref& C2, log_double_t rho);
 std::ostream& operator<<(std::ostream&, const context_ref& C);
 
 typedef std::function<log_double_t(context_ref& P)> Proposal;
+
+void simplify(json::object& j);
+
+json::object flatten_me(const json::object& j);
+
 #endif
