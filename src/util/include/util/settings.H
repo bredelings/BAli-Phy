@@ -50,6 +50,6 @@ T get_setting_or(const std::string& key, const T& t)
 
 inline bool setting_exists(const std::string& key) { return global_settings.count(key);}
 
-inline const json::value& lookup_setting(const std::string& key) { return global_settings.find(key)->second;}
+inline const json::value& get_setting(const std::string& key) { return global_settings.find(key)->second;}
 
 #endif

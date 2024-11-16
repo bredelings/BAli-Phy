@@ -552,7 +552,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 {
     optional<int> bandwidth;
     if (setting_exists("simple_bandwidth"))
-        bandwidth  = lookup_setting("simple_bandwidth").as_int64();
+        bandwidth  = get_setting("simple_bandwidth").as_int64();
 
     try {
 	shared_ptr<sample_A3_multi_calculation> tri;
