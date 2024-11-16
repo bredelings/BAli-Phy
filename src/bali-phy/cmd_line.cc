@@ -301,7 +301,6 @@ po::options_description developer_options()
     options_description developer("Developer options");
     developer.add_options()
 	("test-module",value<string>(),"Parse and optimize the given module")
-	("--no-type-check","Type-check modules")
 	("run,r",value<vector<string>>()->multitoken(),"Run the given module")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
