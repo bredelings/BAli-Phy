@@ -29,7 +29,8 @@ module Probability (module Probability,
                     module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
                     module Probability.Distribution.PhyloCTMC,
-                    module Probability.Distribution.PhyloAlignment
+                    module Probability.Distribution.PhyloAlignment,
+                    module Probability.Distribution.RecDist
                    )
     where
 
@@ -69,3 +70,5 @@ import Probability.Distribution.Markov
 import Probability.Distribution.Tree
 import Probability.Distribution.PhyloCTMC
 import Probability.Distribution.PhyloAlignment
+
+import Probability.Distribution.RecDist
