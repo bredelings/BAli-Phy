@@ -3,13 +3,29 @@ module Probability.Distribution.Independent where
 import Probability.Random
 import qualified Data.IntMap as IntMap
 
--- The `independent` distribution relies on Functor f to go from
---        f (Random a) -> Random (f a)
--- in a lazy fashion.
+{-NOTE: It seems like sampling from an Independent f d should turn into a
+        collection of samples.
 
--- There is no downweighting of the MCMC sampling for larger objects.
--- If we could count the number of forced entries that might work,
---  although we'd have to we aware of how this differs in the initial and proposed point.
+The `independent` distribution relies on Functor f to go from
+     f (Random a) -> Random (f a)
+in a lazy fashion.
+
+There is no downweighting of the MCMC sampling for larger objects.
+If we could count the number of forced entries that might work,
+ although we'd have to we aware of how this differs in the initial and proposed point.
+-}
+
+{- NOTE: It seems like observing from an Independent f d should turn into a
+         collection of observes.
+
+I guess we are doing observes through annotated_densities.
+It calls densities on the components, and densities calls
+annotated_densities on the component distributions.
+-}
+
+{- QUESTION: Is there a way to observe some of the elements while sampling other?
+
+-}
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
