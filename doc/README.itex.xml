@@ -301,7 +301,10 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 <prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
     </para>
-    <para>Furthermore, the directories <filename>25-1</filename> and <filename>25-2</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load these files in Tracer, although the chain will not really have converged yet.</para>
+
+    <para>
+      Then check that the file <filename>Results/index.html</filename> exists and can be opened in a web browser.
+    </para>
     </section>
 
 
@@ -317,6 +320,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	    </link>
 	    :  MCMC parameter/diagnostic viewer.
 	  </para>
+          <para>
+            Check by opening: <filename>25-1/C1.log</filename> and <filename>25-2/C1.log</filename>
+          </para>
 	</listitem> 
 
 	<listitem>
@@ -327,6 +333,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	    </link>
 	    : Phylogeny Viewer
 	  </para>
+          <para>
+            Check by opening: <filename>Results/c50.PP.tree</filename>
+          </para>
 	</listitem>
       
 	<listitem>
@@ -334,12 +343,19 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
 		  xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">
 	      SeaView
+	    </link> and/or 
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+		  xlink:href="https://ormbunkar.se/aliview/">
+	      AliView
 	    </link>
-	    : Alignment viewer.
-	  </para>
+	    : Alignment viewers.
+          </para>
+          <para>
+            Check by opening: <filename>Results/P1.max.fasta</filename>
+          </para>
 	</listitem>
-
     </itemizedlist>
+
     </para>
 
     </section>
