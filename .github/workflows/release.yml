@@ -133,6 +133,7 @@ jobs:
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
+        sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
@@ -255,12 +256,44 @@ jobs:
         name: meson-log-${{ matrix.name }}
         path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
+    - name: Copy shared libs (Windows)
+      if: matrix.arch == 'win64'
+      run: |
+        OUTPUT=$HOME/local
+        mkdir -p "${OUTPUT}/bin"
+        CXX=x86_64-w64-mingw32-g++-posix
+        # Copy compiler DLLS
+        for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
+            cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
+        done
+        cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
+
     - name: Build
       run: |
         ccache -p
         ccache -s
         ninja -C build install -j4
         ccache -s
+
+        skip=none
+        case "${{ matrix.name }}" in
+          *-DEBUG_MACHINE) skip=some ;;
+          *-sanitize) skip=most ;;
+        esac
+
+        if [ "${skip}" = "none" ] ; then
+          if [ -n "${BOOST_ROOT}" ] ; then
+              if [ "${{ runner.os }}" == "macOS" ] ; then
+                 export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+              else
+                 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+              fi
+          fi
+          if [ "${{ matrix.name }}" = "windows" ] ; then
+            export WINEPATH=$(winepath -w $HOME/local/bin)
+          fi
+          ninja -C build test
+        fi
 
     - name: Get version
       id: get_version
@@ -283,17 +316,6 @@ jobs:
             done
         fi
         ldd ${OUTPUT}/bin/bali-phy
-
-    - name: Copy shared libs (Windows)
-      if: matrix.arch == 'win64'
-      run: |
-        OUTPUT=$HOME/local
-        CXX=x86_64-w64-mingw32-g++-posix
-        # Copy compiler DLLS
-        for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
-            cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
-        done
-        cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
     - name: Copy shared libs (Mac)
       if: runner.os == 'macOS'
