@@ -262,7 +262,7 @@ po::options_description parameters_options(int level)
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
-	("tree,T",value<string>(),"File with initial tree");
+	("tree,T",value<string>(),"Tree prior: ~uniform_tree(taxa), ~uniform_rooted_tree(taxa), ~yule(taxa), etc.");
 
     if (level >= 1)
 	parameters.add_options()
