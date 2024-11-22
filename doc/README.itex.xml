@@ -50,7 +50,7 @@
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>
-      We typically run <application>BAli-Phy</application> on workstations with at least 8Gb of RAM and 2 cores.  More cores will allow you to run more MCMC chains at once, and more RAM will allow you to run larger data sets.  However, it is often easier and faster to run BAli-Phy on a (Linux) computing cluster, if you have one available.
+      We typically run <application>BAli-Phy</application> on workstations with at least 16Gb of RAM and 4 cores.  More cores will allow you to run more MCMC chains at once, and more RAM will allow you to run larger data sets.  However, it is often easier and faster to run BAli-Phy on a (Linux) computing cluster, if you have one available.
     </para>
 
     <para>
@@ -297,8 +297,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
     <section xml:id="tests"><info><title>Test the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
     <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=150</userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=150</userinput>
+<prompt>%</prompt> <userinput>bali-phy --version </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
 <prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
     </para>
 
@@ -365,27 +366,97 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
   <section xml:id="running"><info><title>Running the program</title></info>
     
 
-    <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options by running <command> bali-phy --help</command>.</para>
-<para>We recommend running multiple chains in parallel for each command, because 
-<orderedlist>
-  <listitem>You can combine the samples, leading to faster run times.</listitem>
-  <listitem>You can compare the runs to determine if the chains have converged.</listitem>
-</orderedlist>
- 
-This can be done simply by starting several instances of the program, and does not require using MPI or special command-line options.
-</para>
-
-    <section><info><title>Quick Start</title></info>
-      
-      <para>The simplest way to run <command>BAli-Phy</command> is
+    <para> The simplest way to run <command>BAli-Phy</command> is
       to type all the arguments on the command line:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
       You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
       You can also specify a character set for analysis:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
-      </para>
-    </section>
+      You can get an overview of command line options as follows:
+      <screen><prompt>%</prompt> <userinput> bali-phy help</userinput></screen>
+    </para>
+
+    <section><info><title>Quick Start</title></info>
+    <para>Let's run an example analysis using the 5S-rRNA 25-taxon data set.
+    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput></screen>
+    We will now start 4 simultaneous runs:
+    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput></screen>
+    These runs will all execute at the same time.  Each run will create a unique directory of the form <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
+
+    <para>You can use the program <userinput>top</userinput> to verify that four copies of <userinput>bali-phy</userinput> are running:
+    <screen><prompt>%</prompt> top</screen>
+    You can exit <userinput>top</userinput> by pressing <userinput>q</userinput> or <userinput>CTRL-C</userinput>.
+    </para>
+
+    <para>We can use program Tracer to assess the progress of the runs by loading the files
+    <filename>25-1/C1.log</filename>, 
+    <filename>25-2/C1.log</filename>, 
+    <filename>25-3/C1.log</filename>,  and
+    <filename>25-4/C1.log</filename>.
+    All four log files should be loaded simultaneously in order to compare them.
+    </para>
+
+<para>When enough iterations have finished, we then run the script <userinput>bp-analyze</userinput> to summarize the results:
+<screen><prompt>%</prompt> bp-analyze 25-1/ 25-2/ 25-3/ 25-4/
+Creating new directory 'Results' for summary files.
+Summarizing distribution of numerical parameters: done.
+Analyzing scalar variables: done.
+
+Summarizing topology distribution:  done.
+Drawing trees: c50 c66 c80 c90 c95 c99 c100 greedy MAP . done.
+
+Generate mixing diagnostics for topologies ... done.
+Generate SRQ plot for partitions: done.
+Generate SRQ plot for c50 tree: done.
+
+Generate MDS plots of topology burnin:  done.
+Computing initial alignments:  done.
+
+Computing WPD alignments:  done.
+Computing ancestral state alignment:  done.
+Drawing alignments: **** done.
+Generating AU values for 'P1.initial'... done.
+Generating AU values for 'P1.max'... done.
+
+NOTE: burnin (scalar) &lt;= Not Converged!
+NOTE: min_ESS (scalar)    = 96.73
+NOTE: min_ESS (partition)    = 96.278
+NOTE: ASDSF = 0.035
+NOTE: MSDSF = 0.117
+NOTE: PSRF-80%CI = 1.077
+NOTE: PSRF-RCF = 1.256
+
+RUN 1: directory = 25-1     iterations = 1000     burnin = 100
+RUN 2: directory = 25-2     iterations = 1000     burnin = 100
+RUN 3: directory = 25-3     iterations = 1000     burnin = 100
+RUN 4: directory = 25-4     iterations = 1000     burnin = 100
+
+Report written to 'Results/index.html'
+</screen>
+Load the file <filename>Results/index.html</filename> in a web browser to view the results.  On Linux you can do:
+<screen><prompt>%</prompt> firefox Results/index.html</screen>
+The tree estimate, alignment estimate, mixing diagnostics and other information will be displayed in the HTML report.
+</para>
+
+<para>We can also view the tree and alignment estimates directly:
+      <itemizedlist>
+	<listitem>
+	  <para>The majority consensus tree is in the file <filename>Results/c50.PP.tree</filename>.  It can be viewed with <application>Figtree</application>.</para>
+        </listitem>
+        <listitem>
+          <para>The consensus alignment is in the file <filename>Results/P1.max.fasta</filename>.  It can be viewed with <application>Seaview</application> or <application>Aliview</application>.</para>
+        </listitem>
+      </itemizedlist>
+
+See section <xref linkend="analysis"/> for further description of the files in the <filename>Results/</filename> directory.
+
+</para>
+
+  </section>
 
     <section>
       <info><title>Input</title></info>
@@ -946,7 +1017,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     
     <para>
       Instead of manually running each of the steps to analyze the
-      output files, you may instead run the PERL script
+      output files, you may instead run the python script
       <command>bp-analyze</command> to execute these commands.  The
       script will create an HTML page
       <filename>Results/index.html</filename> that summarizes the
