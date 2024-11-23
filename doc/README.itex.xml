@@ -298,6 +298,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
     <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput>
 <prompt>%</prompt> <userinput>bali-phy --version </userinput>
+<prompt>%</prompt> <userinput>bali-phy help</userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
 <prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
@@ -365,7 +366,8 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
   <section xml:id="running"><info><title>Running the program</title></info>
     
-
+  <para>BAli-Phy analyses, as Bayesian analyses, have two phases.  First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that construct a single tree, alignment, or parameters estimate from the collection of posterior samples.
+  </para>
     <para> The simplest way to run <command>BAli-Phy</command> is
       to type all the arguments on the command line:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
@@ -373,8 +375,6 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
       You can also specify a character set for analysis:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
-      You can get an overview of command line options as follows:
-      <screen><prompt>%</prompt> <userinput> bali-phy help</userinput></screen>
     </para>
 
     <section><info><title>Quick Start</title></info>
@@ -385,11 +385,10 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 <prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput></screen>
-    These runs will all execute at the same time.  Each run will create a unique directory of the form <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
+    These runs will all execute at the same time because of the "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
 
     <para>You can use the program <userinput>top</userinput> to verify that four copies of <userinput>bali-phy</userinput> are running:
-    <screen><prompt>%</prompt> top</screen>
-    You can exit <userinput>top</userinput> by pressing <userinput>q</userinput> or <userinput>CTRL-C</userinput>.
+    <screen><prompt>%</prompt> <userinput>top</userinput>                                   # use <userinput>q</userinput> to exit</screen>
     </para>
 
     <para>We can use program Tracer to assess the progress of the runs by loading the files
@@ -437,9 +436,9 @@ RUN 4: directory = 25-4     iterations = 1000     burnin = 100
 
 Report written to 'Results/index.html'
 </screen>
-Load the file <filename>Results/index.html</filename> in a web browser to view the results.  On Linux you can do:
+Load the file <filename>Results/index.html</filename> in a web browser to view the results.  On Linux you can type:
 <screen><prompt>%</prompt> firefox Results/index.html</screen>
-The tree estimate, alignment estimate, mixing diagnostics and other information will be displayed in the HTML report.
+The tree estimate, alignment estimate, mixing diagnostics and other information will be displayed in the HTML report.  The HTML report contains links to FASTA and Newick files in the <filename>Results/</filename> directory.
 </para>
 
 <para>We can also view the tree and alignment estimates directly:
@@ -514,24 +513,24 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 	  For example, consider the following
 	  option file:
 	  <programlisting># sequence data for 3 genes/partitions
-align = ITS1.fasta
-align = 5.8S.fasta
-align = ITS2.fasta
+:align ITS1.fasta
+:align 5.8S.fasta
+:align ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-smodel = 1,3:tn93&nbsp;+>&nbsp;Rates.free(n=3)
+:smodel 1,3:tn93&nbsp; +> &nbsp;Rates.free(n=3)
 
 # substitution model for 2nd partition
-smodel = 2:tn93
+:smodel 2:tn93
 
 # indel model for second partition
-imodel = 2:none
+:imodel 2:none
 
 # linked scale for 1st and 3rd partition
-scale = 1,3:
+:scale 1,3:
 
 # choose a name for output directories
-name = ITS-analysis1
+:name = ITS-analysis1
 </programlisting>
 Options files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput> option:
 	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput>                           # run the analysis
