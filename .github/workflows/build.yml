@@ -189,7 +189,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
-          brew install pkg-config pandoc ccache coreutils
+          brew install pandoc ccache coreutils
           brew install eigen range-v3 cairo fmt
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
