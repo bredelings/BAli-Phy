@@ -14,7 +14,7 @@
   + Use multiple transition kernels for uniform_int distribution.
   + Allow hand-written Metropolis-Hastings proposals for numbers/atomic objects.
 - Bug fixes:
-  + Fix crashes by in module writing/reading.
+  + Fix crashes in module writing/reading.
 - Tests:
   - Refactor tests so that `ninja test` runs each testsuite test seprately.
   - Add CI for `ninja test`.
