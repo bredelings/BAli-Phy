@@ -1,4 +1,4 @@
-* 4.0-beta16 (unreleased)
+* 4.0-beta16 (Nov 23, 2024)
 - Speed: further speed up tree operations.
 + Output: simplify results from ancestral sequence reconstruction.
 - Input: allow defining models using multiple lines.
@@ -16,7 +16,7 @@
 - Bug fixes:
   + Fix crashes in module writing/reading.
 - Tests:
-  - Refactor tests so that `ninja test` runs each testsuite test seprately.
+  - Refactor tests so that `ninja test` runs each testsuite test separately.
   - Add CI for `ninja test`.
 - Haskell:
   - Make [1 ..] and [1.5 .. ] work for floating point.
