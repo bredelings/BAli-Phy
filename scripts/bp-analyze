@@ -19,7 +19,11 @@ import logging
 import shlex
 
 def add_suffix(p,s):
-    return p.with_suffix(p.suffix+s)
+    p = Path(p)
+    if not p.name:
+        return p / s
+    else:
+        return p.with_suffix(p.suffix+s)
 
 def print_model(model):
     main = model['main']
@@ -740,7 +744,7 @@ def get_tree_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name) and str(run_name).endswith(".trees"):
+        if run_name.exists() and str(run_name).endswith(".trees"):
             runs.append(TreeFileRun(run_name))
             good.append(run_name)
         elif add_suffix(run_name,".trees").exists() and not add_suffix(run_name,'.log').exists():
@@ -770,10 +774,9 @@ def get_log_runs(mcmc_args):
     return runs
 
 def construct_runs(mcmc_outputs):
-
     for mcmc_output in mcmc_outputs:
-        if not glob.glob(str(mcmc_output)+('*')):
-            print(f"No file or directory '{str(mcmc_output)+'*'}'")
+        if not mcmc_output.exists() and not glob.glob(str(mcmc_output)+('*')):
+            print(f"Error: No file or directory '{mcmc_output}' or '{str(mcmc_output)+'*'}'")
             exit(1)
 
     run_groups = []
