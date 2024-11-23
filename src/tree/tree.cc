@@ -1835,6 +1835,31 @@ int Tree::add_node_attribute(const string& name)
     return index;
 }
 
+int Tree::add_undirected_branch_attribute()
+{
+    int new_index = undirected_branch_attribute_names.size();
+
+    for(int b=0;b<n_branches();b++)
+    {
+        assert( new_index == branches_[b]->undirected_branch_attributes->size() );
+
+        branches_[b]->undirected_branch_attributes->push_back( boost::any() );
+    }
+
+    undirected_branch_attribute_names.push_back("");
+
+    return new_index;
+}
+
+int Tree::add_undirected_branch_attribute(const string& name)
+{
+    int index = add_undirected_branch_attribute();
+
+    undirected_branch_attribute_names[index] = name;
+
+    return index;
+}
+
 optional<int> Tree::maybe_find_node_attribute_index_by_name(const string& name)  const
 {
     return find_index(node_attribute_names,name);

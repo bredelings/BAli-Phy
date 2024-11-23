@@ -364,6 +364,10 @@ public:
 
     const std::string& node_attribute_name(int i) const {return node_attribute_names[i];}
 
+    int add_undirected_branch_attribute();
+
+    int add_undirected_branch_attribute(const std::string&);
+
     int n_undirected_branch_attributes() const {return undirected_branch_attribute_names.size();}
 
     void set_n_undirected_branch_attributes(int);
