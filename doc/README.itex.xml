@@ -890,7 +890,137 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       </section>
     </section>
 
-    <section><info><title>Summarizing the output</title></info>
+  <section xml:id="analysis"><info><title>Summarizing the output</title></info>
+
+    <para>
+      The <command>bp-analyze</command> script summarizes the posterior samples to create posterior summaries for the alignment, tree, and parameters.
+      It creates an HTML page <filename>Results/index.html</filename> that summarizes the posterior distribution.
+    </para>
+
+  <para>You may run <command>bp-analyze</command> inside the output directory, like this:
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable></screen>
+      You may also run it with one or more output directories as
+      arguments, like this:
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
+      In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
+    </para>
+
+<para> All the commands that are executed by <command>bp-analyze</command> will be logged to
+      <filename>Results/commands.log</filename>. You can also see these
+      commands as they are executed by supplying the <command>--verbose</command> option:
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> --verbose</screen>
+    </para>
+
+    <section><info><title>Meaning of generated files</title></info>
+      
+    <para>The <filename>Results/</filename> directory will contain
+    the following useful files:</para>
+
+      <variablelist>
+
+	<varlistentry><term>Report</term><listitem>
+	    <para>A summary of numerical parameters: credible
+	    intervals and mixing.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>consensus</term><listitem>
+	    <para>A summary of supported splits (clades). </para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c-levels.plot</term><listitem>
+	    <para>The number of splits (clades) supported at each LOD level.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c50.tree</term><listitem>	<para>The majority consensus topology + branch lengths (Newick format)</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>c50.PP.tree</term><listitem>
+	<para>The majority consensus topology + branch lengths +
+	Posterior Probabilities (Newick format)</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP.tree</term><listitem>
+	    <para>An estimate of the MAP topology + branch lengths (Newick format)</para>
+	</listitem></varlistentry>
+
+      </variablelist>
+      <para> 
+	The following files will be generated to summarize alignment uncertainty, unless the analysis uses a fixed alignment.
+
+      </para>
+
+      <variablelist>
+	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
+	    <para>An estimate of the alignment for partition
+	    <replaceable>p</replaceable> using maximum posterior decoding.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
+	    <para>An AU plot of the maximum posterior decoding alignment for partition
+	    <replaceable>p</replaceable>  (AA/DNA color-scheme).</para>
+	</listitem></varlistentry>
+
+	<!-- varlistentry><term>consensus.fasta</term><listitem>
+	    <para>A consensus alignment, representing information shared by most alignment samples.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment (rainbow color-scheme).
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.
+	</para></listitem></varlistentry -->
+	
+      </variablelist>
+
+
+      <para>The following files describe convergence and mixing:</para>
+
+
+      <variablelist>
+
+	<varlistentry><term>partitions.bs</term><listitem>
+	    <para>Confidence intervals on the support for partitions, generated
+	      using a block bootstrap.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>partitions.SRQ</term><listitem><para>A collection of
+	      SRQ plots for the supported partitions.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>c50.SRQ</term><listitem><para>An
+	      SRQ plot for the majority consensus tree.
+	</para></listitem></varlistentry>
+
+
+      </variablelist>
+
+      <para>The SRQ plots can be viewed by typing "<userinput>plot
+	  '<replaceable>file</replaceable>' with lines</userinput>" in
+	<application>gnuplot</application>.</para>
+
+
+    </section>
+      <section><info><title><filename>Mixing/partitions.bs</filename>: partition mixing</title></info>
+	
+	<para>
+	  This file reports the quality of estimates of support for each
+	  partition in terms of the posterior probability (PP) and
+	  log-10 odds (LOD).  It also reports the auto-correlation time (ACT),
+	  the effective sample size (Ne), the number of samples
+	  that support (1) or do not support (0) the partition, and
+	  the number of regenerations. 
+
+	  Only partitions with PP &gt; 0.1 are shown by default.
+	</para>
+      </section>
+
+
+  </section>
+
+    <section><info><title>Summarizing the output (advanced)</title></info>
       
 
       <para>This section is primarily about extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determining effective sample sizes, and for checking mixing and convergence.</para>
@@ -1010,141 +1140,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
     </section>
 
-
-  <section xml:id="analysis"><info><title>Summarizing the output - scripted</title></info>
-    
-    
-    <para>
-      Instead of manually running each of the steps to analyze the
-      output files, you may instead run the python script
-      <command>bp-analyze</command> to execute these commands.  The
-      script will create an HTML page
-      <filename>Results/index.html</filename> that summarizes the
-      posterior distribution.
-    </para>
-
-  <para>You may run <command>bp-analyze</command> inside the output directory, like this:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable></screen>
-      You may also run it with one or more output directories as
-      arguments, like this:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
-      In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
-    </para>
-
-<para> All the commands that are executed by <command>bp-analyze</command> will be logged to
-      <filename>Results/commands.log</filename>. You can also see these
-      commands as they are executed by supplying the <command>--verbose</command> option:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> --verbose</screen>
-    </para>
-
-    <section><info><title>Meaning of generated files</title></info>
-      
-    <para>The <filename>Results/</filename> directory will contain
-    the following useful files:</para>
-
-      <variablelist>
-
-	<varlistentry><term>Report</term><listitem>
-	    <para>A summary of numerical parameters: credible
-	    intervals and mixing.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>consensus</term><listitem>
-	    <para>A summary of supported splits (clades). </para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>c-levels.plot</term><listitem>
-	    <para>The number of splits (clades) supported at each LOD level.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>c50.tree</term><listitem>	<para>The majority consensus topology + branch lengths (Newick format)</para> 
-	</listitem></varlistentry>
-
-	<varlistentry><term>c50.PP.tree</term><listitem>
-	<para>The majority consensus topology + branch lengths +
-	Posterior Probabilities (Newick format)</para> 
-	</listitem></varlistentry>
-
-	<varlistentry><term>MAP.tree</term><listitem>
-	    <para>An estimate of the MAP topology + branch lengths (Newick format)</para>
-	</listitem></varlistentry>
-
-      </variablelist>
-      <para> 
-	The following files will be generated to summarize alignment uncertainty, unless the analysis uses a fixed alignment.
-
-      </para>
-
-      <variablelist>
-	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
-	    <para>An estimate of the alignment for partition
-	    <replaceable>p</replaceable> using maximum posterior decoding.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
-	    <para>An AU plot of the maximum posterior decoding alignment for partition
-	    <replaceable>p</replaceable>  (AA/DNA color-scheme).</para>
-	</listitem></varlistentry>
-
-	<!-- varlistentry><term>consensus.fasta</term><listitem>
-	    <para>A consensus alignment, representing information shared by most alignment samples.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment (rainbow color-scheme).
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.
-	</para></listitem></varlistentry -->
-	
-      </variablelist>
-
-
-      <para>The following files describe convergence and mixing:</para>
-
-
-      <variablelist>
-
-	<varlistentry><term>partitions.bs</term><listitem>
-	    <para>Confidence intervals on the support for partitions, generated
-	      using a block bootstrap.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>partitions.SRQ</term><listitem><para>A collection of
-	      SRQ plots for the supported partitions.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>c50.SRQ</term><listitem><para>An
-	      SRQ plot for the majority consensus tree.
-	</para></listitem></varlistentry>
-
-
-      </variablelist>
-
-      <para>The SRQ plots can be viewed by typing "<userinput>plot
-	  '<replaceable>file</replaceable>' with lines</userinput>" in
-	<application>gnuplot</application>.</para>
-
-    </section>
-      <section><info><title><filename>Mixing/partitions.bs</filename>: partition mixing</title></info>
-	
-	<para>
-	  This file reports the quality of estimates of support for each
-	  partition in terms of the posterior probability (PP) and
-	  log-10 odds (LOD).  It also reports the auto-correlation time (ACT),
-	  the effective sample size (Ne), the number of samples
-	  that support (1) or do not support (0) the partition, and
-	  the number of regenerations. 
-
-	  Only partitions with PP &gt; 0.1 are shown by default.
-	</para>
-      </section>
-
-
-  </section>
-  </section>
+</section>
 
 
   <section xml:id="subst_models">
