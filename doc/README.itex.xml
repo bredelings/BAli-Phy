@@ -41,7 +41,10 @@
     <para><application>BAli-Phy</application> is a Unix command line program that is developed primarily on Linux.  <application>BAli-Phy</application> also runs on Windows and Mac OS X, but it is not a GUI program and so you must run it in a terminal.  Therefore, you might want to keep a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ee.surrey.ac.uk/Teaching/Unix">Unix tutorial</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.rain.org/~mkummel/unix.html">Unix cheat sheet</link> handy while you work.
     </para>
 
-    <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+  </para>
+
+  <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
     </para>
   </section>
 
@@ -366,8 +369,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
   <section xml:id="running"><info><title>Running the program</title></info>
     
-  <para>BAli-Phy analyses, as Bayesian analyses, have two phases.  First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that construct a single tree, alignment, or parameters estimate from the collection of posterior samples.
-  </para>
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+    </para>
+
     <para> The simplest way to run <command>BAli-Phy</command> is
       to type all the arguments on the command line:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
@@ -663,9 +667,11 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
   </section>
 
   <section xml:id="output"><info><title>Output</title></info>
-    
 
-    <section><info><title>Output directory</title></info>
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+    </para>
+
+    <section><info><title>Posterior samples (Output directories)</title></info>
       
       <para><application>BAli-Phy</application> creates a new
 	directory to store its output files each time it is run.  By default, the
@@ -680,7 +686,7 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	sequence-file name by using the <userinput>--name</userinput> option.</para>
     </section>
 
-    <section><info><title>Output files</title></info>
+    <section><info><title>Posterior samples (Output files)</title></info>
       
       <para><application>BAli-Phy</application> writes the following output
 	files inside the directory that it creates:</para>
@@ -890,7 +896,7 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       </section>
     </section>
 
-  <section xml:id="analysis"><info><title>Summarizing the output</title></info>
+  <section xml:id="analysis"><info><title>Posterior summaries</title></info>
 
     <para>
       The <command>bp-analyze</command> script summarizes the posterior samples to create posterior summaries for the alignment, tree, and parameters.
@@ -1020,10 +1026,10 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 
   </section>
 
-    <section><info><title>Summarizing the output (advanced)</title></info>
+    <section><info><title>Posterior summaries (Advanced)</title></info>
       
 
-      <para>This section is primarily about extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determining effective sample sizes, and for checking mixing and convergence.</para>
+      <para>This section is primarily about summarizing the posterior to extract estimates from posterior samples, not about assessing convergence.  See <xref linkend="mixing_and_convergence"/> for methods of determining effective sample sizes, and for checking mixing and convergence.</para>
 
       <section><info><title>Finding the majority consensus tree</title></info>
 	
