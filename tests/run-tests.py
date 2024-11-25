@@ -338,7 +338,11 @@ class Tester:
             print("... FAIL! {} {}".format(failures,expected))
             if message:
                 message = message.rstrip('\n')+"\n"
-                print(message)
+                try:
+                    print(message)
+                # Some terminals don't support unicode
+                except UnicodeEncodeError:
+                    print(message.encode('ascii','replace'))
 
     def test_result_string(self, test_subdir):
         print("Running {} test:".format(self.method.name),test_subdir," ",file=sys.stderr)
