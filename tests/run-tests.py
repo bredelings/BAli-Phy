@@ -218,7 +218,12 @@ class Tester:
             with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
     #            invocation = '"{}"'.format('" "'.join(cmd))
     #            debug('Running: ' + invocation + ' >"' + obt_outf + '" 2>"' + obt_errf + '" ; echo $? >"' + obt_exitf + '"')
-                p = subprocess.Popen(cmd, cwd=rundir, stdin=subprocess.PIPE, stdout=obt_out, stderr=obt_err)
+
+                # Make sure the test output doesn't depend on the terminal width.
+                env = os.environ.copy()
+                env["COLUMNS"] = "80"
+
+                p = subprocess.Popen(cmd, cwd=rundir, stdin=subprocess.PIPE, stdout=obt_out, stderr=obt_err, env=env)
                 p.communicate(input=stdin)
                 exit_code = p.wait()
                 with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
