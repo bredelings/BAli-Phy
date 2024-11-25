@@ -506,8 +506,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
       <para>
 	In addition to using the command line, you may also specify
 	options in a file. Option files also use the long form of command line options.
-	Each option is given on its own line using the syntax "<userinput>option =
-	value</userinput>" instead of the syntax "<userinput>--option
+	Each option is given on its own line using the syntax "<userinput>:option value</userinput>" instead of the syntax "<userinput>--option
 	value</userinput>".  The value can be blank if the option does not take
 	an argument. The <userinput>align</userinput> option indicates sequence files.
 	Lines that begin with # are comments, and blank lines are ignored.
@@ -534,7 +533,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 :scale 1,3:
 
 # choose a name for output directories
-:name = ITS-analysis1
+:name ITS-analysis1
 </programlisting>
 Options files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput> option:
 	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput>                           # run the analysis
