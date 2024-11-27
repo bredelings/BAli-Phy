@@ -2467,7 +2467,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
           ancestors will have a gap there. BAli-Phy reconstructs ancestors for fixed-alignment partitions
           as well as variable-alignment partitions, but it won&apos;t write out fixed alignment samples unless
           you add the flag <userinput>--set write-fixed-alignments=true</userinput>. Additionally, if you
-          have an ambiguous character such as <userinput>N</userinput> in an observed sequence bali-phy
+          have an ambiguous character such as <userinput>N</userinput> in an observed sequence BAli-Phy
           will impute this character. <!-- , but will not do so unless you add the flag <userinput> \-\-set infer-ambiguous-observed=true</userinput>. -->
         </para>
       </section>
