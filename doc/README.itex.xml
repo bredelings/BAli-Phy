@@ -463,7 +463,18 @@ See section <xref linkend="analysis"/> for further description of the files in t
 
     <section>
       <info><title>Input</title></info>
-      <para>Sequence files can be in FastA or PHYLIP format.  FASTA format prefixes sequence names with "&gt;":
+      <para><application>BAli-Phy</application> can read in sequences
+	and alignments in both FastA and PHYLIP formats.  Filenames for
+	FastA files should end in <userinput>.fasta</userinput>,
+	<userinput>.mpfa</userinput>, <userinput>.fna</userinput>,
+	<userinput>.fas</userinput>, <userinput>.fsa</userinput>, or
+	<userinput>.fa</userinput>.  Filenames for PHYLIP files should
+	end in <userinput>.phy</userinput>.  If one of these extensions
+	is not used, then <application>BAli-Phy</application> will
+	attempt to guess which format is being used.
+      </para>
+
+      <para>FASTA format prefixes sequence names with "&gt;":
     </para>
       <programlisting>>human       this is a comment and is not part of the sequence name
 CTGACTCCTGAGGAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAGGTGAACGTGGATGAA
@@ -568,97 +579,79 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       results from <emphasis>all</emphasis> chains to be used, instead
       of just results from the single "cold" chain.  Thus, if you run
       10 independent chains in parallel, then you may gather samples
-      10 times faster that a single chain. 
+      10 times faster than a single chain. 
       </para>
     </section>
 
-  </section>
-
-  <section xml:id="input"><info><title>Input</title></info>
-    
-
-    <section><info><title>Sequence formats</title></info>
-      
-      <para><application>BAli-Phy</application> can read in sequences
-	and alignments in both FastA and PHYLIP formats.  Filenames for
-	FastA files should end in <userinput>.fasta</userinput>,
-	<userinput>.mpfa</userinput>, <userinput>.fna</userinput>,
-	<userinput>.fas</userinput>, <userinput>.fsa</userinput>, or
-	<userinput>.fa</userinput>.  Filenames for PHYLIP files should
-	end in <userinput>.phy</userinput>.  If one of these extensions
-	is not used, then <application>BAli-Phy</application> will
-	attempt to guess which format is being used.
-      </para>
-
-    </section>
 
     <section><info><title>Is my data set too large?</title></info>
       
+    <para>
+      Bayesian inference programs must run for many iterations to complete an analysis.
+      <!-- A Bayesian analysis is considered complete when the MCMC has converged and generated a sufficient number
+      of samples. 
+      (See section <xref linkend="mixing_and_convergence"/>). -->
+      A data set is considered "too large" if waiting for it to complete takes "too long".
+      <!-- (See also <xref linkend="cluster"/>.)   -->
+    </para>
 
-      <para>Large data sets run more slowly than small data
-	sets. We recommend a conservative starting point with few taxa
-	and short sequence lengths.  You can then increase the size of
-	your data set until a balance between speed and size is
-	reached.  The tool <application>alignment-thin</application> described
-        in <xref linkend="alignment-utilities"/> can be used to construct a smaller
-        data set.</para> 
+    <!-- para>
+      MCMC convergence is necessary for obtaining measures of confidence and uncertainty.
+      BAli-Phy can alternatively be used simply to construct an alignment estimate, similar to a maximum-likelihood search.
+      In this case, you don't need very many samples after convergence.
+    </para -->
 
-      <para>The number of MCMC samples that you need depends on whether you
-	are primarily interested in obtaining a point estimate or in
-	obtaining detailed measures of confidence and uncertainty.  For
-	detailed measures of confidence and uncertainty you should
-	obtain a minimum of 10,000 samples after the Markov chain
-	converges.  For an estimate, you don't need very many samples
-	after convergence.  (But you may need many samples to be sure
-	that you've converged!)
-      </para>
-
-      <para>See also <xref linkend="cluster"/>.</para>
-
-      <section><info><title>Too many taxa?</title></info>
+      <section><info><title>Too many sequences?</title></info>
 	
 
-	<para><application>BAli-Phy</application> is quite CPU
-	  intensive, and so we recommend using 150 or fewer taxa in order
-	  to limit the time required to accumulate enough MCMC
-	  samples.
-	</para>
-	<para>When designing an MCMC analysis, I recommend performing an initial analysis
-	with a much smaller number of sequences.  This smaller analysis will run much faster, and
-	allow discovering mistakes much more quickly.  Then, after you are sure that you
-	are running the program correctly and have chosen the best model, you can ramp
-	up the number of sequences towards your desired number.
-	</para> 
+      <para>
+        Bayesian phylogenetics analyses require more iterations to convergence as the number of sequences increases.
+        Additionally, the computing time for each iteration increases with the number of sequences.
+      </para>
+
+      <para>
+        BAli-Phy has been successfully used to compute the full posterior with up to 150 sequences.
+        Additionally, it has been used with up to 500 sequences to obtain alignment estimates that are more accurate than alignments from other software, but without measures of uncertainty.
+      </para>
+
+      <para>
+        If you have many sequences, we recommend using the tool <application>alignment-thin</application> described
+        in <xref linkend="alignment-utilities"/> to construct a preliminary data set of 30-60 sequences.
+        Analyzing such a data set can complete much more quickly.
+        You can then increase the size of your data set until a balance between speed and usefulness is reached.
+      </para> 
+
 
       </section>
 
       <section><info><title>Sequences too long?</title></info>
 	
 
-	<para>Aligning just a pair of sequences takes $O(L^2)$ time
-	  and memory, where $L$ represents the sequence length.  Therefore
-	  sequences longer than (say) 1000 letters become increasingly
-	  impractical.  However, you might try to see how long you can make your
-	  sequences before you run out of memory, or the program
-	  becomes too slow.</para>
+      <para>
+        Aligning just a pair of sequences takes $O(L^2)$ time
+	and memory, where $L$ represents the sequence length.  Therefore
+	sequences longer than (say) 1000 letters become increasingly
+	slow.
+      </para>
 
-	<para>For multi-gene analyses, two separate data partitions
-	  (i.e. genes) of 500 letters will be twice as fast
-	  to align as one data partition of 1000 letters. So, it may be possible
-	  to analyze several genes as long as each gene individually
-	  is not too long.</para> 
+      <para>
+        One solution to this problem is to divide a long gene into multiple partitions.
+        Dividing a long gene into <replaceable>n</replaceable> partitions will be roughly <replaceable>n</replaceable> times as fast as a single partition.
+        The downside of this approach is that it requires performing a preliminary alignment, perhaps with a different aligner, in order to identify the partition boundaries.
+      </para>
+
+      <para>
+        When the multiple partitions can be categorized as introns or exons, then this approach allows treating intron and exon regions differently.
+        It is possible to link all the intron partitions and link all the exon partitions, so that introns have one evolutionary rate and exons have another.
+        Likewise, it is possible to fix the alignment for the exons, but infer the alignment for the introns.
+        A similar approach can be taken with RNA stem and loop regions.
+      </para>
 
 	<!-- para>You can speed up alignment for long genes by specifying
 	  alignment constraints (See <xref linkend="alignment_constraints"/>).
 	  Ideally, 10 evenly spaced constraints should reduce the cost of
 	  re-aligning a sequence by a factor of 10.
 	</para -->
-
-	<para>Also, note that you can sometimes speed up the analysis
-	  of protein sequences by coding them as amino acids or codons, rather 
-	  than nucleotides. This is because it decreases the sequence
-	  length.
-	</para> 
       </section>
 
     </section>
@@ -2229,7 +2222,7 @@ If the genetic code is not specified, then the standard code is used:
         <note>
           Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q +> Covarion.ts98 +> Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><userinput>Q +> Covarion.ts98 +> Rates.gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
             <listitem><para><userinput>Q +> Rates.gamma +> Covarion.hb02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </note>
@@ -2561,7 +2554,8 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
       <info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
       <para>
         In Bayesian phylogenetic analyses, the tree is not fixed. Therefore the internal node
-        corresponding to the ancestral sequence you wish to reconstruct may not exist in every iteration.  The standard Bayesian approach to tree uncertainty is to reconstruct the ancestor for each 
+        corresponding to the ancestral sequence you wish to reconstruct may not exist in every posterior sample.
+        The standard Bayesian approach to tree uncertainty is to reconstruct the ancestor for each 
         node by conditioning on the existence of that node in the tree.  This allows the reconstructed
         ancestor for each node to average over uncertainty about the existence of other nodes.
       </para>
@@ -2644,8 +2638,8 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
 
 
     <section><info><title>Statistical inferences without a summary alignment.</title></info>
-    <para>Inferences about ancestral sequence are sometimes done by analyzing the summary alignment and
-    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately, and then average the results.  (This yield the posterior mean of the analysis result.)
+    <para>Inferences about ancestral sequences are sometimes done by analyzing the summary alignment and
+    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately, and then average the results.  (This yields the posterior mean of the analysis result.)
 When this
     approach is feasible, it is more statistically rigorous than analyzing the summary alignment,
     because it operates on joint reconstructions and because it incorporates uncertainty in the
@@ -3011,11 +3005,11 @@ The stabilization criterion is the same one described above for numerical values
     <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to use the pre-compiled binaries as described in the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.  You might want to compile BAli-Phy yourself if you want to 
     <itemizedlist>
       <listitem>run BAli-Phy on a non-Intel CPU (such as ARM64 or Alpha).</listitem>
-      <listitem>run BAli-Phy on Mac OS X versions older than 10.9</listitem>
-      <listitem>enable the <application>draw-tree</application> program on Windows or Mac (this requires the Cairo graphics library).</listitem>
-      <listitem>modify the source code and submit a patch with new functionality.</listitem>
+      <listitem>run BAli-Phy on a computing cluster.</listitem>
+      <listitem>test an unreleased version of bali-phy.</listitem>
       <listitem>change the optimization options used to compile BAli-Phy in the pre-compiled binaries.</listitem>
       <listitem>compile with debugging options to find the cause of a bug, and maybe fix it.</listitem>
+      <listitem>modify the source code and submit a patch with new functionality.</listitem>
     </itemizedlist>
     Otherwise, the pre-compiled binaries will be fine.
     </para>
@@ -3026,19 +3020,19 @@ The stabilization criterion is the same one described above for numerical values
     <para>In order to compile BAli-Phy, you need
     <itemizedlist>
       <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++20</link> compiler</listitem>
-      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 1.0)</listitem>
+      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 1.1)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 10.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 13 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 11.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 14 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc</userinput></screen>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc libboost-all-dev</userinput></screen>
 
     </para>
-If your version of Debian or Ubuntu is recent enough to contain meson version 1.0 or higher, you can install meson with apt-get:
+If your version of Debian or Ubuntu is recent enough to contain meson version 1.1 or higher, you can install meson with apt-get:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install meson</userinput>
-<prompt>%</prompt> <userinput>dpkg -s meson | grep Version</userinput>
-Version: 1.0.1-5
+<prompt>%</prompt> <userinput>meson --version</userinput>
+1.6.0
 </screen>
 
 <para>On computing clusters, you might want to use miniconda to install the build tools.
@@ -3116,8 +3110,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
     </section>
       <section><info><title>Options: compiler and linker flags</title></info>
 	
-      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-10</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-10 meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-14</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
@@ -3247,9 +3241,9 @@ The command <command>bali-phy</command> and its associated tools should then be 
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>-S 'lg08 +> Rates.gamma(6)'</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>-S lg08+>Rates.gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08 +> Rates.gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+>Rates.gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
 	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'lg08 +> Rates.gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
@@ -3280,24 +3274,33 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	    the command <command>kill</command>.  To do that, you need
 	    to find the PID (process ID) of the running program.  You
 	    can find this by examining the beginning of the file
-	    <filename>C1.out</filename>.  For 
+	    <filename>C1.run.json</filename>.  For 
 	    example:
-<screen><prompt>%</prompt> less 5d-1/C1.out
-command: bali-phy 5d.fasta -I none --iter=10 --seed=0
-start time: Wed Jul  4 17:13:25 2018
-
-VERSION: 3.3-b1  [HEAD -> logging, origin/logging commit 96a43e550]  (Jul 04 2018 16:25:09)
-BUILD: Jul  4 2018 17:12:29
-ARCH: linux x86_64
-COMPILER: gcc 8.1.0 x86_64
-directory: /home/bredelings/Work
-subdirectory: 5d-675
-hostname: telomere
-<emphasis>PID: 18838</emphasis>
-...
+            <screen><prompt>%</prompt> less 5d-1/C1.run.json
+    ...            
+    "partitions": [
+        {
+            "alphabet": "DNA",
+            "filename": "5d-muscle.fasta",
+            "imodel": 0,
+            "range": "",
+            "scale": 0,
+            "smodel": 0
+        }
+    ],
+    <emphasis>"pid": 549319</emphasis>,
+    "program": {
+        "arch": "linux x86_64",
+        "build-date": "Mar  2 2024 11:27:23",
+        "compiler": "gcc 13.2.0 x86_64",
+        "name": "bali-phy",
+        "revision": "[HEAD -> master, origin/master, origin/HEAD commit d394a4fb6]  (Mar 02 2024 11:11:25)",
+        "version": "4.0-beta9-preview"
+    },
+    ...
 </screen>
-Here the PID is 18838.  Therefore you can type:
-<screen><prompt>%</prompt> kill 18838</screen>
+Here the PID is 549319.  Therefore you can type:
+<screen><prompt>%</prompt> kill 549319</screen>
 On some operating systems you can also type:
 <screen><prompt>%</prompt> killall bali-phy</screen>
 However, be aware that this will terminate <emphasis>all</emphasis> of
@@ -3317,12 +3320,12 @@ your <command>bali-phy</command> runs on that computer.
 	    running jobs on your cluster.
 	    </para>
 
-	    <para>As an example, if the SGE software is used
-	    to submit jobs, then the command <command>qstat</command>
+	    <para>As an example, if the SLURM software is used
+	    to submit jobs, then the command <command>squeue</command>
 	    should list your jobs and their job ID numbers (which is
 	    different than the process ID number).  You can then use
-	    the command <command>qdel</command> to delete jobs by ID
-	    number.  The SGE documentation describes how to use these
+	    the command <command>scancel</command> to delete jobs by ID
+	    number.  The SLURM documentation describes how to use these
 	    commands. 
 	    </para>
 	  </answer>
@@ -3384,7 +3387,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>Why is <command>bp-analyze</command> stopping early, or failing to generate some files?</para></question>
 	  <answer>
-	    <para>Look in the file <filename>Results/commands.log</filename>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</para>
+	    <para>Look in the file <filename>Results/commands.log</filename>.  This should contain the specific tool commands that were run, along with error message from these commands.  Identify the first tool command that fails, and read the error message.</para>
 	  </answer>
 	</qandaentry>
       </qandaset>
@@ -3418,7 +3421,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I concatenate alignments?</para></question>
 	  <answer><para>
- 	    <screen><prompt>%</prompt> alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</screen>
+ 	    <screen><prompt>%</prompt> <userinput>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</userinput></screen>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </para>
@@ -3428,16 +3431,16 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
-	    You can now select columns for analysis by specifying a range:
+	    You can select columns for analysis by specifying a range:
 	    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
 	    You can create a new alignment from selected columns using <userinput>alignment-cat</userinput>:
-	    <screen><prompt>%</prompt> alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
+	    <screen><prompt>%</prompt> <userinput>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</userinput></screen>
 	    The resulting alignment will contain the selected columns in the order you specified.
 	  </para>
 	  </answer>
 	</qandaentry>
 
-	<qandaentry>
+	<!-- qandaentry>
 	  <question xml:id="generating_constraint_files"><para>How do I create an alignment-constraint file
 	      from an alignment?</para></question>
 	  <answer>
@@ -3447,7 +3450,7 @@ your <command>bali-phy</command> runs on that computer.
 	      <screen><prompt>%</prompt> alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable> &gt; filename.constraint</screen>
 	    </para>
 	  </answer>	
-	</qandaentry>
+	</qandaentry -->
 
       </qandaset>
     </section>
