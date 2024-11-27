@@ -670,7 +670,10 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
     <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
     </para>
 
-    <section><info><title>Posterior samples (Output directories)</title></info>
+
+    <section><info><title>Posterior samples</title></info>
+
+    <section><info><title>Output directories</title></info>
       
       <para><application>BAli-Phy</application> creates a new
 	directory to store its output files each time it is run.  By default, the
@@ -685,30 +688,15 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	sequence-file name by using the <userinput>--name</userinput> option.</para>
     </section>
 
-    <section><info><title>Posterior samples (Output files)</title></info>
-      
-      <para><application>BAli-Phy</application> writes the following output
+    <section><info><title>Output files</title></info>
+    <para><application>BAli-Phy</application> writes the following output
 	files inside the directory that it creates:</para>
       
       <variablelist>
 	<varlistentry>
-	  <term>C1.out</term>
-	  <listitem>
-	    <para>Iteration numbers, probabilities, success probabilities for transition kernels, etc..</para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
 	  <term>C1.P$n$.fastas</term>
 	  <listitem>
 	    <para>Sampled alignments for partition $n$ including ancestral sequences.</para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>C1.err</term>
-	  <listitem>
-	    <para>Log file for hopefully irrelevant error messages.</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -743,6 +731,7 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	</varlistentry>
 
       </variablelist>
+    </section>
       
       <section><title>Field names in <filename>C1.log</filename></title>
 
@@ -2346,9 +2335,9 @@ A value must be given for each parameter, unless the parameter has a default val
 
   </section>
 
-  <section><info><title>Models and '<userinput>+></userinput>' notation</title></info>
+  <section><info><title>Model stacking and '<userinput>+></userinput>' notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
-  <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>.  For example:
+  <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>, which is equivalent to <userinput>C(B(A))</userinput>.  For example:
 <programlisting>hky85 + Rates.gamma               // rewritten to Rates.gamma(hky85)
 hky85 +> inv                      // rewritten to inv(hky85)
 wag +> f                          // rewritten to f(wag)
