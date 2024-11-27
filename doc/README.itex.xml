@@ -605,7 +605,7 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	
 
       <para>
-        Bayesian phylogenetics analyses require more iterations to convergence as the number of sequences increases.
+        Bayesian phylogenetics analyses require more iterations to converge as the number of sequences increases.
         Additionally, the computing time for each iteration increases with the number of sequences.
       </para>
 
@@ -615,8 +615,8 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       </para>
 
       <para>
-        If you have many sequences, we recommend using the tool <application>alignment-thin</application> described
-        in <xref linkend="alignment-utilities"/> to construct a preliminary data set of 30-60 sequences.
+        If you have many sequences, we recommend using the tool <application>alignment-thin</application> with the <userinput>--down-to=<replaceable>n</replaceable></userinput> option to construct a preliminary data set of 30-60 sequences.
+        It is described in section <xref linkend="alignment-utilities"/> .
         Analyzing such a data set can complete much more quickly.
         You can then increase the size of your data set until a balance between speed and usefulness is reached.
       </para> 
@@ -2476,7 +2476,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     <section>
       <info><title>Generating a summary alignment with ancestral sequences</title></info>
 
-    <para>BAli-Phy can now reconstruct ancestral sequences for a given tree topology and (leaf sequence) alignment.
+    <para>BAli-Phy can reconstruct ancestral sequences for a given tree topology and (leaf sequence) alignment.
     This is similar to the ancestor-reconstruction that is usually done for fixed-alignment analyses.
     However, it is not quite the same, because of uncertainty in the tree and the alignment.
     When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
@@ -2548,7 +2548,25 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           <userinput>bali-subsample</userinput>: 
             <screen><prompt>%</prompt> <userinput>bali-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
         </para>
-    </section>
+      </section>
+
+      <section><info><title>Using the sampled alignments instead of a consensus</title></info>
+
+      <para>
+        Instead of constructing consensus ancestral sequences, you can also analyze the sampled alignments and their ancestral sequences directly.
+        This approach involves performing a downstream analysis on <emphasis>each</emphasis> sampled (alignment,tree) pair,
+        yielding the posterior distribution of the downstream analysis.
+        Averaging these results then yields the posterior mean analysis result.
+      </para>
+        
+      <para>
+        When this approach is feasible, it is more statistically rigorous than analyzing the consensus ancestral sequence alignment.
+        The consensus ancestral sequence alignment does not account for uncertainty in the ancestral sequences, and is not a joint reconstruction.
+        In contrast, analyzing the posterior samples accounts for uncertainty in the ancestral sequences, the alignment, and the tree.
+        Furthermore, it also analyzes joint reconstructions instead of a marginal reconstruction.
+      </para>
+      </section>
+
 
     <section>
       <info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
@@ -2635,19 +2653,6 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
       However, this is a challenging problem that is not completely solved.
     </para>
     </section -->
-
-
-    <section><info><title>Statistical inferences without a summary alignment.</title></info>
-    <para>Inferences about ancestral sequences are sometimes done by analyzing the summary alignment and
-    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately, and then average the results.  (This yields the posterior mean of the analysis result.)
-When this
-    approach is feasible, it is more statistically rigorous than analyzing the summary alignment,
-    because it operates on joint reconstructions and because it incorporates uncertainty in the
-    phylogeny, alignment, and ancestral sequences.
-    </para>
-    <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
-    analyzed in combination with the corresponding sampled tree.</para>
-    </section>
 
 
     </section>
