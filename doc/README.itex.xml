@@ -2464,7 +2464,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
           BAli-Phy can reconstruct ancestral sequences for all internal nodes. Unlike some programs,
           BAli-Phy explicitly infers the presence and absence of characters in ancestral sequences. This
           means that if the ancestral sequence has no character for a column, the reconstructed
-          ancestors will have a gap there. BAli-Phy reconstructs ancestors for fixed-alignment partitions
+          ancestor will have a gap there. BAli-Phy reconstructs ancestors for fixed-alignment partitions
           as well as variable-alignment partitions, but it won&apos;t write out fixed alignment samples unless
           you add the flag <userinput>--set write-fixed-alignments=true</userinput>. Additionally, if you
           have an ambiguous character such as <userinput>N</userinput> in an observed sequence BAli-Phy
@@ -2473,7 +2473,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       </section>
 
     <section>
-      <info><title>Generating a summary alignment with ancestral sequences</title></info>
+      <info><title>Generating a consensus alignment with ancestral sequences</title></info>
 
     <para>BAli-Phy can reconstruct ancestral sequences for a given tree topology and (leaf sequence) alignment.
     This is similar to the ancestor-reconstruction that is usually done for fixed-alignment analyses.
@@ -2488,7 +2488,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 # Reconstruct ancestral sequences on the given tree and alignment
 <prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
     
-BAli-Phy uses an alignment estimate (here, P1-max.fasta) as a template to construct a summary alignment with ancestral sequences.  BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
+BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
 </para>
 
 <para>Because the alignment is uncertain, residues in the same column of the template alignment may end up in different columns in an MCMC sample.  Therefore, in a given MCMC sample, different leaf residues in the same column may have different ancestors at the same internal node!  However, in our ancestral reconstruction, a given column may only display a single ancestral residue.</para>
