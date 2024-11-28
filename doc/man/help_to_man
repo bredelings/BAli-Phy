@@ -117,7 +117,7 @@ for option_group in help['options']:
             value = option[-2]
             value = value if value else ''
             has_short = (len(option) == 5)
-            description = option[-1].replace('[','\[').replace(']','\]')
+            description = option[-1].replace('[','\\[').replace(']','\\]')
 
             # Change <arg> to _arg>
             description = re.sub(r'<([^\s>][^>]*[^\s>])>',r'_\1_',description)
