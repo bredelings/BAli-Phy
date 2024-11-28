@@ -1,6 +1,6 @@
 % bali-phy(1)
 % Benjamin Redelings
-% Feb 2018
+% Nov 2024
 
 # NAME
 
@@ -33,11 +33,11 @@ For each option below, more information is available by specifying the long form
 **-v**, **--version**
 : Print version information.
 
-**-t**, **--test**
-: Analyze the initial values and exit.
-
 **-V**, **--verbose**, **--verbose** _NUM_
 : Print extra output to aid in trouble-shooting.  If _NUM_ is not specified the default is 1.  Values from 2 to 4 increase the amount of information displayed.
+
+**-t**, **--test**
+: Analyze the initial values and exit.
 
 **-c** _filename_, **--config** _filename_
 : Read commands from _filename_ before command line.
@@ -56,6 +56,9 @@ For each option below, more information is available by specifying the long form
 **-s** _NUM_, **--seed** _NUM_
 : Random seed.  Useful for replaying specific runs when trouble-shooting.
 
+**-l** _arg_, **--log-format** _arg_
+: Log-format: `tsv` or `json` or `tsv,json`
+
 # PARAMETER OPTIONS
 **-T** _filename_, **--tree** _filename_
 : File with initial tree in Newick format or NEXUS format.
@@ -73,14 +76,17 @@ For each option below, more information is available by specifying the long form
 **-I** _model_, **--imodel** _model_
 : The insertion-deletion model.
 
-**-B** _prior_, **--branch-lengths** _prior_
-: Prior on branch lengths.
-
-**-R** _prior_, **--scale** _prior_
+**-R** _arg_, **--scale** _arg_
 : Prior on the scale.
+
+**-F** _arg_, **--fix** _arg_
+: Fix topology, tree, or alignment
 
 **-L** _NUMS_,  **--link** _NUMS_
 : Link partitions.  Takes a comma-separated list of numbers indicating partitions.  For example `--link 1,2,3`.
+
+**--variables** _arg_
+: Variable definitions
 
 # EXAMPLES
 
