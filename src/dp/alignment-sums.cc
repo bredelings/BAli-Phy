@@ -24,8 +24,8 @@
 ///
 
 #include "alignment-sums.H"
-#include <math.h>                                   // for pow
-#include <stdlib.h>                                 // for abort
+#include <cmath>                                    // for pow
+#include <cstdlib>                                  // for abort
 #include <algorithm>                                // for find
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <iostream>                                 // for operator<<, ostream

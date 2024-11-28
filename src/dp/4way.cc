@@ -24,9 +24,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include "4way.H"
-#include <assert.h>                                 // for assert
-#include <math.h>                                   // for pow
-#include <stdlib.h>                                 // for abort
+#include <cassert>                                  // for assert
+#include <cmath>                                    // for pow
+#include <cstdlib>                                  // for abort
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <utility>                                  // for swap, pair
 #include "dp/2way.H"                                // for convert_to_bits

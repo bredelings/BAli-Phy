@@ -93,7 +93,7 @@ fs::path init_dir(const variables_map& args)
 
 #if defined _MSC_VER || defined __MINGW32__
 #include <windows.h>
-#include <errno.h>
+#include <cerrno>
 #include <process.h>
 
 string hostname() 

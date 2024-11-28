@@ -19,8 +19,8 @@
 
 #include "result.H"
 #include "util/assert.hh"                           // for assert
-#include <math.h>                                   // for log
-#include <stdlib.h>                                 // for abs, abort
+#include <cmath>                                    // for log
+#include <cstdlib>                                  // for abs, abort
 #include <algorithm>                                // for copy, max, fill
 #include <boost/smart_ptr/intrusive_ptr.hpp>        // for intrusive_ptr
 #include <iostream>                                 // for operator<<, ostream
