@@ -27,14 +27,23 @@ Construct a posterior decoding alignment to summarize an alignment sample.
 **-m** _arg_ (=1000), **--max-alignments** _arg_ (=1000)
 : Maximum number of alignments to analyze
 
-**--analysis** _arg_ (=wsum)
+**--analysis** _arg_ (=multiply)
 : sum, wsum, wsum2, multiply
+
+**--column-pr** _arg_ (=homology)
+: homology, alignment
+
+**-S** _arg_ (=1), **--sort** _arg_ (=1)
+: Sort partially ordered columns to group similar gaps
 
 **-o** _arg_ (=-), **--out** _arg_ (=-)
 : Output file (defaults to stdout)
 
 **-p** _arg_, **--out-probabilities** _arg_
 : Output file for column probabilities, if specified
+
+**--debug-graph** _arg_
+: Filename for debug graph
 
 **-V**, **--verbose**
 : Output more log messages on stderr.

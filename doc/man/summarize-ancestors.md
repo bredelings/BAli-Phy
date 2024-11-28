@@ -32,6 +32,9 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 **-x** _arg_ (=10), **--subsample** _arg_ (=10)
 : factor by which to sub-sample trees
 
+**-m** _arg_ (=500), **--max** _arg_ (=500)
+: Thin (alignment,tree) pairs down to this number of samples.
+
 
 # ANCESTOR QUERY OPTIONS:
 **-n** _arg_, **--nodes** _arg_

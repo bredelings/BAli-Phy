@@ -44,7 +44,7 @@ Remove sequences or columns from an alignment.
 **-d** _arg_, **--down-to** _arg_
 : Remove similar sequences down to _arg_ sequences.
 
-**--remove-crazy** _arg_
+**--remove-gappy** _arg_
 : Remove _arg_ outlier sequences -- defined as sequences that are missing too many conserved sites.
 
 **--conserved** _arg_ (=0.75)
@@ -112,7 +112,7 @@ Remove similar sequences until we have the right number of sequences:
 
 Remove dissimilar sequences that are missing conserved columns:
 ```
-% alignment-thin --remove-crazy=10 file.fasta > file2.fasta
+% alignment-thin --remove-gappy=10 file.fasta > file2.fasta
 ```
 
 Protect some sequences from being removed:

@@ -26,8 +26,11 @@ Perform various operations on Newick trees.
 **--prune** _arg_
 : Comma-separated taxa to remove
 
+**--root**
+: Find a root position
+
 **--resolve**
-: Comma-separated taxa to remove
+: Resolve polytomies
 
 **--remove-root-branch**
 : Remove single branch from root.
@@ -53,7 +56,19 @@ Perform various operations on Newick trees.
 : Report the total tree length
 
 **--diameter**
-: Report the total tree length
+: Report the tree diameter
+
+**--count-leaves**
+: Show the number of leaves
+
+**--count-nodes**
+: Show the number of nodes
+
+**--show-leaves**
+: Show the leaf names
+
+**--show-nodes**
+: Show the node names
 
 
 # REPORTING BUGS:

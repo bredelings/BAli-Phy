@@ -36,6 +36,12 @@ Draw an alignment to HTML, optionally coloring residues by AU.
 **--show-gaps** _arg_ (=yes)
 : Show gaps
 
+**--show-letters** _arg_ (=yes)
+: Show letters
+
+**--show-names** _arg_ (=yes)
+: Show names
+
 **--gaps-different** _arg_ (=yes)
 : Color gaps in grey.
 

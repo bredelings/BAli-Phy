@@ -24,6 +24,15 @@ Convert MCON files
 **--atomize**
 : file with tree
 
+**--split** _arg_
+: split and write to filenames with prefix=arg
+
+**--drop** _arg_
+: paths to drop
+
+**-T** _arg_, **--add-time-field** _arg_
+: add field indicating the record number
+
 **-O** _arg_ (=MCON), **--output** _arg_ (=MCON)
 : output format (TSV or MCON)
 

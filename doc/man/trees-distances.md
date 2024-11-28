@@ -36,7 +36,7 @@ Compute autocorrelations or other functions of tree distances.
 
 # ANALYSIS OPTIONS:
 **--analysis** _arg_ (=matrix)
-: Analysis: matrix, autocorrelation, diameter, compare, convergence, converged.
+: Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.
 
 **--metric** _arg_ (=topology)
 : Tree distance: topology, branch, internal-branch.

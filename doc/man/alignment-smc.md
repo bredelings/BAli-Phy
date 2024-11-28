@@ -24,41 +24,35 @@ Generate input for SMC programs.
 **--alphabet** _arg_
 : specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons
 
-**-S**, **--strip-gaps**
-: Remove columns within _arg_ columns of a gap
-
-**-G** _arg_, **--mask-gaps** _arg_
-: Remove columns within _arg_ columns of a gap
-
-**-M** _arg_, **--mask-file** _arg_
-: Apply mask-file
+**-e**, **--erase-empty-columns**
+: Remove columns with no characters (all gaps).
 
 **--minor-allele** _arg_
-: Keep columns with given minor-allele count
+: Keep columns with minor-allele count >= _arg_
+
+**--missing-freq** _arg_ (=1)
+: Keep columns with missing frequency >= _arg_
 
 **--one-every** _arg_
 : Keep only 1 column in each interval of size _arg_
 
-**--write-bed** _arg_
-: Write selected columns in BED format with chromosome name _arg_
+**-G** _arg_, **--mask-gaps** _arg_
+: Remove columns within _arg_ columns of a gap
 
-**--show-freq**
-: Show allele frequencies
+**-S**, **--strip-gaps**
+: Remove columns within _arg_ columns of a gap
 
-**--translate-mask** _arg_
-: Masks (CSV or @file)
+**--gap-fraction** _arg_ (=0.01)
+: Fraction of sequences that need to have a gap
 
-**--translate-vcf** _arg_
-: Masks (CSV or @file)
+**-M** _arg_, **--mask-file** _arg_
+: Apply mask-file
 
-**--variant** _arg_ (=1)
-: Is there a SNP at distance _arg_ from SNP?
+**-A**, **--autoclean**
+: Mask blocks with too many SNPs
 
 **--dical2**
 : Output file for DiCal2
-
-**--clean-to-ref** _arg_
-: Remove columns not in reference sequence _arg_
 
 **--msmc**
 : Output file for MSMC
@@ -66,11 +60,29 @@ Generate input for SMC programs.
 **--psmc**
 : Output file for PSMC
 
+**--write-bed** _arg_
+: Output BED file with chromosome name _arg_
+
+**--variant** _arg_ (=1)
+: Is there a SNP at distance _arg_ from SNP?
+
+**--consensus-seqs** _arg_
+: sequences to use in consensus
+
+**--translate-mask** _arg_
+: Masks (CSV or @file)
+
+**--translate-vcf** _arg_
+: Masks (CSV or @file)
+
+**--show-freq**
+: Show allele frequencies
+
+**--clean-to-ref** _arg_
+: Remove columns not in reference sequence _arg_
+
 **--pi-matrix**
 : Calculate pi for each pair of sequences
-
-**--autoclean**
-: Mask blocks with too many SNPs
 
 **--histogram** _arg_
 : Output SNP counts for blocks of arg bases
@@ -84,8 +96,8 @@ Generate input for SMC programs.
 **--find-alleles** _arg_
 : Find alleles with S snps in L bases and count >= N
 
-**--consensus-seqs** _arg_
-: sequences to use in consensus
+**-m** _arg_, **--mask-alleles** _arg_
+: Find alleles with S snps in L bases and count >= N
 
 
 # EXAMPLES:

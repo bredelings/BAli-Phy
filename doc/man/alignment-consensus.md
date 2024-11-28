@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**alignment-consensus** [OPTIONS] < alignments-file
+**alignment-consensus** alignments-file [alignments-file ...] [OPTIONS]
 
 # DESCRIPTION
 
@@ -21,10 +21,10 @@ Construct a consensus alignment to summarize an alignment sample.
 **--alphabet** _arg_
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
-**--skip** _arg_ (=0)
-: number of tree samples to skip
+**-s** _arg_ (=0), **--skip** _arg_ (=0)
+: number of alignment samples to skip
 
-**--max-alignments** _arg_ (=1000)
+**-m** _arg_ (=1000), **--max** _arg_ (=1000)
 : maximum number of alignments to analyze
 
 **--strict** _arg_
@@ -36,7 +36,10 @@ Construct a consensus alignment to summarize an alignment sample.
 **--uncertainty** _arg_
 : file-name for AU uncertainty vs level
 
-**--verbose**
+**--chop-to** _arg_
+: keep only the first arg taxa
+
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

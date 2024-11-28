@@ -27,6 +27,9 @@ Show useful statistics about the alignment.
 **--alphabet** _arg_
 : specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons
 
+**-e**, **--erase-empty-columns**
+: Remove columns with no characters (all gaps).
+
 **-N**, **--show-names**
 : Print the sequence-names and exit
 

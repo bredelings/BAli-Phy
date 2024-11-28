@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**alignment-gild** alignment-file tree-file ... [OPTIONS] < alignments-file
+**alignment-gild** alignment-file tree-file alignments-file [alignments-file] [OPTIONS]
 
 # DESCRIPTION
 
@@ -19,10 +19,10 @@ Annotate each residue in the alignment according to the probability that it shou
 : produce help message
 
 **--align** _arg_
-: file with sequences and initial alignment
+: file with alignment to annotate
 
 **--tree** _arg_
-: file with initial tree
+: file with tree
 
 **--find-root**
 : estimate the root position from branch lengths

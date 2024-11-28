@@ -4,15 +4,15 @@
 
 # NAME
 
-**cut-range** - Select lines between certain values of a key. (e.g. iterations)
+**cut-range** - Select lines from multiple input files based on lines containing `key = value`.
 
 # SYNOPSIS
 
-**cut-range** [OPTIONS]
+**cut-range** filename1.fastas [filename2.fastas ...] [OPTIONS]
 
 # DESCRIPTION
 
-Select lines between certain values of a key. (e.g. iterations)
+Select lines from multiple input files based on lines containing `key = value`.
 
 # ALL OPTIONS:
 **-h**, **--help**
@@ -34,9 +34,12 @@ Select lines between certain values of a key. (e.g. iterations)
 : Output more log messages on stderr.
 
 
-# INVISIBLE OPTIONS:
-**--filenames** _arg_
-: Filenames to read
+# EXAMPLES:
+ 
+Select alignments after the first 100 iterations from two different runs:
+```
+% cut-range --skip=100 run-1/C1.P1.fastas run-2/C1.P1.fastas > P1.fastas
+```
 
 
 # REPORTING BUGS:
