@@ -15,6 +15,7 @@ module SModel (module SModel,
                module SModel.MultiFrequency,
                module SModel.BranchModel,
                module SModel.RNAEdit,
+               module SModel.BranchSiteMixture,
                frequencies_from_dict) where
 
 import Probability.Distribution.Discrete
@@ -43,6 +44,7 @@ import SModel.MultiFrequency
 import SModel.MutSel
 import SModel.BranchModel
 import SModel.RNAEdit
+import SModel.BranchSiteMixture
 
 import Data.Matrix
 

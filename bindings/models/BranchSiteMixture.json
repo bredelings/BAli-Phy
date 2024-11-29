@@ -1,0 +1,25 @@
+{
+    "name": "BranchSiteMixture",
+    "result_type": "CTMC<Codons<a>>",
+    "call": "BranchSiteMixture(@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "DiscreteDist<CTMC<Codons<a>>>",
+	    "description": "The mixture of Codon rate matrices."
+        }
+    ],
+    "title": "The BranchSiteMixture model",
+    "description": "A dN/dS model with heterogenous conserved dN/dS values among sites.",
+    "citation": {"type": "article",
+		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
+		 "year": "2000",
+		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pederson, Anne-Mette Krabbe"}],
+		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
+		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
+		},
+    "examples": ["|w:gy94(omega=w,pi=f1x4)| +> m3","|w:mg94(omega=w)| +> m3","|w:fMutSel0(omega=w)| +> m3"],
+    "extract": "all",
+    "see": ["m3_test"]
+}
