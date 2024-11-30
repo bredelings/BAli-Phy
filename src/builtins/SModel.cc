@@ -371,6 +371,132 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
     return R;
 }
 
+// multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
+extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& T = *arg0.poly_as_<alphabet,Triplets>();
+
+    double v2 = Args.evaluate(1).as_double();
+    double v3 = Args.evaluate(2).as_double();
+
+    auto arg3 = Args.evaluate(3);
+    const Matrix& R1 = arg3.as_<Box<Matrix>>();
+
+    auto arg4 = Args.evaluate(4);
+    auto pi1 = arg4.as_<EVector>();
+
+    // Compute the average rate at equilibrium for R1.
+    double rate = 0;
+    for(int i=0;i<4;i++)
+    {
+        double sum = 0;
+        for(int j=0;j<4;j++)
+            if (i!=j) sum += R1(i,j);
+        rate += pi1[i].as_double() * sum;
+    }
+
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+    assert(v2 >= 0);
+    assert(v3 >= 0);
+
+    assert(R1.size1() == 4);
+    assert(R1.size2() == 4);
+
+    assert(pi1.size() == 4);
+
+    const int n = T.size();
+
+    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+
+    // Compute sums for unscaled 2-nuc and 3-nuc mutations.
+    double sum2 = 0;
+    double sum3 = 0;
+    for(int i=0;i<n;i++)
+    {
+	for(int j=0;j<n;j++)
+        {
+	    if (i==j) continue;
+
+	    int nmuts=0;
+	    for(int p=0;p<3;p++)
+		if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+		    nmuts++;
+
+            if (nmuts == 1) continue;
+
+            double prod = 1;
+            for(int p=0;p<3;p++)
+            {
+                if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                {
+                    int to = T.sub_nuc(j,p);
+                    prod *= pi1[to].as_double();
+                }
+            }
+
+            if (nmuts == 2)
+                sum2 += prod;
+            else if (nmuts == 3)
+                sum3 += prod;
+        }
+    }
+
+    // Compute the pairwise rates.
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	{
+	    if (i==j) continue;
+
+	    int nmuts=0;
+	    for(int p=0;p<3;p++)
+		if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+		    nmuts++;
+
+            std::optional<double> r;
+	    if (nmuts == 1)
+	    {
+                for(int p=0;p<3;p++)
+                {
+                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                    {
+                        int from = T.sub_nuc(i,p);
+                        int to = T.sub_nuc(j,p);
+                        r = R1(from,to);
+                    }
+		}
+	    }
+            else
+            {
+                double prod = 1;
+                for(int p=0;p<3;p++)
+                {
+                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                    {
+                        int to = T.sub_nuc(j,p);
+                        prod *= pi1[to].as_double();
+                    }
+                }
+
+                if (nmuts == 2)
+                    r = v2 * prod/sum2;
+                else if (nmuts == 3)
+                    r = v3 * prod/sum3;
+                else
+                    std::abort();
+            }
+
+	    (*R)(i,j) = r.value();
+	    sum += *r;
+	}
+	(*R)(i,i) = -sum;
+    }
+
+    return R;
+}
+
 
 vector<int> make_edit_map(const EVector& edit_pairs, int n)
 {

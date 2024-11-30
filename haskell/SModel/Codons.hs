@@ -5,7 +5,7 @@ import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import Data.Matrix
 import qualified Markov
-import Markov (getQ, getEqFreqs)
+import Markov (CTMC(..))
 
 type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
@@ -13,6 +13,7 @@ type CodonAlphabet = TripletAlphabet
 foreign import bpcall "SModel:" m0 :: CodonAlphabet -> Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> EVector Double -> EVector Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet -> Double -> Matrix Double
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
@@ -46,6 +47,13 @@ x3x3 a m1 m2 m3 = reversible $ markov a smap q pi where
 
 x3_sym a s = singlet_to_triplet_rates a s s s
 x3 a q = x3x3 a q q q
+
+mnm :: CTMC m => TripletAlphabet -> Double -> Double -> m -> ReversibleMarkov
+mnm a v2 v3 model = reversible $ markov a smap q pi where
+    smap = simple_smap a
+    q = multiNucleotideMutationRates a v2 v3 (getQ model) (getEqFreqs model)
+    pi' = getEqFreqs model
+    pi = f3x4_frequencies_builtin a pi' pi' pi'
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS omega m@(Reversible (Markov a s _ r)) = reversible $ markov a s q pi where

@@ -1,0 +1,37 @@
+{
+    "name": "mnm",
+    "result_type": "CTMC<t>",
+    "constraints": [ "Triplets<t,n>" ],
+    "title": "Rate matrix on triplets/codons that multi-nucleotide mutations",
+    "call": "SModel.mnm(@a,@v2,@v3,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "CTMC<n>",
+            "alphabet": "getNucleotides(@a)",
+	    "description": "Nucleotide rates"
+        },
+        {
+            "name": "v2",
+            "type": "Double",
+            "default_value": "~logLaplace(-9,1)",
+	    "description": "Relative rate of 2-nucleotide mutations"
+        },
+        {
+            "name": "v3",
+            "type": "Double",
+            "default_value": "~logLaplace(-12,1)",
+	    "description": "Relative rate of 2-nucleotide mutations"
+        },
+        {
+            "name": "a",
+            "type": "t",
+            "default_value": "get_state(alphabet)",
+	    "description": "The Triplets alphabet"
+        }
+    ],
+    "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.  Multinucleotide mutations are allowed at rates v2 for 2-nucleotide mutations and v3 for 3-nucleotide mutations.",
+    "examples": ["gtr +> mnm +> dNdS"],
+    "see": ["mg94","x3"]
+}
