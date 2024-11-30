@@ -61,73 +61,73 @@ infixl 2 +>
 submodel +> model = model submodel
 
 --
-m1a_omega_dist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
+m1aOmegaDist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 
-m2a_omega_dist f1 w1 posP posW = addComponent (m1a_omega_dist f1 w1) (posW, posP)
+m2aOmegaDist f1 w1 posP posW = addComponent (m1aOmegaDist f1 w1) (posW, posP)
 
-m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1
-m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW
+m2aTestOmegaDist f1 w1 posP posW 0 = m2aOmegaDist f1 w1 posP 1
+m2aTestOmegaDist f1 w1 posP posW _ = m2aOmegaDist f1 w1 posP posW
 
-m3_omega_dist ps omegas = Discrete $ zip' omegas ps
+m3OmegaDist ps omegas = Discrete $ zip' omegas ps
 
-m3p_omega_dist ps omegas posP posW = addComponent (m3_omega_dist ps omegas) (posW, posP)
+m3pOmegaDist ps omegas posP posW = addComponent (m3OmegaDist ps omegas) (posW, posP)
 
-m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1
-m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW
+m3TestOmegaDist ps omegas posP posW 0 = m3pOmegaDist ps omegas posP 1
+m3TestOmegaDist ps omegas posP posW _ = m3pOmegaDist ps omegas posP posW
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
-                                                                          gamma' = gamma*cap
-                                                                          n = (1/gamma')-1
-                                                                          a = n*mu
-                                                                          b = n*(1 - mu)
+m7OmegaDist mu gamma nBins = uniformDiscretize (beta a b) nBins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
+                                                                      gamma' = gamma*cap
+                                                                      n = (1/gamma')-1
+                                                                      a = n*mu
+                                                                      b = n*(1 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8_omega_dist mu gamma n_bins posP posW = addComponent (m7_omega_dist mu gamma n_bins) (posW, posP)
+m8OmegaDist mu gamma nBins posP posW = addComponent (m7OmegaDist mu gamma nBins) (posW, posP)
 
-m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1
+m8aOmegaDist mu gamma nBins posP = m8OmegaDist mu gamma nBins posP 1
 
-m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1
-m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW
+m8aTestOmegaDist mu gamma nBins posP posW 0 = m8OmegaDist mu gamma nBins posP 1
+m8aTestOmegaDist mu gamma nBins posP posW _ = m8OmegaDist mu gamma nBins posP posW
 
 --  w1 <- uniform 0 1
 --  [f1, f2] <- symmetricDirichlet 2 1
-m1a w1 f1 modelFunc = modelFunc <$> m1a_omega_dist f1 w1
+m1a w1 f1 modelFunc = modelFunc <$> m1aOmegaDist f1 w1
 
-m2a w1 f1 posP posW modelFunc = modelFunc <$> m2a_omega_dist f1 w1 posP posW
+m2a w1 f1 posP posW modelFunc = modelFunc <$> m2aOmegaDist f1 w1 posP posW
 
-m2a_test w1 f1 posP posW posSelection modelFunc = modelFunc <$> m2a_test_omega_dist f1 w1 posP posW posSelection
+m2aTest w1 f1 posP posW posSelection modelFunc = modelFunc <$> m2aTestOmegaDist f1 w1 posP posW posSelection
 
 m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
-m3_test ps omegas posP posW posSelection modelFunc = modelFunc <$> m3_test_omega_dist ps omegas posP posW posSelection
+m3Test ps omegas posP posW posSelection modelFunc = modelFunc <$> m3TestOmegaDist ps omegas posP posW posSelection
 
-m7 mu gamma n_bins modelFunc = modelFunc <$> m7_omega_dist mu gamma n_bins
+m7 mu gamma nBins modelFunc = modelFunc <$> m7OmegaDist mu gamma nBins
 
-m8 mu gamma n_bins posP posW modelFunc = modelFunc <$> m8_omega_dist mu gamma n_bins posP posW
+m8 mu gamma nBins posP posW modelFunc = modelFunc <$> m8OmegaDist mu gamma nBins posP posW
 
-m8a mu gamma n_bins posP modelFunc = modelFunc <$> m8a_omega_dist mu gamma n_bins posP
+m8a mu gamma nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu gamma nBins posP
 
-m8a_test mu gamma n_bins posP posW posSelection modelFunc = modelFunc <$> m8a_test_omega_dist mu gamma n_bins posP posW posSelection
+m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu gamma nBins posP posW posSelection
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function modelFunc to all the omegas?
-branch_site fs ws posP posW branch_cats modelFunc = MixtureModels branch_cats [bgMixture,fgMixture]
+branchSite fs ws posP posW branchCats modelFunc = MixtureModels branchCats [bgMixture,fgMixture]
 -- background omega distribution -- where the last omega is 1 (neutral)
-    where bg_dist = Discrete $ zip (ws ++ [1]) fs
+    where bgDist = Discrete $ zip (ws ++ [1]) fs
 -- accelerated omega distribution -- posW for all categories
-          accel_dist = Discrete $ zip (repeat posW) fs
+          accelDist = Discrete $ zip (repeat posW) fs
 -- background branches always use the background omega distribution              
-          bgMixture = modelFunc <$> mix [1-posP, posP] [bg_dist, bg_dist]
+          bgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, bgDist]
 -- foreground branches use the foreground omega distribution with probability posP
-          fgMixture = modelFunc <$> mix [1-posP, posP] [bg_dist, accel_dist]
+          fgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, accelDist]
 
-branch_site_test fs ws posP posW posSelection branch_cats modelFunc = branch_site fs ws posP posW' branch_cats modelFunc
+branchSiteTest fs ws posP posW posSelection branchCats modelFunc = branchSite fs ws posP posW' branchCats modelFunc
     where posW' = if (posSelection == 1) then posW else 1
 
-gamma_rates_dist alpha = gamma alpha (1/alpha)
+gammaRatesDist alpha = gamma alpha (1/alpha)
 
-gamma_rates alpha n base = rateMixtureUnifBins base (gamma_rates_dist alpha) n
+gammaRates alpha n base = rateMixtureUnifBins base (gammaRatesDist alpha) n
 
 logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                             lmu = -0.5*x
@@ -153,7 +153,7 @@ freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist
 -- So, we can have
 --   ReversibleMarkov                          -- rate matrix
 --   MixtureModel ReversibleMarkov             -- mixture of rate matrices
---   MixtureModels branch_cats MixtureModel    -- per-branch mixture of rate matrices, where component i always has the same frequencies.
+--   MixtureModels branchCats MixtureModel     -- per-branch mixture of rate matrices, where component i always has the same frequencies.
 
 -- We can construct mixtures of these things with e.g. gamma rate models.
 --   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unitMixture now.

@@ -2,7 +2,7 @@
     "name": "m3_test",
     "synonyms": ["M3_Test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
-    "call": "SModel.m3_test(@ps,@omegas,@posP,@posW,@posSelection,@submodel)",
+    "call": "SModel.m3Test(@ps,@omegas,@posP,@posW,@posSelection,@submodel)",
     "import": ["SModel"],
     "args": [
         {

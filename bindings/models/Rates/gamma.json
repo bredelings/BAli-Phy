@@ -2,7 +2,7 @@
     "name": "Rates.gamma",
     "synonyms": ["Rates.Gamma"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "SModel.gamma_rates(@alpha,@n,@submodel)",
+    "call": "SModel.gammaRates(@alpha,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {
