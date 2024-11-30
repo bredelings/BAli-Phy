@@ -70,11 +70,6 @@ m2aTestOmegaDist f1 w1 posP posW _ = m2aOmegaDist f1 w1 posP posW
 
 m3OmegaDist ps omegas = Discrete $ zip' omegas ps
 
-m3pOmegaDist ps omegas posP posW = addComponent (m3OmegaDist ps omegas) (posW, posP)
-
-m3TestOmegaDist ps omegas posP posW 0 = m3pOmegaDist ps omegas posP 1
-m3TestOmegaDist ps omegas posP posW _ = m3pOmegaDist ps omegas posP posW
-
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
 m7OmegaDist mu gamma nBins = uniformDiscretize (beta a b) nBins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
@@ -101,7 +96,8 @@ m2aTest w1 f1 posP posW posSelection modelFunc = modelFunc <$> m2aTestOmegaDist 
 
 m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
-m3Test ps omegas posP posW posSelection modelFunc = modelFunc <$> m3TestOmegaDist ps omegas posP posW posSelection
+m3Test ps omegas posP posW posSelection modelFunc = modelFunc <$> addComponent (m3OmegaDist ps omegas) (posW' , posP)
+    where posW' = case posSelection of 0 -> 1; 1 -> posW
 
 m7 mu gamma nBins modelFunc = modelFunc <$> m7OmegaDist mu gamma nBins
 
