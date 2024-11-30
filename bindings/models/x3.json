@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "CTMC<t>",
     "constraints": [ "Triplets<t,n>" ],
-    "title": "Rate matrix on triplets/codon constructed from nucleotide rates",
+    "title": "Rate matrix on triplets/codons constructed from nucleotide rates",
     "call": "SModel.x3(@a,@submodel)",
     "import": ["SModel"],
     "args": [
