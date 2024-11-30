@@ -4,14 +4,16 @@ import Probability.Random
 import Probability.Distribution.Uniform
 import Data.JSON
 
--- this is a join
-mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
-
 mkDiscrete xs ps = Discrete $ zip xs ps
+
+mix fs ds = join $ mkDiscrete ds fs
 
 unitMixture x = Discrete [(x, 1)]
 
--- Should always get its own type (Always a)?
+-- Instead of having a Delta a function, we can treat Discrete as a mixture of Deltas.
+-- A 1-component mixture is a delta function.
+-- The only wrinkle is that a two component mixture could ALSO be a delta function if the
+--   values of the components are equal.
 always = unitMixture
 
 addComponent ms (x,p) = mix [p, 1-p] [always x, ms]
