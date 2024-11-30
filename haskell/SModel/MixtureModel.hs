@@ -13,13 +13,8 @@ import Markov (CTMC(..))
 
 import SModel.ReversibleMarkov
 
-scaleMMs rs ms = [scale r m | (r,m) <- zip' rs ms]
-
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 mixture ms fs = mix fs ms
-
--- Note that this scales the models BY rs instead of TO rs.
-scaledMixture ms rs fs = mix fs (scaleMMs rs ms)
 
 -- Create a mixture of mixtures, and then flatten it:
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
