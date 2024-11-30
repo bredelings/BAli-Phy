@@ -2,7 +2,7 @@
     "name": "m3_test",
     "synonyms": ["M3_Test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
-    "call": "SModel.m3Test(@ps,@omegas,@posP,@posW,@posSelection,@submodel)",
+    "call": "SModel.m3Test(@omegaDist,@posP,@posW,@posSelection,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -12,16 +12,10 @@
 	    "description": "The model as a function of dN/dS"
         },
         {
-            "name": "ps",
-            "type": "List<Double>",
-            "default_value": "~symmetric_dirichlet(@n,2)",
-	    "description": "The frequency of each omega"
-        },
-        {
-            "name": "omegas",
-            "type": "List<Double>",
-            "default_value": "~iid(@n,uniform(0,1))",
-	    "description": "The omega (i.e. dN/dS) values"
+            "name": "omegaDist",
+            "type": "DiscreteDist<Double>",
+            "default_value": "~dirichlet_mixture(uniform(0,1), 2, @n)",
+	    "description": "The conserved omega (i.e. dN/dS) values"
         },
         {
             "name": "posP",

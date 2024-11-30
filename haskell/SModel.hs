@@ -96,7 +96,7 @@ m2aTest w1 f1 posP posW posSelection modelFunc = modelFunc <$> m2aTestOmegaDist 
 
 m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
-m3Test ps omegas posP posW posSelection modelFunc = modelFunc <$> addComponent (m3OmegaDist ps omegas) (posW' , posP)
+m3Test omegaDist posP posW posSelection modelFunc = modelFunc <$> mix [posP, 1-posP] [always posW', omegaDist]
     where posW' = case posSelection of 0 -> 1; 1 -> posW
 
 m7 mu gamma nBins modelFunc = modelFunc <$> m7OmegaDist mu gamma nBins
