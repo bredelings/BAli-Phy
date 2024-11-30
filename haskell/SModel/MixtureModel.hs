@@ -21,10 +21,9 @@ mixture ms fs = mix fs ms
 -- Note that this scales the models BY rs instead of TO rs.
 scaledMixture ms rs fs = mix fs (scaleMMs rs ms)
 
+-- Create a mixture of mixtures, and then flatten it:
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
-parameterMixture values model_fn = Discrete [ (m, f*p) | (x, p) <- unpackDiscrete values,
-                                                         let dist =  model_fn x,
-                                                         (m, f) <- unpackDiscrete dist]
+parameterMixture values modelFn = values >>= modelFn
 
 -- parameterMixture_unit :: (a -> ReversibleMarkov) -> [a] -> MixtureModel ReversibleMarkov
 parameterMixtureUnit values modelFn = parameterMixture values (unitMixture . modelFn)
