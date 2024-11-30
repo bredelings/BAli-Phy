@@ -6,7 +6,7 @@ import Data.JSON
 
 mkDiscrete xs ps = Discrete $ zip xs ps
 
-mix fs ds = join $ mkDiscrete ds fs
+mix ps dists = join $ mkDiscrete dists ps
 
 unitMixture x = Discrete [(x, 1)]
 
