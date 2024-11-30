@@ -20,10 +20,7 @@ mixture ms fs = mix fs ms
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
 parameterMixture values modelFn = values >>= modelFn
 
--- parameterMixture_unit :: (a -> ReversibleMarkov) -> [a] -> MixtureModel ReversibleMarkov
-parameterMixtureUnit values modelFn = parameterMixture values (unitMixture . modelFn)
-
-rateMixture m d = parameterMixture d (\x->scale x m)
+rateMixture model rates = rates >>= (\rate -> scale rate model)
 
 wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
                         dist =  list_to_vector [p | (m,p) <- ms ]
@@ -38,23 +35,20 @@ plusInv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
 
 rateMixtureUnifBins base dist nBins = rateMixture base $ uniformDiscretize dist nBins
 
--- If we had a mixture of mixtures.
-baseModel model i = component model i
-
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
 instance HasAlphabet m => HasAlphabet (Discrete m) where
-    getAlphabet model = getAlphabet $ baseModel model 0
+    getAlphabet model = getAlphabet $ component model 0
 
 instance HasSMap m => HasSMap (Discrete m) where
-    getSMap model = getSMap $ baseModel model 0
+    getSMap model = getSMap $ component model 0
 
 instance (HasBranchLengths t, CTMC m, HasSMap m, RateModel m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
     branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (factor * branchLength tree b / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
     distribution (SModelOnTree _ model _) = map snd (unpackDiscrete model)
-    componentFrequencies (SModelOnTree _ model _) i = getStartFreqs $ baseModel model i
+    componentFrequencies (SModelOnTree _ model _) i = getStartFreqs $ component model i
     stateLetters (SModelOnTree _ model _) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where

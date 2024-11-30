@@ -61,11 +61,11 @@ galtier_01_ssrv nu model = modulatedMarkov models ratesBetween levelProbs where
     -- This is really a generic gtr...  We should be able to get this with f81
     ratesBetween = (Markov.equ n_levels nu) %*% (plus_f_matrix $ list_to_vector levelProbs)
 
-galtier_01 nu pi model = parameterMixtureUnit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> galtier_01_ssrv nu' model)
+galtier_01 nu pi model = (\nu' -> galtier_01_ssrv nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)])
 
 wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model
 
-wssr07 s01 s10 nu pi model = parameterMixtureUnit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> wssr07_ssrv s01 s10 nu' model)
+wssr07 s01 s10 nu pi model = (\nu' -> wssr07_ssrv s01 s10 nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)]) 
 
 -- a -> HB02
 -- b -> GT01 if no HB02
@@ -92,7 +92,7 @@ covarion_gtr_ssrv nu exchange model = modulatedMarkov models ratesBetween levelP
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     ratesBetween = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector levelProbs)
 
-covarion_gtr nu exchange pi model = parameterMixtureUnit (Discrete [(0,1-pi), (nu, pi)]) (\nu' -> covarion_gtr_ssrv nu' exchange model)
+covarion_gtr nu exchange pi model = (\nu' -> covarion_gtr_ssrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
 covarion_gtr_sym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
 covarion_gtr_sym sym model = modulatedMarkov models ratesBetween levelProbs where
