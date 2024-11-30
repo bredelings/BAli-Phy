@@ -1,4 +1,4 @@
-all: README.html README.xhtml README.pdf Tutorial6.xhtml Tutorial6.html Tutorial6.pdf Instructions8.xhtml Instructions8.pdf
+all: README.html README.xhtml README.pdf Tutorial7.xhtml Tutorial7.html Tutorial7.pdf Instructions8.xhtml Instructions8.pdf
 
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
