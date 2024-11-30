@@ -93,23 +93,23 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 --  w1 <- uniform 0 1
 --  [f1, f2] <- symmetricDirichlet 2 1
-m1a w1 f1 modelFunc = (m1a_omega_dist f1 w1) >>= (unitMixture . modelFunc)
+m1a w1 f1 modelFunc = modelFunc <$> m1a_omega_dist f1 w1
 
-m2a w1 f1 posP posW modelFunc = (m2a_omega_dist f1 w1 posP posW) >>= (unitMixture . modelFunc)
+m2a w1 f1 posP posW modelFunc = modelFunc <$> m2a_omega_dist f1 w1 posP posW
 
-m2a_test w1 f1 posP posW posSelection modelFunc = (m2a_test_omega_dist f1 w1 posP posW posSelection) >>= (unitMixture . modelFunc)
+m2a_test w1 f1 posP posW posSelection modelFunc = modelFunc <$> m2a_test_omega_dist f1 w1 posP posW posSelection
 
 m3 omegaDist modelFunc = modelFunc <$> omegaDist
 
-m3_test ps omegas posP posW posSelection modelFunc = (m3_test_omega_dist ps omegas posP posW posSelection) >>= (unitMixture . modelFunc)
+m3_test ps omegas posP posW posSelection modelFunc = modelFunc <$> m3_test_omega_dist ps omegas posP posW posSelection
 
-m7 mu gamma n_bins modelFunc =  (m7_omega_dist mu gamma n_bins) >>= (unitMixture . modelFunc)
+m7 mu gamma n_bins modelFunc = modelFunc <$> m7_omega_dist mu gamma n_bins
 
-m8 mu gamma n_bins posP posW modelFunc = (m8_omega_dist mu gamma n_bins posP posW) >>= (unitMixture . modelFunc)
+m8 mu gamma n_bins posP posW modelFunc = modelFunc <$> m8_omega_dist mu gamma n_bins posP posW
 
-m8a mu gamma n_bins posP modelFunc = (m8a_omega_dist mu gamma n_bins posP) >>= (unitMixture . modelFunc)
+m8a mu gamma n_bins posP modelFunc = modelFunc <$> m8a_omega_dist mu gamma n_bins posP
 
-m8a_test mu gamma n_bins posP posW posSelection modelFunc = (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) >>= (unitMixture . modelFunc)
+m8a_test mu gamma n_bins posP posW posSelection modelFunc = modelFunc <$> m8a_test_omega_dist mu gamma n_bins posP posW posSelection
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function modelFunc to all the omegas?
 branch_site fs ws posP posW branch_cats modelFunc = MixtureModels branch_cats [bgMixture,fgMixture]
@@ -118,9 +118,9 @@ branch_site fs ws posP posW branch_cats modelFunc = MixtureModels branch_cats [b
 -- accelerated omega distribution -- posW for all categories
           accel_dist = Discrete $ zip (repeat posW) fs
 -- background branches always use the background omega distribution              
-          bgMixture = (mix [1-posP, posP] [bg_dist, bg_dist]) >>= (unitMixture . modelFunc)
+          bgMixture = modelFunc <$> mix [1-posP, posP] [bg_dist, bg_dist]
 -- foreground branches use the foreground omega distribution with probability posP
-          fgMixture = (mix [1-posP, posP] [bg_dist, accel_dist]) >>= (unitMixture . modelFunc)
+          fgMixture = modelFunc <$> mix [1-posP, posP] [bg_dist, accel_dist]
 
 branch_site_test fs ws posP posW posSelection branch_cats modelFunc = branch_site fs ws posP posW' branch_cats modelFunc
     where posW' = if (posSelection == 1) then posW else 1
