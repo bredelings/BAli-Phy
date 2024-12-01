@@ -21,6 +21,10 @@ instance RateModel m => RateModel (BranchSiteMixture m) where
 instance HasAlphabet m => HasAlphabet (BranchSiteMixture m) where
     getAlphabet (BranchSiteMixture d) = getAlphabet d
 
+instance HasSMap m => HasSMap (BranchSiteMixture m) where
+    getSMap (BranchSiteMixture d) = getSMap q
+        where Discrete ((q,_):_) = d
+
 instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (BranchSiteMixture m) where
     type instance IsReversible (BranchSiteMixture m) = IsReversible m
     branch_transition_p (SModelOnTree tree smodel factor) b =
