@@ -16,8 +16,8 @@ maybe_zero p dist = do
     length  <- prior $ dist
     if is_zero == 1 then return 0 else return (length / (1 - p))
 
-branch_length_dist zero_p topology b | isInternalBranch topology b = branch_dist_internal
-                                     | otherwise                   = branch_dist_leaf
+branchLengthDist zero_p topology b | isInternalBranch topology b = branch_dist_internal
+                                   | otherwise                   = branch_dist_leaf
   where
     n                    = numBranches topology
     branch_dist_leaf     = prior $ gamma 0.5 (2 / fromIntegral n)
@@ -27,13 +27,13 @@ model seqData = do
 
     let taxa = getTaxa seqData
 
-    zero_p <- prior $ beta 0.1 1
+    zeroP <- prior $ beta 0.1 1
 
     scale  <- prior $ gamma 0.5 2
 
-    tree   <- prior $ uniformLabelledTree'' taxa (branch_length_dist zero_p)
+    tree   <- prior $ uniformLabelledTree'' taxa (branchLengthDist zeroP)
 
-    freqs  <- prior $ symmetricDirichletOn (letters dna) 1
+    freqs  <- prior $ symmetricDirichletOn (getLetters dna) 1
 
     kappa1 <- prior $ logNormal 0 1
 
@@ -46,7 +46,7 @@ model seqData = do
     return
         [ "tree" %=% writeNewick tree
         , "scale" %=% scale
-        , "zero_p" %=% zero_p
+        , "zeroP" %=% zeroP
         , "kappa1" %=% kappa1
         , "kappa2" %=% kappa2
         , "frequencies" %=% freqs
