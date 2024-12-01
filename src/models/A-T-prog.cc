@@ -69,11 +69,19 @@ std::map<std::string, std::string> get_fixed(const boost::program_options::varia
         if (key != "topology" and key != "tree" and key != "alignment")
             throw myexception()<<"--fix: parameter '"<<key<<"' not recognized";
 
-    if (fixed.count("tree") and args.count("tree")) throw myexception()<<"Can't specify --tree=<prior> if it is fixed!";
-    if (fixed.count("tree") and fixed.count("topology")) throw myexception()<<"Can't fix both 'tree' and 'topology'";
-    if (fixed.count("tree") and fixed.at("tree").empty())  throw myexception()<<"Fixed tree but did not specify tree file!  Use --fix topology=<filename>";
-    if (fixed.count("topology") and fixed.at("topology").empty())  throw myexception()<<"Fixed topology but did not specify tree file!  Use --fix topology=<filename>";
-    if (fixed.count("alignment") and not args.count("test")) throw myexception()<<"Currently --fix=alignment only works with --test.\n  You can fix the alignment for MCMC by disabling the indel model with -Inone, which disables the indel model.\n  Using the indel information from a fixed alignment during MCMC is not implemented.";
+    if (fixed.count("tree") and fixed.count("topology"))
+        throw myexception()<<"Can't fix both 'tree' and 'topology'";
+
+    if (fixed.count("alignment") and not args.count("test"))
+        throw myexception()<<"Currently --fix=alignment only works with --test.\n  You can fix the alignment for MCMC by disabling the indel model with -Inone, which disables the indel model.\n  Using the indel information from a fixed alignment during MCMC is not implemented.";
+
+    for(auto&& word: {"tree","topology"})
+        if (fixed.count(word) and args.count("tree"))
+            throw myexception()<<"Can't specify --tree=<prior> if the "<<word<<" is fixed!";
+
+    for(auto&& word: {"tree","topology"})
+        if (fixed.count(word) and fixed.at(word).empty())
+            throw myexception()<<"Fixed "<<word<<" but did not specify "<<word<<" file!  Use --fix "<<word<<"=<filename>";
 
     return fixed;
 }
