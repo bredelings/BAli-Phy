@@ -1,0 +1,54 @@
+{
+    "name": "busted",
+    "result_type": "CTMC<Codons<a>>",
+    "call": "SModel.busted(@omegaDist,@posP,@posW,@posSelection,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "Double -> CTMC<Codons<a>>",
+            "default_value": "|w:gtr+>x3+>dNdS(omega=w)|",
+	    "description": "The model as a function of dN/dS"
+        },
+        {
+            "name": "omegaDist",
+            "type": "DiscreteDist<Double>",
+            "default_value": "~dirichlet_mixture(uniform(0,1), 2, @n)",
+	    "description": "The conserved omega (i.e. dN/dS) values"
+        },
+        {
+            "name": "posP",
+            "type": "Double",
+            "default_value": "~beta(1,10)",
+            "description": "The fraction of positively selected sites"
+        },
+        {
+            "name": "posW",
+            "type": "Double",
+            "description": "The dN\/dS value for positively selected sites",
+            "default_value": "~logGamma(4,0.25)"
+        },
+        {
+            "name": "posSelection",
+            "type": "Int",
+            "default_value": "~bernoulli(0.5)",
+            "description": "The model selector: 1 if positive selection, 0 if not"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "2",
+	    "description": "The number of omega categories, if not specified"
+        }
+    ],
+    "description":"This model performs a Bayesian test of positive selection using the BUSTED model.  The BUSTED model contains a category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1).  The posterior probability that posSelection=1 is posterior probability for positive selection.",
+    "extract": "all",
+    "citation": {"type": "article",
+		 "title": "Gene-Wide Identification of Episodic Selection",
+		 "year": "2015",
+		 "author": [{"name": "Smith,Bob"}],
+		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
+		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
+		},
+    "see": ["m3","m3_test"]
+}
