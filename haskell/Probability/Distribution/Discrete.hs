@@ -20,7 +20,7 @@ addComponent ms (x,p) = mix [p, 1-p] [always x, ms]
 
 uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
-uniformDiscretize dist n = fmap (quantile dist) (uniformGrid n)
+uniformDiscretize dist n = quantile dist <$> uniformGrid n
 
 nComponents (Discrete ds) = length ds
 
