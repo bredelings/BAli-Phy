@@ -33,8 +33,6 @@ plusInv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
     where a  = getAlphabet ms
           pi = averageFrequency ms
 
-rateMixtureUnifBins base dist nBins = rateMixture base $ uniformDiscretize dist nBins
-
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
 instance HasAlphabet m => HasAlphabet (Discrete m) where

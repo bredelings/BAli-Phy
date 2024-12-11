@@ -2,7 +2,7 @@
     "name": "multi_rate",
     "synonyms": ["MultiRate"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "rateMixtureUnifBins(@dist,@n_bins,@submodel)",
+    "call": "rateMixture(@submodel,uniformDiscretize(@dist,@nBins))",
     "import": ["SModel"],
     "args": [
         {
@@ -14,7 +14,7 @@
             "type": "Distribution<Double>"
         },
         {
-            "name": "n_bins",
+            "name": "nBins",
             "type": "Int",
             "default_value": "4"
         }
