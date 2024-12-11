@@ -117,8 +117,7 @@ logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverM
 
 logNormalRates sigmaOverMu n base = rateMixture base $ uniformDiscretize (logNormalRatesDist sigmaOverMu) n
 
--- join collapses a Discrete (Discrete a) -> Discrete a
-freeRates rateDist base = join $ (\r -> scale r base) <$> rateDist
+freeRates rateDist base = rateMixture base rateDist
 
 -- Should we normalize the different entries to have the same rate?
 busted omegaDist posP posW posSelection modelFunc = BranchSiteMixture $ m3Test omegaDist posP posW posSelection modelFunc
