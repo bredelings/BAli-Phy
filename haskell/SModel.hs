@@ -20,16 +20,6 @@ module SModel (module SModel,
                module SModel.ASRV,
                frequencies_from_dict) where
 
-import Probability.Distribution.Discrete
-import Probability.Distribution.Beta
-import Probability.Distribution.Gamma
-import Probability.Distribution.Transform
-import Bio.Alphabet
-import Bio.Sequence
-import Tree
-import Parameters
-import Data.Array
-    
 import SModel.Nucleotides
 import SModel.Doublets
 import SModel.Codons
