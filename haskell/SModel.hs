@@ -63,7 +63,7 @@ submodel +> model = model submodel
 --
 m1aOmegaDist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 
-m2aOmegaDist f1 w1 posP posW = addComponent (m1aOmegaDist f1 w1) (posW, posP)
+m2aOmegaDist f1 w1 posP posW = mix [1 - posP, posP] [m1aOmegaDist f1 w1, always posW]
 
 m2aTestOmegaDist f1 w1 posP posW 0 = m2aOmegaDist f1 w1 posP 1
 m2aTestOmegaDist f1 w1 posP posW _ = m2aOmegaDist f1 w1 posP posW
@@ -79,7 +79,7 @@ m7OmegaDist mu gamma nBins = uniformDiscretize (beta a b) nBins where cap = min 
                                                                       b = n*(1 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8OmegaDist mu gamma nBins posP posW = addComponent (m7OmegaDist mu gamma nBins) (posW, posP)
+m8OmegaDist mu gamma nBins posP posW = mix [1 - posP, posP] [m7OmegaDist mu gamma nBins, always posW]
 
 m8aOmegaDist mu gamma nBins posP = m8OmegaDist mu gamma nBins posP 1
 

@@ -29,9 +29,10 @@ wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
 averageFrequency ms = list_from_vector $ builtin_average_frequency $ wfm ms
 
 plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
-plusInv pInv ms = addComponent ms (scale 0 $ f81 pi a, pInv)
+plusInv pInv ms = mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms
+          inv = scale 0 $ f81 pi a
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
