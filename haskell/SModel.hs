@@ -110,10 +110,10 @@ m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestO
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function modelFunc to all the omegas?
 branchSite fs ws posP posW branchCats modelFunc = MixtureModels branchCats [bgMixture,fgMixture]
 -- background omega distribution -- where the last omega is 1 (neutral)
-    where bgDist = Discrete $ zip (ws ++ [1]) fs
+    where bgDist = mkDiscrete (ws ++ [1]) fs
 -- accelerated omega distribution -- posW for all categories
-          accelDist = Discrete $ zip (repeat posW) fs
--- background branches always use the background omega distribution              
+          accelDist = mkDiscrete (repeat posW) fs
+-- background branches always use the background omega distribution
           bgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, bgDist]
 -- foreground branches use the foreground omega distribution with probability posP
           fgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, accelDist]
