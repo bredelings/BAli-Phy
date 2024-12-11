@@ -14,7 +14,7 @@ foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet -> Matrix 
 foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
 
 siteEdit alphabet nucModel rnaRate edits = reversible $ markov alphabet smap q pi
-    where smap = simple_smap alphabet
+    where smap = simpleSMap alphabet
           nucs = getNucleotides alphabet
           qNuc = getQ nucModel
           piNuc = getEqFreqs nucModel

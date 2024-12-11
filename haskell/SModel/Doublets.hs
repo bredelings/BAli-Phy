@@ -12,7 +12,7 @@ foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: Doub
 foreign import bpcall "SModel:singlet_to_doublet_rates" singlet_to_doublet_rates :: DoubletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double
 
 x2x2 a m1 m2 = reversible $ markov a smap q pi where
-    smap = simple_smap a
+    smap = simpleSMap a
     q = singlet_to_doublet_rates a (getQ m1) (getQ m2)
     pi = f2x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2)
 

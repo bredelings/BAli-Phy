@@ -36,7 +36,7 @@ instance RateModel NonReversibleMarkov where
     rate (Equilibrium m) = rate m
 
 nonRev a rates = Markov.Equilibrium $ markov' a smap q
-    where smap = simple_smap a
+    where smap = simpleSMap a
           n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
 

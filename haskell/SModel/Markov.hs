@@ -51,7 +51,7 @@ instance CTMC Markov where
     getEqFreqs (Markov _ _ m _) = getEqFreqs m
     getQ (Markov _ _ m  _) = getQ m
 
-simple_smap a = list_to_vector [0..(alphabetSize a)-1]
+simpleSMap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 markov a smap q pi = Markov a smap rm rate where
@@ -90,7 +90,7 @@ instance Show Markov where
     show q = show $ getQ q
 
 nonEq a rates pi = markov a smap q pi
-    where smap = simple_smap a
+    where smap = simpleSMap a
           n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
 

@@ -41,7 +41,7 @@ mg94k a k pi w  = hky85 nuc_a k pi & mg94_ext a w where nuc_a = getNucleotides a
 mg94  a   pi w  = f81     pi nuc_a & mg94_ext a w where nuc_a = getNucleotides a
 
 x3x3 a m1 m2 m3 = reversible $ markov a smap q pi where
-    smap = simple_smap a
+    smap = simpleSMap a
     q = singlet_to_triplet_rates a (getQ m1) (getQ m2) (getQ m3)
     pi = f3x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2) (getEqFreqs m3)
 
@@ -50,7 +50,7 @@ x3 a q = x3x3 a q q q
 
 mnm :: CTMC m => TripletAlphabet -> Double -> Double -> m -> ReversibleMarkov
 mnm a v2 v3 model = reversible $ markov a smap q pi where
-    smap = simple_smap a
+    smap = simpleSMap a
     q = multiNucleotideMutationRates a v2 v3 (getQ model) (getEqFreqs model)
     pi' = getEqFreqs model
     pi = f3x4_frequencies_builtin a pi' pi' pi'
