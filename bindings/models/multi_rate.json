@@ -7,16 +7,21 @@
     "args": [
         {
             "name": "submodel",
-            "type": "DiscreteDist<CTMC<a>>"
+            "type": "DiscreteDist<CTMC<a>>",
+            "description": "The base model"
         },
         {
             "name": "dist",
-            "type": "Distribution<Double>"
+            "type": "Distribution<Double>",
+            "description": "The rate distribution"
         },
         {
             "name": "nBins",
             "type": "Int",
-            "default_value": "4"
+            "default_value": "4",
+            "description": "The number of bins for discretizing the rate distribution"
         }
-    ]
+    ],
+    "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly.",
+    "examples": ["gtr +> multi_rate(gamma(1,1))","gtr +> multi_rate(beta(2,2),6)"]
 }
