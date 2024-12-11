@@ -40,3 +40,18 @@ getForeground (Just Nothing) = 1
 getForeground (Just (Just text)) = read (T.unpack text) :: Int
 
 foregroundBranches tree key = edgeAttributes tree (T.pack key) getForeground
+
+-- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function modelFunc to all the omegas?
+branchSite fs ws posP posW branchCats modelFunc = MixtureModels branchCats [bgMixture,fgMixture]
+-- background omega distribution -- where the last omega is 1 (neutral)
+    where bgDist = mkDiscrete (ws ++ [1]) fs
+-- accelerated omega distribution -- posW for all categories
+          accelDist = mkDiscrete (repeat posW) fs
+-- background branches always use the background omega distribution
+          bgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, bgDist]
+-- foreground branches use the foreground omega distribution with probability posP
+          fgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, accelDist]
+
+branchSiteTest fs ws posP posW posSelection branchCats modelFunc = branchSite fs ws posP posW' branchCats modelFunc
+    where posW' = if (posSelection == 1) then posW else 1
+

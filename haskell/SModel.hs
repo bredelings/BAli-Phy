@@ -107,20 +107,6 @@ m8a mu gamma nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu gamma nBins po
 
 m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu gamma nBins posP posW posSelection
 
--- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function modelFunc to all the omegas?
-branchSite fs ws posP posW branchCats modelFunc = MixtureModels branchCats [bgMixture,fgMixture]
--- background omega distribution -- where the last omega is 1 (neutral)
-    where bgDist = mkDiscrete (ws ++ [1]) fs
--- accelerated omega distribution -- posW for all categories
-          accelDist = mkDiscrete (repeat posW) fs
--- background branches always use the background omega distribution
-          bgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, bgDist]
--- foreground branches use the foreground omega distribution with probability posP
-          fgMixture = modelFunc <$> mix [1-posP, posP] [bgDist, accelDist]
-
-branchSiteTest fs ws posP posW posSelection branchCats modelFunc = branchSite fs ws posP posW' branchCats modelFunc
-    where posW' = if (posSelection == 1) then posW else 1
-
 gammaRatesDist alpha = gamma alpha (1/alpha)
 
 gammaRates alpha n base = rateMixtureUnifBins base (gammaRatesDist alpha) n
