@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/builddir/src/bali-phy/bali-phy",
-            "args": ["${workspaceFolder}/examples/sequences/5S-rRNA/5d-muscle.fasta","--iter=10","--package-path=${workspaceFolder}/builddir/src/builtins:${workspaceFolder}"],
+            "args": ["${workspaceFolder}/examples/5S-rRNA/5d-muscle.fasta","--iter=10","--package-path=${workspaceFolder}/builddir/src/builtins:${workspaceFolder}"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/run/",
             "environment": [],
