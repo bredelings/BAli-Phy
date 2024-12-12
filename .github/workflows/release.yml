@@ -6,25 +6,7 @@ on:
       - "*"
 
 jobs:
-  create_release:
-    name: Create release
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-    - name: Create release
-      id: create_release
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        name: Release ${{ github.ref }}
-        draft: true
-        prerelease: false
-
   build_singularity_and_upload:
-    needs: create_release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -53,10 +35,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        name: Release ${{ github.ref }}
         files: ${{ steps.create_image.outputs.archive_path }}
+        draft: true
+        prerelease: false
 
   build_and_upload:
-    needs: create_release
     strategy:
       matrix:
         name: [ubuntu-gcc-11-20.04,
@@ -422,4 +406,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        name: Release ${{ github.ref }}
         files: ./${{ steps.create_tarball.outputs.archive }}
+        draft: true
+        prerelease: false
