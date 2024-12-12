@@ -1,10 +1,15 @@
-*~
 doc/html
 doc/latex
-\#*#
-*.orig
+
 build*/
 subprojects/*/*
 *.Main.hs
 history.txt
 win64-cross.txt
+
+.vscode
+
+#-------- Backups --------
+*.orig
+*~
+\#*#
