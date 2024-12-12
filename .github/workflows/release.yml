@@ -49,14 +49,11 @@ jobs:
         echo "archive_path=${HOME}/${PACKAGE}" >> $GITHUB_OUTPUT
 
     - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.create_image.outputs.archive_path }}
-        asset_name: ${{ steps.create_image.outputs.archive_name }}
-        asset_content_type: application/octet-stream
+        files: ${{ steps.create_image.outputs.archive_path }}
 
   build_and_upload:
     needs: create_release
@@ -421,11 +418,8 @@ jobs:
         echo "archive=${TAR}" >> $GITHUB_OUTPUT
 
     - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ./${{ steps.create_tarball.outputs.archive }}
-        asset_name: ${{ steps.create_tarball.outputs.archive }}
-        asset_content_type: application/zip
+        files: ./${{ steps.create_tarball.outputs.archive }}
