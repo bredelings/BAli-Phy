@@ -20,7 +20,7 @@ mixture ms fs = mix fs ms
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
 parameterMixture values modelFn = values >>= modelFn
 
-rateMixture model rates = rates >>= (\rate -> scale rate model)
+rateMixture model rates = scale (1/mean rates) $ rates >>= (\rate -> scale rate model)
 
 wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
                         dist =  list_to_vector [p | (m,p) <- ms ]
@@ -29,7 +29,7 @@ wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
 averageFrequency ms = list_from_vector $ builtin_average_frequency $ wfm ms
 
 plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
-plusInv pInv ms = mix [1 - pInv, pInv] [ms, always $ inv]
+plusInv pInv ms = scale (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms
           inv = scale 0 $ f81 pi a
