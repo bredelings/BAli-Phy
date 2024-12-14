@@ -89,7 +89,7 @@ instance RateModel Markov where
 instance Show Markov where
     show q = show $ getQ q
 
-nonEq a rates pi = markov a smap q pi
+nonEq a rates pi = rescale 1 $ markov a smap q pi
     where smap = simpleSMap a
           n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
