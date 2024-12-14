@@ -45,7 +45,7 @@ tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (rescale 1 q) & unitMixture,
                                                                        tuffley_steel_98_unscaled s01 s10 (rescale 1 q) & unitMixture]
 
-huelsenbeck_02 s01 s10 model = fmap (tuffley_steel_98_unscaled s01 s10) (rescale 1 model)
+huelsenbeck_02 s01 s10 model = tuffley_steel_98_unscaled s01 s10 <$> rescale 1 model
 
 huelsenbeck_02_test s01 s10 fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 1 0,
                                                                          -- ^ ideally we could just put "model" here.
