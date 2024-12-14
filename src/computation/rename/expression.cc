@@ -468,8 +468,14 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         App.arg  = rename(App.arg,  bound, free_vars);
         E = App;
     }
+    else if (E.is_a<Hs::WildcardPattern>())
+    {
+        error(loc, Note()<<"Wildcard pattern in expression!");
+    }
     else
-        std::abort();
+    {
+        error(loc, Note()<<"Unknown syntax in expression!");
+    }
 
     return LE;
 }
