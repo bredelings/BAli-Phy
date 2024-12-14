@@ -39,4 +39,4 @@ instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel 
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
     distribution _ = [1]
     nBaseModels _ = 1
-    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _) _) i = [pi] !! i
+    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _) _) = [pi]

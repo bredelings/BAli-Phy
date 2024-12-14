@@ -72,7 +72,7 @@ instance HasBranchLengths t => SimpleSModel t Markov where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters (SModelOnTree _ rm _) = getSMap rm
-    componentFrequencies (SModelOnTree _ smodel _) i = [getStartFreqs smodel]!!i
+    componentFrequencies (SModelOnTree _ smodel _) = [getStartFreqs smodel]
 
 instance Scalable Markov where
     scale x (Markov a s rm r) = Markov a s (scale x rm) (x*r)

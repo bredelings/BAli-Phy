@@ -42,5 +42,4 @@ instance (HasRoot t, HasBranchLengths t, RateModel m, CTMC m) => SimpleSModel t 
     stateLetters (SModelOnTree _ model _) = getSMap model
     branch_transition_p (SModelOnTree tree model f) b = [qExp $ scale (f * branchLength tree b / rate q) $ q]
         where q = edgeProp model tree b
-    componentFrequencies (SModelOnTree tree model _) 0 = nodeProp model (root tree)
-    componentFrequencies _ _ = error "MultiFrequency: only 1 component"
+    componentFrequencies (SModelOnTree tree model _) = [nodeProp model (root tree)]

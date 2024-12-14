@@ -47,7 +47,7 @@ instance (HasBranchLengths t, CTMC m, HasSMap m, RateModel m, SimpleSModel t m) 
     branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (factor * branchLength tree b / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
     distribution (SModelOnTree _ model _) = map snd (unpackDiscrete model)
-    componentFrequencies (SModelOnTree _ model _) i = getStartFreqs $ component model i
+    componentFrequencies (SModelOnTree _ model _) = [getStartFreqs component | (component,_) <- unpackDiscrete model]
     stateLetters (SModelOnTree _ model _) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where

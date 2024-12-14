@@ -62,6 +62,6 @@ instance HasBranchLengths t => SimpleSModel t (MkReversible Markov) where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters (SModelOnTree _ rm _) = getSMap rm
-    componentFrequencies (SModelOnTree tree smodel factor) i = [getStartFreqs smodel]!!i
+    componentFrequencies (SModelOnTree tree smodel factor) = [getStartFreqs smodel]
 
 

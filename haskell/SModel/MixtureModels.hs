@@ -29,7 +29,7 @@ instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, Sim
     distribution           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = distribution (SModelOnTree tree m f)
     nBaseModels            (SModelOnTree tree (MixtureModels _ (m:ms)) f) = nBaseModels (SModelOnTree tree m f)
     stateLetters           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = stateLetters (SModelOnTree tree m f)
-    componentFrequencies   (SModelOnTree tree (MixtureModels _ (m:ms)) f) i = componentFrequencies (SModelOnTree tree m f) i
+    componentFrequencies   (SModelOnTree tree (MixtureModels _ (m:ms)) f) = componentFrequencies (SModelOnTree tree m f)
 
 
 -- No Attribute

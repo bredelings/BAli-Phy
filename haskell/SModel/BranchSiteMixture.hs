@@ -35,6 +35,6 @@ instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, Sim
     stateLetters (SModelOnTree _ smodel _) = getSMap model
         where BranchSiteMixture (Discrete models) = smodel
               (model,_):_ = models
-    componentFrequencies (SModelOnTree _ smodel _) i = [getStartFreqs model]!!i
+    componentFrequencies (SModelOnTree _ smodel _) = [getStartFreqs model]
         where BranchSiteMixture (Discrete models) = smodel
               (model,_):_ = models

@@ -30,7 +30,7 @@ instance HasBranchLengths t => SimpleSModel t (MkEquilibrium Markov) where
     distribution _ = [1.0]
     nBaseModels _ = 1
     stateLetters (SModelOnTree _ rm _) = getSMap rm
-    componentFrequencies (SModelOnTree _ smodel _) i = [getStartFreqs smodel]!!i
+    componentFrequencies (SModelOnTree _ smodel _) = [getStartFreqs smodel]
 
 instance RateModel NonReversibleMarkov where
     rate (Equilibrium m) = rate m
