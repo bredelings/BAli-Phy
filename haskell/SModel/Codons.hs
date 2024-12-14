@@ -10,7 +10,7 @@ import Markov (CTMC(..))
 type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
 
-foreign import bpcall "SModel:" m0 :: CodonAlphabet -> Matrix Double -> Double -> Matrix Double
+foreign import bpcall "SModel:" singletToTripletSym :: TripletAlphabet -> Matrix Double -> Matrix Double
 foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> EVector Double -> EVector Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
 foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
@@ -22,19 +22,18 @@ f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
                                   in list_from_vector $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
 f3x4'_frequencies a pi1 pi2 pi3 = zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')
-    where pi1' = get_ordered_elements nuc_letters pi1 "frequencies"
-          pi2' = get_ordered_elements nuc_letters pi2 "frequencies"
-          pi3' = get_ordered_elements nuc_letters pi3 "frequencies"
-          nuc_letters = getLetters a_nuc
-          a_nuc = getNucleotides a
+    where pi1' = get_ordered_elements nucLetters pi1 "frequencies"
+          pi2' = get_ordered_elements nucLetters pi2 "frequencies"
+          pi3' = get_ordered_elements nucLetters pi3 "frequencies"
+          nucLetters = getLetters (getNucleotides a)
 
 f1x4_frequencies a pi = f3x4_frequencies a pi pi pi
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi
 
-gy94_ext  sym w pi a = gtr a (m0 a sym w) pi
+gy94_ext sym w pi a = gtr a (singletToTripletSym a sym) pi & dNdS w
 
-gy94  k w pi a = gy94_ext  sym w pi a where sym = hky85_sym (getNucleotides a) k
+gy94 k w pi a = gy94_ext  sym w pi a where sym = hky85_sym (getNucleotides a) k
 
 mg94_ext a w q = q & x3 a & dNdS w
 mg94k a k pi w  = hky85 nuc_a k pi & mg94_ext a w where nuc_a = getNucleotides a

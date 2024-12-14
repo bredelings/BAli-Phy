@@ -1211,15 +1211,13 @@ extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
     return R;
 }
 
-extern "C" closure builtin_function_m0(OperationArgs& Args)
+extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& C = *arg0.poly_as_<alphabet,Codons>();
+    auto& C = *arg0.poly_as_<alphabet,Triplets>();
 
     auto arg1 = Args.evaluate(1);
     const Matrix& S = arg1.as_<Box<Matrix>>();
-
-    double omega = Args.evaluate(2).as_double();
 
     int n = C.size();
 
@@ -1247,9 +1245,6 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 		assert(l1 != l2);
 
 		rate = S(l1,l2);
-
-		if (C.translate(i) != C.translate(j))
-		    rate *= omega;	
 	    }
 
 	    (*R)(i,j) = (*R)(j,i) = rate;
