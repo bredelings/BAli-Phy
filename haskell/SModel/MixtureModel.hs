@@ -46,8 +46,8 @@ instance (HasBranchLengths t, CTMC m, HasSMap m, RateModel m, SimpleSModel t m) 
     type instance IsReversible (Discrete m) = IsReversible m
     branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (factor * branchLength tree b / r) component | (component,_) <- unpackDiscrete model]
         where r = rate model
-    distribution (SModelOnTree _ model _) = map snd (unpackDiscrete model)
-    componentFrequencies (SModelOnTree _ model _) = [getStartFreqs component | (component,_) <- unpackDiscrete model]
+    distribution (SModelOnTree tree model factor) = concat [(pr*) <$> distribution (SModelOnTree tree component factor) | (component, pr) <- unpackDiscrete model]
+    componentFrequencies (SModelOnTree tree model factor) = concat [componentFrequencies (SModelOnTree tree component factor) | (component,_) <- unpackDiscrete model]
     stateLetters (SModelOnTree _ model _) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where
