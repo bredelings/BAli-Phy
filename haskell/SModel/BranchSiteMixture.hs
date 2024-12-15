@@ -25,12 +25,11 @@ instance HasSMap m => HasSMap (BranchSiteMixture m) where
     getSMap (BranchSiteMixture d) = getSMap q
         where Discrete ((q,_):_) = d
 
-instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (BranchSiteMixture m) where
+instance (HasSMap m, CTMC m, HasAlphabet m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (BranchSiteMixture m) where
     type instance IsReversible (BranchSiteMixture m) = IsReversible m
     branch_transition_p (SModelOnTree tree smodel factor) b =
-        [ foldl1 (%+%) [scaleMatrix p $ qExp $ scale (factor * branchLength tree b / r) q | (q,p) <- models] ]
+        [ foldl1 (%+%) [scaleMatrix p $ qExp $ scale (factor * branchLength tree b) q | (q,p) <- models] ]
             where BranchSiteMixture (Discrete models) = smodel
-                  r = rate smodel
     distribution _ = [1]
     stateLetters (SModelOnTree _ smodel _) = getSMap model
         where BranchSiteMixture (Discrete models) = smodel

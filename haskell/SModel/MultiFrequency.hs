@@ -37,9 +37,9 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 -- Question: How do we attach Rates.gamma to one of these models?
 -- * we need to be able to rescale the model to have the specified rates, which means that it need to have a rate.
 
-instance (HasRoot t, HasBranchLengths t, RateModel m, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
+instance (HasRoot t, HasBranchLengths t, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
     distribution model = [1]
     stateLetters (SModelOnTree _ model _) = getSMap model
-    branch_transition_p (SModelOnTree tree model f) b = [qExp $ scale (f * branchLength tree b / rate q) $ q]
+    branch_transition_p (SModelOnTree tree model f) b = [qExp $ scale (f * branchLength tree b) $ q]
         where q = edgeProp model tree b
     componentFrequencies (SModelOnTree tree model _) = [nodeProp model (root tree)]

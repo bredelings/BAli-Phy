@@ -13,6 +13,16 @@ import Markov (CTMC(..))
 
 import SModel.ReversibleMarkov
 
+{-
+ - NOTE: I should probably change this to ASRV (Discrete m).
+ -       Because the BranchSiteMixture also takes a Discrete m, but means something else.
+ -}
+
+{-
+ - NOTE: 
+ -
+ -}
+
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 mixture ms fs = mix fs ms
 
@@ -42,10 +52,9 @@ instance HasAlphabet m => HasAlphabet (Discrete m) where
 instance HasSMap m => HasSMap (Discrete m) where
     getSMap model = getSMap $ component model 0
 
-instance (HasBranchLengths t, CTMC m, HasSMap m, RateModel m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
+instance (HasBranchLengths t, CTMC m, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
-    branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (factor * branchLength tree b / r) component | (component,_) <- unpackDiscrete model]
-        where r = rate model
+    branch_transition_p (SModelOnTree tree model factor) b = concat [ branch_transition_p (SModelOnTree tree component factor) b | (component, _) <- unpackDiscrete model]
     distribution (SModelOnTree tree model factor) = concat [(pr*) <$> distribution (SModelOnTree tree component factor) | (component, pr) <- unpackDiscrete model]
     componentFrequencies (SModelOnTree tree model factor) = concat [componentFrequencies (SModelOnTree tree component factor) | (component,_) <- unpackDiscrete model]
     stateLetters (SModelOnTree _ model _) = getSMap model

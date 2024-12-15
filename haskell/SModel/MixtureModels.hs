@@ -25,7 +25,7 @@ instance HasAlphabet m => HasAlphabet (MixtureModels m) where
 instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
     branch_transition_p (SModelOnTree tree smodel@(MixtureModels branchCats mms) f) b = branch_transition_p (SModelOnTree tree mx f) b
-        where mx = mms!!(branchCats IntMap.! undirectedName b)
+        where mx = rescale 1 $ mms!!(branchCats IntMap.! undirectedName b)
     distribution           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = distribution (SModelOnTree tree m f)
     nBaseModels            (SModelOnTree tree (MixtureModels _ (m:ms)) f) = nBaseModels (SModelOnTree tree m f)
     stateLetters           (SModelOnTree tree (MixtureModels _ (m:ms)) f) = stateLetters (SModelOnTree tree m f)
@@ -55,3 +55,10 @@ branchSite fs ws posP posW branchCats modelFunc = MixtureModels branchCats [bgMi
 branchSiteTest fs ws posP posW posSelection branchCats modelFunc = branchSite fs ws posP posW' branchCats modelFunc
     where posW' = if (posSelection == 1) then posW else 1
 
+
+-- A rate of 1 means that we do not rescale it.
+instance RateModel m => RateModel (MixtureModels m) where
+    rate _ = 1
+
+instance Scalable m => Scalable (MixtureModels m) where
+    scale f (MixtureModels categories mixtures) = MixtureModels categories (scale f <$> mixtures)
