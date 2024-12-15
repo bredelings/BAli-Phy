@@ -65,7 +65,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree rtree (rescale 1 smodel) scale
+      smodel_on_tree = SModelOnTree rtree smodel scale
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       cls = cached_conditional_likelihoods rtree nodeCLVs transition_ps
@@ -88,14 +88,14 @@ instance Dist (PhyloCTMC t Int s EquilibriumReversible) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t Int s EquilibriumReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length smodel scale
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length (rescale 1 smodel) scale
 
 -- This is imported twice, which is ugly.
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
 foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntInt -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
 sampleComponentStatesFixed rtree rootLength smodel scale =  do
-  let smodel_on_tree = SModelOnTree rtree (rescale 1 smodel) scale
+  let smodel_on_tree = SModelOnTree rtree smodel scale
       ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
 
@@ -109,10 +109,11 @@ sampleComponentStatesFixed rtree rootLength smodel scale =  do
 
 
 instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s) => IOSampleable (PhyloCTMC t Int s EquilibriumReversible) where
-    sampleIO (PhyloCTMC tree rootLength smodel scale) = do
+    sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let rtree = makeRooted tree
           alphabet = getAlphabet smodel
-          smap = stateLetters (SModelOnTree rtree (rescale 1 smodel) scale)
+          smodel = rescale 1 rawSmodel
+          smap = stateLetters (SModelOnTree rtree smodel scale)
 
       stateSequences <- sampleComponentStatesFixed rtree rootLength smodel scale
 
@@ -172,9 +173,10 @@ instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, Rate
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
-    sampleIO (PhyloCTMC tree rootLength smodel scale) = do
+    sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smap = stateLetters (SModelOnTree tree (rescale 1 smodel) scale)
+          smodel = rescale 1 rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel scale)
 
       stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
 
@@ -198,9 +200,10 @@ instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, Rate
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
-    sampleIO (PhyloCTMC tree rootLength smodel scale) = do
+    sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smap = stateLetters (SModelOnTree tree (rescale 1 smodel) scale)
+          smodel = rescale 1 rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel scale)
 
       stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
 
