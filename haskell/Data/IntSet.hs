@@ -60,7 +60,7 @@ foreign import bpcall "IntSet:" disjoint :: IntSet -> IntSet -> Int
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 
 foreign import bpcall "IntSet:keys" _keys :: IntSet -> EVector Key
-elems m = vector_to_list $ _keys m
+elems m = vectorToList $ _keys m
 
 toList m = elems m
 

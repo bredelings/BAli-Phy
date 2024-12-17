@@ -119,7 +119,7 @@ foreign import bpcall "IntMap:map" map :: (a -> b) -> IntMap a -> IntMap b
 elems m = [ m!k | k <- keys m]
 
 foreign import bpcall "IntMap:keys" keysVector :: IntMap a -> EVector Key
-keys m = vector_to_list $ keysVector m
+keys m = vectorToList $ keysVector m
 
 assocs m = [ (k,m!k) | k <- keys m]
 

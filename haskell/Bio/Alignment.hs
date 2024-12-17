@@ -243,7 +243,7 @@ data TimeDirection = Forward | Backward
 
 foreign import bpcall "Alignment:" getTaxonAgesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
 
-getTaxonAges labels regex direction = zip labels (vector_to_list $ getTaxonAgesRaw cppLabels cppRegex cppDirection)
+getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLabels cppRegex cppDirection)
     where cppLabels = list_to_vector (map Text.toCppString labels)
           cppRegex = pack_cpp_string regex
           convert Forward  = 0

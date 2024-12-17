@@ -5,7 +5,7 @@ import Foreign.Vector
 import Tree
 
 foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> EVector Int
-walk_tree_path tree c = vector_to_list $ walkTreePathRaw tree c
+walk_tree_path tree c = vectorToList $ walkTreePathRaw tree c
 
 -- This is "unsafe" because it doesn't update alignments
 foreign import bpcall "MCMC:" fnprUnsafeProposalRaw :: Modifiable t -> Int -> ContextIndex -> IO LogDouble
