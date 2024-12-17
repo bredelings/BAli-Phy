@@ -6,6 +6,7 @@ import SModel.Simple
 import SModel.Rate
 import Tree
 import Markov (CTMC, qExp)
+import qualified Data.IntMap as IntMap
 
 -- The node information (i) is used to construct a node property (n) and an edge property (e).
 data MultiFrequency i n e = MultiFrequency Alphabet (EVector Int) Double (NodeId -> i) (i -> n) (i -> e)
@@ -43,3 +44,5 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t 
     branch_transition_p (SModelOnTree tree model) b = [qExp $ scale (branchLength tree b) $ q]
         where q = rescale (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
+
+multiFrequency a smap nodeMap nodePi branchQ = MultiFrequency a smap 1 (nodeMap IntMap.!) (list_to_vector . nodePi) branchQ
