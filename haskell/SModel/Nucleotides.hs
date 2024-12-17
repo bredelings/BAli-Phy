@@ -9,5 +9,5 @@ k80 a kappa     = gtr a (hky85_sym a kappa) (uniform_frequencies a)
 hky85 a k    pi = gtr a (hky85_sym a k) pi
 tn93 a k1 k2 pi = gtr a (tn93_sym a k1 k2) pi
 
-hky85' a k pi = hky85 a k pi' where pi' = frequencies_from_dict a pi
-tn93' a k1 k2 pi = tn93 a k1 k2 pi' where pi' = frequencies_from_dict a pi
+hky85' a k pi = hky85 a k pi' where pi' = frequenciesFromDict a pi
+tn93' a k1 k2 pi = tn93 a k1 k2 pi' where pi' = frequenciesFromDict a pi

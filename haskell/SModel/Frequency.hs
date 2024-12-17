@@ -25,4 +25,4 @@ get_ordered_elements xs xps plural = if length xs == length xps
                                      else error $ "Expected "++show (length xs)++" "++plural
                                               ++" but got "++ show (length xps)++"!"
 
-frequencies_from_dict a pi = get_ordered_elements (getLetters a) pi "frequencies"
+frequenciesFromDict a pi = get_ordered_elements (getLetters a) pi "frequencies"

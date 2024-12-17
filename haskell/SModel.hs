@@ -18,7 +18,7 @@ module SModel (module SModel,
                module SModel.BranchSiteMixture,
                module SModel.PosSelection,
                module SModel.ASRV,
-               frequencies_from_dict) where
+               frequenciesFromDict) where
 
 import SModel.Nucleotides
 import SModel.Doublets

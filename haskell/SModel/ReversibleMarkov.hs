@@ -22,7 +22,7 @@ gtr a s pi = rescale 1 $ reversible $ markov a (simpleSMap a) (s %*% plus_f_matr
 f81     pi a = gtr a (equ a) pi
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
 
-gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
+gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequenciesFromDict a pi)
 
 letter_pair_names a = pairNames $ Markov.all_pairs (getLetters a)
 
@@ -40,8 +40,8 @@ plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
 plus_gwf a pi f s = reversible $ markov a (simpleSMap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
 
-plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
-plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
+plus_f'  a pi s   = plus_f a (frequenciesFromDict a pi) s
+plus_gwf'  a pi f s = plus_gwf a (frequenciesFromDict a pi) f s
 
 type ReversibleMarkov = MkReversible Markov
 

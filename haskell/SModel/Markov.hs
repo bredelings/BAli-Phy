@@ -103,7 +103,7 @@ nonEq' a rates' pi' = nonEq a rs pi
                    [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
                else
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
-          pi = list_to_vector $ frequencies_from_dict a pi'
+          pi = list_to_vector $ frequenciesFromDict a pi'
 
 labelledEqFrequencies m = zip (getLetters a) frequencies
     where frequencies = list_from_vector $ getEqFreqs m
