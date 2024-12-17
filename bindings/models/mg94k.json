@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["MG94"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
-    "call": "mg94k(@a,@kappa,frequencies_from_dict(getNucleotides(@a),@pi),@omega)",
+    "call": "mg94k(@a,@kappa,frequenciesFromDict(getNucleotides(@a),@pi),@omega)",
     "import": ["SModel","Bio.Alphabet"],
     "args": [
         {

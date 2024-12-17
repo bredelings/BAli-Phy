@@ -28,7 +28,7 @@ model seqData nucs logTree = do
 
     freqs  <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
     nodeMap <- sample $ iidMap (getNodesSet tree) freqs
-    let multiFreqModel = multiFrequency nucs (simpleSMap nucs) nodeMap (frequencies_from_dict nucs) tn93Model
+    let multiFreqModel = multiFrequency nucs (simpleSMap nucs) nodeMap (frequenciesFromDict nucs) tn93Model
         freqs3 = sortDist freqs
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) multiFreqModel scale

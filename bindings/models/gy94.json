@@ -5,7 +5,7 @@
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
-    "call": "gy94(@kappa,@omega,frequencies_from_dict(@a,@pi),@a)",
+    "call": "gy94(@kappa,@omega,frequenciesFromDict(@a,@pi),@a)",
     "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
