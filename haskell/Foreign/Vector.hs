@@ -20,5 +20,5 @@ list_from_vector vec = list_from_vector_of_size vec (vector_size vec)
 vectorToList = list_from_vector
 
 list_to_vector :: [a] -> EVector a
-list_to_vector x = clist_to_vector (list_to_CList x)
+list_to_vector x = clist_to_vector (listToCList x)
 

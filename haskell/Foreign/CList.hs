@@ -11,9 +11,9 @@ foreign import bpcall "Pair:c_pair" c_cons :: a -> CList a -> CList a
 foreign import bpcall "Pair:c_nil" c_nil :: Int -> CList a
 
 -- If we use "error" here, then we get an error defining error in Compiler.Base
-list_to_CList :: [a] -> CList a
-list_to_CList (x:xs) = c_cons x (list_to_CList xs)
-list_to_CList _ = c_nil 0#
+listToCList :: [a] -> CList a
+listToCList (x:xs) = c_cons x (listToCList xs)
+listToCList _ = c_nil 0#
 
 -- This is an attempt to avoid importing anything.
 -- If we import something, that something might already reference Foreign.String.unpack_cpp_string

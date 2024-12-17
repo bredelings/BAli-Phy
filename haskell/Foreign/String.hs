@@ -21,7 +21,7 @@ unpack_cpp_string string = unpack_cpp_substring string 0# (sizeOfString string)
 foreign import bpcall "Vector:clist_to_string" clist_to_string :: CList Char -> CPPString
 
 list_to_string :: [Char] -> CPPString
-list_to_string x  = clist_to_string (list_to_CList x)
+list_to_string x  = clist_to_string (listToCList x)
 
 pack_cpp_string = list_to_string
 
