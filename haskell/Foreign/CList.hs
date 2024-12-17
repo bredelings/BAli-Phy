@@ -23,8 +23,8 @@ foreign import bpcall "Prelude:" increment_int :: Int -> Int
 
 foreign import bpcall "Prelude:" equals_int :: Int -> Int -> Bool
 
-map_from :: Int -> Int -> (Int -> a) -> [a]
-map_from j1 j2 f = go j1 where
+mapFrom :: Int -> Int -> (Int -> a) -> [a]
+mapFrom j1 j2 f = go j1 where
     go i = case equals_int i j2 of
              True -> []
              _  -> f i : go (increment_int i)

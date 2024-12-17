@@ -12,7 +12,7 @@ foreign import bpcall "Vector:" vector_size :: EVector a -> Int
 foreign import bpcall "Vector:" clist_to_vector :: CList a -> EVector a
 
 list_from_vector_of_size :: EVector a -> Int -> [a]
-list_from_vector_of_size vec size = map_from 0# size (\i -> get_vector_index vec i)
+list_from_vector_of_size vec size = mapFrom 0# size (\i -> get_vector_index vec i)
 
 list_from_vector :: EVector a -> [a]
 list_from_vector vec = list_from_vector_of_size vec (vector_size vec)

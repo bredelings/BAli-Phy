@@ -11,7 +11,7 @@ foreign import bpcall "Vector:sizeOfString" sizeOfString :: CPPString -> Int
 
 listFromString s = unpack_cpp_string s
 
-unpack_cpp_substring string offset length = map_from offset length (\i -> getStringElement string i)
+unpack_cpp_substring string offset length = mapFrom offset length (\i -> getStringElement string i)
 
 foreign import bpcall "Vector:" cppSubString :: CPPString -> Int -> Int -> CPPString
 
