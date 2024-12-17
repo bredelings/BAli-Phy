@@ -54,6 +54,7 @@ class SimpleSModel t m where
     nBaseModels :: (SModelOnTree t m) -> Int
     componentFrequencies :: (SModelOnTree t m) -> [EVector Double]
 
+    distribution m = [1]
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 

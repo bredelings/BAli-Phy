@@ -37,6 +37,4 @@ instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel 
     stateLetters (SModelOnTree tree model) = getSMap model
     branch_transition_p (SModelOnTree tree model) b = [qExp $ scale (branchLength tree b) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
-    distribution _ = [1]
-    nBaseModels _ = 1
     componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _)) = [pi]
