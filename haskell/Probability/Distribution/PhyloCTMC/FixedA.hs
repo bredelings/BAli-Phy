@@ -48,7 +48,7 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
+annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   let rtree = setRoot subst_root (makeRooted tree)
       subst_root = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
@@ -65,7 +65,7 @@ annotated_subst_likelihood_fixed_A tree length smodel scale sequenceData = do
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree rtree smodel scale
+      smodel_on_tree = SModelOnTree rtree smodel
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       cls = cached_conditional_likelihoods rtree nodeCLVs transition_ps
@@ -88,14 +88,14 @@ instance Dist (PhyloCTMC t Int s EquilibriumReversible) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t Int s EquilibriumReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length (rescale 1 smodel) scale
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length (rescale scale smodel)
 
 -- This is imported twice, which is ugly.
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
 foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntInt -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
-sampleComponentStatesFixed rtree rootLength smodel scale =  do
-  let smodel_on_tree = SModelOnTree rtree smodel scale
+sampleComponentStatesFixed rtree rootLength smodel =  do
+  let smodel_on_tree = SModelOnTree rtree smodel
       ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
 
@@ -112,10 +112,10 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
     sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let rtree = makeRooted tree
           alphabet = getAlphabet smodel
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree rtree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree rtree smodel)
 
-      stateSequences <- sampleComponentStatesFixed rtree rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixed rtree rootLength smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -131,7 +131,7 @@ ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
-annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
+annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
   let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
@@ -147,7 +147,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel scale sequenceData = do
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel scale
+      smodel_on_tree = SModelOnTree tree smodel
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transition_ps f
@@ -170,15 +170,15 @@ instance Dist (PhyloCTMC t Int s EquilibriumNonReversible) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumNonReversible) where
     type DistProperties (PhyloCTMC t Int s EquilibriumNonReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length (rescale scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
     sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree tree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel)
 
-      stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixed tree rootLength smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -197,15 +197,15 @@ instance Dist (PhyloCTMC t Int s NonEquilibrium) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (PhyloCTMC t Int s NonEquilibrium) where
     type DistProperties (PhyloCTMC t Int s NonEquilibrium) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length smodel scale
+    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length (rescale scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
     sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree tree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel)
 
-      stateSequences <- sampleComponentStatesFixed tree rootLength smodel scale
+      stateSequences <- sampleComponentStatesFixed tree rootLength smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 

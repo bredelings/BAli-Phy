@@ -28,7 +28,7 @@ import Data.Maybe (fromJust)
 
 import Control.Monad.Fix -- for rec
 
-annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
+annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let rtree = setRoot subst_root (makeRooted tree)
       subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
@@ -39,7 +39,7 @@ annotated_subst_like_on_tree tree alignment smodel scale sequenceData = do
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree rtree smodel scale
+      smodel_on_tree = SModelOnTree rtree smodel
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       fs = getNodesSet rtree & IntMap.fromSet (\_ -> f)
@@ -69,7 +69,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t) s EquilibriumReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment (rescale 1 smodel) scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment (rescale scale smodel)
 
 -- getSequencesFromTree :: IsGraph t, LabelType t ~ Text => t -> IntMap Sequence ->
 
@@ -84,8 +84,8 @@ instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBra
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
 foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
-sampleComponentStates rtree alignment smodel scale =  do
-  let smodel_on_tree = SModelOnTree rtree smodel scale
+sampleComponentStates rtree alignment smodel =  do
+  let smodel_on_tree = SModelOnTree rtree smodel
       as = pairwise_alignments alignment
       ps = transition_ps_map smodel_on_tree
       f = (weighted_frequency_matrix smodel_on_tree)
@@ -103,10 +103,10 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
       let alphabet = getAlphabet smodel
           rtree = makeRooted tree
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree rtree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree rtree smodel)
 
-      stateSequences <- sampleComponentStates rtree alignment smodel scale
+      stateSequences <- sampleComponentStates rtree alignment smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -117,7 +117,7 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
 
 
 -----------
-annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale sequenceData = do
+annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
   let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
@@ -127,7 +127,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel scale sequenceData = do
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel scale
+      smodel_on_tree = SModelOnTree tree smodel
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
@@ -157,15 +157,15 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonRevers
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment (rescale 1 smodel) scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment (rescale scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s EquilibriumNonReversible) where
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree tree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel)
 
-      stateSequences <- sampleComponentStates tree alignment smodel scale
+      stateSequences <- sampleComponentStates tree alignment smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 
@@ -175,7 +175,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
     sample dist = RanDistribution2 dist do_nothing
 
 ---------------------------------------------
-annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
+annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
@@ -185,7 +185,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel scale sequenceData = do
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel scale
+      smodel_on_tree = SModelOnTree tree smodel
       transition_ps = transition_ps_map smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
       fs = frequenciesOnTree tree f transition_ps
@@ -215,15 +215,15 @@ instance t ~ t2 => Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) wher
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, t ~ t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCProperties
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment (rescale 1 smodel) scale
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment (rescale scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t (AlignmentOnTree t) s NonEquilibrium) where
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          smodel = rescale 1 rawSmodel
-          smap = stateLetters (SModelOnTree tree smodel scale)
+          smodel = rescale scale rawSmodel
+          smap = stateLetters (SModelOnTree tree smodel)
 
-      stateSequences <- sampleComponentStates tree alignment smodel scale
+      stateSequences <- sampleComponentStates tree alignment smodel
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
 

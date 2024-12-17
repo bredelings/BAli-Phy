@@ -34,9 +34,9 @@ instance HasSMap (BranchModel a) where
     getSMap (BranchModel _ smap _ _) = smap
 
 instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel m) where
-    stateLetters (SModelOnTree tree model _) = getSMap model
-    branch_transition_p (SModelOnTree tree model factor) b = [qExp $ scale (branchLength tree b * factor) (ratesForBranch b)]
+    stateLetters (SModelOnTree tree model) = getSMap model
+    branch_transition_p (SModelOnTree tree model) b = [qExp $ scale (branchLength tree b) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
     distribution _ = [1]
     nBaseModels _ = 1
-    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _) _) = [pi]
+    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _)) = [pi]

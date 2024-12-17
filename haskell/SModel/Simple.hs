@@ -8,7 +8,7 @@ import qualified Data.IntMap as IntMap (fromSet)
 
 data SingleBranchLengthModel a = SingleBranchLengthModel a Double
 
-data SModelOnTree t m = SModelOnTree t m Double
+data SModelOnTree t m = SModelOnTree t m
 {-
   SModelOnTree t (SingleBranchLengthModel Markov
   SModelOnTree t ReversibleMarkov
@@ -55,7 +55,7 @@ class SimpleSModel t m where
     componentFrequencies :: (SModelOnTree t m) -> [EVector Double]
 
     nBaseModels m = length (distribution m)
-    getTree (SModelOnTree tree _ _) = tree
+    getTree (SModelOnTree tree _) = tree
 
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double

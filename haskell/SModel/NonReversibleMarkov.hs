@@ -25,11 +25,11 @@ instance HasAlphabet m => HasAlphabet (MkEquilibrium m) where
 
 instance HasBranchLengths t => SimpleSModel t (MkEquilibrium Markov) where
     type instance IsReversible (MkEquilibrium Markov) = EquilibriumNonReversible
-    branch_transition_p (SModelOnTree tree smodel factor) b = [qExp $ scale (factor * branchLength tree b) smodel]
+    branch_transition_p (SModelOnTree tree smodel) b = [qExp $ scale (branchLength tree b) smodel]
     distribution _ = [1]
     nBaseModels _ = 1
-    stateLetters (SModelOnTree _ rm _) = getSMap rm
-    componentFrequencies (SModelOnTree _ smodel _) = [getStartFreqs smodel]
+    stateLetters (SModelOnTree _ model) = getSMap model
+    componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
 instance RateModel NonReversibleMarkov where
     rate (Equilibrium m) = rate m

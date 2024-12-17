@@ -57,10 +57,10 @@ instance RateModel ReversibleMarkov where
 
 instance HasBranchLengths t => SimpleSModel t (MkReversible Markov) where
     type instance IsReversible (MkReversible Markov) = EquilibriumReversible
-    branch_transition_p (SModelOnTree tree smodel factor) b = [qExp $ scale (factor * branchLength tree b) smodel]
-    distribution _ = [1.0]
+    branch_transition_p (SModelOnTree tree smodel) b = [qExp $ scale (branchLength tree b) smodel]
+    distribution _ = [1]
     nBaseModels _ = 1
-    stateLetters (SModelOnTree _ rm _) = getSMap rm
-    componentFrequencies (SModelOnTree tree smodel factor) = [getStartFreqs smodel]
+    stateLetters (SModelOnTree _ model) = getSMap model
+    componentFrequencies (SModelOnTree tree smodel) = [getStartFreqs smodel]
 
 

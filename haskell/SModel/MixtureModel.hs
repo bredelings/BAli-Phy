@@ -54,10 +54,10 @@ instance HasSMap m => HasSMap (Discrete m) where
 
 instance (HasBranchLengths t, CTMC m, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
-    branch_transition_p (SModelOnTree tree model factor) b = concat [ branch_transition_p (SModelOnTree tree component factor) b | (component, _) <- unpackDiscrete model]
-    distribution (SModelOnTree tree model factor) = concat [(pr*) <$> distribution (SModelOnTree tree component factor) | (component, pr) <- unpackDiscrete model]
-    componentFrequencies (SModelOnTree tree model factor) = concat [componentFrequencies (SModelOnTree tree component factor) | (component,_) <- unpackDiscrete model]
-    stateLetters (SModelOnTree _ model _) = getSMap model
+    branch_transition_p (SModelOnTree tree model) b = concat [ branch_transition_p (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
+    distribution (SModelOnTree tree model) = concat [(pr*) <$> distribution (SModelOnTree tree component) | (component, pr) <- unpackDiscrete model]
+    componentFrequencies (SModelOnTree tree model) = concat [componentFrequencies (SModelOnTree tree component) | (component,_) <- unpackDiscrete model]
+    stateLetters (SModelOnTree _ model) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where
     scale x dist = fmap (scale x) dist

@@ -39,7 +39,7 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 
 instance (HasRoot t, HasBranchLengths t, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
     distribution model = [1]
-    stateLetters (SModelOnTree _ model _) = getSMap model
-    branch_transition_p (SModelOnTree tree model f) b = [qExp $ scale (f * branchLength tree b) $ q]
+    stateLetters (SModelOnTree _ model) = getSMap model
+    branch_transition_p (SModelOnTree tree model) b = [qExp $ scale (branchLength tree b) q]
         where q = edgeProp model tree b
-    componentFrequencies (SModelOnTree tree model _) = [nodeProp model (root tree)]
+    componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
