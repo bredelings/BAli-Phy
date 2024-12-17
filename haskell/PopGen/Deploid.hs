@@ -80,7 +80,7 @@ sample_reads01 counts weights haplotypes error_rate c outlier_frac =
     where counts'     = list_to_vector counts
           weights'    = list_to_vector weights
           haplotypes' = list_to_vector haplotypes
-          f reads = map pair_from_c $ list_from_vector reads
+          f reads = map pair_from_c $ vectorToList reads
 
 foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector Haplotype -> Double -> Double -> Double -> Reads -> LogDouble
 probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'

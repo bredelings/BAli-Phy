@@ -2,7 +2,7 @@ module Test where
 {
   import PopGen;
   import Probability;
-  get_observed_alleles file = map list_from_vector $ list_from_vector $ read_phase_file file;
+  get_observed_alleles file = map vectorToList $ vectorToList $ read_phase_file file;
 
   filename = "/home/bredelings/Reports/Kmar/NNKB2.phase1.infile";
 

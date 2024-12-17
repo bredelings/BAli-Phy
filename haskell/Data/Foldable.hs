@@ -62,7 +62,7 @@ instance Foldable [] where
     toList xs = xs
 
 instance Foldable V.EVector where
-    toList = V.list_from_vector
+    toList = V.vectorToList
     length = V.vector_size
     null v = length v == 0
 

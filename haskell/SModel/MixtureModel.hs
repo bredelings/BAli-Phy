@@ -36,7 +36,7 @@ wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
                         dist =  list_to_vector [p | (m,p) <- ms ]
                     in builtin_weighted_frequency_matrix dist freqs
 
-averageFrequency ms = list_from_vector $ builtin_average_frequency $ wfm ms
+averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
 
 plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
 plusInv pInv ms = scale (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]

@@ -35,7 +35,7 @@ foreign import bpcall "Alignment:" statesToLetters :: EVector Int -> EVector Int
 
 foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> IO (EVector ESequence)
 load_sequences :: String -> IO [Sequence]
-load_sequences filename = fmap (fmap mkSequence . list_from_vector) $ builtin_load_sequences (list_to_string filename)
+load_sequences filename = fmap (fmap mkSequence . vectorToList) $ builtin_load_sequences (list_to_string filename)
 
 foreign import bpcall "Alignment:getRange" builtin_getRange :: CPPString -> Int -> EVector Int
 foreign import bpcall "Alignment:select_range" builtin_select_range :: EVector Int -> CPPString -> CPPString

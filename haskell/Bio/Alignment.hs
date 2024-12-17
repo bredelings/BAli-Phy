@@ -73,7 +73,7 @@ mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.
 
 type EAlignment = EVector (EPair CPPString (EVector Int))
 toEAlignment a = list_to_vector [ c_pair (Text.toCppString label) indices | (label, indices) <- a ]
-fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ list_from_vector ea
+fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ vectorToList ea
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
@@ -101,7 +101,7 @@ totalLengthIndels (AlignmentOnTree t _ _ as) = sum [lengthIndels (as IntMap.! b)
                                          where node0 = head $ getNodes t
 
 -- Alignment -> Int -> EVector Int -> [EVector Int]
-leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
+leaf_sequence_counts a n counts = vectorToList $ builtin_leaf_sequence_counts a n counts
 
 foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
 ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap

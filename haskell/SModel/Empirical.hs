@@ -15,6 +15,6 @@ foreign import bpcall "SModel:" lg :: Alphabet -> Matrix Double
 
 empirical a filename = builtin_empirical a (list_to_string filename)
 
-wag_frequencies a = zip (getLetters a) (list_from_vector $ builtin_wag_frequencies a)
-lg_frequencies a = zip (getLetters a) (list_from_vector $ builtin_lg_frequencies a)
+wag_frequencies a = zip (getLetters a) (vectorToList $ builtin_wag_frequencies a)
+lg_frequencies a = zip (getLetters a) (vectorToList $ builtin_lg_frequencies a)
 

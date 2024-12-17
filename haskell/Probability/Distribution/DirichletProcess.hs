@@ -91,7 +91,7 @@ foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -
 crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
 foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> IO (EVector Int)
 sample_crp alpha n d = do v <- sample_crp_vector alpha n d
-                          return $ list_from_vector_of_size v n
+                          return $ sizedVectorToList v n
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
 
 triggeredModifiableList n value effect = let raw_list = mapn n modifiable value

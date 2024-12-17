@@ -17,7 +17,7 @@ foreign import bpcall "Alphabet:" getAminoAcids :: Alphabet -> Alphabet
 foreign import bpcall "Alphabet:" alphabetSize :: Alphabet -> Int
 
 foreign import bpcall "Alphabet:alphabet_letters" builtin_letters :: Alphabet -> EVector CPPString
-getLetters a = map listFromString (list_from_vector (builtin_letters a) )
+getLetters a = map listFromString (vectorToList (builtin_letters a) )
 
 foreign import bpcall "Alphabet:find_letter" builtin_find_letter :: Alphabet -> CPPString -> Int
 findLetter a letter = builtin_find_letter a (list_to_string letter)

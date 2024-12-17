@@ -106,9 +106,9 @@ nonEq' a rates' pi' = nonEq a rs pi
           pi = list_to_vector $ frequenciesFromDict a pi'
 
 labelledEqFrequencies m = zip (getLetters a) frequencies
-    where frequencies = list_from_vector $ getEqFreqs m
+    where frequencies = vectorToList $ getEqFreqs m
           a = getAlphabet m
 
 labelledStartFrequencies m = zip (getLetters a) frequencies
-    where frequencies = list_from_vector $ getStartFreqs m
+    where frequencies = vectorToList $ getStartFreqs m
           a = getAlphabet m
