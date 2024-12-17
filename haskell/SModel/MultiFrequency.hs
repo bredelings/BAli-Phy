@@ -20,7 +20,7 @@ instance RateModel (MultiFrequency i n e) where
     rate (MultiFrequency _ _ r _ _ _) = r
 
 instance Scalable (MultiFrequency i e n) where
-    scale x (MultiFrequency a smap rate nodeInfo branchQ nodePi) = MultiFrequency a smap (x*rate) nodeInfo branchQ nodePi
+    scale x (MultiFrequency a smap rate nodeInfo nodePi branchQ) = MultiFrequency a smap (x*rate) nodeInfo nodePi branchQ
 
 nodeInfo (MultiFrequency _ _ _ f _ _) node      = f node  -- get the node info
 nodeProp (MultiFrequency _ _ _ f g _) node      = g $ f $ node  -- get the node property
