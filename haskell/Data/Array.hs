@@ -48,8 +48,7 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
-to_vector = list_to_vector . toList
-array_to_vector x = list_to_vector (elems x)
+array_to_vector x = toVector (elems x)
 vectorToArray v = mkArray (vector_size v) (get_vector_index v)
 
 instance Functor (Array Int) where

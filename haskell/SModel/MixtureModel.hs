@@ -32,8 +32,8 @@ parameterMixture values modelFn = values >>= modelFn
 
 rateMixture model rates = scale (1/mean rates) $ rates >>= (\rate -> scale rate model)
 
-wfm (Discrete ms) = let freqs = list_to_vector [ getStartFreqs m | (m,p) <- ms]
-                        dist =  list_to_vector [p | (m,p) <- ms ]
+wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
+                        dist =  toVector [p | (m,p) <- ms ]
                     in builtin_weighted_frequency_matrix dist freqs
 
 averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms

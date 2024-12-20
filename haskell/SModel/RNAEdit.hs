@@ -20,7 +20,7 @@ siteEdit alphabet nucModel rnaRate edits = reversible $ markov alphabet smap q p
           piNuc = getEqFreqs nucModel
           q = rna_editting_rates alphabet qNuc edits' rnaRate
           pi = rna_editting_pi alphabet piNuc edits'
-          edits' = list_to_vector [ c_pair (findLetter nucs i) (findLetter nucs j) | (i,j) <- edits]
+          edits' = toVector [ c_pair (findLetter nucs i) (findLetter nucs j) | (i,j) <- edits]
 
 siteNone a nucModel rnaRate = siteEdit a nucModel rnaRate []
 siteC2U  a nucModel rnaRate = siteEdit a nucModel rnaRate [("C","U")]   -- forward

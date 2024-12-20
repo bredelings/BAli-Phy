@@ -64,7 +64,7 @@ x @. i = testBit x i
 not_ x = complement x
 
 -- fromBits :: [Bool] -> BitVector
---fromBits bits = builtin_from_bits $ list_to_vector bits
+--fromBits bits = builtin_from_bits $ toVector bits
 
 -- toBits x = []        -- toBits
 toBits x = reverse [ x @. n | n <- [0..size x - 1] ]

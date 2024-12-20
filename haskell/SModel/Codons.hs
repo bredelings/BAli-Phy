@@ -16,9 +16,9 @@ foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> M
 foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet -> Double -> Matrix Double
 
-f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
-                                     pi2' = list_to_vector pi2
-                                     pi3' = list_to_vector pi3
+f3x4_frequencies a pi1 pi2 pi3 = let pi1' = toVector pi1
+                                     pi2' = toVector pi2
+                                     pi3' = toVector pi3
                                   in vectorToList $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
 f3x4'_frequencies a pi1 pi2 pi3 = zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')

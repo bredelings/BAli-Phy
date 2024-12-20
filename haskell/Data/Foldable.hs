@@ -10,7 +10,6 @@ import Data.Monoid
 import Compiler.Num -- for Num
 import Compiler.Error -- for error
 import qualified Data.OldList as L
-import qualified Foreign.Vector as V
 
 infix 4 `elem`, `notElem`
 
@@ -60,11 +59,6 @@ class Foldable t where
 
 instance Foldable [] where
     toList xs = xs
-
-instance Foldable V.EVector where
-    toList = V.vectorToList
-    length = V.vector_size
-    null v = length v == 0
 
 notElem x c = not (elem x c)
 

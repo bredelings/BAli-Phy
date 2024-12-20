@@ -88,7 +88,7 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                   return (c:cs)
 
 foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> EVector Int -> LogDouble
-crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
+crp_density alpha n d z = builtin_crp_density alpha n d (toVector z)
 foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> IO (EVector Int)
 sample_crp alpha n d = do v <- sample_crp_vector alpha n d
                           return $ sizedVectorToList v n

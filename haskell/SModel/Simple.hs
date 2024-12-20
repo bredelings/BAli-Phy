@@ -61,13 +61,13 @@ class SimpleSModel t m where
 foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
 
-weighted_frequency_matrix model = let dist = list_to_vector $ distribution model
-                                      freqs = list_to_vector $ componentFrequencies model
+weighted_frequency_matrix model = let dist = toVector $ distribution model
+                                      freqs = toVector $ componentFrequencies model
                                   in builtin_weighted_frequency_matrix dist freqs
 
-frequency_matrix model = builtin_frequency_matrix $ list_to_vector $ componentFrequencies model
+frequency_matrix model = builtin_frequency_matrix $ toVector $ componentFrequencies model
 
 nStates m = vector_size (stateLetters m)
 
-transition_ps_map smodel_on_tree = IntMap.fromSet (list_to_vector . branch_transition_p smodel_on_tree) edges where
+transition_ps_map smodel_on_tree = IntMap.fromSet (toVector . branch_transition_p smodel_on_tree) edges where
     edges = getEdgesSet $ getTree smodel_on_tree

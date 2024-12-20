@@ -40,14 +40,14 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                                                node = sourceNode t b
                                                                sequences = maybeToList $ seqs IntMap.! node
-                                                           in peelMuts (list_to_vector sequences) alpha asIn cpsIn cost
+                                                           in peelMuts (toVector sequences) alpha asIn cpsIn cost
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
                                              cpsIn = IntMap.restrictKeysToVector cp inEdges
                                              asIn  = IntMap.restrictKeysToVector as inEdges
                                              sequences = maybeToList $ seqs IntMap.! root
-                                         in mutsRoot (list_to_vector sequences) alpha asIn cpsIn cost
+                                         in mutsRoot (toVector sequences) alpha asIn cpsIn cost
 
 parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
                                           root = head $ getNodes t
@@ -71,13 +71,13 @@ cached_conditional_muts_fixed_A t seqs alpha cost =
                     clsIn = IntMap.restrictKeysToVector pc inEdges
                     node = sourceNode t b
                     sequences = maybeToList $ c_pair' <$> seqs IntMap.! node
-                in peelMutsFixedA (list_to_vector sequences) alpha clsIn cost
+                in peelMutsFixedA (toVector sequences) alpha clsIn cost
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNodeSet t root
                                                          clsIn = IntMap.restrictKeysToVector cp inEdges
                                                          sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
-                                                     in mutsRootFixedA (list_to_vector sequences) alpha clsIn cost counts
+                                                     in mutsRootFixedA (toVector sequences) alpha clsIn cost counts
 
 parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
                                                       root = head $ getNodes t

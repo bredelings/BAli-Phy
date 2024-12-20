@@ -46,7 +46,7 @@ afsGroup args = AFSGroup args
 
 ---------------------------------
 foreign import bpcall "PopGen:ewens_sampling_mixture_probability" builtin_ewens_sampling_mixture_probability :: EVector Double -> EVector Double -> VVI -> LogDouble
-ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (list_to_vector thetas) (list_to_vector ps) x
+ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (toVector thetas) (toVector ps) x
 
 data AFSMixture = AFSMixture [Double] [Double]
 
@@ -64,7 +64,7 @@ afsMixture thetas ps = AFSMixture thetas ps
 data SelfingCoalescence = SelfingCoalescence Int Double
 
 foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> EVector Int -> LogDouble
-selfing_coalescence_probability n_loci s i = builtin_selfing_coalescence_probability n_loci s (list_to_vector i)
+selfing_coalescence_probability n_loci s i = builtin_selfing_coalescence_probability n_loci s (toVector i)
 
 instance Dist SelfingCoalescence where
     type Result SelfingCoalescence = [Int]
@@ -82,7 +82,7 @@ data LiStephens2003 = LiStephens2003 (EVector Int) [(Double,Double,Double)]
 foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: EVector Int -> EVector (EVector Double) -> AlignmentMatrix -> LogDouble
 
 li_stephens_2003_composite_likelihood sites rhoFunc alignment = li_stephens_2003_composite_likelihood_raw sites rhoFuncRaw alignment
-    where rhoFuncRaw = list_to_vector [list_to_vector [x,start,end] | (x,start,end) <- rhoFunc]
+    where rhoFuncRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhoFunc]
 
 instance Dist LiStephens2003 where
     type Result LiStephens2003 = AlignmentMatrix
@@ -91,7 +91,7 @@ instance Dist LiStephens2003 where
 instance HasAnnotatedPdf LiStephens2003 where
     annotated_densities (LiStephens2003 locs rho) = make_densities $ li_stephens_2003_composite_likelihood locs rho
 
-li_stephens_2003 locs rho = LiStephens2003 (list_to_vector locs) rho
+li_stephens_2003 locs rho = LiStephens2003 (toVector locs) rho
 
 
 ----------------------------------------
@@ -101,7 +101,7 @@ data WilsonMcVean2006 = WilsonMcVean2006 (Matrix Double) [(Double,Double,Double)
 foreign import bpcall "SMC:" wilson_mcvean_2006_composite_likelihood_raw :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
 
 wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilson_mcvean_2006_composite_likelihood_raw q rhosRaw theta alignment
-    where rhosRaw = list_to_vector [list_to_vector [x,start,end] | (x,start,end) <- rhos]
+    where rhosRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhos]
 
 instance Dist WilsonMcVean2006 where
     type Result WilsonMcVean2006 = AlignmentMatrix

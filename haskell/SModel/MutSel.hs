@@ -15,7 +15,7 @@ foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -
 mut_sel ws' m0@(Reversible (Markov a smap _ _)) = reversible $ markov a smap q pi where
     q0 = getQ m0
     pi0 = getEqFreqs m0
-    ws = list_to_vector ws'
+    ws = toVector ws'
     q = mut_sel_q q0 ws
     pi = mut_sel_pi pi0 ws
 

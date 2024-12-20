@@ -27,7 +27,7 @@ load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_stri
 foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet -> EVector (EPair CPPString CPPString) -> AlignmentMatrix
 
 alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
-alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector $ fmap (\(n, s) -> c_pair (Text.toCppString n) (Text.toCppString s)) seqs)
+alignment_from_sequences a seqs = builtin_alignment_from_sequences a (toVector $ fmap (\(n, s) -> c_pair (Text.toCppString n) (Text.toCppString s)) seqs)
 
 
 foreign import bpcall "Alignment:sequence_names" builtin_sequence_names :: AlignmentMatrix -> EVector CPPString
@@ -44,7 +44,7 @@ isequences_from_alignment a = zip (sequence_names a) (indices_from_alignment a)
 
 foreign import bpcall "Alignment:reorder_alignment" builtin_reorder_alignment :: EVector CPPString -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment :: [String] -> AlignmentMatrix -> AlignmentMatrix
-reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
+reorder_alignment names a = builtin_reorder_alignment names' a where names' = toVector $ map pack_cpp_string names
 
 foreign import bpcall "Bits:alignment_row_to_presence_bitvector" builtin_alignment_row_to_bitvector :: AlignmentMatrix -> Int -> CBitVector
 alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
@@ -145,7 +145,7 @@ minimally_connect_characters leaf_sequences tree all_sequences = nodes & IntMap.
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
-    where missingSequence = list_to_vector $ replicate alignmentLength missingCharIndex
+    where missingSequence = toVector $ replicate alignmentLength missingCharIndex
           alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
           msg = "minimally_connect_characters': not all observed sequences are the same length!"
           observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)

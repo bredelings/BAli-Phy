@@ -88,7 +88,7 @@ writeTree file tree iter _ _ _ = do T.hPutStrLn file $ writeNewick tree
 
 foreign import bpcall "Foreign:tsvHeaderAndMapping" builtinTsvHeaderAndMapping :: EVector CPPString -> J.CJSON -> EPair CPPString ColumnNames
 tsvHeaderAndMapping firstFields csample = let (cstring,mapping) = pair_from_c $ builtinTsvHeaderAndMapping cFirstFields csample
-                                              cFirstFields = FV.list_to_vector [ FS.pack_cpp_string field | field <- firstFields ] 
+                                              cFirstFields = FV.toVector [ FS.pack_cpp_string field | field <- firstFields ] 
                in (T.fromCppString cstring, mapping)
 
 foreign import bpcall "Foreign:getTsvLine" builtinGetTsvLine :: ColumnNames -> J.CJSON -> CPPString

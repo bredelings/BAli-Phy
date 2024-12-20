@@ -48,4 +48,4 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t 
         where q = rescale (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
 
-multiFrequency a smap nodeMap nodePi branchQ = MultiFrequency a smap 1 (nodeMap IntMap.!) (list_to_vector . nodePi) branchQ
+multiFrequency a smap nodeMap nodePi branchQ = MultiFrequency a smap 1 (nodeMap IntMap.!) (toVector . nodePi) branchQ

@@ -26,8 +26,8 @@ instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps
 
 multinomial_density n ps ks = builtin_multinomial_density n ps' ks'
-    where ps' = list_to_vector ps
-          ks' = list_to_vector ks
+    where ps' = toVector ps
+          ks' = toVector ks
 
 sample_multinomial n [] = return []
 sample_multinomial n (p:ps) = do

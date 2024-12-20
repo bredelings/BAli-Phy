@@ -67,7 +67,7 @@ markov q pi = Markov qFixed pi 1 where
 markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 where
     qFixed = fixupDiagonalRates q
 
-non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
+non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 
 instance Scalable Markov where
     scale f (Markov q pi s) = Markov q pi (s*f)
@@ -125,9 +125,9 @@ instance CTMC m => CTMC (MkEquilibrium m) where
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 
-gtr_sym n exchange = builtin_gtr_sym (list_to_vector exchange) n
+gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = reversible $ markov (er %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
+gtr er pi = reversible $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

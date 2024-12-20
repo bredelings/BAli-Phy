@@ -5,7 +5,7 @@ import Probability.Distribution.Gamma
 import Probability.Distribution.List
 
 foreign import bpcall "Distribution:dirichlet_density" builtinDirichletDensity :: EVector Double -> EVector Double -> LogDouble
-dirichletDensity as ps = builtinDirichletDensity (list_to_vector as) (list_to_vector ps)
+dirichletDensity as ps = builtinDirichletDensity (toVector as) (toVector ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!
 sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as

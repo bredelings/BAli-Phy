@@ -10,7 +10,7 @@ data Matrix a
 
 foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
 
-fromLists xss = fromVectors $ list_to_vector $ map list_to_vector xss
+fromLists xss = fromVectors $ toVector $ map toVector xss
 
 foreign import bpcall "Matrix:" nrows :: Matrix a -> Int
 foreign import bpcall "Matrix:" ncols :: Matrix a -> Int

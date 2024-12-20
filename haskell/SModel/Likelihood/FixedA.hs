@@ -49,13 +49,13 @@ cachedConditionalLikelihoodsNonRev t nodeCLVs ps f = let clvs = getEdgesSet t & 
                                                                               inEdges = edgesBeforeEdgeSet t b
                                                                               clsIn = IntMap.restrictKeysToVector clvs inEdges
                                                                               node = sourceNode t b
-                                                                              nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
+                                                                              nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! node
                                                                           in peelBranch nodeCLs clsIn p f (towardRoot t b)
                                                      in clvs
 
 peelLikelihoodNonRev nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
                                                                    nModels = nrows f
-                                                                   nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                                   nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! root
                                                                    clsIn = IntMap.restrictKeysToVector cls inEdges
                                                                in calcProb nodeCLs clsIn f counts
 
@@ -65,13 +65,13 @@ cached_conditional_likelihoods t nodeCLVs ps =
                     inEdges = edgesBeforeEdgeSet t b
                     clsIn = IntMap.restrictKeysToVector lc inEdges
                     node = sourceNode t b
-                    nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! node
+                    nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! node
                 in peelBranchTowardRoot nodeCLs clsIn p
     in lc
 
 peel_likelihood nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
                                                               nModels = nrows f
-                                                              nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! root
+                                                              nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! root
                                                               clsIn = IntMap.restrictKeysToVector cls inEdges
                                                           in calcProbAtRoot nodeCLs clsIn f counts
 
@@ -79,7 +79,7 @@ sample_ancestral_sequences t root nodeCLVs alpha ps f cl smap col_to_compressed 
     let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
-        ancestor_for_branch n Nothing = let nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! n
+        ancestor_for_branch n Nothing = let nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! n
                                             inEdges = edgesTowardNodeSet t n
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
                                         in sampleRootSequence nodeCLs
@@ -91,7 +91,7 @@ sample_ancestral_sequences t root nodeCLVs alpha ps f cl smap col_to_compressed 
                                                 ps_for_b0 = ps IntMap.! b0
                                                 inEdges = edgesBeforeEdgeSet t to_p
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
-                                                nodeCLs = list_to_vector $ maybeToList $ nodeCLVs IntMap.! n
+                                                nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! n
                                             in sampleSequence parent_seq
                                                               nodeCLs
                                                               ps_for_b0

@@ -2,6 +2,9 @@
 module Foreign.Vector where
 
 import Foreign.CList
+import Data.Foldable
+import Data.Eq
+import Data.Function
 
 data EVector a
 
@@ -17,6 +20,12 @@ sizedVectorToList vec size = mapFrom 0# size (\i -> get_vector_index vec i)
 vectorToList :: EVector a -> [a]
 vectorToList vec = sizedVectorToList vec (vector_size vec)
 
-list_to_vector :: [a] -> EVector a
-list_to_vector x = clist_to_vector (listToCList x)
+listToVector :: [a] -> EVector a
+listToVector x = clist_to_vector (listToCList x)
 
+instance Foldable EVector where
+    toList = vectorToList
+    length = vector_size
+    null v = length v == 0
+
+toVector = listToVector . toList

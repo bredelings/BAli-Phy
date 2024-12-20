@@ -38,7 +38,7 @@ instance Show Text where
 --    show s = show $ unpack s
     show s = "\"" ++ unpack s ++ "\""
 
-pack = fromCppString . builtin_pack . list_to_vector
+pack = fromCppString . builtin_pack . toVector
 
 unpack (Text array offset length) = FS.unpack_cpp_substring array offset length
 
@@ -140,7 +140,7 @@ fromCppString s = Text s 0 (FS.sizeOfString s)
 foreign import bpcall "Text:" concatRaw :: EVector CPPString -> CPPString
 
 concat :: [Text] -> Text
-concat texts = fromCppString $ concatRaw $ list_to_vector $ map toCppString texts
+concat texts = fromCppString $ concatRaw $ toVector $ map toCppString texts
 
 -- concatMap :: (Char -> Text) -> Text -> Text
 

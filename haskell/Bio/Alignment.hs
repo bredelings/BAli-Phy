@@ -72,7 +72,7 @@ instance IsGraph t => Alignment (AlignmentOnTree t) where
 mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
 type EAlignment = EVector (EPair CPPString (EVector Int))
-toEAlignment a = list_to_vector [ c_pair (Text.toCppString label) indices | (label, indices) <- a ]
+toEAlignment a = toVector [ c_pair (Text.toCppString label) indices | (label, indices) <- a ]
 fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ vectorToList ea
 
 -- Current a' is an alignment, but counts and mapping are EVector
@@ -105,7 +105,7 @@ leaf_sequence_counts a n counts = vectorToList $ builtin_leaf_sequence_counts a 
 
 foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
 ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap
-    where states' = list_to_vector [ states IntMap.! node  | node <- sort $ getNodes tree]
+    where states' = toVector [ states IntMap.! node  | node <- sort $ getNodes tree]
 
 -- Extract (component,state) -> state.
 foreign import bpcall "Alignment:" extractStates :: VectorPairIntInt -> EVector Int
@@ -129,11 +129,11 @@ That would lose the comments on the fastas though.
 -}
 
 foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
-select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (list_to_vector sites)
+select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (toVector sites)
 
 foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignment_pairs :: AlignmentMatrix -> EVector (EPair Int Int) -> Alphabet -> AlignmentMatrix
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
-    where sites' = list_to_vector $ map (\(x,y) -> c_pair x y) sites
+    where sites' = toVector $ map (\(x,y) -> c_pair x y) sites
 
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (EVector Int))
@@ -202,7 +202,7 @@ foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment
 exportAlignmentOnTree :: IsTree t => AlignmentOnTree t -> NodeAlignment
 exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (sequenceLength a root) (branchAlignments $ edgesOutOfNodeArray tree root)
     where root = head $ getNodes tree
-          branchAlignments edges = list_to_vector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]
+          branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]
 
 foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
 
@@ -244,7 +244,7 @@ data TimeDirection = Forward | Backward
 foreign import bpcall "Alignment:" getTaxonAgesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
 
 getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLabels cppRegex cppDirection)
-    where cppLabels = list_to_vector (map Text.toCppString labels)
+    where cppLabels = toVector (map Text.toCppString labels)
           cppRegex = pack_cpp_string regex
           convert Forward  = 0
           convert Backward = 1

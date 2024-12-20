@@ -13,11 +13,11 @@ foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_r
 foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (EVector Double) -> EVector Double -> EVector Double
 foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
-modulatedMarkovRates qs rates_between = builtin_modulated_markov_rates (list_to_vector qs) rates_between
+modulatedMarkovRates qs rates_between = builtin_modulated_markov_rates (toVector qs) rates_between
 
-modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (list_to_vector pis) (list_to_vector levelProbs)
+modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (toVector pis) (toVector levelProbs)
 
-modulatedMarkovSmap smaps = builtin_modulated_markov_smap (list_to_vector smaps)
+modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
 
 -- This could get renamed, after I look at the paper that uses the term "modulated markov"
 modulatedMarkov models ratesBetween levelProbs = reversible $ markov a smap q pi where
@@ -59,7 +59,7 @@ galtier_01_ssrv nu model = modulatedMarkov models ratesBetween levelProbs where
     (models, levelProbs) = unzip $ unpackDiscrete dist
     n_levels = length models
     -- This is really a generic gtr...  We should be able to get this with f81
-    ratesBetween = (Markov.equ n_levels nu) %*% (plus_f_matrix $ list_to_vector levelProbs)
+    ratesBetween = (Markov.equ n_levels nu) %*% (plus_f_matrix $ toVector levelProbs)
 
 galtier_01 nu pi model = (\nu' -> galtier_01_ssrv nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)])
 
@@ -90,7 +90,7 @@ covarion_gtr_ssrv nu exchange model = modulatedMarkov models ratesBetween levelP
     Discrete dist = rescale 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
-    ratesBetween = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector levelProbs)
+    ratesBetween = (scaleMatrix nu exchange) %*% (plus_f_matrix $ toVector levelProbs)
 
 covarion_gtr nu exchange pi model = (\nu' -> covarion_gtr_ssrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
@@ -98,6 +98,6 @@ covarion_gtr_sym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMark
 covarion_gtr_sym sym model = modulatedMarkov models ratesBetween levelProbs where
     dist = rescale 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
-    ratesBetween = sym %*% (plus_f_matrix $ list_to_vector levelProbs)
+    ratesBetween = sym %*% (plus_f_matrix $ toVector levelProbs)
 
 

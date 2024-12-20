@@ -51,7 +51,7 @@ instance CTMC Markov where
     getEqFreqs (Markov _ _ m _) = getEqFreqs m
     getQ (Markov _ _ m  _) = getQ m
 
-simpleSMap a = list_to_vector [0..(alphabetSize a)-1]
+simpleSMap a = toVector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 markov a smap q pi = Markov a smap rm rate where
@@ -103,7 +103,7 @@ nonEq' a rates' pi' = nonEq a rs pi
                    [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
                else
                    error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
-          pi = list_to_vector $ frequenciesFromDict a pi'
+          pi = toVector $ frequenciesFromDict a pi'
 
 labelledEqFrequencies m = zip (getLetters a) frequencies
     where frequencies = vectorToList $ getEqFreqs m
