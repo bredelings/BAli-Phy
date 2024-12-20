@@ -69,5 +69,5 @@ frequency_matrix model = builtin_frequency_matrix $ toVector $ componentFrequenc
 
 nStates m = vector_size (stateLetters m)
 
-transition_ps_map smodel_on_tree = IntMap.fromSet (toVector . branchTransitionP smodel_on_tree) edges where
+transitionPsMap smodel_on_tree = IntMap.fromSet (toVector . branchTransitionP smodel_on_tree) edges where
     edges = getEdgesSet $ getTree smodel_on_tree

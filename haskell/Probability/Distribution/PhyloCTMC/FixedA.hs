@@ -29,10 +29,10 @@ import Data.Maybe (fromJust)
 
 import Control.Monad.Fix -- for rec
 
-sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping =
+sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping =
 --    This also needs the map from columns to compressed columns:
       let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-          ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
+          ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
 
           ancestralStateSequences :: IntMap (EVector Int)
           ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
@@ -66,18 +66,18 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
       smodel_on_tree = SModelOnTree rtree smodel
-      transition_ps = transition_ps_map smodel_on_tree
+      transitionPs = transitionPsMap smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
-      cls = cached_conditional_likelihoods rtree nodeCLVs transition_ps
+      cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
       likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap subst_root column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
 
   return ([likelihood], prop)
 
@@ -96,7 +96,7 @@ foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntIn
 
 sampleComponentStatesFixed rtree rootLength smodel =  do
   let smodel_on_tree = SModelOnTree rtree smodel
-      ps = transition_ps_map smodel_on_tree
+      ps = transitionPsMap smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
@@ -148,18 +148,18 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel_on_tree
       smodel_on_tree = SModelOnTree tree smodel
-      transition_ps = transition_ps_map smodel_on_tree
+      transitionPs = transitionPsMap smodel_on_tree
       f = weighted_frequency_matrix smodel_on_tree
-      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transition_ps f
+      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
       likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap subst_root column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transition_ps f cls smap mapping
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties subst_root transition_ps cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
 
   return ([likelihood], prop)
 
