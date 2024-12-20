@@ -24,7 +24,7 @@ instance HasAlphabet m => HasAlphabet (MixtureModels m) where
 
 instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
-    branch_transition_p (SModelOnTree tree smodel@(MixtureModels branchCats mms)) b = branch_transition_p (SModelOnTree tree mx) b
+    branchTransitionP (SModelOnTree tree smodel@(MixtureModels branchCats mms)) b = branchTransitionP (SModelOnTree tree mx) b
         where mx = rescale 1 $ mms!!(branchCats IntMap.! undirectedName b)
     distribution           (SModelOnTree tree (MixtureModels _ (m:ms))) = distribution (SModelOnTree tree m)
     nBaseModels            (SModelOnTree tree (MixtureModels _ (m:ms))) = nBaseModels (SModelOnTree tree m)

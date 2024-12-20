@@ -54,7 +54,7 @@ instance HasSMap m => HasSMap (Discrete m) where
 
 instance (HasBranchLengths t, CTMC m, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
-    branch_transition_p (SModelOnTree tree model) b = concat [ branch_transition_p (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
+    branchTransitionP (SModelOnTree tree model) b = concat [ branchTransitionP (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
     distribution (SModelOnTree tree model) = concat [(pr*) <$> distribution (SModelOnTree tree component) | (component, pr) <- unpackDiscrete model]
     componentFrequencies (SModelOnTree tree model) = concat [componentFrequencies (SModelOnTree tree component) | (component,_) <- unpackDiscrete model]
     stateLetters (SModelOnTree _ model) = getSMap model

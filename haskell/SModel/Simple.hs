@@ -49,7 +49,7 @@ class SimpleSModel t m where
 
     getTree :: (SModelOnTree t m) -> t
     stateLetters :: (SModelOnTree t m) -> EVector Int
-    branch_transition_p :: (SModelOnTree t m) -> EdgeId -> [Matrix Double]
+    branchTransitionP :: (SModelOnTree t m) -> EdgeId -> [Matrix Double]
     distribution :: (SModelOnTree t m) -> [Double]
     nBaseModels :: (SModelOnTree t m) -> Int
     componentFrequencies :: (SModelOnTree t m) -> [EVector Double]
@@ -69,5 +69,5 @@ frequency_matrix model = builtin_frequency_matrix $ toVector $ componentFrequenc
 
 nStates m = vector_size (stateLetters m)
 
-transition_ps_map smodel_on_tree = IntMap.fromSet (toVector . branch_transition_p smodel_on_tree) edges where
+transition_ps_map smodel_on_tree = IntMap.fromSet (toVector . branchTransitionP smodel_on_tree) edges where
     edges = getEdgesSet $ getTree smodel_on_tree

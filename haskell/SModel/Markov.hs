@@ -67,7 +67,7 @@ instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
 instance HasBranchLengths t => SimpleSModel t Markov where
-    branch_transition_p (SModelOnTree tree smodel) b = [qExp $ scale (branchLength tree b) smodel]
+    branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scale (branchLength tree b) smodel]
     stateLetters (SModelOnTree _ rm) = getSMap rm
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
