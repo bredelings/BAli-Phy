@@ -29,10 +29,10 @@ import Data.Maybe (fromJust)
 
 import Control.Monad.Fix -- for rec
 
-sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping =
+sampleAncestralAlignment uncompressedNodeSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping =
 --    This also needs the map from columns to compressed columns:
       let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-          ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
+          ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
           ancestralStateSequences :: IntMap (EVector Int)
           ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
@@ -49,8 +49,8 @@ well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
 annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
-  let rtree = setRoot subst_root (makeRooted tree)
-      subst_root = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+  let rtree = setRoot substRoot (makeRooted tree)
+      substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
@@ -64,20 +64,20 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
 
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
-      smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree rtree smodel
-      transitionPs = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+      smap   = stateLetters smodelOnTree
+      smodelOnTree = SModelOnTree rtree smodel
+      transitionPs = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
       cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
-      likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap subst_root column_counts
+      likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap substRoot column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -95,9 +95,9 @@ foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double
 foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntInt -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
 sampleComponentStatesFixed rtree rootLength smodel =  do
-  let smodel_on_tree = SModelOnTree rtree smodel
-      ps = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+  let smodelOnTree = SModelOnTree rtree smodel
+      ps = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
                                    Nothing -> simulateRootSequence rootLength f
@@ -132,7 +132,7 @@ well, we could turn each IntMap into an EIntMap
 for alignments, we could also use an ordering of the sequences to ensure that the leaves are written first.
    -}
 annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
-  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
@@ -146,20 +146,20 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
 
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
-      smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel
-      transitionPs = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+      smap   = stateLetters smodelOnTree
+      smodelOnTree = SModelOnTree tree smodel
+      transitionPs = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
-      likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap subst_root column_counts
+      likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap substRoot column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree subst_root nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 

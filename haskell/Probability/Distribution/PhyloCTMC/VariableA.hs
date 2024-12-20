@@ -29,8 +29,8 @@ import Data.Maybe (fromJust)
 import Control.Monad.Fix -- for rec
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
-  let rtree = setRoot subst_root (makeRooted tree)
-      subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let rtree = setRoot substRoot (makeRooted tree)
+      substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes rtree
       as = pairwise_alignments alignment
@@ -38,17 +38,17 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
-      smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree rtree smodel
-      transitionPs = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+      smap   = stateLetters smodelOnTree
+      smodelOnTree = SModelOnTree rtree smodel
+      transitionPs = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
       fs = getNodesSet rtree & IntMap.fromSet (\_ -> f)
       cls = cached_conditional_likelihoods rtree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peel_likelihood rtree nodeCLVs cls as f subst_root
+      likelihood  = peel_likelihood rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences rtree subst_root nodeCLVs as transitionPs f cls
+      ancestralComponentStateSequences = sample_ancestral_sequences rtree substRoot nodeCLVs as transitionPs f cls
 
       ancestral_sequences = extractStates <$> ancestralComponentStateSequences
 
@@ -58,7 +58,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -85,10 +85,10 @@ foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double
 foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
 
 sampleComponentStates rtree alignment smodel =  do
-  let smodel_on_tree = SModelOnTree rtree smodel
+  let smodelOnTree = SModelOnTree rtree smodel
       as = pairwise_alignments alignment
-      ps = transitionPsMap smodel_on_tree
-      f = (weighted_frequency_matrix smodel_on_tree)
+      ps = transitionPsMap smodelOnTree
+      f = (weighted_frequency_matrix smodelOnTree)
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
                                    Nothing -> simulateRootSequence (sequenceLength alignment node) f
@@ -118,7 +118,7 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
 
 -----------
 annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
-  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
@@ -126,17 +126,17 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
-      smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel
-      transitionPs = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+      smap   = stateLetters smodelOnTree
+      smodelOnTree = SModelOnTree tree smodel
+      transitionPs = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
       fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
       cls = cachedConditionalLikelihoodsEqNonRev tree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodEqNonRev tree nodeCLVs cls as f subst_root
+      likelihood  = peelLikelihoodEqNonRev tree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transitionPs f cls
+      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
 
       ancestral_sequences = extractStates <$> ancestralComponentStateSequences
 
@@ -146,7 +146,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -176,7 +176,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
 ---------------------------------------------
 annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
-  let subst_root = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
@@ -184,17 +184,17 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
-      smap   = stateLetters smodel_on_tree
-      smodel_on_tree = SModelOnTree tree smodel
-      transitionPs = transitionPsMap smodel_on_tree
-      f = weighted_frequency_matrix smodel_on_tree
+      smap   = stateLetters smodelOnTree
+      smodelOnTree = SModelOnTree tree smodel
+      transitionPs = transitionPsMap smodelOnTree
+      f = weighted_frequency_matrix smodelOnTree
       fs = frequenciesOnTree tree f transitionPs
       cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f subst_root
+      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree subst_root nodeCLVs as transitionPs f cls
+      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
 
       ancestral_sequences = extractStates <$> ancestralComponentStateSequences
 
@@ -204,7 +204,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties subst_root transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodel_on_tree) (SModel.nBaseModels smodel_on_tree)
+  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
