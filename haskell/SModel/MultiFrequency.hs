@@ -8,6 +8,9 @@ import Tree
 import Markov (CTMC, qExp)
 import qualified Data.IntMap as IntMap
 
+-- NOTE: The model here needs to know the list of node names on the tree.
+--       Is it really separate from the tree then?
+
 -- The node information (i) is used to construct a node property (n) and an edge property (e).
 data MultiFrequency i n e = MultiFrequency Alphabet (EVector Int) Double (NodeId -> i) (i -> n) (i -> e)
 
