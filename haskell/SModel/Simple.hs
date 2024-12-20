@@ -58,14 +58,14 @@ class SimpleSModel t m where
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 
-foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
-foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: EVector Double -> EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:" frequencyMatrixRaw :: EVector (EVector Double) -> Matrix Double
 
-weighted_frequency_matrix model = let dist = toVector $ distribution model
-                                      freqs = toVector $ componentFrequencies model
-                                  in builtin_weighted_frequency_matrix dist freqs
+weightedFrequencyMatrix model = let dist = toVector $ distribution model
+                                    freqs = toVector $ componentFrequencies model
+                                in weightedFrequencyMatrixRaw dist freqs
 
-frequency_matrix model = builtin_frequency_matrix $ toVector $ componentFrequencies model
+frequencyMatrix model = frequencyMatrixRaw $ toVector $ componentFrequencies model
 
 nStates m = vector_size (stateLetters m)
 

@@ -1464,7 +1464,7 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
     return ave_f;
 }
 
-extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Args)
+extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     const auto& D = arg0.as_<EVector>();
@@ -1489,7 +1489,7 @@ extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Arg
     return WF;
 }
 
-extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
+extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     const auto& F = arg0.as_<EVector>();

@@ -67,7 +67,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
       cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
       likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap substRoot column_counts
 
@@ -97,7 +97,7 @@ foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntIn
 sampleComponentStatesFixed rtree rootLength smodel =  do
   let smodelOnTree = SModelOnTree rtree smodel
       ps = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
                                    Nothing -> simulateRootSequence rootLength f
@@ -149,7 +149,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree tree smodel
       transitionPs = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
       likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap substRoot column_counts
 

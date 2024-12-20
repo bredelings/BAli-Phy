@@ -41,7 +41,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
       fs = getNodesSet rtree & IntMap.fromSet (\_ -> f)
       cls = cached_conditional_likelihoods rtree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
@@ -88,7 +88,7 @@ sampleComponentStates rtree alignment smodel =  do
   let smodelOnTree = SModelOnTree rtree smodel
       as = pairwise_alignments alignment
       ps = transitionPsMap smodelOnTree
-      f = (weighted_frequency_matrix smodelOnTree)
+      f = (weightedFrequencyMatrix smodelOnTree)
 
   rec let simulateSequenceForNode node = case branchToParent rtree node of
                                    Nothing -> simulateRootSequence (sequenceLength alignment node) f
@@ -129,7 +129,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree tree smodel
       transitionPs = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
       fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
       cls = cachedConditionalLikelihoodsEqNonRev tree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
@@ -187,7 +187,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree tree smodel
       transitionPs = transitionPsMap smodelOnTree
-      f = weighted_frequency_matrix smodelOnTree
+      f = weightedFrequencyMatrix smodelOnTree
       fs = frequenciesOnTree tree f transitionPs
       cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..

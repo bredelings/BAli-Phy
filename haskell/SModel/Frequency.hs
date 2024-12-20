@@ -5,8 +5,6 @@ import Foreign.Vector
 import Data.Matrix
 import qualified Markov
 
--- foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
--- foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> EVector Double
 
 -- pi is [Double] here
