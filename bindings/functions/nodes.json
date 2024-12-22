@@ -1,0 +1,14 @@
+{
+    "name": "nodes",
+    "result_type": "IntSet",
+    "no_log": true,
+    "call": "getNodesSet(@t)",
+    "import": ["Tree"],
+    "args": [
+        {
+            "name": "t",
+            "type": "Tree",
+            "description": "The tree"
+        }
+    ]
+}
