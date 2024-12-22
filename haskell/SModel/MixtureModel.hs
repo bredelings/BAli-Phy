@@ -30,7 +30,7 @@ mixture ms fs = mix fs ms
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
 parameterMixture values modelFn = values >>= modelFn
 
-rateMixture model rates = scale (1/mean rates) $ rates >>= (\rate -> scale rate model)
+rateMixture model rates = scaleBy (1/mean rates) $ rates >>= (\rate -> scaleBy rate model)
 
 wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
                         dist =  toVector [p | (m,p) <- ms ]
@@ -39,10 +39,10 @@ wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
 averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
 
 plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
-plusInv pInv ms = scale (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
+plusInv pInv ms = scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms
-          inv = scale 0 $ f81 pi a
+          inv = scaleBy 0 $ f81 pi a
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
@@ -60,7 +60,7 @@ instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Di
     stateLetters (SModelOnTree _ model) = getSMap model
 
 instance Scalable a => Scalable (Discrete a) where
-    scale x dist = fmap (scale x) dist
+    scaleBy x dist = fmap (scaleBy x) dist
 
 instance RateModel a => RateModel (Discrete a) where
     rate d = mean $ fmap rate d

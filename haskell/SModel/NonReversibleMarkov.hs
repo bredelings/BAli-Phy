@@ -25,7 +25,7 @@ instance HasAlphabet m => HasAlphabet (MkEquilibrium m) where
 
 instance HasBranchLengths t => SimpleSModel t (MkEquilibrium Markov) where
     type instance IsReversible (MkEquilibrium Markov) = EquilibriumNonReversible
-    branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scale (branchLength tree b) smodel]
+    branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
     stateLetters (SModelOnTree _ model) = getSMap model
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 

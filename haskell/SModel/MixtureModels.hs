@@ -60,4 +60,4 @@ instance RateModel m => RateModel (MixtureModels m) where
     rate _ = 1
 
 instance Scalable m => Scalable (MixtureModels m) where
-    scale f (MixtureModels categories mixtures) = MixtureModels categories (scale f <$> mixtures)
+    scaleBy f (MixtureModels categories mixtures) = MixtureModels categories (scaleBy f <$> mixtures)

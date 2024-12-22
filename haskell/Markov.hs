@@ -49,7 +49,7 @@ class Scalable c => CTMC c where
 -- Can I make an SModel.Markov?
 
 instance Scalable (Matrix Double) where
-    scale f m = scaleMatrix f m
+    scaleBy f m = scaleMatrix f m
 
 instance CTMC (Matrix Double) where
     getQ m = m
@@ -70,7 +70,7 @@ markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 where
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 
 instance Scalable Markov where
-    scale f (Markov q pi s) = Markov q pi (s*f)
+    scaleBy f (Markov q pi s) = Markov q pi (s*f)
 
 instance CTMC Markov where
     getQ  (Markov q _  factor) = scaleMatrix factor q
@@ -86,7 +86,7 @@ data MkReversible m = Reversible  { nonreversible :: m }
 reversible = Reversible
 
 instance Scalable m => Scalable (MkReversible m) where
-    scale f (Reversible m) = Reversible $ scale f m
+    scaleBy f (Reversible m) = Reversible $ scaleBy f m
 
 instance Show m => Show (MkReversible m) where
     show (Reversible m) = show m
@@ -108,7 +108,7 @@ data MkEquilibrium m = Equilibrium  { nonequilibrium :: m }
 equilibrium = Equilibrium
 
 instance Scalable m => Scalable (MkEquilibrium m) where
-    scale f (Equilibrium m) = Equilibrium $ scale f m
+    scaleBy f (Equilibrium m) = Equilibrium $ scaleBy f m
 
 instance Show m => Show (MkEquilibrium m) where
     show (Equilibrium m) = show m

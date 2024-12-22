@@ -16,7 +16,7 @@ model seqData nucs logTree = do
 
     let taxa = getTaxa seqData
 
-    n <- (min 10) <$> (1+) <$> sample (geometric 0.5)
+    let n = 2
 
     tree   <- sample $ uniformRootedTree taxa (gamma 0.5 (1/fromIntegral (length taxa)))
     scale <- sample $ gamma 0.5 2

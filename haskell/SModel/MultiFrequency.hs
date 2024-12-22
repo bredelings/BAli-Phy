@@ -31,7 +31,7 @@ instance RateModel (MultiFrequency i n e) where
     rate (MultiFrequency _ _ r _ _ _) = r
 
 instance Scalable (MultiFrequency i e n) where
-    scale x (MultiFrequency a smap rate nodeInfo nodePi branchQ) = MultiFrequency a smap (x*rate) nodeInfo nodePi branchQ
+    scaleBy x (MultiFrequency a smap rate nodeInfo nodePi branchQ) = MultiFrequency a smap (x*rate) nodeInfo nodePi branchQ
 
 nodeInfo (MultiFrequency _ _ _ f _ _) node      = f node  -- get the node info
 nodeProp (MultiFrequency _ _ _ f g _) node      = g $ f $ node  -- get the node property
@@ -48,7 +48,7 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
-    branchTransitionP (SModelOnTree tree model) b = [qExp $ scale (branchLength tree b) $ q]
+    branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ q]
         where q = rescale (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
 

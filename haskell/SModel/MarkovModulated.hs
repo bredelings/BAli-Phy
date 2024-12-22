@@ -36,7 +36,7 @@ markovModulateMixture nu dist = modulatedMarkov models ratesBetween levelProbs w
 -- We need to rescale submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
-tuffley_steel_98_unscaled s01 s10 q = modulatedMarkov [scale 0 q, q] ratesBetween levelProbs where
+tuffley_steel_98_unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] ratesBetween levelProbs where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
     ratesBetween = fromLists [[-s01,s01],[s10,-s10]]
 
