@@ -8,7 +8,6 @@ import Tree
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
-import Markov (CTMC)
 
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
 -- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
@@ -22,7 +21,7 @@ mmm branch_cats m = MixtureModels branch_cats [m]
 instance HasAlphabet m => HasAlphabet (MixtureModels m) where
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
 
-instance (HasSMap m, CTMC m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
+instance (HasSMap m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
     branchTransitionP (SModelOnTree tree smodel@(MixtureModels branchCats mms)) b = branchTransitionP (SModelOnTree tree mx) b
         where mx = rescale 1 $ mms!!(branchCats IntMap.! undirectedName b)

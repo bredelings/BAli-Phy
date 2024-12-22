@@ -52,7 +52,7 @@ instance HasAlphabet m => HasAlphabet (Discrete m) where
 instance HasSMap m => HasSMap (Discrete m) where
     getSMap model = getSMap $ component model 0
 
-instance (HasBranchLengths t, CTMC m, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
+instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
     type instance IsReversible (Discrete m) = IsReversible m
     branchTransitionP (SModelOnTree tree model) b = concat [ branchTransitionP (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
     distribution (SModelOnTree tree model) = concat [(pr*) <$> distribution (SModelOnTree tree component) | (component, pr) <- unpackDiscrete model]
