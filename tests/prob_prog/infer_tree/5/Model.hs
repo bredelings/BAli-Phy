@@ -28,10 +28,12 @@ model seqData nucs logTree = do
 
     freqs  <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
     nodeMap <- sample $ iidMap (getNodesSet tree) freqs
-    let multiFreqModel = multiFrequency tree nodeMap (frequenciesFromDict nucs) tn93Model
-        freqs3 = sortDist freqs
+    alpha <- sample $ logLaplace 6 2
 
-    observe seqData $ phyloCTMC tree (alignmentLength seqData) multiFreqModel scale
+    let multiFreqModel = multiFrequency tree nodeMap (frequenciesFromDict nucs) tn93Model
+        gammaModel = always multiFreqModel +> gammaRates alpha 4
+
+    observe seqData $ phyloCTMC tree (alignmentLength seqData) gammaModel scale
 
     let tlength = treeLength tree
         substs = parsimony tree (unitCostMatrix nucs) seqData
@@ -42,9 +44,10 @@ model seqData nucs logTree = do
             "scale" %=% scale,
             "scale*|T|" %=% scale * tlength,
             "#substs" %=% substs,
-            "freqs" %=% freqs3,
+            "freqs" %=% sortDist freqs,
             "tn93:kappa1" %=% kappa1,
-            "tn93:kappa2" %=% kappa2]
+            "tn93:kappa2" %=% kappa2,
+            "gamma:alpha" %=% alpha]
 
 main logDir = do
     [filename] <- getArgs
