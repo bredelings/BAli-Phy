@@ -10,7 +10,7 @@ import           Data.Matrix
 import           Tree
 import           SModel.EigenExp
 
-foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
+foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
@@ -54,14 +54,14 @@ instance CTMC Markov where
 simpleSMap a = toVector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov a smap q pi = Markov a smap rm rate where
-    rm = Markov.markov q pi
-    rate = get_equilibrium_rate a smap (getQ rm) pi
+markov a smap q pi = Markov a smap rm rate
+    where rm = Markov.markov q pi
+          rate = getEquilibriumRate a smap (getQ rm) pi
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov' a smap q = Markov a smap rm rate where
-    rm = Markov.markov' q
-    rate = get_equilibrium_rate a smap (getQ rm) (getEqFreqs rm)
+markov' a smap q = Markov a smap rm rate
+    where rm = Markov.markov' q
+          rate = getEquilibriumRate a smap (getQ rm) (getEqFreqs rm)
 
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a

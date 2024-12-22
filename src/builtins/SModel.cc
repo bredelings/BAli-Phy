@@ -119,7 +119,7 @@ extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
     return { checkReversible(Q,pi) };
 }
 
-extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
+extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     const alphabet& a = *arg0.as_<Alphabet>();
