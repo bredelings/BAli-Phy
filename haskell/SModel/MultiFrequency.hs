@@ -7,9 +7,16 @@ import SModel.Rate
 import Tree
 import Markov (CTMC, qExp)
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 
 -- NOTE: The model here needs to know the list of node names on the tree.
---       Is it really separate from the tree then?
+
+
+-- QUESTION: Is it really separate from the tree then?
+-- QUESTION: Suppose we make SimpleSModel operate directly on (SModelOnTree t m)?
+-- QUESTION: Suppose we put the tree into MultiFrequency?
+--           - This allows getting the nodes for the node info.
+--           - This allows getting the branches to apply q(b) and get an alphabet and smap out...
 
 -- The node information (i) is used to construct a node property (n) and an edge property (e).
 data MultiFrequency i n e = MultiFrequency Alphabet (EVector Int) Double (NodeId -> i) (i -> n) (i -> e)
@@ -38,9 +45,6 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 -- * If we attach a SINGLE root frequency vector to each CTMC, then
 -- Suppose we have something that works like a
 
--- Question: How do we attach Rates.gamma to one of these models?
--- * we need to be able to rescale the model to have the specified rates, which means that it need to have a rate.
-
 instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
@@ -48,4 +52,7 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t 
         where q = rescale (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
 
-multiFrequency a smap nodeMap nodePi branchQ = MultiFrequency a smap 1 (nodeMap IntMap.!) (toVector . nodePi) branchQ
+multiFrequency tree nodeMap nodePi branchQ = MultiFrequency alphabet smap 1 (nodeMap IntMap.!) (toVector . nodePi) branchQ
+    where alphabet = getAlphabet (branchQ (nodeMap IntMap.! node))
+          smap = getSMap (branchQ (nodeMap IntMap.! node))
+          node = head $ IntSet.elems (getNodesSet tree)
