@@ -15,6 +15,10 @@ namespace Core
 {
 
     // Expression stuff
+    Exp ConExp(const std::string& name, const std::vector<Exp>& es)
+    {
+        return expression_ref{constructor(name,es.size()), es};
+    }
 
     Exp Tuple(const std::vector<Exp>& es)
     {

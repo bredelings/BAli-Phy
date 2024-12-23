@@ -56,6 +56,7 @@ namespace Core
 
     extern wrapper WrapId;
 
+    Exp ConExp(const std::string& name, const std::vector<Exp>& es);
     Exp Tuple(const std::vector<Exp>& es);
     Exp Lambda(const std::vector<Var>& args, const Exp& body);
     Exp Let(const Decls& args, const Exp& body);
