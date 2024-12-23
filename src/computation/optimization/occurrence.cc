@@ -425,6 +425,26 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
             // change Once -> OnceInLam / work=Many, code=Once
             return {occ_to_expression_ref(unreduced), dup_work(free_vars)};
     }
+    // 3. Apply
+    else if (auto A = E_.to_apply())
+    {
+        set<var> free_vars;
+        auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
+        merge_occurrences_into(free_vars, head_free_vars);
+
+        auto args = A->args;
+
+        for(auto& arg: args)
+        {
+            auto [arg_out, arg_free_vars] = occurrence_analyzer(m, arg, var_context::argument);
+            // FIXME: make a special form for vars.
+            arg = *to_occ_exp(arg_out).to_var();
+            merge_occurrences_into(free_vars, arg_free_vars);
+        }
+        expression_ref F = occ_to_expression_ref(Occ::Apply{to_occ_exp(head), args});
+        return {F, free_vars};
+    }
+
 
     // 6. Case
     if (auto C = parse_case_expression(E))
