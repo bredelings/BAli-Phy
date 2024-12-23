@@ -86,39 +86,37 @@ void merge_occurrences_into(set<var>& free_vars1, const set<var>& free_vars2, bo
     }
 }
 
-var remove_var_and_set_occurrence_info(var x, set<var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<var>& free_vars)
 {
-    assert(not is_wildcard(x));
-
     // 1. Copy occurrence info
-    auto x_iter = free_vars.find(x);
+    auto x_iter = free_vars.find(occ_to_var(x));
     if (x_iter == free_vars.end())
     {
-	x.work_dup = amount_t::None;
-	x.code_dup = amount_t::None;
-	x.is_loop_breaker = false;
-	x.context = var_context::unknown;
+	x.info.work_dup = amount_t::None;
+	x.info.code_dup = amount_t::None;
+	x.info.is_loop_breaker = false;
+	x.info.context = var_context::unknown;
     }
     else
     {
-	bool is_exported = x.is_exported;
-	static_cast<occurrence_info&>(x) = *x_iter;
-	x.is_exported = is_exported;
+	bool is_exported = x.info.is_exported;
+	x.info = *x_iter;
+	x.info.is_exported = is_exported;
     }
 
     // 2. Remove var from set
-    free_vars.erase(x);
+    free_vars.erase(occ_to_var(x));
 
-    assert(x.code_dup != amount_t::Unknown and x.work_dup != amount_t::Unknown);
+    assert(x.info.code_dup != amount_t::Unknown and x.info.work_dup != amount_t::Unknown);
 
     return x;
 }
 
-var remove_var_and_set_occurrence_info(const expression_ref& E, set<var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(const Occ::Exp& E, set<var>& free_vars)
 {
-    var x = E.as_<var>();
-    return remove_var_and_set_occurrence_info(x, free_vars);
+    return remove_var_and_set_occurrence_info(*E.to_var(), free_vars);
 }
+
 // occur:: Expression -> (marked free_variables, marked Expression)
 
 bool is_alive(const occurrence_info& x)
@@ -270,7 +268,7 @@ occurrence_analyze_decls(const Module& m, Occ::Decls decls_, set<var>& free_vars
 	auto& x = decls[i].first;
 	if (is_alive(x))
 	{
-	    x = remove_var_and_set_occurrence_info(x, free_vars);
+	    x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(x), free_vars));
 	    assert(is_alive(x));
 	}
 	else
@@ -414,7 +412,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
-	var x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
+	var x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(E.sub()[0]), free_vars));
 
         // 4. Quantify and maybe eta-reduce.
         //    Note that we also eta-reduce in simplifier.cc
@@ -452,7 +450,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 		{
 		    if (not is_wildcard(pattern2->sub[j]))
 		    {
-			var x = remove_var_and_set_occurrence_info(pattern2->sub[j], alt_i_free_vars);
+			var x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(pattern2->sub[j]), alt_i_free_vars));
 			pattern2->sub[j] = x; // use temporary to avoid deleting pattern2->sub[j]
 		    }
 		}
