@@ -61,28 +61,29 @@ amount_t max(amount_t a1, amount_t a2)
 void merge_occurrences_into(set<var>& free_vars1, const set<var>& free_vars2, bool alternate_branches = false)
 {
     // Then consider free_vars2
-    for(auto x: free_vars2)
+    for(auto x_: free_vars2)
     {
-	auto it = free_vars1.find(x);
+        auto x = to_occ_var(x_);
+	auto it = free_vars1.find(occ_to_var(x));
 
 	// If the var is in both groups, we must modify its occurrence info
 	if (it != free_vars1.end())
 	{
-	    x.is_loop_breaker = x.is_loop_breaker or it->is_loop_breaker;
+	    x.info.is_loop_breaker = x.info.is_loop_breaker or it->is_loop_breaker;
 	    if (alternate_branches)
-		x.work_dup = max(x.work_dup, it->work_dup);
+		x.info.work_dup = max(x.info.work_dup, it->work_dup);
 	    else
-		x.work_dup = x.work_dup + it->work_dup;
-	    x.code_dup = x.code_dup + it->code_dup;
-	    if (x.context == var_context::argument or it->context == var_context::argument)
-		x.context = var_context::argument;
+		x.info.work_dup = x.info.work_dup + it->work_dup;
+	    x.info.code_dup = x.info.code_dup + it->code_dup;
+	    if (x.info.context == var_context::argument or it->context == var_context::argument)
+		x.info.context = var_context::argument;
 	    else
-		x.context = var_context::unknown;
+		x.info.context = var_context::unknown;
 
-	    free_vars1.erase(x);
+	    free_vars1.erase(x_);
 	}
 
-	free_vars1.insert(x);
+	free_vars1.insert(occ_to_var(x));
     }
 }
 
