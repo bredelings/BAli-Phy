@@ -404,20 +404,18 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
     }
 
     // 2. Lambda (E = \x -> body)
-    if (is_lambda_exp(E))
+    if (auto L = E_.to_lambda())
     {
-	assert(E.size() == 2);
-
 	// 1. Analyze the body and marks its variables
-	auto [body, free_vars] = occurrence_analyzer(m, to_occ_exp(E.sub()[1]));
+	auto [body, free_vars] = occurrence_analyzer(m, L->body);
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
-	var x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(E.sub()[0]), free_vars));
+	auto x = remove_var_and_set_occurrence_info(L->x, free_vars);
 
         // 4. Quantify and maybe eta-reduce.
         //    Note that we also eta-reduce in simplifier.cc
-        auto unreduced = lambda_quantify(x,body);
+        auto unreduced = occ_to_expression_ref(Occ::Lambda{x,to_occ_exp(body)});
         if (auto reduced = maybe_eta_reduce(unreduced))
             return {reduced, free_vars};
         else
