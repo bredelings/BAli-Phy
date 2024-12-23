@@ -10,19 +10,28 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
+Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, const string& /*con_name*/, int i, int N)
 {
     // Maybe we should emit the case directly, instead of relying on desugaring?
     // FIXME: We might need to put types on "extractor" and "field".
 
     // extractor (_,field,_,_) = field;
+    // extractor = \x -> case x of (_,field,_,_) -> field
 
     Hs::Var field("field");
 
     // pattern = (_,field,_,_)
     vector<Hs::LPat> pats(N, {noloc,Hs::WildcardPattern()});
     pats[i] = {noloc,Hs::VarPattern({noloc,field})};
-    Hs::LPat pattern = {noloc,Hs::tuple_pattern(pats)};
+
+    // NOTE: Why use tuples instead of a more description constructor name?
+    //       - because we are generating haskell functions, we have to desugar them.
+    //       - the optimizer looks up the class for constructors to check if it can short-cut.
+    //       See instance.cc: infer_type_for_instance2( ).
+    // Hs::LCon con = {noloc, Hs::Con(con_name, N)};
+    // Hs::LPat pattern = {noloc, Hs::ConPattern(con,pats)};
+
+    Hs::LPat pattern = {noloc, Hs::tuple_pattern(pats)};
 
     // matches = (_,field,_,_) -> field
     Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
@@ -41,8 +50,8 @@ Hs::Var unqualified(Hs::Var v)
 // OK, so
 // * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
 // * global_instance_env = made-up-name :: forall a: class var => superclass var
-// * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
-//                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
+// * Hs::Decls           = { name         = \dict -> case dict of K _ _ method _ _ -> method }
+//                       = { made-up-name = \dict -> case dict of K superdict _ _ _ _ -> superdict }
 
 tuple<ClassInfo, Hs::Decls>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
@@ -154,7 +163,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     int N = class_info.fields.size();
     for(auto& [var, type]: class_info.fields)
     {
-        decls.push_back( {noloc,dictionary_extractor(var, i, N)} );
+        decls.push_back( {noloc,dictionary_extractor(var, class_info.name, i, N)} );
 
         i++;
     }

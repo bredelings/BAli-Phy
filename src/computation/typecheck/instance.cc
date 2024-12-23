@@ -651,6 +651,10 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         pop_note();
     }
 
+    // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
+    //       We have to use tuples for now.
+    // auto dict = Core::ConExp(class_name, dict_entries);
+
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
     auto dict = Core::Tuple(dict_entries);
 
