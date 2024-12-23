@@ -19,7 +19,17 @@ modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (toVector pis) (t
 
 modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
 
--- This could get renamed, after I look at the paper that uses the term "modulated markov"
+{- NOTE: Does ratesBetween + levelProbs = GTR ?
+
+   If so, I could pass:
+   - Qs = a list of n rate matrices
+   - S  = a rate matrix on n states
+   Having the matrix S=GTR(ratesBetween,levelProbs) would be a special case.
+
+   If all the Qs and the S are reversible then the whole thing should be reversible.
+   QUESTION: How would we record this?
+ -}
+
 modulatedMarkov models ratesBetween levelProbs = reversible $ markov a smap q pi where
     a = getAlphabet $ head models
     qs = map getQ models
