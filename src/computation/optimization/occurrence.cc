@@ -248,15 +248,17 @@ occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_group
 {
     vector<vector<CDecls>> output;
     for(const auto& decls: reverse(decl_groups))
-	output.push_back(occurrence_analyze_decls(m, decls, free_vars));
+	output.push_back(occurrence_analyze_decls(m, to_occ(decls), free_vars));
 
     std::reverse(output.begin(), output.end());
     return flatten(std::move(output));
 }
 
 vector<CDecls>
-occurrence_analyze_decls(const Module& m, CDecls decls, set<var>& free_vars)
+occurrence_analyze_decls(const Module& m, Occ::Decls decls_, set<var>& free_vars)
 {
+    auto decls = occ_to_cdecls(decls_);
+
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
     auto graph = construct_directed_reference_graph(m, decls, free_vars);
@@ -467,14 +469,12 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
-    else if (is_let_expression(E))
+    else if (auto L = E_.to_let())
     {
-        auto& L = E.as_<let_exp>();
-
 	// 1. Analyze the body
-	auto [body, free_vars] = occurrence_analyzer(m, to_occ_exp(L.body));
+	auto [body, free_vars] = occurrence_analyzer(m, L->body);
 
-	auto decls_groups = occurrence_analyze_decls(m, L.binds, free_vars);
+	auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
 
 	return {let_expression(decls_groups, body), free_vars};
     }
