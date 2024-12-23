@@ -22,6 +22,8 @@
 
 #include "simplifier.H"
 
+#include "computation/expression/convert.H"
+
 using std::string;
 using std::vector;
 using std::list;
@@ -151,7 +153,7 @@ Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	auto [E, free_vars_i] = occurrence_analyzer(m, decls[i].second);
+	auto [E, free_vars_i] = occurrence_analyzer(m, to_occ_exp(decls[i].second));
         decls[i].second = E;
 
 	// 3.2 Record occurrences
@@ -371,8 +373,9 @@ expression_ref maybe_eta_reduce(const expression_ref& E)
 	return {};
 }
 
-pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const expression_ref& E, var_context context)
+pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
 {
+    auto E = occ_to_expression_ref(E_);
     assert(E);
     if (not E) return {E,set<var>{}};
 
@@ -405,7 +408,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const express
 	assert(E.size() == 2);
 
 	// 1. Analyze the body and marks its variables
-	auto [body, free_vars] = occurrence_analyzer(m, E.sub()[1]);
+	auto [body, free_vars] = occurrence_analyzer(m, to_occ_exp(E.sub()[1]));
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
@@ -427,7 +430,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const express
         auto& [object, alts] = *C;
 
 	// Analyze the object
-        auto [object_, free_vars] = occurrence_analyzer(m, object);
+        auto [object_, free_vars] = occurrence_analyzer(m, to_occ_exp(object));
         object = object_;
 
 	// Just normalize the bodies
@@ -435,7 +438,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const express
 	for(auto& [pattern, body]: alts)
 	{
 	    // Analyze the i-ith branch
-            auto [body_, alt_i_free_vars] = occurrence_analyzer(m, body);
+            auto [body_, alt_i_free_vars] = occurrence_analyzer(m, to_occ_exp(body));
             body = body_;
 
 	    // Remove pattern vars from free variables
@@ -469,7 +472,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const express
         auto& L = E.as_<let_exp>();
 
 	// 1. Analyze the body
-	auto [body, free_vars] = occurrence_analyzer(m, L.body);
+	auto [body, free_vars] = occurrence_analyzer(m, to_occ_exp(L.body));
 
 	auto decls_groups = occurrence_analyze_decls(m, L.binds, free_vars);
 
@@ -487,7 +490,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const express
 	for(int i=0;i<E.size();i++)
 	{
 	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
-	    auto [arg_i, free_vars_i] = occurrence_analyzer(m, E.sub()[i], context);
+	    auto [arg_i, free_vars_i] = occurrence_analyzer(m, to_occ_exp(E.sub()[i]), context);
 	    F->sub.push_back(arg_i);
 	    merge_occurrences_into(free_vars, free_vars_i);
 	}
