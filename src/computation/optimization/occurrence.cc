@@ -368,6 +368,7 @@ maybe_eta_reduce(const Occ::Lambda& L)
     // ($) f y x ==> ($) f y
     else
     {
+        // This case goes away if we make Apply only apply a single argument.
         auto args2 = A->args;
         args2.pop_back();
 
