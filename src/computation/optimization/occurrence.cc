@@ -384,16 +384,16 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
     if (not E) return {E,set<var>{}};
 
     // 1. Var
-    if (is_var(E))
+    if (auto V = E_.to_var())
     {
-	var x = E.as_<var>();
-	x.is_loop_breaker = false;
-	x.context = context;
+	auto x = *V;
+	x.info.is_loop_breaker = false;
+	x.info.context = context;
         if (is_local_symbol(x.name, m.name))
         {
-            x.work_dup = amount_t::Once;
-            x.code_dup = amount_t::Once;
-            return {E,{x}};
+            x.info.work_dup = amount_t::Once;
+            x.info.code_dup = amount_t::Once;
+            return {E,{occ_to_var(x)}};
         }
         else
         {
@@ -407,7 +407,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
     }
 
     // 2. Lambda (E = \x -> body)
-    if (auto L = E_.to_lambda())
+    else if (auto L = E_.to_lambda())
     {
 	// 1. Analyze the body and marks its variables
 	auto [body, free_vars] = occurrence_analyzer(m, L->body);
