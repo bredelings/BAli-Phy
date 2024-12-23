@@ -348,30 +348,32 @@ set<var> dup_work(set<var>& vars)
 //                     \x2 ->               ($) f x2  ===>              f
 //                 We don't do this (could perform more allocation):
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-expression_ref maybe_eta_reduce(const expression_ref& E)
+std::optional<Occ::Exp>
+maybe_eta_reduce(const Occ::Lambda& L)
 {
-    assert(is_lambda_exp(E));
-    auto& x    = E.sub()[0].as_<var>();
-    auto& body = E.sub()[1];
+    if (L.x.info.code_dup != amount_t::Once)
+        return {};
 
-    if (x.code_dup == amount_t::Once and
-	body.is_expression() and is_apply_exp(body) and
-	(body.as_expression().sub.back() == x))
-    {
-	// ($) f x  ==> f
-	if (body.size() == 2)
-	    return body.sub()[0];
-	// ($) f y x ==> ($) f y
-	else
-	{
-	    assert(body.size() > 2);
-	    object_ptr<expression> body2 = body.as_expression().clone();
-	    body2->sub.pop_back();
-	    return body2;
-	}
-    }
+    auto A = L.body.to_apply();
+    if (not A)
+        return {};
+
+    assert(A->args.size());
+    if (A->args.back() != L.x)
+        return {};
+
+    // ($) f x  ==> f
+    if (A->args.size() == 1)
+        return A->head;
+    // ($) f y x ==> ($) f y
     else
-	return {};
+    {
+        auto args2 = A->args;
+        args2.pop_back();
+
+        assert(not args2.empty());
+        return Occ::Apply{A->head, args2};
+    }
 }
 
 pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
@@ -415,12 +417,12 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 
         // 4. Quantify and maybe eta-reduce.
         //    Note that we also eta-reduce in simplifier.cc
-        auto unreduced = occ_to_expression_ref(Occ::Lambda{x,to_occ_exp(body)});
+        auto unreduced = Occ::Lambda{x,to_occ_exp(body)};
         if (auto reduced = maybe_eta_reduce(unreduced))
-            return {reduced, free_vars};
+            return {occ_to_expression_ref(*reduced), free_vars};
         else
             // change Once -> OnceInLam / work=Many, code=Once
-            return {unreduced, dup_work(free_vars)};
+            return {occ_to_expression_ref(unreduced), dup_work(free_vars)};
     }
 
     // 6. Case
