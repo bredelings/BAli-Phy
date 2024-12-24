@@ -399,21 +399,19 @@ pair<Occ::Var, set<var>> occurrence_analyze_var(const Module& m, Occ::Var x, var
     }
 }
 
-pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
+pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, var_context context)
 {
-    auto E = occ_to_expression_ref(E_);
-    assert(E);
-    if (not E) return {E_, set<var>{}};
+    assert(not E.empty());
 
     // 1. Var
-    if (auto V = E_.to_var())
+    if (auto V = E.to_var())
     {
 	auto [x,free_vars] = occurrence_analyze_var(m, *V, context);
         return {x, free_vars};
     }
 
     // 2. Lambda (E = \x -> body)
-    else if (auto L = E_.to_lambda())
+    else if (auto L = E.to_lambda())
     {
 	// 1. Analyze the body and marks its variables
 	auto [body, free_vars] = occurrence_analyzer(m, L->body);
@@ -432,7 +430,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
             return {unreduced, dup_work(free_vars)};
     }
     // 3. Apply
-    else if (auto A = E_.to_apply())
+    else if (auto A = E.to_apply())
     {
         set<var> free_vars;
         auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
@@ -450,7 +448,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
         return {Occ::Apply{head, args}, free_vars};
     }
     // 4. Let (let {x[i] = F[i]} in body)
-    else if (auto L = E_.to_let())
+    else if (auto L = E.to_let())
     {
 	// A. Analyze the body
         auto [F, free_vars] = occurrence_analyzer(m, L->body);
@@ -465,7 +463,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
 	return {F, free_vars};
     }
     // 5. Case
-    else if (auto C = E_.to_case())
+    else if (auto C = E.to_case())
     {
 	// Analyze the object
         auto [object, free_vars] = occurrence_analyzer(m, C->object);
@@ -512,7 +510,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
 	return {Occ::Case{object,alts}, free_vars};
     }
     // 6. ConApp
-    else if (auto C = E_.to_conApp())
+    else if (auto C = E.to_conApp())
     {
         set<var> free_vars;
 
@@ -527,25 +525,25 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
 
         return {Occ::ConApp{C->head, args}, free_vars};
     }
-
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size()) return {E_, set<var>{}};
-
-    // 4. Constructor, Operation (including Apply)
-    else if (is_constructor_exp(E) or is_apply_exp(E) or is_non_apply_op_exp(E))
+    // 7. BuiltinOp
+    else if (auto BB = E.to_builtinOp())
     {
-	set<var> free_vars;
-	object_ptr<expression> F = new expression(E.head());
-	for(int i=0;i<E.size();i++)
-	{
-	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
-	    auto [arg_i, free_vars_i] = occurrence_analyzer(m, to_occ_exp(E.sub()[i]), context);
-	    F->sub.push_back(occ_to_expression_ref(arg_i));
-	    merge_occurrences_into(free_vars, free_vars_i);
-	}
-	return {to_occ_exp(F), free_vars};
+        set<var> free_vars;
+
+        auto B = *BB;
+
+        for(auto& arg: B.args)
+        {
+            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            arg = arg_out;
+            merge_occurrences_into(free_vars, arg_free_vars);
+        }
+
+        return {B, free_vars};
     }
-
-
-    throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
+    // 8. Constant
+    else if (E.to_constant())
+        return {E, {}};
+    else
+        throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
 }
