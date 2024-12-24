@@ -551,8 +551,6 @@ string unparse_type(const ptree& p)
     {
 	assert(sargs.size() == 2);
 
-	if (args[0].size() != 0)
-	    sargs[0] = "(" + sargs[0] + ")";
 	return sargs[0] + " -> " + sargs[1];
     }
     else if (not args.empty())
