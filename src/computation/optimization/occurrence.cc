@@ -249,87 +249,85 @@ occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_group
 {
     vector<vector<CDecls>> output;
     for(const auto& decls: reverse(decl_groups))
-	output.push_back(occurrence_analyze_decls(m, to_occ(decls), free_vars));
+        output.push_back(occurrence_analyze_decls(m, to_occ(decls), free_vars));
 
     std::reverse(output.begin(), output.end());
     return flatten(std::move(output));
 }
 
 vector<CDecls>
-occurrence_analyze_decls(const Module& m, Occ::Decls decls_, set<var>& free_vars)
+occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
-    auto graph = construct_directed_reference_graph(m, decls_, free_vars);
+    auto graph = construct_directed_reference_graph(m, decls, free_vars);
 
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
-    for(int i=0;i<decls_.size();i++)
+    for(int i=0;i<decls.size();i++)
     {
-	auto& x = decls_[i].x;
-	if (is_alive(x))
-	{
-	    x = remove_var_and_set_occurrence_info(x, free_vars);
-	    assert(is_alive(x));
-	}
-	else
-	    assert(not free_vars.count(occ_to_var(x)));
+        auto& x = decls[i].x;
+        if (is_alive(x))
+        {
+            x = remove_var_and_set_occurrence_info(x, free_vars);
+            assert(is_alive(x));
+        }
+        else
+            assert(not free_vars.count(occ_to_var(x)));
     }
 
     // 5. Find strongly connected components
-    vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls_);
+    vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
 
     // 6. Break cycles in each component
     for(auto& component: ordered_components)
     {
-	auto& component_indices = component.first;
-	auto& component_graph = component.second;
+        auto& component_indices = component.first;
+        auto& component_graph = component.second;
 
         // 6.1 Break cycles in this component
-	bool changed = true;
-	while(changed)
-	{
-	    changed = false;
+        bool changed = true;
+        while(changed)
+        {
+            changed = false;
 
-	    // find strongly connected components: every node is reachable from every other node
-	    vector<vector<int>> sub_components = get_ordered_strong_components(component_graph);
+            // find strongly connected components: every node is reachable from every other node
+            vector<vector<int>> sub_components = get_ordered_strong_components(component_graph);
 
-	    // 6.1.1.  Break cycles in the first sub_component with a cycle
-	    for(auto& sub_component: sub_components)
-	    {
-		// If the component is a single with no loop to itself, then we don't need to break any loops
-		if (sub_component.size() == 1 and not edge(sub_component[0], sub_component[0], component_graph).second) continue;
+            // 6.1.1.  Break cycles in the first sub_component with a cycle
+            for(auto& sub_component: sub_components)
+            {
+                // If the component is a single with no loop to itself, then we don't need to break any loops
+                if (sub_component.size() == 1 and not edge(sub_component[0], sub_component[0], component_graph).second) continue;
 
-		// Find the element of the component with the lowest score in the sub_component.
-		int loop_breaker_component_index = select_loop_breaker(sub_component, component_indices, decls_);
-		int loop_breaker_index = component_indices[loop_breaker_component_index];
+                // Find the element of the component with the lowest score in the sub_component.
+                int loop_breaker_component_index = select_loop_breaker(sub_component, component_indices, decls);
+                int loop_breaker_index = component_indices[loop_breaker_component_index];
 
-		// Remove incoming edges to the loop breaker from the component graph
-		clear_in_edges(loop_breaker_component_index, component_graph);
+                // Remove incoming edges to the loop breaker from the component graph
+                clear_in_edges(loop_breaker_component_index, component_graph);
 
-		// Mark the variable as a loop breaker
-		decls_[loop_breaker_index].x.info.is_loop_breaker = true;
+                // Mark the variable as a loop breaker
+                decls[loop_breaker_index].x.info.is_loop_breaker = true;
 
-		// Start
-		changed = true;
-		break;
-	    }
-	}
+                // Start
+                changed = true;
+                break;
+            }
+        }
 
-	// 6.2. Topo-sort elements of the component now that loops are broken
-	component_indices = apply_indices(component_indices, topo_sort(component_graph));
+        // 6.2. Topo-sort elements of the component now that loops are broken
+        component_indices = apply_indices(component_indices, topo_sort(component_graph));
     }
-
-    auto decls = occ_to_cdecls(decls_);
 
     // 7. Flatten the decl groups
     vector<CDecls> decls2;
     for(auto& component: ordered_components)
     {
-	CDecls a_decls;
-	for(int i: component.first)
-	    a_decls.push_back(decls[i]);
-	decls2.push_back(a_decls);
+        Occ::Decls a_decls;
+        for(int i: component.first)
+            a_decls.push_back(decls[i]);
+        decls2.push_back(occ_to_cdecls(a_decls));
     }
     return decls2;
 }
