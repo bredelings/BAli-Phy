@@ -218,13 +218,13 @@ int get_score(const CDecl& decl)
     auto& F = decl.second;
 
     if (is_reglike(F))
-	return 4;
-    else if (is_constructor_exp(F) or F.size() == 0)
-	return 3;
+ 	return 4;
+    else if (is_constructor_exp(F) or (F.size() == 0 and not is_let_expression(F)))
+ 	return 3;
     else if (x.pre_inline())
-	return 1;
+ 	return 1;
     else
-	return 0;
+ 	return 0;
 }
 
 // Find element of component with smallest score in sub_component.
