@@ -187,18 +187,18 @@ Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set
     return graph;
 }
 
-vector<int> get_live_vars(const vector<int>& vars, const CDecls& decls)
+vector<int> get_live_vars(const vector<int>& vars, const Occ::Decls& decls)
 {
     vector<int> live_vars;
     for(int var: vars)
     {
-	if (is_alive(decls[var].first))
+	if (is_alive(decls[var].x))
 	    live_vars.push_back(var);
     }
     return live_vars;
 }
 
-vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, const CDecls& decls)
+vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, const Occ::Decls& decls)
 {
     vector<pair<vector<int>,Graph>> live_components;
     for(auto& component: get_ordered_strong_components(graph))
@@ -265,24 +265,24 @@ occurrence_analyze_decls(const Module& m, Occ::Decls decls_, set<var>& free_vars
     // 2. Construct reference graph between (live) vars.
     auto graph = construct_directed_reference_graph(m, decls_, free_vars);
 
-    auto decls = occ_to_cdecls(decls_);
-
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
-    for(int i=0;i<decls.size();i++)
+    for(int i=0;i<decls_.size();i++)
     {
-	auto& x = decls[i].first;
+	auto& x = decls_[i].x;
 	if (is_alive(x))
 	{
-	    x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(x), free_vars));
+	    x = remove_var_and_set_occurrence_info(x, free_vars);
 	    assert(is_alive(x));
 	}
 	else
-	    assert(not free_vars.count(x));
+	    assert(not free_vars.count(occ_to_var(x)));
     }
 
+    auto decls = occ_to_cdecls(decls_);
+
     // 5. Find strongly connected components
-    vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
+    vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls_);
 
     // 6. Break cycles in each component
     for(auto& component: ordered_components)
