@@ -1,0 +1,51 @@
+{
+    "name": "multi_freq",
+    "result_type": "CTMC<a>",
+    "call": "multiFrequency(@tree,@nodeInfo,@nodeProp,@edgeProp)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "edgeProp",
+            "type": "List<(String,Double)> -> CTMC<a>",
+            "description": "The model to use on each branch",
+            "default_value": "|pi:gtr(pi=pi)|"
+        },
+        {
+            "name": "tree",
+            "type": "Tree<t>",
+            "description": "The base model",
+            "default_value": "get_state(tree)"
+        },
+        {
+            "name": "freqs",
+            "type": "DiscreteDist<List<(String,Double)>>",
+            "description": "The rate distribution",
+            "default_value": "~dirichlet_mixture(symmetric_dirichlet_on(letters(@a),1),@n,2)"
+        },
+        {
+            "name": "nodeInfo",
+            "type": "IntMap<f>",
+            "description": "The underlying property for each node (i.e. GC content)",
+            "default_value": "~iidMap(nodes(@tree),@freqs)"
+        },
+        {
+            "name": "nodeProp",
+            "type" : "f -> List<(String,Double)>",
+            "description": "The mapping from node info to node property",
+            "default_value": "identity"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "2",
+            "description": "The number of frequency components"
+        },
+        {
+            "name": "a",
+            "type": "Alphabet",
+            "default_value": "get_state(alphabet)"
+        }
+    ],
+    "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly.",
+    "examples": ["gtr +> multi_rate(gamma(1,1))","gtr +> multi_rate(beta(2,2),6)"]
+}
