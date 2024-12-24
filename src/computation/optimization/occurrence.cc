@@ -444,51 +444,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
         expression_ref F = occ_to_expression_ref(Occ::Apply{to_occ_exp(head), args});
         return {F, free_vars};
     }
-
-
-    // 6. Case
-    if (auto C = parse_case_expression(E))
-    {
-        auto& [object, alts] = *C;
-
-	// Analyze the object
-        auto [object_, free_vars] = occurrence_analyzer(m, to_occ_exp(object));
-        object = object_;
-
-	// Just normalize the bodies
-	set<var> alts_free_vars;
-	for(auto& [pattern, body]: alts)
-	{
-	    // Analyze the i-ith branch
-            auto [body_, alt_i_free_vars] = occurrence_analyzer(m, to_occ_exp(body));
-            body = body_;
-
-	    // Remove pattern vars from free variables
-	    // Copy occurrence info into pattern variables
-	    if (pattern.size())
-	    {
-		object_ptr<expression> pattern2 = pattern.as_expression().clone();
-		for(int j=0;j < pattern2->size(); j++)
-		{
-		    if (not is_wildcard(pattern2->sub[j]))
-		    {
-			var x = occ_to_var(remove_var_and_set_occurrence_info(to_occ_exp(pattern2->sub[j]), alt_i_free_vars));
-			pattern2->sub[j] = x; // use temporary to avoid deleting pattern2->sub[j]
-		    }
-		}
-		pattern = pattern2;
-	    }
-
-	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
-	    merge_occurrences_into(alts_free_vars, alt_i_free_vars, true);
-	}
-	// We can avoid inlining directly into alternatives, since this might duplicate work.
-        // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
-	merge_occurrences_into(free_vars, alts_free_vars);
-	return {make_case_expression(object,alts), free_vars};
-    }
-
-    // 5. Let (let {x[i] = F[i]} in body)
+    // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E_.to_let())
     {
 	// 1. Analyze the body
@@ -497,6 +453,56 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 	auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
 
 	return {let_expression(decls_groups, body), free_vars};
+    }
+    // 5. Case
+    if (auto C = E_.to_case())
+    {
+	// Analyze the object
+        auto [object_, free_vars] = occurrence_analyzer(m, C->object);
+        auto object = to_occ_exp(object_);
+
+	// Just normalize the bodies
+	set<var> alts_free_vars;
+
+        auto alts = C->alts;
+	for(auto& [pattern, body]: alts)
+	{
+	    // Analyze the i-ith branch
+            auto [body_, alt_free_vars] = occurrence_analyzer(m, body);
+            body = to_occ_exp(body_);
+
+	    // Remove pattern vars from free variables
+	    // Copy occurrence info into pattern variables
+	    if (auto VP = pattern.to_var_pat())
+	    {
+                auto x = remove_var_and_set_occurrence_info(VP->var, alt_free_vars);
+                pattern = Occ::VarPat{x};
+            }
+            else if (auto CP = pattern.to_con_pat())
+            {
+		auto con_pat = *CP;
+		for(int j=0;j < con_pat.args.size(); j++)
+		{
+		    if (auto v = con_pat.args[j].to_var_pat_var())
+		    {
+			auto x = remove_var_and_set_occurrence_info(*v, alt_free_vars);
+			con_pat.args[j] = Occ::VarPat{x};
+		    }
+		}
+		pattern = con_pat;
+	    }
+
+	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
+	    merge_occurrences_into(alts_free_vars, alt_free_vars, true);
+	}
+
+	// We can avoid inlining directly into alternatives, since this might duplicate work.
+        // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
+	merge_occurrences_into(free_vars, alts_free_vars);
+
+        expression_ref F = occ_to_expression_ref(Occ::Case{object,alts});
+
+	return {F, free_vars};
     }
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
