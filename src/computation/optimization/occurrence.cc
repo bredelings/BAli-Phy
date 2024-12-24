@@ -125,7 +125,12 @@ bool is_alive(const occurrence_info& x)
     return (x.is_exported or x.code_dup != amount_t::None);
 }
 
-Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var>& free_vars)
+bool is_alive(const Occ::Var& x)
+{
+    return is_alive(x.info);
+}
+
+Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set<var>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
@@ -137,23 +142,23 @@ Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var
     vector<int> work;
     for(int i=0;i<L;i++)
     {
-	auto& x = decls[i].first;
-	x.code_dup = free_vars.count(x)?(amount_t::Unknown):(amount_t::None);
+	auto& x = decls[i].x;
+	x.info.code_dup = free_vars.count(occ_to_var(x))?(amount_t::Unknown):(amount_t::None);
 	if (is_alive(x))
 	    work.push_back(i);
     }
 
     // 3. Discover reachable variables, analyze them, and record references between variables
-    map<var,int> index_for_var;
+    map<Occ::Var,int> index_for_var;
     for(int i=0;i<L;i++)
-	index_for_var.insert({decls[i].first,i});
+	index_for_var.insert({decls[i].x, i});
 
     for(int k=0;k<work.size();k++)
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	auto [E, free_vars_i] = occurrence_analyzer(m, to_occ_exp(decls[i].second));
-        decls[i].second = occ_to_expression_ref(E);
+	auto [E, free_vars_i] = occurrence_analyzer(m, decls[i].body);
+        decls[i].body = E;
 
 	// 3.2 Record occurrences
 	merge_occurrences_into(free_vars, free_vars_i);
@@ -161,7 +166,7 @@ Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var
 	// 3.3. Check if other variables j are referenced from the i-th variable.
 	for(auto& x: free_vars_i)
 	{
-	    auto it = index_for_var.find(x);
+	    auto it = index_for_var.find(to_occ_var(x));
 	    if (it != index_for_var.end())
 	    {
 		int j = it->second;
@@ -170,9 +175,9 @@ Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var
 		boost::add_edge(i, j, graph);
 
 		// 3.3.3 Add variable j to the work list if we haven't put it on the list already
-		if (not is_alive(decls[j].first))
+		if (not is_alive(decls[j].x))
 		{
-		    decls[j].first.code_dup = amount_t::Unknown;
+		    decls[j].x.info.code_dup = amount_t::Unknown;
 		    work.push_back(j);
 		}
 	    }
@@ -256,11 +261,11 @@ occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_group
 vector<CDecls>
 occurrence_analyze_decls(const Module& m, Occ::Decls decls_, set<var>& free_vars)
 {
-    auto decls = occ_to_cdecls(decls_);
-
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
-    auto graph = construct_directed_reference_graph(m, decls, free_vars);
+    auto graph = construct_directed_reference_graph(m, decls_, free_vars);
+
+    auto decls = occ_to_cdecls(decls_);
 
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
