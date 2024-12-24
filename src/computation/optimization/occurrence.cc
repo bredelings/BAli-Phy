@@ -447,13 +447,13 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E_.to_let())
     {
-	// A. Analyze the decls
-        auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
-
-        // B. Analyze the body
+	// A. Analyze the body
         auto [F, free_vars] = occurrence_analyzer(m, L->body);
 
-        // C. Put the decl groups back on
+        // B. Analyze the decls
+        auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
+
+        // C. Wrap the decls around the body
         for(auto& decls: reverse(decls_groups))
             F = Occ::Let{decls,F};
 
