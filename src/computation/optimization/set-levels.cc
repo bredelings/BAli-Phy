@@ -299,13 +299,13 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
         return set_level(AE, level, env);
 }
 
-void set_level_for_module(FreshVarState& fresh_var_state, vector<CDecls>& module)
+void set_level_for_module(FreshVarState& fresh_var_state, vector<CDecls>& decl_groups)
 {
     vector<CDecls> module_out;
 
     let_floater_state state(fresh_var_state);
     level_env_t env;
-    for(auto& decls: module)
+    for(auto& decls: decl_groups)
     {
         for(auto& [x,rhs]: decls)
             rhs = add_free_variable_annotations(rhs);
