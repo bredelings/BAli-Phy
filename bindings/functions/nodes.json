@@ -6,8 +6,8 @@
     "import": ["Tree"],
     "args": [
         {
-            "name": "t",
-            "type": "Tree",
+            "name": "tree",
+            "type": "Tree<t>",
             "description": "The tree"
         }
     ]
