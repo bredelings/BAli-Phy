@@ -14,6 +14,8 @@ expression_ref to_expression_ref(const Core2::Exp<>& E);
 
 expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E);
 
+CDecl to_expression_ref(const Core2::Decl<>& decl);
+
 CDecls to_expression_ref(const Core2::Decls<>& decls);
 
 //-----------------------------------------------------------------------
@@ -39,6 +41,8 @@ Core::Alts occ_to_expression_ref(const Occ::Alts& A);
 expression_ref occ_to_expression_ref(const Occ::Pattern& P);
 
 expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
+
+CDecl occ_to_cdecl(const Occ::Decl& decl);
 
 CDecls occ_to_cdecls(const Occ::Decls& decls);
 

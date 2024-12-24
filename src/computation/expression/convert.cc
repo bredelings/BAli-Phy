@@ -241,6 +241,12 @@ CDecls to_expression_ref(const Core2::Decls<>& decls)
     return decls2;
 }
 
+CDecl to_expression_ref(const Core2::Decl<>& decl)
+{
+    auto& [x,E] = decl;
+    return {to_var(x),to_expression_ref(E)};
+}
+
 expression_ref to_expression_ref(const Core2::Let<>& L)
 {
     auto decls = to_expression_ref(L.decls);
@@ -588,6 +594,12 @@ CDecls occ_to_cdecls(const Occ::Decls& decls)
     for(auto& [x,E]: decls)
 	decls2.push_back({occ_to_var(x), occ_to_expression_ref(E)});
     return decls2;
+}
+
+CDecl occ_to_cdecl(const Occ::Decl& decl)
+{
+    auto& [x,E] = decl;
+    return {occ_to_var(x), occ_to_expression_ref(E)};
 }
 
 expression_ref occ_to_expression_ref(const Occ::Let& L)
