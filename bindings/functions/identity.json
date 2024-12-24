@@ -1,0 +1,14 @@
+{
+    "name": "identity",
+    "result_type": "a",
+    "no_log": true,
+    "call": "id(x)",
+    "args": [
+        {
+            "name": "x",
+            "type": "a",
+	    "description": "The argument"
+        }
+    ],
+    "description" : "The identity function"
+}
