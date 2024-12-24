@@ -244,10 +244,10 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //              Deal with this later.
 //
 
-vector<CDecls>
-occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_groups, set<var>& free_vars)
+vector<Occ::Decls>
+occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decl_groups, set<var>& free_vars)
 {
-    vector<vector<CDecls>> output;
+    vector<vector<Occ::Decls>> output;
     for(const auto& decls: reverse(decl_groups))
         output.push_back(occurrence_analyze_decls(m, to_occ(decls), free_vars));
 
@@ -255,7 +255,7 @@ occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_group
     return flatten(std::move(output));
 }
 
-vector<CDecls>
+vector<Occ::Decls>
 occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
@@ -321,13 +321,13 @@ occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
     }
 
     // 7. Flatten the decl groups
-    vector<CDecls> decls2;
+    vector<Occ::Decls> decls2;
     for(auto& component: ordered_components)
     {
         Occ::Decls a_decls;
         for(int i: component.first)
             a_decls.push_back(decls[i]);
-        decls2.push_back(occ_to_cdecls(a_decls));
+        decls2.push_back(a_decls);
     }
     return decls2;
 }
@@ -447,14 +447,15 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E_.to_let())
     {
-	// 1. Analyze the body
-        auto [body, free_vars] = occurrence_analyzer(m, L->body);
-
+	// A. Analyze the decls
         auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
 
-        auto F = body;
+        // B. Analyze the body
+        auto [F, free_vars] = occurrence_analyzer(m, L->body);
+
+        // C. Put the decl groups back on
         for(auto& decls: reverse(decls_groups))
-            F = Occ::Let{to_occ(decls),F};
+            F = Occ::Let{decls,F};
 
 	return {F, free_vars};
     }

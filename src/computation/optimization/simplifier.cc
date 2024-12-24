@@ -1041,14 +1041,16 @@ SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
     vector<substitution> S(1);
     for(auto& decls: decl_groups)
     {
-	auto decls2 = to_occ(decls);
-	auto s = simplify_decls(decls2, S.back(), bound_vars, true);
-	decls = occ_to_cdecls(decls2);
+	auto s = simplify_decls(decls, S.back(), bound_vars, true);
 	S.push_back( s );
-	bound_vars = bind_decls(bound_vars, decls2);
+	bound_vars = bind_decls(bound_vars, decls);
     }
 
-    return decl_groups;
+    vector<CDecls> decl_groups_out;
+    for(auto& decls: decl_groups)
+        decl_groups_out.push_back(occ_to_cdecls(decls));
+
+    return decl_groups_out;
 }
 
 
