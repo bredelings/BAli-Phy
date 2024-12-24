@@ -153,7 +153,7 @@ Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var
 	int i = work[k];
 	// 3.1 Analyze the bound statement
 	auto [E, free_vars_i] = occurrence_analyzer(m, to_occ_exp(decls[i].second));
-        decls[i].second = E;
+        decls[i].second = occ_to_expression_ref(E);
 
 	// 3.2 Record occurrences
 	merge_occurrences_into(free_vars, free_vars_i);
@@ -377,11 +377,11 @@ maybe_eta_reduce(const Occ::Lambda& L)
     }
 }
 
-pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
+pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
 {
     auto E = occ_to_expression_ref(E_);
     assert(E);
-    if (not E) return {E,set<var>{}};
+    if (not E) return {E_, set<var>{}};
 
     // 1. Var
     if (auto V = E_.to_var())
@@ -393,7 +393,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
         {
             x.info.work_dup = amount_t::Once;
             x.info.code_dup = amount_t::Once;
-            return {E,{occ_to_var(x)}};
+            return {E_, {occ_to_var(x)}};
         }
         else
         {
@@ -402,7 +402,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
                 assert(is_qualified_symbol(x.name));
                 assert(special_prelude_symbol(x.name) or m.lookup_external_symbol(x.name));
             }
-            return {E,{}};
+            return {E_, {}};
         }
     }
 
@@ -418,12 +418,12 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 
         // 4. Quantify and maybe eta-reduce.
         //    Note that we also eta-reduce in simplifier.cc
-        auto unreduced = Occ::Lambda{x,to_occ_exp(body)};
+        auto unreduced = Occ::Lambda{x,body};
         if (auto reduced = maybe_eta_reduce(unreduced))
-            return {occ_to_expression_ref(*reduced), free_vars};
+            return {*reduced, free_vars};
         else
             // change Once -> OnceInLam / work=Many, code=Once
-            return {occ_to_expression_ref(unreduced), dup_work(free_vars)};
+            return {unreduced, dup_work(free_vars)};
     }
     // 3. Apply
     else if (auto A = E_.to_apply())
@@ -438,11 +438,11 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
         {
             auto [arg_out, arg_free_vars] = occurrence_analyzer(m, arg, var_context::argument);
             // FIXME: make a special form for vars.
-            arg = *to_occ_exp(arg_out).to_var();
+            arg = *arg_out.to_var();
             merge_occurrences_into(free_vars, arg_free_vars);
         }
-        expression_ref F = occ_to_expression_ref(Occ::Apply{to_occ_exp(head), args});
-        return {F, free_vars};
+
+        return {Occ::Apply{head, args}, free_vars};
     }
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E_.to_let())
@@ -452,14 +452,13 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 
 	auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
 
-	return {let_expression(decls_groups, body), free_vars};
+	return {to_occ_exp(let_expression(decls_groups, occ_to_expression_ref(body))), free_vars};
     }
     // 5. Case
     if (auto C = E_.to_case())
     {
 	// Analyze the object
-        auto [object_, free_vars] = occurrence_analyzer(m, C->object);
-        auto object = to_occ_exp(object_);
+        auto [object, free_vars] = occurrence_analyzer(m, C->object);
 
 	// Just normalize the bodies
 	set<var> alts_free_vars;
@@ -469,7 +468,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 	{
 	    // Analyze the i-ith branch
             auto [body_, alt_free_vars] = occurrence_analyzer(m, body);
-            body = to_occ_exp(body_);
+            body = body_;
 
 	    // Remove pattern vars from free variables
 	    // Copy occurrence info into pattern variables
@@ -500,13 +499,11 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
         // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
 	merge_occurrences_into(free_vars, alts_free_vars);
 
-        expression_ref F = occ_to_expression_ref(Occ::Case{object,alts});
-
-	return {F, free_vars};
+	return {Occ::Case{object,alts}, free_vars};
     }
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size()) return {E,set<var>{}};
+    else if (not E.size()) return {E_, set<var>{}};
 
     // 4. Constructor, Operation (including Apply)
     else if (is_constructor_exp(E) or is_apply_exp(E) or is_non_apply_op_exp(E))
@@ -517,10 +514,10 @@ pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const Occ::Ex
 	{
 	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
 	    auto [arg_i, free_vars_i] = occurrence_analyzer(m, to_occ_exp(E.sub()[i]), context);
-	    F->sub.push_back(arg_i);
+	    F->sub.push_back(occ_to_expression_ref(arg_i));
 	    merge_occurrences_into(free_vars, free_vars_i);
 	}
-	return {F,free_vars};
+	return {to_occ_exp(F), free_vars};
     }
 
 
