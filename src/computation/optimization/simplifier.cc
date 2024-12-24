@@ -1022,7 +1022,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 vector<CDecls>
 SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
 {
-    set<var> free_vars;
+    set<Occ::Var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
     auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_in, free_vars);

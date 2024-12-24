@@ -58,24 +58,24 @@ amount_t max(amount_t a1, amount_t a2)
 }
 
 // Merge_branch should MAX the work done, but ADD the code size.
-void merge_occurrences_into(set<var>& free_vars1, const set<var>& free_vars2, bool alternate_branches = false)
+void merge_occurrences_into(set<Occ::Var>& free_vars1, const set<Occ::Var>& free_vars2, bool alternate_branches = false)
 {
     // Then consider free_vars2
     for(auto x_: free_vars2)
     {
-        auto x = to_occ_var(x_);
-	auto it = free_vars1.find(occ_to_var(x));
+        auto x = x_;
+	auto it = free_vars1.find(x);
 
 	// If the var is in both groups, we must modify its occurrence info
 	if (it != free_vars1.end())
 	{
-	    x.info.is_loop_breaker = x.info.is_loop_breaker or it->is_loop_breaker;
+	    x.info.is_loop_breaker = x.info.is_loop_breaker or it->info.is_loop_breaker;
 	    if (alternate_branches)
-		x.info.work_dup = max(x.info.work_dup, it->work_dup);
+		x.info.work_dup = max(x.info.work_dup, it->info.work_dup);
 	    else
-		x.info.work_dup = x.info.work_dup + it->work_dup;
-	    x.info.code_dup = x.info.code_dup + it->code_dup;
-	    if (x.info.context == var_context::argument or it->context == var_context::argument)
+		x.info.work_dup = x.info.work_dup + it->info.work_dup;
+	    x.info.code_dup = x.info.code_dup + it->info.code_dup;
+	    if (x.info.context == var_context::argument or it->info.context == var_context::argument)
 		x.info.context = var_context::argument;
 	    else
 		x.info.context = var_context::unknown;
@@ -83,14 +83,14 @@ void merge_occurrences_into(set<var>& free_vars1, const set<var>& free_vars2, bo
 	    free_vars1.erase(x_);
 	}
 
-	free_vars1.insert(occ_to_var(x));
+	free_vars1.insert(x);
     }
 }
 
-Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<Occ::Var>& free_vars)
 {
     // 1. Copy occurrence info
-    auto x_iter = free_vars.find(occ_to_var(x));
+    auto x_iter = free_vars.find(x);
     if (x_iter == free_vars.end())
     {
 	x.info.work_dup = amount_t::None;
@@ -101,19 +101,19 @@ Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<var>& free_vars)
     else
     {
 	bool is_exported = x.info.is_exported;
-	x.info = *x_iter;
+	x.info = x_iter->info;
 	x.info.is_exported = is_exported;
     }
 
     // 2. Remove var from set
-    free_vars.erase(occ_to_var(x));
+    free_vars.erase(x);
 
     assert(x.info.code_dup != amount_t::Unknown and x.info.work_dup != amount_t::Unknown);
 
     return x;
 }
 
-Occ::Var remove_var_and_set_occurrence_info(const Occ::Exp& E, set<var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(const Occ::Exp& E, set<Occ::Var>& free_vars)
 {
     return remove_var_and_set_occurrence_info(*E.to_var(), free_vars);
 }
@@ -130,7 +130,7 @@ bool is_alive(const Occ::Var& x)
     return is_alive(x.info);
 }
 
-Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set<var>& free_vars)
+Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set<Occ::Var>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
@@ -143,7 +143,7 @@ Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set
     for(int i=0;i<L;i++)
     {
 	auto& x = decls[i].x;
-	x.info.code_dup = free_vars.count(occ_to_var(x))?(amount_t::Unknown):(amount_t::None);
+	x.info.code_dup = free_vars.count(x)?(amount_t::Unknown):(amount_t::None);
 	if (is_alive(x))
 	    work.push_back(i);
     }
@@ -166,7 +166,7 @@ Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set
 	// 3.3. Check if other variables j are referenced from the i-th variable.
 	for(auto& x: free_vars_i)
 	{
-	    auto it = index_for_var.find(to_occ_var(x));
+	    auto it = index_for_var.find(x);
 	    if (it != index_for_var.end())
 	    {
 		int j = it->second;
@@ -245,7 +245,7 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //
 
 vector<Occ::Decls>
-occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decl_groups, set<var>& free_vars)
+occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decl_groups, set<Occ::Var>& free_vars)
 {
     vector<vector<Occ::Decls>> output;
     for(const auto& decls: reverse(decl_groups))
@@ -256,7 +256,7 @@ occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decl_
 }
 
 vector<Occ::Decls>
-occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
+occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<Occ::Var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
@@ -273,7 +273,7 @@ occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
             assert(is_alive(x));
         }
         else
-            assert(not free_vars.count(occ_to_var(x)));
+            assert(not free_vars.count(x));
     }
 
     // 5. Find strongly connected components
@@ -332,13 +332,13 @@ occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<var>& free_vars)
     return decls2;
 }
 
-set<var> dup_work(set<var>& vars)
+set<Occ::Var> dup_work(set<Occ::Var>& vars)
 {
-    set<var> vars2;
+    set<Occ::Var> vars2;
     for(auto x: vars)
     {
-	if (x.work_dup == amount_t::Once)
-	    x.work_dup = amount_t::Many;
+	if (x.info.work_dup == amount_t::Once)
+	    x.info.work_dup = amount_t::Many;
 	vars2.insert(x);
     }
     return vars2;
@@ -377,7 +377,7 @@ maybe_eta_reduce(const Occ::Lambda& L)
     }
 }
 
-pair<Occ::Var, set<var>> occurrence_analyze_var(const Module& m, Occ::Var x, var_context context)
+pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Occ::Var x, var_context context)
 {
     // 1. Var
     x.info.is_loop_breaker = false;
@@ -386,7 +386,7 @@ pair<Occ::Var, set<var>> occurrence_analyze_var(const Module& m, Occ::Var x, var
     {
         x.info.work_dup = amount_t::Once;
         x.info.code_dup = amount_t::Once;
-        return {x, {occ_to_var(x)}};
+        return {x, {x}};
     }
     else
     {
@@ -399,7 +399,7 @@ pair<Occ::Var, set<var>> occurrence_analyze_var(const Module& m, Occ::Var x, var
     }
 }
 
-pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, var_context context)
+pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, var_context context)
 {
     assert(not E.empty());
 
@@ -432,7 +432,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, 
     // 3. Apply
     else if (auto A = E.to_apply())
     {
-        set<var> free_vars;
+        set<Occ::Var> free_vars;
         auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
         merge_occurrences_into(free_vars, head_free_vars);
 
@@ -469,7 +469,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, 
         auto [object, free_vars] = occurrence_analyzer(m, C->object);
 
 	// Just normalize the bodies
-	set<var> alts_free_vars;
+	set<Occ::Var> alts_free_vars;
 
         auto alts = C->alts;
 	for(auto& [pattern, body]: alts)
@@ -512,7 +512,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, 
     // 6. ConApp
     else if (auto C = E.to_conApp())
     {
-        set<var> free_vars;
+        set<Occ::Var> free_vars;
 
         auto args = C->args;
 
@@ -528,7 +528,7 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, 
     // 7. BuiltinOp
     else if (auto BB = E.to_builtinOp())
     {
-        set<var> free_vars;
+        set<Occ::Var> free_vars;
 
         auto B = *BB;
 
