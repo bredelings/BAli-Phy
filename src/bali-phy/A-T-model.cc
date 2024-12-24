@@ -506,8 +506,11 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 
 model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const std::string& model, const string& what)
 {
-    map<string,pair<string,ptree>> smodel_states = {{"alphabet",{"alpha",parse_type("a")}},
-						    {"branch_categories",{"branch_categories",parse_type("List<Int>")}}};
+    map<string,pair<string,ptree>> smodel_states = {
+        {"alphabet",{"alpha",parse_type("a")}},
+        {"branch_categories",{"branch_categories",parse_type("List<Int>")}},
+        {"tree",{"tree",parse_type("Tree<t>")}},
+    };
 
     TC.add_states(smodel_states);
 

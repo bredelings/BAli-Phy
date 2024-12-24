@@ -233,6 +233,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<string>& SM_function_for_index,
 						    const vector<expression_ref>& alphabet_exps,
 						    const expression_ref& branch_categories,
+						    const expression_ref& tree,
 						    do_block& model,
 						    vector<expression_ref>& model_loggers)
 {
@@ -252,7 +253,11 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
         auto code = SMs[i].code;
 
         expression_ref smodel = var(SM_function_for_index[i]);
-        smodel = code.add_arguments(smodel, {{"alphabet",alphabet_exps[*first_partition]}, {"branch_categories",branch_categories}});
+        smodel = code.add_arguments(smodel, {
+                {"alphabet",alphabet_exps[*first_partition]},
+                {"branch_categories",branch_categories},
+                {"tree",tree}
+            });
 
         auto smodel_var = var("smodel" + suffix);
         auto log_smodel = var("log_"+smodel_var.name);
@@ -824,7 +829,7 @@ std::string generate_atmodel_program(const variables_map& args,
         }
     }
 
-    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, model, model_loggers);
+    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, tree_var, model, model_loggers);
     auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, model, model_loggers);
     model.empty_stmt();
 

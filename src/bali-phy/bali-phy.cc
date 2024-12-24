@@ -400,7 +400,12 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
             E = {E, a};
         else if (state_name == "branch_categories")
         {
-            throw myexception()<<"Can't handle branch categories in --print expressions right now.";
+            throw myexception()<<"Can't handle state 'branch_categories' in --print expressions right now.";
+//            smodel = {smodel, branch_categories};
+        }
+        else if (state_name == "tree")
+        {
+            throw myexception()<<"Can't handle state 'tree' in --print expressions right now.";
 //            smodel = {smodel, branch_categories};
         }
         else
