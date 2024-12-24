@@ -377,6 +377,28 @@ maybe_eta_reduce(const Occ::Lambda& L)
     }
 }
 
+pair<Occ::Var, set<var>> occurrence_analyze_var(const Module& m, Occ::Var x, var_context context)
+{
+    // 1. Var
+    x.info.is_loop_breaker = false;
+    x.info.context = context;
+    if (is_local_symbol(x.name, m.name))
+    {
+        x.info.work_dup = amount_t::Once;
+        x.info.code_dup = amount_t::Once;
+        return {x, {occ_to_var(x)}};
+    }
+    else
+    {
+        if (not is_haskell_builtin_con_name(x.name))
+        {
+            assert(is_qualified_symbol(x.name));
+            assert(special_prelude_symbol(x.name) or m.lookup_external_symbol(x.name));
+        }
+        return {x, {}};
+    }
+}
+
 pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_, var_context context)
 {
     auto E = occ_to_expression_ref(E_);
@@ -386,24 +408,8 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
     // 1. Var
     if (auto V = E_.to_var())
     {
-	auto x = *V;
-	x.info.is_loop_breaker = false;
-	x.info.context = context;
-        if (is_local_symbol(x.name, m.name))
-        {
-            x.info.work_dup = amount_t::Once;
-            x.info.code_dup = amount_t::Once;
-            return {E_, {occ_to_var(x)}};
-        }
-        else
-        {
-            if (not is_haskell_builtin_con_name(x.name))
-            {
-                assert(is_qualified_symbol(x.name));
-                assert(special_prelude_symbol(x.name) or m.lookup_external_symbol(x.name));
-            }
-            return {E_, {}};
-        }
+	auto [x,free_vars] = occurrence_analyze_var(m, *V, context);
+        return {x, free_vars};
     }
 
     // 2. Lambda (E = \x -> body)
@@ -436,9 +442,8 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
 
         for(auto& arg: args)
         {
-            auto [arg_out, arg_free_vars] = occurrence_analyzer(m, arg, var_context::argument);
-            // FIXME: make a special form for vars.
-            arg = *arg_out.to_var();
+            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            arg = arg_out;
             merge_occurrences_into(free_vars, arg_free_vars);
         }
 
@@ -505,6 +510,22 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
 	merge_occurrences_into(free_vars, alts_free_vars);
 
 	return {Occ::Case{object,alts}, free_vars};
+    }
+    // 6. ConApp
+    else if (auto C = E_.to_conApp())
+    {
+        set<var> free_vars;
+
+        auto args = C->args;
+
+        for(auto& arg: args)
+        {
+            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            arg = arg_out;
+            merge_occurrences_into(free_vars, arg_free_vars);
+        }
+
+        return {Occ::ConApp{C->head, args}, free_vars};
     }
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
