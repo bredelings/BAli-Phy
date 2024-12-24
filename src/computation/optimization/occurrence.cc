@@ -448,14 +448,18 @@ pair<Occ::Exp,set<var>> occurrence_analyzer(const Module& m, const Occ::Exp& E_,
     else if (auto L = E_.to_let())
     {
 	// 1. Analyze the body
-	auto [body, free_vars] = occurrence_analyzer(m, L->body);
+        auto [body, free_vars] = occurrence_analyzer(m, L->body);
 
-	auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
+        auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
 
-	return {to_occ_exp(let_expression(decls_groups, occ_to_expression_ref(body))), free_vars};
+        auto F = body;
+        for(auto& decls: reverse(decls_groups))
+            F = Occ::Let{to_occ(decls),F};
+
+	return {F, free_vars};
     }
     // 5. Case
-    if (auto C = E_.to_case())
+    else if (auto C = E_.to_case())
     {
 	// Analyze the object
         auto [object, free_vars] = occurrence_analyzer(m, C->object);
