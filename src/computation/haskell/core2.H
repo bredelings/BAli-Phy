@@ -59,7 +59,10 @@ namespace Core2
 
 	NoteE note_;
 
-	std::string print() const;
+        const NoteE& note() const {return note_;}
+              NoteE& note()       {return note_;}
+
+        std::string print() const;
 
 	bool empty() const
 	{
@@ -253,15 +256,22 @@ namespace Core2
 
 	Exp() = default;
 	Exp(const Exp<NoteV,NoteE>& e) = default;
-
 	Exp(const Var<NoteV>& v):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ) {}
+	Exp(const Var<NoteV>& v, const NoteE& n):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ), note_(n) {}
 	Exp(const Lambda<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ) {}
+	Exp(const Lambda<NoteV,NoteE>& l, const NoteE& n):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ), note_(n) {}
 	Exp(const Apply<NoteV,NoteE>& a):exp_ptr( make_cow_ptr<Apply<NoteV,NoteE>>(a) ) {}
+	Exp(const Apply<NoteV,NoteE>& a, const NoteE& n):exp_ptr( make_cow_ptr<Apply<NoteV,NoteE>>(a) ), note_(n) {}
 	Exp(const Let<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ) {}
+	Exp(const Let<NoteV,NoteE>& l, const NoteE& n):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ), note_(n) {}
 	Exp(const Case<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ) {}
+	Exp(const Case<NoteV,NoteE>& c, const NoteE& n):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ), note_(n) {}
 	Exp(const ConApp<NoteV>& c):exp_ptr( make_cow_ptr<ConApp<NoteV>>(c) ) {}
+	Exp(const ConApp<NoteV>& c, const NoteE& n):exp_ptr( make_cow_ptr<ConApp<NoteV>>(c)), note_(n) {}
 	Exp(const BuiltinOp<NoteV>& b):exp_ptr( make_cow_ptr<BuiltinOp<NoteV>>(b) ) {}
+	Exp(const BuiltinOp<NoteV>& b, const NoteE& n):exp_ptr( make_cow_ptr<BuiltinOp<NoteV>>(b) ), note_(n) {}
 	Exp(const Constant& c):exp_ptr( make_cow_ptr<Constant>(c) ) {}
+	Exp(const Constant& c, const NoteE& n):exp_ptr( make_cow_ptr<Constant>(c) ), note_(n) {}
 
 	~Exp() = default;
     };
