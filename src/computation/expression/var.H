@@ -21,6 +21,8 @@ struct var: public Object, public occurrence_info
 
     std::optional<int> level;
 
+    bool is_exported = false;
+
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
     var* clone() const {return new var(*this);}
@@ -35,13 +37,13 @@ struct var: public Object, public occurrence_info
     template <class Archive>
     void serialize(Archive& ar)
     {
-	// We should only be serializing var after level is on longer needed.
-	ar(name,index);
+	// We should only be serializing var after level is no longer needed.
+	ar(name,index,is_exported);
     }
 
     var(int i):index(i) {}
     explicit var(const std::string& s):var(s,0) {}
-    var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
+    var(const std::string& s,int i,bool e=false):index(i),name(s),is_exported(e) {assert(name != "_");}
 
     var():index(0) {}
 };

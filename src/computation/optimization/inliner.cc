@@ -272,10 +272,9 @@ bool SimplifierState::do_inline(const Occ::Exp& rhs, const occurrence_info& occu
     // OnceSafe
     else if (occur.pre_inline())
     {
-	if (options.pre_inline_unconditionally and not occur.is_exported and false)
-	    throw myexception()<<"Trying to inline OnceSafe variable!";
-	else
-	    return true;
+//	if (options.pre_inline_unconditionally and not occur.is_exported and false)
+//	    throw myexception()<<"Trying to inline OnceSafe variable!";
+        return true;
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.

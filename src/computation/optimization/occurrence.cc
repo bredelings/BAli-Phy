@@ -100,9 +100,7 @@ Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<Occ::Var>& free_vars
     }
     else
     {
-	bool is_exported = x.info.is_exported;
 	x.info = x_iter->info;
-	x.info.is_exported = is_exported;
     }
 
     // 2. Remove var from set
@@ -119,15 +117,9 @@ Occ::Var remove_var_and_set_occurrence_info(const Occ::Exp& E, set<Occ::Var>& fr
 }
 
 // occur:: Expression -> (marked free_variables, marked Expression)
-
-bool is_alive(const occurrence_info& x)
-{
-    return (x.is_exported or x.code_dup != amount_t::None);
-}
-
 bool is_alive(const Occ::Var& x)
 {
-    return is_alive(x.info);
+    return (x.is_exported or x.info.code_dup != amount_t::None);
 }
 
 Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set<Occ::Var>& free_vars)

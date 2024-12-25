@@ -256,7 +256,7 @@ Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const i
 	S.insert({x, {x2}});
     }
 
-    if (x.info.is_exported) assert(x == x2);
+    if (x.is_exported) assert(x == x2);
 
     return x2;
 }
@@ -726,7 +726,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 
 	auto x2 = new_names[i];
 
-	if (x.info.is_exported) assert(x == x2);
+	if (x.is_exported) assert(x == x2);
 
 	// 1. Any references to x in F must be to the x bound in this scope.
 	// 2. F can only contain references to x if x is a loop breaker.
@@ -739,7 +739,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.info.is_exported)
+	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
 	{
 	    S2.erase(x);
 	    S2.insert({x,{F,S2}});
@@ -782,7 +782,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 		    }
 
 	    // what are the conditions for post-inlining unconditionally?
-	    if (is_trivial(F) and options.post_inline_unconditionally and not x.info.is_exported and not x.info.is_loop_breaker)
+	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.info.is_loop_breaker)
 	    {
 		S2.erase(x);
 		S2.insert({x,F});

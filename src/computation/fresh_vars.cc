@@ -91,7 +91,7 @@ var FreshVarSource::get_fresh_var_copy(var x)
 Occ::Var FreshVarSource::get_fresh_var_copy(Occ::Var x)
 {
 //    assert(x.index >= 0);
-    assert(not x.info.is_exported);
+    assert(not x.is_exported);
     assert(check_index(x.index));
 
     x.index = get_index();

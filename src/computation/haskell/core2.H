@@ -291,6 +291,9 @@ namespace Core2
 
 	NoteV info;
 
+        // Perhaps this should go on a note...
+        bool is_exported = false;
+
 	bool operator==(const Var<NoteV>& v2) const
 	{
 	    return index == v2.index and name == v2.name;
@@ -310,7 +313,7 @@ namespace Core2
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-	    ar(name, index, info);
+	    ar(name, index, info, is_exported);
 	}
     };
 

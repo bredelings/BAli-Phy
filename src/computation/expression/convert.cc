@@ -17,7 +17,7 @@ using std::string;
 
 Core2::Var<> to_core(const var& V)
 {
-    return Core2::Var<>{V.name, V.index, {}};
+    return Core2::Var<>{V.name, V.index, {}, V.is_exported};
 }
 
 Core2::Lambda<> to_core_lambda(expression_ref L)
@@ -213,7 +213,7 @@ Core2::Exp<> to_core_exp(const expression_ref& E)
 
 var to_var(const Core2::Var<>& V)
 {
-    return var(V.name, V.index);
+    return var(V.name, V.index, V.is_exported);
 }
 
 expression_ref var_to_expression_ref(const Core2::Var<>& V)
@@ -378,7 +378,7 @@ expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E)
 
 Occ::Var to_occ_var(const var& V)
 {
-    return Occ::Var{V.name, V.index, (occurrence_info&)V};
+    return Occ::Var{V.name, V.index, (occurrence_info&)V, V.is_exported};
 }
 
 Occ::Lambda to_occ_lambda(expression_ref L)
@@ -573,7 +573,7 @@ Occ::Exp to_occ_exp(const expression_ref& E)
 
 var occ_to_var(const Occ::Var& OV)
 {
-    var V(OV.name, OV.index);
+    var V(OV.name, OV.index, OV.is_exported);
     occurrence_info& O = V;
     O = OV.info;
     return V;
