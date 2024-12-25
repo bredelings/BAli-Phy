@@ -28,6 +28,7 @@ using std::string;
 using std::vector;
 using std::list;
 using std::pair;
+using std::tuple;
 using std::set;
 using std::map;
 
@@ -122,9 +123,11 @@ bool is_alive(const Occ::Var& x)
     return (x.is_exported or x.info.code_dup != amount_t::None);
 }
 
-Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set<Occ::Var>& free_vars)
+tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Occ::Decls& decls_in, set<Occ::Var>& free_vars)
 {
     using namespace boost;
+
+    auto decls = decls_in;
     const int L = decls.size();
 
     // 0. Initialize the graph and decls
@@ -176,7 +179,7 @@ Graph construct_directed_reference_graph(const Module& m, Occ::Decls& decls, set
 	}
     }
 
-    return graph;
+    return {decls, graph};
 }
 
 vector<int> get_live_vars(const vector<int>& vars, const Occ::Decls& decls)
@@ -248,11 +251,11 @@ occurrence_analyze_decl_groups(const Module& m, const std::vector<Core2::Decls<>
 }
 
 vector<Occ::Decls>
-occurrence_analyze_decls(const Module& m, Occ::Decls decls, set<Occ::Var>& free_vars)
+occurrence_analyze_decls(const Module& m, const Occ::Decls& decls_in, set<Occ::Var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
-    auto graph = construct_directed_reference_graph(m, decls, free_vars);
+    auto [decls, graph] = construct_directed_reference_graph(m, decls_in, free_vars);
 
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
