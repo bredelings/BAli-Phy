@@ -1283,24 +1283,21 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
     {
         mark_exported_decls(cdecls, local_instances, exported_symbols(), types, name);
 
-        vector<CDecls> decl_groups = {cdecls};
+        auto core_decl_groups = decl_groups_to_core({cdecls});
 
-        decl_groups = simplify_module_gently(opts, fvstate, *this, decl_groups);
-        auto core_decl_groups = decl_groups_to_core(decl_groups);
+        core_decl_groups = simplify_module_gently(opts, fvstate, *this, core_decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, core_decl_groups);
 
-        decl_groups = decl_groups_to_expression_ref(core_decl_groups);
-        decl_groups = simplify_module(opts, fvstate, *this, decl_groups);
-        core_decl_groups = decl_groups_to_core(decl_groups);
+        core_decl_groups = simplify_module(opts, fvstate, *this, core_decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, core_decl_groups);
 
 	// CSE goes here!  See ghc/compiler/GHC/Core/Opt/CSE.hs
 
-        decl_groups = decl_groups_to_expression_ref(core_decl_groups);
+        auto decl_groups = decl_groups_to_expression_ref(core_decl_groups);
 	cdecls = flatten(decl_groups);
     }
 
