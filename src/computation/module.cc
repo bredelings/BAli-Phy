@@ -1288,12 +1288,20 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
         decl_groups = simplify_module_gently(opts, fvstate, *this, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(fvstate, decl_groups);
+        {
+            auto core_decl_groups = decl_groups_to_core(decl_groups);
+            float_out_from_module(fvstate, core_decl_groups);
+            decl_groups = decl_groups_to_expression_ref(core_decl_groups);
+        }
 
         decl_groups = simplify_module(opts, fvstate, *this, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(fvstate, decl_groups);
+        {
+            auto core_decl_groups = decl_groups_to_core(decl_groups);
+            float_out_from_module(fvstate, core_decl_groups);
+            decl_groups = decl_groups_to_expression_ref(core_decl_groups);
+        }
 
 	// CSE goes here!  See ghc/compiler/GHC/Core/Opt/CSE.hs
 

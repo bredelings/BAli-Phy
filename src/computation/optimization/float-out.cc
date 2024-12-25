@@ -308,8 +308,9 @@ float_lets(const expression_ref& E_, int level)
     std::abort();
 }
 
-void float_out_from_module(FreshVarState& fresh_var_state, vector<CDecls>& decl_groups)
+void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>>& core_decl_groups)
 {
+    auto decl_groups = decl_groups_to_expression_ref(core_decl_groups);
     decl_groups = set_level_for_module(fresh_var_state, decl_groups);
 
     for(auto& decl_group: decl_groups)
@@ -325,4 +326,6 @@ void float_out_from_module(FreshVarState& fresh_var_state, vector<CDecls>& decl_
         for(auto& decl: float_binds.top_binds)
             decl_group.push_back( std::move(decl) );
     }
+
+    core_decl_groups = decl_groups_to_core(decl_groups);
 }
