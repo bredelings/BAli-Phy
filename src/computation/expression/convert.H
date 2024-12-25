@@ -6,6 +6,8 @@
 
 Core2::Exp<> to_core_exp(const expression_ref& E);
 
+std::vector<Core2::Decls<>> decl_groups_to_core(const std::vector<CDecls>& decls);
+
 Core2::Decls<> to_core(const CDecls& decls);
 
 var to_var(const Core2::Var<>& V);
@@ -17,6 +19,8 @@ expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E);
 CDecl to_expression_ref(const Core2::Decl<>& decl);
 
 CDecls to_expression_ref(const Core2::Decls<>& decls);
+
+std::vector<CDecls> decl_groups_to_expression_ref(const std::vector<Core2::Decls<>>& decls);
 
 //-----------------------------------------------------------------------
 
