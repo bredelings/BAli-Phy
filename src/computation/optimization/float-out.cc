@@ -24,6 +24,7 @@ using std::vector;
 using std::set;
 using std::pair;
 using std::string;
+using std::tuple;
 
 
 
@@ -166,8 +167,9 @@ void float_binds_t::append(float_binds_t& float_binds2)
         append_level(level, decl_groups);
 }
 
-pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
+tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in)
 {
+    auto decls = decls_in;
     int level2 = get_level(decls);
 
     float_binds_t float_binds;
@@ -189,7 +191,7 @@ pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
         decls.clear();
     }
 
-    return pair<float_binds_t,int>(std::move(float_binds), level2);
+    return tuple<CDecls, float_binds_t,int>(std::move(decls), std::move(float_binds), level2);
 }
 
 float_binds_t
@@ -257,7 +259,8 @@ float_lets(expression_ref& E, int level)
     {
         auto L = E.as_<let_exp>();
 
-        auto [float_binds, level2] = float_out_from_decl_group(L.binds);
+        auto [decls, float_binds, level2] = float_out_from_decl_group(L.binds);
+        L.binds = decls;
         assert(level2 <= level);
 
         auto float_binds_from_body = float_lets(L.body, level);
@@ -306,7 +309,8 @@ void float_out_from_module(FreshVarState& fresh_var_state, vector<CDecls>& decl_
         // FIXME - should we remove empty groups before we get here?
         if (decl_group.empty()) continue;
 
-        auto [float_binds, level2] = float_out_from_decl_group(decl_group);
+        auto [decls, float_binds, level2] = float_out_from_decl_group(decl_group);
+        decl_group = decls;
 
         assert(float_binds.level_binds.empty());
 
