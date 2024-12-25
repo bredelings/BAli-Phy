@@ -237,11 +237,11 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //
 
 vector<Occ::Decls>
-occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decl_groups, set<Occ::Var>& free_vars)
+occurrence_analyze_decl_groups(const Module& m, const std::vector<Core2::Decls<>>& decl_groups, set<Occ::Var>& free_vars)
 {
     vector<vector<Occ::Decls>> output;
     for(const auto& decls: reverse(decl_groups))
-        output.push_back(occurrence_analyze_decls(m, to_occ(decls), free_vars));
+        output.push_back(occurrence_analyze_decls(m, to_occ(to_expression_ref(decls)), free_vars));
 
     std::reverse(output.begin(), output.end());
     return flatten(std::move(output));

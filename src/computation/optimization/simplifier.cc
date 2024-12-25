@@ -1025,7 +1025,7 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
     set<Occ::Var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_to_expression_ref(decl_groups_in), free_vars);
+    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_in, free_vars);
 
     for(auto& x: free_vars)
     {
