@@ -69,8 +69,8 @@ public:
     simplifier::substitution
     simplify_decls(Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
     
-    std::vector<CDecls>
-    simplify_module_one(const std::vector<CDecls>& decl_groups);
+    std::vector<Core2::Decls<>>
+    simplify_module_one(const std::vector<Core2::Decls<>>& decl_groups);
 
     SimplifierState(const simplifier_options& opts, FreshVarState& s, Module& m);
 };

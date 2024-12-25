@@ -1019,13 +1019,13 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
  */
 
 
-vector<CDecls>
-SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
+vector<Core2::Decls<>>
+SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_in)
 {
     set<Occ::Var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_in, free_vars);
+    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_to_expression_ref(decl_groups_in), free_vars);
 
     for(auto& x: free_vars)
     {
@@ -1050,7 +1050,7 @@ SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
     for(auto& decls: decl_groups)
         decl_groups_out.push_back(occ_to_cdecls(decls));
 
-    return decl_groups_out;
+    return decl_groups_to_core(decl_groups_out);
 }
 
 
@@ -1063,21 +1063,21 @@ vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options,
 //    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
 
     SimplifierState state(options_gentle, fresh_var_state, m);
-    return decl_groups_to_core(state.simplify_module_one(decl_groups_to_expression_ref(decl_groups_in)));
+    return state.simplify_module_one(decl_groups_in);
 }
 
 vector<Core2::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, Module& m,
                                const vector<Core2::Decls<>>& decl_groups_in)
 {
     SimplifierState state(options, fresh_var_state, m);
-    auto decl_groups = decl_groups_to_expression_ref(decl_groups_in);
+    auto decl_groups = decl_groups_in;
 
     for(int i = 0; i < options.max_iterations; i++)
     {
         decl_groups = state.simplify_module_one(decl_groups);
     }
 
-    return decl_groups_to_core(decl_groups);
+    return decl_groups;
 }
 
 
