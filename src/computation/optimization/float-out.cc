@@ -110,12 +110,12 @@ expression_ref install_current_level(float_binds_t& float_binds, int level, cons
     return let_expression(decl_groups_here, E);
 }
 
-float_binds_t
-float_lets_install_current_level(expression_ref& E, int level)
+tuple<expression_ref,float_binds_t>
+float_lets_install_current_level(const expression_ref& E, int level)
 {
     auto [E2,float_binds] = float_lets(E,level);
-    E = install_current_level(float_binds, level, E2);
-    return float_binds;
+    auto E3 = install_current_level(float_binds, level, E2);
+    return {E3, float_binds};
 }
 
 void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
@@ -176,7 +176,8 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     for(auto& [x,rhs]: decls)
     {
         x = strip_level(x);
-        auto float_binds_x = float_lets_install_current_level(rhs, level2);
+        auto [rhs2, float_binds_x] = float_lets_install_current_level(rhs, level2);
+        rhs = rhs2;
 
         float_binds.append(float_binds_x);
     }
@@ -231,8 +232,9 @@ float_lets(const expression_ref& E_, int level)
 
         int level2 = level + 1;
 
-        auto float_binds = float_lets_install_current_level(body, level2);
-
+        auto [body2, float_binds] = float_lets_install_current_level(body, level2);
+        body = body2;
+        
         E = make_lambda(binders,body);
 
         return {E, float_binds};
@@ -249,7 +251,8 @@ float_lets(const expression_ref& E_, int level)
         for(auto& [pattern, body]: alts)
         {
             pattern = strip_level_from_pattern(pattern);
-            auto float_binds_alt = float_lets_install_current_level(body,level2);
+            auto [body2, float_binds_alt] = float_lets_install_current_level(body,level2);
+            body = body2;
 
             float_binds.append(float_binds_alt);
         }
