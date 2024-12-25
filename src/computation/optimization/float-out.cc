@@ -101,8 +101,8 @@ expression_ref make_lambda(const vector<var>& args, expression_ref E)
     return E;
 }
 
-float_binds_t
-float_lets(expression_ref& E, int level);
+tuple<expression_ref, float_binds_t>
+float_lets(const expression_ref& E, int level);
 
 expression_ref install_current_level(float_binds_t& float_binds, int level, const expression_ref& E)
 {
@@ -113,8 +113,8 @@ expression_ref install_current_level(float_binds_t& float_binds, int level, cons
 float_binds_t
 float_lets_install_current_level(expression_ref& E, int level)
 {
-    auto float_binds = float_lets(E,level);
-    E = install_current_level(float_binds, level, E);
+    auto [E2,float_binds] = float_lets(E,level);
+    E = install_current_level(float_binds, level, E2);
     return float_binds;
 }
 
@@ -194,29 +194,32 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     return tuple<CDecls, float_binds_t,int>(std::move(decls), std::move(float_binds), level2);
 }
 
-float_binds_t
-float_lets(expression_ref& E, int level)
+tuple<expression_ref,float_binds_t>
+float_lets(const expression_ref& E_, int level)
 {
+    auto E = E_;
+
     // 1. Var
     if (is_var(E))
     {
         auto x = E.as_<var>();
         x = strip_level(x);
         E = x;
-        return {};
+        return {E, {}};
     }
 
     // 4. Apply @ E x1 x2 x3 ... x[n-1];
     else if (is_apply_exp(E))
     {
         object_ptr<expression> V2 = E.as_expression().clone();
-        auto float_binds = float_lets(V2->sub[0], level);
+        auto [B,float_binds] = float_lets(V2->sub[0], level);
+        V2->sub[0] = B;
 #ifndef NDEBUG
         for(int i=1;i<V2->sub.size();i++)
                 assert(is_var(V2->sub[i]));
 #endif
         E = V2;
-        return float_binds;
+        return {E, float_binds};
     }
 
     // 5. Lambda
@@ -232,7 +235,7 @@ float_lets(expression_ref& E, int level)
 
         E = make_lambda(binders,body);
 
-        return float_binds;
+        return {E, float_binds};
     }
 
     // 6. Case
@@ -240,7 +243,8 @@ float_lets(expression_ref& E, int level)
     {
         auto& [object,alts] = *C;
 
-        auto float_binds = float_lets(object, level);
+        auto [object2, float_binds] = float_lets(object, level);
+        object = object2;
         int level2 = level + 1;
         for(auto& [pattern, body]: alts)
         {
@@ -251,7 +255,7 @@ float_lets(expression_ref& E, int level)
         }
 
         E = make_case_expression(object,alts);
-        return float_binds;
+        return {E, float_binds};
     }
 
     // 7. Let
@@ -263,7 +267,8 @@ float_lets(expression_ref& E, int level)
         L.binds = decls;
         assert(level2 <= level);
 
-        auto float_binds_from_body = float_lets(L.body, level);
+        auto [body, float_binds_from_body] = float_lets(L.body, level);
+        L.body = body;
 
         float_binds.append(float_binds_from_body);
 
@@ -285,17 +290,17 @@ float_lets(expression_ref& E, int level)
         else
             E = let_expression(L.binds, install_current_level(float_binds, level, L.body));
 
-        return float_binds;
+        return {E, float_binds};
     }
 
     // 2. Constant
     else if (not E.size())
-        return {};
+        return {E, {}};
 
 
     // 3. Constructor or Operation
     else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
-        return {};
+        return {E, {}};
 
     std::abort();
 }
