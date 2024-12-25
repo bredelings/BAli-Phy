@@ -800,3 +800,135 @@ Core2::Exp<> load_builtins(const module_loader& loader, const Core2::Exp<>& E)
     std::abort();
 }
 
+
+//------------------------------------------------------------------------------------------------------
+
+Core2::Var<> to_core(const Occ::Var& V)
+{
+    return Core2::Var<>{V.name, V.index, {}, V.is_exported};
+}
+
+Core2::Lambda<> to_core_lambda(const Occ::Lambda& L)
+{
+    return Core2::Lambda<>{to_core(L.x), to_core_exp(L.body)};
+}
+
+vector<Core2::Decls<>> decl_groups_to_core(const vector<Occ::Decls>& decl_groups)
+{
+    vector<Core2::Decls<>> decls2;
+    for(auto& decl_group: decl_groups)
+        decls2.push_back(to_core(decl_group));
+
+    return decls2;
+}
+
+Core2::Decls<> to_core(const Occ::Decls& decls)
+{
+    Core2::Decls<> decls2;
+    for(auto& [x,E]: decls)
+	decls2.push_back(Core2::Decl<>{to_core(x), to_core_exp(E)});
+
+    return decls2;
+}
+
+Core2::Apply<> to_core_apply(const Occ::Apply A)
+{
+    Core2::Apply<> A2;
+
+    A2.head = to_core_exp(A.head);
+
+    for(auto& arg: A.args)
+	A2.args.push_back(to_core(arg));
+
+    return A2;
+}
+
+Core2::Let<> to_core_let(const Occ::Let& L)
+{
+    return {to_core(L.decls), to_core_exp(L.body)};
+}
+
+Core2::VarOrWildcardPattern<> core_patarg_to_expression_ref(const Occ::VarOrWildcardPattern& V)
+{
+    if (V.is_wildcard_pat())
+	return Core2::WildcardPat();
+    else if (auto vp = V.to_var_pat())
+	return Core2::VarPat<>(to_core(vp->var));
+    else
+	std::abort();
+}
+
+Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
+{
+    if (to<Occ::WildcardPat>(P))
+        return Core2::WildcardPat();
+    else if (auto v = to<Occ::VarPat>(P))
+        return Core2::VarPat<>{to_core(v->var)};
+    else if (auto c = to<Occ::ConPat>(P))
+    {
+	auto args = c->args | ranges::views::transform( core_patarg_to_expression_ref ) | ranges::to<vector>();
+	return Core2::ConPat<>{c->head, args};
+    }
+    else
+        std::abort();
+}
+
+Core2::Alts<> to_core_alts(const Occ::Alts& alts1)
+{
+    Core2::Alts<> alts2;
+    for(auto& [pattern,body]: alts1)
+	alts2.push_back({to_core_pattern(pattern),to_core_exp(body)});
+    return alts2;
+}
+
+Core2::Case<> to_core_case(const Occ::Case& C)
+{
+    return Core2::Case<>{to_core_exp(C.object), to_core_alts(C.alts)};
+}
+
+Core2::ConApp<> to_core_con_app(const Occ::ConApp& C)
+{
+    Core2::ConApp<> con_app;
+    con_app.head = C.head;
+    for(int i=0;i<C.args.size();i++)
+	con_app.args.push_back(to_core(C.args[i]));
+    return con_app;
+}
+
+Core2::Constant to_core_constant(const Occ::Constant& C)
+{
+    return C;
+}
+
+Core2::BuiltinOp<> to_core_builtin_op(const Occ::BuiltinOp& B)
+{
+    Core2::BuiltinOp<> builtin;
+    builtin.lib_name = B.lib_name;
+    builtin.func_name = B.func_name;
+    for(int i=0;i<B.args.size();i++)
+	builtin.args.push_back(to_core(B.args[i]));
+    return builtin;
+}
+
+Core2::Exp<> to_core_exp(const Occ::Exp& E)
+{
+    if (auto v = E.to_var())
+	return to_core(*v);
+    else if (auto l = E.to_lambda())
+	return to_core_lambda(*l);
+    else if (auto a = E.to_apply())
+	return to_core_apply(*a);
+    else if (auto l = E.to_let())
+	return to_core_let(*l);
+    else if (auto c = E.to_case())
+	return to_core_case(*c);
+    else if (auto c = E.to_conApp())
+	return to_core_con_app(*c);
+    else if (auto b = E.to_builtinOp())
+	return to_core_builtin_op(*b);
+    else if (auto c = E.to_constant())
+	return to_core_constant(*c);
+    else
+        std::abort();
+}
+

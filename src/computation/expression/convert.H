@@ -52,6 +52,12 @@ CDecls occ_to_cdecls(const Occ::Decls& decls);
 
 //-----------------------------------------------------------------------
 
+Core2::Decls<> to_core(const Occ::Decls& decls);
+
+Core2::Exp<> to_core_exp(const Occ::Exp& E);
+
+//-----------------------------------------------------------------------
+
 Core2::Exp<> load_builtins(const module_loader& L, const Core2::Exp<>& E);
 
 Core2::Decls<> load_builtins(const module_loader& L, Core2::Decls<> E);

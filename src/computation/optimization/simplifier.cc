@@ -1046,11 +1046,11 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
 	bound_vars = bind_decls(bound_vars, decls);
     }
 
-    vector<CDecls> decl_groups_out;
+    vector<Core2::Decls<>> decl_groups_out;
     for(auto& decls: decl_groups)
-        decl_groups_out.push_back(occ_to_cdecls(decls));
+        decl_groups_out.push_back(to_core(decls));
 
-    return decl_groups_to_core(decl_groups_out);
+    return decl_groups_out;
 }
 
 
