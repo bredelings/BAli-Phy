@@ -299,7 +299,7 @@ float_lets(expression_ref& E, int level)
 
 void float_out_from_module(FreshVarState& fresh_var_state, vector<CDecls>& decl_groups)
 {
-    set_level_for_module(fresh_var_state, decl_groups);
+    decl_groups = set_level_for_module(fresh_var_state, decl_groups);
 
     for(auto& decl_group: decl_groups)
     {

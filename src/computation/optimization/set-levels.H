@@ -7,6 +7,6 @@
 
 var strip_level(var x);
 expression_ref strip_level_from_pattern(const expression_ref& pattern);
-void set_level_for_module(FreshVarState& fresh_var_state, std::vector<CDecls>& module);
+std::vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const std::vector<CDecls>& decl_groups);
 
 #endif
