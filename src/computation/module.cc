@@ -930,14 +930,14 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     value_decls = MM->load_builtins(loader, M.foreign_decls, value_decls);
 
-    value_decls = MM->load_constructors(M.type_decls, value_decls);
-
     // Graph-normalize the bodies
     for(auto& [x,rhs]: value_decls)
     {
         // This won't float things to the top level!
         rhs = graph_normalize( MM->fresh_var_state(), rhs);
     }
+
+    value_decls = MM->load_constructors(M.type_decls, value_decls);
 
     auto core_value_decls = to_core(value_decls);
 
