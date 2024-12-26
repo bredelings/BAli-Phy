@@ -193,7 +193,7 @@ public:
 
     CDecls desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
-    void export_small_decls(const CDecls&);
+    void export_small_decls(const Core2::Decls<>&);
 
     CDecls optimize(const simplifier_options&, FreshVarState&, CDecls);
 

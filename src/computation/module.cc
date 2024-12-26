@@ -695,12 +695,14 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         std::cerr<<"\n\n";
     }
 
+    auto core_value_decls = to_core(value_decls);
+    
     // this records unfoldings.
-    MM->export_small_decls(value_decls);
+    MM->export_small_decls(core_value_decls);
 
     auto CM = std::make_shared<CompiledModule>(MM);
 
-    CM->finish_value_decls(to_core(value_decls));
+    CM->finish_value_decls(core_value_decls);
 
     bool ok = write_compile_artifact(P, CM);
 
@@ -1014,22 +1016,22 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 }
 
 
-void Module::export_small_decls(const CDecls& cdecls)
+void Module::export_small_decls(const Core2::Decls<>& decls)
 {
     // FIXME: add a wrapper for EVERY constructor!
 
-    for(auto& [x,rhs]: cdecls)
+    for(auto& [x,rhs]: decls)
     {
         assert(not x.name.empty());
         assert(get_module_name(x.name) == name);
 
-        if (simple_size(to_core_exp(rhs)) <= 5)
+        if (simple_size(rhs) <= 5)
         {
             // Add the unfolding for this variable.
             auto S = lookup_make_local_symbol(x.name);
 
             // Label vars with whether they are used or not, and collect free vars.
-            auto [occ_rhs, free_vars] = occurrence_analyzer(*this, to_core_exp(rhs));
+            auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
 
             // The unfolding need to be occurrence analyzed.
             S->var_info->unfolding = occ_rhs;
