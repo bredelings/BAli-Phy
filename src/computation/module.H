@@ -199,7 +199,7 @@ public:
 
     CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
 
-    CDecls load_constructors(const Hs::Decls&, CDecls);
+    CDecls load_constructors(const Hs::Decls&);
 
     bool is_declared(const std::string&) const;
 

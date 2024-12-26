@@ -777,7 +777,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         return Core2::BuiltinOp<>{B->lib_name, B->func_name, args};
     }
     // 8. Constant
-    else if (auto C = E.to_constant())
+    else if (E.to_constant())
         return E;
     else
         std::abort();
@@ -937,7 +937,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         rhs = graph_normalize( MM->fresh_var_state(), rhs);
     }
 
-    value_decls = MM->load_constructors(M.type_decls, value_decls);
+    value_decls += MM->load_constructors(M.type_decls);
 
     auto core_value_decls = to_core(value_decls);
 
@@ -1397,8 +1397,10 @@ string get_constructor_name(const Hs::LType& constr)
     return tc->name;
 }
 
-CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
+CDecls Module::load_constructors(const Hs::Decls& topdecls)
 {
+    CDecls cdecls;
+
     for(const auto& [_,decl]: topdecls)
     {
         auto d = decl.to<Haskell::DataOrNewtypeDecl>();
