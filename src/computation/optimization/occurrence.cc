@@ -372,8 +372,10 @@ maybe_eta_reduce(const Occ::Lambda& L)
     }
 }
 
-pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Occ::Var x, var_context context)
+pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var<> x_in, var_context context)
 {
+    Occ::Var x(x_in.name, x_in.index, {}, x_in.is_exported);
+
     // 1. Var
     x.info.is_loop_breaker = false;
     x.info.context = context;
@@ -401,9 +403,9 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     Occ::Exp E = to_occ_exp(to_expression_ref(E_));
 
     // 1. Var
-    if (auto V = E.to_var())
+    if (auto V = E_.to_var())
     {
-	auto [x,free_vars] = occurrence_analyze_var(m, *V, context);
+	auto [x, free_vars] = occurrence_analyze_var(m, *V, context);
         return {x, free_vars};
     }
 
@@ -427,18 +429,18 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
             return {unreduced, dup_work(free_vars)};
     }
     // 3. Apply
-    else if (auto A = E.to_apply())
+    else if (auto A = E_.to_apply())
     {
         set<Occ::Var> free_vars;
-        auto [head, head_free_vars] = occurrence_analyzer(m, to_core_exp(A->head), var_context::unknown);
+        auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
         merge_occurrences_into(free_vars, head_free_vars);
 
-        auto args = A->args;
+        vector<Occ::Var> args;
 
-        for(auto& arg: args)
+        for(auto& arg: A->args)
         {
-            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
-            arg = arg_out;
+            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            args.push_back(occ_arg);
             merge_occurrences_into(free_vars, arg_free_vars);
         }
 
@@ -507,40 +509,40 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
 	return {Occ::Case{object,alts}, free_vars};
     }
     // 6. ConApp
-    else if (auto C = E.to_conApp())
+    else if (auto C = E_.to_conApp())
     {
         set<Occ::Var> free_vars;
 
-        auto args = C->args;
+        vector<Occ::Var> args;
 
-        for(auto& arg: args)
+        for(auto& arg: C->args)
         {
-            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
-            arg = arg_out;
+            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            args.push_back(occ_arg);
             merge_occurrences_into(free_vars, arg_free_vars);
         }
 
         return {Occ::ConApp{C->head, args}, free_vars};
     }
     // 7. BuiltinOp
-    else if (auto BB = E.to_builtinOp())
+    else if (auto B = E_.to_builtinOp())
     {
         set<Occ::Var> free_vars;
 
-        auto B = *BB;
+        vector<Occ::Var> args;
 
-        for(auto& arg: B.args)
+        for(auto& arg: B->args)
         {
-            auto [arg_out, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
-            arg = arg_out;
+            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            args.push_back(occ_arg);
             merge_occurrences_into(free_vars, arg_free_vars);
         }
 
-        return {B, free_vars};
+        return {Occ::BuiltinOp{B->lib_name, B->func_name, args}, free_vars};
     }
     // 8. Constant
-    else if (E.to_constant())
-        return {E, {}};
+    else if (auto C = E_.to_constant())
+        return {*C, {}};
     else
-        throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
+        throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E_.print() + "'";
 }
