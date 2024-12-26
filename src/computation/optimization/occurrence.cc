@@ -493,51 +493,58 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
 	return {F, free_vars};
     }
     // 5. Case
-    else if (auto C = E.to_case())
+    else if (auto C = E_.to_case())
     {
-	// Analyze the object
-        auto [object, free_vars] = occurrence_analyzer(m, to_core_exp(C->object));
+        // Analyze the object
+        auto [object, free_vars] = occurrence_analyzer(m, C->object);
 
-	// Just normalize the bodies
-	set<Occ::Var> alts_free_vars;
+        // Just normalize the bodies
+        set<Occ::Var> alts_free_vars;
 
-        auto alts = C->alts;
-	for(auto& [pattern, body]: alts)
-	{
-	    // Analyze the i-ith branch
-            auto [body_, alt_free_vars] = occurrence_analyzer(m, to_core_exp(body));
-            body = body_;
+        Occ::Alts alts;
+        for(auto& [pattern, body]: C->alts)
+        {
+            // Analyze the i-ith branch
+            auto [occ_body, alt_free_vars] = occurrence_analyzer(m, body);
 
-	    // Remove pattern vars from free variables
-	    // Copy occurrence info into pattern variables
-	    if (auto VP = pattern.to_var_pat())
-	    {
+            // Remove pattern vars from free variables
+            // Copy occurrence info into pattern variables
+            Occ::Pattern occ_pattern;
+            if (auto VP = pattern.to_var_pat())
+            {
                 auto x = remove_var_and_set_occurrence_info(VP->var, alt_free_vars);
-                pattern = Occ::VarPat{x};
+                occ_pattern = Occ::VarPat{x};
             }
             else if (auto CP = pattern.to_con_pat())
             {
-		auto con_pat = *CP;
-		for(int j=0;j < con_pat.args.size(); j++)
-		{
-		    if (auto v = con_pat.args[j].to_var_pat_var())
-		    {
-			auto x = remove_var_and_set_occurrence_info(*v, alt_free_vars);
-			con_pat.args[j] = Occ::VarPat{x};
-		    }
-		}
-		pattern = con_pat;
-	    }
+                Occ::ConPat con_pat;
+                con_pat.head = CP->head;
+                for(auto& arg: CP->args)
+                {
+                    if (auto v = arg.to_var_pat_var())
+                    {
+                        auto x = remove_var_and_set_occurrence_info(*v, alt_free_vars);
+                        con_pat.args.push_back(Occ::VarPat{x});
+                    }
+                    else
+                        con_pat.args.push_back(Occ::WildcardPat());
+                }
+                occ_pattern = con_pat;
+            }
+            else
+                occ_pattern = Occ::WildcardPat();
 
-	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
-	    merge_occurrences_into(alts_free_vars, alt_free_vars, true);
-	}
+            // Merge occurrences for this pattern into the occurrence for the whole set of alts.
+            merge_occurrences_into(alts_free_vars, alt_free_vars, true);
 
-	// We can avoid inlining directly into alternatives, since this might duplicate work.
+            alts.push_back({occ_pattern, occ_body});
+        }
+
+        // We can avoid inlining directly into alternatives, since this might duplicate work.
         // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
-	merge_occurrences_into(free_vars, alts_free_vars);
+        merge_occurrences_into(free_vars, alts_free_vars);
 
-	return {Occ::Case{object,alts}, free_vars};
+        return {Occ::Case{object,alts}, free_vars};
     }
     // 6. ConApp
     else if (auto C = E_.to_conApp())
