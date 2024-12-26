@@ -154,12 +154,12 @@ bool is_alive(const Occ::Var& x)
     return (x.is_exported or x.info.code_dup != amount_t::None);
 }
 
-tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Occ::Decls& decls_in, set<Occ::Var>& free_vars)
+tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
     using namespace boost;
 
-    auto decls = decls_in;
-    const int L = decls.size();
+    const int L = decls_in.size();
+    Occ::Decls decls(L);
 
     // 0. Initialize the graph and decls
     Graph graph(L);
@@ -168,9 +168,11 @@ tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, con
     vector<int> work;
     for(int i=0;i<L;i++)
     {
-	auto& x = decls[i].x;
-	x.info.code_dup = free_vars.count(x)?(amount_t::Unknown):(amount_t::None);
-	if (is_alive(x))
+        auto& x = decls_in[i].x;
+
+	decls[i].x = Occ::Var(x.name, x.index, {}, x.is_exported);
+	decls[i].x.info.code_dup = free_vars.count(decls[i].x)?(amount_t::Unknown):(amount_t::None);
+	if (is_alive(decls[i].x))
 	    work.push_back(i);
     }
 
@@ -183,8 +185,8 @@ tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, con
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	auto [E, free_vars_i] = occurrence_analyzer(m, to_core_exp(decls[i].body));
-        decls[i].body = E;
+	auto [occ_body, free_vars_i] = occurrence_analyzer(m, decls_in[i].body);
+        decls[i].body = occ_body;
 
 	// 3.2 Record occurrences
 	merge_occurrences_into(free_vars, free_vars_i);
@@ -284,11 +286,9 @@ occurrence_analyze_decl_groups(const Module& m, const std::vector<Core2::Decls<>
 vector<Occ::Decls>
 occurrence_analyze_decls(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
-    Occ::Decls occ_decls_in = to_occ(to_expression_ref(decls_in));
-
     // 1. Determine which vars are alive or dead.
     // 2. Construct reference graph between (live) vars.
-    auto [decls, graph] = construct_directed_reference_graph(m, occ_decls_in, free_vars);
+    auto [decls, graph] = construct_directed_reference_graph(m, decls_in, free_vars);
 
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
