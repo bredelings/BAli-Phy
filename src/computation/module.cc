@@ -698,7 +698,7 @@ Core2::Var<> rename_var(const Core2::Var<>& x, const map<Core2::Var<>,Core2::Var
 
 Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
 {
-    assert(E);
+    assert(not E.empty());
 
     // 1. Var (x)
     if (auto x = E.to_var())
