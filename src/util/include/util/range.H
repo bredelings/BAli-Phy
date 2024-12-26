@@ -177,20 +177,20 @@ int remove_element(std::vector<int>& v, const  int e);
 
 void remove_elements(std::vector<int>& v, const std::vector<int>& e);
 
-template <typename T>
-std::vector<T> flatten(const std::vector<std::vector<T>>& v1)
+template <typename V>
+V flatten(const std::vector<V>& v1)
 {
-    std::vector<T> v2;
+    V v2;
     for(auto& v: v1)
 	for(auto& t: v)
 	    v2.push_back(t);
     return v2;
 }
 
-template <typename T>
-std::vector<T> flatten(std::vector<std::vector<T>>&& v1)
+template <typename V>
+V flatten(std::vector<V>&& v1)
 {
-    std::vector<T> v2;
+    V v2;
     for(auto& v: v1)
 	for(auto& t: v)
 	    v2.push_back(std::move(t));
