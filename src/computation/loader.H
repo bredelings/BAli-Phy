@@ -9,6 +9,7 @@
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
 #include "computation/expression/expression_ref.H"
 #include "computation/operation.H"
+#include "computation/haskell/core2.H"
 
 class Module;
 
@@ -39,9 +40,7 @@ public:
 
     void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name) const;
 
-    Operation load_builtin_op(const std::string& lib_name, const std::string& func_name) const;
-
-    expression_ref load_builtin(const std::string& lib_name, const std::string& func_name, int n) const;
+    Core2::Exp<> load_builtin(const std::string& lib_name, const std::string& func_name, int n) const;
 
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };

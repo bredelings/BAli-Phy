@@ -231,22 +231,18 @@ void* module_loader::load_builtin_ptr(const string& plugin_name, const string& s
     return cached_builtins.at(op);
 }
 
-Operation module_loader::load_builtin_op(const string& plugin_name, const string& symbol_name) const
+Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string& symbol_name, int n) const
 {
     auto fn = load_builtin_ptr(plugin_name, symbol_name);
-
-    // Create the operation
-    return Operation( (operation_fn)fn, plugin_name + ":" + symbol_name );
-}
-
-expression_ref module_loader::load_builtin(const string& plugin_name, const string& symbol_name, int n) const
-{
-    auto O = load_builtin_op(plugin_name, symbol_name);
 
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
-    // Create the function body from it.
-    return lambda_n(O, n);
+    vector<Core2::Var<>> args;
+    for(int i=0;i<n;i++)
+        args.push_back({"",i});
+
+    Core2::Exp<> body = Core2::BuiltinOp<>{plugin_name, symbol_name, args, fn};
+    return lambda_quantify(args, body);
 }
 

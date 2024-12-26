@@ -1345,7 +1345,7 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
     return flatten(core_decl_groups);
 }
 
-expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
+Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
     return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
 }
@@ -1369,7 +1369,7 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
 
         if (is_IO_type(result_type))
         {
-            body = parse_builtin(decl, n_args+1, L);
+            body = to_expression_ref(parse_builtin(decl, n_args+1, L));
 
 	    // Change IO a to RealWorld -> a
             for(int i=0;i<n_args;i++)
@@ -1382,7 +1382,7 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
             // (\x0 x1 ... x<n-1> -> makeIO ((\x0 x1 .. x<n> -> builtinOp x0 x1 .. x<n>) x0 x1 .. x<n-1>))
         }
         else
-            body = parse_builtin(decl, n_args, L);
+            body = to_expression_ref(parse_builtin(decl, n_args, L));
 
         cdecls.push_back( { var(function_name), body} );
     }
