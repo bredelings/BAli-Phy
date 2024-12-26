@@ -197,7 +197,7 @@ public:
 
     Core2::Decls<> optimize(const simplifier_options&, FreshVarState&, Core2::Decls<>);
 
-    CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
+    CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&);
 
     Core2::Decls<> load_constructors(const Hs::Decls&);
 

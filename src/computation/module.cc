@@ -928,7 +928,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     CDecls value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
     value_decls += core_decls;
 
-    value_decls = MM->load_builtins(loader, M.foreign_decls, value_decls);
+    value_decls += MM->load_builtins(loader, M.foreign_decls);
 
     // Graph-normalize the bodies
     for(auto& [x,rhs]: value_decls)
@@ -1350,8 +1350,9 @@ expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const mo
     return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
 }
 
-CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
+CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
 {
+    CDecls cdecls;
     for(const auto& decl: foreign_decls)
     {
         auto function_name = unloc(decl.function).name;
