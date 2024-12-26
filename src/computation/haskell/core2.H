@@ -800,7 +800,9 @@ namespace Core2
     std::string Apply<NoteV,NoteE>::print() const
     {
 	std::vector<std::string> words;
-	words.push_back(head.print());
+        words.push_back(head.print());
+        if (not head.to_var() and not head.to_apply())
+            words[0] = "(" + words[0] + ")";
 	for(auto& v: args)
 	    words.push_back(v.print());
 	return join(words," ");
