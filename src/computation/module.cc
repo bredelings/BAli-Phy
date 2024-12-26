@@ -1029,10 +1029,10 @@ void Module::export_small_decls(const CDecls& cdecls)
             auto S = lookup_make_local_symbol(x.name);
 
             // Label vars with whether they are used or not, and collect free vars.
-            auto [E, free_vars] = occurrence_analyzer(*this, to_occ_exp(rhs));
+            auto [occ_rhs, free_vars] = occurrence_analyzer(*this, to_core_exp(rhs));
 
             // The unfolding need to be occurrence analyzed.
-            S->var_info->unfolding = E;
+            S->var_info->unfolding = occ_rhs;
 
             // Check that we have local symbols for everything that we've put in an unfolding.
             for(auto& y: free_vars)
@@ -1435,8 +1435,8 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
 
     Module empty("Empty");
 
-    auto [E, free_vars] = occurrence_analyzer(empty, to_occ_exp(U));
-    S->var_info->unfolding = E;
+    auto [occ_U, free_vars] = occurrence_analyzer(empty, to_core_exp(U));
+    S->var_info->unfolding = occ_U;
     assert(free_vars.empty());
     return S;
 }

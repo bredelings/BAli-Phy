@@ -152,7 +152,7 @@ tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, con
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	auto [E, free_vars_i] = occurrence_analyzer(m, decls[i].body);
+	auto [E, free_vars_i] = occurrence_analyzer(m, to_core_exp(decls[i].body));
         decls[i].body = E;
 
 	// 3.2 Record occurrences
@@ -394,9 +394,11 @@ pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Occ::Var x
     }
 }
 
-pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp& E, var_context context)
+pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::Exp<>& E_, var_context context)
 {
-    assert(not E.empty());
+    assert(not E_.empty());
+
+    Occ::Exp E = to_occ_exp(to_expression_ref(E_));
 
     // 1. Var
     if (auto V = E.to_var())
@@ -409,7 +411,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp
     else if (auto L = E.to_lambda())
     {
 	// 1. Analyze the body and marks its variables
-	auto [body, free_vars] = occurrence_analyzer(m, L->body);
+	auto [body, free_vars] = occurrence_analyzer(m, to_core_exp(L->body));
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
@@ -428,7 +430,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp
     else if (auto A = E.to_apply())
     {
         set<Occ::Var> free_vars;
-        auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
+        auto [head, head_free_vars] = occurrence_analyzer(m, to_core_exp(A->head), var_context::unknown);
         merge_occurrences_into(free_vars, head_free_vars);
 
         auto args = A->args;
@@ -446,7 +448,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp
     else if (auto L = E.to_let())
     {
 	// A. Analyze the body
-        auto [F, free_vars] = occurrence_analyzer(m, L->body);
+        auto [F, free_vars] = occurrence_analyzer(m, to_core_exp(L->body));
 
         // B. Analyze the decls
         auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
@@ -461,7 +463,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp
     else if (auto C = E.to_case())
     {
 	// Analyze the object
-        auto [object, free_vars] = occurrence_analyzer(m, C->object);
+        auto [object, free_vars] = occurrence_analyzer(m, to_core_exp(C->object));
 
 	// Just normalize the bodies
 	set<Occ::Var> alts_free_vars;
@@ -470,7 +472,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Occ::Exp
 	for(auto& [pattern, body]: alts)
 	{
 	    // Analyze the i-ith branch
-            auto [body_, alt_free_vars] = occurrence_analyzer(m, body);
+            auto [body_, alt_free_vars] = occurrence_analyzer(m, to_core_exp(body));
             body = body_;
 
 	    // Remove pattern vars from free variables
