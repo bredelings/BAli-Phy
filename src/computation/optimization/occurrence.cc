@@ -88,6 +88,37 @@ void merge_occurrences_into(set<Occ::Var>& free_vars1, const set<Occ::Var>& free
     }
 }
 
+Occ::Var remove_var_and_set_occurrence_info(const Core2::Var<>& x_in, set<Occ::Var>& free_vars)
+{
+    Occ::Var x{x_in.name, x_in.index, {}, x_in.is_exported};
+
+    // 1. Copy occurrence info
+    auto x_iter = free_vars.find(x);
+    if (x_iter == free_vars.end())
+    {
+	x.info.work_dup = amount_t::None;
+	x.info.code_dup = amount_t::None;
+	x.info.is_loop_breaker = false;
+	x.info.context = var_context::unknown;
+    }
+    else
+    {
+	x.info = x_iter->info;
+    }
+
+    // 2. Remove var from set
+    free_vars.erase(x);
+
+    assert(x.info.code_dup != amount_t::Unknown and x.info.work_dup != amount_t::Unknown);
+
+    return x;
+}
+
+Occ::Var remove_var_and_set_occurrence_info(const Core2::Exp<>& E, set<Occ::Var>& free_vars)
+{
+    return remove_var_and_set_occurrence_info(*E.to_var(), free_vars);
+}
+
 Occ::Var remove_var_and_set_occurrence_info(Occ::Var x, set<Occ::Var>& free_vars)
 {
     // 1. Copy occurrence info
@@ -410,10 +441,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     }
 
     // 2. Lambda (E = \x -> body)
-    else if (auto L = E.to_lambda())
+    else if (auto L = E_.to_lambda())
     {
 	// 1. Analyze the body and marks its variables
-	auto [body, free_vars] = occurrence_analyzer(m, to_core_exp(L->body));
+	auto [body, free_vars] = occurrence_analyzer(m, L->body);
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
