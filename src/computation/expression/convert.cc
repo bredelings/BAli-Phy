@@ -853,7 +853,7 @@ Core2::VarOrWildcardPattern<> core_patarg_to_expression_ref(const Occ::VarOrWild
     if (V.is_wildcard_pat())
 	return Core2::WildcardPat();
     else if (auto vp = V.to_var_pat())
-	return Core2::VarPat<>(to_core(vp->var));
+	return Core2::VarPat<>{to_core(vp->var)};
     else
 	std::abort();
 }
