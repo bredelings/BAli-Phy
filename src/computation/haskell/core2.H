@@ -891,7 +891,7 @@ namespace Core2
 	std::vector<std::string> alts;
 	for(auto& alt: *this)
 	    alts.push_back(alt.print());
-	return "{"+join(alts,";")+"}";
+	return "{"+join(alts,"; ")+"}";
     }
 
     template <typename NoteV, typename NoteE>
