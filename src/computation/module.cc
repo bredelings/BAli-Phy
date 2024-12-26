@@ -641,6 +641,26 @@ void mark_exported_decls(Core2::Decls<>& decls,
     }
 }
 
+std::optional<Core2::Var<>> find_first_duplicate_var(const Core2::Decls<>& decls)
+{
+    set<Core2::Var<>> vars;
+    for(auto& [x,_]: decls)
+    {
+	if (vars.count(x))
+	    return x;
+	else
+            vars.insert(x);
+    }
+    return {};
+}
+
+void check_duplicate_var(const Core2::Decls<>& decls)
+{
+    auto var = find_first_duplicate_var(decls);
+    if (var)
+	throw myexception()<<"variable '"<<var->print()<<"' occurs twice!";
+}
+
 std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
 {
     auto& loader = *P.get_module_loader();
@@ -1114,104 +1134,126 @@ void erase_one(multiset<T>& mset, const T& elem)
     mset.erase(it);
 }
 
-expression_ref rename(const expression_ref& E, const map<var,var>& substitution, multiset<var>& bound)
+set<Core2::Var<>> vars_in_pattern(const Core2::Pattern<>& p)
+{
+    if (p.is_wildcard_pat())
+	return {};
+    else if (auto vp = p.to_var_pat())
+	return {vp->var};
+    else if (auto cp = p.to_con_pat())
+    {
+        set<Core2::Var<>> vars;
+        for(auto& arg: cp->args)
+            if (auto vp = arg.to_var_pat_var())
+                vars.insert(*vp);
+        return vars;
+    }
+    else
+	std::abort();
+}
+
+Core2::Var<> rename_var(const Core2::Var<>& x, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
+{
+    // 1.1 If there's a substitution x -> E
+    if (not bound.count(x) and substitution.count(x))
+        return substitution.at(x);
+    else
+        return x;
+}
+
+Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
 {
     assert(E);
 
     // 1. Var (x)
-    if (E.is_a<var>())
-    {
-        auto& x = E.as_<var>();
-        // 1.1 If there's a substitution x -> E
-        if (not bound.count(x) and substitution.count(x))
-            return substitution.at(x);
-        else
-            return E;
-    }
-
+    if (auto x = E.to_var())
+        return rename_var(*x, substitution, bound);
     // 2. Lambda (E = \x -> body)
-    if (E.head().is_a<lambda>())
+    else if (auto L = E.to_lambda())
     {
-        assert(E.size() == 2);
+        bound.insert(L->x);
+        auto body = rename(L->body, substitution, bound);
+        erase_one(bound, L->x);
 
-        auto x = E.sub()[0].as_<var>();
-        auto body = E.sub()[1];
-
-        bound.insert(x);
-        body = rename(body, substitution, bound);
-        erase_one(bound,x);
-
-        return lambda_quantify(x,body);
+        return Core2::Lambda<>{L->x,body};
     }
-
-    // 6. Case
-    if (auto C = parse_case_expression(E))
+    // 3. Apply
+    else if (auto A = E.to_apply())
     {
-        auto& [object, alts] = *C;
+        auto head = rename(A->head, substitution, bound);
+
+        auto args = A->args;
+        for(auto& arg: args)
+            arg = rename_var(arg, substitution, bound);
+
+        return Core2::Apply<>{head, args};
+    }
+    // 4. Let (let {x[i] = F[i]} in body)
+    else if (auto L = E.to_let())
+    {
+        for(auto& [x,_]: L->decls)
+            bound.insert(x);
+
+        auto body = rename(L->body, substitution, bound);
+
+        auto decls = L->decls;
+        for(auto& [_,e]: decls)
+            e = rename(e, substitution, bound);
+
+        for(auto& [x,e]: L->decls)
+            erase_one(bound, x);
+
+        return Core2::Let<>{decls, body};
+    }
+    // 5. Case
+    else if (auto C = E.to_case())
+    {
         // Analyze the object
-        object = rename(object, substitution, bound);
+        auto object = rename(C->object, substitution, bound);
+        auto alts = C->alts;
         for(auto& [pattern, body]: alts)
         {
-            for(int j=0;j<pattern.size(); j++)
-            {
-                auto& x = pattern.sub()[j].as_<var>();
-                if (not x.is_wildcard())
-                    bound.insert(x);
-            }
+            auto pat_vars = vars_in_pattern(pattern);
+            for(auto& x: pat_vars)
+                bound.insert(x);
 
             body = rename(body, substitution, bound);
 
-            for(int j=0;j<pattern.size(); j++)
-            {
-                auto& x = pattern.sub()[j].as_<var>();
-                if (not x.is_wildcard())
-                    erase_one(bound,x);
-            }
+            for(auto& x: pat_vars)
+                erase_one(bound, x);
         }
-        return make_case_expression(object, alts);
+        return Core2::Case<>{object, alts};
     }
-
-    // 5. Let (let {x[i] = F[i]} in body)
-    else if (is_let_expression(E))
+    // 6. ConApp
+    else if (auto C = E.to_conApp())
     {
-        auto L = E.as_<let_exp>();
-
-        for(auto& [x,_]: L.binds)
-            bound.insert(x);
-
-        L.body = rename(L.body, substitution, bound);
-
-        for(auto& [_,e]: L.binds)
-            e = rename(e, substitution, bound);
-
-        for(auto& [x,e]: L.binds)
-            erase_one(bound, x);
-
-        return L;
+        auto args = C->args;
+        for(auto& arg: args)
+            arg = rename_var(arg, substitution, bound);
+        return Core2::ConApp<>{C->head, args};
     }
-
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size()) return E;
-
-    // 4. Constructor or Operation or Apply
-    else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    // 7. BuiltinOp
+    else if (auto B = E.to_builtinOp())
     {
-        object_ptr<expression> E2 = E.as_expression().clone();
-        for(int i=0;i<E.size();i++)
-            E2->sub[i] = rename(E2->sub[i], substitution, bound);
-        return E2;
-    }
+        auto args = B->args;
+        for(auto& arg: args)
+            arg = rename_var(arg, substitution, bound);
 
-    std::abort();
-    return E;
+        return Core2::BuiltinOp<>{B->lib_name, B->func_name, args};
+    }
+    // 8. Constant
+    else if (auto C = E.to_constant())
+        return E;
+    else
+        std::abort();
 }
 
 
-std::optional<string> get_new_name(const var& x, const string& module_name)
+std::optional<string> get_new_name(const Core2::Var<>& x, const string& module_name)
 {
     assert(not is_haskell_builtin_con_name(x.name));
 
-    if (is_qualified_var(x))
+    if (is_qualified_symbol(x.name))
     {
         // Allow adding suffixes like #1 to qualified names IF they are not exported.
         // Such suffixes can be added by renaming inside of let-floating.
@@ -1222,13 +1264,13 @@ std::optional<string> get_new_name(const var& x, const string& module_name)
     return module_name + "." + x.name + "#" + convertToString(x.index);
 }
 
-CDecls rename_top_level(const CDecls& decls, const string& module_name)
+Core2::Decls<> rename_top_level(const Core2::Decls<>& decls, const string& module_name)
 {
-    map<var, var> substitution;
+    map<Core2::Var<>, Core2::Var<>> substitution;
 
-    set<var> top_level_vars;
+    set<Core2::Var<>> top_level_vars;
 
-    CDecls decls2;
+    Core2::Decls<> decls2;
 
 #ifndef NDEBUG
     check_duplicate_var(decls);
@@ -1237,13 +1279,13 @@ CDecls rename_top_level(const CDecls& decls, const string& module_name)
     for(int i = 0; i< decls.size(); i++)
     {
         auto& [x,rhs] = decls[i];
-        var x2 = x;
+        auto x2 = x;
         assert(not substitution.count(x));
 
         if (auto new_name = get_new_name(x, module_name))
         {
-            x2 = var(*new_name);
-            assert(not substitution.count(var(x2.name)));
+            x2 = Core2::Var<>(*new_name,0);
+            assert(not substitution.count(x2));
             substitution.insert({x,x2});
         }
 
@@ -1254,7 +1296,7 @@ CDecls rename_top_level(const CDecls& decls, const string& module_name)
         top_level_vars.insert(x2);
     }
 
-    multiset<var> bound;
+    multiset<Core2::Var<>> bound;
     for(auto& [_,rhs]: decls2)
     {
         assert(bound.empty());
@@ -1304,7 +1346,7 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
 	cdecls = flatten(decl_groups);
     }
 
-    return to_core(rename_top_level(cdecls, name));
+    return rename_top_level(to_core(cdecls), name);
 }
 
 expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
