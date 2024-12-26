@@ -937,9 +937,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         rhs = graph_normalize( MM->fresh_var_state(), rhs);
     }
 
-    value_decls += MM->load_constructors(M.type_decls);
-
     auto core_value_decls = to_core(value_decls);
+
+    core_value_decls += MM->load_constructors(M.type_decls);
 
     if (opts.dump_desugared)
     {
@@ -1397,9 +1397,9 @@ string get_constructor_name(const Hs::LType& constr)
     return tc->name;
 }
 
-CDecls Module::load_constructors(const Hs::Decls& topdecls)
+Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 {
-    CDecls cdecls;
+    Core2::Decls<> decls;
 
     for(const auto& [_,decl]: topdecls)
     {
@@ -1410,31 +1410,41 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls)
         {
             for(const auto& constr: d->get_constructors())
             {
-                auto cname = unloc(*constr.con).name;
-                auto info = lookup_resolved_symbol(cname)->con_info;
+                auto con_name = unloc(*constr.con).name;
+                auto info = lookup_resolved_symbol(con_name)->con_info;
                 assert(info);
                 int arity = info->dict_arity() + info->arity();
 
-                expression_ref body = lambda_n( constructor(cname, arity), arity );
-                cdecls.push_back( { var(cname) , body} );
+                vector<Core2::Var<>> args;
+                for(int i=0;i<arity;i++)
+                    args.push_back({"",i});
+
+                Core2::Exp<> body = Core2::ConApp<>{con_name, args};
+                body = lambda_quantify(args, body);
+                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name,0) , body} );
             }
         }
         else if (d->is_gadt_decl())
         {
             for(const auto& cons_decl: d->get_gadt_constructors())
-                for(auto& con_name: cons_decl.con_names)
+                for(auto& lcon_name: cons_decl.con_names)
                 {
-                    auto cname = unloc(con_name);
-                    auto info = lookup_resolved_symbol(cname)->con_info;
+                    auto con_name = unloc(lcon_name);
+                    auto info = lookup_resolved_symbol(con_name)->con_info;
                     assert(info);
                     int arity = info->dict_arity() + info->arity();
 
-                    expression_ref body = lambda_n( constructor(cname, arity), arity );
-                    cdecls.push_back( { var(cname) , body} );
+                    vector<Core2::Var<>> args;
+                    for(int i=0;i<arity;i++)
+                        args.push_back({"",i});
+
+                    Core2::Exp<> body = Core2::ConApp<>{con_name, args};
+                    body = lambda_quantify(args, body);
+                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name,0) , body} );
                 }
         }
     }
-    return cdecls;
+    return decls;
 }
 
 bool Module::is_declared(const std::string& name) const
