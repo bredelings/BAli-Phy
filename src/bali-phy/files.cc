@@ -3,6 +3,7 @@
 
 #include "util/io.H"
 #include "util/io/vector.H"
+#include "util/string/convert.H"
 #include "files.H"
 #include "util/string/join.H"
 #include "util/string/split.H"
