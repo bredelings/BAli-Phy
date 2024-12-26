@@ -747,14 +747,14 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
 
-    value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
-
     auto core_value_decls = to_core(value_decls);
-    
+
+    core_value_decls = MM->optimize(opts, MM->fresh_var_state(), core_value_decls);
+
     if (opts.dump_optimized)
     {
         std::cerr<<"\nOptimized Core:\n";
-        for(auto& [x,rhs] : value_decls)
+        for(auto& [x,rhs] : core_value_decls)
             std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
         std::cerr<<"\n\n";
     }
@@ -1280,8 +1280,9 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
     return args;
 }
 
-CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls)
+Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core2::Decls<> decls)
 {
+    auto cdecls = to_expression_ref(decls);
     // 2. Optimize
     if (opts.optimize)
     {
@@ -1303,7 +1304,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 	cdecls = flatten(decl_groups);
     }
 
-    return rename_top_level(cdecls, name);
+    return to_core(rename_top_level(cdecls, name));
 }
 
 expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)

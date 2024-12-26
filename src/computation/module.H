@@ -195,7 +195,7 @@ public:
 
     void export_small_decls(const Core2::Decls<>&);
 
-    CDecls optimize(const simplifier_options&, FreshVarState&, CDecls);
+    Core2::Decls<> optimize(const simplifier_options&, FreshVarState&, Core2::Decls<>);
 
     CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
 
