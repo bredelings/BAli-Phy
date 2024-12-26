@@ -66,9 +66,9 @@ public:
     Occ::Exp
     rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    simplifier::substitution
-    simplify_decls(Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
-    
+    std::tuple<Occ::Decls, simplifier::substitution>
+    simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
     std::vector<Core2::Decls<>>
     simplify_module_one(const std::vector<Core2::Decls<>>& decl_groups);
 

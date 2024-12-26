@@ -248,12 +248,12 @@ Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const i
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (x == x2)
-	S.erase(x);
+	S = S.erase(x);
     // 2. If x IS in the bound set, add a substitution from x --> x2 then erase x from the substitution (if it's there)
     else
     {
-	S.erase(x);
-	S.insert({x, {x2}});
+	S = S.erase(x);
+	S = S.insert({x, {x2}});
     }
 
     if (x.is_exported) assert(x == x2);
@@ -378,8 +378,8 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
                 if (x)
                 {
                     auto obj_var = obj_con->args[j];
-                    S2.erase(*x);
-                    S2.insert({*x, {obj_var}});
+                    S2 = S2.erase(*x);
+                    S2 = S2.insert({*x, {obj_var}});
                 }
             }
             return {{body, S2}};
@@ -696,8 +696,8 @@ Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const
 
 // FIXME - Cache free vars on expressions!
 
-substitution
-SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
+tuple<Occ::Decls, substitution>
+SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
@@ -741,8 +741,8 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
 	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
 	{
-	    S2.erase(x);
-	    S2.insert({x,{F,S2}});
+	    S2 = S2.erase(x);
+	    S2 = S2.insert({x,{F,S2}});
 	}
 	else
 	{
@@ -784,8 +784,8 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	    // what are the conditions for post-inlining unconditionally?
 	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.info.is_loop_breaker)
 	    {
-		S2.erase(x);
-		S2.insert({x,F});
+		S2 = S2.erase(x);
+		S2 = S2.insert({x,F});
 	    }
 	    else
 	    {
@@ -797,8 +797,7 @@ SimplifierState::simplify_decls(Occ::Decls& orig_decls, const substitution& S, i
 	}
     }
 
-    std::swap(orig_decls, new_decls);
-    return S2;
+    return {new_decls, S2};
 }
 
 // NOTE: See maybe_eta_reduce( ) in occurrence.cc
@@ -872,11 +871,11 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	{
 	    auto it = S.find(*x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
-	    if (it->second.S)
-		return simplify(it->second.E, *(it->second.S), bound_vars, context);
+	    if (it->S)
+		return simplify(it->E, *(it->S), bound_vars, context);
 	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
 	    else
-		return simplify(it->second.E, {}, bound_vars, context);
+		return simplify(it->E, {}, bound_vars, context);
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
@@ -914,8 +913,8 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
             if (x.info.pre_inline() and options.pre_inline_unconditionally)
             {
-                S2.erase(x);
-                S2.insert({x,arg});
+                S2 = S2.erase(x);
+                S2 = S2.insert({x,arg});
                 return simplify(lam->body, S2, bound_vars, ac->next);
             }
             else
@@ -964,10 +963,10 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
     else if (auto let = E.to_let())
     {
 	auto decls = let->decls;
-	auto S2 = simplify_decls(decls, S, bound_vars, false);
+	auto [decls2, S2] = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(decls, let->body, S2, bound_vars, context);
+	return rebuild_let(decls2, let->body, S2, bound_vars, context);
     }
 
      // Do we need something to handle WHNF variables?
@@ -1041,7 +1040,8 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
     vector<substitution> S(1);
     for(auto& decls: decl_groups)
     {
-	auto s = simplify_decls(decls, S.back(), bound_vars, true);
+	auto [decls2, s] = simplify_decls(decls, S.back(), bound_vars, true);
+        decls = decls2;
 	S.push_back( s );
 	bound_vars = bind_decls(bound_vars, decls);
     }
