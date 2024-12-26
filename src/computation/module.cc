@@ -588,7 +588,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
     return false;
 }
 
-void mark_exported_decls(CDecls& decls,
+void mark_exported_decls(Core2::Decls<>& decls,
                          const InstanceEnv& instance_env,
                          const map<string,const_symbol_ptr>& exports,
                          const map<string,type_ptr>& type_exports,
@@ -745,9 +745,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         rhs = graph_normalize( MM->fresh_var_state(), rhs);
     }
 
-    mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
-
     auto core_value_decls = to_core(value_decls);
+
+    mark_exported_decls(core_value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
 
     core_value_decls = MM->optimize(opts, MM->fresh_var_state(), core_value_decls);
 
