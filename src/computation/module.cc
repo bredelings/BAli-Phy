@@ -1324,11 +1324,9 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 
 Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core2::Decls<> decls)
 {
-    auto cdecls = to_expression_ref(decls);
-    // 2. Optimize
     if (opts.optimize)
     {
-        auto core_decl_groups = decl_groups_to_core({cdecls});
+        vector<Core2::Decls<>> core_decl_groups = {decls};
 
         core_decl_groups = simplify_module_gently(opts, fvstate, *this, core_decl_groups);
 
@@ -1342,11 +1340,10 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
 
 	// CSE goes here!  See ghc/compiler/GHC/Core/Opt/CSE.hs
 
-        auto decl_groups = decl_groups_to_expression_ref(core_decl_groups);
-	cdecls = flatten(decl_groups);
+        decls = flatten(core_decl_groups);
     }
 
-    return rename_top_level(to_core(cdecls), name);
+    return rename_top_level(decls, name);
 }
 
 expression_ref parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
