@@ -427,21 +427,19 @@ pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var
     }
 }
 
-pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::Exp<>& E_, var_context context)
+pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::Exp<>& E, var_context context)
 {
-    assert(not E_.empty());
-
-    Occ::Exp E = to_occ_exp(to_expression_ref(E_));
+    assert(not E.empty());
 
     // 1. Var
-    if (auto V = E_.to_var())
+    if (auto V = E.to_var())
     {
 	auto [x, free_vars] = occurrence_analyze_var(m, *V, context);
         return {x, free_vars};
     }
 
     // 2. Lambda (E = \x -> body)
-    else if (auto L = E_.to_lambda())
+    else if (auto L = E.to_lambda())
     {
 	// 1. Analyze the body and marks its variables
 	auto [body, free_vars] = occurrence_analyzer(m, L->body);
@@ -460,7 +458,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
             return {unreduced, dup_work(free_vars)};
     }
     // 3. Apply
-    else if (auto A = E_.to_apply())
+    else if (auto A = E.to_apply())
     {
         set<Occ::Var> free_vars;
         auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
@@ -481,10 +479,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     else if (auto L = E.to_let())
     {
 	// A. Analyze the body
-        auto [F, free_vars] = occurrence_analyzer(m, to_core_exp(L->body));
+        auto [F, free_vars] = occurrence_analyzer(m, L->body);
 
         // B. Analyze the decls
-        auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
+        auto decls_groups = occurrence_analyze_decls(m, to_occ(to_expression_ref(L->decls)), free_vars);
 
         // C. Wrap the decls around the body
         for(auto& decls: reverse(decls_groups))
@@ -493,7 +491,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
 	return {F, free_vars};
     }
     // 5. Case
-    else if (auto C = E_.to_case())
+    else if (auto C = E.to_case())
     {
         // Analyze the object
         auto [object, free_vars] = occurrence_analyzer(m, C->object);
@@ -547,7 +545,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         return {Occ::Case{object,alts}, free_vars};
     }
     // 6. ConApp
-    else if (auto C = E_.to_conApp())
+    else if (auto C = E.to_conApp())
     {
         set<Occ::Var> free_vars;
 
@@ -563,7 +561,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         return {Occ::ConApp{C->head, args}, free_vars};
     }
     // 7. BuiltinOp
-    else if (auto B = E_.to_builtinOp())
+    else if (auto B = E.to_builtinOp())
     {
         set<Occ::Var> free_vars;
 
@@ -579,8 +577,8 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         return {Occ::BuiltinOp{B->lib_name, B->func_name, args}, free_vars};
     }
     // 8. Constant
-    else if (auto C = E_.to_constant())
+    else if (auto C = E.to_constant())
         return {*C, {}};
     else
-        throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E_.print() + "'";
+        throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
 }
