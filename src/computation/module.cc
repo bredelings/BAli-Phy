@@ -700,7 +700,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     auto CM = std::make_shared<CompiledModule>(MM);
 
-    CM->finish_value_decls(value_decls);
+    CM->finish_value_decls(to_core(value_decls));
 
     bool ok = write_compile_artifact(P, CM);
 
@@ -2036,9 +2036,9 @@ map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
     return code;
 }
 
-void CompiledModule::finish_value_decls( CDecls& cdecls )
+void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
 {
-    value_decls = to_core( cdecls );
+    value_decls = decls;
 }
 
 const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const

@@ -89,7 +89,7 @@ shared_ptr<CompiledModule> compiler_prim_module()
     m->_cached_sha = "12345";
 
     auto cm = std::make_shared<CompiledModule>(m);
-    cm->finish_value_decls(value_decls);
+    cm->finish_value_decls(to_core(value_decls));
 
     return cm;
 }

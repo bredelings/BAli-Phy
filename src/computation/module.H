@@ -307,7 +307,7 @@ public:
 
     const_type_ptr lookup_local_type(const std::string& t) const;
 
-    void finish_value_decls( CDecls& cdecls );
+    void finish_value_decls( const Core2::Decls<>& decls );
 
     // Why do we have code that isn't for this module?
     std::map<Core2::Var<>,Core2::Exp<>> code_defs() const;
