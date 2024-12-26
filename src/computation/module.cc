@@ -588,6 +588,59 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
     return false;
 }
 
+void mark_exported_decls(CDecls& decls,
+                         const InstanceEnv& instance_env,
+                         const map<string,const_symbol_ptr>& exports,
+                         const map<string,type_ptr>& type_exports,
+                         const string& module_name)
+{
+    // Record exports
+    set<string> exported;
+    for(auto& [name,symbol]: exports)
+        if (get_module_name(symbol->name) == module_name)
+            exported.insert(symbol->name);
+
+    // Instances are exported
+    for(auto& [dvar, _]: instance_env)
+        exported.insert(dvar.name);
+
+    for(auto& [tname,tinfo]: type_exports)
+    {
+        if (auto c = tinfo->is_class())
+        {
+            for(auto& [dvar, _]: c->info->superclass_extractors)
+                exported.insert(dvar.name);
+
+            // Default methods are exported
+            for(auto& [method, dm]: c->info->default_methods)
+                exported.insert(dm.name);
+        }
+    }
+
+    // Mark exported vars as exported
+    for(auto& [x,_]: decls)
+    {
+        if (exported.count(x.name))
+        {
+            x.is_exported = true;
+            exported.erase(x.name);
+        }
+        else
+            x.is_exported = false;
+    }
+
+    // Check that we don't export things that don't exist
+    if (false and not exported.empty())
+    {
+        // FIXME: class members don't have a value def, and so this doesn't work.
+        myexception e;
+        e<<"Module '"<<module_name<<"' exports undefined symbols:\n";
+        for(auto& name: exported)
+            e<<"  "<<name;
+        throw e;
+    }
+}
+
 std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
 {
     auto& loader = *P.get_module_loader();
@@ -685,8 +738,19 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
+    // Graph-normalize the bodies
+    for(auto& [x,rhs]: value_decls)
+    {
+        // This won't float things to the top level!
+        rhs = graph_normalize( MM->fresh_var_state(), rhs);
+    }
+
+    mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
+
     value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
+    auto core_value_decls = to_core(value_decls);
+    
     if (opts.dump_optimized)
     {
         std::cerr<<"\nOptimized Core:\n";
@@ -695,8 +759,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         std::cerr<<"\n\n";
     }
 
-    auto core_value_decls = to_core(value_decls);
-    
     // this records unfoldings.
     MM->export_small_decls(core_value_decls);
 
@@ -1218,73 +1280,11 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
     return args;
 }
 
-void mark_exported_decls(CDecls& decls,
-                         const InstanceEnv& instance_env,
-                         const map<string,const_symbol_ptr>& exports,
-                         const map<string,type_ptr>& type_exports,
-                         const string& module_name)
-{
-    // Record exports
-    set<string> exported;
-    for(auto& [name,symbol]: exports)
-        if (get_module_name(symbol->name) == module_name)
-            exported.insert(symbol->name);
-
-    // Instances are exported
-    for(auto& [dvar, _]: instance_env)
-        exported.insert(dvar.name);
-
-    for(auto& [tname,tinfo]: type_exports)
-    {
-        if (auto c = tinfo->is_class())
-        {
-            for(auto& [dvar, _]: c->info->superclass_extractors)
-                exported.insert(dvar.name);
-
-            // Default methods are exported
-            for(auto& [method, dm]: c->info->default_methods)
-                exported.insert(dm.name);
-        }
-    }
-
-    // Mark exported vars as exported
-    for(auto& [x,_]: decls)
-    {
-        if (exported.count(x.name))
-        {
-            x.is_exported = true;
-            exported.erase(x.name);
-        }
-        else
-            x.is_exported = false;
-    }
-
-    // Check that we don't export things that don't exist
-    if (false and not exported.empty())
-    {
-        // FIXME: class members don't have a value def, and so this doesn't work.
-        myexception e;
-        e<<"Module '"<<module_name<<"' exports undefined symbols:\n";
-        for(auto& name: exported)
-            e<<"  "<<name;
-        throw e;
-    }
-}
-
 CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls)
 {
-    // 1. Graph-normalize the bodies
-    for(auto& [x,rhs]: cdecls)
-    {
-        // This won't float things to the top level!
-        rhs = graph_normalize( fvstate, rhs);
-    }
-
     // 2. Optimize
     if (opts.optimize)
     {
-        mark_exported_decls(cdecls, local_instances, exported_symbols(), types, name);
-
         auto core_decl_groups = decl_groups_to_core({cdecls});
 
         core_decl_groups = simplify_module_gently(opts, fvstate, *this, core_decl_groups);
