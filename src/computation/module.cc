@@ -747,17 +747,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     value_decls = MM->load_constructors(M.type_decls, value_decls);
 
-    if (opts.dump_desugared)
-    {
-        std::cerr<<"\nCore:\n";
-        for(auto& [x,rhs] : value_decls)
-            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
-        std::cerr<<"\n\n";
-    }
-
-    // Check for duplicate top-level names.
-    check_duplicate_var(value_decls);
-
     // Graph-normalize the bodies
     for(auto& [x,rhs]: value_decls)
     {
@@ -766,6 +755,17 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     }
 
     auto core_value_decls = to_core(value_decls);
+
+    if (opts.dump_desugared)
+    {
+        std::cerr<<"\nCore:\n";
+        for(auto& [x,rhs] : core_value_decls)
+            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
+        std::cerr<<"\n\n";
+    }
+
+    // Check for duplicate top-level names.
+    check_duplicate_var(value_decls);
 
     mark_exported_decls(core_value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
 
