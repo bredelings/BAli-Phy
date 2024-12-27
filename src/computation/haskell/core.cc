@@ -147,12 +147,11 @@ namespace Core
 
     struct WrapApplyObj: public WrapObj
     {
-        std::vector<Exp> args;
+        std::vector<Var> args;
 
         WrapApplyObj* clone() const {return new WrapApplyObj(*this);}
         Exp operator()(const Exp&) const;
 
-        WrapApplyObj(const std::vector<Exp>& args);
         WrapApplyObj(const std::vector<Var>& args);
     };
 
@@ -161,22 +160,10 @@ namespace Core
         return Apply(e, args);
     }
 
-    WrapApplyObj::WrapApplyObj(const vector<Exp>& as)
-        :args(as)
-    {}
-
     WrapApplyObj::WrapApplyObj(const vector<Var>& as)
     {
         for(auto& a:as)
             args.push_back(a);
-    }
-
-    wrapper WrapApply(const std::vector<Exp>& args)
-    {
-        if (args.empty())
-            return {};
-        else
-            return {WrapApplyObj(args)};
     }
 
     wrapper WrapApply(const std::vector<Var>& args)

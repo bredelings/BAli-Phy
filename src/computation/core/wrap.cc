@@ -1,6 +1,7 @@
 #include "core/wrap.H"
 
 #include "core/func.H"
+#include "computation/fresh_vars.H"
 
 using std::vector;
 

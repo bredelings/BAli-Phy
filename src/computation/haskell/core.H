@@ -7,8 +7,6 @@
 #include "computation/expression/var.H"
 #include "computation/expression/let.H"
 
-// make a Core namespace
-
 namespace Core
 {
     // This should be Core::Exp
@@ -50,7 +48,6 @@ namespace Core
 
     wrapper WrapLet(const Decls& d);
     wrapper WrapLet(const std::shared_ptr<const Decls>& d);
-    wrapper WrapApply(const std::vector<Exp>& args);
     wrapper WrapApply(const std::vector<Var>& args);
     wrapper WrapLambda(const std::vector<Var>& args);
 
