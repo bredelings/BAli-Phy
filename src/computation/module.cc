@@ -1370,16 +1370,14 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
         if (is_IO_type(result_type))
         {
             auto builtin = parse_builtin(decl, n_args+1, L);
-            auto xs = make_vars<>(n_args, "x", 1);
+            auto xs = make_vars<>(n_args);
             auto f1 = Core2::Var<>("f1");
             auto f2 = Core2::Var<>("f2");
             auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
 
-            body = Core2::Apply<>(makeIO, {f2});                          // makeIO f2
-
             body = Core2::Let<>{ {{f1,builtin},                           // let f1 = builtin
                                   {f2,make_apply(Core2::Exp<>(f1),xs)}},  //     f2 = f2 = f1 x1 .. xn in makeIO f2
-                body};                                                    // in makeIO fs
+                     Core2::Apply<>(makeIO, {f2})};                       // in makeIO fs
 
             body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO fs
         }
@@ -1418,13 +1416,11 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                 assert(info);
                 int arity = info->dict_arity() + info->arity();
 
-                vector<Core2::Var<>> args;
-                for(int i=0;i<arity;i++)
-                    args.push_back({"",i, {}, false});
+                auto args = make_vars<>(arity);
 
                 Core2::Exp<> body = Core2::ConApp<>{con_name, args};
                 body = lambda_quantify(args, body);
-                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name,0) , body} );
+                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , body} );
             }
         }
         else if (d->is_gadt_decl())
@@ -1437,13 +1433,11 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                     assert(info);
                     int arity = info->dict_arity() + info->arity();
 
-                    vector<Core2::Var<>> args;
-                    for(int i=0;i<arity;i++)
-                        args.push_back({"",i, {}, false});
+                    auto args = make_vars<>(arity);
 
                     Core2::Exp<> body = Core2::ConApp<>{con_name, args};
                     body = lambda_quantify(args, body);
-                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name,0) , body} );
+                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , body} );
                 }
         }
     }

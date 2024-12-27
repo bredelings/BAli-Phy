@@ -238,9 +238,7 @@ Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
-    vector<Core2::Var<>> args;
-    for(int i=0;i<n;i++)
-        args.push_back({"",i});
+    auto args = make_vars<>(n);
 
     Core2::Exp<> body = Core2::BuiltinOp<>{plugin_name, symbol_name, args, fn};
     return lambda_quantify(args, body);

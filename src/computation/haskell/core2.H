@@ -1009,11 +1009,11 @@ Core2::Exp<NoteV, NoteE> make_let(const Core2::Decls<NoteV,NoteE>& decls, const 
 }
 
 template <typename NoteV = std::monostate>
-std::vector<Core2::Var<NoteV>> make_vars(int n, const std::string& prefix="", int start=0)
+std::vector<Core2::Var<NoteV>> make_vars(int n, char prefix = 'x', int start=1)
 {
     std::vector<Core2::Var<>> xs;
     for(int i=0;i<n;i++)
-        xs.push_back({prefix,start+i});
+        xs.push_back({prefix+std::to_string(start+i)});
     return xs;
 }
 
