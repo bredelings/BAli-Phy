@@ -980,7 +980,7 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Cor
 	return Core2::Apply<NoteV,NoteE>{E,{x}};
 }
 
-template <typename NoteV, typename NoteE>
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std::vector<Core2::Var<NoteV>>& xs)
 {
     auto E2 = E;
@@ -990,7 +990,7 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std
     return E2;
 }
 
-template <typename NoteV, typename NoteE>
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& xs, Core2::Exp<NoteV, NoteE> E)
 {
     for(auto& x: xs | ranges::views::reverse)
@@ -999,13 +999,22 @@ Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& x
     return E;
 }
 
-template <typename NoteV, typename NoteE>
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core2::Exp<NoteV, NoteE> make_let(const Core2::Decls<NoteV,NoteE>& decls, const Core2::Exp<NoteV, NoteE>& body)
 {
     if (decls.empty())
 	return body;
     else
 	return Core2::Let<NoteV,NoteE>{decls,body};
+}
+
+template <typename NoteV = std::monostate>
+std::vector<Core2::Var<NoteV>> make_vars(int n, const std::string& prefix="", int start=0)
+{
+    std::vector<Core2::Var<>> xs;
+    for(int i=0;i<n;i++)
+        xs.push_back({prefix,start+i});
+    return xs;
 }
 
 #endif
