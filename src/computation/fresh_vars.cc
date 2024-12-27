@@ -200,6 +200,14 @@ var make_var(const Hs::Var& v)
     return v2;
 }
 
+Core2::Var<> make_core_var(const Hs::Var& v)
+{
+    assert(v.wrap.is_identity());
+    Core2::Var v2(v.name);
+
+    return v2;
+}
+
 vector<var> make_vars(const vector<Hs::Var>& vs)
 {
     vector<var> vs2;

@@ -10,6 +10,8 @@
 #include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 #include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
 
+#include "core/ast.H"
+
 class FreshVarState
 {
     int var_index = 1;
@@ -97,6 +99,8 @@ public:
 };
 
 var make_var(const Hs::Var& v);
+
+Core2::Var<> make_core_var(const Hs::Var& v);
 
 std::vector<var> make_vars(const std::vector<Hs::Var>& vs);
 
