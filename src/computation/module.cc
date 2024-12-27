@@ -1375,9 +1375,9 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
             auto f2 = Core2::Var<>("f2");
             auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
 
-            body = Core2::Let<>{ {{f1,builtin},                           // let f1 = builtin
-                                  {f2,make_apply(Core2::Exp<>(f1),xs)}},  //     f2 = f2 = f1 x1 .. xn in makeIO f2
-                     Core2::Apply<>(makeIO, {f2})};                       // in makeIO fs
+            body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
+                                  {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f2 = f1 x1 .. xn in makeIO f2
+                  Core2::Apply<>{makeIO, {f2}}};                          // in makeIO fs
 
             body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO fs
         }
