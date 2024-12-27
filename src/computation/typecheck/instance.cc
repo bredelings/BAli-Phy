@@ -5,6 +5,7 @@
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/core.H"
+#include "computation/expression/convert.H"
 
 using std::string;
 using std::vector;
@@ -546,7 +547,7 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
-pair<Hs::Decls, tuple<Core::Var, Core::wrapper, Core::Exp>>
+pair<Hs::Decls, tuple<Core::Var, Core::wrapper, Core2::Exp<>>>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
@@ -595,6 +596,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     string classdict_name = "d" + get_class_name_from_constraint(instance_head);
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
+    CDecls dict_decls;
     for(const auto& [method, method_type]: class_info.members)
     {
         auto& method_name = method.name;
@@ -632,14 +634,18 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                dict_entries.push_back( Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") );
+                auto dict_entry = get_fresh_var("de",false);
+                dict_decls.push_back({dict_entry, Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") });
+                dict_entries.push_back( dict_entry );
 
                 pop_note();
                 continue;
             }
         }
 
-        dict_entries.push_back( Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)) );
+        auto dict_entry = get_fresh_var("de",false);
+        dict_decls.push_back({dict_entry, Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens))});
+        dict_entries.push_back( dict_entry );
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
         decls.push_back({noloc,decl2});
@@ -656,7 +662,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // auto dict = Core::ConExp(class_name, dict_entries);
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
-    auto dict = Core::Tuple(dict_entries);
+    auto dict = Core::Let(dict_decls,Core::Tuple(dict_entries));
 
     auto wrap = wrap_gen * wrap_let;
 
@@ -664,15 +670,15 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     pop_note();
 
-    return {decls, {dfun, wrap, dict}};
+    return {decls, {dfun, wrap, to_core_exp(dict)}};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, vector<tuple<Core::Var, Core::wrapper, Core::Exp>>> TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
+pair<Hs::Binds, vector<tuple<Core::Var, Core::wrapper, Core2::Exp<>>>> TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
-    vector<tuple<Core::Var, Core::wrapper, Core::Exp>> dfun_decls;
+    vector<tuple<Core::Var, Core::wrapper, Core2::Exp<>>> dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {
