@@ -1017,4 +1017,12 @@ std::vector<Core2::Var<NoteV>> make_vars(int n, char prefix = 'x', int start=1)
     return xs;
 }
 
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+Core2::Exp<NoteV> Tuple(const std::vector<Core2::Var<NoteV>>& vars)
+{
+    if (vars.size() == 1)
+        return vars[0];
+    else
+        return Core2::ConApp<NoteV>{tuple_name(vars.size()),vars};
+}
 #endif
