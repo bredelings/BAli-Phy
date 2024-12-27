@@ -587,7 +587,9 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
-    auto dict_entries = dict_vars_from_lie<Core::Exp>(wanteds);
+    vector<Core2::Var<>> dict_entries;
+    for(auto& var: dict_vars_from_lie<Core::Var>(wanteds))
+        dict_entries.push_back(to_core(var));
 
     // 7. Construct binds_methods
     Hs::Decls decls;
@@ -596,7 +598,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     string classdict_name = "d" + get_class_name_from_constraint(instance_head);
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    CDecls dict_decls;
+    Core2::Decls<> dict_decls;
     for(const auto& [method, method_type]: class_info.members)
     {
         auto& method_name = method.name;
@@ -634,8 +636,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                auto dict_entry = get_fresh_var("de",false);
-                dict_decls.push_back({dict_entry, Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") });
+                auto dict_entry = to_core(get_fresh_var("de",false));
+                dict_decls.push_back({dict_entry, to_core_exp(Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") )});
                 dict_entries.push_back( dict_entry );
 
                 pop_note();
@@ -643,8 +645,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
             }
         }
 
-        auto dict_entry = get_fresh_var("de",false);
-        dict_decls.push_back({dict_entry, Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens))});
+        auto dict_entry = to_core(get_fresh_var("de",false));
+        dict_decls.push_back({dict_entry, to_core_exp(Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)))});
         dict_entries.push_back( dict_entry );
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
@@ -662,7 +664,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // auto dict = Core::ConExp(class_name, dict_entries);
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
-    auto dict = Core::Let(dict_decls,Core::Tuple(dict_entries));
+    Core2::Exp<> dict = Core2::Let<>(dict_decls, Tuple(dict_entries));
 
     auto wrap = wrap_gen * wrap_let;
 
@@ -670,7 +672,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     pop_note();
 
-    return {decls, {dfun, wrap, to_core_exp(dict)}};
+    return {decls, {dfun, wrap, dict}};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
