@@ -665,7 +665,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // auto dict = Core::ConExp(class_name, dict_entries);
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
-    Core2::Exp<> dict = Core2::Let<>(dict_decls, Tuple(dict_entries));
+    Core2::Exp<> dict = Core2::Let<>{dict_decls, Tuple(dict_entries)};
 
     auto wrap = wrap_gen * wrap_let;
 
