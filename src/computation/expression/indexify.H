@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "expression_ref.H"
-#include "computation/haskell/core2.H"
+#include "computation/core/ast.H"
 
 expression_ref indexify(const expression_ref&);
 

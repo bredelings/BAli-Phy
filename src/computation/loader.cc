@@ -8,6 +8,7 @@
 #include "parser/driver.hh"
 #include "haskell/ids.H"
 #include "haskell/extensions.H"
+#include "core/func.H"
 
 #include "util/io.H"
 #include <boost/compute/detail/sha1.hpp>

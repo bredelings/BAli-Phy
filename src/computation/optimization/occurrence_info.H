@@ -1,7 +1,7 @@
 #ifndef OCCURRENCE_INFO_H
 #define OCCURRENCE_INFO_H
 
-#include "computation/haskell/core2.H"
+#include "computation/core/ast.H"
 
 enum class amount_t {Unknown, None, Once, Many};
 

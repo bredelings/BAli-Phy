@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "haskell/ids.H"
+#include "core/func.H"
 
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"

@@ -5,7 +5,7 @@
 #include "object.H"       // for Box
 #include "immer/set.hpp"  // for immer::set
 #include "computation/expression/var.H"
-#include "computation/haskell/core2.H"
+#include "computation/core/ast.H"
 
 typedef Box<immer::set<var>> FreeVarSet;
 

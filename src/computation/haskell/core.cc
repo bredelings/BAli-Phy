@@ -7,7 +7,6 @@
 
 #include <fstream>
 #include <cereal/archives/binary.hpp>
-#include "core2.H"
 
 using std::vector;
 
@@ -245,18 +244,4 @@ Core::wrapper operator*(const Core::wrapper& w1, const Core::wrapper& w2)
         return w1;
     else
         return {Core::WrapCompose(w1,w2)};
-}
-
-
-void test ()
-{
-    Core2::Exp<> exp;
-    std::ofstream file("tmp");
-    cereal::BinaryOutputArchive archive( file );
-    Core2::ConApp<> constant;
-    archive(exp);
-
-    std::ifstream file2("tmp");
-    cereal::BinaryInputArchive iarchive( file2 );
-    iarchive(exp);
 }

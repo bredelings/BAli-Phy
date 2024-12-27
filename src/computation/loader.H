@@ -7,7 +7,7 @@
 #include <map>
 #include <filesystem>
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
-#include "computation/haskell/core2.H"
+#include "computation/core/ast.H"
 
 class Module;
 

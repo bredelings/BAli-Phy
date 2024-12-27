@@ -5,6 +5,7 @@
 #include "occurrence.H"
 #include "computation/varinfo.H"
 #include "computation/module.H"
+#include "core/func.H"
 
 #include "simplifier.H"
 

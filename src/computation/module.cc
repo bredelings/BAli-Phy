@@ -34,6 +34,7 @@
 #include "computation/optimization/inliner.H"
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
+#include "computation/core/func.H"
 #include "computation/varinfo.H"
 #include "util/assert.hh"
 #include <boost/compute/detail/sha1.hpp>
