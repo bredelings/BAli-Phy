@@ -96,7 +96,7 @@ jobs:
           - name: macos-xcode-15-arm
             os: macos-14
             compiler: xcode
-            version: "15"
+            version: "16"
             buildtype: "debugoptimized"
             arch: "mac-arm64"
 
