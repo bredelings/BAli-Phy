@@ -42,4 +42,6 @@ namespace Core2
 
     extern wrapper WrapId;
 };
+
+Core2::wrapper operator*(const Core2::wrapper&, const Core2::wrapper&);
 #endif
