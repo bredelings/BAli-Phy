@@ -54,7 +54,7 @@ Occ::Var FreshVarSource::get_fresh_occ_var(const std::string& name)
 {
     assert(not is_haskell_builtin_con_name(name));
 //    assert(name.empty() or not is_qualified_symbol(name));
-    return Occ::Var{name, get_index(), {}};
+    return Occ::Var(name, get_index());
 }
 
 var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
