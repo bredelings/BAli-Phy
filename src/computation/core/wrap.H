@@ -1,7 +1,7 @@
 #ifndef CORE_WRAP_H
 #define CORE_WRAP_H
 
-#include "core/ast.H"
+#include "ast.H"
 
 namespace Core2
 {
