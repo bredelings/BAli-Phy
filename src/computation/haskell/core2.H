@@ -287,7 +287,7 @@ namespace Core2
     struct Var
     {
 	std::string name;
-	int index;
+	int index=0;
 
 	NoteV info;
 
@@ -315,6 +315,12 @@ namespace Core2
 	{
 	    ar(name, index, info, is_exported);
 	}
+
+        Var() = default;
+        Var(const std::string& s):name(s) {}
+        Var(const std::string& s, int i):name(s), index(i) {}
+        Var(const std::string& s, int i, const NoteV& n):name(s), index(i), info(n) {}
+        Var(const std::string& s, int i, const NoteV& n, bool b):name(s), index(i), info(n), is_exported(b) {}
     };
 
     template <typename NoteV>
