@@ -819,7 +819,7 @@ Core2::Decls<> rename_top_level(const Core2::Decls<>& decls, const string& modul
 
         if (auto new_name = get_new_name(x, module_name))
         {
-            x2 = Core2::Var<>(*new_name,0);
+            x2 = Core2::Var<>(*new_name);
             assert(not substitution.count(x2));
             substitution.insert({x,x2});
         }
@@ -928,8 +928,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     CDecls value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
     value_decls += core_decls;
 
-    value_decls += MM->load_builtins(loader, M.foreign_decls);
-
     // Graph-normalize the bodies
     for(auto& [x,rhs]: value_decls)
     {
@@ -938,6 +936,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     }
 
     auto core_value_decls = to_core(value_decls);
+
+    core_value_decls += MM->load_builtins(loader, M.foreign_decls);
 
     core_value_decls += MM->load_constructors(M.type_decls);
 
@@ -1350,9 +1350,9 @@ Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const modu
     return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
 }
 
-CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
+Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
 {
-    CDecls cdecls;
+    Core2::Decls<> decls;
     for(const auto& decl: foreign_decls)
     {
         auto function_name = unloc(decl.function).name;
@@ -1365,29 +1365,31 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
 
         auto [_,result_type] = gen_arg_result_types(S->type);
 
-        expression_ref body;
+        Core2::Exp<> body;
 
         if (is_IO_type(result_type))
         {
-            body = to_expression_ref(parse_builtin(decl, n_args+1, L));
+            auto builtin = parse_builtin(decl, n_args+1, L);
+            auto xs = make_vars<>(n_args, "x", 1);
+            auto f1 = Core2::Var<>("f1");
+            auto f2 = Core2::Var<>("f2");
+            auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
 
-	    // Change IO a to RealWorld -> a
-            for(int i=0;i<n_args;i++)
-                body = {body,var(i)};
+            body = Core2::Apply<>(makeIO, {f2});                          // makeIO f2
 
-            body = {var("Compiler.IO.makeIO"), body};
+            body = Core2::Let<>{ {{f1,builtin},                           // let f1 = builtin
+                                  {f2,make_apply(Core2::Exp<>(f1),xs)}},  //     f2 = f2 = f1 x1 .. xn in makeIO f2
+                body};                                                    // in makeIO fs
 
-            for(int i=n_args-1;i>=0;i--)
-                body = lambda_quantify(i,body);
-            // (\x0 x1 ... x<n-1> -> makeIO ((\x0 x1 .. x<n> -> builtinOp x0 x1 .. x<n>) x0 x1 .. x<n-1>))
+            body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO fs
         }
         else
-            body = to_expression_ref(parse_builtin(decl, n_args, L));
+            body = parse_builtin(decl, n_args, L);
 
-        cdecls.push_back( { var(function_name), body} );
+        decls.push_back( { Core2::Var<>(function_name), body} );
     }
 
-    return cdecls;
+    return decls;
 }
 
 string get_constructor_name(const Hs::LType& constr)
@@ -1418,7 +1420,7 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 
                 vector<Core2::Var<>> args;
                 for(int i=0;i<arity;i++)
-                    args.push_back({"",i});
+                    args.push_back({"",i, {}, false});
 
                 Core2::Exp<> body = Core2::ConApp<>{con_name, args};
                 body = lambda_quantify(args, body);
@@ -1437,7 +1439,7 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 
                     vector<Core2::Var<>> args;
                     for(int i=0;i<arity;i++)
-                        args.push_back({"",i});
+                        args.push_back({"",i, {}, false});
 
                     Core2::Exp<> body = Core2::ConApp<>{con_name, args};
                     body = lambda_quantify(args, body);
