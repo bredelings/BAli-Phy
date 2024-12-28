@@ -160,7 +160,7 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
     return partitions;
 }
 
-failable_expression desugar_state::match_constructor(const vector<var>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -207,17 +207,17 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
         int total_arity = dict_arity + field_arity;
 
 	// 2.2 Construct the simple pattern for constant C
-	vector<var> args;
+	vector<Core2::Var<>> args;
 	for(int j=0;j< total_arity; j++)
-	    args.push_back( get_fresh_var() );
+	    args.push_back( get_fresh_core_var("c") );
 
         vector<Core2::VarOrWildcardPattern<>> pat_args;
         for(auto& arg: args)
-            pat_args.push_back({Core2::VarPat<>(to_core(arg))});
+            pat_args.push_back({Core2::VarPat<>(arg)});
         Core2::Pattern<> pat = Core2::ConPat<>(name, pat_args);
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<var> x2 = args;
+	vector<Core2::Var<>> x2 = args;
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
@@ -253,7 +253,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
     simple_bodies.push_back(fail_identity());
 
     // 3. Construct a failable_expression.
-    auto x0 = to_core_exp(x[0]);
+    auto x0 = x[0];
 
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
@@ -272,7 +272,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 }
 
 
-failable_expression desugar_state::match_literal(const vector<var>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -307,7 +307,7 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 	auto pat = constants[c];
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<var> x2;
+	vector<Core2::Var<>> x2;
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
@@ -344,13 +344,13 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
             auto& LP = constants[i];
 
             // condition = (x == constants[i])
-            expression_ref condition = safe_apply(to_expression_ref(desugar(LP.equalsOp)), {x0, to_expression_ref(desugar(LP.lit))});
+            auto condition = safe_apply(desugar(LP.equalsOp), {x0, desugar(LP.lit)});
 
             // let o = E in case condition of True -> true_branch(o); 
             auto o = get_fresh_var("o");
             auto true_branch = simple_bodies[i].result(to_core(o));
             E = let_expression(CDecls({{o,E}}),
-                               to_expression_ref(case_expression(to_core_exp(condition),
+                               to_expression_ref(case_expression(condition,
                                                                  {Hs::TruePat()},{failable_expression(true_branch)}).result(to_core(o))));
         }
         return to_core_exp(E);
@@ -360,7 +360,7 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 }
 
 
-failable_expression desugar_state::match_var(const vector<var>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_var(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -381,7 +381,7 @@ failable_expression desugar_state::match_var(const vector<var>& x, const vector<
 }
 
 
-failable_expression desugar_state::match_empty(const vector<var>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_empty(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     assert(x.size() == 0);
 
@@ -394,7 +394,7 @@ failable_expression desugar_state::match_empty(const vector<var>& x, const vecto
 }
 
 // Make this a member function of equation_info_t?
-void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
+void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn)
 {
     auto& patterns = eqn.patterns;
     auto& pat1 = patterns[0];
@@ -409,21 +409,21 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
     if (auto v = pat1.to<Hs::VarPattern>())
     {
-	auto y = make_var(unloc(v->var));
-	rhs.add_binding(to_core(CDecls({{y, x}})));
+	auto y = make_core_var(unloc(v->var));
+	rhs.add_binding({{y, x}});
 	pat1 = Hs::WildcardPattern();
     }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
     else if (pat1.is_a<Haskell::LazyPattern>())
     {
         auto& LP = pat1.as_<Haskell::LazyPattern>();
-	CDecls binds = {};
+        Core2::Decls<> binds = {};
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
-            auto y = make_var(unloc(v));
-	    binds.push_back(CDecl({y,to_expression_ref(case_expression(to_core(x), {unloc(LP.pattern)}, {failable_expression(to_core(y))}).result(Core2::error("lazy pattern: failed pattern match")))}));
+            auto y = make_core_var(unloc(v));
+	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(Core2::error("lazy pattern: failed pattern match"))});
         }
-	rhs.add_binding(to_core(binds));
+	rhs.add_binding(binds);
 	pat1 = Hs::WildcardPattern();
     }
 
@@ -453,8 +453,8 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
     else if (pat1.is_a<Haskell::AsPattern>())
     {
         auto& AP = pat1.as_<Haskell::AsPattern>();
-	auto y = make_var(unloc(AP.var));
-	rhs.add_binding(to_core(CDecls({{y, x}})));
+	auto y = make_core_var(unloc(AP.var));
+	rhs.add_binding({{y, x}});
 	pat1 = unloc(AP.pattern);
 	clean_up_pattern(x, eqn);
     }
@@ -467,7 +467,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
     }
 }
 
-failable_expression desugar_state::match(const vector<var>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -511,25 +511,25 @@ failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const 
     for(int i=0; i<patterns.size(); i++)
 	equations.push_back( { {patterns[i]}, bodies[i]} );
 
-    auto x = get_fresh_var();
+    auto x = get_fresh_core_var("x");
     auto FE = match({x}, equations);
-    FE.add_binding(to_core(CDecls({{x,to_expression_ref(T)}})));
+    FE.add_binding({{x,T}});
     return FE;
 }
 
 Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core2::Exp<>& otherwise)
 {
     // 1. Get fresh vars for the arguments
-    vector<var> args;
+    vector<Core2::Var<>> args;
     for(int i=0;i<equations[0].patterns.size();i++)
-	args.push_back(get_fresh_var());
+	args.push_back(get_fresh_core_var("x"));
 
     // 2. Construct the case expression
     auto E = match(args, equations).result(otherwise);
 
     // 3. Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
-	E = Core2::Lambda<>{to_core(args[i]), E};
+	E = Core2::Lambda<>{args[i], E};
 
     return E;
 }
