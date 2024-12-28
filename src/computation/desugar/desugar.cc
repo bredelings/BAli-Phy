@@ -41,7 +41,7 @@ void failable_expression::add_binding(const Core2::Decls<>& decls)
 {
     auto result2 = result;
 
-    result = [result2,decls](const expression_ref& o) {return to_expression_ref(Core2::Let(decls,to_core_exp(result2(o))));};
+    result = [result2,decls](const Core2::Exp<>& o) {return Core2::Let(decls,result2(o));};
 }
 
 
@@ -133,7 +133,7 @@ bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 {
-    auto F = failable_expression(to_expression_ref(desugar(grhs.body)));
+    auto F = failable_expression(desugar(grhs.body));
 
     for(auto& lguard: std::reverse(grhs.guards))
     {
@@ -208,7 +208,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
-            decls.push_back( {z,rhs.result(0)});
+            decls.push_back( {z,to_expression_ref(rhs.result(Core2::Constant(0)))});
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
@@ -217,7 +217,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 auto x = make_var(v);
 		std::ostringstream o;
 		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-		    decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(desugar_error(o.str()))});
+                decls.push_back( {x ,to_expression_ref(case_expression(z, {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str())))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
@@ -597,10 +597,10 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto& I = E.as_<Hs::IfExp>();
 
         auto condition = to_expression_ref(desugar(I.condition));
-        auto true_branch = to_expression_ref(desugar(I.true_branch));
-        auto false_branch = to_expression_ref(desugar(I.false_branch));
+        auto true_branch = desugar(I.true_branch);
+        auto false_branch = desugar(I.false_branch);
 
-        return to_core_exp(case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch));
+        return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
     }
     else if (auto c = E.to<Hs::CaseExp>())
     {
@@ -615,7 +615,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
             patterns.push_back( unloc(alt_patterns[0]) );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
-        return to_core_exp(case_expression(obj, patterns, bodies).result(desugar_error("case: failed pattern match")));
+        return case_expression(obj, patterns, bodies).result(Core2::error("case: failed pattern match"));
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {

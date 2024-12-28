@@ -21,6 +21,7 @@
 #include "util/range.H"
 #include "computation/typecheck/typecheck.H"
 #include "util/assert.hh"
+#include "computation/core/func.H"
 
 using std::string;
 using std::vector;
@@ -35,19 +36,19 @@ using std::pair;
 
 failable_expression fail_identity()
 {
-    return failable_expression{true, [](const expression_ref& o) {return o;}};
+    return failable_expression{true, [](const Core2::Exp<>& o) {return o;}};
 }
 
 failable_expression desugar_state::combine(const failable_expression& E1, const failable_expression& E2)
 {
     if (not E1.can_fail) return E1;
 
-    std::function<expression_ref(const expression_ref&)> result;
+    std::function<Core2::Exp<>(const Core2::Exp<>&)> result;
 
     // result = \o -> let o2 = e2 o in e1 o2
-    auto o2 = get_fresh_var();
-    result = [E1,E2,o2](const expression_ref& o) {
-	return let_expression({{o2,E2.result(o)}},E1.result(o2));
+    auto o2 = get_fresh_core_var("o");
+    result = [E1,E2,o2](const Core2::Exp<>& o) {
+	return Core2::Let<>({{o2,E2.result(o)}},E1.result(o2));
     };
 
     return failable_expression{E2.can_fail, result};
@@ -260,18 +261,15 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
-    auto o = get_fresh_var();
+    auto o = get_fresh_var("o");
 
-    auto result = [=](const expression_ref& otherwise)
+    auto result = [=](const Core2::Exp<>& otherwise)
     {
-	// Bind the otherwise branch to a let var.
-	CDecls binds = {{o,otherwise}};
-
 	vector<expression_ref> simple_bodies2;
 	for(auto& body: simple_bodies)
-	    simple_bodies2.push_back(body.result(o));
+	    simple_bodies2.push_back(to_expression_ref(body.result(to_core(o))));
 
-	return let_expression({{o,otherwise}}, make_case_expression(x0, simple_patterns, simple_bodies2));
+	return to_core_exp(let_expression(CDecls({{o,to_expression_ref(otherwise)}}), make_case_expression(x0, simple_patterns, simple_bodies2)));
     };
 
     return failable_expression{true, result};
@@ -341,9 +339,9 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
 
-    std::function<expression_ref(const expression_ref&)> result = [=,this](const expression_ref& otherwise)
+    std::function<Core2::Exp<>(const Core2::Exp<>&)> result = [=,this](const Core2::Exp<>& otherwise)
     {
-        expression_ref E = otherwise;
+        expression_ref E = to_expression_ref(otherwise);
 
         for(int i=constants.size()-1; i>= 0; i--)
         {
@@ -353,13 +351,13 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
             expression_ref condition = safe_apply(to_expression_ref(desugar(LP.equalsOp)), {x0, to_expression_ref(desugar(LP.lit))});
 
             // let o = E in case condition of True -> true_branch(o); 
-            auto o = get_fresh_var();
-            Core::Exp true_branch = simple_bodies[i].result(o);
-            E = let_expression({{o,E}},
-                               case_expression(condition,
-                                               {Hs::TruePat()},{failable_expression(true_branch)}).result(o));
+            auto o = get_fresh_var("o");
+            auto true_branch = simple_bodies[i].result(to_core(o));
+            E = let_expression(CDecls({{o,E}}),
+                               to_expression_ref(case_expression(condition,
+                                                                 {Hs::TruePat()},{failable_expression(true_branch)}).result(to_core(o))));
         }
-        return E;
+        return to_core_exp(E);
     };
 
     return failable_expression{true, result};
@@ -427,7 +425,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
             auto y = make_var(unloc(v));
-	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(desugar_error("lazy pattern: failed pattern match"))});
+	    binds.push_back(CDecl({y,to_expression_ref(case_expression(x, {unloc(LP.pattern)}, {failable_expression(to_core(y))}).result(Core2::error("lazy pattern: failed pattern match")))}));
         }
 	rhs.add_binding(to_core(binds));
 	pat1 = Hs::WildcardPattern();
@@ -531,7 +529,7 @@ expression_ref desugar_state::def_function(const vector< equation_info_t >& equa
 	args.push_back(get_fresh_var());
 
     // 2. Construct the case expression
-    expression_ref E = match(args, equations).result(otherwise);
+    expression_ref E = to_expression_ref(match(args, equations).result(to_core_exp(otherwise)));
 
     // 3. Turn it into a function
     for(int i=args.size()-1;i>=0;i--)

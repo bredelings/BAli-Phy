@@ -18,22 +18,22 @@ struct failable_expression: public Object
 {
     bool can_fail;
 
-    std::function<expression_ref(const expression_ref&)> result;
+    std::function<Core2::Exp<>(const Core2::Exp<>&)> result;
 
     failable_expression* clone() const {return new failable_expression(*this);}
 
-    std::string print() const {return "("+std::to_string(can_fail)+","+convertToString(result(var("FAIL")))+")";}
+    std::string print() const {return "("+std::to_string(can_fail)+","+convertToString(result(Core2::Var<>("FAIL")))+")";}
 
     void add_binding(const Core2::Decls<>& binds);
 
-    failable_expression(bool b, std::function<expression_ref(const expression_ref&)> f)
+    failable_expression(bool b, std::function<Core2::Exp<>(const Core2::Exp<>&)> f)
 	:can_fail(b), result(f)
 	{}
 
-    explicit failable_expression(const expression_ref& E)
+    explicit failable_expression(const Core2::Exp<>& E)
     {
        can_fail = false;
-       result = [E](const expression_ref&){return E;};
+       result = [E](const Core2::Exp<>&){return E;};
     }
 };
 
