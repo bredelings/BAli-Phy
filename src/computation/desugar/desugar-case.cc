@@ -203,8 +203,8 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 
         vector<Core2::VarOrWildcardPattern<>> pat_args;
         for(auto& arg: args)
-            pat_args.push_back({Core2::VarPat<>(arg)});
-        Core2::Pattern<> pat = Core2::ConPat<>(name, pat_args);
+            pat_args.push_back({Core2::VarPat<>{arg}});
+        Core2::Pattern<> pat = Core2::ConPat<>{name, pat_args};
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<Core2::Var<>> x2 = args;

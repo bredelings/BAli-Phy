@@ -71,7 +71,7 @@ Core2::Pattern<NoteV> TuplePat(const std::vector<Core2::Var<NoteV>>& args)
 
     std::vector<Core2::VarOrWildcardPattern<>> arg_pats;
     for(auto& arg: args)
-        arg_pats.push_back({Core2::VarPat<>(arg)});
+        arg_pats.push_back({Core2::VarPat<>{arg}});
 
     return Core2::ConPat<NoteV>{tuple_name(args.size()), arg_pats};
 }
