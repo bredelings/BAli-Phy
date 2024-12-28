@@ -193,7 +193,6 @@ LIE float_wanteds(bool float_past_equalities, const WantedConstraints& wanteds, 
 
 bool TypeChecker::default_preds( WantedConstraints& wanted )
 {
-    Core::Decls decls;
     auto simple_wanteds = float_wanteds(true, wanted);
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( simple_wanteds );
 

@@ -528,7 +528,7 @@ public:
     std::optional<std::vector<Core::Var>>
     is_superclass_of(const Type&, const Type&);
 
-    std::optional<Core::Decls>
+    std::optional<Core2::Decls<>>
     entails_by_superclass(const Constraint& to_keep, const Constraint& to_remove);
 
     Core2::Decls<> simplify(const LIE& givens, LIE& wanteds);

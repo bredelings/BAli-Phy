@@ -6,6 +6,8 @@
 #include "util/variant.H"
 #include "util/string/join.H"
 
+#include "computation/core/func.H"
+
 #include <range/v3/all.hpp>
 
 using std::string;
@@ -134,16 +136,16 @@ optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Type& constraint
     }
 }
 
-optional<Core::Decls> TypeChecker::entails_by_superclass(const Constraint& given, const Constraint& wanted)
+optional<Core2::Decls<>> TypeChecker::entails_by_superclass(const Constraint& given, const Constraint& wanted)
 {
     if (auto extractors = is_superclass_of(wanted.pred, given.pred))
     {
-        Core::Exp dict_exp = given.ev_var;
+        Core2::Exp<> dict_exp = to_core(given.ev_var);
         for(auto& extractor: *extractors | views::reverse)
-            dict_exp = Core::safe_apply(extractor, {dict_exp}, *this);
+            dict_exp = safe_apply(to_core_exp(extractor), {dict_exp}, *this);
 
         // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
-        return Core::Decls( { pair(wanted.ev_var, dict_exp) } );
+        return Core2::Decls<>( { {to_core(wanted.ev_var), dict_exp} } );
     }
     else
         return {};
@@ -214,7 +216,7 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
         // SUPER - not in the paper.
         else if (auto sdecls = entails_by_superclass(dict1->constraint, dict2->constraint))
         {
-            decls += to_core(*sdecls);
+            decls += *sdecls;
             return Solved();
         }
     }
