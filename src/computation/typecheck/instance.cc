@@ -801,7 +801,11 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
 
                 auto type = apply_subst(*subst, instance_head);
 
-                auto dfun_exp = to_core_exp(Core::Apply(to_var(dfun), dict_vars_from_lie<Core::Exp>(wanteds)));
+                vector<Core2::Var<>> tmp;
+                for(auto& arg: dict_vars_from_lie(wanteds))
+                    tmp.push_back(to_core(arg));
+
+                Core2::Exp<> dfun_exp = make_apply<>(Core2::Exp<>(dfun), tmp);
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }
