@@ -92,4 +92,5 @@ struct desugar_state: public FreshVarSource
     desugar_state(const Module&, FreshVarState&);
 };
 
+expression_ref desugar_error(const std::string& s);
 #endif
