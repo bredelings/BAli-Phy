@@ -927,7 +927,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
 
-    auto value_decls = to_core( MM->desugar(opts, MM->fresh_var_state(), hs_decls) );
+    auto value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
 
     value_decls += core_decls;
 
@@ -1249,9 +1249,9 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     return M;
 }
 
-CDecls Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
+Core2::Decls<> Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
 {
-    auto cdecls = ::desugar(*this, state, topdecls);
+    auto cdecls = to_core( ::desugar(*this, state, topdecls) );
 
 //    if (opts.dump_desugared)
 //        std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";

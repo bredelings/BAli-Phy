@@ -191,7 +191,7 @@ public:
 
     Hs::ModuleDecls rename(const simplifier_options&, Hs::ModuleDecls);
 
-    CDecls desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
+    Core2::Decls<> desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
     void export_small_decls(const Core2::Decls<>&);
 
