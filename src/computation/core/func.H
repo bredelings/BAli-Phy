@@ -62,4 +62,10 @@ Core2::Exp<NoteV> Tuple(const std::vector<Core2::Var<NoteV>>& vars)
         return Core2::ConApp<NoteV>{tuple_name(vars.size()),vars};
 }
 
+class FreshVarSource;
+
+std::tuple<Core2::Decls<>, std::vector<Core2::Var<>>>
+args_to_vars(const std::vector<Core2::Exp<>>& args, FreshVarSource& source);
+
+Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args, FreshVarSource& source);
 #endif

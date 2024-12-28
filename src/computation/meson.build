@@ -24,7 +24,7 @@ computation_sources = [
   'haskell/literal.cc', 'haskell/ids.cc', 'haskell/type.cc',
   'haskell/core.cc', 'haskell/coretype.cc', 'haskell/extensions.cc',
 
-  'core/wrap.cc',
+  'core/wrap.cc', 'core/func.cc',
   
   'expression/expression.cc','expression/constructor.cc',
   'expression/expression_ref.cc', 'expression/core.cc',
