@@ -255,7 +255,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 	for(int i=0;i<simple_bodies.size();i++)
             alts.push_back({simple_patterns[i], simple_bodies[i].result(o)});
 
-	return make_let<>(Core2::Decls<>({{o,otherwise}}), Core2::Exp<>(Core2::Case<>(x0, alts)));
+	return make_let<>(Core2::Decls<>({{o,otherwise}}), Core2::Exp<>(Core2::Case<>{x0, alts}));
     };
 
     return failable_expression{true, result};
