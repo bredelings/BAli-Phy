@@ -311,17 +311,6 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 }
 
 
-tuple<Core::Decls, vector<Core::Exp>>
-desugar_state::args_to_vars(const vector<Core::Exp>& args)
-{
-    return Core::args_to_vars(args, *this);
-}
-
-Core::Exp desugar_state::safe_apply(const Core::Exp& head, const vector<Core::Exp>& args)
-{
-    return Core::safe_apply(head, args, *this);
-}
-
 tuple<Core2::Decls<>, vector<Core2::Var<>>>
 desugar_state::args_to_vars(const vector<Core2::Exp<>>& args)
 {
@@ -332,13 +321,6 @@ Core2::Exp<> desugar_state::safe_apply(const Core2::Exp<>& head, const vector<Co
 {
     return ::safe_apply(head, args, *this);
 }
-
-//TODO: make functions that do e.g.
-//      * desugar_decls -> CDecls
-//      * desugar_decl  -> CDecl
-// I guess this would be AST-izing?
-//
-// One general issue with AST-izing is maybe needing to use object_ptr<T> to avoid copying things.
 
 Core2::Exp<> desugar_state::desugar(const Hs::LExp& LE)
 {

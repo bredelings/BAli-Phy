@@ -47,8 +47,6 @@ struct equation_info_t
 
 Hs::VarPattern make_VarPattern(const Core2::Var<>&);
 
-CDecls translate_decls_to_cdecls(const Haskell::Decls&);
-
 struct desugar_state: public FreshVarSource
 {
     const Module& m;
@@ -79,10 +77,8 @@ struct desugar_state: public FreshVarSource
     Core2::Decls<> desugar_decls(const Haskell::Decls&);
     Core2::Decls<> desugar_decls(const Haskell::Binds&);
 
-    std::tuple<Core::Decls, std::vector<Core::Exp>> args_to_vars(const std::vector<Core::Exp>& args);
     std::tuple<Core2::Decls<>, std::vector<Core2::Var<>>> args_to_vars(const std::vector<Core2::Exp<>>& args);
 
-    Core::Exp safe_apply(const Core::Exp& head, const std::vector<Core::Exp>& args);
     Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args);
 
     desugar_state(const Module&, FreshVarState&);
