@@ -7,16 +7,7 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
-#include "computation/expression/core.H"
 #include "computation/expression/apply.H"
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/tuple.H"
-#include "computation/expression/list.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/var.H"
-#include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "desugar.H"
 #include "util/assert.hh"
@@ -377,7 +368,6 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
         // [ e | x<-l, Q]  =  concatMap (\x -> [e | q ]) l
         // [ e | x<-l]  =  concatMap (\x -> [e]) l = map (\x -> e) l
-
 
 
         // [ e | True   ]  =  [ e ]

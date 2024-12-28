@@ -3,9 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
+#include "computation/haskell/haskell.H"
 #include "computation/fresh_vars.H"
 
 class Module;
