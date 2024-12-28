@@ -141,8 +141,10 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 	if (guard.is_a<Hs::SimpleQual>())
 	{
             auto& SQ = guard.as_<Hs::SimpleQual>();
-	    auto condition = to_expression_ref(desugar(SQ.exp));
+	    auto condition = desugar(SQ.exp);
 	    // F' = case True of True -> F
+            assert(is_bool_true(condition) == is_bool_true(to_expression_ref(condition)));
+            assert(is_otherwise(condition) == is_otherwise(to_expression_ref(condition)));
 	    if (is_bool_true(condition) or is_otherwise(condition))
 		;
 	    // F' = case condition of True -> F
@@ -160,7 +162,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
         {
             auto& PQ = guard.as_<Hs::PatQual>();
 
-            F = case_expression(to_expression_ref(desugar(PQ.exp)), {unloc(PQ.bindpat)}, {F});
+            F = case_expression(desugar(PQ.exp), {unloc(PQ.bindpat)}, {F});
         }
 	else
 	    std::abort();
@@ -217,7 +219,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 auto x = make_var(v);
 		std::ostringstream o;
 		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-                decls.push_back( {x ,to_expression_ref(case_expression(z, {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str())))});
+                decls.push_back( {x ,to_expression_ref(case_expression(to_core(z), {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str())))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
@@ -596,7 +598,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         auto& I = E.as_<Hs::IfExp>();
 
-        auto condition = to_expression_ref(desugar(I.condition));
+        auto condition = desugar(I.condition);
         auto true_branch = desugar(I.true_branch);
         auto false_branch = desugar(I.false_branch);
 
@@ -606,7 +608,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         auto& C = *c;
 
-        expression_ref obj = to_expression_ref(desugar(C.object));
+        auto obj = desugar(C.object);
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;

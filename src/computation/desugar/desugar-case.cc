@@ -354,7 +354,7 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
             auto o = get_fresh_var("o");
             auto true_branch = simple_bodies[i].result(to_core(o));
             E = let_expression(CDecls({{o,E}}),
-                               to_expression_ref(case_expression(condition,
+                               to_expression_ref(case_expression(to_core_exp(condition),
                                                                  {Hs::TruePat()},{failable_expression(true_branch)}).result(to_core(o))));
         }
         return to_core_exp(E);
@@ -425,7 +425,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
             auto y = make_var(unloc(v));
-	    binds.push_back(CDecl({y,to_expression_ref(case_expression(x, {unloc(LP.pattern)}, {failable_expression(to_core(y))}).result(Core2::error("lazy pattern: failed pattern match")))}));
+	    binds.push_back(CDecl({y,to_expression_ref(case_expression(to_core(x), {unloc(LP.pattern)}, {failable_expression(to_core(y))}).result(Core2::error("lazy pattern: failed pattern match")))}));
         }
 	rhs.add_binding(to_core(binds));
 	pat1 = Hs::WildcardPattern();
@@ -508,7 +508,7 @@ failable_expression desugar_state::match(const vector<var>& x, const vector<equa
 }
 
 // For `case T of patterns[i] -> bodies[i]`
-failable_expression desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
+failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
 {
     assert(patterns.size() == bodies.size());
     vector<equation_info_t> equations;
@@ -517,7 +517,7 @@ failable_expression desugar_state::case_expression(const expression_ref& T, cons
 
     auto x = get_fresh_var();
     auto FE = match({x}, equations);
-    FE.add_binding(to_core(CDecls({{x,T}})));
+    FE.add_binding(to_core(CDecls({{x,to_expression_ref(T)}})));
     return FE;
 }
 
