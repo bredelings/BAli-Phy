@@ -314,27 +314,16 @@ Core::Exp desugar_state::desugar(const Hs::LExp& LE)
 
 Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
-    if (E.is_a<Hs::ClassDecl>())
+    if (auto L = E.to<Hs::List>())
     {
-        auto C = E.as_<Hs::ClassDecl>();
-//        if (C.decls)
-//            unloc(*C.decls) = desugar_decls(unloc(*C.decls));
-        return C;
-    }
-    else if (E.is_a<Hs::InstanceDecl>())
-    {
-        auto I = E.as_<Hs::InstanceDecl>();
-//        if (I.decls)
-//            unloc(*I.decls) = desugar_decls(unloc(*I.decls));
-        return I;
-    }
-    else if (E.is_a<Hs::List>())
-    {
-        auto L = E.as_<Hs::List>();
-        vector<Core::Exp> elements;
-        for(auto& element: L.elements)
-            elements.push_back(desugar(element));
-        return get_list(elements);
+        Core::Exp CL = List();
+        for(auto& element: reverse(L->elements))
+        {
+            auto h = get_fresh_var("h");
+            auto t = get_fresh_var("t");
+            CL = Core::Let({{h,desugar(element)},{t,CL}}, cons(h,t));
+        }
+        return CL;
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
@@ -655,8 +644,8 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         assert(args.size());
         return expression_ref{E.head(),args};
     }
-
-    std::abort();
+    else
+        throw myexception()<<"desugar: unknown expression "<<E.print();
 }
 
 expression_ref desugar(const Module& m, FreshVarState& state, const expression_ref& E)
