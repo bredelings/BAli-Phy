@@ -777,7 +777,7 @@ TypeChecker::get_quantifiable_preds(bool restricted, const vector<Type>& preds, 
     return keep;
 }
 
-tuple<set<TypeVar>, LIE, Core::Decls>
+tuple<set<TypeVar>, LIE, Core2::Decls<>>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
     // 1. Try and solve the wanteds.  (See simplifyInfer)
@@ -841,7 +841,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     for(auto& pred: quant_preds)
         givens.push_back({GivenOrigin(), Given, fresh_dvar(pred), pred, context()});
 
-    return {qtvs, givens, to_expression_ref(solve_decls)};
+    return {qtvs, givens, solve_decls};
 }
 
 Hs::Decls
@@ -871,7 +871,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     // 3. Determine what to quantify over and stuff
     auto [qtvs, givens, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
-    auto ev_decls = std::make_shared<Core2::Decls<>>(to_core(solve_decls));
+    auto ev_decls = std::make_shared<Core2::Decls<>>(solve_decls);
 
     auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 

@@ -458,7 +458,7 @@ public:
 
     std::vector<Type> get_quantifiable_preds(bool restricted, const std::vector<Type>& preds, const std::set<TypeVar>& qtvs) const;
 
-    std::tuple<std::set<TypeVar>, LIE, Core::Decls> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
+    std::tuple<std::set<TypeVar>, LIE, Core2::Decls<>> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
 
     Hs::Decls
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);
@@ -531,7 +531,7 @@ public:
     std::optional<Core::Decls>
     entails_by_superclass(const Constraint& to_keep, const Constraint& to_remove);
 
-    Core::Decls simplify(const LIE& givens, LIE& wanteds);
+    Core2::Decls<> simplify(const LIE& givens, LIE& wanteds);
 
     Core2::Decls<> entails(const LIE& lie1, WantedConstraints& lie2);
 

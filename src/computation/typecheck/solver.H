@@ -99,7 +99,7 @@ struct InertSet
 
 struct Solver: public TypeChecker
 {
-    Core::Decls decls;
+    Core2::Decls<> decls;
 
     std::vector<Predicate> work_list;
 
@@ -158,7 +158,7 @@ struct Solver: public TypeChecker
 
     std::optional<Reaction> top_react(const Predicate& P);
 
-    Core::Decls simplify(const LIE& givens, LIE& wanteds);
+    Core2::Decls<> simplify(const LIE& givens, LIE& wanteds);
     Solver(const TypeChecker& tc);
 };
 

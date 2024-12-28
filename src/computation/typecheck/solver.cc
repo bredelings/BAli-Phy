@@ -208,13 +208,13 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
         // DDICT:  (D xs)     + (D xs)     -> (D xs)
         if (same_type(dict1->constraint.pred, dict2->constraint.pred))
         {
-            decls.push_back({dict2->constraint.ev_var, dict1->constraint.ev_var});
+            decls.push_back({to_core(dict2->constraint.ev_var), to_core_exp(dict1->constraint.ev_var)});
             return Solved();
         }
         // SUPER - not in the paper.
         else if (auto sdecls = entails_by_superclass(dict1->constraint, dict2->constraint))
         {
-            decls += *sdecls;
+            decls += to_core(*sdecls);
             return Solved();
         }
     }
@@ -242,7 +242,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
-            decls.push_back( { dict->constraint.ev_var, dfun_exp } );
+            decls.push_back( { to_core(dict->constraint.ev_var), to_core_exp(dfun_exp) } );
             for(auto& pred: super_wanteds)
             {
                 // Say where in the source code we got this thing from
@@ -480,7 +480,7 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
     }
 }
 
-Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
+Core2::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {};
 
@@ -604,7 +604,7 @@ Core2::Decls<> TypeChecker::entails(const LIE& givens, WantedConstraints& wanted
     {
         // 1. Simplify the simple wanteds.
         Solver solver(*this);
-        decls += to_core(solver.simplify(givens, wanteds.simple));
+        decls += solver.simplify(givens, wanteds.simple);
         update = false;
 
         // 2. Handle implications
