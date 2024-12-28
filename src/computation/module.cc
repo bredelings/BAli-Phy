@@ -918,7 +918,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         {
             std::cerr<<decl.print()<<"\n";
         }
-        std::cerr<<print_cdecls(core_decls)<<"\n";
+        std::cerr<<core_decls.print()<<"\n";
     }
 
     // Updates exported_symols_ + exported_types_
@@ -929,7 +929,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     auto value_decls = to_core( MM->desugar(opts, MM->fresh_var_state(), hs_decls) );
 
-    value_decls += to_core( core_decls );
+    value_decls += core_decls;
 
     value_decls += MM->load_builtins(loader, M.foreign_decls);
 

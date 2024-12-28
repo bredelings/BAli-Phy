@@ -1619,7 +1619,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
     return type_decls;
 }
 
-pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
+pair<Hs::Binds,Core2::Decls<>> typechecker_result::all_binds() const
 {
     Hs::Binds all = value_decls;
     all.signatures = {};
@@ -1631,7 +1631,7 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
 //    std::cerr<<"Haskell decls:\n";
 //    std::cerr<<all.print();
 
-    Core::Decls all2 = top_simplify_decls;
+    auto all2 = top_simplify_decls;
     all2 += dfun_decls;
 
 //    std::cerr<<"\n\nCore decls:\n";
@@ -1728,7 +1728,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     for(auto& [var,wrap,rhs]: dfun_decls)
         dfun_decls2.push_back({var,wrap(to_expression_ref(rhs))});
 
-    return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
+    return {class_binds, value_decls, dm_decls, instance_method_binds, to_core( dfun_decls2 ), to_core( top_simplify_decls )};
 }
 
 /*

@@ -34,11 +34,11 @@ struct typechecker_result
 
     Hs::Binds instance_method_decls;
 
-    Core::Decls dfun_decls;
+    Core2::Decls<> dfun_decls;
 
-    Core::Decls top_simplify_decls;
+    Core2::Decls<> top_simplify_decls;
 
-    std::pair<Hs::Binds, Core::Decls> all_binds() const;
+    std::pair<Hs::Binds, Core2::Decls<>> all_binds() const;
 };
 
 typedef std::shared_ptr<symbol_info> symbol_ptr;
