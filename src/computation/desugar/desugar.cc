@@ -269,16 +269,22 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                     var x_inner = make_var(info.inner_id);
                     var x_tmp   = get_fresh_var();
 
-                    vector<expression_ref> fields(N, wildcard());
-                    fields[i] = x_inner;
+                    vector<expression_ref> fields;
+                    for(int j=0;j<N;j++)
+                    {
+                        if (i == j)
+                            fields.push_back( x_inner );
+                        else
+                            fields.push_back( get_fresh_var("w") );
+                    }
                     expression_ref pattern = get_tuple(fields);
 
                     // \dargs -> case (tup dargs) of (..fields..) -> field
-                    Core::Exp x_tmp_body = Core::Lambda(gb->dict_args,
-                                                        Core::Case( Core::Apply(tup, gb->dict_args),
-                                                                    {pattern},{x_inner}) );
+                    auto x_tmp_body = to_core_exp(Core::Lambda(gb->dict_args,
+                                                               Core::Case( Core::Apply(tup, gb->dict_args),
+                                                                           {pattern},{x_inner}) ));
 
-                    decls.push_back({to_core(x_tmp), to_core_exp(x_tmp_body)});
+                    decls.push_back({to_core(x_tmp), x_tmp_body});
 
                     decls.push_back({to_core(x_outer), to_core_exp(info.wrap(x_tmp))});
 
