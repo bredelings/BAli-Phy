@@ -50,18 +50,6 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-expression_ref desugar_string_expression(const std::string& s)
-{
-    var x("x");
-    return Core::Let({{x,String(s)}}, {Core::unpack_cpp_string(),x});
-}
-
-expression_ref desugar_error(const std::string& s)
-{
-    var x("x");
-    return Core::Let({{x,desugar_string_expression(s)}}, {Core::error(),x});
-}
-
 Hs::VarPattern make_VarPattern(const var& v)
 {
     assert(v.index == 0);
