@@ -43,7 +43,14 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
 
 expression_ref desugar_string_expression(const std::string& s)
 {
-    return Core::unpack_cpp_string(s);
+    var x("x");
+    return Core::Let({{x,String(s)}}, {Core::unpack_cpp_string(),x});
+}
+
+expression_ref desugar_error(const std::string& s)
+{
+    var x("x");
+    return Core::Let({{x,desugar_string_expression(s)}}, {Core::error(),x});
 }
 
 Hs::VarPattern make_VarPattern(const var& v)
@@ -201,7 +208,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
                 auto x = make_var(v);
 		std::ostringstream o;
 		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-		    decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(Core::error(o.str()))});
+		    decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(desugar_error(o.str()))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
@@ -209,7 +216,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             auto fvar = make_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
-            auto otherwise = Core::error(m.name + "." + fvar.name+": pattern match failure");
+            auto otherwise = desugar_error(m.name + "." + fvar.name+": pattern match failure");
 
             decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
@@ -568,7 +575,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         auto equation = desugar_match(L.match);
 	// what top-level function is the lambda in?
 	// what line is it on?
-        expression_ref otherwise = Core::error(m.name + " lambda: pattern match failure");
+        expression_ref otherwise = desugar_error(m.name + " lambda: pattern match failure");
 
         return def_function({equation}, otherwise);
     }
@@ -605,7 +612,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             patterns.push_back( unloc(alt_patterns[0]) );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
-        return case_expression(obj, patterns, bodies).result(Core::error("case: failed pattern match"));
+        return case_expression(obj, patterns, bodies).result(desugar_error("case: failed pattern match"));
     }
     else if (E.is_a<Hs::ValueDecl>())
         std::abort();
@@ -669,7 +676,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             arg = desugar(arg);
 
         assert(args.size());
-        return desugar_apply(E.head(),args);
+        return to_expression_ref(to_core_exp(desugar_apply(E.head(),args)));
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
