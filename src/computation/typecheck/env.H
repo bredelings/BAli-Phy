@@ -16,6 +16,8 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/utility.hpp>
 
+#include "computation/core/ast.H"
+
 typedef std::string ID;
 
 typedef immer::map<Hs::Var, Type> value_env;
