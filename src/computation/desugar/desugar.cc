@@ -37,6 +37,14 @@ using std::tuple;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
+void failable_expression::add_binding(const Core2::Decls<>& decls)
+{
+    auto result2 = result;
+
+    result = [result2,decls](const expression_ref& o) {return to_expression_ref(Core2::Let(decls,to_core_exp(result2(o))));};
+}
+
+
 desugar_state::desugar_state(const Module& m_, FreshVarState& state)
     : FreshVarSource(state),
       m(m_)
@@ -144,7 +152,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 	else if (guard.is_a<Hs::LetQual>())
 	{
             auto& LQ = guard.as_<Hs::LetQual>();
-	    auto binds = to_expression_ref(desugar_decls(unloc(LQ.binds)));
+	    auto binds = desugar_decls(unloc(LQ.binds));
 
 	    F.add_binding(binds);
 	}
@@ -303,7 +311,7 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
     auto rhs = fold(gdrhs);
 
     if (R.decls)
-        rhs.add_binding(to_expression_ref(desugar_decls(unloc(*R.decls))));
+        rhs.add_binding(desugar_decls(unloc(*R.decls)));
 
     return rhs;
 }

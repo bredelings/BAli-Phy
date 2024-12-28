@@ -16,21 +16,15 @@ Core2::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
 
 struct failable_expression: public Object
 {
-    failable_expression* clone() const {return new failable_expression(*this);}
-
     bool can_fail;
 
     std::function<expression_ref(const expression_ref&)> result;
 
+    failable_expression* clone() const {return new failable_expression(*this);}
+
     std::string print() const {return "("+std::to_string(can_fail)+","+convertToString(result(var("FAIL")))+")";}
 
-    void add_binding(const CDecls& binds)
-    {
-	auto result2 = result;
-	result(0);
-	result2(0);
-	result = [result2,binds](const expression_ref& o) {return let_expression(binds,result2(o));};
-    }
+    void add_binding(const Core2::Decls<>& binds);
 
     failable_expression(bool b, std::function<expression_ref(const expression_ref&)> f)
 	:can_fail(b), result(f)
