@@ -1209,19 +1209,6 @@ struct ModuleDecls
     ModuleDecls(const Decls& topdecls);
 };
 
-struct EvidenceDecls: public Object
-{
-    // Information for calling each of the binders in the group.
-    std::shared_ptr<const Core::Decls> decls;
-
-    Expression body;
-
-    EvidenceDecls* clone() const {return new EvidenceDecls(*this);}
-    std::string print() const;
-
-    EvidenceDecls(const std::shared_ptr<const Core::Decls>& d, const Expression& e): decls(d), body(e) {}
-};
-
 Expression error(const std::string& s);
 
 Con True();

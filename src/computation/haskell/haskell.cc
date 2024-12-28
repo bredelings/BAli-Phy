@@ -1058,11 +1058,6 @@ expression_ref error(const std::string& s)
     return {error,msg};
 }
 
-string EvidenceDecls::print()  const
-{
-    return "core::let " + print_cdecls(*decls) + " in " + body.print();
-}
-
 Con True()
 {
     return {"Data.Bool.True", 0};
