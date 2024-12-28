@@ -548,7 +548,7 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
-pair<Hs::Decls, tuple<Core2::Var<>, Core::wrapper, Core2::Exp<>>>
+pair<Hs::Decls, tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
 TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
@@ -584,7 +584,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // 5. Construct binds_super
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
-    auto wrap_let = Core::WrapLet(decls_super);
+    auto wrap_let = Core2::WrapLet(decls_super);
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
@@ -663,7 +663,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // auto dict = Core::ConExp(class_name, dict_entries);
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
-    Core2::Exp<> dict = Core2::Let<>{dict_decls, Tuple(dict_entries)};
+    Core2::Exp<> dict = make_let(dict_decls, Tuple(dict_entries));
 
     auto wrap = wrap_gen * wrap_let;
 
@@ -676,11 +676,11 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, vector<tuple<Core2::Var<>, Core::wrapper, Core2::Exp<>>>>
+pair<Hs::Binds, vector<tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>>
 TypeChecker::infer_type_for_instances2(const vector<pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
-    vector<tuple<Core2::Var<>, Core::wrapper, Core2::Exp<>>> dfun_decls;
+    vector<tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>> dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {

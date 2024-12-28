@@ -48,7 +48,7 @@ failable_expression desugar_state::combine(const failable_expression& E1, const 
     // result = \o -> let o2 = e2 o in e1 o2
     auto o2 = get_fresh_core_var("o");
     result = [E1,E2,o2](const Core2::Exp<>& o) {
-	return Core2::Let<>({{o2,E2.result(o)}},E1.result(o2));
+	return make_let({{o2,E2.result(o)}},E1.result(o2));
     };
 
     return failable_expression{E2.can_fail, result};
@@ -265,7 +265,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 	for(int i=0;i<simple_bodies.size();i++)
             alts.push_back({simple_patterns[i], simple_bodies[i].result(o)});
 
-	return Core2::Let<>({{o,otherwise}}, Core2::Case<>(x0, alts));
+	return make_let<>(Core2::Decls<>({{o,otherwise}}), Core2::Exp<>(Core2::Case<>(x0, alts)));
     };
 
     return failable_expression{true, result};
@@ -349,9 +349,9 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
             // let o = E in case condition of True -> true_branch(o); 
             auto o = get_fresh_core_var("o");
             auto true_branch = simple_bodies[i].result(o);
-            E = Core2::Let<>({{o,E}},
-                             case_expression(condition,
-                                             {Hs::TruePat()},{failable_expression(true_branch)}).result(o));
+            E = make_let({{o,E}},
+                         case_expression(condition,
+                                         {Hs::TruePat()},{failable_expression(true_branch)}).result(o));
         }
         return E;
     };

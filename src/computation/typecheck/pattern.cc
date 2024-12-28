@@ -10,12 +10,12 @@ using std::pair;
 using std::optional;
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
-Core::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expected& exp_type)
+Core2::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
     {
         fillInfer( pat_type, *I );
-        return Core::WrapId;
+        return Core2::WrapId;
     }
     else
         return subsumptionCheck( PatOrigin(), exp_type.check_type(), pat_type);

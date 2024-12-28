@@ -23,7 +23,7 @@ tc_sub_type_shallow actual expected = if definitely_poly expected and definitely
 */
 
 template <typename A>
-Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)
+Core2::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)
 {
     std::vector<Expected> extra_arg_types;
     // pad out with FlexiTyVars ... what's that?
@@ -42,19 +42,19 @@ Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, i
     if (auto I = extra_fun_type.infer(); I and not I->type())
     {
         fillInfer(unif_fun_type, *I);
-        return Core::WrapId;
+        return Core2::WrapId;
     }
     else
         return subsumptionCheck(TypeConvertOrigin(), unif_fun_type, extra_fun_type.read_type());
 }
 
 template <typename A>
-Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a)
+Core2::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a)
 {
     if (not is_rho_type(type))
     {
         auto [wrap_gen, tcs, givens, rho_type, wrap_match] =
-            skolemize_and_result<Core::wrapper>
+            skolemize_and_result<Core2::wrapper>
             (
                 type,
                 [&](const Type& rho_type, auto& tc2) {
@@ -78,7 +78,7 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
         // If we got here, then the Check type had enough arguments.
         // We don't need to construct a result type, we just need to check things.
         a(arg_types, Check(type))(*this);
-        return Core::WrapId;
+        return Core2::WrapId;
     }
     // look through type synonyms
     else if (auto type2 = expand_type_synonym(type))
@@ -116,7 +116,7 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
 }
 
 template <typename A>
-Core::wrapper TypeChecker::tcMatchesFun(int arity, const Expected& fun_type, const A& action)
+Core2::wrapper TypeChecker::tcMatchesFun(int arity, const Expected& fun_type, const A& action)
 {
     std::vector<Expected> arg_types;
     if (fun_type.check())

@@ -18,6 +18,7 @@
 #include "type.H"
 
 #include "computation/core/ast.H"
+#include "computation/core/wrap.H"
 
 /*
   - For renaming class decls, can we first run group_decls on them?
@@ -95,8 +96,8 @@ struct ApplyExp: public Object
     LExp head;
     LExp arg;
 
-    Core::wrapper arg_wrapper;
-    Core::wrapper res_wrapper;
+    Core2::wrapper arg_wrapper;
+    Core2::wrapper res_wrapper;
 
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
@@ -213,7 +214,7 @@ struct TypedExp: public Object
 {
     LExp exp;
     LType type;
-    Core::wrapper wrap;
+    Core2::wrapper wrap;
 
     TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;
@@ -1148,9 +1149,9 @@ struct BindInfo
     ::Type polytype;
 
     // Wrapper to apply types and dicts to the tuple entry.
-    Core::wrapper wrap;
+    Core2::wrapper wrap;
 
-    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core::wrapper& w)
+    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core2::wrapper& w)
         : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w)
     { }
 };

@@ -12,6 +12,7 @@
 #include "computation/expression/expression_ref.H"
 
 #include "computation/core/ast.H"
+#include "computation/core/wrap.H"
 
 #include "core.H"
 
@@ -99,7 +100,7 @@ struct TypedPattern: public Object
 {
     LPat pat;
     LType type;
-    Core::wrapper wrap;
+    Core2::wrapper wrap;
 
     TypedPattern* clone() const { return new TypedPattern(*this);}
     std::string print() const;

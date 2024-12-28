@@ -41,7 +41,7 @@ void failable_expression::add_binding(const Core2::Decls<>& decls)
 {
     auto result2 = result;
 
-    result = [result2,decls](const Core2::Exp<>& o) {return Core2::Let(decls,result2(o));};
+    result = [result2,decls](const Core2::Exp<>& o) {return make_let(decls,result2(o));};
 }
 
 
@@ -230,9 +230,9 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            Core2::Exp<> tup_body = Core2::Let<> ( *(gb->dict_decls),
-                                                   Core2::Let<> ( desugar_decls(gb->body),
-                                                                  Tuple(binders) ) );
+            Core2::Exp<> tup_body = make_let( *(gb->dict_decls),
+                                              make_let( desugar_decls(gb->body),
+                                                        Tuple(binders) ) );
             auto tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
             if (N == 1)
@@ -242,7 +242,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 
                 auto x_outer = make_core_var(info.outer_id);
 
-                decls.push_back({x_outer, to_core_exp(info.wrap(to_expression_ref(tup_lambda)))});
+                decls.push_back({x_outer, info.wrap(tup_lambda)});
             }
             else
             {
@@ -274,7 +274,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 
                     decls.push_back({x_tmp, x_tmp_body});
 
-                    decls.push_back({x_outer, to_core_exp(info.wrap(to_var(x_tmp)))});
+                    decls.push_back({x_outer, info.wrap(x_tmp)});
 
                     i++;
                 }
@@ -353,7 +353,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         for(auto& element: reverse(L->elements))
         {
             auto [decls, vars] = args_to_vars({desugar(element),CL});
-            CL = Core2::Let(decls, Core2::ConApp<>(":",vars));
+            CL = make_let(decls, Core2::Exp<>(Core2::ConApp<>(":",vars)));
         }
         return CL;
     }
@@ -477,7 +477,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         for(auto& element: T->elements)
             elements.push_back( desugar(element) );
         auto [decls, vars] = args_to_vars(elements);
-        return Core2::Let(decls, Tuple(vars));
+        return make_let(decls, Tuple(vars));
     }
     else if (auto v = E.to<Hs::Var>())
     {
@@ -485,14 +485,14 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto V = *v;
         V.wrap = {};
         Core2::Exp<> E = make_core_var(V);
-        E = to_core_exp(v->wrap(to_expression_ref(E)));
+        E = v->wrap(E);
         return E;
     }
     else if (auto c = E.to<Hs::Con>())
     {
         // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
         Core2::Exp<> E = Core2::Var<>(c->name);
-        E = to_core_exp(c->wrap(to_expression_ref(E)));
+        E = c->wrap(E);
         return E;
     }
     else if (E.is_a<Hs::Do>())
@@ -564,7 +564,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
-        return to_core_exp(texp->wrap( to_expression_ref(desugar( texp->exp)) ));
+        return texp->wrap( desugar( texp->exp) );
     }
     else if (E.is_a<Hs::LambdaExp>())
     {
@@ -583,7 +583,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto body = desugar(L->body);
 
         // construct the new let expression.
-        return Core2::Let<>{decls, body};
+        return make_let(decls, body);
     }
     else if (E.is_a<Hs::IfExp>())
     {
@@ -616,11 +616,11 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
         auto arg = desugar( app->arg );
 
-        arg = to_core_exp( app->arg_wrapper( to_expression_ref(arg) ) );
+        arg = app->arg_wrapper( arg );
 
         A = safe_apply(A, {arg});
 
-        A = to_core_exp( app->res_wrapper( to_expression_ref(A) ) );
+        A = app->res_wrapper( A );
 
         return A;
     }

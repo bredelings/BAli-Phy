@@ -9,6 +9,8 @@
 #include "coretype.H"
 #include "core.H"
 
+#include "computation/core/wrap.H"
+
 struct VarInfo;
 
 namespace Haskell
@@ -18,7 +20,7 @@ struct Var: public Object
 {
     std::string name;
 
-    Core::wrapper wrap;
+    Core2::wrapper wrap;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;
@@ -50,7 +52,7 @@ struct Con: public Object
 
     std::optional<int> arity;
 
-    Core::wrapper wrap;
+    Core2::wrapper wrap;
 
     bool operator==(const Object&) const;
     bool operator==(const Con&) const;

@@ -1223,7 +1223,7 @@ value_env add_constraints(const std::vector<Type>& preds, const value_env& env1)
 }
 
 // OK, so this returns something of type exp_sigma
-Core::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
+Core2::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
 {
     if (E.loc) push_source_span(*E.loc);
 
@@ -1244,7 +1244,7 @@ Core::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
 // The idea is that we need an e2, but we have a t1.
 // So, if we can make an e2 from the t1, then we are good.
 // The wrapper is evidence that we can, and also converts a value of type t1 to a value of type e2.
-Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2)
+Core2::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2)
 {
     if (auto t2 = e2.read_type_maybe())
         return subsumptionCheck(origin, t1, *t2);
@@ -1252,11 +1252,11 @@ Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, cons
     {
         auto I = e2.infer();
         fillInfer(t1, *I);
-        return Core::WrapId;
+        return Core2::WrapId;
     }
 }
 
-Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
+Core2::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
 {
     /*
       If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).
@@ -1287,7 +1287,7 @@ Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, cons
     */
 
     auto [wrap_gen, tvs2, givens, type2, wrap_apply]
-        = skolemize_and_result<Core::wrapper>
+        = skolemize_and_result<Core2::wrapper>
         (
             t2,
             [&](const Type& rho_type, TypeChecker& tcs2)
@@ -1302,7 +1302,7 @@ Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, cons
     return wrap_gen * wrap_apply;
 }
 
-std::tuple<Core::wrapper, Type>
+std::tuple<Core2::wrapper, Type>
 TypeChecker::instantiate_emit(const ConstraintOrigin& origin, const Type& polytype)
 {
     auto [_, wanteds, rho_type] = instantiate(origin, polytype);
@@ -1311,10 +1311,10 @@ TypeChecker::instantiate_emit(const ConstraintOrigin& origin, const Type& polyty
 
     auto dict_args = dict_vars_from_lie( wanteds );
 
-    return {Core::WrapApply(dict_args), rho_type};
+    return {Core2::WrapApply(dict_args), rho_type};
 }
 
-Core::wrapper
+Core2::wrapper
 TypeChecker::instantiateSigma(const ConstraintOrigin& origin, const Type& polytype, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
@@ -1423,7 +1423,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintO
     return {tvs, wanteds, type};
 }
 
-tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Type& polytype, bool skolem)
+tuple<Core2::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Type& polytype, bool skolem)
 {
     // 1. Handle foralls
     
@@ -1453,7 +1453,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
 
-        // auto wrap = Core::WrapLambdaTypes(fa->type_var_binders) * wrap2;
+        // auto wrap = Core2::WrapLambdaTypes(fa->type_var_binders) * wrap2;
         auto wrap = wrap2;
 
         return {wrap, tvs, givens2, type2};
@@ -1464,7 +1464,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     {
         // Compute givens from local givens followed by givens of sub-type.
         auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints);
-        auto wrap1 = Core::WrapLambda( dict_vars_from_lie( givens ) );
+        auto wrap1 = Core2::WrapLambda( dict_vars_from_lie( givens ) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
 
@@ -1477,10 +1477,10 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
 
     // 3. If the type has no foralls and no constraints, then it is just a rho-type.
     else
-        return {Core::WrapId, {}, {}, polytype};
+        return {Core2::WrapId, {}, {}, polytype};
 }
 
-std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type>
+std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type>
 TypeChecker::skolemize_and(const Type& polytype, const tc_action<Type>& nested_action)
 {
     // 1. Skolemize the type at level+1
@@ -1493,7 +1493,7 @@ TypeChecker::skolemize_and(const Type& polytype, const tc_action<Type>& nested_a
     auto ev_decls = maybe_implication(tvs, givens, [&,&rho_type=rho_type](auto& tc) {nested_action(rho_type, tc);});
 
     // 3. Combine the wrappers
-    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type};
+    return {wrap * Core2::WrapLet(ev_decls), tvs, givens, rho_type};
 }
 
 shared_ptr<const Core2::Decls<>>
@@ -1726,7 +1726,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
 
     Core2::Decls<> dfun_decls2;
     for(auto& [var,wrap,rhs]: dfun_decls)
-        dfun_decls2.push_back({var, to_core_exp(wrap(to_expression_ref(rhs)))});
+        dfun_decls2.push_back({var, wrap(rhs)});
 
     return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
 }

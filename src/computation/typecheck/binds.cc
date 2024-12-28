@@ -268,7 +268,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
     auto [wrap_gen, tvs, givens, rho_type, wrap_match] =
-        skolemize_and_result<Core::wrapper>(polytype,
+        skolemize_and_result<Core2::wrapper>(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
 
                           // 3. Record the mapping from inner_id -> rho_type for error messages
@@ -688,7 +688,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Va
 
     auto dict_args = dict_vars_from_lie( lie_used );
     auto tup_dict_args = dict_vars_from_lie( lie_all );
-    auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
+    auto wrap = Core2::WrapLambda(dict_args) * Core2::WrapApply(tup_dict_args);
 
     auto constraints_used = preds_from_lie(lie_used);
     Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );

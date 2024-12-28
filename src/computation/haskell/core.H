@@ -21,44 +21,6 @@ namespace Core
 
     typedef var Var;
 
-    // Wrappers
-    struct WrapObj
-    {
-        virtual WrapObj* clone() const = 0;
-        virtual Exp operator()(const Exp&) const = 0;
-        std::string print() const;
-        virtual ~WrapObj() = default;
-    };
-
-    class wrapper
-    {
-        std::shared_ptr<WrapObj> ptr;
-    public:
-
-        Exp operator()(const Exp& e) const;
-        std::string print() const;
-
-        wrapper& operator=(const wrapper&) = default;
-        wrapper& operator=(wrapper&&) = default;
-
-        bool is_identity() const;
-
-        wrapper() = default;
-        wrapper(const wrapper&) = default;
-        wrapper(wrapper&&) = default;
-
-        wrapper(const WrapObj&);
-    };
-
-    wrapper WrapLet(const Core2::Decls<>& d);
-    wrapper WrapLet(const std::shared_ptr<const Core2::Decls<>>& d);
-    wrapper WrapApply(const std::vector<Var>& args);
-    wrapper WrapApply(const std::vector<Core2::Var<>>& args);
-    wrapper WrapLambda(const std::vector<Var>& args);
-    wrapper WrapLambda(const std::vector<Core2::Var<>>& args);
-
-    extern wrapper WrapId;
-
     Exp ConExp(const std::string& name, const std::vector<Exp>& es);
     Exp Tuple(const std::vector<Exp>& es);
     Exp Lambda(const std::vector<Var>& args, const Exp& body);
@@ -72,8 +34,6 @@ namespace Core
 
     Exp safe_apply(const Exp&, const std::vector<Exp>& args, FreshVarSource&);
 }
-
-Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);
 
 // Core should have:
 
