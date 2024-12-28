@@ -929,12 +929,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     CDecls value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
     value_decls += core_decls;
 
-    // Graph-normalize the bodies
-    for(auto& [x,rhs]: value_decls)
-    {
-        // This won't float things to the top level!
-        rhs = graph_normalize( MM->fresh_var_state(), rhs);
-    }
+    value_decls = graph_normalize( MM->fresh_var_state(), value_decls);
 
     auto core_value_decls = to_core(value_decls);
 

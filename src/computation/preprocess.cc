@@ -28,6 +28,15 @@ using std::cerr;
 using std::endl;
 
 
+CDecls graph_normalize(FreshVarSource& source, CDecls decls)
+{
+    // Just normalize the bound statements
+    for(auto& [x,e]: decls)
+        e = graph_normalize(source, e);
+
+    return decls;
+}
+
 // This version is used in module.cc
 expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
@@ -74,8 +83,7 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 	L.body = graph_normalize(source, L.body);
 
 	// Just normalize the bound statements
-	for(auto& [x,e]: L.binds)
-	    e = graph_normalize(source, e);
+	L.binds = graph_normalize(source, L.binds);
 
 	return L;
     }
@@ -117,6 +125,12 @@ expression_ref graph_normalize(FreshVarState& state, const expression_ref& E)
 {
     FreshVarSource source(state);
     return graph_normalize(source, E);
+}
+
+CDecls graph_normalize(FreshVarState& state, const CDecls& decls)
+{
+    FreshVarSource source(state);
+    return graph_normalize(source, decls);
 }
 
 // Deleted: Fun_normalize( ).  Perhaps reintroduce later.

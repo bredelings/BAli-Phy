@@ -798,6 +798,10 @@ public:
 };
 
 expression_ref graph_normalize(FreshVarState&, const expression_ref& R);
+CDecls graph_normalize(FreshVarState&, const CDecls&);
+
+expression_ref graph_normalize(FreshVarSource&, const expression_ref& R);
+CDecls graph_normalize(FreshVarSource&, CDecls);
 
 void write_dot_graph(const reg_heap& C, std::ostream& o);
 
