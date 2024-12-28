@@ -90,7 +90,6 @@ using std::tuple;
   * separate Core::Apply, Core::Let, Core::Lambda, Core::Tuple
   * add a wrapper to checkSigma( ).
   * record a result wrapper on ApplyExp
-  * Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
   * Implement type classes Num, Enum, and Ix.
   * Make MetaTypeVar's point directly to their target.
 
