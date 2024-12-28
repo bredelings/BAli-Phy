@@ -231,21 +231,25 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {
-            vector<var> binders;
+            vector<Core2::Var<>> binders;
             for(auto& [name, info]: gb->bind_infos)
             {
-                var x_inner = make_var(info.inner_id);
+                auto x_inner = make_core_var(info.inner_id);
                 binders.push_back( x_inner );
             }
+
+            vector<Core2::Var<>> dict_args;
+            for(auto& arg: gb->dict_args)
+                dict_args.push_back(to_core(arg));
 
             const int N = gb->bind_infos.size();
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            expression_ref tup_body = Core::Let ( *(gb->dict_decls),
-                                                  Core::Let ( to_expression_ref(desugar_decls(gb->body)),
-                                                              maybe_tuple(binders) ) );
-            expression_ref tup_lambda = Core::Lambda( gb->dict_args, tup_body );
+            Core2::Exp<> tup_body = Core2::Let<> ( to_core(*(gb->dict_decls)),
+                                                   Core2::Let<> ( desugar_decls(gb->body),
+                                                                  Tuple(binders) ) );
+            auto tup_lambda = lambda_quantify( dict_args, tup_body );
 
             if (N == 1)
             {
@@ -254,12 +258,12 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 
                 auto x_outer = make_core_var(info.outer_id);
 
-                decls.push_back({x_outer, to_core_exp(info.wrap(tup_lambda))});
+                decls.push_back({x_outer, to_core_exp(info.wrap(to_expression_ref(tup_lambda)))});
             }
             else
             {
                 auto tup = get_fresh_core_var("tup");
-                decls.push_back({tup, to_core_exp(tup_lambda)});
+                decls.push_back({tup, tup_lambda});
 
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 int i=0;
@@ -278,10 +282,6 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                             fields.push_back( get_fresh_core_var("w") );
                     }
                     auto pattern = TuplePat(fields);
-
-                    vector<Core2::Var<>> dict_args;
-                    for(auto& arg: gb->dict_args)
-                        dict_args.push_back(to_core(arg));
 
                     // \dargs -> case (tup dargs) of (..fields..) -> field
                     auto x_tmp_body = lambda_quantify(dict_args,
