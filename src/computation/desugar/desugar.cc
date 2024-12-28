@@ -23,6 +23,7 @@
 #include "util/range.H"
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
+#include "computation/core/func.H"
 
 #include "range/v3/all.hpp"
 namespace views = ranges::views;
@@ -317,6 +318,17 @@ desugar_state::args_to_vars(const vector<Core::Exp>& args)
 Core::Exp desugar_state::safe_apply(const Core::Exp& head, const vector<Core::Exp>& args)
 {
     return Core::safe_apply(head, args, *this);
+}
+
+tuple<Core2::Decls<>, vector<Core2::Var<>>>
+desugar_state::args_to_vars(const vector<Core2::Exp<>>& args)
+{
+    return ::args_to_vars(args, *this);
+}
+
+Core2::Exp<> desugar_state::safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args)
+{
+    return ::safe_apply(head, args, *this);
 }
 
 //TODO: make functions that do e.g.
