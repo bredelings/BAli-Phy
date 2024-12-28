@@ -34,12 +34,14 @@ const std::shared_ptr<module_loader>& Program::get_module_loader() const
     return loader;
 }
 
-symbol_info seq_info()
+Core2::Exp<> declare_seq_info(Module& m)
 {
     // 1. seq = \x y -> case x of _ -> y
-    auto x = Core::Var("x");
-    auto y = Core::Var("y");
-    Core::Exp code = lambda_quantify(vector{x,y},make_case_expression(x,{{var(-1)}},{{y}}));
+    auto x = Core2::Var<>("x");
+    auto y = Core2::Var<>("y");
+
+    Core2::Exp<> code = lambda_quantify({x,y}, Core2::Exp<>(Core2::Case<>{x,{{Core2::WildcardPat(),y}}}));
+    auto [occ_code, _] = occurrence_analyzer(m, code);
 
     // 2. seq :: forall a b. a -> b -> b
     TypeVar a({noloc,"a"});
@@ -54,14 +56,16 @@ symbol_info seq_info()
     // 4. always unfold to code.
     auto info = std::make_shared<VarInfo>();
     info->always_unfold = true;
-    info->unfolding = to_occ_exp(code);
+    info->unfolding = occ_code;
 
     // 5. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
     seq.type = type;
     seq.var_info = info;
 
-    return seq;
+    m.declare_symbol(seq);
+
+    return code;
 }
 
 shared_ptr<CompiledModule> compiler_prim_module()
@@ -72,18 +76,11 @@ shared_ptr<CompiledModule> compiler_prim_module()
     // 2. No implicit Prelude
     m->language_extensions.set_extension(LangExt::ImplicitPrelude, false);
 
-    // 3. Add seq.
-    auto seq = seq_info();
     Core2::Decls<> value_decls;
-    if (seq.var_info and seq.var_info->unfolding)
-    {
-        auto code = to_core_exp(maybe_occ_to_expression_ref(seq.var_info->unfolding));
-        value_decls.push_back({Core2::Var<>("Compiler.Prim.seq"), code});
-        // Unfoldings must be occurrence-analyzed so that we can inline them.
-        auto [occ_code, _] = occurrence_analyzer(*m, code);
-        seq.var_info->unfolding = occ_code;
-    }
-    m->declare_symbol(seq);
+
+    // 3. Add seq.
+    auto seq_code = declare_seq_info(*m);
+    value_decls.push_back({Core2::Var<>("Compiler.Prim.seq"), seq_code});
 
     // 4. Copy symbols to the for-export maps.
     m->perform_exports();
