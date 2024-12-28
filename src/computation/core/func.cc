@@ -31,3 +31,38 @@ Core2::Exp<> safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& ar
     return Core2::Let(decls, Core2::Apply(head,vars));
 }
 
+namespace Core2
+{
+    Var<> unpack_cpp_string()
+    {
+        return Var<>("Foreign.String.unpack_cpp_string");
+    }
+
+    Var<> error()
+    {
+        return Var<>("Compiler.Error.error");
+    }
+
+    Var<> unsafePerformIO()
+    {
+        return Var<>("Compiler.IO.unsafePerformIO");
+    }
+
+    Exp<> unpack_cpp_string(const std::string&s)
+    {
+        Var<> x("x");
+        return Let<>({{x,Constant(s)}}, Apply<>(unpack_cpp_string(),{x}));
+    }
+
+    Exp<> error(const std::string& s)
+    {
+        Var<> x("x");
+        return Let<>({{x, unpack_cpp_string(s)}}, Apply<>(error(),{x}));
+    }
+
+    Exp<> unsafePerformIO(const Exp<>& e)
+    {
+        Var<> x("x");
+        return Let<>({{x, e}}, Apply<>(unsafePerformIO(),{x}));
+    }
+}

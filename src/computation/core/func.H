@@ -68,4 +68,15 @@ std::tuple<Core2::Decls<>, std::vector<Core2::Var<>>>
 args_to_vars(const std::vector<Core2::Exp<>>& args, FreshVarSource& source);
 
 Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args, FreshVarSource& source);
+
+namespace Core2
+{
+    Var<> unpack_cpp_string();
+    Var<> error();
+    Var<> unsafePerformIO();
+
+    Exp<> unpack_cpp_string(const std::string&);
+    Exp<> error(const std::string&);
+    Exp<> unsafePerformIO(const Exp<>&);
+}
 #endif
