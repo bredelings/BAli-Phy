@@ -701,6 +701,9 @@ namespace Core2
 	{
 	    ar(head, args);
 	}
+
+        ConApp() = default;
+        ConApp(const std::string& h, const std::vector<Var<NoteV>>& a):head(h),args(a) {}
     };
 
     template <typename NoteV = std::monostate>
