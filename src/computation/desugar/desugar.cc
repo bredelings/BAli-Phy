@@ -32,6 +32,7 @@ using std::vector;
 using std::set;
 using std::deque;
 using std::pair;
+using std::tuple;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
@@ -300,16 +301,28 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 }
 
 
-Core::Exp desugar_state::desugar_apply(const Core::Exp& head, const vector<Core::Exp>& args)
+tuple<Core::Decls, vector<Core::Exp>>
+desugar_state::args_to_vars(const vector<Core::Exp>& args)
 {
     vector<Core::Exp> vars;
     CDecls decls;
-    for(int i=0;i<args.size();i++)
+    for(auto& arg: args)
     {
-        auto a = get_fresh_var("a");
-        vars.push_back(a);
-        decls.push_back({a,args[i]});
+        if (auto v = arg.to<var>())
+            vars.push_back(*v);
+        else
+        {
+            auto a = get_fresh_var("a");
+            decls.push_back({a,arg});
+            vars.push_back(a);
+        }
     }
+    return {decls, vars};
+}
+
+Core::Exp desugar_state::desugar_apply(const Core::Exp& head, const vector<Core::Exp>& args)
+{
+    auto [decls, vars] = args_to_vars(args);
 
     return Core::Let(decls,Core::Apply(head,vars));
 }
@@ -333,9 +346,8 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         Core::Exp CL = List();
         for(auto& element: reverse(L->elements))
         {
-            auto h = get_fresh_var("h");
-            auto t = get_fresh_var("t");
-            CL = Core::Let({{h,desugar(element)},{t,CL}}, cons(h,t)); // CL = let {h = element; t = CL} in cons(h,t)
+            auto [decls, vars] = args_to_vars({desugar(element),CL});
+            CL = Core::Let(decls, cons(vars[0],vars[1]));
         }
         return CL;
     }
@@ -446,12 +458,12 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return expression_ref({desugar(S->op), desugar(S->l_arg)});
+        return desugar_apply(desugar(S->op), {desugar(S->l_arg)});
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
         auto x = get_fresh_var();
-        return lambda_quantify(x, {desugar(S->op), x, desugar(S->r_arg)} );
+        return lambda_quantify(x, desugar_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
     }
     else if (E.is_a<Hs::Tuple>())
     {
@@ -459,7 +471,8 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         vector<Core::Exp> elements;
         for(auto& element: T.elements)
             elements.push_back( desugar(element) );
-        return get_tuple( elements );
+        auto [decls, vars] = args_to_vars(elements);
+        return Core::Let(decls,get_tuple( vars ));
     }
     else if (auto v = E.to<Hs::Var>())
     {
@@ -604,7 +617,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 
         arg = app->arg_wrapper( arg );
 
-        A = apply_expression(A, arg);
+        A = desugar_apply(A, {arg});
 
         A = app->res_wrapper( A );
 
@@ -620,7 +633,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return {desugar(I.fromIntegerOp), Integer(I.value)};
+                return desugar_apply(desugar(I.fromIntegerOp), {Integer(I.value)});
             else
                 return Integer(I.value);
         }
@@ -631,7 +644,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 	    expression_ref ratio={var("Compiler.Ratio.Ratio"),Integer(r->numerator()),Integer(r->denominator())};
 
             if (F.fromRationalOp)
-                return {desugar(F.fromRationalOp), ratio};
+                return desugar_apply(desugar(F.fromRationalOp), {ratio});
             else
                 return ratio;
         }
@@ -656,7 +669,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             arg = desugar(arg);
 
         assert(args.size());
-        return expression_ref{E.head(),args};
+        return desugar_apply(E.head(),args);
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
