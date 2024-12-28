@@ -78,5 +78,9 @@ namespace Core2
     Exp<> unpack_cpp_string(const std::string&);
     Exp<> error(const std::string&);
     Exp<> unsafePerformIO(const Exp<>&);
+
+    bool is_bool_true(const Core2::Exp<>&);
+    bool is_bool_false(const Core2::Exp<>&);
+    bool is_otherwise(const Core2::Exp<>&);
 }
 #endif

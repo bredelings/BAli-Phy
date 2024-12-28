@@ -65,4 +65,19 @@ namespace Core2
         Var<> x("x");
         return Let<>({{x, e}}, Apply<>(unsafePerformIO(),{x}));
     }
+
+    bool is_bool_true(const Core2::Exp<>& E)
+    {
+        return E == Core2::ConApp("Data.Bool.True",{});
+    }
+
+    bool is_bool_false(const Core2::Exp<>& E)
+    {
+        return E == Core2::ConApp("Data.Bool.False",{});
+    }
+
+    bool is_otherwise(const Core2::Exp<>& E)
+    {
+        return E == Core2::Var("Data.Bool.otherwise");
+    }
 }
