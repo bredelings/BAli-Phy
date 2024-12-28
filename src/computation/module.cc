@@ -1251,7 +1251,7 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
 
 Core2::Decls<> Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
 {
-    auto cdecls = to_core( ::desugar(*this, state, topdecls) );
+    auto cdecls = ::desugar(*this, state, topdecls);
 
 //    if (opts.dump_desugared)
 //        std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";
