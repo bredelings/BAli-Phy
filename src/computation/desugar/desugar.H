@@ -10,9 +10,9 @@
 
 class Module;
 
-expression_ref desugar(const Module& p, FreshVarState&, const expression_ref&);
-CDecls desugar(const Module& p, FreshVarState&, const Haskell::Decls&);
-CDecls desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
+Core2::Exp<> desugar(const Module& p, FreshVarState&, const expression_ref&);
+Core2::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Decls&);
+Core2::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
 
 struct failable_expression: public Object
 {
@@ -80,10 +80,10 @@ struct desugar_state: public FreshVarSource
     equation_info_t desugar_match(const Hs::MRule& matches);
     std::vector<equation_info_t> desugar_matches(const Hs::Matches& matches);
 
-    Core::Exp desugar(const Hs::Exp& E);
-    Core::Exp desugar(const Hs::LExp& E);
-    CDecls desugar_decls(const Haskell::Decls&);
-    CDecls desugar_decls(const Haskell::Binds&);
+    Core2::Exp<> desugar(const Hs::Exp& E);
+    Core2::Exp<> desugar(const Hs::LExp& E);
+    Core2::Decls<> desugar_decls(const Haskell::Decls&);
+    Core2::Decls<> desugar_decls(const Haskell::Binds&);
 
     std::tuple<Core::Decls, std::vector<Core::Exp>> args_to_vars(const std::vector<Core::Exp>& args);
 

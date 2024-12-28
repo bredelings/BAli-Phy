@@ -124,7 +124,7 @@ bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 {
-    auto F = failable_expression(desugar(grhs.body));
+    auto F = failable_expression(to_expression_ref(desugar(grhs.body)));
 
     for(auto& lguard: std::reverse(grhs.guards))
     {
@@ -132,7 +132,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 	if (guard.is_a<Hs::SimpleQual>())
 	{
             auto& SQ = guard.as_<Hs::SimpleQual>();
-	    auto condition = desugar(SQ.exp);
+	    auto condition = to_expression_ref(desugar(SQ.exp));
 	    // F' = case True of True -> F
 	    if (is_bool_true(condition) or is_otherwise(condition))
 		;
@@ -143,7 +143,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 	else if (guard.is_a<Hs::LetQual>())
 	{
             auto& LQ = guard.as_<Hs::LetQual>();
-	    auto binds = desugar_decls(unloc(LQ.binds));
+	    auto binds = to_expression_ref(desugar_decls(unloc(LQ.binds)));
 
 	    F.add_binding(binds);
 	}
@@ -151,7 +151,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
         {
             auto& PQ = guard.as_<Hs::PatQual>();
 
-            F = case_expression(desugar(PQ.exp), {unloc(PQ.bindpat)}, {F});
+            F = case_expression(to_expression_ref(desugar(PQ.exp)), {unloc(PQ.bindpat)}, {F});
         }
 	else
 	    std::abort();
@@ -178,7 +178,7 @@ vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matche
     return equations;
 }
 
-CDecls desugar_state::desugar_decls(const Hs::Decls& v)
+Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 {
     // Now we go through and translate groups of FunDecls.
     CDecls decls;
@@ -234,7 +234,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
             expression_ref tup_body = Core::Let ( *(gb->dict_decls),
-                                                  Core::Let ( desugar_decls(gb->body),
+                                                  Core::Let ( to_expression_ref(desugar_decls(gb->body)),
                                                               maybe_tuple(binders) ) );
             expression_ref tup_lambda = Core::Lambda( gb->dict_args, tup_body );
 
@@ -282,12 +282,12 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
         else
             continue; // std::abort();
     }
-    return decls;
+    return to_core(decls);
 }
 
-CDecls desugar_state::desugar_decls(const Hs::Binds& binds)
+Core2::Decls<> desugar_state::desugar_decls(const Hs::Binds& binds)
 {
-    CDecls all_decls;
+    Core2::Decls<> all_decls;
     for(auto& decls: binds)
         ranges::insert(all_decls, all_decls.end(), desugar_decls(decls));
     return all_decls;
@@ -302,7 +302,7 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
     auto rhs = fold(gdrhs);
 
     if (R.decls)
-        rhs.add_binding(desugar_decls(unloc(*R.decls)));
+        rhs.add_binding(to_expression_ref(desugar_decls(unloc(*R.decls))));
 
     return rhs;
 }
@@ -326,49 +326,49 @@ Core::Exp desugar_state::safe_apply(const Core::Exp& head, const vector<Core::Ex
 //
 // One general issue with AST-izing is maybe needing to use object_ptr<T> to avoid copying things.
 
-Core::Exp desugar_state::desugar(const Hs::LExp& LE)
+Core2::Exp<> desugar_state::desugar(const Hs::LExp& LE)
 {
     return desugar(unloc(LE));
 }
 
-Core::Exp desugar_state::desugar(const Hs::Exp& E)
+Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 {
     if (auto L = E.to<Hs::List>())
     {
         Core::Exp CL = List();
         for(auto& element: reverse(L->elements))
         {
-            auto [decls, vars] = args_to_vars({desugar(element),CL});
+            auto [decls, vars] = args_to_vars({to_expression_ref(desugar(element)),CL});
             CL = Core::Let(decls, cons(vars[0],vars[1]));
         }
-        return CL;
+        return to_core_exp(CL);
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
         Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
-        enumFrom = desugar(L->enumFromOp);
+        enumFrom = to_expression_ref(desugar(L->enumFromOp));
 
-        return safe_apply(enumFrom, {desugar(L->from)});
+        return to_core_exp(safe_apply(enumFrom, {to_expression_ref(desugar(L->from))}));
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
         expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
-        enumFromTo = desugar(L->enumFromToOp);
+        enumFromTo = to_expression_ref(desugar(L->enumFromToOp));
 
-        return safe_apply(enumFromTo, {desugar(L->from), desugar(L->to)});
+        return to_core_exp(safe_apply(enumFromTo, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->to))}));
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
         expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
-        enumFromThen = desugar(L->enumFromThenOp);
-        return safe_apply(enumFromThen, {desugar(L->from), desugar(L->then)});
+        enumFromThen = to_expression_ref(desugar(L->enumFromThenOp));
+        return to_core_exp(safe_apply(enumFromThen, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->then))}));
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
         expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
-        enumFromThenTo = desugar(L->enumFromThenToOp);
+        enumFromThenTo = to_expression_ref(desugar(L->enumFromThenToOp));
 
-        return safe_apply(enumFromThenTo, {desugar(L->from), desugar(L->then), desugar(L->to)});
+        return to_core_exp(safe_apply(enumFromThenTo, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->then)), to_expression_ref(desugar(L->to))}));
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
@@ -450,21 +450,21 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return safe_apply(desugar(S->op), {desugar(S->l_arg)});
+        return to_core_exp(safe_apply(to_expression_ref(desugar(S->op)), {to_expression_ref(desugar(S->l_arg))}));
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
         auto x = get_fresh_var();
-        return lambda_quantify(x, safe_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
+        return to_core_exp(lambda_quantify(x, safe_apply(to_expression_ref(desugar(S->op)), {x, to_expression_ref(desugar(S->r_arg))}) ));
     }
     else if (E.is_a<Hs::Tuple>())
     {
         auto T = E.as_<Hs::Tuple>();
         vector<Core::Exp> elements;
         for(auto& element: T.elements)
-            elements.push_back( desugar(element) );
+            elements.push_back( to_expression_ref(desugar(element)) );
         auto [decls, vars] = args_to_vars(elements);
-        return Core::Let(decls,get_tuple( vars ));
+        return to_core_exp(Core::Let(decls,get_tuple( vars )));
     }
     else if (auto v = E.to<Hs::Var>())
     {
@@ -473,14 +473,14 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         V.wrap = {};
         Core::Exp E = make_var(V);
         E = v->wrap(E);
-        return E;
+        return to_core_exp(E);
     }
     else if (auto c = E.to<Hs::Con>())
     {
         // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
         Core::Exp E = var(c->name);
         E = c->wrap(E);
-        return E;
+        return to_core_exp(E);
     }
     else if (E.is_a<Hs::Do>())
     {
@@ -551,7 +551,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
-        return texp->wrap( desugar( texp->exp) );
+        return to_core_exp(texp->wrap( to_expression_ref(desugar( texp->exp)) ));
     }
     else if (E.is_a<Hs::LambdaExp>())
     {
@@ -562,33 +562,33 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 	// what line is it on?
         expression_ref otherwise = desugar_error(m.name + " lambda: pattern match failure");
 
-        return def_function({equation}, otherwise);
+        return to_core_exp(def_function({equation}, otherwise));
     }
     else if (E.is_a<Hs::LetExp>())
     {
         auto& L = E.as_<Hs::LetExp>();
 
-        CDecls decls = desugar_decls(unloc(L.binds));
-        auto body = desugar(L.body);
+        CDecls decls = to_expression_ref(desugar_decls(unloc(L.binds)));
+        auto body = to_expression_ref(desugar(L.body));
 
         // construct the new let expression.
-        return let_expression(decls, body);
+        return to_core_exp(let_expression(decls, body));
     }
     else if (E.is_a<Hs::IfExp>())
     {
         auto& I = E.as_<Hs::IfExp>();
 
-        auto condition = desugar(I.condition);
-        auto true_branch = desugar(I.true_branch);
-        auto false_branch = desugar(I.false_branch);
+        auto condition = to_expression_ref(desugar(I.condition));
+        auto true_branch = to_expression_ref(desugar(I.true_branch));
+        auto false_branch = to_expression_ref(desugar(I.false_branch));
 
-        return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
+        return to_core_exp(case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch));
     }
     else if (auto c = E.to<Hs::CaseExp>())
     {
         auto& C = *c;
 
-        expression_ref obj = desugar(C.object);
+        expression_ref obj = to_expression_ref(desugar(C.object));
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;
@@ -597,15 +597,15 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             patterns.push_back( unloc(alt_patterns[0]) );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
-        return case_expression(obj, patterns, bodies).result(desugar_error("case: failed pattern match"));
+        return to_core_exp(case_expression(obj, patterns, bodies).result(desugar_error("case: failed pattern match")));
     }
     else if (E.is_a<Hs::ValueDecl>())
         std::abort();
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        Core::Exp A = desugar(app->head);
+        Core::Exp A = to_expression_ref(desugar(app->head));
 
-        Core::Exp arg = desugar( app->arg );
+        Core::Exp arg = to_expression_ref(desugar( app->arg ));
 
         arg = app->arg_wrapper( arg );
 
@@ -613,21 +613,21 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 
         A = app->res_wrapper( A );
 
-        return A;
+        return to_core_exp(A);
     }
     else if (auto L = E.to<Hs::Literal>())
     {
         if (auto c = L->is_Char())
         {
-            return *c;
+            return to_core_exp(*c);
         }
         else if (auto i = L->is_Integer())
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return safe_apply(desugar(I.fromIntegerOp), {Integer(I.value)});
+                return to_core_exp(safe_apply(to_expression_ref(desugar(I.fromIntegerOp)), {Integer(I.value)}));
             else
-                return Integer(I.value);
+                return to_core_exp(Integer(I.value));
         }
         else if (auto r = L->is_Floating())
         {
@@ -636,17 +636,17 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 	    expression_ref ratio = safe_apply(var("Compiler.Ratio.Ratio"), {Integer(r->numerator()), Integer(r->denominator())});
 
             if (F.fromRationalOp)
-                return safe_apply(desugar(F.fromRationalOp), {ratio});
+                return to_core_exp(safe_apply(to_expression_ref(desugar(F.fromRationalOp)), {ratio}));
             else
-                return ratio;
+                return to_core_exp(ratio);
         }
         else if (auto s = L->is_String())
         {
-            return desugar_string_expression(*s);
+            return to_core_exp(desugar_string_expression(*s));
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return i->convert_to<int>();
+            return to_core_exp(i->convert_to<int>());
         }
         else
             std::abort();
@@ -658,28 +658,28 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 
         auto args = E.copy_sub();
         for(auto& arg: args)
-            arg = desugar(arg);
+            arg = to_expression_ref(desugar(arg));
 
         assert(args.size());
-        return safe_apply(E.head(),args);
+        return to_core_exp(safe_apply(E.head(),args));
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
 }
 
-expression_ref desugar(const Module& m, FreshVarState& state, const expression_ref& E)
+Core2::Exp<> desugar(const Module& m, FreshVarState& state, const expression_ref& E)
 {
     desugar_state ds(m, state);
     return ds.desugar(E);
 }
 
-CDecls desugar(const Module& m, FreshVarState& state, const Hs::Decls& decls)
+Core2::Decls<> desugar(const Module& m, FreshVarState& state, const Hs::Decls& decls)
 {
     desugar_state ds(m, state);
     return ds.desugar_decls(decls);
 }
 
-CDecls desugar(const Module& m, FreshVarState& state, const Hs::Binds& binds)
+Core2::Decls<> desugar(const Module& m, FreshVarState& state, const Hs::Binds& binds)
 {
     desugar_state ds(m, state);
     return ds.desugar_decls(binds);
