@@ -238,10 +238,6 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 binders.push_back( x_inner );
             }
 
-            vector<Core2::Var<>> dict_args;
-            for(auto& arg: gb->dict_args)
-                dict_args.push_back(to_core(arg));
-
             const int N = gb->bind_infos.size();
             assert(N >= 1);
 
@@ -249,7 +245,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             Core2::Exp<> tup_body = Core2::Let<> ( to_core(*(gb->dict_decls)),
                                                    Core2::Let<> ( desugar_decls(gb->body),
                                                                   Tuple(binders) ) );
-            auto tup_lambda = lambda_quantify( dict_args, tup_body );
+            auto tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
             if (N == 1)
             {
@@ -284,8 +280,8 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                     auto pattern = TuplePat(fields);
 
                     // \dargs -> case (tup dargs) of (..fields..) -> field
-                    auto x_tmp_body = lambda_quantify(dict_args,
-                                                      Core2::Exp<>(Core2::Case<>( Core2::Apply<>(tup, dict_args),
+                    auto x_tmp_body = lambda_quantify(gb->dict_args,
+                                                      Core2::Exp<>(Core2::Case<>( Core2::Apply<>(tup, gb->dict_args),
                                                                                   Core2::Alts<>({{pattern, x_inner}}))) );
 
                     decls.push_back({x_tmp, x_tmp_body});

@@ -17,6 +17,8 @@
 #include "pattern.H"
 #include "type.H"
 
+#include "computation/core/ast.H"
+
 /*
   - For renaming class decls, can we first run group_decls on them?
     + We need to know the set of bound names for the whole module in order to rename the RHSs, right?
@@ -1158,7 +1160,7 @@ struct GenBind: public Object
     std::vector<::TypeVar> tv_args;
 
     // These variables MUST be type-annotated!
-    std::vector<Core::Var> dict_args;
+    std::vector<Core2::Var<>> dict_args;
 
     // Information for calling each of the binders in the group.
     std::shared_ptr<const Core::Decls> dict_decls;
@@ -1173,7 +1175,7 @@ struct GenBind: public Object
     std::string print() const;
 
     GenBind(const std::vector<::TypeVar>& v1,
-            const std::vector<Core::Var>& v2,
+            const std::vector<Core2::Var<>>& v2,
             const std::shared_ptr<const Core::Decls>& ev,
             const Decls& d,
             const std::map<Var, BindInfo>& bi)
