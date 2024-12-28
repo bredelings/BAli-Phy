@@ -196,7 +196,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
-            decls.push_back( {z,rhs.result(Core2::Constant(0))});
+            decls.push_back( {z,rhs.result(Core2::Constant{0})});
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
@@ -628,21 +628,21 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (auto c = L->is_Char())
         {
-            return Core2::Constant(*c);
+            return Core2::Constant{*c};
         }
         else if (auto i = L->is_Integer())
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return safe_apply(desugar(I.fromIntegerOp), {Core2::Constant(Integer(I.value))});
+                return safe_apply(desugar(I.fromIntegerOp), {Core2::Constant{Integer(I.value)}});
             else
-                return Core2::Constant(Integer(I.value));
+                return Core2::Constant{Integer(I.value)};
         }
         else if (auto r = L->is_Floating())
         {
             auto F = std::get<Hs::Floating>(L->literal);
 
-	    auto ratio = safe_apply(Core2::Var<>("Compiler.Ratio.Ratio"), {Core2::Constant(Integer(r->numerator())), Core2::Constant(Integer(r->denominator()))});
+	    auto ratio = safe_apply(Core2::Var<>("Compiler.Ratio.Ratio"), {Core2::Constant{Integer(r->numerator())}, Core2::Constant{Integer(r->denominator())}});
 
             if (F.fromRationalOp)
                 return safe_apply(desugar(F.fromRationalOp), {ratio});
@@ -655,7 +655,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return Core2::Constant(i->convert_to<int>());
+            return Core2::Constant{i->convert_to<int>()};
         }
         else
             std::abort();

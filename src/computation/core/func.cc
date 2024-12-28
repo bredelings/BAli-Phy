@@ -51,7 +51,7 @@ namespace Core2
     Exp<> unpack_cpp_string(const std::string&s)
     {
         Var<> x("x");
-        return Let<>({{x,Constant(s)}}, Apply<>(unpack_cpp_string(),{x}));
+        return Let<>({{x,Constant{s}}}, Apply<>(unpack_cpp_string(),{x}));
     }
 
     Exp<> error(const std::string& s)
