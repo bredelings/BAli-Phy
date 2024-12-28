@@ -174,6 +174,16 @@ namespace Core
             return {WrapApplyObj(args)};
     }
 
+    wrapper WrapApply(const std::vector<Core2::Var<>>& args)
+    {
+        vector<Var> args2;
+
+        for(auto& arg: args)
+            args2.push_back(to_var(arg));
+
+        return WrapApply(args2);
+    }
+
     struct WrapLambdaObj: public WrapObj
     {
         std::vector<Var> args;
@@ -199,6 +209,16 @@ namespace Core
             return WrapId;
         else
             return {WrapLambdaObj(args)};
+    }
+
+    wrapper WrapLambda(const std::vector<Core2::Var<>>& args)
+    {
+        vector<Var> args2;
+
+        for(auto& arg: args)
+            args2.push_back(to_var(arg));
+
+        return WrapLambda(args2);
     }
     
     struct WrapCompose: public WrapObj

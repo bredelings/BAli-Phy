@@ -53,7 +53,9 @@ namespace Core
     wrapper WrapLet(const Core2::Decls<>& d);
     wrapper WrapLet(const std::shared_ptr<const Core2::Decls<>>& d);
     wrapper WrapApply(const std::vector<Var>& args);
+    wrapper WrapApply(const std::vector<Core2::Var<>>& args);
     wrapper WrapLambda(const std::vector<Var>& args);
+    wrapper WrapLambda(const std::vector<Core2::Var<>>& args);
 
     extern wrapper WrapId;
 
