@@ -87,7 +87,7 @@ struct desugar_state: public FreshVarSource
 
     std::tuple<Core::Decls, std::vector<Core::Exp>> args_to_vars(const std::vector<Core::Exp>& args);
 
-    Core::Exp desugar_apply(const Core::Exp& head, const std::vector<Core::Exp>& args);
+    Core::Exp safe_apply(const Core::Exp& head, const std::vector<Core::Exp>& args);
 
     desugar_state(const Module&, FreshVarState&);
 };

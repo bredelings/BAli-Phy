@@ -8,7 +8,10 @@
 #include <fstream>
 #include <cereal/archives/binary.hpp>
 
+#include "computation/fresh_vars.H"
+
 using std::vector;
+using std::tuple;
 
 namespace Core
 {
@@ -220,6 +223,32 @@ namespace Core
     WrapCompose::WrapCompose(const wrapper& W1, const wrapper& W2)
         :w1(W1), w2(W2)
     {}
+
+    tuple<Decls, vector<Exp>>
+    args_to_vars(const vector<Exp>& args, FreshVarSource& source)
+    {
+        vector<Exp> vars;
+        CDecls decls;
+        for(auto& arg: args)
+        {
+            if (auto v = arg.to<var>())
+                vars.push_back(*v);
+            else
+            {
+                auto a = source.get_fresh_var("a");
+                decls.push_back({a,arg});
+                vars.push_back(a);
+            }
+        }
+        return {decls, vars};
+    }
+
+    Exp safe_apply(const Exp& head, const vector<Exp>& args, FreshVarSource& source)
+    {
+        auto [decls, vars] = args_to_vars(args, source);
+
+        return Let(decls, Apply(head,vars));
+    }
 }
 
 
@@ -232,3 +261,4 @@ Core::wrapper operator*(const Core::wrapper& w1, const Core::wrapper& w2)
     else
         return {Core::WrapCompose(w1,w2)};
 }
+

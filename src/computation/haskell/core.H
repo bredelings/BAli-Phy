@@ -7,6 +7,8 @@
 #include "computation/expression/var.H"
 #include "computation/expression/let.H"
 
+class FreshVarSource;
+
 namespace Core
 {
     // This should be Core::Exp
@@ -61,6 +63,11 @@ namespace Core
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
     Exp Apply(const Exp& fun, const std::vector<Var>& args);
     Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies);
+
+    std::tuple<Decls, std::vector<Exp>>
+    args_to_vars(const std::vector<Exp>& args, FreshVarSource&);
+
+    Exp safe_apply(const Exp&, const std::vector<Exp>& args, FreshVarSource&);
 }
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);

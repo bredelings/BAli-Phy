@@ -311,27 +311,12 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 tuple<Core::Decls, vector<Core::Exp>>
 desugar_state::args_to_vars(const vector<Core::Exp>& args)
 {
-    vector<Core::Exp> vars;
-    CDecls decls;
-    for(auto& arg: args)
-    {
-        if (auto v = arg.to<var>())
-            vars.push_back(*v);
-        else
-        {
-            auto a = get_fresh_var("a");
-            decls.push_back({a,arg});
-            vars.push_back(a);
-        }
-    }
-    return {decls, vars};
+    return Core::args_to_vars(args, *this);
 }
 
-Core::Exp desugar_state::desugar_apply(const Core::Exp& head, const vector<Core::Exp>& args)
+Core::Exp desugar_state::safe_apply(const Core::Exp& head, const vector<Core::Exp>& args)
 {
-    auto [decls, vars] = args_to_vars(args);
-
-    return Core::Let(decls,Core::Apply(head,vars));
+    return Core::safe_apply(head, args, *this);
 }
 
 //TODO: make functions that do e.g.
@@ -363,27 +348,27 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
         enumFrom = desugar(L->enumFromOp);
 
-        return desugar_apply(enumFrom, {desugar(L->from)});
+        return safe_apply(enumFrom, {desugar(L->from)});
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
         expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
         enumFromTo = desugar(L->enumFromToOp);
 
-        return desugar_apply(enumFromTo, {desugar(L->from), desugar(L->to)});
+        return safe_apply(enumFromTo, {desugar(L->from), desugar(L->to)});
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
         expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
         enumFromThen = desugar(L->enumFromThenOp);
-        return desugar_apply(enumFromThen, {desugar(L->from), desugar(L->then)});
+        return safe_apply(enumFromThen, {desugar(L->from), desugar(L->then)});
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
         expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
         enumFromThenTo = desugar(L->enumFromThenToOp);
 
-        return desugar_apply(enumFromThenTo, {desugar(L->from), desugar(L->then), desugar(L->to)});
+        return safe_apply(enumFromThenTo, {desugar(L->from), desugar(L->then), desugar(L->to)});
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
@@ -465,12 +450,12 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return desugar_apply(desugar(S->op), {desugar(S->l_arg)});
+        return safe_apply(desugar(S->op), {desugar(S->l_arg)});
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
         auto x = get_fresh_var();
-        return lambda_quantify(x, desugar_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
+        return lambda_quantify(x, safe_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
     }
     else if (E.is_a<Hs::Tuple>())
     {
@@ -624,7 +609,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 
         arg = app->arg_wrapper( arg );
 
-        A = desugar_apply(A, {arg});
+        A = safe_apply(A, {arg});
 
         A = app->res_wrapper( A );
 
@@ -640,7 +625,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return desugar_apply(desugar(I.fromIntegerOp), {Integer(I.value)});
+                return safe_apply(desugar(I.fromIntegerOp), {Integer(I.value)});
             else
                 return Integer(I.value);
         }
@@ -651,7 +636,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
 	    expression_ref ratio={var("Compiler.Ratio.Ratio"),Integer(r->numerator()),Integer(r->denominator())};
 
             if (F.fromRationalOp)
-                return desugar_apply(desugar(F.fromRationalOp), {ratio});
+                return safe_apply(desugar(F.fromRationalOp), {ratio});
             else
                 return ratio;
         }
@@ -676,7 +661,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             arg = desugar(arg);
 
         assert(args.size());
-        return to_expression_ref(to_core_exp(desugar_apply(E.head(),args)));
+        return safe_apply(E.head(),args);
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
