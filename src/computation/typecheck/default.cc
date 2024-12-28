@@ -204,7 +204,7 @@ bool TypeChecker::default_preds( WantedConstraints& wanted )
     return progress;
 }
 
-Core::Decls TypeChecker::simplify_and_default_top_level()
+Core2::Decls<> TypeChecker::simplify_and_default_top_level()
 {
     auto top_simplify_decls = entails( {}, current_wanteds() );
 

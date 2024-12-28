@@ -291,7 +291,7 @@ public:
 
     bool default_preds( WantedConstraints& wanteds );
 
-    Core::Decls simplify_and_default_top_level();
+    Core2::Decls<> simplify_and_default_top_level();
 
     std::bitset<8> check_type_equality(const Type& lhs, const Type& rhs) const;
 
@@ -533,7 +533,7 @@ public:
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
-    Core::Decls entails(const LIE& lie1, WantedConstraints& lie2);
+    Core2::Decls<> entails(const LIE& lie1, WantedConstraints& lie2);
 
     bool more_specific_than(const Type&, const Type&);
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Type& constraint);

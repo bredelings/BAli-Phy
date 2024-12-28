@@ -596,15 +596,15 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
+Core2::Decls<> TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 {
-    Core::Decls decls;
+    Core2::Decls<> decls;
     bool update = false;
     do
     {
         // 1. Simplify the simple wanteds.
         Solver solver(*this);
-        decls += solver.simplify(givens, wanteds.simple);
+        decls += to_core(solver.simplify(givens, wanteds.simple));
         update = false;
 
         // 2. Handle implications
@@ -631,7 +631,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             // 5. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
             tcs2.set_level( implic->level );
-            *implic->evidence_binds += to_core( tcs2.entails(sub_givens, implic->wanteds) );
+            *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
 
             // 6. Keep implication if not empty.
             if (not implic->wanteds.empty())

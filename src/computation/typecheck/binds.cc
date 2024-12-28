@@ -841,7 +841,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     for(auto& pred: quant_preds)
         givens.push_back({GivenOrigin(), Given, fresh_dvar(pred), pred, context()});
 
-    return {qtvs, givens, solve_decls};
+    return {qtvs, givens, to_expression_ref(solve_decls)};
 }
 
 Hs::Decls

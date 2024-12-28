@@ -1724,11 +1724,11 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
 
     tc_state->messages().clear();
 
-    Core::Decls dfun_decls2;
+    Core2::Decls<> dfun_decls2;
     for(auto& [var,wrap,rhs]: dfun_decls)
-        dfun_decls2.push_back({var,wrap(to_expression_ref(rhs))});
+        dfun_decls2.push_back({to_core(var),to_core_exp(wrap(to_expression_ref(rhs)))});
 
-    return {class_binds, value_decls, dm_decls, instance_method_binds, to_core( dfun_decls2 ), to_core( top_simplify_decls )};
+    return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
 }
 
 /*
