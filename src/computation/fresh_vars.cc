@@ -75,6 +75,17 @@ var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
     return var(name2);
 }
 
+Core2::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qualified)
+{
+    assert(not is_haskell_builtin_con_name(name));
+    string name2 = add_suffix(get_unqualified_name(name), get_index() );
+
+    if (qualified)
+        name2 = qualified_name(name2);
+
+    return Core2::Var<>(name2);
+}
+
 var FreshVarSource::get_fresh_var(const var& x)
 {
 //    assert(x.index >= 0);
