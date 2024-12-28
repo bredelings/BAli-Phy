@@ -141,8 +141,8 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
-    this_mod().local_instances.insert( {dvar, *S.instance_info} );
-    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+    this_mod().local_instances.insert( {to_core(dvar), *S.instance_info} );
+    this_mod().local_eq_instances.insert( {to_core(dvar), *S.eq_instance_info} );
 }
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
@@ -477,7 +477,7 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
                 assert(inst_info);
 
                 named_instances.push_back({dfun, *I});
-                this_mod().local_instances.insert( {to_var(dfun), *inst_info} );
+                this_mod().local_instances.insert( {dfun, *inst_info} );
             }
         }
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
@@ -801,7 +801,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
                 auto type = apply_subst(*subst, instance_head);
                 
-                auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
+                auto dfun_exp = Core::Apply(to_var(dfun), dict_vars_from_lie<Core::Exp>(wanteds));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }

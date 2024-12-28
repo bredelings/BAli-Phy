@@ -7,6 +7,8 @@
 #include "haskell/coretype.H"
 #include "parser/location.hh"
 
+#include "computation/core/ast.H"
+
 struct InstanceInfo
 {
     // forall tvs. constraints => class_con args.
@@ -51,7 +53,7 @@ struct EqInstanceInfo
     }
 };
 
-typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
-typedef std::map<Core::Var, EqInstanceInfo> EqInstanceEnv;
+typedef std::map<Core2::Var<>, InstanceInfo> InstanceEnv;
+typedef std::map<Core2::Var<>, EqInstanceInfo> EqInstanceEnv;
 
 #endif

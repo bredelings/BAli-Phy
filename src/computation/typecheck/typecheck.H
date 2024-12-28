@@ -39,8 +39,6 @@ type_check_type_class(Module& m, const Haskell::ClassDecl& class_decl);
 
 global_value_env sig_env(const signature_env& signatures);
 
-typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
-
 typedef std::map<TypeCon,Kind> KindSigEnv;
 
 struct global_tc_state
