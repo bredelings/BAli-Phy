@@ -491,16 +491,16 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         // Why does make_var not want any wrappers?
         auto V = *v;
         V.wrap = {};
-        Core::Exp E = make_var(V);
-        E = v->wrap(E);
-        return to_core_exp(E);
+        Core2::Exp<> E = make_core_var(V);
+        E = to_core_exp(v->wrap(to_expression_ref(E)));
+        return E;
     }
     else if (auto c = E.to<Hs::Con>())
     {
         // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
-        Core::Exp E = var(c->name);
-        E = c->wrap(E);
-        return to_core_exp(E);
+        Core2::Exp<> E = Core2::Var<>(c->name);
+        E = to_core_exp(c->wrap(to_expression_ref(E)));
+        return E;
     }
     else if (E.is_a<Hs::Do>())
     {
@@ -658,7 +658,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto s = L->is_String())
         {
-            return to_core_exp(desugar_string_expression(*s));
+            return Core2::unpack_cpp_string(*s);
         }
         else if (auto i = L->is_BoxedInteger())
         {
