@@ -211,14 +211,10 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	for(int j=0;j< total_arity; j++)
 	    args.push_back( get_fresh_var() );
 
-	expression_ref pat = constructor(name, total_arity);
-	if (args.size())
-        {
-            vector<expression_ref> args2;
-            for(auto& arg: args)
-                args2.push_back(arg);
-	    pat = expression_ref{pat,args2};
-        }
+        vector<Core2::VarOrWildcardPattern<>> pat_args;
+        for(auto& arg: args)
+            pat_args.push_back({Core2::VarPat<>(to_core(arg))});
+        Core2::Pattern<> pat = Core2::ConPat<>(name, pat_args);
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<var> x2 = args;
@@ -230,7 +226,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	{
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
             auto con_pat = equations[r].patterns[0].to<Hs::ConPattern>();
-            vector<expression_ref> patterns;
+            vector<Hs::Pattern> patterns;
             for(auto& dvar: con_pat->given_dict_vars)
                 patterns.push_back(make_VarPattern(dvar));
             for(auto& sub_pat: con_pat->args)
@@ -250,7 +246,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	    equations2.push_back(std::move(eqn));
 	}
 
-	simple_patterns.push_back( to_core_pattern(pat) );
+	simple_patterns.push_back( pat );
 	simple_bodies.push_back( match(x2, equations2) );
     }
     simple_patterns.push_back( Core2::WildcardPat());
