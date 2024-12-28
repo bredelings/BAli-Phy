@@ -28,7 +28,7 @@ Core2::Exp<> safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& ar
 {
     auto [decls, vars] = args_to_vars(args, source);
 
-    return Core2::Let(decls, Core2::Apply(head,vars));
+    return Core2::Let(decls, make_apply(head,vars));
 }
 
 namespace Core2
