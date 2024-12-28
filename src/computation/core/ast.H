@@ -462,7 +462,7 @@ namespace Core2
 	}
 
         Let() = default;
-        Let(const Decls<NoteV,NoteE>& d, const Exp<NoteV,NoteE>& e):decls(d), body(e) {}
+        Let(const Decls<NoteV,NoteE>& d, const Exp<NoteV,NoteE>& e):decls(d), body(e) { assert(not decls.empty()); }
     };
 
     // Deduction guide.
