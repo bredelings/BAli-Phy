@@ -244,7 +244,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
-            decls.push_back( { to_core(dict->constraint.ev_var), to_core_exp(dfun_exp) } );
+            decls.push_back( { to_core(dict->constraint.ev_var), dfun_exp } );
             for(auto& pred: super_wanteds)
             {
                 // Say where in the source code we got this thing from

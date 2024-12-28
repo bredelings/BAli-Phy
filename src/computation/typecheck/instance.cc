@@ -766,9 +766,9 @@ EqInstanceInfo TypeChecker::freshen(EqInstanceInfo info)
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
 // FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
-optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
+optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
-    vector<tuple<pair<Core::Exp, LIE>,Type,Type,InstanceInfo>> matching_instances;
+    vector<tuple<pair<Core2::Exp<>, LIE>,Type,Type,InstanceInfo>> matching_instances;
 
     vector<InstanceInfo> unifying_instances;
 
@@ -800,8 +800,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
                 auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
 
                 auto type = apply_subst(*subst, instance_head);
-                
-                auto dfun_exp = Core::Apply(to_var(dfun), dict_vars_from_lie<Core::Exp>(wanteds));
+
+                auto dfun_exp = to_core_exp(Core::Apply(to_var(dfun), dict_vars_from_lie<Core::Exp>(wanteds)));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }
@@ -816,7 +816,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<tuple<pair<Core::Exp, LIE>,Type,Type,InstanceInfo>> surviving_instances;
+    vector<tuple<pair<Core2::Exp<>, LIE>,Type,Type,InstanceInfo>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {
