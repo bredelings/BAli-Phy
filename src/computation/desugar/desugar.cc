@@ -225,9 +225,9 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             auto fvar = make_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
-            auto otherwise = desugar_error(m.name + "." + fvar.name+": pattern match failure");
+            auto otherwise = Core2::error(m.name + "." + fvar.name+": pattern match failure");
 
-            decls.push_back( {fvar , def_function(equations, otherwise) } );
+            decls.push_back( {fvar , to_expression_ref(def_function(equations, otherwise)) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {
@@ -580,9 +580,9 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto equation = desugar_match(L.match);
 	// what top-level function is the lambda in?
 	// what line is it on?
-        expression_ref otherwise = desugar_error(m.name + " lambda: pattern match failure");
+        auto otherwise = Core2::error(m.name + " lambda: pattern match failure");
 
-        return to_core_exp(def_function({equation}, otherwise));
+        return def_function({equation}, otherwise);
     }
     else if (auto L = E.to<Hs::LetExp>())
     {

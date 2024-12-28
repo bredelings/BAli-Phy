@@ -53,7 +53,7 @@ struct desugar_state: public FreshVarSource
 {
     const Module& m;
 
-    expression_ref def_function(const std::vector< equation_info_t >&, const expression_ref& otherwise);
+    Core2::Exp<> def_function(const std::vector< equation_info_t >&, const Core2::Exp<>& otherwise);
 
     failable_expression case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies);
 

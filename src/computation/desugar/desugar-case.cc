@@ -521,7 +521,7 @@ failable_expression desugar_state::case_expression(const expression_ref& T, cons
     return FE;
 }
 
-expression_ref desugar_state::def_function(const vector< equation_info_t >& equations, const expression_ref& otherwise)
+Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core2::Exp<>& otherwise)
 {
     // 1. Get fresh vars for the arguments
     vector<var> args;
@@ -529,11 +529,11 @@ expression_ref desugar_state::def_function(const vector< equation_info_t >& equa
 	args.push_back(get_fresh_var());
 
     // 2. Construct the case expression
-    expression_ref E = to_expression_ref(match(args, equations).result(to_core_exp(otherwise)));
+    auto E = match(args, equations).result(otherwise);
 
     // 3. Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
-	E = lambda_quantify(args[i], E);
+	E = Core2::Lambda<>{to_core(args[i]), E};
 
     return E;
 }
