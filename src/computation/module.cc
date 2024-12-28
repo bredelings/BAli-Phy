@@ -927,7 +927,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
 
-    auto value_decls = to_core( graph_normalize( MM->fresh_var_state(), MM->desugar(opts, MM->fresh_var_state(), hs_decls) ) );
+    auto value_decls = to_core( MM->desugar(opts, MM->fresh_var_state(), hs_decls) );
 
     value_decls += to_core( graph_normalize( MM->fresh_var_state(), core_decls ) );
 
