@@ -372,23 +372,23 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
-        expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
-        enumFromTo = to_expression_ref(desugar(L->enumFromToOp));
+        Core2::Exp<> enumFromTo = Core2::Var<>("Compiler.Enum.enumFromTo");
+        enumFromTo = desugar(L->enumFromToOp);
 
-        return to_core_exp(safe_apply(enumFromTo, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->to))}));
+        return safe_apply(enumFromTo, {desugar(L->from), desugar(L->to)});
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
-        expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
-        enumFromThen = to_expression_ref(desugar(L->enumFromThenOp));
-        return to_core_exp(safe_apply(enumFromThen, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->then))}));
+        Core2::Exp<> enumFromThen = Core2::Var<>("Compiler.Enum.enumFromThen");
+        enumFromThen = desugar(L->enumFromThenOp);
+        return safe_apply(enumFromThen, {desugar(L->from), desugar(L->then)});
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
-        expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
-        enumFromThenTo = to_expression_ref(desugar(L->enumFromThenToOp));
+        Core2::Exp<> enumFromThenTo = Core2::Var<>("Compiler.Enum.enumFromThenTo");
+        enumFromThenTo = desugar(L->enumFromThenToOp);
 
-        return to_core_exp(safe_apply(enumFromThenTo, {to_expression_ref(desugar(L->from)), to_expression_ref(desugar(L->then)), to_expression_ref(desugar(L->to))}));
+        return safe_apply(enumFromThenTo, {desugar(L->from), desugar(L->then), desugar(L->to)});
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
@@ -470,11 +470,11 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return to_core_exp(safe_apply(to_expression_ref(desugar(S->op)), {to_expression_ref(desugar(S->l_arg))}));
+        return safe_apply(desugar(S->op), {desugar(S->l_arg)});
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
-        auto x = get_fresh_var();
+        auto x = get_fresh_var("x");
         return to_core_exp(lambda_quantify(x, safe_apply(to_expression_ref(desugar(S->op)), {x, to_expression_ref(desugar(S->r_arg))}) ));
     }
     else if (E.is_a<Hs::Tuple>())
