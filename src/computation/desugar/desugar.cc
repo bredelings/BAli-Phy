@@ -355,20 +355,20 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 {
     if (auto L = E.to<Hs::List>())
     {
-        Core::Exp CL = List();
+        Core2::Exp<> CL = Core2::ConApp<>("[]",{});
         for(auto& element: reverse(L->elements))
         {
-            auto [decls, vars] = args_to_vars({to_expression_ref(desugar(element)),CL});
-            CL = Core::Let(decls, cons(vars[0],vars[1]));
+            auto [decls, vars] = args_to_vars({desugar(element),CL});
+            CL = Core2::Let(decls, Core2::ConApp<>(":",vars));
         }
-        return to_core_exp(CL);
+        return CL;
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
-        Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
-        enumFrom = to_expression_ref(desugar(L->enumFromOp));
+        Core2::Exp<> enumFrom = Core2::Var<>("Compiler.Enum.enumFrom");
+        enumFrom = desugar(L->enumFromOp);
 
-        return to_core_exp(safe_apply(enumFrom, {to_expression_ref(desugar(L->from))}));
+        return safe_apply(enumFrom, {desugar(L->from)});
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
