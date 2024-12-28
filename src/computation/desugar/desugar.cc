@@ -576,15 +576,13 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
         return to_core_exp(def_function({equation}, otherwise));
     }
-    else if (E.is_a<Hs::LetExp>())
+    else if (auto L = E.to<Hs::LetExp>())
     {
-        auto& L = E.as_<Hs::LetExp>();
-
-        CDecls decls = to_expression_ref(desugar_decls(unloc(L.binds)));
-        auto body = to_expression_ref(desugar(L.body));
+        auto decls = desugar_decls(unloc(L->binds));
+        auto body = desugar(L->body);
 
         // construct the new let expression.
-        return to_core_exp(let_expression(decls, body));
+        return Core2::Let<>{decls, body};
     }
     else if (E.is_a<Hs::IfExp>())
     {
