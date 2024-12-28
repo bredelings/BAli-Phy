@@ -199,35 +199,35 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
         {
             auto pat = pd->lhs;
             auto rhs = desugar_rhs(pd->rhs);
-            var z = get_fresh_var();
+            Core2::Var<> z = get_fresh_core_var("z");
             if (unloc(pat).is_a<Hs::AsPattern>())
             {
                 // Special-case for top-level as-patterns
                 // This isn't needed, but generates simpler code.
-                z = make_var(unloc(unloc(pat).as_<Hs::AsPattern>().var));
+                z = make_core_var(unloc(unloc(pat).as_<Hs::AsPattern>().var));
                 pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
-            decls.push_back( {to_core(z),rhs.result(Core2::Constant(0))});
+            decls.push_back( {z,rhs.result(Core2::Constant(0))});
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
 	    for(auto& [_,v]: Hs::vars_in_pattern( pat ) )
             {
-                auto x = make_var(v);
+                auto x = make_core_var(v);
 		std::ostringstream o;
 		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-                decls.push_back( {to_core(x) ,case_expression(to_core(z), {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str()))});
+                decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(Core2::error(o.str()))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
-            auto fvar = make_var(unloc(fd->v));
+            auto fvar = make_core_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
             auto otherwise = Core2::error(m.name + "." + fvar.name+": pattern match failure");
 
-            decls.push_back( {to_core(fvar) , def_function(equations, otherwise) } );
+            decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {
