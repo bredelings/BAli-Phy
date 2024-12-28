@@ -50,6 +50,13 @@ var FreshVarSource::get_fresh_var(const std::string& name)
     return var(name, get_index() );
 }
 
+Core2::Var<> FreshVarSource::get_fresh_core_var(const std::string& name)
+{
+    assert(not is_haskell_builtin_con_name(name));
+//    assert(name.empty() or not is_qualified_symbol(name));
+    return Core2::Var<>(name, get_index() );
+}
+
 Occ::Var FreshVarSource::get_fresh_occ_var(const std::string& name)
 {
     assert(not is_haskell_builtin_con_name(name));

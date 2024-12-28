@@ -76,6 +76,8 @@ public:
     Hs::Var get_fresh_Var(const var& x, bool qualified);
     Hs::Var get_fresh_Var(const Hs::Var& x, bool qualified);
 
+    Core2::Var<> get_fresh_core_var(const std::string& name);
+
     // "Rigid" type vars come from forall-quantified variables.
     // "Meta" type vars are unification type vars.
     // "Other" type vars are used in foralls.
