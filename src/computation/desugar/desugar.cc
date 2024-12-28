@@ -484,17 +484,16 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
-        auto x = get_fresh_var("x");
-        return to_core_exp(lambda_quantify(x, safe_apply(to_expression_ref(desugar(S->op)), {x, to_expression_ref(desugar(S->r_arg))}) ));
+        auto x = get_fresh_core_var("x");
+        return lambda_quantify({x}, safe_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
     }
-    else if (E.is_a<Hs::Tuple>())
+    else if (auto T = E.to<Hs::Tuple>())
     {
-        auto T = E.as_<Hs::Tuple>();
-        vector<Core::Exp> elements;
-        for(auto& element: T.elements)
-            elements.push_back( to_expression_ref(desugar(element)) );
+        vector<Core2::Exp<>> elements;
+        for(auto& element: T->elements)
+            elements.push_back( desugar(element) );
         auto [decls, vars] = args_to_vars(elements);
-        return to_core_exp(Core::Let(decls,get_tuple( vars )));
+        return Core2::Let(decls, Tuple(vars));
     }
     else if (auto v = E.to<Hs::Var>())
     {
