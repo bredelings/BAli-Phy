@@ -143,7 +143,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars( desugar(class_decl.type_vars), type);
-        class_info.superclass_extractors.insert(pair(make_var(get_dict), type));
+        class_info.superclass_extractors.insert(pair(make_core_var(get_dict), type));
 
         // Is this right???
         class_info.fields.push_back(pair(get_dict, type));

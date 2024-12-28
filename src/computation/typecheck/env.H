@@ -56,7 +56,7 @@ typedef value_env local_value_env;
 // leads to
 //   dEqList :: forall a. Eq a => Eq [a]
 
-typedef std::map<Core::Var, Type> GIE;
+typedef std::map<Core2::Var<>, Type> GIE;
 
 std::string print(const value_env& env);
 void add_no_overlap(value_env& e1, const value_env& e2);

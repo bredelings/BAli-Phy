@@ -107,7 +107,7 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
         if (auto subst = maybe_match(class_constraint, constraint))
         {
             superclass_constraint = apply_subst(*subst, superclass_constraint);
-            constraints.push_back( { dvar, superclass_constraint } );
+            constraints.push_back( { to_var(dvar), superclass_constraint } );
         }
     }
 
