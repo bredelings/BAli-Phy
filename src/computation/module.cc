@@ -926,12 +926,10 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    CDecls value_decls = MM->desugar(opts, MM->fresh_var_state(), hs_decls);
-    value_decls += core_decls;
 
-    value_decls = graph_normalize( MM->fresh_var_state(), value_decls);
+    auto core_value_decls = to_core( graph_normalize( MM->fresh_var_state(), MM->desugar(opts, MM->fresh_var_state(), hs_decls) ) );
 
-    auto core_value_decls = to_core(value_decls);
+    core_value_decls += to_core( graph_normalize( MM->fresh_var_state(), core_decls ) );
 
     core_value_decls += MM->load_builtins(loader, M.foreign_decls);
 
@@ -946,7 +944,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     }
 
     // Check for duplicate top-level names.
-    check_duplicate_var(value_decls);
+    check_duplicate_var(core_value_decls);
 
     mark_exported_decls(core_value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
 
