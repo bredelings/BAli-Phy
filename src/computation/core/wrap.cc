@@ -54,7 +54,7 @@ namespace Core2
 
     Exp<> WrapLetObj::operator()(const Exp<>& e) const
     {
-        return Let<>{*decls, e};
+        return make_let(*decls,e);
     }
 
     WrapLetObj::WrapLetObj(const Decls<>& d)
