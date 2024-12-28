@@ -252,41 +252,45 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 auto& info = gb->bind_infos.begin()->second;
 
-                var x_outer = make_var(info.outer_id);
+                auto x_outer = make_core_var(info.outer_id);
 
-                decls.push_back({to_core(x_outer), to_core_exp(info.wrap(tup_lambda))});
+                decls.push_back({x_outer, to_core_exp(info.wrap(tup_lambda))});
             }
             else
             {
-                auto tup = get_fresh_var("tup");
-                decls.push_back({to_core(tup), to_core_exp(tup_lambda)});
+                auto tup = get_fresh_core_var("tup");
+                decls.push_back({tup, to_core_exp(tup_lambda)});
 
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 int i=0;
                 for(auto& [name, info]: gb->bind_infos)
                 {
-                    var x_outer = make_var(info.outer_id);
-                    var x_inner = make_var(info.inner_id);
-                    var x_tmp   = get_fresh_var();
+                    auto x_outer = make_core_var(info.outer_id);
+                    auto x_inner = make_core_var(info.inner_id);
+                    auto x_tmp   = get_fresh_core_var("tmp");
 
-                    vector<expression_ref> fields;
+                    vector<Core2::Var<>> fields;
                     for(int j=0;j<N;j++)
                     {
                         if (i == j)
                             fields.push_back( x_inner );
                         else
-                            fields.push_back( get_fresh_var("w") );
+                            fields.push_back( get_fresh_core_var("w") );
                     }
-                    expression_ref pattern = get_tuple(fields);
+                    auto pattern = TuplePat(fields);
+
+                    vector<Core2::Var<>> dict_args;
+                    for(auto& arg: gb->dict_args)
+                        dict_args.push_back(to_core(arg));
 
                     // \dargs -> case (tup dargs) of (..fields..) -> field
-                    auto x_tmp_body = to_core_exp(Core::Lambda(gb->dict_args,
-                                                               Core::Case( Core::Apply(tup, gb->dict_args),
-                                                                           {pattern},{x_inner}) ));
+                    auto x_tmp_body = lambda_quantify(dict_args,
+                                                      Core2::Exp<>(Core2::Case<>( Core2::Apply<>(tup, dict_args),
+                                                                                  Core2::Alts<>({{pattern, x_inner}}))) );
 
-                    decls.push_back({to_core(x_tmp), x_tmp_body});
+                    decls.push_back({x_tmp, x_tmp_body});
 
-                    decls.push_back({to_core(x_outer), to_core_exp(info.wrap(x_tmp))});
+                    decls.push_back({x_outer, to_core_exp(info.wrap(to_var(x_tmp)))});
 
                     i++;
                 }

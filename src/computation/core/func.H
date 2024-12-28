@@ -2,6 +2,7 @@
 #define CORE_FUNC_H
 
 #include "computation/core/ast.H"
+#include "computation/haskell/ids.H"
 
 template <typename NoteV, typename NoteE>
 Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Core2::Var<NoteV>& x)
@@ -60,6 +61,19 @@ Core2::Exp<NoteV> Tuple(const std::vector<Core2::Var<NoteV>>& vars)
         return vars[0];
     else
         return Core2::ConApp<NoteV>{tuple_name(vars.size()),vars};
+}
+
+template <typename NoteV>
+Core2::Pattern<NoteV> TuplePat(const std::vector<Core2::Var<NoteV>>& args)
+{
+    if (args.size() == 1)
+        throw myexception()<<"TuplePat: can't construct a tuple of 1 element!";
+
+    std::vector<Core2::VarOrWildcardPattern<>> arg_pats;
+    for(auto& arg: args)
+        arg_pats.push_back({Core2::VarPat<>(arg)});
+
+    return Core2::ConPat<NoteV>{tuple_name(args.size()), arg_pats};
 }
 
 class FreshVarSource;
