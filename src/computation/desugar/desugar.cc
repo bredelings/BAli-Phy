@@ -609,8 +609,6 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         return to_core_exp(case_expression(obj, patterns, bodies).result(desugar_error("case: failed pattern match")));
     }
-    else if (E.is_a<Hs::ValueDecl>())
-        std::abort();
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         Core::Exp A = to_expression_ref(desugar(app->head));
