@@ -14,6 +14,7 @@
 #include "computation/optimization/occurrence.H"
 #include "computation/machine/graph_register.H"
 #include "util/assert.hh"
+#include "computation/core/func.H"
 
 using std::vector;
 using std::set;
@@ -73,13 +74,13 @@ shared_ptr<CompiledModule> compiler_prim_module()
 
     // 3. Add seq.
     auto seq = seq_info();
-    CDecls value_decls;
+    Core2::Decls<> value_decls;
     if (seq.var_info and seq.var_info->unfolding)
     {
-        auto code = maybe_occ_to_expression_ref(seq.var_info->unfolding);
-        value_decls.push_back({var("Compiler.Prim.seq"), code});
+        auto code = to_core_exp(maybe_occ_to_expression_ref(seq.var_info->unfolding));
+        value_decls.push_back({Core2::Var<>("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
-        auto [occ_code, _] = occurrence_analyzer(*m, to_core_exp(code));
+        auto [occ_code, _] = occurrence_analyzer(*m, code);
         seq.var_info->unfolding = occ_code;
     }
     m->declare_symbol(seq);
@@ -89,7 +90,7 @@ shared_ptr<CompiledModule> compiler_prim_module()
     m->_cached_sha = "12345";
 
     auto cm = std::make_shared<CompiledModule>(m);
-    cm->finish_value_decls(to_core(value_decls));
+    cm->finish_value_decls(value_decls);
 
     return cm;
 }
