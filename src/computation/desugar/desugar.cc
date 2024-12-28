@@ -627,26 +627,26 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (auto c = L->is_Char())
         {
-            return to_core_exp(*c);
+            return Core2::Constant(*c);
         }
         else if (auto i = L->is_Integer())
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return to_core_exp(safe_apply(to_expression_ref(desugar(I.fromIntegerOp)), {Integer(I.value)}));
+                return safe_apply(desugar(I.fromIntegerOp), {Core2::Constant(Integer(I.value))});
             else
-                return to_core_exp(Integer(I.value));
+                return Core2::Constant(Integer(I.value));
         }
         else if (auto r = L->is_Floating())
         {
             auto F = std::get<Hs::Floating>(L->literal);
 
-	    expression_ref ratio = safe_apply(var("Compiler.Ratio.Ratio"), {Integer(r->numerator()), Integer(r->denominator())});
+	    auto ratio = safe_apply(Core2::Var<>("Compiler.Ratio.Ratio"), {Core2::Constant(Integer(r->numerator())), Core2::Constant(Integer(r->denominator()))});
 
             if (F.fromRationalOp)
-                return to_core_exp(safe_apply(to_expression_ref(desugar(F.fromRationalOp)), {ratio}));
+                return safe_apply(desugar(F.fromRationalOp), {ratio});
             else
-                return to_core_exp(ratio);
+                return ratio;
         }
         else if (auto s = L->is_String())
         {
@@ -654,7 +654,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return to_core_exp(i->convert_to<int>());
+            return Core2::Constant(i->convert_to<int>());
         }
         else
             std::abort();
