@@ -1451,35 +1451,37 @@ bool Module::type_is_declared(const std::string& name) const
 const_symbol_ptr make_builtin_symbol(const std::string& name)
 {
     symbol_ptr S;
-    expression_ref U;
+    Core2::Exp<> U;
     if (name == "()")
     {
         S = std::make_shared<symbol_info>("()", symbol_type_t::constructor, "()", 0);
-        U = constructor("()",0);
+        U = Core2::ConApp("()",{});
     }
     else if (name == "[]")
     {
         S = std::make_shared<symbol_info>("[]", symbol_type_t::constructor, "[]", 0);
-        U = constructor("[]",0);
+        U = Core2::ConApp("[]",{});
     }
     else if (name == ":")
     {
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
-        U = lambda_n( constructor(":",2), 2 );
+        auto args = make_vars<>(2,'l');
+        U = lambda_quantify(args, Core2::Exp<>(Core2::ConApp(":", args)));
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
-        U = lambda_n( tuple_head(arity), arity );
+        auto args = make_vars<>(arity,'t');
+        U = lambda_quantify(args, Core2::Exp<>(Tuple(args)));
     }
     else
         throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 
     Module empty("Empty");
 
-    auto [occ_U, free_vars] = occurrence_analyzer(empty, to_core_exp(U));
+    auto [occ_U, free_vars] = occurrence_analyzer(empty, U);
     S->var_info->unfolding = occ_U;
     assert(free_vars.empty());
     return S;
