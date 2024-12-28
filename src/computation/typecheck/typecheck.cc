@@ -1726,7 +1726,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
 
     Core2::Decls<> dfun_decls2;
     for(auto& [var,wrap,rhs]: dfun_decls)
-        dfun_decls2.push_back({to_core(var),to_core_exp(wrap(to_expression_ref(rhs)))});
+        dfun_decls2.push_back({var, to_core_exp(wrap(to_expression_ref(rhs)))});
 
     return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
 }

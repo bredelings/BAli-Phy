@@ -493,20 +493,20 @@ public:
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::optional<Core::Var>
+    std::optional<Core2::Var<>>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
-    std::vector< std::pair<Core::Var, Hs::InstanceDecl> >
+    std::vector< std::pair<Core2::Var<>, Hs::InstanceDecl> >
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    std::pair<Hs::Binds, std::vector<std::tuple<Core::Var, Core::wrapper, Core2::Exp<>>>>
-    infer_type_for_instances2(const std::vector<std::pair<Core::Var, Hs::InstanceDecl>>& named_instances);
+    std::pair<Hs::Binds, std::vector<std::tuple<Core2::Var<>, Core::wrapper, Core2::Exp<>>>>
+    infer_type_for_instances2(const std::vector<std::pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
-    std::pair<Hs::Decls, std::tuple<Core::Var, Core::wrapper, Core2::Exp<>>>
-    infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
+    std::pair<Hs::Decls, std::tuple<Core2::Var<>, Core::wrapper, Core2::Exp<>>>
+    infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
