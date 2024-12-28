@@ -85,6 +85,8 @@ struct desugar_state: public FreshVarSource
     CDecls desugar_decls(const Haskell::Decls&);
     CDecls desugar_decls(const Haskell::Binds&);
 
+    Core::Exp desugar_apply(const Core::Exp& head, const std::vector<Core::Exp>& args);
+
     desugar_state(const Module&, FreshVarState&);
 };
 

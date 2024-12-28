@@ -300,6 +300,20 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 }
 
 
+Core::Exp desugar_state::desugar_apply(const Core::Exp& head, const vector<Core::Exp>& args)
+{
+    vector<Core::Exp> vars;
+    CDecls decls;
+    for(int i=0;i<args.size();i++)
+    {
+        auto a = get_fresh_var("a");
+        vars.push_back(a);
+        decls.push_back({a,args[i]});
+    }
+
+    return Core::Let(decls,Core::Apply(head,vars));
+}
+
 //TODO: make functions that do e.g.
 //      * desugar_decls -> CDecls
 //      * desugar_decl  -> CDecl
@@ -321,7 +335,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         {
             auto h = get_fresh_var("h");
             auto t = get_fresh_var("t");
-            CL = Core::Let({{h,desugar(element)},{t,CL}}, cons(h,t));
+            CL = Core::Let({{h,desugar(element)},{t,CL}}, cons(h,t)); // CL = let {h = element; t = CL} in cons(h,t)
         }
         return CL;
     }
@@ -330,27 +344,27 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
         enumFrom = desugar(L->enumFromOp);
 
-        return {enumFrom, desugar(L->from)};
+        return desugar_apply(enumFrom, {desugar(L->from)});
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
         expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
         enumFromTo = desugar(L->enumFromToOp);
 
-        return {enumFromTo, desugar(L->from), desugar(L->to)};
+        return desugar_apply(enumFromTo, {desugar(L->from), desugar(L->to)});
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
         expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
         enumFromThen = desugar(L->enumFromThenOp);
-        return {enumFromThen, desugar(L->from), desugar(L->then)};
+        return desugar_apply(enumFromThen, {desugar(L->from), desugar(L->then)});
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
         expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
         enumFromThenTo = desugar(L->enumFromThenToOp);
 
-        return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
+        return desugar_apply(enumFromThenTo, {desugar(L->from), desugar(L->then), desugar(L->to)});
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
