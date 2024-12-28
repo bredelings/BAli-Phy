@@ -452,7 +452,18 @@ namespace Core2
 	{
 	    ar(decls, body);
 	}
+
+        Let() = default;
+        Let(const Decls<NoteV,NoteE>& d, const Exp<NoteV,NoteE>& e):decls(d), body(e) {}
     };
+
+    // Deduction guide.
+    template <typename NoteV, typename NoteE, typename T>
+    Let(const Decls<NoteV,NoteE>&, const T&) -> Let<NoteV,NoteE>;
+
+    // Deduction guide.
+    template <typename NoteV, typename NoteE, typename T>
+    Let(const T&, const Exp<NoteV,NoteE>&) -> Let<NoteV,NoteE>;
 
     struct WildcardPat
     {
