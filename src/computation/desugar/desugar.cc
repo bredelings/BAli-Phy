@@ -611,17 +611,17 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        Core::Exp A = to_expression_ref(desugar(app->head));
+        auto A = desugar(app->head);
 
-        Core::Exp arg = to_expression_ref(desugar( app->arg ));
+        auto arg = desugar( app->arg );
 
-        arg = app->arg_wrapper( arg );
+        arg = to_core_exp( app->arg_wrapper( to_expression_ref(arg) ) );
 
         A = safe_apply(A, {arg});
 
-        A = app->res_wrapper( A );
+        A = to_core_exp( app->res_wrapper( to_expression_ref(A) ) );
 
-        return to_core_exp(A);
+        return A;
     }
     else if (auto L = E.to<Hs::Literal>())
     {
