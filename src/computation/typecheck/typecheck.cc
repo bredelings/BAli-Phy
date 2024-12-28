@@ -14,9 +14,6 @@
 
 #include "util/graph.H" // for get_ordered_strong_components( )
 
-#include "computation/expression/apply.H"
-#include "computation/expression/tuple.H" // for is_tuple_name( )
-#include "computation/operation.H" // for is_non_apply_op( )
 #include "haskell/ids.H"
 
 #include "alphabetize.H" // for alphabetize_type( ).

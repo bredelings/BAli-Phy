@@ -10,7 +10,6 @@
 #include "env.H"
 #include "substitution.H"
 #include <range/v3/all.hpp>
-#include "computation/expression/apply.H"
 #include "util/cow-ptr.H"
 
 #include "computation/haskell/haskell.H"

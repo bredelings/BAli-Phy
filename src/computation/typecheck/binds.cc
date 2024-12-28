@@ -9,8 +9,6 @@
 #include <range/v3/all.hpp>
 #include "util/assert.hh"
 
-#include "computation/expression/convert.H"
-
 using std::string;
 using std::vector;
 using std::map;

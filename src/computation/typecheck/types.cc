@@ -3,8 +3,6 @@
 #include "haskell/ids.H"
 #include "util/assert.hh"
 
-#include "computation/expression/tuple.H"
-
 using std::set;
 using std::optional;
 using std::pair;

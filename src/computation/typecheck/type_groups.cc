@@ -1,5 +1,4 @@
 #include "kindcheck.H"
-#include "expression/tuple.H"
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
 #include "haskell/ids.H"

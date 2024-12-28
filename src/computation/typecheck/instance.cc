@@ -3,11 +3,6 @@
 #include "haskell/ids.H"
 #include "core/func.H"
 
-#include "computation/expression/apply.H"
-#include "computation/expression/tuple.H"
-#include "computation/expression/core.H"
-#include "computation/expression/convert.H"
-
 using std::string;
 using std::vector;
 using std::map;
