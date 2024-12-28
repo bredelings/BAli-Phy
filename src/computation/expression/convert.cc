@@ -57,7 +57,7 @@ Core2::Apply<> to_core_apply(expression_ref A)
     {
 	auto& arg = A.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_core_apply: Argument "<<i<<" of apply is not a variable!";
+	    throw myexception()<<"to_core_apply: Argument "<<i<<" of apply is not a variable in "<<A.print();
 
 	A2.args.push_back(to_core(arg.as_<var>()));
     }
@@ -136,7 +136,7 @@ Core2::ConApp<> to_core_con_app(const expression_ref& E)
     {
 	auto& arg = E.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_core_con_app: Argument "<<i+1<<" is not a variable!";
+	    throw myexception()<<"to_core_con_app: Argument "<<i+1<<" is not a variable in "<<E.print();
 
 	con_app.args.push_back(to_core(arg.as_<var>()));
     }
@@ -180,7 +180,7 @@ Core2::BuiltinOp<> to_core_builtin_op(const expression_ref& E)
     {
 	auto& arg = E.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_core_builtin_op: Argument "<<i+1<<" is not a variable!";
+	    throw myexception()<<"to_core_builtin_op: Argument "<<i+1<<" is not a variable in "<<E.print();
 
 	builtin_op.args.push_back(to_core(arg.as_<var>()));
     }
@@ -417,7 +417,7 @@ Occ::Apply to_occ_apply(expression_ref A)
     {
 	auto& arg = A.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_occ_apply: Argument "<<i<<" of apply is not a variable!";
+	    throw myexception()<<"to_occ_apply: Argument "<<i<<" of apply is not a variable in "<<A.print();
 
 	A2.args.push_back(to_occ_var(arg.as_<var>()));
     }
@@ -496,7 +496,7 @@ Occ::ConApp to_occ_con_app(const expression_ref& E)
     {
 	auto& arg = E.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_occ_con_app: Argument "<<i+1<<" is not a variable!";
+	    throw myexception()<<"to_occ_con_app: Argument "<<i+1<<" is not a variable in "<<E.print();
 
 	con_app.args.push_back(to_occ_var(arg.as_<var>()));
     }
@@ -540,7 +540,7 @@ Occ::BuiltinOp to_occ_builtin_op(const expression_ref& E)
     {
 	auto& arg = E.sub()[i];
 	if (not arg.is_a<var>())
-	    throw myexception()<<"to_occ_builtin_op: Argument "<<i+1<<" is not a variable!";
+	    throw myexception()<<"to_occ_builtin_op: Argument "<<i+1<<" is not a variable in "<<E.print();
 
 	builtin_op.args.push_back(to_occ_var(arg.as_<var>()));
     }
