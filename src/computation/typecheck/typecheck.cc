@@ -1019,7 +1019,7 @@ string class_arg_name(const Type& class_arg)
         return "_";
 }
 
-Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
+Core2::Var<> TypeChecker::fresh_dvar(const Type& pred, bool qualified)
 {
     auto [class_head, class_args] = decompose_type_apps(pred);
     string name = "dvar";
@@ -1036,11 +1036,11 @@ Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
         for(auto& class_arg: class_args)
             name += class_arg_name(class_arg);
     }
-    auto dvar = get_fresh_var(name, qualified);
+    auto dvar = get_fresh_core_var(name, qualified);
     return dvar;
 }
 
-Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pred)
+Core2::Var<> TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pred)
 {
 //    if (context()->locs.empty())
 //        std::cerr<<"No location -- add wanted!";

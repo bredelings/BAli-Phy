@@ -200,9 +200,9 @@ public:
 
     WantedConstraints& current_wanteds();
 
-    Core::Var fresh_dvar(const Type& constraint, bool qualified = false);
+    Core2::Var<> fresh_dvar(const Type& constraint, bool qualified = false);
 
-    Core::Var add_wanted(const ConstraintOrigin& origin, const Type& constraint);
+    Core2::Var<> add_wanted(const ConstraintOrigin& origin, const Type& constraint);
 
     // ------ End: Functions handling the LIE ---
 
@@ -521,9 +521,9 @@ public:
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     LIE preds_to_constraints(const ConstraintOrigin&, ConstraintFlavor, const std::vector<Type>&);
 
-    std::vector<std::pair<Core::Var, Type>> superclass_constraints(const Type& constraint);
+    std::vector<std::pair<Core2::Var<>, Type>> superclass_constraints(const Type& constraint);
 
-    std::optional<std::vector<Core::Var>>
+    std::optional<std::vector<Core2::Var<>>>
     is_superclass_of(const Type&, const Type&);
 
     std::optional<Core2::Decls<>>

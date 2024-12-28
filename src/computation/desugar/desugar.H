@@ -45,7 +45,7 @@ struct equation_info_t
     failable_expression rhs;
 };
 
-Hs::VarPattern make_VarPattern(const var&);
+Hs::VarPattern make_VarPattern(const Core2::Var<>&);
 
 CDecls translate_decls_to_cdecls(const Haskell::Decls&);
 

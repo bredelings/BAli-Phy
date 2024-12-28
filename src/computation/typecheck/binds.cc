@@ -901,9 +901,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     add_binders(poly_binder_env);
 
     // 8. Construct the quantified declaration to return
-    vector< Core2::Var<> > dict_vars;
-    for(auto& dvar: dict_vars_from_lie( givens ))
-        dict_vars.push_back(to_core(dvar));
+    vector< Core2::Var<> > dict_vars = dict_vars_from_lie(givens);
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
     Hs::Decls decls2({{noloc, gen_bind }});
 

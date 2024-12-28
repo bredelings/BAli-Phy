@@ -141,8 +141,8 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
-    this_mod().local_instances.insert( {to_core(dvar), *S.instance_info} );
-    this_mod().local_eq_instances.insert( {to_core(dvar), *S.eq_instance_info} );
+    this_mod().local_instances.insert( {dvar, *S.instance_info} );
+    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
 }
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
@@ -404,7 +404,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     }
 
 
-    auto dfun = to_core(fresh_dvar(constraint, true));
+    auto dfun = fresh_dvar(constraint, true);
 
     //  -- new -- //
     Type inst_type = add_constraints(desugar(inst_decl.context.constraints), constraint);
@@ -588,9 +588,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
-    vector<Core2::Var<>> dict_entries;
-    for(auto& var: dict_vars_from_lie<Core::Var>(wanteds))
-        dict_entries.push_back(to_core(var));
+    vector<Core2::Var<>> dict_entries = dict_vars_from_lie(wanteds);
 
     // 7. Construct binds_methods
     Hs::Decls decls;
@@ -637,8 +635,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                auto dict_entry = to_core(get_fresh_var("de",false));
-                dict_decls.push_back({dict_entry, to_core_exp(Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") )});
+                auto dict_entry = get_fresh_core_var("de",false);
+                dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") });
                 dict_entries.push_back( dict_entry );
 
                 pop_note();
@@ -646,8 +644,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
             }
         }
 
-        auto dict_entry = to_core(get_fresh_var("de",false));
-        dict_decls.push_back({dict_entry, to_core_exp(Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)))});
+        auto dict_entry = get_fresh_core_var("de",false);
+        dict_decls.push_back({dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))});
         dict_entries.push_back( dict_entry );
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
@@ -801,11 +799,7 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
 
                 auto type = apply_subst(*subst, instance_head);
 
-                vector<Core2::Var<>> tmp;
-                for(auto& arg: dict_vars_from_lie(wanteds))
-                    tmp.push_back(to_core(arg));
-
-                Core2::Exp<> dfun_exp = make_apply<>(Core2::Exp<>(dfun), tmp);
+                Core2::Exp<> dfun_exp = make_apply<>(Core2::Exp<>(dfun), dict_vars_from_lie(wanteds));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }

@@ -70,13 +70,13 @@ struct Constraint
     cow_ptr<TypeCheckerContext> tc_state;
 
     ConstraintFlavor flavor;
-    Core::Var ev_var;
+    Core2::Var<> ev_var;
     Type pred;
 
     int level() const;
     std::string print() const;
 
-    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core::Var, Type, const cow_ptr<TypeCheckerContext>& s);
+    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core2::Var<>, Type, const cow_ptr<TypeCheckerContext>& s);
 };
 
 typedef std::vector<Constraint> LIE;
@@ -147,19 +147,9 @@ struct Implication
     Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core2::Decls<>>& eb, const cow_ptr<TypeCheckerContext>& c);
 };
 
-template <typename T>
-std::vector<T> dict_vars_from_lie(const LIE& constraints)
-{
-    std::vector<T> dvars;
-    for(auto& constraint: constraints)
-        if (is_dictionary_pred(constraint.pred))
-            dvars.push_back(constraint.ev_var);
-    return dvars;
-}
-
 std::vector<Type> preds_from_lie(const LIE& lie);
 
-std::vector<Core::Var> dict_vars_from_lie(const LIE& lie);
+std::vector<Core2::Var<>> dict_vars_from_lie(const LIE& lie);
 
 std::string print(const LIE& lie);
 

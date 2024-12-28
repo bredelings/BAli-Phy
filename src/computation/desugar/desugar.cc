@@ -50,7 +50,7 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-Hs::VarPattern make_VarPattern(const var& v)
+Hs::VarPattern make_VarPattern(const Core2::Var<>& v)
 {
     assert(v.index == 0);
     Hs::Var V(v.name);

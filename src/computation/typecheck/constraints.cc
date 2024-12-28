@@ -24,7 +24,7 @@ string Constraint::print() const
     return s;
 }
 
-Constraint::Constraint(const ConstraintOrigin& o, ConstraintFlavor f, Core::Var v, Type p,
+Constraint::Constraint(const ConstraintOrigin& o, ConstraintFlavor f, Core2::Var<> v, Type p,
                        const cow_ptr<TypeCheckerContext>& s)
     :origin(o),
      tc_state(s),
@@ -53,9 +53,9 @@ vector<Type> preds_from_lie(const LIE& constraints)
     return preds;
 }
 
-vector<Core::Var> dict_vars_from_lie(const LIE& constraints)
+vector<Core2::Var<>> dict_vars_from_lie(const LIE& constraints)
 {
-    vector<Core::Var> vars;
+    vector<Core2::Var<>> vars;
     for(auto& constraint: constraints)
         if (is_dictionary_pred(constraint.pred))
             vars.push_back( constraint.ev_var );

@@ -78,9 +78,9 @@ int Predicate::level() const
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
-vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& constraint)
+vector<pair<Core2::Var<>, Type>> TypeChecker::superclass_constraints(const Type& constraint)
 {
-    vector<pair<Core::Var, Type>> constraints;
+    vector<pair<Core2::Var<>, Type>> constraints;
 
     auto class_name = get_full_class_name_from_constraint(constraint);
 
@@ -107,7 +107,7 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
         if (auto subst = maybe_match(class_constraint, constraint))
         {
             superclass_constraint = apply_subst(*subst, superclass_constraint);
-            constraints.push_back( { to_var(dvar), superclass_constraint } );
+            constraints.push_back( { dvar, superclass_constraint } );
         }
     }
 
@@ -115,9 +115,9 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
 }
 
 // We are trying to eliminate the *first* argument.
-optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Type& constraint1, const Type& constraint2)
+optional<vector<Core2::Var<>>> TypeChecker::is_superclass_of(const Type& constraint1, const Type& constraint2)
 {
-    vector<Core::Var> extractors;
+    vector<Core2::Var<>> extractors;
     if (same_type(constraint1, constraint2))
         return extractors;
     else
@@ -140,12 +140,12 @@ optional<Core2::Decls<>> TypeChecker::entails_by_superclass(const Constraint& gi
 {
     if (auto extractors = is_superclass_of(wanted.pred, given.pred))
     {
-        Core2::Exp<> dict_exp = to_core(given.ev_var);
+        Core2::Exp<> dict_exp = given.ev_var;
         for(auto& extractor: *extractors | views::reverse)
-            dict_exp = safe_apply(to_core_exp(extractor), {dict_exp}, *this);
+            dict_exp = safe_apply(extractor, {dict_exp}, *this);
 
         // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
-        return Core2::Decls<>( { {to_core(wanted.ev_var), dict_exp} } );
+        return Core2::Decls<>( { {wanted.ev_var, dict_exp} } );
     }
     else
         return {};
@@ -210,7 +210,7 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
         // DDICT:  (D xs)     + (D xs)     -> (D xs)
         if (same_type(dict1->constraint.pred, dict2->constraint.pred))
         {
-            decls.push_back({to_core(dict2->constraint.ev_var), to_core_exp(dict1->constraint.ev_var)});
+            decls.push_back({dict2->constraint.ev_var, dict1->constraint.ev_var});
             return Solved();
         }
         // SUPER - not in the paper.
@@ -244,7 +244,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
-            decls.push_back( { to_core(dict->constraint.ev_var), dfun_exp } );
+            decls.push_back( { dict->constraint.ev_var, dfun_exp } );
             for(auto& pred: super_wanteds)
             {
                 // Say where in the source code we got this thing from
