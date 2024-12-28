@@ -337,7 +337,7 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
 
     std::function<Core2::Exp<>(const Core2::Exp<>&)> result = [=,this](const Core2::Exp<>& otherwise)
     {
-        expression_ref E = to_expression_ref(otherwise);
+        Core2::Exp<> E = otherwise;
 
         for(int i=constants.size()-1; i>= 0; i--)
         {
@@ -347,13 +347,13 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
             auto condition = safe_apply(desugar(LP.equalsOp), {x0, desugar(LP.lit)});
 
             // let o = E in case condition of True -> true_branch(o); 
-            auto o = get_fresh_var("o");
-            auto true_branch = simple_bodies[i].result(to_core(o));
-            E = let_expression(CDecls({{o,E}}),
-                               to_expression_ref(case_expression(condition,
-                                                                 {Hs::TruePat()},{failable_expression(true_branch)}).result(to_core(o))));
+            auto o = get_fresh_core_var("o");
+            auto true_branch = simple_bodies[i].result(o);
+            E = Core2::Let<>({{o,E}},
+                             case_expression(condition,
+                                             {Hs::TruePat()},{failable_expression(true_branch)}).result(o));
         }
-        return to_core_exp(E);
+        return E;
     };
 
     return failable_expression{true, result};
