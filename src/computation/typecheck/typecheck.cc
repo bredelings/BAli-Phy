@@ -1496,10 +1496,10 @@ TypeChecker::skolemize_and(const Type& polytype, const tc_action<Type>& nested_a
     return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type};
 }
 
-shared_ptr<const Core::Decls>
+shared_ptr<const Core2::Decls<>>
 TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action)
 {
-    auto ev_decls = std::make_shared<Core::Decls>();
+    auto ev_decls = std::make_shared<Core2::Decls<>>();
 
     bool need_implication = not (tvs.empty() and givens.empty());
 

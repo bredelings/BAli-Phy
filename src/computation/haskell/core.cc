@@ -10,6 +10,8 @@
 
 #include "computation/fresh_vars.H"
 
+#include "computation/expression/convert.H"
+
 using std::vector;
 using std::tuple;
 
@@ -41,14 +43,6 @@ namespace Core
             return body;
         else
             return let_expression(decls, body);
-    }
-
-    Exp Let(const std::shared_ptr<const Decls>& decls, const Exp& body)
-    {
-        if (decls->empty())
-            return body;
-        else
-            return let_expression(*decls, body);
     }
 
     Exp Apply(const Exp& fun, const std::vector<Exp>& args)
@@ -112,29 +106,32 @@ namespace Core
 
     struct WrapLetObj: public WrapObj
     {
-        std::shared_ptr<const Decls> decls;
+        std::shared_ptr<const Core2::Decls<>> decls;
 
         WrapLetObj* clone() const {return new WrapLetObj(*this);}
         Exp operator()(const Exp&) const;
 
-        WrapLetObj(const Decls& d);
-        WrapLetObj(const std::shared_ptr<const Decls>& d);
+        WrapLetObj(const Core2::Decls<>& d);
+        WrapLetObj(const std::shared_ptr<const Core2::Decls<>>& d);
     };
 
     Exp WrapLetObj::operator()(const Exp& e) const
     {
-        return Let(decls, e);
+        if (decls->empty())
+            return e;
+        else
+            return let_expression(to_expression_ref(*decls), e);
     }
 
-    WrapLetObj::WrapLetObj(const Decls& d)
-        :decls(std::make_shared<const Decls>(d))
+    WrapLetObj::WrapLetObj(const Core2::Decls<>& d)
+        :decls(std::make_shared<const Core2::Decls<>>(d))
     {}
 
-    WrapLetObj::WrapLetObj(const std::shared_ptr<const Decls>& d)
+    WrapLetObj::WrapLetObj(const std::shared_ptr<const Core2::Decls<>>& d)
         :decls(d)
     {}
 
-    wrapper WrapLet(const Decls& d)
+    wrapper WrapLet(const Core2::Decls<>& d)
     {
         if (d.empty())
             return {};
@@ -142,7 +139,7 @@ namespace Core
             return WrapLetObj(d);
     }
 
-    wrapper WrapLet(const std::shared_ptr<const Decls>& d)
+    wrapper WrapLet(const std::shared_ptr<const Core2::Decls<>>& d)
     {
         // We can't return an identify here, because the decls might grow, later.
         return WrapLetObj(d);

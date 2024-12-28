@@ -6,6 +6,8 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
 #include "computation/expression/let.H"
+#include "computation/core/ast.H"
+
 
 class FreshVarSource;
 
@@ -48,8 +50,8 @@ namespace Core
         wrapper(const WrapObj&);
     };
 
-    wrapper WrapLet(const Decls& d);
-    wrapper WrapLet(const std::shared_ptr<const Decls>& d);
+    wrapper WrapLet(const Core2::Decls<>& d);
+    wrapper WrapLet(const std::shared_ptr<const Core2::Decls<>>& d);
     wrapper WrapApply(const std::vector<Var>& args);
     wrapper WrapLambda(const std::vector<Var>& args);
 
@@ -59,7 +61,6 @@ namespace Core
     Exp Tuple(const std::vector<Exp>& es);
     Exp Lambda(const std::vector<Var>& args, const Exp& body);
     Exp Let(const Decls& args, const Exp& body);
-    Exp Let(const std::shared_ptr<const Decls>& args, const Exp& body);
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
     Exp Apply(const Exp& fun, const std::vector<Var>& args);
     Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies);

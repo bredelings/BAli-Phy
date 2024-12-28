@@ -9,6 +9,8 @@
 #include <range/v3/all.hpp>
 #include "util/assert.hh"
 
+#include "computation/expression/convert.H"
+
 using std::string;
 using std::vector;
 using std::map;
@@ -209,7 +211,7 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<Hs::Var, Hs::BindInfo>&
 
 Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
                       const vector<Core2::Var<>>& dict_vars,
-                      const shared_ptr<const Core::Decls>& ev_decls,
+                      const shared_ptr<const Core2::Decls<>>& ev_decls,
                       Hs::Decls decls,
                       const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
@@ -288,7 +290,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
     Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen * wrap_match);
 
-    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core2::Decls<>>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
 
     pop_note();
 
@@ -869,7 +871,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     // 3. Determine what to quantify over and stuff
     auto [qtvs, givens, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
-    auto ev_decls = std::make_shared<Core::Decls>(solve_decls);
+    auto ev_decls = std::make_shared<Core2::Decls<>>(to_core(solve_decls));
 
     auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 

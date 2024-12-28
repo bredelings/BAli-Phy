@@ -8,6 +8,7 @@
 #include "haskell/core.H"
 #include "util/cow-ptr.H"
 #include "haskell/haskell.H" // for Hs::LExp
+#include "core/ast.H" // for Core2::Decls
 
 struct OccurrenceOrigin
 {
@@ -131,7 +132,7 @@ struct Implication
 
     // Pointer to a set of evidence bindings.
     // We can append new bindings to this object.
-    std::shared_ptr<Core::Decls> evidence_binds;
+    std::shared_ptr<Core2::Decls<>> evidence_binds;
 
     std::vector<TypeVar> tvs;
 
@@ -143,7 +144,7 @@ struct Implication
 
     std::string print() const;
 
-    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const cow_ptr<TypeCheckerContext>& c);
+    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core2::Decls<>>& eb, const cow_ptr<TypeCheckerContext>& c);
 };
 
 template <typename T>

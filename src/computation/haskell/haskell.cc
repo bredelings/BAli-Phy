@@ -1013,7 +1013,7 @@ string GenBind::print() const
         ds.push_back( darg.print() );
 
     string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
-    s += print_cdecls(*dict_decls)+"\n";
+    s += dict_decls->print()+"\n";
     s += body.print();
     return s;
 }

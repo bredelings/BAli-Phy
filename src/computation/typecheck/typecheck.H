@@ -326,10 +326,10 @@ public:
 
     void tcRhoStmts(int i, std::vector<Located<Hs::Qual>>& stmts, const Expected& exp_type);
 
-    std::shared_ptr<const Core::Decls> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
+    std::shared_ptr<const Core2::Decls<>> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
 
     template <typename R>
-    std::tuple<std::shared_ptr<const Core::Decls>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
+    std::tuple<std::shared_ptr<const Core2::Decls<>>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
 
     // Figure 22.
     void infer_quals_type(std::vector<Located<Hs::Qual>>& quals);
@@ -586,10 +586,10 @@ TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Typ
 }
 
 template <typename R>
-std::tuple<std::shared_ptr<const Core::Decls>, R>
+std::tuple<std::shared_ptr<const Core2::Decls<>>, R>
 TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
 {
-    auto ev_decls = std::make_shared<Core::Decls>();
+    auto ev_decls = std::make_shared<Core2::Decls<>>();
 
     bool need_implication = not (tvs.empty() and givens.empty());
 

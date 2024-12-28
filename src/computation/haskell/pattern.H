@@ -11,6 +11,8 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 
+#include "computation/core/ast.H"
+
 #include "core.H"
 
 #include "var.H"
@@ -84,7 +86,7 @@ struct ConPattern: public Object
     std::vector<::TypeVar> universal_tyvars;        // What do we do with this?
     std::vector<::TypeVar> existential_tyvars;      // What do we do with this?
     std::vector<Core::Var> given_dict_vars;
-    std::shared_ptr<const Core::Decls> ev_binds;
+    std::shared_ptr<const Core2::Decls<>> ev_binds;
 
     // get given variables for dictionaries only (nothing for type equalities)
     ConPattern* clone() const { return new ConPattern(*this);}

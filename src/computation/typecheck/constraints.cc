@@ -152,12 +152,12 @@ string Implication::print() const
         oss<< ::print(givens) <<" => ";
     oss<<wanteds.print();
     if (not evidence_binds->empty())
-        oss<<" =& "<<print_cdecls(*evidence_binds);
+        oss<<" =& "<<evidence_binds->print();
     oss<<")";
     return oss.str();
 }
 
-Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const cow_ptr<TypeCheckerContext>& c)
+Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core2::Decls<>>& eb, const cow_ptr<TypeCheckerContext>& c)
     :level(l), evidence_binds(eb), tvs(v), givens(g), wanteds(w), tc_state(c)
 {
     for(auto& tv: tvs)

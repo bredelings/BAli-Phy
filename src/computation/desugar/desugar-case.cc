@@ -239,7 +239,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
             // Add the ev_binds for the ConPattern to the rhs
             auto rhs = equations[r].rhs;
             if (con_pat->ev_binds)
-                rhs.add_binding(to_core(*con_pat->ev_binds));
+                rhs.add_binding(*con_pat->ev_binds);
 
 	    // Add the equation
 	    auto eqn = equation_info_t{std::move(patterns), std::move(rhs)};
