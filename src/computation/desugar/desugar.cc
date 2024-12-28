@@ -190,7 +190,7 @@ vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matche
 Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 {
     // Now we go through and translate groups of FunDecls.
-    CDecls decls;
+    Core2::Decls<> decls;
     for(int i=0;i<v.size();i++)
     {
 	auto& [_,decl] = v[i];
@@ -208,7 +208,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
-            decls.push_back( {z,to_expression_ref(rhs.result(Core2::Constant(0)))});
+            decls.push_back( {to_core(z),rhs.result(Core2::Constant(0))});
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
@@ -217,7 +217,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 auto x = make_var(v);
 		std::ostringstream o;
 		o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-                decls.push_back( {x ,to_expression_ref(case_expression(to_core(z), {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str())))});
+                decls.push_back( {to_core(x) ,case_expression(to_core(z), {unloc(pat)}, {failable_expression(to_core(x))}).result(Core2::error(o.str()))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
@@ -227,7 +227,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             auto equations = desugar_matches(fd->matches);
             auto otherwise = Core2::error(m.name + "." + fvar.name+": pattern match failure");
 
-            decls.push_back( {fvar , to_expression_ref(def_function(equations, otherwise)) } );
+            decls.push_back( {to_core(fvar) , def_function(equations, otherwise) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {
@@ -254,12 +254,12 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 
                 var x_outer = make_var(info.outer_id);
 
-                decls.push_back({x_outer, info.wrap(tup_lambda)});
+                decls.push_back({to_core(x_outer), to_core_exp(info.wrap(tup_lambda))});
             }
             else
             {
                 auto tup = get_fresh_var("tup");
-                decls.push_back({tup, tup_lambda});
+                decls.push_back({to_core(tup), to_core_exp(tup_lambda)});
 
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 int i=0;
@@ -278,9 +278,9 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                                                         Core::Case( Core::Apply(tup, gb->dict_args),
                                                                     {pattern},{x_inner}) );
 
-                    decls.push_back({x_tmp, x_tmp_body});
+                    decls.push_back({to_core(x_tmp), to_core_exp(x_tmp_body)});
 
-                    decls.push_back({x_outer, info.wrap(x_tmp)});
+                    decls.push_back({to_core(x_outer), to_core_exp(info.wrap(x_tmp))});
 
                     i++;
                 }
@@ -291,7 +291,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
         else
             continue; // std::abort();
     }
-    return to_core(decls);
+    return decls;
 }
 
 Core2::Decls<> desugar_state::desugar_decls(const Hs::Binds& binds)

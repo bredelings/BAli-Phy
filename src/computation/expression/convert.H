@@ -6,6 +6,8 @@
 
 Core2::Exp<> to_core_exp(const expression_ref& E);
 
+Core2::Pattern<> to_core_pattern(const expression_ref& E);
+
 std::vector<Core2::Decls<>> decl_groups_to_core(const std::vector<CDecls>& decls);
 
 Core2::Var<> to_core(const var& x);
