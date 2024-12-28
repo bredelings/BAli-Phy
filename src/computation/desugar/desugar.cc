@@ -661,15 +661,19 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (is_apply_exp(E))
     {
-        // why are we desugaring this?
-        // whouldn't it be an applyexp that we are desugaring?
+        // This should really be an Hs::Apply< > expression.
+        // But those are hard to construct since they must all be located.
+        // Perhaps I should allow constructing an located one from an unlocated one...
 
-        auto args = E.copy_sub();
-        for(auto& arg: args)
-            arg = to_expression_ref(desugar(arg));
+        vector<Core2::Exp<>> args;
+        for(auto& arg: E.sub())
+            args.push_back(desugar(arg));
+
+        auto head = args[0];
+        args.erase(args.begin());
 
         assert(args.size());
-        return to_core_exp(safe_apply(E.head(),args));
+        return safe_apply(head, args);
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
