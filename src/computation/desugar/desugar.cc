@@ -143,8 +143,6 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
             auto& SQ = guard.as_<Hs::SimpleQual>();
 	    auto condition = desugar(SQ.exp);
 	    // F' = case True of True -> F
-            assert(is_bool_true(condition) == is_bool_true(to_expression_ref(condition)));
-            assert(is_otherwise(condition) == is_otherwise(to_expression_ref(condition)));
 	    if (is_bool_true(condition) or is_otherwise(condition))
 		;
 	    // F' = case condition of True -> F
