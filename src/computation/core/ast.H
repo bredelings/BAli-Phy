@@ -386,6 +386,14 @@ namespace Core2
 	{
 	    ar(head, args);
 	}
+
+        Apply() = default;
+
+        Apply(const Exp<NoteV,NoteE>& h, const std::vector<Var<NoteV>>& a)
+            :head(h), args(a)
+        {
+            assert(not args.empty());
+        }
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
