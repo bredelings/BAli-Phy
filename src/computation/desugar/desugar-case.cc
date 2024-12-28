@@ -191,7 +191,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
     }
 
     // 2. Find the alternatives in the simple case expression
-    vector<expression_ref> simple_patterns;
+    vector<Core2::Pattern<>> simple_patterns;
     vector<failable_expression> simple_bodies;
 
     for(int c=0;c<constants.size();c++)
@@ -250,26 +250,26 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	    equations2.push_back(std::move(eqn));
 	}
 
-	simple_patterns.push_back( pat );
+	simple_patterns.push_back( to_core_pattern(pat) );
 	simple_bodies.push_back( match(x2, equations2) );
     }
-    simple_patterns.push_back(var(-1));
+    simple_patterns.push_back( Core2::WildcardPat());
     simple_bodies.push_back(fail_identity());
 
     // 3. Construct a failable_expression.
-    auto x0 = x[0];
+    auto x0 = to_core_exp(x[0]);
 
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
-    auto o = get_fresh_var("o");
+    auto o = get_fresh_core_var("o");
 
     auto result = [=](const Core2::Exp<>& otherwise)
     {
-	vector<expression_ref> simple_bodies2;
-	for(auto& body: simple_bodies)
-	    simple_bodies2.push_back(to_expression_ref(body.result(to_core(o))));
+        Core2::Alts<> alts;
+	for(int i=0;i<simple_bodies.size();i++)
+            alts.push_back({simple_patterns[i], simple_bodies[i].result(o)});
 
-	return to_core_exp(let_expression(CDecls({{o,to_expression_ref(otherwise)}}), make_case_expression(x0, simple_patterns, simple_bodies2)));
+	return Core2::Let<>({{o,otherwise}}, Core2::Case<>(x0, alts));
     };
 
     return failable_expression{true, result};
