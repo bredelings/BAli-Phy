@@ -633,7 +633,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
         {
             auto F = std::get<Hs::Floating>(L->literal);
 
-	    expression_ref ratio={var("Compiler.Ratio.Ratio"),Integer(r->numerator()),Integer(r->denominator())};
+	    expression_ref ratio = safe_apply(var("Compiler.Ratio.Ratio"), {Integer(r->numerator()), Integer(r->denominator())});
 
             if (F.fromRationalOp)
                 return safe_apply(desugar(F.fromRationalOp), {ratio});

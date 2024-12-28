@@ -350,7 +350,7 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
             auto& LP = constants[i];
 
             // condition = (x == constants[i])
-            expression_ref condition = {desugar(LP.equalsOp), x0, desugar(LP.lit)};
+            expression_ref condition = safe_apply(desugar(LP.equalsOp), {x0, desugar(LP.lit)});
 
             // let o = E in case condition of True -> true_branch(o); 
             auto o = get_fresh_var();
