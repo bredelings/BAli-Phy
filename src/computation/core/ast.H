@@ -23,7 +23,6 @@
 /* TODO:
  *
  * 1. Remove VarPat -- we should only have ConPat and WildCardPat
- * 2. Remove VarOrWildcardPat -- arguments to ConPat should never be wildcards.
  * 3. Make Apply take exactly one argument.
  * 4. Don't allow empty Exp -- actually this prevents cereal from serializing it.
  *    Use optional<Exp> instead?
@@ -501,36 +500,10 @@ namespace Core2
     };
 
     template <typename NoteV = std::monostate>
-    struct VarOrWildcardPattern: public std::variant<std::monostate, VarPat<NoteV>>
-    {
-	std::string print() const;
-
-	using std::variant<std::monostate, VarPat<NoteV>>::variant;
-
-	std::strong_ordering operator<=>(const VarOrWildcardPattern<NoteV>&) const = default;
-
-	const VarPat<NoteV>* to_var_pat() const
-	{
-	    if (this->index() == 1)
-		return &std::get<VarPat<NoteV>>(*this);
-	    else
-		return nullptr;
-	}
-
-	const Var<NoteV>* to_var_pat_var() const
-	{
-	    if (auto vp = to_var_pat())
-		return &vp->var;
-	    else
-		return nullptr;
-	}
-    };
-
-    template <typename NoteV = std::monostate>
     struct ConPat
     {
 	std::string head;
-	std::vector<VarOrWildcardPattern<NoteV>> args;
+	std::vector<Var<NoteV>> args;
 
 	bool operator==(const ConPat<NoteV>& v2) const
 	{
@@ -544,19 +517,6 @@ namespace Core2
 	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
 
 	    return args <=> v2.args;
-	}
-
-	std::optional<std::vector<Var<NoteV>>> all_args_vars() const
-	{
-	    std::vector<Var<NoteV>> arg_vars;
-	    for(auto& arg_pat: args)
-	    {
-		if (auto x = arg_pat.to_var_pat_var())
-		    arg_vars.push_back(*x);
-		else
-		    return {};
-	    }
-	    return arg_vars;
 	}
 
 	std::string print() const;
@@ -881,14 +841,6 @@ namespace Core2
     std::string VarPat<NoteV>::print() const
     {
 	return var.print();
-    }
-
-    template <typename NoteV>
-    std::string VarOrWildcardPattern<NoteV>::print() const
-    {
-	if (this->index() == 0) return "NOPATVW";
-	else if (this->index() == 1) return std::get<VarPat<NoteV>>(*this).print();
-	else std::abort();
     }
 
     template <typename NoteV>

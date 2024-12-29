@@ -101,8 +101,7 @@ set<Occ::Var> get_free_vars(const Occ::Pattern& pattern)
     {
 	set<Occ::Var> vars;
 	for(auto& arg: cp->args)
-	    if (auto x = arg.to_var_pat_var())
-		vars.insert(*x);
+            vars.insert(arg);
 	return vars;
     }
     else
@@ -272,18 +271,9 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
 }
 
 // Convert the pattern to an expression if it contains no wildcards.
-std::optional<Occ::Exp> pattern_to_expression(const Occ::ConPat& con_pat)
+Occ::Exp pattern_to_expression(const Occ::ConPat& con_pat)
 {
-    Occ::ConApp con_app;
-    for(auto& arg: con_pat.args)
-    {
-	if (auto x = arg.to_var_pat_var())
-	    con_app.args.push_back(*x);
-	else
-	    return {};
-    }
-    con_app.head = con_pat.head;
-    return con_app;
+    return Occ::ConApp{con_pat.head, con_pat.args};
 }
 
 // Convert the pattern to an expression if it contains no wildcards.
@@ -338,9 +328,9 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
     if (auto x = pattern.to_var_pat_var(); x and is_used_var(*x))
 	used.push_back(*x);
     else if (auto con_pat = pattern.to_con_pat())
-	for(auto& arg_pat: con_pat->args)
-	    if (auto x = arg_pat.to_var_pat_var(); x and is_used_var(*x))
-		used.push_back(*x);
+	for(auto& x: con_pat->args)
+	    if (is_used_var(x))
+		used.push_back(x);
 
     return used;
 }
@@ -375,13 +365,10 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
             auto S2 = S;
             for(int j=0;j<N;j++)
             {
-                auto x = pat_con->args[j].to_var_pat_var();
-                if (x)
-                {
-                    auto obj_var = obj_con->args[j];
-                    S2 = S2.erase(*x);
-                    S2 = S2.insert({*x, {obj_var}});
-                }
+                auto x = pat_con->args[j];
+                auto obj_var = obj_con->args[j];
+                S2 = S2.erase(x);
+                S2 = S2.insert({x, {obj_var}});
             }
             return {{body, S2}};
         }
@@ -447,11 +434,7 @@ SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const subst
     {
 	Occ::ConPat pattern2 = *con_pat;
 	for(auto& arg: pattern2.args)
-        {
-	    Occ::Var x1 = *arg.to_var_pat_var();
-            auto x2 = rename_and_bind_var(x1, S2, bound_vars);
-	    arg = Occ::VarPat{x2};
-        }
+            arg = rename_and_bind_var(arg, S2, bound_vars);
         pattern = pattern2;
     }
 

@@ -260,8 +260,7 @@ add_free_variable_annotations(const Core2::Exp<>& E)
             else if (auto CP = pat.to_con_pat())
             {
                 for(auto arg: CP->args)
-                    if (auto v = arg.to_var_pat_var())
-                        alt_free_vars = alt_free_vars.erase(*v);
+                    alt_free_vars = alt_free_vars.erase(arg);
             }
 
             alts.push_back({pat, fv_body});

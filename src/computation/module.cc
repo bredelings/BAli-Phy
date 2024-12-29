@@ -680,8 +680,7 @@ set<Core2::Var<>> vars_in_pattern(const Core2::Pattern<>& p)
     {
         set<Core2::Var<>> vars;
         for(auto& arg: cp->args)
-            if (auto vp = arg.to_var_pat_var())
-                vars.insert(*vp);
+            vars.insert(arg);
         return vars;
     }
     else
