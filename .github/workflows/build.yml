@@ -22,7 +22,7 @@ jobs:
                ubuntu-gcc-14,
                ubuntu-clang-17,
                macos-xcode-15-intel,
-               macos-xcode-15-arm,
+               macos-xcode-16-arm,
                windows
                ]
 
@@ -93,7 +93,7 @@ jobs:
             buildtype: "release"
             arch: "mac-intel64"
 
-          - name: macos-xcode-15-arm
+          - name: macos-xcode-16-arm
             os: macos-14
             compiler: xcode
             version: "16"
