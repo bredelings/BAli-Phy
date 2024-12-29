@@ -302,20 +302,23 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
         return set_level(AE, level, env);
 }
 
-vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups_in)
+vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
 {
-    auto decl_groups = decl_groups_to_expression_ref(decl_groups_in);
-
     let_floater_state state(fresh_var_state);
     level_env_t env;
+
+    vector<CDecls> decl_groups_out;
     for(auto& decls: decl_groups)
     {
-        for(auto& [x,rhs]: decls)
-            rhs = add_free_variable_annotations(rhs);
-        auto [decls2,env2] = state.set_level_decl_group(decls, env);
-        decls = decls2;
+        CDecls fv_decls;
+        for(auto& [x,rhs]: to_expression_ref(decls))
+            fv_decls.push_back({x, add_free_variable_annotations(rhs)});
+
+        auto [level_decls,env2] = state.set_level_decl_group(fv_decls, env);
         env = env2;
+
+        decl_groups_out.push_back(level_decls);
     }
 
-    return decl_groups;
+    return decl_groups_out;
 }
