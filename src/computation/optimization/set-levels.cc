@@ -54,7 +54,7 @@ struct let_floater_state: public FreshVarSource
     expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env);
     expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
 
-    level_env_t set_level_decl_group(CDecls& decls, const level_env_t& env);
+    pair<CDecls,level_env_t> set_level_decl_group(const CDecls& decls, const level_env_t& env);
 
     let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
@@ -143,8 +143,10 @@ expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& e
     }
 }
 
-level_env_t let_floater_state::set_level_decl_group(CDecls& decls, const level_env_t& env)
+pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const CDecls& decls_in, const level_env_t& env)
 {
+    auto decls = decls_in;
+
     FreeVarSet free_vars;
     vector<var> binders;
     for(auto& [x,rhs]: decls)
@@ -172,7 +174,7 @@ level_env_t let_floater_state::set_level_decl_group(CDecls& decls, const level_e
     for(auto& [var,rhs]: decls)
         rhs = set_level(rhs, level2, env2);
 
-    return env2;
+    return {decls, env2};
 }
 
 expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
@@ -259,7 +261,8 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
     {
         auto L = E.as_<let_exp>();
 
-        auto env2 = set_level_decl_group(L.binds, env);
+        auto [binds2, env2] = set_level_decl_group(L.binds, env);
+        L.binds = binds2;
 
         L.body = set_level_maybe_MFE(L.body, level, env2);
 
@@ -309,7 +312,9 @@ vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector
     {
         for(auto& [x,rhs]: decls)
             rhs = add_free_variable_annotations(rhs);
-        env = state.set_level_decl_group(decls, env);
+        auto [decls2,env2] = state.set_level_decl_group(decls, env);
+        decls = decls2;
+        env = env2;
     }
 
     return decl_groups;
