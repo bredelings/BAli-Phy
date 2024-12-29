@@ -448,18 +448,7 @@ SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const subst
 	Occ::ConPat pattern2 = *con_pat;
 	for(auto& arg: pattern2.args)
         {
-	    Occ::Var x1;
-
-            // Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
-	    if (arg.is_wildcard_pat())
-	    {
-                x1 = get_fresh_occ_var("__");
-                x1.info.code_dup = amount_t::None;
-                x1.info.work_dup = amount_t::None;
-            }
-	    else if (auto x = arg.to_var_pat_var())
-		x1 = *x;
-
+	    Occ::Var x1 = *arg.to_var_pat_var();
             auto x2 = rename_and_bind_var(x1, S2, bound_vars);
 	    arg = Occ::VarPat{x2};
         }

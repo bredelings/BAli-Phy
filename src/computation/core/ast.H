@@ -499,24 +499,19 @@ namespace Core2
 	    ar(var);
 	}
     };
-    
+
     template <typename NoteV = std::monostate>
-    struct VarOrWildcardPattern: public std::variant<std::monostate, WildcardPat, VarPat<NoteV>>
+    struct VarOrWildcardPattern: public std::variant<std::monostate, VarPat<NoteV>>
     {
 	std::string print() const;
 
-	using std::variant<std::monostate, WildcardPat, VarPat<NoteV>>::variant;
+	using std::variant<std::monostate, VarPat<NoteV>>::variant;
 
 	std::strong_ordering operator<=>(const VarOrWildcardPattern<NoteV>&) const = default;
 
-	bool is_wildcard_pat() const
-	{
-	    return (this->index() == 1);
-	}
-
 	const VarPat<NoteV>* to_var_pat() const
 	{
-	    if (this->index() == 2)
+	    if (this->index() == 1)
 		return &std::get<VarPat<NoteV>>(*this);
 	    else
 		return nullptr;
@@ -892,8 +887,7 @@ namespace Core2
     std::string VarOrWildcardPattern<NoteV>::print() const
     {
 	if (this->index() == 0) return "NOPATVW";
-	else if (this->index() == 1) return std::get<WildcardPat>(*this).print();
-	else if (this->index() == 2) return std::get<VarPat<NoteV>>(*this).print();
+	else if (this->index() == 1) return std::get<VarPat<NoteV>>(*this).print();
 	else std::abort();
     }
 

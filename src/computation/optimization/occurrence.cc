@@ -492,13 +492,9 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
                 con_pat.head = CP->head;
                 for(auto& arg: CP->args)
                 {
-                    if (auto v = arg.to_var_pat_var())
-                    {
-                        auto x = remove_var_and_set_occurrence_info(*v, alt_free_vars);
-                        con_pat.args.push_back(Occ::VarPat{x});
-                    }
-                    else
-                        con_pat.args.push_back(Occ::WildcardPat());
+                    auto v = arg.to_var_pat_var();
+                    auto x = remove_var_and_set_occurrence_info(*v, alt_free_vars);
+                    con_pat.args.push_back(Occ::VarPat{x});
                 }
                 occ_pattern = con_pat;
             }

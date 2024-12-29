@@ -98,7 +98,7 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
 		throw myexception()<<"to_core_pattern: constructor argument is not a var: "<<P;
 	    auto x = P.sub()[i].as_<var>();
 	    if (x.is_wildcard())
-		con_pat.args.push_back( Core2::WildcardPat() );
+		throw myexception()<<"to_core_pattern: constructor pattern has wildcard argument: "<<P;
 	    else
 		con_pat.args.push_back( Core2::VarPat<>{to_core(x)} );
 	}
@@ -223,12 +223,8 @@ expression_ref var_to_expression_ref(const Core2::Var<>& V)
 
 expression_ref patarg_to_expression_ref(const Core2::VarOrWildcardPattern<>& V)
 {
-    if (V.is_wildcard_pat())
-	return var(-1);
-    else if (auto vp = V.to_var_pat())
-	return to_var(vp->var);
-    else
-	std::abort();
+    auto vp = V.to_var_pat();
+    return to_var(vp->var);
 }
 
 expression_ref to_expression_ref(const Core2::Lambda<>& L)
@@ -288,12 +284,8 @@ expression_ref to_expression_ref(const Core2::Pattern<>& P)
 
 expression_ref to_expression_ref(const Core2::VarOrWildcardPattern<>& P)
 {
-    if (to<Core2::WildcardPat>(P))
-	return var(-1);
-    else if (auto v = to<Core2::VarPat<>>(P))
-	return to_var(v->var);
-    else
-	std::abort();
+    auto v = to<Core2::VarPat<>>(P);
+    return to_var(v->var);
 }
 
 Core::Alts to_expression_ref(const Core2::Alts<>& A)
@@ -458,7 +450,7 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
 		throw myexception()<<"to_occ_pattern: constructor argument is not a var: "<<P;
 	    auto x = P.sub()[i].as_<var>();
 	    if (x.is_wildcard())
-		con_app.args.push_back( Occ::WildcardPat() );
+		throw myexception()<<"to_occ_pattern: constructor pattern has wildcard argument: "<<P;
 	    else
 		con_app.args.push_back( Occ::VarPat{to_occ_var(x)} );
 	}
@@ -586,12 +578,8 @@ expression_ref occ_var_to_expression_ref(const Occ::Var& V)
 
 expression_ref occ_patarg_to_expression_ref(const Occ::VarOrWildcardPattern& V)
 {
-    if (V.is_wildcard_pat())
-	return var(-1);
-    else if (auto vp = V.to_var_pat())
-	return occ_to_var(vp->var);
-    else
-	std::abort();
+    auto vp = V.to_var_pat();
+    return occ_to_var(vp->var);
 }
 
 expression_ref occ_to_expression_ref(const Occ::Lambda& L)
@@ -643,12 +631,8 @@ expression_ref occ_to_expression_ref(const Occ::Pattern& P)
 
 expression_ref occ_to_expression_ref(const Occ::VarOrWildcardPattern& P)
 {
-    if (to<Occ::WildcardPat>(P))
-	return var(-1);
-    else if (auto v = to<Occ::VarPat>(P))
-	return occ_to_var(v->var);
-    else
-	std::abort();
+    auto v = to<Occ::VarPat>(P);
+    return occ_to_var(v->var);
 }
 
 Core::Alts occ_to_expression_ref(const Occ::Alts& A)
@@ -850,12 +834,8 @@ Core2::Let<> to_core_let(const Occ::Let& L)
 
 Core2::VarOrWildcardPattern<> core_patarg_to_expression_ref(const Occ::VarOrWildcardPattern& V)
 {
-    if (V.is_wildcard_pat())
-	return Core2::WildcardPat();
-    else if (auto vp = V.to_var_pat())
-	return Core2::VarPat<>{to_core(vp->var)};
-    else
-	std::abort();
+    auto vp = V.to_var_pat();
+    return Core2::VarPat<>{to_core(vp->var)};
 }
 
 Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
