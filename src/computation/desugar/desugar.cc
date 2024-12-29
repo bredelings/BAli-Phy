@@ -7,7 +7,6 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
-#include "computation/expression/apply.H"
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"
@@ -315,6 +314,17 @@ Core2::Exp<> desugar_state::desugar(const Hs::LExp& LE)
     return desugar(unloc(LE));
 }
 
+Hs::Exp noloc_apply(const std::vector<Hs::Exp>& E)
+{
+    assert(E.size());
+    Hs::LExp LE = {noloc, E[0]};
+    for(int i=1;i<E.size();i++)
+    {
+        LE = {noloc, Hs::ApplyExp(LE, {noloc, E[i]})};
+    }
+    return unloc(LE);
+}
+
 Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 {
     if (auto L = E.to<Hs::List>())
@@ -405,13 +415,13 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 		    if (L.quals.empty())
 		    {
 			expression_ref f = Hs::LambdaExp({PQ->bindpat}, L.body);
-			return desugar( {Hs::Var("Data.OldList.map"), f, unloc(PQ->exp)} );
+			return desugar( noloc_apply({Hs::Var("Data.OldList.map"), f, unloc(PQ->exp)}) );
 		    }
 		    // [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
 		    else
 		    {
 			expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
-			return desugar( {concatMap, f, unloc(PQ->exp)} );
+			return desugar( noloc_apply({concatMap, f, unloc(PQ->exp)}) );
 		    }
                 }
                 else
@@ -424,8 +434,8 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
                     auto rule2 = Hs::MRule{ { _ },           Hs::SimpleRHS({noloc, fail})     };
                     auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
-                    expression_ref body = {concatMap, ok, unloc(PQ->exp)};
-                    return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body}) );
+                    auto body = noloc_apply({concatMap, ok, unloc(PQ->exp)});
+                    return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc, body}) );
                 }
             }
         }
@@ -490,7 +500,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         if (auto sq = first.to<Hs::SimpleQual>())
         {
             expression_ref e = unloc(first.as_<Hs::SimpleQual>().exp);
-            result = {sq->andThenOp, e, do_stmts};
+            result = noloc_apply({sq->andThenOp, e, do_stmts});
         }
 
         // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
@@ -502,13 +512,13 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
             if (is_irrefutable_pat(m, PQ.bindpat))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
-                result = {PQ.bindOp, unloc(PQ.exp), lambda};
+                result = noloc_apply({PQ.bindOp, unloc(PQ.exp), lambda});
             }
             else
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {Hs::Var("Control.Monad.fail"), Hs::Literal(Hs::String("Fail!"))};
+                expression_ref fail = noloc_apply({Hs::Var("Control.Monad.fail"), Hs::Literal(Hs::String("Fail!"))});
                 if (PQ.failOp)
                     fail = *PQ.failOp;
                 auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
@@ -516,7 +526,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
                 auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
-                expression_ref body = {PQ.bindOp, unloc(PQ.exp), ok};
+                expression_ref body = noloc_apply({PQ.bindOp, unloc(PQ.exp), ok});
                 result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});
             }
         }
@@ -628,22 +638,6 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else
             std::abort();
-    }
-    else if (is_apply_exp(E))
-    {
-        // This should really be an Hs::Apply< > expression.
-        // But those are hard to construct since they must all be located.
-        // Perhaps I should allow constructing an located one from an unlocated one...
-
-        vector<Core2::Exp<>> args;
-        for(auto& arg: E.sub())
-            args.push_back(desugar(arg));
-
-        auto head = args[0];
-        args.erase(args.begin());
-
-        assert(args.size());
-        return safe_apply(head, args);
     }
     else
         throw myexception()<<"desugar: unknown expression "<<E.print();
