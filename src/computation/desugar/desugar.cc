@@ -271,10 +271,8 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                 }
             }
         }
-        else if (decl.is_a<Hs::ValueDecl>())
-            std::abort();
         else
-            continue; // std::abort();
+            std::abort();
     }
     return decls;
 }
