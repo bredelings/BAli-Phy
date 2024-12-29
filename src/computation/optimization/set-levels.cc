@@ -299,9 +299,9 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
         return set_level(AE, level, env);
 }
 
-vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<CDecls>& decl_groups_in)
+vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups_in)
 {
-    auto decl_groups = decl_groups_in;
+    auto decl_groups = decl_groups_to_expression_ref(decl_groups_in);
 
     let_floater_state state(fresh_var_state);
     level_env_t env;
