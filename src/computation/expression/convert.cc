@@ -81,7 +81,7 @@ Core2::Pattern<> to_core_pattern(const expression_ref& P)
     if (auto v = P.to<var>())
     {
 	if (v->is_wildcard()) return Core2::WildcardPat();
-	else return Core2::VarPat<>{to_core(*v)};
+	else throw myexception()<<"to_core_pattern: pattern is a non-wildcard variable: "<<P;
     }
     else
     {
@@ -271,8 +271,6 @@ expression_ref to_expression_ref(const Core2::Pattern<>& P)
 {
     if (to<Core2::WildcardPat>(P))
 	return var(-1);
-    else if (auto v = to<Core2::VarPat<>>(P))
-	return to_var(v->var);
     else if (auto c = to<Core2::ConPat<>>(P))
     {
 	auto args = c->args | ranges::views::transform( patarg_to_expression_ref ) | ranges::to<vector>();
@@ -432,7 +430,7 @@ Occ::Pattern to_occ_pattern(const expression_ref& P)
     if (auto v = P.to<var>())
     {
 	if (v->is_wildcard()) return Occ::WildcardPat();
-	else return Occ::VarPat{to_occ_var(*v)};
+	else throw myexception()<<"to_core_pattern: pattern is a non-wildcard variable: "<<P;
     }
     else
     {
@@ -616,8 +614,6 @@ expression_ref occ_to_expression_ref(const Occ::Pattern& P)
 {
     if (to<Occ::WildcardPat>(P))
 	return var(-1);
-    else if (auto v = to<Occ::VarPat>(P))
-	return occ_to_var(v->var);
     else if (auto c = to<Occ::ConPat>(P))
     {
 	auto args = c->args | ranges::views::transform( occ_patarg_to_expression_ref ) | ranges::to<vector>();
@@ -838,8 +834,6 @@ Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
 {
     if (to<Occ::WildcardPat>(P))
         return Core2::WildcardPat();
-    else if (auto v = to<Occ::VarPat>(P))
-        return Core2::VarPat<>{to_core(v->var)};
     else if (auto c = to<Occ::ConPat>(P))
     {
 	auto args = c->args | ranges::views::transform( core_patarg_to_expression_ref ) | ranges::to<vector>();

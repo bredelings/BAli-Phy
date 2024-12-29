@@ -206,8 +206,6 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 		pattern2 = var(-1);
 		body2 = indexify(body,variables);
 	    }
-	    else if (to<Core2::VarPat<>>(pattern))
-		std::abort();
 	    else if (auto CP = to<Core2::ConPat<>>(pattern))
 	    {
 		pattern2 = constructor(CP->head, CP->args.size());

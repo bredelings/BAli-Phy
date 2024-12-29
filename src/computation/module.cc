@@ -674,8 +674,6 @@ set<Core2::Var<>> vars_in_pattern(const Core2::Pattern<>& p)
 {
     if (p.is_wildcard_pat())
 	return {};
-    else if (auto vp = p.to_var_pat())
-	return {vp->var};
     else if (auto cp = p.to_con_pat())
     {
         set<Core2::Var<>> vars;

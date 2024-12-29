@@ -95,9 +95,7 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 
 set<Occ::Var> get_free_vars(const Occ::Pattern& pattern)
 {
-    if (auto x = pattern.to_var_pat_var())
-	return {*x};
-    else if (auto cp = pattern.to_con_pat())
+    if (auto cp = pattern.to_con_pat())
     {
 	set<Occ::Var> vars;
 	for(auto& arg: cp->args)
@@ -281,8 +279,6 @@ std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
 {
     if (pattern.is_wildcard_pat())
 	return {};
-    else if (auto x = pattern.to_var_pat_var())
-	return *x;
     else
     {
 	auto con_pat = pattern.to_con_pat();
@@ -325,12 +321,12 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
 {
     vector<Occ::Var> used;
 
-    if (auto x = pattern.to_var_pat_var(); x and is_used_var(*x))
-	used.push_back(*x);
-    else if (auto con_pat = pattern.to_con_pat())
+    if (auto con_pat = pattern.to_con_pat())
+    {
 	for(auto& x: con_pat->args)
 	    if (is_used_var(x))
 		used.push_back(x);
+    }
 
     return used;
 }
@@ -342,8 +338,6 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
 
     for(auto& [pattern, body]: alts)
     {
-        assert(not pattern.to_var_pat());
-
         if (pattern.is_wildcard_pat())
         {
             return {{body, S}};
@@ -425,8 +419,6 @@ Occ::Exp case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& f
 tuple<substitution, in_scope_set>
 SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const substitution& S, const in_scope_set& bound_vars_in)
 {
-    assert(not pattern.to_var_pat());
-
     auto S2 = S;
     auto bound_vars = bound_vars_in;
 

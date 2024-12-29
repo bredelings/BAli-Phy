@@ -37,7 +37,6 @@ namespace FV
     using Case = Core2::Case<std::monostate, FreeVars>;
     using WildcardPat = Core2::WildcardPat;
     using ConPat = Core2::ConPat<>;
-    using VarPat = Core2::VarPat<>;
     using Pattern = Core2::Pattern<>;
     using Alt = Core2::Alt<std::monostate, FreeVars>;
     using Alts = Core2::Alts<std::monostate, FreeVars>;

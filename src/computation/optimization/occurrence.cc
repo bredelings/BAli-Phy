@@ -481,12 +481,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
             // Remove pattern vars from free variables
             // Copy occurrence info into pattern variables
             Occ::Pattern occ_pattern;
-            if (auto VP = pattern.to_var_pat())
-            {
-                auto x = remove_var_and_set_occurrence_info(VP->var, alt_free_vars);
-                occ_pattern = Occ::VarPat{x};
-            }
-            else if (auto CP = pattern.to_con_pat())
+            if (auto CP = pattern.to_con_pat())
             {
                 Occ::ConPat con_pat;
                 con_pat.head = CP->head;

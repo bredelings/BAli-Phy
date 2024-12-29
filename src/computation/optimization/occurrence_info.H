@@ -37,7 +37,6 @@ namespace Occ
     using Case = Core2::Case<occurrence_info>;
     using WildcardPat = Core2::WildcardPat;
     using ConPat = Core2::ConPat<occurrence_info>;
-    using VarPat = Core2::VarPat<occurrence_info>;
     using Pattern = Core2::Pattern<occurrence_info>;
     using Alt = Core2::Alt<occurrence_info>;
     using Alts = Core2::Alts<occurrence_info>;

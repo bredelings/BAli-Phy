@@ -22,7 +22,6 @@
 
 /* TODO:
  *
- * 1. Remove VarPat -- we should only have ConPat and WildCardPat
  * 3. Make Apply take exactly one argument.
  * 4. Don't allow empty Exp -- actually this prevents cereal from serializing it.
  *    Use optional<Exp> instead?
@@ -484,22 +483,6 @@ namespace Core2
     };
 
     template <typename NoteV = std::monostate>
-    struct VarPat
-    {
-	Var<NoteV> var;
-
-	std::string print() const;
-
-	std::strong_ordering operator<=>(const VarPat<NoteV>&) const = default;
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-	    ar(var);
-	}
-    };
-
-    template <typename NoteV = std::monostate>
     struct ConPat
     {
 	std::string head;
@@ -529,11 +512,11 @@ namespace Core2
     };
 
     template <typename NoteV = std::monostate>
-    struct Pattern: public std::variant<std::monostate, WildcardPat, VarPat<NoteV>, ConPat<NoteV>>
+    struct Pattern: public std::variant<std::monostate, WildcardPat, ConPat<NoteV>>
     {
 	std::string print() const;
 
-	using std::variant<std::monostate, WildcardPat, VarPat<NoteV>, ConPat<NoteV>>::variant;
+	using std::variant<std::monostate, WildcardPat, ConPat<NoteV>>::variant;
 
 	std::strong_ordering operator<=>(const Pattern<NoteV>&) const = default;
 
@@ -542,31 +525,15 @@ namespace Core2
 	    return (this->index() == 1);
 	}
 
-	const VarPat<NoteV>* to_var_pat() const
-	{
-	    if (this->index() == 2)
-		return &std::get<VarPat<NoteV>>(*this);
-	    else
-		return nullptr;
-	}
-
-	const Var<NoteV>* to_var_pat_var() const
-	{
-	    if (auto vp = to_var_pat())
-		return &vp->var;
-	    else
-		return nullptr;
-	}
-
 	const ConPat<NoteV>* to_con_pat() const
 	{
-	    if (this->index() == 3)
+	    if (this->index() == 2)
 		return &std::get<ConPat<NoteV>>(*this);
 	    else
 		return nullptr;
 	}
 
-	bool is_irrefutable() const {return to_var_pat() or is_wildcard_pat();}
+	bool is_irrefutable() const {return is_wildcard_pat();}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -838,18 +805,11 @@ namespace Core2
     }
 
     template <typename NoteV>
-    std::string VarPat<NoteV>::print() const
-    {
-	return var.print();
-    }
-
-    template <typename NoteV>
     std::string Pattern<NoteV>::print() const
     {
 	if (this->index() == 0) return "NOPAT";
 	else if (this->index() == 1) return std::get<WildcardPat>(*this).print();
-	else if (this->index() == 2) return std::get<VarPat<NoteV>>(*this).print();
-	else if (this->index() == 3) return std::get<ConPat<NoteV>>(*this).print();
+	else if (this->index() == 2) return std::get<ConPat<NoteV>>(*this).print();
 	else std::abort();
     }
 

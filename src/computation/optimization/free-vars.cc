@@ -255,9 +255,7 @@ add_free_variable_annotations(const Core2::Exp<>& E)
             auto fv_body = add_free_variable_annotations(body);
             auto alt_free_vars = get_free_vars(fv_body);
 
-            if (auto VP = pat.to_var_pat())
-                alt_free_vars = alt_free_vars.erase(VP->var);
-            else if (auto CP = pat.to_con_pat())
+            if (auto CP = pat.to_con_pat())
             {
                 for(auto arg: CP->args)
                     alt_free_vars = alt_free_vars.erase(arg);
