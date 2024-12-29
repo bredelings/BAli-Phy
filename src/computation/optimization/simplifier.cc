@@ -525,35 +525,43 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
         if (con_pat)
         {
 	    // Get type and its constructors
-            auto C = this_mod.lookup_resolved_symbol(con_pat->head);
+            if (auto C = this_mod.lookup_resolved_symbol(con_pat->head))
+            {
+                string pattern_type = *C->parent;
+                if (object_type)
+                    assert(*object_type == pattern_type);
+                else
+                {
+                    object_type = pattern_type;
+                    auto T = this_mod.lookup_resolved_type(*object_type);
+                    assert(T);
+                    auto D = T->is_data();
+                    assert(D);
+                    unseen_constructors = D->constructors;
+                    assert(not unseen_constructors.empty());
+                }
 
-            string pattern_type = *C->parent;
-            if (object_type)
-                assert(*object_type == pattern_type);
+                // Remove this constructors from the total list of constructors
+                if (unseen_constructors.count(con_pat->head))
+                {
+                    unseen_constructors.erase(con_pat->head);
+                    seen_constructors.insert(con_pat->head);
+                }
+                else if (seen_constructors.count(con_pat->head))
+                {
+                    // we should ignore this branch!
+                    // and this shouldn't happen.
+                }
+                else
+                    std::abort();
+            }
             else
             {
-                object_type = pattern_type;
-                auto T = this_mod.lookup_resolved_type(*object_type);
+                auto T = this_mod.lookup_resolved_type(con_pat->head);
                 assert(T);
-                auto D = T->is_data();
-                assert(D);
-                unseen_constructors = D->constructors;
-                assert(not unseen_constructors.empty());
+                assert(T->is_class());
+                assert(alts.size() == 1);
             }
-
-            // Remove this constructors from the total list of constructors
-            if (unseen_constructors.count(con_pat->head))
-            {
-                unseen_constructors.erase(con_pat->head);
-                seen_constructors.insert(con_pat->head);
-            }
-            else if (seen_constructors.count(con_pat->head))
-            {
-                // we should ignore this branch!
-                // and this shouldn't happen.
-            }
-            else
-                std::abort();
         }
 
         // 2.2 Define x = pattern in this branch only

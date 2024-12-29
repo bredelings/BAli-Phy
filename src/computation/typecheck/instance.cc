@@ -658,7 +658,10 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // auto dict = Core::ConExp(class_name, dict_entries);
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
-    Core2::Exp<> dict = make_let(dict_decls, Tuple(dict_entries));
+    Core2::Exp<> dict = Core2::ConApp<>(class_name, dict_entries);
+    if (dict_entries.size() == 1)
+        dict = dict_entries[0];
+    dict = make_let(dict_decls, dict);
 
     auto wrap = wrap_gen * wrap_let;
 

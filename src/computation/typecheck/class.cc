@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "haskell/ids.H"
+#include "computation/core/func.H"
 
 using std::string;
 using std::vector;
@@ -10,34 +11,31 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, const string& /*con_name*/, int i, int N)
+Core2::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVarSource& source)
 {
-    // Maybe we should emit the case directly, instead of relying on desugaring?
-    // FIXME: We might need to put types on "extractor" and "field".
+    Core2::Var<> x("x");
 
-    // extractor (_,field,_,_) = field;
-    // extractor = \x -> case x of (_,field,_,_) -> field
+    if (N == 1)
+        return  lambda_quantify({x}, Core2::Exp<>(x));
+    else
+    {
+        // extractor (_,field,_,_) = field;
+        // extractor = \x -> case x of ConName _ d _ _ -> d
 
-    Hs::Var field("field");
+        Core2::Var<> d("d");
+    
+        vector<Core2::Var<>> fields;
+        for(int j=0;j<N;j++)
+        {
+            if (i == j)
+                fields.push_back( d );
+            else
+                fields.push_back( source.get_fresh_core_var("w") );
+        }
+        Core2::Pattern<> pattern = Core2::ConPat<>(con_name, fields);
 
-    // pattern = (_,field,_,_)
-    vector<Hs::LPat> pats(N, {noloc,Hs::WildcardPattern()});
-    pats[i] = {noloc,Hs::VarPattern({noloc,field})};
-
-    // NOTE: Why use tuples instead of a more description constructor name?
-    //       - because we are generating haskell functions, we have to desugar them.
-    //       - the optimizer looks up the class for constructors to check if it can short-cut.
-    //       See instance.cc: infer_type_for_instance2( ).
-    // Hs::LCon con = {noloc, Hs::Con(con_name, N)};
-    // Hs::LPat pattern = {noloc, Hs::ConPattern(con,pats)};
-
-    Hs::LPat pattern = {noloc, Hs::tuple_pattern(pats)};
-
-    // matches = (_,field,_,_) -> field
-    Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
-    Hs::Matches matches{{rule}};
-
-    return Hs::FunDecl({noloc,extractor}, matches);
+        return lambda_quantify({x}, Core2::Exp<>(Core2::Case<>{x,{{pattern, d}}}));
+    }
 }
 
 
@@ -53,7 +51,7 @@ Hs::Var unqualified(Hs::Var v)
 // * Hs::Decls           = { name         = \dict -> case dict of K _ _ method _ _ -> method }
 //                       = { made-up-name = \dict -> case dict of K superdict _ _ _ _ -> superdict }
 
-tuple<ClassInfo, Hs::Decls>
+tuple<ClassInfo, Core2::Decls<>>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
@@ -152,7 +150,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         class_info.fields.push_back({add_mod_name(var), type});
 
     // 5. Define superclass extractors and member function extractors
-    Hs::Decls decls;
+    Core2::Decls<> decls;
 
     vector<Type> types;
     for(auto& [_,type]: class_info.fields)
@@ -163,7 +161,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     int N = class_info.fields.size();
     for(auto& [var, type]: class_info.fields)
     {
-        decls.push_back( {noloc,dictionary_extractor(var, class_info.name, i, N)} );
+        decls.push_back( {Core2::Var<>(var.name), make_field_extractor(class_info.name, i, N, *this)} );
 
         i++;
     }
@@ -233,11 +231,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {class_info, decls};
 }
 
-Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
+Core2::Decls<> TypeChecker::infer_type_for_classes(const Hs::Decls& hs_decls)
 {
-    Hs::Binds class_binds;
+    Core2::Decls<> core_decls;
 
-    for(auto& [_,decl]: decls)
+    for(auto& [_,decl]: hs_decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
@@ -246,10 +244,11 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
 
         this_mod().lookup_local_type(class_info.name)->is_class()->info = std::make_shared<ClassInfo>(class_info);
 
-        class_binds.push_back(class_decls);
+        for(auto& core_decl: class_decls)
+            core_decls.push_back(core_decl);
     }
 
-    return class_binds;
+    return core_decls;
 
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 

@@ -480,9 +480,9 @@ public:
 
     void get_type_families(const Hs::Decls& decls);
 
-    Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
+    Core2::Decls<> infer_type_for_classes(const Hs::Decls& decls);
 
-    std::tuple<ClassInfo,Hs::Decls>
+    std::tuple<ClassInfo,Core2::Decls<>>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);

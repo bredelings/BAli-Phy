@@ -1622,12 +1622,12 @@ pair<Hs::Binds,Core2::Decls<>> typechecker_result::all_binds() const
 
     ranges::insert(all, all.end(), default_method_decls);
     ranges::insert(all, all.end(), instance_method_decls);
-    ranges::insert(all, all.end(), class_binds);
 
 //    std::cerr<<"Haskell decls:\n";
 //    std::cerr<<all.print();
 
     auto all2 = top_simplify_decls;
+    all2 += class_decls;
     all2 += dfun_decls;
 
 //    std::cerr<<"\n\nCore decls:\n";
@@ -1683,7 +1683,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     tc_state->get_constructor_info(M.type_decls);
 
     // 7. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    auto class_binds = tc_state->infer_type_for_classes(M.type_decls);
+    auto class_decls = tc_state->infer_type_for_classes(M.type_decls);
 
     // 8. Get types and names for instances (pass 1)
     auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
@@ -1724,7 +1724,7 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     for(auto& [var,wrap,rhs]: dfun_decls)
         dfun_decls2.push_back({var, wrap(rhs)});
 
-    return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
+    return {class_decls, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
 }
 
 /*

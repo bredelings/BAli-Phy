@@ -26,7 +26,7 @@ class Program;
 
 struct typechecker_result
 {
-    Hs::Binds class_binds;
+    Core2::Decls<> class_decls;
 
     Hs::Binds value_decls;
 
