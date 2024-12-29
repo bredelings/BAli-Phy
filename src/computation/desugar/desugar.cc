@@ -8,7 +8,6 @@
 #include "models/parameters.H"
 #include "computation/loader.H"
 #include "computation/expression/apply.H"
-#include "computation/expression/bool.H"
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"
@@ -369,7 +368,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
 
         // [ e | True   ]  =  [ e ]
-        if (L.quals.size() == 1 and unloc(L.quals[0]).is_a<Hs::SimpleQual>() and unloc(unloc(L.quals[0]).as_<Hs::SimpleQual>().exp) == bool_true)
+        if (L.quals.size() == 1 and unloc(L.quals[0]).is_a<Hs::SimpleQual>() and unloc(unloc(L.quals[0]).as_<Hs::SimpleQual>().exp) == Hs::Con("Data.Bool.True"))
         {
             return desugar( Hs::List({L.body}) );
         }
@@ -377,7 +376,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         // [ e | q      ]  =  [ e | q, True ]
         else if (L.quals.size() == 1)
         {
-            L.quals.push_back( {noloc,Hs::SimpleQual({noloc,bool_true})} );
+            L.quals.push_back( {noloc,Hs::SimpleQual({noloc,Hs::Con("Data.Bool.True")})} );
             return desugar( L );
         }
 
