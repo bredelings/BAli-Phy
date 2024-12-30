@@ -1,11 +1,11 @@
 {
     "name": "multi_freq",
     "result_type": "CTMC<a>",
-    "call": "multiFrequency(@tree,@nodeInfo,@nodeProp,@edgeProp)",
+    "call": "multiFrequency'(@tree,@nodeFreqs,id,@submodel)",
     "import": ["SModel"],
     "args": [
         {
-            "name": "edgeProp",
+            "name": "submodel",
             "type": "List<(String,Double)> -> CTMC<a>",
             "description": "The model to use on each branch",
             "default_value": "|pi:gtr(pi=pi)|"
@@ -23,16 +23,10 @@
             "default_value": "~dirichlet_mixture(symmetric_dirichlet_on(letters(@a),1),@n,2)"
         },
         {
-            "name": "nodeInfo",
+            "name": "nodeFreqs",
             "type": "IntMap<f>",
-            "description": "The underlying property for each node (i.e. GC content)",
+            "description": "The frequencies for each node",
             "default_value": "~iidMap(nodes(@tree),@freqs)"
-        },
-        {
-            "name": "nodeProp",
-            "type" : "f -> List<(String,Double)>",
-            "description": "The mapping from node info to node property",
-            "default_value": "|x: x|"
         },
         {
             "name": "n",
