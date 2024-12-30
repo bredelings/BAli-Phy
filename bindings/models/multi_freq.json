@@ -32,7 +32,7 @@
             "name": "nodeProp",
             "type" : "f -> List<(String,Double)>",
             "description": "The mapping from node info to node property",
-            "default_value": "identity"
+            "default_value": "|x: x|"
         },
         {
             "name": "n",
