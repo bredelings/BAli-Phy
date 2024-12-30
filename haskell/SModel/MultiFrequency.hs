@@ -45,7 +45,7 @@ edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node -- get the node p
 -- * If we attach a SINGLE root frequency vector to each CTMC, then
 -- Suppose we have something that works like a
 
-instance (HasRoot t, RateModel m, HasBranchLengths t, CTMC m) => SimpleSModel t (MultiFrequency i (EVector Double) m) where
+instance (HasRoot t, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m) => SimpleSModel t (MultiFrequency i j m) where
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ q]
