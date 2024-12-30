@@ -36,13 +36,13 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    model = result;
 	}
     }
-    // List<(a,Double)> -> DiscreteDistribution a
+    // * -> DiscreteDistribution<*>
     else if (head2 == "DiscreteDist" and args2.size() == 1)
     {
-	// CTMC<a> -> DiscreteDist<CTMC<a>>
 	auto [head3,args3] = get_type_apps(args2[0]);
 	if (head3 == "CTMC")
 	{
+            // CTMC<a> -> DiscreteDist<CTMC<a>>
 	    auto a = args3[0];
 	    t2 = make_type_app("CTMC",a);
 
@@ -70,6 +70,23 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 		model = result;
 	    }
 	}
+    }
+    // * -> Distribution<*>
+    else if (head2 == "Distribution" and args2.size() == 1)
+    {
+	auto [head1,args1] = get_type_apps(t1);
+        // DiscreteDist<a> -> Distribution<a>
+	if (head1 == "DiscreteDist" and args1.size() == 1)
+        {
+	    E = convertible_to(model,args1[0],args2[0]);
+	    if (E)
+	    {
+		ptree result;
+		result.put_value("convertDiscrete");
+		result.push_back({"x",model});
+		model = result;
+	    }
+        }
     }
     else if (head2 == "MultiMixtureModel" and args2.size() == 1)
     {

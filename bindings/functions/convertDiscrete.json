@@ -1,0 +1,13 @@
+{
+    "name": "convertDiscrete",
+    "result_type": "Distribution<a>",
+    "no_log": true,
+    "call": "@x",
+    "args": [
+        {
+            "name": "x",
+            "type": "DiscreteDist<a>"
+        }
+    ],
+    "title": "Convert a discrete distribution to a distribution"
+}
