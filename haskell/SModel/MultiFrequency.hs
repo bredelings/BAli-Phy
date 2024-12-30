@@ -8,6 +8,7 @@ import Tree
 import Markov (CTMC, qExp)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import SModel.Frequency (frequenciesFromDict)
 
 -- NOTE: The model here needs to know the list of node names on the tree.
 
@@ -51,6 +52,12 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ q]
         where q = rescale (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
+
+-- It would be nice if the branchQ and the nodePi contained the alphabet before applying them to a value.                                                     
+multiFrequency' tree nodeMap nodePi branchQ = MultiFrequency alphabet smap 1 (nodeMap IntMap.!) (toVector . frequenciesFromDict alphabet . nodePi) branchQ
+    where alphabet = getAlphabet (branchQ (nodeMap IntMap.! node))
+          smap = getSMap (branchQ (nodeMap IntMap.! node))
+          node = head $ IntSet.elems (getNodesSet tree)
 
 multiFrequency tree nodeMap nodePi branchQ = MultiFrequency alphabet smap 1 (nodeMap IntMap.!) (toVector . nodePi) branchQ
     where alphabet = getAlphabet (branchQ (nodeMap IntMap.! node))
