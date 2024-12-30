@@ -1321,20 +1321,73 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
 
     vector<Core2::Decls<>> core_decl_groups = {decls};
 
+    // Pass: Simplify gently, Static argument
+
+    // Pass: Simplify Gently
     core_decl_groups = simplify_module_gently(opts, fvstate, *this, core_decl_groups);
 
-    if (opts.fully_lazy)
-        float_out_from_module(fvstate, core_decl_groups);
+    // Pass: specialize
 
+    // Pass: Full Laziness (FloatLambdas = 0, FloatConstants)
+    if (opts.fully_lazy) float_out_from_module(fvstate, core_decl_groups);
+
+    // Pass: Simplifier*3
     core_decl_groups = simplify_module(opts, fvstate, *this, core_decl_groups);
 
-    if (opts.fully_lazy)
-        float_out_from_module(fvstate, core_decl_groups);
+    // Pass: Float In
 
-    // CSE goes here!  See ghc/compiler/GHC/Core/Opt/CSE.hs
+    // Pass: Call Arity, Simplify
+
+    // Pass: Demand Analysis
+
+    // Pass: Exitification
+
+    // Pass: Full Laziness (Float Lambdas = ??, FloutConstants, FloatOverSatApps, FloatJoins)
+    if (opts.fully_lazy) float_out_from_module(fvstate, core_decl_groups);
+    // QUESTION!  We need to avoid floating things into case alternatives as well as lambda expressions.
+    //            Should this be an option to the simplifier?
+
+    // Pass: CSE -- See note Implementing CSE.
+    // Pass: Float In
+    // Pass: Simplify (final)
+
+    // NOTE: -O2 passes:
+    // Pass: Liberate case, Simplify
+    // Pass: SpecConstr, Simplify.
+    // Pass: Late Specialize, Simplify.
+    // Pass: CSE, Simplify (but only if (liberate_case or spec_constr))
+    // End of -O2 passes.
+
+    // Late Demand Analysis, Simplify
+    // Late Demand Analysis
+    // Pass: add caller ccs?
+    // Pass: add late ccs?
 
     return flatten(core_decl_groups);
 }
+
+/* Note: Implementing CSE
+ * (See ghc/compiler/GHC/Core/Opt/CSE.hs)
+ *
+ * It relies on the ability to map from Core expressions to variables.
+ * (See GHC.Core.Map.Expr)
+ *
+ * To avoid being sensitive to binder names, this map transforms to DeBruijn indices on the fly!
+ * (See GHC.Core.Map.Type)
+ *
+ * Apparently handling recursive binder groups is hard, but for self-recursive bindings like
+ *    f = \x -> ...f ...
+ * They can store then as \f \x -> ... f ...
+ * Then the deBruijn indices allow noting the equivalence.
+ * A separate looking environment is used for these.
+ *
+ * The CSE environment (CSEnv) has three parts:
+ * - cs_subst :: in_var -> out_var (or trivial out-expression?)
+ *               This substitution is applied before cs_map
+ * - cs_map :: out_exp -> out_var (or trivial out-expression?)
+ * - cs_rec_map :: out_exp -> out_exp.  This is a separate map for self-recursive bindings.
+ */
+
 
 Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
