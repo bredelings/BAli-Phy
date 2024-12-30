@@ -2,7 +2,7 @@
     "name": "branches",
     "result_type": "IntSet",
     "no_log": true,
-    "call": "getUEdgesSet(@t)",
+    "call": "getUEdgesSet(@tree)",
     "import": ["Tree"],
     "args": [
         {

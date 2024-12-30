@@ -2,7 +2,7 @@
     "name": "nodes",
     "result_type": "IntSet",
     "no_log": true,
-    "call": "getNodesSet(@t)",
+    "call": "getNodesSet(@tree)",
     "import": ["Tree"],
     "args": [
         {
