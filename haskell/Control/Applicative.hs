@@ -29,7 +29,7 @@ class Applicative f => Alternative f where
     many :: f a -> f [a]
 
     many v = some v <|> pure []
---  Not working! some v = (:) <$> v <*> many v
+    some v = (:) <$> v <*> many v
 
 -- These are defined by Parse.hs
 -- <|>
