@@ -1,4 +1,5 @@
 module SModel.Frequency (module SModel.Frequency, Markov.plus_gwf_matrix, Markov.plus_f_matrix) where
+-- Rename to SModel.Frequencies?
 
 import Bio.Alphabet
 import Foreign.Vector
