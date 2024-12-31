@@ -427,6 +427,49 @@ bool annotated_term_is_model(const ptree& term)
     return false;
 }
 
+bool bound(const ptree& annotated_term, const set<string>& binders)
+{
+    assert(annotated_term.get_child_optional("value"));
+    auto& value = annotated_term.get_child("value");
+
+    // Handle constants
+    if (not  value.has_value<string>()) return false;
+
+    string func_name = value.get_value<string>();
+
+    if (func_name == "!let")
+    {
+	auto& decls = value[0].second;
+	auto& body  = value[1].second;
+
+        auto binders2 = binders;
+	for(auto& [var_name, _]: decls)
+            binders2.erase(var_name);
+
+        if (bound(body, binders2)) return true;
+
+	for(auto& [var_name, exp]: decls)
+	    if (bound(exp, binders2)) return true;
+    }
+    else if (func_name == "function")
+    {
+        string var_name = value[0].second.get_child("value").get_value<string>();
+        auto binders2 = binders;
+        binders2.erase(var_name);
+
+        return bound(value[1].second, binders2);
+    }
+    else
+    {
+        if (binders.count(func_name)) return true;
+
+        for(auto& [arg_name,arg_value]: value)
+            if (bound(arg_value, binders)) return true;
+    }
+
+    return false;
+}
+
 // Don't extract terms that
 // * contain function variables
 // * don't extract gamma::n if its an integer
@@ -434,8 +477,7 @@ bool annotated_term_is_model(const ptree& term)
 // Some terms seem to have types like 'var5' so they always fail the check for
 //   extractable types.
 
-
-bool do_extract(const ptree& func, const ptree& arg)
+bool do_extract(const ptree& func, const ptree& arg, const set<string>& binders)
 {
     // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
     //    This is supposed to indicate things who arguments don't really have names?
@@ -450,6 +492,8 @@ bool do_extract(const ptree& func, const ptree& arg)
     if (func_name == "List") return false;
     // 1e. Don't pull anything out of tuples.
     if (func_name == "Tuple") return false;
+
+    if (bound(arg, binders)) return false;
 
     auto arg_value = arg.get_child("value");
     string arg_type = unparse_type(arg.get_child("type"));
@@ -509,7 +553,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
         auto binders2 = binders;
         binders2.insert(var_name);
 
-        for(auto& [sub_name,sub_term]: extract_terms(value[1].second, binders2))
+        for(auto& [sub_name, sub_term]: extract_terms(value[1].second, binders2))
             extracted.emplace_back(sub_name, std::move(sub_term));
     }
     // 3. Function calls
@@ -528,7 +572,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
             }
 
             // If we should pull out the argument then do so
-            if (do_extract(m, arg_value))
+            if (do_extract(m, arg_value, binders))
             {
                 ptree extracted_value;
                 std::swap(arg_value, extracted_value);
