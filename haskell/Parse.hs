@@ -18,19 +18,6 @@ instance Alternative Parser where
               case parse p s of
                 []  -> parse q s
                 res -> res
-    some v = some_v where
-      many_v = some_v <|> return []
-      some_v = do
-        x <- v
-        xs <- many_v
-        return (x:xs)
-               
-    many v = many_v where
-      many_v = some_v <|> return []
-      some_v = do
-        x <- v
-        xs <- many_v
-        return (x:xs)
                
 instance Monad Parser where
     p >>= f   = Parser( \s -> concat [parse (f x) s' | (x,s') <- parse p s] )
