@@ -53,7 +53,7 @@
 	    "description": "The number of conserved omega categories, if not specified"
         }
     ],
-    "description":"This model performs a Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",
+    "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",
     "extract": "all",
     "citation": {"type": "article",
 		 "title": "Synonymous Site-to-Site Substitution Rate Variation Dramatically Inflates False Positive Rates of Selection Analyses: Ignore at Your Own Peril",
@@ -65,7 +65,7 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "37", "number": "8", "pages": "2430--2439"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msaa037"}]
 		},
-    "see": ["busted"],
+    "see": ["branch_site_mixture", "busted"],
     "examples": ["|w: tn93 +> x3 +> dNdS(omega=w)| +> busted_s",
 		 "|w: tn93 +> mnm +> dNdS(omega=w)| +> busted_s"]
 }
