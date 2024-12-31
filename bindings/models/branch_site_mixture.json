@@ -1,0 +1,37 @@
+{
+    "name": "branch_site_mixture",
+    "result_type": "CTMC<a>",
+    "call": "BranchSiteMixture(@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "DiscreteDist<CTMC<a>>",
+	    "description": "The model as a function of dN/dS"
+        }
+    ],
+    "description": "Approximate a markov-modulated model by randomly choosing the rate matrix for each (branch,site) pair from the distribution of rate matrices.\nThe transition matrix P for each branch is the weighted average of the transition matrices P[i] computed from the mixture components.",
+    "extract": "all",
+    "citation": {"type": "article",
+		 "title": "Gene-Wide Identification of Episodic Selection",
+		 "year": "2015",
+		 "author": [{"name": "Murrell, Ben"},
+			    {"name": "Weaver, Steven"},
+			    {"name": "Smith, Martin D."},
+			    {"name": "Wertheim, Joel O."},
+			    {"name": "Murrell, Sasha"},
+			    {"name": "Aylward, Anthony"},
+			    {"name": "Eren, Kemal"},
+			    {"name": "Pollner, Tristan"},
+			    {"name": "Martin, Darren P."},
+			    {"name": "Smith, Davey M."},
+			    {"name": "Scheffler, Konrad"},
+			    {"name": "Kosakovsky Pond, Sergei L."}
+			   ],
+		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
+		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
+		},
+    "examples": ["|w: gtr +> x3 +> dNdS(w)| +> m3 +> branch_site_mixture                       // = BUSTED",
+		 "|w: gtr +> x3 +> dNdS(w)| +> m3 +> branch_site_mixture +> Rates.gamma(n=3)   // = BUSTED-S"],
+    "see": ["busted","busted_s"]
+}
