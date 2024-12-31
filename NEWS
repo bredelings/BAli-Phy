@@ -1,6 +1,7 @@
 * 4.0-beta17 (unreleased)
 - Models:
-  + multi-nucleotide-mutation (mnm) model for codons.
+  + Multi-Nucleotide-Mutation (MNM) model for codons.
+  + BUSTED and BUSTED-S substitution models for positive selection.
 - Bug fixes:
  + Log sorted (conserved) omegas in m3_test.
 

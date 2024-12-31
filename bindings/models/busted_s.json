@@ -66,5 +66,6 @@
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msaa037"}]
 		},
     "see": ["busted"],
-    "examples": ["|w: tn93 +> x3 +> dNdS(omega=w)| +> busted_s"]
+    "examples": ["|w: tn93 +> x3 +> dNdS(omega=w)| +> busted_s",
+		 "|w: tn93 +> mnm +> dNdS(omega=w)| +> busted_s"]
 }

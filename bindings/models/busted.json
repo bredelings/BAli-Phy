@@ -41,7 +41,7 @@
 	    "description": "The number of conserved omega categories, if not specified"
         }
     ],
-    "description": "This model performs a Bayesian test of positive selection using the BUSTED model.  Instead of using a covarion process, the BUSTED model simply lets each (branch,site) pair choose a rate matrix from a mixture of `n` conserved rates matrices and 1 positively-selected rate matrix.\nThe test for positive selection compares the unrestricted BUSTED model to a restricted version with posW=1.  The posterior probability that posSelection=1 is posterior probability for positive selection.\nAll branches are treated as foreground branches.",
+    "description": "This model performs a Bayesian test of positive selection using the BUSTED model.  The BUSTED model constructs a weighted list of (n+1) dN/dS values and constructs rate matrices from them.  The first n rate matrices are conserved, and the last rate matrix is positive selected with weight posP and dNdS=posW. Instead switching between these rate matrices using a covarion process, the BUSTED model simply lets each (branch,site) pair choose a rate matrix from the mixture.\nThe test for positive selection compares the unrestricted BUSTED model to a restricted version with posW=1.  The posterior probability that posSelection=1 is posterior probability for positive selection.\nAll branches are treated as foreground branches.",
     "extract": "all",
     "citation": {"type": "article",
 		 "title": "Gene-Wide Identification of Episodic Selection",
@@ -62,8 +62,9 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
-    "examples": ["busted +> Rates.gamma    // This is the same as BUSTED-S",
+    "examples": ["busted +> Rates.gamma(n=3)                              // with synonymous rate variation (= BUSTED-S)",
 		 "busted +> Rates.free",
-		 "|w: gtr +> x3 +> dNdS(omega=w) +> mut_sel| +> busted"],
+		 "|w: gtr +> mnm +> dNdS(omega=w)| +> busted              // with multi-nucleotide mutations",
+		 "|w: gtr +> x3 +> dNdS(omega=w) +> mut_sel| +> busted    // with mutation-selection-balance"],
     "see": ["busted_s"]
 }
