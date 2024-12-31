@@ -560,6 +560,9 @@ maybeexports: "(" exportlist ")"      {$$ = $2;}
 |             %empty                  {}
 
 exportlist: exportlist1               {$$ = $1;}
+|           %empty                    {}
+|           exportlist1 ','           {$$ = $1;}
+|           ','                       {}
 
 exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}

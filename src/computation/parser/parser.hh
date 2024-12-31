@@ -978,7 +978,7 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 144, ///< Number of tokens.
+        YYNTOKENS = 145, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -1122,214 +1122,215 @@ namespace yy {
         S_PRINTWORD = 139,                       // "PRIMWORD"
         S_PRIMFLOAT = 140,                       // "PRIMFLOAT"
         S_PRIMDOUBLE = 141,                      // "PRIMDOUBLE"
-        S_142_SPECIALISE_ = 142,                 // "{-# SPECIALISE"
-        S_143_SPECIALISE_INLINE_ = 143,          // "{-# SPECIALISE_INLINE"
-        S_YYACCEPT = 144,                        // $accept
-        S_unit = 145,                            // unit
-        S_module = 146,                          // module
-        S_missing_module_keyword = 147,          // missing_module_keyword
-        S_maybemodwarning = 148,                 // maybemodwarning
-        S_body = 149,                            // body
-        S_body2 = 150,                           // body2
-        S_top = 151,                             // top
-        S_top1 = 152,                            // top1
-        S_maybeexports = 153,                    // maybeexports
-        S_exportlist = 154,                      // exportlist
-        S_exportlist1 = 155,                     // exportlist1
-        S_export = 156,                          // export
-        S_export_subspec = 157,                  // export_subspec
-        S_qcnames = 158,                         // qcnames
-        S_qcnames1 = 159,                        // qcnames1
-        S_qcname = 160,                          // qcname
-        S_semis1 = 161,                          // semis1
-        S_semis = 162,                           // semis
-        S_importdecls = 163,                     // importdecls
-        S_importdecls_semi = 164,                // importdecls_semi
-        S_importdecl = 165,                      // importdecl
-        S_optqualified = 166,                    // optqualified
-        S_maybeas = 167,                         // maybeas
-        S_maybeimpspec = 168,                    // maybeimpspec
-        S_impspec = 169,                         // impspec
-        S_prec = 170,                            // prec
-        S_infix = 171,                           // infix
-        S_ops = 172,                             // ops
-        S_topdecls = 173,                        // topdecls
-        S_topdecls_semi = 174,                   // topdecls_semi
-        S_topdecl = 175,                         // topdecl
-        S_cl_decl = 176,                         // cl_decl
-        S_ty_decl = 177,                         // ty_decl
-        S_standalone_kind_sig = 178,             // standalone_kind_sig
-        S_sks_vars = 179,                        // sks_vars
-        S_inst_decl = 180,                       // inst_decl
-        S_overlap_pragma = 181,                  // overlap_pragma
-        S_deriv_strategy_no_via = 182,           // deriv_strategy_no_via
-        S_deriv_strategy_via = 183,              // deriv_strategy_via
-        S_opt_injective_info = 184,              // opt_injective_info
-        S_injectivity_cond = 185,                // injectivity_cond
-        S_inj_varids = 186,                      // inj_varids
-        S_where_type_family = 187,               // where_type_family
-        S_ty_fam_inst_eqn_list = 188,            // ty_fam_inst_eqn_list
-        S_ty_fam_inst_eqns = 189,                // ty_fam_inst_eqns
-        S_ty_fam_inst_eqn = 190,                 // ty_fam_inst_eqn
-        S_at_decl_cls = 191,                     // at_decl_cls
-        S_opt_family = 192,                      // opt_family
-        S_opt_instance = 193,                    // opt_instance
-        S_at_decl_inst = 194,                    // at_decl_inst
-        S_data_or_newtype = 195,                 // data_or_newtype
-        S_opt_kind_sig = 196,                    // opt_kind_sig
-        S_opt_datafam_kind_sig = 197,            // opt_datafam_kind_sig
-        S_opt_tyfam_kind_sig = 198,              // opt_tyfam_kind_sig
-        S_opt_at_kind_inj_sig = 199,             // opt_at_kind_inj_sig
-        S_tycl_hdr = 200,                        // tycl_hdr
-        S_datafam_inst_hdr = 201,                // datafam_inst_hdr
-        S_capi_ctype = 202,                      // capi_ctype
-        S_decl_cls = 203,                        // decl_cls
-        S_decls_cls = 204,                       // decls_cls
-        S_decllist_cls = 205,                    // decllist_cls
-        S_where_cls = 206,                       // where_cls
-        S_decl_inst = 207,                       // decl_inst
-        S_decls_inst = 208,                      // decls_inst
-        S_decllist_inst = 209,                   // decllist_inst
-        S_where_inst = 210,                      // where_inst
-        S_decls = 211,                           // decls
-        S_decllist = 212,                        // decllist
-        S_binds = 213,                           // binds
-        S_wherebinds = 214,                      // wherebinds
-        S_strings = 215,                         // strings
-        S_stringlist = 216,                      // stringlist
-        S_opt_tyconsig = 217,                    // opt_tyconsig
-        S_sigtype = 218,                         // sigtype
-        S_sigtypedoc = 219,                      // sigtypedoc
-        S_sig_vars = 220,                        // sig_vars
-        S_sigtypes1 = 221,                       // sigtypes1
-        S_ktype = 222,                           // ktype
-        S_ctype = 223,                           // ctype
-        S_ctypedoc = 224,                        // ctypedoc
-        S_context = 225,                         // context
-        S_context_no_ops = 226,                  // context_no_ops
-        S_type = 227,                            // type
-        S_typedoc = 228,                         // typedoc
-        S_btype = 229,                           // btype
-        S_infixtype = 230,                       // infixtype
-        S_btype_no_ops = 231,                    // btype_no_ops
-        S_ftype = 232,                           // ftype
-        S_tyarg = 233,                           // tyarg
-        S_tyop = 234,                            // tyop
-        S_atype_docs = 235,                      // atype_docs
-        S_atype = 236,                           // atype
-        S_inst_type = 237,                       // inst_type
-        S_deriv_types = 238,                     // deriv_types
-        S_comma_types0 = 239,                    // comma_types0
-        S_comma_types1 = 240,                    // comma_types1
-        S_tv_bndrs = 241,                        // tv_bndrs
-        S_tv_bndr = 242,                         // tv_bndr
-        S_tv_bndr_no_braces = 243,               // tv_bndr_no_braces
-        S_kind = 244,                            // kind
-        S_gadt_constrlist = 245,                 // gadt_constrlist
-        S_gadt_constrs = 246,                    // gadt_constrs
-        S_gadt_constr = 247,                     // gadt_constr
-        S_constrs = 248,                         // constrs
-        S_constrs1 = 249,                        // constrs1
-        S_constr = 250,                          // constr
-        S_forall = 251,                          // forall
-        S_constr_stuff = 252,                    // constr_stuff
-        S_fielddecls = 253,                      // fielddecls
-        S_fielddecls1 = 254,                     // fielddecls1
-        S_fielddecl = 255,                       // fielddecl
-        S_maybe_derivings = 256,                 // maybe_derivings
-        S_derivings = 257,                       // derivings
-        S_deriving = 258,                        // deriving
-        S_deriv_clause_types = 259,              // deriv_clause_types
-        S_decl_no_th = 260,                      // decl_no_th
-        S_decl = 261,                            // decl
-        S_rhs = 262,                             // rhs
-        S_gdrhs = 263,                           // gdrhs
-        S_gdrh = 264,                            // gdrh
-        S_sigdecl = 265,                         // sigdecl
-        S_activation = 266,                      // activation
-        S_explicit_activation = 267,             // explicit_activation
-        S_exp = 268,                             // exp
-        S_infixexp = 269,                        // infixexp
-        S_exp10 = 270,                           // exp10
-        S_optSemi = 271,                         // optSemi
-        S_fexp = 272,                            // fexp
-        S_aexp = 273,                            // aexp
-        S_aexp1 = 274,                           // aexp1
-        S_aexp2 = 275,                           // aexp2
-        S_projection = 276,                      // projection
-        S_texp = 277,                            // texp
-        S_tup_exprs = 278,                       // tup_exprs
-        S_list = 279,                            // list
-        S_lexps = 280,                           // lexps
-        S_squals = 281,                          // squals
-        S_guardquals = 282,                      // guardquals
-        S_guardquals1 = 283,                     // guardquals1
-        S_altslist = 284,                        // altslist
-        S_alts = 285,                            // alts
-        S_alts1 = 286,                           // alts1
-        S_alt = 287,                             // alt
-        S_alt_rhs = 288,                         // alt_rhs
-        S_gdpats = 289,                          // gdpats
-        S_gdpat = 290,                           // gdpat
-        S_pat = 291,                             // pat
-        S_bindpat = 292,                         // bindpat
-        S_apat = 293,                            // apat
-        S_apats1 = 294,                          // apats1
-        S_stmtlist = 295,                        // stmtlist
-        S_stmts = 296,                           // stmts
-        S_stmt = 297,                            // stmt
-        S_qual = 298,                            // qual
-        S_fbinds = 299,                          // fbinds
-        S_fbinds1 = 300,                         // fbinds1
-        S_fbind = 301,                           // fbind
-        S_fieldToUpdate = 302,                   // fieldToUpdate
-        S_qcon = 303,                            // qcon
-        S_gen_qcon = 304,                        // gen_qcon
-        S_con = 305,                             // con
-        S_con_list = 306,                        // con_list
-        S_sysdcon_no_list = 307,                 // sysdcon_no_list
-        S_sysdcon = 308,                         // sysdcon
-        S_conop = 309,                           // conop
-        S_qconop = 310,                          // qconop
-        S_gtycon = 311,                          // gtycon
-        S_ntgtycon = 312,                        // ntgtycon
-        S_oqtycon = 313,                         // oqtycon
-        S_oqtycon_no_varcon = 314,               // oqtycon_no_varcon
-        S_qtyconop = 315,                        // qtyconop
-        S_qtycondoc = 316,                       // qtycondoc
-        S_qtycon = 317,                          // qtycon
-        S_tycon = 318,                           // tycon
-        S_qtyconsym = 319,                       // qtyconsym
-        S_tyconsym = 320,                        // tyconsym
-        S_op = 321,                              // op
-        S_varop = 322,                           // varop
-        S_qop = 323,                             // qop
-        S_qopm = 324,                            // qopm
-        S_qvarop = 325,                          // qvarop
-        S_qvaropm = 326,                         // qvaropm
-        S_tyvar = 327,                           // tyvar
-        S_tyvarop = 328,                         // tyvarop
-        S_tyvarid = 329,                         // tyvarid
-        S_var = 330,                             // var
-        S_qvar = 331,                            // qvar
-        S_field = 332,                           // field
-        S_qvarid = 333,                          // qvarid
-        S_varid = 334,                           // varid
-        S_qvarsym = 335,                         // qvarsym
-        S_qvarsym_no_minus = 336,                // qvarsym_no_minus
-        S_qvarsym1 = 337,                        // qvarsym1
-        S_varsym = 338,                          // varsym
-        S_varsym_no_minus = 339,                 // varsym_no_minus
-        S_special_id = 340,                      // special_id
-        S_special_sym = 341,                     // special_sym
-        S_qconid = 342,                          // qconid
-        S_conid = 343,                           // conid
-        S_qconsym = 344,                         // qconsym
-        S_consym = 345,                          // consym
-        S_literal = 346,                         // literal
-        S_close = 347,                           // close
-        S_modid = 348,                           // modid
-        S_commas = 349                           // commas
+        S_142_ = 142,                            // ','
+        S_143_SPECIALISE_ = 143,                 // "{-# SPECIALISE"
+        S_144_SPECIALISE_INLINE_ = 144,          // "{-# SPECIALISE_INLINE"
+        S_YYACCEPT = 145,                        // $accept
+        S_unit = 146,                            // unit
+        S_module = 147,                          // module
+        S_missing_module_keyword = 148,          // missing_module_keyword
+        S_maybemodwarning = 149,                 // maybemodwarning
+        S_body = 150,                            // body
+        S_body2 = 151,                           // body2
+        S_top = 152,                             // top
+        S_top1 = 153,                            // top1
+        S_maybeexports = 154,                    // maybeexports
+        S_exportlist = 155,                      // exportlist
+        S_exportlist1 = 156,                     // exportlist1
+        S_export = 157,                          // export
+        S_export_subspec = 158,                  // export_subspec
+        S_qcnames = 159,                         // qcnames
+        S_qcnames1 = 160,                        // qcnames1
+        S_qcname = 161,                          // qcname
+        S_semis1 = 162,                          // semis1
+        S_semis = 163,                           // semis
+        S_importdecls = 164,                     // importdecls
+        S_importdecls_semi = 165,                // importdecls_semi
+        S_importdecl = 166,                      // importdecl
+        S_optqualified = 167,                    // optqualified
+        S_maybeas = 168,                         // maybeas
+        S_maybeimpspec = 169,                    // maybeimpspec
+        S_impspec = 170,                         // impspec
+        S_prec = 171,                            // prec
+        S_infix = 172,                           // infix
+        S_ops = 173,                             // ops
+        S_topdecls = 174,                        // topdecls
+        S_topdecls_semi = 175,                   // topdecls_semi
+        S_topdecl = 176,                         // topdecl
+        S_cl_decl = 177,                         // cl_decl
+        S_ty_decl = 178,                         // ty_decl
+        S_standalone_kind_sig = 179,             // standalone_kind_sig
+        S_sks_vars = 180,                        // sks_vars
+        S_inst_decl = 181,                       // inst_decl
+        S_overlap_pragma = 182,                  // overlap_pragma
+        S_deriv_strategy_no_via = 183,           // deriv_strategy_no_via
+        S_deriv_strategy_via = 184,              // deriv_strategy_via
+        S_opt_injective_info = 185,              // opt_injective_info
+        S_injectivity_cond = 186,                // injectivity_cond
+        S_inj_varids = 187,                      // inj_varids
+        S_where_type_family = 188,               // where_type_family
+        S_ty_fam_inst_eqn_list = 189,            // ty_fam_inst_eqn_list
+        S_ty_fam_inst_eqns = 190,                // ty_fam_inst_eqns
+        S_ty_fam_inst_eqn = 191,                 // ty_fam_inst_eqn
+        S_at_decl_cls = 192,                     // at_decl_cls
+        S_opt_family = 193,                      // opt_family
+        S_opt_instance = 194,                    // opt_instance
+        S_at_decl_inst = 195,                    // at_decl_inst
+        S_data_or_newtype = 196,                 // data_or_newtype
+        S_opt_kind_sig = 197,                    // opt_kind_sig
+        S_opt_datafam_kind_sig = 198,            // opt_datafam_kind_sig
+        S_opt_tyfam_kind_sig = 199,              // opt_tyfam_kind_sig
+        S_opt_at_kind_inj_sig = 200,             // opt_at_kind_inj_sig
+        S_tycl_hdr = 201,                        // tycl_hdr
+        S_datafam_inst_hdr = 202,                // datafam_inst_hdr
+        S_capi_ctype = 203,                      // capi_ctype
+        S_decl_cls = 204,                        // decl_cls
+        S_decls_cls = 205,                       // decls_cls
+        S_decllist_cls = 206,                    // decllist_cls
+        S_where_cls = 207,                       // where_cls
+        S_decl_inst = 208,                       // decl_inst
+        S_decls_inst = 209,                      // decls_inst
+        S_decllist_inst = 210,                   // decllist_inst
+        S_where_inst = 211,                      // where_inst
+        S_decls = 212,                           // decls
+        S_decllist = 213,                        // decllist
+        S_binds = 214,                           // binds
+        S_wherebinds = 215,                      // wherebinds
+        S_strings = 216,                         // strings
+        S_stringlist = 217,                      // stringlist
+        S_opt_tyconsig = 218,                    // opt_tyconsig
+        S_sigtype = 219,                         // sigtype
+        S_sigtypedoc = 220,                      // sigtypedoc
+        S_sig_vars = 221,                        // sig_vars
+        S_sigtypes1 = 222,                       // sigtypes1
+        S_ktype = 223,                           // ktype
+        S_ctype = 224,                           // ctype
+        S_ctypedoc = 225,                        // ctypedoc
+        S_context = 226,                         // context
+        S_context_no_ops = 227,                  // context_no_ops
+        S_type = 228,                            // type
+        S_typedoc = 229,                         // typedoc
+        S_btype = 230,                           // btype
+        S_infixtype = 231,                       // infixtype
+        S_btype_no_ops = 232,                    // btype_no_ops
+        S_ftype = 233,                           // ftype
+        S_tyarg = 234,                           // tyarg
+        S_tyop = 235,                            // tyop
+        S_atype_docs = 236,                      // atype_docs
+        S_atype = 237,                           // atype
+        S_inst_type = 238,                       // inst_type
+        S_deriv_types = 239,                     // deriv_types
+        S_comma_types0 = 240,                    // comma_types0
+        S_comma_types1 = 241,                    // comma_types1
+        S_tv_bndrs = 242,                        // tv_bndrs
+        S_tv_bndr = 243,                         // tv_bndr
+        S_tv_bndr_no_braces = 244,               // tv_bndr_no_braces
+        S_kind = 245,                            // kind
+        S_gadt_constrlist = 246,                 // gadt_constrlist
+        S_gadt_constrs = 247,                    // gadt_constrs
+        S_gadt_constr = 248,                     // gadt_constr
+        S_constrs = 249,                         // constrs
+        S_constrs1 = 250,                        // constrs1
+        S_constr = 251,                          // constr
+        S_forall = 252,                          // forall
+        S_constr_stuff = 253,                    // constr_stuff
+        S_fielddecls = 254,                      // fielddecls
+        S_fielddecls1 = 255,                     // fielddecls1
+        S_fielddecl = 256,                       // fielddecl
+        S_maybe_derivings = 257,                 // maybe_derivings
+        S_derivings = 258,                       // derivings
+        S_deriving = 259,                        // deriving
+        S_deriv_clause_types = 260,              // deriv_clause_types
+        S_decl_no_th = 261,                      // decl_no_th
+        S_decl = 262,                            // decl
+        S_rhs = 263,                             // rhs
+        S_gdrhs = 264,                           // gdrhs
+        S_gdrh = 265,                            // gdrh
+        S_sigdecl = 266,                         // sigdecl
+        S_activation = 267,                      // activation
+        S_explicit_activation = 268,             // explicit_activation
+        S_exp = 269,                             // exp
+        S_infixexp = 270,                        // infixexp
+        S_exp10 = 271,                           // exp10
+        S_optSemi = 272,                         // optSemi
+        S_fexp = 273,                            // fexp
+        S_aexp = 274,                            // aexp
+        S_aexp1 = 275,                           // aexp1
+        S_aexp2 = 276,                           // aexp2
+        S_projection = 277,                      // projection
+        S_texp = 278,                            // texp
+        S_tup_exprs = 279,                       // tup_exprs
+        S_list = 280,                            // list
+        S_lexps = 281,                           // lexps
+        S_squals = 282,                          // squals
+        S_guardquals = 283,                      // guardquals
+        S_guardquals1 = 284,                     // guardquals1
+        S_altslist = 285,                        // altslist
+        S_alts = 286,                            // alts
+        S_alts1 = 287,                           // alts1
+        S_alt = 288,                             // alt
+        S_alt_rhs = 289,                         // alt_rhs
+        S_gdpats = 290,                          // gdpats
+        S_gdpat = 291,                           // gdpat
+        S_pat = 292,                             // pat
+        S_bindpat = 293,                         // bindpat
+        S_apat = 294,                            // apat
+        S_apats1 = 295,                          // apats1
+        S_stmtlist = 296,                        // stmtlist
+        S_stmts = 297,                           // stmts
+        S_stmt = 298,                            // stmt
+        S_qual = 299,                            // qual
+        S_fbinds = 300,                          // fbinds
+        S_fbinds1 = 301,                         // fbinds1
+        S_fbind = 302,                           // fbind
+        S_fieldToUpdate = 303,                   // fieldToUpdate
+        S_qcon = 304,                            // qcon
+        S_gen_qcon = 305,                        // gen_qcon
+        S_con = 306,                             // con
+        S_con_list = 307,                        // con_list
+        S_sysdcon_no_list = 308,                 // sysdcon_no_list
+        S_sysdcon = 309,                         // sysdcon
+        S_conop = 310,                           // conop
+        S_qconop = 311,                          // qconop
+        S_gtycon = 312,                          // gtycon
+        S_ntgtycon = 313,                        // ntgtycon
+        S_oqtycon = 314,                         // oqtycon
+        S_oqtycon_no_varcon = 315,               // oqtycon_no_varcon
+        S_qtyconop = 316,                        // qtyconop
+        S_qtycondoc = 317,                       // qtycondoc
+        S_qtycon = 318,                          // qtycon
+        S_tycon = 319,                           // tycon
+        S_qtyconsym = 320,                       // qtyconsym
+        S_tyconsym = 321,                        // tyconsym
+        S_op = 322,                              // op
+        S_varop = 323,                           // varop
+        S_qop = 324,                             // qop
+        S_qopm = 325,                            // qopm
+        S_qvarop = 326,                          // qvarop
+        S_qvaropm = 327,                         // qvaropm
+        S_tyvar = 328,                           // tyvar
+        S_tyvarop = 329,                         // tyvarop
+        S_tyvarid = 330,                         // tyvarid
+        S_var = 331,                             // var
+        S_qvar = 332,                            // qvar
+        S_field = 333,                           // field
+        S_qvarid = 334,                          // qvarid
+        S_varid = 335,                           // varid
+        S_qvarsym = 336,                         // qvarsym
+        S_qvarsym_no_minus = 337,                // qvarsym_no_minus
+        S_qvarsym1 = 338,                        // qvarsym1
+        S_varsym = 339,                          // varsym
+        S_varsym_no_minus = 340,                 // varsym_no_minus
+        S_special_id = 341,                      // special_id
+        S_special_sym = 342,                     // special_sym
+        S_qconid = 343,                          // qconid
+        S_conid = 344,                           // conid
+        S_qconsym = 345,                         // qconsym
+        S_consym = 346,                          // consym
+        S_literal = 347,                         // literal
+        S_close = 348,                           // close
+        S_modid = 349,                           // modid
+        S_commas = 350                           // commas
       };
     };
 
@@ -3210,6 +3211,7 @@ switch (yykind)
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::TOK_END
                    || (token::TOK_YYerror <= tok && tok <= token::TOK_SIMPLEQUOTE)
+                   || tok == 44
                    || (397 <= tok && tok <= 398));
 #endif
       }
@@ -5809,7 +5811,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5333,     ///< Last index in yytable_.
+      yylast_ = 5402,     ///< Last index in yytable_.
       yynnts_ = 206,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -5834,7 +5836,7 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,   142,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -5869,7 +5871,7 @@ switch (yykind)
      105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
      115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
      125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
-     135,   136,   137,   138,   139,   140,   141,   142,   143
+     135,   136,   137,   138,   139,   140,   141,   143,   144
     };
     // Last valid token kind.
     const int code_max = 398;
@@ -6776,7 +6778,7 @@ switch (yykind)
 
 
 } // yy
-#line 6780 "parser.hh"
+#line 6782 "parser.hh"
 
 
 
