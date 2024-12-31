@@ -72,7 +72,7 @@ vector<string> wrap_lines(const string& line, int width)
             if (line[loc] == ' ' or line[loc] == '\t')
                 break;
 
-        // 3. If that doesn't work, split at the first space of tab past the edge of the page.
+        // 3. If that doesn't work, split at the first space or tab past the edge of the page.
         if (loc < pos)
             loc = line.find_first_of(" \t", pos + width);
 
@@ -128,6 +128,32 @@ string indent_and_wrap(int indent, int width, const string& text)
         line = string(indent,' ') + line;
 
     return join(lines,'\n');
+}
+
+string indent_and_wrap_par(int indent, int width, const string& text)
+{
+    if (text.empty()) return text;
+
+    auto lines = wrap_lines(text, width - indent);
+
+    for(auto& line: lines)
+        line = string(indent,' ') + line;
+
+    return join(lines,'\n');
+}
+
+string indent_and_wrap_pars(int indent, int width, const string& text)
+{
+    if (text.empty()) return text;
+
+    auto paragraphs = get_lines(text);
+
+    vector<string> paragraphs_out;
+    for(auto& paragraph: paragraphs)
+        if (not paragraph.empty())
+            paragraphs_out.push_back( indent_and_wrap_par(indent, width, paragraph) );
+
+    return join(paragraphs_out,"\n\n");
 }
 
 string indent(int indent, const string& text)

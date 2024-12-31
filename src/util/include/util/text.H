@@ -40,6 +40,9 @@ std::vector<std::string> get_lines(const std::string& line);
 std::string indent_and_wrap(int indent_first_line, int indent_other_lines, int width, const std::string& text);
 std::string indent_and_wrap(int indent, int width, const std::string& text);
 
+std::string indent_and_wrap_par(int indent, int width, const std::string& text);
+std::string indent_and_wrap_pars(int indent, int width, const std::string& text);
+
 std::string indent(int indent, const std::string& text);
 
 std::string bold(const std::string& line);

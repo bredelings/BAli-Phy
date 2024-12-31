@@ -30,6 +30,28 @@ using po::variables_map;
 
 namespace fs = std::filesystem;
 
+string do_quotes(const string& line)
+{
+    return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+black(highlight_bg("$2")).c_str());
+}
+
+string do_double_emph(string line)
+{
+    line = std::regex_replace(line,std::regex("([^\\\\]|^)__([^_ ][^_]*)__"),string("$1")+bold("$2").c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)\\*\\*([^* ][^*]*)\\*\\*"),string("$1")+bold("$2").c_str());
+}
+
+string do_single_emph(string line)
+{
+    line = std::regex_replace(line,std::regex("([^\\\\]|^)\\*([^* ][^*]*)\\*"),string("$1")+underline("$2").c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)_([^_ ][^_]*)_"),string("$1")+underline("$2").c_str());
+}
+
+string do_unescape(const string& line)
+{
+    return std::regex_replace(line,std::regex("\\\\([`_*])"),"$1");
+}
+
 string get_topic_from_string(const string& s)
 {
     string s2 = s;
@@ -270,7 +292,12 @@ string get_help_for_rule(const Rule& rule)
     if (auto description = rule.get_optional<string>("description"))
     {
 	help<<header("Description");
-	help<<indent_and_wrap(3, terminal_width(), *description)<<std::endl<<std::endl;
+        auto text = indent_and_wrap_pars(3, terminal_width(), *description);
+//        text = do_quotes(text);
+//        text = do_double_emph(text);
+//        text = do_single_emph(text);
+//        text = do_unescape(text);
+	help<<text<<std::endl<<std::endl;
     }
 
     if (auto examples = rule.get_child_optional("examples"))
@@ -301,28 +328,6 @@ string get_help_for_rule(const Rule& rule)
     }
 
     return help.str();
-}
-
-string do_quotes(const string& line)
-{
-    return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+black(highlight_bg("$2")).c_str());
-}
-
-string do_double_emph(string line)
-{
-    line = std::regex_replace(line,std::regex("([^\\\\]|^)__([^_ ][^_]*)__"),string("$1")+bold("$2").c_str());
-    return std::regex_replace(line,std::regex("([^\\\\]|^)\\*\\*([^* ][^*]*)\\*\\*"),string("$1")+bold("$2").c_str());
-}
-
-string do_single_emph(string line)
-{
-    line = std::regex_replace(line,std::regex("([^\\\\]|^)\\*([^* ][^*]*)\\*"),string("$1")+underline("$2").c_str());
-    return std::regex_replace(line,std::regex("([^\\\\]|^)_([^_ ][^_]*)_"),string("$1")+underline("$2").c_str());
-}
-
-string do_unescape(const string& line)
-{
-    return std::regex_replace(line,std::regex("\\\\([`_*])"),"$1");
 }
 
 string pseudo_markdown(const string& text)
