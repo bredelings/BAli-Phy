@@ -442,13 +442,13 @@ bool do_extract(const ptree& func, const ptree& arg)
     if (func.get("no_log",false)) return false;
 
     string func_name = func.get_child("value").get_value<string>();
-    // 1b. Don't pull anything out of "let"
-    if (func_name == "!let") return false;
-    // 1c. Don't pull anything out of lambdas
-    if (func_name == "function") return false;
-    // 1d. Don't pull anything out of lambdas
+
+    assert(func_name != "!let");
+    assert(func_name != "function");
+
+    // 1d. Don't pull anything out of lists.
     if (func_name == "List") return false;
-    // 1e. Don't pull anything out of lambdas
+    // 1e. Don't pull anything out of tuples.
     if (func_name == "Tuple") return false;
 
     auto arg_value = arg.get_child("value");
@@ -483,7 +483,7 @@ bool do_extract(const ptree& func, const ptree& arg)
 
 // This only extracts from the top level...
 
-vector<pair<string, ptree>> extract_terms(ptree& m)
+vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
 {
     // move value's children out of the structure
     ptree& value = m.get_child("value");
@@ -495,7 +495,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 	auto decls = value[0].second;
 	auto body  = value[1].second;
 
-        auto extracted = extract_terms(body);
+        auto extracted = extract_terms(body, binders);
         m = body;
 
 	for(auto& [var_name, exp]: decls)
@@ -503,6 +503,29 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 	    extracted.insert(extracted.begin(),{var_name,exp});
 	}
 
+        return extracted;
+    }
+    else if (value.has_value<string>() and value.get_value<string>() == "function")
+    {
+        // Walk each argument and determine if it should be pulled out
+        for(auto& [arg_name,arg_value]: value)
+        {
+            auto func = value.get_value<string>();
+            string name = func + ":" + arg_name;
+
+            // Otherwise look into the argument's value and try to pull things out
+            if (not arg_value.is_null()) // for function[x=null,body=E]
+            {
+                for(auto& [sub_name,sub_term]: extract_terms(arg_value, binders))
+                {
+                    auto sup_name = name + "/" + sub_name;
+                    // Fuse subscripts like [1] into the name.
+                    if (sub_name.size() and sub_name[0] == '[')
+                        sup_name = name + sub_name;
+                    extracted.emplace_back(sup_name, std::move(sub_term));
+                }
+            }
+        }
         return extracted;
     }
 
@@ -528,7 +551,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
         // Otherwise look into the argument's value and try to pull things out
         else if (not arg_value.is_null()) // for function[x=null,body=E]
         {
-            for(auto& [sub_name,sub_term]: extract_terms(arg_value))
+            for(auto& [sub_name,sub_term]: extract_terms(arg_value, binders))
             {
                 auto sup_name = name + "/" + sub_name;
                 // Fuse subscripts like [1] into the name.
@@ -576,7 +599,7 @@ pretty_model_t::pretty_model_t(const ptree& m)
     :main(m)
 {
     // 1. Extract terms
-    for(auto& [name,term]: extract_terms(main))
+    for(auto& [name,term]: extract_terms(main, {}))
     {
         term_names.push_back(name);
         terms.push_back(term);
