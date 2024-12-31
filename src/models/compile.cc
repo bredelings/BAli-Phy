@@ -489,6 +489,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
     ptree& value = m.get_child("value");
 
     vector<pair<string,ptree>> extracted;
+    // 1. Let statements
     if (value.has_value<string>() and value.get_value<string>() == "!let")
     {
         assert(value.size() == 2);
@@ -499,22 +500,42 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
         m = body;
 
 	for(auto& [var_name, exp]: decls)
-	{
 	    extracted.insert(extracted.begin(),{var_name,exp});
-	}
-
-        return extracted;
     }
+    // 2. Lambda functions
     else if (value.has_value<string>() and value.get_value<string>() == "function")
     {
+        string var_name = value[0].second.get_child("value").get_value<string>();
+        auto binders2 = binders;
+        binders2.insert(var_name);
+
+        for(auto& [sub_name,sub_term]: extract_terms(value[1].second, binders2))
+            extracted.emplace_back(sub_name, std::move(sub_term));
+    }
+    // 3. Function calls
+    else
+    {
+        vector<pair<string,ptree>> extracted_top;
+        int i=0;
         // Walk each argument and determine if it should be pulled out
         for(auto& [arg_name,arg_value]: value)
         {
             auto func = value.get_value<string>();
             string name = func + ":" + arg_name;
+            if (func == "List" or func == "Tuple")
+            {
+                name = "["+std::to_string(++i)+"]";
+            }
 
+            // If we should pull out the argument then do so
+            if (do_extract(m, arg_value))
+            {
+                ptree extracted_value;
+                std::swap(arg_value, extracted_value);
+                extracted_top.push_back({name, extracted_value});
+            }
             // Otherwise look into the argument's value and try to pull things out
-            if (not arg_value.is_null()) // for function[x=null,body=E]
+            else if (not arg_value.is_null()) // for function[x=null,body=E]
             {
                 for(auto& [sub_name,sub_term]: extract_terms(arg_value, binders))
                 {
@@ -526,42 +547,9 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
                 }
             }
         }
-        return extracted;
+        std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     }
 
-    vector<pair<string,ptree>> extracted_top;
-    int i=0;
-    // Walk each argument and determine if it should be pulled out
-    for(auto& [arg_name,arg_value]: value)
-    {
-        auto func = value.get_value<string>();
-        string name = func + ":" + arg_name;
-        if (func == "List" or func == "Tuple")
-        {
-            name = "["+std::to_string(++i)+"]";
-        }
-
-        // If we should pull out the argument then do so
-        if (do_extract(m, arg_value))
-        {
-            ptree extracted_value;
-            std::swap(arg_value, extracted_value);
-            extracted_top.push_back({name, extracted_value});
-        }
-        // Otherwise look into the argument's value and try to pull things out
-        else if (not arg_value.is_null()) // for function[x=null,body=E]
-        {
-            for(auto& [sub_name,sub_term]: extract_terms(arg_value, binders))
-            {
-                auto sup_name = name + "/" + sub_name;
-                // Fuse subscripts like [1] into the name.
-                if (sub_name.size() and sub_name[0] == '[')
-                    sup_name = name + sub_name;
-                extracted.emplace_back(sup_name, std::move(sub_term));
-            }
-        }
-    }
-    std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     return extracted;
 }
 
