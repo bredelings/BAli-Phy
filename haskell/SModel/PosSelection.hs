@@ -53,7 +53,6 @@ m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestO
 -- Should we normalize the different entries to have the same rate?
 busted omegaDist posP posW posSelection modelFunc = BranchSiteMixture $ m3Test omegaDist posP posW posSelection modelFunc
 
--- This doesn't quite work, because busted has transition probabilities but is not a (single) CTMC.                                                    
 bustedS omegaDist posP posW posSelection alpha n modelFunc = gammaRates alpha n $ always $ busted omegaDist posP posW posSelection modelFunc
 
 -- * The model from Sergei Kosakovsky-Pond is a SModelOnTreeMixture, since it is a mixture at the matrix level.
