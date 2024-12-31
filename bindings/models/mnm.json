@@ -2,7 +2,7 @@
     "name": "mnm",
     "result_type": "CTMC<t>",
     "constraints": [ "Triplets<t,n>" ],
-    "title": "Rate matrix on triplets/codons that multi-nucleotide mutations",
+    "title": "Rate matrix on triplets/codons that includes multi-nucleotide mutations",
     "call": "SModel.mnm(@a,@v2,@v3,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -31,7 +31,7 @@
 	    "description": "The Triplets alphabet"
         }
     ],
-    "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.  Multinucleotide mutations are allowed at rates v2 for 2-nucleotide mutations and v3 for 3-nucleotide mutations.",
-    "examples": ["gtr +> mnm +> dNdS"],
+    "description":"A rate matrix on triplets or codons that includes multinucleotide mutations.\nThe rates of single-nucleotide mutations are given by the nucleotide rate matrix.  The rates of 2- and 3-nucleotide mutation are proportional to the frequencies of the target nucleotides and do not distinguish between transitions and tranversions.\nThe v2 and v3 parameters control the total rate of all 2- and 3- nucleotide mutations relative to the rate of single-nucleotide mutations.  So the fraction of mutations that are 2-nucleotide mutations is:\n   v2/(1+v2+v3)",
+    "examples": ["gtr +> mnm +> dNdS","|w: gtr +> mnm +> dNdS(w)| +> m3"],
     "see": ["mg94","x3"]
 }
