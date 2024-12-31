@@ -50,17 +50,21 @@
             "name": "n",
             "type": "Int",
             "default_value": "2",
-	    "description": "The number of omega categories, if not specified"
+	    "description": "The number of conserved omega categories, if not specified"
         }
     ],
-    "description":"This model performs a Bayesian test of positive selection using the BUSTED model.  The BUSTED model contains a category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1).  The posterior probability that posSelection=1 is posterior probability for positive selection.",
+    "description":"This model performs a Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",
     "extract": "all",
     "citation": {"type": "article",
-		 "title": "Gene-Wide Identification of Episodic Selection",
-		 "year": "2015",
-		 "author": [{"name": "Smith,Bob"}],
-		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
-		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
+		 "title": "Synonymous Site-to-Site Substitution Rate Variation Dramatically Inflates False Positive Rates of Selection Analyses: Ignore at Your Own Peril",
+		 "year": "2020",
+		 "author": [{"name": "Wisotsky, Sadie R."},
+			    {"name": "Kosakovsky Pond, Sergei L."},
+			    {"name": "Shank, Stephen D."},
+			    {"name": "Muse, Spencer V."}],
+		 "journal": {"name": "Mol. Biol. Evol.", "volume": "37", "number": "8", "pages": "2430--2439"},
+		 "link": [{"url":"https://doi.org/10.1093/molbev/msaa037"}]
 		},
-    "see": ["m3","m3_test"]
+    "see": ["busted"],
+    "examples": ["|w: tn93 +> x3 +> dNdS(omega=w)| +> busted_s"]
 }

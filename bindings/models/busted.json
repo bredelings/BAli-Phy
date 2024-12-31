@@ -38,17 +38,32 @@
             "name": "n",
             "type": "Int",
             "default_value": "2",
-	    "description": "The number of omega categories, if not specified"
+	    "description": "The number of conserved omega categories, if not specified"
         }
     ],
-    "description":"This model performs a Bayesian test of positive selection using the BUSTED model.  The BUSTED model contains a category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1).  The posterior probability that posSelection=1 is posterior probability for positive selection.",
+    "description": "This model performs a Bayesian test of positive selection using the BUSTED model.  Instead of using a covarion process, the BUSTED model simply lets each (branch,site) pair choose a rate matrix from a mixture of `n` conserved rates matrices and 1 positively-selected rate matrix.\nThe test for positive selection compares the unrestricted BUSTED model to a restricted version with posW=1.  The posterior probability that posSelection=1 is posterior probability for positive selection.\nAll branches are treated as foreground branches.",
     "extract": "all",
     "citation": {"type": "article",
 		 "title": "Gene-Wide Identification of Episodic Selection",
 		 "year": "2015",
-		 "author": [{"name": "Smith,Bob"}],
+		 "author": [{"name": "Murrell, Ben"},
+			    {"name": "Weaver, Steven"},
+			    {"name": "Smith, Martin D."},
+			    {"name": "Wertheim, Joel O."},
+			    {"name": "Murrell, Sasha"},
+			    {"name": "Aylward, Anthony"},
+			    {"name": "Eren, Kemal"},
+			    {"name": "Pollner, Tristan"},
+			    {"name": "Martin, Darren P."},
+			    {"name": "Smith, Davey M."},
+			    {"name": "Scheffler, Konrad"},
+			    {"name": "Kosakovsky Pond, Sergei L."}
+			   ],
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
-    "see": ["m3","m3_test"]
+    "examples": ["busted +> Rates.gamma    // This is the same as BUSTED-S",
+		 "busted +> Rates.free",
+		 "|w: gtr +> x3 +> dNdS(omega=w) +> mut_sel| +> busted"],
+    "see": ["busted_s"]
 }
