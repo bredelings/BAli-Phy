@@ -264,7 +264,7 @@ string get_help_for_rule(const Rule& rule)
     if (args_names_types.size()) help<<bold("(")<<join(args_names_types,bold(", "))<<bold(")");
     help<<" "<<bold("->")<<" "<<red(result_type);
     help<<"\n\n";
-    
+
     if (auto synonyms = rule.get_child_optional("synonyms"))
     {
 	vector<string> syn;
