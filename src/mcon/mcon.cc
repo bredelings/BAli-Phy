@@ -668,10 +668,9 @@ vector<tuple<string,vector<json::value>>> Log::dump_json_table(std::optional<boo
 
     if (not varyingFields.empty())
     {
-        std::cerr<<"varying fields =";
+        std::cerr<<"varying fields:\n";
         for(auto& field: varyingFields)
-            std::cerr<<" "<<field;
-        std::cerr<<"\n";
+            std::cerr<<"  "<<field<<"\n";
     }
 
     const int n_fields = constantFields.size();
