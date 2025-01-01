@@ -300,7 +300,7 @@ model_t compile_model(const Rules& R,
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
-        std::cout<<"equations: "<<show(TC.eqs)<<std::endl;
+        std::cout<<"equations: "<<TC.eqs.show()<<std::endl;
 
 	model_rep = extract_value(model);
 	substitute(TC.eqs, model_rep);

@@ -20,19 +20,25 @@ bool is_wildcard(const ptree& p)
 }
 
 /// Split a string of the form key=value into {key,value}
-string show(const equations& E)
+string equations::show() const
 {
     string result;
-    if (not E) result = "FAIL:\n";
+    if (not *this) {
+        result = "FAIL:\n";
+        for(auto& [t1,t2]: failed)
+        {
+            result += "  "+unparse_type(t1) + " !~ " + unparse_type(t2) + "\n";
+        }
+    }
 
     vector<string> constraints;
-    for(auto& constraint: E.get_constraints())
+    for(auto& constraint: get_constraints())
 	constraints.push_back(unparse_type(constraint));
     if (not constraints.empty())
 	result += join(constraints,",") + "\n\n";
 
     vector<string> eqs;
-    for(auto& [names,term]: E.get_values())
+    for(auto& [names,term]: get_values())
     {
 	string e = join(names," = ");
 	if (term)
@@ -58,9 +64,14 @@ bool equations::has_record(const std::string& x) const
     return false;
 }
 
+bool equations::valid() const
+{
+    return failed.empty();
+}
+
 equations::operator bool() const
 {
-    return valid;
+    return valid();
 }
 
 void equations::remove_record_for(const std::string& x)
@@ -122,20 +133,17 @@ bool equations::occurs_check() const
 
 bool equations::add_condition(const string& x, const term_t& T)
 {
-    if (is_wildcard(T)) return valid;
+    if (is_wildcard(T)) return valid();
 
     if (not has_record(x))
     {
 	// Occurs check.
 	auto fvs_T = find_variables_in_type(T);
 	if (fvs_T.count(x))
-	{
-	    valid = false;
-	    return valid;
-	}
-
-	// Add x = T
-	values.push_back({set<string>{x},T});
+            failed.push_back({ptree(x),T});
+        else
+            // Add x = T
+            values.push_back({set<string>{x},T});
     }
     else
     {
@@ -145,13 +153,10 @@ bool equations::add_condition(const string& x, const term_t& T)
 	    // Occurs check.
 	    auto fvs_T = find_variables_in_type(T);
 	    if (intersects(vars, fvs_T))
-	    {
-		valid = false;
-		return valid;
-	    }
-
-	    // Set x = T
-	    value = T;
+                failed.push_back({ptree(x),T});
+            else
+                // Set x = T
+                value = T;
 	}
 	else
 	    // If x=U then unify(U,T)
@@ -161,14 +166,14 @@ bool equations::add_condition(const string& x, const term_t& T)
     for(auto& [names,term]: values)
 	assert(term or names.size() > 1);
 #endif
-    assert(not valid or not occurs_check());
-    return valid;
+    assert(not valid() or not occurs_check());
+    return valid();
 }
 
 bool equations::add_var_condition(const string& x, const string& y)
 {
     // 1. If we are adding x == y then quit.
-    if (x == y) return valid;
+    if (x == y) return valid();
 
     if (not has_record(y))
     {
@@ -182,8 +187,8 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    // Occurs check.
 	    if (T and find_variables_in_type(*T).count(y))
 	    {
-		valid = false;
-		return valid;
+                failed.push_back({ptree(x),ptree(y)});
+		return valid();
 	    }
 
 	    // 3. If x has a record by y does not, then add y to x's record;
@@ -197,8 +202,8 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Occurs check.
 	if (T and find_variables_in_type(*T).count(x))
 	{
-	    valid = false;
-	    return valid;
+            failed.push_back({ptree(x),ptree(y)});
+	    return valid();
 	}
 
 	// 4. If y has a record by x does not, then add x to y's record;
@@ -210,7 +215,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	auto yrec = find_record(y);
 
 	// If the two variables are already equal then we are done
-	if (xrec == yrec) return valid;
+	if (xrec == yrec) return valid();
 
 	// Otherwise we need to merge the two records
 
@@ -223,8 +228,8 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Do an occurs check.
 	if (xrec->second and intersects(xrec->first, find_variables_in_type(*xrec->second)))
 	{
-	    valid = false;
-	    return valid;
+	    failed.push_back({ptree(x),ptree(y)});
+	    return valid();
 	}
 
 	// Save the body of the y record.
@@ -243,8 +248,8 @@ bool equations::add_var_condition(const string& x, const string& y)
     for(auto& [names,term]: values)
 	assert(term or names.size() > 1);
 #endif
-    assert(not valid or not occurs_check());
-    return valid;
+    assert(not valid() or not occurs_check());
+    return valid();
 }
 
 optional<term_t> equations::value_of_var(const string& x) const
@@ -442,8 +447,8 @@ map<string,term_t> alpha_rename(const set<string>& vars, const FVSource& fresh_v
 
 equations operator&&(const equations& E1, const equations& E2)
 {
-    if (not E1) return equations{false};
-    if (not E2) return equations{false};
+    if (not E1) return E1;
+    if (not E2) return E2;
 
     equations solution = E1;
     for(auto& constraint: E2.get_constraints())
@@ -500,7 +505,7 @@ bool equations::unify(const term_t& T1, const term_t& T2)
 {
     // 1. If either term is a wildcard, then we are done.
     if (is_wildcard(T1) or is_wildcard(T2))
-	return valid;
+	return valid();
 
     else if (is_variable(T1))
     {
@@ -517,7 +522,7 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     else if (T1.size() == 0)
     {
 	if (T2.size() != 0 or T1.value != T2.value)
-	    valid = false;
+            failed.push_back({T1,T2});
     }
     else if (T1.size() == 2 and T2.size() == 2)
     {
@@ -525,14 +530,9 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     }
     else
     {
-	valid = false;
+        failed.push_back({T1,T2});
     }
-    return valid;
-}
-
-string equations::show() const
-{
-    return ::show(*this);
+    return valid();
 }
 
 equations unify(const term_t& T1, const term_t& T2)

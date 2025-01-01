@@ -18,7 +18,7 @@ template<> struct less<term_t> {
 
 class equations
 {
-    bool valid = true;
+    std::vector<std::pair<term_t,term_t>> failed;
 
     // Use a list here so that we can modify the list without invalidating iterators.
     std::list<std::pair<std::set<std::string>,std::optional<term_t>>> values;
@@ -35,6 +35,8 @@ class equations
 
 public:
     void clear();
+
+    bool valid() const;
 
     bool occurs_check() const;
 
@@ -63,7 +65,6 @@ public:
 
     operator bool() const;
     equations() {};
-    explicit equations(bool s):valid(s) {};
 };
 
 // given two terms, what equations do we need to unify them?
@@ -86,8 +87,6 @@ void substitute(const std::map<std::string, term_t>& replace, term_t& T);
 equations operator&&(const equations& p1, const equations& p2);
 
 bool is_wildcard(const ptree& p);
-
-std::string show(const equations& E);
 
 std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type);
 term_t make_type_app(const term_t& t1, const term_t& t2);
