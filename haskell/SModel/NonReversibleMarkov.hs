@@ -32,7 +32,7 @@ instance HasBranchLengths t => SimpleSModel t (MkEquilibrium Markov) where
 instance RateModel NonReversibleMarkov where
     rate (Equilibrium m) = rate m
 
-nonRev a rates = rescale 1 $ Markov.Equilibrium $ markov' a smap q
+nonRev a rates = scaleTo 1 $ Markov.Equilibrium $ markov' a smap q
     where smap = simpleSMap a
           n = length $ getLetters a
           q = Markov.non_rev_from_list n rates

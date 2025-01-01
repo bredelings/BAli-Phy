@@ -50,7 +50,7 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ q]
-        where q = rescale (rate model) $ edgeProp model tree b
+        where q = scaleTo (rate model) $ edgeProp model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeProp model (root tree)]
 
 -- It would be nice if the branchQ and the nodePi contained the alphabet before applying them to a value.                                                     

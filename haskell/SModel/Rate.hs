@@ -6,5 +6,5 @@ class Scalable m where
 class Scalable m => RateModel m where
     rate :: m -> Double
 
-rescale r q = scaleBy (r/rate q) q
+scaleTo r q = scaleBy (r/rate q) q
 

@@ -17,7 +17,7 @@ equ a = Markov.equ (alphabetSize a) 1.0
 
 gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
-gtr a s pi = rescale 1 $ reversible $ markov a (simpleSMap a) (s %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr a s pi = scaleTo 1 $ reversible $ markov a (simpleSMap a) (s %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 f81     pi a = gtr a (equ a) pi
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)

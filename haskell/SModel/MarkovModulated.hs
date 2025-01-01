@@ -43,19 +43,19 @@ markovModulateMixture nu dist = modulatedMarkov models ratesBetween levelProbs w
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = Markov.equ (length models) nu
 
--- We need to rescale submodels to have substitution rate `1`.
+-- We need to scaleTo submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
 tuffley_steel_98_unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] ratesBetween levelProbs where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
     ratesBetween = fromLists [[-s01,s01],[s10,-s10]]
 
-tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
+tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (scaleTo 1 q)
 
-tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (rescale 1 q) & unitMixture,
-                                                                       tuffley_steel_98_unscaled s01 s10 (rescale 1 q) & unitMixture]
+tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_steel_98_unscaled 1 0 (scaleTo 1 q) & unitMixture,
+                                                                       tuffley_steel_98_unscaled s01 s10 (scaleTo 1 q) & unitMixture]
 
-huelsenbeck_02 s01 s10 model = tuffley_steel_98_unscaled s01 s10 <$> rescale 1 model
+huelsenbeck_02 s01 s10 model = tuffley_steel_98_unscaled s01 s10 <$> scaleTo 1 model
 
 huelsenbeck_02_test s01 s10 fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 1 0,
                                                                          -- ^ ideally we could just put "model" here.
@@ -65,7 +65,7 @@ huelsenbeck_02_two s01a s10a s01b s10b fraction model = mix [1-fraction, fractio
                                                                                     model & huelsenbeck_02 s01a s10a]
 
 galtier_01_ssrv nu model = modulatedMarkov models ratesBetween levelProbs where
-    dist = rescale 1 model
+    dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     n_levels = length models
     -- This is really a generic gtr...  We should be able to get this with f81
@@ -97,7 +97,7 @@ wssr07Ext s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
 
 -- Instead of passing ratesBetween+levelProbs, could we just pass a q matrix?
 covarion_gtr_ssrv nu exchange model = modulatedMarkov models ratesBetween levelProbs where
-    Discrete dist = rescale 1 model
+    Discrete dist = scaleTo 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     ratesBetween = (scaleMatrix nu exchange) %*% (plus_f_matrix $ toVector levelProbs)
@@ -106,7 +106,7 @@ covarion_gtr nu exchange pi model = (\nu' -> covarion_gtr_ssrv nu' exchange mode
 
 covarion_gtr_sym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
 covarion_gtr_sym sym model = modulatedMarkov models ratesBetween levelProbs where
-    dist = rescale 1 model
+    dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = sym %*% (plus_f_matrix $ toVector levelProbs)
 
