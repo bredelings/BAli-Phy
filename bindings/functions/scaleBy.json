@@ -1,0 +1,21 @@
+{
+    "name": "scaleBy",
+    "result_type": "b",
+    "no_log": true,
+    "constraints": ["Num<a>"],
+    "call": "scaleBy(@factor,@submodel)",
+    "args": [
+        {
+            "name": "submodel",
+            "type": "b",
+	    "description": "The input model"
+        },
+        {
+            "name": "factor",
+	    "type": "a",
+            "description": "The factor by which to scale the rate"
+        }
+    ],
+    "title":"The scaleBy function",
+    "description": "Returns a version of `submodel` with the rate multiplied by `factor`."
+}

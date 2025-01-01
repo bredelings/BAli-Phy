@@ -1,0 +1,21 @@
+{
+    "name": "scaleTo",
+    "result_type": "b",
+    "no_log": true,
+    "constraints": ["Num<a>"],
+    "call": "scaleTo(@rate,@submodel)",
+    "args": [
+        {
+            "name": "submodel",
+            "type": "b",
+	    "description": "The input model"
+        },
+        {
+            "name": "rate",
+	    "type": "a",
+            "description": "The desired rate for the model"
+        }
+    ],
+    "title":"The scaleTo function",
+    "description": "Returns a version of submodel with the desired rate"
+}
