@@ -129,7 +129,8 @@ extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_<Box<json::value>>();
+    // Serialize no long works with classes DERIVED from json::value.
+    json::value j = Args.evaluate(0).as_<Box<json::value>>();
     String s = json::serialize(j,{.allow_infinity_and_nan=true});
     return s;
 }
