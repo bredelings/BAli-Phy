@@ -58,7 +58,6 @@ tuffley_steel_98_test s01 s10 fraction q = mix [1-fraction, fraction] [tuffley_s
 huelsenbeck_02 s01 s10 model = tuffley_steel_98_unscaled s01 s10 <$> scaleTo 1 model
 
 huelsenbeck_02_test s01 s10 fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 1 0,
-                                                                         -- ^ ideally we could just put "model" here.
                                                                          model & huelsenbeck_02 s01 s10]
 
 huelsenbeck_02_two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck_02 s01b s10b,
