@@ -1,0 +1,17 @@
+{
+    "name": "dirichlet_on",
+    "synonyms": ["DirichletOn"],
+    "result_type": "Distribution<List<(a,Double)>>",
+    "call": "dirichletOn(@items,@as)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "items",
+            "type": "List<a>"
+        },
+        {
+            "name": "as",
+            "type": "List<Double>"
+        }
+    ]
+}
