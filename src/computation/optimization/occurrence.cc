@@ -127,8 +127,6 @@ bool is_alive(const Occ::Var& x)
 
 tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
-    using namespace boost;
-
     const int L = decls_in.size();
     Occ::Decls decls(L);
 

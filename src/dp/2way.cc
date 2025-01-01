@@ -119,12 +119,18 @@ vector<bitmask_8> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2)
     return a;
 }
 
-using namespace boost;
-
 // bidirectionalS means we store both In and Out edges.
 // directionalS ... means we store only Out edges?
-typedef adjacency_list< vecS, vecS, bidirectionalS, property<vertex_color_t, default_color_type> > Graph; 
-typedef graph_traits<Graph>::vertex_descriptor Vertex;
+using boost::vertex_index;
+using boost::add_edge;
+using boost::add_vertex;
+using boost::add_vertex;
+using boost::graph_traits;
+using boost::graph_traits;
+
+typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
+typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
 
 #include <map>
 using std::map;
@@ -300,7 +306,7 @@ void graph_alignment::link_all_columns()
 
 vector<int> graph_alignment::sort()
 {
-    boost::property_map<Graph, vertex_index_t>::type id = get(vertex_index, g);
+    auto id = get(vertex_index, g);
 
     vector<Vertex> c;
     topological_sort(g, std::back_inserter(c));

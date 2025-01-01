@@ -383,11 +383,15 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
     return graph;
 }
 
-using namespace boost;
+using boost::vertex_index;
+using boost::add_edge;
+using boost::graph_traits;
+using boost::graph_traits;
 
-typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
-typedef graph_traits<Graph>::vertex_descriptor Vertex;
-typedef graph_traits<Graph>::edge_descriptor Edge_t;
+typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
+typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
+
 
 struct cycle_exception: public std::exception {
     int x;
@@ -804,12 +808,11 @@ bool online_topo_sort::less_than(int x, int y) const
 
 void online_topo_sort::check_order() const
 {
-    graph_traits<Graph>::vertex_iterator vi, vi_end;
-    for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
+    for (auto [vi, vi_end] = boost::vertices(g); vi != vi_end; ++vi)
     {
 	int index1 = get(vertex_index,g,*vi);
-	graph_traits<Graph>::out_edge_iterator ei, eend;
-	for(tie(ei,eend) = out_edges(*vi,g); ei != eend; ++ei)
+
+	for(auto [ei, eend] = out_edges(*vi,g); ei != eend; ++ei)
 	{ 
 	    int index2 = get(vertex_index,g,target(*ei,g));
 	    assert(order[index1] < order[index2]);
@@ -825,7 +828,6 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge2(const Edges& E,doubl
     vector<int> i_order = invert(order);
 
     //----- Create initial graph of index matrix ----//
-    using namespace boost;
     // what properties should this graph have?
 
     online_topo_sort S(size1());

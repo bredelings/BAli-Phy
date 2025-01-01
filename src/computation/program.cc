@@ -204,14 +204,12 @@ int Program::count_module(const string& module_name) const
 
 vector<string> sort_modules_by_dependencies(const module_loader& L, vector<string>& new_module_names)
 {
-    using namespace boost;
-
-    typedef adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
-    typedef graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
+    typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
     // Construct the dependency graph.  (i,j) means that i imports j
     Graph graph;
-    vector<adjacency_list<>::vertex_descriptor> vertices;
+    vector<boost::adjacency_list<>::vertex_descriptor> vertices;
     for(int i=0; i<new_module_names.size(); i++)
 	vertices.push_back( add_vertex(graph) );
 
@@ -225,7 +223,7 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
 
     // Find connected components
     vector<int> component(new_module_names.size());
-    int num = strong_components(graph, make_iterator_property_map(component.begin(), get(vertex_index, graph)));
+    int num = strong_components(graph, boost::make_iterator_property_map(component.begin(), get(boost::vertex_index, graph)));
     vector<vector<int>> components(num);
     for(int i=0;i<new_module_names.size();i++)
     {
@@ -253,7 +251,7 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
     vector<string> new_module_names2;
     for(int i=0;i<new_module_names.size();i++)
     {
-	int j = get(vertex_index,graph,sorted_vertices[i]);
+	int j = get(boost::vertex_index,graph,sorted_vertices[i]);
 	new_module_names2.push_back(new_module_names[j]);
     }
 

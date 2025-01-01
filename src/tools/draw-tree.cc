@@ -2471,11 +2471,9 @@ double max_delta(const vector<point_position>& p)
 #include <boost/graph/fruchterman_reingold.hpp>
 #include "util/assert.hh"
 
-using namespace boost;
-
-typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
-typedef graph_traits<Graph>::vertex_descriptor Vertex;
-typedef graph_traits<Graph>::edge_descriptor Edge_t;
+typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
+typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
 
 
 graph_layout kamada_kawai_layout(graph_layout GL)
@@ -2491,11 +2489,11 @@ graph_layout kamada_kawai_layout(graph_layout GL)
 
     //--------- Package position as property ---------//
     typedef vector<point_position> PositionVec;
-    typedef iterator_property_map<PositionVec::iterator,
-				  property_map<Graph, vertex_index_t>::type>
+    typedef boost::iterator_property_map<PositionVec::iterator,
+                                         boost::property_map<Graph, boost::vertex_index_t>::type>
 	PositionMap;
 
-    PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+    PositionMap position(GL.node_positions.begin(), get(boost::vertex_index, g));
 
     //--------- Package weights as property ---------//
     vector<double> weights(num_edges(g));
@@ -2515,7 +2513,7 @@ graph_layout kamada_kawai_layout(graph_layout GL)
 struct my_square_distance_attractive_force {
     template<typename Graph, typename T>
     T
-    operator()(typename graph_traits<Graph>::edge_descriptor,
+    operator()(typename boost::graph_traits<Graph>::edge_descriptor,
 	       T k,
 	       T d,
 	       const Graph&) const

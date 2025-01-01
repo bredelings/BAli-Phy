@@ -1,6 +1,7 @@
 #include "util/graph.H"
 
 using std::vector;
+using boost::vertex_index;
 
 Graph make_graph(int N, std::function<bool(int,int)> edge_from_to)
 {
@@ -21,12 +22,11 @@ Graph get_subgraph(const vector<int>& vertices, const Graph& graph)
 
 vector<vector<int>> get_ordered_strong_components(const Graph& graph)
 {
-    using namespace boost;
     const int L = num_vertices(graph);
 
     // 1. Label each vertex with its component
     vector<int> component_for_index(L);
-    int C = strong_components(graph, make_iterator_property_map(component_for_index.begin(), get(vertex_index, graph)));
+    int C = strong_components(graph, boost::make_iterator_property_map(component_for_index.begin(), get(vertex_index, graph)));
 
     // find live variables in each component
     vector<vector<int>> components(C);
@@ -44,8 +44,6 @@ vector<vector<int>> get_loop_components(const Graph& graph)
 {
     vector<vector<int>> loop_components;
 
-    using namespace boost;
-
     for(auto& component: get_ordered_strong_components(graph))
     {
         if (component.size() == 1 and not edge(component[0], component[0], graph).second) continue;
@@ -58,8 +56,6 @@ vector<vector<int>> get_loop_components(const Graph& graph)
 
 vector<int> topo_sort(const Graph& graph)
 {
-    using namespace boost;
-
     vector<Vertex> sorted_vertices;
     topological_sort(graph, std::back_inserter(sorted_vertices));
 
