@@ -80,7 +80,12 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 
     EVector LCN;
     if (auto lcn = P.get_node_CLV(n2))
-	LCN.push_back(lcn);
+    {
+        if (auto sparse = lcn.to<SparseLikelihoods>())
+            LCN.push_back(sparse->DenseLikelihoods());
+        else
+            LCN.push_back(lcn);
+    }
 
     EVector LCB;
     EVector A;

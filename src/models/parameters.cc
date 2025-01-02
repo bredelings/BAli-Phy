@@ -135,11 +135,11 @@ bool data_partition::alignment_is_random() const
     return (bool)DPC().alignment_properties_reg;
 }
 
-object_ptr<const Likelihood_Cache_Branch> data_partition::get_node_CLV(int node) const
+expression_ref data_partition::get_node_CLV(int node) const
 {
     auto maybe_node_CLV = property(7)[node];
     if (maybe_node_CLV.size() > 0)
-	return maybe_node_CLV[0].value().as_ptr_to<Likelihood_Cache_Branch>();
+	return maybe_node_CLV[0].value();
     else
 	return {};
 }
