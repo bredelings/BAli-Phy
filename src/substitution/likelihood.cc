@@ -1135,7 +1135,7 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_toward_root(const EVector& sparse_LCN,
+    peel_leaf_branch_toward_root(const Likelihood_Cache_Branch& node_CLV,
                                  const EVector& transition_P,
                                  const Matrix& F)
     {
@@ -1145,20 +1145,9 @@ namespace substitution {
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
 
-        auto LCN = sparse_to_dense(sparse_LCN);
-
-        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
-
-	int n_sequences = LCN.size();
-	int L = node_cache(0).n_columns();
+	int L = node_CLV.n_columns();
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-
-#ifndef NDEBUG
-	// Check that all the sequences have the right length.
-	for(int i=0; i<n_sequences;i++)
-	    assert(node_cache(i).n_columns() == L);
-#endif
 
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
@@ -1177,8 +1166,7 @@ namespace substitution {
 		S[k] = 1.0;
 
 	    // Handle observed sequences at the node.
-	    for(int j=0;j<n_sequences;j++)
-		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+            element_prod_assign(S, node_CLV[s_out], matrix_size);
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
@@ -1189,6 +1177,28 @@ namespace substitution {
         LCB_OUT->init_other_subst(total);
         LCB_OUT->other_subst().log() += total_scale*log_scale_min;
         return LCB_OUT;
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_toward_root(const SparseLikelihoods& node_CLV,
+                                 const EVector& transition_P,
+                                 const Matrix& F)
+    {
+        return peel_leaf_branch_toward_root( *node_CLV.DenseLikelihoods(), transition_P, F );
+    }
+
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_toward_root(const expression_ref& nodeCLV,
+                                 const EVector& transition_P,
+                                 const Matrix& F)
+    {
+	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
+	    return peel_leaf_branch_toward_root(*LCB, transition_P, F);
+	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
+	    return peel_leaf_branch_toward_root(*SL, transition_P, F);
+	else
+	    throw myexception()<<"peel_leaf_branch_toward_root: leaf object not recognized!";
     }
 
 
@@ -1203,7 +1213,7 @@ namespace substitution {
         // * LCN.empty() and LCB.size() == 2
         // * LCN.empty() and LCB.size() == 1
         if (sparse_LCN.size() == 1 and LCB.empty())
-            return peel_leaf_branch_toward_root(sparse_LCN, transition_P, F);
+            return peel_leaf_branch_toward_root(sparse_LCN[0], transition_P, F);
 
         total_peel_internal_branches++;
 
