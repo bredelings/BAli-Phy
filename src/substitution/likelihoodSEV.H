@@ -60,6 +60,7 @@ namespace substitution {
 				    const EVector& smap,
 				    int n_models);
 
+    // This one is sparse
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
 				     const alphabet& a,
