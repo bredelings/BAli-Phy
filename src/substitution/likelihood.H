@@ -72,12 +72,6 @@ namespace substitution {
                                  int n_models);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P);
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap);
-
-    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch(const Likelihood_Cache_Branch& LCB1,
                          const Likelihood_Cache_Branch& LCB2,
                          const pairwise_alignment_t& A0,
