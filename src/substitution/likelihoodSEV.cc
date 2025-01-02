@@ -562,26 +562,26 @@ namespace substitution
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const EVector& transition_P)
     {
-        int L0 = nodeCLV.n_columns();
-
-        const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
-
-	assert(nodeCLV.n_models() == n_models);
-	assert(nodeCLV.n_states() == n_states);
-
         total_peel_leaf_branches++;
+
+        const int n_models  = nodeCLV.n_models();
+        const int n_states  = nodeCLV.n_states();
+
+        assert(transition_P.size() == n_models);
+        assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
+
+        int L0 = nodeCLV.n_columns();
 
         auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(nodeCLV.bits, n_models, n_states));
 
         for(int i=0;i<L0;i++)
         {
-	    const double* S = nodeCLV[i];
+            const double* S = nodeCLV[i];
 
-	    int scale = 0;
+            int scale = 0;
             double* R = (*LCB)[i];
-	    propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
-	    LCB->scale(i) = scale;
+            propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
+            LCB->scale(i) = scale;
         }
 
         return LCB;
