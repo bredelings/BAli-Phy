@@ -1169,7 +1169,69 @@ namespace substitution {
     peel_leaf_branch_toward_root(const SparseLikelihoods& nodeCLV,
                                  const EVector& transition_P)
     {
-        return peel_leaf_branch_toward_root( *nodeCLV.DenseLikelihoods(), transition_P );
+        total_peel_leaf_branches++;
+
+        const int n_models  = nodeCLV.n_models();
+        const int n_states  = nodeCLV.n_states();
+
+        assert(transition_P.size() == n_models);
+        assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
+
+        int L0 = nodeCLV.n_columns();
+
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
+
+        for(int i=0;i<L0;i++)
+        {
+            double* R = (*LCB)[i];
+
+            int offset = nodeCLV.column_offsets[i];
+            int next_offset = nodeCLV.column_offsets[i+1];
+            if (offset >= next_offset)
+            {
+                for(int m=0;m<n_models;m++)
+                    for(int s1=0;s1<n_states;s1++)
+                        R[m*n_states + s1] = 0;
+            }
+            else if (offset + 1 == next_offset)
+            {
+                int s2 = nodeCLV.states[offset];
+                for(int m=0;m<n_models;m++)
+                {
+                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+                    // compute the distribution at the target (parent) node - single letters
+                    for(int s1=0;s1<n_states;s1++)
+                        R[m*n_states + s1] = Q(s1,s2);
+                }
+            }
+            else
+            {
+                for(int m=0;m<n_models;m++)
+                {
+                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+
+                    // compute the distribution at the target (parent) node - multiple letters
+                    for(int s1=0;s1<n_states;s1++)
+                    {
+                        int j = offset;
+                        int s2 = nodeCLV.states[j];
+                        double temp = Q(s1,s2);
+                        j++;
+                        for(;j<next_offset;j++)
+                        {
+                            int s2 = nodeCLV.states[j];
+                            temp += Q(s1,s2);
+                        }
+                        R[m*n_states + s1] = temp;
+                    }
+                }
+            }
+        }
+
+        LCB->init_other_subst(1);
+
+        return LCB;
     }
 
 
