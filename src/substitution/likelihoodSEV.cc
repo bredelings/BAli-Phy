@@ -777,7 +777,7 @@ namespace substitution
     {
         total_peel_internal_branches++;
 
-	  if (LCN.empty() and LCB.size() == 2)
+        if (LCN.empty() and LCB.size() == 2)
 	    return peel_internal_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					    LCB[1].as_<Likelihood_Cache_Branch>(),
 					    transition_P);
