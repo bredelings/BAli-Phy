@@ -1602,30 +1602,20 @@ namespace substitution {
         return LCB_OUT;
     }
 
-
-
     // This version takes expression_ref because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_toward_root_non_eq(const expression_ref& LCN_,
-                                        const expression_ref& transition_P_)
+    peel_leaf_branch_toward_root_non_eq(const Likelihood_Cache_Branch& nodeCLV,
+                                        const EVector& transition_P)
     {
-	auto& sparse_LCN = LCN_.as_<EVector>();
-	auto& transition_P = transition_P_.as_<EVector>();
-
 	total_peel_leaf_branches++;
 
-        auto LCN = sparse_to_dense(sparse_LCN);
-
-        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
-
-        const int n_models = node_cache(0).n_models();
-        const int n_states = node_cache(0).n_states();
+        const int n_models = nodeCLV.n_models();
+        const int n_states = nodeCLV.n_states();
         const int matrix_size = n_models * n_states;
 
-	int n_sequences = LCN.size();
-	int L = node_cache(0).n_columns();
+	int L0 = nodeCLV.n_columns();
 
-        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
 
 #ifndef NDEBUG
 	// Check that all the sequences have the right length.
@@ -1641,7 +1631,7 @@ namespace substitution {
 	int s_out = 0;
         for(;;)
         {
-            if (s_out == L)
+            if (s_out == L0)
             {
                 break;
             }
@@ -1651,8 +1641,7 @@ namespace substitution {
 		S[k] = 1.0;
 
 	    // Handle observed sequences at the node.
-	    for(int j=0;j<n_sequences;j++)
-		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+            element_prod_assign(S, nodeCLV[s_out], matrix_size);
 
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
@@ -1668,6 +1657,17 @@ namespace substitution {
         return LCB_OUT;
     }
 
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_toward_root_non_eq(const expression_ref& nodeCLV,
+                                 const EVector& transition_P)
+    {
+	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
+	    return peel_leaf_branch_toward_root_non_eq(*LCB, transition_P );
+	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
+	    return peel_leaf_branch_toward_root_non_eq(*SL->DenseLikelihoods(), transition_P );
+	else
+	    throw myexception()<<"peel_leaf_branch_toward_root_non_eq: leaf object not recognized!";
+    }
 
     // This version takes expression_ref because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
@@ -1685,7 +1685,7 @@ namespace substitution {
         // * LCN.empty() and LCB.size() == 2
         // * LCN.empty() and LCB.size() == 1
         if (sparse_LCN.size() == 1 and LCB.empty())
-            return peel_leaf_branch_toward_root_non_eq(LCN_, transition_P_);
+            return peel_leaf_branch_toward_root_non_eq(sparse_LCN[0], transition_P);
 
 	total_peel_internal_branches++;
 
