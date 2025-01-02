@@ -106,6 +106,7 @@ namespace substitution {
 			   const Matrix& F);
     //-- NonEq
 
+    // This version takes expression_ref because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root_non_eq(const expression_ref& LCN_,
 				   const expression_ref& LCB_,
