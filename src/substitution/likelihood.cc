@@ -1152,15 +1152,8 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
-        int total_scale = 0;
-
-	int s_out = 0;
-        for(;;)
+        for(int s_out = 0; s_out < L;s_out++)
         {
-            if (s_out == L)
-                break;
-
 	    int scale = 0;
 	    for(int k=0; k<matrix_size; k++)
 		S[k] = 1.0;
@@ -1171,11 +1164,11 @@ namespace substitution {
 	    // propagate from the source distribution
 	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
 	    propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
-            LCB_OUT->scale(s_out++) = scale;
+            LCB_OUT->scale(s_out) = scale;
         }
 
-        LCB_OUT->init_other_subst(total);
-        LCB_OUT->other_subst().log() += total_scale*log_scale_min;
+        LCB_OUT->init_other_subst(1);
+
         return LCB_OUT;
     }
 
