@@ -1170,7 +1170,8 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const SparseLikelihoods& nodeCLV,
-                                 const EVector& transition_P)
+                                 const EVector& transition_P,
+                                 bool equilibrium)
     {
         total_peel_leaf_branches++;
 
@@ -1232,7 +1233,10 @@ namespace substitution {
             }
         }
 
-        LCB->init_other_subst(1);
+        if (equilibrium)
+            LCB->init_other_subst(1);
+        else
+            LCB->other_subst_f = [](const Matrix&) {return log_double_t(1);};
 
         return LCB;
     }
@@ -1240,12 +1244,13 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const expression_ref& nodeCLV,
-                                 const EVector& transition_P)
+                                 const EVector& transition_P,
+                                 bool equilibrium = true)
     {
 	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
-	    return peel_leaf_branch_toward_root(*LCB, transition_P );
+	    return peel_leaf_branch_toward_root(*LCB, transition_P, equilibrium );
 	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
-	    return peel_leaf_branch_toward_root(*SL, transition_P );
+	    return peel_leaf_branch_toward_root(*SL, transition_P, equilibrium );
 	else
 	    throw myexception()<<"peel_leaf_branch_toward_root: leaf object not recognized!";
     }
@@ -1605,18 +1610,6 @@ namespace substitution {
         return LCB_OUT;
     }
 
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_toward_root_non_eq(const expression_ref& nodeCLV,
-                                 const EVector& transition_P)
-    {
-	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
-	    return peel_leaf_branch_toward_root(*LCB, transition_P, false );
-	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
-	    return peel_leaf_branch_toward_root(*SL->DenseLikelihoods(), transition_P, false );
-	else
-	    throw myexception()<<"peel_leaf_branch_toward_root_non_eq: leaf object not recognized!";
-    }
-
     // This version takes expression_ref because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root_non_eq(const expression_ref& LCN_,
@@ -1633,7 +1626,7 @@ namespace substitution {
         // * LCN.empty() and LCB.size() == 2
         // * LCN.empty() and LCB.size() == 1
         if (sparse_LCN.size() == 1 and LCB.empty())
-            return peel_leaf_branch_toward_root_non_eq(sparse_LCN[0], transition_P);
+            return peel_leaf_branch_toward_root(sparse_LCN[0], transition_P, false);
 
 	total_peel_internal_branches++;
 
