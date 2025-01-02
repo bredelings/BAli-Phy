@@ -1607,7 +1607,6 @@ namespace substitution {
         double* S = LCB_OUT->scratch(0);
 
         log_prod total;
-        int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
@@ -1682,7 +1681,6 @@ namespace substitution {
 	    const int n_states = LCN.empty() ? cache(0).n_states() : node_cache(0).n_states();
 	    const int matrix_size = n_models * n_states;
 
-	    int n_sequences = LCN.size();
 	    int n_branches_in = LCB.size();
 
 	    log_prod total;
