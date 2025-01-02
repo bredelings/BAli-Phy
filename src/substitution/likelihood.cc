@@ -1136,10 +1136,8 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const EVector& sparse_LCN,
-			    const EVector& LCB,
-			    const EVector& A_,
-			    const EVector& transition_P,
-			    const Matrix& F)
+                                 const EVector& transition_P,
+                                 const Matrix& F)
     {
         total_peel_leaf_branches++;
 
@@ -1150,13 +1148,9 @@ namespace substitution {
         auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
-        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
-        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
 
 	int n_sequences = LCN.size();
-	int n_branches_in = LCB.size();
-	assert(not LCN.empty() or not A_.empty());
-	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+	int L = node_cache(0).n_columns();
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 
@@ -1164,14 +1158,6 @@ namespace substitution {
 	// Check that all the sequences have the right length.
 	for(int i=0; i<n_sequences;i++)
 	    assert(node_cache(i).n_columns() == L);
-
-	// Check that all the alignments have the right length for both sequences.
-	assert(A_.size() == n_branches_in);
-	for(int i=0; i<n_branches_in; i++)
-	{
-	    assert(A(i).length2() == L);
-	    assert(A(i).length1() == cache(i).n_columns());
-	}
 #endif
 
         // scratch matrix
@@ -1180,57 +1166,15 @@ namespace substitution {
         log_prod total;
         int total_scale = 0;
 
-	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
-	vector<int> i(n_branches_in, 0);
         for(;;)
         {
-	    for(int j =0;j < n_branches_in; j++)
-	    {
-		auto& a = A(j);
-		auto& lcb = cache(j);
-		auto& ij = i[j];
-		auto& sj = s[j];
-		while (ij < a.size() and not a.has_character2(ij))
-		{
-		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
-		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
-		    total *= p_col;
-		    total_scale += lcb.scale(sj);
-		    ij++;
-		    sj++;
-		}
-	    }
             if (s_out == L)
-            {
-		for(int j=0;j<n_branches_in;j++)
-		    assert(i[j] == A(j).size());
                 break;
-            }
-	    else
-	    {
-		for(int j=0;j<n_branches_in;j++)
-		{
-		    assert(i[j] < A(j).size());
-		    assert(A(j).has_character2(i[j]));
-		}
-	    }
 
 	    int scale = 0;
 	    for(int k=0; k<matrix_size; k++)
 		S[k] = 1.0;
-	    for(int j=0;j<n_branches_in;j++)
-	    {
-		if (A(j).has_character1(i[j]))
-		{
-		    auto& lcb = cache(j);
-		    element_prod_assign(S, lcb[s[j]], matrix_size);
-		    scale += lcb.scale(s[j]);
-		    s[j]++;
-		}
-		i[j]++;
-	    }
 
 	    // Handle observed sequences at the node.
 	    for(int j=0;j<n_sequences;j++)
@@ -1244,8 +1188,6 @@ namespace substitution {
 
         LCB_OUT->init_other_subst(total);
         LCB_OUT->other_subst().log() += total_scale*log_scale_min;
-	for(int j=0;j<n_branches_in;j++)
-	    LCB_OUT->other_subst() *= cache(j).other_subst();
         return LCB_OUT;
     }
 
@@ -1261,7 +1203,7 @@ namespace substitution {
         // * LCN.empty() and LCB.size() == 2
         // * LCN.empty() and LCB.size() == 1
         if (sparse_LCN.size() == 1 and LCB.empty())
-            return peel_leaf_branch_toward_root(sparse_LCN, LCB, A_, transition_P, F);
+            return peel_leaf_branch_toward_root(sparse_LCN, transition_P, F);
 
         total_peel_internal_branches++;
 
