@@ -1606,17 +1606,186 @@ namespace substitution {
 
     // This version takes expression_ref because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_toward_root_non_eq(const expression_ref& LCN_,
+                                        const expression_ref& LCB_,
+                                        const expression_ref& A__,
+                                        const expression_ref& transition_P_)
+    {
+	auto& sparse_LCN = LCN_.as_<EVector>();
+	auto& LCB = LCB_.as_<EVector>();
+	auto& A_ = A__.as_<EVector>();
+	auto& transition_P = transition_P_.as_<EVector>();
+
+	total_peel_leaf_branches++;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
+
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+        const int n_models = LCN.empty() ? cache(0).n_models() : node_cache(0).n_models();
+        const int n_states = LCN.empty() ? cache(0).n_states() : node_cache(0).n_states();
+        const int matrix_size = n_models * n_states;
+
+	int n_sequences = LCN.size();
+	int n_branches_in = LCB.size();
+	assert(not LCN.empty() or not A_.empty());
+	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
+
+        auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
+
+#ifndef NDEBUG
+	// Check that all the sequences have the right length.
+	for(int i=0; i<n_sequences;i++)
+	    assert(node_cache(i).n_columns() == L);
+
+	// Check that all the alignments have the right length for both sequences.
+	assert(A_.size() == n_branches_in);
+	for(int i=0; i<n_branches_in; i++)
+	{
+	    assert(A(i).length2() == L);
+	    assert(A(i).length1() == cache(i).n_columns());
+	}
+#endif
+
+        // scratch matrix
+        double* S = LCB_OUT->scratch(0);
+
+        log_prod total;
+
+	vector<int> s(n_branches_in, 0);
+	int s_out = 0;
+	vector<int> i(n_branches_in, 0);
+        for(;;)
+        {
+	    for(int j =0;j < n_branches_in; j++)
+	    {
+		auto& a = A(j);
+		auto& ij = i[j];
+		auto& sj = s[j];
+		while (ij < a.size() and not a.has_character2(ij))
+		{
+		    assert(a.has_character1(ij));
+		    ij++;
+		    sj++;
+		}
+	    }
+            if (s_out == L)
+            {
+		for(int j=0;j<n_branches_in;j++)
+		    assert(i[j] == A(j).size());
+                break;
+            }
+	    else
+	    {
+		for(int j=0;j<n_branches_in;j++)
+		{
+		    assert(i[j] < A(j).size());
+		    assert(A(j).has_character2(i[j]));
+		}
+	    }
+
+	    int scale = 0;
+	    for(int k=0; k<matrix_size; k++)
+		S[k] = 1.0;
+	    for(int j=0;j<n_branches_in;j++)
+	    {
+		if (A(j).has_character1(i[j]))
+		{
+		    auto& lcb = cache(j);
+		    element_prod_assign(S, lcb[s[j]], matrix_size);
+		    scale += lcb.scale(s[j]);
+		    s[j]++;
+		}
+		i[j]++;
+	    }
+
+	    // Handle observed sequences at the node.
+	    for(int j=0;j<n_sequences;j++)
+		element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+
+	    // propagate from the source distribution
+	    double* R = (*LCB_OUT)[s_out];            //name the result matrix
+	    propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
+            LCB_OUT->scale(s_out++) = scale;
+        }
+
+	LCB_OUT->other_subst_f = [LCN_, LCB_, A__, transition_P_](const Matrix& F_in)
+	{
+	    auto& LCN = LCN_.as_<EVector>();
+	    auto& LCB = LCB_.as_<EVector>();
+	    auto& A_ = A__.as_<EVector>();
+	    auto& transition_P = transition_P_.as_<EVector>();
+	    auto F = propagate_frequencies(F_in, transition_P);
+
+	    auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+	    auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+	    auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>();};
+
+	    const int n_models = LCN.empty() ? cache(0).n_models() : node_cache(0).n_models();
+	    const int n_states = LCN.empty() ? cache(0).n_states() : node_cache(0).n_states();
+	    const int matrix_size = n_models * n_states;
+
+	    int n_branches_in = LCB.size();
+
+	    log_prod total;
+	    int total_scale = 0;
+
+	    for(int j =0;j < n_branches_in; j++)
+	    {
+		auto& a = A(j);
+		auto& lcb = cache(j);
+
+		int sj = 0;
+		for(int ij = 0; ij < a.size(); ij++)
+		{
+		    if (a.has_character1(ij))
+		    {
+			if (not a.has_character2(ij))
+			{
+			    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+			    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+			    total *= p_col;
+			    total_scale += lcb.scale(sj);
+			}
+			sj++;
+		    }
+		}
+	    }
+
+	    log_double_t other_subst = total;
+	    other_subst.log() += total_scale*log_scale_min;
+
+	    for(int j=0;j< n_branches_in; j++)
+		other_subst *= cache(j).other_subst_f( F );
+
+	    return other_subst;
+	};
+
+        return LCB_OUT;
+    }
+
+
+    // This version takes expression_ref because lambda-capturing them copies them.
+    object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root_non_eq(const expression_ref& LCN_,
 				   const expression_ref& LCB_,
 				   const expression_ref& A__,
 				   const expression_ref& transition_P_)
     {
-	total_peel_internal_branches++;
-
 	auto& sparse_LCN = LCN_.as_<EVector>();
 	auto& LCB = LCB_.as_<EVector>();
 	auto& A_ = A__.as_<EVector>();
 	auto& transition_P = transition_P_.as_<EVector>();
+
+        // The SEV version also special-cases:
+        // * LCN.empty() and LCB.size() == 2
+        // * LCN.empty() and LCB.size() == 1
+        if (sparse_LCN.size() == 1 and LCB.empty())
+            return peel_leaf_branch_toward_root_non_eq(LCN_, LCB_, A__, transition_P_);
+
+	total_peel_internal_branches++;
 
         auto LCN = sparse_to_dense(sparse_LCN);
 
