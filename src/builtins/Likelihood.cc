@@ -74,12 +74,11 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::simple_sequence_likelihoods(arg3.as_<EVector>(),   // sequence
-						     *arg0.as_<Alphabet>(), // alphabet
-						     arg1.as_<EVector>(),   // smap
-						     arg2.as_int());        // n_models
+    return substitution::simple_sequence_likelihoods2(arg3.as_<EVector>(),   // sequence
+                                                      *arg0.as_<Alphabet>(), // alphabet
+                                                      arg1.as_<EVector>(),   // smap
+                                                      arg2.as_int());        // n_models
 }
-
 
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)

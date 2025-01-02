@@ -64,6 +64,13 @@ namespace substitution {
 				const EVector& smap,
 				int n_models);
 
+    // This one is sparse.
+    object_ptr<const SparseLikelihoods>
+    simple_sequence_likelihoods2(const EVector& sequence,
+                                 const alphabet& a,
+                                 const EVector& smap,
+                                 int n_models);
+
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P);
 

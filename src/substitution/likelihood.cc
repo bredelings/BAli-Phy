@@ -346,7 +346,20 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_at_root(const EVector& LCN,
+    EVector sparse_to_dense(const EVector& LCN)
+    {
+        EVector LCN2;
+        for(auto& lc: LCN)
+        {
+            if (auto SL = lc.to<SparseLikelihoods>())
+                LCN2.push_back(SL->DenseLikelihoods());
+            else
+                LCN2.push_back(lc);
+        }
+        return LCN2;
+    }
+
+    log_double_t calc_prob_at_root(const EVector& sparse_LCN,
 				   const EVector& LCB,
 				   const EVector& A_,
 				   const Matrix& F)
@@ -356,6 +369,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -467,7 +482,7 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root(const EVector& LCN,
+    log_double_t calc_prob_not_at_root(const EVector& sparse_LCN,
 				       const EVector& LCB,
 				       const EVector& A_,
 				       const Matrix& F)
@@ -477,6 +492,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -619,7 +636,7 @@ namespace substitution {
 	}
     }
 
-    log_double_t calc_prob_at_root_non_eq(const EVector& LCN,
+    log_double_t calc_prob_at_root_non_eq(const EVector& sparse_LCN,
 					  const EVector& LCB,
 					  const EVector& A_,
 					  const Matrix& F)
@@ -629,6 +646,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -740,11 +759,13 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root_non_eq(const EVector& LCN,
+    log_double_t calc_prob_not_at_root_non_eq(const EVector& sparse_LCN,
 					      const EVector& LCB,
 					      const EVector& A_)
     {
         total_calc_root_prob++;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1114,7 +1135,7 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_toward_root(const EVector& LCN,
+    peel_branch_toward_root(const EVector& sparse_LCN,
 			    const EVector& LCB,
 			    const EVector& A_,
 			    const EVector& transition_P,
@@ -1125,6 +1146,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1228,7 +1251,7 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_at_root(const EVector& LCN,
+    peel_branch_at_root(const EVector& sparse_LCN,
 			const EVector& LCB,
 			const EVector& A_,
 			const EVector& transition_P,
@@ -1239,6 +1262,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1343,7 +1368,7 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_at_root_non_eq(const EVector& LCN,
+    peel_branch_at_root_non_eq(const EVector& sparse_LCN,
 			       const EVector& LCB,
 			       const EVector& A_,
 			       const EVector& transition_P,
@@ -1354,6 +1379,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1465,10 +1492,12 @@ namespace substitution {
     {
 	total_peel_internal_branches++;
 
-	auto& LCN = LCN_.as_<EVector>();
+	auto& sparse_LCN = LCN_.as_<EVector>();
 	auto& LCB = LCB_.as_<EVector>();
 	auto& A_ = A__.as_<EVector>();
 	auto& transition_P = transition_P_.as_<EVector>();
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1620,7 +1649,7 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root(const EVector& LCN,
+    peel_branch_away_from_root(const EVector& sparse_LCN,
 			       const EVector& LCB,
 			       const EVector& A_,
 			       const EVector& transition_P,
@@ -1635,13 +1664,15 @@ namespace substitution {
 	    }
 
 	if (not away_from_root_index)
-	    return peel_branch_at_root(LCN, LCB, A_, transition_P, F);
+	    return peel_branch_at_root(sparse_LCN, LCB, A_, transition_P, F);
 
 	total_peel_internal_branches++;
 
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1749,7 +1780,7 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root_non_eq(const EVector& LCN,
+    peel_branch_away_from_root_non_eq(const EVector& sparse_LCN,
 				      const EVector& LCB,
 				      const EVector& A_,
 				      const EVector& transition_P,
@@ -1764,9 +1795,11 @@ namespace substitution {
 	    }
 
 	if (not away_from_root_index)
-	    return peel_branch_at_root_non_eq(LCN, LCB, A_, transition_P, rootF);
+	    return peel_branch_at_root_non_eq(sparse_LCN, LCB, A_, transition_P, rootF);
 
 	total_peel_internal_branches++;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -1890,7 +1923,7 @@ namespace substitution {
     // If the node is the root, dp-matrix handles root frequencies external to this function.
 
     object_ptr<const Likelihood_Cache_Branch>
-    merge_branches(const EVector& LCN,
+    merge_branches(const EVector& sparse_LCN,
 		   const EVector& LCB,
 		   const EVector& A_)
     {
@@ -1901,6 +1934,8 @@ namespace substitution {
 		assert(not away_from_root_index.has_value());
 		away_from_root_index = j;
 	    }
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -2048,6 +2083,54 @@ namespace substitution {
 		}
 	    }
 	}
+
+	return LCB;
+    }
+
+    object_ptr<const SparseLikelihoods>
+    simple_sequence_likelihoods2(const EVector& sequence,
+                                 const alphabet& a,
+                                 const EVector& smap,
+                                 int n_models)
+    {
+	int n_states = smap.size();
+
+	int L = sequence.size();
+
+	auto LCB = object_ptr<SparseLikelihoods>(new SparseLikelihoods(L, n_models, n_states));
+
+	int i=0;
+        for(int c=0;c<L;c++)
+	{
+	    // Add NNZ offset fo values/states for this column.
+	    LCB->column_offsets.push_back(LCB->num_non_zeros());
+
+	    int letter = sequence[i].as_int();
+
+	    if (letter >= 0)
+	    {
+		auto& ok = a.letter_mask(letter);
+		for(int s1=0;s1<n_states;s1++)
+		{
+		    int l = smap[s1].as_int();
+		    if (ok[l])
+		    {
+			LCB->states.push_back(s1);
+		    }
+		}
+	    }
+	    else if (letter == alphabet::not_gap)
+	    {
+		for(int s1=0;s1<n_states;s1++)
+		{
+		    LCB->states.push_back(s1);
+		}
+	    }
+
+	    i++;
+	}
+
+	LCB->column_offsets.push_back(LCB->num_non_zeros());
 
 	return LCB;
     }
@@ -2213,7 +2296,7 @@ namespace substitution {
         return Pr3;
     }
 
-    Vector<pair<int,int>> sample_root_sequence(const EVector& LCN,
+    Vector<pair<int,int>> sample_root_sequence(const EVector& sparse_LCN,
 					       const EVector& LCB,
 					       const EVector& A_,
                                                const Matrix& F)
@@ -2222,6 +2305,8 @@ namespace substitution {
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
@@ -2307,7 +2392,7 @@ namespace substitution {
 
     Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
-						 const EVector& LCN,
+						 const EVector& sparse_LCN,
 						 const EVector& LCB,
 						 const EVector& A_,
 						 const EVector& transition_P,
@@ -2318,6 +2403,8 @@ namespace substitution {
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
 
         auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
         auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
