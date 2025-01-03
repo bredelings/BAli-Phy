@@ -986,7 +986,8 @@ struct ExportSubSpec
     std::string print() const;
 };
 
-enum class ImpExpNs {module, type, pattern};
+// The 'type' seems to be different.
+enum class ImpExpNs {module, type, pattern, default_};
 
 std::string print(ImpExpNs);
 
@@ -999,6 +1000,7 @@ struct Export
     bool is_module() const;
     bool is_value() const;
     bool is_type() const;
+    bool is_default() const;
 };
 
 typedef Located<Export> LExport;

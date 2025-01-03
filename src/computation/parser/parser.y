@@ -572,6 +572,7 @@ exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 
 export: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
 |       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, $2, {}}}; }
+|       "default" modid               {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::default_}}, $2, {}}}; }
 
 export_subspec: %empty                {}
 |              "(" qcnames ")"        { $$ = Hs::ExportSubSpec{$2}; }

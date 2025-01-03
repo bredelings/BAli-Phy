@@ -146,6 +146,11 @@ bool Export::is_type() const
     return is_haskell_con_name(unloc(symbol));
 }
 
+bool Export::is_default() const
+{
+    return (ns and unloc(*ns) == ImpExpNs::default_);
+}
+
 string ImpSpec::print() const
 {
     vector<string> is;
