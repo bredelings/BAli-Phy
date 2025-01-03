@@ -156,6 +156,8 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 
     auto P = new Box<Matrix>(n,n);
 
+    // Using Map<.., Eigen::Aligned> gives a small (0.2%) speedup with codon alphabets.
+    // But ensuring alignment is messy on windows.
     Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EQ(Q.begin(), n, n);
     Map<Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EP(P->begin(), n, n);
 
