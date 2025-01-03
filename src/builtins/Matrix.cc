@@ -139,8 +139,14 @@ extern "C" closure builtin_function_identity(OperationArgs& Args)
     return m;
 }
 
+#include <unsupported/Eigen/MatrixFunctions>
+
 extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 {
+    using Eigen::Map;
+    using Eigen::Dynamic;
+    using Eigen::RowMajor;
+
     auto arg0 = Args.evaluate(0);
     auto& Q = arg0.as_<Box<Matrix>>();
     int n = Q.size1();
@@ -148,7 +154,26 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 
     double t = Args.evaluate(1).as_double();
 
-    return new Box<Matrix>( fromEigen( exp(toEigen(Q),t) ) );
+    auto P = new Box<Matrix>(n,n);
+
+    Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EQ(Q.begin(), n, n);
+    Map<Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EP(P->begin(), n, n);
+
+    EP = (t*EQ).exp();
+
+    for(int i=0; i< n;i++)
+    {
+        double sum = 0;
+        for(int j=0; j< n;j++)
+        {
+            EP(i,j) = std::max(EP(i,j),0.0);
+            sum += EP(i,j);
+        }
+        for(int j=0; j< n;j++)
+            EP(i,j)/= sum;
+    }
+    
+    return P;
 }
 
 
