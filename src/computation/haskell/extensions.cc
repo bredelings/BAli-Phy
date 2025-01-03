@@ -25,6 +25,7 @@ map<string,LangExt> ext_to_bit =
     {"LexicalNegation",             {LangExt::LexicalNegation}},
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
+    {"NamedDefaults",               {LangExt::NamedDefaults}},
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
