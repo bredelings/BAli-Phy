@@ -244,6 +244,9 @@
 %type <std::optional<Located<std::string>>> maybeas
 %type <std::optional<Hs::ImpSpec>> maybeimpspec
 %type <Hs::ImpSpec> impspec
+%type <std::vector<Hs::LExport>> importlist
+%type <std::vector<Hs::LExport>> importlist1
+%type <Hs::LExport> import
 
 %type <std::optional<int>> prec
 %type <Hs::Fixity> infix
@@ -620,8 +623,19 @@ maybeimpspec: impspec          { $$ = $1; }
 
 /* Since we can't have `module name` in an IMPORT list, maybe we should a different type here...*/
 
-impspec: "(" exportlist ")"           { $$ = Hs::ImpSpec{false, $2}; }
-|        "hiding" "(" exportlist ")"  { $$ = Hs::ImpSpec{true,  $3}; }
+impspec: "(" importlist ")"           { $$ = Hs::ImpSpec{false, $2}; }
+|        "hiding" "(" importlist ")"  { $$ = Hs::ImpSpec{true,  $3}; }
+
+importlist: importlist1               {$$ = $1;}
+|           %empty                    {}
+|           importlist1 ','           {$$ = $1;}
+|           ','                       {}
+
+importlist1: importlist1 "," import   {$$ = $1; $$.push_back($3);}
+|            import                   {$$.push_back($1);}
+
+import: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
+|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, $2, {}}}; }
 
 
 /* ------------- Fixity Declarations ----------------------------- */
