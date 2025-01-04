@@ -51,6 +51,12 @@ geometric_effect x = do
   add_move $ sliceSampleInteger x geometric_bounds
   add_move $ incDecMH x geometric_bounds
 
-geometric :: Double -> Geometric
-geometric p_success = Geometric (toFloating p_success)
+{- NOTE: Why specify that pSuccess :: Double ?
+   This avoids callers of (geometric p) getting
+   saddled with ambiguous types.
 
+   See note in Data.Floating.Types
+-}
+
+geometric :: Double -> Geometric
+geometric pSuccess = Geometric (toFloating pSuccess)
