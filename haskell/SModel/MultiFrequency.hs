@@ -109,9 +109,7 @@ multiFrequencyCovarion tree nodeInfo nodePi branchQ rateDist s01 s10 = modelForR
     where modelForRate rate = multiFrequencyUnscaled tree nodeInfo nodePi (tuffleySteel98Unscaled s01 s10 . scaleTo rate . branchQ)
 
 
-{-
-multiFrequencyCovarion tree nodeInfo nodePi branchQ rateDist s01 s10 =
+multiFrequencyCovarion' tree nodeInfo nodePi branchQ rateDist s01 s10 =
     multiFrequencyCovarion tree nodeInfo (frequenciesFromDict alphabet . nodePi) branchQ rateDist s01 s10
         where alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
               node = head $ IntSet.elems (getNodesSet tree)
--}
