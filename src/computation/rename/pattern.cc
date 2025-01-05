@@ -195,7 +195,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
 
             // FIXME -- we really want the location of the whole pattern here
             if (*S->arity != c->args.size())
-                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<*S->arity<<" doesn't match pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
         }
 
         // 11. Return the variables bound
@@ -335,7 +335,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
             // FIXME -- we really want the location of the whole pattern here
             if (*S->arity != c->args.size())
-                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<*S->arity<<" doesn't match pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
 
             unloc(C.head).name = S->name;
             unloc(C.head).arity = *S->arity;
