@@ -52,8 +52,8 @@ tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] ratesBetween
 
 tuffleySteel98 s01 s10 q = tuffleySteel98Unscaled s01 s10 (scaleTo 1 q)
 
-tuffleySteel98Test s01 s10 fraction q = mix [1-fraction, fraction] [tuffleySteel98Unscaled 1 0 (scaleTo 1 q) & unitMixture,
-                                                                    tuffleySteel98Unscaled s01 s10 (scaleTo 1 q) & unitMixture]
+tuffleySteel98Test s01 s10 fraction q = mix [1-fraction, fraction] [tuffleySteel98 1   0   q & unitMixture,
+                                                                    tuffleySteel98 s01 s10 q & unitMixture]
 
 huelsenbeck02 s01 s10 model = tuffleySteel98Unscaled s01 s10 <$> scaleTo 1 model
 
