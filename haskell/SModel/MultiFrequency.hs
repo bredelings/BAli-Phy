@@ -69,3 +69,42 @@ multiFrequency tree nodeInfo nodePi branchQ = MultiFrequency alphabet smap 1 (no
 multiFrequency' tree nodeInfo nodePi branchQ = multiFrequency tree nodeInfo (frequenciesFromDict alphabet . nodePi) branchQ
     where alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
           node = head $ IntSet.elems (getNodesSet tree)
+{-
+
+1. OK, so for homogeneous multi-freq model, we scale the q matrix for each branch to 1 before using it.
+   The single component thus has
+
+   q = scaleTo 1 . q'
+
+   And the rate is 1.
+
+2. For rate heterogeneity, we scale each q matrix to rate before using it.
+   The component with rate r will have
+
+   q = scaleTo r . q'
+
+   And the rate is r.
+
+3. For the covarion version, we scale the substitution rate to r, but we don't want to scale the switching rate.
+   The rate matrix for the component constructed from
+
+   q = tuffleySteel98Unscaled s01 s10 . scaleTo r . q
+
+   And the rate is pi1 * r.
+
+I guess what these all have in common is that every branch has the same rate.
+Right now we ensure that by specifying the common rate as part of the model object,
+   and rescaling to that rate before we use the rate matrix.
+But alternatively, we could move the rate rescaling into the q(pi) function, and compute the rate
+   by looking at a particular branch.
+This requires knowing the tree, which we don't know in the RateModel instance.  But we do know it
+   in the construction function, so we could compute it there and then cache it in the object.
+
+multiFrequencyCovarion tree nodeInfo nodePi branchQ rateDist s01 s10 = modelForRate <$> rateDist where
+    modelForRate rate = multiFrequency tree nodeInfo nodePi (tuffleySteel98Unscaled s01 s10 . scaleBy rate . branchQ)
+
+multiFrequencyCovarion tree nodeInfo nodePi branchQ rateDist s01 s10 =
+    multiFrequencyCovarion tree nodeInfo (frequenciesFromDict alphabet . nodePi) branchQ rateDist s01 s10
+        where alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
+              node = head $ IntSet.elems (getNodesSet tree)
+-}
