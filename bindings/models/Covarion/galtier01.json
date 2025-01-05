@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.galtier01"],
     "title":"The Galtier (2001) Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "galtier_01(@nu,@pi,@submodel)",
+    "call": "galtier01(@nu,@pi,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Maximum-likelihood phylogenetic analysis under a covarion-like model",

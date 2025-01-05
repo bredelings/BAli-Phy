@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "huelsenbeck_02_test(@s01,@s10,@fraction1,@submodel)",
+    "call": "huelsenbeck02Test(@s01,@s10,@fraction1,@submodel)",
     "import": ["SModel"],
     "args": [
         {

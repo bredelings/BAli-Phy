@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.tuffley_steel_98"],
     "title":"The Tuffley-Steel Covarion Model",
     "result_type": "CTMC<a>",
-    "call": "tuffley_steel_98(@s01,@s10,@submodel)",
+    "call": "tuffleySteel98(@s01,@s10,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Modeling the covarion hypothesis of nucleotide substitution",

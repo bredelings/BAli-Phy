@@ -3,7 +3,7 @@
     "synonyms": ["Covarion.huelsenbeck02"],
     "title":"The Huelsenbeck Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "huelsenbeck_02(@s01,@s10,@submodel)",
+    "call": "huelsenbeck02(@s01,@s10,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Testing a covariotide model of DNA substitution",
