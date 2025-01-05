@@ -34,7 +34,7 @@ instance Scalable (MultiFrequency i e n) where
 
 nodeInfo (MultiFrequency _ _ _ f _ _) node      = f node        -- get the node info
 nodeFreq (MultiFrequency _ _ _ f g _) node      = g $ f $ node  -- get the node property
-edgeProp (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node  -- get the node property
+edgeRates (MultiFrequency _ _ _ f _ h) tree edge = h $ f $ node  -- get the node property
     where edge' | towardRoot tree edge = reverseEdge edge
                 | otherwise = edge
           node = targetNode tree edge'
@@ -58,7 +58,7 @@ instance (HasRoot t, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ q]
-        where q = scaleTo (rate model) $ edgeProp model tree b
+        where q = scaleTo (rate model) $ edgeRates model tree b
     componentFrequencies (SModelOnTree tree model) = [nodeFreq model (root tree)]
 
 multiFrequency tree nodeInfo nodePi branchQ = MultiFrequency alphabet smap 1 (nodeInfo IntMap.!) (toVector . nodePi) branchQ
