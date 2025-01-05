@@ -19,27 +19,29 @@ import SModel.MarkovModulated
 --           - This allows getting the branches to apply q(b) and get an alphabet and smap out...
 
 -- The node information (i) is used to construct a node property (n) and an edge property (e).
-data MultiFrequency t i n e = MultiFrequency t Alphabet (EVector Int) (NodeId -> i) (i -> n) (i -> e)
+data MultiFrequency t i n e = MultiFrequency t (NodeId -> i) (i -> n) (i -> e)
 
-nodeInfo (MultiFrequency _ _ _ f _ _) node      = f node        -- get the node info
-nodeFreq (MultiFrequency _ _ _ f g _) node      = g $ f $ node  -- get the node property
-edgeRates (MultiFrequency tree _ _ f _ h) edge = h $ f $ node  -- get the node property
+nodeInfo (MultiFrequency _ f _ _) node      = f node        -- get the node info
+nodeFreq (MultiFrequency _ f g _) node      = g $ f $ node  -- get the node property
+edgeRates (MultiFrequency tree f _ h) edge = h $ f $ node  -- get the node property
     where edge' | towardRoot tree edge = reverseEdge edge
                 | otherwise = edge
           node = targetNode tree edge'
 
-instance HasAlphabet (MultiFrequency t i n e) where
-    getAlphabet (MultiFrequency _ a _ _ _ _) = a
+instance (HasRoot t, HasAlphabet e) => HasAlphabet (MultiFrequency t i n e) where
+    getAlphabet model@(MultiFrequency tree _ _ _) = getAlphabet (edgeRates model branch)
+        where branch = head $ IntSet.elems (getEdgesSet tree)
 
-instance HasSMap (MultiFrequency t i n e) where
-    getSMap (MultiFrequency _ _ s _ _ _) = s
+instance (HasRoot t, HasSMap e) => HasSMap (MultiFrequency t i n e) where
+    getSMap model@(MultiFrequency tree _ _ _) = getSMap (edgeRates model branch)
+        where branch = head $ IntSet.elems (getEdgesSet tree)
 
 instance Scalable e => Scalable (MultiFrequency t i n e) where
-    scaleBy x (MultiFrequency tree a smap nodeInfo nodePi branchQ) = MultiFrequency tree a smap nodeInfo nodePi (scaleBy x . branchQ)
+    scaleBy x (MultiFrequency tree nodeInfo nodePi branchQ) = MultiFrequency tree nodeInfo nodePi (scaleBy x . branchQ)
 
 -- All branches need to have the same rate!
 instance (HasRoot t, RateModel e) => RateModel (MultiFrequency t i n e) where
-    rate model@(MultiFrequency tree _ _ _ _ _) = rate (edgeRates model branch)
+    rate model@(MultiFrequency tree _ _ _) = rate (edgeRates model branch)
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
 -- It would be nice if the branchQ and the nodePi contained the _alphabet_ *before* applying them to a value.
@@ -57,16 +59,15 @@ instance (HasRoot t, RateModel e) => RateModel (MultiFrequency t i n e) where
  -}
 
 
-instance (HasRoot t, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m, t ~ t2) => SimpleSModel t (MultiFrequency t2 i j m) where
+instance (HasRoot t, HasSMap m, RateModel m, HasBranchLengths t, j ~ EVector Double, CTMC m, t ~ t2) => SimpleSModel t (MultiFrequency t2 i j m) where
     distribution model = [1]
     stateLetters (SModelOnTree _ model) = getSMap model
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ edgeRates model b]
     componentFrequencies (SModelOnTree tree model) = [nodeFreq model (root tree)]
 
-multiFrequency tree nodeInfo nodePi branchQ = MultiFrequency tree alphabet smap (nodeInfo IntMap.!) (toVector . nodePi) (scaleTo 1 . branchQ)
-    where alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
-          smap = getSMap (branchQ (nodeInfo IntMap.! node))
-          node = head $ IntSet.elems (getNodesSet tree)
+multiFrequencyUnscaled tree nodeInfo nodePi branchQ = MultiFrequency tree (nodeInfo IntMap.!) (toVector . nodePi) branchQ
+
+multiFrequency tree nodeInfo nodePi branchQ = multiFrequencyUnscaled tree nodeInfo nodePi (scaleTo 1 . branchQ)
 
 multiFrequency' tree nodeInfo nodePi branchQ = multiFrequency tree nodeInfo (frequenciesFromDict alphabet . nodePi) branchQ
     where alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
@@ -105,10 +106,7 @@ This requires knowing the tree, which we don't know in the RateModel instance.  
 -}
 
 multiFrequencyCovarion tree nodeInfo nodePi branchQ rateDist s01 s10 = modelForRate <$> rateDist
-    where modelForRate rate = MultiFrequency tree alphabet smap (nodeInfo IntMap.!) (toVector . nodePi) (tuffleySteel98Unscaled s01 s10 . scaleTo rate . branchQ)
-          alphabet = getAlphabet (branchQ (nodeInfo IntMap.! node))
-          smap = getSMap (branchQ (nodeInfo IntMap.! node))
-          node = head $ IntSet.elems (getNodesSet tree)
+    where modelForRate rate = multiFrequencyUnscaled tree nodeInfo nodePi (tuffleySteel98Unscaled s01 s10 . scaleTo rate . branchQ)
 
 
 {-
