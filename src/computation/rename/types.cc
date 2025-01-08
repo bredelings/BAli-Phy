@@ -79,6 +79,12 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
         Fa.type = rename_type(Fa.type);
         type = Fa;
     }
+    else if (auto st = type.to<Hs::StrictType>())
+    {
+        auto St = *st;
+        St.type = rename_type(St.type);
+        type = St;
+    }
     else
         throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";
 
