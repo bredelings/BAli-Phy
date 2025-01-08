@@ -709,7 +709,13 @@ string DefaultDecl::print() const
     vector<string> ts;
     for(auto& type: types)
         ts.push_back(type.print());
-    return "default (" + join(ts,", ") + " )";
+
+    string result = "default ";
+    if (maybe_class)
+        result += unloc(*maybe_class) + " ";
+    result += "(" + join(ts,", ") + " )";
+
+    return result;
 }
 
 string TypeSynonymDecl::print() const

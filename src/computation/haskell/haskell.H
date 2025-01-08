@@ -693,11 +693,12 @@ struct InstanceDecl: public Object
 
 struct DefaultDecl: public Object
 {
+    std::optional<Located<std::string>> maybe_class;
     std::vector<LType> types;
     DefaultDecl() {}
     DefaultDecl* clone() const { return new DefaultDecl(*this);}
     std::string print() const;
-    DefaultDecl(const std::vector<LType>& ts):types(ts) {}
+    DefaultDecl(const std::optional<Located<std::string>>& c, std::vector<LType>& ts):maybe_class(c), types(ts) {}
 };
 
 

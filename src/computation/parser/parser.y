@@ -243,6 +243,7 @@
 %type <bool> optqualified
 %type <std::optional<Located<std::string>>> maybeas
 %type <std::optional<Hs::ImpSpec>> maybeimpspec
+%type <std::optional<Located<std::string>>> opt_class
 %type <Hs::ImpSpec> impspec
 %type <std::vector<Hs::LExport>> importlist
 %type <std::vector<Hs::LExport>> importlist1
@@ -664,7 +665,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving */
 /*|        role_annot */
-|        "default" "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($3)}; }
+|        "default" opt_class "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($2,$4)}; }
 |        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($4, {@5,$5}, $7)};}
 /*
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -787,6 +788,10 @@ at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = {@$,Hs::Typ
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
+
+
+opt_class: %empty {$$ = {};}
+|          qtycon {$$ = {@1,$1};}
 
 /* Family results and kind signatures */
 
