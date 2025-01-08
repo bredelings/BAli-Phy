@@ -241,6 +241,8 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
 
         return {Fa, kind};
     }
+    else if (auto st = t.to<StrictType>())
+        throw myexception()<<"kind_check: strict type '"<<t.print()<<"' not allowed here.";
 
     throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
 }
@@ -282,6 +284,8 @@ Kind kindchecker_state::kind_for_type(const Type& t)
 
         return kind;
     }
+    else if (auto st = t.to<StrictType>())
+        throw myexception()<<"kind_for_type: strict type '"<<t.print()<<"' not allowed here.";
 
     throw myexception()<<"kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
@@ -339,7 +343,9 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
 
         return Fa;
     }
-
+    else if (auto st = t.to<StrictType>())
+        throw myexception()<<"zonk_kind_for_type: strict type '"<<t.print()<<"' not allowed here.";
+    
     throw myexception()<<"zonk_kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
 
