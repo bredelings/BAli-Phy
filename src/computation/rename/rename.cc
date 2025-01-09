@@ -92,6 +92,7 @@ Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
     // 1. Handle value decls
     M.value_decls = rename_infix(m, M.value_decls);
 
+    // default_decls aren't infix
     for(auto& [_,type_decl]: M.type_decls)
     {
         // 2. Handle default method decls
@@ -219,6 +220,8 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     renamer_state Rn(m);
 
     M.type_decls = Rn.rename_type_decls(M.type_decls);
+
+    M.default_decls = Rn.rename_default_decls(M.default_decls);
 
     // Find all the names bound HERE, versus in individual decls.
 

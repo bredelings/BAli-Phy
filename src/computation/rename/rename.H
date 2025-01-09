@@ -81,10 +81,14 @@ struct renamer_state
     Hs::DataFamilyInstanceDecl rename(Hs::DataFamilyInstanceDecl);
     Hs::TypeFamilyInstanceDecl rename(Hs::TypeFamilyInstanceDecl);
     Hs::TypeFamilyInstanceEqn rename(Hs::TypeFamilyInstanceEqn);
-    Haskell::KindSigDecl rename(Haskell::KindSigDecl KS);
+    Hs::KindSigDecl rename(Hs::KindSigDecl);
     Hs::LTypeCon rename_type(Hs::LTypeCon);
     Hs::LType rename_type(Hs::LType);
     Hs::Context rename(Hs::Context);
+
+    std::vector<Located<Hs::DefaultDecl>> rename_default_decls(std::vector<Located<Hs::DefaultDecl>>);
+
+    Hs::DefaultDecl rename(Hs::DefaultDecl);
 
     Hs::Exp rename(const Hs::Exp& E, const bound_var_info& bound, std::set<std::string>& free_vars);
     Hs::LExp rename(Hs::LExp E, const bound_var_info& bound, std::set<std::string>& free_vars);

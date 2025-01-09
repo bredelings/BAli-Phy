@@ -276,6 +276,25 @@ Haskell::KindSigDecl renamer_state::rename(Haskell::KindSigDecl KS)
     return KS;
 }
 
+Hs::DefaultDecl renamer_state::rename(Hs::DefaultDecl DD)
+{
+    if (DD.maybe_class)
+    {
+        auto [loc, class_name] = *DD.maybe_class;
+        auto renamed_tycon = rename_type(Hs::LTypeCon({loc,class_name}));
+        DD.maybe_class = {{loc,unloc(renamed_tycon).name}};
+    }
+    for(auto& type: DD.types)
+        type = rename_type(type);
+    return DD;
+}
+
+vector<Located<Hs::DefaultDecl>> renamer_state::rename_default_decls(vector<Located<Hs::DefaultDecl>> default_decls)
+{
+    for(auto& [loc, decl]: default_decls)
+        decl = rename(decl);
+    return default_decls;
+}
 
 Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 {

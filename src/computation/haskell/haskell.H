@@ -1200,7 +1200,7 @@ struct ModuleDecls
 {
     Decls type_decls;
 
-    std::optional<DefaultDecl> default_decl;
+    std::vector<Located<DefaultDecl>> default_decls;
 
     std::vector<FixityDecl> fixity_decls;
 

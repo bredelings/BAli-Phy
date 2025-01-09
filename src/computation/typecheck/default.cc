@@ -15,9 +15,50 @@ using std::tuple;
 
 void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
-    if (M.default_decl)
-        defaults() = desugar( M.default_decl->types );
-    else if (this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules))
+    auto Num = find_prelude_tycon("Num");
+
+    for(auto& [loc,default_decl]: M.default_decls)
+    {
+        push_source_span(*loc);
+        if (auto dclass = default_decl.maybe_class)
+        {
+            bool named_defaults = this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
+
+            {
+                push_source_span(*dclass->loc);
+                if (not named_defaults)
+                    record_error( Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
+                if (default_env().count(TypeCon(*dclass)))
+                {
+                    record_error( Note() <<"Duplicate default declaration." );
+                    // Original declaration at location; default_env().find->first.loc
+                }
+                pop_source_span();
+            }
+            // Check that the data types are all data types and instances of the class?
+            default_env().insert({TypeCon(*dclass), desugar(default_decl.types)});
+        }
+        else
+        {
+            if (default_env().count(Num))
+            {
+                record_error( Note() <<"Duplicate default declaration." );
+            }
+            // Check that the data types are all data types and instances of the class?
+            default_env().insert({Num, desugar( default_decl.types )});
+        }
+        pop_source_span();
+    }
+
+    if (not default_env().count(Num))
+    {
+        auto Integer = find_prelude_tycon("Integer");
+        auto Double = find_prelude_tycon("Double");
+        default_env().insert({Num, {Integer, Double}});
+    }
+
+    /*
+    if (this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules))
     {
         defaults() = { TypeCon({noloc,"()"}), TypeCon({noloc,"[]"}), TypeCon({noloc,"Integer"}), TypeCon({noloc,"Double"}) };
 
@@ -31,6 +72,7 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
             defaults().push_back( list_type( TypeCon({noloc,"Char"}) ) );
     }
+    */
 }
 
 // Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
@@ -105,7 +147,8 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
     // Fail if none of the predicates is a numerical constraint
     if (not any_num or (extended and not any_interactive and not any_num)) return false;
 
-    for(auto& type: defaults() )
+    auto Num = find_prelude_tycon("Num");
+    for(auto& type: default_env().at(Num))
     {
         tv.fill(type);
         auto wanteds = WantedConstraints(tv_wanteds);

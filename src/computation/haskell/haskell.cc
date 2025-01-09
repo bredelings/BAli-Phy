@@ -980,12 +980,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
         else if (decl.is_a<KindSigDecl>())
             type_decls.push_back(ldecl);
         else if (auto d = decl.to<DefaultDecl>())
-        {
-            if (default_decl)
-                throw myexception()<<"Found more than 1 default declaration in module!";
-            else
-                default_decl = *d;
-        }
+            default_decls.push_back({loc,*d});
         else
             throw myexception()<<"I don't recognize declaration '"<<decl.print()<<"'";
     }

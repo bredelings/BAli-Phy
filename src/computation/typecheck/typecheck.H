@@ -40,13 +40,16 @@ global_value_env sig_env(const signature_env& signatures);
 
 typedef std::map<TypeCon,Kind> KindSigEnv;
 
+// Can the instances be something like (Log Double)?  I suppose they could.
+typedef std::map<TypeCon,std::vector<Type>> DefaultEnv;
+
 struct global_tc_state
 {
     Module& this_mod; // for name lookups like Bool, Num, etc.
 
     KindSigEnv kind_sigs;
 
-    std::vector<Type> defaults;
+    DefaultEnv default_env;
 
     std::optional<int> unification_level;
 
@@ -94,8 +97,8 @@ public:
 
     const TypeFamInfo* info_for_type_fam(const std::string& fname) const;
 
-          std::vector<Type>& defaults()       {return global_state->defaults;}
-    const std::vector<Type>& defaults() const {return global_state->defaults;}
+          DefaultEnv& default_env()       {return global_state->default_env;}
+    const DefaultEnv& default_env() const {return global_state->default_env;}
 
           std::vector<Message>& messages()       {return this_mod().messages;}
     const std::vector<Message>& messages() const {return this_mod().messages;}
