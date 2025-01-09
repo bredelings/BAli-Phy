@@ -24,8 +24,15 @@ Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
 
     if (m.type_is_declared(name))
     {
-        auto T = m.lookup_type(name);
-        name = T->name;
+        try
+        {
+            auto T = m.lookup_type(name);
+            name = T->name;
+        }
+        catch (myexception& e)
+        {
+            error(loc, Note()<<e.what());
+        }
     }
     else
         error(loc, Note()<<"Undeclared type constructor `"<<name<<"`");
