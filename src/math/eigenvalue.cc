@@ -22,29 +22,27 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <Eigen/Dense>
 
 EigenValues::EigenValues(const Matrix& M)
-  :O(M.size1(),M.size2()),D(M.size1())
+    :O(M.size1(),M.size2()),D(M.size1())
 {
-  int n = M.size1();
-  assert(M.size1() == M.size2());
+    using namespace Eigen;
 
-  // 1. Make an eigen array from M
-  Eigen::MatrixXd M2(n,n);
-  for(int i=0;i<n;i++)
-    for(int j=0;j<n;j++)
-      M2(i,j) = M(i,j);
+    int n = M.size1();
+    assert(M.size1() == M.size2());
 
-  // 2. Solve the eigenvalue problem
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solution(M2,Eigen::ComputeEigenvectors);
+    // 1. Make an eigen array from M
+    Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> M2(M.begin(), n, n);
 
-  // 3. Copy values back into current data structures
-  auto d = solution.eigenvalues();
-  for(int i=0;i<n;i++)
-    D[i] = d[i];
+    // 2. Solve the eigenvalue problem
+    SelfAdjointEigenSolver<MatrixXd> solution(M2,ComputeEigenvectors);
 
-  auto o = solution.eigenvectors();
+    // 3. Copy values back into current data structures
+    auto d = solution.eigenvalues();
+    for(int i=0;i<n;i++)
+        D[i] = d[i];
 
-  for(int i=0;i<n;i++)
-    for(int j=0;j<n;j++)
-      O(i,j) = o(i,j);
+    auto o = solution.eigenvectors();
+
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            O(i,j) = o(i,j);
 }
-
