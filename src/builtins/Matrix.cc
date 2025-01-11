@@ -180,15 +180,15 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 
 
 
-extern "C" closure builtin_function_lExp(OperationArgs& Args)
+extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
     auto pi = (vector<double>) Args.evaluate(1).as_<EVector>();
     double t = Args.evaluate(2).as_double();
 
-    auto M = new Box<Matrix>;
+    object_ptr<Box<Matrix>> M = new Box<Matrix>;
     *M = exp(L.as_<EigenValues>(), pi, t);
-    return M;
+    return {EMaybe(M)};
 }
 
 
@@ -201,7 +201,7 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
  *           = pi^-1.2 * exp(S2) * pi^1/2
  */
 
-extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
+extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     const Matrix& Q = arg0.as_< Box<Matrix> >();
@@ -254,7 +254,8 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 	}
 
     //---------------- Compute eigensystem ------------------//
-    return {new EigenValues(S)};
+    expression_ref E(new EigenValues(S));
+    return {EMaybe(E)};
 }
 
 

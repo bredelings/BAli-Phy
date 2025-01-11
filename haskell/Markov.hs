@@ -78,7 +78,9 @@ instance CTMC Markov where
     getQ  (Markov q _  factor _) = scaleMatrix factor q
     getStartFreqs (Markov _ pi _ _) = pi
     qExp   (Markov q _  factor (NoDecomp _)) = mexp q factor
-    qExp   (Markov q pi  factor (RealEigenDecomp eigensys)) = lExp eigensys pi factor
+    qExp   (Markov q pi  factor (RealEigenDecomp eigensys)) =
+        case lExp eigensys pi factor of Just mat -> mat
+                                        Nothing -> mexp q factor
 
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
@@ -91,7 +93,8 @@ class CanMakeReversible m where
 
 instance CanMakeReversible Markov where
     reversible (Markov q pi s _) = Reversible $ Markov q pi s decomp
-        where decomp = RealEigenDecomp $ get_eigensystem q pi
+        where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
+                                                   Nothing -> NoDecomp (Just NoDiagReason)
 
 instance Scalable m => Scalable (MkReversible m) where
     scaleBy f (Reversible m) = Reversible $ scaleBy f m
