@@ -9,9 +9,9 @@ Compiling
 ---------
 
 You will need a C++ compiler that understands C++20.
- * gcc 11 (or higher) works
- * clang 14 (or higher) works
- * XCode 14 (or higher) works
+ * gcc 12 (or higher) works
+ * clang 17 (or higher) works
+ * XCode 15 (or higher) works
 
 Install Prerequisites
 ---------------------
@@ -49,7 +49,7 @@ If your version of meson is less than 1.1, you need to install the most recent v
 Build BAli-Phy
 --------------
 
-This will build the latest unreleased beta version of BAli-Phy, which fixes some memory issues in 3.6.  There are some changes to the model language.  Check the NEWS file for the details.
+This will build the latest unreleased 4.0-beta version of BAli-Phy, which fixes some memory issues in 3.6.  There are some changes to the model language.  Check the NEWS file for the details.
 
 ```
 git clone https://github.com/bredelings/BAli-Phy.git

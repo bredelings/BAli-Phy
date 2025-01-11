@@ -3026,7 +3026,7 @@ The stabilization criterion is the same one described above for numerical values
       <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++20</link> compiler</listitem>
       <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 1.1)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 11.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 14 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 12.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 17 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
@@ -3059,7 +3059,7 @@ Otherwise you can install meson through pip3:
     </section>
 
     <section><info><title>Mac</title></info>
-    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 11 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
+    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 15 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
  <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
 <screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
     </para>
