@@ -62,13 +62,15 @@ string TidyState::tidy_name(const string& name)
 }
 
 
-std::string tidy_print_paren(TidyState& tidy_state, Type t)
+std::string tidy_print_paren(TidyState& tidy_state, Type t, bool parenthesize_type_app)
 {
     t = follow_meta_type_var(t);
 
     auto s = tidy_print(tidy_state, t);
 
     if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
+        return s;
+    else if (not parenthesize_type_app and t.is_a<TypeApp>() and not is_type_op(t))
         return s;
     else
         return "(" + s + ")";
@@ -117,12 +119,10 @@ std::string tidy_print(TidyState& tidy_state, const TypeApp& app)
     {
         auto [tycon, arg1, arg2] = *type_op;
 
-        string arg1s = tidy_print(tidy_state, arg1);
-        if (is_type_op(arg1)) arg1s = "(" + arg1s + ")";
-        string arg2s = tidy_print(tidy_state, arg2);
-        if (is_type_op(arg2)) arg2s = "(" + arg2s + ")";
-
-        return arg1s + " " + tidy_print(tidy_state, tycon) + " "+ arg2s;
+        if (is_function_type(app) and is_function_type(arg2))
+            return tidy_print_paren(tidy_state, arg1, false) + " " + tycon.print() + " " + tidy_print(tidy_state, arg2);
+        else
+            return tidy_print_paren(tidy_state, arg1, false) + " " + tycon.print() + " " + tidy_print_paren(tidy_state, arg2, false);
     }
     else if (auto element_type = is_list_type(app))
         return "[" + tidy_print(tidy_state, *element_type) +"]";
@@ -134,14 +134,17 @@ std::string tidy_print(TidyState& tidy_state, const TypeApp& app)
         return "(" + join(parts,", ") +")";
     }
 
-    return tidy_print(tidy_state, app.head) + " " + tidy_print_paren(tidy_state, app.arg);
+    return tidy_print(tidy_state, app.head) + " " + tidy_print_paren(tidy_state, app.arg, true);
 }
 
 string tidy_print(TidyState& tidy_state, const ForallType& forall)
 {
     vector<string> binders;
     for(auto& type_var_binder: forall.type_var_binders)
-        binders.push_back(type_var_binder.print_with_kind());
+    {
+        binders.push_back(tidy_print(tidy_state, type_var_binder));
+//        binders.push_back(type_var_binder.print_with_kind());
+    }
     return "forall "+join(binders," ")+". "+tidy_print(tidy_state, forall.type);
 }
 
@@ -170,7 +173,7 @@ string tidy_print(TidyState& tidy_state, const StrictType& sl)
 
 string tidy_print(TidyState& tidy_state, const LazyType& sl)
 {
-    return "!" + tidy_print(tidy_state, sl.type);
+    return "~" + tidy_print(tidy_state, sl.type);
 }
 
 

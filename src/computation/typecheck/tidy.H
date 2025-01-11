@@ -3,7 +3,7 @@
 
 #include <set>
 #include <map>
-#include "haskell/coretype.H"
+#include "computation/haskell/coretype.H"
 
 struct TidyState
 {
