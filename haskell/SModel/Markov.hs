@@ -1,7 +1,7 @@
 module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
 
 import qualified Markov
-import           Markov (CTMC(..))
+import           Markov (CTMC(..), CanMakeReversible(..), MkReversible (..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -39,6 +39,10 @@ foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int ->
 -- Fields are: alphabet, smap, q, and cached rate.
 
 data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
+
+instance CanMakeReversible Markov where
+    reversible (Markov a smap m f) = Reversible $ Markov a smap m' f
+        where Reversible m' = reversible m
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where

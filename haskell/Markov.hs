@@ -86,7 +86,12 @@ instance CTMC Markov where
 
 data MkReversible m = Reversible  { nonreversible :: m }
 
-reversible = Reversible
+class CanMakeReversible m where
+    reversible :: m -> MkReversible m
+
+instance CanMakeReversible Markov where
+    reversible (Markov q pi s _) = Reversible $ Markov q pi s decomp
+        where decomp = RealEigenDecomp $ get_eigensystem q pi
 
 instance Scalable m => Scalable (MkReversible m) where
     scaleBy f (Reversible m) = Reversible $ scaleBy f m
