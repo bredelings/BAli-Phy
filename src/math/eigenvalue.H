@@ -22,7 +22,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "util/matrix.H"
-#include "computation/object.H"
 
 class EigenValues
 {

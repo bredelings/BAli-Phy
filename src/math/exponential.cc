@@ -24,6 +24,7 @@
 ///
 
 #include <vector>
+#include <iostream>
 #include "math/exponential.H"
 #include "math/eigenvalue.H"
 #include <unsupported/Eigen/MatrixFunctions>
