@@ -225,12 +225,13 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
     vector<double> sqrt_pi(n, 1.0);
     vector<double> inverse_sqrt_pi(n, 1.0);
-    for(int i=0;i<n;i++) {
-        if (pi[i] > 1.0e-13)
-        {
-            sqrt_pi[i] = sqrt(pi[i]);
-            inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
-        }
+    for(int i=0;i<n;i++)
+    {
+        // symmetrizing may be ill-conditioned -- fail
+        if (pi[i]*n < 1.0e-13) return {EMaybe()};
+
+        sqrt_pi[i] = sqrt(pi[i]);
+        inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
     }
 
     //--------------- Calculate eigensystem -----------------//
@@ -258,8 +259,16 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     // 1. Make an eigen array from M
     Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> S2(S.begin(), n, n);
 
-    expression_ref E(new Box<EigenValues>(S2, ComputeEigenvectors));
-    return {EMaybe(E)};
+    object_ptr<Box<EigenValues>> eigensolver(new Box<EigenValues>(S2, ComputeEigenvectors));
+    if (eigensolver->info() != Eigen::Success)
+        return {EMaybe()};
+    else if (std::abs(eigensolver->eigenvalues().maxCoeff()) > 1.0e-8)
+    {
+        // The largest eigenvalue should be exactly 0.
+        return {EMaybe()};
+    }
+    else
+        return {EMaybe(eigensolver)};
 }
 
 
