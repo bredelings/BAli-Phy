@@ -87,7 +87,7 @@ instance RateModel Markov where
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
 instance Show Markov where
-    show q = show $ getQ q
+    show (Markov _ _ m _) = show m
 
 nonEq a rates pi = scaleTo 1 $ markov a smap q pi
     where smap = simpleSMap a

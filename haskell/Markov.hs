@@ -96,6 +96,9 @@ instance CanMakeReversible Markov where
 instance Scalable m => Scalable (MkReversible m) where
     scaleBy f (Reversible m) = Reversible $ scaleBy f m
 
+instance Show Markov where
+    show m@(Markov _ _ _ decomp) = "Markov " ++ show decomp ++ "\n" ++ show (getQ m)
+
 instance Show m => Show (MkReversible m) where
     show (Reversible m) = show m
 
