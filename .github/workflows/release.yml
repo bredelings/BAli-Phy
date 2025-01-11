@@ -43,30 +43,22 @@ jobs:
   build_and_upload:
     strategy:
       matrix:
-        name: [ubuntu-gcc-11-20.04,
-               ubuntu-gcc-11-22.04,
-               ubuntu-gcc-14,
+        name: [ubuntu-gcc-12-22.04,
+               ubuntu-gcc-14-24.04,
                macos-xcode-15-intel,
                macos-xcode-16-arm,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-11-20.04
-            os: ubuntu-20.04
-            compiler: gcc
-            version: "11"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-11-22.04
+          - name: ubuntu-gcc-12-22.04
             os: ubuntu-22.04
             compiler: gcc
-            version: "11"
+            version: "12"
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-gcc-14
+          - name: ubuntu-gcc-14-24.04
             os: ubuntu-24.04
             compiler: gcc
             version: "14"

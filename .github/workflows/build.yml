@@ -12,14 +12,13 @@ jobs:
   build:
     strategy:
       matrix:
-        name: [ubuntu-gcc-11-20.04,
-               ubuntu-gcc-11-22.04,
-
-               ubuntu-gcc-11,
+        name: [
+               ubuntu-gcc-12-22.04,
                ubuntu-gcc-12-debugoptimized,
+               ubuntu-gcc-12-NDEBUG_DP,
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
-               ubuntu-gcc-14,
+               ubuntu-gcc-14-24.04,
                ubuntu-clang-17,
                macos-xcode-15-intel,
                macos-xcode-16-arm,
@@ -27,26 +26,11 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-11-20.04
-            os: ubuntu-20.04
-            compiler: gcc
-            version: "11"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-11-22.04
+          - name: ubuntu-gcc-12-22.04
             os: ubuntu-22.04
             compiler: gcc
-            version: "11"
+            version: "12"
             buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-11
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "11"
-            buildtype: "debugoptimized"  # test WITH assertions
-            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
             arch: "linux64"
 
           - name: ubuntu-gcc-12-debugoptimized
@@ -54,6 +38,14 @@ jobs:
             compiler: gcc
             version: "12"
             buildtype: "debugoptimized"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-12-NDEBUG_DP
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "12"
+            buildtype: "debugoptimized"  # test WITH assertions
+            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
             arch: "linux64"
 
           - name: ubuntu-gcc-13-DEBUG_MACHINE
@@ -64,19 +56,19 @@ jobs:
             cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
-          - name: ubuntu-gcc-14
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "14"
-            buildtype: "release"
-            arch: "linux64"
-
           - name: ubuntu-gcc-14-sanitize
             os: ubuntu-24.04
             compiler: gcc
             version: "14"
             buildtype: "release"
             sanitize: "address"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-14-24.04
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
+            buildtype: "release"
             arch: "linux64"
 
           - name: ubuntu-clang-17
