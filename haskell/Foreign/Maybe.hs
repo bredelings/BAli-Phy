@@ -19,3 +19,7 @@ cMaybe (Just x) = cJust x
 cNothing = builtin_cNothing ()
 
 cIsNothing = not . cIsJust
+
+fromCMaybe x = if cIsJust x
+               then Just $ cFromJust x
+               else Nothing
