@@ -8,7 +8,6 @@ import           SModel.Frequency
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
-import           SModel.EigenExp
 
 foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 

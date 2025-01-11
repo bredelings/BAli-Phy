@@ -1,4 +1,4 @@
-module SModel.EigenExp where
+module EigenExp where
 
 import Data.Matrix
 

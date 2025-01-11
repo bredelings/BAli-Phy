@@ -2,6 +2,7 @@ module Markov where
 
 import Data.Matrix
 import SModel.Rate
+import EigenExp
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
@@ -57,25 +58,30 @@ instance CTMC (Matrix Double) where
 
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
-data Markov = Markov (Matrix Double) (EVector Double) Double
+
+data NoDecompReason = NoDiagReason
+data MatDecomp = NoDecomp (Maybe NoDecompReason) | RealEigenDecomp EigenSystem
+
+data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp
 
 -- can I hide the Markov constructor?
 -- should I rename this function to ctmc?
-markov q pi = Markov qFixed pi 1 where
+markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) where
     qFixed = fixupDiagonalRates q
 
-markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 where
+markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) where
     qFixed = fixupDiagonalRates q
 
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 
 instance Scalable Markov where
-    scaleBy f (Markov q pi s) = Markov q pi (s*f)
+    scaleBy f (Markov q pi s decomp) = Markov q pi (s*f) decomp
 
 instance CTMC Markov where
-    getQ  (Markov q _  factor) = scaleMatrix factor q
-    getStartFreqs (Markov _ pi _     ) = pi
-    qExp   (Markov q _  factor) = mexp q factor
+    getQ  (Markov q _  factor _) = scaleMatrix factor q
+    getStartFreqs (Markov _ pi _ _) = pi
+    qExp   (Markov q _  factor (NoDecomp _)) = mexp q factor
+    qExp   (Markov q pi  factor (RealEigenDecomp eigensys)) = lExp eigensys pi factor
 
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
