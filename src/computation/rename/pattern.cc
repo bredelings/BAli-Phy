@@ -189,13 +189,20 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
             error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
-            auto S = m.lookup_symbol(id);
-            if (S->symbol_type != symbol_type_t::constructor)
-                error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
+            try
+            {
+                auto S = m.lookup_symbol(id);
+                if (S->symbol_type != symbol_type_t::constructor)
+                    error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
-            // FIXME -- we really want the location of the whole pattern here
-            if (*S->arity != c->args.size())
-                error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
+                // FIXME -- we really want the location of the whole pattern here
+                if (*S->arity != c->args.size())
+                    error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
         }
 
         // 11. Return the variables bound
@@ -328,20 +335,27 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
             error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
-            auto S = m.lookup_symbol(id);
-            assert(S);
-            if (S->symbol_type != symbol_type_t::constructor)
-                error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
+            try
+            {
+                auto S = m.lookup_symbol(id);
+                assert(S);
+                if (S->symbol_type != symbol_type_t::constructor)
+                    error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
-            // FIXME -- we really want the location of the whole pattern here
-            if (*S->arity != c->args.size())
-                error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
+                // FIXME -- we really want the location of the whole pattern here
+                if (*S->arity != c->args.size())
+                    error(loc, Note()<<"Pattern has "<<c->args.size()<<" fields, but should have "<<*S->arity<<"!");
 
-            unloc(C.head).name = S->name;
-            unloc(C.head).arity = *S->arity;
+                unloc(C.head).name = S->name;
+                unloc(C.head).arity = *S->arity;
 
-            // 10. Construct the renamed pattern
-            pat = C;
+                // 10. Construct the renamed pattern
+                pat = C;
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
         }
 
         // 11. Return the variables bound

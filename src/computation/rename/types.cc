@@ -225,8 +225,15 @@ Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstance
 
 	if (m.type_is_declared(con_name))
 	{
-	    auto T = m.lookup_type(con_name);
-	    con_name = T->name;
+            try
+            {
+                auto T = m.lookup_type(con_name);
+                con_name = T->name;
+            }
+            catch (myexception& e)
+            {
+                error(con_loc, Note()<<e.what());
+            }
 	}
 	else
 	    error(con_loc, Note()<<"Instance for undeclared type family `"<<con_name<<"`");
@@ -248,8 +255,15 @@ Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanc
 
 	if (m.type_is_declared(con_name))
 	{
-	    auto T = m.lookup_type(con_name);
-	    con_name = T->name;
+            try
+            {
+                auto T = m.lookup_type(con_name);
+                con_name = T->name;
+            }
+            catch (myexception& e)
+            {
+                error(con_loc, Note()<<e.what());
+            }
 	}
 	else
 	    error(con_loc, Note()<<"Instance for undeclared data family `"<<con_name<<"`");

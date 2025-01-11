@@ -312,12 +312,19 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
         {
-            auto S = m.lookup_symbol(name);
-            string qualified_name = S->name;
-            name = qualified_name;
-            if (get_module_name(qualified_name) == m.name)
-                free_vars.insert(qualified_name);
-            E = V;
+            try
+            {
+                auto S = m.lookup_symbol(name);
+                string qualified_name = S->name;
+                name = qualified_name;
+                if (get_module_name(qualified_name) == m.name)
+                    free_vars.insert(qualified_name);
+                E = V;
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
         }
         else
         {
@@ -333,11 +340,18 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // Does that mean that we look up constructors in a different table?
         if (m.is_declared(name))
         {
-            auto S = m.lookup_symbol(name);
-            name = S->name; // use the qualified name
-            // We return a reference to a lambda function, in case the constructor isn't fully applied.
-            C.arity = S->arity;
-            E = C;
+            try
+            {
+                auto S = m.lookup_symbol(name);
+                name = S->name; // use the qualified name
+                // We return a reference to a lambda function, in case the constructor isn't fully applied.
+                C.arity = S->arity;
+                E = C;
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
         }
         else
         {
