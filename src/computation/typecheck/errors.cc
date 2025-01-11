@@ -86,7 +86,7 @@ Note make_mismatch_message(TidyState& tidy_state, const Constraint& wanted, cons
     Note mismatch;
     if (auto uorig = to<UnifyOrigin>(wanted.origin))
     {
-        mismatch<<"Expected `"<<tidy_print(tidy_state, uorig->t2)<<"` but got `"<<tidy_print(tidy_state, uorig->t1)<<"`";
+        mismatch<<"Expected `"<<tidy_state.print(uorig->t2)<<"` but got `"<<tidy_state.print(uorig->t1)<<"`";
     }
     else if (auto app = to<AppOrigin>(wanted.origin); app and app->app)
     {
@@ -99,7 +99,7 @@ Note make_mismatch_message(TidyState& tidy_state, const Constraint& wanted, cons
         mismatch<<"In left section, "<<lsec->op<<" is not a function!";
     else
     {
-        mismatch<<"Couldn't match `"<<tidy_print(tidy_state, t1)<<"` with `"<<tidy_print(tidy_state, t2)<<"`";
+        mismatch<<"Couldn't match `"<<tidy_state.print(t1)<<"` with `"<<tidy_state.print(t2)<<"`";
     }
     return mismatch;
 }
@@ -148,7 +148,7 @@ vector<tuple<Hs::Var,Type>> get_relevant_bindings(const TypeCheckerContext& tc_s
     {
         auto note = Note()<<"Relevant bindings:";
         for(auto& [var,type]: bindings)
-            note<<"\n  "<<print_unqualified_id(var.print())<<" :: "<<tidy_print(tidy_state, type);
+            note<<"\n  "<<print_unqualified_id(var.print())<<" :: "<<tidy_state.print(type);
         notes.push_back(note);
     }
     return notes;
@@ -217,7 +217,7 @@ string get_context(TidyState& tidy_state, const Constraint& wanted, const vector
     {
         vector<string> gs;
         for(auto& given: givens)
-            gs.push_back(tidy_print(tidy_state, given.pred));
+            gs.push_back(tidy_state.print(given.pred));
         return " in context " + join(gs, ", ");
     }
     else
@@ -237,7 +237,7 @@ Notes TypeChecker::check_eq_tv_constraint(TidyState& tidy_state, vector<shared_p
     Note mismatch = make_mismatch_message(tidy_state, wanted, t1, t2);
 
     Note cannot_unify;
-    cannot_unify<<"Cannot unify `"<<tidy_print(tidy_state, t1)<<"` with `"<<tidy_print(tidy_state, t2)<<"`";
+    cannot_unify<<"Cannot unify `"<<tidy_state.print(t1)<<"` with `"<<tidy_state.print(t2)<<"`";
 
     auto problems = check_type_equality(t1,t2);
 
@@ -275,7 +275,7 @@ Notes TypeChecker::check_eq_tv_constraint(TidyState& tidy_state, vector<shared_p
         auto escaped = intersection(free_type_variables(t2), implic->tvs | ranges::to<set>());
         vector<string> escaped_names;
         for(auto& tv: escaped)
-            escaped_names.push_back(tidy_print(tidy_state,tv));
+            escaped_names.push_back(tidy_state.print(tv));
         cannot_unify<<" because the quantified variable `"<<join(escaped_names," ")<<"` would escape its scope";
 
         cannot_unify<<get_context(tidy_state, wanted, implic_scopes)<<".";
@@ -331,7 +331,7 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
         else
         {
             Note e;
-            e<<"Could not derive `"<<bold_green(tidy_print(tidy_state, wanted.pred))<<ANSI::bold<<"`";
+            e<<"Could not derive `"<<bold_green(tidy_state.print(wanted.pred))<<ANSI::bold<<"`";
 
             e<<get_context(tidy_state, wanted, implic_scopes);
 
@@ -360,9 +360,9 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds)
     // Get names for problematic variables before names in "relevant bindings"
     TidyState tidy_state;
     for(auto& tv: free_type_variables(wanteds))
-        tidy_print(tidy_state, tv);
+        tidy_state.print(tv);
     for(auto& mtv: free_meta_type_variables(wanteds))
-        tidy_print(tidy_state, mtv);
+        tidy_state.print(mtv);
 
     check_wanteds(tidy_state, implic_scopes, wanteds);
 }
