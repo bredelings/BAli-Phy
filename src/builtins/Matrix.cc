@@ -179,19 +179,6 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 
 
 
-extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
-{
-    auto L = Args.evaluate(0);
-    auto pi = (vector<double>) Args.evaluate(1).as_<EVector>();
-    double t = Args.evaluate(2).as_double();
-
-    object_ptr<Box<Matrix>> M = new Box<Matrix>;
-    *M = exp(L.as_<Box<EigenValues>>(), pi, t);
-    return {EMaybe(M)};
-}
-
-
-
 /*
  * 1. pi[i]*Q(i,j) = pi[j]*Q(j,i)         - Because Q is reversible
  * 2. Q(i,j)/pi[j] = Q(j,i)/pi[i] = S1(i,j)
@@ -262,7 +249,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     object_ptr<Box<EigenValues>> eigensolver(new Box<EigenValues>(S2, ComputeEigenvectors));
     if (eigensolver->info() != Eigen::Success)
         return {EMaybe()};
-    else if (std::abs(eigensolver->eigenvalues().maxCoeff()) > 1.0e-8)
+    else if (std::abs(eigensolver->eigenvalues().maxCoeff()) > 1.0e-9)
     {
         // The largest eigenvalue should be exactly 0.
         return {EMaybe()};
@@ -271,6 +258,23 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
         return {EMaybe(eigensolver)};
 }
 
+extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
+{
+    auto L = Args.evaluate(0);
+    auto pi = (vector<double>) Args.evaluate(1).as_<EVector>();
+    double t = Args.evaluate(2).as_double();
+
+    object_ptr<Box<Matrix>> Mptr = new Box<Matrix>;
+    auto& M = *Mptr;
+    M = exp(L.as_<Box<EigenValues>>(), pi, t);
+
+    double error = positivize_and_renormalize_matrix(M);
+
+    if (error > 1.0e-9)
+        return {EMaybe()};
+    else
+        return {EMaybe(Mptr)};
+}
 
 
 extern "C" closure builtin_function_transpose(OperationArgs& Args)

@@ -38,8 +38,8 @@ Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t);
 
 double rate_away(const std::vector<double>& pi, const Eigen::MatrixXd& Q);
 
-void positivize_and_renormalize_matrix(Matrix& E);
-void positivize_and_renormalize_matrix(Eigen::MatrixXd& E);
+double positivize_and_renormalize_matrix(Matrix& E);
+double positivize_and_renormalize_matrix(Eigen::MatrixXd& E);
 
 Eigen::MatrixXd toEigen(const Matrix& Q);
 Matrix fromEigen(const Eigen::MatrixXd& EM);

@@ -172,29 +172,6 @@ Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const
     return E;
 }
 
-void positivize_and_renormalize_matrix(Matrix& E)
-{
-    // Force positive, and renormalize rows.
-    for(int i=0;i<E.size1();i++)
-    {
-        double sum = 0;
-	for(int j=0;j<E.size2();j++) {
-	    // assert(E(i,j) >= -1.0e-10);
-
-            // Force positive
-            E(i,j) = std::max(0.0, E(i,j));
-            sum += E(i,j);
-	}
-
-        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
-
-        // Renormalize rows
-        double factor = 1.0/sum;
-	for(int j=0;j<E.size2();j++)
-            E(i,j) *= factor;
-    }
-}
-
 Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
     bool small = true;
@@ -202,34 +179,10 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
         if (eigenvalue * t < -1)
             small = false;
 
-    auto E = small?exp_small(eigensystem, pi, t):exp_large(eigensystem, pi, t);
-
-    positivize_and_renormalize_matrix(E);
-
-    return E;
-}
-
-void positivize_and_renormalize_matrix(Eigen::MatrixXd& E)
-{
-    // Force positive, and renormalize rows.
-    for(int i=0;i<E.rows();i++)
-    {
-        double sum = 0;
-        for(int j=0;j<E.cols();j++) {
-            // assert(E(i,j) >= -1.0e-10);
-
-            // Force positive
-            E(i,j) = std::max(0.0, E(i,j));
-            sum += E(i,j);
-        }
-
-        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
-
-        // Renormalize rows
-        double factor = 1.0/sum;
-        for(int j=0;j<E.cols();j++)
-            E(i,j) *= factor;
-    }
+    if (small)
+        return exp_small(eigensystem, pi, t);
+    else
+        return exp_large(eigensystem, pi, t);
 }
 
 Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t)
@@ -281,6 +234,64 @@ double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
     }
     assert(rate >= 0);
     return rate;
+}
+
+double positivize_and_renormalize_matrix(Matrix& E)
+{
+    double error = 0;
+    // Force positive, and renormalize rows.
+    for(int i=0;i<E.size1();i++)
+    {
+        double sum = 0;
+	for(int j=0;j<E.size2();j++) {
+	    // assert(E(i,j) >= -1.0e-10);
+
+            // Force positive
+            E(i,j) = std::max(0.0, E(i,j));
+            sum += E(i,j);
+	}
+
+        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
+
+        // Renormalize rows
+        double factor = 1.0/sum;
+	for(int j=0;j<E.size2();j++)
+            E(i,j) *= factor;
+
+        // The row sum should be 1!
+        error = std::max(error, std::abs(1-sum));
+    }
+
+    return error;
+}
+
+double positivize_and_renormalize_matrix(Eigen::MatrixXd& E)
+{
+    double error = 0;
+    // Force positive, and renormalize rows.
+    for(int i=0;i<E.rows();i++)
+    {
+        double sum = 0;
+        for(int j=0;j<E.cols();j++) {
+            // assert(E(i,j) >= -1.0e-10);
+
+            // Force positive
+            E(i,j) = std::max(0.0, E(i,j));
+            sum += E(i,j);
+        }
+
+        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
+
+        // Renormalize rows
+        double factor = 1.0/sum;
+        for(int j=0;j<E.cols();j++)
+            E(i,j) *= factor;
+
+        // The row sum factor should be 1!
+        error = std::max(error, std::abs(1-sum));
+    }
+
+    return error;
 }
 
 std::vector<double> compute_stationary_freqs(const Matrix& Q)
