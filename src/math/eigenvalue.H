@@ -24,22 +24,22 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/matrix.H"
 #include "computation/object.H"
 
-class EigenValues: public Object 
+class EigenValues
 {
-  Matrix O;
-  std::vector<double> D;
+    Matrix O;
+    std::vector<double> D;
 
 public:
-  EigenValues* clone() const {return new EigenValues(*this);}
+    EigenValues* clone() const {return new EigenValues(*this);}
 
-  int size() const {return D.size();}
+    int size() const {return D.size();}
 
-  const std::vector<double>& Diagonal() const {return D;}
-  std::vector<double>& Diagonal() {return D;}
+    const std::vector<double>& Diagonal() const {return D;}
+    std::vector<double>& Diagonal() {return D;}
 
-  const Matrix& Rotation() const {return O;}
+    const Matrix& Rotation() const {return O;}
 
-  EigenValues(const Matrix& M);
+    EigenValues(const Matrix& M);
 };
 
 #endif

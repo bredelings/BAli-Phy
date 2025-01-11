@@ -187,7 +187,7 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
     double t = Args.evaluate(2).as_double();
 
     object_ptr<Box<Matrix>> M = new Box<Matrix>;
-    *M = exp(L.as_<EigenValues>(), pi, t);
+    *M = exp(L.as_<Box<EigenValues>>(), pi, t);
     return {EMaybe(M)};
 }
 
@@ -254,7 +254,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 	}
 
     //---------------- Compute eigensystem ------------------//
-    expression_ref E(new EigenValues(S));
+    expression_ref E(new Box<EigenValues>(S));
     return {EMaybe(E)};
 }
 
