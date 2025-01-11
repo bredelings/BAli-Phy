@@ -25,9 +25,8 @@
 
 #include <vector>
 #include <iostream>
-#include "math/exponential.H"
-#include "math/eigenvalue.H"
 #include <unsupported/Eigen/MatrixFunctions>
+#include "exponential.H"
 
 
 // The approach used in this file works because of general properties
@@ -69,29 +68,29 @@ using std::vector;
 // compute the exp(M) - I from the SVD for M (i.e. M=O D O^t )
 Matrix expm1(const EigenValues& solution,double t) 
 {
-    const Matrix& O = solution.Rotation();
-    std::vector<double> D = solution.Diagonal();
-
+    auto& O = solution.eigenvectors();
+    Eigen::VectorXd D = solution.eigenvalues();
+    int n = D.size();
+    
     // Exponentiate Eigenvalues
-    for(int i=0;i<solution.size();i++)
-	D[i] = expm1(t*D[i]);
+    for(int i=0;i<n;i++)
+        D[i] = expm1(t*D[i]);
 
     //Matrix E = prod(O,prod(D,trans(O)));
 
-    int size = O.size1();
-    Matrix E(size,size);
-    for(int i=0;i<size;i++)
-	for(int j=0;j<size;j++) {
-	    double temp =0;
-	    for(int k=0;k<size;k++)
-		temp += O(i,k)*O(j,k)*D[k];
-	    E(i,j) = temp;
-	}
-	
+    Matrix E(n,n);
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++) {
+            double temp =0;
+            for(int k=0;k<n;k++)
+                temp += O(i,k)*O(j,k)*D[k];
+            E(i,j) = temp;
+        }
+
 //#ifndef NDEBUG
 //    for(int i=0;i<E.size1();i++)
-//	for(int j=0;j<E.size2();j++)
-//	    assert(E(i,j) + ((i==j)?1.0:0.0) >= -1.0e-10);
+//      for(int j=0;j<E.size2();j++)
+//          assert(E(i,j) + ((i==j)?1.0:0.0) >= -1.0e-10);
 //#endif
 
     return E;
@@ -100,29 +99,29 @@ Matrix expm1(const EigenValues& solution,double t)
 // compute the exp(M) I from the SVD for M (i.e. M=O D O^t )
 Matrix exp(const EigenValues& solution,double t)
 {
-    const Matrix& O = solution.Rotation();
-    std::vector<double> D = solution.Diagonal();
-
+    auto& O = solution.eigenvectors();
+    Eigen::VectorXd D = solution.eigenvalues();
+    int n = D.size();
+    
     // Exponentiate Eigenvalues
-    for(int i=0;i<solution.size();i++)
-	D[i] = exp(t*D[i]);
+    for(int i=0;i<n;i++)
+        D[i] = exp(t*D[i]);
 
     //Matrix E = prod(O,prod(D,trans(O)));
 
-    int size = O.size1();
-    Matrix E(size,size);
-    for(int i=0;i<size;i++)
-	for(int j=0;j<size;j++) {
-	    double temp =0;
-	    for(int k=0;k<size;k++)
-		temp += O(i,k)*O(j,k)*D[k];
-	    E(i,j) = temp;
-	}
+    Matrix E(n,n);
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++) {
+            double temp =0;
+            for(int k=0;k<n;k++)
+                temp += O(i,k)*O(j,k)*D[k];
+            E(i,j) = temp;
+        }
 
 //#ifndef NDEBUG
 //    for(int i=0;i<E.size1();i++)
-//	for(int j=0;j<E.size2();j++)
-//	    assert(E(i,j) >= -1.0e-10);
+//      for(int j=0;j<E.size2();j++)
+//          assert(E(i,j) >= -1.0e-10);
 //#endif
 
     return E;
@@ -199,7 +198,7 @@ void positivize_and_renormalize_matrix(Matrix& E)
 Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
     bool small = true;
-    for(double eigenvalue: eigensystem.Diagonal())
+    for(double eigenvalue: eigensystem.eigenvalues())
         if (eigenvalue * t < -1)
             small = false;
 

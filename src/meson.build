@@ -97,7 +97,6 @@ libbaliphy_sources = [
   'substitution/parsimony.cc',
 
   'math/exponential.cc',
-  'math/eigenvalue.cc',
   'math/pow2.cc',
 
   'models/TreeInterface.cc',

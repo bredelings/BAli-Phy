@@ -30,7 +30,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/matrix.H"
 #include <Eigen/Dense>
 
-class EigenValues;
+
+typedef Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> EigenValues;
+
 Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);
 Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t);
 

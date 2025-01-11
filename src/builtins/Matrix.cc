@@ -2,7 +2,6 @@
 //#define DEBUG_RATE_MATRIX
 #include "computation/machine/args.H"
 #include "math/exponential.H"
-#include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
 #include "sequence/doublets.H"
 #include "sequence/codons.H"
@@ -203,8 +202,10 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 {
+    using namespace Eigen;
+
     auto arg0 = Args.evaluate(0);
-    const Matrix& Q = arg0.as_< Box<Matrix> >();
+    const ::Matrix& Q = arg0.as_< Box<::Matrix> >();
 
     auto pi = vector<double>(Args.evaluate(1).as_<EVector>() );
 
@@ -233,7 +234,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     }
 
     //--------------- Calculate eigensystem -----------------//
-    Matrix S(n,n);
+    ::Matrix S(n,n);
     for(int i=0;i<n;i++)
 	for(int j=0;j<=i;j++) {
 	    S(j,i) = S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
@@ -254,7 +255,10 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 	}
 
     //---------------- Compute eigensystem ------------------//
-    expression_ref E(new Box<EigenValues>(S));
+    // 1. Make an eigen array from M
+    Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> S2(S.begin(), n, n);
+
+    expression_ref E(new Box<EigenValues>(S2, ComputeEigenvectors));
     return {EMaybe(E)};
 }
 
