@@ -4,6 +4,8 @@
   + BUSTED and BUSTED-S substitution models for positive selection.
 - Bug fixes:
  + Log sorted (conserved) omegas in m3_test.
+- Speed:
+ + Use faster eigenvalue method to compute exp(Q*t) by default, falling back to slower method if needed.        
 
 * 4.0-beta16 (Nov 23, 2024)
 - Speed: further speed up tree operations.
