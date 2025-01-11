@@ -196,7 +196,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     std::shared_ptr<VarInfo> var_info;
     if (is_haskell_builtin_con_name(x.name))
     {
-        auto S = this_mod.lookup_builtin_symbol(x.name);
+        auto S = lookup_builtin_symbol(x.name);
         assert(S);
 	var_info = S->var_info;
     }

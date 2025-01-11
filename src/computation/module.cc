@@ -1541,7 +1541,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
 // reference to the VarInfo for these symbols.
 std::map<std::string, const_symbol_ptr> builtin_symbols_cache;
 
-const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
+const_symbol_ptr lookup_builtin_symbol(const std::string& name)
 {
     auto iter = builtin_symbols_cache.find(name);
     if (iter == builtin_symbols_cache.end())
@@ -1554,7 +1554,7 @@ const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
     return iter->second;
 }
 
-const_type_ptr Module::lookup_builtin_type(const std::string& name)
+const_type_ptr lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
         return const_type_ptr(new type_info{"Char", type_info::data_info(), {}, 0, kind_type()});
@@ -2157,6 +2157,27 @@ const_type_ptr CompiledModule::lookup_local_type(const std::string& type_name) c
         return iter->second;
 }
 
+const_symbol_ptr CompiledModule::lookup_symbol(const std::string& name) const
+{
+    if (is_haskell_builtin_con_name(name))
+        return lookup_builtin_symbol(name);
+
+    int count = aliases.count(name);
+    if (count == 0)
+        throw myexception()<<"Indentifier '"<<name<<"' not declared.";
+    else if (count == 1)
+        return aliases.find(name)->second;
+    else
+    {
+        myexception e;
+        e<<"Identifier '"<<name<<"' is ambiguous!";
+        auto range = aliases.equal_range(name);
+        for(auto i = range.first; i != range.second ;i++)
+            e<<"\n "<<i->first<<" -> "<<i->second->name;
+        throw e;
+    }
+}
+
 void CompiledModule::clear_symbol_table()
 {
     dependencies_.clear();
@@ -2211,6 +2232,10 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     std::swap(exported_symbols_, m->exported_symbols_);
 
     std::swap(exported_types_, m->exported_types_);
+
+    std::swap(aliases, m->aliases);
+
+    std::swap(type_aliases, m->type_aliases);
 
     // Why can't we clear the language extensions on m?
     language_extensions_ = m->language_extensions;

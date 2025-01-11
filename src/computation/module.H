@@ -209,7 +209,6 @@ public:
 
     bool type_in_scope_with_name(const std::string&, const std::string&) const;
 
-    static const_symbol_ptr lookup_builtin_symbol(const std::string&);
     const_symbol_ptr lookup_symbol(const std::string&) const;
     const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
     const_symbol_ptr lookup_local_symbol(const std::string&) const;
@@ -217,7 +216,6 @@ public:
           symbol_ptr lookup_make_local_symbol(const std::string&);
     const_symbol_ptr lookup_external_symbol(const std::string&) const;
 
-    static const_type_ptr lookup_builtin_type(const std::string&);
     const_type_ptr lookup_type(const std::string&) const;
     const_type_ptr lookup_resolved_type(const std::string&) const;
     const_type_ptr lookup_local_type(const std::string&) const;
@@ -233,6 +231,7 @@ public:
     explicit Module(const Haskell::Module&, const LanguageExtensions& lo, const FileContents& f);
 };
 
+const_symbol_ptr lookup_builtin_symbol(const std::string& name);
 
 // Eliminate this_compiled_mod?
 
@@ -245,7 +244,11 @@ class CompiledModule
 
     Core2::Decls<> value_decls;
 
+    std::multimap<std::string, const_symbol_ptr> aliases;
+
     std::map<std::string, symbol_ptr> symbols;
+
+    std::multimap<std::string, const_type_ptr> type_aliases;
 
     std::map<std::string, type_ptr> types;
 
@@ -307,6 +310,8 @@ public:
 
     const_type_ptr lookup_local_type(const std::string& t) const;
 
+    const_symbol_ptr lookup_symbol(const std::string&) const;
+
     void finish_value_decls( const Core2::Decls<>& decls );
 
     // Why do we have code that isn't for this module?
@@ -318,6 +323,7 @@ public:
     void serialize(Archive& ar)
     {
 	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
+        ar( aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_sha_ );
 

@@ -302,6 +302,7 @@ po::options_description developer_options()
     developer.add_options()
 	("test-module",value<string>(),"Parse and optimize the given module")
 	("run,r",value<vector<string>>()->multitoken(),"Run the given module")
+	("type",value<string>(),"Get the type of a qualified haskell function")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
 	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
@@ -362,6 +363,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     else if (cargs.size()>=1 and cargs[0] == "run")
     {
         cargs[0] = "--run";
+    }
+    else if (cargs.size()>=1 and cargs[0] == "type")
+    {
+        cargs[0] = "--type";
     }
     else if (cargs.size()>=1 and cargs[0] == "model")
     {
@@ -428,7 +433,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     load_bali_phy_rc(args,all);
 
     std::set<string> commands;
-    for(auto word : {"align", "Model", "model", "print", "test-module", "run"})
+    for(auto word : {"align", "Model", "model", "print", "test-module", "run", "type"})
 	if (args.count(word))
 	    commands.insert(word);
 

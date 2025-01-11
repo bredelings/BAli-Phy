@@ -176,7 +176,7 @@ int reg_heap::reg_for_id(const var& x)
 	{
             assert(x.index == 0);
 
-            auto sym = Module::lookup_builtin_symbol(name);
+            auto sym = lookup_builtin_symbol(name);
             auto code = maybe_occ_to_expression_ref(sym->var_info->unfolding);
             add_identifier(x);
 

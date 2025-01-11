@@ -65,6 +65,9 @@ namespace mpi = boost::mpi;
 #include "computation/program.H"
 #include "models/A-T-prog.H" // for gen_model_program( )
 
+#include "computation/haskell/ids.H"
+#include "computation/typecheck/tidy.H"  // for TidyState.print( )
+
 #include "A-T-model.H"
 #include "files.H"
 #include "paths.H"
@@ -614,6 +617,29 @@ int main(int argc,char* argv[])
             }
             exit(0);
         }
+        else if (args.count("type"))
+        {
+            auto term = args.at("type").as<string>();
+
+            auto module_name = get_module_name(term);
+            if (module_name.empty()) module_name = "Prelude";
+            auto M = L->load_module(module_name);
+
+            std::vector<std::shared_ptr<Module>> modules;
+            modules.push_back(M);
+            auto P = std::make_unique<Program>(L, modules);
+            auto compiled_mod = P->get_module(module_name);
+
+            auto symbol = compiled_mod->lookup_symbol(get_unqualified_name(term));
+            auto type = symbol->type;
+            std::cout<<"resolved name = "<<symbol->name<<"\n";
+
+            TidyState tidy_state;
+            tidy_state.ignore_top_foralls = true;
+            std::cout<<"type = "<<tidy_state.print(type)<<"\n";
+            exit(0);
+        }
+
 
         //----------- Create output dir --------------//
         fs::path output_dir;
