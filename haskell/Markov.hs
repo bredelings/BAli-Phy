@@ -59,9 +59,6 @@ instance CTMC (Matrix Double) where
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
 
-data NoDecompReason = NoDiagReason
-data MatDecomp = NoDecomp (Maybe NoDecompReason) | RealEigenDecomp EigenSystem
-
 data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp
 
 -- can I hide the Markov constructor?
