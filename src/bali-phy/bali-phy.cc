@@ -632,11 +632,11 @@ int main(int argc,char* argv[])
 
             auto symbol = compiled_mod->lookup_symbol(get_unqualified_name(term));
             auto type = symbol->type;
-            std::cout<<"resolved name = "<<symbol->name<<"\n";
+            std::cout<<"name:  "<<symbol->name<<"\n";
 
             TidyState tidy_state;
             tidy_state.ignore_top_foralls = true;
-            std::cout<<"type = "<<tidy_state.print(type)<<"\n";
+            std::cout<<"type:  "<<tidy_state.print(type)<<"\n";
             exit(0);
         }
 
