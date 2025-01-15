@@ -3,11 +3,12 @@ module Probability.Distribution.Dirichlet where
 import Probability.Random
 import Probability.Distribution.Gamma
 import Probability.Distribution.List
+import MCMC.Moves.Real
 
 foreign import bpcall "Distribution:dirichlet_density" builtinDirichletDensity :: EVector Double -> EVector Double -> LogDouble
 dirichletDensity as ps = builtinDirichletDensity (toVector as) (toVector ps)
 
--- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!
+-- The `dirichlet` does not handle cases where the number of as changes in a graceful way: all entries are resampled!
 sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
                         return $ map (/(sum vs)) vs
 
@@ -32,8 +33,10 @@ instance Sampleable Dirichlet where
 
 dirichlet as = Dirichlet as
 
+
+-- Is there a more graceful way to add a move here?
 symmetricDirichlet n a = do
-  ws <- sample $ iid n (gamma a 1)
+  ws <- (sample $ iid n (gamma a 1)) `withTKEffect` (\ws -> addMove 1 $ scaleGroupSlice ws)
   return $ map (/sum ws) ws
 
 
