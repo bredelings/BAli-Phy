@@ -1,6 +1,5 @@
 {
     "name": "Rates.free",
-    "synonyms": ["DP"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.freeRates(@rateDist,@submodel)",
     "import": ["SModel"],
@@ -13,7 +12,7 @@
         {
             "name": "rateDist",
             "type": "DiscreteDist<Double>",
-            "default_value": "~dirichlet_mixture(gamma(1,1),2,@n)",
+            "default_value": "~dirichlet_on_dirichlet(@n,2,2)",
 	    "description" : "Rates for each category"
         },
         {
