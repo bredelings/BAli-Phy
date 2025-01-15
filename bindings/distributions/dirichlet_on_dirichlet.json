@@ -1,0 +1,27 @@
+{
+    "name": "dirichlet_on_dirichlet",
+    "synonyms": ["DP"],
+    "result_type": "Distribution<DiscreteDist<Double>>",
+    "call": "dirichletOnDirichlet(@n,@a2,@a1)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "n",
+            "type": "Int",
+	    "description": "Number of categories"
+        },
+        {
+            "name": "a1",
+            "type": "Double",
+	    "description": "Alpha parameter for weights"
+        },
+        {
+            "name": "a2",
+            "type": "Double",
+	    "description": "Alpha parameter for items"
+        }
+    ],
+    "title": "Free rates model",
+    "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
+    "examples": ["hky85 +> Rates.free(n=3)"]
+}
