@@ -13,6 +13,7 @@ struct DataConInfo
     std::vector<Type> written_constraints;
     std::vector<Type> gadt_eq_constraints;
     std::vector<Type> field_types;
+    std::vector<bool> field_strictness;
     TypeCon data_type;
 
     std::vector<Type> all_constraints() const;

@@ -24,8 +24,6 @@ struct TidyState
     std::string print(const ForallType& forall);
     std::string print(const Context& c);
     std::string print(const ConstrainedType& ct);
-    std::string print(const StrictType& sl);
-    std::string print(const LazyType& sl);
     std::string print(const Type& name);
 };
 

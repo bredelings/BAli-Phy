@@ -241,8 +241,6 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
 
         return {Fa, kind};
     }
-    else if (auto st = t.to<StrictType>())
-        throw myexception()<<"kind_check: strict type '"<<t.print()<<"' not allowed here.";
 
     throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
 }
@@ -284,8 +282,6 @@ Kind kindchecker_state::kind_for_type(const Type& t)
 
         return kind;
     }
-    else if (auto st = t.to<StrictType>())
-        throw myexception()<<"kind_for_type: strict type '"<<t.print()<<"' not allowed here.";
 
     throw myexception()<<"kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
@@ -343,8 +339,6 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
 
         return Fa;
     }
-    else if (auto st = t.to<StrictType>())
-        throw myexception()<<"zonk_kind_for_type: strict type '"<<t.print()<<"' not allowed here.";
     
     throw myexception()<<"zonk_kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
@@ -363,6 +357,19 @@ Context kindchecker_state::kind_check_context(const Context& context)
     return context2;
 }
 
+std::pair<Type,bool> desugar_field_type(Hs::LType ltype)
+{
+    bool strictness = false;
+    auto& [loc, type] = ltype;
+
+    if (auto strict_type = type.to<Hs::StrictType>())
+    {
+        strictness = true;
+        ltype = strict_type->type;
+    }
+    return {desugar(ltype), strictness};
+}
+
 void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor, const Type& data_type)
 {
     auto type2 = data_type;
@@ -373,15 +380,22 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
 
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
+            auto [field_type, _] = desugar_field_type(field_decl.type);
+
             for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = make_arrow_type(desugar(field_decl.type), type2);
+                type2 = make_arrow_type(field_type, type2);
         }
     }
     else
     {
-        auto types = desugar(std::get<0>(constructor.fields));
+        vector<Type> field_types;
+        for(auto& hs_field_type: std::get<0>(constructor.fields))
+        {
+            auto [field_type,_] = desugar_field_type(hs_field_type);
+            field_types.push_back(field_type);
+        }
 
-        for(auto& type: types | views::reverse)
+        for(auto& type: field_types | views::reverse)
             type2 = make_arrow_type(type, type2);
     }
 
@@ -409,10 +423,21 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
     {
         for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
             for(int i=0; i < field_decl.field_names.size(); i++)
-                info.field_types.push_back( desugar(field_decl.type) );
+            {
+                auto [field_type,strictness] = desugar_field_type(field_decl.type);
+                info.field_types.push_back( field_type );
+                info.field_strictness.push_back( strictness );
+            }
     }
     else
-        info.field_types = desugar( std::get<0>(constructor.fields) );
+    {
+        for(auto& hs_field_type: std::get<0>(constructor.fields))
+        {
+            auto [field_type, strictness] = desugar_field_type(hs_field_type);
+            info.field_types.push_back( field_type );
+            info.field_strictness.push_back( strictness );
+        }
+    }
 
     // 2. Make up kind vars for exi_tvs
     push_type_var_scope();
@@ -493,6 +518,8 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     // f. Handle GADT constructor terms (class variables are NOT in scope)
     if (data_decl.is_gadt_decl())
     {
+        // BUG: We don't handle strictness annotations on the fields here!
+
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
             kind_and_type_check_type(desugar(data_cons_decl.type));
@@ -560,6 +587,8 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             DataConInfo info;
 
             // 1. Kind-check and add foralls for free type vars.
+
+            // BUG: We don't handle strictness annotations on the fields here!
             auto written_type = desugar(data_cons_decl.type);
             written_type = kind_and_type_check_type( written_type );
 

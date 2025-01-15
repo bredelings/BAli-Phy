@@ -175,17 +175,6 @@ string TidyState::print(const ConstrainedType& ct)
     return print(ct.context) + " => " + print(ct.type);
 }
 
-string TidyState::print(const StrictType& sl)
-{
-    return "!" + print(sl.type);
-}
-
-string TidyState::print(const LazyType& sl)
-{
-    return "~" + print(sl.type);
-}
-
-
 std::string TidyState::print(const Type& type)
 {
     if (type.empty()) return "NOTYPE";
@@ -202,10 +191,6 @@ std::string TidyState::print(const Type& type)
         return print(*ct);
     else if (auto forall = type.to<ForallType>())
         return print(*forall);
-    else if (auto s = type.to<StrictType>())
-        return print(*s);
-    else if (auto l = type.to<LazyType>())
-        return print(*l);
 
     std::abort();
 }

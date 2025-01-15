@@ -2,7 +2,7 @@
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
 #include "haskell/ids.H"
-#include "haskell/desugar_type.H"
+//#include "haskell/desugar_type.H"
 
 using std::pair;
 using std::map;
@@ -13,46 +13,62 @@ using std::string;
 using std::vector;
 
 
-set<string> free_type_cons(const Context& context);
+set<string> free_type_cons(const Hs::Context& context);
 
-set<string> free_type_cons(const Type& type)
+set<string> free_type_cons(const Hs::LType& ltype)
 {
+    auto& [_,type] = ltype;
+
     set<string> tcons;
-    if (type.is_a<TypeVar>())
+
+    if (type.is_a<Hs::TypeVar>())
     {
         return {};
     }
-    else if (auto tc = type.to<TypeCon>())
+    else if (auto tc = type.to<Hs::TypeCon>())
     {
-        auto& name = unloc(tc->name);
+        auto& name = tc->name;
         if (is_qualified_symbol(name))
             tcons.insert(name);
     }
-    else if (type.is_a<TypeApp>())
+    else if (auto tuple_type = type.to<Hs::TupleType>())
     {
-        auto& app = type.as_<TypeApp>();
-        add(tcons, free_type_cons(app.head));
-        add(tcons, free_type_cons(app.arg));
+        for(auto& element_type: tuple_type->element_types)
+            add(tcons, free_type_cons(element_type));
     }
-    else if (auto forall = type.to<ForallType>())
+    else if (auto list_type = type.to<Hs::ListType>())
     {
-        return free_type_cons(forall->type);
+        return free_type_cons(list_type->element_type);
     }
-    else if (auto c = type.to<ConstrainedType>())
+    else if (auto app = type.to<Hs::TypeApp>())
+    {
+        add(tcons, free_type_cons(app->head));
+        add(tcons, free_type_cons(app->arg));
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
     {
         add(tcons, free_type_cons(c->context));
         add(tcons, free_type_cons(c->type));
     }
-    else if (auto s = type.to<StrictType>())
-        return free_type_cons(s->type);
-    else if (auto l = type.to<LazyType>())
-        return free_type_cons(l->type);
+    else if (auto forall = type.to<Hs::ForallType>())
+    {
+        return free_type_cons(forall->type);
+    }
+    else if (auto st = type.to<Hs::StrictType>())
+    {
+        return free_type_cons(st->type);
+    }
+    else if (auto lt = type.to<Hs::LazyType>())
+    {
+        return free_type_cons(lt->type);
+    }
     else
-        std::abort();
+        throw myexception()<<"free_type_cons: can't handle Haskell type '"<<type.print()<<"'";
+
     return tcons;
 }
 
-set<string> free_type_cons(const Context& context)
+set<string> free_type_cons(const Hs::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
@@ -64,55 +80,55 @@ set<string> free_type_cons(const Hs::ClassDecl& class_decl)
 {
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
-    add(tvars, free_type_cons(desugar(class_decl.context)));
+    add(tvars, free_type_cons(class_decl.context));
     for(auto& sig_decl: class_decl.sig_decls)
-        add(tvars, free_type_cons(desugar(sig_decl.type)));
+        add(tvars, free_type_cons(sig_decl.type));
     return tvars;
 }
 
 set<string> free_type_cons(const Hs::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_cons(desugar(type_decl.context)));
+    add(tvars, free_type_cons(type_decl.context));
     if (type_decl.is_regular_decl())
     {
         for(auto& constr: type_decl.get_constructors())
         {
             if (constr.context)
-                add(tvars, free_type_cons(desugar(*constr.context)));
+                add(tvars, free_type_cons(*constr.context));
 
             if (constr.is_record_constructor())
             {
                 auto& field_decls = std::get<1>(constr.fields).field_decls;
                 for(auto& field: field_decls)
-                    add(tvars, free_type_cons(desugar(field.type)));
+                    add(tvars, free_type_cons(field.type));
             }
             else
             {
                 auto& types = std::get<0>(constr.fields);
                 for(auto& type: types)
-                    add(tvars, free_type_cons(desugar(type)));
+                    add(tvars, free_type_cons(type));
             }
         }
     }
     else if (type_decl.is_gadt_decl())
     {
         for(auto& data_cons_decl: type_decl.get_gadt_constructors())
-            add(tvars, free_type_cons(desugar(data_cons_decl.type)));
+            add(tvars, free_type_cons(data_cons_decl.type));
     }
     return tvars;
 }
 
 set<string> free_type_cons(const Hs::TypeSynonymDecl& synonym_decl)
 {
-    return free_type_cons(desugar(synonym_decl.rhs_type));
+    return free_type_cons(synonym_decl.rhs_type);
 }
 
 set<string> free_type_cons(const Hs::InstanceDecl& instance_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_cons(desugar(instance_decl.context)));
-    add(tvars, free_type_cons(desugar(instance_decl.constraint)));
+    add(tvars, free_type_cons(instance_decl.context));
+    add(tvars, free_type_cons(instance_decl.constraint));
     return tvars;
 
 }

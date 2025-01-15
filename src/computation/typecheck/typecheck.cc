@@ -919,14 +919,6 @@ std::bitset<8> TypeChecker::check_type_equality(const Type& lhs, const Type& rhs
             result |= check_type_equality(lhs, constraint);
         return result;
     }
-    else if (auto st = rhs.to<StrictType>())
-    {
-        return check_type_equality(lhs, st->type);
-    }
-    else if (auto lt = rhs.to<LazyType>())
-    {
-        return check_type_equality(lhs, lt->type);
-    }
     else
         std::abort();
 }

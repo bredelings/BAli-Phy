@@ -24,8 +24,6 @@ struct TypeCon;
 struct TypeApp;
 struct ConstrainedType;
 struct ForallType;
-struct StrictType;
-struct LazyType;
 
 struct Type
 {
@@ -37,10 +35,8 @@ struct Type
         cow_ptr<TypeCon>,
         cow_ptr<TypeApp>,
         cow_ptr<ConstrainedType>,
-        cow_ptr<ForallType>,
-        cow_ptr<StrictType>,
-        cow_ptr<LazyType>
-        >
+        cow_ptr<ForallType>
+    >
     type_ptr;
 
     std::string print() const;
@@ -318,49 +314,6 @@ private:
 
 Type add_constraints(const std::vector<Type>& constraints, const Type& type);
 Type add_constraints(const Context& constraints, const Type& type);
-
-struct StrictType
-{
-    Type type;
-
-    bool operator==(const StrictType& t) const;
-    std::string print() const;
-
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(type);
-    }
-
-    StrictType(const Type& t):type(t) {}
-
-private:
-    friend cereal::access;
-
-    StrictType() = default;
-};
-
-struct LazyType
-{
-    Type type;
-
-    bool operator==(const LazyType& t) const;
-    std::string print() const;
-
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(type);
-    }
-
-    LazyType(const Type& t):type(t) {}
-private:
-    friend cereal::access;
-
-    LazyType() = default;
-};
-
-
 
 template <class Archive>
 void Type::serialize(Archive& ar)

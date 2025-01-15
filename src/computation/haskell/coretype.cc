@@ -55,10 +55,6 @@ bool Type::operator==(const Type& t) const
         return as_<ConstrainedType>() == t.as_<ConstrainedType>();
     else if (is_a<ForallType>())
         return as_<ForallType>() == t.as_<ForallType>();
-    else if (is_a<StrictType>())
-        return as_<StrictType>() == t.as_<StrictType>();
-    else if (is_a<LazyType>())
-        return as_<LazyType>() == t.as_<LazyType>();
 
     std::abort();
 }
@@ -88,10 +84,6 @@ int max_level(Type t)
         return std::max( max_level(ct->context.constraints), max_level(ct->type) );
     else if (auto fa = t.to<ForallType>())
         return max_level( fa->type );
-    else if (auto st = t.to<StrictType>())
-        return max_level( st->type );
-    else if (auto lt = t.to<LazyType>())
-        return max_level( lt->type );
 
     std::abort();
     
@@ -121,10 +113,6 @@ int max_meta_level(Type t)
         return std::max( max_meta_level(ct->context.constraints), max_meta_level(ct->type) );
     else if (auto fa = t.to<ForallType>())
         return max_meta_level( fa->type );
-    else if (auto st = t.to<StrictType>())
-        return max_meta_level( st->type );
-    else if (auto lt = t.to<LazyType>())
-        return max_meta_level( lt->type );
 
     std::abort();
 }
@@ -145,10 +133,6 @@ std::string Type::print() const
         return as_<ConstrainedType>().print();
     else if (is_a<ForallType>())
         return as_<ForallType>().print();
-    else if (is_a<StrictType>())
-        return as_<StrictType>().print();
-    else if (is_a<LazyType>())
-        return as_<LazyType>().print();
 
     std::abort();
 }
@@ -803,26 +787,6 @@ std::string Context::print() const
         return "(" + result + ")";
 }
 
-bool StrictType::operator==(const StrictType& t) const
-{
-    return type == t.type;
-}
-
-string StrictType::print() const
-{
-    return "!" + type.print();
-}
-
-bool LazyType::operator==(const LazyType& t) const
-{
-    return type == t.type;
-}
-
-string LazyType::print() const
-{
-    return "!" + type.print();
-}
-
 Type tuple_type(const std::vector<Type>& ts)
 {
     int n = ts.size();
@@ -917,21 +881,21 @@ Type desugar(const Hs::LType& lt)
             tvs.push_back( desugar(tv) );
         return ForallType(tvs, desugar(fa->type) );
     }
-    else if (auto st = t.to<Hs::StrictType>())
-    {
-        return StrictType( desugar(st->type) );
-    }
-    else if (auto st = t.to<Hs::LazyType>())
-    {
-        return LazyType( desugar(st->type) );
-    }
     else if (auto ct = t.to<Hs::ConstrainedType>())
     {
         return ConstrainedType( desugar(ct->context), desugar(ct->type) );
     }
+    else if (auto st = t.to<Hs::StrictType>())
+    {
+        throw myexception()<<"Can't desugar strict type '"<<lt.print()<<"' from Hs::Type to Type";
+    }
+    else if (auto st = t.to<Hs::LazyType>())
+    {
+        throw myexception()<<"Can't desugar lazy type '"<<lt.print()<<"' from Hs::Type to Type";
+    }
     else if (t.is_a<Hs::TypeOfKind>())
     {
-        throw myexception()<<"Can't desugar TypeOfKind from Hs::Type to Type";
+        throw myexception()<<"Can't desugar TypeOfKind '"<<lt.print()<<"' from Hs::Type to Type";
     }
     else
         std::abort();

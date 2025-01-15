@@ -59,14 +59,6 @@ set<MetaTypeVar> free_meta_type_variables(const Type& type)
         add(tvars, free_meta_type_variables(c->context));
         add(tvars, free_meta_type_variables(c->type));
     }
-    else if (auto st = type.to<StrictType>())
-    {
-        return free_meta_type_variables(st->type);
-    }
-    else if (auto lt = type.to<LazyType>())
-    {
-        return free_meta_type_variables(lt->type);
-    }
     else
         std::abort();
 
@@ -125,14 +117,6 @@ set<TypeVar> free_type_variables(const Type& type)
         add(tvars, free_type_variables(c->context));
         add(tvars, free_type_variables(c->type));
     }
-    else if (auto st = type.to<StrictType>())
-    {
-        return free_type_variables(st->type);
-    }
-    else if (auto lt = type.to<LazyType>())
-    {
-        return free_type_variables(lt->type);
-    }
     else
         std::abort();
 
@@ -167,14 +151,6 @@ set<string> free_type_vars(const Type& type)
     {
         add(tvars, free_type_vars(c->context));
         add(tvars, free_type_vars(c->type));
-    }
-    else if (auto st = type.to<StrictType>())
-    {
-        return free_type_vars(st->type);
-    }
-    else if (auto lt = type.to<LazyType>())
-    {
-        return free_type_vars(lt->type);
     }
     else
         std::abort();
@@ -225,14 +201,6 @@ bool affected_by_mtv(const Type& type, const MetaTypeVar& mtv)
     {
         return affected_by_mtv(c->context.constraints, mtv) or affected_by_mtv(c->type, mtv);
     }
-    else if (auto st = type.to<StrictType>())
-    {
-        return affected_by_mtv(st->type, mtv);
-    }
-    else if (auto lt = type.to<LazyType>())
-    {
-        return affected_by_mtv(lt->type, mtv);
-    }
     else
         std::abort();
 }
@@ -274,14 +242,6 @@ bool contains_mtv(const Type& type, const MetaTypeVar& mtv)
     {
         return contains_mtv(c->context.constraints, mtv) or contains_mtv(c->type, mtv);
     }
-    else if (auto st = type.to<StrictType>())
-    {
-        return contains_mtv(st->type, mtv);
-    }
-    else if (auto lt = type.to<LazyType>())
-    {
-        return contains_mtv(lt->type, mtv);
-    }
     else
         std::abort();
 }
@@ -320,14 +280,6 @@ bool contains_tv(const Type& type, const TypeVar& tv)
     else if (auto c = type.to<ConstrainedType>())
     {
         return contains_tv(c->context.constraints, tv) or contains_tv(c->type, tv);
-    }
-    else if (auto s = type.to<StrictType>())
-    {
-        return contains_tv(s->type, tv);
-    }
-    else if (auto l = type.to<LazyType>())
-    {
-        return contains_tv(l->type, tv);
     }
     else
         std::abort();

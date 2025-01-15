@@ -421,10 +421,6 @@ bool Solver::contains_type(const Type& t1_, const Type& t2) const
         return contains_type(con->context.constraints, t2) or contains_type(con->type, t2);
     else if (auto forall = t1.to<ForallType>())
         return contains_type(forall->type, t2);
-    else if (auto st = t1.to<StrictType>())
-        return contains_type(st->type, t2);
-    else if (auto lt = t1.to<LazyType>())
-        return contains_type(lt->type, t2);
     else if (auto syn = expand_type_synonym(t1))
         return contains_type(*syn, t2);
     else if (auto app = t1.to<TypeApp>())
