@@ -2,6 +2,7 @@
 - Models:
   + Multi-Nucleotide-Mutation (MNM) model for codons.
   + BUSTED and BUSTED-S substitution models for positive selection.
+  + Initial cmdline version of `multi_freq` model.
 - Bug fixes:
  + Log sorted (conserved) omegas in m3_test.
 - Speed:
