@@ -5,7 +5,7 @@
 #include <string>
 
 #include "types.H"
-#include "module.H"
+#include "computation/module.H"
 #include "kind.H"
 #include "env.H"
 

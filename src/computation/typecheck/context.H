@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include "message.H"
 #include <utility>
+#include "computation/message.H"
 #include "computation/haskell/coretype.H"
 #include "computation/haskell/haskell.H"
 #include "immer/map.hpp" // for immer::map

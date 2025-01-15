@@ -14,11 +14,11 @@
 
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/desugar_type.H"
+#include "computation/message.H"
 #include "types.H"
 #include "expected.H"
 #include "context.H"
 #include "constraints.H"
-#include "message.H"
 #include "tidy.H"
 
 struct unification_env

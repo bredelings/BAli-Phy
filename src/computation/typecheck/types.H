@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "haskell/coretype.H"
+#include "computation/haskell/coretype.H"
 
 std::set<TypeVar> free_type_variables(const Context& context);
 std::set<TypeVar> free_type_variables(const std::vector<Type>& types);

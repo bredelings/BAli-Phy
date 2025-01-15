@@ -9,6 +9,9 @@
 #include "models/parse.H" // for is_constant( )
 #include "models/driver.hh" // for parse_expression( )
 
+#include "computation/module.H"
+#include "computation/typecheck/typecheck.H"
+
 using std::vector;
 using std::set;
 using std::map;
