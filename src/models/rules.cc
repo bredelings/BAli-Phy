@@ -202,6 +202,28 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 	    value = parse_value(value);
 	}
     }
+
+    Module m("Temp");
+    FreshVarState fvs;
+    FreshVarSource fvsource(fvs);
+    auto tc = std::make_shared<TypeChecker>(fvs, "Temp", m);
+    std::map<std::string, Type> type_for_args;
+    for(auto& [_,x]: rule.get_child("args"))
+    {
+        string arg_name = x.get_child("name").get_value<string>();
+        auto type = fvsource.fresh_meta_type_var( 0, "m", {} );
+        type_for_args.insert({arg_name, type});
+        tc->mono_local_env() = tc->mono_local_env().insert({arg_name,{arg_name,type}});
+    }
+
+    // OK, now we need to typecheck the call expression.
+
+    // I guess this is a declaration?  So it makes sense to run the solver.
+
+    // Question: how/when would we ensure that things like Num [String] cause an error?
+
+    // Do we want to import all the referenced modules and fill the poly_env before we start type checking?
+
     return rule;
 }
 
