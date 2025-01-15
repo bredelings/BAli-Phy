@@ -240,8 +240,8 @@ instance MonadIO Random where
 
 lazy = Lazy
 interchangeable = RanInterchangeable
-infixl 2 `with_tk_effect`
-with_tk_effect = WithTKEffect
+infixl 2 `withTKEffect`
+withTKEffect = WithTKEffect
 
 addLogger logger = liftIO $ registerLogger logger
 
