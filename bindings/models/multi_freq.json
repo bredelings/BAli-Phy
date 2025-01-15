@@ -20,7 +20,7 @@
             "name": "freqs",
             "type": "DiscreteDist<List<(String,Double)>>",
             "description": "The rate distribution",
-            "default_value": "~dirichlet_mixture(symmetric_dirichlet_on(letters(@a),1),2,@n)"
+            "default_value": "~dirichlet_mixture(symmetric_dirichlet_on(letters(@a),2),2,@n)"
         },
         {
             "name": "nodeFreqs",
