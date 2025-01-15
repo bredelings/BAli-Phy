@@ -12,6 +12,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
+import MCMC.Moves.Real
 
 {-
  Can we generalize this to something that works for IntMap a as well as List a?
@@ -127,7 +128,20 @@ iid2 n dist1 dist2 = iid n $ PairDist dist1 dist2
 -- The return type should be Random (Discrete a)
 iidMixture n itemDist weightDist = normalizeMixture <$> (sample $ iid2 n (itemDist) (weightDist))
 
-dirichletMixture n a dist = iidMixture n dist (gamma a 1)
+dmMoves (Discrete pairs) = do
+  let (_,weights) = unzip pairs
+  addMove 1 $ scaleGroupSlice weights
+
+dirichletMixture n a dist = iidMixture n dist (gamma a 1) `withTKEffect` dmMoves
+
+ddMoves (Discrete pairs) = do
+  let (items,_) = unzip pairs
+  addMove 1 $ scaleGroupSlice items
+
+dirichletOnDirichlet n a1 a2 = do
+  m@(Discrete pairs) <- iidMixture n (gamma a2 1) (gamma a1 1) `withTKEffect` ddMoves
+  let total = sum $ map fst $ pairs
+  return (fmap (/total) m)
 
 even_sorted_on_iid f n dist = do let n_all = 2*n+1
                                  xs' <- sample $ iid n_all dist
