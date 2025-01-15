@@ -129,6 +129,18 @@ ptree parse_value(ptree call)
 	return parse_expression(call.get_value<string>(),"call");
 }
 
+
+/* NOTE: convert_rule parses and processes strings.  It converts:
+
+   - "result_type" -> type
+   - "arg_type" -> type
+   - "constraints" -> type
+
+   - "call" -> expression
+   - "default_value" -> expression -> fill in default values
+   - "alphabet" -> expression -> fill in default values
+   - "computed" -> expression
+*/
 ptree convert_rule(const Rules& R, const string& name, Rule rule)
 {
     {
@@ -174,7 +186,7 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 	    if (not alphabet->has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
 
-	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": default value for '"+arg_name+"'");
+	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
 	}
     }
 
