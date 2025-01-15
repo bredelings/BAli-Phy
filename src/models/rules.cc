@@ -216,13 +216,19 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
         tc->mono_local_env() = tc->mono_local_env().insert({arg_name,{arg_name,type}});
     }
 
+
     // OK, now we need to typecheck the call expression.
 
-    // I guess this is a declaration?  So it makes sense to run the solver.
-
-    // Question: how/when would we ensure that things like Num [String] cause an error?
-
     // Do we want to import all the referenced modules and fill the poly_env before we start type checking?
+
+    // I guess this rule is a declaration?  So it makes sense to run the solver.
+    // And then we decide which unsolved wanteds to quantify.
+    // Any remaining wanteds are errors.
+
+    // How do we efficiently look up the types of the haskell functions?
+    // We contain maintain a Program and add any modules that are referenced... but that would require changing the interface.
+
+    // How do we ensure that instances are in scope?
 
     return rule;
 }
