@@ -36,6 +36,12 @@ void kindchecker_state::bind_type_var(const TypeVar& tv, const Kind& kind)
     tvk.insert({tv,kind});
 }
 
+void kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
+{
+    auto tv = desugar(hs_tv);
+    return bind_type_var(tv, kind);
+}
+
 void kindchecker_state::push_type_var_scope()
 {
     assert(not type_var_to_kind.empty());
@@ -111,6 +117,16 @@ bool kindchecker_state::unify(const Kind& kind1, const Kind& kind2)
         return false;
 }
 
+Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& kind)
+{
+    auto [t2,kind2] = kind_check_type(t);
+    t2 = zonk_kind_for_type(t2);
+    if (not unify(kind, kind2))
+        throw myexception()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
+    return t2;
+}
+
+
 Type kindchecker_state::kind_check_type_of_kind(const Type& t, const Kind& kind)
 {
     auto [t2,kind2] = kind_check_type(t);
@@ -153,6 +169,11 @@ Kind kindchecker_state::kind_check_type_con(const string& name)
     }
     else
         return kind_for_type_con(name);
+}
+
+tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& t)
+{
+    return kind_check_type(desugar(t));
 }
 
 tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
@@ -349,12 +370,25 @@ Type kindchecker_state::kind_check_constraint(const Type& constraint)
     return kind_check_type_of_kind(constraint, kind_constraint());
 }
 
+Type kindchecker_state::kind_check_constraint(const Hs::LType& constraint)
+{
+    return kind_check_type_of_kind(constraint, kind_constraint());
+}
+
 Context kindchecker_state::kind_check_context(const Context& context)
 {
     Context context2 = context;
     for(auto& constraint: context2.constraints)
         constraint = kind_check_constraint(constraint);
     return context2;
+}
+
+Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
+{
+    Context context;
+    for(auto& hs_constraint: hs_context.constraints)
+        context.constraints.push_back( kind_check_constraint(hs_constraint) );
+    return context;
 }
 
 std::pair<Type,bool> desugar_field_type(Hs::LType ltype)
@@ -462,7 +496,7 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
 	    throw myexception()<<"Constraint '"<<constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
         constraint = t2;
     }
-    
+
     // 4. Substitute and replace kind vars
     for(auto& field_type: info.field_types)
         field_type = zonk_kind_for_type( field_type );
@@ -484,13 +518,13 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     auto kind = kind_for_type_con(unloc(data_decl.name));  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
-    for(auto& tv: desugar(data_decl.type_vars))
+    for(auto& ltv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
         auto [arg_kind, result_kind] = is_function_type(kind).value();
 
         // map the name to its kind
-        bind_type_var(tv, arg_kind);
+        bind_type_var(ltv, arg_kind);
 
         // set up the next iteration
         kind = result_kind;
@@ -498,7 +532,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     assert(is_kind_type(kind));
 
     // c. Handle the context
-    for(auto& constraint: desugar(data_decl.context.constraints))
+    for(auto& constraint: data_decl.context.constraints)
         kind_check_constraint(constraint);
 
     // d. construct the data type
@@ -535,7 +569,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
 
     // b. Bind each type variable.
     vector<TypeVar> datatype_typevars;
-    for(auto& tv: desugar(data_decl.type_vars))
+    for(auto& tv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
 	auto [arg_kind, result_kind] = is_function_type(k).value();
@@ -544,7 +578,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
         bind_type_var(tv, arg_kind);
 
         // record a version of the var with that contains its kind
-        auto tv2 = tv;
+        auto tv2 = desugar(tv);
         tv2.kind = arg_kind;
         datatype_typevars.push_back(tv2);
 
@@ -737,13 +771,13 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
     // b. Put each type variable into the kind.
-    for(auto& tv: desugar(type_syn_decl.type_vars))
+    for(auto& ltv: type_syn_decl.type_vars)
     {
         // the kind should be an arrow kind.
         auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // map the name to its kind
-        bind_type_var(tv, arg_kind);
+        bind_type_var(ltv, arg_kind);
 
         // set up the next iteration
         k = result_kind;
