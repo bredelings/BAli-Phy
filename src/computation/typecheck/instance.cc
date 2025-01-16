@@ -57,8 +57,18 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+// NOTE: The reason we aren't taking Hs::Type arguments here is that default_type_instance doesn't provide them (See NOTE on default_type_instance).
+// Location information for default type instances would refer to lines in a different module!
+// Suppose we strip all the type information from the default instance and store it in Haskell form?
+// Then suppose we allow substitution in Haskell types?
+void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
+    // We used to construct a TypeFamEqnInfo here
+    // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
+
+    vector<Type> args = args_in;
+    Type rhs = rhs_in;
+
     // 1. The rhs may only mention type vars bound on the lhs.
     set<TypeVar> lhs_tvs;
     for(auto& arg: args)
@@ -73,16 +83,14 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
             record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
             return;
         }
-
-    // FIXME: We don't use TypeFamEqnInfo for anything!
-    TypeFamEqnInfo eqn{ args, rhs, lhs_tvs | ranges::to<vector>()};
+    auto free_tvs = lhs_tvs | ranges::to<vector>();
 
     // 2. Kind-check the parameters and result type, and record the free type variables.
 
     // 2a. Bind the free type vars
     kindchecker_state K( this_mod() );
     K.push_type_var_scope();
-    for(auto& tv: eqn.free_tvs)
+    for(auto& tv: free_tvs)
     {
         assert(not K.type_var_in_scope(tv));
         tv.kind = K.fresh_kind_var();
@@ -91,11 +99,11 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
 
     // 2b. Kind-check the type vars
     bool ok = true;
-    for(int i=0; i<eqn.args.size(); i++)
+    for(int i=0; i<args.size(); i++)
     {
         try {
             // FIXME: we don't have location information on args[i], because default_type_instance doesn't have it.
-            K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
+            K.kind_check_type_of_kind(args[i], *tf_info.args[i].kind);
         }
         catch (std::exception& e)
         {
@@ -106,7 +114,7 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     try
     {
         // FIXME: we don't have location information on rhs, because default_type_instance doesn't have it.
-        K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+        K.kind_check_type_of_kind(rhs, tf_info.result_kind);
     }
     catch (std::exception& e)
     {
@@ -116,23 +124,23 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     if (not ok) return;
 
     // 2c. Record the final kinds for the free type vars
-    for(int i=0; i<eqn.args.size(); i++)
-        eqn.args[i] = K.zonk_kind_for_type(eqn.args[i]);
-    eqn.rhs = K.zonk_kind_for_type(eqn.rhs);
+    for(auto& arg: args)
+        arg = K.zonk_kind_for_type(arg);
+    rhs = K.zonk_kind_for_type(rhs);
 
-    for(auto& tv: eqn.free_tvs)
+    for(auto& tv: free_tvs)
         tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
 
     // 3. Add the (~) instance to the instance environment
-    Type lhs = make_tyapps(tf_con, eqn.args);
-    Type constraint = make_equality_pred(lhs, eqn.rhs);
-    Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
+    Type lhs = make_tyapps(tf_con, args);
+    Type constraint = make_equality_pred(lhs, rhs);
+    Type inst_type = add_forall_vars(free_tvs, constraint);
 
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}, false, false, false} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, eqn.free_tvs, lhs, eqn.rhs} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon({noloc,"~"}),{lhs, rhs}, false, false, false} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
