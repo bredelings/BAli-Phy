@@ -239,8 +239,8 @@ struct ConstrainedType
     ConstrainedType(const Context& c, const LType& t):context(c), type(t) {}
 };
 
-Type add_constraints(const std::vector<LType>& constraints, const LType& type);
-Type add_constraints(const Context& constraints, const LType& type);
+LType add_constraints(const std::vector<LType>& constraints, const LType& type);
+LType add_constraints(const Context& constraints, const LType& type);
 
 struct StrictType
 {

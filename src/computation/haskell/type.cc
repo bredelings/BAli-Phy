@@ -319,6 +319,30 @@ LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& ltype
         return {loc,ForallType(type_vars, ltype)};
 }
 
+LType add_constraints(const vector<LType>& constraints, const LType& ltype)
+{
+    auto [loc, type] = ltype;
+    for(auto& constraint: constraints)
+        loc = loc * constraint.loc;
+
+    if (constraints.empty())
+        return {loc, type};
+    else if (type.is_a<ConstrainedType>())
+    {
+        auto CT = type.as_<ConstrainedType>();
+        for(auto& constraint: constraints)
+            CT.context.constraints.push_back(constraint);
+        return {loc, CT};
+    }
+    else
+        return {loc, ConstrainedType(Context(constraints), ltype)};
+}
+
+LType add_constraints(const Context& context, const LType& ltype)
+{
+    return add_constraints(context.constraints, ltype);
+}
+
 
 bool ConstrainedType::operator==(const ConstrainedType& t) const
 {
