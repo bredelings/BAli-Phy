@@ -41,6 +41,7 @@ struct kindchecker_state
 
     Kind kind_for_type_con(const std::string&) const;
     Kind kind_for_type_var(const TypeVar&) const;
+    Kind kind_for_type_var(const Hs::LTypeVar&) const;
     void add_type_con_of_kind(const std::string& name, const Kind& k, int arity);
 
     // Kind check a group.
@@ -61,10 +62,14 @@ struct kindchecker_state
     Type zonk_kind_for_type(const Type& t);
     Kind kind_for_type(const Type& t);
     std::vector<TypeVar> unbound_free_type_variables(const Type& t);
+    std::vector<Hs::LTypeVar> unbound_free_type_variables(const Hs::LType& t);
 
     // class
+    Type kind_and_type_check_type_(const Hs::LType& type, const Hs::Kind& k);
     Type kind_and_type_check_type_(const Type& type, const Hs::Kind& k);
+    Type kind_and_type_check_type(const Hs::LType& type);
     Type kind_and_type_check_type(const Type& type);
+    Type kind_and_type_check_constraint(const Hs::LType& type);
     Type kind_and_type_check_constraint(const Type& type);
     void kind_check_type_class(const Hs::ClassDecl& class_decl);
 

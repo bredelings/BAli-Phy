@@ -297,11 +297,14 @@ string ForallType::print() const
     return "forall "+join(binders," ")+". "+type.print();
 }
 
-/*
-LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& type)
+LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& ltype)
 {
+    auto [loc,type] = ltype;
+    for(auto& [tv_loc, tv]: type_vars)
+        loc = loc * tv_loc;
+
     if (type_vars.empty())
-        return type;
+        return {loc, type};
     else if (auto FAT = type.to<ForallType>())
     {
         auto new_type_vars = type_vars;
@@ -310,12 +313,12 @@ LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& type)
             assert(not includes(type_vars, type_var));
             new_type_vars.push_back(type_var);
         }
-        return ForallType(new_type_vars, FAT->type);
+        return {loc, ForallType(new_type_vars, FAT->type)};
     }
     else
-        return ForallType(type_vars, type);
+        return {loc,ForallType(type_vars, ltype)};
 }
-*/
+
 
 bool ConstrainedType::operator==(const ConstrainedType& t) const
 {

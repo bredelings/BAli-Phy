@@ -819,6 +819,16 @@ Type TypeChecker::look_thru(const Type& t) const
         return t;
 }
 
+Type TypeChecker::check_type(const Hs::LType& type, kindchecker_state& K) const
+{
+    // So, currently, we
+    // (1) infer kinds for all the free variables.
+    // (2) then add foralls for the free variables.
+    // Should we be doing synonym substitution FIRST?
+
+    return K.kind_and_type_check_type( type );
+}
+
 Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
 {
     // So, currently, we
@@ -827,6 +837,14 @@ Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
     // Should we be doing synonym substitution FIRST?
 
     return K.kind_and_type_check_type( type );
+}
+
+Type TypeChecker::check_type(const Hs::LType& type) const
+{
+    // This should be rather wasteful... can we use a reference?
+    kindchecker_state K( this_mod() );
+
+    return check_type(type, K);
 }
 
 Type TypeChecker::check_type(const Type& type) const
@@ -838,6 +856,15 @@ Type TypeChecker::check_type(const Type& type) const
 }
 
 Type TypeChecker::check_constraint(const Type& type) const
+{
+    // This should be rather wasteful... can we use a reference?
+    kindchecker_state K( this_mod() );
+
+    return K.kind_and_type_check_constraint( type );
+
+}
+
+Type TypeChecker::check_constraint(const Hs::LType& type) const
 {
     // This should be rather wasteful... can we use a reference?
     kindchecker_state K( this_mod() );

@@ -885,11 +885,11 @@ Type desugar(const Hs::LType& lt)
     {
         return ConstrainedType( desugar(ct->context), desugar(ct->type) );
     }
-    else if (auto st = t.to<Hs::StrictType>())
+    else if (t.to<Hs::StrictType>())
     {
         throw myexception()<<"Can't desugar strict type '"<<lt.print()<<"' from Hs::Type to Type";
     }
-    else if (auto st = t.to<Hs::LazyType>())
+    else if (t.to<Hs::LazyType>())
     {
         throw myexception()<<"Can't desugar lazy type '"<<lt.print()<<"' from Hs::Type to Type";
     }

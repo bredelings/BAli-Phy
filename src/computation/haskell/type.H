@@ -227,7 +227,7 @@ struct ForallType
     ForallType(const std::vector<LTypeVar>& tvb, const LType& t):type_var_binders(tvb), type(t) {}
 };
 
-//Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
+LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& type);
 
 struct ConstrainedType
 {

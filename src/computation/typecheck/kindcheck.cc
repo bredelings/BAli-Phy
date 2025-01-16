@@ -38,7 +38,7 @@ void kindchecker_state::bind_type_var(const TypeVar& tv, const Kind& kind)
 
 void kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
 {
-    auto tv = desugar(hs_tv);
+    TypeVar tv({hs_tv.loc, hs_tv.value().name}, kind);
     return bind_type_var(tv, kind);
 }
 
@@ -95,6 +95,10 @@ Kind kindchecker_state::kind_for_type_con(const std::string& name) const
     return apply_substitution(kind);
 }
 
+Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& tv) const
+{
+    return kind_for_type_var(desugar(tv));
+}
 
 Kind kindchecker_state::kind_for_type_var(const TypeVar& tv) const
 {
@@ -171,9 +175,110 @@ Kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_for_type_con(name);
 }
 
-tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& t)
+tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
 {
-    return kind_check_type(desugar(t));
+    auto& [loc, t] = ltype;
+
+    if (auto tc = t.to<Hs::TypeCon>())
+    {
+        auto& name = tc->name;
+
+        // FIXME: we should pass the location to kind_check_type_con( ).
+        auto k = kind_check_type_con(name);
+        TypeCon Tc({loc, tc->name}, k);
+
+        return {Type(Tc),k};
+    }
+    else if (auto tv = t.to<Hs::TypeVar>())
+    {
+        auto k = kind_for_type_var({loc,*tv});
+        TypeVar Tv({loc, tv->name}, k);
+
+        return {Tv,k};
+    }
+    else if (auto tapp = t.to<Hs::TypeApp>())
+    {
+        auto [type1,kind1] = kind_check_type(tapp->head);
+        auto [type2,kind2] = kind_check_type(tapp->arg);
+
+        auto t2 = TypeApp(type1,type2);
+
+        if (auto kv1 = kind1.to<KindVar>())
+        {
+            auto a1 = fresh_kind_var();
+            auto a2 = fresh_kind_var();
+            add_substitution(*kv1, kind_arrow(a1,a2));
+            unify(a1, kind2); /// can't fail.
+            return {t2,a2};
+        }
+        else if (auto a = is_function_type(kind1))
+        {
+	    auto& [arg_kind, result_kind] = *a;
+            if (not unify(arg_kind, kind2))
+                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp->arg<<" :: "<<apply_substitution(kind2)<<")";
+            return {t2, result_kind};
+        }
+        else
+            throw myexception()<<"Can't apply type "<<tapp->head<<" :: "<<kind1.print()<<" to type "<<tapp->arg<<".";
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        Context context;
+        for(auto& hs_constraint: c->context.constraints)
+        {
+            auto [c2,k2] = kind_check_type(hs_constraint);
+            if (not unify(kind_constraint(), k2))
+		throw myexception()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
+            context.constraints.push_back(c2);
+        }
+        auto [type,k] = kind_check_type(c->type);
+
+        return {Type(ConstrainedType(context, type)), k};
+    }
+    else if (auto fa = t.to<Hs::ForallType>())
+    {
+        push_type_var_scope();
+
+        vector<TypeVar> binders;
+        for(auto& htv: fa->type_var_binders)
+        {
+            auto kv = fresh_kind_var();
+            bind_type_var(htv, kv);
+            auto tv = desugar(htv);
+            tv.kind = kv;
+            binders.push_back(tv);
+        }
+
+        auto [type,kind] = kind_check_type(fa->type);
+
+        // to construct a new type, perhaps we should create an ForallType, with the kind of each variable set to the fresh kind.
+        // however, afterwards, we have to zonk the final TYPE to fill in KIND variables.
+
+        pop_type_var_scope();
+
+        return {ForallType(binders, type), kind};
+    }
+    else if (auto list_type = t.to<Hs::ListType>())
+    {
+        Hs::Type type2 = Hs::TypeApp({noloc,Hs::TypeCon("[]")}, list_type->element_type);
+        return kind_check_type({loc, type2});
+    }
+    else if (auto tuple_type = t.to<Hs::TupleType>())
+    {
+        int n = tuple_type->element_types.size();
+        Hs::LType tuple_tycon(noloc, Hs::TypeCon(tuple_name(n)));
+        return kind_check_type( make_tyapps(tuple_tycon, tuple_type->element_types) );
+    }
+    else if (t.to<Hs::StrictType>())
+    {
+        throw myexception()<<"kind_check_type: Internal strictness mark";
+    }
+    else if (t.to<Hs::LazyType>())
+    {
+        throw myexception()<<"kind_check_type: Internal strictness mark";
+    }
+
+    throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
 }
 
 tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
@@ -699,9 +804,30 @@ Type kindchecker_state::kind_and_type_check_type(const Type& type)
     return kind_and_type_check_type_(type, kind_type() );
 }
 
+Type kindchecker_state::kind_and_type_check_type(const Hs::LType& type)
+{
+    return kind_and_type_check_type_(type, kind_type() );
+}
+
 Type kindchecker_state::kind_and_type_check_constraint(const Type& type)
 {
     return kind_and_type_check_type_(type, kind_constraint() );
+}
+
+Type kindchecker_state::kind_and_type_check_constraint(const Hs::LType& type)
+{
+    return kind_and_type_check_type_(type, kind_constraint() );
+}
+
+vector<Hs::LTypeVar> kindchecker_state::unbound_free_type_variables(const Hs::LType& type)
+{
+    vector<Hs::LTypeVar> tvs;
+    for(auto& tv: unbound_free_type_variables(desugar(type)))
+    {
+        Hs::TypeVar htv(tv.name.value());
+        tvs.push_back({noloc, htv});
+    }
+    return tvs;
 }
 
 vector<TypeVar> kindchecker_state::unbound_free_type_variables(const Type& type)
@@ -722,6 +848,16 @@ Type kindchecker_state::kind_and_type_check_type_(const Type& type, const Kind& 
     return kind_check_type_of_kind(type2, kind);
 }
 
+Type kindchecker_state::kind_and_type_check_type_(const Hs::LType& type, const Kind& kind)
+{
+    // 1. Find the NEW free type variables
+    auto new_ftvs = unbound_free_type_variables(type);
+
+    auto type2 = Hs::add_forall_vars(new_ftvs, type);
+    
+    return kind_check_type_of_kind(type2, kind);
+}
+
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
 {
     // Bind type parameters for class
@@ -734,7 +870,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
 
     // b. Put each type variable into the kind.
     Kind k2 = kind_type();
-    for(auto& tv: desugar(class_decl.type_vars))
+    for(auto& tv: class_decl.type_vars)
     {
         // the kind should be an arrow kind.
 	auto [arg_kind, result_kind] = is_function_type(k).value();
