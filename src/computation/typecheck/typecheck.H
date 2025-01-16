@@ -225,15 +225,11 @@ public:
 
     Type check_type(const Hs::LType&) const;
 
-    Type check_type(const Type&) const;
-
     Type check_type(const Hs::LType&, kindchecker_state& K) const;
 
     Type check_type(const Type&, kindchecker_state& K) const;
 
     Type check_constraint(const Hs::LType&) const;
-
-    Type check_constraint(const Type&) const;
 
     Hs::Var find_prelude_var(std::string name) const;
 

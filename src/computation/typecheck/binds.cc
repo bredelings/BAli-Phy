@@ -52,7 +52,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     global_value_env fte;
     for(auto& f: foreign_decls)
     {
-        auto type = check_type( desugar(f.type) );
+        auto type = check_type( f.type );
         auto FI = this_mod().lookup_local_symbol(unloc(f.function).name);
         FI->type = expand_all_type_synonyms(type);
     }
@@ -72,7 +72,7 @@ void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
     for(auto& [lvar,type]: binds.signatures)
     {
         auto& var = unloc(lvar);
-        auto type2 = check_type(desugar(type));
+        auto type2 = check_type(type);
         sigs = sigs.insert({var,type2});
         sigs2.insert({var,type2});
     }

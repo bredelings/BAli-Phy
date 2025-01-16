@@ -847,23 +847,6 @@ Type TypeChecker::check_type(const Hs::LType& type) const
     return check_type(type, K);
 }
 
-Type TypeChecker::check_type(const Type& type) const
-{
-    // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( this_mod() );
-
-    return check_type(type, K);
-}
-
-Type TypeChecker::check_constraint(const Type& type) const
-{
-    // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( this_mod() );
-
-    return K.kind_and_type_check_constraint( type );
-
-}
-
 Type TypeChecker::check_constraint(const Hs::LType& type) const
 {
     // This should be rather wasteful... can we use a reference?

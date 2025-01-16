@@ -402,9 +402,9 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto dfun = fresh_dvar(constraint, true);
 
     //  -- new -- //
-    Type inst_type = add_constraints(desugar(inst_decl.context.constraints), constraint);
+    Type inst_type;
     try {
-	inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
+	inst_type = check_constraint( Hs::add_constraints(inst_decl.context, inst_decl.constraint) );  // kind-check the constraint and quantify it.
     }
     catch (std::exception& e)
     {

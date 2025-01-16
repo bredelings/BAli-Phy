@@ -245,7 +245,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     else if (auto tp = pat.to<Hs::TypedPattern>())
     {
         auto TP = *tp;
-        auto type = check_type(desugar(TP.type));
+        auto type = check_type(TP.type);
         tcPat(penv, TP.pat, Check(type), sigs, a);
         TP.wrap = instPatSigma(type, exp_type);
         // I think we should translate this to case (wrap(x)) of pat -> E

@@ -92,7 +92,7 @@ void TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
-    auto type = check_type(desugar(TExp.type));
+    auto type = check_type(TExp.type);
     Core2::wrapper w1 = checkSigma( TExp.exp, type );
     Core2::wrapper w2 = instantiateSigma(TypeConvertOrigin(), type, exp_type);
     TExp.wrap = w1 * w2;
