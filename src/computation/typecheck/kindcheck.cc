@@ -17,8 +17,17 @@ using std::vector;
 
 namespace views = ranges::views;
 
+
+/* NOTE: Can we avoid two-stage kind-checking?
+  1. We first determine the constructor kinds.
+     Here we do: kind_check_data_type() -> kind_check_constructor()
+  2. Later we do: typecheck_data_type() -> type_check_constructor()
+
+   Is there a way we could avoid this two-stage approach?
+*/
+
 /*
- * See Note: Error messages from the kind checker.
+ * See Note: Error messages from the kind checker (below).
  */
 
 bool kindchecker_state::type_var_in_scope(const TypeVar& tv) const
