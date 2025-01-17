@@ -70,13 +70,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     auto class_kind = K.kind_for_type_con(class_info.name);
 
     // 1b. Record the kind for each type variable.
-    for(auto& tv: desugar(class_decl.type_vars))
-        K.bind_type_var(tv, *tv.kind);
+    for(auto& tv: class_decl.type_vars)
+        K.bind_type_var(tv, *unloc(tv).kind);
 
     // 2. construct the constraint that represent the class
     Type class_constraint = TypeCon(class_decl.name); // put class_kind into TypeCon?
-    for(auto& tv: desugar(class_decl.type_vars))
-        class_constraint = TypeApp(class_constraint, tv);
+    for(auto& tv: class_decl.type_vars)
+        class_constraint = TypeApp(class_constraint, desugar(tv));
 
     // 3. make global types for class methods
 
@@ -84,7 +84,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& sig_decl: class_decl.sig_decls)
     {
         // We need the class variables in scope here.
-        auto method_type = check_type(desugar(sig_decl.type), K);
+        auto method_type = check_type(sig_decl.type, K);
         // forall a. C a => method_type
         method_type = add_constraints({class_constraint}, method_type);
         method_type = add_forall_vars(desugar(class_decl.type_vars), method_type);
