@@ -69,6 +69,8 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 //     And don't we also know the kinds for variables that are not substituted?
 //     Then if we check that the substitutions have the right kind, shouldn't we be able to skip kind-checking?
 // (c) For RHS's that are not default, we have to check that they have the right kind.
+// (d) However, free variables in the instance head should ALREADY have a kind assigned to them.
+//     Part of the issue may be that we aren't doing kind inference on the free vars in the instance head.
 void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
     // We used to construct a TypeFamEqnInfo here
