@@ -4,6 +4,7 @@
 #include "haskell/desugar_type.H"
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
+#include "typecheck.H"
 
 using std::pair;
 using std::map;
@@ -1039,3 +1040,8 @@ TypeConEnv kindchecker_state::infer_kinds(const vector<expression_ref>& type_dec
     // * the type for each method MAY mention other variables.
     // * constraints on a class method may ONLY mention NON-class variables. (but this is a "silly" rule)
 
+kindchecker_state::kindchecker_state(TypeChecker& tc)
+    :mod(tc.this_mod()),type_checker(tc)
+{
+    type_var_to_kind.push_back({});
+}

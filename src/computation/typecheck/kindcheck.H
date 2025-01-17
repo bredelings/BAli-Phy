@@ -9,11 +9,14 @@
 #include "kind.H"
 #include "env.H"
 
+class TypeChecker;
+
 struct kindchecker_state
 {
     int next_kvar_index = 1;
 
     const Module& mod;
+    TypeChecker& type_checker;
 
     KindVar fresh_named_kind_var(const std::string& s) {
 	auto kv = TypeVar({noloc,s});
@@ -84,11 +87,7 @@ struct kindchecker_state
 
     TypeConEnv infer_kinds(const std::vector<expression_ref>& type_decl_group);
 
-    kindchecker_state(const Module& m)
-        :mod(m)
-    {
-        type_var_to_kind.push_back({});
-    }
+    kindchecker_state(TypeChecker&);
 };
 
 #endif

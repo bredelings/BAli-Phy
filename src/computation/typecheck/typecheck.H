@@ -223,13 +223,13 @@ public:
 
     Type expand_all_type_synonyms(Type type) const;
 
-    Type check_type(const Hs::LType&) const;
+    Type check_type(const Hs::LType&);
 
-    Type check_type(const Hs::LType&, kindchecker_state& K) const;
+    Type check_type(const Hs::LType&, kindchecker_state& K);
 
-    Type check_type(const Type&, kindchecker_state& K) const;
+    Type check_type(const Type&, kindchecker_state& K);
 
-    Type check_constraint(const Hs::LType&) const;
+    Type check_constraint(const Hs::LType&);
 
     Hs::Var find_prelude_var(std::string name) const;
 

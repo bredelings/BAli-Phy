@@ -98,7 +98,7 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     // 2. Kind-check the parameters and result type, and record the free type variables.
 
     // 2a. Bind the free type vars
-    kindchecker_state K( this_mod() );
+    kindchecker_state K( *this );
     K.push_type_var_scope();
     for(auto& tv: free_tvs)
     {

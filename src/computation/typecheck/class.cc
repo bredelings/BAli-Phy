@@ -56,7 +56,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
-    kindchecker_state K( this_mod() );
+    kindchecker_state K( *this );
 
     ClassInfo class_info;
     class_info.type_vars = desugar(class_decl.type_vars);

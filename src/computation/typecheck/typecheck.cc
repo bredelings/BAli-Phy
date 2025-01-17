@@ -647,7 +647,7 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
     // Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K( this_mod() );
+        kindchecker_state K( *this );
 
         auto new_tycons = K.infer_kinds(type_decl_group);
 
@@ -819,7 +819,7 @@ Type TypeChecker::look_thru(const Type& t) const
         return t;
 }
 
-Type TypeChecker::check_type(const Hs::LType& type, kindchecker_state& K) const
+Type TypeChecker::check_type(const Hs::LType& type, kindchecker_state& K)
 {
     // So, currently, we
     // (1) infer kinds for all the free variables.
@@ -829,7 +829,7 @@ Type TypeChecker::check_type(const Hs::LType& type, kindchecker_state& K) const
     return K.kind_and_type_check_type( type );
 }
 
-Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
+Type TypeChecker::check_type(const Type& type, kindchecker_state& K)
 {
     // So, currently, we
     // (1) infer kinds for all the free variables.
@@ -839,18 +839,18 @@ Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
     return K.kind_and_type_check_type( type );
 }
 
-Type TypeChecker::check_type(const Hs::LType& type) const
+Type TypeChecker::check_type(const Hs::LType& type)
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( this_mod() );
+    kindchecker_state K( *this );
 
     return check_type(type, K);
 }
 
-Type TypeChecker::check_constraint(const Hs::LType& type) const
+Type TypeChecker::check_constraint(const Hs::LType& type)
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( this_mod() );
+    kindchecker_state K( *this );
 
     return K.kind_and_type_check_constraint( type );
 
@@ -1544,7 +1544,7 @@ Type remove_top_level_foralls(Type t)
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
-    kindchecker_state ks( this_mod() );
+    kindchecker_state ks( *this );
 
     for(auto& [_,decl]: decls)
     {
