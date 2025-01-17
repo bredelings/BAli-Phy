@@ -61,6 +61,14 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 // Location information for default type instances would refer to lines in a different module!
 // Suppose we strip all the type information from the default instance and store it in Haskell form?
 // Then suppose we allow substitution in Haskell types?
+
+// QUESTION: But for default methods, do we actually need to do these checks?
+// (a) We already know that any variable on the rhs will occur on the lhs, because its being substituted into something on the right
+//     that also occurs on the left.
+// (b) How do we determine kinds for things?  Should we already know the kinds for the instance variables?
+//     And don't we also know the kinds for variables that are not substituted?
+//     Then if we check that the substitutions have the right kind, shouldn't we be able to skip kind-checking?
+// (c) For RHS's that are not default, we have to check that they have the right kind.
 void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
     // We used to construct a TypeFamEqnInfo here
