@@ -18,13 +18,16 @@ using std::vector;
 namespace views = ranges::views;
 
 
-/* NOTE: Can we avoid two-stage kind-checking?
+/* FIXME: We currently kind_check data types, and then duplicate the work to construct the DataConInfo.
   1. We first determine the constructor kinds.
      Here we do: kind_check_data_type() -> kind_check_constructor()
   2. Later we do: typecheck_data_type() -> type_check_constructor()
 
-   Is there a way we could avoid this two-stage approach?
+   Currently we must redo the kind-checking we do not record the kinds for the type variables.
+   So we get the same errors the second time, but we need to redo it to find the kinds for the type variables.
 */
+
+// FIXME: Simplify AST by replacing Context -> std::vector<Type>
 
 /*
  * See Note: Error messages from the kind checker (below).
@@ -704,7 +707,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
 
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
-            kind_and_type_check_type(desugar(data_cons_decl.type));
+            kind_and_type_check_type(data_cons_decl.type);
     }
 }
 
