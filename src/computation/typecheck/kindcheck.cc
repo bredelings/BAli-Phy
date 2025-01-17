@@ -105,18 +105,30 @@ Kind kindchecker_state::kind_for_type_con(const std::string& name) const
     return apply_substitution(kind);
 }
 
-Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& tv) const
+Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& ltv) const
 {
-    return kind_for_type_var(desugar(tv));
+    auto& [loc, tv] = ltv;
+    if (loc) type_checker.push_source_span(*loc);
+    auto result = kind_for_type_var(desugar(ltv));
+    if (loc) type_checker.pop_source_span();
+    return result;
 }
 
 Kind kindchecker_state::kind_for_type_var(const TypeVar& tv) const
 {
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
-        throw myexception()<<"Can't find type variable '"<<tv.print()<<"'";
-    auto kind = it->second;
-    return apply_subst(kind_var_to_kind, kind);
+    {
+        type_checker.record_error(Note()<<"Undefined type variable '"<<tv.print()<<"'");
+        // Ideally we'd return fresh_kind_var() here.
+        // But that requires this not to be const.
+        return kind_type();
+    }
+    else
+    {
+        auto kind = it->second;
+        return apply_subst(kind_var_to_kind, kind);
+    }
 }
 
 bool kindchecker_state::unify(const Kind& kind1, const Kind& kind2)
@@ -136,7 +148,11 @@ Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& 
     auto [t2,kind2] = kind_check_type(t);
     t2 = zonk_kind_for_type(t2);
     if (not unify(kind, kind2))
-        throw myexception()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
+    {
+        if (t.loc) type_checker.push_source_span(*t.loc);
+        type_checker.record_error(Note()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n");
+        if (t.loc) type_checker.pop_source_span();
+    }
     return t2;
 }
 
@@ -146,7 +162,7 @@ Type kindchecker_state::kind_check_type_of_kind(const Type& t, const Kind& kind)
     auto [t2,kind2] = kind_check_type(t);
     t2 = zonk_kind_for_type(t2);
     if (not unify(kind, kind2))
-        throw myexception()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
+        type_checker.record_error(Note()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n");
     return t2;
 }
 
@@ -225,11 +241,21 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         {
 	    auto& [arg_kind, result_kind] = *a;
             if (not unify(arg_kind, kind2))
-                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp->arg<<" :: "<<apply_substitution(kind2)<<")";
+            {
+                if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+                type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp->arg<<" :: "<<apply_substitution(kind2)<<")");
+                if (ltype.loc) type_checker.pop_source_span();
+            }
             return {t2, result_kind};
         }
         else
-            throw myexception()<<"Can't apply type "<<tapp->head<<" :: "<<kind1.print()<<" to type "<<tapp->arg<<".";
+        {
+            if (loc) type_checker.push_source_span(*loc);
+            type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "<<kind1.print()<<" to type "<<tapp->arg<<".");
+            if (loc) type_checker.pop_source_span();
+
+            return {t2, fresh_kind_var()};
+        }
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
@@ -238,7 +264,11 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         {
             auto [c2,k2] = kind_check_type(hs_constraint);
             if (not unify(kind_constraint(), k2))
-		throw myexception()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
+            {
+                if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+		type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print());
+                if (ltype.loc) type_checker.pop_source_span();
+            }
             context.constraints.push_back(c2);
         }
         auto [type,k] = kind_check_type(c->type);
@@ -279,13 +309,19 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         Hs::LType tuple_tycon(noloc, Hs::TypeCon(tuple_name(n)));
         return kind_check_type( make_tyapps(tuple_tycon, tuple_type->element_types) );
     }
-    else if (t.to<Hs::StrictType>())
+    else if (auto st = t.to<Hs::StrictType>())
     {
-        throw myexception()<<"kind_check_type: Internal strictness mark";
+        if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+        type_checker.record_error(Note()<<"Internal strictness mark not allowed");
+        if (ltype.loc) type_checker.pop_source_span();
+        return kind_check_type( st->type );
     }
-    else if (t.to<Hs::LazyType>())
+    else if (auto lt = t.to<Hs::LazyType>())
     {
-        throw myexception()<<"kind_check_type: Internal strictness mark";
+        if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+        type_checker.record_error(Note()<<"Internal strictness mark not allowed");
+        if (ltype.loc) type_checker.pop_source_span();
+        return kind_check_type( lt->type );
     }
 
     throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
@@ -506,7 +542,7 @@ Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
     return context;
 }
 
-std::pair<Type,bool> desugar_field_type(Hs::LType ltype)
+std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
 {
     bool strictness = false;
     auto& [loc, type] = ltype;
@@ -516,12 +552,28 @@ std::pair<Type,bool> desugar_field_type(Hs::LType ltype)
         strictness = true;
         ltype = strict_type->type;
     }
-    return {desugar(ltype), strictness};
+    return {ltype, strictness};
 }
 
 void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor, const Type& data_type)
 {
-    auto type2 = data_type;
+    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
+
+    // This requires {-# LANGUAGE ExistentialQuantification #-}
+    push_type_var_scope();
+    for(auto& htv: constructor.forall)
+    {
+        auto kv = fresh_kind_var();
+        bind_type_var(htv, kv);
+        auto tv = desugar(htv);
+        tv.kind = kv;
+    }
+
+    if (constructor.context)
+    {
+        for(auto& constraint: constructor.context->constraints)
+            kind_check_type_of_kind(constraint, kind_constraint());
+    }
 
     if (constructor.is_record_constructor())
     {
@@ -529,10 +581,9 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
 
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
-            auto [field_type, _] = desugar_field_type(field_decl.type);
+            auto [hs_field_type, _] = pop_strictness(field_decl.type);
 
-            for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = make_arrow_type(field_type, type2);
+            kind_check_type_of_kind(hs_field_type, kind_type());
         }
     }
     else
@@ -540,41 +591,47 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
         vector<Type> field_types;
         for(auto& hs_field_type: std::get<0>(constructor.fields))
         {
-            auto [field_type,_] = desugar_field_type(hs_field_type);
-            field_types.push_back(field_type);
+            auto [field_type,_] = pop_strictness(hs_field_type);
+            kind_check_type_of_kind(field_type, kind_type());
         }
-
-        for(auto& type: field_types | views::reverse)
-            type2 = make_arrow_type(type, type2);
     }
 
-    // Are we allowed to write constraints here?
-    if (constructor.context)
-        type2 = ::add_constraints( desugar(constructor.context->constraints), type2);
-
-    // This requires {-# LANGUAGE ExistentialQuantification #-}
-    type2 = add_forall_vars( desugar(constructor.forall), type2 );
-
-    kind_check_type_of_kind(type2, kind_type());
+    pop_type_var_scope();
 }
 
 DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor)
 {
+    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
+
     DataConInfo info;
 
-    // 1. Record exi_tvs, written_constraints, and field_types
-    info.exi_tvs = desugar(constructor.forall);
+    // 1. Record exi_tvs and make up kind vars for them.
+    push_type_var_scope();
+    for(auto& htv: constructor.forall)
+    {
+        auto k = fresh_kind_var();
+        bind_type_var(htv, k);
+        auto tv = desugar(htv);
+        tv.kind = k;
+        info.exi_tvs.push_back(tv);
+    }
 
+    // 2. Record written_constraints
+    //   Do constraints affect kind determination?  Maybe not
     if (constructor.context)
-        info.written_constraints = desugar(constructor.context->constraints);
+    {
+        for(auto& constraint: constructor.context->constraints)
+            info.written_constraints.push_back( kind_check_type_of_kind(constraint, kind_constraint()) );
+    }
 
+    // 3. Kind check field types
     if (constructor.is_record_constructor())
     {
         for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
             for(int i=0; i < field_decl.field_names.size(); i++)
             {
-                auto [field_type,strictness] = desugar_field_type(field_decl.type);
-                info.field_types.push_back( field_type );
+                auto [hs_field_type, strictness] = pop_strictness(field_decl.type);
+                info.field_types.push_back( kind_check_type_of_kind( hs_field_type, kind_type() ) );
                 info.field_strictness.push_back( strictness );
             }
     }
@@ -582,34 +639,10 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
     {
         for(auto& hs_field_type: std::get<0>(constructor.fields))
         {
-            auto [field_type, strictness] = desugar_field_type(hs_field_type);
-            info.field_types.push_back( field_type );
+            auto [field_type, strictness] = pop_strictness(hs_field_type);
+            info.field_types.push_back( kind_check_type_of_kind( hs_field_type, kind_type() ) );
             info.field_strictness.push_back( strictness );
         }
-    }
-
-    // 2. Make up kind vars for exi_tvs
-    push_type_var_scope();
-    for(auto& tv: info.exi_tvs)
-    {
-        tv.kind = fresh_kind_var();
-        bind_type_var(tv, *tv.kind);
-    }
-
-    // 3. Infer kind for exi_tvs
-    for(auto& field_type: info.field_types)
-    {
-        auto [t2,k2] = kind_check_type(field_type);
-        field_type = t2;
-        if (not unify(kind_type(), k2))
-	    throw myexception()<<"Field type '"<<field_type.print()<<"' should be a Type, but has kind "<<k2.print();
-    }
-    for(auto& constraint: info.written_constraints)
-    {
-        auto [t2,k2] = kind_check_type(constraint);
-        if (not unify(kind_constraint(), k2))
-	    throw myexception()<<"Constraint '"<<constraint.print()<<"' should be a Constraint, but has kind "<<k2.print();
-        constraint = t2;
     }
 
     // 4. Substitute and replace kind vars
