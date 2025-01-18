@@ -80,7 +80,7 @@ struct kindchecker_state
     DataConEnv type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl);
     void kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl);
     DataConInfo type_check_constructor(const Hs::ConstructorDecl& constructor);
-    void kind_check_constructor(const Hs::ConstructorDecl& constructor, const Type& data_type);
+    void kind_check_constructor(const Hs::ConstructorDecl& constructor);
 
     // type synonym
     void kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_decl);

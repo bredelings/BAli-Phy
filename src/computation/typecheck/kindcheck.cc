@@ -558,7 +558,7 @@ std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
     return {ltype, strictness};
 }
 
-void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor, const Type& data_type)
+void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor)
 {
     // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
 
@@ -584,9 +584,9 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
 
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
-            auto [hs_field_type, _] = pop_strictness(field_decl.type);
+            auto [field_type, _] = pop_strictness(field_decl.type);
 
-            kind_check_type_of_kind(hs_field_type, kind_type());
+            kind_check_type_of_kind(field_type, kind_type());
         }
     }
     else
@@ -633,8 +633,8 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
         for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
             for(int i=0; i < field_decl.field_names.size(); i++)
             {
-                auto [hs_field_type, strictness] = pop_strictness(field_decl.type);
-                info.field_types.push_back( kind_check_type_of_kind( hs_field_type, kind_type() ) );
+                auto [field_type, strictness] = pop_strictness(field_decl.type);
+                info.field_types.push_back( kind_check_type_of_kind(field_type, kind_type() ) );
                 info.field_strictness.push_back( strictness );
             }
     }
@@ -643,7 +643,7 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
         for(auto& hs_field_type: std::get<0>(constructor.fields))
         {
             auto [field_type, strictness] = pop_strictness(hs_field_type);
-            info.field_types.push_back( kind_check_type_of_kind( hs_field_type, kind_type() ) );
+            info.field_types.push_back( kind_check_type_of_kind(field_type, kind_type() ) );
             info.field_strictness.push_back( strictness );
         }
     }
@@ -695,7 +695,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())
-            kind_check_constructor(constructor, data_type);
+            kind_check_constructor(constructor);
     }
 
     pop_type_var_scope();
@@ -707,7 +707,13 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
 
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
+        {
+            // FIXME! Handle strict fields: Con :: forall b. C b a => a -> !b -> T Int
+            // FIXME! Handle record fields: Con :: { field1, field2 :: Int } -> T Int
+            // OK: Con :: T Int
+            // OK: Con :: a -> b -> T Int
             kind_and_type_check_type(data_cons_decl.type);
+        }
     }
 }
 
