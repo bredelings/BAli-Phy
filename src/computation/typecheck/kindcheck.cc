@@ -473,7 +473,12 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
     }
     else if (auto tv = t.to<TypeVar>())
     {
-        auto kind = replace_kvar_with_star(kind_for_type_var(*tv));
+        Kind kind;
+        if (tv->kind)
+            kind = *tv->kind;
+        else
+            kind = kind_for_type_var(*tv);
+        kind = replace_kvar_with_star(kind);
 
         auto Tv = *tv;
         Tv.kind = kind;
