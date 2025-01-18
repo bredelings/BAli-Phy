@@ -514,6 +514,8 @@ public:
 
     void add_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
 
+    void add_default_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
+
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
     void default_type_instance(const TypeCon& tf_con,

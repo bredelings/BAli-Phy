@@ -11,6 +11,12 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
+// TODO: kind-check the instance head in infer_type_for_instance1
+// This should allow us pass in type variables with kinds into add_default_type_instance( ).
+// This should allow us to avoid doing kind checking in add_default_type_instance( ).
+
+// TODO: change TypeVar to have a non-optional kind.
+
 Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
@@ -72,6 +78,93 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 // (d) However, free variables in the instance head should ALREADY have a kind assigned to them.
 //     Part of the issue may be that we aren't doing kind inference on the free vars in the instance head.
 void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+{
+    // We used to construct a TypeFamEqnInfo here
+    // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
+
+    vector<Type> args = args_in;
+    Type rhs = rhs_in;
+
+    // 1. The rhs may only mention type vars bound on the lhs.
+    set<TypeVar> lhs_tvs;
+    for(auto& arg: args)
+    {
+        for(auto& tv: free_type_variables(arg))
+            lhs_tvs.insert(tv);
+    }
+
+    for(auto& tv: free_type_variables(rhs))
+        if (not lhs_tvs.count(tv))
+        {
+            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
+            return;
+        }
+    auto free_tvs = lhs_tvs | ranges::to<vector>();
+
+    // 2. Kind-check the parameters and result type, and record the free type variables.
+
+    // 2a. Bind the free type vars
+    kindchecker_state K( *this );
+    K.push_type_var_scope();
+    for(auto& tv: free_tvs)
+    {
+        assert(not K.type_var_in_scope(tv));
+        tv.kind = K.fresh_kind_var();
+        K.bind_type_var(tv, *tv.kind);
+    }
+
+    // 2b. Kind-check the type vars
+    bool ok = true;
+    for(int i=0; i<args.size(); i++)
+    {
+        try {
+            // FIXME: we don't have location information on args[i], because default_type_instance doesn't have it.
+            K.kind_check_type_of_kind(args[i], *tf_info.args[i].kind);
+        }
+        catch (std::exception& e)
+        {
+            record_error(Note()<<e.what());
+            ok = false;
+        }
+    }
+    try
+    {
+        // FIXME: we don't have location information on rhs, because default_type_instance doesn't have it.
+        K.kind_check_type_of_kind(rhs, tf_info.result_kind);
+    }
+    catch (std::exception& e)
+    {
+        record_error(Note()<<e.what());
+        ok = false;
+    }
+    if (not ok) return;
+
+    // 2c. Record the final kinds for the free type vars
+    for(auto& arg: args)
+        arg = K.zonk_kind_for_type(arg);
+    rhs = K.zonk_kind_for_type(rhs);
+
+    for(auto& tv: free_tvs)
+        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
+
+    // 3. Add the (~) instance to the instance environment
+    Type lhs = make_tyapps(tf_con, args);
+    Type constraint = make_equality_pred(lhs, rhs);
+    Type inst_type = add_forall_vars(free_tvs, constraint);
+
+    auto dvar = fresh_dvar(constraint, true);
+
+    auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon({noloc,"~"}),{lhs, rhs}, false, false, false} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
+    S.type = S.instance_info->type();
+    this_mod().add_symbol(S);
+
+    this_mod().local_instances.insert( {dvar, *S.instance_info} );
+    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+}
+
+void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
     // We used to construct a TypeFamEqnInfo here
     // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
@@ -331,7 +424,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance
-    add_type_instance(tf_con, args, rhs, *tf_info, inst_loc);
+    add_default_type_instance(tf_con, args, rhs, *tf_info, inst_loc);
 }
 
 std::optional<Core2::Var<>>
