@@ -1671,6 +1671,11 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     // 2. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
     tc_state->get_tycon_info( M.type_decls );
 
+    // Quit early if there are errors in kind-checking.
+    // This solves double-reporting of kind errors, since we re-king check data types in get_constructor_info( ).
+    show_messages(MM.file, std::cerr, tc_state->messages());
+    exit_on_error(tc_state->messages());
+
     // 3. Annotate tyvars in types with their kind.
     // Do we need this, could we do it in infer_type_for_classes/synonyms/data?
     M.type_decls = tc_state->add_type_var_kinds( M.type_decls );
