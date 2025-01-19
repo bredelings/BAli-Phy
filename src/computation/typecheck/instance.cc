@@ -22,6 +22,10 @@ using std::optional;
 
 // TODO: change TypeVar to have a non-optional kind.
 
+// TODO: make indenting ignore ANSI color codes.
+
+// TODO: make constructors look at the strictness mark.
+
 Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
@@ -165,62 +169,13 @@ void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<
     for(auto& arg: args)
     {
         for(auto& tv: free_type_variables(arg))
+        {
+            assert(tv.kind);
             lhs_tvs.insert(tv);
+        }
     }
 
-    for(auto& tv: free_type_variables(rhs))
-        if (not lhs_tvs.count(tv))
-        {
-            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
-            return;
-        }
     auto free_tvs = lhs_tvs | ranges::to<vector>();
-
-    // 2. Kind-check the parameters and result type, and record the free type variables.
-
-    // 2a. Bind the free type vars
-    kindchecker_state K( *this );
-    K.push_type_var_scope();
-    for(auto& tv: free_tvs)
-    {
-        assert(not K.type_var_in_scope(tv));
-        tv.kind = K.fresh_kind_var();
-        K.bind_type_var(tv, *tv.kind);
-    }
-
-    // 2b. Kind-check the type vars
-    bool ok = true;
-    for(int i=0; i<args.size(); i++)
-    {
-        try {
-            // FIXME: we don't have location information on args[i], because default_type_instance doesn't have it.
-            K.kind_check_type_of_kind(args[i], *tf_info.args[i].kind);
-        }
-        catch (std::exception& e)
-        {
-            record_error(Note()<<e.what());
-            ok = false;
-        }
-    }
-    try
-    {
-        // FIXME: we don't have location information on rhs, because default_type_instance doesn't have it.
-        K.kind_check_type_of_kind(rhs, tf_info.result_kind);
-    }
-    catch (std::exception& e)
-    {
-        record_error(Note()<<e.what());
-        ok = false;
-    }
-    if (not ok) return;
-
-    // 2c. Record the final kinds for the free type vars
-    for(auto& arg: args)
-        arg = K.zonk_kind_for_type(arg);
-    rhs = K.zonk_kind_for_type(rhs);
-
-    for(auto& tv: free_tvs)
-        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
 
     // 3. Add the (~) instance to the instance environment
     Type lhs = make_tyapps(tf_con, args);
@@ -418,6 +373,10 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
 std::optional<Core2::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
+    // IDEA move some of the checking and complaining to the renaming stage.
+
+    // FIXME: allow check_constraint to fail by returning an optional<Type>.
+
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
     auto inst_loc = range(inst_decl.context) * inst_decl.constraint.loc;
     push_source_span( *inst_loc );
