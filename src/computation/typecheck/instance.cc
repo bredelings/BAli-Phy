@@ -465,21 +465,21 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         return {};
     }
 
-    // 4. Construct the mapping from original class variables to instance variables
+    // 4. Construct the quantified type (forall tvs. constraints => constraint)
+    auto free_ltvs = free_type_variables(inst_decl.constraint);
+    auto hs_polytype = Hs::add_forall_vars(free_ltvs, Hs::add_constraints(inst_decl.context, inst_decl.constraint));
+
+    // 5. Kind-check the type and set the kinds for the type variables.
+    auto polytype = check_constraint(hs_polytype);
+
+    // 6. Get the free type variables, constraints, class_head and args
+    auto [tvs, constraints, constraint] = peel_top_gen(polytype);
+    auto [head, args] = decompose_type_apps(constraint);
+
+    // 7. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
     for(int i = 0; i < N; i++)
-        instance_subst = instance_subst.insert( {class_info.type_vars[i], desugar(class_args[i])} );
-
-    // 5. Find the type vars mentioned in the constraint.
-    auto constraint = desugar(inst_decl.constraint);
-    set<TypeVar> type_vars = free_type_variables(constraint);
-
-    // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
-    for(auto& tv: free_type_variables(desugar(inst_decl.context)))
-    {
-        if (not type_vars.count(tv))
-            record_error( Note() << "  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration" );
-    }
+        instance_subst = instance_subst.insert( {class_info.type_vars[i], args[i]} );
 
     // Look at associated type instances
     std::set<TypeCon> defined_ats;
@@ -497,36 +497,8 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 	    default_type_instance(tf_con, maybe_default, instance_subst, *inst_loc);
     }
 
-
     auto dfun = fresh_dvar(constraint, true);
 
-    //  -- new -- //
-    Type inst_type;
-    try {
-	inst_type = check_constraint( Hs::add_constraints(inst_decl.context, inst_decl.constraint) );  // kind-check the constraint and quantify it.
-    }
-    catch (std::exception& e)
-    {
-	// Sometimes we get an error from add_type_instance( ) above... but not always.
-	record_error(Note()<<e.what());
-	return {};
-    }
-
-    // -- break down the inst_type into pieces. -- //
-    auto tt = inst_type;
-    vector<TypeVar> tvs;
-    if (auto forall = tt.to<ForallType>())
-    {
-        tvs = forall->type_var_binders;
-        tt = forall->type;
-    }
-    vector<Type> constraints;
-    if (auto c = tt.to<ConstrainedType>())
-    {
-        constraints = c->context;
-        tt = c->type;
-    }
-    auto [head,args] = decompose_type_apps(tt);
     auto class_con = head.to<TypeCon>();
     assert(class_con);
 
