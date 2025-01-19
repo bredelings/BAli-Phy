@@ -81,7 +81,7 @@ int max_level(Type t)
     else if (auto app = t.to<TypeApp>())
         return std::max( max_level(app->head), max_level(app->arg) );
     else if (auto ct = t.to<ConstrainedType>())
-        return std::max( max_level(ct->context.constraints), max_level(ct->type) );
+        return std::max( max_level(ct->context), max_level(ct->type) );
     else if (auto fa = t.to<ForallType>())
         return max_level( fa->type );
 
@@ -110,7 +110,7 @@ int max_meta_level(Type t)
     else if (auto app = t.to<TypeApp>())
         return std::max( max_meta_level(app->head), max_meta_level(app->arg) );
     else if (auto ct = t.to<ConstrainedType>())
-        return std::max( max_meta_level(ct->context.constraints), max_meta_level(ct->type) );
+        return std::max( max_meta_level(ct->context), max_meta_level(ct->type) );
     else if (auto fa = t.to<ForallType>())
         return max_meta_level( fa->type );
 
@@ -285,7 +285,7 @@ std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t)
     std::vector<Type> constraints;
     if (auto c = t.to<ConstrainedType>())
     {
-        constraints = c->context.constraints;
+        constraints = c->context;
         t = c->type;
     }
 
@@ -752,24 +752,19 @@ Type add_constraints(const vector<Type>& constraints, const Type& type)
     {
         auto CT = type.as_<ConstrainedType>();
         for(auto& constraint: constraints)
-            CT.context.constraints.push_back(constraint);
+            CT.context.push_back(constraint);
         return CT;
     }
     else
         return ConstrainedType(Context(constraints),type);
 }
 
-Type add_constraints(const Context& context, const Type& type)
-{
-    return add_constraints(context.constraints, type);
-}
-
 bool Context::operator==(const Context& c) const
 {
-    if (constraints.size() != c.constraints.size()) return false;
+    if (size() != c.size()) return false;
 
-    for(int i=0; i<constraints.size();i++)
-        if (constraints[i] != c.constraints[i]) return false;
+    for(int i=0; i<size();i++)
+        if ((*this)[i] != c[i]) return false;
 
     return true;
 }
@@ -777,11 +772,11 @@ bool Context::operator==(const Context& c) const
 std::string Context::print() const
 {
     vector<string> cs;
-    for(auto& constraint: constraints)
+    for(auto& constraint: *this)
         cs.push_back(constraint.print());
 
     string result = join(cs,", ");
-    if (cs.size() == 1 and not is_type_op(constraints[0]))
+    if (cs.size() == 1 and not is_type_op((*this)[0]))
         return result;
     else
         return "(" + result + ")";
@@ -831,13 +826,6 @@ TypeCon desugar(const Hs::LTypeCon& ltc)
     t2.name = {ltc.loc,tc.name};
     t2.kind = tc.kind;
     return t2;
-}
-
-Context desugar(const Hs::Context& c)
-{
-    Context c2;
-    c2.constraints = desugar(c.constraints);
-    return c2;
 }
 
 vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& ts1)

@@ -26,7 +26,7 @@ Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index);
 
 Context alphabetize(Context context, map<TypeVar,TypeVar>& s, int& index)
 {
-    for(auto& constraint: context.constraints)
+    for(auto& constraint: context)
         constraint = alphabetize_type(constraint, s, index);
     return context;
 }

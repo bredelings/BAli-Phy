@@ -22,7 +22,7 @@ string print(const substitution_t& s)
 optional<Context> check_apply_subst(const substitution_t& s, Context C)
 {
     bool changed = false;
-    for(auto& constraint: C.constraints)
+    for(auto& constraint: C)
     {
         if (auto maybe_constraint = check_apply_subst(s, constraint))
         {
@@ -39,7 +39,7 @@ optional<Context> check_apply_subst(const substitution_t& s, Context C)
 optional<Context> check_apply_subst(const usubstitution_t& s, Context C)
 {
     bool changed = false;
-    for(auto& constraint: C.constraints)
+    for(auto& constraint: C)
     {
         if (auto maybe_constraint = check_apply_subst(s, constraint))
         {
@@ -56,7 +56,7 @@ optional<Context> check_apply_subst(const usubstitution_t& s, Context C)
 optional<Context> check_apply_subst(const bsubstitution_t& s, Context C)
 {
     bool changed = false;
-    for(auto& constraint: C.constraints)
+    for(auto& constraint: C)
     {
         if (auto maybe_constraint = check_apply_subst(s, constraint))
         {

@@ -100,7 +100,7 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
 
 Haskell::Context renamer_state::rename(Haskell::Context context)
 {
-    for(auto& constraint: context.constraints)
+    for(auto& constraint: context)
         constraint = rename_type(constraint);
     return context;
 }
@@ -117,7 +117,7 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
 
             if (constructor.context)
             {
-                for(auto& constraint: constructor.context->constraints)
+                for(auto& constraint: *constructor.context)
                     constraint = rename_type(constraint);
             }
 

@@ -158,13 +158,13 @@ string TidyState::print(const Context& c)
     bool prev_ignore = ignore_top_foralls;
 
     vector<string> cs;
-    for(auto& constraint: c.constraints)
+    for(auto& constraint: c)
         cs.push_back(print(constraint));
 
     ignore_top_foralls = prev_ignore;
 
     string result = join(cs,", ");
-    if (cs.size() == 1 and not is_type_op(c.constraints[0]))
+    if (cs.size() == 1 and not is_type_op(c[0]))
         return result;
     else
         return "(" + result + ")";

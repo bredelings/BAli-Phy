@@ -585,7 +585,7 @@ set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
     else if (auto constrained = type.to<ConstrainedType>())
     {
         auto mtvs = injective_vars_for_type(constrained->type);
-        for(auto& pred: constrained->context.constraints)
+        for(auto& pred: constrained->context)
             add(mtvs, injective_vars_for_type(pred));
         return mtvs;
     }

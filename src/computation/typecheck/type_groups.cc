@@ -71,7 +71,7 @@ set<string> free_type_cons(const Hs::LType& ltype)
 set<string> free_type_cons(const Hs::Context& context)
 {
     set<string> tvars;
-    for(auto& constraint: context.constraints)
+    for(auto& constraint: context)
         add(tvars, free_type_cons(constraint));
     return tvars;
 }

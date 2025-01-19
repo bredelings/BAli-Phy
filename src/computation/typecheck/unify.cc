@@ -24,7 +24,7 @@ bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
     else if (auto c = t.to<ConstrainedType>())
     {
         // The context may not contain vars that don't occur in the head;
-        for(auto& constraint: c->context.constraints)
+        for(auto& constraint: c->context)
             if (occurs_check(tv, constraint))
                 return true;
 
@@ -59,7 +59,7 @@ bool TypeChecker::occurs_check(const TypeVar& tv, const Type& t) const
     else if (auto c = t.to<ConstrainedType>())
     {
         // The context may not contain vars that don't occur in the head;
-        for(auto& constraint: c->context.constraints)
+        for(auto& constraint: c->context)
             if (occurs_check(tv, constraint))
                 return true;
 
@@ -287,10 +287,10 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
     {
         auto c1 = t1.to<ConstrainedType>();
         auto c2 = t2.to<ConstrainedType>();
-        if (c1->context.constraints.size() != c2->context.constraints.size())
+        if (c1->context.size() != c2->context.size())
             return false;
-        for(int i=0;i< c1->context.constraints.size();i++)
-            if (not maybe_unify_(both_ways, env, c1->context.constraints[i], c2->context.constraints[i], s))
+        for(int i=0;i< c1->context.size();i++)
+            if (not maybe_unify_(both_ways, env, c1->context[i], c2->context[i], s))
                 return false;
         return maybe_unify_(both_ways, env, c1->type, c2->type, s);
     }
@@ -390,9 +390,9 @@ bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Ty
     auto c2 = t2.to<ConstrainedType>();
     if (c1 and c2)
     {
-        if (c1->context.constraints.size() != c2->context.constraints.size()) return false;
+        if (c1->context.size() != c2->context.size()) return false;
 
-        return same_types(keep_syns, env, c1->context.constraints, c2->context.constraints) and same_type(keep_syns, env, c1->type, c2->type);
+        return same_types(keep_syns, env, c1->context, c2->context) and same_type(keep_syns, env, c1->type, c2->type);
     }
 
     // 8. Handle type apps

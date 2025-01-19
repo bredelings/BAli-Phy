@@ -59,7 +59,7 @@ Type Solver::rewrite_tv(ConstraintFlavor flavor, const TypeVar& tv) const
 Type Solver::rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType& C)
 {
     auto C2 = C;
-    C2.context.constraints = rewrite(flavor, C.context.constraints);
+    C2.context = rewrite(flavor, C.context);
     C2.type = rewrite(flavor, C.type);
     return C2;
 }

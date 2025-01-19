@@ -11,11 +11,6 @@ using std::string;
 
 // Q: how/when do we rename default method definitions?
 
-set<MetaTypeVar> free_meta_type_variables(const Context& context)
-{
-    return free_meta_type_variables(context.constraints);
-}
-
 set<MetaTypeVar> free_meta_type_variables(const vector<Type>& types)
 {
     set<MetaTypeVar> tvars;
@@ -66,11 +61,6 @@ set<MetaTypeVar> free_meta_type_variables(const Type& type)
 }
 
 // Q: how/when do we rename default method definitions?
-
-set<TypeVar> free_type_variables(const Context& context)
-{
-    return free_type_variables(context.constraints);
-}
 
 set<TypeVar> free_type_variables(const vector<Type>& types)
 {
@@ -161,7 +151,7 @@ set<string> free_type_vars(const Type& type)
 set<string> free_type_vars(const Context& context)
 {
     set<string> tvars;
-    for(auto& constraint: context.constraints)
+    for(auto& constraint: context)
         add(tvars, free_type_vars(constraint));
     return tvars;
 }
@@ -199,7 +189,7 @@ bool affected_by_mtv(const Type& type, const MetaTypeVar& mtv)
     }
     else if (auto c = type.to<ConstrainedType>())
     {
-        return affected_by_mtv(c->context.constraints, mtv) or affected_by_mtv(c->type, mtv);
+        return affected_by_mtv(c->context, mtv) or affected_by_mtv(c->type, mtv);
     }
     else
         std::abort();
@@ -240,7 +230,7 @@ bool contains_mtv(const Type& type, const MetaTypeVar& mtv)
     }
     else if (auto c = type.to<ConstrainedType>())
     {
-        return contains_mtv(c->context.constraints, mtv) or contains_mtv(c->type, mtv);
+        return contains_mtv(c->context, mtv) or contains_mtv(c->type, mtv);
     }
     else
         std::abort();
@@ -279,7 +269,7 @@ bool contains_tv(const Type& type, const TypeVar& tv)
     }
     else if (auto c = type.to<ConstrainedType>())
     {
-        return contains_tv(c->context.constraints, tv) or contains_tv(c->type, tv);
+        return contains_tv(c->context, tv) or contains_tv(c->type, tv);
     }
     else
         std::abort();

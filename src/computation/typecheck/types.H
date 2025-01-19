@@ -6,11 +6,9 @@
 
 #include "computation/haskell/coretype.H"
 
-std::set<TypeVar> free_type_variables(const Context& context);
 std::set<TypeVar> free_type_variables(const std::vector<Type>& types);
 std::set<TypeVar> free_type_variables(const Type& type);
 
-std::set<MetaTypeVar> free_meta_type_variables(const Context& context);
 std::set<MetaTypeVar> free_meta_type_variables(const std::vector<Type>& types);
 std::set<MetaTypeVar> free_meta_type_variables(const Type& type);
 

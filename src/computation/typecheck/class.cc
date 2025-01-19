@@ -126,7 +126,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     //   (c) synthesize field accessors and put them in decls
 
     // 4. Make global types for superclass extractors
-    for(auto& superclass_constraint: class_info.context.constraints)
+    for(auto& superclass_constraint: class_info.context)
     {
         // We don't reserve a field in the dictionary for equality superclasses.
         if (is_equality_pred(superclass_constraint)) continue;

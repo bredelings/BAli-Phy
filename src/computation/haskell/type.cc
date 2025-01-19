@@ -331,18 +331,12 @@ LType add_constraints(const vector<LType>& constraints, const LType& ltype)
     {
         auto CT = type.as_<ConstrainedType>();
         for(auto& constraint: constraints)
-            CT.context.constraints.push_back(constraint);
+            CT.context.push_back(constraint);
         return {loc, CT};
     }
     else
         return {loc, ConstrainedType(Context(constraints), ltype)};
 }
-
-LType add_constraints(const Context& context, const LType& ltype)
-{
-    return add_constraints(context.constraints, ltype);
-}
-
 
 bool ConstrainedType::operator==(const ConstrainedType& t) const
 {
@@ -356,10 +350,10 @@ string ConstrainedType::print() const
 
 bool Context::operator==(const Context& c) const
 {
-    if (constraints.size() != c.constraints.size()) return false;
+    if (size() != c.size()) return false;
 
-    for(int i=0; i<constraints.size();i++)
-        if (constraints[i] != c.constraints[i]) return false;
+    for(int i=0; i<size();i++)
+        if ((*this)[i] != c[i]) return false;
 
     return true;
 }
@@ -367,7 +361,7 @@ bool Context::operator==(const Context& c) const
 std::string Context::print() const
 {
     vector<string> cs;
-    for(auto& constraint: constraints)
+    for(auto& constraint: *this)
         cs.push_back(constraint.print());
 
     string result = join(cs,", ");

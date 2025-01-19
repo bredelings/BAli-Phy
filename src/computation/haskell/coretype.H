@@ -212,22 +212,14 @@ struct TypeCon
     TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
 };
 
-struct Context
+struct Context: public std::vector<Type>
 {
-    std::vector<Type> constraints;
-
     bool operator==(const Context& t) const;
 
     std::string print() const;
 
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(constraints);
-    }
-
     Context() = default;
-    Context(const std::vector<Type>& cs): constraints(cs) {}
+    Context(const std::vector<Type>& cs): std::vector<Type>(cs) {}
 };
 
 
@@ -313,7 +305,6 @@ private:
 };
 
 Type add_constraints(const std::vector<Type>& constraints, const Type& type);
-Type add_constraints(const Context& constraints, const Type& type);
 
 template <class Archive>
 void Type::serialize(Archive& ar)

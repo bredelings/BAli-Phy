@@ -15,6 +15,11 @@ using std::optional;
 // This should allow us pass in type variables with kinds into add_default_type_instance( ).
 // This should allow us to avoid doing kind checking in add_default_type_instance( ).
 
+// TODO: when we infer types for instances, we want to kind-check the instance heads,
+//  assigning new kinds to new type variables as we see them.
+
+// TODO: change kind unification to use meta-variables.
+
 // TODO: change TypeVar to have a non-optional kind.
 
 Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
@@ -77,14 +82,15 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 // (c) For RHS's that are not default, we have to check that they have the right kind.
 // (d) However, free variables in the instance head should ALREADY have a kind assigned to them.
 //     Part of the issue may be that we aren't doing kind inference on the free vars in the instance head.
-void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
-    // We used to construct a TypeFamEqnInfo here
-    // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
+    TypeCon tf_con = desugar(tf_con_in);
+    vector<Type> args  = desugar(args_in);
+    Type rhs = desugar(rhs_in);
 
-    vector<Type> args = args_in;
-    Type rhs = rhs_in;
-
+    // What we really want to do here is to kind-check the args, binding new kind variables to new type variables.
+    // Then we want to kind-check the rhs, complaining if we see unbound variables.
+    
     // 1. The rhs may only mention type vars bound on the lhs.
     set<TypeVar> lhs_tvs;
     for(auto& arg: args)
@@ -114,30 +120,12 @@ void TypeChecker::add_type_instance(const TypeCon& tf_con, const vector<Type>& a
     }
 
     // 2b. Kind-check the type vars
-    bool ok = true;
     for(int i=0; i<args.size(); i++)
-    {
-        try {
-            // FIXME: we don't have location information on args[i], because default_type_instance doesn't have it.
-            K.kind_check_type_of_kind(args[i], *tf_info.args[i].kind);
-        }
-        catch (std::exception& e)
-        {
-            record_error(Note()<<e.what());
-            ok = false;
-        }
-    }
-    try
-    {
-        // FIXME: we don't have location information on rhs, because default_type_instance doesn't have it.
-        K.kind_check_type_of_kind(rhs, tf_info.result_kind);
-    }
-    catch (std::exception& e)
-    {
-        record_error(Note()<<e.what());
-        ok = false;
-    }
-    if (not ok) return;
+        K.kind_check_type_of_kind(args_in[i], *tf_info.args[i].kind);
+
+    K.kind_check_type_of_kind(rhs_in, tf_info.result_kind);
+
+    // QUESTION: How do we know if there was a kind-checking error?
 
     // 2c. Record the final kinds for the free type vars
     for(auto& arg: args)
@@ -352,7 +340,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    add_type_instance(tf_con, desugar(inst.args), desugar(inst.rhs), *tf_info, inst_loc);
+    add_type_instance(inst.con, inst.args, inst.rhs, *tf_info, inst_loc);
 
     pop_source_span();
     pop_note();
@@ -431,7 +419,7 @@ std::optional<Core2::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
-    auto inst_loc = range(inst_decl.context.constraints) * inst_decl.constraint.loc;
+    auto inst_loc = range(inst_decl.context) * inst_decl.constraint.loc;
     push_source_span( *inst_loc );
     
     // 1. Get class name and parameters for the instance
@@ -487,7 +475,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     set<TypeVar> type_vars = free_type_variables(constraint);
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
-    for(auto& tv: free_type_variables(desugar(inst_decl.context.constraints)))
+    for(auto& tv: free_type_variables(desugar(inst_decl.context)))
     {
         if (not type_vars.count(tv))
             record_error( Note() << "  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration" );
@@ -535,7 +523,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     vector<Type> constraints;
     if (auto c = tt.to<ConstrainedType>())
     {
-        constraints = c->context.constraints;
+        constraints = c->context;
         tt = c->type;
     }
     auto [head,args] = decompose_type_apps(tt);
@@ -683,7 +671,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
     // 4. Get (constrained) superclass constraints
     push_note(Note()<<"Deriving superclass constraints for "<<instance_head.print());
-    auto superclass_constraints = class_info.context.constraints;
+    vector<Type> superclass_constraints = class_info.context;
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 

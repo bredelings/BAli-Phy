@@ -66,7 +66,7 @@ LExp apply(const LExp& head, const std::vector<LExp>& args)
 string show_type_or_class_header(const Context& context, const Located<string>& name, const vector<LTypeVar>& tvs)
 {
     vector<string> ss;
-    if (context.constraints.size())
+    if (context.size())
         ss = {context.print(), "=>"};
     ss.push_back(unloc(name));
     for(auto& tv: tvs)
@@ -77,7 +77,7 @@ string show_type_or_class_header(const Context& context, const Located<string>& 
 string show_instance_header(const Context& context, const LType& constraint)
 {
     string result = constraint.print();
-    if (context.constraints.size())
+    if (context.size())
         result = context.print() + " => " + result;
     return result;
 }

@@ -263,7 +263,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
         Context context;
-        for(auto& hs_constraint: c->context.constraints)
+        for(auto& hs_constraint: c->context)
         {
             auto [c2,k2] = kind_check_type(hs_constraint);
             if (not unify(kind_constraint(), k2))
@@ -272,7 +272,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
 		type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print());
                 if (ltype.loc) type_checker.pop_source_span();
             }
-            context.constraints.push_back(c2);
+            context.push_back(c2);
         }
         auto [type,k] = kind_check_type(c->type);
 
@@ -382,7 +382,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
     {
         auto C = *c;
 
-        for(auto& constraint: C.context.constraints)
+        for(auto& constraint: C.context)
         {
             auto [c2,k2] = kind_check_type(constraint);
             if (not unify(kind_constraint(), k2))
@@ -494,7 +494,7 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
     else if (auto c = t.to<ConstrainedType>())
     {
         auto C = *c;
-        for(auto& constraint: C.context.constraints)
+        for(auto& constraint: C.context)
             constraint = zonk_kind_for_type( constraint );
 
         C.type = zonk_kind_for_type( C.type );
@@ -537,7 +537,7 @@ Type kindchecker_state::kind_check_constraint(const Hs::LType& constraint)
 Context kindchecker_state::kind_check_context(const Context& context)
 {
     Context context2 = context;
-    for(auto& constraint: context2.constraints)
+    for(auto& constraint: context2)
         constraint = kind_check_constraint(constraint);
     return context2;
 }
@@ -545,8 +545,8 @@ Context kindchecker_state::kind_check_context(const Context& context)
 Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
 {
     Context context;
-    for(auto& hs_constraint: hs_context.constraints)
-        context.constraints.push_back( kind_check_constraint(hs_constraint) );
+    for(auto& hs_constraint: hs_context)
+        context.push_back( kind_check_constraint(hs_constraint) );
     return context;
 }
 
@@ -579,7 +579,7 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
 
     if (constructor.context)
     {
-        for(auto& constraint: constructor.context->constraints)
+        for(auto& constraint: *constructor.context)
             kind_check_type_of_kind(constraint, kind_constraint());
     }
 
@@ -628,7 +628,7 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
     //   Do constraints affect kind determination?  Maybe not
     if (constructor.context)
     {
-        for(auto& constraint: constructor.context->constraints)
+        for(auto& constraint: *constructor.context)
             info.written_constraints.push_back( kind_check_type_of_kind(constraint, kind_constraint()) );
     }
 
@@ -688,7 +688,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     assert(is_kind_type(kind));
 
     // c. Handle the context
-    for(auto& constraint: data_decl.context.constraints)
+    for(auto& constraint: data_decl.context)
         kind_check_constraint(constraint);
 
     // d. construct the data type
@@ -768,7 +768,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             DataConInfo info = type_check_constructor(constructor);
             info.uni_tvs = datatype_typevars;
             info.data_type = data_type_con;
-            info.top_constraints = desugar(data_decl.context.constraints);
+            info.top_constraints = desugar(data_decl.context);
             types = types.insert({unloc(*constructor.con).name, info});
         }
     }
@@ -829,7 +829,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             info.field_types = field_types;
             info.data_type = data_type_con;
             info.written_constraints = constraints;
-            info.top_constraints = desugar( data_decl.context.constraints );
+            info.top_constraints = desugar( data_decl.context );
             info.exi_tvs = exi_tvs_set | ranges::to<vector>();
             info.uni_tvs = u_tvs;
             

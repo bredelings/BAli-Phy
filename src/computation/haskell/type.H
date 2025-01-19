@@ -157,15 +157,13 @@ struct TypeCon
 
 typedef Located<TypeCon> LTypeCon;
 
-struct Context
+struct Context: public std::vector<LType>
 {
-    std::vector<LType> constraints;
-
     bool operator==(const Context& t) const;
 
     std::string print() const;
     Context() = default;
-    Context(const std::vector<LType>& cs): constraints(cs) {}
+    Context(const std::vector<LType>& cs): std::vector<LType>(cs) {}
 };
 
 
@@ -240,7 +238,6 @@ struct ConstrainedType
 };
 
 LType add_constraints(const std::vector<LType>& constraints, const LType& type);
-LType add_constraints(const Context& constraints, const LType& type);
 
 struct StrictType
 {

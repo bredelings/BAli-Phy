@@ -418,7 +418,7 @@ bool Solver::contains_type(const Type& t1_, const Type& t2) const
     if (t1.is_a<MetaTypeVar>() or t1.is_a<TypeVar>())
         return t1 == t2;
     else if (auto con = t1.to<ConstrainedType>())
-        return contains_type(con->context.constraints, t2) or contains_type(con->type, t2);
+        return contains_type(con->context, t2) or contains_type(con->type, t2);
     else if (auto forall = t1.to<ForallType>())
         return contains_type(forall->type, t2);
     else if (auto syn = expand_type_synonym(t1))

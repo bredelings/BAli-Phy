@@ -214,7 +214,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
     else if (auto c = type.to<ConstrainedType>())
     {
         auto CT = *c;
-        for(auto& constraint: CT.context.constraints)
+        for(auto& constraint: CT.context)
             constraint = break_type_equality_cycle(C, constraint);
         CT.type = break_type_equality_cycle(C, CT.type);
         return CT;

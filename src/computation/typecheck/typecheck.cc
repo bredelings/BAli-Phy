@@ -925,7 +925,7 @@ std::bitset<8> TypeChecker::check_type_equality(const Type& lhs, const Type& rhs
     else if (auto con = rhs.to<ConstrainedType>())
     {
         auto result = check_type_equality(lhs, con->type) | impredicative_result;
-        for(auto& constraint: con->context.constraints)
+        for(auto& constraint: con->context)
             result |= check_type_equality(lhs, constraint);
         return result;
     }
@@ -1400,7 +1400,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintO
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints);
+        wanteds = preds_to_constraints(origin, Wanted, ct->context);
         type = ct->type;
     }
 
@@ -1461,7 +1461,7 @@ tuple<Core2::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const T
     else if (auto ct = polytype.to<ConstrainedType>())
     {
         // Compute givens from local givens followed by givens of sub-type.
-        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints);
+        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context);
         auto wrap1 = Core2::WrapLambda( dict_vars_from_lie( givens ) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
