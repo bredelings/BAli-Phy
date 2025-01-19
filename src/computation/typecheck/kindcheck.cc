@@ -49,10 +49,11 @@ void kindchecker_state::bind_type_var(const TypeVar& tv, const Kind& kind)
     tvk.insert({tv,kind});
 }
 
-void kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
+TypeVar kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
 {
     TypeVar tv({hs_tv.loc, hs_tv.value().name}, kind);
-    return bind_type_var(tv, kind);
+    bind_type_var(tv, kind);
+    return tv;
 }
 
 void kindchecker_state::push_type_var_scope()
@@ -122,7 +123,7 @@ Kind kindchecker_state::kind_for_type_var(const TypeVar& tv) const
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
     {
-        type_checker.record_error(Note()<<"Undefined type variable '"<<tv.print()<<"'");
+        type_checker.record_error(Note()<<"type variable '"<<tv.print()<<"' not in scope");
         // Ideally we'd return fresh_kind_var() here.
         // But that requires this not to be const.
         return kind_type();
@@ -286,9 +287,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         for(auto& htv: fa->type_var_binders)
         {
             auto kv = fresh_kind_var();
-            bind_type_var(htv, kv);
-            auto tv = desugar(htv);
-            tv.kind = kv;
+            auto tv = bind_type_var(htv, kv);
             binders.push_back(tv);
         }
 

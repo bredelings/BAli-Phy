@@ -32,7 +32,7 @@ struct kindchecker_state
     // We also need the kinds for type classes and type constructors of previous groups.
 
     void bind_type_var(const TypeVar& tv, const Hs::Kind& k);
-    void bind_type_var(const Hs::LTypeVar& tv, const Hs::Kind& k);
+    TypeVar bind_type_var(const Hs::LTypeVar& tv, const Hs::Kind& k);
     void push_type_var_scope();
     void pop_type_var_scope();
     bool type_var_in_scope(const TypeVar& tv) const;
