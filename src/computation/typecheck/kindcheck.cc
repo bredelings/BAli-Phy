@@ -123,7 +123,7 @@ Kind kindchecker_state::kind_for_type_var(const TypeVar& tv) const
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
     {
-        type_checker.record_error(Note()<<"type variable '"<<tv.print()<<"' not in scope");
+        type_checker.record_error(Note()<<"Type variable '"<<tv.print()<<"' not in scope");
         // Ideally we'd return fresh_kind_var() here.
         // But that requires this not to be const.
         return kind_type();
