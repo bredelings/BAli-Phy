@@ -34,8 +34,7 @@ set<MetaTypeVar> free_meta_type_variables(const Type& type)
     {
         auto& tv = type.as_<MetaTypeVar>();
         assert(not tv.filled());
-        auto& name = unloc(tv.name);
-        assert(name.size());
+        assert(tv.name.size());
         tvars.insert(tv);
     }
     else if (type.is_a<TypeApp>())
@@ -79,9 +78,8 @@ set<TypeVar> free_type_variables(const Type& type)
     else if (type.is_a<TypeVar>())
     {
         auto& tv = type.as_<TypeVar>();
-        auto& name = unloc(tv.name);
-        assert(name.size());
-        assert(is_haskell_varid(name));
+        assert(tv.name.size());
+        assert(is_haskell_varid(tv.name));
         tvars.insert(tv);
     }
     else if (auto t = filled_meta_type_var(type))
@@ -125,9 +123,8 @@ void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
 
     if (auto tv = type.to<Hs::TypeVar>())
     {
-        auto& name = tv->name;
-        assert(name.size());
-        assert(is_haskell_varid(name));
+        assert(tv->name.size());
+        assert(is_haskell_varid(tv->name));
         tvs.push_back({loc,*tv});
     }
     else if (type.is_a<Hs::TypeCon>())
@@ -222,8 +219,7 @@ set<string> free_type_vars(const Type& type)
     }
     else if (auto tv = type.to<TypeVar>())
     {
-        auto& name = unloc(tv->name);
-        tvars.insert(name);
+        tvars.insert(tv->name);
     }
     else if (type.is_a<TypeApp>())
     {
@@ -235,7 +231,7 @@ set<string> free_type_vars(const Type& type)
     {
         tvars = free_type_vars(forall->type);
         for(auto& type_var: forall->type_var_binders)
-            tvars.erase(unloc(type_var.name));
+            tvars.erase(type_var.name);
     }
     else if (auto c = type.to<ConstrainedType>())
     {

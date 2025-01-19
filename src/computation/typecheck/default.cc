@@ -28,7 +28,7 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
                 push_source_span(*dclass->loc);
                 if (not named_defaults)
                     record_error( Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
-                if (default_env().count(TypeCon(*dclass)))
+                if (default_env().count(TypeCon(unloc(*dclass))))
                 {
                     record_error( Note() <<"Duplicate default declaration." );
                     // Original declaration at location; default_env().find->first.loc
@@ -36,7 +36,7 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
                 pop_source_span();
             }
             // Check that the data types are all data types and instances of the class?
-            default_env().insert({TypeCon(*dclass), desugar(default_decl.types)});
+            default_env().insert({TypeCon(unloc(*dclass)), desugar(default_decl.types)});
         }
         else
         {
@@ -131,14 +131,13 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
         // Fail if any of the predicates is not a simple constraint.
         if (auto tycon = simple_constraint_class_meta(constraint.pred))
         {
-            auto& name = unloc(tycon->name);
-            if (num_classes.count(name))
+            if (num_classes.count(tycon->name))
                 any_num = true;
-            if (interactive_classes.count(name))
+            if (interactive_classes.count(tycon->name))
                 any_interactive = true;
 
             // Fail if any of the predicates are not in the standard prelude.
-            if (not extended and not std_classes.count(name)) return false;
+            if (not extended and not std_classes.count(tycon->name)) return false;
         }
         else if (not extended)
             return false;

@@ -74,7 +74,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         K.bind_type_var(tv, *unloc(tv).kind);
 
     // 2. construct the constraint that represent the class
-    Type class_constraint = TypeCon(class_decl.name); // put class_kind into TypeCon?
+    Type class_constraint = TypeCon(unloc(class_decl.name)); // put class_kind into TypeCon?
     for(auto& tv: class_decl.type_vars)
         class_constraint = TypeApp(class_constraint, desugar(tv));
 
@@ -174,7 +174,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto kind = this_mod().lookup_local_type(fname)->kind;
 
         auto con = desugar(type_fam_decl.con);
-        this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, unloc(class_decl.name));
+        this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, unloc(class_decl.name));
         if (class_info.associated_type_families.count(con))
             throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
         class_info.associated_type_families.insert({con,{}});
@@ -303,14 +303,14 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
             auto kind = this_mod().lookup_local_type(fname)->kind;
 
             auto con = desugar(type_fam_decl->con);
-            this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info = std::make_shared<TypeFamInfo>(args,kind);
+            this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args,kind);
 
             // Add instance equations for closed type families
             if (type_fam_decl->where_instances)
             {
                 for(auto& inst: *type_fam_decl->where_instances)
                     check_add_type_instance(inst, {}, {});
-                this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info->closed = true;
+                this_mod().lookup_local_type(con.name)->is_type_fam()->info->closed = true;
             }
         }
     }

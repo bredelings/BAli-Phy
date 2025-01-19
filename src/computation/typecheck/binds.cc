@@ -667,7 +667,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Va
     for(auto& tv: qtvs_unused)
     {
         assert(tv.kind);
-        auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
+        auto new_tv = fresh_meta_type_var(tv.name, *tv.kind);
         s = s.insert({tv, new_tv});
     }
     auto lie_all = apply_subst(s, lie_retained);
@@ -808,7 +808,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     set<TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
     {
-        TypeVar qtv = FreshVarSource::fresh_rigid_type_var(rhs_level, unloc(qmtv.name), *qmtv.kind);
+        TypeVar qtv = FreshVarSource::fresh_rigid_type_var(rhs_level, qmtv.name, *qmtv.kind);
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }

@@ -1664,7 +1664,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     if (con_name == ":")
     {
         DataConInfo info;
-        TypeVar a({noloc, "a"}, kind_type());
+        TypeVar a("a", kind_type());
         info.uni_tvs = { a };
         info.field_types = { a, list_type(a) };
         info.data_type = list_tycon();
@@ -1673,7 +1673,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     else if (con_name == "[]")
     {
         DataConInfo info;
-        TypeVar a({noloc, "a"}, kind_type());
+        TypeVar a("a", kind_type());
         info.uni_tvs = { a };
         info.data_type = list_tycon();
         return info;
@@ -1684,7 +1684,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
         int n = tuple_arity(con_name);
         for(int i=0;i<n;i++)
         {
-            TypeVar tv({noloc, "a"+std::to_string(i+1)}, kind_type());
+            TypeVar tv("a"+std::to_string(i+1), kind_type());
             info.uni_tvs.push_back( tv );
             info.field_types.push_back( tv );
         }

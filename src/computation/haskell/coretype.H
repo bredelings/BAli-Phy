@@ -6,7 +6,6 @@
 #include <set>
 
 #include "util/cow-ptr.H"
-#include "computation/parser/located.H"
 
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
@@ -114,7 +113,7 @@ class MetaTypeVar
     std::shared_ptr<Type> indirect;
 public:
 
-    Located<std::string> name;
+    std::string name;
     std::optional<int> index;
     bool cycle_breaker = false;
 
@@ -135,11 +134,11 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(level_, indirect, unloc(name), index, cycle_breaker, kind);
+	ar(level_, indirect, name, index, cycle_breaker, kind);
     }
 
-    MetaTypeVar(int level, const Located<std::string>& s);
-    MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
+    MetaTypeVar(int level, const std::string& s);
+    MetaTypeVar(int level, const std::string& s, const Kind& k);
 
 private:
     friend cereal::access;
@@ -160,7 +159,7 @@ class TypeVar
     std::optional<int> level_;
 
 public:
-    Located<std::string> name;
+    std::string name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
@@ -178,21 +177,21 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(level_, unloc(name), index, kind);
+	ar(level_, name, index, kind);
     }
 
     TypeVar();
-    TypeVar(const Located<std::string>& s);
-    TypeVar(int l, const Located<std::string>& s);
-    TypeVar(const Located<std::string>& s, const Kind& k);
-    TypeVar(int l, const Located<std::string>& s, const Kind& k);
+    TypeVar(const std::string& s);
+    TypeVar(int l, const std::string& s);
+    TypeVar(const std::string& s, const Kind& k);
+    TypeVar(int l, const std::string& s, const Kind& k);
 };
 
 typedef TypeVar KindVar;
 
 struct TypeCon
 {
-    Located<std::string> name;
+    std::string name;
     std::optional<Kind> kind;
 
     bool operator==(const TypeCon&) const;
@@ -204,12 +203,12 @@ struct TypeCon
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(unloc(name), kind);
+	ar(name, kind);
     }
 
     TypeCon() = default;
-    TypeCon(const Located<std::string>& s):name(s) {}
-    TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+    TypeCon(const std::string& s):name(s) {}
+    TypeCon(const std::string& s, const Kind& k):name(s),kind(k) {}
 };
 
 struct Context: public std::vector<Type>
@@ -403,7 +402,7 @@ namespace std
     public :
         size_t operator()(const TypeVar &x) const
         {
-            return std::hash<std::string>()(unloc(x.name));
+            return std::hash<std::string>()(x.name);
         }
     };
 
@@ -412,7 +411,7 @@ namespace std
     public :
         size_t operator()(const MetaTypeVar &x) const
         {
-            return std::hash<std::string>()(unloc(x.name));
+            return std::hash<std::string>()(x.name);
         }
     };
 }

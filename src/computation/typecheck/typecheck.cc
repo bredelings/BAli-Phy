@@ -368,7 +368,7 @@ const TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name) const
 
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
-    auto T = this_mod().lookup_resolved_type(unloc(tc.name));
+    auto T = this_mod().lookup_resolved_type(tc.name);
     if (not T)
         throw note_exception()<<"Can't find type con '"<<tc<<"'";
     assert(T->arity);
@@ -377,17 +377,17 @@ int TypeChecker::type_con_arity(const TypeCon& tc) const
 
 bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
 {
-    return info_for_type_fam(unloc(tc.name));
+    return info_for_type_fam(tc.name);
 }
 
 bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
 {
-    return info_for_type_synonym(unloc(tc.name));
+    return info_for_type_synonym(tc.name);
 }
 
 bool TypeChecker::type_con_is_type_class(const TypeCon& tc) const
 {
-    return info_for_class(unloc(tc.name));
+    return info_for_class(tc.name);
 }
 
 bool TypeChecker::type_con_must_be_saturated(const TypeCon& tc) const
@@ -455,7 +455,7 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
 TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
 {
     int level = 0;
-    TypeVar ftv(level, {noloc,"utv"+std::to_string(next_index)});
+    TypeVar ftv(level, "utv"+std::to_string(next_index));
     ftv.index = next_index++;
     ftv.kind = kind;
     return ftv;
@@ -576,7 +576,7 @@ void TypeChecker::get_tycon_info(const Hs::FamilyDecl& F)
         if (F.has_kind_notes())
         {
             push_note( Note() <<"In type family `"<<con.print()<<"`");
-            push_source_span(*con.name.loc);
+            push_source_span(*F.con.loc);
             record_error( Note() << "Kind annotations in declaration not allowed with a kind signature");
             pop_source_span();
             pop_note();
@@ -585,7 +585,7 @@ void TypeChecker::get_tycon_info(const Hs::FamilyDecl& F)
         // Complain if kind signature allow to few arguments.
         if (num_args_for_kind(kind) < F.arity())
         {
-            push_source_span(*con.name.loc);
+            push_source_span(*F.con.loc);
             record_error( Note() << "Kind signature for type family `"<<con.print()<<"` only allows "<<num_args_for_kind(kind)<<", but declaration has "<<F.arity());
             kind = F.kind();
             pop_source_span();
@@ -607,10 +607,10 @@ void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
             for(auto& hs_tycon: SK->tycons)
             {
                 auto tycon = desugar(hs_tycon);
-                push_source_span(*tycon.name.loc);
+                push_source_span(*hs_tycon.loc);
 
                 if (kind_sigs().count(tycon))
-                    record_error( Note()<<"Second kind signature for `"<<unloc(tycon.name)<<"`" );
+                    record_error( Note()<<"Second kind signature for `"<<tycon.name<<"`" );
                 else
                     kind_sigs().insert({tycon,SK->kind});
 
@@ -682,7 +682,7 @@ struct instance_info
     // forall <type_vars> . context => class_name argument_types[0] arguments[1] .. argument_types[n01]
     Type dfun_type() const
     {
-        TypeCon class_con({noloc, class_name}); // whats the kind?
+        TypeCon class_con(class_name); // whats the kind?
         return ForallType(type_vars, ConstrainedType(context, make_tyapps(class_con, argument_types)));
     }
 };
@@ -702,7 +702,7 @@ optional<ID> maybe_get_class_name_from_constraint(const Type& constraint)
 {
     auto [tycon, args] = decompose_type_apps(constraint);
     if (auto tc = tycon.to<TypeCon>())
-        return get_unqualified_name(unloc(tc->name));
+        return get_unqualified_name(tc->name);
     else
         return {};
 }
@@ -711,7 +711,7 @@ ID get_full_class_name_from_constraint(const Type& constraint)
 {
     auto [tycon, args] = decompose_type_apps(constraint);
     if (auto tc = tycon.to<TypeCon>())
-        return unloc(tc->name);
+        return tc->name;
     else
         throw myexception()<<"Can't get class name for constraint '"<<constraint<<"'";
 }
@@ -759,7 +759,7 @@ TypeVar TypeChecker::fresh_rigid_type_var(const Kind& k)
 const TypeSynonymInfo* TypeChecker::maybe_find_type_synonym(const Type& type) const
 {
     if (auto tycon = type.to<TypeCon>())
-        return info_for_type_synonym(unloc(tycon->name));
+        return info_for_type_synonym(tycon->name);
     else
         return nullptr;
 }
@@ -945,7 +945,7 @@ TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const
 void TypeChecker::promote_mtv(const MetaTypeVar& mtv, int new_level)
 {
     assert(mtv.level() > new_level);
-    auto mtv2 = FreshVarSource::fresh_meta_type_var( new_level, unloc(mtv.name), *mtv.kind);
+    auto mtv2 = FreshVarSource::fresh_meta_type_var( new_level, mtv.name, *mtv.kind);
     mtv.fill( mtv2 );
 }
 
@@ -992,7 +992,7 @@ WantedConstraints& TypeChecker::current_wanteds()
 
 string get_name_for_typecon(const TypeCon& tycon)
 {
-    auto n = unloc(tycon.name);
+    auto n = tycon.name;
 
     if (n == "[]")
         return "List";
@@ -1024,7 +1024,7 @@ Core2::Var<> TypeChecker::fresh_dvar(const Type& pred, bool qualified)
     if (auto tc = class_head.to<TypeCon>())
     {
         // 1. Get constraint class
-        name = get_unqualified_name(unloc(tc->name));
+        name = get_unqualified_name(tc->name);
         if (name == "~")
             name = "co";
         else
@@ -1080,7 +1080,7 @@ TypeCon TypeChecker::find_prelude_tycon(const string& name) const
     // We need to look in the Prelude, not this module!
     // But then we would have to rename all modules before type-checking any of them.
     auto prelude_name = find_prelude_tycon_name(name);
-    return TypeCon({noloc, prelude_name });
+    return TypeCon(prelude_name);
 }
 
 Type TypeChecker::bool_type() const
@@ -1105,7 +1105,7 @@ Type TypeChecker::integer_type() const
 
 Type TypeChecker::rational_type() const
 {
-    return TypeCon({noloc,"Compiler.Ratio.Rational"});
+    return TypeCon("Compiler.Ratio.Rational");
 }
 
 Type TypeChecker::double_type() const
@@ -1356,7 +1356,7 @@ substitution_t TypeChecker::get_subst_for_tv_binders(const vector<TypeVar>& type
     for(auto& tv: type_var_binders)
     {
         assert(tv.kind);
-        auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
+        auto new_tv = fresh_meta_type_var(tv.name, *tv.kind);
         s = s.insert({tv,new_tv});
     }
     return s;
@@ -1368,7 +1368,7 @@ substitution_t TypeChecker::fresh_tv_binders(vector<TypeVar>& type_var_binders)
     for(auto& tv: type_var_binders)
     {
         assert(tv.kind);
-        auto new_tv = fresh_other_type_var(unloc(tv.name), *tv.kind);
+        auto new_tv = fresh_other_type_var(tv.name, *tv.kind);
         s = s.insert({tv,new_tv});
         tv = new_tv;
     }
@@ -1435,9 +1435,9 @@ tuple<Core2::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const T
             assert(tv.kind);
             TypeVar new_tv;
             if (skolem)
-                new_tv = fresh_rigid_type_var(unloc(tv.name), *tv.kind);
+                new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
             else
-                new_tv = fresh_other_type_var(unloc(tv.name), *tv.kind);
+                new_tv = fresh_other_type_var(tv.name, *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);

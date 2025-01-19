@@ -204,7 +204,7 @@ std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t)
         if (auto t2 = s.find(*tv))
         {
             if (tv->filled())
-                throw myexception()<<"Trying to substitution for filled unification variable "<<unloc(tv->name);
+                throw myexception()<<"Trying to substitution for filled unification variable "<<tv->name;
             return apply_subst(s,*t2);
         }
         else
@@ -279,7 +279,7 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
         if (auto t2 = s.find(*mtv))
         {
             if (mtv->filled())
-                throw myexception()<<"Trying to substitute for filled unification variable "<<unloc(mtv->name);
+                throw myexception()<<"Trying to substitute for filled unification variable "<<mtv->name;
             return apply_subst(s,*t2);
         }
         else

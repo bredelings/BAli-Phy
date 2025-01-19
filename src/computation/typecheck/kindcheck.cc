@@ -51,7 +51,7 @@ void kindchecker_state::bind_type_var(const TypeVar& tv, const Kind& kind)
 
 TypeVar kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
 {
-    TypeVar tv({hs_tv.loc, hs_tv.value().name}, kind);
+    TypeVar tv(hs_tv.value().name, kind);
     bind_type_var(tv, kind);
     return tv;
 }
@@ -215,14 +215,14 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
 
         // FIXME: we should pass the location to kind_check_type_con( ).
         auto k = kind_check_type_con(name);
-        TypeCon Tc({loc, tc->name}, k);
+        TypeCon Tc(tc->name, k);
 
         return {Type(Tc),k};
     }
     else if (auto tv = t.to<Hs::TypeVar>())
     {
         auto k = kind_for_type_var({loc,*tv});
-        TypeVar Tv({loc, tv->name}, k);
+        TypeVar Tv(tv->name, k);
 
         return {Tv,k};
     }
@@ -333,7 +333,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
 {
     if (auto tc = t.to<TypeCon>())
     {
-        auto& name = unloc(tc->name);
+        auto& name = tc->name;
 
         auto k = kind_check_type_con(name);
         auto Tc = *tc;
@@ -464,7 +464,7 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
 {
     if (auto tc = t.to<TypeCon>())
     {
-        auto& name = unloc(tc->name);
+        auto& name = tc->name;
 
         auto Tc = *tc;
         Tc.kind = kind_check_type_con(name);
@@ -691,7 +691,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         kind_check_constraint(constraint);
 
     // d. construct the data type
-    Type data_type = TypeCon(data_decl.name);
+    Type data_type = TypeCon(unloc(data_decl.name));
     for(auto& tv: desugar(data_decl.type_vars))
         data_type = TypeApp(data_type, tv);
 
@@ -753,7 +753,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    auto data_type_con = TypeCon(data_decl.name);
+    auto data_type_con = TypeCon(unloc(data_decl.name));
     Type data_type = data_type_con;
     for(auto& tv: datatype_typevars)
         data_type = TypeApp(data_type, tv);
@@ -877,10 +877,11 @@ Type kindchecker_state::kind_and_type_check_constraint(const Hs::LType& type)
 
 vector<Hs::LTypeVar> kindchecker_state::unbound_free_type_variables(const Hs::LType& type)
 {
+    // FIXME: can we remove this if we quantify types in rename?
     vector<Hs::LTypeVar> tvs;
     for(auto& tv: unbound_free_type_variables(desugar(type)))
     {
-        Hs::TypeVar htv(tv.name.value());
+        Hs::TypeVar htv(tv.name);
         tvs.push_back({noloc, htv});
     }
     return tvs;

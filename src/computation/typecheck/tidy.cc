@@ -94,7 +94,7 @@ std::string TidyState::print(const MetaTypeVar& mtv)
     if (auto t = mtv.filled())
         return print(*t);
 
-    auto name = unloc(mtv.name);
+    auto name = mtv.name;
     if (mtv.index)
         name += "_"+std::to_string(*mtv.index);
     return tidy_name(name);
@@ -102,7 +102,7 @@ std::string TidyState::print(const MetaTypeVar& mtv)
 
 std::string TidyState::print(const TypeVar& tv)
 {
-    auto name = unloc(tv.name);
+    auto name = tv.name;
     if (tv.index)
         name += "_"+std::to_string(*tv.index);
     return tidy_name(name);
@@ -110,7 +110,7 @@ std::string TidyState::print(const TypeVar& tv)
 
 std::string TidyState::print(const TypeCon& tc)
 {
-    return get_unqualified_name(unloc(tc.name));
+    return get_unqualified_name(tc.name);
 }
 
 std::string TidyState::print(const TypeApp& app)

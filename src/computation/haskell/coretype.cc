@@ -139,13 +139,13 @@ std::string Type::print() const
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
-    static TypeCon type_arrow(Located<string>({},"->"));
+    static TypeCon type_arrow("->");
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
 Type make_equality_pred(const Type& t1, const Type& t2)
 {
-    static TypeCon type_eq(Located<string>({},"~"));
+    static TypeCon type_eq("~");
     return TypeApp(TypeApp(type_eq,t1),t2);
 }
 
@@ -242,7 +242,7 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
     auto tc = head.to<TypeCon>();
     if (not tc) return {};
 
-    if (unloc(tc->name) == "->")
+    if (tc->name == "->")
         return {{args[0],args[1]}};
     else
         return {};
@@ -323,7 +323,7 @@ optional<pair<Type,Type>> is_equality_pred(const Type& t)
     auto tc = head.to<TypeCon>();
     if (not tc) return {};
 
-    if (unloc(tc->name) == "~")
+    if (tc->name == "~")
         return {{args[0],args[1]}};
     else
         return {};
@@ -335,7 +335,7 @@ optional<tuple<Type,vector<Type>>> is_dictionary_pred(const Type& t)
     // if the kind of the predicate is Constraint
     auto [head,args] = decompose_type_apps(t);
 
-    if (auto tc = head.to<TypeCon>(); tc and unloc(tc->name) == "~")
+    if (auto tc = head.to<TypeCon>(); tc and tc->name == "~")
         return {};
     else
         return {{head, args}};
@@ -369,7 +369,7 @@ optional<Type> is_list_type(Type t)
     {
         auto& [tc, args] = *tcapp;
 
-        if (args.size() == 1 and unloc(tc.name) == "[]")
+        if (args.size() == 1 and tc.name == "[]")
             return args[0];
         else
             return {};
@@ -384,7 +384,7 @@ std::optional<Type> is_IO_type(Type t)
     {
         auto& [tc, args] = *tcapp;
 
-        if (args.size() == 1 and unloc(tc.name) == "Compiler.IO.IO")
+        if (args.size() == 1 and tc.name == "Compiler.IO.IO")
             return args[0];
         else
             return {};
@@ -399,7 +399,7 @@ optional<vector<Type>> is_tuple_type(Type t)
     {
         auto& [tc, args] = *tcapp;
 
-        auto& head_name = unloc(tc.name);
+        auto& head_name = tc.name;
         if (is_tuple_name(head_name) and args.size() == tuple_arity(head_name))
             return args;
         else
@@ -475,7 +475,7 @@ string MetaTypeVar::print() const
     if (auto t = filled())
         return t->print();
 
-    string uname = unloc(name);
+    string uname = name;
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
@@ -498,7 +498,7 @@ string MetaTypeVar::print_with_kind() const
 
 bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
 {
-    return index == tv.index and unloc(name) == unloc(tv.name) and indirect == tv.indirect;
+    return index == tv.index and name == tv.name and indirect == tv.indirect;
 }
 
 bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
@@ -509,7 +509,7 @@ bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
     if (index > tv.index)
         return false;
 
-    int cmp = unloc(name).compare(unloc(tv.name));
+    int cmp = name.compare(tv.name);
 
     // Don't depend on the location of *indirect, if indirect is non-null.
     assert(cmp != 0 or indirect == tv.indirect);
@@ -525,11 +525,11 @@ int MetaTypeVar::level() const
         throw myexception()<<"Trying to get level for filled meta-typevar";
 }
 
-MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s)
+MetaTypeVar::MetaTypeVar(int l, const std::string& s)
     : MetaTypeVar(l, s, {})
 {}
 
-MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s, const Kind& k)
+MetaTypeVar::MetaTypeVar(int l, const std::string& s, const Kind& k)
     :level_(l), indirect(new Type),name(s),kind(k)
 {}
 
@@ -548,7 +548,7 @@ int TypeVar::level() const
     
 string TypeVar::print() const
 {
-    string uname = unloc(name);
+    string uname = name;
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
@@ -570,7 +570,7 @@ string TypeVar::print_with_kind() const
 
 bool TypeVar::operator==(const TypeVar& tv) const
 {
-    return index == tv.index and unloc(name) == unloc(tv.name);
+    return index == tv.index and name == tv.name;
 }
 
 bool TypeVar::operator<(const TypeVar& tv) const
@@ -581,7 +581,7 @@ bool TypeVar::operator<(const TypeVar& tv) const
     if (index > tv.index)
         return false;
 
-    int cmp = unloc(name).compare(unloc(tv.name));
+    int cmp = name.compare(tv.name);
 
     return (cmp < 0);
 }
@@ -589,43 +589,43 @@ bool TypeVar::operator<(const TypeVar& tv) const
 TypeVar::TypeVar()
 {}
 
-TypeVar::TypeVar(const Located<std::string>& s)
+TypeVar::TypeVar(const std::string& s)
     :name(s)
 {}
 
-TypeVar::TypeVar(int l, const Located<std::string>& s)
+TypeVar::TypeVar(int l, const std::string& s)
     :level_(l), name(s)
 {}
 
-TypeVar::TypeVar(const Located<std::string>& s, const Kind& k)
+TypeVar::TypeVar(const std::string& s, const Kind& k)
     :name(s), kind(k)
 {}
 
-TypeVar::TypeVar(int l, const Located<std::string>& s, const Kind& k)
+TypeVar::TypeVar(int l, const std::string& s, const Kind& k)
     :level_(l), name(s),kind(k)
 {}
 
 string TypeCon::print() const
 {
-    return unloc(name);
+    return name;
 }
 
 string TypeCon::print_with_kind() const
 {
     if (kind)
-        return "("+unloc(name) + " :: " + (*kind).print()+")";
+        return "("+name + " :: " + (*kind).print()+")";
     else
-        return unloc(name);
+        return name;
 }
 
 bool TypeCon::operator==(const TypeCon& tc) const
 {
-    return unloc(name) == unloc(tc.name);
+    return name == tc.name;
 }
 
 bool TypeCon::operator<(const TypeCon& tc) const
 {
-    int cmp = unloc(name).compare(unloc(tc.name));
+    int cmp = name.compare(tc.name);
 
     return (cmp < 0);
 }
@@ -643,7 +643,7 @@ optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t)
 
     auto tc = head.to<TypeCon>();
 
-    if (tc and is_haskell_sym(unloc(tc->name)))
+    if (tc and is_haskell_sym(tc->name))
         return {{*tc, args[0], args[1]}};
     else
         return {};
@@ -799,21 +799,21 @@ Type list_type(const Type& t)
 TypeCon tuple_tycon(int n)
 {
     auto kind = make_n_args_kind(n);
-    return TypeCon( {noloc, tuple_name(n)}, kind );
+    return TypeCon( tuple_name(n), kind );
 }
 
 TypeCon list_tycon()
 {
     auto kind = make_n_args_kind(1);
-    return TypeCon( {noloc,"[]"}, kind );
+    return TypeCon( "[]", kind );
 }
 
 
 TypeVar desugar(const Hs::LTypeVar& ltv)
 {
-    auto& tv = unloc(ltv);
+    auto& [loc,tv] = ltv;
     TypeVar t2;
-    t2.name = {ltv.loc,tv.name};
+    t2.name = tv.name;
     t2.index = tv.index;
     t2.kind = tv.kind;
     return t2;
@@ -821,9 +821,9 @@ TypeVar desugar(const Hs::LTypeVar& ltv)
 
 TypeCon desugar(const Hs::LTypeCon& ltc)
 {
-    auto& tc = unloc(ltc);
+    auto& [loc,tc] = ltc;
     TypeCon t2;
-    t2.name = {ltc.loc,tc.name};
+    t2.name = tc.name;
     t2.kind = tc.kind;
     return t2;
 }

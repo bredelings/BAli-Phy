@@ -9,9 +9,9 @@ using std::vector;
 
 namespace views = ranges::views;
 
-TypeCon kind_type() {return TypeCon({noloc,"Type"});}
+TypeCon kind_type() {return TypeCon("Type");}
 
-TypeCon kind_constraint() {return TypeCon({noloc,"Constraint"});}
+TypeCon kind_constraint() {return TypeCon("Constraint");}
 
 Kind kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return make_arrow_type(k1,k2);}
 
@@ -33,7 +33,7 @@ bool is_kind_constraint(const Kind& k)
 
 TypeVar kind_var(const std::string& s, int i)
 {
-    TypeVar kv({noloc,s});
+    TypeVar kv(s);
     kv.index = i;
     return kv;
 }

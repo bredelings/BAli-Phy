@@ -143,7 +143,7 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon({noloc,"~"}),{lhs, rhs}, false, false, false} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
     S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
@@ -230,7 +230,7 @@ void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon({noloc,"~"}),{lhs, rhs}, false, false, false} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
     S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
@@ -263,7 +263,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // But we don't check if the two instances are "apart" either.
 
     // 2. Get the type family info
-    auto tf_info = info_for_type_fam( unloc(tf_con.name) );
+    auto tf_info = info_for_type_fam( tf_con.name );
 
     if (tf_info->associated_class)
     {
@@ -387,7 +387,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     auto default_instance = *maybe_default;
 
     // 1. Get the type family info
-    auto tf_info = info_for_type_fam( unloc(tf_con.name) );
+    auto tf_info = info_for_type_fam( tf_con.name );
 
     // 2. Now we need to perform this substitution on the type family definition to get the default instance head.
     //   => 
@@ -625,7 +625,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
     auto inst_type = inst_info->type();
 
-    push_source_span(*inst_info->class_con.name.loc);
+    push_source_span(*inst_decl.constraint.loc);
     // Instantiate it with rigid type variables.
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
@@ -633,7 +633,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
     // 2. Get the class info
     auto class_con = get_class_for_constraint(instance_head);
-    auto class_name = unloc(class_con.name);
+    auto class_name = class_con.name;
     auto class_info = *info_for_class(class_name);
 
     // 3. Get constrained version of the class

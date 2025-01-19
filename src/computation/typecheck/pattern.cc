@@ -140,13 +140,13 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
 
         substitution_t s;
         for(auto& tv: info.uni_tvs)
-            s = s.insert({tv,fresh_meta_type_var(unloc(tv.name), *tv.kind)});
+            s = s.insert({tv,fresh_meta_type_var(tv.name, *tv.kind)});
 
         // These are supposed to be "super" skolems.
         vector<TypeVar> ex_tvs2;
         for(auto& tv: info.exi_tvs)
         {
-            auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level()+1, unloc(tv.name), *tv.kind);
+            auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level()+1, tv.name, *tv.kind);
             s = s.insert({tv, super_skol_tv});
             ex_tvs2.push_back(super_skol_tv);
         }

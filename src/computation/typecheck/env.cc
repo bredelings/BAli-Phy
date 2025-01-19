@@ -173,7 +173,7 @@ RenameTyvarEnv2 rename_binder2(RenameTyvarEnv2 env, const TypeVar& tv1, const Ty
 
 TypeVar locally_unique_tyvar(const VarSet& vars)
 {
-    TypeVar tv = TypeVar({noloc,"tvX"});
+    TypeVar tv = TypeVar("tvX");
     int index = 0;
     for(auto& var: vars)
     {

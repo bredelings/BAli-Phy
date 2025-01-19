@@ -18,8 +18,7 @@ string alphabetized_type_var_name(int i)
 TypeVar alphabetized_type_var(int i)
 {
     auto s = alphabetized_type_var_name(i);
-    auto v = TypeVar({noloc,s});
-    return v;
+    return TypeVar(s);
 }
 
 Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index);
