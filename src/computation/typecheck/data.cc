@@ -141,7 +141,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             // 1. Kind-check and add foralls for free type vars.
 
             // BUG: We don't handle strictness annotations on the fields here!
-            auto written_type = K.kind_and_type_check_type( data_cons_decl.type );
+            auto written_type = check_type( data_cons_decl.type );
 
             // 2. Extract tyvar, givens, and rho type.
             auto [written_tvs, written_constraints, rho_type] = peel_top_gen( written_type );
