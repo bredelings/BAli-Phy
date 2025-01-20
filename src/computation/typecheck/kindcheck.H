@@ -55,7 +55,6 @@ struct kindchecker_state
     Kind kind_check_type_var(const TypeVar& tv);
     Kind kind_check_type_con(const std::string&);
     std::tuple<Type,Kind> kind_check_type(const Hs::LType& t);
-    std::tuple<Type,Kind> kind_check_type(const Type& t);
     Type kind_check_constraint(const Hs::LType& constraint);
     Context kind_check_context(const Hs::Context& context);
 
