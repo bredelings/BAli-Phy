@@ -669,8 +669,7 @@ struct InstanceDecl: public Object
 
     // This should be something like Eq a => Eq [a]
     // Right now it could be either ForallType or ConstrainedType
-    Context context;
-    LType constraint;
+    LType polytype;
 
     std::vector<TypeFamilyInstanceDecl> type_inst_decls;
     Decls method_decls;
@@ -679,13 +678,11 @@ struct InstanceDecl: public Object
     std::string print() const;
 
     InstanceDecl(const std::optional<std::string>& o,
-                 const Context& c,
                  const LType& t,
                  const std::vector<TypeFamilyInstanceDecl>& tids,
                  const Decls& ds)
         :overlap_pragma(o),
-         context(c),
-         constraint(t),
+         polytype(t),
          type_inst_decls(tids),
          method_decls(ds)
         {}
@@ -1219,6 +1216,8 @@ Con False();
 Con ConsCon();
 Con Nil();
 Con TupleCon(int n);
+
+std::tuple<std::vector<LTypeVar>, std::vector<LType>, LType> peel_top_gen(LType t);
 
 }
 

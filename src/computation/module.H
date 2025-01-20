@@ -144,18 +144,18 @@ public:
     void def_constructor(const std::string& name, int arity, const std::string& type_name);
 
     /// Add an ADT
-    void def_ADT(const std::string& name, const type_info::data_info& info);
-    void def_ADT(const std::string& name, const fixity_info&, const type_info::data_info& info);
+    void def_ADT(const std::string& name, int arity, const type_info::data_info& info);
+    void def_ADT(const std::string& name, int arity, const fixity_info&, const type_info::data_info& info);
 
-    void def_type_class(const std::string& class_name, const type_info::class_info& info);
-
-    void def_type_class_method(const std::string& method_name, const std::string& class_name);
+    void def_type_class(const std::string& class_name, int arity, const type_info::class_info& info);
 
     void def_type_synonym(const std::string& syn_name, int arity);
 
     void def_type_family(const std::string& family_name, int arity);
 
     void def_data_family(const std::string& family_name, int arity);
+
+    void def_type_class_method(const std::string& method_name, const std::string& class_name);
 
     symbol_ptr add_symbol(const symbol_info&);
 

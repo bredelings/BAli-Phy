@@ -287,7 +287,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
                 {
-                    Rn.error(pd->lhs.loc, Note()<<"Illegal pattern binding in instance "<<I.constraint.print());
+                    Rn.error(pd->lhs.loc, Note()<<"Illegal pattern binding in instance "<<I.polytype.print());
                 }
                 else
                 {

@@ -126,11 +126,7 @@ set<string> free_type_cons(const Hs::TypeSynonymDecl& synonym_decl)
 
 set<string> free_type_cons(const Hs::InstanceDecl& instance_decl)
 {
-    set<string> tvars;
-    add(tvars, free_type_cons(instance_decl.context));
-    add(tvars, free_type_cons(instance_decl.constraint));
-    return tvars;
-
+    return free_type_cons(instance_decl.polytype);;
 }
 
 vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)

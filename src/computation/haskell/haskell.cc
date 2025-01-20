@@ -607,7 +607,7 @@ string ClassDecl::print() const
 
 string InstanceDecl::print() const
 {
-    string result = "instance " + show_instance_header(context, constraint);
+    string result = "instance " + polytype.print();
 
     vector<string> decls;
     for(auto& decl: type_inst_decls)
@@ -1087,6 +1087,25 @@ Con Nil()
 Con TupleCon(int n)
 {
     return {tuple_name(n), n};
+}
+
+std::tuple<std::vector<LTypeVar>, std::vector<LType>, LType> peel_top_gen(LType ltype)
+{
+    std::vector<LTypeVar> tvs;
+    if (auto fa = unloc(ltype).to<ForallType>())
+    {
+        tvs = fa->type_var_binders;
+        ltype = fa->type;
+    }
+
+    std::vector<LType> constraints;
+    if (auto c = unloc(ltype).to<ConstrainedType>())
+    {
+        constraints = c->context;
+        ltype = c->type;
+    }
+
+    return {tvs, constraints, ltype};
 }
 
 }

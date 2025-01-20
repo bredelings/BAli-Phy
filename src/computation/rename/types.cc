@@ -162,13 +162,60 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 
 Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 {
-    I.context = rename(I.context);
-    I.constraint = rename_type(I.constraint);
+    // 1. Rename the constraints and instance head
+    I.polytype = rename_type(I.polytype);
 
+    // 2. Renaming of the methods is done in rename_decls
+
+    // 3. Rename type instance decls
     for(auto& type_inst_decl: I.type_inst_decls)
         type_inst_decl = rename(type_inst_decl);
 
-    // Renaming of the methods is done in rename_decls
+    // 4. Get free tvs, constraints, and typecon and parameters
+    if (unloc(I.polytype).to<Hs::ForallType>())
+    {
+        error(I.polytype.loc, Note()<<"Instance head cannot contain forall");
+        return I;
+    }
+
+    auto [_, context, head] = Hs::peel_top_gen(I.polytype);
+    auto tvs = free_type_variables(head);
+    auto [class_head, class_args] = Hs::decompose_type_apps(head);
+
+    // 5. Quantify the instance head with the free type variables.
+    I.polytype = add_forall_vars(tvs, add_constraints(context, head));
+
+    // 6. Check that the instance head is a class application
+    auto tc = unloc(class_head).to<Hs::TypeCon>();
+    if (not tc)
+    {
+        error(*class_head.loc, Note() << "Not a type constructor!");
+        return I;
+    }
+
+    auto type_info = m.lookup_resolved_type(tc->name);
+    if (not type_info)
+    {
+        error(*class_head.loc, "Unknown type!");
+        return I;
+    }
+
+    if (not type_info->is_class())
+    {
+        error(*class_head.loc, "Not a class!");
+        return I;
+    }
+
+    // We could check if class_head is a class, and not a data type.
+    // But that will also be done by kind checking.
+
+    // 7. Check that the instance has the right number of parameters
+    int N = *type_info->arity;
+    if (class_args.size() != N)
+    {
+        error( *head.loc, Note() <<head.print()<<" should have "<<N<<" parameters, but has "<<class_args.size()<<".");
+        return I;
+    }
 
     return I;
 }

@@ -166,6 +166,8 @@ void Module::declare_symbol(const symbol_info& S)
 
 void Module::declare_type(const type_info& T)
 {
+    assert(T.arity);
+
     if (is_haskell_builtin_type_name(T.name))
         throw myexception()<<"Can't declare builtin type name '"<<T.name<<"' as local type!.";
 
@@ -1830,20 +1832,20 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
     declare_symbol( S );
 }
 
-void Module::def_ADT(const std::string& tname, const type_info::data_info& info)
+void Module::def_ADT(const std::string& tname, int arity, const type_info::data_info& info)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined type '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, info, {}, /*arity*/ {}, /*kind*/ {}} );
+    declare_type( {tname, info, {}, arity, /*kind*/ {}} );
 }
 
-void Module::def_ADT(const std::string& tname, const fixity_info& fixity, const type_info::data_info& info)
+void Module::def_ADT(const std::string& tname, int arity, const fixity_info& fixity, const type_info::data_info& info)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, info, fixity, /*arity*/ {}, /*kind*/ {}} );
+    declare_type( {tname, info, fixity, arity, /*kind*/ {}} );
 }
 
 void Module::def_type_synonym(const std::string& sname, int arity)
@@ -1870,12 +1872,12 @@ void Module::def_data_family(const std::string& fname, int arity)
     declare_type( {fname, type_info::data_fam_info(), {}, arity, /*kind*/ {}} );
 }
 
-void Module::def_type_class(const std::string& cname, const type_info::class_info& info)
+void Module::def_type_class(const std::string& cname, int arity, const type_info::class_info& info)
 {
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
-    declare_type( {cname, info, {}, /*arity*/ {}, /*kind*/ {}} );
+    declare_type( {cname, info, {}, arity, /*kind*/ {}} );
 }
 
 void Module::def_type_class_method(const string& method_name, const string& class_name)
@@ -1955,8 +1957,10 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             // Why are we recording the arity here?  This is too early...
             // It looks like we use it when renaming patterns, but...
             type_info::data_info info;
+            std::optional<int> arity;
             if (data_decl->is_regular_decl())
             {
+                arity = data_decl->get_constructors().size();
                 for(const auto& constr: data_decl->get_constructors())
                 {
                     auto cname = unloc(*constr.con).name;
@@ -1970,6 +1974,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             }
             else if (data_decl->is_gadt_decl())
             {
+                arity = data_decl->get_gadt_constructors().size();
                 for(const auto& cons_decl: data_decl->get_gadt_constructors())
                     for(auto& con_name: cons_decl.con_names)
                     {
@@ -1982,29 +1987,26 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     }
             }
 
-            def_ADT(unloc(data_decl->name), info);
+            def_ADT(unloc(data_decl->name), *arity, info);
         }
-        else if (decl.is_a<Haskell::ClassDecl>())
+        else if (auto Class = decl.to<Haskell::ClassDecl>())
         {
-            auto& Class = decl.as_<Haskell::ClassDecl>();
-
             type_info::class_info info;
 
-            for(auto& fam_decl: Class.fam_decls)
+            for(auto& fam_decl: Class->fam_decls)
 		if (fam_decl.is_type_family())
 		    def_type_family( unloc(fam_decl.con).name, fam_decl.arity() );
 		else
 		    throw myexception()<<"data families not handled";
 
-            for(auto& sig_decl: Class.sig_decls)
+            for(auto& sig_decl: Class->sig_decls)
                 for(auto& v: sig_decl.vars)
                 {
-                    def_type_class_method(unloc(v).name, unloc(Class.name));
+                    def_type_class_method(unloc(v).name, unloc(Class->name));
                     info.methods.insert(unloc(v).name);
                 }
-            
-            
-            def_type_class(unloc(Class.name), info);
+
+            def_type_class(unloc(Class->name), Class->type_vars.size(), info);
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {

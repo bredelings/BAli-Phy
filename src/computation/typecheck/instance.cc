@@ -66,20 +66,6 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-// NOTE: The reason we aren't taking Hs::Type arguments here is that default_type_instance doesn't provide them (See NOTE on default_type_instance).
-// Location information for default type instances would refer to lines in a different module!
-// Suppose we strip all the type information from the default instance and store it in Haskell form?
-// Then suppose we allow substitution in Haskell types?
-
-// QUESTION: But for default methods, do we actually need to do these checks?
-// (a) We already know that any variable on the rhs will occur on the lhs, because its being substituted into something on the right
-//     that also occurs on the left.
-// (b) How do we determine kinds for things?  Should we already know the kinds for the instance variables?
-//     And don't we also know the kinds for variables that are not substituted?
-//     Then if we check that the substitutions have the right kind, shouldn't we be able to skip kind-checking?
-// (c) For RHS's that are not default, we have to check that they have the right kind.
-// (d) However, free variables in the instance head should ALREADY have a kind assigned to them.
-//     Part of the issue may be that we aren't doing kind inference on the free vars in the instance head.
 void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
     TypeCon tf_con = desugar(tf_con_in);
@@ -367,69 +353,30 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
 std::optional<Core2::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
-    // IDEA move some of the checking and complaining to the renaming stage.
+    auto inst_loc = inst_decl.polytype.loc;
+    push_note( Note()<<"In instance '"<<unloc(inst_decl.polytype)<<"':" );
+    push_source_span( *inst_loc );
+
+    // 3. Kind-check the type and set the kinds for the type variables.
 
     // FIXME: allow check_constraint to fail by returning an optional<Type>.
+    auto polytype = check_constraint(inst_decl.polytype);
 
-    push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
-    auto inst_loc = range(inst_decl.context) * inst_decl.constraint.loc;
-    push_source_span( *inst_loc );
-    
-    // 1. Get class name and parameters for the instance
-    auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
-
-    // 2. Look up the class info
-    auto tc = unloc(class_head).to<Hs::TypeCon>();
-    push_source_span( *class_head.loc );
-    if (not tc)
-    {
-        record_error(Note() << "'"<<class_head.print()<<"' is not a type constructor!");
-
-        pop_source_span();
-        pop_source_span();
-        pop_note();
-        return {};
-    }
-
-    // Check that this is a class, and not a data or type?
-    auto class_name = tc->name;
-    auto maybe_class_info = info_for_class(class_name);
-    if (not maybe_class_info)
-    {
-        record_error( Note() <<"no class named '"<<class_name<<"'!");
-        pop_source_span();
-        pop_source_span();
-        pop_note();
-        return {};
-    }
-    auto class_info = *maybe_class_info;
-    pop_source_span();
-
-    // 3. Check that the instance has the right number of parameters
-    int N = class_info.type_vars.size();
-    if (class_args.size() != class_info.type_vars.size())
-    {
-        push_source_span( *inst_decl.constraint.loc );
-        record_error( Note() <<inst_decl.constraint.print()<<" should have "<<N<<" parameters, but has "<<class_args.size()<<".");
-        pop_source_span();
-
-        pop_source_span();
-        pop_note();
-        return {};
-    }
-
-    // 4. Construct the quantified type (forall tvs. constraints => constraint)
-    auto free_ltvs = free_type_variables(inst_decl.constraint);
-    auto hs_polytype = Hs::add_forall_vars(free_ltvs, Hs::add_constraints(inst_decl.context, inst_decl.constraint));
-
-    // 5. Kind-check the type and set the kinds for the type variables.
-    auto polytype = check_constraint(hs_polytype);
-
-    // 6. Get the free type variables, constraints, class_head and args
+    // 4. Get the free type variables, constraints, class_head and args
     auto [tvs, constraints, constraint] = peel_top_gen(polytype);
     auto [head, args] = decompose_type_apps(constraint);
+    int N = args.size();
 
-    // 7. Construct the mapping from original class variables to instance variables
+    // 2. Look up the class info
+    auto tc = head.to<TypeCon>();
+    // We checked that this is a typecon in rename.
+    assert(tc);
+    auto class_name = tc->name;
+    auto maybe_class_info = info_for_class(class_name);
+    assert(maybe_class_info);
+    auto class_info = *maybe_class_info;
+
+    // 5. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
     for(int i = 0; i < N; i++)
         instance_subst = instance_subst.insert( {class_info.type_vars[i], args[i]} );
@@ -570,7 +517,7 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
 pair<Hs::Decls, tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
 TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
+    push_note( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
 
     // 1. Get instance head and constraints 
 
@@ -578,7 +525,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
     auto inst_type = inst_info->type();
 
-    push_source_span(*inst_decl.constraint.loc);
+    push_source_span(*inst_decl.polytype.loc);
     // Instantiate it with rigid type variables.
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
@@ -650,12 +597,12 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
             }
             else
             {
-                record_warning( Note() <<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'" );
+                record_warning( Note() <<"instance "<<inst_decl.polytype<<" is missing method '"<<method_name<<"'" );
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
                 auto dict_entry = get_fresh_core_var("de",false);
-                dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") });
+                dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.polytype.print() + "`") });
                 dict_entries.push_back( dict_entry );
 
                 pop_note();

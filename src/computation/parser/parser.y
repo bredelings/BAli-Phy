@@ -1777,22 +1777,8 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
     return {name, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
 }
 
-Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& ltype_orig, const optional<Located<Hs::Decls>>& decls)
+Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& polytype, const optional<Located<Hs::Decls>>& decls)
 {
-    // GHC stores the instance as a polytype?
-    // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
-    auto ltype = ltype_orig;
-    auto& [loc, type] = ltype;
-    
-    if (type.is_a<Hs::ForallType>())
-        throw myexception()<<"instance declaration '"<<unloc(ltype)<<"' is malformed";
-    Hs::Context context;
-    if (auto ct = type.to<Hs::ConstrainedType>())
-    {
-        context = ct->context;
-        ltype = ct->type;
-    }
-
     std::vector<Hs::TypeFamilyInstanceDecl> type_inst_decls;
     Hs::Decls method_decls;
     if (decls)
@@ -1803,9 +1789,9 @@ Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, con
             else if (auto V = decl.to<Hs::ValueDecl>())
                 method_decls.push_back({loc,*V});
             else
-                throw myexception()<<"In declaration of instance "<<unloc(ltype_orig).print()<<", I don't recognize declaration:\n   "<<decl.print();
+                throw myexception()<<"In declaration of instance "<<unloc(polytype).print()<<", I don't recognize declaration:\n   "<<decl.print();
         }
-    return {oprag, context, ltype, type_inst_decls, method_decls};
+    return {oprag, polytype, type_inst_decls, method_decls};
 }
 
 Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const optional<Located<Hs::Decls>>& decls)
