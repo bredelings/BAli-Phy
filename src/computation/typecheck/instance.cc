@@ -11,13 +11,6 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: kind-check the instance head in infer_type_for_instance1
-// This should allow us pass in type variables with kinds into add_default_type_instance( ).
-// This should allow us to avoid doing kind checking in add_default_type_instance( ).
-
-// TODO: when we infer types for instances, we want to kind-check the instance heads,
-//  assigning new kinds to new type variables as we see them.
-
 // TODO: change kind unification to use meta-variables.
 
 // TODO: change TypeVar to have a non-optional kind.
@@ -156,7 +149,7 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
     this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
 }
 
-void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const yy::location& inst_loc)
 {
     // We used to construct a TypeFamEqnInfo here
     // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
@@ -367,7 +360,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance
-    add_default_type_instance(tf_con, args, rhs, *tf_info, inst_loc);
+    add_default_type_instance(tf_con, args, rhs, inst_loc);
 }
 
 std::optional<Core2::Var<>>

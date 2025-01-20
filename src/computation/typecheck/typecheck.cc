@@ -829,16 +829,6 @@ Type TypeChecker::check_type(const Hs::LType& type, kindchecker_state& K)
     return K.kind_and_type_check_type( type );
 }
 
-Type TypeChecker::check_type(const Type& type, kindchecker_state& K)
-{
-    // So, currently, we
-    // (1) infer kinds for all the free variables.
-    // (2) then add foralls for the free variables.
-    // Should we be doing synonym substitution FIRST?
-
-    return K.kind_and_type_check_type( type );
-}
-
 Type TypeChecker::check_type(const Hs::LType& type)
 {
     // This should be rather wasteful... can we use a reference?

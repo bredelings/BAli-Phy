@@ -227,8 +227,6 @@ public:
 
     Type check_type(const Hs::LType&, kindchecker_state& K);
 
-    Type check_type(const Type&, kindchecker_state& K);
-
     Type check_constraint(const Hs::LType&);
 
     Hs::Var find_prelude_var(std::string name) const;
@@ -514,7 +512,7 @@ public:
 
     void add_type_instance(const Hs::LTypeCon& tf_con, const std::vector<Hs::LType>& args, const Hs::LType& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
 
-    void add_default_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
+    void add_default_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const yy::location& inst_loc);
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
