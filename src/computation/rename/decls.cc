@@ -255,7 +255,7 @@ bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signat
     for(auto& [lvar, ltype]: signatures)
     {
         assert(not is_qualified_symbol(unloc(lvar).name));
-        ltype = rename_type(ltype);
+        ltype = rename_and_quantify_type(ltype);
 
         auto lvar2 = lvar;
         auto& var2 = unloc(lvar2);

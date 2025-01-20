@@ -434,7 +434,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     {
         auto TE = *te;
         TE.exp = rename(TE.exp, bound, free_vars);
-        TE.type = rename_type(TE.type);
+        TE.type = rename_and_quantify_type(TE.type);
         E = TE;
     }
     else if (auto c = E.to<Hs::CaseExp>())

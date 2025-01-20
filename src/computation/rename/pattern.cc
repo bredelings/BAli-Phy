@@ -265,7 +265,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     {
         auto TPat = *tpat;
         auto bound = rename_pattern(TPat.pat, top);
-        TPat.type = rename_type(TPat.type);
+        TPat.type = rename_and_quantify_type(TPat.type);
         pat = TPat;
         return bound;
     }

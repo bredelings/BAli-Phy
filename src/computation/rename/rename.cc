@@ -251,7 +251,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     {
         Rn.qualify_name(unloc(foreign_decl.function).name );
 
-        foreign_decl.type = Rn.rename_type( foreign_decl.type );
+        foreign_decl.type = Rn.rename_and_quantify_type( foreign_decl.type );
 
         bound_names.insert( {unloc(foreign_decl.function).name} );
     }
