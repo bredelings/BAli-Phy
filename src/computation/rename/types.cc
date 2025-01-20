@@ -17,6 +17,22 @@ using std::set;
 using std::optional;
 using std::map;
 
+vector<Hs::LTypeVar> type_vars_except(const vector<Hs::LTypeVar>& tvs, const vector<Hs::LTypeVar>& remove_)
+{
+    auto remove = remove_ | ranges::to<set>();
+
+    vector<Hs::LTypeVar> tvs2;
+    for(auto& tv: tvs)
+        if (not remove.count(tv))
+            tvs2.push_back(tv);
+    return tvs2;
+}
+
+vector<Hs::LTypeVar> free_type_variables_except(const Hs::LType& type, const vector<Hs::LTypeVar>& remove_)
+{
+    return type_vars_except( free_type_variables(type), remove_);
+}
+
 Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
 {
     auto& [loc, tc] = ltc;
@@ -100,13 +116,13 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
 }
 
 // This is used for instance polytypes, in addition to signature types
-Haskell::LType renamer_state::rename_and_quantify_type(Haskell::LType ltype)
+Haskell::LType renamer_state::rename_and_quantify_type(Haskell::LType ltype, const vector<Hs::LTypeVar>& outer_tvs)
 {
     // The "forall-or-nothing" rule says that if the user writes a forall, then they need to mention ALL the variables.
     // However, there are are exceptions...
     if (not unloc(ltype).to<Hs::ForallType>())
     {
-        auto free_tvs = free_type_variables(ltype);
+        auto free_tvs = free_type_variables_except(ltype, outer_tvs);
         ltype = Hs::add_forall_vars(free_tvs, ltype);
     }
 
@@ -234,7 +250,7 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 
     for(auto& sig_decl: C.sig_decls)
     {
-        sig_decl.type = rename_type(sig_decl.type);
+        sig_decl.type = rename_and_quantify_type(sig_decl.type, C.type_vars);
 
         for(auto& v: sig_decl.vars)
             qualify_name(unloc(v));
