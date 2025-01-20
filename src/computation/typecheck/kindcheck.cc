@@ -436,18 +436,7 @@ Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
     return context;
 }
 
-std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
-{
-    bool strictness = false;
-    auto& [loc, type] = ltype;
-
-    if (auto strict_type = type.to<Hs::StrictType>())
-    {
-        strictness = true;
-        ltype = strict_type->type;
-    }
-    return {ltype, strictness};
-}
+std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype);
 
 void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor)
 {
@@ -491,65 +480,6 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
     }
 
     pop_type_var_scope();
-}
-
-DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor)
-{
-    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
-
-    DataConInfo info;
-
-    // 1. Record exi_tvs and make up kind vars for them.
-    push_type_var_scope();
-    for(auto& htv: constructor.forall)
-    {
-        auto k = fresh_kind_var();
-        bind_type_var(htv, k);
-        auto tv = desugar(htv);
-        tv.kind = k;
-        info.exi_tvs.push_back(tv);
-    }
-
-    // 2. Record written_constraints
-    //   Do constraints affect kind determination?  Maybe not
-    if (constructor.context)
-    {
-        for(auto& constraint: *constructor.context)
-            info.written_constraints.push_back( kind_check_type_of_kind(constraint, kind_constraint()) );
-    }
-
-    // 3. Kind check field types
-    if (constructor.is_record_constructor())
-    {
-        for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
-            for(int i=0; i < field_decl.field_names.size(); i++)
-            {
-                auto [field_type, strictness] = pop_strictness(field_decl.type);
-                info.field_types.push_back( kind_check_type_of_kind(field_type, kind_type() ) );
-                info.field_strictness.push_back( strictness );
-            }
-    }
-    else
-    {
-        for(auto& hs_field_type: std::get<0>(constructor.fields))
-        {
-            auto [field_type, strictness] = pop_strictness(hs_field_type);
-            info.field_types.push_back( kind_check_type_of_kind(field_type, kind_type() ) );
-            info.field_strictness.push_back( strictness );
-        }
-    }
-
-    // 4. Substitute and replace kind vars
-    for(auto& field_type: info.field_types)
-        field_type = zonk_kind_for_type( field_type );
-    for(auto& constraint: info.written_constraints)
-        constraint = zonk_kind_for_type( constraint );
-    for(auto& tv : info.exi_tvs)
-        tv.kind = apply_substitution(*tv.kind);
-
-    pop_type_var_scope();
-
-    return info;
 }
 
 void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)

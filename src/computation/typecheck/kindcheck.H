@@ -72,7 +72,6 @@ struct kindchecker_state
 
     // data or newtype
     void kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl);
-    DataConInfo type_check_constructor(const Hs::ConstructorDecl& constructor);
     void kind_check_constructor(const Hs::ConstructorDecl& constructor);
 
     // type synonym

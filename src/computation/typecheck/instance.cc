@@ -71,7 +71,7 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
+void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const yy::location& inst_loc)
 {
     auto lhs_in = Hs::type_apply(tf_con_in, args_in);
 
@@ -244,7 +244,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    add_type_instance(inst.con, inst.args, inst.rhs, *tf_info, inst_loc);
+    add_type_instance(inst.con, inst.args, inst.rhs, inst_loc);
 
     pop_source_span();
     pop_note();

@@ -488,6 +488,8 @@ public:
     std::tuple<ClassInfo,Core2::Decls<>>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
+    DataConInfo infer_type_for_constructor(kindchecker_state& K, const Hs::ConstructorDecl& constructor);
+
     DataConEnv infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl);
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
@@ -512,7 +514,7 @@ public:
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
-    void add_type_instance(const Hs::LTypeCon& tf_con, const std::vector<Hs::LType>& args, const Hs::LType& rhs, const TypeFamInfo& tf_info, const yy::location& inst_loc);
+    void add_type_instance(const Hs::LTypeCon& tf_con, const std::vector<Hs::LType>& args, const Hs::LType& rhs, const yy::location& inst_loc);
 
     void add_default_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const yy::location& inst_loc);
 

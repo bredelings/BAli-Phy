@@ -1532,6 +1532,78 @@ Type remove_top_level_foralls(Type t)
     return t;
 }
 
+std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
+{
+    bool strictness = false;
+    auto& [loc, type] = ltype;
+
+    if (auto strict_type = type.to<Hs::StrictType>())
+    {
+        strictness = true;
+        ltype = strict_type->type;
+    }
+    return {ltype, strictness};
+}
+
+DataConInfo TypeChecker::infer_type_for_constructor(kindchecker_state& K, const Hs::ConstructorDecl& constructor)
+{
+    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
+
+    DataConInfo info;
+
+    // 1. Record exi_tvs and make up kind vars for them.
+    K.push_type_var_scope();
+    for(auto& htv: constructor.forall)
+    {
+        auto k = K.fresh_kind_var();
+        K.bind_type_var(htv, k);
+        auto tv = desugar(htv);
+        tv.kind = k;
+        info.exi_tvs.push_back(tv);
+    }
+
+    // 2. Record written_constraints
+    //   Do constraints affect kind determination?  Maybe not
+    if (constructor.context)
+    {
+        for(auto& constraint: *constructor.context)
+            info.written_constraints.push_back( K.kind_check_type_of_kind(constraint, kind_constraint()) );
+    }
+
+    // 3. Kind check field types
+    if (constructor.is_record_constructor())
+    {
+        for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
+            for(int i=0; i < field_decl.field_names.size(); i++)
+            {
+                auto [field_type, strictness] = pop_strictness(field_decl.type);
+                info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type() ) );
+                info.field_strictness.push_back( strictness );
+            }
+    }
+    else
+    {
+        for(auto& hs_field_type: std::get<0>(constructor.fields))
+        {
+            auto [field_type, strictness] = pop_strictness(hs_field_type);
+            info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type() ) );
+            info.field_strictness.push_back( strictness );
+        }
+    }
+
+    // 4. Substitute and replace kind vars
+    for(auto& field_type: info.field_types)
+        field_type = K.zonk_kind_for_type( field_type );
+    for(auto& constraint: info.written_constraints)
+        constraint = K.zonk_kind_for_type( constraint );
+    for(auto& tv : info.exi_tvs)
+        tv.kind = K.apply_substitution(*tv.kind);
+
+    K.pop_type_var_scope();
+
+    return info;
+}
+
 DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl)
 {
     kindchecker_state K(*this);
@@ -1577,7 +1649,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     {
         for(auto& constructor: data_decl.get_constructors())
         {
-            DataConInfo info = K.type_check_constructor(constructor);
+            DataConInfo info = infer_type_for_constructor(K,constructor);
             info.uni_tvs = datatype_typevars;
             info.data_type = data_type_con;
             info.top_constraints = desugar(data_decl.context);
