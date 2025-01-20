@@ -52,14 +52,11 @@ struct kindchecker_state
     bool unify(const Kind& k1, const Kind& k2);
 
     Type kind_check_type_of_kind(const Hs::LType& t, const Kind& k);
-    Type kind_check_type_of_kind(const Type& t, const Kind& k);
     Kind kind_check_type_var(const TypeVar& tv);
     Kind kind_check_type_con(const std::string&);
     std::tuple<Type,Kind> kind_check_type(const Hs::LType& t);
     std::tuple<Type,Kind> kind_check_type(const Type& t);
-    Type kind_check_constraint(const Type& constraint);
     Type kind_check_constraint(const Hs::LType& constraint);
-    Context kind_check_context(const Context& context);
     Context kind_check_context(const Hs::Context& context);
 
     Type zonk_kind_for_type(const Type& t);

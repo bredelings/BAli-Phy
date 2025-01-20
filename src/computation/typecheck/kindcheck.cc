@@ -160,16 +160,6 @@ Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& 
     return t2;
 }
 
-
-Type kindchecker_state::kind_check_type_of_kind(const Type& t, const Kind& kind)
-{
-    auto [t2,kind2] = kind_check_type(t);
-    t2 = zonk_kind_for_type(t2);
-    if (not unify(kind, kind2))
-        type_checker.record_error(Note()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n");
-    return t2;
-}
-
 Kind kindchecker_state::kind_check_type_var(const TypeVar& tv)
 {
     return kind_for_type_var(tv);
@@ -523,22 +513,9 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
 }
 
 
-Type kindchecker_state::kind_check_constraint(const Type& constraint)
-{
-    return kind_check_type_of_kind(constraint, kind_constraint());
-}
-
 Type kindchecker_state::kind_check_constraint(const Hs::LType& constraint)
 {
     return kind_check_type_of_kind(constraint, kind_constraint());
-}
-
-Context kindchecker_state::kind_check_context(const Context& context)
-{
-    Context context2 = context;
-    for(auto& constraint: context2)
-        constraint = kind_check_constraint(constraint);
-    return context2;
 }
 
 Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
@@ -957,7 +934,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     }
     assert(is_kind_type(k));
 
-    kind_check_type_of_kind( desugar(type_syn_decl.rhs_type), kind_type() );
+    kind_check_type_of_kind( type_syn_decl.rhs_type, kind_type() );
 
     pop_type_var_scope();
 }
