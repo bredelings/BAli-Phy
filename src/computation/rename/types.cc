@@ -33,6 +33,11 @@ vector<Hs::LTypeVar> free_type_variables_except(const Hs::LType& type, const vec
     return type_vars_except( free_type_variables(type), remove_);
 }
 
+vector<Hs::LTypeVar> free_type_variables_except(const vector<Hs::LType>& types, const vector<Hs::LTypeVar>& remove_)
+{
+    return type_vars_except( free_type_variables(types), remove_);
+}
+
 Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
 {
     auto& [loc, tc] = ltc;
@@ -129,7 +134,7 @@ Haskell::LType renamer_state::rename_and_quantify_type(Haskell::LType ltype, con
     return rename_type(ltype);
 }
 
-Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
+Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs::LTypeVar>& outer_tvs)
 {
     for(auto& constraint: decl.context)
         constraint = rename_type(constraint);
@@ -160,6 +165,12 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
                 for(auto& type: std::get<0>(constructor.fields))
                     type = rename_type(type);
             }
+
+            // Quantify by new tvs if there is no forall.
+            auto ftvs = free_type_variables_except(constructor.get_field_types(), outer_tvs);
+
+            if (constructor.forall.empty())
+                constructor.forall = ftvs;
         }
     }
     else if (decl.is_gadt_decl())
@@ -169,7 +180,7 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
             for(auto& con_name: constructors.con_names)
                 qualify_name(con_name);
 
-            constructors.type = rename_type(constructors.type);
+            constructors.type = rename_and_quantify_type(constructors.type, outer_tvs);
         }
     }
     return decl;
@@ -180,7 +191,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
     qualify_name(decl.name);
 
     Hs::DataDefn& decl2 = decl;
-    decl2 = rename( decl2 );
+    decl2 = rename( decl2, decl.type_vars );
 
     return decl;
 }
@@ -336,7 +347,10 @@ Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanc
     for(auto& arg: DI.args)
         arg = rename_type(arg);
 
-    DI.rhs = rename( DI.rhs );
+    vector<Hs::LTypeVar> free_tvs;
+    // FIXME!
+
+    DI.rhs = rename( DI.rhs, free_tvs );
 
     return DI;
 }

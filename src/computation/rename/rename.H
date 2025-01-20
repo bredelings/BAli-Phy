@@ -75,7 +75,7 @@ struct renamer_state
     Hs::InstanceDecl rename(Hs::InstanceDecl);
     Hs::ClassDecl rename(Hs::ClassDecl);
     Hs::TypeSynonymDecl rename(Hs::TypeSynonymDecl);
-    Hs::DataDefn rename(Hs::DataDefn);
+    Hs::DataDefn rename(Hs::DataDefn, const std::vector<Hs::LTypeVar>&);
     Hs::DataOrNewtypeDecl rename(Hs::DataOrNewtypeDecl);
     Hs::FamilyDecl rename(Hs::FamilyDecl);
     Hs::DataFamilyInstanceDecl rename(Hs::DataFamilyInstanceDecl);
