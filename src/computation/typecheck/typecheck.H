@@ -488,6 +488,8 @@ public:
     std::tuple<ClassInfo,Core2::Decls<>>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
+    DataConEnv infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl);
+
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
