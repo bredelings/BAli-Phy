@@ -17,14 +17,33 @@ std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
     return {ltype, strictness};
 }
 
-DataConInfo TypeChecker::infer_type_for_constructor(kindchecker_state& K, const Hs::ConstructorDecl& constructor)
+DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, const vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor)
 {
-    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
-
     DataConInfo info;
 
-    // 1. Record exi_tvs and make up kind vars for them.
+    // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
+    kindchecker_state K(*this);
     K.push_type_var_scope();
+
+    // a. Look up kind for this data type.
+    auto k = K.kind_for_type_con(unloc(con).name);  // FIXME -- check that this is a data type?
+
+    // b. Bind each type variable.
+    for(auto& tv: tvs)
+    {
+        // the kind should be an arrow kind.
+	auto [arg_kind, result_kind] = is_function_type(k).value();
+
+        // map the name to its kind
+        K.bind_type_var(tv, arg_kind);
+
+        // set up the next iteration
+        k = result_kind;
+    }
+    assert(is_kind_type(k));
+
+
+    // 1. Record exi_tvs and make up kind vars for them.
     for(auto& htv: constructor.forall)
     {
         auto k = K.fresh_kind_var();
@@ -35,7 +54,6 @@ DataConInfo TypeChecker::infer_type_for_constructor(kindchecker_state& K, const 
     }
 
     // 2. Record written_constraints
-    //   Do constraints affect kind determination?  Maybe not
     if (constructor.context)
     {
         for(auto& constraint: *constructor.context)
@@ -72,48 +90,28 @@ DataConInfo TypeChecker::infer_type_for_constructor(kindchecker_state& K, const 
         tv.kind = K.apply_substitution(*tv.kind);
 
     K.pop_type_var_scope();
-
     return info;
 }
 
 DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl)
 {
-    kindchecker_state K(*this);
-
-    K.push_type_var_scope();
-
-    // a. Look up kind for this data type.
-    auto k = K.kind_for_type_con(unloc(data_decl.name));  // FIXME -- check that this is a data type?
-
-    // b. Bind each type variable.
     vector<TypeVar> datatype_typevars;
     for(auto& tv: data_decl.type_vars)
     {
-        // the kind should be an arrow kind.
-	auto [arg_kind, result_kind] = is_function_type(k).value();
-
-        // map the name to its kind
-        K.bind_type_var(tv, arg_kind);
-
-        // record a version of the var with that contains its kind
-        auto tv2 = desugar(tv);
-        tv2.kind = arg_kind;
-        datatype_typevars.push_back(tv2);
-
-        // set up the next iteration
-        k = result_kind;
+        datatype_typevars.push_back(desugar(tv));
     }
-    assert(is_kind_type(k));
 
     // c. handle the context
     // The context should already be type-checked.
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
+
+    Hs::LTypeCon hs_data_type_con = {data_decl.name.loc, Hs::TypeCon(unloc(data_decl.name))};
+    auto hs_data_type = Hs::type_apply(hs_data_type_con, data_decl.type_vars);
+
     auto data_type_con = TypeCon(unloc(data_decl.name));
-    Type data_type = data_type_con;
-    for(auto& tv: datatype_typevars)
-        data_type = TypeApp(data_type, tv);
+    Type data_type = type_apply(data_type_con, datatype_typevars);
 
     // e. Handle regular constructor terms (class variables ARE in scope)
     DataConEnv types;
@@ -121,15 +119,13 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     {
         for(auto& constructor: data_decl.get_constructors())
         {
-            DataConInfo info = infer_type_for_constructor(K,constructor);
+            DataConInfo info = infer_type_for_constructor(hs_data_type_con, data_decl.type_vars, constructor);
             info.uni_tvs = datatype_typevars;
             info.data_type = data_type_con;
             info.top_constraints = desugar(data_decl.context);
             types = types.insert({unloc(*constructor.con).name, info});
         }
     }
-
-    K.pop_type_var_scope();
 
     // f. Handle GADT constructor terms (class variables are NOT in scope)
     if (data_decl.is_gadt_decl())

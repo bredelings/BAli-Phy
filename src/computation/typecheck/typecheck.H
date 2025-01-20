@@ -488,7 +488,7 @@ public:
     std::tuple<ClassInfo,Core2::Decls<>>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
-    DataConInfo infer_type_for_constructor(kindchecker_state& K, const Hs::ConstructorDecl& constructor);
+    DataConInfo infer_type_for_constructor(const Hs::LTypeCon& con, const std::vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor);
 
     DataConEnv infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl);
 
