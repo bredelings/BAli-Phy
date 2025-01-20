@@ -56,22 +56,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
-    kindchecker_state K( *this );
-
     ClassInfo class_info;
     class_info.type_vars = desugar(class_decl.type_vars);
     class_info.name = unloc(class_decl.name);
     class_info.context = desugar(class_decl.context);
-
-    // 1. Bind type parameters for class
-    K.push_type_var_scope();
-
-    // 1a. Look up kind for this data type.
-    auto class_kind = K.kind_for_type_con(class_info.name);
-
-    // 1b. Record the kind for each type variable.
-    for(auto& tv: class_decl.type_vars)
-        K.bind_type_var(tv, *unloc(tv).kind);
 
     // 2. construct the constraint that represent the class
     Hs::LType hs_class_con{class_decl.name.loc, Hs::TypeCon(unloc(class_decl.name))};
@@ -87,11 +75,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // then : add the class constraint
         // then : quantify by the variables in the class decl.
 
-        // We need the class variables in scope here.
-        auto method_type = check_type(sig_decl.type, K);
         // forall a. C a => method_type
-        method_type = add_constraints({class_constraint}, method_type);
-        method_type = add_forall_vars(desugar(class_decl.type_vars), method_type);
+        auto hs_method_type = sig_decl.type;
+        hs_method_type = Hs::add_constraints({hs_class_constraint}, hs_method_type);
+        hs_method_type = Hs::add_forall_vars(class_decl.type_vars, hs_method_type);
+        auto method_type = check_type(hs_method_type);
 
         for(auto& lv: sig_decl.vars)
         {
@@ -120,9 +108,6 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Default methods don't get an alias.
         this_mod().add_symbol(S);
     }
-
-
-    K.pop_type_var_scope();
 
     // OK, so now we need to
     //   (a) determine names for dictionary extractors.
