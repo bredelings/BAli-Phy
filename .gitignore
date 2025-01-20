@@ -11,5 +11,6 @@ win64-cross.txt
 
 #-------- Backups --------
 *.orig
+.#*        
 *~
 \#*#
