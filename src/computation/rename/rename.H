@@ -115,4 +115,10 @@ std::vector<Hs::Decls> split_decls(const Hs::Decls& decls, const std::vector< st
 std::tuple<std::map<std::string,int>, std::map<Hs::Var,std::vector<Hs::LVar>>>
 get_indices_for_names(const Hs::Decls& decls);
 
+void free_type_variables_(const std::vector<Hs::LType>& types, std::vector<Hs::LTypeVar>&);
+void free_type_variables_(const Hs::LType& type, std::vector<Hs::LTypeVar>&);
+
+std::vector<Hs::LTypeVar> free_type_variables(const std::vector<Hs::LType>& types);
+std::vector<Hs::LTypeVar> free_type_variables(const Hs::LType& type);
+
 #endif

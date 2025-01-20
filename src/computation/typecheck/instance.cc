@@ -2,6 +2,7 @@
 #include "kindcheck.H"
 #include "haskell/ids.H"
 #include "core/func.H"
+#include "rename/rename.H"
 
 using std::string;
 using std::vector;

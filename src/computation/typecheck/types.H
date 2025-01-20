@@ -10,12 +10,6 @@
 std::set<TypeVar> free_type_variables(const std::vector<Type>& types);
 std::set<TypeVar> free_type_variables(const Type& type);
 
-void free_type_variables_(const std::vector<Hs::LType>& types, std::vector<Hs::LTypeVar>&);
-void free_type_variables_(const Hs::LType& type, std::vector<Hs::LTypeVar>&);
-
-std::vector<Hs::LTypeVar> free_type_variables(const std::vector<Hs::LType>& types);
-std::vector<Hs::LTypeVar> free_type_variables(const Hs::LType& type);
-
 std::set<MetaTypeVar> free_meta_type_variables(const std::vector<Type>& types);
 std::set<MetaTypeVar> free_meta_type_variables(const Type& type);
 
