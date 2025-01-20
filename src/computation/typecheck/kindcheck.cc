@@ -784,8 +784,7 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             // 1. Kind-check and add foralls for free type vars.
 
             // BUG: We don't handle strictness annotations on the fields here!
-            auto written_type = desugar(data_cons_decl.type);
-            written_type = kind_and_type_check_type( written_type );
+            auto written_type = kind_and_type_check_type( data_cons_decl.type );
 
             // 2. Extract tyvar, givens, and rho type.
             auto [written_tvs, written_constraints, rho_type] = peel_top_gen( written_type );
@@ -855,19 +854,9 @@ DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
  *   - We might need to make some types optional<Type>, e.g. the parser.
  */
 
-Type kindchecker_state::kind_and_type_check_type(const Type& type)
-{
-    return kind_and_type_check_type_(type, kind_type() );
-}
-
 Type kindchecker_state::kind_and_type_check_type(const Hs::LType& type)
 {
     return kind_and_type_check_type_(type, kind_type() );
-}
-
-Type kindchecker_state::kind_and_type_check_constraint(const Type& type)
-{
-    return kind_and_type_check_type_(type, kind_constraint() );
 }
 
 Type kindchecker_state::kind_and_type_check_constraint(const Hs::LType& type)
@@ -894,15 +883,6 @@ vector<TypeVar> kindchecker_state::unbound_free_type_variables(const Type& type)
         if (not type_var_in_scope(type_var))
             ftvs.push_back(type_var);
     return ftvs;
-}
-
-Type kindchecker_state::kind_and_type_check_type_(const Type& type, const Kind& kind)
-{
-    // 1. Find the NEW free type variables
-    auto new_ftvs = unbound_free_type_variables(type);
-    Type type2 = add_forall_vars(new_ftvs, type);
-
-    return kind_check_type_of_kind(type2, kind);
 }
 
 Type kindchecker_state::kind_and_type_check_type_(const Hs::LType& type, const Kind& kind)
@@ -941,7 +921,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     assert(is_kind_constraint(k));
 
     for(auto& sig_decl: class_decl.sig_decls)
-        kind_and_type_check_type(desugar(sig_decl.type));
+        kind_and_type_check_type(sig_decl.type);
 
     pop_type_var_scope();
 }

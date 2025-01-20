@@ -67,13 +67,11 @@ struct kindchecker_state
     std::vector<TypeVar> unbound_free_type_variables(const Type& t);
     std::vector<Hs::LTypeVar> unbound_free_type_variables(const Hs::LType& t);
 
-    // class
     Type kind_and_type_check_type_(const Hs::LType& type, const Hs::Kind& k);
-    Type kind_and_type_check_type_(const Type& type, const Hs::Kind& k);
     Type kind_and_type_check_type(const Hs::LType& type);
-    Type kind_and_type_check_type(const Type& type);
     Type kind_and_type_check_constraint(const Hs::LType& type);
-    Type kind_and_type_check_constraint(const Type& type);
+
+    // class
     void kind_check_type_class(const Hs::ClassDecl& class_decl);
 
     // data or newtype
