@@ -63,7 +63,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     // 2. construct the constraint that represent the class
     Hs::LType hs_class_con{class_decl.name.loc, Hs::TypeCon(unloc(class_decl.name))};
-    auto hs_class_constraint = Hs::make_tyapps(hs_class_con, class_decl.type_vars);
+    auto hs_class_constraint = Hs::type_apply(hs_class_con, class_decl.type_vars);
     auto class_constraint = desugar(hs_class_constraint);
 
     // 3. make global types for class methods

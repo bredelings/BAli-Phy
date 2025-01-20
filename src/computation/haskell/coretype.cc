@@ -213,6 +213,14 @@ bool is_rho_type(Type type)
     throw myexception()<<"is_rho_type: I don't recognize type '"<<type<<"'";
 }
 
+Type type_apply(const std::vector<Type>& tyapps)
+{
+    assert(not tyapps.empty());
+    Type T = tyapps[0];
+    for(int i=1;i<tyapps.size();i++)
+	T = TypeApp(T,tyapps[i]);
+    return T;
+}
 
 Type type_apply(Type t, const std::vector<Type>& args)
 {
@@ -684,23 +692,6 @@ string TypeApp::print() const
     }
 
     return head.print() + " " + parenthesize_type(arg, true);
-}
-
-Type make_tyapps(const std::vector<Type>& tyapps)
-{
-    assert(not tyapps.empty());
-    Type T = tyapps[0];
-    for(int i=1;i<tyapps.size();i++)
-	T = TypeApp(T,tyapps[i]);
-    return T;
-}
-
-Type make_tyapps(const Type& T0, const std::vector<Type>& args)
-{
-    Type T = T0;
-    for(auto& arg: args)
-	T = TypeApp(T, arg);
-    return T;
 }
 
 bool ForallType::operator==(const ForallType&) const

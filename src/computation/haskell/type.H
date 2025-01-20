@@ -202,17 +202,17 @@ struct TypeApp
     TypeApp(const LType& t1, const LType& t2):head(t1), arg(t2) {}
 };
 
-LType make_tyapps(const std::vector<LType>& tyapps);
-LType make_tyapps(const LType& T0, const std::vector<LType>& args);
+LType type_apply(const std::vector<LType>& tyapps);
+LType type_apply(const LType& T0, const std::vector<LType>& args);
 
 template <typename T>
-LType make_tyapps(const LType& T0, const std::vector<T>& args)
+LType type_apply(const LType& T0, const std::vector<T>& args)
 {
     std::vector<LType> type_args;
     for(auto& arg: args)
         type_args.push_back(arg);
 
-    return make_tyapps(T0, type_args);
+    return type_apply(T0, type_args);
 }
 
 struct ForallType

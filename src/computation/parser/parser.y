@@ -975,10 +975,10 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 
 context: btype                     {$$ = make_context($1);}
 
-context_no_ops: btype_no_ops       {$$ = make_context(Hs::make_tyapps($1));}
+context_no_ops: btype_no_ops       {$$ = make_context(Hs::type_apply($1));}
 
 type: btype
-|     btype "->" ctype             {$$ = Hs::make_tyapps({{@2,Hs::TypeCon("->")},$1,$3});}
+|     btype "->" ctype             {$$ = Hs::type_apply({{@2,Hs::TypeCon("->")},$1,$3});}
 
 typedoc: type
 /* typedoc: .... */
@@ -986,7 +986,7 @@ typedoc: type
 btype: infixtype
 
 infixtype: ftype
-|          btype tyop btype         {$$ = Hs::make_tyapps({{@2,Hs::TypeCon($2)},$1,$3});}
+|          btype tyop btype         {$$ = Hs::type_apply({{@2,Hs::TypeCon($2)},$1,$3});}
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
@@ -1099,11 +1099,11 @@ constr: forall context_no_ops "=>" constr_stuff {$$ = make_constructor($1,$2, $4
 forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
-constr_stuff: btype_no_ops                      {$$ = Hs::make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({
+constr_stuff: btype_no_ops                      {$$ = Hs::type_apply($1);}
+|             btype_no_ops conop btype_no_ops   {$$ = Hs::type_apply({
                                                                           {@2,Hs::TypeCon($2)},
-                                                                          Hs::make_tyapps($1),
-                                                                          Hs::make_tyapps($3)
+                                                                          Hs::type_apply($1),
+                                                                          Hs::type_apply($3)
                                                                        });}
 
 fielddecls: %empty              {}

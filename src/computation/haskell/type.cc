@@ -267,7 +267,7 @@ string TypeApp::print() const
     return head.print() + " " + parenthesize_type(arg,true);
 }
 
-LType make_tyapps(const std::vector<LType>& tyapps)
+LType type_apply(const std::vector<LType>& tyapps)
 {
     assert(not tyapps.empty());
     LType T = tyapps[0];
@@ -276,7 +276,7 @@ LType make_tyapps(const std::vector<LType>& tyapps)
     return T;
 }
 
-LType make_tyapps(const LType& T0, const std::vector<LType>& args)
+LType type_apply(const LType& T0, const std::vector<LType>& args)
 {
     LType T = T0;
     for(auto& arg: args)

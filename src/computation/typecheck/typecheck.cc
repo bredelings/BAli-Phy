@@ -683,7 +683,7 @@ struct instance_info
     Type dfun_type() const
     {
         TypeCon class_con(class_name); // whats the kind?
-        return ForallType(type_vars, ConstrainedType(context, make_tyapps(class_con, argument_types)));
+        return ForallType(type_vars, ConstrainedType(context, type_apply(class_con, argument_types)));
     }
 };
 

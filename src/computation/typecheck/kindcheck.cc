@@ -299,7 +299,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
     {
         int n = tuple_type->element_types.size();
         Hs::LType tuple_tycon(noloc, Hs::TypeCon(tuple_name(n)));
-        return kind_check_type( make_tyapps(tuple_tycon, tuple_type->element_types) );
+        return kind_check_type( type_apply(tuple_tycon, tuple_type->element_types) );
     }
     else if (auto st = t.to<Hs::StrictType>())
     {

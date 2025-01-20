@@ -79,7 +79,7 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
 
     // What we really want to do here is to kind-check the args, binding new kind variables to new type variables.
     // Then we want to kind-check the rhs, complaining if we see unbound variables.
-    
+
     // 1. The rhs may only mention type vars bound on the lhs.
     set<TypeVar> lhs_tvs;
     for(auto& arg: args)
@@ -125,7 +125,7 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
         tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
 
     // 3. Add the (~) instance to the instance environment
-    Type lhs = make_tyapps(tf_con, args);
+    Type lhs = type_apply(tf_con, args);
     Type constraint = make_equality_pred(lhs, rhs);
     Type inst_type = add_forall_vars(free_tvs, constraint);
 
@@ -163,7 +163,7 @@ void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<
     auto free_tvs = lhs_tvs | ranges::to<vector>();
 
     // 3. Add the (~) instance to the instance environment
-    Type lhs = make_tyapps(tf_con, args);
+    Type lhs = type_apply(tf_con, args);
     Type constraint = make_equality_pred(lhs, rhs);
     Type inst_type = add_forall_vars(free_tvs, constraint);
 

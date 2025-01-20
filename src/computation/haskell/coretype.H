@@ -244,19 +244,6 @@ private:
     TypeApp() = default;
 };
 
-Type make_tyapps(const std::vector<Type>& tyapps);
-Type make_tyapps(const Type& T0, const std::vector<Type>& args);
-
-template <typename T>
-Type make_tyapps(const Type& T0, const std::vector<T>& args)
-{
-    std::vector<Type> type_args;
-    for(auto& arg: args)
-        type_args.push_back(arg);
-
-    return make_tyapps(T0, type_args);
-}
-
 struct ForallType
 {
     std::vector<TypeVar> type_var_binders;
@@ -334,9 +321,21 @@ std::string parenthesize_type(Type t, bool parenthesize_type_app);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
+Type type_apply(const std::vector<Type>& args);
+
 Type type_apply(Type t, const std::vector<Type>& args);
 
 Type type_apply(Type t, const std::vector<TypeVar>& args);
+
+template <typename T>
+Type type_apply(const Type& T0, const std::vector<T>& args)
+{
+    std::vector<Type> type_args;
+    for(auto& arg: args)
+        type_args.push_back(arg);
+
+    return type_apply(T0, type_args);
+}
 
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 

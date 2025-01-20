@@ -371,7 +371,7 @@ optional<Predicate> Solver::canonicalize_dict(CanonicalDict P)
     for(auto& arg: P.args)
         arg = rewrite(P.flavor(), arg);
 
-    P.constraint.pred = make_tyapps(P.klass, P.args);
+    P.constraint.pred = type_apply(P.klass, P.args);
 
     return P;
 }

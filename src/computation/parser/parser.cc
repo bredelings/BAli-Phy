@@ -3565,7 +3565,7 @@ namespace yy {
 
   case 201: // context_no_ops: btype_no_ops
 #line 978 "parser.y"
-                                   {yylhs.value.as < Hs::Context > () = make_context(Hs::make_tyapps(yystack_[0].value.as < std::vector<Hs::LType> > ()));}
+                                   {yylhs.value.as < Hs::Context > () = make_context(Hs::type_apply(yystack_[0].value.as < std::vector<Hs::LType> > ()));}
 #line 3570 "parser.cc"
     break;
 
@@ -3577,7 +3577,7 @@ namespace yy {
 
   case 203: // type: btype "->" ctype
 #line 981 "parser.y"
-                                   {yylhs.value.as < Hs::LType > () = Hs::make_tyapps({{yystack_[1].location,Hs::TypeCon("->")},yystack_[2].value.as < Hs::LType > (),yystack_[0].value.as < Hs::LType > ()});}
+                                   {yylhs.value.as < Hs::LType > () = Hs::type_apply({{yystack_[1].location,Hs::TypeCon("->")},yystack_[2].value.as < Hs::LType > (),yystack_[0].value.as < Hs::LType > ()});}
 #line 3582 "parser.cc"
     break;
 
@@ -3601,7 +3601,7 @@ namespace yy {
 
   case 207: // infixtype: btype tyop btype
 #line 989 "parser.y"
-                                    {yylhs.value.as < Hs::LType > () = Hs::make_tyapps({{yystack_[1].location,Hs::TypeCon(yystack_[1].value.as < std::string > ())},yystack_[2].value.as < Hs::LType > (),yystack_[0].value.as < Hs::LType > ()});}
+                                    {yylhs.value.as < Hs::LType > () = Hs::type_apply({{yystack_[1].location,Hs::TypeCon(yystack_[1].value.as < std::string > ())},yystack_[2].value.as < Hs::LType > (),yystack_[0].value.as < Hs::LType > ()});}
 #line 3606 "parser.cc"
     break;
 
@@ -3877,16 +3877,16 @@ namespace yy {
 
   case 255: // constr_stuff: btype_no_ops
 #line 1102 "parser.y"
-                                                {yylhs.value.as < Hs::LType > () = Hs::make_tyapps(yystack_[0].value.as < std::vector<Hs::LType> > ());}
+                                                {yylhs.value.as < Hs::LType > () = Hs::type_apply(yystack_[0].value.as < std::vector<Hs::LType> > ());}
 #line 3882 "parser.cc"
     break;
 
   case 256: // constr_stuff: btype_no_ops conop btype_no_ops
 #line 1103 "parser.y"
-                                                {yylhs.value.as < Hs::LType > () = Hs::make_tyapps({
+                                                {yylhs.value.as < Hs::LType > () = Hs::type_apply({
                                                                           {yystack_[1].location,Hs::TypeCon(yystack_[1].value.as < std::string > ())},
-                                                                          Hs::make_tyapps(yystack_[2].value.as < std::vector<Hs::LType> > ()),
-                                                                          Hs::make_tyapps(yystack_[0].value.as < std::vector<Hs::LType> > ())
+                                                                          Hs::type_apply(yystack_[2].value.as < std::vector<Hs::LType> > ()),
+                                                                          Hs::type_apply(yystack_[0].value.as < std::vector<Hs::LType> > ())
                                                                        });}
 #line 3892 "parser.cc"
     break;
