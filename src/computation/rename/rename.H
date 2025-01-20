@@ -84,7 +84,6 @@ struct renamer_state
     Hs::KindSigDecl rename(Hs::KindSigDecl);
     Hs::LTypeCon rename_type(Hs::LTypeCon);
     Hs::LType rename_type(Hs::LType);
-    Hs::Context rename(Hs::Context);
 
     std::vector<Located<Hs::DefaultDecl>> rename_default_decls(std::vector<Located<Hs::DefaultDecl>>);
 

@@ -76,7 +76,8 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
     else if (type.is_a<Haskell::ConstrainedType>())
     {
         auto ctype = type.as_<Haskell::ConstrainedType>();
-        ctype.context = rename(ctype.context);
+        for(auto& constraint: ctype.context)
+            constraint = rename_type(constraint);
         ctype.type = rename_type(ctype.type);
         type = ctype;
     }
@@ -98,16 +99,10 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
     return ltype;
 }
 
-Haskell::Context renamer_state::rename(Haskell::Context context)
-{
-    for(auto& constraint: context)
-        constraint = rename_type(constraint);
-    return context;
-}
-
 Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
 {
-    decl.context = rename(decl.context);
+    for(auto& constraint: decl.context)
+        constraint = rename_type(constraint);
 
     if (decl.is_regular_decl())
     {
@@ -223,7 +218,8 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
     qualify_name(C.name);
-    C.context = rename(C.context);
+    for(auto& constraint: C.context)
+        constraint = rename_type(constraint);
 
     for(auto& fam_decl: C.fam_decls)
         fam_decl = rename(fam_decl);
