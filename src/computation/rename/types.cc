@@ -99,6 +99,19 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
     return ltype;
 }
 
+// This is used for instance polytypes, in addition to signature types
+Haskell::LType renamer_state::rename_and_quantify_type(Haskell::LType ltype)
+{
+    // If the user writes a forall, then they need to mention ALL the variables.
+    if (not unloc(ltype).to<Hs::ForallType>())
+    {
+        auto free_tvs = free_type_variables(ltype);
+        ltype = Hs::add_forall_vars(free_tvs, ltype);
+    }
+
+    return rename_type(ltype);
+}
+
 Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl)
 {
     for(auto& constraint: decl.context)
@@ -157,8 +170,9 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 
 Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 {
-    // 1. Rename the constraints and instance head
-    I.polytype = rename_type(I.polytype);
+    // 1. Rename and quantify the constraints and instance head
+    // NOTE: (instance forall a.Eq a => Eq [a]) is allowed!
+    I.polytype = rename_and_quantify_type(I.polytype);
 
     // 2. Renaming of the methods is done in rename_decls
 
@@ -167,18 +181,8 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
         type_inst_decl = rename(type_inst_decl);
 
     // 4. Get free tvs, constraints, and typecon and parameters
-    if (unloc(I.polytype).to<Hs::ForallType>())
-    {
-        error(I.polytype.loc, Note()<<"Instance head cannot contain forall");
-        return I;
-    }
-
-    auto [_, context, head] = Hs::peel_top_gen(I.polytype);
-    auto tvs = free_type_variables(head);
+    auto [tvs, context, head] = Hs::peel_top_gen(I.polytype);
     auto [class_head, class_args] = Hs::decompose_type_apps(head);
-
-    // 5. Quantify the instance head with the free type variables.
-    I.polytype = add_forall_vars(tvs, add_constraints(context, head));
 
     // 6. Check that the instance head is a class application
     auto tc = unloc(class_head).to<Hs::TypeCon>();
