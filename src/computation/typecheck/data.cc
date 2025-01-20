@@ -35,8 +35,10 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
 	auto [arg_kind, result_kind] = is_function_type(k).value();
 
         // map the name to its kind
-        K.bind_type_var(tv, arg_kind);
+        auto utv = K.bind_type_var(tv, arg_kind);
 
+        info.uni_tvs.push_back(utv);
+        
         // set up the next iteration
         k = result_kind;
     }
@@ -61,24 +63,12 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
     }
 
     // 3. Kind check field types
-    if (constructor.is_record_constructor())
+    auto field_types = constructor.get_field_types();
+    for(auto& sfield_type: field_types)
     {
-        for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
-            for(int i=0; i < field_decl.field_names.size(); i++)
-            {
-                auto [field_type, strictness] = pop_strictness(field_decl.type);
-                info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type() ) );
-                info.field_strictness.push_back( strictness );
-            }
-    }
-    else
-    {
-        for(auto& hs_field_type: std::get<0>(constructor.fields))
-        {
-            auto [field_type, strictness] = pop_strictness(hs_field_type);
-            info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type() ) );
-            info.field_strictness.push_back( strictness );
-        }
+        auto [field_type, strictness] = pop_strictness(sfield_type);
+        info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type()) );
+        info.field_strictness.push_back( strictness );
     }
 
     // 4. Substitute and replace kind vars
@@ -86,6 +76,8 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
         field_type = K.zonk_kind_for_type( field_type );
     for(auto& constraint: info.written_constraints)
         constraint = K.zonk_kind_for_type( constraint );
+    for(auto& tv : info.uni_tvs)
+        tv.kind = K.apply_substitution(*tv.kind);
     for(auto& tv : info.exi_tvs)
         tv.kind = K.apply_substitution(*tv.kind);
 
@@ -120,7 +112,6 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
         for(auto& constructor: data_decl.get_constructors())
         {
             DataConInfo info = infer_type_for_constructor(hs_data_type_con, data_decl.type_vars, constructor);
-            info.uni_tvs = datatype_typevars;
             info.data_type = data_type_con;
             info.top_constraints = desugar(data_decl.context);
             types = types.insert({unloc(*constructor.con).name, info});
