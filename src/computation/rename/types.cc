@@ -102,7 +102,8 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
 // This is used for instance polytypes, in addition to signature types
 Haskell::LType renamer_state::rename_and_quantify_type(Haskell::LType ltype)
 {
-    // If the user writes a forall, then they need to mention ALL the variables.
+    // The "forall-or-nothing" rule says that if the user writes a forall, then they need to mention ALL the variables.
+    // However, there are are exceptions...
     if (not unloc(ltype).to<Hs::ForallType>())
     {
         auto free_tvs = free_type_variables(ltype);
