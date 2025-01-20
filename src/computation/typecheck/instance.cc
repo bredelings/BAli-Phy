@@ -73,62 +73,26 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 
 void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const TypeFamInfo& tf_info, const yy::location& inst_loc)
 {
-    TypeCon tf_con = desugar(tf_con_in);
-    vector<Type> args  = desugar(args_in);
-    Type rhs = desugar(rhs_in);
+    auto lhs_in = Hs::type_apply(tf_con_in, args_in);
 
-    // What we really want to do here is to kind-check the args, binding new kind variables to new type variables.
-    // Then we want to kind-check the rhs, complaining if we see unbound variables.
+    auto free_tvs_in = free_type_variables(lhs_in);
 
-    // 1. The rhs may only mention type vars bound on the lhs.
-    set<TypeVar> lhs_tvs;
-    for(auto& arg: args)
-    {
-        for(auto& tv: free_type_variables(arg))
-            lhs_tvs.insert(tv);
-    }
+    Hs::LTypeCon sim(noloc, Hs::TypeCon("~"));
+    auto hs_pred = Hs::type_apply(sim, {lhs_in, rhs_in});
 
-    for(auto& tv: free_type_variables(rhs))
-        if (not lhs_tvs.count(tv))
-        {
-            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
-            return;
-        }
-    auto free_tvs = lhs_tvs | ranges::to<vector>();
+    hs_pred = Hs::add_forall_vars(free_tvs_in, hs_pred);
 
-    // 2. Kind-check the parameters and result type, and record the free type variables.
+    auto inst_type = check_constraint(hs_pred);
 
-    // 2a. Bind the free type vars
-    kindchecker_state K( *this );
-    K.push_type_var_scope();
-    for(auto& tv: free_tvs)
-    {
-        assert(not K.type_var_in_scope(tv));
-        tv.kind = K.fresh_kind_var();
-        K.bind_type_var(tv, *tv.kind);
-    }
+    auto [free_tvs, context, constraint] = peel_top_gen(inst_type);
 
-    // 2b. Kind-check the type vars
-    for(int i=0; i<args.size(); i++)
-        K.kind_check_type_of_kind(args_in[i], *tf_info.args[i].kind);
+    assert(context.empty());
 
-    K.kind_check_type_of_kind(rhs_in, tf_info.result_kind);
-
-    // QUESTION: How do we know if there was a kind-checking error?
-
-    // 2c. Record the final kinds for the free type vars
-    for(auto& arg: args)
-        arg = K.zonk_kind_for_type(arg);
-    rhs = K.zonk_kind_for_type(rhs);
-
-    for(auto& tv: free_tvs)
-        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
+    auto [core_sim, args] = decompose_type_apps(constraint);
+    auto lhs = args[0];
+    auto rhs = args[1];
 
     // 3. Add the (~) instance to the instance environment
-    Type lhs = type_apply(tf_con, args);
-    Type constraint = make_equality_pred(lhs, rhs);
-    Type inst_type = add_forall_vars(free_tvs, constraint);
-
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
