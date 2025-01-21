@@ -60,8 +60,6 @@ struct kindchecker_state
 
     Type zonk_kind_for_type(const Type& t);
     Kind kind_for_type(const Type& t);
-    std::vector<TypeVar> unbound_free_type_variables(const Type& t);
-    std::vector<Hs::LTypeVar> unbound_free_type_variables(const Hs::LType& t);
 
     Type kind_and_type_check_type_(const Hs::LType& type, const Hs::Kind& k);
     Type kind_and_type_check_type(const Hs::LType& type);

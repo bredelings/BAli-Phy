@@ -180,7 +180,7 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
             for(auto& con_name: constructors.con_names)
                 qualify_name(con_name);
 
-            constructors.type = rename_and_quantify_type(constructors.type, outer_tvs);
+            constructors.type = rename_and_quantify_type(constructors.type);
         }
     }
     return decl;

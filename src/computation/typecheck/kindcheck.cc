@@ -570,35 +570,9 @@ Type kindchecker_state::kind_and_type_check_constraint(const Hs::LType& type)
     return kind_and_type_check_type_(type, kind_constraint() );
 }
 
-vector<Hs::LTypeVar> kindchecker_state::unbound_free_type_variables(const Hs::LType& type)
-{
-    // FIXME: can we remove this if we quantify types in rename?
-    vector<Hs::LTypeVar> tvs;
-    for(auto& tv: unbound_free_type_variables(desugar(type)))
-    {
-        Hs::TypeVar htv(tv.name);
-        tvs.push_back({noloc, htv});
-    }
-    return tvs;
-}
-
-vector<TypeVar> kindchecker_state::unbound_free_type_variables(const Type& type)
-{
-    vector<TypeVar> ftvs;
-    for(auto& type_var: free_type_variables(type))
-        if (not type_var_in_scope(type_var))
-            ftvs.push_back(type_var);
-    return ftvs;
-}
-
 Type kindchecker_state::kind_and_type_check_type_(const Hs::LType& type, const Kind& kind)
 {
-    // 1. Find the NEW free type variables
-    auto new_ftvs = unbound_free_type_variables(type);
-
-    auto type2 = Hs::add_forall_vars(new_ftvs, type);
-    
-    return kind_check_type_of_kind(type2, kind);
+    return kind_check_type_of_kind(type, kind);
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
