@@ -365,7 +365,7 @@ void TypeChecker::set_expected_type(const Expected& E, const Type& type)
 
 void TypeChecker::get_tycon_info(const Hs::FamilyDecl& F)
 {
-    auto con = desugar(F.con);
+    TypeCon con(unloc(F.con).name);
     auto kind = F.kind();
     if (kind_sigs().count(con))
     {
@@ -405,7 +405,8 @@ void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
         {
             for(auto& hs_tycon: SK->tycons)
             {
-                auto tycon = desugar(hs_tycon);
+                TypeCon tycon(unloc(hs_tycon).name);
+
                 push_source_span(*hs_tycon.loc);
 
                 if (kind_sigs().count(tycon))
