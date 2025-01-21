@@ -163,6 +163,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
                 exi_tvs_set.erase(u_tv);
 
             info.field_types = field_types;
+            info.field_strictness = std::vector<bool>( info.field_types.size(), false); // FIXME
             info.data_type = data_type_con;
             info.written_constraints = constraints;
             info.top_constraints = desugar( data_decl.context );

@@ -6,7 +6,10 @@
 - Bug fixes:
  + Log sorted (conserved) omegas in m3_test.
 - Speed:
- + Use faster eigenvalue method to compute exp(Q*t) by default, falling back to slower method if needed.        
+ + Use sparse likelihood vectors for leaf branches.
+ + Use faster eigenvalue method to compute exp(Q*t) by default, falling back to slower method if needed.
+- Haskell:
+ + Implement strict fields for data types with !type.
 
 * 4.0-beta16 (Nov 23, 2024)
 - Speed: further speed up tree operations.

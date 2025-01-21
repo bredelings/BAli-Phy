@@ -1444,6 +1444,27 @@ string get_constructor_name(const Hs::LType& constr)
     return tc->name;
 }
 
+Core2::Exp<> make_constructor(const std::string& con_name, const DataConInfo& info)
+{
+    assert(info.field_strictness.size() == info.arity());
+    int arity = info.dict_arity() + info.arity();
+
+    auto args = make_vars<>(arity);
+
+    Core2::Exp<> body = Core2::ConApp<>{con_name, args};
+
+    // Force strict fields
+    for(int i = info.arity()-1;i >= 0; i--)
+    {
+        int j = i + info.dict_arity();
+        if (info.field_strictness[i])
+            body = Core2::Case<>(args[j],Core2::Alts<>({{Core2::WildcardPat(), body}}));
+    }
+
+    return lambda_quantify(args, body);
+}
+
+
 Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 {
     Core2::Decls<> decls;
@@ -1460,13 +1481,8 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                 auto con_name = unloc(*constr.con).name;
                 auto info = lookup_resolved_symbol(con_name)->con_info;
                 assert(info);
-                int arity = info->dict_arity() + info->arity();
-
-                auto args = make_vars<>(arity);
-
-                Core2::Exp<> body = Core2::ConApp<>{con_name, args};
-                body = lambda_quantify(args, body);
-                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , body} );
+                auto exp = make_constructor(con_name, *info);
+                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , exp} );
             }
         }
         else if (d->is_gadt_decl())
@@ -1477,13 +1493,8 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                     auto con_name = unloc(lcon_name);
                     auto info = lookup_resolved_symbol(con_name)->con_info;
                     assert(info);
-                    int arity = info->dict_arity() + info->arity();
-
-                    auto args = make_vars<>(arity);
-
-                    Core2::Exp<> body = Core2::ConApp<>{con_name, args};
-                    body = lambda_quantify(args, body);
-                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , body} );
+                    auto exp = make_constructor(con_name, *info);
+                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , exp} );
                 }
         }
     }

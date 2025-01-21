@@ -12,13 +12,20 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: change kind unification to use meta-variables.
+// TODO: complain when constraint uses var that is not on RHS.
+
+// TODO: How to bail early if we find an error?  Maybe check_error() return a bool
+//       if there is an error since the last call?
 
 // TODO: change TypeVar to have a non-optional kind.
 
 // TODO: make indenting ignore ANSI color codes.
 
-// TODO: make constructors look at the strictness mark.
+// TODO: eliminate desugar( ).
+
+// TODO: change kind unification to use meta-variables.
+
+// TODO: maybe add Hs::ParenType( )
 
 Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
