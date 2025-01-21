@@ -94,8 +94,7 @@ set<string> free_type_cons(const Hs::DataOrNewtypeDecl& type_decl)
     {
         for(auto& constr: type_decl.get_constructors())
         {
-            if (constr.context)
-                add(tvars, free_type_cons(*constr.context));
+            add(tvars, free_type_cons(constr.context));
 
             if (constr.is_record_constructor())
             {

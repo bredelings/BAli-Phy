@@ -145,11 +145,8 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
         {
             qualify_name(unloc(*constructor.con).name);
 
-            if (constructor.context)
-            {
-                for(auto& constraint: *constructor.context)
-                    constraint = rename_type(constraint);
-            }
+            for(auto& constraint: constructor.context)
+                constraint = rename_type(constraint);
 
             if (constructor.is_record_constructor())
             {

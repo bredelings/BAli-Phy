@@ -68,7 +68,7 @@
   std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::LImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
   Hs::Kind type_to_kind(const Hs::LType& kind);
-  Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
+  Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const Hs::Context& c, const Hs::LType& typeish);
   Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::FamilyDecl make_family_decl(Hs::FamilyInfo info, const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,

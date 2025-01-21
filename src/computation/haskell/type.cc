@@ -127,6 +127,24 @@ optional<pair<LType,LType>> is_function_type(const LType& lt)
         return {};
 }
 
+LType make_arrow_type(const LType& t1, const LType& t2)
+{
+    LType f = LTypeCon(noloc, TypeCon("->"));
+
+    f = {t1.loc, TypeApp(f, t1)};
+    f = {t1.loc * t2.loc, TypeApp(f, t2)};
+
+    return f;
+}
+    
+LType function_type(const std::vector<LType>& arg_types, const LType& result_type)
+{
+    auto ftype = result_type;
+    for(auto& arg_type: arg_types | views::reverse)
+        ftype = make_arrow_type(arg_type, ftype);
+    return ftype;
+}
+
 int gen_type_arity(LType lt)
 {
     int a = 0;

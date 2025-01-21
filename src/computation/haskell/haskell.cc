@@ -550,11 +550,12 @@ std::string ConstructorDecl::print() const
             var_strings.push_back(var.print());
         result += "forall " + join(var_strings," ")+".";
     }
-    if (context)
-    {
-        result += context->print() + " => ";
-    }
+
+    if (not context.empty())
+        result += context.print() + " => ";
+
     result += con->print();
+
     if (fields.index() == 0)
     {
         for(auto& arg_type: std::get<0>(fields))

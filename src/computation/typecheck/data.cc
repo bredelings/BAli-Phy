@@ -17,6 +17,10 @@ std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
     return {ltype, strictness};
 }
 
+
+// Technically, we could add (forall tvs.<>) on the hs_con_type, and that would work.
+// But that would bind free kind vars to the tvs, whereas actually we know the kinds.
+// If we had a kind error, then we would complain in (Con tvs) instead of the actually error location.
 DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, const vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor)
 {
     DataConInfo info;
@@ -45,45 +49,29 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
     }
     assert(is_kind_type(k));
 
-    // 1. Record exi_tvs and make up kind vars for them.
-    for(auto& htv: constructor.forall)
-    {
-        auto k = K.fresh_kind_var();
-        K.bind_type_var(htv, k);
-        auto tv = desugar(htv);
-        tv.kind = k;
-        info.exi_tvs.push_back(tv);
-    }
-
-    // 2. Record written_constraints
-    if (constructor.context)
-    {
-        for(auto& constraint: *constructor.context)
-            info.written_constraints.push_back( K.kind_check_type_of_kind(constraint, kind_constraint()) );
-    }
-
     // 3. Record strictness marks
-    auto field_types = constructor.get_field_types();
-    for(auto& sfield_type: field_types)
+    auto hs_field_types = constructor.get_field_types();
+    for(auto& sfield_type: hs_field_types)
     {
         auto [field_type, strictness] = pop_strictness(sfield_type);
         sfield_type = field_type;
         info.field_strictness.push_back( strictness );
     }
 
-    // 3. Kind check field types
-    for(auto& field_type: field_types)
-        info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type()) );
+    auto hs_con_type = Hs::function_type(hs_field_types, Hs::type_apply(con, tvs));
+    hs_con_type = Hs::add_constraints(constructor.context, hs_con_type);
+    hs_con_type = Hs::add_forall_vars(constructor.forall, hs_con_type);
 
-    // 4. Substitute and replace kind vars
-    for(auto& field_type: info.field_types)
-        field_type = K.zonk_kind_for_type( field_type );
-    for(auto& constraint: info.written_constraints)
-        constraint = K.zonk_kind_for_type( constraint );
-    for(auto& tv : info.uni_tvs)
-        tv.kind = K.apply_substitution(*tv.kind);
-    for(auto& tv : info.exi_tvs)
-        tv.kind = K.apply_substitution(*tv.kind);
+    auto con_type = check_type(hs_con_type, K);
+
+    auto [exi_tvs, written_constraints, rho_type] = peel_top_gen(con_type);
+    auto [field_types, result_type] = arg_result_types(rho_type);
+
+    info.exi_tvs = exi_tvs;
+    info.written_constraints = written_constraints;
+    info.field_types = field_types;
+
+    assert(info.field_strictness.size() == info.field_types.size());
 
     K.pop_type_var_scope();
     return info;

@@ -7665,7 +7665,7 @@ Hs::Kind type_to_kind(const Hs::LType& kind)
     return *maybe_kind;
 }
 
-Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish)
+Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& qtvs, const Hs::Context& context, const Hs::LType& typeish)
 {
     // 1. Split into head and arguments
     auto [head,args] = Hs::decompose_type_apps(typeish);
@@ -7681,11 +7681,11 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& forall, const s
     {
         if (auto fd = unloc(args[0]).to<Hs::FieldDecls>())
         {
-            return {forall, c, con, *fd};
+            return {qtvs, context, con, *fd};
         }
     }
 
     // 4. Otherwise make a normal constructor.
-    return {forall, c, con, args};
+    return {qtvs, context, con, args};
 }
 

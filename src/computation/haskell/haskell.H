@@ -392,7 +392,7 @@ struct GADTConstructorsDecl: public std::vector<GADTConstructorDecl>
 struct ConstructorDecl
 {
     std::vector<LTypeVar> forall;           // list of type variables we are forall-ing over.
-    std::optional<Context> context;         // type constraints
+    Context context;                        // type constraints
 
     std::optional<Hs::LCon> con;            // the name of the constructor
     std::variant< std::vector<LType>, FieldDecls> fields;
@@ -407,14 +407,14 @@ struct ConstructorDecl
 
     ConstructorDecl() = default;
 
-    ConstructorDecl(const std::vector<LTypeVar>& tvs, const std::optional<Context>& ct, const Hs::LCon& c, std::vector<LType>& as)
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const Context& ct, const Hs::LCon& c, std::vector<LType>& as)
         :forall(tvs),
          context(ct),
          con(c),
          fields(as)
    { }
 
-    ConstructorDecl(const std::vector<LTypeVar>& tvs, const std::optional<Context>& ct, const Hs::LCon& c, const FieldDecls& fds)
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const Context& ct, const Hs::LCon& c, const FieldDecls& fds)
         :forall(tvs),
          context(ct),
          con(c),

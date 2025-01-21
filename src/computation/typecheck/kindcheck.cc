@@ -459,11 +459,8 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
         tv.kind = kv;
     }
 
-    if (constructor.context)
-    {
-        for(auto& constraint: *constructor.context)
-            kind_check_type_of_kind(constraint, kind_constraint());
-    }
+    for(auto& constraint: constructor.context)
+        kind_check_type_of_kind(constraint, kind_constraint());
 
     if (constructor.is_record_constructor())
     {
