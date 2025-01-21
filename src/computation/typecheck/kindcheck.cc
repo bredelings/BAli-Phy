@@ -274,10 +274,17 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         push_type_var_scope();
 
         vector<TypeVar> binders;
-        for(auto& htv: fa->type_var_binders)
+        for(auto& lhtv: fa->type_var_binders)
         {
-            auto kv = fresh_kind_var();
-            auto tv = bind_type_var(htv, kv);
+            auto& [loc,htv] = lhtv;
+
+            Kind kind;
+            if (htv.kind)
+                kind = *htv.kind;
+            else
+                kind = fresh_kind_var();
+            auto tv = bind_type_var(lhtv, kind);
+
             binders.push_back(tv);
         }
 
