@@ -20,6 +20,7 @@ std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
 DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, const vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor)
 {
     DataConInfo info;
+    info.data_type = TypeCon(unloc(con).name);
 
     // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
     kindchecker_state K(*this);
@@ -44,7 +45,6 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
     }
     assert(is_kind_type(k));
 
-
     // 1. Record exi_tvs and make up kind vars for them.
     for(auto& htv: constructor.forall)
     {
@@ -62,14 +62,18 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
             info.written_constraints.push_back( K.kind_check_type_of_kind(constraint, kind_constraint()) );
     }
 
-    // 3. Kind check field types
+    // 3. Record strictness marks
     auto field_types = constructor.get_field_types();
     for(auto& sfield_type: field_types)
     {
         auto [field_type, strictness] = pop_strictness(sfield_type);
-        info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type()) );
+        sfield_type = field_type;
         info.field_strictness.push_back( strictness );
     }
+
+    // 3. Kind check field types
+    for(auto& field_type: field_types)
+        info.field_types.push_back( K.kind_check_type_of_kind(field_type, kind_type()) );
 
     // 4. Substitute and replace kind vars
     for(auto& field_type: info.field_types)
@@ -105,16 +109,18 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     auto data_type_con = TypeCon(unloc(data_decl.name));
     Type data_type = type_apply(data_type_con, datatype_typevars);
 
+    // Assume no "stupid theta".
+    assert(data_decl.context.empty());
+
     // e. Handle regular constructor terms (class variables ARE in scope)
     DataConEnv types;
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())
         {
+            auto con_name = unloc(*constructor.con).name;
             DataConInfo info = infer_type_for_constructor(hs_data_type_con, data_decl.type_vars, constructor);
-            info.data_type = data_type_con;
-            info.top_constraints = desugar(data_decl.context);
-            types = types.insert({unloc(*constructor.con).name, info});
+            types = types.insert({con_name, info});
         }
     }
 
