@@ -12,8 +12,6 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: complain when constraint uses var that is not on RHS.
-
 // TODO: How to bail early if we find an error?  Maybe check_error() return a bool
 //       if there is an error since the last call?
 
