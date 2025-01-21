@@ -1458,7 +1458,7 @@ Core2::Exp<> make_constructor(const std::string& con_name, const DataConInfo& in
     {
         int j = i + info.dict_arity();
         if (info.field_strictness[i])
-            body = Core2::Case<>(args[j],Core2::Alts<>({{Core2::WildcardPat(), body}}));
+            body = Core2::Case<>{args[j],Core2::Alts<>{{{Core2::WildcardPat(), body}}}};
     }
 
     return lambda_quantify(args, body);
