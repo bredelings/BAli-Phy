@@ -12,11 +12,6 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: remove quantification from kindchecker_state::kind_and_type_check_type::( )
-// - we need to know how to quantify in ... rename?
-// - we should probably ensure that the forall-or-nothing rule doesn't apply to TypedPat
-// - naive quantification breaks: constructor decls, class method decls
-
 // TODO: change kind unification to use meta-variables.
 
 // TODO: change TypeVar to have a non-optional kind.
