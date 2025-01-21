@@ -301,12 +301,12 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     push_note( Note()<<"In instance '"<<unloc(inst_decl.polytype)<<"':" );
     push_source_span( *inst_loc );
 
-    // 3. Kind-check the type and set the kinds for the type variables.
+    // 1. Kind-check the type and set the kinds for the type variables.
 
     // FIXME: allow check_constraint to fail by returning an optional<Type>.
     auto polytype = check_constraint(inst_decl.polytype);
 
-    // 4. Get the free type variables, constraints, class_head and args
+    // 2. Get the free type variables, constraints, class_head and args
     auto [tvs, constraints, constraint] = peel_top_gen(polytype);
     auto [head, args] = decompose_type_apps(constraint);
     int N = args.size();

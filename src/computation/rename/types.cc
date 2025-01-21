@@ -17,6 +17,116 @@ using std::set;
 using std::optional;
 using std::map;
 
+void free_type_variables_(const vector<Hs::LType>& types, vector<Hs::LTypeVar>& tvs)
+{
+    for(auto& type: types)
+        free_type_variables_(type, tvs);
+}
+
+void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
+{
+    auto& [loc, type] = ltype;
+
+    if (auto tv = type.to<Hs::TypeVar>())
+    {
+        assert(tv->name.size());
+        assert(is_haskell_varid(tv->name));
+        tvs.push_back({loc,*tv});
+    }
+    else if (type.is_a<Hs::TypeCon>())
+    {
+    }
+    else if (auto tuple_type = type.to<Hs::TupleType>())
+    {
+        for(auto& element_type: tuple_type->element_types)
+            free_type_variables_(element_type, tvs);
+    }
+    else if (auto list_type = type.to<Hs::ListType>())
+    {
+        free_type_variables_(list_type->element_type, tvs);
+    }
+    else if (auto tapp = type.to<Hs::TypeApp>())
+    {
+        free_type_variables_(tapp->head, tvs);
+        free_type_variables_(tapp->arg, tvs);
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        free_type_variables_(c->context, tvs);
+        free_type_variables_(c->type, tvs);
+    }
+    else if (auto fa = type.to<Hs::ForallType>())
+    {
+        auto binders = fa->type_var_binders | ranges::to<set>();
+
+        vector<Hs::LTypeVar> body_tvs;
+        free_type_variables_(fa->type, body_tvs);
+
+        for(auto& tv: body_tvs)
+            if (not binders.count(tv))
+                tvs.push_back(tv);
+    }
+    else if (auto strict_type = type.to<Hs::StrictType>())
+    {
+        free_type_variables_(strict_type->type, tvs);
+    }
+    else if (auto lazy_type = type.to<Hs::LazyType>())
+    {
+        free_type_variables_(lazy_type->type, tvs);
+    }
+    else if (auto type_of_kind = type.to<Hs::TypeOfKind>())
+    {
+        // Extract the kind variables first.
+        // Right new we are using CORETYPE for the kind!
+        // But we should be using Hs::Type, and storing a located Kind.
+        // free_type_variables(type_of_kind->kind, tvs);
+        free_type_variables_(type_of_kind->type, tvs);
+    }
+    // FieldDecls actually this can't happen right now!
+    else
+        throw myexception()<<"free_type_vars: bad type "<<type.print()<<"!";
+}
+
+vector<Hs::LTypeVar> unique_type_vars(const vector<Hs::LTypeVar>& tvs)
+{
+    vector<Hs::LTypeVar> tvs2;
+
+    set<Hs::LTypeVar> seen_tvs;
+    for(auto& tv: tvs)
+        if (not seen_tvs.count(tv))
+        {
+            tvs2.push_back(tv);
+            seen_tvs.insert(tv);
+        }
+
+    return tvs2;
+}
+
+std::map<Hs::TypeVar,int> counted_free_type_variables(const Hs::LType& type)
+{
+    map<Hs::TypeVar,int> tv_counts;
+
+    vector<Hs::LTypeVar> tvs;
+    free_type_variables_(type, tvs);
+    for(auto& [loc,tv]: tvs)
+        tv_counts[tv]++;
+    return tv_counts;
+}
+
+vector<Hs::LTypeVar> free_type_variables(const vector<Hs::LType>& types)
+{
+    vector<Hs::LTypeVar> tvs;
+    free_type_variables_(types, tvs);
+    return unique_type_vars(tvs);
+}
+
+vector<Hs::LTypeVar> free_type_variables(const Hs::LType& type)
+{
+    vector<Hs::LTypeVar> tvs;
+    free_type_variables_(type, tvs);
+    return unique_type_vars(tvs);
+}
+
 vector<Hs::LTypeVar> type_vars_except(const vector<Hs::LTypeVar>& tvs, const vector<Hs::LTypeVar>& remove_)
 {
     auto remove = remove_ | ranges::to<set>();
@@ -208,6 +318,15 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     // 4. Get free tvs, constraints, and typecon and parameters
     auto [tvs, context, head] = Hs::peel_top_gen(I.polytype);
     auto [class_head, class_args] = Hs::decompose_type_apps(head);
+
+    // 5. Check for variables that occur too often in constraints.
+    auto head_tvs = counted_free_type_variables(head);
+
+    for(auto& constraint: context)
+        for(auto& [tv,count]: counted_free_type_variables(constraint))
+            if (count > head_tvs[tv])
+                error(constraint.loc, Note()<<"Variable '"<<tv.print()<<"' occurs more times in the constraint '"<<constraint.print()<<"' than in the instance head '"<<head.print()<<"'");
+
 
     // 6. Check that the instance head is a class application
     auto tc = unloc(class_head).to<Hs::TypeCon>();
@@ -410,104 +529,5 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
     }
 
     return decls;
-}
-
-void free_type_variables_(const vector<Hs::LType>& types, vector<Hs::LTypeVar>& tvs)
-{
-    for(auto& type: types)
-        free_type_variables_(type, tvs);
-}
-
-void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
-{
-    auto& [loc, type] = ltype;
-
-    if (auto tv = type.to<Hs::TypeVar>())
-    {
-        assert(tv->name.size());
-        assert(is_haskell_varid(tv->name));
-        tvs.push_back({loc,*tv});
-    }
-    else if (type.is_a<Hs::TypeCon>())
-    {
-    }
-    else if (auto tuple_type = type.to<Hs::TupleType>())
-    {
-        for(auto& element_type: tuple_type->element_types)
-            free_type_variables_(element_type, tvs);
-    }
-    else if (auto list_type = type.to<Hs::ListType>())
-    {
-        free_type_variables_(list_type->element_type, tvs);
-    }
-    else if (auto tapp = type.to<Hs::TypeApp>())
-    {
-        free_type_variables_(tapp->head, tvs);
-        free_type_variables_(tapp->arg, tvs);
-    }
-    else if (auto c = type.to<Hs::ConstrainedType>())
-    {
-        free_type_variables_(c->context, tvs);
-        free_type_variables_(c->type, tvs);
-    }
-    else if (auto fa = type.to<Hs::ForallType>())
-    {
-        auto binders = fa->type_var_binders | ranges::to<set>();
-
-        vector<Hs::LTypeVar> body_tvs;
-        free_type_variables_(fa->type, body_tvs);
-
-        for(auto& tv: body_tvs)
-            if (not binders.count(tv))
-                tvs.push_back(tv);
-    }
-    else if (auto strict_type = type.to<Hs::StrictType>())
-    {
-        free_type_variables_(strict_type->type, tvs);
-    }
-    else if (auto lazy_type = type.to<Hs::LazyType>())
-    {
-        free_type_variables_(lazy_type->type, tvs);
-    }
-    else if (auto type_of_kind = type.to<Hs::TypeOfKind>())
-    {
-        // Extract the kind variables first.
-        // Right new we are using CORETYPE for the kind!
-        // But we should be using Hs::Type, and storing a located Kind.
-        // free_type_variables(type_of_kind->kind, tvs);
-        free_type_variables_(type_of_kind->type, tvs);
-    }
-    // FieldDecls actually this can't happen right now!
-    else
-        throw myexception()<<"free_type_vars: bad type "<<type.print()<<"!";
-}
-
-vector<Hs::LTypeVar> unique_type_vars(const vector<Hs::LTypeVar>& tvs)
-{
-    vector<Hs::LTypeVar> tvs2;
-
-    set<Hs::LTypeVar> seen_tvs;
-    for(auto& tv: tvs)
-        if (not seen_tvs.count(tv))
-        {
-            tvs2.push_back(tv);
-            seen_tvs.insert(tv);
-        }
-
-    return tvs2;
-}
-
-vector<Hs::LTypeVar> free_type_variables(const vector<Hs::LType>& types)
-{
-    vector<Hs::LTypeVar> tvs;
-    free_type_variables_(types, tvs);
-    return unique_type_vars(tvs);
-}
-
-vector<Hs::LTypeVar> free_type_variables(const Hs::LType& type)
-{
-    vector<Hs::LTypeVar> tvs;
-    free_type_variables_(type, tvs);
-    return unique_type_vars(tvs);
 }
 
