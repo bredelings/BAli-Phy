@@ -279,17 +279,6 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
         auto type_vars = desugar(t->type_vars);
         auto rhs_type = desugar(t->rhs_type);
 
-        // ensure that these type variables will never occur in the arguments
-        substitution_t s;
-        for(auto& type_var: type_vars)
-        {
-            auto new_type_var = fresh_other_type_var();
-            s = s.insert({type_var, new_type_var});
-            type_var = new_type_var;
-        }
-
-        rhs_type = apply_subst(s, rhs_type);
-
         auto& info = this_mod().lookup_local_type(name)->is_type_syn()->info;
         assert(not info);
         info = std::shared_ptr<TypeSynonymInfo>(new TypeSynonymInfo{name, type_vars, rhs_type});
