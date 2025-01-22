@@ -12,9 +12,17 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: make indenting ignore ANSI color codes.
+// TODO: share parts of add_type_instance( ) and add_default_type_instance( )
+
+// TODO: share parts of handling class_decl.default_type_inst_decls from class.cc
+
+// TODO: maybe remove the inst_loc arguments to InstanceInfo and EqInstanceInfo
+
+// TODO: maybe move some of the check_add_type_instance stuff to renaming?
 
 // TODO: eliminate desugar( ).
+
+// TODO: make indenting ignore ANSI color codes.
 
 // TODO: change kind unification to use meta-variables.
 
@@ -66,28 +74,31 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
+std::tuple<std::vector<TypeVar>, Type, Type> TypeChecker::check_type_instance(const Hs::LType& hs_lhs, const Hs::LType& hs_rhs)
+{
+    auto hs_free_tvs = free_type_variables(hs_lhs);
+    auto hs_equality = Hs::make_equality_type(hs_lhs, hs_rhs);
+    auto hs_inst_type = Hs::add_forall_vars(hs_free_tvs, hs_equality);
+
+    auto inst_type = check_constraint(hs_inst_type);
+    auto [free_tvs, context, equality] = peel_top_gen(inst_type);
+    assert(context.empty());
+
+    auto [core_sim, args] = decompose_type_apps(equality);
+    auto lhs = args[0];
+    auto rhs = args[1];
+
+    return {free_tvs, lhs, rhs};
+}
+
 void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const yy::location& inst_loc)
 {
     auto lhs_in = Hs::type_apply(tf_con_in, args_in);
 
-    auto free_tvs_in = free_type_variables(lhs_in);
-
-    auto hs_pred = Hs::make_equality_type(lhs_in, rhs_in);
-
-    hs_pred = Hs::add_forall_vars(free_tvs_in, hs_pred);
-
-    auto inst_type = check_constraint(hs_pred);
-
-    auto [free_tvs, context, constraint] = peel_top_gen(inst_type);
-
-    assert(context.empty());
-
-    auto [core_sim, args] = decompose_type_apps(constraint);
-    auto lhs = args[0];
-    auto rhs = args[1];
+    auto [free_tvs, lhs, rhs] = check_type_instance(lhs_in, rhs_in);
 
     // 3. Add the (~) instance to the instance environment
-    auto dvar = fresh_dvar(constraint, true);
+    auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
@@ -99,30 +110,12 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
     this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
 }
 
-void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args_in, const Type& rhs_in, const yy::location& inst_loc)
+void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args, const Type& rhs, const yy::location& inst_loc)
 {
-    // We used to construct a TypeFamEqnInfo here
-    // TypeFamEqnInfo eqn{ args, rhs, free_tvs};
-
-    vector<Type> args = args_in;
-    Type rhs = rhs_in;
-
-    // 1. The rhs may only mention type vars bound on the lhs.
-    set<TypeVar> lhs_tvs;
-    for(auto& arg: args)
-    {
-        for(auto& tv: free_type_variables(arg))
-            lhs_tvs.insert(tv);
-    }
-
-    auto free_tvs = lhs_tvs | ranges::to<vector>();
-
-    // 3. Add the (~) instance to the instance environment
     Type lhs = type_apply(tf_con, args);
-    Type constraint = make_equality_pred(lhs, rhs);
-    Type inst_type = add_forall_vars(free_tvs, constraint);
+    auto free_tvs = free_type_variables(lhs) | ranges::to<vector>();
 
-    auto dvar = fresh_dvar(constraint, true);
+    auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );

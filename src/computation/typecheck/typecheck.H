@@ -233,6 +233,8 @@ public:
 
     Type check_constraint(const Hs::LType&);
 
+    std::tuple<std::vector<TypeVar>, Type, Type> check_type_instance(const Hs::LType&, const Hs::LType&);
+
     Hs::Var find_prelude_var(std::string name) const;
 
     ID find_prelude_tycon_name(const std::string& name) const;

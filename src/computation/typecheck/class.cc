@@ -206,16 +206,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         if (num_errors() > nerrors) continue;
 
         auto hs_lhs = Hs::type_apply(def_inst.con, def_inst.args);
-        auto hs_free_tvs = free_type_variables(hs_lhs);
-
-        auto hs_inst_type = Hs::quantify(hs_free_tvs, {}, Hs::make_equality_type(hs_lhs, def_inst.rhs));
-        auto inst_type = check_constraint(hs_inst_type);
-
-        auto [free_tvs, context, constraint] = peel_top_gen(inst_type);
-        assert(context.empty());
-        auto [core_sim, eq_args] = decompose_type_apps(constraint);
-        auto lhs = eq_args[0];
-        auto rhs = eq_args[1];
+        auto [free_tvs, lhs, rhs] = check_type_instance(hs_lhs, def_inst.rhs);
         auto [inst_con, inst_args] = decompose_type_apps(lhs);
 
         // This type family has a default instance now.
