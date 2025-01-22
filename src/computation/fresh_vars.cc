@@ -169,29 +169,6 @@ TypeVar FreshVarSource::fresh_rigid_type_var(int level, const Kind& k)
     return fresh_rigid_type_var(level, "t", k);
 }
 
-TypeVar FreshVarSource::fresh_other_type_var(const string& name, const Kind& k)
-{
-    TypeVar tv(add_suffix(name, get_index() ));
-    tv.kind = k;
-    return tv;
-}
-
-TypeVar FreshVarSource::fresh_other_type_var(const Kind& k)
-{
-    return fresh_other_type_var("t", k);
-}
-
-TypeVar FreshVarSource::fresh_other_type_var(const string& name)
-{
-    TypeVar tv(add_suffix(name, get_index() ));
-    return tv;
-}
-
-TypeVar FreshVarSource::fresh_other_type_var()
-{
-    return fresh_other_type_var(std::string("t"));
-}
-
 bool FreshVarSource::check_index(int i) const
 {
     return state.check_index(i);

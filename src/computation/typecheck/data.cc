@@ -150,7 +150,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
                 }
                 else
                 {
-                    auto u_tv = fresh_other_type_var(*unloc(data_decl.type_vars[i]).kind);
+                    auto u_tv = fresh_rigid_type_var(*unloc(data_decl.type_vars[i]).kind);
                     u_tvs.push_back(u_tv);
                     info.gadt_eq_constraints.push_back(make_equality_pred(u_tv,arg));
                 }

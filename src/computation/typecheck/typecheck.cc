@@ -1158,7 +1158,7 @@ substitution_t TypeChecker::fresh_tv_binders(vector<TypeVar>& type_var_binders)
     for(auto& tv: type_var_binders)
     {
         assert(tv.kind);
-        auto new_tv = fresh_other_type_var(tv.name, *tv.kind);
+        auto new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
         s = s.insert({tv,new_tv});
         tv = new_tv;
     }
@@ -1224,10 +1224,7 @@ tuple<Core2::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const T
         {
             assert(tv.kind);
             TypeVar new_tv;
-            if (skolem)
-                new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
-            else
-                new_tv = fresh_other_type_var(tv.name, *tv.kind);
+            new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);

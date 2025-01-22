@@ -88,12 +88,6 @@ public:
     TypeVar fresh_rigid_type_var(int level, const std::string& name, const Kind& k);
     TypeVar fresh_rigid_type_var(int level, const Kind& k);
 
-    TypeVar fresh_other_type_var(const std::string& name, const Kind& k);
-    TypeVar fresh_other_type_var(const Kind& k);
-
-    TypeVar fresh_other_type_var(const std::string& name);
-    TypeVar fresh_other_type_var();
-
     bool check_index(int i) const;
     int get_index();
 
