@@ -15,10 +15,10 @@ string alphabetized_type_var_name(int i)
     return s;
 }
 
-TypeVar alphabetized_type_var(int i)
+TypeVar alphabetized_type_var(int i, const Kind& k)
 {
     auto s = alphabetized_type_var_name(i);
-    return TypeVar(s);
+    return TypeVar(s, k);
 }
 
 Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index);
@@ -39,7 +39,7 @@ Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index)
         auto rec = s.find(*tv);
         if (rec == s.end())
         {
-            rec = s.insert({*tv, alphabetized_type_var(index++)}).first;
+            rec = s.insert({*tv, alphabetized_type_var(index++, tv->kind)}).first;
         }
         return rec->second;
     }

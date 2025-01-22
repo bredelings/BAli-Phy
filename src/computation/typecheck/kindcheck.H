@@ -19,7 +19,7 @@ struct kindchecker_state
     TypeChecker& type_checker;
 
     KindVar fresh_named_kind_var(const std::string& s) {
-	auto kv = TypeVar(s);
+	auto kv = TypeVar(s, kind_kind());
 	kv.index = next_kvar_index++;
 	return kv;
     }

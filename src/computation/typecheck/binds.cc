@@ -26,8 +26,6 @@ Type quantify(const T& tvs, const Type& monotype)
         return monotype;
     else
     {
-        for(auto& tv: tvs)
-            assert(tv.kind);
         return ForallType(tvs | ranges::to<vector>, monotype);
     }
 }
@@ -666,8 +664,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Va
     substitution_t s;
     for(auto& tv: qtvs_unused)
     {
-        assert(tv.kind);
-        auto new_tv = fresh_meta_type_var(tv.name, *tv.kind);
+        auto new_tv = fresh_meta_type_var(tv.name, tv.kind);
         s = s.insert({tv, new_tv});
     }
     auto lie_all = apply_subst(s, lie_retained);

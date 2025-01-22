@@ -16,6 +16,7 @@ namespace Haskell
 
 namespace Hs = Haskell;
 
+TypeCon kind_kind();
 TypeCon kind_type();
 TypeCon kind_constraint();
 Hs::Kind kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2);

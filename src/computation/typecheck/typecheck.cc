@@ -251,12 +251,12 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
         return {};
 }
 
-TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
+TypeVar unification_env::fresh_tyvar(const Kind& kind) const
 {
     int level = 0;
-    TypeVar ftv(level, "utv"+std::to_string(next_index));
+    
+    TypeVar ftv(level, "utv"+std::to_string(next_index), kind);
     ftv.index = next_index++;
-    ftv.kind = kind;
     return ftv;
 }
 
@@ -1145,8 +1145,7 @@ substitution_t TypeChecker::get_subst_for_tv_binders(const vector<TypeVar>& type
     substitution_t s;
     for(auto& tv: type_var_binders)
     {
-        assert(tv.kind);
-        auto new_tv = fresh_meta_type_var(tv.name, *tv.kind);
+        auto new_tv = fresh_meta_type_var(tv.name, tv.kind);
         s = s.insert({tv,new_tv});
     }
     return s;
@@ -1157,8 +1156,7 @@ substitution_t TypeChecker::fresh_tv_binders(vector<TypeVar>& type_var_binders)
     substitution_t s;
     for(auto& tv: type_var_binders)
     {
-        assert(tv.kind);
-        auto new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
+        auto new_tv = fresh_rigid_type_var(tv.name, tv.kind);
         s = s.insert({tv,new_tv});
         tv = new_tv;
     }
@@ -1222,9 +1220,8 @@ tuple<Core2::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const T
         substitution_t s;
         for(auto& tv: fa->type_var_binders)
         {
-            assert(tv.kind);
             TypeVar new_tv;
-            new_tv = fresh_rigid_type_var(tv.name, *tv.kind);
+            new_tv = fresh_rigid_type_var(tv.name, tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);

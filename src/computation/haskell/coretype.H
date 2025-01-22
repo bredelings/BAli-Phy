@@ -162,7 +162,7 @@ public:
     std::string name;
     std::optional<int> index;
 
-    std::optional<Kind> kind;
+    Kind kind;
 
     bool is_skolem_constant() const;
 
@@ -181,8 +181,6 @@ public:
     }
 
     TypeVar();
-    TypeVar(const std::string& s);
-    TypeVar(int l, const std::string& s);
     TypeVar(const std::string& s, const Kind& k);
     TypeVar(int l, const std::string& s, const Kind& k);
 };

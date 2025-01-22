@@ -171,9 +171,9 @@ RenameTyvarEnv2 rename_binder2(RenameTyvarEnv2 env, const TypeVar& tv1, const Ty
     return env2;
 }
 
-TypeVar locally_unique_tyvar(const VarSet& vars)
+TypeVar locally_unique_tyvar(const VarSet& vars, const Kind& k)
 {
-    TypeVar tv = TypeVar("tvX");
+    TypeVar tv = TypeVar("tvX", k);
     int index = 0;
     for(auto& var: vars)
     {
@@ -191,7 +191,7 @@ std::tuple<RenameTyvarEnv2,TypeVar> rename_binder2_var(RenameTyvarEnv2 env, cons
     {
         tv_new = tv2;
         if (env.out_vars.count(tv_new))
-            tv_new = locally_unique_tyvar(env.out_vars);
+            tv_new = locally_unique_tyvar(env.out_vars, tv1.kind);
     }
 
     env.left = extendVarEnv(env.left, tv1, tv_new);

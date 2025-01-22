@@ -570,8 +570,7 @@ string TypeVar::print_with_kind() const
 {
     string uname = print();
 
-    if (kind)
-        uname = "("+uname + " :: " + (*kind).print()+")";
+    uname = "("+uname + " :: " + kind.print()+")";
 
     return uname;
 }
@@ -595,14 +594,6 @@ bool TypeVar::operator<(const TypeVar& tv) const
 }
 
 TypeVar::TypeVar()
-{}
-
-TypeVar::TypeVar(const std::string& s)
-    :name(s)
-{}
-
-TypeVar::TypeVar(int l, const std::string& s)
-    :level_(l), name(s)
 {}
 
 TypeVar::TypeVar(const std::string& s, const Kind& k)
@@ -806,7 +797,8 @@ TypeVar desugar(const Hs::LTypeVar& ltv)
     TypeVar t2;
     t2.name = tv.name;
     t2.index = tv.index;
-    t2.kind = tv.kind;
+    if (tv.kind)
+        t2.kind = *tv.kind;
     return t2;
 }
 

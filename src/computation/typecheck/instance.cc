@@ -118,10 +118,7 @@ void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<
     for(auto& arg: args)
     {
         for(auto& tv: free_type_variables(arg))
-        {
-            assert(tv.kind);
             lhs_tvs.insert(tv);
-        }
     }
 
     auto free_tvs = lhs_tvs | ranges::to<vector>();

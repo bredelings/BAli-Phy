@@ -331,7 +331,7 @@ Kind kindchecker_state::kind_for_type(const Type& t)
     if (auto tc = t.to<TypeCon>())
         return *(tc->kind);
     else if (auto tv = t.to<TypeVar>())
-        return apply_substitution(*tv->kind);
+        return apply_substitution(tv->kind);
     else if (auto tapp = t.to<TypeApp>())
     {
         // Get the kind of the type being applied
@@ -353,8 +353,7 @@ Kind kindchecker_state::kind_for_type(const Type& t)
 
         for(auto& tv: fa->type_var_binders)
         {
-            assert(tv.kind);
-            bind_type_var(tv, apply_substitution(*tv.kind));
+            bind_type_var(tv, apply_substitution(tv.kind));
         }
 
         auto kind = kind_for_type( fa->type );
@@ -379,15 +378,8 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
     }
     else if (auto tv = t.to<TypeVar>())
     {
-        Kind kind;
-        if (tv->kind)
-            kind = *tv->kind;
-        else
-            kind = kind_for_type_var(*tv);
-        kind = replace_kvar_with_star(kind);
-
         auto Tv = *tv;
-        Tv.kind = kind;
+        Tv.kind = replace_kvar_with_star(Tv.kind);
         return Tv;
     }
     else if (auto tapp = t.to<TypeApp>())
@@ -414,9 +406,8 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
 
         for(auto& tv: Fa.type_var_binders)
         {
-            assert(tv.kind);
-            tv.kind = replace_kvar_with_star(*tv.kind);
-            bind_type_var(tv, *tv.kind);
+            tv.kind = replace_kvar_with_star(tv.kind);
+            bind_type_var(tv, tv.kind);
         }
 
         Fa.type = zonk_kind_for_type( Fa.type );

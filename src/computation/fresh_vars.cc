@@ -147,9 +147,7 @@ Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
 
 MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const string& name, const Kind& k)
 {
-    MetaTypeVar tv(level, add_suffix(name, get_index() ));
-    tv.kind = k;
-    return tv;
+    return MetaTypeVar(level, add_suffix(name, get_index() ), k);
 }
 
 MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const Kind& k)
@@ -159,9 +157,7 @@ MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const Kind& k)
 
 TypeVar FreshVarSource::fresh_rigid_type_var(int level, const string& name, const Kind& k)
 {
-    TypeVar tv(level, add_suffix(name, get_index() ));
-    tv.kind = k;
-    return tv;
+    return TypeVar(level, add_suffix(name, get_index() ), k);
 }
 
 TypeVar FreshVarSource::fresh_rigid_type_var(int level, const Kind& k)

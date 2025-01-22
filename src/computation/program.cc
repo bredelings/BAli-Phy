@@ -44,10 +44,8 @@ Core2::Exp<> declare_seq_info(Module& m)
     auto [occ_code, _] = occurrence_analyzer(m, code);
 
     // 2. seq :: forall a b. a -> b -> b
-    TypeVar a("a");
-    a.kind = kind_type();
-    TypeVar b("b");
-    b.kind = kind_type();
+    TypeVar a("a", kind_type());
+    TypeVar b("b", kind_type());
     Type type = ForallType({a,b},function_type({a,b},b));
 
     // 3. infixr 0 seq

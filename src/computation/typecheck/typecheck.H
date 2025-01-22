@@ -26,7 +26,7 @@ struct unification_env
     mutable int next_index = 0;
     immer::map<TypeVar, TypeVar> mapping1;
     immer::map<TypeVar, TypeVar> mapping2;
-    TypeVar fresh_tyvar(const std::optional<Kind>& k) const;
+    TypeVar fresh_tyvar(const Kind& k) const;
 };
 
 Hs::ModuleDecls typecheck(const std::string& s, Module& m, Hs::ModuleDecls M);
