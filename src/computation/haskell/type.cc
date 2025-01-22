@@ -442,4 +442,9 @@ string TypeOfKind::print() const
     return type.print() + " :: " + kind.print();
 }
 
+LType quantify(const std::vector<LTypeVar>& tvs, const std::vector<LType>& context, const LType& type)
+{
+    return add_forall_vars(tvs, add_constraints(context, type));
+}
+
 }

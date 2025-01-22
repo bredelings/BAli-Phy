@@ -56,24 +56,27 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.con<<"':" );
 
-    ClassInfo class_info;
-    string class_name = unloc(class_decl.con).name;
-    class_info.type_vars = desugar(class_decl.type_vars);
-    class_info.name = unloc(class_decl.con).name;
-    class_info.context = desugar(class_decl.context);
-
-    // 2. construct the constraint that represent the class
+    // 1. construct the constraint that represent the class
     auto hs_class_constraint = Hs::type_apply(class_decl.con, class_decl.type_vars);
-    auto class_constraint = desugar(hs_class_constraint);
+    auto hs_class_type = Hs::quantify(class_decl.type_vars, class_decl.context, hs_class_constraint);
+
+    auto class_type = check_constraint(hs_class_type);
+
+    auto [tvs, context, class_constraint] = peel_top_gen(class_type);
+
+    string class_name = unloc(class_decl.con).name;
+
+    ClassInfo class_info;
+    class_info.type_vars = tvs;
+    class_info.name = class_name;
+    class_info.context = context;
 
     // 3. make global types for class methods
 
     // Add class methods to GVE
     for(auto& sig_decl: class_decl.sig_decls)
     {
-        // first: quantify by variables NOT in the class decl,
-        // then : add the class constraint
-        // then : quantify by the variables in the class decl.
+        // variables NOT in the class decl are quantified in rename
 
         // forall a. C a => method_type
         auto hs_method_type = sig_decl.type;
