@@ -50,6 +50,38 @@ vector<string> get_lines(const string& line)
     return lines;
 }
 
+bool skip_ansi(const string& line, int& pos)
+{
+    // ANSI sequences look like '\033[0;2;3;4m'
+    // - They start with '\033['
+    // - They have some number of '\d+;'
+    // - They end with an 'm'
+
+    if (pos+2 < line.size() and line[pos] == '\033' and line[pos+1] == '[')
+    {
+        // To be safer, we could skip [0..9;] and then if we find an m, skip that too.
+        pos = line.find(pos+2,'m');
+        if (pos == -1) pos = line.size();
+        return true;
+    }
+    else
+        return false;
+}
+
+int advance(const string& line, int pos, int delta)
+{
+    assert(pos >= 0 and pos <= line.size());
+
+    while(delta > 0 and pos < line.size())
+    {
+        while(skip_ansi(line,pos)) { };
+        pos++;
+        delta--;
+    }
+
+    return pos;
+}
+
 // Given a line containing no line breaks, return the first wrapped line and the rest of the line.
 vector<string> wrap_lines(const string& line, int width)
 {
@@ -58,30 +90,30 @@ vector<string> wrap_lines(const string& line, int width)
     int pos = 0;
     while (pos < line.size())
     {
+        int pos2 = advance(line, pos, width);
+
         // 1. If the remainder of the line fits, just return that.
-        if (pos + width > line.size())
+        if (pos2 >= line.size())
         {
             lines.push_back( line.substr(pos) );
-            pos = line.size();
-            continue;
+            return lines;
         }
 
         // 2. Try to split at the last space or tab near the edge of the page.
-        int loc = pos+width-1;
+        int loc = pos2;
         for(;loc >= pos; loc--)
             if (line[loc] == ' ' or line[loc] == '\t')
                 break;
 
         // 3. If that doesn't work, split at the first space or tab past the edge of the page.
         if (loc < pos)
-            loc = line.find_first_of(" \t", pos + width);
+            loc = line.find_first_of(" \t", pos2);
 
         // 4. If there is no space or tab in the rest of the line, just return the whole thing.
         if (loc == string::npos)
         {
             lines.push_back( line.substr(pos) );
-            pos = line.size();
-            continue;
+            return lines;
         }
 
         // 5. Check that we actually found a space.
