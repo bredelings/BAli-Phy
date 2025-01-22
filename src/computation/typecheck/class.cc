@@ -3,6 +3,7 @@
 #include "haskell/ids.H"
 #include "computation/core/func.H"
 #include "computation/rename/rename.H"
+#include "tidy.H"
 
 using std::string;
 using std::vector;
@@ -55,7 +56,7 @@ Hs::Var unqualified(Hs::Var v)
 tuple<ClassInfo, Core2::Decls<>>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    push_note( Note()<<"In class '"<<class_decl.con<<"':" );
+    push_note( Note()<<"In class '"<<TidyState().print(TypeCon(unloc(class_decl.con).name))<<"':" );
 
     // 1. construct the constraint that represent the class
     auto hs_class_constraint = Hs::type_apply(class_decl.con, class_decl.type_vars);

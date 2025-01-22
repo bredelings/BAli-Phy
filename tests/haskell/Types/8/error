@@ -1,9 +1,6 @@
 [1mMain.hs:9.9-11:[1;31m error:[0m[1m
    • Expected '[1;32mT[0m'[1m but got '[1;32m[t][0m'[1m
    • In equation `g x  = Main.f [x]`
-   • In function `Main.g`
-   • In recursive group:
-         Main.g
   [1;34m|[0m
 [1;34m9[0m [1;34m| [0mg x = f [1;31m[x][0m
   [1;34m|[0m         [1;31m^^^[0m

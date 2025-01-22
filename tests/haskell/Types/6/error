@@ -5,9 +5,6 @@
        f :: [1;32mb -> a[0m[1m
        apply :: [1;32mT a -> m[0m[1m
    • In equation `apply (Main.T f x)  = x`
-   • In function `Main.apply`
-   • In recursive group:
-         Main.apply
   [1;34m|[0m
 [1;34m5[0m [1;34m| [0mapply (T f x) = [1;31mx[0m
   [1;34m|[0m                 [1;31m^[0m

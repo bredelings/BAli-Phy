@@ -1,9 +1,6 @@
 [1mMain.hs:12.19-20:[1;31m error:[0m[1m
    • Could not derive '[1;32mEq a[0m'[1m arising from a use of '[1;36m(==)[0m[1m' at Main.hs:12.19-20
    • In equation `reflexive2 ae  = x Data.Eq.== x`
-   • In function `Main.reflexive2`
-   • In recursive group:
-         Main.reflexive2
    [1;34m|[0m
 [1;34m12[0m [1;34m| [0mreflexive2 ae = x [1;31m==[0m x
    [1;34m|[0m                   [1;31m^^[0m

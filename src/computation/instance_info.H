@@ -13,7 +13,6 @@ struct InstanceInfo
 {
     // forall tvs. constraints => class_con args.
 
-    yy::location loc;
     std::vector<TypeVar> tvs;
     std::vector<Type> constraints;
     TypeCon class_con;
@@ -28,7 +27,7 @@ struct InstanceInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(/*loc, */ tvs, constraints, class_con, args, incoherent, overlapping, overlappable);
+	ar(tvs, constraints, class_con, args, incoherent, overlapping, overlappable);
     }
 };
 
@@ -36,7 +35,6 @@ struct EqInstanceInfo
 {
     // forall tvs. lhs ~ rhs
 
-    yy::location loc;
     std::vector<TypeVar> tvs;
 
     // TypeCon lhs_tyfam_tycon;
@@ -49,7 +47,7 @@ struct EqInstanceInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(/*loc, */ tvs, lhs, rhs);
+	ar(tvs, lhs, rhs);
     }
 };
 

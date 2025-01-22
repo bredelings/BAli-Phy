@@ -12,11 +12,7 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: maybe remove the inst_loc arguments to InstanceInfo and EqInstanceInfo
-
 // TODO: maybe move some of the check_add_type_instance stuff to renaming?
-
-// TODO: make indenting ignore ANSI color codes.
 
 // TODO: change kind unification to use meta-variables.
 
@@ -85,13 +81,13 @@ std::tuple<std::vector<TypeVar>, Type, Type> TypeChecker::check_type_instance(co
     return {free_tvs, lhs, rhs};
 }
 
-void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs, const yy::location& inst_loc)
+void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs)
 {
     auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{free_tvs, lhs, rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -204,7 +200,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    add_type_instance(free_ltvs, lhs, rhs, inst_loc);
+    add_type_instance(free_ltvs, lhs, rhs);
 
     pop_source_span();
     pop_note();
@@ -212,8 +208,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
 void TypeChecker::default_type_instance(const TypeCon& tf_con,
 					const std::optional<TypeFamilyInstanceDecl>& maybe_default,
-					const substitution_t& instance_subst,
-					const yy::location& inst_loc)
+					const substitution_t& instance_subst)
 {
     if (not maybe_default)
     {
@@ -251,7 +246,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     // 4. add the instance
     auto lhs = type_apply(tf_con, args);
     auto free_tvs = free_type_variables(lhs) | ranges::to<vector>();
-    add_type_instance(free_tvs, lhs, rhs, inst_loc);
+    add_type_instance(free_tvs, lhs, rhs);
 }
 
 std::optional<Core2::Var<>>
@@ -298,7 +293,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     {
 	// The user wrote an instance for this, we're all done.
 	if (not defined_ats.contains(tf_con))
-	    default_type_instance(tf_con, maybe_default, instance_subst, *inst_loc);
+	    default_type_instance(tf_con, maybe_default, instance_subst);
     }
 
     auto dfun = fresh_dvar(constraint, true);
@@ -318,7 +313,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         incoherent;
 
     auto S = symbol_info(dfun.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{*inst_loc, tvs, constraints, *class_con, args, incoherent, overlappable, overlapping} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{tvs, constraints, *class_con, args, incoherent, overlappable, overlapping} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -472,7 +467,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     {
         auto& method_name = method.name;
 
-        push_note( Note()<<"In method `"<<method_name<<"`:" );
+        // push_note( Note()<<"In method `"<<method_name<<"`:" );
 
         auto op = get_fresh_Var("i"+method_name, true);
 
@@ -509,7 +504,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
                 dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.polytype.print() + "`") });
                 dict_entries.push_back( dict_entry );
 
-                pop_note();
+                // pop_note();
                 continue;
             }
         }
@@ -525,7 +520,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         S.type = op_type;
         this_mod().add_symbol(S);
 
-        pop_note();
+        // pop_note();
     }
 
     // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
@@ -660,8 +655,6 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
 
             auto info = freshen(info_);
 
-            push_source_span( info.loc );
-
             auto instance_head = type_apply(info.class_con, info.args);
 
             if (auto subst = maybe_match(instance_head, target_pred))
@@ -680,7 +673,6 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
             {
                 unifying_instances.push_back(info);
             }
-            pop_source_span();
         }
     }
 
@@ -716,7 +708,7 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
         for(auto& [_,type1,type2,info]: surviving_instances)
 	{
 	    auto instance_head = type_apply(info.class_con, info.args);
-            n<<"  "<<remove_top_gen(instance_head)<<" at " <<info.loc<<"\n";
+            n<<"  "<<remove_top_gen(instance_head)<<"\n";
 	}
         record_error(n);
     }

@@ -146,13 +146,13 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
             else
                 std::abort();
         }
-        push_note(ec);
+        if (group.size() > 1) push_note(ec);
         if (decls_loc) push_source_span(*decls_loc);
 
         auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
         if (decls_loc) pop_source_span();
-        pop_note();
+        if (group.size() > 1) pop_note();
         
         for(auto& decl: group_decls)
             decls2.push_back(decl);
@@ -257,7 +257,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 {
     // Q: Are we getting the monotype correct?
 
-    push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
+    // push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
 
     // 1. Make up a inner id.
     Hs::Var inner_id = get_fresh_Var(unloc(FD.v).name, false);
@@ -288,7 +288,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
     auto decl = mkGenBind( {}, {}, std::make_shared<Core2::Decls<>>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
 
-    pop_note();
+    // pop_note();
 
     return decl;
 }
@@ -346,13 +346,13 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
         auto FD = *fd;
 
         push_binder( IDType{ unloc(FD.v), mono_local_env().at(unloc(FD.v)).second } );
-        push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
+        // push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
         auto ctx = Hs::FunctionContext{unloc(FD.v).name};
 	//  FIXME: do something with wrap_match!
         auto wrap_match = tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
-        pop_note();
+        // pop_note();
         pop_binder();
 
         decl = FD;
@@ -374,7 +374,7 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
 tuple< map<Hs::Var, Hs::Var>, local_value_env >
 TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 {
-    push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
+    // push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
@@ -408,7 +408,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     local_value_env mono_binder_env;
     mono_binder_env = mono_binder_env.insert({poly_id, fun_type.read_type()});
 
-    pop_note();
+    // pop_note();
 
     return tuple<map<Hs::Var,Hs::Var>,local_value_env>(mono_ids, mono_binder_env);
 }

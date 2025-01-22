@@ -10,6 +10,7 @@
   + Use faster eigenvalue method to compute exp(Q*t) by default, falling back to slower method if needed.
 - Haskell:
   + Implement strict fields for data types with !type.
+  + Improved error messages for type errors.
 
 * 4.0-beta16 (Nov 23, 2024)
 - Speed: further speed up tree operations.
