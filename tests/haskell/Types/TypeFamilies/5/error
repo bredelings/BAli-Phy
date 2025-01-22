@@ -1,0 +1,38 @@
+[1mMain.hs:13.10:[1;31m error:[0m[1m
+   • Associated type family 'Test.K' may only have one default instance!
+   • In default instance 'type instance Test.K a a a = a':
+   • In class 'Test.C':
+   [1;34m|[0m
+[1;34m13[0m [1;34m| [0m    type [1;31mK[0m a a a = a
+   [1;34m|[0m          [1;31m^[0m
+
+[1mMain.hs:13.14:[1;31m error:[0m[1m
+   • Argument 'a' used twice.
+   • In default instance 'type instance Test.K a a a = a':
+   • In class 'Test.C':
+   [1;34m|[0m
+[1;34m13[0m [1;34m| [0m    type K a [1;31ma[0m a = a
+   [1;34m|[0m              [1;31m^[0m
+
+[1mMain.hs:13.16:[1;31m error:[0m[1m
+   • Argument 'a' used twice.
+   • In default instance 'type instance Test.K a a a = a':
+   • In class 'Test.C':
+   [1;34m|[0m
+[1;34m13[0m [1;34m| [0m    type K a a [1;31ma[0m = a
+   [1;34m|[0m                [1;31m^[0m
+
+[1mMain.hs:17.15:[1;31m error:[0m[1m
+   • Expected `Int` but got `a`
+   • Relevant bindings:
+       x :: a
+       iasdf_19988 :: a -> Int
+   • In equation `iasdf_19988 x  = x`
+   • In function `Test.iasdf_19988`
+   • In method `asdf`:
+   • In instance `forall a. Text.Show.Show a => Test.C a`:
+   • In class 'Test.C':
+   [1;34m|[0m
+[1;34m17[0m [1;34m| [0m    asdf x  = [1;31mx[0m
+   [1;34m|[0m               [1;31m^[0m
+

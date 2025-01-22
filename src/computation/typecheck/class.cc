@@ -173,14 +173,17 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 7. Load default associated type family instances
     for(auto& def_inst: class_decl.default_type_inst_decls)
     {
+        int nerrors = num_errors();
+
         push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
         TypeCon tf_con(unloc(def_inst.con).name);
         if (not class_info.associated_type_families.count(tf_con))
-        {
             record_error(def_inst.con.loc, Note()<<"Type family '"<<tf_con<<"' is not defined in class '"<<class_name<<"'");
-            continue;
-        }
+
+        // An associated type family can have only one default instance.
+        if (class_info.associated_type_families.at(tf_con))
+            record_error(def_inst.con.loc, Note()<<"Associated type family '"<<tf_con.print()<<"' may only have one default instance!");
 
         // All type arguments must be variables.
         // The type variables may not be repeated.
@@ -190,23 +193,14 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
             auto tv = arg.to<Hs::TypeVar>();
 
             if (not tv)
-            {
                 record_error(loc, Note()<<"Argument '"<<arg.print()<<"' must be a type variable.");
-                continue;
-            }
-
-            if (lhs_tvs.count(*tv))
+            else if (lhs_tvs.count(*tv))
                 record_error(loc, Note()<<"Argument '"<<arg.print()<<"' used twice.");
-
-            lhs_tvs.insert(*tv);
+            else
+                lhs_tvs.insert(*tv);
         }
 
-        // An associated type family can have only one default instance.
-        if (class_info.associated_type_families.at(tf_con))
-        {
-            record_error(def_inst.con.loc, Note()<<"Associated type family '"<<tf_con.print()<<"' may only have one default instance!");
-            continue;
-        }
+        if (num_errors() > nerrors) continue;
 
         auto hs_lhs = Hs::type_apply(def_inst.con, def_inst.args);
         auto hs_free_tvs = free_type_variables(hs_lhs);

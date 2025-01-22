@@ -20,6 +20,11 @@ using std::tuple;
 using std::optional;
 using std::shared_ptr;
 
+int TypeChecker::num_errors()
+{
+    return ::num_errors(messages());
+}
+
 void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes)
 {
     auto c = context.modify();
