@@ -87,6 +87,10 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
 
     auto hs_data_type = Hs::type_apply(data_decl.con, data_decl.type_vars);
 
+    hs_data_type = Hs::quantify(data_decl.type_vars, data_decl.context, hs_data_type);
+
+    auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_data_type));
+
     auto data_type_con = TypeCon(unloc(data_decl.con).name);
 
     // Assume no "stupid theta".
@@ -100,6 +104,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
         {
             auto con_name = unloc(*constructor.con).name;
             DataConInfo info = infer_type_for_constructor(data_decl.con, data_decl.type_vars, constructor);
+            info.top_constraints = data_context;
             types = types.insert({con_name, info});
         }
     }
@@ -158,7 +163,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             info.field_strictness = std::vector<bool>( info.field_types.size(), false); // FIXME
             info.data_type = data_type_con;
             info.written_constraints = constraints;
-            info.top_constraints = desugar( data_decl.context );
+            info.top_constraints = data_context;
             info.exi_tvs = exi_tvs_set | ranges::to<vector>();
             info.uni_tvs = u_tvs;
             
