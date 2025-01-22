@@ -205,8 +205,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto hs_lhs = Hs::type_apply(def_inst.con, def_inst.args);
         auto hs_free_tvs = free_type_variables(hs_lhs);
 
-        Hs::LTypeCon sim(noloc, Hs::TypeCon("~"));
-        auto hs_inst_type = Hs::quantify(hs_free_tvs, {}, Hs::type_apply(sim, {hs_lhs, def_inst.rhs}));
+        auto hs_inst_type = Hs::quantify(hs_free_tvs, {}, Hs::make_equality_type(hs_lhs, def_inst.rhs));
         auto inst_type = check_constraint(hs_inst_type);
 
         auto [free_tvs, context, constraint] = peel_top_gen(inst_type);
@@ -269,9 +268,17 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
         auto t = decl.to<Hs::TypeSynonymDecl>();
         if (not t) continue;
 
+        auto hs_lhs = Hs::type_apply(t->con, t->type_vars);
+        auto hs_syn_type = Hs::quantify(t->type_vars,{}, Hs::make_equality_type(hs_lhs, t->rhs_type));
+
+        auto syn_type = check_constraint(hs_syn_type);
+
+        auto [type_vars, context, equality] = peel_top_gen(syn_type);
+        auto [core_sim, args] = decompose_type_apps(equality);
+        auto lhs_type = args[0];
+        auto rhs_type = args[1];
+
         auto name = unloc(t->con).name;
-        auto type_vars = desugar(t->type_vars);
-        auto rhs_type = desugar(t->rhs_type);
 
         auto& info = this_mod().lookup_local_type(name)->is_type_syn()->info;
         assert(not info);
