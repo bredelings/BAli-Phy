@@ -34,6 +34,13 @@ void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& 
     record_error(context, Notes{e});
 }
 
+void TypeChecker::record_error(const std::optional<yy::location>& loc, const Note& e)
+{
+    if (loc) push_source_span(*loc);
+    record_error(context(), e);
+    if (loc) pop_source_span();
+}
+
 void TypeChecker::record_error(const Note& e)
 {
     return record_error(context(), e);
@@ -51,6 +58,13 @@ void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note
 void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note& e)
 {
     record_warning(context, Notes{e});
+}
+
+void TypeChecker::record_warning(const std::optional<yy::location>& loc, const Note& e)
+{
+    if (loc) push_source_span(*loc);
+    record_warning(context(), e);
+    if (loc) pop_source_span();
 }
 
 void TypeChecker::record_warning(const Note& e)

@@ -2,6 +2,7 @@
 #include "kindcheck.H"
 #include "haskell/ids.H"
 #include "computation/core/func.H"
+#include "computation/rename/rename.H"
 
 using std::string;
 using std::vector;
@@ -174,41 +175,55 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
-        auto tf_con = desugar(def_inst.con);
+        TypeCon tf_con(unloc(def_inst.con).name);
         if (not class_info.associated_type_families.count(tf_con))
-            throw note_exception()<<
-                "  Type family '"<<tf_con<<"' is not defined.";
-
-        // An associated type family can have only one default instance.
-        if (class_info.associated_type_families.at(tf_con))
-            throw note_exception()<<
-                "  Associated type family '"<<tf_con.print()<<"' may only have one default instance!";
+        {
+            record_error(def_inst.con.loc, Note()<<"Type family '"<<tf_con<<"' is not defined in class '"<<class_name<<"'");
+            continue;
+        }
 
         // All type arguments must be variables.
         // The type variables may not be repeated.
-        set<TypeVar> lhs_tvs;
-        for(auto& arg: desugar(def_inst.args))
+        set<Hs::TypeVar> lhs_tvs;
+        for(auto& [loc,arg]: def_inst.args)
         {
-            auto tv = arg.to<TypeVar>();
+            auto tv = arg.to<Hs::TypeVar>();
 
             if (not tv)
-                throw note_exception()<<
-                    "  Argument '"<<arg.print()<<"' must be a type variable.";
+            {
+                record_error(loc, Note()<<"Argument '"<<arg.print()<<"' must be a type variable.");
+                continue;
+            }
 
             if (lhs_tvs.count(*tv))
-                throw note_exception()<<
-                    "  Argument '"<<arg.print()<<"' used twice.";
+                record_error(loc, Note()<<"Argument '"<<arg.print()<<"' used twice.");
 
             lhs_tvs.insert(*tv);
         }
 
-        // The rhs may only mention type vars bound on the lhs.
-        for(auto& tv: free_type_variables(desugar(def_inst.rhs)))
-            if (not lhs_tvs.count(tv))
-                throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+        // An associated type family can have only one default instance.
+        if (class_info.associated_type_families.at(tf_con))
+        {
+            record_error(def_inst.con.loc, Note()<<"Associated type family '"<<tf_con.print()<<"' may only have one default instance!");
+            continue;
+        }
+
+        auto hs_lhs = Hs::type_apply(def_inst.con, def_inst.args);
+        auto hs_free_tvs = free_type_variables(hs_lhs);
+
+        Hs::LTypeCon sim(noloc, Hs::TypeCon("~"));
+        auto hs_inst_type = Hs::quantify(hs_free_tvs, {}, Hs::type_apply(sim, {hs_lhs, def_inst.rhs}));
+        auto inst_type = check_constraint(hs_inst_type);
+
+        auto [free_tvs, context, constraint] = peel_top_gen(inst_type);
+        assert(context.empty());
+        auto [core_sim, eq_args] = decompose_type_apps(constraint);
+        auto lhs = eq_args[0];
+        auto rhs = eq_args[1];
+        auto [inst_con, inst_args] = decompose_type_apps(lhs);
 
         // This type family has a default instance now.
-        class_info.associated_type_families.at(tf_con) = desugar(def_inst);
+        class_info.associated_type_families.at(tf_con) = TypeFamilyInstanceDecl{tf_con, inst_args, rhs};
 
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});

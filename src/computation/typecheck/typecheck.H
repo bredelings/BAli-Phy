@@ -105,10 +105,12 @@ public:
 
     void record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_error(cow_ptr<TypeCheckerContext> context, const Note& e);
+    void record_error(const std::optional<yy::location>& loc, const Note& e);
     void record_error(const Note& e);
 
     void record_warning(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_warning(cow_ptr<TypeCheckerContext> context, const Note& e);
+    void record_warning(const std::optional<yy::location>& loc, const Note& e);
     void record_warning(const Note& e);
 
     std::optional<int> unification_level() const;
