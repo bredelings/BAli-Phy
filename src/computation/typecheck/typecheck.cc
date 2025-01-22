@@ -1371,7 +1371,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto kind = this_mod().lookup_local_type(unloc(C.name))->kind;
+            auto kind = this_mod().lookup_local_type(unloc(C.con).name)->kind;
             assert(not kind.empty());
             result_kind_for_type_vars( C.type_vars, kind);
             type_decl = C;

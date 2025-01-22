@@ -144,7 +144,7 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
         if (decl.is_a<Hs::ClassDecl>())
         {
             auto& class_decl = decl.as_<Hs::ClassDecl>();
-            auto& name = unloc(class_decl.name);
+            auto& name = unloc(class_decl.con).name;
             referenced_types[name] = free_type_cons(class_decl);
             decl_for_type[name] = decl;
         }

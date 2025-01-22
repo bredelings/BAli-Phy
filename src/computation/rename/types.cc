@@ -365,7 +365,7 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
-    qualify_name(C.name);
+    qualify_name(unloc(C.con).name);
     for(auto& constraint: C.context)
         constraint = rename_type(constraint);
 

@@ -54,16 +54,16 @@ Hs::Var unqualified(Hs::Var v)
 tuple<ClassInfo, Core2::Decls<>>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    push_note( Note()<<"In class '"<<class_decl.name<<"':" );
+    push_note( Note()<<"In class '"<<class_decl.con<<"':" );
 
     ClassInfo class_info;
+    string class_name = unloc(class_decl.con).name;
     class_info.type_vars = desugar(class_decl.type_vars);
-    class_info.name = unloc(class_decl.name);
+    class_info.name = unloc(class_decl.con).name;
     class_info.context = desugar(class_decl.context);
 
     // 2. construct the constraint that represent the class
-    Hs::LType hs_class_con{class_decl.name.loc, Hs::TypeCon(unloc(class_decl.name))};
-    auto hs_class_constraint = Hs::type_apply(hs_class_con, class_decl.type_vars);
+    auto hs_class_constraint = Hs::type_apply(class_decl.con, class_decl.type_vars);
     auto class_constraint = desugar(hs_class_constraint);
 
     // 3. make global types for class methods
@@ -102,7 +102,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto type = class_info.members.at(method_name);
 
         // Hmm... so one issue is that I think we want to declare this (i) with NO alias and (ii) only with the original name.
-        auto S = symbol_info(dm.name, symbol_type_t::default_method, unloc(class_decl.name), {}, {});
+        auto S = symbol_info(dm.name, symbol_type_t::default_method, class_name, {}, {});
         S.type = type;
 
         // Default methods don't get an alias.
@@ -163,7 +163,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto kind = this_mod().lookup_local_type(fname)->kind;
 
         auto con = desugar(type_fam_decl.con);
-        this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, unloc(class_decl.name));
+        this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, class_name);
         if (class_info.associated_type_families.count(con))
             throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
         class_info.associated_type_families.insert({con,{}});

@@ -577,7 +577,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     // Bind type parameters for class
     push_type_var_scope();
 
-    auto& name = unloc(class_decl.name);
+    auto& name = unloc(class_decl.con).name;
 
     // a. Look up kind for this data type.
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
@@ -658,7 +658,7 @@ TypeConEnv kindchecker_state::infer_kinds(const vector<expression_ref>& type_dec
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto& C = type_decl.as_<Hs::ClassDecl>();
-            name = unloc(C.name);
+            name = unloc(C.con).name;
             arity = C.type_vars.size();
             kind = kind_constraint();
         }

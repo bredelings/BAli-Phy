@@ -629,7 +629,7 @@ struct ClassDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     Context context;
-    Located<std::string> name;
+    LTypeCon con;
     std::vector<LTypeVar> type_vars;
 
     std::vector<FixityDecl> fixity_decls;
@@ -643,7 +643,7 @@ struct ClassDecl: public Object
     std::string print() const;
 
     ClassDecl(const Context& ct,
-              const Located<std::string>& s,
+              const LTypeCon& c,
               const std::vector<LTypeVar>& tvs,
               const std::vector<FixityDecl>& fxs,
               const std::vector<FamilyDecl>& tfds,
@@ -651,7 +651,7 @@ struct ClassDecl: public Object
               const std::vector<SignatureDecl>& sds,
               const Decls& dms)
         :context(ct),
-         name(s),
+         con(c),
          type_vars(tvs),
          fixity_decls(fxs),
          fam_decls(tfds),

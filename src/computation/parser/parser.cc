@@ -7584,7 +7584,7 @@ Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, con
 
 Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const optional<Located<Hs::Decls>>& decls)
 {
-    auto [name, type_args] = check_type_or_class_header(header);
+    auto [con, type_args] = check_type_or_class_header2(header);
 
     std::vector<Hs::FixityDecl> fixity_decls;
     std::vector<Hs::FamilyDecl> fam_decls;
@@ -7606,10 +7606,10 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
             else if (auto V = decl.to<Hs::ValueDecl>())
                 default_method_decls.push_back({loc,*V});
             else
-                throw myexception()<<"In declaration of class "<<name<<", I don't recognize declaration:\n   "<<decl.print();
+                throw myexception()<<"In declaration of class "<<con<<", I don't recognize declaration:\n   "<<decl.print();
         }
 
-    return {context, name, check_all_type_vars(type_args), fixity_decls, fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
+    return {context, con, check_all_type_vars(type_args), fixity_decls, fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
 }
 
 // Can we change the context parsing rule to expect:

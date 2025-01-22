@@ -74,6 +74,17 @@ string show_type_or_class_header(const Context& context, const Located<string>& 
     return join(ss, " ");
 }
 
+string show_type_or_class_header(const Context& context, const LTypeCon& con, const vector<LTypeVar>& tvs)
+{
+    vector<string> ss;
+    if (context.size())
+        ss = {context.print(), "=>"};
+    ss.push_back(unloc(con).name);
+    for(auto& tv: tvs)
+        ss.push_back(tv.print());
+    return join(ss, " ");
+}
+
 string show_instance_header(const Context& context, const LType& constraint)
 {
     string result = constraint.print();
@@ -586,7 +597,7 @@ int ConstructorDecl::arity() const
 
 string ClassDecl::print() const
 {
-    string result = "class " + show_type_or_class_header(context, name, type_vars);
+    string result = "class " + show_type_or_class_header(context, con, type_vars);
 
     vector<string> decls;
     for(auto& decl: fixity_decls)

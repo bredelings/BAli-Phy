@@ -29,7 +29,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
-    auto class_info = *info_for_class(unloc(C.name));
+    auto class_info = *info_for_class(unloc(C.con).name);
 
     for(auto& [loc,decl]: C.default_method_decls)
     {
