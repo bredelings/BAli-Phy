@@ -1,8 +1,8 @@
 [1mMain.hs:2.9-14:[1;31m error:[0m[1m
-   • Cannot unify `t` with `[t]` because of occurs check
+   • Cannot unify '[1;32mt[0m'[1m with '[1;32m[t][0m'[1m because of occurs check
    • Relevant bindings:
-       x :: t
-       f :: t -> [t]
+       x :: [1;32mt[0m[1m
+       f :: [1;32mt -> [t][0m[1m
    • In expression '[x] : []':
    • In equation `f x  = x : ([x] : [])`
    • In function `Main.f`

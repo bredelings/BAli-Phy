@@ -1,9 +1,9 @@
 [1mMain.hs:5.17:[1;31m error:[0m[1m
-   • Expected `m` but got `b`
+   • Expected '[1;32mm[0m'[1m but got '[1;32mb[0m'[1m
    • Relevant bindings:
-       x :: b
-       f :: b -> a
-       apply :: T a -> m
+       x :: [1;32mb[0m[1m
+       f :: [1;32mb -> a[0m[1m
+       apply :: [1;32mT a -> m[0m[1m
    • In equation `apply (Main.T f x)  = x`
    • In function `Main.apply`
    • In recursive group:

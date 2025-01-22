@@ -1,9 +1,8 @@
 [1mMain.hs:7.19:[1;31m error:[0m[1m
-   • Cannot unify `m` with `I a` because the quantified variable `a` would
-     escape its scope.
+   • Cannot unify '[1;32mm[0m'[1m with '[1;32mI a[0m'[1m because the quantified variable '[1;32ma[0m[1m' would escape its scope.
    • Relevant bindings:
-       i :: I a
-       unI :: SomeI -> m
+       i :: [1;32mI a[0m[1m
+       unI :: [1;32mSomeI -> m[0m[1m
    • In equation `unI (Main.MkSomeI i)  = i`
    • In function `Main.unI`
    • In recursive group:
