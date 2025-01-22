@@ -81,7 +81,6 @@ public:
 
     // "Rigid" type vars come from forall-quantified variables.
     // "Meta" type vars are unification type vars.
-    // "Other" type vars are used in foralls.
     MetaTypeVar fresh_meta_type_var(int level, const std::string& name, const Kind& k);
     MetaTypeVar fresh_meta_type_var(int level, const Kind& k);
 

@@ -805,7 +805,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     set<TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
     {
-        TypeVar qtv = FreshVarSource::fresh_rigid_type_var(rhs_level, qmtv.name, *qmtv.kind);
+        TypeVar qtv = FreshVarSource::fresh_rigid_type_var(rhs_level, qmtv.name, qmtv.kind);
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }

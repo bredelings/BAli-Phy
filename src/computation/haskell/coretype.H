@@ -117,7 +117,7 @@ public:
     std::optional<int> index;
     bool cycle_breaker = false;
 
-    std::optional<Kind> kind;
+    Kind kind;
 
     std::optional<Type> filled() const;
     void fill(const Type& t) const;
@@ -137,7 +137,6 @@ public:
 	ar(level_, indirect, name, index, cycle_breaker, kind);
     }
 
-    MetaTypeVar(int level, const std::string& s);
     MetaTypeVar(int level, const std::string& s, const Kind& k);
 
 private:

@@ -498,8 +498,7 @@ string MetaTypeVar::print_with_kind() const
 
     string uname = print();
 
-    if (kind)
-        uname = "("+uname + " :: " + (*kind).print()+")";
+    uname = "("+uname + " :: " + kind.print()+")";
 
     return uname;
 }
@@ -532,10 +531,6 @@ int MetaTypeVar::level() const
     else
         throw myexception()<<"Trying to get level for filled meta-typevar";
 }
-
-MetaTypeVar::MetaTypeVar(int l, const std::string& s)
-    : MetaTypeVar(l, s, {})
-{}
 
 MetaTypeVar::MetaTypeVar(int l, const std::string& s, const Kind& k)
     :level_(l), indirect(new Type),name(s),kind(k)

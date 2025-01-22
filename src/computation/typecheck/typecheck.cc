@@ -735,7 +735,7 @@ TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const
 void TypeChecker::promote_mtv(const MetaTypeVar& mtv, int new_level)
 {
     assert(mtv.level() > new_level);
-    auto mtv2 = FreshVarSource::fresh_meta_type_var( new_level, mtv.name, *mtv.kind);
+    auto mtv2 = FreshVarSource::fresh_meta_type_var( new_level, mtv.name, mtv.kind);
     mtv.fill( mtv2 );
 }
 
