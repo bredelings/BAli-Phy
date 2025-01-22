@@ -12,11 +12,6 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: How to bail early if we find an error?  Maybe check_error() return a bool
-//       if there is an error since the last call?
-
-// TODO: change TypeVar to have a non-optional kind.
-
 // TODO: make indenting ignore ANSI color codes.
 
 // TODO: eliminate desugar( ).
@@ -77,8 +72,7 @@ void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<
 
     auto free_tvs_in = free_type_variables(lhs_in);
 
-    Hs::LTypeCon sim(noloc, Hs::TypeCon("~"));
-    auto hs_pred = Hs::type_apply(sim, {lhs_in, rhs_in});
+    auto hs_pred = Hs::make_equality_type(lhs_in, rhs_in);
 
     hs_pred = Hs::add_forall_vars(free_tvs_in, hs_pred);
 

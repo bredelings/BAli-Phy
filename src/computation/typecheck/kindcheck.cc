@@ -33,27 +33,19 @@ namespace views = ranges::views;
  * See Note: Error messages from the kind checker (below).
  */
 
-bool kindchecker_state::type_var_in_scope(const TypeVar& tv) const
-{
-    return type_var_to_kind.back().count(tv);
-}
-
-void kindchecker_state::bind_type_var(const TypeVar& tv, const Kind& kind)
+TypeVar kindchecker_state::bind_type_var(const Hs::LTypeVar& ltv, const Kind& kind)
 {
     // We can't modify the initial empty scope.
     assert(type_var_to_kind.size() > 1);
 
     auto& tvk = type_var_to_kind.back();
-    if (tvk.count(tv))
-        tvk.erase(tv);
-    tvk.insert({tv,kind});
-}
+    if (tvk.count(ltv))
+        tvk.erase(ltv);
+    tvk.insert({ltv,kind});
 
-TypeVar kindchecker_state::bind_type_var(const Hs::LTypeVar& hs_tv, const Kind& kind)
-{
-    TypeVar tv(hs_tv.value().name, kind);
-    bind_type_var(tv, kind);
-    return tv;
+    TypeVar tv2(unloc(ltv).name, kind);
+    tv2.index = unloc(ltv).index;
+    return tv2;
 }
 
 void kindchecker_state::push_type_var_scope()
@@ -111,19 +103,10 @@ Kind kindchecker_state::kind_for_type_con(const std::string& name) const
 
 Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& ltv) const
 {
-    auto& [loc, tv] = ltv;
-    if (loc) type_checker.push_source_span(*loc);
-    auto result = kind_for_type_var(desugar(ltv));
-    if (loc) type_checker.pop_source_span();
-    return result;
-}
-
-Kind kindchecker_state::kind_for_type_var(const TypeVar& tv) const
-{
-    auto it = type_var_to_kind.back().find(tv);
+    auto it = type_var_to_kind.back().find(ltv);
     if (it == type_var_to_kind.back().end())
     {
-        type_checker.record_error(Note()<<"Type variable '"<<tv.print()<<"' not in scope");
+        type_checker.record_error(ltv.loc, Note()<<"Type variable '"<<unloc(ltv).print()<<"' not in scope");
         // Ideally we'd return fresh_kind_var() here.
         // But that requires this not to be const.
         return kind_type();
@@ -158,11 +141,6 @@ Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& 
         if (t.loc) type_checker.pop_source_span();
     }
     return t2;
-}
-
-Kind kindchecker_state::kind_check_type_var(const TypeVar& tv)
-{
-    return kind_for_type_var(tv);
 }
 
 Kind kindchecker_state::kind_check_type_con(const string& name)
@@ -326,46 +304,6 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
     throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
 }
 
-Kind kindchecker_state::kind_for_type(const Type& t)
-{
-    if (auto tc = t.to<TypeCon>())
-        return *(tc->kind);
-    else if (auto tv = t.to<TypeVar>())
-        return apply_substitution(tv->kind);
-    else if (auto tapp = t.to<TypeApp>())
-    {
-        // Get the kind of the type being applied
-        auto hkind = kind_for_type(tapp->head);
-
-        // The kind should be k1 -> k2
-        if (auto ka = is_function_type(hkind))
-            return ka->second;
-        else
-            throw myexception()<<"Kind of applied tycon is not an arrow kind!";
-    }
-    else if (auto c = t.to<ConstrainedType>())
-    {
-        return kind_for_type(c->type);
-    }
-    else if (auto fa = t.to<ForallType>())
-    {
-        push_type_var_scope();
-
-        for(auto& tv: fa->type_var_binders)
-        {
-            bind_type_var(tv, apply_substitution(tv.kind));
-        }
-
-        auto kind = kind_for_type( fa->type );
-
-        pop_type_var_scope();
-
-        return kind;
-    }
-
-    throw myexception()<<"kind_for_type: I don't recognize type '"<<t.print()<<"'";
-}
-
 Type kindchecker_state::zonk_kind_for_type(const Type& t)
 {
     if (auto tc = t.to<TypeCon>())
@@ -402,17 +340,10 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
     {
         auto Fa = *fa;
 
-        push_type_var_scope();
-
         for(auto& tv: Fa.type_var_binders)
-        {
             tv.kind = replace_kvar_with_star(tv.kind);
-            bind_type_var(tv, tv.kind);
-        }
 
         Fa.type = zonk_kind_for_type( Fa.type );
-
-        pop_type_var_scope();
 
         return Fa;
     }
@@ -445,9 +376,7 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
     for(auto& htv: constructor.forall)
     {
         auto kv = fresh_kind_var();
-        bind_type_var(htv, kv);
-        auto tv = desugar(htv);
-        tv.kind = kv;
+        auto tv = bind_type_var(htv, kv);
     }
 
     for(auto& constraint: constructor.context)

@@ -27,15 +27,13 @@ struct kindchecker_state
 
     // These three together form the "type context"
     TypeConEnv type_con_to_kind;
-    std::vector<std::map<TypeVar,Kind>> type_var_to_kind;
+    std::vector<std::map<Hs::LTypeVar,Kind>> type_var_to_kind;
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
 
-    void bind_type_var(const TypeVar& tv, const Hs::Kind& k);
     TypeVar bind_type_var(const Hs::LTypeVar& tv, const Hs::Kind& k);
     void push_type_var_scope();
     void pop_type_var_scope();
-    bool type_var_in_scope(const TypeVar& tv) const;
 
     void add_substitution(const KindVar& kv, const Kind& k);
     void add_substitution(const k_substitution_t& s);
@@ -43,7 +41,6 @@ struct kindchecker_state
     Kind apply_substitution(const Kind& k) const;
 
     Kind kind_for_type_con(const std::string&) const;
-    Kind kind_for_type_var(const TypeVar&) const;
     Kind kind_for_type_var(const Hs::LTypeVar&) const;
     void add_type_con_of_kind(const std::string& name, const Kind& k, int arity);
 
@@ -52,14 +49,12 @@ struct kindchecker_state
     bool unify(const Kind& k1, const Kind& k2);
 
     Type kind_check_type_of_kind(const Hs::LType& t, const Kind& k);
-    Kind kind_check_type_var(const TypeVar& tv);
     Kind kind_check_type_con(const std::string&);
     std::tuple<Type,Kind> kind_check_type(const Hs::LType& t);
     Type kind_check_constraint(const Hs::LType& constraint);
     Context kind_check_context(const Hs::Context& context);
 
     Type zonk_kind_for_type(const Type& t);
-    Kind kind_for_type(const Type& t);
 
     Type kind_and_type_check_type_(const Hs::LType& type, const Hs::Kind& k);
     Type kind_and_type_check_type(const Hs::LType& type);
