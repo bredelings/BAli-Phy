@@ -479,17 +479,12 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
 
 Type kindchecker_state::kind_and_type_check_type(const Hs::LType& type)
 {
-    return kind_and_type_check_type_(type, kind_type() );
+    return kind_check_type_of_kind(type, kind_type() );
 }
 
 Type kindchecker_state::kind_and_type_check_constraint(const Hs::LType& type)
 {
-    return kind_and_type_check_type_(type, kind_constraint() );
-}
-
-Type kindchecker_state::kind_and_type_check_type_(const Hs::LType& type, const Kind& kind)
-{
-    return kind_check_type_of_kind(type, kind);
+    return kind_check_type_of_kind(type, kind_constraint() );
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
