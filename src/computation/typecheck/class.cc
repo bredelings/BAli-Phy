@@ -178,7 +178,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         int nerrors = num_errors();
 
-        push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
+        //push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
         TypeCon tf_con(unloc(def_inst.con).name);
         if (not class_info.associated_type_families.count(tf_con))
@@ -198,7 +198,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
             if (not tv)
                 record_error(loc, Note()<<"Argument '"<<arg.print()<<"' must be a type variable.");
             else if (lhs_tvs.count(*tv))
-                record_error(loc, Note()<<"Argument '"<<arg.print()<<"' used twice.");
+                record_error(loc, Note()<<"Argument '"<<arg.print()<<"' used twice in default instance.");
             else
                 lhs_tvs.insert(*tv);
         }
@@ -215,7 +215,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});
 
-        pop_note();
+        // pop_note();
     }
 
     pop_note();
