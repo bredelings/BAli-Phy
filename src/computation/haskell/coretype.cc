@@ -892,3 +892,8 @@ TypeFamilyInstanceDecl desugar(const Hs::TypeFamilyInstanceDecl& decl)
 {
     return TypeFamilyInstanceDecl{desugar(decl.con), desugar(decl.args), desugar(decl.rhs)};
 }
+
+Type quantify(const std::vector<TypeVar>& tvs, const std::vector<Type>& constraints, const Type& type)
+{
+    return add_forall_vars(tvs, add_constraints(constraints, type));
+}

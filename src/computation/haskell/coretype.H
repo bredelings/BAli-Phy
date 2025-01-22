@@ -337,6 +337,8 @@ Type type_apply(const Type& T0, const std::vector<T>& args)
     return type_apply(T0, type_args);
 }
 
+Type quantify(const std::vector<TypeVar>& type_vars, const std::vector<Type>& constraints, const Type& type);
+
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_function_type(const Type& t);

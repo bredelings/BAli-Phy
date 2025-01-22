@@ -76,12 +76,8 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // Add class methods to GVE
     for(auto& sig_decl: class_decl.sig_decls)
     {
-        // variables NOT in the class decl are quantified in rename
-
-        // forall a. C a => method_type
-        auto hs_method_type = sig_decl.type;
-        hs_method_type = Hs::add_constraints({hs_class_constraint}, hs_method_type);
-        hs_method_type = Hs::add_forall_vars(class_decl.type_vars, hs_method_type);
+        // forall a. C a => method_type  (non-class variables are quantified in rename)
+        auto hs_method_type = Hs::quantify(class_decl.type_vars, {hs_class_constraint}, sig_decl.type);
         auto method_type = check_type(hs_method_type);
 
         for(auto& lv: sig_decl.vars)
@@ -128,15 +124,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         string extractor_name = cname1+"From"+cname2;
 
         auto get_dict = get_fresh_Var(extractor_name, true);
-        // Should this be a function arrow?
-        Type type = add_constraints({class_constraint}, superclass_constraint);
-
         // Maybe intersect the forall_vars with USED vars?
-        type = add_forall_vars( desugar(class_decl.type_vars), type);
-        class_info.superclass_extractors.insert(pair(make_core_var(get_dict), type));
+        // Should the => be a function arrow?
+        auto dict_type = quantify(tvs, {class_constraint}, superclass_constraint);
+        class_info.superclass_extractors.insert(pair(make_core_var(get_dict), dict_type));
 
         // Is this right???
-        class_info.fields.push_back(pair(get_dict, type));
+        class_info.fields.push_back(pair(get_dict, dict_type));
     }
     for(auto& [var,type]: class_info.members)
         class_info.fields.push_back({add_mod_name(var), type});
