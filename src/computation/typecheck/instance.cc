@@ -146,7 +146,7 @@ void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
-    auto tf_con = desugar(inst.con);
+    TypeCon tf_con(unloc(inst.con).name);
     auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
     push_source_span( inst_loc );
 
@@ -327,7 +327,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     std::set<TypeCon> defined_ats;
     for(auto& inst: inst_decl.type_inst_decls)
     {
-	auto tf_con = desugar(inst.con);
+	TypeCon tf_con(unloc(inst.con).name);
         check_add_type_instance(inst, class_name, instance_subst);
 	defined_ats.insert(tf_con);
     }

@@ -79,12 +79,6 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
 
 DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl)
 {
-    vector<TypeVar> datatype_typevars;
-    for(auto& tv: data_decl.type_vars)
-    {
-        datatype_typevars.push_back(desugar(tv));
-    }
-
     // c. handle the context
     // The context should already be type-checked.
     // We should already have checked that it doesn't contain any unbound variables.
@@ -94,7 +88,6 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     auto hs_data_type = Hs::type_apply(data_decl.con, data_decl.type_vars);
 
     auto data_type_con = TypeCon(unloc(data_decl.con).name);
-    Type data_type = type_apply(data_type_con, datatype_typevars);
 
     // Assume no "stupid theta".
     assert(data_decl.context.empty());
