@@ -166,7 +166,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         TypeCon con(unloc(type_fam_decl.con).name);
         this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, class_name);
         if (class_info.associated_type_families.count(con))
-            throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
+        {
+            record_error(hs_type_fam_type.loc, Note()<<"Trying to define type family '"<<con.print()<<"' twice");
+            continue;
+        }
         class_info.associated_type_families.insert({con,{}});
     }
 
