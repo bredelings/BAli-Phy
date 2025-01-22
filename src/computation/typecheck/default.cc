@@ -19,35 +19,29 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 
     for(auto& [loc,default_decl]: M.default_decls)
     {
-        push_source_span(*loc);
-        if (auto dclass = default_decl.maybe_class)
+        vector<Type> default_types;
+        for(auto& type: default_decl.types)
+            default_types.push_back(check_type(type));
+
+        auto dclass = Num;
+
+        if (default_decl.maybe_class)
         {
             bool named_defaults = this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
-
-            {
-                push_source_span(*dclass->loc);
-                if (not named_defaults)
-                    record_error( Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
-                if (default_env().count(TypeCon(unloc(*dclass))))
-                {
-                    record_error( Note() <<"Duplicate default declaration." );
-                    // Original declaration at location; default_env().find->first.loc
-                }
-                pop_source_span();
-            }
-            // Check that the data types are all data types and instances of the class?
-            default_env().insert({TypeCon(unloc(*dclass)), desugar(default_decl.types)});
+            if (not named_defaults)
+                record_error(default_decl.maybe_class->loc, Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
+            else
+                continue;
+            dclass = TypeCon(unloc(*default_decl.maybe_class));
         }
+
+        if (default_env().count(dclass))
+            record_error(loc, Note() <<"Duplicate default declaration." );
         else
         {
-            if (default_env().count(Num))
-            {
-                record_error( Note() <<"Duplicate default declaration." );
-            }
             // Check that the data types are all data types and instances of the class?
-            default_env().insert({Num, desugar( default_decl.types )});
+            default_env().insert({dclass, default_types});
         }
-        pop_source_span();
     }
 
     if (not default_env().count(Num))
