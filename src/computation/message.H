@@ -63,5 +63,7 @@ Message warning(const std::optional<yy::location>& loc, const Note& note);
 
 bool has_errors(const std::vector<Message>& messages);
 
+int num_errors(const std::vector<Message>& messages);
+
 void exit_on_error(const std::vector<Message>& messages, int exit_code = 1);
 #endif

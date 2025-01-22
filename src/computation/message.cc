@@ -138,12 +138,18 @@ void show_messages(const FileContents& file, std::ostream& out, vector<Message> 
         exit(1);
 }
 
-bool has_errors(const vector<Message>& messages)
+int num_errors(const vector<Message>& messages)
 {
+    int count = 0;
     for(auto& message: messages)
         if (message.is_error())
-            return true;
-    return false;
+            count++;
+    return count;
+}
+
+bool has_errors(const vector<Message>& messages)
+{
+    return (num_errors(messages) > 0);
 }
 
 void exit_on_error(const vector<Message>& messages, int exit_code)
