@@ -12,10 +12,6 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
-// TODO: share parts of add_type_instance( ) and add_default_type_instance( )
-
-// TODO: share parts of handling class_decl.default_type_inst_decls from class.cc
-
 // TODO: maybe remove the inst_loc arguments to InstanceInfo and EqInstanceInfo
 
 // TODO: maybe move some of the check_add_type_instance stuff to renaming?
@@ -91,30 +87,8 @@ std::tuple<std::vector<TypeVar>, Type, Type> TypeChecker::check_type_instance(co
     return {free_tvs, lhs, rhs};
 }
 
-void TypeChecker::add_type_instance(const Hs::LTypeCon& tf_con_in, const vector<Hs::LType>& args_in, const Hs::LType& rhs_in, const yy::location& inst_loc)
+void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs, const yy::location& inst_loc)
 {
-    auto lhs_in = Hs::type_apply(tf_con_in, args_in);
-
-    auto [free_tvs, lhs, rhs] = check_type_instance(lhs_in, rhs_in);
-
-    // 3. Add the (~) instance to the instance environment
-    auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
-
-    auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{inst_loc, free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{inst_loc, free_tvs, lhs, rhs} );
-    S.type = S.instance_info->type();
-    this_mod().add_symbol(S);
-
-    this_mod().local_instances.insert( {dvar, *S.instance_info} );
-    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
-}
-
-void TypeChecker::add_default_type_instance(const TypeCon& tf_con, const vector<Type>& args, const Type& rhs, const yy::location& inst_loc)
-{
-    Type lhs = type_apply(tf_con, args);
-    auto free_tvs = free_type_variables(lhs) | ranges::to<vector>();
-
     auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
@@ -145,6 +119,10 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         pop_note();
         return;
     }
+
+    auto hs_lhs = Hs::type_apply(inst.con, inst.args);
+    auto [free_ltvs, lhs, rhs] = check_type_instance(hs_lhs, inst.rhs);
+    auto [_, inst_args] = decompose_type_apps(lhs);
 
     // There CAN be multiple type instances for an associated type family, if they don't unify with each other.
     // We don't check if a class has only one instance, so I guess we allow this.
@@ -198,7 +176,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             if (instance_subst.count(fam_tv))
             {
                 auto expected = instance_subst.at(fam_tv);
-                if (not same_type( desugar(inst.args[i]), expected))
+                if (not same_type( inst_args[i], expected))
                     record_error( Note() << "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
             }
             pop_source_span();
@@ -228,7 +206,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    add_type_instance(inst.con, inst.args, inst.rhs, inst_loc);
+    add_type_instance(free_ltvs, lhs, rhs, inst_loc);
 
     pop_source_span();
     pop_note();
@@ -273,7 +251,9 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance
-    add_default_type_instance(tf_con, args, rhs, inst_loc);
+    auto lhs = type_apply(tf_con, args);
+    auto free_tvs = free_type_variables(lhs) | ranges::to<vector>();
+    add_type_instance(free_tvs, lhs, rhs, inst_loc);
 }
 
 std::optional<Core2::Var<>>

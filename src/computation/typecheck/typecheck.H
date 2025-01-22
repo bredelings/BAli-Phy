@@ -520,9 +520,7 @@ public:
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
-    void add_type_instance(const Hs::LTypeCon& tf_con, const std::vector<Hs::LType>& args, const Hs::LType& rhs, const yy::location& inst_loc);
-
-    void add_default_type_instance(const TypeCon& tf_con, const std::vector<Type>& args, const Type& rhs, const yy::location& inst_loc);
+    void add_type_instance(const std::vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs, const yy::location& inst_loc);
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
