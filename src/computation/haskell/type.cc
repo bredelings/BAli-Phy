@@ -137,6 +137,16 @@ LType make_arrow_type(const LType& t1, const LType& t2)
     return f;
 }
     
+LType make_equality_type(const LType& t1, const LType& t2)
+{
+    LType f = LTypeCon(noloc, TypeCon("~"));
+
+    f = {t1.loc, TypeApp(f, t1)};
+    f = {t1.loc * t2.loc, TypeApp(f, t2)};
+
+    return f;
+}
+
 LType function_type(const std::vector<LType>& arg_types, const LType& result_type)
 {
     auto ftype = result_type;

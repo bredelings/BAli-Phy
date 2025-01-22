@@ -278,6 +278,7 @@ std::optional<std::pair<LType,LType>> is_gen_function_type(const LType& t);
 int gen_type_arity(LType t);
 
 LType make_arrow_type(const LType& t1, const LType& t2);
+LType make_equality_type(const LType& t1, const LType& t2);
 LType function_type(const std::vector<LType>& arg_types, const LType& result_type);
 
 LType quantify(const std::vector<LTypeVar>& tvs, const std::vector<LType>& context, const LType& type);
