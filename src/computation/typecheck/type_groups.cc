@@ -151,14 +151,14 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
         else if (decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto& type_decl = decl.as_<Hs::DataOrNewtypeDecl>();
-            auto& name = unloc(type_decl.name);
+            auto& name = unloc(type_decl.con).name;
             referenced_types[name] = free_type_cons(type_decl);
             decl_for_type[name] = decl;
         }
         else if (decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto& type_decl = decl.as_<Hs::TypeSynonymDecl>();
-            auto& name = unloc(type_decl.name);
+            auto& name = unloc(type_decl.con).name;
             referenced_types[name] = free_type_cons(type_decl);
             decl_for_type[name] = decl;
         }

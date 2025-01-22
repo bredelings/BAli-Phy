@@ -1975,7 +1975,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 for(const auto& constr: data_decl->get_constructors())
                 {
                     auto cname = unloc(*constr.con).name;
-                    def_constructor(cname, constr.arity(), unloc(data_decl->name));
+                    def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
                     info.constructors.insert( qualify_local_name(cname) );
                     if (auto fields = to<Hs::FieldDecls>(constr.fields))
                         for(auto& field_decl: fields->field_decls)
@@ -1991,14 +1991,14 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     {
                         int arity = Hs::gen_type_arity( cons_decl.type );
                         auto cname = unloc(con_name);
-                        def_constructor(cname, arity, unloc(data_decl->name));
+                        def_constructor(cname, arity, unloc(data_decl->con).name);
                         info.constructors.insert( qualify_local_name(cname) );
 
                         // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
                     }
             }
 
-            def_ADT(unloc(data_decl->name), *arity, info);
+            def_ADT(unloc(data_decl->con).name, *arity, info);
         }
         else if (auto Class = decl.to<Haskell::ClassDecl>())
         {
@@ -2021,7 +2021,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {
-            def_type_synonym(unloc(S->name), S->arity());
+            def_type_synonym(unloc(S->con).name, S->arity());
         }
         else if (auto TF = decl.to<Hs::FamilyDecl>())
         {

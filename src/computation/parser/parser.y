@@ -1662,23 +1662,6 @@ check_type_or_class_header2(const Hs::LType& type)
     return {{type_head.loc, *tc}, type_args};
 }
 
-std::tuple<Located<string>, vector<Hs::LType>>
-check_type_or_class_header(const Hs::LType& type)
-{
-    auto [type_head, type_args] = Hs::decompose_type_apps(type);
-
-    // FIXME -- add location!
-    auto tc = unloc(type_head).to<Hs::TypeCon>();
-
-    // Convert to error message!
-    if (not tc)
-        throw myexception()<<"Malformed type or class header '"<<type<<"'";
-
-    auto name = tc->name;
-
-    return {{type_head.loc,name}, type_args};
-}
-
 vector<Hs::LTypeVar> check_all_type_vars(const vector<Hs::LType>& ltypes)
 {
     vector<Hs::LTypeVar> ltype_vars;
@@ -1699,8 +1682,8 @@ vector<Hs::LTypeVar> check_all_type_vars(const vector<Hs::LType>& ltypes)
 
 Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type)
 {
-    auto [name, type_args] = check_type_or_class_header(lhs_type);
-    return {name, check_all_type_vars(type_args), rhs_type};
+    auto [con, type_args] = check_type_or_class_header2(lhs_type);
+    return {con, check_all_type_vars(type_args), rhs_type};
 }
 
 Hs::FamilyDecl make_family_decl(Hs::FamilyInfo info, const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
@@ -1758,23 +1741,23 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
                                            const Hs::LType& header, const std::optional<Hs::Kind>& k,
                                            const Hs::ConstructorsDecl& constrs)
 {
-    auto [name, type_args] = check_type_or_class_header(header);
+    auto [con, type_args] = check_type_or_class_header2(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
-        throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
-    return {name, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
+        throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
+    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
                                            const Hs::LType& header, const std::optional<Hs::Kind>& k, const Hs::GADTConstructorsDecl& constrs)
 {
-    auto [name, type_args] = check_type_or_class_header(header);
+    auto [con, type_args] = check_type_or_class_header2(header);
     if (d_or_n == Hs::DataOrNewtype::newtype)
     {
         if (constrs.size() != 1 or constrs[0].con_names.size() != 1)
-            throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
+            throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
     }
 
-    return {name, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
+    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
 }
 
 Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& polytype, const optional<Located<Hs::Decls>>& decls)

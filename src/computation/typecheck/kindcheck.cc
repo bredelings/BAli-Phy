@@ -491,7 +491,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    auto kind = kind_for_type_con(unloc(data_decl.name));  // FIXME -- check that this is a data type?
+    auto kind = kind_for_type_con(unloc(data_decl.con).name);  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
     for(auto& ltv: data_decl.type_vars)
@@ -512,7 +512,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         kind_check_constraint(constraint);
 
     // d. construct the data type
-    Type data_type = TypeCon(unloc(data_decl.name));
+    Type data_type = TypeCon(unloc(data_decl.con).name);
     for(auto& tv: desugar(data_decl.type_vars))
         data_type = TypeApp(data_type, tv);
 
@@ -615,7 +615,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     // Bind type parameters for class
     push_type_var_scope();
 
-    auto& name = unloc(type_syn_decl.name);
+    auto& name = unloc(type_syn_decl.con).name;
 
     // a. Look up kind for this data type.
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
@@ -651,7 +651,7 @@ TypeConEnv kindchecker_state::infer_kinds(const vector<expression_ref>& type_dec
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            name = unloc(D.name);
+            name = unloc(D.con).name;
             arity = D.type_vars.size();
             kind = kind_type();
         }
@@ -665,7 +665,7 @@ TypeConEnv kindchecker_state::infer_kinds(const vector<expression_ref>& type_dec
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
-            name = unloc(T.name);
+            name = unloc(T.con).name;
             arity = T.type_vars.size();
             kind = kind_type();
         }

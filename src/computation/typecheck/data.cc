@@ -91,10 +91,9 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
 
     // d. construct the data type
 
-    Hs::LTypeCon hs_data_type_con = {data_decl.name.loc, Hs::TypeCon(unloc(data_decl.name))};
-    auto hs_data_type = Hs::type_apply(hs_data_type_con, data_decl.type_vars);
+    auto hs_data_type = Hs::type_apply(data_decl.con, data_decl.type_vars);
 
-    auto data_type_con = TypeCon(unloc(data_decl.name));
+    auto data_type_con = TypeCon(unloc(data_decl.con).name);
     Type data_type = type_apply(data_type_con, datatype_typevars);
 
     // Assume no "stupid theta".
@@ -107,7 +106,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
         for(auto& constructor: data_decl.get_constructors())
         {
             auto con_name = unloc(*constructor.con).name;
-            DataConInfo info = infer_type_for_constructor(hs_data_type_con, data_decl.type_vars, constructor);
+            DataConInfo info = infer_type_for_constructor(data_decl.con, data_decl.type_vars, constructor);
             types = types.insert({con_name, info});
         }
     }

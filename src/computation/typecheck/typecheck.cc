@@ -1363,7 +1363,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto kind = this_mod().lookup_local_type(unloc(D.name))->kind;
+            auto kind = this_mod().lookup_local_type(unloc(D.con).name)->kind;
             assert(not kind.empty());
             result_kind_for_type_vars( D.type_vars, kind);
             type_decl = D;
@@ -1379,7 +1379,7 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto kind = this_mod().lookup_local_type(unloc(T.name))->kind;
+            auto kind = this_mod().lookup_local_type(unloc(T.con).name)->kind;
             assert(not kind.empty());
             result_kind_for_type_vars( T.type_vars, kind);
             type_decl = T;

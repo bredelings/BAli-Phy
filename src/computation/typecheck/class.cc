@@ -260,7 +260,7 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
         auto t = decl.to<Hs::TypeSynonymDecl>();
         if (not t) continue;
 
-        auto name = unloc(t->name);
+        auto name = unloc(t->con).name;
         auto type_vars = desugar(t->type_vars);
         auto rhs_type = desugar(t->rhs_type);
 

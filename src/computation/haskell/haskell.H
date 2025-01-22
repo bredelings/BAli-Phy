@@ -498,17 +498,17 @@ struct DataOrNewtypeDecl: public Object, public DataDefn
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     // Should I factor out this group into a DataOrNewtypeHeader?
-    Located<std::string> name;
+    LTypeCon con;
     std::vector<LTypeVar> type_vars;
 
     DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
     std::string print() const;
 
-    DataOrNewtypeDecl(const Located<std::string>& s,
+    DataOrNewtypeDecl(const LTypeCon& c,
 		      const std::vector<LTypeVar>& tvs,
 		      const DataDefn& def)
         :DataDefn(def),
-         name(s),
+         con(c),
          type_vars(tvs)
         {}
 };
@@ -517,7 +517,7 @@ struct TypeSynonymDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
-    Located<std::string> name;
+    LTypeCon con;
     std::vector<LTypeVar> type_vars;
 
     LType rhs_type;
@@ -527,10 +527,10 @@ struct TypeSynonymDecl: public Object
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
     std::string print() const;
 
-    TypeSynonymDecl(const Located<std::string>& s,
+    TypeSynonymDecl(const LTypeCon& c,
                     const std::vector<LTypeVar>& tvs,
                     const Located<Type>& rhs)
-        :name(s),
+        :con(c),
          type_vars(tvs),
          rhs_type(rhs)
         {}

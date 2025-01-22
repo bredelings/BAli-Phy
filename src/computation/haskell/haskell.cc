@@ -63,17 +63,6 @@ LExp apply(const LExp& head, const std::vector<LExp>& args)
     return exp;
 }
 
-string show_type_or_class_header(const Context& context, const Located<string>& name, const vector<LTypeVar>& tvs)
-{
-    vector<string> ss;
-    if (context.size())
-        ss = {context.print(), "=>"};
-    ss.push_back(unloc(name));
-    for(auto& tv: tvs)
-        ss.push_back(tv.print());
-    return join(ss, " ");
-}
-
 string show_type_or_class_header(const Context& context, const LTypeCon& con, const vector<LTypeVar>& tvs)
 {
     vector<string> ss;
@@ -732,7 +721,7 @@ string DefaultDecl::print() const
 
 string TypeSynonymDecl::print() const
 {
-    string result = "type " + show_type_or_class_header({}, name, type_vars) + " = " + rhs_type.print();
+    string result = "type " + show_type_or_class_header({}, con, type_vars) + " = " + rhs_type.print();
     return result;
 }
 
@@ -804,7 +793,7 @@ std::string DataDefn::print() const
 std::string DataOrNewtypeDecl::print() const
 {
     string result = (data_or_newtype == DataOrNewtype::data) ? "data " : "newtype ";
-    result += show_type_or_class_header(context, name, type_vars);
+    result += show_type_or_class_header(context, con, type_vars);
     result += DataDefn::print();
 
     return result;

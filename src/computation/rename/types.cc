@@ -295,7 +295,7 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
 
 Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
 {
-    qualify_name(decl.name);
+    qualify_name(unloc(decl.con).name);
 
     Hs::DataDefn& decl2 = decl;
     decl2 = rename( decl2, decl.type_vars );
@@ -390,7 +390,7 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 
 Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
 {
-    qualify_name(decl.name);
+    qualify_name(unloc(decl.con).name);
     decl.rhs_type = rename_type(decl.rhs_type);
     return decl;
 }
