@@ -413,14 +413,17 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     // a. Look up kind for this data type.
     auto kind = kind_for_type_con(unloc(data_decl.con).name);  // FIXME -- check that this is a data type?
 
-    // b. Put each type variable into the kind.
+    // b. construct the data type
+    Type data_type = TypeCon(unloc(data_decl.con).name);
     for(auto& ltv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
         auto [arg_kind, result_kind] = is_function_type(kind).value();
 
         // map the name to its kind
-        bind_type_var(ltv, arg_kind);
+        auto tv = bind_type_var(ltv, arg_kind);
+
+        data_type = TypeApp(data_type, tv);
 
         // set up the next iteration
         kind = result_kind;
@@ -431,12 +434,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     for(auto& constraint: data_decl.context)
         kind_check_constraint(constraint);
 
-    // d. construct the data type
-    Type data_type = TypeCon(unloc(data_decl.con).name);
-    for(auto& tv: desugar(data_decl.type_vars))
-        data_type = TypeApp(data_type, tv);
-
-    // e. Handle regular constructor terms (class variables ARE in scope)
+    // d. Handle regular constructor terms (class variables ARE in scope)
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())
@@ -461,21 +459,6 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         }
     }
 }
-
-/* NOTE: Error messages from the kind checker.
- *
- * Currently error messages don't have locations information.
- * In order to get better error messages, we need to:
- * - pass a mutable reference to the typechecker (maybe?)
- * - have location information.
- *
- * Typically we also do check_type(desugar(type)).
- * - We should probably do this in one step.
- * - We could remove locations from core types.
- * - We could make kinds mandatory in Core types.
- * - Do we need to eliminate default-constructed types/kinds (NOTYPE)?
- *   - We might need to make some types optional<Type>, e.g. the parser.
- */
 
 Type kindchecker_state::kind_and_type_check_type(const Hs::LType& type)
 {
