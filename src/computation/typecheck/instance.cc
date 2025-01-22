@@ -16,8 +16,6 @@ using std::optional;
 
 // TODO: maybe move some of the check_add_type_instance stuff to renaming?
 
-// TODO: eliminate desugar( ).
-
 // TODO: make indenting ignore ANSI color codes.
 
 // TODO: change kind unification to use meta-variables.

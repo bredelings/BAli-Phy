@@ -1,7 +1,6 @@
 #include "computation/typecheck/typecheck.H"
 #include "computation/typecheck/kindcheck.H"
 #include "computation/typecheck/solver.H"
-#include "computation/haskell/desugar_type.H"
 
 #include "util/set.H"
 #include "util/variant.H"

@@ -2,7 +2,6 @@
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
 #include "haskell/ids.H"
-//#include "haskell/desugar_type.H"
 
 using std::pair;
 using std::map;

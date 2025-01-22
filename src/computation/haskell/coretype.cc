@@ -5,7 +5,6 @@
 #include "haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
 #include <range/v3/all.hpp>
-#include "desugar_type.H"
 
 using std::string;
 using std::pair;
@@ -783,101 +782,6 @@ TypeCon list_tycon()
 {
     auto kind = make_n_args_kind(1);
     return TypeCon( "[]", kind );
-}
-
-
-TypeVar desugar(const Hs::LTypeVar& ltv)
-{
-    auto& [loc,tv] = ltv;
-    TypeVar t2;
-    t2.name = tv.name;
-    t2.index = tv.index;
-    if (tv.kind)
-        t2.kind = *tv.kind;
-    return t2;
-}
-
-TypeCon desugar(const Hs::LTypeCon& ltc)
-{
-    auto& [loc,tc] = ltc;
-    TypeCon t2;
-    t2.name = tc.name;
-    t2.kind = tc.kind;
-    return t2;
-}
-
-vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& ts1)
-{
-    vector<TypeVar> ts2;
-    for(auto& t1: ts1)
-        ts2.push_back(desugar(t1));
-    return ts2;
-}
-
-Type desugar(const Hs::LType& lt)
-{
-    auto& [loc, t] = lt;
-
-    if (t.empty())
-        return {};
-    else if (auto tv = t.to<Hs::TypeVar>())
-        return desugar(Hs::LTypeVar{loc, *tv});
-    else if (auto tc = t.to<Hs::TypeCon>())
-        return desugar(Hs::LTypeCon{loc, *tc});
-    else if (auto l= t.to<Hs::ListType>())
-    {
-        return list_type( desugar(l->element_type) );
-    }
-    else if (auto tup = t.to<Hs::TupleType>())
-    {
-        vector<Type> element_types;
-        for(auto& e: tup->element_types)
-            element_types.push_back( desugar( e) );
-
-        return tuple_type( element_types );
-    }
-    else if (auto app = t.to<Hs::TypeApp>())
-    {
-        return TypeApp( desugar(app->head), desugar(app->arg) );
-    }
-    else if (auto fa = t.to<Hs::ForallType>())
-    {
-        vector<TypeVar> tvs;
-        for(auto& tv: fa->type_var_binders)
-            tvs.push_back( desugar(tv) );
-        return ForallType(tvs, desugar(fa->type) );
-    }
-    else if (auto ct = t.to<Hs::ConstrainedType>())
-    {
-        return ConstrainedType( desugar(ct->context), desugar(ct->type) );
-    }
-    else if (t.to<Hs::StrictType>())
-    {
-        throw myexception()<<"Can't desugar strict type '"<<lt.print()<<"' from Hs::Type to Type";
-    }
-    else if (t.to<Hs::LazyType>())
-    {
-        throw myexception()<<"Can't desugar lazy type '"<<lt.print()<<"' from Hs::Type to Type";
-    }
-    else if (t.is_a<Hs::TypeOfKind>())
-    {
-        throw myexception()<<"Can't desugar TypeOfKind '"<<lt.print()<<"' from Hs::Type to Type";
-    }
-    else
-        std::abort();
-}
-
-vector<Type> desugar(const std::vector<Hs::LType>& ts1)
-{
-    vector<Type> ts2;
-    for(auto& t1: ts1)
-        ts2.push_back(desugar(t1));
-    return ts2;
-}
-
-TypeFamilyInstanceDecl desugar(const Hs::TypeFamilyInstanceDecl& decl)
-{
-    return TypeFamilyInstanceDecl{desugar(decl.con), desugar(decl.args), desugar(decl.rhs)};
 }
 
 Type quantify(const std::vector<TypeVar>& tvs, const std::vector<Type>& constraints, const Type& type)

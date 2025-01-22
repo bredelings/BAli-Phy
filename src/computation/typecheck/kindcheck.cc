@@ -1,7 +1,6 @@
 #include "kindcheck.H"
 #include "range/v3/all.hpp"
 #include "haskell/ids.H"
-#include "haskell/desugar_type.H"
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
 #include "typecheck.H"
