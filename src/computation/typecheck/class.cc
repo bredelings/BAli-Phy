@@ -292,19 +292,27 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
     {
         if (auto type_fam_decl = decl.to<Hs::FamilyDecl>())
         {
-            auto args = desugar(type_fam_decl->args);
-            auto fname = unloc(type_fam_decl->con).name;
-            auto kind = this_mod().lookup_local_type(fname)->kind;
+            auto fam_name = unloc(type_fam_decl->con).name;
+            auto fam_kind = this_mod().lookup_local_type(fam_name)->kind;
 
-            auto con = desugar(type_fam_decl->con);
-            this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args,kind);
+            auto kind = fam_kind;
+            auto& hs_args = type_fam_decl->args;
+            vector<TypeVar> args;
+            for(auto& [loc,tv]: hs_args)
+            {
+                auto [first,rest] = *is_gen_function_type(kind);
+                args.push_back(TypeVar(tv.name, first));
+                kind = rest;
+            }
+
+            this_mod().lookup_local_type(fam_name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, fam_kind);
 
             // Add instance equations for closed type families
             if (type_fam_decl->where_instances)
             {
                 for(auto& inst: *type_fam_decl->where_instances)
                     check_add_type_instance(inst, {}, {});
-                this_mod().lookup_local_type(con.name)->is_type_fam()->info->closed = true;
+                this_mod().lookup_local_type(fam_name)->is_type_fam()->info->closed = true;
             }
         }
     }
