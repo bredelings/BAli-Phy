@@ -240,6 +240,10 @@ public:
 
     TypeCon find_prelude_tycon(const std::string& name) const;
 
+    std::optional<ID> find_tycon_name(const std::string& name) const;
+
+    std::optional<TypeCon> find_tycon(const std::string& name) const;
+
     Type bool_type() const;
 
     Type char_type() const;

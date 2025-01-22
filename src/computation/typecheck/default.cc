@@ -32,7 +32,14 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
                 record_error(default_decl.maybe_class->loc, Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
             else
                 continue;
-            dclass = TypeCon(unloc(*default_decl.maybe_class));
+
+            if (auto d = find_tycon(unloc(*default_decl.maybe_class)))
+                dclass = *d;
+            else
+            {
+                record_error(default_decl.maybe_class->loc, Note()<<"Unknown data type");
+                continue;
+            }
         }
 
         if (default_env().count(dclass))

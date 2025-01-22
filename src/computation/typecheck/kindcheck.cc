@@ -413,7 +413,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     auto kind = kind_for_type_con(unloc(data_decl.con).name);  // FIXME -- check that this is a data type?
 
     // b. construct the data type
-    Type data_type = TypeCon(unloc(data_decl.con).name);
+    Type data_type = TypeCon(unloc(data_decl.con).name, kind);
     for(auto& ltv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.

@@ -857,20 +857,38 @@ Hs::Var TypeChecker::find_prelude_var(string name) const
 
 ID TypeChecker::find_prelude_tycon_name(const string& name) const
 {
-    // We need to look in the Prelude, not this module!
-    // But then we would have to rename all modules before type-checking any of them.
-    if (this_mod().type_is_declared(name))
-        return this_mod().lookup_type(name)->name;
+    if (auto n = find_tycon_name(name))
+        return *n;
     else
         return name;
 }
 
 TypeCon TypeChecker::find_prelude_tycon(const string& name) const
 {
+    return TypeCon( find_prelude_tycon_name(name) );
+}
+
+std::optional<ID> TypeChecker::find_tycon_name(const string& name) const
+{
     // We need to look in the Prelude, not this module!
     // But then we would have to rename all modules before type-checking any of them.
-    auto prelude_name = find_prelude_tycon_name(name);
-    return TypeCon(prelude_name);
+    if (this_mod().type_is_declared(name))
+        return this_mod().lookup_type(name)->name;
+    else
+        return {};
+}
+
+std::optional<TypeCon> TypeChecker::find_tycon(const string& name) const
+{
+    // We need to look in the Prelude, not this module!
+    // But then we would have to rename all modules before type-checking any of them.
+    if (this_mod().type_is_declared(name))
+    {
+        auto type = this_mod().lookup_type(name);
+        return TypeCon(type->name, type->kind);
+    }
+    else
+        return {};
 }
 
 Type TypeChecker::bool_type() const
@@ -895,7 +913,7 @@ Type TypeChecker::integer_type() const
 
 Type TypeChecker::rational_type() const
 {
-    return TypeCon("Compiler.Ratio.Rational");
+    return TypeCon("Compiler.Ratio.Rational", kind_type());
 }
 
 Type TypeChecker::double_type() const

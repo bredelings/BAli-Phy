@@ -9,6 +9,14 @@ using std::vector;
 
 namespace views = ranges::views;
 
+// Note: Attempting to add kinds on TypeCon can cause loops!
+// * make_arrow_type( ) <-> kind_arrow( )
+// The arrow type has kind Type -> Type -> Type
+// The arrow kind has sort Kind -> Kind -> Kind
+// We could make all the sorts be empty.
+// We could say that the Type kind has sort Type.
+//   But how would we allocate this?  The object would have to be self-referential.
+
 TypeCon kind_kind() {return TypeCon("Kind");}
 
 TypeCon kind_type() {return TypeCon("Type");}
