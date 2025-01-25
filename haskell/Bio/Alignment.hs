@@ -140,8 +140,8 @@ alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree num
           observedSequences = labelToNodeMap tree $ getSequences sequences
           allSequences = minimally_connect_characters observedSequences tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
-          lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ strip_gaps $ allSequences IntMap.! node)
-          bits = fmap bitmask_from_sequence' allSequences
+          lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ stripGaps $ allSequences IntMap.! node)
+          bits = fmap bitmaskFromSequence' allSequences
           alignmentForBranch b = pairwise_alignment_from_bits (bits IntMap.! source) (bits IntMap.! target)
                                  where source = sourceNode tree b
                                        target = targetNode tree b
@@ -234,7 +234,7 @@ align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterDa
 instance Alignment AlignedCharacterData where
     alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
     numSequences (Aligned (CharacterData _ seqs)) = length seqs
-    sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ strip_gaps $ snd $ (seqs !! index)
+    sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ stripGaps $ snd $ (seqs !! index)
 
 
 -- In both cases we normalize the oldest taxon to have time 0.

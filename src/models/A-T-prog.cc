@@ -333,7 +333,7 @@ do_block generate_main(const variables_map& args,
 
 	// Select range
 	if (not range.empty())
-            E = {var("<$>"), {var("select_range"),String(range)}, E};
+            E = {var("<$>"), {var("selectRange"),String(range)}, E};
 
 	// Convert to CharacterData
 	if (partition_group[0] == 0)
@@ -384,7 +384,7 @@ do_block generate_main(const variables_map& args,
                 int index = index_for_filename.at( filename_ranges[i].first );
                 expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
                 if (not filename_ranges[i].second.empty())
-                    loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+                    loaded_sequences = {var("selectRange"), String(filename_ranges[i].second), loaded_sequences};
 		if (partition_group[i] == 0)
 		{
 		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
@@ -871,7 +871,7 @@ std::string generate_atmodel_program(const variables_map& args,
             else
             {
                 var leaf_sequence_lengths("sequence_lengths" + part_suffix);
-                model.let(leaf_sequence_lengths, {var("get_sequence_lengths"), sequence_data_var});
+                model.let(leaf_sequence_lengths, {var("getSequenceLengths"), sequence_data_var});
 
                 var properties_A("properties_A"+part_suffix);
 		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("phyloAlignment"), tree_var, imodel, scale, leaf_sequence_lengths}});

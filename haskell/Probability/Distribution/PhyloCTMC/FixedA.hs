@@ -55,7 +55,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
       maybeNodeISequences = labelToNodeMap rtree isequences
-      maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+      maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
@@ -137,7 +137,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
   let (isequences, column_counts, mapping) = compress_alignment $ getSequences sequenceData
 
       maybeNodeISequences = labelToNodeMap tree isequences
-      maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+      maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 

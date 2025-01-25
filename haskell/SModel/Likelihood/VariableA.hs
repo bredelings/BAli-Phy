@@ -10,7 +10,7 @@ import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
-import Bio.Sequence (bitmask_from_sequence, strip_gaps)
+import Bio.Sequence
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap

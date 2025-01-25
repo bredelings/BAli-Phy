@@ -86,7 +86,7 @@ parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_mu
 instance Parsimony AlignedCharacterData where
     parsimony tree cost alignment = let (isequences, column_counts, mapping) = compress_alignment $ getSequences alignment
                                         maybeNodeISequences = labelToNodeMap tree isequences
-                                        maybeNodeSeqsBits = ((\seq -> (strip_gaps seq, bitmask_from_sequence seq)) <$>) <$> maybeNodeISequences
+                                        maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
                                         alphabet = getAlphabet alignment
                                     in parsimony_root_fixed_A tree maybeNodeSeqsBits alphabet cost column_counts
 

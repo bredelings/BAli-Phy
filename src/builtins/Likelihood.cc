@@ -22,7 +22,7 @@ using Alphabet = PtrBox<alphabet>;
 #include "dp/hmm.H"
 using boost::dynamic_bitset;
 
-extern "C" closure builtin_function_bitmask_from_sequence(OperationArgs& Args)
+extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 
@@ -45,7 +45,7 @@ extern "C" closure builtin_function_bitmask_from_sequence(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_strip_gaps(OperationArgs& Args)
+extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 

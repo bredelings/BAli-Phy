@@ -22,7 +22,7 @@ mkSequence :: ESequence -> Sequence
 mkSequence s = (T.fromCppString $ builtin_sequence_name s, T.fromCppString $ sequenceDataRaw s)
 
 -- FIXME: make these operate on just the text, not the pair?
--- FIXME: remove sequence_to_indices in favor of strip_gaps . sequenceToAlignedIndices?
+-- FIXME: remove sequence_to_indices in favor of stripGaps . sequenceToAlignedIndices?
 foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
 foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
 sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
@@ -38,24 +38,24 @@ load_sequences :: String -> IO [Sequence]
 load_sequences filename = fmap (fmap mkSequence . vectorToList) $ builtin_load_sequences (list_to_string filename)
 
 foreign import bpcall "Alignment:getRange" builtin_getRange :: CPPString -> Int -> EVector Int
-foreign import bpcall "Alignment:select_range" builtin_select_range :: EVector Int -> CPPString -> CPPString
-select_range :: String -> [Sequence] -> [Sequence]
-select_range range sequences = let maxLength = maximum [ T.length $ snd s | s <- sequences ]
-                                   range' = builtin_getRange (list_to_string range) maxLength
-                                   select (name, chars) = (name, (T.fromCppString $ builtin_select_range range' (T.toCppString chars)))
+foreign import bpcall "Alignment:" selectRangeRaw :: EVector Int -> CPPString -> CPPString
+selectRange :: String -> [Sequence] -> [Sequence]
+selectRange range sequences = let maxLength = maximum [ T.length $ snd s | s <- sequences ]
+                                  range' = builtin_getRange (list_to_string range) maxLength
+                                  select (name, chars) = (name, (T.fromCppString $ selectRangeRaw range' (T.toCppString chars)))
                                in fmap select sequences
 
-reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"
+reorderSequences names sequences | length names /= length sequences  = error "Sequences.reorderSequences: different number of names and sequences!"
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
     where sequences_map = Map.fromList [ (fst sequence, sequence) | sequence <- sequences ]
 
-get_sequence_lengths sequenceData = Map.fromList [ (label, vector_size isequence) | (label, isequence) <- getSequences $ sequenceData]
+getSequenceLengths sequenceData = Map.fromList [ (label, vector_size isequence) | (label, isequence) <- getSequences $ sequenceData]
 
-foreign import bpcall "Likelihood:" bitmask_from_sequence :: EVector Int -> CBitVector
-foreign import bpcall "Likelihood:" strip_gaps :: EVector Int -> EVector Int
+foreign import bpcall "Likelihood:" bitmaskFromSequence :: EVector Int -> CBitVector
+foreign import bpcall "Likelihood:" stripGaps :: EVector Int -> EVector Int
 foreign import bpcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
 
-bitmask_from_sequence' s = BitVector $ bitmask_from_sequence s
+bitmaskFromSequence' s = BitVector $ bitmaskFromSequence s
 maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
 
 fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
@@ -117,7 +117,7 @@ mkCharacterData alphabet sequences = CharacterData alphabet [(label, go sequence
 
 mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet indices')
     where CharacterData _ indices = mkCharacterData alphabet sequences
-          indices' = map (\(label,is) -> (label, strip_gaps is)) indices
+          indices' = map (\(label,is) -> (label, stripGaps is)) indices
 
 allSameAs x xs = and ((x==) <$> xs)
 
@@ -131,5 +131,5 @@ checkSameLengths d@(CharacterData _ sequences) | isJust $ allSame lengths = d
 
 mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkCharacterData alphabet sequences
 
-unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, strip_gaps s) | (l,s) <- sequences])
+unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, stripGaps s) | (l,s) <- sequences])
 

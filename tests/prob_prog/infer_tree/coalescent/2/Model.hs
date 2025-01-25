@@ -96,7 +96,7 @@ main logDir = do
 
     sequences <- load_sequences filename
 
-    let seqData = [ mkAlignedCharacterData dna $ select_range range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
+    let seqData = [ mkAlignedCharacterData dna $ selectRange range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 
     logTree <- treeLogger $ logDir </> "C1.trees"
 

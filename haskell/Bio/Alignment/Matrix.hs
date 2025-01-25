@@ -120,7 +120,7 @@ getConnectedStates :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap Bi
 getConnectedStates sequences tree =
     let nodes = tree & getNodesSet
 
-        sequence_masks = fmap (fmap bitmask_from_sequence') sequences
+        sequence_masks = fmap (fmap bitmaskFromSequence') sequences
 
         node_masks = nodes & IntMap.fromSet mask_for_node
 

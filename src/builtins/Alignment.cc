@@ -674,7 +674,7 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
     return columns2;
 }
 
-extern "C" closure builtin_function_select_range(OperationArgs& Args)
+extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& columns = arg0.as_<EVector>();

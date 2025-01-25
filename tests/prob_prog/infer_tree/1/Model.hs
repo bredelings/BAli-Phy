@@ -14,7 +14,7 @@ branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = nu
 
 model seq_data = do
     let taxa            = getTaxa seq_data
-        tip_seq_lengths = get_sequence_lengths seq_data
+        tip_seq_lengths = getSequenceLengths seq_data
 
     -- Tree
     scale <- prior $ gamma (1/2) 2
