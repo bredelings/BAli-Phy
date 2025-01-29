@@ -1,7 +1,7 @@
 {
-    "name": "multi_freq",
+    "name": "Covarion.multi_freq",
     "result_type": "CTMC<a>",
-    "call": "multiFrequency(@tree,@nodeFreqs,@submodel)",
+    "call": "multiFrequencyCovarion(@tree,@nodeFreqs,@submodel,@rateDist,@s01,@s10)",
     "import": ["SModel"],
     "args": [
         {
@@ -35,12 +35,44 @@
             "description": "The number of frequency components"
         },
         {
+            "name": "rateDist",
+            "type": "DiscreteDist<Double>",
+	    "default_value":"~dirichlet_on_dirichlet(@n,2,2)",
+	    "description":"Rates for each category"
+        },
+        {
+            "name": "r",
+            "type": "Double",
+	    "default_value":"~gamma(2,1/4)",
+	    "description":"s01 + s10"
+        },
+        {
+            "name": "pi1",
+            "type": "Double",
+	    "default_value":"~beta(2,2)",
+	    "description":"Fraction of time spent in the ON state"
+        },
+        {
             "name": "a",
             "type": "Alphabet",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
     ],
+    "computed": [
+	{
+	    "name": "rate",
+	    "value": "2 * @r * @pi1 * (1 - @pi1)"
+	},
+	{
+	    "name": "s01",
+	    "value": "@r * @pi1"
+	},
+	{
+	    "name": "s10",
+	    "value": "@r * (1 - @pi1)"
+	}
+    ],
     "description": "A non-equilibrium model where each node selects from a weighted collection of n frequences.",
-    "examples": ["|pi:tn93(pi=pi)| +> multi_freq(n=3) +> Rates.gamma"]
+    "examples": ["|pi:tn93(pi=pi)| +> Covarion.multi_freq(n=3)"]
 }
