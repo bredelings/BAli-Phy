@@ -452,7 +452,7 @@ string MDo::print() const
 
 string Alt::print() const
 {
-    return pattern.print() + " -> " + rhs.print_no_equals();
+    return pattern.print() + rhs.print_no_equals();
 }
 
 string Alts::print() const
@@ -467,7 +467,7 @@ string CaseExp::print() const
 {
     vector<string> alt_strings;
     for(auto& alt: alts)
-        alt_strings.push_back(alt.patterns[0].print() + " -> " + alt.rhs.print_no_equals());
+        alt_strings.push_back(alt.patterns[0].print() + alt.rhs.print_no_equals());
 
     return "case " + unloc(object).print() + " of {" + join(alt_strings, "\n;") + "}";
 }
@@ -821,8 +821,13 @@ std::string GuardedRHS::print() const
 
 std::string GuardedRHS::print_no_equals() const
 {
-    assert(guards.empty());
-    return unloc(body).print();
+    vector<string> guard_string;
+    for(auto& guard: guards)
+        guard_string.push_back(unloc(guard).print());
+    string result = "-> " + unloc(body).print();
+    if (not guard_string.empty())
+        result = "| " + join(guard_string,", ") + result;
+    return result;
 }
 
 std::string MultiGuardedRHS::print() const
@@ -838,9 +843,9 @@ std::string MultiGuardedRHS::print() const
 
 std::string MultiGuardedRHS::print_no_equals() const
 {
-    assert(guarded_rhss.size() == 1);
     vector<string> ss;
-    ss.push_back(guarded_rhss[0].print_no_equals());
+    for(auto& guarded_rhs: guarded_rhss)
+        ss.push_back(guarded_rhs.print_no_equals());
     if (decls)
         ss.push_back("where " + unloc(*decls).print());
 
@@ -857,7 +862,6 @@ string LambdaExp::print() const
     string result = "\\";
     for(auto& pat: match.patterns)
         result += parenthesize_pattern(pat) + " ";
-    result += "-> ";
     result += match.rhs.print_no_equals();
     return result;
 }
