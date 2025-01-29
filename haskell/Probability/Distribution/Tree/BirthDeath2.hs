@@ -9,32 +9,32 @@ data Tree = Tree Int Time [Tree] (Maybe Tree)
 nodeTime (Tree _ t _ _) = t
 setParent p (Tree n t children _) = (Tree n t children (Just p))
 
-sampleBirthDeathTree t b d s = do
+sampleBirthDeathNode t b d s = do
   delta <- sample $ exponential (1/(b + d + s))
   u <- uniqueInt
   r <- sample $ uniform 0 (d + s + b)
   if delta > t
   then return (Tree u 0 [] Nothing) -- survives until present, and is observed.
   else do
-      let t2 = t - delta
-      if r < d
-      then return (Tree u t2 [] Nothing) -- goes extinct at time t2
-      else
-          if r < d + s
-          then do
-            child <- sampleBirthDeathTree t2 b d s
-            let node = Tree u t2 [setParent node child] Nothing -- a sampling event
-            return node
-          else do
-            left <- sampleBirthDeathTree t2 b d s
-            right <- sampleBirthDeathTree t2 b d s
-            let node = Tree u t2 (setParent node <$> [left,right]) Nothing
-            return node
+      let nchildren = case () of _ | r > d + s -> 2
+                                   | r > d     -> 1
+                                   | otherwise -> 0
+          t2 = t - delta
+
+      children <- sequence $ replicate nchildren (sampleBirthDeathNode t2 b d s)
+      let node = Tree u t2 (setParent node <$> children) Nothing
+      return node
+
+sampleBirthDeathTree1 t b d s = do
+    u <- uniqueInt
+    left <- sampleBirthDeathNode t b d s
+    let node = Tree u t [setParent node left] Nothing
+    return node
 
 sampleBirthDeathTree2 t b d s = do
     u <- uniqueInt
-    left <- sampleBirthDeathTree t b d s
-    right <- sampleBirthDeathTree t b d s
+    left <- sampleBirthDeathNode t b d s
+    right <- sampleBirthDeathNode t b d s
     let node = Tree u t (setParent node <$> [left, right]) Nothing
     return node
 
