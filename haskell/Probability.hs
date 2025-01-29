@@ -30,7 +30,8 @@ module Probability (module Probability,
                     module Probability.Distribution.Tree,
                     module Probability.Distribution.PhyloCTMC,
                     module Probability.Distribution.PhyloAlignment,
-                    module Probability.Distribution.RecDist
+                    module Probability.Distribution.RecDist,
+                    module Probability.Distribution.UniqueDist
                    )
     where
 
@@ -72,3 +73,5 @@ import Probability.Distribution.PhyloCTMC
 import Probability.Distribution.PhyloAlignment
 
 import Probability.Distribution.RecDist
+
+import Probability.Distribution.UniqueDist
