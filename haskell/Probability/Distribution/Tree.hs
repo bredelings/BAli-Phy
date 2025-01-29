@@ -4,12 +4,10 @@ module Probability.Distribution.Tree (module Probability.Distribution.Tree,
                                       module Probability.Distribution.Tree.UniformTimeTree,
                                       module Probability.Distribution.Tree.Coalescent,
                                       module Probability.Distribution.Tree.Yule,
-                                      module Tree,
                                       module Probability.Random
                                      )
     where
 
-import           Tree
 import           Probability.Random
 
 import           Probability.Distribution.Tree.Coalescent

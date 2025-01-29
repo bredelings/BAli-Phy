@@ -522,7 +522,8 @@ void write_header(std::ostream& program_file,
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("Bio.Sequence");                          // for mkAlignedCharacterData, mkUnalignedCharacterData
     imports.insert("MCMC");                                  // for scaleGroups{Slice,MH}
-    imports.insert("Tree.Newick");                           // for write_newick
+    imports.insert("Tree");                                  // for Tree
+    imports.insert("Tree.Newick");                           // for writeNewick
     imports.insert("SModel.Parsimony");                      // for parsimony
     imports.insert("Probability");                           // for prop_likelihood, dropInternalLabels(?)
     imports.insert("Probability.Random");                    // for makeMCMCModel
