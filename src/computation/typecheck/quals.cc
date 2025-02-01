@@ -156,9 +156,11 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         // 4. if pat is failable, also typecheck "fail".
         if (this_mod().is_refutable_pattern(PQ.bindpat))
         {
+            if (pq->bindpat.loc) push_source_span(*pq->bindpat.loc);
             auto fail_op_type = inferRho(*PQ.failOp);
             auto [fail_arg_type, fail_result_type] = unify_function(fail_op_type);
             unify(fail_result_type, stmts_type);
+            if (pq->bindpat.loc) pop_source_span();
         }
         else
             PQ.failOp = {};
