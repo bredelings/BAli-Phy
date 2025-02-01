@@ -22,7 +22,8 @@ import MCMC
 
 uniformOrderedTreeEdges [l1]     _        = return []
 uniformOrderedTreeEdges leaves   (i : is) = do
-    Just ([l1, l2], leaves') <- remove 2 leaves
+    tmp <- remove 2 leaves
+    let Just ([l1, l2], leaves') = tmp
     otherEdges         <- uniformOrderedTreeEdges (i : leaves') is
     return $ [(l1, i), (l2, i)] ++ otherEdges
 

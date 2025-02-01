@@ -32,6 +32,9 @@ instance Monad IO where
     f >>= g  = IO (\state1 -> case runIO f state1 of (state2,x) -> runIO (g x) state2)
     unsafeInterleaveIO f = IO (\s -> s `seq` (s, snd (runIO f s)) )
 
+instance MonadFail IO where
+    fail s = error s
+
 fixIO f   = IO (\state1 -> let result@(state2,x) = runIO (f x) state1 in result)
 
 unsafePerformIO :: IO c -> c

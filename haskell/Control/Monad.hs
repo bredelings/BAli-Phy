@@ -18,21 +18,27 @@ class Applicative m => Monad m where
     return :: a -> m a
     (>>=)  :: m a -> (a -> m b) -> m b
     (>>)   :: m a -> m b -> m b
-    fail   :: String -> m a
     unsafeInterleaveIO :: m a -> m a
-
 
     return = pure
     f >> g = f >>= (\x -> g)
-    fail s = error s
     unsafeInterleaveIO = error "no unsafeInterleaveIO for this class"
+
+class Monad m => MonadFail m where
+    fail   :: String -> m a
 
 instance Monad [] where
     xs >>= f = concatMap f xs
 
+instance MonadFail [] where
+    fail _ = []
+
 instance Monad Maybe where
     (Just x) >>= f = f x
     Nothing >>=  f = Nothing
+
+instance MonadFail Maybe where
+    fail _ = Nothing
 
 mapM f = sequence . map f
 
