@@ -1501,6 +1501,81 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
     return decls;
 }
 
+bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
+{
+    auto& [loc,pat] = lpat;
+    if (auto con_pat = pat.to<Hs::ConPattern>())
+    {
+        // If there's > 1 constructor this this if refutable.
+        auto C = lookup_resolved_symbol(unloc(con_pat->head).name);
+        assert(C);
+        auto T = lookup_resolved_type(*C->parent);
+        assert(T);
+        auto D = T->is_data();
+        assert(D);
+        if (D->constructors.size() >= 2) return true;
+
+        // If any of the argument patterns are refutable, then this is refutable.
+        for(auto& arg: con_pat->args)
+            if (is_refutable_pattern(arg)) return true;
+
+        // Otherwise it is irrefutable.
+        return false;
+    }
+    else if (auto tuple_pat = pat.to<Hs::TuplePattern>())
+    {
+        // If any of the argument patterns are refutable, then this is refutable.
+        for(auto& arg: tuple_pat->elements)
+            if (is_refutable_pattern(arg)) return true;
+
+        // Otherwise it is irrefutable.
+        return false;
+    }
+    // Typed patterns are refutable if the underlying pattern is.
+    else if (auto typed_pat = pat.to<Hs::TypedPattern>())
+    {
+        return is_refutable_pattern(typed_pat->pat);
+    }
+    // Strict patterns are refutable if the underlying pattern is.
+    else if (auto strict_pat = pat.to<Hs::StrictPattern>())
+    {
+        return is_refutable_pattern(strict_pat->pattern);
+    }
+    // As patterns are refutable if the underlying pattern is.
+    else if (auto as_pat = pat.to<Hs::AsPattern>())
+    {
+        return is_refutable_pattern(as_pat->pattern);
+    }
+    // Literal patterns are refutable
+    else if (pat.is_a<Hs::LiteralPattern>())
+    {
+        return true;
+    }
+    // List patterns are refutable
+    else if (pat.is_a<Hs::ListPattern>())
+    {
+        return true;
+    }
+    // Var patterns are irrefutable
+    else if (pat.is_a<Hs::VarPattern>())
+    {
+        return false;
+    }
+    // Wildcard patterns are irrefutable
+    else if (pat.is_a<Hs::WildcardPattern>())
+    {
+        return false;
+    }
+    // Lazy patterns are irrefutable
+    else if (pat.is_a<Hs::LazyPattern>())
+    {
+        return false;
+    }
+    else
+        std::abort();
+}
+    
+
 bool Module::is_declared(const std::string& name) const
 {
     return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);

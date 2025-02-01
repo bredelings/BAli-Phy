@@ -201,6 +201,8 @@ public:
 
     Core2::Decls<> load_constructors(const Hs::Decls&);
 
+    bool is_refutable_pattern(const Hs::LPat& pattern) const;
+
     bool is_declared(const std::string&) const;
 
     bool type_is_declared(const std::string&) const;
