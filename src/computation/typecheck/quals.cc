@@ -153,19 +153,21 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         local_value_env pat_binders;
         checkPat(pat_binders, PQ.bindpat, pat_type);
 
-        // 4. Check stmts
+        // 4. if pat is failable, also typecheck "fail".
+        if (this_mod().is_refutable_pattern(PQ.bindpat))
+        {
+            auto fail_op_type = inferRho(*PQ.failOp);
+            auto [fail_arg_type, fail_result_type] = unify_function(fail_op_type);
+            unify(fail_result_type, stmts_type);
+        }
+        else
+            PQ.failOp = {};
+
+        // 5. Check stmts
         auto state2 = copy_clear_wanteds();
         state2.add_binders(pat_binders);
         state2.tcRhoStmts(i+1, stmts, Check(stmts_type));
 
-        // 5. if pat is failable, also typecheck "fail".
-        // Desugaring always emits fail right now, I think...
-        //   but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
-        if (false) 
-        {
-            PQ.failOp = Hs::Var("Control.Monad.fail");
-            auto fail_op_type = state2.inferRho(*PQ.failOp);
-        }
         current_wanteds() += state2.current_wanteds();
 
         stmt = PQ;

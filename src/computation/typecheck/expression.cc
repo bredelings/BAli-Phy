@@ -214,6 +214,7 @@ void TypeChecker::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
+    // FIXME! Rewrite "Do" to >>= and fail immediately before typechecking.
     tcRhoStmts(0, DoExp.stmts.stmts, exp_type);
 }
 

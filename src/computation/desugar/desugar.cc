@@ -476,6 +476,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (E.is_a<Hs::Do>())
     {
+        // FIXME! Do the rewrite after rename and immediately before typechecking.
         auto stmts = E.as_<Hs::Do>().stmts.stmts;
 
         if (stmts.empty())
@@ -518,13 +519,16 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = noloc_apply({Hs::Var("Control.Monad.fail"), Hs::Literal(Hs::String("Fail!"))});
-                if (PQ.failOp)
-                    fail = *PQ.failOp;
-                auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                 auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
-                auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };
-                auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
+                auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1}});
+                if (PQ.failOp)
+                {
+                    Hs::Literal msg(Hs::String("Pattern match failed at '" +PQ.bindpat.print() + "'"));
+                    expression_ref fail = noloc_apply({*PQ.failOp, msg});
+                    auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
+                    auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc, fail})};
+                    decl.matches.push_back(rule2);
+                }
 
                 expression_ref body = noloc_apply({PQ.bindOp, unloc(PQ.exp), ok});
                 result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});
