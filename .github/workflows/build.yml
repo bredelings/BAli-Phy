@@ -195,15 +195,7 @@ jobs:
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
 
     - name: Configure
-      env:
-        OSX_VERSION_MIN: "11.0"
       run: |
-        if [ ${{ runner.os }} = "macOS" ] && [ -n "${OSX_VERSION_MIN}" ]; then
-           MIN="-mmacosx-version-min=${OSX_VERSION_MIN}"
-           export CFLAGS="$CFLAGS $MIN"
-           export CXXFLAGS="$CXXFLAGS $MIN"
-           export LDFLAGS="$LDFLAGS $MIN"
-        fi
         CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
