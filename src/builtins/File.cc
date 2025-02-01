@@ -111,9 +111,13 @@ extern "C" closure builtin_function_hIsEOF(OperationArgs& Args)
 
     if (handle->eof())
         return bool_true;
-    else
-        return bool_false;
 
+    std::streambuf* sb = handle->rdbuf();
+    int c = sb->sgetc();
+    if (c == std::streambuf::traits_type::eof())
+        return bool_true;
+
+    return bool_false;
 }
 
 // Handle -> Char -> RealWorld -> ()
