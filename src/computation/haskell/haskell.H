@@ -888,7 +888,7 @@ struct PatQual: public Object
     LExp exp;
 
     Hs::Var bindOp = {"Control.Monad.>>="};
-    std::optional<Hs::Var> failOp;
+    std::optional<Hs::Var> failOp = {{"Control.Monad.fail"}};
 
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
