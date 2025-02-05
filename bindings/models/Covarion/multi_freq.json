@@ -1,6 +1,6 @@
 {
     "name": "Covarion.multi_freq",
-    "result_type": "CTMC<a>",
+    "result_type": "DiscreteDist<CTMC<a>>",
     "call": "multiFrequencyCovarion(@tree,@nodeFreqs,@submodel,@rateDist,@s01,@s10)",
     "import": ["SModel"],
     "args": [
@@ -37,7 +37,7 @@
         {
             "name": "rateDist",
             "type": "DiscreteDist<Double>",
-	    "default_value":"~dirichlet_on_dirichlet(@n,2,2)",
+	    "default_value":"~dirichlet_on_dirichlet(4,2,2)",
 	    "description":"Rates for each category"
         },
         {
