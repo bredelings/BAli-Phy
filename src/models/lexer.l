@@ -86,6 +86,8 @@ escape	     \\[abfnrtv\"\']
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
 qconid       {qual}{conid}
+qvarsym      {qual}{varsym}
+qconsym      {qual}{consym}
 
 floating_point      {numspc}{decimal}\.{decimal}{exponent}?|{numspc}{decimal}{exponent}
 
@@ -157,6 +159,9 @@ signed       {negative}?
 {qconid}      return zz::parser::make_QVARID (yytext, loc);
 {varid}       return drv.varid(loc);
 {conid}       return drv.varid(loc);
+
+ /* {varsym}      return zz::parser::make_VARSYM  (yytext,loc); This matches >> before the > rule */
+{qvarsym}     return zz::parser::make_QVARSYM  (yytext,loc);
 
 {decimal}                              return zz_make_integer10(loc);
 

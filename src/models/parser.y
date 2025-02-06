@@ -82,6 +82,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
 %token <std::string> VARID    "VARID"
 %token <std::string> VARSYM   "VARSYM"
 %token <std::string> QVARID   "QVARID"
+%token <std::string> QVARSYM  "QVARSYM"
 
 %token <std::string>   STRING   "STRING"
 %token <int>           INTEGER  "INTEGER"
@@ -189,6 +190,7 @@ tup_args: exp               { $$.push_back({"",$1});}
 
 qvarid: varid  { $$ = $1; }
 |       QVARID { $$ = $1; }
+|       "(" QVARSYM ")" { $$ = $2; }
 
 varid: VARID        { $$ = $1; }
 |       "(" VARSYM ")" { $$ = $2; }
