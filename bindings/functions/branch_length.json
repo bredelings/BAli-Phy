@@ -1,0 +1,16 @@
+{
+    "name": "branch_length",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "branchLength(@tree,@b)",
+    "args": [
+        {
+            "name": "tree",
+            "type": "Tree<t>"
+        },
+        {
+            "name": "b",
+            "type": "Int"
+        }
+    ]
+}
