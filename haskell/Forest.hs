@@ -190,7 +190,6 @@ class IsGraph g => HasNodeTimes g where
     nodeTimes :: g -> IntMap Double
     modifyNodeTimes :: g -> (Double -> Double) -> g
 
--- We could separate out modifyNodeTimes out into a separate class CanModifyNodeTimes, like with CanModifyBranchLengths
 instance IsGraph g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
     nodeTimes (WithNodeTimes _ hs) = hs
@@ -200,9 +199,6 @@ instance HasNodeTimes t => HasNodeTimes (WithBranchRates t) where
     nodeTime (WithBranchRates tt _) node = nodeTime tt node
     nodeTimes (WithBranchRates tt _) = nodeTimes tt
     modifyNodeTimes (WithBranchRates tt rs) f = WithBranchRates (modifyNodeTimes tt f) rs
-
-instance HasBranchRates (WithBranchRates t) where
-    branch_rate (WithBranchRates _ rs) node = rs IntMap.! node
 
 instance HasRoots t => HasBranchLengths (WithNodeTimes t) where
     branchLength tree b = branch_duration tree b
@@ -255,17 +251,12 @@ instance IsForest t => IsForest (WithBranchRates t) where
     isRooted (WithBranchRates tree _) = case isRooted tree of Rooted -> Rooted
                                                               Unrooted -> Unrooted
 
-class HasBranchRates t where
-    branch_rate :: t -> Int -> Double
-
 instance HasBranchLengths t => HasBranchLengths (WithBranchRates t) where
     branchLength (WithBranchRates tree rates) b = branchLength tree b * (rates IntMap.! b)
 
 instance HasBranchLengths t => HasBranchLengths (WithRoots t) where
     branchLength (WithRoots t _ _) b   = branchLength t b
 
-instance CanModifyBranchLengths t => CanModifyBranchLengths (WithRoots t) where
-    modifyBranchLengths f (WithRoots t roots forward) = WithRoots (modifyBranchLengths f t) roots forward
 
 rate_time_tree time_tree rates = WithBranchRates time_tree rates
 
@@ -282,9 +273,18 @@ addRoots roots t = rt
 
 forestFromEdges nodes edges = Forest $ graphFromEdges nodes edges
 
+--
 -- NOTE: For scaleBranchLengths, we previously had
---           scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
---       But that didn't work for time trees.
---       Since we're only scaling this for output at the moment, adding rates should be OK.
-
+--
+--       class HasBranchLengths g => CanModifyBranchLengths g where
+--           modifyBranchLengths :: (Int -> Double) -> g -> g
+--
+--       instance CanModifyBranchLengths t => CanModifyBranchLengths (WithRoots t) where
+--           modifyBranchLengths f (WithRoots t roots forward) = WithRoots (modifyBranchLengths f t) roots forward
+--
+--       scaleBranchLengths factor g = modifyBranchLengths (\b -> factor * branchLength g b) g
+--
+--   But that didn't work for time trees.
+--   Since we're only scaling this for output at the moment, adding rates should be OK.
+--
 scaleBranchLengths factor g = WithBranchRates g (getEdgesSet g & IntMap.fromSet (\_ -> factor))

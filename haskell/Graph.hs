@@ -258,12 +258,6 @@ class IsGraph g => HasBranchLengths g where
 branchLengths g = branchLength g <$> getUEdges g
 branchLengthsSet g = getUEdgesSet g & IntMap.fromSet (branchLength g)
 
---   but could not do this for WithNodeTimes...
---   QUESTION: should this just be (Double->Double)?  Or (Int->Double->Double)?
-class HasBranchLengths g => CanModifyBranchLengths g where
-    modifyBranchLengths :: (Int -> Double) -> g -> g
-
--- This seems to be unused in both Haskell and C++ code.
 -- I guess it makes sense that you could construct a WithBranchLengths with arbitrary new branch lengths,
 data WithBranchLengths t = WithBranchLengths t (IntMap Double)
 
@@ -290,9 +284,6 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
 
 instance IsGraph t => HasBranchLengths (WithBranchLengths t) where
     branchLength (WithBranchLengths tree ds) b = ds IntMap.! (undirectedName b)
-
-instance IsGraph t => CanModifyBranchLengths (WithBranchLengths t) where
-    modifyBranchLengths f t@(WithBranchLengths tree ds) = WithBranchLengths tree (IntMap.keysSet ds & IntMap.fromSet f)
 
 branchLengthTree topology lengths = WithBranchLengths topology lengths
 
