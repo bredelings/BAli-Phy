@@ -1,0 +1,16 @@
+{
+    "name": "lookup",
+    "result_type": "a",
+    "no_log": true,
+    "call": "(IntMap.!)(@m,@i)",
+    "args": [
+        {
+            "name": "m",
+            "type": "IntMap<a>"
+        },
+        {
+            "name": "i",
+            "type": "Int"
+        }
+    ]
+}
