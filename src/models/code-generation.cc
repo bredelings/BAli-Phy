@@ -641,14 +641,36 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
         return {double(call)};
     assert(call.has_value<string>());
     auto name = call.get_value<string>();
+    assert(name != "!let");
     expression_ref E;
+
+    // Process expression
+    if (name == "function")
+    {
+        auto body = make_call(call[1].second, simple_args);
+        auto x = call[0].second.get_value<string>();
+
+        Hs::LVar v = {noloc, Hs::Var(x)};
+        Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(x)})};
+
+        if (auto L = body.to<Hs::LambdaExp>())
+        {
+            auto LE = *L;
+            auto& pats = LE.match.patterns;
+            pats.insert(pats.begin(), p);
+            return LE;
+        }
+        else
+        {
+            return Hs::LambdaExp({p}, {noloc, body});
+        }
+    }
 
     // Process arguments;
     vector<expression_ref> args;
     for(int i=0;i<call.size();i++)
 	args.push_back(make_call(call[i].second, simple_args));
 
-    // Process expression
     if (name == "List")
     {
 	vector<Hs::LExp> located_args;
