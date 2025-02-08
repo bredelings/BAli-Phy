@@ -289,13 +289,13 @@ model_t compile_model(const Rules& R,
         TC2.identifiers.insert({name, type});
     auto model = TC2.typecheck_and_annotate(required_type, model_rep);
 
-    substitute(TC.eqs, required_type);
-    substitute_annotated(TC.eqs, model);
+    substitute(TC2.eqs, required_type);
+    substitute_annotated(TC2.eqs, model);
 
     set<ptree> constraints;
-    for(auto constraint: TC.eqs.get_constraints())
+    for(auto constraint: TC2.eqs.get_constraints())
     {
-	substitute(TC.eqs, constraint);
+	substitute(TC2.eqs, constraint);
 	constraints.insert(constraint);
     }
 
