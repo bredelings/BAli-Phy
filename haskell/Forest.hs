@@ -288,3 +288,4 @@ forestFromEdges nodes edges = Forest $ graphFromEdges nodes edges
 --   Since we're only scaling this for output at the moment, adding rates should be OK.
 --
 scaleBranchLengths factor g = WithBranchRates g (getEdgesSet g & IntMap.fromSet (\_ -> factor))
+addBranchRates factors g = WithBranchRates g factors
