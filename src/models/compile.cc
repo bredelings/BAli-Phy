@@ -284,7 +284,10 @@ model_t compile_model(const Rules& R,
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     // 2. Typecheck
-    auto model = TC.typecheck_and_annotate(required_type, model_rep);
+    auto TC2 = TC;
+    for(auto& [name,type]: scope)
+        TC2.identifiers.insert({name, type});
+    auto model = TC2.typecheck_and_annotate(required_type, model_rep);
 
     substitute(TC.eqs, required_type);
     substitute_annotated(TC.eqs, model);
