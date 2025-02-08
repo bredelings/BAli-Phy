@@ -444,8 +444,11 @@ string unparse_annotated(const ptree& ann)
     string s = p.get_value<string>();
     if (s == "!let")
     {
-	string name = p[0].first;
-	return name+show_model_annotated(p[0].second)+";"+unparse_annotated(p[1].second);
+        vector<string> decls;
+        for(auto& [name, value]: p[0].second)
+            decls.push_back(name + " " + show_model_annotated(value));
+        decls.push_back(unparse_annotated(p[1].second));
+        return "{" + join(decls, "; ") + "}";
     }
     else if (s == "function")
     {
