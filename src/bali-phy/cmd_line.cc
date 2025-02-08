@@ -284,13 +284,15 @@ po::options_description model_options(int level)
         ("fix,F",value<vector<string>>()->composing(),"Fix topology,tree,alignment")
         ("variables",value<vector<string>>()->composing(),"Variable definitions");
     model.add_options()
-	("link,L",value<vector<string>>()->composing(),"Link partitions.");
+        ("link,L",value<vector<string>>()->composing(),"Link partitions.")
+        ("subst-rates",value<string>()->default_value("constant"),"Subst rates: constant, relaxed, or an expression.")
+        ("indel-rates",value<string>()->default_value("constant"),"Indel rates: constant, relaxed, or an expression.");
 
     if (level >= 2)
-	model.add_options()
-	    ("model,m",value<vector<string>>()->multitoken(),"File containing hierarchical model.")
+        model.add_options()
+            ("model,m",value<vector<string>>()->multitoken(),"File containing hierarchical model.")
             ("Model,M",value<vector<string>>()->multitoken(),"Module containing hierarchical model.")
-	    ("print,p",value<string>(),"Evaluate and print expression.");
+            ("print,p",value<string>(),"Evaluate and print expression.");
     return model;
 }
 

@@ -689,6 +689,8 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const vector<model_t>& scaleMs,
                                      const vector<optional<int>>& scale_mapping,
                                      const model_t& tree_model,
+                                     const model_t& subst_rates_model,
+                                     const model_t& indel_rates_model,
                                      const std::vector<int>& like_calcs)
 {
     auto fixed = get_fixed(args);
@@ -804,6 +806,36 @@ std::string generate_atmodel_program(const variables_map& args,
         branch_lengths = {var("branchLengths"), tree_var};
     }
 
+    expression_ref subst_tree=tree_var;
+    auto subst_rates_var = var("substRates");
+    if (not subst_rates_model.empty())
+    {
+        string var_name = "substRates";
+        auto code = subst_rates_model.code;
+        code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
+        subst_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
+
+        auto subst_tree_var = var("substTree");
+        model.let(subst_tree_var, {var("addBranchRates"),var("substRates"),tree_var});
+        subst_tree = subst_tree_var;
+        model.empty_stmt();
+    }
+
+    expression_ref indel_tree=tree_var;
+    auto indel_rates_var = var("indelRates");
+    if (not indel_rates_model.empty())
+    {
+        string var_name = "indelRates";
+        auto code = indel_rates_model.code;
+        code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
+        indel_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
+
+        auto indel_tree_var = var("indelTree");
+        model.let(indel_tree_var, {var("addBranchRates"),var("indelRates"),tree_var});
+        indel_tree = indel_tree_var;
+        model.empty_stmt();
+    }
+
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
         add(used_states, SMs[i].code.used_states);
@@ -875,18 +907,18 @@ std::string generate_atmodel_program(const variables_map& args,
                 model.let(leaf_sequence_lengths, {var("getSequenceLengths"), sequence_data_var});
 
                 var properties_A("properties_A"+part_suffix);
-		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("phyloAlignment"), tree_var, imodel, scale, leaf_sequence_lengths}});
+		model.perform(Tuple(alignment_on_tree, properties_A), {var("sampleWithProps"),{var("phyloAlignment"), indel_tree, imodel, scale, leaf_sequence_lengths}});
             }
         }
 
         // Model.Partition.3. Observe the sequence data from the distribution
         expression_ref distribution;
         if (like_calcs[i] == 0)
-            distribution = {var("phyloCTMC"), tree_var, alignment_on_tree, smodel, scale};
+            distribution = {var("phyloCTMC"), subst_tree, alignment_on_tree, smodel, scale};
         else
 	{
 	    expression_ref alignment_length = {var("alignmentLength"), sequence_data_var};
-            distribution = {var("phyloCTMC"), tree_var, alignment_length, smodel, scale};
+            distribution = {var("phyloCTMC"), subst_tree, alignment_length, smodel, scale};
 	}
 	var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;
@@ -1062,6 +1094,8 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const vector<model_t>& scaleMs,
 		    const vector<optional<int>>& scale_mapping,
 		    const model_t& tree_model,
+		    const model_t& subst_rates_model,
+		    const model_t& indel_rates_model,
 		    const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
@@ -1076,6 +1110,8 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
                                                tree_model,
+                                               subst_rates_model,
+                                               indel_rates_model,
                                                like_calcs);
     }
 

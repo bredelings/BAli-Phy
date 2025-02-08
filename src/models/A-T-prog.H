@@ -30,7 +30,9 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const std::vector<std::optional<int>>& i_mapping,
 		    const std::vector<model_t>& scaleMs,
 		    const std::vector<std::optional<int>>& scale_mapping,
-		    const model_t& branch_length_model,
+		    const model_t& tree_model,
+		    const model_t& subst_rates_model,
+		    const model_t& indel_rates_model,
 		    const std::vector<int>& like_calcs);
 
 std::unique_ptr<Program>

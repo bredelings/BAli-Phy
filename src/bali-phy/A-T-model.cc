@@ -223,6 +223,8 @@ json::object log_summary(const vector<model_t>& IModels,
 			 const vector<model_t>& SModels,
 			 const vector<model_t>& ScaleModels,
 			 const model_t& tree_model,
+                         const model_t& subst_rates,
+                         const model_t& indel_rates,
 			 std::vector<std::optional<int>>& smodel_index_for_partition,
 			 std::vector<std::optional<int>>& imodel_index_for_partition,
 			 std::vector<std::optional<int>>& scale_index_for_partition,
@@ -233,8 +235,19 @@ json::object log_summary(const vector<model_t>& IModels,
     string tree;
     if (n_sequences >= 2 and not tree_model.empty())
     {
-        cout<<"tree "<<tree_model.show()<<endl<<endl;
+        cout<<"tree "<<tree_model.show()<<endl;
         tree = tree_model.show(false);
+        if (subst_rates.empty())
+            cout<<"subst rates = constant"<<endl;
+        else
+            cout<<"subst rates "<<subst_rates.show()<<endl;
+
+        if (indel_rates.empty())
+            cout<<"indel rates = constant"<<endl;
+        else
+            cout<<"indel rates "<<indel_rates.show()<<endl;
+
+        cout<<endl;
     }
 
     //-------- Log some stuff -----------//
@@ -791,6 +804,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     decls = compile_decls(R, TC, code_gen_state, var_str, extra_vars, {});
 
+    // QUESTION: How do we access the list of declared variables, their type, and their haskell name?
+
     // 4. --- Get smodels for all SPECIFIED smodel names 
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
     auto& smodel_mapping = smodel_names_mapping.item_for_partition;
@@ -898,7 +913,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         full_scale_models[i] = compile_model(R, TC, code_gen_state, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
     }
 
-    // 12. Default and compile branch length model
+    // 12. Default and compile tree model
     model_t tree_model;
     if (not fixed.count("tree"))
     {
@@ -911,6 +926,29 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
             M = "~uniform_tree(taxa, gamma(0.5, 2/length(taxa)))";
 
         tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<t>"), M, "tree model", {});
+    }
+
+    // 13. Default and compile subst rates
+    model_t subst_rates_model;
+    if (args.count("subst-rates") and args.at("subst-rates").as<string>() != "constant")
+    {
+        string M = args.at("subst-rates").as<string>();
+        if (M == "relaxed")
+            M = "{sigma ~ logLaplace(-3,1); ~iidMap(branches(tree), logNormal(0,sigma))}";
+
+        auto TC2 = TC;
+        subst_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "substitution rates", {{"tree", tree_model.type}});
+    }
+
+    // 14. Default and compile indel rates
+    model_t indel_rates_model;
+    if (args.count("indel-rates") and args.at("indel-rates").as<string>() != "constant")
+    {
+        string M = args.at("indel-rates").as<string>();
+        if (M == "relaxed")
+            M = "{sigma ~ logLaplace(-3,1); ~iidMap(branches(tree), logNormal(0,sigma))}";
+
+        indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree",tree_model.type}});
     }
 
     //-------------- Likelihood calculator types -----------//
@@ -963,7 +1001,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     }
 
     //-------------------- Log model -------------------------//
-    auto info = log_summary(full_imodels, full_smodels, full_scale_models, tree_model,
+    auto info = log_summary(full_imodels, full_smodels, full_scale_models,
+                            tree_model, subst_rates_model, indel_rates_model,
                             smodel_mapping, imodel_mapping, scale_mapping,
                             A[0].n_sequences(), filename_ranges.size(),
                             alphabet_names,
@@ -978,6 +1017,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     for(int i=0;i<n_partitions;i++)
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 
+    // Can we pass the code_gen_state, to avoid stomping on generated haskell var names?
     auto prog = gen_atmodel_program(args,
                                     L, dir,
                                     program_filename,
@@ -987,6 +1027,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,
                                     tree_model,
+                                    subst_rates_model, indel_rates_model,
                                     likelihood_calculators);
 
     return {std::move(prog), info};
