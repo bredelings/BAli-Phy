@@ -252,7 +252,7 @@ instance IsForest t => IsForest (WithBranchRates t) where
                                                               Unrooted -> Unrooted
 
 instance HasBranchLengths t => HasBranchLengths (WithBranchRates t) where
-    branchLength (WithBranchRates tree rates) b = branchLength tree b * (rates IntMap.! b)
+    branchLength (WithBranchRates tree rates) b = branchLength tree b * (rates IntMap.! undirectedName b)
 
 instance HasBranchLengths t => HasBranchLengths (WithRoots t) where
     branchLength (WithRoots t _ _) b   = branchLength t b
