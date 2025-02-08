@@ -440,6 +440,7 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // 4. Append body result to decls result
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
+    result.code.perform_function = body_result.code.perform_function;
 
     vector<CDecls> decls_groups(1);
     set<var> prev_free_vars;
