@@ -72,6 +72,16 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
+	if (has_constructor(tree.head(), "Forest.WithBranchRates"))
+	{
+	    assert(tree.size() == 2);
+
+	    // We need to evaluate this to avoid getting an index_var.
+	    branch_rate_regs.push_back( tree[1].get_reg() );
+
+	    tree = tree[0];
+	}
+
 	if (has_constructor(tree.head(), "Tree.Tree"))
 	{
 	    tree = tree[0];
@@ -132,6 +142,11 @@ std::optional<int> TreeInterface::node_times_reg() const
 std::optional<int> TreeInterface::away_from_root_reg() const
 {
     return get_tree_constants().away_from_root_reg;
+}
+
+const std::vector<int>& TreeInterface::branch_rate_regs() const
+{
+    return get_tree_constants().branch_rate_regs;
 }
 
 int TreeInterface::n_nodes() const {
@@ -626,6 +641,21 @@ bool TreeInterface::has_branch_lengths() const
         return false;
 }
 
+double TreeInterface::branch_rate(int b) const
+{
+    b = undirected(b);
+
+    double rate = 1;
+    for(int r: branch_rate_regs())
+    {
+        auto rates = context_ptr(get_const_context(), r);
+
+        rate *= rates[b].value().as_double();
+    }
+
+    return rate;
+}
+
 map<int,double> TreeInterface::branch_lengths() const
 {
     assert(has_branch_lengths());
@@ -636,12 +666,14 @@ map<int,double> TreeInterface::branch_lengths() const
 
     map<int,double> lengths;
     for(auto& [b,r]: length_regs.as_<IntMap>())
-        lengths.insert({b, branch_to_reg[b].value().as_double()});
+        lengths.insert({b, branch_rate(b) * branch_to_reg[b].value().as_double()});
     return lengths;
 }
 
 double TreeInterface::branch_length(int b) const
 {
+    // FIXME: handle branch lengths on time trees!
+
     assert(has_branch_lengths());
 
     b = undirected(b);
@@ -650,7 +682,7 @@ double TreeInterface::branch_length(int b) const
 
     auto lengths = context_ptr{get_const_context(), array_reg};
 
-    return lengths[b].value().as_double();
+    return lengths[b].value().as_double() * branch_rate(b);
 }
 
 bool TreeInterface::can_set_branch_length(int b) const
@@ -682,7 +714,7 @@ void TreeInterface::set_branch_length(int b, double l)
 
     auto length = lengths[b];
 
-    C.set_modifiable_value(length.get_reg(), l);
+    C.set_modifiable_value(length.get_reg(), l/branch_rate(b));
 }
 
 bool TreeInterface::has_node_times() const

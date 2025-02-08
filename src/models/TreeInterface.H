@@ -36,6 +36,9 @@ struct tree_constants: public Object
     // Node times
     std::optional<int> node_times_reg;
 
+    // Branch rates
+    std::vector<int> branch_rate_regs;
+
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(context_ref&, int tree_reg);
@@ -51,6 +54,8 @@ class TreeInterface
     std::optional<int> node_times_reg() const;
 
     std::optional<int> away_from_root_reg() const;
+
+    const std::vector<int>& branch_rate_regs() const;
 
     virtual const tree_constants& get_tree_constants() const = 0;
     virtual const context_ref& get_const_context() const = 0;
@@ -128,6 +133,8 @@ public:
     std::optional<int> parent_branch_for_node(int n) const;
     std::optional<int> parent_of_node(int n) const;
     std::vector<int> children_of_node(int n) const;
+
+    double branch_rate(int b) const;
 
     std::map<int,double> branch_lengths() const;
     bool has_branch_lengths() const;
