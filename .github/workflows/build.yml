@@ -188,16 +188,16 @@ jobs:
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
 
+          echo "DEVELOPER_DIR=${DEVELOPER_DIR}"
+          echo "SDKROOT=${SDKROOT}"
           if [[ "${{ matrix.sdk }}" != "" ]] ; then
              echo "Setting SDK to ${{ matrix.sdk }}"
-             SDKROOT=$(DEVELOPER_SDK_DIR)/MacOSX${{ matrix.sdk }}.sdk
+             SDKROOT=$(DEVELOPER_DIR)/MacOSX${{ matrix.sdk }}.sdk
              echo "SDKROOT_i386=$SDKROOT" >> $GITHUB_ENV
              echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
           fi
           # brew install boost
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
-          echo "DEVELOPER_DIR=${DEVELOPER_DIR}"
-          echo "SDKROOT=${SDKROOT}"
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
     - name: Install meson
