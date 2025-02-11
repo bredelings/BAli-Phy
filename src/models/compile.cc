@@ -543,7 +543,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
 	auto decls = value[0].second;
 	auto body  = value[1].second;
 
-        auto extracted = extract_terms(body, binders);
+        extracted = extract_terms(body, binders);
         m = body;
 
 	for(auto& [var_name, exp]: decls)
