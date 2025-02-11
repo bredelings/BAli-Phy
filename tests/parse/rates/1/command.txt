@@ -1,0 +1,1 @@
+dna.fasta --indel-rates=relaxed --subst-rates=relaxed --name=ignore --iterations=10
