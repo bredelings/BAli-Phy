@@ -528,7 +528,7 @@ namespace zz {
     TOK_START_EXP = 1,             // START_EXP
     TOK_START_TYPE = 2,            // START_TYPE
     TOK_START_DEFS = 3,            // START_DEFS
-    TOK_FUNCTION = 258,            // "function"
+    TOK_WHERE = 258,               // "where"
     TOK_SEMI = 259,                // ";"
     TOK_COLON = 260,               // ":"
     TOK_EQUAL = 261,               // "="
@@ -582,7 +582,7 @@ namespace zz {
         S_START_EXP = 3,                         // START_EXP
         S_START_TYPE = 4,                        // START_TYPE
         S_START_DEFS = 5,                        // START_DEFS
-        S_FUNCTION = 6,                          // "function"
+        S_WHERE = 6,                             // "where"
         S_SEMI = 7,                              // ";"
         S_COLON = 8,                             // ":"
         S_EQUAL = 9,                             // "="
@@ -1025,7 +1025,7 @@ switch (yykind)
         ZZ_ASSERT (tok == token::TOK_END
                    || (token::TOK_ZZerror <= tok && tok <= token::TOK_ZZUNDEF)
                    || (token::TOK_START_EXP <= tok && tok <= token::TOK_START_DEFS)
-                   || (token::TOK_FUNCTION <= tok && tok <= token::TOK_PLACEHOLDER));
+                   || (token::TOK_WHERE <= tok && tok <= token::TOK_PLACEHOLDER));
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -1205,16 +1205,16 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_FUNCTION (location_type l)
+      make_WHERE (location_type l)
       {
-        return symbol_type (token::TOK_FUNCTION, std::move (l));
+        return symbol_type (token::TOK_WHERE, std::move (l));
       }
 #else
       static
       symbol_type
-      make_FUNCTION (const location_type& l)
+      make_WHERE (const location_type& l)
       {
-        return symbol_type (token::TOK_FUNCTION, l);
+        return symbol_type (token::TOK_WHERE, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1682,7 +1682,7 @@ switch (yykind)
 
 
     /// Stored state numbers (used for stacks).
-    typedef unsigned char state_type;
+    typedef signed char state_type;
 
     /// The arguments of the error message.
     int yy_syntax_error_arguments_ (const context& yyctx,
@@ -1730,7 +1730,7 @@ switch (yykind)
     static const signed char yydefact_[];
 
     // YYPGOTO[NTERM-NUM].
-    static const short yypgoto_[];
+    static const signed char yypgoto_[];
 
     // YYDEFGOTO[NTERM-NUM].
     static const signed char yydefgoto_[];
@@ -1738,7 +1738,7 @@ switch (yykind)
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const unsigned char yytable_[];
+    static const signed char yytable_[];
 
     static const signed char yycheck_[];
 
@@ -1982,7 +1982,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 256,     ///< Last index in yytable_.
+      yylast_ = 242,     ///< Last index in yytable_.
       yynnts_ = 20,  ///< Number of nonterminal symbols.
       yyfinal_ = 35 ///< Termination state number.
     };

@@ -295,17 +295,33 @@ optional<ptree> peel_sample(ptree p)
 {
     if (p.has_value<string>() and p.get_value<string>() == "sample")
 	return p[0].second;
-    else
-	return {};
+    else if (p.has_value<string>() and p.get_value<string>() == "!let")
+    {
+        if (auto new_body = peel_sample(p[1].second))
+        {
+            p[1].second = *new_body;
+            return p;
+        }
+    }
+
+    return {};
 }
 
 optional<ptree> peel_sample_annotated(ptree p)
 {
-    auto v = p.get_child("value");
+    auto& v = p.get_child("value");
     if (v.has_value<string>() and v.get_value<string>() == "sample")
 	return v[0].second;
-    else
-	return {};
+    else if (v.has_value<string>() and v.get_value<string>() == "!let")
+    {
+        if (auto new_body = peel_sample_annotated(v[1].second))
+        {
+            v[1].second = *new_body;
+            return p;
+        }
+    }
+
+    return {};
 }
 
 bool is_operator(const string& s)
@@ -447,8 +463,7 @@ string unparse_annotated(const ptree& ann)
         vector<string> decls;
         for(auto& [name, value]: p[0].second)
             decls.push_back(name + " " + show_model_annotated(value));
-        decls.push_back(unparse_annotated(p[1].second));
-        return "{" + join(decls, "; ") + "}";
+        return unparse_annotated(p[1].second) + " where {" + join(decls, "; ") + "}";
     }
     else if (s == "function")
     {

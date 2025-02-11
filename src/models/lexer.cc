@@ -880,8 +880,8 @@ static const flex_int16_t yy_rule_linenum[35] =
     {   0,
       126,  127,  130,  133,  135,  136,  137,  138,  139,  140,
       141,  142,  143,  144,  145,  146,  147,  148,  149,  150,
-      151,  152,  153,  154,  155,  159,  160,  161,  162,  165,
-      167,  169,  170,  172
+      151,  152,  153,  154,  155,  159,  160,  161,  162,  168,
+      170,  172,  173,  175
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1467,45 +1467,48 @@ YY_RULE_SETUP
 #line 162 "lexer.l"
 return drv.varid(loc);
 	YY_BREAK
-/* {varsym}      return zz::parser::make_VARSYM  (yytext,loc); This matches >> before the > rule */
+/* {varsym}      return zz::parser::make_VARSYM  (yytext,loc);
+    This rule causes problems because it matches ">>" before the ">" rule.
+    Presumably because the longest match wins?
+    And that doesn't work with types like List<List>>. */
 case 30:
 YY_RULE_SETUP
-#line 165 "lexer.l"
+#line 168 "lexer.l"
 return zz::parser::make_QVARSYM  (yytext,loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 167 "lexer.l"
+#line 170 "lexer.l"
 return zz_make_integer10(loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 169 "lexer.l"
+#line 172 "lexer.l"
 return zz_make_float(loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 170 "lexer.l"
+#line 173 "lexer.l"
 return zz_make_string(loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 172 "lexer.l"
+#line 175 "lexer.l"
 {
              throw zz::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 177 "lexer.l"
+#line 180 "lexer.l"
 return zz::parser::make_END (loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 178 "lexer.l"
+#line 181 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1509 "lexer.cc"
+#line 1512 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2668,7 +2671,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 178 "lexer.l"
+#line 181 "lexer.l"
 
 
 

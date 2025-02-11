@@ -160,7 +160,10 @@ signed       {negative}?
 {varid}       return drv.varid(loc);
 {conid}       return drv.varid(loc);
 
- /* {varsym}      return zz::parser::make_VARSYM  (yytext,loc); This matches >> before the > rule */
+ /* {varsym}      return zz::parser::make_VARSYM  (yytext,loc);
+    This rule causes problems because it matches ">>" before the ">" rule.
+    Presumably because the longest match wins?
+    And that doesn't work with types like List<List>>. */
 {qvarsym}     return zz::parser::make_QVARSYM  (yytext,loc);
 
 {decimal}                              return zz_make_integer10(loc);

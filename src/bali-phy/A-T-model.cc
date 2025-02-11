@@ -213,7 +213,7 @@ string tag(string s, int i)
     return s+convertToString(i+1);
 }
 
-string show_model(const model_t& m)
+string show_main_bold(const model_t& m)
 {
     string s = indent_and_wrap(0,12,1000,m.show_main(false));
     return s.substr(0,2) + bold(s.substr(2));
@@ -279,19 +279,19 @@ json::object log_summary(const vector<model_t>& IModels,
 
         // 3. substitution model
         auto s_index = smodel_index_for_partition[i];
-        cout<<"    subst "<<show_model(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
+        cout<<"    subst "<<show_main_bold(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
         partition["smodel"] = optional_to_json( smodel_index_for_partition[i] );
 
         // 4. indel model
         if (auto i_index = imodel_index_for_partition[i])
-            cout<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
+            cout<<"    indel "<<show_main_bold(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
         else
             cout<<"    indel = "<<bold("none")<<"\n";
         partition["imodel"] = optional_to_json( imodel_index_for_partition[i] );
 
         // 5. scale model
         auto scale_index = scale_index_for_partition[i];
-        cout<<"    scale "<<show_model(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
+        cout<<"    scale "<<show_main_bold(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
         partition["scale"] = optional_to_json( scale_index_for_partition[i] );
 
         cout<<endl;
@@ -934,7 +934,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     {
         string M = args.at("subst-rates").as<string>();
         if (M == "relaxed")
-            M = "{sigma ~ logLaplace(-3,1); ~iidMap(branches(tree), logNormal(0,sigma))}";
+            M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}"; 
 
         auto TC2 = TC;
         subst_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "substitution rates", {{"tree", tree_model.type}});
@@ -946,7 +946,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     {
         string M = args.at("indel-rates").as<string>();
         if (M == "relaxed")
-            M = "{sigma ~ logLaplace(-3,1); ~iidMap(branches(tree), logNormal(0,sigma))}";
+            M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}"; 
 
         indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree",tree_model.type}});
     }

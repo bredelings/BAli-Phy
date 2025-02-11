@@ -52,7 +52,7 @@ ptree add_arg(const ptree& p1, const ptree& p2);
   START_TYPE 2
   START_DEFS 3
 
-  FUNCTION      "function"
+  WHERE         "where"
   SEMI          ";"
   COLON         ":"
   EQUAL         "="
@@ -137,9 +137,8 @@ defs: %empty       { $$ = ptree("!Decls"); }
 |     defs ";" def { $$ = $1; $$.push_back($3); }
 |     defs ";"     { $$ = $1; }
 
-exp: term                         { $$ = $1; }
-|    "{" defs ";" exp "}"         { $$ = ptree("!let",{{"decls",$2},{"body",$4}}); }
-|    "{" defs ";" exp ";" "}"     { $$ = ptree("!let",{{"decls",$2},{"body",$4}}); }
+exp: term                          { $$ = $1; }
+|    exp "where" "{" defs "}"      { $$ = ptree("!let",{{"decls",$4},{"body",$1}}); }
 
 
 // See parse_no_submodel( )

@@ -26,7 +26,7 @@ zz_driver::zz_driver ()
     using namespace zz;
 
     reserved_words = {
-       {"function",{parser::token::TOK_FUNCTION,0}},
+       {"where",{parser::token::TOK_WHERE,0}},
     };
 };
 
