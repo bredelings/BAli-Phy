@@ -1,0 +1,17 @@
+{
+    "name": "pow",
+    "result_type": "a",
+    "no_log": true,
+    "constraints": ["Floating<a>"],
+    "call": "(Prelude.**)(@x,@y)",
+    "args": [
+        {
+            "name": "x",
+            "type": "a"
+        },
+        {
+            "name": "y",
+            "type": "a"
+        }
+    ]
+}

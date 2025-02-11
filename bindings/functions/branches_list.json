@@ -1,0 +1,14 @@
+{
+    "name": "branches_list",
+    "result_type": "List<Int>",
+    "no_log": true,
+    "call": "getUEdges(@tree)",
+    "import": ["Tree"],
+    "args": [
+        {
+            "name": "tree",
+            "type": "Tree<t>",
+            "description": "The tree"
+        }
+    ]
+}
