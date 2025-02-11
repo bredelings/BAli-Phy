@@ -81,7 +81,8 @@ jobs:
           - name: macos-xcode-15-intel
             os: macos-13
             compiler: xcode
-            version: "13"
+            version: "15"
+            sdk: 13
             buildtype: "release"
             arch: "mac-intel64"
 
@@ -187,8 +188,17 @@ jobs:
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
 
+          if [[ "${{ matrix.sdk }}" != "" ]] ; then
+             echo "Setting SDK to ${{ matrix.sdk }}"
+             SDKROOT=$(DEVELOPER_SDK_DIR)/MacOSX${{ matrix.sdk }}.sdk
+             echo "SDKROOT_i386=$SDKROOT" >> $GITHUB_ENV
+             echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
+          fi
           # brew install boost
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
+          echo "DEVELOPER_DIR=${DEVELOPER_DIR}"
+          echo "SDKROOT=${SDKROOT}"
+          echo "BOOST_ROOT=${BOOST_ROOT}"
 
     - name: Install meson
       run: |
@@ -220,7 +230,8 @@ jobs:
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
-        fi
+        fi 
+        echo "SDKROOT = $SDKROOT"
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
