@@ -1,1 +1,1 @@
---print quantile(Gamma(1.0,1.0),"bob",1.0)
+--print 'quantile(Gamma(1.0,1.0),"bob",1.0)'

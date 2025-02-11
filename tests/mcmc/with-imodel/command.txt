@@ -1,1 +1,1 @@
-5d.fasta --smodel=hky85(kappa=2,pi={"A":0.1,"C":0.2,"T":0.3,"G":0.4}) --iter=10 --name=ignore
+5d.fasta '--smodel=hky85(kappa=2,pi={"A":0.1,"C":0.2,"T":0.3,"G":0.4})' --iter=10 --name=ignore

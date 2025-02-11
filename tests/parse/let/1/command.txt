@@ -1,1 +1,1 @@
---test dna.fasta -S hky85_sym(kappa=m)where{m~logNormal(0,1)}
+--test dna.fasta -S 'hky85_sym(kappa=m) where {m~logNormal(0,1)}'

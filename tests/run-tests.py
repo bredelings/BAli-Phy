@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import subprocess
 import re
+import shlex
 import pathlib
 
 from collections import defaultdict
@@ -78,7 +79,7 @@ class Program(object):
             return self.cmd + self.extra_args + [args_filename]
         else:
             args = open(args_filename,'r').read()
-            return self.cmd + args.split() + self.extra_args
+            return self.cmd + shlex.split(args) + self.extra_args
 
     def stdin(self, tester, test_subdir):
         return ""

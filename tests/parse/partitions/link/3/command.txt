@@ -1,1 +1,1 @@
---test dna.fasta dna.fasta --link=1,2 --smodel=1:tn93_sym 
+--test dna.fasta dna.fasta --link=1,2 --smodel=1:tn93_sym

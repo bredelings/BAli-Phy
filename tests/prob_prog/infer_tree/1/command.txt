@@ -1,1 +1,1 @@
--m Model 5d-muscle.fasta --test 
+-m Model 5d-muscle.fasta --test
