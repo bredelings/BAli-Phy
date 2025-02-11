@@ -169,18 +169,23 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
+          if [ ${{ runner.os }} = "macOS" ] && [ -n "${{ matrix.sdk }}" ]; then
+             export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
+             echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
+
+             MIN="-mmacosx-version-min=${{ matrix.sdk }}"
+             export CFLAGS="$CFLAGS $MIN"
+             export CXXFLAGS="$CXXFLAGS $MIN"
+             export LDFLAGS="$LDFLAGS $MIN"
+          fi
+          echo "SDKROOT=${SDKROOT}"
+
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
           brew install eigen range-v3 cairo fmt
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
-
-          # set SDK if needed
-          if [[ "${{ matrix.sdk }}" != "" ]] ; then
-             export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
-             echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
-          fi
 
           # brew install boost
           # if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
@@ -195,7 +200,6 @@ jobs:
             echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
           )
           echo "BOOST_ROOT=${BOOST_ROOT}"
-          echo "SDKROOT=${SDKROOT}"
 
     - name: Install meson
       run: |
@@ -208,15 +212,7 @@ jobs:
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
 
     - name: Configure
-      env:
-        OSX_VERSION_MIN: "13.0"
       run: |
-        if [ ${{ runner.os }} = "macOS" ] && [ -n "${OSX_VERSION_MIN}" ]; then
-           MIN="-mmacosx-version-min=${OSX_VERSION_MIN}"
-           export CFLAGS="$CFLAGS $MIN"
-           export CXXFLAGS="$CXXFLAGS $MIN"
-           export LDFLAGS="$LDFLAGS $MIN"
-        fi
         CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
