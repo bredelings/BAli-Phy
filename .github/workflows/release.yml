@@ -43,10 +43,11 @@ jobs:
   build_and_upload:
     strategy:
       matrix:
-        name: [ubuntu-gcc-12-22.04,
+        name: [
+               ubuntu-gcc-12-22.04,
                ubuntu-gcc-14-24.04,
-               macos-xcode-15-intel,
-               macos-xcode-16-arm,
+               macos13-xcode14-sdk13-intel,
+               macos14-xcode16-arm,
                windows
                ]
 
@@ -65,14 +66,15 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-xcode-15-intel
+          - name: macos13-xcode14-sdk13-intel
             os: macos-13
             compiler: xcode
-            version: "15"
+            version: "14"
+            sdk: 13
             buildtype: "release"
             arch: "mac-intel64"
 
-          - name: macos-xcode-16-arm
+          - name: macos14-xcode16-arm
             os: macos-14
             compiler: xcode
             version: "16"
@@ -174,6 +176,12 @@ jobs:
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
 
+          # set SDK if needed
+          if [[ "${{ matrix.sdk }}" != "" ]] ; then
+             export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
+             echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
+          fi
+
           # brew install boost
           # if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
 
@@ -186,6 +194,8 @@ jobs:
             echo -e "\n    BOOST root is at $(cd ../installed-boost-1.87.0; pwd)\n"
             echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
           )
+          echo "BOOST_ROOT=${BOOST_ROOT}"
+          echo "SDKROOT=${SDKROOT}"
 
     - name: Install meson
       run: |
@@ -199,7 +209,7 @@ jobs:
 
     - name: Configure
       env:
-        OSX_VERSION_MIN: "11.0"
+        OSX_VERSION_MIN: "13.0"
       run: |
         if [ ${{ runner.os }} = "macOS" ] && [ -n "${OSX_VERSION_MIN}" ]; then
            MIN="-mmacosx-version-min=${OSX_VERSION_MIN}"
@@ -218,6 +228,7 @@ jobs:
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
+        echo "SDKROOT = $SDKROOT"
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 

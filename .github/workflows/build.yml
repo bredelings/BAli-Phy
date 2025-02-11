@@ -20,8 +20,8 @@ jobs:
                ubuntu-gcc-14-sanitize,
                ubuntu-gcc-14-24.04,
                ubuntu-clang-17,
-               macos-13-xcode-14-sdk13-intel,
-               macos-14-xcode-16-arm,
+               macos13-xcode14-sdk13-intel,
+               macos14-xcode16-arm,
                windows
                ]
 
@@ -78,7 +78,7 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-13-xcode-14-sdk-13-intel
+          - name: macos13-xcode14-sdk13-intel
             os: macos-13
             compiler: xcode
             version: "14"
@@ -86,7 +86,7 @@ jobs:
             buildtype: "release"
             arch: "mac-intel64"
 
-          - name: macos-14-xcode-16-arm
+          - name: macos14-xcode16-arm
             os: macos-14
             compiler: xcode
             version: "16"
@@ -188,10 +188,12 @@ jobs:
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
 
+          # set SDK if needed
           if [[ "${{ matrix.sdk }}" != "" ]] ; then
              export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
              echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
           fi
+
           # brew install boost
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
           echo "BOOST_ROOT=${BOOST_ROOT}"
@@ -209,7 +211,7 @@ jobs:
 
     - name: Configure
       env:
-        OSX_VERSION_MIN: "11.0"
+        OSX_VERSION_MIN: "13.0"
       run: |
         if [ ${{ runner.os }} = "macOS" ] && [ -n "${OSX_VERSION_MIN}" ]; then
            MIN="-mmacosx-version-min=${OSX_VERSION_MIN}"
@@ -227,7 +229,7 @@ jobs:
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
-        fi 
+        fi
         echo "SDKROOT = $SDKROOT"
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
