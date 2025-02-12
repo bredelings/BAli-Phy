@@ -921,9 +921,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         if (args.count("tree"))
             M = args["tree"].as<string>();
         else if (fixed.count("topology"))
-            M = "~fixed_topology_tree(topology, gamma(0.5, 2/length(taxa)))";
+            M = "~fixed_topology_tree(topology)";
         else
-            M = "~uniform_tree(taxa, gamma(0.5, 2/length(taxa)))";
+            M = "~uniform_tree(taxa)";
 
         tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<t>"), M, "tree model", {});
     }
