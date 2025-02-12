@@ -110,13 +110,11 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
     if (x.is_double())
     {
 	double xx = x.as_double();
-	assert(xx > 0.0);
 	return {pow(xx,yy)};
     }
     else if (x.is_int())
     {
 	double xx = x.as_int();
-	assert(xx > 0.0);
 	return {pow(xx,yy)};
     }
     else if (x.is_log_double())
