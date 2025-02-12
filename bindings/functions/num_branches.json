@@ -2,12 +2,15 @@
     "name": "num_branches",
     "result_type": "Int",
     "no_log": true,
-    "call": "numBranches(@t)",
+    "call": "numBranches(@tree)",
     "import": ["Tree"],
     "args": [
         {
             "name": "tree",
-            "type": "Tree<t>"
+            "type": "Tree<t>",
+	    "description": "The tree in question"
         }
-    ]
+    ],
+    "description": "Get the number of branches of a tree.",
+    "examples" : ["num_branches(tree)"]
 }
