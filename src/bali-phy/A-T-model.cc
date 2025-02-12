@@ -325,7 +325,8 @@ json::object log_summary(const vector<model_t>& IModels,
         if (e.size())
             cout<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
     }
-
+    cout.flush();
+    
     json::object info;
     info["partitions"] = partitions;
     info["smodels"] = smodels;
