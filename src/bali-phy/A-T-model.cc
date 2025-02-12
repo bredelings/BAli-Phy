@@ -934,7 +934,11 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     {
         string M = args.at("subst-rates").as<string>();
         if (M == "relaxed")
-            M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}"; 
+        {
+            // FIXME -- allow automatically modifying downstream vars when changing sigma
+            // M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}";
+            M = "map(|x:pow(x,sigma)|,~iidMap(branches(tree), logNormal(0,1))) where {sigma~logLaplace(-3,1)}";
+        }
 
         auto TC2 = TC;
         subst_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "substitution rates", {{"tree", tree_model.type}});
@@ -946,7 +950,11 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     {
         string M = args.at("indel-rates").as<string>();
         if (M == "relaxed")
-            M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}"; 
+        {
+            // FIXME -- allow automatically modifying downstream vars when changing sigma
+            // M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}";
+            M = "map(|x:pow(x,sigma)|,~iidMap(branches(tree), logNormal(0,1))) where {sigma~logLaplace(-3,1)}";
+        }
 
         indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree",tree_model.type}});
     }
