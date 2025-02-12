@@ -13,7 +13,8 @@
 	{
 	    "name": "branch_length_dist",
 	    "type": "Distribution<Double>",
-	    "description": "The distribution for branch lengths"
+	    "description": "The distribution for branch lengths",
+	    "default_value": "gamma(0.5,2/num_branches(@topology))"
 	}
     ]
 }
