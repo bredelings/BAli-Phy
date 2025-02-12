@@ -84,6 +84,10 @@ class IsGraph g where
     getEdgeAttributes :: g -> EdgeId -> Attributes
     getAttributes :: g -> Attributes
 
+    setNodeAttributes :: g -> (NodeId -> Attributes) -> g
+    setEdgeAttributes :: g -> (EdgeId -> Attributes) -> g
+    setAttributes :: g -> Attributes -> g
+
     type family LabelType g
     type family NewLabelType g l
 
@@ -185,6 +189,11 @@ instance IsGraph (Graph l) where
     getEdgeAttributes (Graph _ _ _ _ a _) edge     = a IntMap.! edge
     getAttributes (Graph _ _ _ _ _ a)              = a
 
+    setNodeAttributes g@(Graph n e l na ea ga) f = (Graph n e l na' ea ga)
+        where na' = getNodesSet g & IntMap.fromSet f
+    setEdgeAttributes g@(Graph n e l na ea ga) f = (Graph n e l na ea' ga)
+        where ea' = getEdgesSet g & IntMap.fromSet f
+    setAttributes g@(Graph n e l na ea ga) ga' = (Graph n e l na ea ga')
 
     -- What this does NOT say how to do is to fmap the labels to a new type
     -- labelMap display graph
@@ -275,6 +284,10 @@ instance IsGraph t => IsGraph (WithBranchLengths t) where
     getNodeAttributes (WithBranchLengths t _) node     = getNodeAttributes t node
     getEdgeAttributes (WithBranchLengths t _) edge     = getEdgeAttributes t edge
     getAttributes (WithBranchLengths t _)              = getAttributes t
+
+    setNodeAttributes (WithBranchLengths t l) as    = WithBranchLengths (setNodeAttributes t as) l
+    setEdgeAttributes (WithBranchLengths t l) as    = WithBranchLengths (setEdgeAttributes t as) l
+    setAttributes (WithBranchLengths t l) as    = WithBranchLengths (setAttributes t as) l
 
     type instance LabelType (WithBranchLengths t) = LabelType t
     type instance NewLabelType (WithBranchLengths t) a = WithBranchLengths (NewLabelType t a)

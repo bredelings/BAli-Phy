@@ -61,6 +61,10 @@ instance IsGraph (Forest l) where
     getEdgeAttributes (Forest g) edge = getEdgeAttributes g edge
     getAttributes (Forest g) = getAttributes g
 
+    setNodeAttributes (Forest g) as = Forest (setNodeAttributes g as)
+    setEdgeAttributes (Forest g) as = Forest (setEdgeAttributes g as)
+    setAttributes (Forest g) as = Forest (setAttributes g as)
+
     type instance LabelType (Forest l) = l
     type instance NewLabelType (Forest l) a = Forest a
     getLabel (Forest g) node = getLabel g node
@@ -120,6 +124,10 @@ instance IsGraph t => IsGraph (WithRoots t) where
     getEdgeAttributes (WithRoots t _ _) edge         = getEdgeAttributes t edge
     getAttributes (WithRoots t _ _)              = getAttributes t
 
+    setNodeAttributes (WithRoots t roots forward) as    = WithRoots (setNodeAttributes t as) roots forward
+    setEdgeAttributes (WithRoots t roots forward) as    = WithRoots (setEdgeAttributes t as) roots forward
+    setAttributes (WithRoots t roots forward) as        = WithRoots (setAttributes t as) roots forward
+
     type instance LabelType (WithRoots t) = LabelType t
     type instance NewLabelType (WithRoots t) a = WithRoots (NewLabelType t a)
     getLabel (WithRoots t _ _) node               = getLabel t node
@@ -171,6 +179,10 @@ instance IsGraph t => IsGraph (WithNodeTimes t) where
     getNodeAttributes (WithNodeTimes t _) node     = getNodeAttributes t node
     getEdgeAttributes (WithNodeTimes t _) edge     = getEdgeAttributes t edge
     getAttributes (WithNodeTimes t _)              = getAttributes t
+
+    setNodeAttributes (WithNodeTimes t hs) as      = WithNodeTimes (setNodeAttributes t as) hs
+    setEdgeAttributes (WithNodeTimes t hs) as      = WithNodeTimes (setEdgeAttributes t as) hs
+    setAttributes (WithNodeTimes t hs) as          = WithNodeTimes (setAttributes t as) hs
 
     type instance LabelType (WithNodeTimes t) = LabelType t
     type instance NewLabelType (WithNodeTimes t) a = WithNodeTimes (NewLabelType t a)
@@ -227,6 +239,10 @@ instance IsGraph t => IsGraph (WithBranchRates t) where
     getNodeAttributes (WithBranchRates t _) node         = getNodeAttributes t node
     getEdgeAttributes (WithBranchRates t _) edge         = getEdgeAttributes t edge
     getAttributes (WithBranchRates t _)                  = getAttributes t
+
+    setNodeAttributes (WithBranchRates t rates) as       = WithBranchRates (setNodeAttributes t as) rates
+    setEdgeAttributes (WithBranchRates t rates) as       = WithBranchRates (setEdgeAttributes t as) rates
+    setAttributes (WithBranchRates t rates) as           = WithBranchRates (setAttributes t as) rates
 
     type instance LabelType (WithBranchRates t) = LabelType t
     type instance NewLabelType (WithBranchRates t) a = WithBranchRates (NewLabelType t a)

@@ -48,6 +48,10 @@ instance IsGraph (Tree l) where
     getEdgeAttributes (Tree f) edge = getEdgeAttributes f edge
     getAttributes (Tree f) = getAttributes f
 
+    setNodeAttributes (Tree f) as = Tree (setNodeAttributes f as)
+    setEdgeAttributes (Tree f) as = Tree (setEdgeAttributes f as)
+    setAttributes (Tree f) as = Tree (setAttributes f as)
+
     type instance LabelType (Tree l) = l
     type instance NewLabelType (Tree l) a = Tree a
     getLabel (Tree f) node = getLabel f node
