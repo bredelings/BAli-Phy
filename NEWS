@@ -1,4 +1,6 @@
 * 4.0-beta18 (unreleased)
+- Models
+  + Allow indel rate variation, relative to the substitution rate.
 
 
 * 4.0-beta17 (Jan 22, 2025)
