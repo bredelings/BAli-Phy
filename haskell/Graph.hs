@@ -15,6 +15,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Display
 
 type NodeId = Int
 type EdgeId = Int
@@ -57,6 +58,12 @@ getAttribute _   (Just (Just text)) = read (T.unpack text)
 
 simpleEdgeAttributes tree key = edgeAttributes tree key (getAttribute key)
 
+-- If there are edges with no value, we don't want to add an attribute with no value
+addUEdgeAttributes name values g = setEdgeAttributes g attributesForBranch
+    where ea = getEdgeAttributes g
+          attributesForBranch b = case IntMap.lookup (undirectedName b) values of
+                                    Nothing -> ea b
+                                    Just x  -> ea b +:+ (Attributes [(T.pack name, Just (display x))])
 
 {-
  ISSUE: If we define graph operations in terms of node *ids*, then finding neighbors will depend on the id->Node map.
