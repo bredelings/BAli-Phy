@@ -285,8 +285,8 @@ po::options_description model_options(int level)
         ("variables",value<vector<string>>()->composing(),"Variable definitions");
     model.add_options()
         ("link,L",value<vector<string>>()->composing(),"Link partitions.")
-        ("subst-rates",value<string>()->default_value("constant"),"Subst rates: constant, relaxed, or an expression.")
-        ("indel-rates",value<string>()->default_value("constant"),"Indel rates: constant, relaxed, or an expression.");
+        ("subst-rates",value<string>()->default_value("constant"),"Subst rates: *constant, relaxed, or an expression.")
+        ("indel-rates",value<string>()->default_value("relaxed"),"Indel rates: constant, *relaxed, or an expression.");
 
     if (level >= 2)
         model.add_options()
