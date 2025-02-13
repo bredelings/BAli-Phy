@@ -161,7 +161,7 @@ ptree& ptree::make_path(const vector<string>& path, int i)
 ptree::operator bool () const
 {
     if (not is_a<bool>())
-	throw myexception()<<"Trying to convert non-bool to bool";
+	throw myexception()<<"Trying to convert non-bool to bool: '"<<show(false)<<"'";
     else
 	return get_value<bool>();
 }
@@ -169,7 +169,7 @@ ptree::operator bool () const
 ptree::operator int () const
 {
     if (not is_a<int>())
-	throw myexception()<<"Trying to convert non-int to int";
+	throw myexception()<<"Trying to convert non-int to int: '"<<show(false)<<"'";
     else
 	return get_value<int>();
 }
@@ -177,7 +177,7 @@ ptree::operator int () const
 ptree::operator double () const
 {
     if (not is_a<double>())
-	throw myexception()<<"Trying to convert non-double to double";
+	throw myexception()<<"Trying to convert non-double to double: '"<<show(false)<<"'";
     else
 	return get_value<double>();
 }
@@ -185,7 +185,7 @@ ptree::operator double () const
 ptree::operator const std::string& () const
 {
     if (not is_a<string>())
-	throw myexception()<<"Trying to convert non-string to string";
+	throw myexception()<<"Trying to convert non-string to string: '"<<show(false)<<"'";
     else
 	return get_value<string>();
 }

@@ -916,6 +916,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 12. Default and compile tree model
     model_t tree_model;
+    ptree tree_type = parse_type("Tree<t>");
     if (not fixed.count("tree"))
     {
         string M;
@@ -926,7 +927,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         else
             M = "~uniform_tree(taxa)";
 
-        tree_model = compile_model(R, TC, code_gen_state, parse_type("Tree<t>"), M, "tree model", {});
+        tree_model = compile_model(R, TC, code_gen_state, tree_type, M, "tree model", {});
+        tree_type = tree_model.type;
     }
 
     // 13. Default and compile subst rates
@@ -942,7 +944,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         }
 
         auto TC2 = TC;
-        subst_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "substitution rates", {{"tree", tree_model.type}});
+        subst_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "substitution rates", {{"tree", tree_type}});
     }
 
     // 14. Default and compile indel rates
@@ -957,7 +959,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
             M = "map(|x:pow(x,sigma)|,~iidMap(branches(tree), logNormal(0,1))) where {sigma~logLaplace(-3,1)}";
         }
 
-        indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree",tree_model.type}});
+        indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree", tree_type}});
     }
 
     //-------------- Likelihood calculator types -----------//

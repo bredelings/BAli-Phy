@@ -553,9 +553,13 @@ TypecheckingState::typecheck_and_annotate_var(const ptree& required_type, const 
         if (not type)
             throw myexception()<<"can't find argument '"<<name<<"'";
         result_type = *type;
+        assert(not result_type.is_null());
     }
     else if (auto type = type_for_var(name))
+    {
         result_type = *type;
+        assert(not result_type.is_null());
+    }
     else
         return {};
 

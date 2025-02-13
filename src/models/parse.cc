@@ -557,6 +557,8 @@ string unparse_annotated(const ptree& ann)
 
 string unparse_type(const ptree& p)
 {
+    if (p.is_null()) return "NOTYPE";
+
     auto [head,args] = get_type_apps(p);
 
     vector<string> sargs;
