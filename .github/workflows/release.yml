@@ -77,7 +77,6 @@ jobs:
             os: macos-14
             compiler: xcode
             version: "16"
-            osx-version-min: 13
             buildtype: "debugoptimized"
             arch: "mac-arm64"
 
