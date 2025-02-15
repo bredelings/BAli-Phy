@@ -89,6 +89,7 @@ jobs:
             os: macos-14
             compiler: xcode
             version: "16"
+            osx-version-min: 13
             buildtype: "debugoptimized"
             arch: "mac-arm64"
 
@@ -180,16 +181,18 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
-          if [ ${{ runner.os }} = "macOS" ] && [ -n "${{ matrix.sdk }}" ]; then
+          if [ -n "${{ matrix.sdk }}" ]; then
              export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
              echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
+          fi
+          echo "SDKROOT=${SDKROOT}"
 
-             MIN="-mmacosx-version-min=${{ matrix.sdk }}"
+          if [ -n "${{ osx-version-min }}" ] ; then
+             MIN="-mmacosx-version-min=${{ osx-version-min }}"
              export CFLAGS="$CFLAGS $MIN"
              export CXXFLAGS="$CXXFLAGS $MIN"
              export LDFLAGS="$LDFLAGS $MIN"
           fi
-          echo "SDKROOT=${SDKROOT}"
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
