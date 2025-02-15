@@ -187,8 +187,8 @@ jobs:
           fi
           echo "SDKROOT=${SDKROOT}"
 
-          if [ -n "${{ osx-version-min }}" ] ; then
-             MIN="-mmacosx-version-min=${{ osx-version-min }}"
+          if [ -n "${{ matrix.osx-version-min }}" ] ; then
+             MIN="-mmacosx-version-min=${{ matrix.osx-version-min }}"
              export CFLAGS="$CFLAGS $MIN"
              export CXXFLAGS="$CXXFLAGS $MIN"
              export LDFLAGS="$LDFLAGS $MIN"
