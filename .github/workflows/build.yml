@@ -20,7 +20,7 @@ jobs:
                ubuntu-gcc-14-sanitize,
                ubuntu-gcc-14-24.04,
                ubuntu-clang-17,
-               macos13-xcode14-sdk13-intel,
+               macos13-xcode14-intel,
                macos14-xcode16-arm,
                windows
                ]
@@ -78,11 +78,10 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos13-xcode14-sdk13-intel
+          - name: macos13-xcode14-intel
             os: macos-13
             compiler: xcode
             version: "14"
-            sdk: 13
             buildtype: "release"
             arch: "mac-intel64"
 
