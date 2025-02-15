@@ -46,7 +46,7 @@ jobs:
         name: [
                ubuntu-gcc-12-22.04,
                ubuntu-gcc-14-24.04,
-               macos13-xcode14-sdk13-intel,
+               macos13-xcode15-intel,
                macos14-xcode16-arm,
                windows
                ]
@@ -66,11 +66,10 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos13-xcode14-sdk13-intel
+          - name: macos13-xcode15-intel
             os: macos-13
             compiler: xcode
-            version: "14"
-            sdk: 13
+            version: "15"
             buildtype: "release"
             arch: "mac-intel64"
 
@@ -78,7 +77,8 @@ jobs:
             os: macos-14
             compiler: xcode
             version: "16"
-            buildtype: "release"
+            osx-version-min: 13
+            buildtype: "debugoptimized"
             arch: "mac-arm64"
 
           - name: windows
@@ -169,16 +169,18 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
-          if [ ${{ runner.os }} = "macOS" ] && [ -n "${{ matrix.sdk }}" ]; then
+          if [ -n "${{ matrix.sdk }}" ]; then
              export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${{ matrix.sdk }}.sdk
              echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
+          fi
+          echo "SDKROOT=${SDKROOT}"
 
-             MIN="-mmacosx-version-min=${{ matrix.sdk }}"
+          if [ -n "${{ matrix.osx-version-min }}" ] ; then
+             MIN="-mmacosx-version-min=${{ matrix.osx-version-min }}"
              export CFLAGS="$CFLAGS $MIN"
              export CXXFLAGS="$CXXFLAGS $MIN"
              export LDFLAGS="$LDFLAGS $MIN"
           fi
-          echo "SDKROOT=${SDKROOT}"
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
@@ -186,9 +188,6 @@ jobs:
           brew install gnuplot r
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
-
-          # brew install boost
-          # if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
 
           ( cd
             curl -O -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
