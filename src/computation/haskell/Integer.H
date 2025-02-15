@@ -26,8 +26,7 @@ struct integer_container
     integer_container() = default;
     integer_container(const integer& ii):i(ii) {}
 
-    bool operator==(const integer_container& ic) const { return i == ic.i;}
-    bool operator<(const integer_container& ic) const { return i < ic.i;}
+    std::strong_ordering operator<=>(const integer_container&) const = default;
 
     template <class Archive>
     void load(Archive& ar)
