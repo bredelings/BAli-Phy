@@ -1,0 +1,1 @@
+-m Model data/bglobin.fasta --test
