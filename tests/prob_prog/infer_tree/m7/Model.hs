@@ -2,19 +2,12 @@ module Model where
 
 import Bio.Alignment
 import Bio.Alphabet
-import Bio.Sequence
-import qualified Data.IntMap as IntMap
-import qualified Data.JSON as J
-import qualified Data.Text.IO as T
 import IModel
 import MCMC
 import Probability
-import Probability.Logger
-import Probability.Random
 import SModel
 import SModel.Parsimony
 import System.Environment
-import System.FilePath
 import Tree
 import Tree.Newick
 
