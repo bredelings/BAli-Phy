@@ -264,7 +264,7 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
 
 struct attachment_branch
 {
-    int prev_i = -1;
+    std::optional<int> prev_i;
     tree_edge edge;
     tree_edge sibling;
 };
@@ -628,7 +628,7 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     P.setlength(b2, L2);
 }
 
-void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs, const spr_range& range)
+void branch_pairs_after(const TreeInterface& T, std::optional<int> prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs, const spr_range& range)
 {
     vector<int> after = T.branches_after(T.find_branch(prev_b));
     assert(after.size() == 0 or after.size() == 2);
@@ -653,7 +653,7 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     tree_edge b0 { b1.node2, b2.node2 };
 
     vector<attachment_branch> branch_pairs;
-    branch_pairs.push_back({-1,b0,{}});
+    branch_pairs.push_back({{},b0,{}});
 
     branch_pairs_after(T, 0, b1, branch_pairs, range);
     branch_pairs_after(T, 0, b2, branch_pairs, range);
@@ -1084,7 +1084,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	const tree_edge& target_edge = BB.edge;
         const tree_edge& sibling_edge = BB.sibling;
 
-	int prev_i = BB.prev_i;
+	int prev_i = *BB.prev_i;
 	const tree_edge& prev_target_edge = I.attachment_branch_pairs[prev_i].edge;
 
 	if (prev_i != 0) assert(prev_target_edge.node2 == target_edge.node1);
@@ -1218,9 +1218,9 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     for(int i=0;i<indices.size();i++)
     {
 	int I1 = indices[i];
-	int I2 = I.attachment_branch_pairs[I1].prev_i;
-	if (I2 >= 0)
-	    indices.push_back(I2);
+	auto I2 = I.attachment_branch_pairs[I1].prev_i;
+	if (I2)
+	    indices.push_back(*I2);
     }
     std::reverse(indices.begin(), indices.end());
 
@@ -1235,7 +1235,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 	const auto& BB = I.attachment_branch_pairs[indices[j]];
 	const tree_edge& target_edge = BB.edge;
 	const tree_edge& sibling_edge = BB.sibling;
-	const tree_edge& prev_target_edge = I.attachment_branch_pairs[BB.prev_i].edge;
+	const tree_edge& prev_target_edge = I.attachment_branch_pairs[*BB.prev_i].edge;
 
 	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, target_edge, sibling_edge, false) );
     }
