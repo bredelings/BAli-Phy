@@ -138,6 +138,31 @@ public:
 
 //------------------------------------ Tree -----------------------------//
 
+struct tree_dir_edge
+{
+    int node1;
+    int node2;
+
+    /// Check if the other branch is the same regardless of orientation
+    bool operator==(const tree_dir_edge& b2) const = default;
+
+    /// Order branches (for sorting)
+    std::strong_ordering operator<=>(const tree_dir_edge& b2) const = default;
+
+    tree_dir_edge reverse() const;
+
+    tree_dir_edge():node1(-1),node2(-1) { }
+    tree_dir_edge(int s, int t):node1(s), node2(t) { }
+    tree_dir_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
+    // The "explicit" is in order to avoid ambiguous conversions between 'const_branchview -> int' or 'const_branchview -> tree_dir_edge'
+    explicit tree_dir_edge(const const_branchview& b):node1(b.source()), node2(b.target()) { }
+};
+
+inline tree_dir_edge tree_dir_edge::reverse() const
+{
+    return tree_dir_edge(node2, node1);
+}
+
 struct tree_edge
 {
     int node1;
@@ -188,6 +213,8 @@ struct tree_edge
     tree_edge(int s, int t):node1(s), node2(t) { }
     tree_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
     // The "explicit" is in order to avoid ambiguous conversions between 'const_branchview -> int' or 'const_branchview -> tree_edge'
+    tree_edge(const tree_edge&) = default;
+    tree_edge(const tree_dir_edge& e):node1(e.node1),node2(e.node2) {}
     explicit tree_edge(const const_branchview& b):node1(b.source()), node2(b.target()) { }
 };
 
