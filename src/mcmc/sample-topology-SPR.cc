@@ -1074,12 +1074,8 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
             P[j].cache(x1);
         }
 
-    vector<Parameters> Ps;
-    Ps.reserve(I.attachment_branch_pairs.size());
-    Ps.push_back(P);
-
-    std::map<tree_edge, Parameters> Ps_map;
-    Ps_map.insert({I.initial_edge, P});
+    std::map<tree_edge, Parameters> Ps;
+    Ps.insert({I.initial_edge, P});
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -1095,13 +1091,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 	if (prev_i != 0) assert(prev_target_edge.node2 == target_edge.node1);
 
-        Ps_map.insert({target_edge, Ps_map.at(prev_target_edge)});
+        Ps.insert({target_edge, Ps.at(prev_target_edge)});
 
-	Ps.push_back(Ps[prev_i]);
-	assert(Ps.size() == i+1);
-
-	auto& p0 = Ps.back();
-        auto& p0_map = Ps_map.at(target_edge);
+	auto& p0 = Ps.at(target_edge);
 
 	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(prev_target_edge), subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
@@ -1113,14 +1105,14 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
                 p0[j].cache(b);
             }
 
-        set_attachment_probability(Pr, locations, subtree_edge, target_edge, Ps[i], nodes, alignment_3way, sum_out_A);
+        set_attachment_probability(Pr, locations, subtree_edge, target_edge, Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
 
         alignments3way.insert({target_edge, alignment_3way});
     }
 
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
-	Ps.pop_back();
+	Ps.erase(I.attachment_branch_pairs[i].edge);
     }
 
 #ifndef NDEBUG
