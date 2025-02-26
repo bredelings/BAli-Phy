@@ -629,7 +629,7 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     P.setlength(b2, L2);
 }
 
-void branch_pairs_after(const TreeInterface& T, std::optional<int> prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs, const spr_range& range)
+void branch_pairs_after(const TreeInterface& T, std::optional<int> prev_i, const tree_edge& prev_b, const tree_edge& prev_b_pruned, vector<attachment_branch>& branch_pairs, const spr_range& range)
 {
     vector<int> after = T.branches_after(T.find_branch(prev_b));
     assert(after.size() == 0 or after.size() == 2);
@@ -639,9 +639,9 @@ void branch_pairs_after(const TreeInterface& T, std::optional<int> prev_i, const
 	if (range.count(curr_b))
 	{
 	    tree_edge sibling = T.edge(after[1-j]);
-	    branch_pairs.push_back({prev_b, prev_i, curr_b, sibling});
+	    branch_pairs.push_back({prev_b_pruned, prev_i, curr_b, sibling});
 	    int curr_i = branch_pairs.size()-1;
-	    branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
+	    branch_pairs_after(T, curr_i, curr_b, curr_b, branch_pairs, range);
 	}
     }
 }
@@ -656,8 +656,8 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     vector<attachment_branch> branch_pairs;
     branch_pairs.push_back({ {}, {}, b0, {} });
 
-    branch_pairs_after(T, 0, b1, branch_pairs, range);
-    branch_pairs_after(T, 0, b2, branch_pairs, range);
+    branch_pairs_after(T, 0, b1, b0.reverse(), branch_pairs, range);
+    branch_pairs_after(T, 0, b2, b0,           branch_pairs, range);
 
     // Check that the range is connected, and connected to b_parent
     assert(branch_pairs.size() == range.size());
@@ -1050,11 +1050,12 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
 
-    vector<tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
-    alignments3way.reserve(I.attachment_branch_pairs.size());
+    std::map<tree_edge, tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A));
+    auto alignments3way_initial = prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A);
+
+    alignments3way.insert({I.initial_edge, alignments3way_initial});
 
     int x0 = P.t().find_branch(I.initial_edge);
     int x1 = P.t().reverse(x0);
@@ -1077,6 +1078,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     Ps.reserve(I.attachment_branch_pairs.size());
     Ps.push_back(P);
 
+    std::map<tree_edge, Parameters> Ps_map;
+    Ps_map.insert({I.initial_edge, P});
+
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
@@ -1086,13 +1090,20 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         const tree_edge& sibling_edge = BB.sibling;
 
 	int prev_i = *BB.prev_i;
-	const tree_edge& prev_target_edge = I.attachment_branch_pairs[prev_i].edge;
+	const tree_edge& prev_target_edge = *I.attachment_branch_pairs[i].prev_edge;
+        assert(I.attachment_branch_pairs[prev_i].edge == prev_target_edge);
 
 	if (prev_i != 0) assert(prev_target_edge.node2 == target_edge.node1);
+
+        Ps_map.insert({target_edge, Ps_map.at(prev_target_edge)});
+
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
+
 	auto& p0 = Ps.back();
-	auto alignment_3way = move_pruned_subtree(p0, alignments3way[prev_i], subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
+        auto& p0_map = Ps_map.at(target_edge);
+
+	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(prev_target_edge), subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
         int b = p0.t().find_branch(BB.edge);
         if (not p0.t().is_leaf_node(BB.edge.node2))
@@ -1104,7 +1115,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
         set_attachment_probability(Pr, locations, subtree_edge, target_edge, Ps[i], nodes, alignment_3way, sum_out_A);
 
-	alignments3way.push_back( std::move(alignment_3way) );
+        alignments3way.insert({target_edge, alignment_3way});
     }
 
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
