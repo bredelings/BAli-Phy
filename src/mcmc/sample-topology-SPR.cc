@@ -264,6 +264,7 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
 
 struct attachment_branch
 {
+    std::optional<tree_edge> prev_edge;
     std::optional<int> prev_i;
     tree_edge edge;
     tree_edge sibling;
@@ -638,7 +639,7 @@ void branch_pairs_after(const TreeInterface& T, std::optional<int> prev_i, const
 	if (range.count(curr_b))
 	{
 	    tree_edge sibling = T.edge(after[1-j]);
-	    branch_pairs.push_back({prev_i, curr_b, sibling});
+	    branch_pairs.push_back({prev_b, prev_i, curr_b, sibling});
 	    int curr_i = branch_pairs.size()-1;
 	    branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
 	}
@@ -653,7 +654,7 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     tree_edge b0 { b1.node2, b2.node2 };
 
     vector<attachment_branch> branch_pairs;
-    branch_pairs.push_back({{},b0,{}});
+    branch_pairs.push_back({ {}, {}, b0, {} });
 
     branch_pairs_after(T, 0, b1, branch_pairs, range);
     branch_pairs_after(T, 0, b2, branch_pairs, range);
