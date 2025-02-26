@@ -1213,37 +1213,59 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 {
+    auto target_edge = I.attachment_branch_pairs[C].edge;
     auto& subtree_edge = I.b_parent;
+
+    // 1. Record a map from each edge to its prev_edge.
+    std::map<tree_edge, tree_edge> prev_edges;
+    std::map<tree_edge, tree_edge> sibling_edges;
+    for(auto& [prev,i,edge,sibling]: I.attachment_branch_pairs)
+        if (prev)
+        {
+            prev_edges.insert({edge,*prev});
+            sibling_edges.insert({edge,sibling});
+        }
+
+    // 2. Record list of edges from target edge to initial edge
+    vector<tree_edge> edges;
+    edges.push_back(target_edge);
 
     vector<int> indices;
     indices.push_back(C);
+
     for(int i=0;i<indices.size();i++)
     {
 	int I1 = indices[i];
+
 	auto I2 = I.attachment_branch_pairs[I1].prev_i;
 	if (I2)
+        {
 	    indices.push_back(*I2);
+            edges.push_back( I.attachment_branch_pairs[*I2].edge );
+        }
     }
-    std::reverse(indices.begin(), indices.end());
 
-    // 1. Prune subtree and store homology bitpath
+    // 3. Reverse the list of edges, so that it goes from initial edge to target_edge.
+    std::reverse(indices.begin(), indices.end());
+    std::reverse(edges.begin(), edges.end());
+
+    // 4. Prune subtree and store homology bitpath
     vector<tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
     alignments3way.reserve(I.attachment_branch_pairs.size());
     alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes0, false));
 
-    // 2. Move subtree one branch at a time to handle fixed-A partitions represented with pairwise alignments
-    for(int j=1;j<indices.size();j++)
+    // 5. Move the subtree one branch at a time to handle fixed-A partitions represented with pairwise alignments
+    //    We move from edge (j-1) to edge j, while remaining pruned.
+    for(int j=1;j<edges.size();j++)
     {
-	const auto& BB = I.attachment_branch_pairs[indices[j]];
-	const tree_edge& target_edge = BB.edge;
-	const tree_edge& sibling_edge = BB.sibling;
-	const tree_edge& prev_target_edge = *BB.prev_edge;
+	const tree_edge& target_edge = edges[j];
+	const tree_edge& sibling_edge = sibling_edges.at(target_edge);
+	const tree_edge& prev_target_edge = prev_edges.at(target_edge);
 
 	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, target_edge, sibling_edge, false) );
     }
 
-    // 3. Regraft the subtree to the correct edge and set branch lengths
-    auto target_edge = I.attachment_branch_pairs[C].edge;
+    // 6. Finally, regraft the subtree to the target edge and set branch lengths
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
 }
 
