@@ -1085,11 +1085,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	const tree_edge& target_edge = BB.edge;
         const tree_edge& sibling_edge = BB.sibling;
 
-	int prev_i = *BB.prev_i;
-	const tree_edge& prev_target_edge = *I.attachment_branch_pairs[i].prev_edge;
-        assert(I.attachment_branch_pairs[prev_i].edge == prev_target_edge);
+	const tree_edge& prev_target_edge = *BB.prev_edge;
 
-	if (prev_i != 0) assert(prev_target_edge.node2 == target_edge.node1);
+	if (BB.prev_edge) assert(prev_target_edge.node2 == target_edge.node1);
 
         Ps.insert({target_edge, Ps.at(prev_target_edge)});
 
@@ -1239,7 +1237,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 	const auto& BB = I.attachment_branch_pairs[indices[j]];
 	const tree_edge& target_edge = BB.edge;
 	const tree_edge& sibling_edge = BB.sibling;
-	const tree_edge& prev_target_edge = I.attachment_branch_pairs[*BB.prev_i].edge;
+	const tree_edge& prev_target_edge = *BB.prev_edge;
 
 	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, target_edge, sibling_edge, false) );
     }
