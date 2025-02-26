@@ -1230,23 +1230,10 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     vector<tree_edge> edges;
     edges.push_back(target_edge);
 
-    vector<int> indices;
-    indices.push_back(C);
-
-    for(int i=0;i<indices.size();i++)
-    {
-	int I1 = indices[i];
-
-	auto I2 = I.attachment_branch_pairs[I1].prev_i;
-	if (I2)
-        {
-	    indices.push_back(*I2);
-            edges.push_back( I.attachment_branch_pairs[*I2].edge );
-        }
-    }
+    while(prev_edges.count(edges.back()))
+        edges.push_back(prev_edges.at(edges.back()));
 
     // 3. Reverse the list of edges, so that it goes from initial edge to target_edge.
-    std::reverse(indices.begin(), indices.end());
     std::reverse(edges.begin(), edges.end());
 
     // 4. Prune subtree and store homology bitpath
@@ -1254,16 +1241,9 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     alignments3way.reserve(I.attachment_branch_pairs.size());
     alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes0, false));
 
-    // 5. Move the subtree one branch at a time to handle fixed-A partitions represented with pairwise alignments
-    //    We move from edge (j-1) to edge j, while remaining pruned.
+    // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
     for(int j=1;j<edges.size();j++)
-    {
-	const tree_edge& target_edge = edges[j];
-	const tree_edge& sibling_edge = sibling_edges.at(target_edge);
-	const tree_edge& prev_target_edge = prev_edges.at(target_edge);
-
-	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, target_edge, sibling_edge, false) );
-    }
+	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
 
     // 6. Finally, regraft the subtree to the target edge and set branch lengths
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
