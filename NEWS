@@ -1,7 +1,11 @@
-* 4.0-beta18 (unreleased)
+* 4.0 (Feb 27, 2025)
 - Models
   + Allow indel rate variation, relative to the substitution rate.
-
+- Build:
+  - Fix homebrew build on MacOS 13.
+- Misc:
+  - Print priors before long pause if compiling haskell modules for the first time.
+  - Allow printing branch attributes on Newick trees.
 
 * 4.0-beta17 (Jan 22, 2025)
 - Models:
