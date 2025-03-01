@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "4.0-beta16"         >
+<!ENTITY  version        "4.0"         >
 
 <!ENTITY  source.file    "&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -109,7 +109,7 @@ C:\cygwin64\home\<emphasis>username</emphasis>\Applications\
 
     <section><info><title>Install on Mac OS X</title></info>
     <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
-    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 11 or higher) command line tools:
+    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 15 or higher) command line tools:
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
@@ -152,8 +152,7 @@ However, note that this might conflict with R installed from other places, such 
 	     I could copy it to bredelings/bioinformatics ...
 	-->
 	You can install Figtree with homebrew:
-	<screen><prompt>%</prompt> <userinput>brew tap caskroom/cask</userinput>
-<prompt>%</prompt> <userinput>brew cask install figtree</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>brew install --cask figtree</userinput></screen>
 	However, Seaview and Tracer don't have homebrew packages at the moment.
       </para>
     </section>
@@ -1656,7 +1655,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <para>The default substitution model for codons is gy94.</para>
 
       <section>
-	<info><title>Substitution rates</title></info>
+	<info><title>Standard models</title></info>
 	
 	<informaltable>
 	  
@@ -1763,7 +1762,67 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 		</link>
 		</entry>
 	      </row>
-	      
+
+	      <row>
+		<entry><userinput>busted</userinput></entry>
+		<entry>24</entry>
+		<entry><para>MG94-like model where each branch and site has a randomly chosen dN/dS category.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msv035">
+		  (Murrell et al,  2015)
+		</link>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>busted_s</userinput></entry>
+		<entry>13</entry>
+		<entry><para>BUSTED model with synonymous rate variation.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msaa037">
+		  (Wisotsky et al, 2020)
+		</link>
+		</entry>
+	      </row>
+            </tbody>
+	  </tgroup>
+	</informaltable>
+
+	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
+      </section>
+
+      <section>
+	  <info><title>Constructing and tweaking codon models</title></info>
+
+          <para>Sometimes the researcher wants to use an existing codon model, but with a slight tweak.
+          For example, you might want to use an M3 model that is based on GTR instead of HKY.
+          This section provides building blocks to construct codon models from nucleotide models.
+          This allows you to change the underlying nucleotide model or add other modifications.
+          </para>
+
+	  <para>Here are some examples for how to construct classic codon models piecewise:
+	  <itemizedlist>
+	    <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81 +> x3 +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85 +> x3 +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym +> x3_sym +> f +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel</userinput>.</listitem>
+	    <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel_aa</userinput>.</listitem>
+            <listitem><userinput>m3</userinput> is equivalent to <userinput>|w: gy94(w)| +> m3</userinput>.</listitem>
+            <listitem><userinput>m3_test</userinput> is equivalent to <userinput>|w: gy94(w)| +> m3_test</userinput>.</listitem>
+	    <listitem><userinput>busted</userinput> is equivalent to <userinput>|w:gtr +> x3 +> dNdS(omega=w)| +> m3_test(n=2) +> branch_site_mixture</userinput>.</listitem>
+	    <listitem><userinput>busted_s</userinput> is equivalent to <userinput>|w:gtr +> x3 +> dNdS(omega=w)| +> m3_test(n=2) +> branch_site_mixture +> Rates.gamma(n=3)</userinput>.</listitem>
+	  </itemizedlist>
+	  </para>
+
+	  <informaltable>
+	  <tgroup cols="3">
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+	      <entry>Model</entry>
+	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>Summary</entry>
+	    </row></thead>
+            <tbody>
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;f</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
@@ -1775,7 +1834,14 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</userinput></entry>
 		<entry>df(nuc_model)</entry>
-		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para>
+		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para><para>Constructs either a codon model or a triplet model, depending on the alphabet.</para>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;mnm</userinput></entry>
+		<entry>df(nuc_model)</entry>
+		<entry><para>Like <userinput>x3</userinput>, but with multi-nucleotide mutations.</para>
 		</entry>
 	      </row>
 
@@ -1801,28 +1867,24 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;mut_sel_aa</userinput></entry>
+		<entry><userinput><replaceable>codon_model</replaceable> +> mut_sel_aa</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
 		</entry>
 	      </row>
-	      
+
+	      <row>
+		<entry><userinput><replaceable>codon_mixture_model</replaceable> +> branch_site_mixture</userinput></entry>
+		<entry>df(<replaceable>codon_mixture_model</replaceable>)</entry>
+		<entry><para>Codon model where each the rate matrix for each branch and site is chosen from the mixture distribution.</para>
+		</entry>
+	      </row>
+
 	    </tbody>
 	  </tgroup>
 	</informaltable>
 
 
-	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
-	<para>The <userinput>x3</userinput>, <userinput>x3_sym</userinput>, <userinput>x3x3</userinput>, <userinput>dNdS</userinput>, and <userinput>mut_sel</userinput> models
-	can be used to build up codon models piecewise:
-	<itemizedlist>
-	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81 +> x3 +> dNdS</userinput>.</listitem>
-	  <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85 +> x3 +> dNdS</userinput>.</listitem>
-	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym +> x3_sym +> f +> dNdS</userinput>.</listitem>
-	  <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel</userinput>.</listitem>
-	  <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel_aa</userinput>.</listitem>
-	</itemizedlist>
-	</para>
       </section>
 
       <section xml:id="codon-frequencies">
