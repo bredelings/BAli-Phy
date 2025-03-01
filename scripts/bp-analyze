@@ -25,6 +25,14 @@ def add_suffix(p,s):
     else:
         return p.with_suffix(p.suffix+s)
 
+def print_model_string(model):
+    m = model
+    assign = '='
+    if m[0] == '~':
+        assign = '~'
+        m = m[1:]
+    return f"{assign} {m}"
+
 def print_model(model):
     main = model['main']
 
@@ -459,6 +467,12 @@ class MCMCRun(object):
     def get_tree_prior(self):
         return None
 
+    def get_subst_rates(self):
+        return None
+
+    def get_indel_rates(self):
+        return None
+
     def get_code(self):
         return []
 
@@ -542,6 +556,9 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
             self.branch_prior = self.run_info["tree"]["lengths"]
             self.tree_prior = None
 
+        self.subst_rates = self.run_info["subst rates"] if "subst rates" in self.run_info else None
+        self.indel_rates = self.run_info["indel rates"] if "indel rates" in self.run_info else None
+
         self.code = []
         for file_path in os.listdir( self.get_dir() ):
             if Path(file_path).suffix == '.hs':
@@ -617,6 +634,12 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def get_tree_prior(self):
         return self.tree_prior
+
+    def get_subst_rates(self):
+        return self.subst_rates
+
+    def get_indel_rates(self):
+        return self.indel_rates
 
     def get_n_sequences(self,p):
         features = self.get_alignment_info( self.dir / "C1.P{p+1}.initial.fasta")
@@ -948,6 +971,12 @@ class Analysis(object):
 
     def get_tree_prior(self):
         return first_all_same([run.get_tree_prior() for run in self.mcmc_runs])
+
+    def get_subst_rates(self):
+        return first_all_same([run.get_subst_rates() for run in self.mcmc_runs])
+
+    def get_indel_rates(self):
+        return first_all_same([run.get_indel_rates() for run in self.mcmc_runs])
 
     def get_topology_prior(self):
         return first_all_same([run.get_topology_prior() for run in self.mcmc_runs])
@@ -1887,11 +1916,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_scale_model_indices()[i]+1
                 target = f"scale{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                assign = '='
-                if scale_model[0] == '~':
-                    scale_model = scale_model[1:]
-                    assign = '~'
-                section += f'<td>{link} {assign} {scale_model}</td>\n'
+                section += f'<td>{link} {print_model_string(scale_model)}</td>\n'
             elif self.get_scale_models() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -2356,6 +2381,10 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += f'<tr><td class="modelname">branch lengths</td><td>{self.get_branch_length_prior()}</td></tr>'
         if self.get_tree_prior():
             section += f'<tr><td class="modelname">tree</td><td>{self.get_tree_prior()}</td></tr>'
+        if self.get_subst_rates():
+            section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_subst_rates())}</td></tr>'
+        if self.get_indel_rates():
+            section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
         section += '</table>\n'
 
         section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'

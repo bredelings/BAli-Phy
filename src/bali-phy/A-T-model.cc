@@ -233,19 +233,34 @@ json::object log_summary(const vector<model_t>& IModels,
                          const variables_map& args)
 {
     string tree;
+    string m_subst_rates;
+    string m_indel_rates;
     if (n_sequences >= 2 and not tree_model.empty())
     {
         cout<<"tree "<<tree_model.show()<<endl;
         tree = tree_model.show(false);
+
         if (subst_rates.empty())
+        {
             cout<<"subst rates = constant"<<endl;
+            m_subst_rates = "constant";
+        }
         else
+        {
             cout<<"subst rates "<<subst_rates.show()<<endl;
+            m_subst_rates = subst_rates.show(false);
+        }
 
         if (indel_rates.empty())
+        {
             cout<<"indel rates = constant"<<endl;
+            m_indel_rates = "constant";
+        }
         else
+        {
             cout<<"indel rates "<<indel_rates.show()<<endl;
+            m_indel_rates = indel_rates.show(false);
+        }
 
         cout<<endl;
     }
@@ -326,13 +341,15 @@ json::object log_summary(const vector<model_t>& IModels,
             cout<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
     }
     cout.flush();
-    
+
     json::object info;
     info["partitions"] = partitions;
     info["smodels"] = smodels;
     info["imodels"] = imodels;
     info["scales"] = scales;
     info["tree"] = tree;
+    info["subst rates"] = m_subst_rates;
+    info["indel rates"] = m_indel_rates;
     return info;
 }
 
