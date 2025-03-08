@@ -742,6 +742,15 @@ vector<HMM::bitmask_t> get_3way_alignment(mutable_data_partition P, int a, int b
     return Aabxy;
 }
 
+// preserve_homology = not sum_out_A (in search_attachment_points) and false (in spr_to_index).
+// not preserve_homology = sum_out_A
+// So, I think that unless we are doing sum_out_A, we preserve homologies with the original attachment point,
+//  even if there is a - on the path.  We do that by flipping the - to +.
+// But if we are doing sum_out_A, we always drop homologies with the original attachment point if there is
+//  a - on the path.
+// In theory, we could instead perform an NNI where we resample all 5 pairwise alignments, which would allow
+//  preserving homologies even when we integrate out the alignment.
+
 tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target,
 				      const vector<int>& nodes0, bool preserve_homology=false)
@@ -1037,6 +1046,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         P.set_root(root_node);
     }
 
+    // Cache probabilities from behind subtree.
     for(int j=0;j<P.n_data_partitions();j++)
     {
         int b0 = P.t().find_branch(subtree_edge);
@@ -1049,6 +1059,8 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 #endif
 
     std::map<tree_edge, tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
+    std::map<tree_edge, Parameters> pruned_Ps;
+    std::map<tree_dir_edge, Parameters> directed_attached_Ps;
 
     // 1. Prune subtree and store homology bitpath
     auto alignments3way_initial = prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A);
@@ -1072,8 +1084,24 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
             P[j].cache(x1);
         }
 
-    std::map<tree_edge, Parameters> Ps;
-    Ps.insert({I.initial_edge, P});
+    if (not P.t().is_leaf_node(I.initial_edge.node2))
+    {
+        auto Px0 = P;
+        for(int j=0;j<P.n_data_partitions();j++)
+        {
+            P[j].transition_P(x0);
+            P[j].cache(x0);
+        }
+    }
+
+    if (not P.t().is_leaf_node(I.initial_edge.node1))
+        for(int j=0;j<P.n_data_partitions();j++)
+        {
+            P[j].transition_P(x1);
+            P[j].cache(x1);
+        }
+
+    pruned_Ps.insert({I.initial_edge, P});
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -1087,9 +1115,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 	if (BB.prev_edge) assert(prev_target_edge.node2 == target_edge.node1);
 
-        Ps.insert({target_edge, Ps.at(prev_target_edge)});
+        pruned_Ps.insert({target_edge, pruned_Ps.at(prev_target_edge)});
 
-	auto& p0 = Ps.at(target_edge);
+	auto& p0 = pruned_Ps.at(target_edge);
 
 	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(prev_target_edge), subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
@@ -1101,14 +1129,14 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
                 p0[j].cache(b);
             }
 
-        set_attachment_probability(Pr, locations, subtree_edge, target_edge, Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
+        set_attachment_probability(Pr, locations, subtree_edge, target_edge, pruned_Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
 
         alignments3way.insert({target_edge, alignment_3way});
     }
 
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
-	Ps.erase(I.attachment_branch_pairs[i].edge);
+	pruned_Ps.erase(I.attachment_branch_pairs[i].edge);
     }
 
 #ifndef NDEBUG
