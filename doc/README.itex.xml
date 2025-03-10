@@ -1938,7 +1938,7 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
       <section xml:id="genetic-codes">
 	<info><title>Genetic Codes</title></info>
       
-	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A Codons(,<replaceable>genetic-code</replaceable>)</userinput>.
+	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A "Codons(,<replaceable>genetic-code</replaceable>)"</userinput>.
         Available genetic codes are:</para>
 	<informaltable>
 	  <tgroup cols="3">
@@ -1984,10 +1984,10 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
         For example <userinput>code1</userinput> is the standard code.
 If the genetic code is not specified, then the standard code is used:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(RNA)</screen>
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(RNA)"</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(DNA,mt-vert)
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons(,mt-vert)</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(DNA,mt-vert)"
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(,mt-vert)"</screen>	
 </para>
       </section>
       <section>
@@ -2393,7 +2393,7 @@ A value must be given for each parameter, unless the parameter has a default val
   <section><info><title>Model stacking and '<userinput>+></userinput>' notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
   <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>, which is equivalent to <userinput>C(B(A))</userinput>.  For example:
-<programlisting>hky85 + Rates.gamma               // rewritten to Rates.gamma(hky85)
+<programlisting>hky85 +> Rates.gamma              // rewritten to Rates.gamma(hky85)
 hky85 +> inv                      // rewritten to inv(hky85)
 wag +> f                          // rewritten to f(wag)
 wag +> f +> Rates.gamma +> inv    // rewritten to inv(Rates.gamma(f(wag)))
