@@ -67,10 +67,12 @@
   </section>
 
   <section><info><title>Install on MS Windows</title></info>
-    <para>First check that you have a 64-bit version of the Windows operation system installed. The executables for download will only run on a 64-bit installation of Windows.  </para>
-    <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
+  <section><info><title>Install a Unix command line: WSL2 (recommended)</title></info>
+  <para>We recommend <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">installing WSL2</link>.  Then you can install bali-phy inside the WSL2 Linux installation and follow the instructions for Linux users.</para>
+  </section>
+    <section><info><title>Install a Unix command line: Cygwin</title></info>
     <para>
-       Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  
+       It is also possible to install native windows executables.  However, you will still need a Unix command-line environment.
        We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>:
 <itemizedlist>
 <listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
@@ -81,7 +83,7 @@
        You can run the installer again to add more packages.
     </para>
 
-    <para>BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>) because it is compiled as a native windows executable.  However, the Cygwin shell uses UNIX-style filenames.
+    <para>The native windows version of BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>).  However, the Cygwin shell uses UNIX-style filenames, so you will need to keep the difference in mind:
 <informaltable>
 <tgroup cols="2">
 <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -160,15 +162,7 @@ However, note that this might conflict with R installed from other places, such 
 
     <section><info><title>Install on Linux</title></info>
 
-    <section><info><title>Install BAli-Phy using <command>apt-get</command></title></info>
-    BAli-Phy is available on Ubuntu <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://launchpad.net/ubuntu/+source/bali-phy/">("Cosmic Cuttlefish" or later)</link>, and Debian (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all">testing and unstable</link>).
-    <screen><prompt>%</prompt> <userinput>sudo apt-get install bali-phy</userinput></screen>
-    Check that the executable runs:
-    <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-    If you install with <command>apt-get</command>, you don't need to do anything extra to put bali-phy in your PATH.
-    </section>
-
-    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
+    <section><info><title>Download BAli-Phy executables from website</title></info>
 
     <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
@@ -181,9 +175,19 @@ However, note that this might conflict with R installed from other places, such 
 <prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput></screen>
       Second, check that the executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
-      You still need to add it to your PATH as described in <xref linkend="path"/>.
     </para>
+      <para>Third, add bali-phy to your PATH as described in <xref linkend="path"/>.</para>
+    <para>Fourth, test the software as described in <xref linkend="tests"/>.</para>
     </section>
+
+    <section><info><title>Install BAli-Phy using <command>apt-get</command> (alternative)</title></info>
+    <para>BAli-Phy packages exists for Ubuntu <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://launchpad.net/ubuntu/+source/bali-phy/">("Cosmic Cuttlefish" or later)</link>, and Debian (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all">testing and unstable</link>).  However, these may not be up-to-date.</para>
+    <screen><prompt>%</prompt> <userinput>sudo apt-get install bali-phy</userinput></screen>
+    Check that the executable runs:
+    <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+    If you install with <command>apt-get</command>, you don't need to do anything extra to put bali-phy in your PATH.
+    </section>
+
     <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
     <para>If you have Debian or Ubuntu Linux, you can install other recommended programs by typing:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
