@@ -28,10 +28,11 @@
 #include "expression/tuple.H"
 #include "expression/substitute.H"
 #include "expression/convert.H"
-#include "computation/optimization/simplifier.H"
-#include "computation/optimization/occurrence.H"
+#include "computation/optimization/cse.H"
 #include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
+#include "computation/optimization/occurrence.H"
+#include "computation/optimization/simplifier.H"
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
 #include "computation/core/func.H"
@@ -1349,7 +1350,7 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
     // QUESTION!  We need to avoid floating things into case alternatives as well as lambda expressions.
     //            Should this be an option to the simplifier?
 
-    // Pass: CSE -- See note Implementing CSE.
+    core_decl_groups = cse_module(opts, fvstate, *this, core_decl_groups);  // Pass: CSE -- See note Implementing CSE.
     // Pass: Float In
     // Pass: Simplify (final)
 
