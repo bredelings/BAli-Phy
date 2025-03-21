@@ -1089,7 +1089,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         // We want to attach on a target_node, but keep the pairwise alignment settings for being on the branch.
         if (not directed_attached_Ps.count(prev_target_dir_edge))
         {
+            // Attach the pruned subtree at attach_node
             auto attach_node_P = pruned_Ps.at(prev_target_edge);
+            attach_node_P.reconnect_branch(root_node, root_node, attach_node);
 
             // Cache probabilities from behind subtree.
             for(int j=0;j<attach_node_P.n_data_partitions();j++)
@@ -1098,9 +1100,6 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
                 attach_node_P[j].cache(b);
                 attach_node_P[j].transition_P(b);
             }
-
-            // Make the branch that goes from (root_node, root_node) go from (root_node, attach_node)
-            attach_node_P.reconnect_branch(root_node, root_node, attach_node);
 
             directed_attached_Ps.insert({prev_target_dir_edge, attach_node_P});
         }
