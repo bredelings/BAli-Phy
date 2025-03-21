@@ -299,13 +299,14 @@ model_t compile_model(const Rules& R,
 	constraints.insert(constraint);
     }
 
+/*
     if (log_verbose >= 2)
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
         std::cout<<"equations: "<<TC.eqs.show()<<std::endl;
 
-	model_rep = extract_value(model);
+	FIXME!  This crashes with decls --- model_rep = extract_value(model);
 	substitute(TC.eqs, model_rep);
         std::cout<<"structure = "<<show(model_rep)<<std::endl;
 
@@ -313,6 +314,7 @@ model_t compile_model(const Rules& R,
         std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
         std::cout<<std::endl;
     }
+*/
 
     // 3. Generate code - translate to Haskell
     vector<var> lambda_vars;

@@ -1015,9 +1015,7 @@ spr_attachment_probabilities
 SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_range& range, const spr_attachment_points& locations,
 			     const map<tree_edge,vector<int>>& nodes, bool sum_out_A)
 {
-#ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
-#endif
 
     // The attachment node for the pruned subtree.
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
@@ -1067,41 +1065,9 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
     alignments3way.insert({I.initial_edge, alignments3way_initial});
 
-    int x0 = P.t().find_branch(I.initial_edge);
-    int x1 = P.t().reverse(x0);
-
-    if (not P.t().is_leaf_node(I.initial_edge.node2))
-        for(int j=0;j<P.n_data_partitions();j++)
-        {
-            P[j].transition_P(x0);
-            P[j].cache(x0);
-        }
-
-    if (not P.t().is_leaf_node(I.initial_edge.node1))
-        for(int j=0;j<P.n_data_partitions();j++)
-        {
-            P[j].transition_P(x1);
-            P[j].cache(x1);
-        }
-
-    if (not P.t().is_leaf_node(I.initial_edge.node2))
-    {
-        auto Px0 = P;
-        for(int j=0;j<P.n_data_partitions();j++)
-        {
-            P[j].transition_P(x0);
-            P[j].cache(x0);
-        }
-    }
-
-    if (not P.t().is_leaf_node(I.initial_edge.node1))
-        for(int j=0;j<P.n_data_partitions();j++)
-        {
-            P[j].transition_P(x1);
-            P[j].cache(x1);
-        }
-
     pruned_Ps.insert({I.initial_edge, P});
+
+    auto peels1 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -1113,39 +1079,56 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 	const tree_edge& prev_target_edge = *BB.prev_edge;
 
-	if (BB.prev_edge) assert(prev_target_edge.node2 == target_edge.node1);
+        // Wouldn't BB.prev_edge always be true?
+        assert(prev_target_edge.node2 == target_edge.node1);
 
-        pruned_Ps.insert({target_edge, pruned_Ps.at(prev_target_edge)});
+        // This edge points to the node shared with the prev_target.
+        tree_dir_edge prev_target_dir_edge{prev_target_edge.node1, prev_target_edge.node2};
+        int attach_node = prev_target_dir_edge.node2;
+
+        // We want to attach on a target_node, but keep the pairwise alignment settings for being on the branch.
+        if (not directed_attached_Ps.count(prev_target_dir_edge))
+        {
+            auto attach_node_P = pruned_Ps.at(prev_target_edge);
+
+            // Cache probabilities from behind subtree.
+            for(int j=0;j<attach_node_P.n_data_partitions();j++)
+            {
+                int b = attach_node_P.t().find_branch(prev_target_dir_edge);
+                attach_node_P[j].cache(b);
+                attach_node_P[j].transition_P(b);
+            }
+
+            // Make the branch that goes from (root_node, root_node) go from (root_node, attach_node)
+            attach_node_P.reconnect_branch(root_node, root_node, attach_node);
+
+            directed_attached_Ps.insert({prev_target_dir_edge, attach_node_P});
+        }
+
+        auto prev_p = directed_attached_Ps.at(prev_target_dir_edge);
+        prev_p.reconnect_branch(root_node, attach_node, root_node);
+
+        pruned_Ps.insert({target_edge, prev_p});
 
 	auto& p0 = pruned_Ps.at(target_edge);
 
 	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(prev_target_edge), subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
-        int b = p0.t().find_branch(BB.edge);
-        if (not p0.t().is_leaf_node(BB.edge.node2))
-            for(int j=0;j<p0.n_data_partitions();j++)
-            {
-                p0[j].transition_P(b);
-                p0[j].cache(b);
-            }
-
         set_attachment_probability(Pr, locations, subtree_edge, target_edge, pruned_Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
 
         alignments3way.insert({target_edge, alignment_3way});
     }
-
+    
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
 	pruned_Ps.erase(I.attachment_branch_pairs[i].edge);
     }
 
-#ifndef NDEBUG
     if (log_verbose >= 4)
     {
-	auto peels1 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
-	std::cerr<<"total_peels2 = "<<peels1 - peels0<<std::endl;
+	auto peels2 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
+	std::cerr<<"SPR_search_attachment_points:  range = "<<I.attachment_branch_pairs.size()<<"   branch_peels_to_root = "<<peels1 - peels0<<"   branch_peels_to_other_branches = "<<peels2 - peels1<<std::endl;
     }
-#endif
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
     // We had better not let this get changed!
