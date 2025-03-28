@@ -2384,7 +2384,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         if self.get_subst_rates():
             section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_subst_rates())}</td></tr>'
         if self.get_indel_rates():
-            section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
+            section += f'<tr><td class="modelname">indel rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
         section += '</table>\n'
 
         section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'
