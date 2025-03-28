@@ -104,7 +104,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	  options(all).positional(p).run(), args);
     notify(args);    
 
-    if (args.count("help"))
+    if (args.count("help") or not args.count("analysis"))
     {
 	cout<<"Compute distances between alignments.\n\n";
 	cout<<"Usage: alignment-distances <analysis> alignments-file1 [alignments-file2 ...]\n\n";
@@ -416,7 +416,7 @@ int main(int argc,char* argv[])
 	//----------- Parse command line ---------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	string analysis = args["analysis"].as<string>();
+        string analysis = args["analysis"].as<string>();
 
 	string distance_names = args["distances"].as<string>();
 

@@ -865,14 +865,14 @@ int main(int argc,char* argv[])
 	//--------- Construct alignment indexes ---------//
 	MPD mpd( alignments[0] );
 
-        if (args["column-pr"].as<string>() == "alignment")
+        if (args["column-pr-type"].as<string>() == "alignment")
         {
-            std::cerr<<"emitted!\n";
+            if (log_verbose) std::cerr<<"column-pr = emitted!\n";
             mpd.column_pr_type = column_pr_type_t::emitted;
         }
-        else if (args["column-pr"].as<string>() == "homology")
+        else if (args["column-pr-type"].as<string>() == "homology")
         {
-            std::cerr<<"bare!\n";
+            if (log_verbose) std::cerr<<"column-pr = homology\n";
             mpd.column_pr_type = column_pr_type_t::bare;
         }
         else
