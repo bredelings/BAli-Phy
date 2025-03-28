@@ -252,8 +252,8 @@ struct emitted_column_order
  * An emitted column specifies the character index (-1 for a gap) AND the total number
    of emitted characters for each sequence.
 
-   A "bare" column includes ONLY the character indices, so it is possible for multiple
-   emitted columns to map to each "bare" column.
+   A "homology_only" column includes ONLY the character indices, so it is possible for multiple
+   emitted columns to map to each "homology_only" column.
 
    This probably makes sense for columns that consist only of leaf sequences, since those
    sequences are fixed.
@@ -269,7 +269,7 @@ typedef map< vector<int>, vector<int>, column_order> emitted_map;
 enum class column_pr_type_t
 {
     emitted,
-    bare
+    homology_only
 };
 
 struct MPD
@@ -289,19 +289,19 @@ struct MPD
     /// map emitted columns -> x
     emitted_column_map emitted_columns;
 
-    /// map bare columns    -> y
+    /// map homology_only columns    -> y
     column_map columns;
 
     // How do we think of column counts?
     column_pr_type_t column_pr_type;
 
     /// map x -> y
-    vector<int> emitted_to_bare;
+    vector<int> emitted_to_homology_only;
 
-    /// how many times did we see each bare column?
-    vector<int> bare_column_counts;
+    /// how many times did we see each column (gaps are just gaps)?
+    vector<int> homology_only_column_counts;
 
-    /// how many times did we see each bare column?
+    /// how many times did we see each column (gaps specify previously emitted letters)?
     vector<int> emitted_column_counts;
 
     /// emitted before column -> {x1...xn}
@@ -331,7 +331,7 @@ struct MPD
   
     alignment get_best_alignment(int);
   
-    int n_vertices() const {return emitted_to_bare.size();}
+    int n_vertices() const {return emitted_to_homology_only.size();}
 
     vector<double> get_column_probabilities(const alignment&) const;
 
@@ -347,7 +347,7 @@ MPD::MPD(const alignment& A)
 	L[i] = A.seqlength(i);
     
     vertex_start = add_vertex(g); // add the start node
-    emitted_to_bare.push_back(-1); // the start node doesn't correspond to a column
+    emitted_to_homology_only.push_back(-1); // the start node doesn't correspond to a column
     emitted_column_counts.push_back(0); // the start node has no observations
     int x_start = get(vertex_index, g, vertex_start);
 
@@ -356,7 +356,7 @@ MPD::MPD(const alignment& A)
     after[nothing_emitted].push_back(x_start);
 
     vertex_end = add_vertex(g); // add the end node
-    emitted_to_bare.push_back(-1); // the end node doesn't correspond to a column
+    emitted_to_homology_only.push_back(-1); // the end node doesn't correspond to a column
     emitted_column_counts.push_back(0); // the end node has no observations
     int x_end = get(vertex_index, g, vertex_end);
 
@@ -433,28 +433,28 @@ MPD::create_new_emitted_column(const emitted_column& C)
     auto x_record = emitted_columns.find(C);
     assert(x_record != emitted_columns.end());
 
-    // if this bare column has not been seen before
+    // if this homology_only column has not been seen before
     auto y_record = columns.find(C.column);
     if (y_record == columns.end()) 
     {
-	// Add the mapping from C.column -> columns.size() to the bare column map
+	// Add the mapping from C.column -> columns.size() to the homology_only column map
 	columns.insert( {C.column, columns.size()} );
 	y_record = columns.find(C.column);
 	assert(y_record != columns.end());
     
-	// This new bare column has no counts
-	bare_column_counts.push_back(0);
-	assert(bare_column_counts.size() == columns.size());
+	// This new homology_only column has no counts
+	homology_only_column_counts.push_back(0);
+	assert(homology_only_column_counts.size() == columns.size());
     }
   
-    // map the emitted_column index (emitted.size()) to the bare column index (y_record->second)
+    // map the emitted_column index (emitted.size()) to the homology_only column index (y_record->second)
     emitted_column_counts.push_back(0);
     assert(emitted_column_counts.size()-1 == vi);
 
-    emitted_to_bare.push_back(y_record->second);
-    assert(emitted_to_bare.size()-1 == vi);
+    emitted_to_homology_only.push_back(y_record->second);
+    assert(emitted_to_homology_only.size()-1 == vi);
   
-    assert(emitted_columns.size()+2 == emitted_to_bare.size());
+    assert(emitted_columns.size()+2 == emitted_to_homology_only.size());
 
     return x_record;
 }
@@ -506,7 +506,7 @@ MPD::add_emitted_column(const emitted_column& C)
     x_current = x_record->second;
   
     // Increment column count
-    ++bare_column_counts[emitted_to_bare[x_current]];
+    ++homology_only_column_counts[emitted_to_homology_only[x_current]];
     ++emitted_column_counts[x_current];
 }
 
@@ -538,10 +538,10 @@ vector<double> MPD::get_score(int type) const
 	int n = n_letters(emitted_column.column);
 	assert(n > 0);
 
-        int j = emitted_to_bare[i];
+        int j = emitted_to_homology_only[i];
 
-        if (column_pr_type == column_pr_type_t::bare)
-            score[i] = double(bare_column_counts[j])/n_samples;
+        if (column_pr_type == column_pr_type_t::homology_only)
+            score[i] = double(homology_only_column_counts[j])/n_samples;
         else
             score[i] = double(emitted_column_counts[i])/n_samples;
 
@@ -825,7 +825,7 @@ vector<double> MPD::get_column_probabilities(const alignment& A) const
 	if (y_record != columns.end())
 	{
 	    int y_index = y_record->second;
-	    int count = bare_column_counts[y_index];
+	    int count = homology_only_column_counts[y_index];
 	    column_pr[c] = double(count)/n_samples;
 	}
     }
@@ -865,15 +865,15 @@ int main(int argc,char* argv[])
 	//--------- Construct alignment indexes ---------//
 	MPD mpd( alignments[0] );
 
-        if (args["column-pr-type"].as<string>() == "alignment")
+        if (args["column-pr"].as<string>() == "alignment")
         {
-            if (log_verbose) std::cerr<<"column-pr = emitted!\n";
+            if (log_verbose) std::cerr<<"column-pr-type = gaps specify how many letters previously emitted\n";
             mpd.column_pr_type = column_pr_type_t::emitted;
         }
-        else if (args["column-pr-type"].as<string>() == "homology")
+        else if (args["column-pr"].as<string>() == "homology")
         {
-            if (log_verbose) std::cerr<<"column-pr = homology\n";
-            mpd.column_pr_type = column_pr_type_t::bare;
+            if (log_verbose) std::cerr<<"column-pr-type = gaps do not specify how many letters previously emitted\n";
+            mpd.column_pr_type = column_pr_type_t::homology_only;
         }
         else
             throw myexception()<<"--column-pr should be either 'alignment' or 'homology'";
