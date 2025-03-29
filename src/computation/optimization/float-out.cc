@@ -312,19 +312,23 @@ void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>
 {
     auto decl_groups = set_level_for_module(fresh_var_state, core_decl_groups);
 
+    vector<Core2::Decls<>> core_decl_groups2;
+
     for(auto& decl_group: decl_groups)
     {
         // FIXME - should we remove empty groups before we get here?
         if (decl_group.empty()) continue;
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(decl_group);
-        decl_group = decls;
 
         assert(float_binds.level_binds.empty());
 
+        // Why put these at the END?
         for(auto& decl: float_binds.top_binds)
-            decl_group.push_back( std::move(decl) );
+            decls.push_back( std::move(decl) );
+
+        core_decl_groups2.push_back(to_core(decls)); //decl_group = decls;
     }
 
-    core_decl_groups = decl_groups_to_core(decl_groups);
+    std::swap(core_decl_groups, core_decl_groups2);
 }
