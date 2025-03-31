@@ -3,6 +3,7 @@
 #include "computation/expression/case.H"
 #include "computation/loader.H"
 #include "computation/optimization/occurrence_info.H"
+#include "computation/optimization/set-levels.H"
 
 Core2::Exp<> to_core_exp(const expression_ref& E);
 
@@ -14,6 +15,19 @@ Core2::Var<> to_core(const var& x);
 
 Core2::Decls<> to_core(const CDecls& decls);
 
+//-----------------------------------------------------------------------
+
+Levels::Exp to_levels_exp(const expression_ref& E);
+
+Levels::Pattern to_levels_pattern(const expression_ref& E);
+
+std::vector<Levels::Decls> decl_groups_to_levels(const std::vector<CDecls>& decls);
+
+Levels::Var to_levels(const var& x);
+
+Levels::Decls to_levels(const CDecls& decls);
+
+//-----------------------------------------------------------------------
 var to_var(const Core2::Var<>& V);
 
 expression_ref to_expression_ref(const Core2::Exp<>& E);

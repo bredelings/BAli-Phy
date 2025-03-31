@@ -15,6 +15,203 @@ using std::vector;
 using std::multiset;
 using std::string;
 
+Levels::Var to_levels(const var& V)
+{
+    return Levels::Var{V.name, V.index, V.level.value(), V.is_exported};
+}
+
+Levels::Lambda to_levels_lambda(expression_ref L)
+{
+    assert(is_lambda_exp(L));
+
+    auto x = to_levels(L.sub()[0].as_<var>());
+    auto body = to_levels_exp(L.sub()[1]);
+
+    return Levels::Lambda{x,body};
+}
+
+vector<Levels::Decls> decl_groups_to_levels(const vector<CDecls>& decl_groups)
+{
+    vector<Levels::Decls> decls2;
+    for(auto& decl_group: decl_groups)
+        decls2.push_back(to_levels(decl_group));
+
+    return decls2;
+}
+
+Levels::Decls to_levels(const CDecls& decls)
+{
+    Levels::Decls decls2;
+    for(auto& [x,E]: decls)
+	decls2.push_back(Levels::Decl{to_levels(x), to_levels_exp(E)});
+
+    return decls2;
+}
+
+Levels::Apply to_levels_apply(expression_ref A)
+{
+    assert(is_apply_exp(A));
+    Levels::Apply A2;
+    A2.head = to_levels_exp(A.sub()[0]);
+    for(int i=1;i<A.size();i++)
+    {
+	auto& arg = A.sub()[i];
+	if (not arg.is_a<var>())
+	    throw myexception()<<"to_levels_apply: Argument "<<i<<" of apply is not a variable in "<<A.print();
+
+	A2.args.push_back(to_levels(arg.as_<var>()));
+    }
+    return A2;
+}
+
+
+Levels::Let to_levels(const let_exp&  L)
+{
+    return {to_levels(L.binds), to_levels_exp(L.body)};
+}
+
+Levels::Let to_levels_let(const expression_ref& E)
+{
+    assert(is_let_expression(E));
+    return to_levels(E.as_<let_exp>());
+}
+
+Levels::Pattern to_levels_pattern(const expression_ref& P)
+{
+    if (auto v = P.to<var>())
+    {
+	if (v->is_wildcard()) return Levels::WildcardPat();
+	else throw myexception()<<"to_levels_pattern: pattern is a non-wildcard variable: "<<P;
+    }
+    else
+    {
+	Levels::ConPat con_pat;
+	con_pat.head = P.head().as_<constructor>().f_name;
+
+	// The arity on the constructor head must match the number of arguments.
+	// We use the constructor arity to infer the number of pattern variables in indexified form.
+	assert(P.head().as_<constructor>().n_args() == P.size());
+
+	for(int i=0;i<P.size();i++)
+	{
+	    if (not is_var(P.sub()[i]))
+		throw myexception()<<"to_levels_pattern: constructor argument is not a var: "<<P;
+
+	    auto x = P.sub()[i].as_<var>();
+	    if (x.is_wildcard())
+		throw myexception()<<"to_levels_pattern: constructor pattern has wildcard argument: "<<P;
+
+            con_pat.args.push_back( to_levels(x) );
+	}
+	return con_pat;
+    }
+}
+
+Levels::Alts to_levels(const Core::Alts& alts1)
+{
+    Levels::Alts alts2;
+    for(auto& [pattern,body]: alts1)
+	alts2.push_back({to_levels_pattern(pattern),to_levels_exp(body)});
+    return alts2;
+}
+
+Levels::Alts to_levels_alts(const expression_ref& E)
+{
+    assert(E.is_a<Core::Alts>());
+    return to_levels(E.as_<Core::Alts>());
+}
+
+Levels::Case to_levels_case(const expression_ref& E)
+{
+    assert(is_case(E));
+    return {to_levels_exp(E.sub()[0]),to_levels_alts(E.sub()[1])};
+}
+
+Levels::ConApp to_levels_con_app(const expression_ref& E)
+{
+    assert(E.head().is_a<constructor>());
+
+    Levels::ConApp con_app;
+    con_app.head = E.head().as_<constructor>().f_name;
+    for(int i=0;i<E.size();i++)
+    {
+	auto& arg = E.sub()[i];
+	if (not arg.is_a<var>())
+	    throw myexception()<<"to_levels_con_app: Argument "<<i+1<<" is not a variable in "<<E.print();
+
+	con_app.args.push_back(to_levels(arg.as_<var>()));
+    }
+    return con_app;
+}
+
+Levels::Constant to_levels_constant(const expression_ref& E)
+{
+    assert(E.is_atomic());
+
+    if (E.is_char()) return {E.as_char()};
+    else if (E.is_int()) return {E.as_int()};
+    else if (E.is_double()) throw myexception()<<"to_levels_constant: found double "<<E;
+    else if (E.is_log_double()) throw myexception()<<"to_levels_constant: found log-double "<<E;
+    else if (E.is_index_var()) throw myexception()<<"to_levels_constant: found index_var "<<E;
+    else if (E.is_object_type())
+    {
+	if (auto s = E.to<Box<std::string>>()) 	return {*s};
+
+	if (auto i = E.to<Integer>()) return { integer_container(*i) };
+
+	throw myexception()<<"to_levels_constant: found object "<<E;
+    }
+    else
+	std::abort();
+}
+
+Levels::BuiltinOp to_levels_builtin_op(const expression_ref& E)
+{
+    assert(E.head().is_a<Operation>());
+    auto name = E.head().as_<Operation>().name();
+    int delim = name.find(':');
+    assert(delim != std::string::npos);
+    string libname = name.substr(0,delim);
+    string funcname = name.substr(delim+1);
+    assert(not libname.empty());
+    assert(not funcname.empty());
+
+    Levels::BuiltinOp builtin_op{libname, funcname, {}, (void*)E.head().as_<Operation>().op};
+    for(int i=0;i<E.size();i++)
+    {
+	auto& arg = E.sub()[i];
+	if (not arg.is_a<var>())
+	    throw myexception()<<"to_levels_builtin_op: Argument "<<i+1<<" is not a variable in "<<E.print();
+
+	builtin_op.args.push_back(to_levels(arg.as_<var>()));
+    }
+    return builtin_op;
+}
+
+Levels::Exp to_levels_exp(const expression_ref& E)
+{
+    if (auto v = E.to<var>())
+	return to_levels(*v);
+    else if (is_lambda_exp(E))
+	return to_levels_lambda(E);
+    else if (is_apply_exp(E))
+	return to_levels_apply(E);
+    else if (is_let_expression(E))
+	return to_levels_let(E);
+    else if (is_case(E))
+	return to_levels_case(E);
+    else if (E.head().is_a<constructor>())
+	return to_levels_con_app(E);
+    else if (E.head().is_a<Operation>())
+	return to_levels_builtin_op(E);
+    else if (E.is_atomic())
+	return to_levels_constant(E);
+
+    std::abort();
+}
+
+//----------------------------------------------------------------------//
+
 Core2::Var<> to_core(const var& V)
 {
     return Core2::Var<>{V.name, V.index, {}, V.is_exported};

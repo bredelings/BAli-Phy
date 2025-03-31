@@ -6,7 +6,7 @@
 #include <optional>
 
 #include "computation/expression/var.H" // for var
-#include "computation/expression/convert.H" // for Core2::Var<>, Occ::Var
+#include "computation/optimization/occurrence_info.H" // for Core2::Var<>, Occ::Var
 #include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 #include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
 
