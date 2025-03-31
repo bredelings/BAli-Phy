@@ -48,14 +48,16 @@ int get_level(const CDecls& decl_group)
 
 struct float_binds_t
 {
-    CDecls top_binds;
+    Core2::Decls<> top_binds;
     std::map<int,vector<CDecls>> level_binds;
 
     vector<Core2::Decls<>> get_decl_groups_at_level(int level);
 
-    void append_top(CDecls&);
+    void append_top(Core2::Decls<>&);
 
     void append_level(int level, CDecls&);
+
+    void append_level(int level, const Core2::Decls<>&);
 
     void append_level(int level, vector<CDecls>&);
 
@@ -131,7 +133,7 @@ void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
         decl_groups1.push_back(std::move(decls));
 }
 
-void float_binds_t::append_top(CDecls& decls)
+void float_binds_t::append_top(Core2::Decls<>& decls)
 {
     if (not top_binds.empty())
     {
@@ -160,6 +162,13 @@ void float_binds_t::append_level(int level, CDecls& decls)
 {
     vector<CDecls> decl_groups;
     decl_groups.push_back( std::move(decls) );
+    append_level( level, decl_groups );
+}
+
+void float_binds_t::append_level(int level, const Core2::Decls<>& decls)
+{
+    vector<CDecls> decl_groups;
+    decl_groups.push_back( to_expression_ref(decls) );
     append_level( level, decl_groups );
 }
 
@@ -193,8 +202,8 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     //  could get floated above their binders.
     if (level2 == 0)
     {
-        for(auto& decl: decls)
-            float_binds.top_binds.push_back(std::move(decl));
+        for(auto& [x,E]: decls)
+            float_binds.top_binds.push_back( {to_core(x),to_core_exp(E)} );
         decls.clear();
     }
 
@@ -274,7 +283,7 @@ float_lets(const expression_ref& E_, int level)
         auto L = E.as_<let_exp>();
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(L.binds);
-        auto Lbinds = decls;
+        auto Lbinds = to_core(decls);
         assert(level2 <= level);
 
         auto [body, float_binds_from_body] = float_lets(L.body, level);
@@ -302,7 +311,7 @@ float_lets(const expression_ref& E_, int level)
             E2 = install_current_level(float_binds, level, body);
 
             if (not Lbinds.empty())
-                E2 = Core2::Let<>(to_core(Lbinds), E2);
+                E2 = Core2::Let<>(Lbinds, E2);
         }
 
         return {E2, float_binds};
@@ -332,14 +341,15 @@ void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>
         if (decl_group.empty()) continue;
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(decl_group);
+        auto decls2 = to_core(decls);
 
         assert(float_binds.level_binds.empty());
 
         // Why put these at the END?
         for(auto& decl: float_binds.top_binds)
-            decls.push_back( std::move(decl) );
+            decls2.push_back( decl );
 
-        core_decl_groups2.push_back(to_core(decls)); //decl_group = decls;
+        core_decl_groups2.push_back(decls2); //decl_group = decls;
     }
 
     std::swap(core_decl_groups, core_decl_groups2);
