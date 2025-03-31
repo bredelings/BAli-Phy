@@ -51,7 +51,7 @@ struct float_binds_t
     CDecls top_binds;
     std::map<int,vector<CDecls>> level_binds;
 
-    vector<CDecls> get_decl_groups_at_level(int level);
+    vector<Core2::Decls<>> get_decl_groups_at_level(int level);
 
     void append_top(CDecls&);
 
@@ -68,7 +68,7 @@ struct float_binds_t
     float_binds_t& operator=(float_binds_t&&) = default;
 };
 
-vector<CDecls> float_binds_t::get_decl_groups_at_level(int level)
+vector<Core2::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
 {
     auto iter = level_binds.find(level);
     if (iter == level_binds.end())
@@ -78,7 +78,11 @@ vector<CDecls> float_binds_t::get_decl_groups_at_level(int level)
     std::swap(decl_groups, iter->second);
     level_binds.erase(iter);
 
-    return decl_groups;
+    vector<Core2::Decls<>> decl_groups_core;
+    for(auto& decls: decl_groups)
+        decl_groups_core.push_back( to_core(decls) );
+
+    return decl_groups_core;
 }
 
 pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
@@ -101,19 +105,21 @@ expression_ref make_lambda(const vector<var>& args, expression_ref E)
     return E;
 }
 
-tuple<expression_ref, float_binds_t>
+tuple<Core2::Exp<>, float_binds_t>
 float_lets(const expression_ref& E, int level);
 
-expression_ref install_current_level(float_binds_t& float_binds, int level, const expression_ref& E)
+Core2::Exp<> install_current_level(float_binds_t& float_binds, int level, Core2::Exp<> E)
 {
     auto decl_groups_here = float_binds.get_decl_groups_at_level(level);
-    return let_expression(decl_groups_here, E);
+    for(auto& decls: decl_groups_here | views::reverse)
+        E = Core2::Let<>(decls, E);
+    return E;
 }
 
-tuple<expression_ref,float_binds_t>
+tuple<Core2::Exp<>, float_binds_t>
 float_lets_install_current_level(const expression_ref& E, int level)
 {
-    auto [E2,float_binds] = float_lets(E,level);
+    auto [E2, float_binds] = float_lets(E,level);
     auto E3 = install_current_level(float_binds, level, E2);
     return {E3, float_binds};
 }
@@ -177,7 +183,7 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     {
         x = strip_level(x);
         auto [rhs2, float_binds_x] = float_lets_install_current_level(rhs, level2);
-        rhs = rhs2;
+        rhs = to_expression_ref(rhs2);
 
         float_binds.append(float_binds_x);
     }
@@ -195,7 +201,7 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     return tuple<CDecls, float_binds_t,int>(std::move(decls), std::move(float_binds), level2);
 }
 
-tuple<expression_ref,float_binds_t>
+tuple<Core2::Exp<>,float_binds_t>
 float_lets(const expression_ref& E_, int level)
 {
     auto E = E_;
@@ -206,21 +212,22 @@ float_lets(const expression_ref& E_, int level)
         auto x = E.as_<var>();
         x = strip_level(x);
         E = x;
-        return {E, {}};
+        return {to_core_exp(E), {}};
     }
 
     // 4. Apply @ E x1 x2 x3 ... x[n-1];
     else if (is_apply_exp(E))
     {
         object_ptr<expression> V2 = E.as_expression().clone();
-        auto [B,float_binds] = float_lets(V2->sub[0], level);
+        auto [B_,float_binds] = float_lets(V2->sub[0], level);
+        auto B = to_expression_ref(B_);
         V2->sub[0] = B;
 #ifndef NDEBUG
         for(int i=1;i<V2->sub.size();i++)
                 assert(is_var(V2->sub[i]));
 #endif
         E = V2;
-        return {E, float_binds};
+        return {to_core_exp(E), float_binds};
     }
 
     // 5. Lambda
@@ -233,11 +240,11 @@ float_lets(const expression_ref& E_, int level)
         int level2 = level + 1;
 
         auto [body2, float_binds] = float_lets_install_current_level(body, level2);
-        body = body2;
-        
+        body = to_expression_ref(body2);
+
         E = make_lambda(binders,body);
 
-        return {E, float_binds};
+        return {to_core_exp(E), float_binds};
     }
 
     // 6. Case
@@ -246,19 +253,19 @@ float_lets(const expression_ref& E_, int level)
         auto& [object,alts] = *C;
 
         auto [object2, float_binds] = float_lets(object, level);
-        object = object2;
+        object = to_expression_ref(object2);
         int level2 = level + 1;
         for(auto& [pattern, body]: alts)
         {
             pattern = strip_level_from_pattern(pattern);
             auto [body2, float_binds_alt] = float_lets_install_current_level(body,level2);
-            body = body2;
+            body = to_expression_ref(body2);
 
             float_binds.append(float_binds_alt);
         }
 
         E = make_case_expression(object,alts);
-        return {E, float_binds};
+        return {to_core_exp(E), float_binds};
     }
 
     // 7. Let
@@ -267,43 +274,48 @@ float_lets(const expression_ref& E_, int level)
         auto L = E.as_<let_exp>();
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(L.binds);
-        L.binds = decls;
+        auto Lbinds = decls;
         assert(level2 <= level);
 
         auto [body, float_binds_from_body] = float_lets(L.body, level);
-        L.body = body;
 
         float_binds.append(float_binds_from_body);
 
+        Core2::Exp<> E2;
         if (level2 < level)
         {
             // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
             float_binds_t float_binds_first;
             if (level2 == 0)
-                float_binds_first.append_top( L.binds );
+                float_binds_first.append_top( Lbinds );
             else
-                float_binds_first.append_level( level2, L.binds );
+                float_binds_first.append_level( level2, Lbinds );
             float_binds_first.append(float_binds);
             std::swap(float_binds_first, float_binds);
-            E = L.body;
+            E2 = body;
         }
         // Prevents floated bindings at the same level from getting installed HIGHER than
         // bindings that they reference.
         // Does this place floated bindings as deep as possible at the correct level?
         else
-            E = let_expression(L.binds, install_current_level(float_binds, level, L.body));
+        {
+            E2 = install_current_level(float_binds, level, body);
 
-        return {E, float_binds};
+            if (not Lbinds.empty())
+                E2 = Core2::Let<>(to_core(Lbinds), E2);
+        }
+
+        return {E2, float_binds};
     }
 
     // 2. Constant
     else if (not E.size())
-        return {E, {}};
+        return {to_core_exp(E), {}};
 
 
     // 3. Constructor or Operation
     else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
-        return {E, {}};
+        return {to_core_exp(E), {}};
 
     std::abort();
 }
