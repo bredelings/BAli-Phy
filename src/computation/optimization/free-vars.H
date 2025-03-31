@@ -61,7 +61,11 @@ FreeVars get_union(const FreeVars& s1, const FreeVars& s2);
 
 [[nodiscard]] FreeVarSet erase(const FreeVarSet& s, const std::vector<var>& xs);
 
+[[nodiscard]] FreeVars erase(const FreeVars& s, const std::vector<FV::Var>& xs);
+
 std::vector<var> get_vars(const expression_ref& pattern);
+
+std::vector<FV::Var> get_vars(const FV::Pattern& pattern);
 
 const FreeVarSet& get_free_vars(const annot_expression_ref<FreeVarSet>& e);
 

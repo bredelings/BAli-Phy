@@ -36,6 +36,14 @@ FreeVarSet erase(const FreeVarSet& s, const vector<var>& xs)
     return s2;
 }
 
+FreeVars erase(const FreeVars& s, const vector<FV::Var>& xs)
+{
+    auto s2 = s;
+    for(auto& x: xs)
+        s2 = s2.erase(x);
+    return s2;
+}
+
 void get_vars_(const expression_ref& pattern, vector<var>& vars)
 {
     if (is_var(pattern))
@@ -50,6 +58,14 @@ vector<var> get_vars(const expression_ref& pattern)
     vector<var> vars;
     get_vars_(pattern, vars);
     return vars;
+}
+
+vector<FV::Var> get_vars(const FV::Pattern& p)
+{
+    if (auto CP = p.to_con_pat())
+        return CP->args;
+    else
+        return {};
 }
 
 FreeVarSet get_union(const FreeVarSet& s1, const FreeVarSet& s2)

@@ -32,9 +32,9 @@ const expression_ref un_fv(const expression_ref& AE)
 }
 
 // This maps the in-name to (i) the out-name and (ii) the level, which is stored on the out-name.
-typedef immer::map<var,var> level_env_t;
+typedef immer::map<FV::Var,var> level_env_t;
 
-int max_level(const level_env_t& env, const FreeVarSet& free_vars)
+int max_level(const level_env_t& env, const FreeVars& free_vars)
 {
     // Global variables that are free will not be in the env, so just ignore them.
     int level = 0;
@@ -49,18 +49,18 @@ int max_level(const level_env_t& env, const FreeVarSet& free_vars)
 
 struct let_floater_state: public FreshVarSource
 {
-    var new_unique_var(const var& x, int level);
+    var new_unique_var(const FV::Var& x, int level);
     var new_unique_var(const string& name, int level);
 
-    expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env);
-    expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
+    expression_ref set_level(const FV::Exp& AE, int level, const level_env_t& env);
+    expression_ref set_level_maybe_MFE(const FV::Exp& AE, int level, const level_env_t& env);
 
-    pair<CDecls,level_env_t> set_level_decl_group(const CDecls& decls, const level_env_t& env);
+    pair<CDecls,level_env_t> set_level_decl_group(const FV::Decls& decls, const level_env_t& env);
 
     let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
 
-var let_floater_state::new_unique_var(const var& x, int level)
+var let_floater_state::new_unique_var(const FV::Var& x, int level)
 {
     // I guess we are assuming that the name is sufficient?
     return new_unique_var(x.name, level);
@@ -100,11 +100,8 @@ expression_ref strip_level_from_pattern(const expression_ref& pattern)
     }
 }
 
-var subst_var(var x, const level_env_t& env)
+var subst_var(FV::Var x, const level_env_t& env)
 {
-    // We should handle this in ... desugar?
-    if (is_wildcard(x)) return x; 
-
     auto record = env.find(x);
     assert(record);
 
@@ -144,10 +141,24 @@ expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& e
     }
 }
 
-pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const CDecls& decls_in, const level_env_t& env)
+expression_ref subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
-    FreeVarSet free_vars;
-    vector<var> binders;
+    // I THINK that these should never be VARs in the current paradigm... but we should fix that.
+    if (pattern.is_wildcard_pat())
+        return var(-1);
+    else if (auto c = pattern.to_con_pat())
+    {
+        auto args = c->args | ranges::views::transform( [&](auto& x) {return expression_ref(subst_var(x,env));} ) | ranges::to<vector>();
+        return expression_ref(constructor(c->head, args.size()), args);
+    }
+    else
+        std::abort();
+}
+
+pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls& decls_in, const level_env_t& env)
+{
+    FreeVars free_vars;
+    vector<FV::Var> binders;
     for(auto& [x,rhs]: decls_in)
     {
         free_vars = get_union(free_vars, get_free_vars(rhs));
@@ -180,40 +191,37 @@ pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const CDecls& d
             x2 = env2.at(x);
 
         auto rhs2 = set_level(rhs, level2, env2);
-        decls_out.push_back({x2,rhs2});
+        decls_out.push_back({x2, rhs2});
     }
 
     return {decls_out, env2};
 }
 
-expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
+expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
 {
-    const auto& E = AE.as_<annot_expression_ref<FreeVarSet>>().exp;
-
     // 1. Var
-    if (is_var(E))
+    if (auto V = E.to_var())
     {
-        const auto& x = E.as_<var>();
         // Top-level symbols from this module and other modules won't be in the env.
-        if (auto x_out = env.find(x))
+        if (auto x_out = env.find(*V))
             return strip_level(*x_out);
         else
-            return strip_level(x);
+        {
+            return var(V->name, V->index, V->is_exported);
+        }
     }
 
-    // 4. Lambda
-    else if (is_lambda_exp(E))
+    // 3. Lambda
+    else if (auto L = E.to_lambda())
     {
         int level2 = level + 1;
         auto env2 = env;
 
         vector<var> args;
-        auto AE2 = AE;
-        while(is_lambda_exp(un_fv(AE2)))
+        auto AE2 = E;
+        while(auto L2 = AE2.to_lambda())
         {
-            auto& E2 = un_fv(AE2);
-
-            auto x = E2.sub()[0].as_<var>();
+            auto x = L2->x;
 
             // assert that none of the other args have the same name!
             // we should check this in the renamer, I think.
@@ -222,7 +230,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
             env2 = env2.insert({x,x2});
 
             args.push_back(x2);
-            AE2 = E2.sub()[1];
+            AE2 = L2->body;
         }
 
         auto E2 = set_level_maybe_MFE(AE2, level2, env2);
@@ -232,32 +240,29 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
 
         return E2;
     }
-
-    else if (is_apply_exp(E))
+    // 3. Apply
+    else if (auto A = E.to_apply())
     {
-        auto head2 = set_level_maybe_MFE(E.sub()[0], level, env);
+        auto head2 = set_level_maybe_MFE(A->head, level, env);
 
         vector<expression_ref> args2;
-        for(int i=1;i<E.sub().size();i++)
-            args2.push_back(set_level(E.sub()[i], level, env));
+        for(auto& arg: A->args)
+            args2.push_back(set_level(arg, level, env));
 
         return apply_expression(head2, args2);
     }
-
     // 4. Case
-    else if (auto C = parse_case_expression(E))
+    else if (auto C = E.to_case())
     {
-        auto& [object, alts] = *C;
-
-        auto object2 = set_level_maybe_MFE(object, level, env);
+        auto object2 = set_level_maybe_MFE(C->object, level, env);
 
         int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
 
         // Don't float out the entire case alternative if this isn't changeable.
-        bool non_changeable = alts.size() == 1 and alts[0].pattern.is_a<var>();
+        bool non_changeable = C->alts.size() == 1 and C->alts[0].pat.is_wildcard_pat();
 
         Core::Alts alts2;
-        for(auto& [pattern, body]: alts)
+        for(auto& [pattern, body]: C->alts)
         {
             // Extend environment with pattern vars at level2
             auto env2 = env;
@@ -280,48 +285,52 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
     }
 
     // 5. Let
-    else if (is_let_expression(E))
+    else if (auto L = E.to_let())
     {
-        auto L = E.as_<let_exp>();
+        auto [binds2, env2] = set_level_decl_group(L->decls, env);
 
-        auto [binds2, env2] = set_level_decl_group(L.binds, env);
-
-        auto body2 = set_level_maybe_MFE(L.body, level, env2);
+        auto body2 = set_level_maybe_MFE(L->body, level, env2);
 
         return let_expression(binds2, body2);
     }
 
     // 2. Constant
-    else if (not E.size())
-        return E;
-
-    // 3. Apply or constructor or Operation
-    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
+    else if (auto C = E.to_constant())
+        return to_expression_ref(*C);
+    else if (auto C = E.to_conApp())
     {
-        object_ptr<expression> V2 = E.as_expression().clone();
+        vector<expression_ref> args2;
+        for(auto& arg: C->args)
+            args2.push_back(set_level(arg, level, env));
 
-        // All the arguments except the first one are supposed to be vars .... I think?
-        for(int i=0;i<E.size();i++)
-            V2->sub[i] = set_level(V2->sub[i], level, env);
+        return expression_ref(constructor(C->head, C->args.size()), args2);
 
-        return V2;
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        Operation O( (operation_fn)B->op, B->lib_name+":"+B->func_name);
+
+        vector<expression_ref> args2;
+        for(auto& arg: B->args)
+            args2.push_back(set_level(arg, level, env));
+
+        return expression_ref(O, args2);
     }
 
     std::abort();
 }
 
-expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env)
+expression_ref let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, const level_env_t& env)
 {
-    int level2 = max_level(env, get_free_vars(AE));
-    const auto& E = un_fv(AE);
-    if (level2 < level and not is_var(E)) // and not is_WHNF(E))
+    int level2 = max_level(env, get_free_vars(E));
+    if (level2 < level and not E.to_var()) // and not is_WHNF(E))
     {
-        auto E = set_level(AE, level2, env);
+        auto E2 = set_level(E, level2, env);
         var v = new_unique_var("$v", level2);
-        return let_expression({{v,E}},v);
+        return let_expression({{v,E2}},v);
     }
     else
-        return set_level(AE, level, env);
+        return set_level(E, level, env);
 }
 
 vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
@@ -332,8 +341,8 @@ vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector
     vector<CDecls> decl_groups_out;
     for(auto& decls: decl_groups)
     {
-        CDecls fv_decls;
-        for(auto& [x,rhs]: to_expression_ref(decls))
+        FV::Decls fv_decls;
+        for(auto& [x,rhs]: decls)
             fv_decls.push_back({x, add_free_variable_annotations(rhs)});
 
         auto [level_decls,env2] = state.set_level_decl_group(fv_decls, env);
