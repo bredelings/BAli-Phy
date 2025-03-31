@@ -120,13 +120,6 @@ float_lets_install_current_level(const expression_ref& E, int level)
     return {E3, float_binds};
 }
 
-void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
-{
-    assert(&decl_groups1 != &decl_groups2);
-    for(auto& decls: decl_groups2)
-        decl_groups1.push_back(std::move(decls));
-}
-
 void append(vector<Core2::Decls<>>& decl_groups1, vector<Core2::Decls<>>& decl_groups2)
 {
     assert(&decl_groups1 != &decl_groups2);
