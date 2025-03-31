@@ -49,17 +49,15 @@ int get_level(const CDecls& decl_group)
 struct float_binds_t
 {
     Core2::Decls<> top_binds;
-    std::map<int,vector<CDecls>> level_binds;
+    std::map<int,vector<Core2::Decls<>>> level_binds;
 
     vector<Core2::Decls<>> get_decl_groups_at_level(int level);
 
     void append_top(Core2::Decls<>&);
 
-    void append_level(int level, CDecls&);
+    void append_level(int level, Core2::Decls<>&);
 
-    void append_level(int level, const Core2::Decls<>&);
-
-    void append_level(int level, vector<CDecls>&);
+    void append_level(int level, vector<Core2::Decls<>>&);
 
     void append(float_binds_t& float_binds2);
 
@@ -76,15 +74,11 @@ vector<Core2::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
     if (iter == level_binds.end())
         return {};
 
-    vector<CDecls> decl_groups;
+    vector<Core2::Decls<>> decl_groups;
     std::swap(decl_groups, iter->second);
     level_binds.erase(iter);
 
-    vector<Core2::Decls<>> decl_groups_core;
-    for(auto& decls: decl_groups)
-        decl_groups_core.push_back( to_core(decls) );
-
-    return decl_groups_core;
+    return decl_groups;
 }
 
 pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
@@ -133,6 +127,13 @@ void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
         decl_groups1.push_back(std::move(decls));
 }
 
+void append(vector<Core2::Decls<>>& decl_groups1, vector<Core2::Decls<>>& decl_groups2)
+{
+    assert(&decl_groups1 != &decl_groups2);
+    for(auto& decls: decl_groups2)
+        decl_groups1.push_back(std::move(decls));
+}
+
 void float_binds_t::append_top(Core2::Decls<>& decls)
 {
     if (not top_binds.empty())
@@ -146,7 +147,7 @@ void float_binds_t::append_top(Core2::Decls<>& decls)
         std::swap(top_binds,decls);
 }
 
-void float_binds_t::append_level(int level, vector<CDecls>& decl_groups)
+void float_binds_t::append_level(int level, vector<Core2::Decls<>>& decl_groups)
 {
     if (auto iter = level_binds.find(level); iter != level_binds.end())
     {
@@ -158,17 +159,10 @@ void float_binds_t::append_level(int level, vector<CDecls>& decl_groups)
         std::swap(level_binds[level], decl_groups);
 }
 
-void float_binds_t::append_level(int level, CDecls& decls)
+void float_binds_t::append_level(int level, Core2::Decls<>& decls)
 {
-    vector<CDecls> decl_groups;
+    vector<Core2::Decls<>> decl_groups;
     decl_groups.push_back( std::move(decls) );
-    append_level( level, decl_groups );
-}
-
-void float_binds_t::append_level(int level, const Core2::Decls<>& decls)
-{
-    vector<CDecls> decl_groups;
-    decl_groups.push_back( to_expression_ref(decls) );
     append_level( level, decl_groups );
 }
 
