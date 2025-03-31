@@ -176,19 +176,19 @@ void float_binds_t::append(float_binds_t& float_binds2)
         append_level(level, decl_groups);
 }
 
-tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in)
+tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in)
 {
-    auto decls = decls_in;
-    int level2 = get_level(decls);
+    Core2::Decls<> decls_out;
+    int level2 = get_level(decls_in);
 
     float_binds_t float_binds;
-    for(auto& [x,rhs]: decls)
+    for(auto& [x,rhs]: decls_in)
     {
-        x = strip_level(x);
         auto [rhs2, float_binds_x] = float_lets_install_current_level(rhs, level2);
-        rhs = to_expression_ref(rhs2);
 
         float_binds.append(float_binds_x);
+
+        decls_out.push_back({to_core(x), rhs2});
     }
 
     // We need to move any level-0 bindings to the top level.
@@ -196,12 +196,12 @@ tuple<CDecls,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in
     //  could get floated above their binders.
     if (level2 == 0)
     {
-        for(auto& [x,E]: decls)
-            float_binds.top_binds.push_back( {to_core(x),to_core_exp(E)} );
-        decls.clear();
+        for(auto& decl: decls_out)
+            float_binds.top_binds.push_back( decl );
+        decls_out.clear();
     }
 
-    return tuple<CDecls, float_binds_t,int>(std::move(decls), std::move(float_binds), level2);
+    return {std::move(decls_out), std::move(float_binds), level2};
 }
 
 tuple<Core2::Exp<>,float_binds_t>
@@ -277,7 +277,7 @@ float_lets(const expression_ref& E_, int level)
         auto L = E.as_<let_exp>();
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(L.binds);
-        auto Lbinds = to_core(decls);
+        auto Lbinds = decls;
         assert(level2 <= level);
 
         auto [body, float_binds_from_body] = float_lets(L.body, level);
@@ -335,15 +335,14 @@ void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>
         if (decl_group.empty()) continue;
 
         auto [decls, float_binds, level2] = float_out_from_decl_group(decl_group);
-        auto decls2 = to_core(decls);
 
         assert(float_binds.level_binds.empty());
 
         // Why put these at the END?
         for(auto& decl: float_binds.top_binds)
-            decls2.push_back( decl );
+            decls.push_back( decl );
 
-        core_decl_groups2.push_back(decls2); //decl_group = decls;
+        core_decl_groups2.push_back(decls); //decl_group = decls;
     }
 
     std::swap(core_decl_groups, core_decl_groups2);
