@@ -62,9 +62,8 @@ struct let_floater_state: public FreshVarSource
 
 var let_floater_state::new_unique_var(const var& x, int level)
 {
-    auto x2 = get_fresh_var(x);
-    x2.level = level;
-    return x2;
+    // I guess we are assuming that the name is sufficient?
+    return new_unique_var(x.name, level);
 }
 
 
@@ -109,11 +108,12 @@ var subst_var(var x, const level_env_t& env)
     auto record = env.find(x);
     assert(record);
 
-    x.level = record->level;
-    x.name = record->name;
-    x.index = record->index;
+    var x2;
+    x2.level = record->level;
+    x2.name = record->name;
+    x2.index = record->index;
 
-    return x;
+    return x2;
 }
 
 var subst_var(const expression_ref& E, const level_env_t& env)
@@ -146,11 +146,9 @@ expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& e
 
 pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const CDecls& decls_in, const level_env_t& env)
 {
-    auto decls = decls_in;
-
     FreeVarSet free_vars;
     vector<var> binders;
-    for(auto& [x,rhs]: decls)
+    for(auto& [x,rhs]: decls_in)
     {
         free_vars = get_union(free_vars, get_free_vars(rhs));
         binders.push_back(x);
@@ -160,22 +158,32 @@ pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const CDecls& d
     int level2 = max_level(env, free_vars);
 
     auto env2 = env;
-    for(auto& [x,rhs]: decls)
+    for(auto& [x,rhs]: decls_in)
     {
         if (not x.is_exported)
         {
             auto x2 = new_unique_var(x, level2);
             env2 = env2.insert({x,x2});
-            x = x2;
         }
-        else
-            x.level = 0;
     }
 
-    for(auto& [var,rhs]: decls)
-        rhs = set_level(rhs, level2, env2);
+    CDecls decls_out;
+    for(auto& [x,rhs]: decls_in)
+    {
+        var x2;
+        if (x.is_exported)
+        {
+            x2 = var(x.name, x.index, x.is_exported);
+            x2.level = 0;
+        }
+        else
+            x2 = env2.at(x);
 
-    return {decls, env2};
+        auto rhs2 = set_level(rhs, level2, env2);
+        decls_out.push_back({x2,rhs2});
+    }
+
+    return {decls_out, env2};
 }
 
 expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
@@ -225,18 +233,30 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         return E2;
     }
 
+    else if (is_apply_exp(E))
+    {
+        auto head2 = set_level_maybe_MFE(E.sub()[0], level, env);
+
+        vector<expression_ref> args2;
+        for(int i=1;i<E.sub().size();i++)
+            args2.push_back(set_level(E.sub()[i], level, env));
+
+        return apply_expression(head2, args2);
+    }
+
     // 4. Case
     else if (auto C = parse_case_expression(E))
     {
         auto& [object, alts] = *C;
 
-        object = set_level_maybe_MFE(object, level, env);
+        auto object2 = set_level_maybe_MFE(object, level, env);
 
         int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
 
         // Don't float out the entire case alternative if this isn't changeable.
         bool non_changeable = alts.size() == 1 and alts[0].pattern.is_a<var>();
 
+        Core::Alts alts2;
         for(auto& [pattern, body]: alts)
         {
             // Extend environment with pattern vars at level2
@@ -247,14 +267,16 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
                 env2 = env2.insert({binder,binder2});
             }
 
-            pattern = subst_pattern(pattern, env2);
+            auto pattern2 = subst_pattern(pattern, env2);
 
-            body = non_changeable?
+            auto body2 = non_changeable?
                 set_level(body, level2, env2):
                 set_level_maybe_MFE(body, level2, env2);
+
+            alts2.push_back({pattern2, body2});
         }
 
-        return make_case_expression(object, alts);
+        return make_case_expression(object2, alts2);
     }
 
     // 5. Let
@@ -263,11 +285,10 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         auto L = E.as_<let_exp>();
 
         auto [binds2, env2] = set_level_decl_group(L.binds, env);
-        L.binds = binds2;
 
-        L.body = set_level_maybe_MFE(L.body, level, env2);
+        auto body2 = set_level_maybe_MFE(L.body, level, env2);
 
-        return L;
+        return let_expression(binds2, body2);
     }
 
     // 2. Constant
@@ -275,7 +296,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         return E;
 
     // 3. Apply or constructor or Operation
-    else if (is_apply_exp(E) or is_constructor_exp(E) or is_non_apply_op_exp(E))
+    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
     {
         object_ptr<expression> V2 = E.as_expression().clone();
 
