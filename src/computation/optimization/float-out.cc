@@ -48,6 +48,22 @@ int get_level(const CDecls& decl_group)
     return level;
 }
 
+int get_level(const Levels::Decls& decl_group)
+{
+    assert( not decl_group.empty() );
+
+    auto level = decl_group[0].x.info;
+
+#ifndef NDEBUG
+    for(int i=1; i<decl_group.size(); i++)
+    {
+        assert( decl_group[i].x.info == level );
+    }
+#endif
+
+    return level;
+}
+
 struct float_binds_t
 {
     Core2::Decls<> top_binds;
@@ -81,19 +97,6 @@ vector<Core2::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
     level_binds.erase(iter);
 
     return decl_groups;
-}
-
-pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
-{
-    assert(is_lambda_exp(E));
-    vector<var> binders;
-    while(is_lambda_exp(E))
-    {
-        auto x = E.sub()[0].as_<var>();
-        binders.push_back(x);
-        E = E.sub()[1];
-    }
-    return {std::move(binders), E};
 }
 
 tuple<vector<Levels::Var>,Levels::Exp> get_lambda_binders(Levels::Exp E)
@@ -183,7 +186,7 @@ void float_binds_t::append(float_binds_t& float_binds2)
         append_level(level, decl_groups);
 }
 
-tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const CDecls& decls_in)
+tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::Decls& decls_in)
 {
     Core2::Decls<> decls_out;
     int level2 = get_level(decls_in);
@@ -191,11 +194,11 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const CDecls& 
     float_binds_t float_binds;
     for(auto& [x,rhs]: decls_in)
     {
-        auto [rhs2, float_binds_x] = float_lets_install_current_level(rhs, level2);
+        auto [rhs2, float_binds_x] = float_lets_install_current_level(levels_to_expression_ref(rhs), level2);
 
         float_binds.append(float_binds_x);
 
-        decls_out.push_back({to_core(x), rhs2});
+        decls_out.push_back({strip_level(x), rhs2});
     }
 
     // We need to move any level-0 bindings to the top level.
@@ -270,15 +273,13 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 7. Let
-    else if (is_let_expression(E))
+    else if (auto L = EE.to_let())
     {
-        auto L = E.as_<let_exp>();
-
-        auto [decls, float_binds, level2] = float_out_from_decl_group(L.binds);
+        auto [decls, float_binds, level2] = float_out_from_decl_group(L->decls);
         auto Lbinds = decls;
         assert(level2 <= level);
 
-        auto [body, float_binds_from_body] = float_lets(L.body, level);
+        auto [body, float_binds_from_body] = float_lets(L->body, level);
 
         float_binds.append(float_binds_from_body);
 

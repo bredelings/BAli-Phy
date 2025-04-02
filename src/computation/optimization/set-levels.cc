@@ -306,12 +306,12 @@ expression_ref let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int leve
         return set_level(E, level, env);
 }
 
-vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
+vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
 {
     let_floater_state state(fresh_var_state);
     level_env_t env;
 
-    vector<CDecls> decl_groups_out;
+    vector<Levels::Decls> decl_groups_out;
     for(auto& decls: decl_groups)
     {
         FV::Decls fv_decls;
@@ -321,7 +321,7 @@ vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const vector
         auto [level_decls,env2] = state.set_level_decl_group(fv_decls, env);
         env = env2;
 
-        decl_groups_out.push_back(level_decls);
+        decl_groups_out.push_back(to_levels(level_decls));
     }
 
     return decl_groups_out;

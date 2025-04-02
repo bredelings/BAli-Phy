@@ -30,6 +30,6 @@ var strip_level(var x);
 Core2::Var<> strip_level(const Levels::Var&);
 std::vector<Core2::Var<>> strip_levels(const std::vector<Levels::Var>& xs);
 Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern&);
-std::vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const std::vector<Core2::Decls<>>& decl_groups);
+std::vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const std::vector<Core2::Decls<>>& decl_groups);
 
 #endif
