@@ -90,28 +90,23 @@ Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
     return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
 }
 
-var subst_var(FV::Var x, const level_env_t& env)
+Levels::Var subst_var(FV::Var x, const level_env_t& env)
 {
     auto record = env.find(x);
     assert(record);
 
-    var x2;
-    x2.level = record->level;
-    x2.name = record->name;
-    x2.index = record->index;
-
-    return x2;
+    return Levels::Var{record->name, record->index, *record->level, record->is_exported};
 }
 
-expression_ref subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
+Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
     // I THINK that these should never be VARs in the current paradigm... but we should fix that.
     if (pattern.is_wildcard_pat())
-        return var(-1);
+        return Levels::WildcardPat();
     else if (auto c = pattern.to_con_pat())
     {
-        auto args = c->args | ranges::views::transform( [&](auto& x) {return expression_ref(subst_var(x,env));} ) | ranges::to<vector>();
-        return expression_ref(constructor(c->head, args.size()), args);
+        auto args = c->args | ranges::views::transform( [&](auto& x) {return subst_var(x,env);} ) | ranges::to<vector>();
+        return Levels::ConPat{c->head, args};
     }
     else
         std::abort();
@@ -222,14 +217,15 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     // 4. Case
     else if (auto C = E.to_case())
     {
-        auto object2 = levels_to_expression_ref(set_level_maybe_MFE(C->object, level, env));
+        auto object2 = set_level_maybe_MFE(C->object, level, env);
 
         int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
 
-        // Don't float out the entire case alternative if this isn't changeable.
+        // Is it possible that we could choose a different alternative later?
+        // If so, don't float out the entire case alternative if this isn't changeable.
         bool non_changeable = C->alts.size() == 1 and C->alts[0].pat.is_wildcard_pat();
 
-        Core::Alts alts2;
+        Levels::Alts alts2;
         for(auto& [pattern, body]: C->alts)
         {
             // Extend environment with pattern vars at level2
@@ -243,13 +239,13 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             auto pattern2 = subst_pattern(pattern, env2);
 
             auto body2 = non_changeable?
-                levels_to_expression_ref(set_level(body, level2, env2)):
-                levels_to_expression_ref(set_level_maybe_MFE(body, level2, env2));
+                set_level(body, level2, env2):
+                set_level_maybe_MFE(body, level2, env2);
 
             alts2.push_back({pattern2, body2});
         }
 
-        return to_levels_exp(make_case_expression(object2, alts2));
+        return Levels::Case{object2, alts2};
     }
 
     // 5. Let
