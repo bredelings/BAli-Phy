@@ -317,13 +317,18 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 2. Constant
-    else if (not E.size())
-        return {to_core_exp(E), {}};
+    else if (auto C = EE.to_constant())
+        return {*C, {}};
 
 
-    // 3. Constructor or Operation
-    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
-        return {to_core_exp(E), {}};
+    else if (auto C = EE.to_conApp())
+    {
+        return {Core2::ConApp<>{C->head, strip_levels(C->args)}, {}};
+    }
+    else if (auto B = EE.to_builtinOp())
+    {
+        return {Core2::BuiltinOp<>{B->lib_name, B->func_name, strip_levels(B->args), B->op}, {}};
+    }
 
     std::abort();
 }
