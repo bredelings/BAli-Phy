@@ -26,11 +26,6 @@ using std::set;
 using std::pair;
 using std::string;
 
-const expression_ref un_fv(const expression_ref& AE)
-{
-    return AE.as_<annot_expression_ref<FreeVarSet>>().exp;
-}
-
 // This maps the in-name to (i) the out-name and (ii) the level, which is stored on the out-name.
 typedef immer::map<FV::Var,var> level_env_t;
 
@@ -113,34 +108,6 @@ var subst_var(FV::Var x, const level_env_t& env)
     return x2;
 }
 
-var subst_var(const expression_ref& E, const level_env_t& env)
-{
-    const auto& x = E.as_<var>();
-    return subst_var(x, env);
-}
-
-expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& env)
-{
-    // I THINK that these should never be VARs in the current paradigm... but we should fix that.
-
-    if (is_var(pattern))
-        return strip_level(subst_var(pattern, env));
-    else if (not pattern.size())
-        return pattern;
-    else
-    {
-        object_ptr<expression> pattern2 = pattern.as_expression().clone();
-
-        for(auto& Ex: pattern2->sub)
-        {
-            assert(is_var(Ex));
-
-            Ex = subst_pattern(Ex, env);
-        }
-        return pattern2;
-    }
-}
-
 expression_ref subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
     // I THINK that these should never be VARs in the current paradigm... but we should fix that.
@@ -212,7 +179,7 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
     }
 
     // 3. Lambda
-    else if (auto L = E.to_lambda())
+    else if (E.to_lambda())
     {
         int level2 = level + 1;
         auto env2 = env;

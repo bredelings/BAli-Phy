@@ -7,23 +7,6 @@
 #include "computation/expression/var.H"
 #include "computation/core/ast.H"
 
-typedef Box<immer::set<var>> FreeVarSet;
-
-template<typename T>
-struct annot_expression_ref: public Object
-{
-    annot_expression_ref<T>* clone() const {return new annot_expression_ref<T>(*this);}
-
-    T note;
-    expression_ref exp;
-
-    std::string print() const {return exp.print();}
-
-    annot_expression_ref() = default;
-    annot_expression_ref(const T& t, const expression_ref& e):note(t),exp(e) {}
-    annot_expression_ref(const T&& t, const expression_ref& e):note(std::move(t)),exp(e) {}
-};
-
 typedef immer::set<Core2::Var<>> FreeVars;
 
 namespace FV
@@ -47,29 +30,15 @@ namespace FV
 };
 
 
-template <>
-std::string annot_expression_ref<FreeVarSet>::print() const;
-
-annot_expression_ref<FreeVarSet>
-add_free_variable_annotations(const expression_ref& E);
-
 FV::Exp add_free_variable_annotations(const Core2::Exp<>& E);
 
-FreeVarSet get_union(const FreeVarSet& s1, const FreeVarSet& s2);
-
 FreeVars get_union(const FreeVars& s1, const FreeVars& s2);
-
-[[nodiscard]] FreeVarSet erase(const FreeVarSet& s, const std::vector<var>& xs);
 
 [[nodiscard]] FreeVars erase(const FreeVars& s, const std::vector<FV::Var>& xs);
 
 std::vector<var> get_vars(const expression_ref& pattern);
 
 std::vector<FV::Var> get_vars(const FV::Pattern& pattern);
-
-const FreeVarSet& get_free_vars(const annot_expression_ref<FreeVarSet>& e);
-
-const FreeVarSet& get_free_vars(const expression_ref& E);
 
 const FreeVars& get_free_vars(const FV::Exp& E);
 FreeVars& get_free_vars(FV::Exp& E);
