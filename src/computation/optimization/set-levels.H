@@ -27,7 +27,7 @@ namespace Levels
 };
 
 var strip_level(var x);
-Core2::Var<> strip_level(Levels::Var);
+Core2::Var<> strip_level(const Levels::Var&);
 expression_ref strip_level_from_pattern(const expression_ref& pattern);
 Core2::Pattern<> strip_level_from_pattern(Levels::Pattern);
 std::vector<CDecls> set_level_for_module(FreshVarState& fresh_var_state, const std::vector<Core2::Decls<>>& decl_groups);

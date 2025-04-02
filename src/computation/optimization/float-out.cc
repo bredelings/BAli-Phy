@@ -198,33 +198,35 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const CDecls& 
     return {std::move(decls_out), std::move(float_binds), level2};
 }
 
+vector<Core2::Var<>> strip_levels(const vector<Levels::Var>& xs)
+{
+    return xs | ranges::views::transform( [&](auto& x) {return strip_level(x);} ) | ranges::to<vector>();
+}
+
+tuple<Core2::Exp<>,float_binds_t>
+float_lets(const Levels::Exp& E, int level)
+{
+    return float_lets(levels_to_expression_ref(E), level);
+}
+
 tuple<Core2::Exp<>,float_binds_t>
 float_lets(const expression_ref& E_, int level)
 {
     auto E = E_;
-
+    auto EE = to_levels_exp(E);
+    
     // 1. Var
-    if (is_var(E))
+    if (auto V = EE.to_var())
     {
-        auto x = E.as_<var>();
-        x = strip_level(x);
-        E = x;
-        return {to_core_exp(E), {}};
+        return {strip_level(*V), {}};
     }
 
     // 4. Apply @ E x1 x2 x3 ... x[n-1];
-    else if (is_apply_exp(E))
+    else if (auto A = EE.to_apply())
     {
-        object_ptr<expression> V2 = E.as_expression().clone();
-        auto [B_,float_binds] = float_lets(V2->sub[0], level);
-        auto B = to_expression_ref(B_);
-        V2->sub[0] = B;
-#ifndef NDEBUG
-        for(int i=1;i<V2->sub.size();i++)
-                assert(is_var(V2->sub[i]));
-#endif
-        E = V2;
-        return {to_core_exp(E), float_binds};
+        auto [head2, float_binds] = float_lets(A->head, level);
+
+        return {Core2::Apply{head2, strip_levels(A->args)}, float_binds};
     }
 
     // 5. Lambda

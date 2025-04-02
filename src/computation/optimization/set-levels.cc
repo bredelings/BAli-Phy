@@ -75,6 +75,11 @@ var strip_level(var x)
     return x;
 }
 
+Core2::Var<> strip_level(const Levels::Var& x)
+{
+    return Core2::Var<>(x.name, x.index, {}, x.is_exported);
+}
+
 expression_ref strip_level_from_pattern(const expression_ref& pattern)
 {
     if (is_var(pattern))
