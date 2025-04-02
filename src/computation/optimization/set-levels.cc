@@ -50,7 +50,7 @@ struct let_floater_state: public FreshVarSource
     expression_ref set_level(const FV::Exp& AE, int level, const level_env_t& env);
     expression_ref set_level_maybe_MFE(const FV::Exp& AE, int level, const level_env_t& env);
 
-    pair<CDecls,level_env_t> set_level_decl_group(const FV::Decls& decls, const level_env_t& env);
+    pair<Levels::Decls,level_env_t> set_level_decl_group(const FV::Decls& decls, const level_env_t& env);
 
     let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
@@ -122,7 +122,7 @@ expression_ref subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
         std::abort();
 }
 
-pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls& decls_in, const level_env_t& env)
+pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls& decls_in, const level_env_t& env)
 {
     // 1. Get the free variables in the decl group
     FreeVars free_vars;
@@ -165,7 +165,7 @@ pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls
         decls_out.push_back({x2, rhs2});
     }
 
-    return {decls_out, env2};
+    return {to_levels(decls_out), env2};
 }
 
 expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
@@ -264,7 +264,7 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
 
         auto body2 = set_level_maybe_MFE(L->body, level, env2);
 
-        return let_expression(binds2, body2);
+        return let_expression(levels_to_cdecls(binds2), body2);
     }
 
     // 2. Constant
@@ -321,7 +321,7 @@ vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const
         auto [level_decls,env2] = state.set_level_decl_group(fv_decls, env);
         env = env2;
 
-        decl_groups_out.push_back(to_levels(level_decls));
+        decl_groups_out.push_back(level_decls);
     }
 
     return decl_groups_out;
