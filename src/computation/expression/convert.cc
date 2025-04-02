@@ -904,6 +904,153 @@ expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E)
 }
 
 //----------------------------------------------------------------------//
+
+var levels_to_var(const Levels::Var& OV)
+{
+    var V(OV.name, OV.index, OV.is_exported);
+    V.level = OV.info;
+    return V;
+}
+
+expression_ref levels_var_to_expression_ref(const Levels::Var& V)
+{
+    return levels_to_var(V);
+}
+
+expression_ref levels_patarg_to_expression_ref(const Levels::Var& V)
+{
+    return levels_to_var(V);
+}
+
+expression_ref levels_to_expression_ref(const Levels::Lambda& L)
+{
+    return lambda_quantify(levels_to_var(L.x), levels_to_expression_ref(L.body));
+}
+
+expression_ref levels_to_expression_ref(const Levels::Apply& A)
+{
+    vector<expression_ref> args = A.args | ranges::views::transform( levels_var_to_expression_ref ) | ranges::to<vector>();
+    return apply_expression(levels_to_expression_ref(A.head), args);
+}
+
+CDecls levels_to_cdecls(const Levels::Decls& decls)
+{
+    CDecls decls2;
+    for(auto& [x,E]: decls)
+	decls2.push_back({levels_to_var(x), levels_to_expression_ref(E)});
+    return decls2;
+}
+
+CDecl levels_to_cdecl(const Levels::Decl& decl)
+{
+    auto& [x,E] = decl;
+    return {levels_to_var(x), levels_to_expression_ref(E)};
+}
+
+expression_ref levels_to_expression_ref(const Levels::Let& L)
+{
+    auto decls = levels_to_cdecls(L.decls);
+    auto body = levels_to_expression_ref(L.body);
+    return let_expression(decls, body);
+}
+
+expression_ref levels_to_expression_ref(const Levels::Pattern& P)
+{
+    if (to<Levels::WildcardPat>(P))
+	return var(-1);
+    else if (auto c = to<Levels::ConPat>(P))
+    {
+	auto args = c->args | ranges::views::transform( levels_patarg_to_expression_ref ) | ranges::to<vector>();
+	return expression_ref(constructor(c->head, args.size()), args);
+    }
+    else
+	std::abort();
+}
+
+expression_ref levels_to_expression_ref(const Levels::Var& P)
+{
+    return levels_to_var(P);
+}
+
+Core::Alts levels_to_expression_ref(const Levels::Alts& A)
+{
+    Core::Alts alts;
+    for(auto [pat,body]: A)
+	alts.push_back({levels_to_expression_ref(pat), levels_to_expression_ref(body)});
+    return alts;
+}
+
+expression_ref levels_to_expression_ref(const Levels::Case& C)
+{
+    auto object = levels_to_expression_ref(C.object);
+    auto alts = levels_to_expression_ref(C.alts);
+    return make_case_expression(object, alts);
+}
+
+expression_ref levels_to_expression_ref(const Levels::ConApp& C)
+{
+    vector<expression_ref> vars;
+    for(auto& v: C.args)
+	vars.push_back( levels_to_var(v) );
+    return expression_ref(constructor(C.head,C.args.size()),vars);
+}
+
+// How can we do this?
+expression_ref levels_to_expression_ref(const Levels::BuiltinOp& B)
+{
+    Operation O( (operation_fn)B.op, B.lib_name+":"+B.func_name);
+
+    vector<expression_ref> vars;
+    for(auto& v: B.args)
+	vars.push_back( levels_to_var(v) );
+    return expression_ref(O, vars);
+}
+
+expression_ref levels_to_expression_ref(const Levels::Constant& C)
+{
+    if (auto c = to<char>(C.value))
+	return *c;
+    else if (auto i = to<int>(C.value))
+	return *i;
+    else if (auto i = to<integer_container>(C.value))
+	return Integer(i->i);
+    else if (auto s = to<std::string>(C.value))
+	return String(*s);
+    else
+	std::abort();
+}
+
+expression_ref levels_to_expression_ref(const Levels::Exp& E)
+{
+    if (auto v = E.to_var())
+	return levels_to_var(*v);
+    else if (auto l = E.to_lambda())
+	return levels_to_expression_ref(*l);
+    else if (auto a = E.to_apply())
+	return levels_to_expression_ref(*a);
+    else if (auto l = E.to_let())
+	return levels_to_expression_ref(*l);
+    else if (auto c = E.to_case())
+	return levels_to_expression_ref(*c);
+    else if (auto c = E.to_conApp())
+	return levels_to_expression_ref(*c);
+    else if (auto b = E.to_builtinOp())
+	return levels_to_expression_ref(*b);
+    else if (auto c = E.to_constant())
+	return levels_to_expression_ref(*c);
+
+    std::abort();
+}
+
+expression_ref maybe_levels_to_expression_ref(const std::optional<Levels::Exp>& E)
+{
+    if (not E)
+	return {};
+    else
+	return levels_to_expression_ref(*E);
+}
+
+//----------------------------------------------------------------------//
 Core2::Lambda<> load_builtins(const module_loader& loader, Core2::Lambda<> L)
 {
     L.body = load_builtins(loader, L.body);

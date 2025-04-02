@@ -27,6 +27,20 @@ Levels::Var to_levels(const var& x);
 
 Levels::Decls to_levels(const CDecls& decls);
 
+var levels_to_var(const Levels::Var& V);
+
+expression_ref levels_to_expression_ref(const Levels::Exp& E);
+
+Core::Alts levels_to_expression_ref(const Levels::Alts& A);
+
+expression_ref levels_to_expression_ref(const Levels::Pattern& P);
+
+expression_ref maybe_levels_to_expression_ref(const std::optional<Levels::Exp>& E);
+
+CDecl levels_to_cdecl(const Levels::Decl& decl);
+
+CDecls levels_to_cdecls(const Levels::Decls& decls);
+
 //-----------------------------------------------------------------------
 var to_var(const Core2::Var<>& V);
 
