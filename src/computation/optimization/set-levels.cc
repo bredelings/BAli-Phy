@@ -1,6 +1,7 @@
 #include <vector>
 #include <set>
 #include "set-levels.H"
+#include "computation/fresh_vars.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/substitute.H"
 #include "computation/expression/var.H"
@@ -44,8 +45,8 @@ int max_level(const level_env_t& env, const FreeVars& free_vars)
 
 struct let_floater_state: public FreshVarSource
 {
-    var new_unique_var(const FV::Var& x, int level);
-    var new_unique_var(const string& name, int level);
+    Levels::Var new_unique_var(const FV::Var& x, int level);
+    Levels::Var new_unique_var(const string& name, int level);
 
     Levels::Exp set_level(const FV::Exp& AE, int level, const level_env_t& env);
     Levels::Exp set_level_maybe_MFE(const FV::Exp& AE, int level, const level_env_t& env);
@@ -55,23 +56,17 @@ struct let_floater_state: public FreshVarSource
     let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
 
-var let_floater_state::new_unique_var(const FV::Var& x, int level)
+Levels::Var let_floater_state::new_unique_var(const FV::Var& x, int level)
 {
     // I guess we are assuming that the name is sufficient?
     return new_unique_var(x.name, level);
 }
 
 
-var let_floater_state::new_unique_var(const string& name, int level)
+Levels::Var let_floater_state::new_unique_var(const string& name, int level)
 {
-    auto x = get_fresh_var(name);
-    x.level = level;
-    return x;
-}
-
-var strip_level(var x)
-{
-    x.level.reset();
+    auto x = get_fresh_levels_var(name);
+    x.info = level;
     return x;
 }
 
@@ -143,7 +138,7 @@ pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV
     {
         if (not x.is_exported)
         {
-            auto x2 = new_unique_var(x, level2);
+            auto x2 = levels_to_var(new_unique_var(x, level2));
             env2 = env2.insert({x,x2});
         }
     }
@@ -199,7 +194,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             // assert that none of the other args have the same name!
             // we should check this in the renamer, I think.
 
-            auto x2 = new_unique_var(x, level2);
+            auto x2 = levels_to_var(new_unique_var(x, level2));
             env2 = env2.insert({x,x2});
 
             args.push_back(x2);
@@ -241,7 +236,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             auto env2 = env;
             for(auto binder: get_vars(pattern))
             {
-                auto binder2 = new_unique_var(binder, level2);
+                auto binder2 = levels_to_var(new_unique_var(binder, level2));
                 env2 = env2.insert({binder,binder2});
             }
 
@@ -299,7 +294,7 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
     if (level2 < level and not E.to_var()) // and not is_WHNF(E))
     {
         auto E2 = set_level(E, level2, env);
-        Levels::Var v = to_levels(new_unique_var("$v", level2));
+        Levels::Var v = new_unique_var("$v", level2);
         return Levels::Let({{v,E2}}, v);
     }
     else

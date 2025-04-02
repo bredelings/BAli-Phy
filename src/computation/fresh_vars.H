@@ -10,6 +10,7 @@
 #include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 #include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
 
+#include "computation/optimization/set-levels.H" // for Levels::Var
 #include "core/ast.H"
 
 class FreshVarState
@@ -67,6 +68,7 @@ public:
     var get_fresh_var(const var& x);
     var get_fresh_var_copy(var x);
     Occ::Var get_fresh_occ_var(const std::string& name);
+    Levels::Var get_fresh_levels_var(const std::string& name);
     Occ::Var get_fresh_var_copy(Occ::Var x);
     var get_fresh_var(const Hs::Var& x);
 
