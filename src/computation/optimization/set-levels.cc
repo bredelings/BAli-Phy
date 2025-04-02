@@ -175,10 +175,12 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
     {
         // Top-level symbols from this module and other modules won't be in the env.
         if (auto x_out = env.find(*V))
-            return strip_level(*x_out);
+            return *x_out;
         else
         {
-            return var(V->name, V->index, V->is_exported);
+            auto x = var(V->name, V->index, V->is_exported);
+            x.level = 0;
+            return x;
         }
     }
 
@@ -207,7 +209,7 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
         auto E2 = set_level_maybe_MFE(AE2, level2, env2);
 
         for(auto x2 : args | views::reverse)
-            E2 = lambda_quantify(strip_level(x2),E2);
+            E2 = lambda_quantify(x2,E2);
 
         return E2;
     }
