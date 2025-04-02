@@ -1,8 +1,6 @@
 #ifndef SET_LEVELS_H
 #define SET_LEVELS_H
 
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/let.H"
 #include "computation/core/ast.H"
 
 class FreshVarState;
@@ -27,7 +25,6 @@ namespace Levels
     using Exp = Core2::Exp<int>;
 };
 
-var strip_level(var x);
 Core2::Var<> strip_level(const Levels::Var&);
 std::vector<Core2::Var<>> strip_levels(const std::vector<Levels::Var>& xs);
 Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern&);

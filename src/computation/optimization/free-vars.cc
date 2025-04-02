@@ -1,13 +1,5 @@
 #include "free-vars.H"
 
-#include "computation/expression/var.H"
-#include "computation/expression/let.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/case.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/apply.H"
-#include "computation/operation.H"                // for is_non_apply_op_exp( )
-
 #include "util/string/join.H"
 
 using std::string;
@@ -20,22 +12,6 @@ FreeVars erase(const FreeVars& s, const vector<FV::Var>& xs)
     for(auto& x: xs)
         s2 = s2.erase(x);
     return s2;
-}
-
-void get_vars_(const expression_ref& pattern, vector<var>& vars)
-{
-    if (is_var(pattern))
-        vars.push_back(pattern.as_<var>());
-    else if (pattern.is_expression())
-        for(auto& Evar: pattern.sub())
-            get_vars_(Evar, vars);
-}
-
-vector<var> get_vars(const expression_ref& pattern)
-{
-    vector<var> vars;
-    get_vars_(pattern, vars);
-    return vars;
 }
 
 vector<FV::Var> get_vars(const FV::Pattern& p)

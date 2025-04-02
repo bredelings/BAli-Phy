@@ -4,7 +4,6 @@
 #include <vector>
 #include "object.H"       // for Box
 #include "immer/set.hpp"  // for immer::set
-#include "computation/expression/var.H"
 #include "computation/core/ast.H"
 
 typedef immer::set<Core2::Var<>> FreeVars;
@@ -35,8 +34,6 @@ FV::Exp add_free_variable_annotations(const Core2::Exp<>& E);
 FreeVars get_union(const FreeVars& s1, const FreeVars& s2);
 
 [[nodiscard]] FreeVars erase(const FreeVars& s, const std::vector<FV::Var>& xs);
-
-std::vector<var> get_vars(const expression_ref& pattern);
 
 std::vector<FV::Var> get_vars(const FV::Pattern& pattern);
 
