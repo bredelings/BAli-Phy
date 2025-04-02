@@ -124,6 +124,7 @@ expression_ref subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 
 pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls& decls_in, const level_env_t& env)
 {
+    // 1. Get the free variables in the decl group
     FreeVars free_vars;
     vector<FV::Var> binders;
     for(auto& [x,rhs]: decls_in)
@@ -133,8 +134,10 @@ pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls
     }
     free_vars = erase(free_vars, binders);
 
+    // 2. Compute the level of the decl group
     int level2 = max_level(env, free_vars);
 
+    // 3. Set the variable level to the decl-group level for all non-exported binders.
     auto env2 = env;
     for(auto& [x,rhs]: decls_in)
     {
@@ -145,6 +148,7 @@ pair<CDecls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls
         }
     }
 
+    // 4. Set the level on the let-binders and recurse into the bodies.
     CDecls decls_out;
     for(auto& [x,rhs]: decls_in)
     {
