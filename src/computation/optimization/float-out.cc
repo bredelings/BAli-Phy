@@ -111,15 +111,8 @@ tuple<vector<Levels::Var>,Levels::Exp> get_lambda_binders(Levels::Exp E)
     return {std::move(binders), E};
 }
 
-expression_ref make_lambda(const vector<var>& args, expression_ref E)
-{
-    for(auto x : args | views::reverse)
-        E = lambda_quantify(x,E);
-    return E;
-}
-
 tuple<Core2::Exp<>, float_binds_t>
-float_lets(const expression_ref& E, int level);
+float_lets(const Levels::Exp& E, int level);
 
 Core2::Exp<> install_current_level(float_binds_t& float_binds, int level, Core2::Exp<> E)
 {
@@ -130,7 +123,7 @@ Core2::Exp<> install_current_level(float_binds_t& float_binds, int level, Core2:
 }
 
 tuple<Core2::Exp<>, float_binds_t>
-float_lets_install_current_level(const expression_ref& E, int level)
+float_lets_install_current_level(const Levels::Exp& E, int level)
 {
     auto [E2, float_binds] = float_lets(E,level);
     auto E3 = install_current_level(float_binds, level, E2);
@@ -194,7 +187,7 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::
     float_binds_t float_binds;
     for(auto& [x,rhs]: decls_in)
     {
-        auto [rhs2, float_binds_x] = float_lets_install_current_level(levels_to_expression_ref(rhs), level2);
+        auto [rhs2, float_binds_x] = float_lets_install_current_level(rhs, level2);
 
         float_binds.append(float_binds_x);
 
@@ -212,12 +205,6 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::
     }
 
     return {std::move(decls_out), std::move(float_binds), level2};
-}
-
-tuple<Core2::Exp<>,float_binds_t>
-float_lets(const Levels::Exp& E, int level)
-{
-    return float_lets(levels_to_expression_ref(E), level);
 }
 
 tuple<Core2::Exp<>,float_binds_t>
@@ -248,7 +235,7 @@ float_lets(const expression_ref& E_, int level)
 
         int level2 = level + 1;
 
-        auto [body2, float_binds] = float_lets_install_current_level(levels_to_expression_ref(body), level2);
+        auto [body2, float_binds] = float_lets_install_current_level(body, level2);
 
         return {lambda_quantify(binders2, body2), float_binds};
     }
@@ -263,7 +250,7 @@ float_lets(const expression_ref& E_, int level)
         for(auto& [pattern, body]: C->alts)
         {
             auto pattern2 = strip_levels_from_pattern(pattern);
-            auto [body2, float_binds_alt] = float_lets_install_current_level(levels_to_expression_ref(body),level2);
+            auto [body2, float_binds_alt] = float_lets_install_current_level(body,level2);
 
             alts2.push_back({pattern2, body2});
             float_binds.append(float_binds_alt);
@@ -325,6 +312,12 @@ float_lets(const expression_ref& E_, int level)
     }
 
     std::abort();
+}
+
+tuple<Core2::Exp<>,float_binds_t>
+float_lets(const Levels::Exp& E, int level)
+{
+    return float_lets(levels_to_expression_ref(E), level);
 }
 
 void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>>& core_decl_groups)
