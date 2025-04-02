@@ -10,8 +10,6 @@
 
 #include "computation/fresh_vars.H"
 
-#include "computation/expression/convert.H"
-
 using std::vector;
 using std::tuple;
 

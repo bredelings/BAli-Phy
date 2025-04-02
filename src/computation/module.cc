@@ -27,7 +27,7 @@
 #include "expression/case.H"
 #include "expression/tuple.H"
 #include "expression/substitute.H"
-#include "expression/convert.H"
+#include "expression/convert.H" // for load_builtins( )
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"

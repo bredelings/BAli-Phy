@@ -13,6 +13,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
+#include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
 #include "computation/fresh_vars.H"
 #include "computation/varinfo.H"
 #include "haskell/ids.H"

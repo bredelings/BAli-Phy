@@ -2,6 +2,7 @@
 #include "util/range.H" // for reverse( )
 #include "util/set.H" // for add( )
 #include "computation/operations.H"
+#include "computation/expression/convert.H" // for to_core(Occ::Exp)
 #include "occurrence.H"
 #include "computation/varinfo.H"
 #include "computation/module.H"

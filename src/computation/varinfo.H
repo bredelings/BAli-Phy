@@ -2,7 +2,6 @@
 #define VAR_INFO_H
 
 #include "haskell/core.H"
-#include "expression/convert.H"
 
 struct VarInfo
 {

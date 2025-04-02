@@ -1,16 +1,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <list>
-#include "computation/operations.H"
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/var.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/indexify.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/expression.H" // for is_reglike( )
 #include "occurrence.H"
 
 #include "computation/module.H"
@@ -21,8 +11,6 @@
 #include "util/graph.H"
 
 #include "simplifier.H"
-
-#include "computation/expression/convert.H"
 
 using std::string;
 using std::vector;

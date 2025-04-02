@@ -75,7 +75,6 @@ namespace mpi = boost::mpi;
 #include "system.H"
 #include "cmd_line.H"
 #include "computation/expression/expression.H" // for parse_object( )
-#include "computation/expression/convert.H" // for to_expression_ref( )
 #include "computation/loader.H"
 
 namespace fs = std::filesystem;
