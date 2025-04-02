@@ -245,18 +245,14 @@ float_lets(const expression_ref& E_, int level)
     // 5. Lambda
     else if (auto L = EE.to_lambda())
     {
-        auto [binders,body] = get_lambda_binders(E);
-        for(auto& x: binders)
-            x = strip_level(x);
+        auto [binders,body] = get_lambda_binders(*L);
+        auto binders2 = strip_levels(binders);
 
         int level2 = level + 1;
 
-        auto [body2, float_binds] = float_lets_install_current_level(body, level2);
-        body = to_expression_ref(body2);
+        auto [body2, float_binds] = float_lets_install_current_level(levels_to_expression_ref(body), level2);
 
-        E = make_lambda(binders,body);
-
-        return {to_core_exp(E), float_binds};
+        return {lambda_quantify(binders2, body2), float_binds};
     }
 
     // 6. Case
