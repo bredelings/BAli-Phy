@@ -14,6 +14,7 @@
 #include "computation/operation.H"
 #include "computation/module.H"
 #include "util/set.H"
+#include "core/func.H" // for lambda_quantify( )
 
 #include "free-vars.H"
 #include "immer/map.hpp" // for immer::map
@@ -28,7 +29,7 @@ using std::pair;
 using std::string;
 
 // This maps the in-name to (i) the out-name and (ii) the level, which is stored on the out-name.
-typedef immer::map<FV::Var,var> level_env_t;
+typedef immer::map<FV::Var,Levels::Var> level_env_t;
 
 int max_level(const level_env_t& env, const FreeVars& free_vars)
 {
@@ -37,8 +38,7 @@ int max_level(const level_env_t& env, const FreeVars& free_vars)
     for(auto& x: free_vars)
         if (auto x_out = env.find(x))
         {
-            assert(x_out->level);
-            level = std::max(level, *x_out->level);
+            level = std::max(level, x_out->info);
         }
     return level;
 }
@@ -90,14 +90,6 @@ Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
     return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
 }
 
-Levels::Var subst_var(FV::Var x, const level_env_t& env)
-{
-    auto record = env.find(x);
-    assert(record);
-
-    return Levels::Var{record->name, record->index, *record->level, record->is_exported};
-}
-
 Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
     // I THINK that these should never be VARs in the current paradigm... but we should fix that.
@@ -105,7 +97,7 @@ Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env
         return Levels::WildcardPat();
     else if (auto c = pattern.to_con_pat())
     {
-        auto args = c->args | ranges::views::transform( [&](auto& x) {return subst_var(x,env);} ) | ranges::to<vector>();
+        auto args = c->args | ranges::views::transform( [&](auto& x) {return env.at(x);} ) | ranges::to<vector>();
         return Levels::ConPat{c->head, args};
     }
     else
@@ -133,29 +125,28 @@ pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV
     {
         if (not x.is_exported)
         {
-            auto x2 = levels_to_var(new_unique_var(x, level2));
+            auto x2 = new_unique_var(x, level2);
             env2 = env2.insert({x,x2});
         }
     }
 
     // 4. Set the level on the let-binders and recurse into the bodies.
-    CDecls decls_out;
+    Levels::Decls decls_out;
     for(auto& [x,rhs]: decls_in)
     {
-        var x2;
+        Levels::Var x2;
         if (x.is_exported)
         {
-            x2 = var(x.name, x.index, x.is_exported);
-            x2.level = 0;
+            x2 = Levels::Var(x.name, x.index, 0, x.is_exported);
         }
         else
             x2 = env2.at(x);
 
-        auto rhs2 = levels_to_expression_ref(set_level(rhs, level2, env2));
+        auto rhs2 = set_level(rhs, level2, env2);
         decls_out.push_back({x2, rhs2});
     }
 
-    return {to_levels(decls_out), env2};
+    return {decls_out, env2};
 }
 
 Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
@@ -165,12 +156,10 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     {
         // Top-level symbols from this module and other modules won't be in the env.
         if (auto x_out = env.find(*V))
-            return to_levels_exp(*x_out);
+            return *x_out;
         else
         {
-            auto x = var(V->name, V->index, V->is_exported);
-            x.level = 0;
-            return to_levels_exp(x);
+            return Levels::Var(V->name, V->index, 0, V->is_exported);
         }
     }
 
@@ -180,7 +169,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
         int level2 = level + 1;
         auto env2 = env;
 
-        vector<var> args;
+        vector<Levels::Var> args;
         auto AE2 = E;
         while(auto L2 = AE2.to_lambda())
         {
@@ -189,19 +178,16 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             // assert that none of the other args have the same name!
             // we should check this in the renamer, I think.
 
-            auto x2 = levels_to_var(new_unique_var(x, level2));
+            auto x2 = new_unique_var(x, level2);
             env2 = env2.insert({x,x2});
 
             args.push_back(x2);
             AE2 = L2->body;
         }
 
-        auto E2 = levels_to_expression_ref(set_level_maybe_MFE(AE2, level2, env2));
+        auto E2 = set_level_maybe_MFE(AE2, level2, env2);
 
-        for(auto x2 : args | views::reverse)
-            E2 = lambda_quantify(x2,E2);
-
-        return to_levels_exp(E2);
+        return lambda_quantify(args, E2);
     }
     // 3. Apply
     else if (auto A = E.to_apply())
@@ -232,7 +218,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             auto env2 = env;
             for(auto binder: get_vars(pattern))
             {
-                auto binder2 = levels_to_var(new_unique_var(binder, level2));
+                auto binder2 = new_unique_var(binder, level2);
                 env2 = env2.insert({binder,binder2});
             }
 
