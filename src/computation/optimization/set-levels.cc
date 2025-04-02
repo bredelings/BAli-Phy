@@ -90,9 +90,23 @@ Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
     return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
 }
 
-vector<Levels::Var> add_levels(const Vector<FV::Var>& xs, const level_env_t& env)
+Levels::Var add_level(const FV::Var& x, const level_env_t& env)
+{
+    // Top-level symbols from this module and other modules won't be in the env.
+    if (auto x_out = env.find(x))
+        return *x_out;
+    else
+        return Levels::Var(x.name, x.index, 0, x.is_exported);
+}
+
+vector<Levels::Var> add_levels_no_missing(const Vector<FV::Var>& xs, const level_env_t& env)
 {
     return xs | ranges::views::transform( [&](auto& x) {return env.at(x);} ) | ranges::to<vector>();
+}
+
+vector<Levels::Var> add_levels(const Vector<FV::Var>& xs, const level_env_t& env)
+{
+    return xs | ranges::views::transform( [&](auto& x) {return add_level(x, env);} ) | ranges::to<vector>();
 }
 
 Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
@@ -102,7 +116,7 @@ Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env
         return Levels::WildcardPat();
     else if (auto c = pattern.to_con_pat())
     {
-        return Levels::ConPat{c->head, add_levels(c->args, env)};
+        return Levels::ConPat{c->head, add_levels_no_missing(c->args, env)};
     }
     else
         std::abort();
@@ -157,15 +171,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
 {
     // 1. Var
     if (auto V = E.to_var())
-    {
-        // Top-level symbols from this module and other modules won't be in the env.
-        if (auto x_out = env.find(*V))
-            return *x_out;
-        else
-        {
-            return Levels::Var(V->name, V->index, 0, V->is_exported);
-        }
-    }
+        return add_level(*V, env);
 
     // 3. Lambda
     else if (E.to_lambda())
@@ -196,13 +202,11 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     // 3. Apply
     else if (auto A = E.to_apply())
     {
-        auto head2 = levels_to_expression_ref(set_level_maybe_MFE(A->head, level, env));
+        auto head2 = set_level_maybe_MFE(A->head, level, env);
 
-        vector<expression_ref> args2;
-        for(auto& arg: A->args)
-            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
+        auto args2 = add_levels(A->args, env);
 
-        return to_levels_exp(apply_expression(head2, args2));
+        return Levels::Apply{head2, args2};
     }
     // 4. Case
     else if (auto C = E.to_case())
@@ -252,24 +256,9 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     else if (auto C = E.to_constant())
         return *C;
     else if (auto C = E.to_conApp())
-    {
-        vector<expression_ref> args2;
-        for(auto& arg: C->args)
-            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
-
-        return to_levels_exp(expression_ref(constructor(C->head, C->args.size()), args2));
-
-    }
+        return Levels::ConApp{C->head, add_levels(C->args, env)};
     else if (auto B = E.to_builtinOp())
-    {
-        Operation O( (operation_fn)B->op, B->lib_name+":"+B->func_name);
-
-        vector<expression_ref> args2;
-        for(auto& arg: B->args)
-            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
-
-        return to_levels_exp(expression_ref(O, args2));
-    }
+        return Levels::BuiltinOp{B->lib_name, B->func_name, add_levels(B->args,env), B->op};
 
     std::abort();
 }
