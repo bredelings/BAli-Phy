@@ -90,6 +90,11 @@ Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
     return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
 }
 
+vector<Levels::Var> add_levels(const Vector<FV::Var>& xs, const level_env_t& env)
+{
+    return xs | ranges::views::transform( [&](auto& x) {return env.at(x);} ) | ranges::to<vector>();
+}
+
 Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
     // I THINK that these should never be VARs in the current paradigm... but we should fix that.
@@ -97,8 +102,7 @@ Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env
         return Levels::WildcardPat();
     else if (auto c = pattern.to_con_pat())
     {
-        auto args = c->args | ranges::views::transform( [&](auto& x) {return env.at(x);} ) | ranges::to<vector>();
-        return Levels::ConPat{c->head, args};
+        return Levels::ConPat{c->head, add_levels(c->args, env)};
     }
     else
         std::abort();
