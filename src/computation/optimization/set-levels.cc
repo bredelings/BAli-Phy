@@ -47,7 +47,7 @@ struct let_floater_state: public FreshVarSource
     var new_unique_var(const FV::Var& x, int level);
     var new_unique_var(const string& name, int level);
 
-    expression_ref set_level(const FV::Exp& AE, int level, const level_env_t& env);
+    Levels::Exp set_level(const FV::Exp& AE, int level, const level_env_t& env);
     expression_ref set_level_maybe_MFE(const FV::Exp& AE, int level, const level_env_t& env);
 
     pair<Levels::Decls,level_env_t> set_level_decl_group(const FV::Decls& decls, const level_env_t& env);
@@ -161,26 +161,26 @@ pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV
         else
             x2 = env2.at(x);
 
-        auto rhs2 = set_level(rhs, level2, env2);
+        auto rhs2 = levels_to_expression_ref(set_level(rhs, level2, env2));
         decls_out.push_back({x2, rhs2});
     }
 
     return {to_levels(decls_out), env2};
 }
 
-expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
+Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
 {
     // 1. Var
     if (auto V = E.to_var())
     {
         // Top-level symbols from this module and other modules won't be in the env.
         if (auto x_out = env.find(*V))
-            return *x_out;
+            return to_levels_exp(*x_out);
         else
         {
             auto x = var(V->name, V->index, V->is_exported);
             x.level = 0;
-            return x;
+            return to_levels_exp(x);
         }
     }
 
@@ -211,7 +211,7 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
         for(auto x2 : args | views::reverse)
             E2 = lambda_quantify(x2,E2);
 
-        return E2;
+        return to_levels_exp(E2);
     }
     // 3. Apply
     else if (auto A = E.to_apply())
@@ -220,9 +220,9 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
 
         vector<expression_ref> args2;
         for(auto& arg: A->args)
-            args2.push_back(set_level(arg, level, env));
+            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
 
-        return apply_expression(head2, args2);
+        return to_levels_exp(apply_expression(head2, args2));
     }
     // 4. Case
     else if (auto C = E.to_case())
@@ -248,13 +248,13 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
             auto pattern2 = subst_pattern(pattern, env2);
 
             auto body2 = non_changeable?
-                set_level(body, level2, env2):
+                levels_to_expression_ref(set_level(body, level2, env2)):
                 set_level_maybe_MFE(body, level2, env2);
 
             alts2.push_back({pattern2, body2});
         }
 
-        return make_case_expression(object2, alts2);
+        return to_levels_exp(make_case_expression(object2, alts2));
     }
 
     // 5. Let
@@ -264,19 +264,19 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
 
         auto body2 = set_level_maybe_MFE(L->body, level, env2);
 
-        return let_expression(levels_to_cdecls(binds2), body2);
+        return to_levels_exp(let_expression(levels_to_cdecls(binds2), body2));
     }
 
     // 2. Constant
     else if (auto C = E.to_constant())
-        return to_expression_ref(*C);
+        return *C;
     else if (auto C = E.to_conApp())
     {
         vector<expression_ref> args2;
         for(auto& arg: C->args)
-            args2.push_back(set_level(arg, level, env));
+            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
 
-        return expression_ref(constructor(C->head, C->args.size()), args2);
+        return to_levels_exp(expression_ref(constructor(C->head, C->args.size()), args2));
 
     }
     else if (auto B = E.to_builtinOp())
@@ -285,9 +285,9 @@ expression_ref let_floater_state::set_level(const FV::Exp& E, int level, const l
 
         vector<expression_ref> args2;
         for(auto& arg: B->args)
-            args2.push_back(set_level(arg, level, env));
+            args2.push_back(levels_to_expression_ref(set_level(arg, level, env)));
 
-        return expression_ref(O, args2);
+        return to_levels_exp(expression_ref(O, args2));
     }
 
     std::abort();
@@ -298,12 +298,12 @@ expression_ref let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int leve
     int level2 = max_level(env, get_free_vars(E));
     if (level2 < level and not E.to_var()) // and not is_WHNF(E))
     {
-        auto E2 = set_level(E, level2, env);
+        auto E2 = levels_to_expression_ref(set_level(E, level2, env));
         var v = new_unique_var("$v", level2);
         return let_expression({{v,E2}},v);
     }
     else
-        return set_level(E, level, env);
+        return levels_to_expression_ref(set_level(E, level, env));
 }
 
 vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
