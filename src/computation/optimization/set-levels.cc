@@ -239,9 +239,9 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     {
         auto [binds2, env2] = set_level_decl_group(L->decls, env);
 
-        auto body2 = levels_to_expression_ref(set_level_maybe_MFE(L->body, level, env2));
+        auto body2 = set_level_maybe_MFE(L->body, level, env2);
 
-        return to_levels_exp(let_expression(levels_to_cdecls(binds2), body2));
+        return Levels::Let{binds2, body2};
     }
 
     // 2. Constant
