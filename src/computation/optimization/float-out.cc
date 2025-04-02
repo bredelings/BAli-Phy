@@ -2,16 +2,6 @@
 #include <set>
 #include "set-levels.H"
 #include "float-out.H"
-#include "computation/expression/expression.H" // for is_reglike( )
-#include "computation/expression/substitute.H"
-#include "computation/expression/var.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/let.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/case.H"
-#include "computation/expression/convert.H"
-#include "computation/operation.H"
 #include "computation/module.H"
 #include "computation/core/func.H"  // for lambda_quantify( )
 #include "util/set.H"
@@ -208,19 +198,16 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::
 }
 
 tuple<Core2::Exp<>,float_binds_t>
-float_lets(const expression_ref& E_, int level)
+float_lets(const Levels::Exp& E, int level)
 {
-    auto E = E_;
-    auto EE = to_levels_exp(E);
-    
     // 1. Var
-    if (auto V = EE.to_var())
+    if (auto V = E.to_var())
     {
         return {strip_level(*V), {}};
     }
 
     // 4. Apply @ E x1 x2 x3 ... x[n-1];
-    else if (auto A = EE.to_apply())
+    else if (auto A = E.to_apply())
     {
         auto [head2, float_binds] = float_lets(A->head, level);
 
@@ -228,7 +215,7 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 5. Lambda
-    else if (auto L = EE.to_lambda())
+    else if (auto L = E.to_lambda())
     {
         auto [binders,body] = get_lambda_binders(*L);
         auto binders2 = strip_levels(binders);
@@ -241,7 +228,7 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 6. Case
-    else if (auto C = EE.to_case())
+    else if (auto C = E.to_case())
     {
         auto [object2, float_binds] = float_lets(C->object, level);
         int level2 = level + 1;
@@ -260,7 +247,7 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 7. Let
-    else if (auto L = EE.to_let())
+    else if (auto L = E.to_let())
     {
         auto [decls, float_binds, level2] = float_out_from_decl_group(L->decls);
         auto Lbinds = decls;
@@ -298,26 +285,20 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 2. Constant
-    else if (auto C = EE.to_constant())
+    else if (auto C = E.to_constant())
         return {*C, {}};
 
 
-    else if (auto C = EE.to_conApp())
+    else if (auto C = E.to_conApp())
     {
         return {Core2::ConApp<>{C->head, strip_levels(C->args)}, {}};
     }
-    else if (auto B = EE.to_builtinOp())
+    else if (auto B = E.to_builtinOp())
     {
         return {Core2::BuiltinOp<>{B->lib_name, B->func_name, strip_levels(B->args), B->op}, {}};
     }
 
     std::abort();
-}
-
-tuple<Core2::Exp<>,float_binds_t>
-float_lets(const Levels::Exp& E, int level)
-{
-    return float_lets(levels_to_expression_ref(E), level);
 }
 
 void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>>& core_decl_groups)
