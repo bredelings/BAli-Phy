@@ -80,24 +80,19 @@ Core2::Var<> strip_level(const Levels::Var& x)
     return Core2::Var<>(x.name, x.index, {}, x.is_exported);
 }
 
-expression_ref strip_level_from_pattern(const expression_ref& pattern)
+vector<Core2::Var<>> strip_levels(const vector<Levels::Var>& xs)
 {
-    if (is_var(pattern))
-        return strip_level(pattern.as_<var>());
-    else if (not pattern.size())
-        return pattern;
-    else
-    {
-        object_ptr<expression> pattern2 = pattern.as_expression().clone();
+    return xs | ranges::views::transform( [&](auto& x) {return strip_level(x);} ) | ranges::to<vector>();
+}
 
-        for(auto& Ex: pattern2->sub)
-        {
-            assert(is_var(Ex));
+Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
+{
+    if (pattern.is_wildcard_pat())
+        return Core2::WildcardPat();
 
-            Ex = strip_level_from_pattern(Ex);
-        }
-        return pattern2;
-    }
+    auto CP = pattern.to_con_pat();
+
+    return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
 }
 
 var subst_var(FV::Var x, const level_env_t& env)

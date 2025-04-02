@@ -211,11 +211,6 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const CDecls& 
     return {std::move(decls_out), std::move(float_binds), level2};
 }
 
-vector<Core2::Var<>> strip_levels(const vector<Levels::Var>& xs)
-{
-    return xs | ranges::views::transform( [&](auto& x) {return strip_level(x);} ) | ranges::to<vector>();
-}
-
 tuple<Core2::Exp<>,float_binds_t>
 float_lets(const Levels::Exp& E, int level)
 {
@@ -256,24 +251,22 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 6. Case
-    else if (auto C = parse_case_expression(E))
+    else if (auto C = EE.to_case())
     {
-        auto& [object,alts] = *C;
-
-        auto [object2, float_binds] = float_lets(object, level);
-        object = to_expression_ref(object2);
+        auto [object2, float_binds] = float_lets(C->object, level);
         int level2 = level + 1;
-        for(auto& [pattern, body]: alts)
-        {
-            pattern = strip_level_from_pattern(pattern);
-            auto [body2, float_binds_alt] = float_lets_install_current_level(body,level2);
-            body = to_expression_ref(body2);
 
+        Core2::Alts<> alts2;
+        for(auto& [pattern, body]: C->alts)
+        {
+            auto pattern2 = strip_levels_from_pattern(pattern);
+            auto [body2, float_binds_alt] = float_lets_install_current_level(levels_to_expression_ref(body),level2);
+
+            alts2.push_back({pattern2, body2});
             float_binds.append(float_binds_alt);
         }
 
-        E = make_case_expression(object,alts);
-        return {to_core_exp(E), float_binds};
+        return {Core2::Case{object2, alts2}, float_binds};
     }
 
     // 7. Let
