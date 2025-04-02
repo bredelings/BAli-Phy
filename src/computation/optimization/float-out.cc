@@ -13,6 +13,7 @@
 #include "computation/expression/convert.H"
 #include "computation/operation.H"
 #include "computation/module.H"
+#include "computation/core/func.H"  // for lambda_quantify( )
 #include "util/set.H"
 
 #include "free-vars.H"
@@ -91,6 +92,18 @@ pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
         auto x = E.sub()[0].as_<var>();
         binders.push_back(x);
         E = E.sub()[1];
+    }
+    return {std::move(binders), E};
+}
+
+tuple<vector<Levels::Var>,Levels::Exp> get_lambda_binders(Levels::Exp E)
+{
+    assert(E.to_lambda());
+    vector<Levels::Var> binders;
+    while(auto L = E.to_lambda())
+    {
+        binders.push_back(L->x);
+        E = L->body;
     }
     return {std::move(binders), E};
 }
@@ -230,7 +243,7 @@ float_lets(const expression_ref& E_, int level)
     }
 
     // 5. Lambda
-    else if (is_lambda_exp(E))
+    else if (auto L = EE.to_lambda())
     {
         auto [binders,body] = get_lambda_binders(E);
         for(auto& x: binders)
