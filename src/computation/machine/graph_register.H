@@ -421,7 +421,7 @@ public:
     void unregister_dist_property(int r, int s);
 
     /// Probably this would be non-parameter identifiers
-    std::map<var, int> identifiers;
+    std::map<std::string, int> identifiers;
   
     std::unique_ptr<Program> program;
 
@@ -438,6 +438,8 @@ public:
     closure translate_refs(closure&& C);
 
     closure preprocess(const closure& C);
+
+    closure preprocess(const Core2::Exp<>& E);
 
     /*----- Modifiable regs ----*/
 private:
@@ -638,8 +640,8 @@ public:
 
     const std::vector<int>& get_heads() const {return heads;}
 
-    const std::map<var,int>& get_identifiers() const {return identifiers;}
-    std::map<var,int>& get_identifiers()       {return identifiers;}
+    const std::map<std::string,int>& get_identifiers() const {return identifiers;}
+    std::map<std::string,int>& get_identifiers()       {return identifiers;}
 
     /// Find out which reg the head `index` points to.
     int reg_for_head(int index) const;
@@ -660,7 +662,7 @@ public:
     void pop_temp_head();
 
     /// Add a new identifier, pointing to a newly allocated location
-    int add_identifier(const var&);
+    int add_identifier(const std::string&);
 
     /*----- Graph walking ------*/
     void find_all_regs_in_context(int, bool, std::vector<int>&) const;

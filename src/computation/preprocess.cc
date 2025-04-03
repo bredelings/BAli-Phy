@@ -159,6 +159,11 @@ closure trim_normalize(closure&& C)
     return std::move(C);
 }
 
+closure reg_heap::preprocess(const Core2::Exp<>& E)
+{
+    return preprocess(to_expression_ref(E));
+}
+
 closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
@@ -170,7 +175,7 @@ int reg_heap::reg_for_id(const var& x)
 {
     auto& name = x.name;
     assert(is_qualified_symbol(name) or is_haskell_builtin_con_name(name));
-    auto loc = identifiers.find( x );
+    auto loc = identifiers.find( x.name );
     if (loc == identifiers.end())
     {
 	if (is_haskell_builtin_con_name(name))
@@ -179,10 +184,10 @@ int reg_heap::reg_for_id(const var& x)
 
             auto sym = lookup_builtin_symbol(name);
             auto code = maybe_occ_to_expression_ref(sym->var_info->unfolding);
-            add_identifier(x);
+            add_identifier(x.name);
 
 	    // get the root for each identifier
-	    loc = identifiers.find(x);
+	    loc = identifiers.find(x.name);
 	    assert(loc != identifiers.end());
 
 	    int R = loc->second;

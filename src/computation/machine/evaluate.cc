@@ -37,7 +37,7 @@ long total_let_op = 0;
 long total_index_op = 0;
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
-expression_ref untranslate_vars(const expression_ref& E, const map<var, int>& ids);
+expression_ref untranslate_vars(const expression_ref& E, const map<std::string, int>& ids);
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 

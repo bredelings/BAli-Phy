@@ -379,34 +379,27 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
     return launchbury_unnormalize(names[R]);
 }
 
-map<int,string> get_register_names(const map<var, int>& ids, bool allow_compiler_vars=true)
+map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars=true)
 {
     map<int,string> ids2;
-    for(const auto& [x, r]:ids)
+    for(const auto& [name, r]:ids)
     {
         if (not allow_compiler_vars)
         {
-            auto uname = get_unqualified_name(x.name);
+            auto uname = get_unqualified_name(name);
             if (uname.size() > 1 and (uname[0] == '$' or uname[0] == '#'))
                 continue;
         }
-	ids2[r] = x.print();
+	ids2[r] = name;
     }
     return ids2;
 }
 
-set<string> get_names(const map<var, int>& ids)
+set<string> get_names(const map<string, int>& ids)
 {
     set<string> names;
-    for(const auto& [x,_]:ids)
-    {
-	// avoid parenthesizing symbol names
-	string name = x.name;
-	if (x.index!=0)
-	    name += string("#") + convertToString(x.index);
-
+    for(const auto& [name,_]:ids)
 	names.insert( name );
-    }
     return names;
 }
 
@@ -451,7 +444,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
     return constants;
 }
 
-expression_ref untranslate_vars(const expression_ref& E, const map<var, int>& ids)
+expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids)
 {
     return untranslate_vars(E, get_register_names(ids));
 }
@@ -709,12 +702,12 @@ map<int,expression_ref> get_names_for_regs(const reg_heap& M)
 
     // Get mapping from regs to vars with simplified names.
     map<int,var> reg_to_var;
-    for(auto& [named_var, reg]: M.get_identifiers())
+    for(auto& [name, reg]: M.get_identifiers())
     {
-	auto named_var2 = named_var;
-	if (simplify.contains(named_var2.name))
-	    named_var2.name = simplify.at(named_var2.name);
-	reg_to_var.insert({reg, named_var2});
+        auto sname = name;
+	if (simplify.contains(name))
+	    sname = simplify.at(name);
+	reg_to_var.insert({reg, var(sname)});
     }
 
     map<int,expression_ref> reg_to_expression;

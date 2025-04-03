@@ -15,7 +15,6 @@
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
-#include "computation/expression/convert.H"
 #include "computation/operations.H"
 #include "effect.H"
 #include "effects.H"
@@ -3110,20 +3109,20 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
     return call_for_reg(R);
 }
 
-int reg_heap::add_identifier(const var& x)
+int reg_heap::add_identifier(const string& name)
 {
     // if there's already an 's', then complain
-    if (identifiers.count(x))
+    if (identifiers.count(name))
     {
-        if (special_prelude_symbols.count(x.name))
-            return identifiers.at(x);
+        if (special_prelude_symbols.count(name))
+            return identifiers.at(name);
         else
-            throw myexception()<<"Cannot add identifier '"<<x<<"': there is already an identifier with that name.";
+            throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
     }
 
     int R = allocate();
 
-    identifiers[x] = R;
+    identifiers[name] = R;
     return R;
 }
 
@@ -3141,24 +3140,19 @@ void reg_heap::allocate_identifiers_for_program()
 
     // 1. Pre-allocate locations for symbols that can be used without being imported.
     for(auto name: special_prelude_symbols)
-        add_identifier(var(name));
+        add_identifier(name);
 
     // 2. Give each identifier a pointer to an unused location; define parameter bodies.
     for(auto& M: *program)
     {
         // 2.1 Pre-allocate locations for all symbols in the module.
         for(const auto& [x, _]: M->code_defs())
-            add_identifier(to_var(x));
+            add_identifier(x.name);
 
-        for(const auto& [x_, body_]: M->code_defs())
+        for(const auto& [x, body]: M->code_defs())
         {
-	    // convert from Core2::Var<> to var
-	    auto x = to_var(x_);
-	    // convert from Core2::Exp<> to expression_ref
-	    auto body = to_expression_ref(body_);
-
             // get the root for each identifier
-            auto loc = identifiers.find(x);
+            auto loc = identifiers.find(x.name);
             assert(loc != identifiers.end());
             int R = loc->second;
 
