@@ -30,31 +30,9 @@ std::vector<CDecls> decl_groups_to_expression_ref(const std::vector<Core2::Decls
 
 //-----------------------------------------------------------------------
 
-Occ::Var to_occ_var(const var& V);
-
-Occ::Exp to_occ_exp(const expression_ref& E);
-
-Occ::Pattern to_occ_pattern(const expression_ref& P);
-
-Occ::Alts to_occ_alts(const expression_ref& E);
-
-Occ::Decls to_occ(const CDecls& decls);
-
-Occ::Decl to_occ(const CDecl& decl);
-
-var occ_to_var(const Occ::Var& V);
-
 expression_ref occ_to_expression_ref(const Occ::Exp& E);
 
-Core::Alts occ_to_expression_ref(const Occ::Alts& A);
-
-expression_ref occ_to_expression_ref(const Occ::Pattern& P);
-
 expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
-
-CDecl occ_to_cdecl(const Occ::Decl& decl);
-
-CDecls occ_to_cdecls(const Occ::Decls& decls);
 
 //-----------------------------------------------------------------------
 
