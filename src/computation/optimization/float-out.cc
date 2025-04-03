@@ -246,17 +246,19 @@ float_lets(const expression_ref& E_, int level)
     else if (auto L = EE.to_lambda())
     {
         auto [binders,body] = get_lambda_binders(E);
+        vector<Core2::Var<>> binders2;
         for(auto& x: binders)
-            x = strip_level(x);
+            binders2.push_back({x.name, x.index, {}, x.is_exported});
 
         int level2 = level + 1;
 
         auto [body2, float_binds] = float_lets_install_current_level(body, level2);
-        body = to_expression_ref(body2);
 
-        E = make_lambda(binders,body);
+        auto L2 = body2;
+        for(auto x2: binders2 | views::reverse)
+            L2 = Core2::Lambda<>{x2, L2};
 
-        return {to_core_exp(E), float_binds};
+        return {L2, float_binds};
     }
 
     // 6. Case
