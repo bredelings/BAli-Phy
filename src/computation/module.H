@@ -5,9 +5,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
 #include <utility>                                  // for pair
 #include <iostream>
 #include "computation/haskell/haskell.H"
@@ -92,8 +89,6 @@ public:
 
     InstanceEnv local_instances;
     EqInstanceEnv local_eq_instances;
-
-    std::vector<std::vector<expression_ref>> class_and_type_decls;
 
     std::string name;
 
@@ -340,8 +335,6 @@ private:
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
-
-expression_ref resolve_refs(const Program&, const expression_ref&);
 
 bool special_prelude_symbol(const std::string& name);
 

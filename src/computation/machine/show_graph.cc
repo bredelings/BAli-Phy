@@ -22,6 +22,27 @@ using std::map;
 using std::set;
 using std::ofstream;
 
+expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
+{
+    if (not E.size())
+    {
+	if (is_qualified_var(E))
+	{
+	    auto x = E.as_<var>();
+	    auto loc = simplify.find(x.name);
+	    if (loc != simplify.end())
+		return var(loc->second);
+	}
+	return E;
+    }
+
+    object_ptr<expression> V = E.as_expression().clone();
+    for(int i=0;i<E.size();i++)
+	V->sub[i] = map_symbol_names(V->sub[i], simplify);
+    return V;
+}
+
+
 expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_ref>& replace)
 {
     if (auto rv = E.to<reg_var>())

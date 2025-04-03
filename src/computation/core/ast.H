@@ -10,7 +10,7 @@
 #include "util/string/join.H"
 #include "util/math/log-double.H"
 #include "computation/haskell/ids.H"
-#include "computation/haskell/Integer.H"
+#include "computation/haskell/integer_container.H"
 
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>

@@ -21,12 +21,6 @@
 #include "desugar/desugar.H"
 #include "typecheck/typecheck.H"
 #include "computation/loader.H"
-#include "expression/var.H"
-#include "expression/lambda.H"
-#include "expression/let.H"
-#include "expression/case.H"
-#include "expression/tuple.H"
-#include "expression/substitute.H"
 #include "expression/convert.H" // for load_builtins( )
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"

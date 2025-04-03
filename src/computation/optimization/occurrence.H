@@ -3,9 +3,7 @@
 
 #include <set>
 #include <utility>
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
+#include "computation/optimization/occurrence_info.H"
 
 class Module;
 

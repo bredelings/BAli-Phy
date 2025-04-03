@@ -7,6 +7,7 @@
 #include "index_var.H"
 #include "apply.H"
 #include "util/variant.H"
+#include "computation/haskell/Integer.H" // for Integer
 
 using std::pair;
 using std::vector;

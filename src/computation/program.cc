@@ -2,14 +2,11 @@
 #include "computation/haskell/ids.H"
 #include "computation/module.H"
 #include "computation/loader.H"
-#include "expression/var.H"
 #include "util/myexception.H"
 #include "util/string/join.H"
 #include "util/mapping.H"
 #include "util/log-level.H"
 #include "computation/varinfo.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/case.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/machine/graph_register.H"
@@ -443,27 +440,6 @@ map<string,string> get_simplified_names(const set<string>& names)
 	});
 
     return compose(m1, compose(m2,m3));
-}
-
-
-expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
-{
-    if (not E.size())
-    {
-	if (is_qualified_var(E))
-	{
-	    auto x = E.as_<var>();
-	    auto loc = simplify.find(x.name);
-	    if (loc != simplify.end())
-		return var(loc->second);
-	}
-	return E;
-    }
-
-    object_ptr<expression> V = E.as_expression().clone();
-    for(int i=0;i<E.size();i++)
-	V->sub[i] = map_symbol_names(V->sub[i], simplify);
-    return V;
 }
 
 

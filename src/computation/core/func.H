@@ -1,6 +1,7 @@
 #ifndef CORE_FUNC_H
 #define CORE_FUNC_H
 
+#include "util/myexception.H"
 #include "computation/core/ast.H"
 #include "computation/haskell/ids.H"
 
