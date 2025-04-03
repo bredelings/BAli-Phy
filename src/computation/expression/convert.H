@@ -5,17 +5,6 @@
 #include "computation/optimization/occurrence_info.H"
 #include "computation/optimization/set-levels.H"
 
-Core2::Exp<> to_core_exp(const expression_ref& E);
-
-Core2::Pattern<> to_core_pattern(const expression_ref& E);
-
-std::vector<Core2::Decls<>> decl_groups_to_core(const std::vector<CDecls>& decls);
-
-Core2::Var<> to_core(const var& x);
-
-Core2::Decls<> to_core(const CDecls& decls);
-
-//-----------------------------------------------------------------------
 var to_var(const Core2::Var<>& V);
 
 expression_ref to_expression_ref(const Core2::Exp<>& E);
