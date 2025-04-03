@@ -254,11 +254,7 @@ float_lets(const expression_ref& E_, int level)
 
         auto [body2, float_binds] = float_lets_install_current_level(body, level2);
 
-        auto L2 = body2;
-        for(auto x2: binders2 | views::reverse)
-            L2 = Core2::Lambda<>{x2, L2};
-
-        return {L2, float_binds};
+        return {lambda_quantify(binders2, body2), float_binds};
     }
 
     // 6. Case
