@@ -16,32 +16,6 @@ Core2::Var<> to_core(const var& x);
 Core2::Decls<> to_core(const CDecls& decls);
 
 //-----------------------------------------------------------------------
-
-Levels::Exp to_levels_exp(const expression_ref& E);
-
-Levels::Pattern to_levels_pattern(const expression_ref& E);
-
-std::vector<Levels::Decls> decl_groups_to_levels(const std::vector<CDecls>& decls);
-
-Levels::Var to_levels(const var& x);
-
-Levels::Decls to_levels(const CDecls& decls);
-
-var levels_to_var(const Levels::Var& V);
-
-expression_ref levels_to_expression_ref(const Levels::Exp& E);
-
-Core::Alts levels_to_expression_ref(const Levels::Alts& A);
-
-expression_ref levels_to_expression_ref(const Levels::Pattern& P);
-
-expression_ref maybe_levels_to_expression_ref(const std::optional<Levels::Exp>& E);
-
-CDecl levels_to_cdecl(const Levels::Decl& decl);
-
-CDecls levels_to_cdecls(const Levels::Decls& decls);
-
-//-----------------------------------------------------------------------
 var to_var(const Core2::Var<>& V);
 
 expression_ref to_expression_ref(const Core2::Exp<>& E);
