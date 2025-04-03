@@ -249,11 +249,31 @@ namespace Core2
 		std::abort();
 	}
 
-	template <class Archive>
-	void serialize(Archive& ar);
+        Exp<NoteV,NoteE>& operator=(const Exp<NoteV,NoteE>& E)
+        {
+            // If *this points to a structure containing E,
+            // then E can get destroyed during the operation, including E.note_.
+
+            // By constructing a temporary here we
+            // * increment the reference of E.exp_ptr.
+            // * copy E.note_, so that we can use it safely.
+
+            auto tmp(E);
+
+            std::swap(*this, tmp);
+
+            return *this;
+        }
+
+        Exp<NoteV,NoteE>& operator=(Exp<NoteV,NoteE>&& E) noexcept = default;
+
+        template <class Archive>
+        void serialize(Archive& ar);
 
 	Exp() = default;
 	Exp(const Exp<NoteV,NoteE>& e) = default;
+	Exp(Exp<NoteV,NoteE>&& e) noexcept = default;
+
 	Exp(const Var<NoteV>& v):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ) {}
 	Exp(const Var<NoteV>& v, const NoteE& n):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ), note_(n) {}
 	Exp(const Lambda<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ) {}
