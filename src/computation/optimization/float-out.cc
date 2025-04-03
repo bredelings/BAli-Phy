@@ -243,7 +243,7 @@ float_lets(const Levels::Exp& E, int level)
             float_binds.append(float_binds_alt);
         }
 
-        return {Core2::Case{object2, alts2}, float_binds};
+        return {Core2::Case<>{object2, alts2}, float_binds};
     }
 
     // 7. Let
