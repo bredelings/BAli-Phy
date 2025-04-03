@@ -245,14 +245,25 @@ float_lets(const expression_ref& E_, int level)
     // 5. Lambda
     else if (auto L = EE.to_lambda())
     {
-        auto [binders,body] = get_lambda_binders(E);
+        auto [binders_,body_] = get_lambda_binders(E);
+
+        auto [binders,body] = get_lambda_binders(*L);
+
+        assert(binders_.size() == binders.size());
+
         vector<Core2::Var<>> binders2;
         for(auto& x: binders)
             binders2.push_back({x.name, x.index, {}, x.is_exported});
 
+        vector<Core2::Var<>> binders3;
+        for(auto& x: binders_)
+            binders3.push_back({x.name, x.index, {}, x.is_exported});
+
+        assert(binders2 == binders3);
+
         int level2 = level + 1;
 
-        auto [body2, float_binds] = float_lets_install_current_level(body, level2);
+        auto [body2, float_binds] = float_lets_install_current_level(body_, level2);
 
         return {lambda_quantify(binders2, body2), float_binds};
     }
