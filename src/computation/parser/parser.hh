@@ -53,14 +53,9 @@
   # include <tuple>
   # include <optional>
   # include "computation/expression/expression_ref.H"
-  # include "computation/expression/var.H"
-  # include "computation/operations.H"
-  # include "computation/expression/list.H"
-  # include "computation/expression/tuple.H"
   # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
-  # include "computation/haskell/Integer.H"
   # include "util/string/join.H"
 
   class driver;
@@ -84,7 +79,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 88 "parser.hh"
+#line 83 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -224,7 +219,7 @@
 #endif
 
 namespace yy {
-#line 228 "parser.hh"
+#line 223 "parser.hh"
 
 
 
@@ -6802,7 +6797,7 @@ switch (yykind)
 
 
 } // yy
-#line 6806 "parser.hh"
+#line 6801 "parser.hh"
 
 
 

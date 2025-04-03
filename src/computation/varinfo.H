@@ -1,7 +1,8 @@
 #ifndef VAR_INFO_H
 #define VAR_INFO_H
 
-#include "haskell/core.H"
+#include <optional>
+#include "computation/optimization/occurrence_info.H"
 
 struct VarInfo
 {

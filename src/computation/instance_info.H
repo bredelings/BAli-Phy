@@ -3,7 +3,6 @@
 
 #include <map>
 #include <vector>
-#include "haskell/core.H"
 #include "haskell/coretype.H"
 #include "parser/location.hh"
 

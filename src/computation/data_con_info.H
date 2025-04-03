@@ -2,7 +2,6 @@
 #define DATA_CON_INFO_H
 
 #include <vector>
-#include "haskell/core.H"
 #include "haskell/coretype.H"
 
 struct DataConInfo

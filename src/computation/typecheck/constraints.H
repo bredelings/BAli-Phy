@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "computation/haskell/coretype.H"
-#include "computation/haskell/core.H"
 #include "computation/haskell/haskell.H" // for Hs::LExp
 #include "computation/core/ast.H" // for Core2::Decls
 #include "util/cow-ptr.H"

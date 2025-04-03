@@ -7,8 +7,7 @@
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
-#include "expression/lambda.H"
-#include "expression/var.H"
+#include "expression/lambda.H" // for is_a<lambda2>
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"
 #include "util/rng.H"

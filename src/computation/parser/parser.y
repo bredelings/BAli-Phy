@@ -14,14 +14,9 @@
   # include <tuple>
   # include <optional>
   # include "computation/expression/expression_ref.H"
-  # include "computation/expression/var.H"
-  # include "computation/operations.H"
-  # include "computation/expression/list.H"
-  # include "computation/expression/tuple.H"
   # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
-  # include "computation/haskell/Integer.H"
   # include "util/string/join.H"
 
   class driver;
