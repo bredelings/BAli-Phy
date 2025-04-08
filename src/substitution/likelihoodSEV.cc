@@ -156,7 +156,6 @@ namespace substitution
         return Pr;
     }
 
-
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const Matrix& F,
@@ -281,12 +280,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -402,6 +396,151 @@ namespace substitution
     }
 
 
+    log_double_t calc_prob_at_root_variable_SEV(const EVector& LCN,
+						const EVector& LCB,
+						const Matrix& F,
+						const EVector& counts)
+    {
+	total_calc_root_prob++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
+	// But then we'd be using a pointer, which is indirect.
+	EVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	    LC.push_back(lc);
+
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
+        int L = cache(0).bits.size();
+
+#ifndef NDEBUG
+	assert(L > 0);
+
+        for(int i=0;i<n_clvs;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
+        total_root_clv_length += L;
+
+	boost::dynamic_bitset<> bits_out;
+	bits_out.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits_out |= cache(i).bits;
+
+        // index into LCs
+        vector<int> s(n_clvs, 0);
+
+	vector<double> Prs;
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+	    int scale = 0;
+
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
+
+            // Handle branches in
+	    int j=0;
+            for(;j<n_clvs and mi < mi_max;j++)
+            {
+		auto& lcb = cache(j);
+                if (lcb.bits.test(c))
+                {
+		    m[mi++] = lcb[s[j]];
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+	    double p_col = 1;
+	    if (j == n_clvs)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		else
+		    element_assign(S, F.begin(), matrix_size);
+
+		for(;j<n_clvs;j++)
+		{
+		    auto& lcb = cache(j);
+		    if (lcb.bits.test(c))
+		    {
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+	    p_col *= std::ldexp(1.0, scale*-256);
+
+            Prs.push_back(p_col);
+            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+        }
+
+	int n = L/counts.size();
+        log_prod total;
+	for(int c=0;c<counts.size();c++)
+	{
+	    double sum = 0;
+	    for(int i=0;i<n;i++)
+		sum += Prs[c*n+i];
+	    double Pr = 1.0 - sum;
+	    total.mult_with_count(Pr, counts[c].as_int());
+	}
+
+        log_double_t Pr = total;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability_variable_SEV: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
+    }
+
+
     log_double_t calc_prob_SEV(const EVector& LCN,
 			       const EVector& LCB,
 			       const Matrix& FF,
@@ -429,12 +568,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -562,34 +696,6 @@ namespace substitution
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const EVector& transition_P)
     {
-        total_peel_leaf_branches++;
-
-        const int n_models  = nodeCLV.n_models();
-        const int n_states  = nodeCLV.n_states();
-
-        assert(transition_P.size() == n_models);
-        assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
-
-        int L0 = nodeCLV.n_columns();
-
-        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(nodeCLV.bits, n_models, n_states));
-
-        for(int i=0;i<L0;i++)
-        {
-            const double* S = nodeCLV[i];
-
-            int scale = 0;
-            double* R = (*LCB)[i];
-            propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
-            LCB->scale(i) = scale;
-        }
-
-        return LCB;
-    }
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const SparseLikelihoods& nodeCLV, const EVector& transition_P)
-    {
         int L0 = nodeCLV.n_columns();
 
         const int n_models  = transition_P.size();
@@ -604,64 +710,15 @@ namespace substitution
 
         for(int i=0;i<L0;i++)
         {
+	    const double* S = nodeCLV[i];
+
+	    int scale = 0;
             double* R = (*LCB)[i];
-
-	    int offset = nodeCLV.column_offsets[i];
-	    int next_offset = nodeCLV.column_offsets[i+1];
-	    if (offset >= next_offset)
-	    {
-		for(int m=0;m<n_models;m++)
-		    for(int s1=0;s1<n_states;s1++)
-			R[m*n_states + s1] = 0;
-	    }
-	    else if (offset + 1 == next_offset)
-	    {
-		int s2 = nodeCLV.states[offset];
-		for(int m=0;m<n_models;m++)
-		{
-		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-		    // compute the distribution at the target (parent) node - single letters
-		    for(int s1=0;s1<n_states;s1++)
-			R[m*n_states + s1] = Q(s1,s2);
-		}
-	    }
-	    else
-	    {
-		for(int m=0;m<n_models;m++)
-		{
-		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
-
-		    // compute the distribution at the target (parent) node - multiple letters
-		    for(int s1=0;s1<n_states;s1++)
-		    {
-			int j = offset;
-			int s2 = nodeCLV.states[j];
-			double temp = Q(s1,s2);
-			j++;
-			for(;j<next_offset;j++)
-			{
-			    int s2 = nodeCLV.states[j];
-			    temp += Q(s1,s2);
-			}
-			R[m*n_states + s1] = temp;
-		    }
-		}
-	    }
+	    propagate_toward_root(R, n_models, n_states, scale, transition_P, S);
+	    LCB->scale(i) = scale;
         }
 
         return LCB;
-    }
-
-    object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const expression_ref& nodeCLV, const EVector& transition_P)
-    {
-	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
-	    return peel_leaf_branch_SEV(*LCB, transition_P);
-	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
-	    return peel_leaf_branch_SEV(*SL, transition_P);
-	else
-	    throw myexception()<<"peel_leaf_branch_SEV: leaf object not recognized!";
     }
 
     object_ptr<const Likelihood_Cache_Branch>
@@ -777,7 +834,7 @@ namespace substitution
     {
         total_peel_internal_branches++;
 
-        if (LCN.empty() and LCB.size() == 2)
+	  if (LCN.empty() and LCB.size() == 2)
 	    return peel_internal_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					    LCB[1].as_<Likelihood_Cache_Branch>(),
 					    transition_P);
@@ -785,7 +842,8 @@ namespace substitution
 	    return peel_deg2_branch_SEV(LCB[0].as_<Likelihood_Cache_Branch>(),
 					transition_P);
 	else if (LCN.size() == 1 and LCB.empty())
-	    return peel_leaf_branch_SEV(LCN[0], transition_P);
+	    return peel_leaf_branch_SEV(LCN[0].as_<Likelihood_Cache_Branch>(),
+					transition_P);
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
@@ -796,12 +854,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -899,12 +952,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -1036,59 +1084,6 @@ namespace substitution
 	return LCB;
     }
 
-    object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
-				     const alphabet& a,
-				     const EVector& smap,
-				     int n_models)
-    {
-	auto& sequence = sequence_mask.first.as_<EVector>();
-	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
-
-	int n_states = smap.size();
-
-	int L = mask.size();
-
-	auto LCB = object_ptr<SparseLikelihoods>(new SparseLikelihoods(mask, n_models, n_states));
-
-	int i=0;
-        for(int c=0;c<L;c++)
-	{
-	    if (not mask.test(c)) continue;
-
-	    // Add NNZ offset fo values/states for this column.
-	    LCB->column_offsets.push_back(LCB->num_non_zeros());
-
-	    int letter = sequence[i].as_int();
-
-	    if (letter >= 0)
-	    {
-		auto& ok = a.letter_mask(letter);
-		for(int s1=0;s1<n_states;s1++)
-		{
-		    int l = smap[s1].as_int();
-		    if (ok[l])
-		    {
-			LCB->states.push_back(s1);
-		    }
-		}
-	    }
-	    else if (letter == alphabet::not_gap)
-	    {
-		for(int s1=0;s1<n_states;s1++)
-		{
-		    LCB->states.push_back(s1);
-		}
-	    }
-
-	    i++;
-	}
-
-	LCB->column_offsets.push_back(LCB->num_non_zeros());
-
-	return LCB;
-    }
-
     vector<optional<int>> get_index_for_column(const boost::dynamic_bitset<>& bits)
     {
         vector<optional<int>> index_for_column(bits.size());
@@ -1123,12 +1118,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 
@@ -1202,12 +1192,7 @@ namespace substitution
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
 	for(auto& lc: LCN)
-	{
-	    if (auto SL = lc.to<SparseLikelihoods>())
-		LC.push_back(SL->DenseLikelihoods());
-	    else
-		LC.push_back(lc);
-	}
+	    LC.push_back(lc);
 
 	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
 

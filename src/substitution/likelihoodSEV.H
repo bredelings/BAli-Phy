@@ -25,6 +25,11 @@ namespace substitution {
 				       const Matrix& F,
 				       const EVector& counts);
 
+    log_double_t calc_prob_at_root_variable_SEV(const EVector& LCN,
+						const EVector& LCB,
+						const Matrix& F,
+						const EVector& counts);
+
     log_double_t calc_prob_SEV(const EVector& LCN,
 				     const EVector& LCB,
 				     const Matrix& FF,
@@ -59,13 +64,6 @@ namespace substitution {
 				    const alphabet& a,
 				    const EVector& smap,
 				    int n_models);
-
-    // This one is sparse
-    object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
-				     const alphabet& a,
-				     const EVector& smap,
-				     int n_models);
 
     Vector<std::pair<int,int>> sample_root_sequence_SEV(const EVector& LCN,
 							const EVector& LCB,

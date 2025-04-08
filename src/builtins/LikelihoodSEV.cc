@@ -29,10 +29,10 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::simple_sequence_likelihoods2_SEV(arg3.as_<EPair>(),     // sequence/bits
-							  *arg0.as_<Alphabet>(), // alphabet
-							  arg1.as_<EVector>(),   // smap
-							  arg2.as_int());        // n_models
+    return substitution::simple_sequence_likelihoods_SEV(arg3.as_<EPair>(),     // sequence/bits
+							 *arg0.as_<Alphabet>(), // alphabet
+							 arg1.as_<EVector>(),   // smap
+							 arg2.as_int());        // n_models
 }
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
@@ -99,6 +99,20 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 							  arg1.as_<EVector>(),       // LCB
 							  arg2.as_<Box<Matrix>>(),   // F
 							  arg3.as_<EVector>());      // counts
+    return {Pr};
+}
+
+extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<EVector>(),       // sequences
+								   arg1.as_<EVector>(),       // LCB
+								   arg2.as_<Box<Matrix>>(),   // F
+								   arg3.as_<EVector>());      // counts
     return {Pr};
 }
 
