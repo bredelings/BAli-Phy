@@ -25,6 +25,11 @@ namespace substitution {
 				       const Matrix& F,
 				       const EVector& counts);
 
+    log_double_t calc_prob_at_root_variable_SEV(const EVector& LCN,
+						const EVector& LCB,
+						const Matrix& F,
+						const EVector& counts);
+
     log_double_t calc_prob_SEV(const EVector& LCN,
 				     const EVector& LCB,
 				     const Matrix& FF,

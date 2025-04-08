@@ -156,7 +156,6 @@ namespace substitution
         return Pr;
     }
 
-
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const Matrix& F,
@@ -395,6 +394,157 @@ namespace substitution
         if (std::isnan(Pr.log()) and log_verbose > 0)
         {
             std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
+
+        return Pr;
+    }
+
+
+    log_double_t calc_prob_at_root_variable_SEV(const EVector& LCN,
+						const EVector& LCB,
+						const Matrix& F,
+						const EVector& counts)
+    {
+	total_calc_root_prob++;
+
+        const int n_models = F.size1();
+        const int n_states = F.size2();
+        const int matrix_size = n_models * n_states;
+
+	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
+	// But then we'd be using a pointer, which is indirect.
+	EVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
+
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
+        int L = cache(0).bits.size();
+
+#ifndef NDEBUG
+	assert(L > 0);
+
+        for(int i=0;i<n_clvs;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        // scratch matrix
+        Matrix SMAT(n_models,n_states);
+        double* S = SMAT.begin();
+        total_root_clv_length += L;
+
+	boost::dynamic_bitset<> bits_out;
+	bits_out.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits_out |= cache(i).bits;
+
+        // index into LCs
+        vector<int> s(n_clvs, 0);
+
+	vector<double> Prs;
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+	    int scale = 0;
+
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
+
+            // Handle branches in
+	    int j=0;
+            for(;j<n_clvs and mi < mi_max;j++)
+            {
+		auto& lcb = cache(j);
+                if (lcb.bits.test(c))
+                {
+		    m[mi++] = lcb[s[j]];
+                    scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+	    double p_col = 1;
+	    if (j == n_clvs)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		else
+		    element_assign(S, F.begin(), matrix_size);
+
+		for(;j<n_clvs;j++)
+		{
+		    auto& lcb = cache(j);
+		    if (lcb.bits.test(c))
+		    {
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+	    p_col *= std::ldexp(1.0, scale*-256);
+
+            Prs.push_back(p_col);
+            //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+        }
+
+	int n = L/counts.size();
+        log_prod total;
+	for(int c=0;c<counts.size();c++)
+	{
+	    double sum = 0;
+	    for(int i=0;i<n;i++)
+		sum += Prs[c*n+i];
+	    double Pr = 1.0 - sum;
+            assert(Pr >= 0 and Pr <= 1);
+	    total.mult_with_count(Pr, counts[c].as_int());
+	}
+
+        log_double_t Pr = total;
+
+        if (std::isnan(Pr.log()) and log_verbose > 0)
+        {
+            std::cerr<<"calc_root_probability_variable_SEV: probability is NaN!\n";
             return log_double_t(0.0);
         }
 

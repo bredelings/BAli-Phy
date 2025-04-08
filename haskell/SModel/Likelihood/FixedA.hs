@@ -20,6 +20,7 @@ import SModel.Likelihood.CLV
 
 -- peeling for SEV
 foreign import bpcall "LikelihoodSEV:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "LikelihoodSEV:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> CondLikes
@@ -74,6 +75,12 @@ peel_likelihood nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTow
                                                               nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! root
                                                               clsIn = IntMap.restrictKeysToVector cls inEdges
                                                           in calcProbAtRoot nodeCLs clsIn f counts
+
+peel_likelihood_variable nodeCLVs t cls f alpha smap root counts = let inEdges = edgesTowardNodeSet t root
+                                                                       nModels = nrows f
+                                                                       nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! root
+                                                                       clsIn = IntMap.restrictKeysToVector cls inEdges
+                                                                   in calcProbAtRootVariable nodeCLs clsIn f counts
 
 sample_ancestral_sequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
     let rt = addRoot root t
