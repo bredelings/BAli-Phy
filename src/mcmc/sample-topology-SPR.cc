@@ -944,27 +944,6 @@ move_pruned_subtree(Parameters& P,
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
 
-// NOTE: Computing subst_likelihood(P) * alignment_prior(P) would double the amount of pivoting.
-log_double_t subst_likelihood_and_alignment_prior(const Parameters& P)
-{
-    log_double_t Pr = 1.0;
-
-    for(int j=0;j<P.n_data_partitions();j++)
-        Pr *= P[j].heated_likelihood() * P[j].prior_alignment();
-
-    return Pr;
-}
-
-log_double_t subst_likelihood(const Parameters& P)
-{
-    log_double_t Pr = 1.0;
-
-    for(int j=0;j<P.n_data_partitions();j++)
-        Pr *= P[j].heated_likelihood();
-
-    return Pr;
-}
-
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
 optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
 
@@ -992,13 +971,13 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
         //Resample the alignment and compute the sampling probability.
         auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
         if (A_sampling_pr)
-            Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / *A_sampling_pr;
+            Pr[target_edge] = p2.heated_probability() / *A_sampling_pr;
         else
             Pr[target_edge] = 0;
     }
     // 3b. Compute substitution likelihood
     else
-        Pr[target_edge] = subst_likelihood(p2);
+        Pr[target_edge] = p2.heated_likelihood();
 
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[target_edge] = p2.heated_likelihood();
@@ -1034,13 +1013,13 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         P.set_root(root_node);
         auto A_sampling_pr = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_) ;
         if (A_sampling_pr)
-            Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P) / *A_sampling_pr;
+            Pr[I.initial_edge] = P.heated_probability() / *A_sampling_pr;
         else
             Pr[I.initial_edge] = 0;
     }
     else
     {
-	Pr[I.initial_edge] = subst_likelihood(P);
+	Pr[I.initial_edge] = P.heated_likelihood();
         P.set_root(root_node);
     }
     assert(P.n_data_partitions() == 0 or P.subst_root() == root_node);
