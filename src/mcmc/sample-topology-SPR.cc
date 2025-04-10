@@ -1043,6 +1043,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	Pr[I.initial_edge] = subst_likelihood(P);
         P.set_root(root_node);
     }
+    assert(P.n_data_partitions() == 0 or P.subst_root() == root_node);
 
     // Cache probabilities from behind subtree.
     for(int j=0;j<P.n_data_partitions();j++)
@@ -1131,7 +1132,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
     // We had better not let this get changed!
-    assert(P.subst_root() == root_node);
+    assert(P.n_data_partitions() == 0 or P.subst_root() == root_node);
 
     return Pr;
 }
