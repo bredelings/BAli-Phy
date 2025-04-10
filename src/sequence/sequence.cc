@@ -128,7 +128,7 @@ string guess_alphabet(const vector<sequence>& sequences)
     double digits = letter_fraction("0123456789","-?X=",sequences);
     // FIXME - We can check the largest number ... but each column might have a different highest number.
     if (digits > 0.95)
-	return "Numeric[2]";
+	return "Numeric(2)";
 
     double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?=",sequences);
     if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and AUTGCN<0.5)

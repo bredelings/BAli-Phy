@@ -150,7 +150,7 @@ string default_markov_model(const alphabet& a)
     else if (dynamic_cast<const Triplets*>(&a))
         return "tn93 +> x3";
     else
-        return "";
+        return "jc69";
 }
 
 // See simplify(json& j) in models/model.cc and simplify(ptree&) models/in path.cc

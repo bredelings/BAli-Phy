@@ -316,7 +316,7 @@ Numeric::Numeric(const string& s, int n)
 }
 
 Numeric::Numeric(int n)
-    :Numeric(string("Numeric[")+std::to_string(n)+"]", n)
+    :Numeric(string("Numeric(")+std::to_string(n)+")", n)
 {
 }
 
