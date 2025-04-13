@@ -684,6 +684,7 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const model_t& decls,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
+                                     const vector<string>& s_conditions,
                                      const vector<model_t>& IMs,
                                      const vector<optional<int>>& i_mapping,
                                      const vector<model_t>& scaleMs,
@@ -913,12 +914,23 @@ std::string generate_atmodel_program(const variables_map& args,
 
         // Model.Partition.3. Observe the sequence data from the distribution
         expression_ref distribution;
+        string s_condition = s_conditions[smodel_index];
         if (like_calcs[i] == 0)
+        {
+            assert(s_condition.empty());
             distribution = {var("phyloCTMC"), subst_tree, alignment_on_tree, smodel, scale};
+        }
         else
 	{
 	    expression_ref alignment_length = {var("alignmentLength"), sequence_data_var};
             distribution = {var("phyloCTMC"), subst_tree, alignment_length, smodel, scale};
+            if (not s_condition.empty())
+            {
+                if (s_condition == "variable")
+                    distribution = {var("variable"), distribution};
+                else
+                    throw myexception()<<"Unrecognized ascertainment condition '"<<s_condition<<"'";
+            }
 	}
 	var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;
@@ -1089,6 +1101,7 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const model_t& decls,
 		    const vector<model_t>& SMs,
 		    const vector<optional<int>>& s_mapping,
+                    const vector<string>& s_conditions,
 		    const vector<model_t>& IMs,
 		    const vector<optional<int>>& i_mapping,
 		    const vector<model_t>& scaleMs,
@@ -1106,7 +1119,7 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
                                                alphabet_exps,
                                                filename_ranges,
 					       decls,
-                                               SMs, s_mapping,
+                                               SMs, s_mapping, s_conditions,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
                                                tree_model,

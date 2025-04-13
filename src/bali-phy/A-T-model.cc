@@ -45,8 +45,11 @@
 #include "util/string/join.H"                       // for join
 #include "util/string/split.H"                      // for split, split_on_last
 #include "util/text.H"                              // for bold, bold_blue
+#include <range/v3/all.hpp>                         // for ranges::transform
+
 class module_loader;
 
+namespace views = ranges::views;
 
 extern int log_verbose;
 
@@ -194,14 +197,6 @@ json::value optional_to_json(const std::optional<T>& o)
 }
 
 
-vector<pair<string,string>> split_on_last(char sep, const vector<string>& v1)
-{
-    vector<pair<string,string>> v2;
-    for(auto& s: v1)
-        v2.push_back(split_on_last(sep, s));
-    return v2;
-}
-
 // FIXME - maybe we should try to make a single giant model so that we get S1/parameter
 //           exactly when this occurs for the logged parameter names, themselves.
 //
@@ -230,6 +225,7 @@ json::object log_summary(const vector<model_t>& IModels,
 			 std::vector<std::optional<int>>& scale_index_for_partition,
                          int n_sequences, int n_data_partitions,
                          const vector<string>& alphabet_names,
+                         const vector<string>& smodel_conditions,
                          const variables_map& args)
 {
     string tree;
@@ -269,7 +265,10 @@ json::object log_summary(const vector<model_t>& IModels,
     auto filename_ranges = args["align"].as<vector<string> >();
 
     vector<pair<fs::path,string>> alignment_files;
-    for(auto& [filename,range]: split_on_last(':',filename_ranges))
+    for(const auto& [filename,range]: args["align"].as<vector<string>>()
+                                      | views::transform([&](auto& x) {
+                                          return split_on_last_regex(":", "[\\d-]*", x);
+                                      }))
         alignment_files.push_back( {fs::path(filename), range} );
 
     json::array partitions;
@@ -294,8 +293,17 @@ json::object log_summary(const vector<model_t>& IModels,
 
         // 3. substitution model
         auto s_index = smodel_index_for_partition[i];
-        cout<<"    subst "<<show_main_bold(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
+        cout<<"    subst "<<show_main_bold(SModels[*s_index]);
+        auto condition = smodel_conditions[*s_index];
         partition["smodel"] = optional_to_json( smodel_index_for_partition[i] );
+        if (condition.empty())
+            partition["condition"] = nullptr;
+        else
+        {
+            cout<<bold(" | "+smodel_conditions[i]);
+            partition["condition"] = condition;
+        }
+        cout<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
 
         // 4. indel model
         if (auto i_index = imodel_index_for_partition[i])
@@ -800,7 +808,10 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 {
     // 1. --- Determine number of partitions
     vector<pair<fs::path,string>> filename_ranges;
-    for(auto& [filename,range]: split_on_last(':', args["align"].as<vector<string> >() ))
+    for(const auto& [filename,range]: args["align"].as<vector<string>>()
+                                      | views::transform([&](auto& x) {
+                                          return split_on_last_regex(":","[\\d-]*",x);
+                                      }))
         filename_ranges.push_back( {fs::path(filename), range});
 
     const int n_partitions = filename_ranges.size();
@@ -826,6 +837,22 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 4. --- Get smodels for all SPECIFIED smodel names 
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+
+    vector<string> smodel_conditions;
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+    {
+        auto fullname = smodel_names_mapping.unique(i);
+        auto [name,condition] = split_on_last_regex("\\|","[a-zA-Z0-9_]*", fullname);
+
+        if (not condition.empty())
+        {
+            if (condition != "variable")
+                throw myexception()<<"Unknown ascertainment condition '"<<condition<<"' in substitution model '"<<fullname<<"'.\n  Implemented conditions include: variable";
+        }
+        smodel_names_mapping.unique(i) = name;
+        smodel_conditions.push_back(condition);
+    }
+
     auto& smodel_mapping = smodel_names_mapping.item_for_partition;
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
@@ -910,6 +937,18 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     get_default_imodels(imodel_names_mapping, A);
 
     auto full_imodels = compile_imodels(R, TC, code_gen_state, imodel_names_mapping);
+
+    // Check that there are no substitution conditions on variable partitions.
+    for(int i=0;i<imodel_mapping.size();i++)
+    {
+        int smodel_index = *smodel_mapping[i];
+        auto s_condition = smodel_conditions[smodel_index];
+
+        if (imodel_mapping[i] and not s_condition.empty())
+        {
+            throw myexception()<<"Partition "<<i+1<<" has both a variable alignment and an ascertainment condition '"<<s_condition<<"'.";
+        }
+    }
 
     // 11. --- Default and compile scale models
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
@@ -1034,6 +1073,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                             smodel_mapping, imodel_mapping, scale_mapping,
                             A[0].n_sequences(), filename_ranges.size(),
                             alphabet_names,
+                            smodel_conditions,
                             args);
 
     //------------------- Handle heating ---------------------//
@@ -1051,7 +1091,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                                     program_filename,
                                     alphabet_exps, filename_ranges, A[0].n_sequences(),
                                     decls,
-                                    full_smodels, smodel_mapping,
+                                    full_smodels, smodel_mapping, smodel_conditions,
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,
                                     tree_model,
@@ -1063,12 +1103,13 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
 void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)
 {
-    auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
-
     string base = "C" + convertToString(proc_id+1);
 
     int i=1;
-    for(auto& [filename, range]: filename_ranges)
+    for(const auto& [filename, range]: args["align"].as<vector<string> >()
+                                       | views::transform([&](auto& x) {
+                                           return split_on_last_regex(":","[\\d-]*",x);
+                                       }))
     {
         auto sequences = load_sequences_with_range(filename, range);
 

@@ -1,7 +1,7 @@
 module Probability.Distribution.PhyloCTMC.FixedA
     (module Probability.Distribution.PhyloCTMC.Properties,
      module Probability.Distribution.PhyloCTMC.PhyloCTMC,
-     VariablePhyloCTMC(..)
+     VariablePhyloCTMC(..), variable
     )
 
 where
@@ -220,7 +220,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
 data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
 
-
+variable = Variable
 
 {-
 ok, so how do we pass IntMaps to C++ functions?
