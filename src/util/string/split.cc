@@ -88,6 +88,20 @@ pair<string,string> split_on_last(char sep, const string& s)
     return {s1,s2};
 }
 
+pair<string,string> split_on_last_regex(const string& sep_rgx, const string& final_rgx, const string& s)
+{
+    auto rgx = string("(.*)") + sep_rgx + '(' + final_rgx + ')';
+    std::regex rgx_pair(rgx);
+
+    std::smatch m;
+    if (std::regex_match(s, m, rgx_pair))
+    {
+        return {m[1], m[2]};
+    }
+    else
+        return {s, {}};
+}
+
 pair<string,string> split_on_first(char sep, const string& s)
 {
     string s1 = s;
