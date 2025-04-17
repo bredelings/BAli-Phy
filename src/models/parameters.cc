@@ -341,6 +341,10 @@ data_partition_constants::data_partition_constants(context_ref& C, int r_data)
     {
         likelihood_calculator = 1;
     }
+    else if (dist_type == "VariablePhyloCTMCFixedA")
+    {
+        likelihood_calculator = 2;
+    }
     else
         throw myexception()<<"data_partition_constant: I don't recognize data from distribution '"<<dist_type<<"'";
 }
@@ -859,7 +863,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
             // Under what circumstances would se get unregistered?
             if (auto type = dist_type(se))
             {
-                if (*type == "PhyloCTMC" or *type == "PhyloCTMCFixedA")
+                if (*type == "PhyloCTMC" or *type == "PhyloCTMCFixedA" or *type == "VariablePhyloCTMCFixedA")
                 {
                     auto r_out = out_edges_from_dist(se);
                     if (not r_out)
