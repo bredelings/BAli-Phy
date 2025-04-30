@@ -329,7 +329,7 @@ do_block generate_main(const variables_map& args,
         auto [filename, range] = filename_ranges[0];
 
 	// Load the sequences
-	expression_ref E = {var("load_sequences"),String(filename.string())};
+	expression_ref E = {var("loadSequences"),String(filename.string())};
 
 	// Select range
 	if (not range.empty())
@@ -365,7 +365,7 @@ do_block generate_main(const variables_map& args,
             // Main.2: Emit let filenames_to_seqs = ...
             var filename_to_seqs("seqs");
             {
-                main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
+                main.perform(filename_to_seqs,{var("mapM"), var("loadSequences"), filenames_var});
             }
             main.empty_stmt();
 

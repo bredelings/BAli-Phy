@@ -94,7 +94,7 @@ main logDir = do
 
     [filename] <- getArgs
 
-    sequences <- load_sequences filename
+    sequences <- loadSequences filename
 
     let seqData = [ mkAlignedCharacterData dna $ selectRange range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 

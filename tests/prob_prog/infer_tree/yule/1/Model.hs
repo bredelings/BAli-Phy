@@ -67,7 +67,7 @@ model seqData logTree = do
 main logDir = do
     [filename] <- getArgs
 
-    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
 
     -- This is placed in the wrong directory.
     logTree <- treeLogger $ logDir </> "C1.trees"

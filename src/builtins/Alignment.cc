@@ -648,7 +648,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
     return A;
 }
 
-extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
+extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
 {
     string filename = Args.evaluate(0).as_checked<String>();
 

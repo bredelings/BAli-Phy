@@ -84,6 +84,6 @@ model sequenceData = do
 main logDir = do
     [filename] <- getArgs
 
-    sequenceData <- mkUnalignedCharacterData (mkCodons dna standard_code) <$> load_sequences filename
+    sequenceData <- mkUnalignedCharacterData (mkCodons dna standard_code) <$> loadSequences filename
 
     return $ model sequenceData

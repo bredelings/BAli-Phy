@@ -33,7 +33,7 @@ model seqData = do
 main logDir = do
     [filename] <- getArgs
 
-    seqData <- mkAlignedCharacterData dna <$> load_sequences filename
+    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
 
     return $ model seqData
 

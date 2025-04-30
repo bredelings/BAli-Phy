@@ -54,7 +54,7 @@ main logDir = do
 
     let nucs = dna
 
-    seqData <- mkAlignedCharacterData nucs <$> load_sequences filename
+    seqData <- mkAlignedCharacterData nucs <$> loadSequences filename
 
     logTree <- treeLogger (logDir </> "C1.trees")
 
