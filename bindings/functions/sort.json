@@ -1,0 +1,12 @@
+{
+    "name": "sort",
+    "result_type": "List<a>",
+    "no_log": true,
+    "call": "sort(@xs)",
+    "args": [
+        {
+            "name": "xs",
+            "type": "List<a>"
+        }
+    ]
+}
