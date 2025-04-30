@@ -481,3 +481,19 @@ extern "C" closure builtin_function_forceAll(OperationArgs& Args)
 
     return constructor("()", 0);
 }
+
+extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
+
+    object_ptr<EIntMap>  m2(new EIntMap);
+
+    for(auto& [key,reg]: m)
+    {
+        auto value = Args.evaluate_reg_to_object(reg);
+	m2->insert({key, value});
+    }
+
+    return m2;
+}
