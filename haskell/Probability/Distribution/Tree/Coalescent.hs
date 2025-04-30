@@ -7,6 +7,7 @@ import           Probability.Distribution.Tree.UniformTimeTree
 import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
+import qualified Foreign.IntMap as FIM
 import           Data.Text (Text)
 import           MCMC
 import           Data.Array
@@ -154,7 +155,7 @@ the same time as another node.
    At population merge/split times, we also need to relabel times by deme transitions.
 -}
 
-coalescentTreePrFactors ((t0,popSize0):popSizes) tree = [balancedProduct $ go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree) ]
+coalescentTreePrFactorsSort ((t0,popSize0):popSizes) tree = [balancedProduct $ go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree) ]
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- popSizes]
           events = merge (\x y -> fst x < fst y) nodes shifts
@@ -168,6 +169,16 @@ coalescentTreePrFactors ((t0,popSize0):popSizes) tree = [balancedProduct $ go t0
                         -- the nChoose2 from the rate cancels with the one from the topology
               where nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
                     prNothing = expToLogDouble $ (-rate * nChoose2 * (t2-t1))
+
+-------------------------------------------------------------
+
+foreign import bpcall "TreeDist:" rawCoalescentTreePr :: EVector (EPair Double Double) -> EVector (EPair Double Int) -> LogDouble
+
+coalescentTreePr popSizes tree = rawCoalescentTreePr popSizes' nodeTimes
+    where popSizes' = toVector $ c_pair' <$> popSizes
+          nodeTimes =  getNodesSet tree & IntMap.fromSet (\node -> c_pair (nodeTime tree node) (nodeDegree tree node)) & FIM.exportIntMapToVector
+
+coalescentTreePrFactors popSizes tree = [coalescentTreePr popSizes tree]
 
 -------------------------------------------------------------
 
