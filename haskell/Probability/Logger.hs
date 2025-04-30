@@ -22,6 +22,12 @@ Possibly this could be fixed by using this as an expected type and checking the 
 should match, instead of unifying.
 -}
 
+{-
+   Ideally we could initialize a logger to get something with (i) an append operation and (ii) a finalize/close operation.
+   Then we wouldn't have to perform IO just to define the logger.
+   We only know what the operation is after we initialize the logger, because initializing creates the filehandle that we would write to.
+-}
+
 class Logger a where
     type LogValue a
     logAppend :: a -> LogValue a -> Int -> LogDouble -> LogDouble -> LogDouble -> IO ()
