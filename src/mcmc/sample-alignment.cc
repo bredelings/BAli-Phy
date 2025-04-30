@@ -156,6 +156,9 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
 
 log_double_t sample_alignment(Parameters& P,int b)
 {
+    if (log_verbose >= 3)
+        std::cerr<<"[sample_alignment]\n";
+
     //  if (any_branches_constrained(vector<int>(1,b), P.t(), P.PC->TC, P.PC->AC))
     //    return;
 

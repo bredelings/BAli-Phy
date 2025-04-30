@@ -592,6 +592,8 @@ void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 
     for(int b: branches)
     {
+        if (log_verbose >= 3)
+            std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<">\n";
         if (uniform() < 0.95)
             three_way_topology_sample(P,Stats,b);
         else
@@ -609,6 +611,8 @@ void walk_tree_sample_NNI_and_A(owned_ptr<context>& P, MoveStats& Stats)
 
     for(int b: branches)
     {
+        if (log_verbose >= 3)
+            std::cerr<<" <walk_tree_sample_NNI_and_A: branch "<<b<<">\n";
         if (uniform() < NNI_A_fraction)
             three_way_topology_and_alignment_sample(P,Stats,b);
         else
@@ -629,6 +633,8 @@ void walk_tree_sample_alignments(owned_ptr<context>& P, MoveStats& Stats)
 
     for(int b: branches)
     {
+        if (log_verbose >= 3)
+            std::cerr<<" <walk_tree_sample_alignments: branch "<<b<<">\n";
         //    std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
         if ((uniform() < 0.15) and is_degree3_edge(PP.t(),b))

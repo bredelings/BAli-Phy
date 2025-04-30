@@ -656,6 +656,11 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 // Are we assuming that calling g sets the value?
 double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
 {
+    if (log_verbose >= 4)
+    {
+        std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<"\n";
+    }
+
     // 0. Check that the values are OK
     if (not pre_slice_sampling_check_OK(x0, g))
         return x0;

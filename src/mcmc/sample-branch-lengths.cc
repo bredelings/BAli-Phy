@@ -120,6 +120,17 @@ void change_branch_length_log_scale(owned_ptr<context>& P,
 
 #include "slice-sampling.H"
 
+// In one case, we had x~1e-99 and y~1e26
+// In that case, setting the window size to 1e26 meant that
+// we couldn't shrink to a small enough window in 200 steps.
+double scale_between(double x, double y)
+{
+    if (x > 0 and y > 0)
+        return exp( (log(x) + log(y))/2 );
+    else
+        return (x + y)/2.0;
+}
+
 void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
@@ -136,7 +147,7 @@ void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
     //------------- Find new length --------------//
     double sigma = get_setting_or("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma*(PP.branch_mean()+L);
+    double w = sigma * scale_between(PP.branch_mean(),L);
     branch_length_slice_function logp(PP,b);
     double L2 = slice_sample(L,logp,w,50);
 
@@ -158,10 +169,11 @@ void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 
 void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
 {
-    if (log_verbose >= 3) std::cerr<<"\n\n  [slice_sample_node_time]\n";
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_node_time(n))
         return;
+
+    if (log_verbose >= 3) std::cerr<<"\n\n  [slice_sample_node_time]\n";
 
     PP.set_root(n);
 
@@ -183,6 +195,8 @@ void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_branch_length(b)) return;
 
+    if (log_verbose >= 3) std::cerr<<"\n\n  [alignment_slice_sample_branch_length]\n";
+
     PP.select_root(b);
 
     const double L = PP.t().branch_length(b);
@@ -195,7 +209,7 @@ void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats
 
     double sigma = get_setting_or("slice_branch_sigma",1.5);
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma*(PP.branch_mean()+L);
+    double w = sigma * scale_between(PP.branch_mean(),L);
     alignment_branch_length_slice_function logp(PP,b);
     double L2 = slice_sample(L,logp,w,50);
 
@@ -377,7 +391,7 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
     if (uniform() < p)
     {
 	slide_node_slice_function logp(*PP,b);
-	double w = (logp.x0 + logp.y0) * get_setting_or("slide_branch_slice_window",0.3);
+	double w = scale_between(logp.x0, logp.y0) * get_setting_or("slide_branch_slice_window",0.3);
 	double L1b = slice_sample(logp,w,50);
     
 	MCMC::Result result(2);
