@@ -267,7 +267,7 @@ json::object log_summary(const vector<model_t>& IModels,
     vector<pair<fs::path,string>> alignment_files;
     for(const auto& [filename,range]: args["align"].as<vector<string>>()
                                       | views::transform([&](auto& x) {
-                                          return split_on_last_regex(":", "[\\d-]*", x);
+                                          return split_on_last_regex(":", "[-\\d.\\/]*", x);
                                       }))
         alignment_files.push_back( {fs::path(filename), range} );
 
@@ -810,7 +810,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     vector<pair<fs::path,string>> filename_ranges;
     for(const auto& [filename,range]: args["align"].as<vector<string>>()
                                       | views::transform([&](auto& x) {
-                                          return split_on_last_regex(":","[\\d-]*",x);
+                                          return split_on_last_regex(":","[-\\d.\\/]*",x);
                                       }))
         filename_ranges.push_back( {fs::path(filename), range});
 
@@ -1108,7 +1108,7 @@ void write_initial_alignments(variables_map& args, int proc_id, const fs::path& 
     int i=1;
     for(const auto& [filename, range]: args["align"].as<vector<string> >()
                                        | views::transform([&](auto& x) {
-                                           return split_on_last_regex(":","[\\d-]*",x);
+                                           return split_on_last_regex(":","[-\\d.\\/]*",x);
                                        }))
     {
         auto sequences = load_sequences_with_range(filename, range);
