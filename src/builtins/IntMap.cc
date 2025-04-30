@@ -497,3 +497,18 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 
     return m2;
 }
+
+extern "C" closure builtin_function_toVector(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
+
+    object_ptr<EVector>  v(new EVector);
+
+    for(auto& [key,reg]: m)
+    {
+        v->push_back( Args.evaluate_reg_to_object(reg) );
+    }
+
+    return v;
+}
