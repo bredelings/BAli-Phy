@@ -157,7 +157,10 @@ drop 0 xs     =  xs
 drop _ []     =  []
 drop n (_:xs) =  drop (n-1) xs
 
-splitAt n xs  =  (take n xs, drop n xs)
+splitAt n xs | n <= 0 =  ([],xs)
+splitAt _ []          =  ([],[])
+splitAt n (x:xs)      =  (x:xs',xs'') where
+    (xs',xs'') = splitAt (n-1) xs
 
 takeWhile _ []          = []
 takeWhile p (x:xs)
@@ -296,10 +299,21 @@ sort  = sortOn id
 
 -- sortOn
 sortOn :: Ord b => (a -> b) -> [a] -> [a]
-sortOn f [] = []
-sortOn f (x:xs) = sortOn f small ++ (x : sortOn f large)
-   where small = [x' | x' <- xs, (f x') <= (f x)]
-         large = [x' | x' <- xs, (f x')  > (f x)]
+sortOn f xs = msort xs where
+    msort [] = []
+    msort [x] = [x]
+    msort xs = merge (msort left) (msort right)
+               where (left,right) = halve xs
+
+    halve []  = ([],[])
+    halve xs@[x] = (xs,[])
+    halve (x:y:rest) = (x:xs,y:ys)
+        where (xs,ys) = halve rest
+
+    merge []     ys     = ys
+    merge xs     []     = xs
+    merge xss@(x:xs) yss@(y:ys) | f x < f y  = x:merge xs yss
+                                | otherwise  = y:merge xss ys
 
 -- insert
 

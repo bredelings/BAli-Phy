@@ -23,8 +23,8 @@
    • Expected '[1;32mInt[0m'[1m but got '[1;32ma[0m'[1m
    • Relevant bindings:
        x :: [1;32ma[0m[1m
-       iasdf_19912 :: [1;32ma -> Int[0m[1m
-   • In equation `iasdf_19912 x  = x`
+       iasdf_20554 :: [1;32ma -> Int[0m[1m
+   • In equation `iasdf_20554 x  = x`
    • In instance `forall a. Text.Show.Show a => Test.C a`:
    [1;34m|[0m
 [1;34m17[0m [1;34m| [0m    asdf x  = [1;31mx[0m
