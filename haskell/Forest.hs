@@ -151,6 +151,8 @@ parentNode rooted_tree n = case branchToParent rooted_tree n of
                              Just b  -> Just $ targetNode rooted_tree b
                              Nothing -> Nothing
 
+children rootedTree node = [targetNode rootedTree b | b <- outEdges rootedTree node]
+
 instance IsDirectedGraph g => IsDirectedGraph (WithBranchLengths g) where
     isForward (WithBranchLengths g _) e = isForward g e
 
