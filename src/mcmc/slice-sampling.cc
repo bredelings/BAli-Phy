@@ -300,7 +300,7 @@ scale_groups_slice_function::scale_groups_slice_function(context_ref& C, const s
     for(int i=0;i<initial_scales.size();i++)
     {
         initial_scales[i] = C.get_modifiable_value(r_scales[i]).as_double();
-        initial_average_scale += initial_scales[i];
+        initial_average_scale += std::abs(initial_scales[i]);
     }
     initial_average_scale /= initial_scales.size();
 
@@ -321,6 +321,7 @@ scale_groups_slice_function::scale_groups_slice_function(context_ref& C, const s
     //     log(initial_average_scale) + log_current_factor \in [-40,40]
     //                                  log_current_factor \in [-40 - log(initial_average_scale), 40 - log(initial_average_scale)]
     double shift = -log(initial_average_scale);
+    assert(std::isfinite(shift));
 
     b = between<double>(-40+shift,40+shift);
 
