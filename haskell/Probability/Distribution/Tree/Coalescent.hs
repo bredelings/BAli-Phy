@@ -172,11 +172,11 @@ coalescentTreePrFactorsSort ((t0,popSize0):popSizes) tree = [balancedProduct $ g
 
 -------------------------------------------------------------
 
-foreign import bpcall "TreeDist:" rawCoalescentTreePr :: EVector (EPair Double Double) -> EVector (EPair Double Int) -> LogDouble
+foreign import bpcall "TreeDist:" rawCoalescentTreePr :: EVector (EPair Double Double) -> EVector (EPair Double (EVector Double)) -> LogDouble
 
 coalescentTreePr popSizes tree = rawCoalescentTreePr popSizes' nodeTimes
     where popSizes' = toVector $ c_pair' <$> popSizes
-          nodeTimes =  getNodesSet tree & IntMap.fromSet (\node -> c_pair (nodeTime tree node) (nodeDegree tree node)) & FIM.exportIntMapToVector
+          nodeTimes =  getNodesSet tree & IntMap.fromSet (\node -> c_pair (nodeTime tree node) (toVector $ nodeTime tree <$> children tree node)) & FIM.exportIntMapToVector
 
 coalescentTreePrFactors popSizes tree = [coalescentTreePr popSizes tree]
 
