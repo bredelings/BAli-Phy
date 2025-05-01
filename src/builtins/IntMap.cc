@@ -8,6 +8,10 @@
 #include "immer/set.hpp"
 #include <map>
 
+#include "range/v3/all.hpp"
+
+namespace views = ranges::views;
+
 typedef Box<immer::set<int>> IntSet;
 
 typedef Box<std::map<int,expression_ref>> EIntMap;
@@ -489,10 +493,25 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 
     object_ptr<EIntMap>  m2(new EIntMap);
 
+    // Ensure the value regs don't vanish on us!
+    std::vector<int> tmp;
+    for(auto& [_,reg]: m)
+    {
+        Args.stack_push(reg);
+        tmp.push_back(reg);
+    }
+
+    // Compute the values
     for(auto& [key,reg]: m)
     {
         auto value = Args.evaluate_reg_to_object(reg);
 	m2->insert({key, value});
+    }
+
+    // Unreserve the value regs
+    for(auto& reg: tmp | views::reverse)
+    {
+        Args.stack_pop(reg);
     }
 
     return m2;
@@ -505,9 +524,24 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
 
     object_ptr<EVector>  v(new EVector);
 
+    // Ensure the value regs don't vanish on us!
+    std::vector<int> tmp;
+    for(auto& [_,reg]: m)
+    {
+        Args.stack_push(reg);
+        tmp.push_back(reg);
+    }
+
+    // Compute the values
     for(auto& [key,reg]: m)
     {
         v->push_back( Args.evaluate_reg_to_object(reg) );
+    }
+
+    // Unreserve the value regs
+    for(auto& reg: tmp | views::reverse)
+    {
+        Args.stack_pop(reg);
     }
 
     return v;
