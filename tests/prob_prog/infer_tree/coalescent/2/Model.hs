@@ -41,8 +41,7 @@ tree_prior taxa = do
 
     tree <- sample $ coalescentTree taxonAges popSizes
 
-    let loggers   = ["N_over_tau" %=% popSize,
-                     "coalescentPr" %=% ln (density (coalescentTree taxonAges popSizes) tree)]
+    let loggers   = ["N_over_tau" %=% popSize]
 
     return (tree, loggers)
 
