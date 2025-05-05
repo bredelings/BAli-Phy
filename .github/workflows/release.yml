@@ -310,7 +310,7 @@ jobs:
         OUTPUT=$HOME/local
         brew install findutils file-formula
         for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
-           echo codesign -s - ${exe}
+           echo codesign --sign - --force --timestamp=none ${exe}
            codesign --sign - --force --timestamp=none ${exe}
         done
         otool -L ${OUTPUT}/bin/bali-phy
