@@ -311,10 +311,11 @@ jobs:
         brew install findutils file-formula
         for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
            echo codesign -s - ${exe}
-           codesign -s - ${exe}
+           codesign --sign - --force --timestamp=none ${exe}
         done
         otool -L ${OUTPUT}/bin/bali-phy
         # otool -l ${OUTPUT}/bin/bali-phy
+        codesign -d --verbose=4 ${OUTPUT}/bin/bali-phy
 
     - name: Test
       run: |
