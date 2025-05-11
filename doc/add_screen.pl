@@ -5,7 +5,7 @@ use strict;
 my $screen = "";
 while(my $line = <>)
 {
-    if ($line =~ s|^\% (.*)//(.*)$|<prompt>\%</prompt> <userinput>$1</userinput>//$2|)
+    if ($line =~ s|^\% (.*)# (.*)$|<prompt>\%</prompt> <userinput>$1</userinput># $2|)
     {
 	$screen = $screen . $line;
 	next;

@@ -18,17 +18,17 @@
 <section><info><title>Exercise (Setup, AliView, alignment "by eye")</title></info>
 
 <section><info><title>Download the alignment files we will use</title></info>
-% cd                        			 // go to your home directory
-% pwd                                            // where are we? = print working directory
-% mkdir alignment_files                          // make a subdirectory
-% cd ~/alignment_files                           // enter the subdirectory
-% wget http://www.bali-phy.org/examples.tgz      // Download the files - Linux
-% curl -O http://www.bali-phy.org/examples.tgz   // Download the files - Mac
+% cd                        			 # go to your home directory
+% pwd                                            # where are we? = print working directory
+% mkdir alignment_files                          # make a subdirectory
+% cd ~/alignment_files                           # enter the subdirectory
+% wget https://www.bali-phy.org/examples.tgz     # Download the files - Linux
+% curl -O https://www.bali-phy.org/examples.tgz  # Download the files - Mac
 %%&lt;Alternatively, download the files using your browser&gt;
-% tar -zxf examples.tgz                          // extract the compressed archive
-% ls examples					 // look inside the new directory that was created
-% less examples/ferns/cleaned.fasta              // examine the downloaded files – type q to quit
-% alignment-info examples/ferns/cleaned.fasta    // this will only work if bali-phy is already installed
+% tar -zxf examples.tgz                          # extract the compressed archive
+% ls examples					 # look inside the new directory that was created
+% less examples/ferns/cleaned.fasta              # examine the downloaded files – type q to quit
+% alignment-info examples/ferns/cleaned.fasta    # this will only work if bali-phy is already installed
 </section>
 
 <section><info><title>Open a FASTA file in Aliview</title></info>
@@ -57,8 +57,8 @@ Which alignment (or alignments) is most likely?  Why?
 </section>
 
 <section><info><title>Try some different programs (optional)</title></info>
-% mafft test1.fasta &gt; test1.maff.fasta
-% muscle -align test1.fasta -output test1.mafft.fasta
+% mafft test1.fasta &gt; test1.mafft.fasta
+% muscle -align test1.fasta -output test1.muscle.fasta
 % fsa test1.fasta &gt; test1.fsa.fasta
 
 <para>Look at all these alignments in aliview.</para>
@@ -68,57 +68,60 @@ Which alignment (or alignments) is most likely?  Why?
 <section><info><title>Exercise (MAFFT, HoT, MUSCLE)</title></info>
 
 <section><info><title>Make a <filename>~/bin</filename> directory (for programs) and add it to your PATH</title></info>
-% cd
-% pwd                                           // where are we? = print working directory
-% ls                                            // look around
-% ls bin                                        // does it already exists?
+% cd                                            # go to your home directory
+% pwd                                           # where are we? = print working directory
+% ls                                            # look around
+% ls bin                                        # does it already exist?
 % mkdir ~/bin            			
-% ls bin                                        // does it exist now?
+% ls bin                                        # does it exist now?
+%%&lt;Log out and log back in.&gt;
+% echo $PATH                                    # check if ~/bin is in PATH
+% echo $PATH | sed 's/:/\n/g'                   # easier to read!
 
-% ls .bash_profile .profile .zprofile           // do you have .profile or .bash_profile or .zprofile?
-% nano .profile                                 // edit the startup script
+% ls .bash_profile .profile .zprofile           # do you have .profile or .bash_profile or .zprofile?
+% nano .profile                                 # edit the startup script
 %% OR
-% nano .bash_profile                            // edit the startup script
+% nano .bash_profile                            # edit the startup script
 %% OR
-% nano .zprofile                                // edit the startup script
+% nano .zprofile                                # edit the startup script
 %%&lt;Add the line &quot;PATH=~/bin:$PATH&quot;.&gt;
 
-% cat ~/.bash_profile				// Check if your changes are there
-% cat ~/.profile				// Check if your changes are there
-% cat ~/.zprofile				// Check if your changes are there
-
+% cat ~/.bash_profile				# Check if your changes are there
+%% OR
+% cat ~/.profile				# Check if your changes are there
+%% OR
+% cat ~/.zprofile				# Check if your changes are there
 %%&lt;Log out and log back in.&gt;
-% echo $PATH                                    // check that ~/bin is in PATH
-% echo $PATH | sed 's/:/\n/g'                   // easier to read!
+% echo $PATH | sed 's/:/\n/g'                   # Is ~/bin in the PATH now?
 </section>
 
 <section><info><title>Install <filename>fasta-flip.pl</filename> and <filename>compare-alignments</filename> to <filename>~/bin</filename></title></info>
 % cd ~/alignment_files/examples
 
-% chmod +x fasta-flip.pl			 // make the file executable
-% cp fasta-flip.pl ~/bin			 // copy the file to ~/bin
-% which fasta-flip.pl				 // check to make sure its in your PATH
+% chmod +x fasta-flip.pl			 # make the file executable
+% cp fasta-flip.pl ~/bin			 # copy the file to ~/bin
+% which fasta-flip.pl				 # check to make sure its in your PATH
 
-% chmod +x compare-alignments			 // make the file executable
-% cp compare-alignments ~/bin			 // copy the file to ~/bin
-% which compare-alignments              	 // check to make sure its in your PATH
+% chmod +x compare-alignments			 # make the file executable
+% cp compare-alignments ~/bin			 # copy the file to ~/bin
+% which compare-alignments              	 # check to make sure its in your PATH
 </section>
 
 <section><info><title>MAFFT and HoT and Seaview</title></info>
-% cp ferns/cleaned.fasta ferns.fasta                                          // make a copy of a file
-% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                // try a simple sequence alignment 
+% cp ferns/cleaned.fasta ferns.fasta                                          # make a copy of a file
+% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                # try a simple sequence alignment 
 % fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
-% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             // take a look at the two good alignments
+% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             # take a look at the two good alignments
 % compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
-% firefox ferns-compare.html                                                  // load in firefox, then shrink the font
+% firefox ferns-compare.html                                                  # load in firefox, then shrink the font
 </section>
 
 <section><info><title>Alignment with MUSCLE (v5)</title></info>
 Look at the time to perform different numbers of iterations with MAFFT:
 % cd ~/alignment_files/examples
-% muscle -align ferns.fasta -output ferns-muscle.fasta                        // compute a MUSCLE alignment
-% aliview ferns-muscle.fasta &amp;                                                // compare with the MAFFT alignment
-% alignment-info ferns-muscle.fasta | grep columns                            // How long is the alignment?
+% muscle -align ferns.fasta -output ferns-muscle.fasta                        # compute a MUSCLE alignment
+% aliview ferns-muscle.fasta &amp;                                                # compare with the MAFFT alignment
+% alignment-info ferns-muscle.fasta | grep columns                            # How long is the alignment?
 % compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
 % firefox ferns-compare-muscle-mafft.html
 
@@ -140,11 +143,11 @@ Look at the time to perform different numbers of iterations with MAFFT:
 
 <section><info><title>Alignment with FSA</title></info>
 Lets run FSA with no penalty for wrong homologies, like ProbCons and Muscle v5.
-% time fsa --fast --gapfactor 0 ferns.fasta &gt; ferns-fsa0.fasta      	// This is similar to probcons/muscle5 – few gaps.
+% time fsa --fast --gapfactor 0 ferns.fasta &gt; ferns-fsa0.fasta      	# This is similar to probcons/muscle5 – few gaps.
 % alignment-info ferns-fsa0.fasta | grep columns
 % aliview ferns-fsa0.fasta &#38;
 Let's run FSA with the standard penalty for wrong homologies:
-% time fsa --fast ferns.fasta &gt; ferns-fsa.fasta                        // This is the default. Some gaps.
+% time fsa --fast ferns.fasta &gt; ferns-fsa.fasta                        # This is the default. Some gaps.
 % alignment-info ferns-fsa.fasta | grep columns
 % aliview ferns-fsa.fasta &#38;
 
@@ -246,8 +249,8 @@ However, with partitioned analyses the command-line can become kind of long.  Ra
 <para>You can see the options for bali-phy by running:
 % bali-phy help
 You can also get help on particular options or models with the help command:
-% bali-phy help smodel                // help on option
-% bali-phy help gtr                   // help on model
+% bali-phy help smodel                # help on option
+% bali-phy help gtr                   # help on model
 </para>
 </section>
 
@@ -259,15 +262,15 @@ After you get the <userinput>--test</userinput> command to work, remove the <use
 These should create directories called <filename>ferns-intron-exon-1</filename> and <filename>ferns-intron-exon-2</filename>.
 Lets look inside one of these directories:
 % ls ferns-intron-exon-1
-% less ferns-intron-exon-1/C1.log             // numerical parameter samples
-% less ferns-intron-exon-1/C1.trees           // tree samples
-% less ferns-intron-exon-1/C1.P1.fastas       // alignment samples for partition 1
-% less ferns-intron-exon-1/C1.P2.fastas       // alignment samples for partition 2
+% less ferns-intron-exon-1/C1.log             # numerical parameter samples
+% less ferns-intron-exon-1/C1.trees           # tree samples
+% less ferns-intron-exon-1/C1.P1.fastas       # alignment samples for partition 1
+% less ferns-intron-exon-1/C1.P2.fastas       # alignment samples for partition 2
 </section>
 
 <section><info><title>Monitoring an analysis</title></info>
 You can monitor an analysis in two ways.  One way is to use the program <userinput>tracer</userinput>.
-% tracer ferns-intron-exon-1/C1.log ferns-intron-exon-2/C1.log   // you may need to double-click on Tracer and load log files via the menu.
+% tracer ferns-intron-exon-1/C1.log ferns-intron-exon-2/C1.log   # you may need to double-click on Tracer and load log files via the menu.
 We would like to see that the likelihood and posterior probability have stabilized.  Another method of monitoring is just to
 generate the summary report.
 </section>
@@ -352,11 +355,11 @@ name = ferns-intron-exon2       # determines name for output directory
 % bali-phy -c ferns-config2.txt &amp;
 % bali-phy -c ferns-config2.txt &amp;
 %%&lt;wait a few minutes
-% wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+% wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
 %%&lt;wait a few more minutes
-% wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+% wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
 % firefox Results/index.html &amp;
 </section>
 
@@ -384,7 +387,7 @@ In order to load nucleotide sequences as codons, three conditions must be met:
 Note that spaces in FASTA files are allowed, but not required.
 <para>Let's extract the coding data:
 % alignment-cat -c6-8,454-596,865-948,1329-1389 ferns.fasta --strip-gaps > coding.fasta
-% alignment-translate coding.fasta | less         // check that the coding frame is correct
+% alignment-translate coding.fasta | less         # check that the coding frame is correct
 </para>
 
 <para>Now we can put the following into a configuration file called <filename>ferns-config3.txt</filename>.</para>
@@ -408,11 +411,11 @@ name = ferns-intron-exon3
 
 % bali-phy -c ferns-config3.txt &amp;
 % bali-phy -c ferns-config3.txt &amp;
-% wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+% wc -l ferns-intron-exon3-*/C1.log                      # How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   # Generate a summary of completed iterations.
 %%&lt;wait a few more minutes
-% wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+% wc -l ferns-intron-exon3-*/C1.log                      # How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   # Generate a summary of completed iterations.
 %%&lt;wait a few minutes
 % firefox Results/index.html &amp;
 
@@ -420,8 +423,8 @@ name = ferns-intron-exon3
 <section><info><title>Further exploration...</title></info>
   <para>For more information see:
   <itemizedlist>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/README.xhtml">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
   </itemizedlist>
 </para>
 </section>
