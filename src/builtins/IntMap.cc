@@ -98,6 +98,34 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
     return m2;
 }
 
+extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
+{
+    const closure& C = Args.current_closure();
+
+    int f_reg = C.reg_for_slot(0);
+
+    auto& m = Args.evaluate(1).as_<IntMap>();
+
+    expression_ref apply_E;
+    {
+	expression_ref f = index_var(2);
+	expression_ref argKey = index_var(1);
+	expression_ref argVal = index_var(0);
+	apply_E = {f, argKey, argVal};
+    }
+
+    IntMap m2;
+
+    for(auto& [k,r_val]: m)
+    {
+        int r_key = Args.allocate({k});
+        int r_val2 = Args.allocate({apply_E,{f_reg,r_key,r_val}});
+        m2.insert(k,r_val2);
+    }
+
+    return m2;
+}
+
 extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();

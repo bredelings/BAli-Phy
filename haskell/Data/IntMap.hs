@@ -113,6 +113,8 @@ disjoint m1 m2 = case _disjoint m1 m2 of
 
 foreign import bpcall "IntMap:map" map :: (a -> b) -> IntMap a -> IntMap b
 
+foreign import bpcall "IntMap:mapWithKey" mapWithKey :: (Key -> a -> b) -> IntMap a -> IntMap b
+
 ---
 
 -- Note!  These are supposed be to in ascending order of keys, but are not.
