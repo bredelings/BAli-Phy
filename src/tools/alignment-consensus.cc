@@ -193,6 +193,8 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
         }
     }
 
+    M3.resize(c3_next);
+
     return M3;
 }
 
