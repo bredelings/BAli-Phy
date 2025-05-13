@@ -193,9 +193,12 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
         }
     }
 
-    M3.resize(c3_next);
+    matrix<int> M4(c3_next, M1.size2());
+    for(int i=0;i<M4.size1();i++)
+        for(int j=0;j<M4.size2();j++)
+            M4(i,j) = M3(i,j);
 
-    return M3;
+    return M4;
 }
 
 int main(int argc,char* argv[]) 
