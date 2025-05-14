@@ -107,13 +107,15 @@ Which alignment (or alignments) is most likely?  Why?
 % which compare-alignments              	 # check to make sure its in your PATH
 </section>
 
-<section><info><title>MAFFT and HoT and Seaview</title></info>
+<section><info><title>MAFFT and HoT and Aliview</title></info>
 % cp ferns/cleaned.fasta ferns.fasta                                          # make a copy of a file
 % mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                # try a simple sequence alignment 
 % fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
 % aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             # take a look at the two good alignments
 % compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
 % firefox ferns-compare.html                                                  # load in firefox, then shrink the font
+% alignment-consensus --cutoff=0.999 ferns-mafft.fasta ferns-mafft-flipped.fasta > ferns-mafft-consensus.fasta
+% aliview ferns-mafft-consensus.fasta &#38;
 </section>
 
 <section><info><title>Alignment with MUSCLE (v5)</title></info>
@@ -124,6 +126,8 @@ Look at the time to perform different numbers of iterations with MAFFT:
 % alignment-info ferns-muscle.fasta | grep columns                            # How long is the alignment?
 % compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
 % firefox ferns-compare-muscle-mafft.html
+% alignment-consensus --cutoff=0.999 ferns-mafft.fasta ferns-muscle.fasta > ferns-mm-consensus.fasta
+% aliview ferns-mm-consensus.fasta &#38;
 
 % muscle -align ferns.fasta -output ferns-muscle.efa -diversified -replicates 10
 % muscle -efa_explode ferns-muscle.efa
@@ -182,26 +186,24 @@ Try muscle:
 
 Try prank:
 % prank -d=5S-25.fasta +F -o=5S-25-prank
-% cp 5S-25-prank.best.fas 5S-25-prank.fasta
+% cat 5S-25-prank.best.fas | sed 's/_/ /g' > 5S-25-prank.fasta
 % FastTree -nt 5S-25-prank.fasta > 5S-25-prank.tree
 
 Try fsa:
 % fsa --fast 5S-25.fasta > 5S-25-fsa.fasta
 % FastTree -nt 5S-25-fsa.fasta > 5S-25-fsa.tree
 
-Try bali-phy:
-% bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
-% bali-phy 5S-25.fasta -S "gtr +> Rates.free(n=4) +> Covarion.gt01" --name 5S-25-gtr-R4-gt01 &amp;
-%%&lt;wait some time&gt;
-% bp-analyze 5S-25-gtr-R4-gt01-1 5S-25-gtr-R4-gt01-2
-% firefox Results/index.html
-%%&lt;wait some more time&gt;
-% bp-analyze 5S-25-gtr-R4-gt01-1 5S-25-gtr-R4-gt01-2
-% firefox Results/index.html
+Try a consensus tree
+% trees-consensus 5S-25-{mafft,muscle,prank,fsa}.tree > 5S-maj-consensus.tree
+% figtree 5S-maj-consensus.tree
 
-How different are the alignments?
+Try a consensus alignment
+% alignment-consensus 5S-25-{mafft,muscle,prank,fsa}.fasta > 5S-consensus.fasta
+% FastTree -nt 5S-consensus.fasta > 5S-consensus.tree
 
-How different are the trees?
+How different are the alignments? (use aliview)
+
+How different are the trees? (use figtree)
 
 </section>
 <section><info><title>BAli-Phy (part 2)</title></info>
@@ -220,17 +222,26 @@ How different are the trees?
 <para>First, go to the <filename>~/alignment_files/examples</filename> directory and create
 a text file called <filename>ferns-config1.txt</filename> that looks like this:</para>
 <programlisting># sequence data for 7 partitions
-align = ferns.fasta:5-8       # exon 1
-align = ferns.fasta:12-444    # intron 1
-align = ferns.fasta:454-596   # exon 2
-align = ferns.fasta:609-844   # intron 2
-align = ferns.fasta:865-948   # exon 3
-align = ferns.fasta:953-1312  # intron 3
-align = ferns.fasta:1329-1393 # exon 4
+# exon 1
+:align ferns.fasta:5-8
+# intron 1
+:align ferns.fasta:12-444
+# exon 2
+:align ferns.fasta:454-596
+# intron 2
+:align ferns.fasta:609-844
+# exon 3
+:align ferns.fasta:865-948
+# intron 3
+:align ferns.fasta:953-1312
+# exon 4
+:align ferns.fasta:1329-1393
 
-smodel = gtr +> Rates.gamma +> inv  # substitution model
+# substitution model
+:smodel gtr +> Rates.gamma +> inv  
 
-name = ferns-intron-exon      # determines name for output directory
+# determines name for output directory
+:name ferns-intron-exon      
 </programlisting>
 <para>It should be possible to copy and paste this text into the nano editor when running nano.  Note the instructions on the bottom of the terminal when running nano: <userinput>^X</userinput> means <userinput>Control-X</userinput>.
 % cd ~/alignment_files/examples
@@ -240,7 +251,7 @@ name = ferns-intron-exon      # determines name for output directory
 </para>
 </section>
 <section><info><title>Command line options</title></info>
-<para>A script file can be turned into a command-line by replacing commands like <userinput>command = value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>align=file</userinput> commands, you can just write the filename by itself:
+<para>A script file can be turned into a command-line by replacing commands like <userinput>:command value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>:align file</userinput> commands, you can just write the filename by itself:
 % bali-phy ferns.fasta:{5-8,12-444,454-596,609-844,865-948,953-1312,1329-1393} --smodel 'gtr +> Rates.gamma +> inv' --name=ferns-intron-exon --test
 However, with partitioned analyses the command-line can become kind of long.  Raw command lines are more useful with a simple unpartitioned analysis:
 % bali-phy ferns.fasta --test
@@ -335,29 +346,41 @@ We can do this by specifying an insertion-deletion model of "none" for those par
 
 Let's put the following into a configuration file called <filename>ferns-config2.txt</filename>.
 <programlisting># sequence data for 7 partitions
-align = ferns.fasta:5-8         # exon 1
-align = ferns.fasta:12-444      # intron 1
-align = ferns.fasta:454-596     # exon 2
-align = ferns.fasta:609-844     # intron 2
-align = ferns.fasta:865-948     # exon 3
-align = ferns.fasta:953-1312    # intron 3
-align = ferns.fasta:1329-1393   # exon 4
+# exon 1
+:align ferns.fasta:5-8
+# intron 1
+:align ferns.fasta:12-444
+# exon 2
+:align ferns.fasta:454-596
+# intron 2
+:align ferns.fasta:609-844
+# exon 3
+:align ferns.fasta:865-948
+# intron 3
+:align ferns.fasta:953-1312
+# exon 4
+:align ferns.fasta:1329-1393
 
-smodel = 1,3,5,7:gtr +> Rates.free # substitution model
-smodel = 2,4,6:gtr +> Rates.free   # substitution model
+# substitution model
+:smodel 1,3,5,7:gtr +> Rates.free
+# substitution model
+:smodel 2,4,6:gtr +> Rates.free
 
-imodel = 1,3,5,7:none           # insertion-deletion model
-imodel = 2,4,6:rs07             # insertion-deletion model
+# insertion-deletion model
+:imodel 1,3,5,7:none
+# insertion-deletion model
+:imodel 2,4,6:rs07
 
-name = ferns-intron-exon2       # determines name for output directory
+# determines name for output directory
+:name ferns-intron-exon2
 </programlisting>
 
 % bali-phy -c ferns-config2.txt &amp;
 % bali-phy -c ferns-config2.txt &amp;
-%%&lt;wait a few minutes
+%%&lt;wait a few minutes&gt;
 % wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
 % bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
-%%&lt;wait a few more minutes
+%%&lt;wait a few more minutes&gt;
 % wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
 % bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
 % firefox Results/index.html &amp;
@@ -387,43 +410,46 @@ In order to load nucleotide sequences as codons, three conditions must be met:
 Note that spaces in FASTA files are allowed, but not required.
 <para>Let's extract the coding data:
 % alignment-cat -c6-8,454-596,865-948,1329-1389 ferns.fasta --strip-gaps > coding.fasta
-% alignment-translate coding.fasta | less         # check that the coding frame is correct
+% alignment-translate &lt; coding.fasta | less         # check that the coding frame is correct
 </para>
 
 <para>Now we can put the following into a configuration file called <filename>ferns-config3.txt</filename>.</para>
 <programlisting># sequence data for 7 partitions
-align = coding.fasta
-align = ferns.fasta:12-444    # intron 1
-align = ferns.fasta:609-844   # intron 2
-align = ferns.fasta:953-1312  # intron 3
+:align coding.fasta
+# intron 1
+:align ferns.fasta:12-444
+# intron 2
+:align ferns.fasta:609-844
+# intron 3
+:align ferns.fasta:953-1312
 
-smodel = 1:gy94(pi=f1x4)
-#smodel = 1:m3
-#smodel = 1:gtr + > x3 +> dNdS +> mut_sel_aa
-#smodel = 1:function(w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa) +> m3
-smodel = 2,3,4:gtr +> Rates.free
+:smodel 1:gy94(pi=f1x4)
+#:smodel 1:m3
+#:smodel 1:gtr + > x3 +> dNdS +> mut_sel_aa
+#:smodel 1:function(w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa) +> m3
+:smodel 2,3,4:gtr +> Rates.free
 
-imodel = 1:none
-imodel = 2,3,4:rs07
+:imodel 1:none
+:imodel 2,3,4:rs07
 
-name = ferns-intron-exon3
+:name ferns-intron-exon3
 </programlisting>
 
 % bali-phy -c ferns-config3.txt &amp;
 % bali-phy -c ferns-config3.txt &amp;
 % wc -l ferns-intron-exon3-*/C1.log                      # How many iterations have been completed so far?
 % bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   # Generate a summary of completed iterations.
-%%&lt;wait a few more minutes
+%%&lt;wait a few more minutes&gt;
 % wc -l ferns-intron-exon3-*/C1.log                      # How many iterations have been completed so far?
 % bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   # Generate a summary of completed iterations.
-%%&lt;wait a few minutes
+%%&lt;wait a few minutes&gt;
 % firefox Results/index.html &amp;
 
 </section>
 <section><info><title>Further exploration...</title></info>
   <para>For more information see:
   <itemizedlist>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/Tutorial.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
     <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/README.xhtml">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
   </itemizedlist>
 </para>
