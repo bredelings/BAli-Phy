@@ -210,11 +210,14 @@ Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g,const dyn
     assert(not group1.intersects(group2));
 }
 
-// line -> word (space word)*
+// line -> word (space* word)*
 // word = quoted_word | unquoted_word
-// quoted_word = " (letter|escape| )* "
-// unquoted_word = (letter|escape| )+
-// escape = \"
+// quoted_word = get_char(") >> letter* >> get_char(")
+// letter = escaped_letter | unescaped_letter
+// escaped_letter = Char('\\')>>get_char
+
+// unquoted_word = unescaped_letter+
+// unescaped_letter = char that is not '\\','"', or ' '.
 
 struct parse_input
 {
@@ -482,11 +485,12 @@ parse_result<string> quoted_word_(parse_input input)
     
     return {{result2->output,input}};
 }
+
 parser<string> quoted_word = quoted_word_;
 
-parser<string> unquoted_word = +letter;
+parser<string> unquoted_word = +unescaped_letter;
 
-parser<string> word = quoted_word|unquoted_word;
+parser<string> word = quoted_word | unquoted_word;
 
 template <typename T1, typename T2>
 parser<vector<T1>> intercalate(const parser<T1>& p1, const parser<T2>& p2)
@@ -523,7 +527,7 @@ std::optional<T> parse(const string& s, const parser<T>& p)
 
 vector< vector<string> > parse_partition(const string& line)
 {
-    auto result = parse(line, intercalate(word,Char(' ')));
+    auto result = parse(line, intercalate(word,+Char(' ')));
     vector<string> all_names = *result;
 
     vector< vector<string> > names(3);
