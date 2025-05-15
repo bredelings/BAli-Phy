@@ -877,9 +877,9 @@ move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alig
     for(auto& a: A_abxcd)
     {
 	int inc=0;
-	if (a.test(0)) inc++;
-	if (a.test(4)) inc++;
-	if (a.test(2) or a.test(3)) inc++;
+	if (a.test(a_bit)) inc++;
+	if (a.test(d_bit)) inc++;
+	if (a.test(x_bit) or a.test(c_bit)) inc++;
 	a.set(b_bit, inc > 1);
     }
 
