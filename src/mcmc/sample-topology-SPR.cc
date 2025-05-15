@@ -296,7 +296,21 @@ double attachment_edge_length(const TreeInterface& T, const tree_edge& b_parent)
 spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
 {
     spr_range range;
-    if (T.is_leaf_node(b_parent.node2)) return range;
+    std::optional<double> min_age;
+
+    // If the pruned branch points to a leaf, then quit.
+    if (T.is_leaf_node(b_parent.node2))
+        return range;
+
+    // If the pruned branch doesn't point rootward, then quit.
+    bool is_time_tree = T.has_node_times();
+    if (is_time_tree)
+    {
+        if (not T.toward_root(T.find_branch(b_parent)))
+            return range;
+
+        min_age = T.node_time(b_parent.node1);
+    }
 
     auto child_branches = attachment_sub_branches(T, b_parent);
     auto initial_edge = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
@@ -304,7 +318,18 @@ spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
 
     for(int cb: child_branches)
 	for(int b: T.all_branches_after(cb))
-	    range[T.edge(b)] = true;
+        {
+            // For time trees, we can only attach on the edge if the older age is older than the min age.
+            if (is_time_tree)
+            {
+                double t1 = T.node_time(T.source(b));
+                double t2 = T.node_time(T.target(b));
+                if (std::max(t1,t2) < *min_age)
+                    range[T.edge(b)] = true;
+            }
+            else
+                range[T.edge(b)] = true;
+        }
 
     return range;
 }
