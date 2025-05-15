@@ -544,10 +544,12 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     }
 }
 
-// UNSAFE!
+// UNSAFE (infinite loop)!
 int choose_subtree_branch_uniform(const TreeInterface& T) 
 {
     assert(T.n_branches() >= 3);
+
+    bool timetree = T.has_node_times();
 
     int b1 = -1;
     while (true)
@@ -556,6 +558,9 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
 
 	// forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
+
+        // forbid pruning subtrees that contain the root on a time-tree.
+        if (timetree and T.away_from_root(b1)) continue;
 
 	break;
     }
@@ -563,23 +568,30 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
     return b1;
 }
 
-// UNSAFE!
+// UNSAFE (infinite loop)!
 int choose_subtree_branch_uniform2(const TreeInterface& T) 
 {
     assert(T.n_branches() >= 4);
+
+    bool timetree = T.has_node_times();
+
     int b1 = -1;
     while (true)
     {
 	b1 = uniform_element(T.directed_branches());
 
-	// forbid branches leaf branches - no attachment point!
+        // forbid branches leaf branches - no attachment point!
 	if (T.is_leaf_node(T.target(b1))) continue;
 
-	// forbid branches with only 1 attachment point - not very useful.
+        // forbid pruning subtrees that contain the root on a time-tree.
+        if (timetree and T.away_from_root(b1)) continue;
+
+        // forbid branches with only 1 attachment point - not very useful.
 	bool ok = false;
 	for(int b: T.branches_after(b1))
 	    if (not T.is_leaf_node(T.target(b)))
 		ok = true;
+
 	if (not ok) continue;
 
 	break;
