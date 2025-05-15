@@ -842,7 +842,8 @@ class Analysis(object):
         if not self.fourmolu_exe and not self.ormolu_exe and not self.hindent_exe:
             print("Can't find fourmolu, ormolu or hindent -- not formatting Haskell code.")
 
-        self.subpartitions = args.subpartitions
+        self.subpartitions = args.sub_partitions
+        self.node_bubbles = args.node_bubbles
         self.subsample = args.subsample
         self.prune = args.prune
         self.burnin = args.skip
@@ -878,6 +879,8 @@ class Analysis(object):
             self.summarize_numerical_parameters()
         if self.has_trees():
             self.summarize_topology_distribution()
+            if self.node_bubbles:
+                self.compute_mean_branch_lengths()
             self.draw_trees()
             self.compute_tree_mixing_diagnostics()
             self.compute_srq_plots()
@@ -1293,6 +1296,33 @@ class Analysis(object):
                 self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
         print(" done.")
 
+        # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
+    def compute_mean_branch_lengths(self):
+        print("\nComputing mean branch lengths: ",end='')
+        for level in self.tree_consensus_levels:
+            value = int(level*100)
+            prefix = "Results/c{}".format(value)
+            tree = prefix+".tree"
+            outfile=prefix+".ltree"
+            if more_recent_than_all_of(outfile, self.get_trees_files()):
+                break
+
+            cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
+            cmd += self.get_trees_files()
+
+            if self.prune is not None:
+                cmd.append("--ignore={}".format(self.prune))
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+
+            self.exec_show(cmd,outfile=outfile)
+        print(" done.")
+
+
     def get_alignment_info(self,filename):
         output = self.exec_show(['alignment-info',filename])
         features = dict()
@@ -1347,11 +1377,12 @@ class Analysis(object):
                 if not more_recent_than(self.outdir / f"{tree}-mctree.pdf",filename2):
                     self.exec_show(cmd + ['--output=pdf'])
 
+            treefile = tree + (".ltree" if self.node_bubbles else ".tree")
             if not more_recent_than(self.outdir / f"{tree}-tree.pdf", filename1):
-                cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight']
+                cmd = ['draw-tree', treefile, '--layout=equal-daylight']
                 self.exec_show(cmd,cwd=self.outdir)
             if not more_recent_than(self.outdir / f"{tree}-tree.svg", filename1):
-                cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight','--output=svg']
+                cmd = ['draw-tree', treefile, '--layout=equal-daylight', '--output=svg']
                 self.exec_show(cmd,cwd=self.outdir)
             print(tree+' ',end='',flush=True)
 
@@ -2423,7 +2454,8 @@ if __name__ == '__main__':
 #    parser.add_argument("--muscle")
 #    parser.add_argument("--probcons")
 #    parser.add_argument("--mafft")
-    parser.add_argument("--subpartitions",default=False,action='store_true')
+    parser.add_argument("--sub-partitions",default=False,action='store_true')
+    parser.add_argument("--node-bubbles",default=False,action='store_true')
     args = parser.parse_args()
 
     if args.verbose:
