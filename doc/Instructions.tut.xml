@@ -118,6 +118,26 @@ Which alignment (or alignments) is most likely?  Why?
 % aliview ferns-mafft-consensus.fasta &#38;
 </section>
 
+<section><info><title>MAFFT with different gap penalties</title></info>
+% mafft --auto ferns.fasta --op 0.53 &gt; ferns-mafft-op053.fasta             # set gap-opening penalty to 0.53
+% mafft --auto ferns.fasta --op 2.53 &gt; ferns-mafft-op253.fasta             # set gap-opening penalty to 2.53
+% mafft --auto ferns.fasta --op 3.53 &gt; ferns-mafft-op353.fasta             # set gap-opening penalty to 2.53
+% aliview ferns-mafft-op053.fasta &#38;                                        # how do the alignments differ?
+% aliview ferns-mafft.fasta &#38;
+% aliview ferns-mafft-op253.fasta &#38;
+% aliview ferns-mafft-op353.fasta &#38;
+</section>
+
+<section><info><title>MAFFT with different guide trees</title></info>
+% mafft --auto ferns.fasta --op 0.53 &gt; ferns-mafft-op053.fasta             # set gap-opening penalty to 0.53
+% mafft --auto ferns.fasta --op 2.53 &gt; ferns-mafft-op253.fasta             # set gap-opening penalty to 2.53
+% mafft --auto ferns.fasta --op 3.53 &gt; ferns-mafft-op353.fasta             # set gap-opening penalty to 2.53
+% aliview ferns-mafft-op053.fasta &#38;                                        # how do the alignments differ?
+% aliview ferns-mafft.fasta &#38;
+% aliview ferns-mafft-op253.fasta &#38;
+% aliview ferns-mafft-op353.fasta &#38;
+</section>
+
 <section><info><title>Alignment with MUSCLE (v5)</title></info>
 Look at the time to perform different numbers of iterations with MAFFT:
 % cd ~/alignment_files/examples
