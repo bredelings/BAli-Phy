@@ -1199,6 +1199,13 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     return (C2 == 1);
 }
 
+//
+// NOTE: Why would we want to move the pruned subtree iteratively from edge(j-1) to edge(j) until we get to the target edge?
+//       Does move_pruned_subtree extend the homology of characters at the initial edge so that they are present at the target edge?
+//       If so, that should result in higher likelihoods for attaching at the target edge.
+//       But to actually compute the final alignment, it seems like such an extension would not be reversible -- what would undo it?
+//       - BDR 05/18/2025
+//
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 {
     auto target_edge = I.attachment_branch_pairs[C].edge;
