@@ -601,7 +601,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 // Let b_target = (x,y).  Then we have (x,n0) and (n0,y).
 // B_unbroken_target specifies the orientation for the distance U.
-void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b_target, const spr_attachment_points& locations)
+void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, double L, const tree_edge& b_target, const spr_attachment_points& locations)
 {
     // 1. Look up location attachment info for this branch.
     map<tree_edge, double>::const_iterator record = locations.find(b_target);
@@ -616,16 +616,35 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     double U = record->second; 
 
     // 3. Find the names of the branches
-    int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
-    int b2 = P.t().find_branch(n0, B_unbroken_target.node2);
+    int b1 = P.t().find_branch(B_unbroken_target.node1, subtree_edge.node2);
+    int b2 = P.t().find_branch(subtree_edge.node2, B_unbroken_target.node2);
 
-    // 4. Get the lengths of the two branches
-    double L1 = L*U;
-    double L2 = L - L1;
+    if (P.t().has_node_times())
+    {
+        double T1 = P.t().node_time(B_unbroken_target.node1);
+        double T2 = P.t().node_time(B_unbroken_target.node2);
+        if (T1 > T2) std::swap(T1,T2);
+        assert(T1 < T2);
 
-    // 5. Set the lengths of the two branches
-    P.setlength(b1, L1);
-    P.setlength(b2, L2);
+        double T_min = P.t().node_time(subtree_edge.node1);
+        assert(P.t().node_time(subtree_edge.node2) > P.t().node_time(subtree_edge.node1));
+        assert(T_min < T2);
+        T1 = std::max(T_min, T1);
+        assert(T1 < T2);
+
+        double T = T1 + U*(T2-T1);
+        P.t().set_node_time(subtree_edge.node2, T);
+    }
+    else
+    {
+        // 4. Get the lengths of the two branches
+        double L1 = L*U;
+        double L2 = L - L1;
+
+        // 5. Set the lengths of the two branches
+        P.setlength(b1, L1);
+        P.setlength(b2, L2);
+    }
 }
 
 void branch_pairs_after(const TreeInterface& T, const tree_edge& prev_b, const tree_edge& prev_b_pruned, vector<attachment_branch>& branch_pairs, const spr_range& range)
@@ -962,8 +981,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     regraft_subtree_and_set_3way_alignments(p2, subtree_edge, target_edge, alignment3way, not sum_out_A);
 
     // 2. Set branch lengths
-    int n0 = subtree_edge.node2;
-    set_lengths_at_location(p2, n0, L, target_edge, locations);
+    set_lengths_at_location(p2, subtree_edge, L, target_edge, locations);
 
     // 3a. Compute substitution likelihood AND alignment probability.
     if (sum_out_A)
@@ -1362,7 +1380,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	auto target_edge = I.attachment_branch_pairs[C].edge;
 	double original_length = p[1].t().branch_length(p[1].t().find_branch(target_edge));
 	spr_to_index(p[1], I, C, nodes0);
-	set_lengths_at_location(p[1], subtree_edge.node2, original_length, target_edge, locations);
+	set_lengths_at_location(p[1], subtree_edge, original_length, target_edge, locations);
     }
 
 #ifdef DEBUG_SPR_ALL
