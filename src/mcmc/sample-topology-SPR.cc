@@ -1336,7 +1336,15 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 {
     const int bins = 6;
 
-    if (P.t().is_leaf_node(subtree_edge.node2)) return false;
+    if (P.t().degree(subtree_edge.node2) != 3) return false;
+
+    if (P.t().has_node_times())
+    {
+        int b = P.t().find_branch(subtree_edge);
+
+        // We can only prune subtrees that don't include the root.
+        if (P.t().away_from_root(b)) return false;
+    }
 
     sum_out_A = sum_out_A or (uniform() < get_setting_or("spr_sum_out_A",0.0));
 
