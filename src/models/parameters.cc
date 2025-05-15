@@ -390,7 +390,12 @@ void Parameters::prune_subtree(const tree_edge& b_subtree)
 {
     // FIXME -- this seems redundant.
     vector<int> connected = t().branches_after(t().find_branch(b_subtree));
-    double L = t().branch_length(connected[0]) + t().branch_length(connected[1]);
+
+    std::optional<double> L;
+    if (not t().has_node_times())
+    {
+        L = t().branch_length(connected[0]) + t().branch_length(connected[1]);
+    }
 
     if (connected.empty()) throw myexception()<<"We can't prune subtrees that point to leaves!";
 
@@ -405,8 +410,12 @@ void Parameters::prune_subtree(const tree_edge& b_subtree)
     reconnect_branch(a,y,b);
     reconnect_branch(y,b,y);
 
-    t().set_branch_length(t().find_branch(a,b), L);
-    t().set_branch_length(t().find_branch(y,y), 0.0);
+    // If we have node times, we can just leave the node time for the pruned node unchanged.
+    if (not t().has_node_times())
+    {
+        t().set_branch_length(t().find_branch(a,b), *L);
+        t().set_branch_length(t().find_branch(y,y), 0.0);
+    }
 }
 
 void Parameters::regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target)
