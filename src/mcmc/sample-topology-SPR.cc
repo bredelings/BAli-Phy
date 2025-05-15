@@ -1487,7 +1487,8 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
 
 void sample_SPR_search_all(owned_ptr<context>& P,MoveStats& Stats, bool sum_out_A) 
 {
-    auto branches = P.as<Parameters>()->t().branches();
+    auto branches = P.as<Parameters>()->t().directed_branches();
+    bool timetree = P.as<Parameters>()->t().has_node_times();
     for(int b: branches)
     {
 	slice_sample_branch_length(P,Stats,b);
