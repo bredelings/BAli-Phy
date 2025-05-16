@@ -226,7 +226,7 @@ How different are the alignments? (use aliview)
 How different are the trees? (use figtree)
 
 </section>
-<section><info><title>BAli-Phy (part 2)</title></info>
+<section><info><title>BAli-Phy</title></info>
 
   <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
   <itemizedlist>
@@ -238,43 +238,10 @@ How different are the trees? (use figtree)
   </itemizedlist>
   </para>
 
-<section><info><title>Creating a script file</title></info>
-<para>First, go to the <filename>~/alignment_files/examples</filename> directory and create
-a text file called <filename>ferns-config1.txt</filename> that looks like this:</para>
-<programlisting># sequence data for 7 partitions
-# exon 1
-:align ferns.fasta:5-8
-# intron 1
-:align ferns.fasta:12-444
-# exon 2
-:align ferns.fasta:454-596
-# intron 2
-:align ferns.fasta:609-844
-# exon 3
-:align ferns.fasta:865-948
-# intron 3
-:align ferns.fasta:953-1312
-# exon 4
-:align ferns.fasta:1329-1393
-
-# substitution model
-:smodel gtr +> Rates.gamma +> inv  
-
-# determines name for output directory
-:name ferns-intron-exon      
-</programlisting>
-<para>It should be possible to copy and paste this text into the nano editor when running nano.  Note the instructions on the bottom of the terminal when running nano: <userinput>^X</userinput> means <userinput>Control-X</userinput>.
+<section><info><title>Planning a run</title></info>
+<para>Lets run bali-phy on the ferns data:
 % cd ~/alignment_files/examples
-% nano ferns-config1.txt
-% cat ferns-config1.txt
-% bali-phy -c ferns-config1.txt --test | less
-</para>
-</section>
-<section><info><title>Command line options</title></info>
-<para>A script file can be turned into a command-line by replacing commands like <userinput>:command value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>:align file</userinput> commands, you can just write the filename by itself:
-% bali-phy ferns.fasta:{5-8,12-444,454-596,609-844,865-948,953-1312,1329-1393} --smodel 'gtr +> Rates.gamma +> inv' --name=ferns-intron-exon --test
-However, with partitioned analyses the command-line can become kind of long.  Raw command lines are more useful with a simple unpartitioned analysis:
-% bali-phy ferns.fasta --test
+% bali-phy ferns.fasta -S gtr --test
 </para>
 
 <para>You can see the options for bali-phy by running:
@@ -285,23 +252,22 @@ You can also get help on particular options or models with the help command:
 </para>
 </section>
 
-
 <section><info><title>Running an analysis</title></info>
 After you get the <userinput>--test</userinput> command to work, remove the <userinput>--test</userinput> option and start two copies of this analysis:
-% bali-phy -c ferns-config1.txt &#38;
-% bali-phy -c ferns-config1.txt &#38;
-These should create directories called <filename>ferns-intron-exon-1</filename> and <filename>ferns-intron-exon-2</filename>.
+% bali-phy -S gtr ferns.fasta &#38;
+% bali-phy -S gtr ferns.fasta &#38;
+These should create directories called <filename>ferns-1</filename> and <filename>ferns-2</filename>.
 Lets look inside one of these directories:
-% ls ferns-intron-exon-1
-% less ferns-intron-exon-1/C1.log             # numerical parameter samples
-% less ferns-intron-exon-1/C1.trees           # tree samples
-% less ferns-intron-exon-1/C1.P1.fastas       # alignment samples for partition 1
-% less ferns-intron-exon-1/C1.P2.fastas       # alignment samples for partition 2
+% ls ferns-1
+% less ferns-1/C1.log             # numerical parameter samples
+% less ferns-1/C1.trees           # tree samples
+% less ferns-1/C1.P1.fastas       # alignment samples for partition 1
+% less ferns-1/C1.P2.fastas       # alignment samples for partition 2
 </section>
 
 <section><info><title>Monitoring an analysis</title></info>
 You can monitor an analysis in two ways.  One way is to use the program <userinput>tracer</userinput>.
-% tracer ferns-intron-exon-1/C1.log ferns-intron-exon-2/C1.log   # you may need to double-click on Tracer and load log files via the menu.
+% tracer ferns-1/C1.log ferns-2/C1.log   # you may need to double-click on Tracer and load log files via the menu.
 We would like to see that the likelihood and posterior probability have stabilized.  Another method of monitoring is just to
 generate the summary report.
 </section>
@@ -320,10 +286,8 @@ For more information on parameter names, see <link xmlns:xlink="http://www.w3.or
 </section>
 
 <section><info><title>Summarizing the results of a run</title></info>
-% bp-analyze ferns-intron-exon-1 ferns-intron-exon-2
+% bp-analyze ferns-1 ferns-2
 % firefox Results/index.html
-Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
-% alignment-cat Results/P{1..7}.max.fasta > ferns-bali-phy.fasta
 Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-analyze</userinput>.
 </section>
 <section><info><title>Comparing to MAFFT, FSA, and PRANK</title></info>
@@ -404,6 +368,8 @@ Let's put the following into a configuration file called <filename>ferns-config2
 % wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
 % bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
 % firefox Results/index.html &amp;
+Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
+% alignment-cat Results/P{1..7}.max.fasta > ferns-bali-phy.fasta
 </section>
 
 
@@ -446,7 +412,7 @@ Note that spaces in FASTA files are allowed, but not required.
 :smodel 1:gy94(pi=f1x4)
 #:smodel 1:m3
 #:smodel 1:gtr + > x3 +> dNdS +> mut_sel_aa
-#:smodel 1:function(w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa) +> m3
+#:smodel 1:|w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa| +> m3
 :smodel 2,3,4:gtr +> Rates.free
 
 :imodel 1:none
