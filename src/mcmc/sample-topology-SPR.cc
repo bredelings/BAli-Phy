@@ -67,7 +67,14 @@ int random_int_from_double(double x)
 int n_SPR_moves(const Parameters& P)
 {
     double f = get_setting_or("SPR_amount",0.1);
-    if (P.t().n_branches() < 4) return 0;
+    if (P.t().has_node_times())
+    {
+        if (P.t().n_branches() <= 4) return 0;
+    }
+    else
+    {
+        if (P.t().n_branches() < 4) return 0;
+    }
     int n = random_int_from_double(P.t().n_branches()*f);
     return n+1;
 }
