@@ -21,3 +21,19 @@ addTreeMoves rate tree = do
   addTopologyMoves (rate*2) tree
   addLengthMoves (rate*2) tree
 
+addTimeTreeMoves rate tree = do
+  -- Resample all the node times, including the root...
+  -- But what if some node times are fixed?
+  -- FIXME: check that leaf times are fixed?
+  -- sequence_ [ addMove 1 $ sliceSample (nodeTime tree node) (above 0) | node <- internalNodes tree]
+
+  -- This allow attaching at the same level OR more rootward.
+  -- FIXME: but it doesn't allow becoming the root!
+  -- QUESTION: Could we slice sample the root location?
+  -- QUESTION: Could we somehow propose a root location based on the likelihood/posterior?
+  -- sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
+
+  -- Exchange sibling branches with children?
+  addMove (rate*2) $ walkTimeTreeSampleNNIandNodeTimes tree
+
+  addMove (rate*2) $ sampleSPRAll tree

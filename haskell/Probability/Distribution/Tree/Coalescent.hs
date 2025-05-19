@@ -2,6 +2,7 @@ module Probability.Distribution.Tree.Coalescent where
 
 import           Tree
 import           Probability.Random
+import           Probability.Distribution.Tree.Moves (addTimeTreeMoves)
 import           Probability.Distribution.Tree.Modifiable
 import           Probability.Distribution.Tree.UniformTimeTree
 import           Probability.Distribution.Tree.Util
@@ -242,14 +243,8 @@ coalescentTreeEffect tree = do
   -- FIXME: check that leaf times are fixed?
   -- sequence_ [ addMove 1 $ sliceSample (nodeTime tree node) (above 0) | node <- internalNodes tree]
 
-  -- This allow attaching at the same level OR more rootward.
-  -- FIXME: but it doesn't allow becoming the root!
-  -- QUESTION: Could we slice sample the root location?
-  -- QUESTION: Could we somehow propose a root location based on the likelihood/posterior?
-  -- sequence_ [ addMove 1 $ metropolisHastings $ fnpr_unsafe_proposal tree node | node <- getNodes tree]
-
   -- Exchange sibling branches with children?
-  addMove 1 $ walkTimeTreeSampleNNIandNodeTimes tree
+  addTimeTreeMoves 1 tree
 
 -------------------------------------------------------------
 
