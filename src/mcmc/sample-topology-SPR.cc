@@ -273,7 +273,7 @@ struct attachment_branch
 {
     std::optional<tree_edge> prev_edge;
     tree_edge edge;
-    tree_edge sibling;
+    std::optional<tree_edge> sibling;
 };
 
 typedef std::map<tree_edge, bool> spr_range;
@@ -694,17 +694,34 @@ void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, doubl
 void branch_pairs_after(const TreeInterface& T, const tree_edge& prev_b, const tree_edge& prev_b_pruned, vector<attachment_branch>& branch_pairs, const spr_range& range)
 {
     vector<int> after = T.branches_after(T.find_branch(prev_b));
-    assert(after.size() == 0 or after.size() == 2);
-    for(int j=0; j<after.size(); j++)
+
+    if (after.size() == 0)
+        ; // nothing to do
+    else if (after.size() == 1)
     {
-	tree_edge curr_b = T.edge(after[j]);
-	if (range.count(curr_b))
-	{
-	    tree_edge sibling = T.edge(after[1-j]);
-	    branch_pairs.push_back({prev_b_pruned, curr_b, sibling});
-	    branch_pairs_after(T, curr_b, curr_b, branch_pairs, range);
-	}
+        tree_edge curr_b = T.edge(after[0]);
+        if (range.count(curr_b))
+        {
+            // NO SIBLING
+            branch_pairs.push_back({prev_b_pruned, curr_b, {}});
+            branch_pairs_after(T, curr_b, curr_b, branch_pairs, range);
+        }
     }
+    else if (after.size() == 2)
+    {
+        for(int j=0; j<after.size(); j++)
+        {
+            tree_edge curr_b = T.edge(after[j]);
+            if (range.count(curr_b))
+            {
+                tree_edge sibling = T.edge(after[1-j]);
+                branch_pairs.push_back({prev_b_pruned, curr_b, {sibling}});
+                branch_pairs_after(T, curr_b, curr_b, branch_pairs, range);
+            }
+        }
+    }
+    else
+        throw myexception()<<"branch_pairs_after: SPR can't handle node of degree "<<after.size()+1;
 }
 
 vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent, const spr_range& range)
@@ -978,7 +995,7 @@ move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alig
 tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 move_pruned_subtree(Parameters& P,
 		    const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments_prev,
-		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling,
+		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const std::optional<tree_edge>& b_sibling,
 		    bool preserve_homology=false)
 {
     using std::get;
@@ -1005,8 +1022,9 @@ move_pruned_subtree(Parameters& P,
     assert(b_next.node1 == b);
     int c = b_next.node2;
 
-    assert(b_sibling.node1 == b);
-    int d = b_sibling.node2;
+    assert(b_sibling);
+    assert(b_sibling->node1 == b);
+    int d = b_sibling->node2;
 
     int b_ab = P.t().find_branch(a,b);
     int b_bc = P.t().find_branch(b,c);
@@ -1137,7 +1155,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	// Define target branch b2 - pointing away from subtree_edge
 	const auto& BB = I.attachment_branch_pairs[i];
 	const tree_edge& target_edge = BB.edge;
-        const tree_edge& sibling_edge = BB.sibling;
+        const tree_edge& sibling_edge = *BB.sibling;
 
 	const tree_edge& prev_target_edge = *BB.prev_edge;
 
@@ -1295,7 +1313,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 
     // 1. Record a map from each edge to its prev_edge.
     std::map<tree_edge, tree_edge> prev_edges;
-    std::map<tree_edge, tree_edge> sibling_edges;
+    std::map<tree_edge, optional<tree_edge>> sibling_edges;
     for(auto& [prev, edge, sibling]: I.attachment_branch_pairs)
         if (prev)
         {
@@ -1320,7 +1338,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 
     // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
     for(int j=1;j<edges.size();j++)
-	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
+	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], *sibling_edges.at(edges[j]), false) );
 
     // 6. Finally, regraft the subtree to the target edge and set branch lengths
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
