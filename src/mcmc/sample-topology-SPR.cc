@@ -331,7 +331,7 @@ spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
             {
                 double t1 = T.node_time(T.source(b));
                 double t2 = T.node_time(T.target(b));
-                if (std::max(t1,t2) < *min_age)
+                if (*min_age < std::max(t1,t2))
                     range[T.edge(b)] = true;
             }
             else
@@ -362,15 +362,15 @@ public:
     vector<attachment_branch> attachment_branch_pairs;
 
     // Lengths of branches
-    vector<double> L;
+    vector<double> relative_proposal_probs_;
 
     /// The number of places we could regraft, including the current site
     unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
 
     /// The length of each attachment branch, indexed in the same way as attachment_branches
-    const vector<double>& attachment_branch_lengths() const
+    const vector<double>& relative_proposal_probs() const
 	{
-	    return L;
+	    return relative_proposal_probs_;
 	}
 
     /// Express a branch \a in attachment_branches in terms of its endpoint nodes
@@ -742,22 +742,42 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b, const spr_range&
 
     attachment_branch_pairs = branch_pairs_after(T, b_parent, range);
 
+    std::optional<double> min_age;
+    bool timetree = T.has_node_times();
+    if (timetree)
+    {
+        assert(T.node_time(b_parent.node1) < T.node_time(b_parent.node2));
+        min_age = T.node_time(b_parent.node1);
+    }
+
     for(const auto& bp: attachment_branch_pairs)
     {
 	const auto& E = bp.edge;
-	if (E == initial_edge)
-	    L.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
-	else if (E == initial_edge.reverse())
-	    std::abort();
-	else
-	    L.push_back(T.branch_length(T.find_branch(E)));
+        if (timetree)
+        {
+            double T1 = T.node_time(E.node1);
+            double T2 = T.node_time(E.node2);
+            if (T1 > T2) std::swap(T1,T2);
+            T1 = std::max(T1, *min_age);
+            assert(T1 < T2);
+            relative_proposal_probs_.push_back(T2 - T1);
+        }
+        else
+        {
+            if (E == initial_edge)
+                relative_proposal_probs_.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
+            else if (E == initial_edge.reverse())
+                std::abort();
+            else
+                relative_proposal_probs_.push_back(T.branch_length(T.find_branch(E)));
+        }
     }
 }
 
 /// Get a list of attachment branches, and a location for attachment on each branch
-spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tree_edge& subtree_edge)
+spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tree_edge& subtree_edge, const spr_range& range)
 {
-    spr_info I(T, subtree_edge);
+    spr_info I(T, subtree_edge, range);
 
     tree_edge initial_edge(T.target(I.child_branches[0]), T.target(I.child_branches[1]));
     double L0a = T.branch_length(I.child_branches[0]);
@@ -1193,7 +1213,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     assert(p.size() == 2);
     assert(p[0].variable_alignment() == p[1].variable_alignment());
 
-    vector<double> L = I.attachment_branch_lengths();
+    vector<double> relative_proposal_probs = I.relative_proposal_probs();
 
     //----------------- Generate the Different node lists ---------------//
     vector< vector<int> > nodes(2);
@@ -1229,13 +1249,13 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     
 	PrL2 = Pr2;
 	for(int i=0;i<PrL2.size();i++)
-	    PrL2[i] *= L[i];
+	    PrL2[i] *= relative_proposal_probs[i];
     }
 
     //----------------- Specify proposal probabilities -----------------//
     vector<log_double_t> rho(2,1);
-    rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
-    rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
+    rho[0] = relative_proposal_probs[0] * choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
+    rho[1] = relative_proposal_probs[C] * choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
   
     tri->set_proposal_probabilities(rho);
 
@@ -1365,7 +1385,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     P.set_root( subtree_edge.node2 );
 
     // 2. Compute the fractions along each edge that we will attach at.
-    spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge);
+    spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge, range);
 
     // 3. Construct data structure with information for incremental regrafting.
     spr_info I(P.t(), subtree_edge);
@@ -1382,7 +1402,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     const auto& nodes0 = nodes[I.initial_edge];
 
     // 5. Compute total lengths for each of the possible attachment branches
-    vector<double> L = I.attachment_branch_lengths();
+    vector<double> relative_proposal_probs = I.relative_proposal_probs();
 
     if (I.n_attachment_branches() == 1) return false;
 
@@ -1411,7 +1431,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     // 7. Scale the attachment probabilities by 1/(1/L), since we don't have to propose an attachment point for the starting branch.
     vector<log_double_t> PrL = Pr;
     for(int i=0;i<PrL.size();i++)
-	PrL[i] *= L[i];
+	PrL[i] *= relative_proposal_probs[i];
 
 
     // 8. Choose the attachment branch.
@@ -1500,7 +1520,6 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
 void sample_SPR_search_all(owned_ptr<context>& P,MoveStats& Stats, bool sum_out_A) 
 {
     auto branches = P.as<Parameters>()->t().directed_branches();
-    bool timetree = P.as<Parameters>()->t().has_node_times();
     for(int b: branches)
     {
 	slice_sample_branch_length(P,Stats,b);
