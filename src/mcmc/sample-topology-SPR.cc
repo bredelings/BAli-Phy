@@ -632,7 +632,9 @@ std::ostream& operator<<(std::ostream& o, const tree_edge& b)
     return o;
 }
 
-/// Represent positions along branches as a fraction in [0,1) from node1 to node2
+/// Represent positions along branches.
+//   With BranchLengthTrees, this is a raction in [0,1) from node1 to node2
+//   With TimeTrees, this is a fraction from T1 to T2, there T1 <= T2.
 struct spr_attachment_points: public map<tree_edge,double>
 {
 };
@@ -645,7 +647,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 // Let b_target = (x,y).  Then we have (x,n0) and (n0,y).
 // B_unbroken_target specifies the orientation for the distance U.
-void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, double L, const tree_edge& b_target, const spr_attachment_points& locations)
+void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, const tree_edge& b_target, const spr_attachment_points& locations)
 {
     // 1. Look up location attachment info for this branch.
     map<tree_edge, double>::const_iterator record = locations.find(b_target);
@@ -681,6 +683,8 @@ void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, doubl
     }
     else
     {
+        double L = P.t().branch_length(b1) + P.t().branch_length(b2);
+
         // 4. Get the lengths of the two branches
         double L1 = L*U;
         double L2 = L - L1;
@@ -797,12 +801,31 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
     spr_info I(T, subtree_edge, range);
 
     tree_edge initial_edge(T.target(I.child_branches[0]), T.target(I.child_branches[1]));
-    double L0a = T.branch_length(I.child_branches[0]);
-    double L0b = T.branch_length(I.child_branches[1]);
-
-    // compute attachment location for current branche
     spr_attachment_points locations;
-    locations[initial_edge] = L0a/(L0a+L0b);
+
+    if (T.has_node_times())
+    {
+        double T1 = T.node_time(initial_edge.node1);
+        double T3 = T.node_time(initial_edge.node2);
+        if (T1 > T3) std::swap(T1, T3);
+        assert(T1 <= T3);
+
+        double T2 = T.node_time(subtree_edge.node2);
+        double age_min = T.node_time(subtree_edge.node1);
+        assert(age_min < T2);
+
+        assert(T1 <= T2 and T2 <= T3);
+        T1 = std::max(T1, age_min);
+        locations[initial_edge] = (T2 - age_min)/(T3 - age_min);
+    }
+    else
+    {
+        double L0a = T.branch_length(I.child_branches[0]);
+        double L0b = T.branch_length(I.child_branches[1]);
+
+        // compute attachment location for current branch
+        locations[initial_edge] = L0a/(L0a+L0b);
+    }
 
     // compute attachment locations for non-current branches
     for(int i=1;i<I.n_attachment_branches();i++)
@@ -1051,7 +1074,6 @@ optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vec
 void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
 {
     // ---------------- Compute the attachment probability -----------------------
-    double L = p2.t().branch_length(p2.t().find_branch(target_edge));
     auto& nodes_ = nodes.at(target_edge);
 
     // 0. Save constraints before we regraft
@@ -1063,7 +1085,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     regraft_subtree_and_set_3way_alignments(p2, subtree_edge, target_edge, alignment3way, not sum_out_A);
 
     // 2. Set branch lengths
-    set_lengths_at_location(p2, subtree_edge, L, target_edge, locations);
+    set_lengths_at_location(p2, subtree_edge, target_edge, locations);
 
     // 3a. Compute substitution likelihood AND alignment probability.
     if (sum_out_A)
@@ -1468,9 +1490,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     if (C != 0)
     {
 	auto target_edge = I.attachment_branch_pairs[C].edge;
-	double original_length = p[1].t().branch_length(p[1].t().find_branch(target_edge));
 	spr_to_index(p[1], I, C, nodes0);
-	set_lengths_at_location(p[1], subtree_edge, original_length, target_edge, locations);
+	set_lengths_at_location(p[1], subtree_edge, target_edge, locations);
     }
 
 #ifdef DEBUG_SPR_ALL
