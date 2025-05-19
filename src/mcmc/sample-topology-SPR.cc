@@ -1175,24 +1175,20 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
 	// Define target branch b2 - pointing away from subtree_edge
-	const auto& BB = I.attachment_branch_pairs[i];
-	const tree_edge& target_edge = BB.edge;
-        const tree_edge& sibling_edge = *BB.sibling;
-
-	const tree_edge& prev_target_edge = *BB.prev_edge;
+	const auto& [prev_target_edge, target_edge, sibling_edge] = I.attachment_branch_pairs[i];
 
         // Wouldn't BB.prev_edge always be true?
-        assert(prev_target_edge.node2 == target_edge.node1);
+        assert(prev_target_edge->node2 == target_edge.node1);
 
         // This edge points to the node shared with the prev_target.
-        tree_dir_edge prev_target_dir_edge{prev_target_edge.node1, prev_target_edge.node2};
+        tree_dir_edge prev_target_dir_edge{prev_target_edge->node1, prev_target_edge->node2};
         int attach_node = prev_target_dir_edge.node2;
 
         // We want to attach on a target_node, but keep the pairwise alignment settings for being on the branch.
         if (not directed_attached_Ps.count(prev_target_dir_edge))
         {
             // Attach the pruned subtree at attach_node
-            auto attach_node_P = pruned_Ps.at(prev_target_edge);
+            auto attach_node_P = pruned_Ps.at(*prev_target_edge);
             attach_node_P.reconnect_branch(root_node, root_node, attach_node);
 
             // Cache probabilities from behind subtree.
@@ -1213,7 +1209,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 	auto& p0 = pruned_Ps.at(target_edge);
 
-	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(prev_target_edge), subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
+	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(*prev_target_edge), subtree_edge, *prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
         set_attachment_probability(Pr, locations, subtree_edge, target_edge, pruned_Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
 
