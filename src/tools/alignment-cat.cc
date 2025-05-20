@@ -31,6 +31,7 @@
 #include "util/io.H"
 #include "util/range.H"
 #include "util/cmdline.H"
+#include "util/log-level.H"
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
@@ -197,6 +198,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("use-root","use the root specified in the tree file to reorder")
 	("reorder-by-alignment",value<string>(),"Reorder the sequences following an alignment")
 	("align-by-amino",value<string>(),"Arrange nucleotides into codon alignment")
+	("verbose,V",value<int>()->implicit_value(1),"Show verbose error messages")
 	;
 
     options_description all("All options");
@@ -212,6 +214,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);
 
     bool error = false;
+
+    if (args.count("verbose")) log_verbose = args.at("verbose").as<int>();
 
     if (args.count("help") or error) {
 	cout<<"Concatenate several alignments (with the same sequence names) end-to-end.\n\n";

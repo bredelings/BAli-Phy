@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include <valarray>
+#include <optional>
 
 namespace optimize {
   using std::valarray;
@@ -34,8 +35,8 @@ namespace optimize {
 
   class function {
   public:
-    virtual double operator()(const Vector&) const =0;
-    virtual ~function() {}
+      virtual std::optional<double> operator()(const Vector&) const =0;
+      virtual ~function() {}
   };
 
   /// Derivative of f, using dx as the delta
@@ -50,7 +51,6 @@ namespace optimize {
   Vector search_basis(const Vector& start,const function& f,double delta = 1.0e-6,int maxiterations=200);
 
   Vector search_gradient(const Vector& start,const function& f,double delta = 1.0e-6,int maxiterations=200);
-
 }
 
 #endif
