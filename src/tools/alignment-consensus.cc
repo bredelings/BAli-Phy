@@ -151,6 +151,7 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
     vector< vector< int> > column_indices2 = column_lookup(M2);
 
     // allocate the output matrix
+    // Note: |M1| + |M2| is NOT the maximum length for the consensus!
     matrix<int> M3(M1.size1() + M2.size1(), M1.size2());
 
     // Initialize it to contain only gaps
@@ -187,6 +188,17 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
 
             // find the column in M3
             int c3 = iter->second;
+
+            if (c3 >= M3.size1())
+            {
+                int new_length = M3.size() * 2;
+                matrix<int> M4(new_length, M3.size2());
+                M4.fill(alphabet::gap);
+                for(int i=0;i<M3.size1();i++)
+                    for(int j=0;j<M3.size2();j++)
+                        M4(i,j) = M3(i,j);
+                std::swap(M3,M4);
+            }
 
             // Put character k there.
             M3(c3,i) = k;
@@ -252,10 +264,23 @@ int main(int argc,char* argv[])
         {
             auto M2 = Ms.front();
 
+            int s = 0;
             for(auto& M: Ms)
-                M2 = split_alignment(M2,M);
+            {
+                if (s > 0)
+                {
+                    std::cerr<<"Splitting "<<s<<"/"<<Ms.size()-1<<"...";
+                    M2 = split_alignment(M2,M);
+                    std::cerr<<"done.\n";
+                }
+                s++;
+            }
 
             alignment consensus = get_alignment(M2,alignments[0]);
+
+            std::cerr<<"Sorting...";
+            consensus = get_ordered_alignment(consensus);
+            std::cerr<<"done.\n";
 
             std::cout<<consensus<<std::endl;
         }
@@ -287,7 +312,9 @@ int main(int argc,char* argv[])
 
             //-------- Construct Build a beginning alignment --------//
 
+            std::cerr<<"Sorting...";
             matrix<int> M2 = get_ordered_matrix(M);
+            std::cerr<<"done.\n";
 
             consensus = get_alignment(M2,alignments[0]);
 
