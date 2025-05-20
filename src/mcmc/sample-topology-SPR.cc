@@ -1319,9 +1319,19 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
 //
 // NOTE: Why would we want to move the pruned subtree iteratively from edge(j-1) to edge(j) until we get to the target edge?
-//       Does move_pruned_subtree extend the homology of characters at the initial edge so that they are present at the target edge?
-//       If so, that should result in higher likelihoods for attaching at the target edge.
-//       But to actually compute the final alignment, it seems like such an extension would not be reversible -- what would undo it?
+//       This is necessary in order to get an initial alignment at the regrafting location.
+//       Such an alignment could possibly be used to create a bandwidth around the current path.
+//       We would need to check what bandwidth would be created around the initial alignment from the reverse proposal.
+//
+//       Currently move_pruned_subtree extends the homology of characters at the initial edge so that they are present at the target edge.
+//       Alternatively, we could unalign characters in the subtree that are not homologous to anything at the attachment point.
+//       I expect that the first option would result in higher likelihoods at the target edge.
+//
+//       So there are three options: none, extending vanish homology, unalign vanishing homology.
+//       Model with optional<bool>?
+//
+//       To attach at the final location, it seems like extending vanished homology would be wrong.
+//
 //       - BDR 05/18/2025
 //
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
