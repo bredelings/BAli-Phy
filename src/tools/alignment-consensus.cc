@@ -213,6 +213,47 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
     return M4;
 }
 
+sparse_index_matrix split_alignment(const sparse_index_matrix& M1, const sparse_index_matrix& M2)
+{
+    const int N = M1.n_sequences();
+
+    assert(M2.n_sequences() == N);
+
+    auto M3 = M1;
+    for(auto& [col1,letters]: M1.letters_for_column())
+    {
+        // seq -> col2
+        std::map<int,int> cmap;
+
+        for(auto& [seq, index]: letters)
+        {
+            // which column in M2?
+            int col2 = M2.column(seq, index);
+
+            // look up the column in M3;
+            auto iter = cmap.find(col2);
+
+            // if we haven't seen c2 before, allocate a new column in c3 for it.
+            if (iter == cmap.end())
+            {
+                int new_col1 = M3.new_column();
+                cmap.insert({col2, new_col1});
+                iter = cmap.find(col2);
+                assert( iter != cmap.end() );
+            }
+
+            // Find the new column for find the column in M3
+            int new_col1 = iter->second;
+
+            // Put character k there.
+            M3.erase(seq, index);
+            M3.add(seq, index, new_col1);
+        }
+    }
+
+    return M3;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -221,7 +262,6 @@ int main(int argc,char* argv[])
 
         //------------ Load alignment and tree ----------//
         vector<alignment> alignments;
-        vector<matrix<int> > Ms;
 
         do_setup(args,alignments);
         for(auto& alignment: alignments)
@@ -235,15 +275,10 @@ int main(int argc,char* argv[])
             assert(alignments[1].n_sequences() == N);
             assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
         }
+
         vector<int> L(N);
         for(int i=0;i<L.size();i++)
             L[i] = alignments[0].seqlength(i);
-
-    
-        //--------- Construct alignment indexes ---------//
-        for(auto& alignment: alignments)
-            Ms.push_back(M(alignment));
-
 
         //--------- Build alignment from list ---------//
         double cutoff_strict = -1;
@@ -262,30 +297,65 @@ int main(int argc,char* argv[])
 
         if (cutoff_strict == 1.0 or cutoff == 1.0)
         {
-            auto M2 = Ms.front();
+            auto consensus = SM(alignments[0]);
 
             int s = 0;
-            for(auto& M: Ms)
+            for(auto& A: alignments)
             {
                 if (s > 0)
                 {
-                    std::cerr<<"Splitting "<<s<<"/"<<Ms.size()-1<<"...";
-                    M2 = split_alignment(M2,M);
-                    std::cerr<<"done.\n";
+                    if (log_verbose) std::cerr<<"Splitting "<<s<<"/"<<alignments.size()-1<<"...";
+                    consensus = split_alignment(consensus, SM(A));
+                    if (log_verbose) std::cerr<<"done.\n";
                 }
                 s++;
             }
 
-            alignment consensus = get_alignment(M2,alignments[0]);
+            if (log_verbose) std::cerr<<"Sorting...";
+            vector<int> ordered_columns = get_ordered_columns(consensus);
+            std::map<int,int> order_for_column;
+            for(int i=0;i<ordered_columns.size();i++)
+            {
+                int col = ordered_columns[i];
+                assert(not order_for_column.count(col));
+                order_for_column.insert({col,i});
+            }
+            if (log_verbose) std::cerr<<"done.\n";
 
-            std::cerr<<"Sorting...";
-            consensus = get_ordered_alignment(consensus);
-            std::cerr<<"done.\n";
+            auto& A = alignments[0];
+            auto& a = A.get_alphabet();
 
-            std::cout<<consensus<<std::endl;
+            auto sequences = A.convert_to_letters();
+
+            int L = consensus.n_columns();
+            for(int seq=0;seq<consensus.n_sequences();seq++)
+            {
+                std::cout<<">"<<A.seq(seq).name<<"\n";
+                int col = 0;
+                for(int i=0;i<consensus.seqlength(seq);i++)
+                {
+                    int next_col = consensus.column(seq,i);
+                    assert(consensus.letters_for_column(next_col).size());
+                    next_col = order_for_column.at(next_col);
+
+                    for(;col<next_col;col++)
+                        std::cout<<a.gap_letter;
+                    int letter = sequences[seq][i];
+                    std::cout<<a.lookup(letter);
+                    col++;
+                }
+                for(;col<consensus.n_columns();col++)
+                    std::cout<<a.gap_letter;
+                std::cout<<"\n";
+            }
         }
         else
         {
+            vector<matrix<int> > Ms;
+
+            //--------- Construct alignment indexes ---------//
+            for(auto& alignment: alignments)
+                Ms.push_back(M(alignment));
 
             //--------- Get list of supported pairs ---------//
             Edges E(L);
