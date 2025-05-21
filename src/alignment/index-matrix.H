@@ -56,6 +56,75 @@ public:
 void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
 	       int s1,int s2,int L1, int L2,double cutoff);
 
+
+
+/*
+ * OK, so we want to avoid storing the entire matrix, including gaps.
+ * And we also want to be able to modify the matrix.
+ *
+ * We could store the entire graph, in which graph vertices replace columns.
+ * We don't really need to store edges though, unless we are doing graph operations,
+ *  since the in-edge are just the columns for all the previous letters.
+ *
+ * We would need to actually make the graph in order to write out a matrix though -- that's the sort.
+ * What is this "better algorithm" in the FSA paper?
+ *
+ * In order to access cells as a matrix, we need to be able to look up the index by (seq,column).
+ */
+
+// TODO: Unify with sparse_increasing_index_matrix in alignment.{H,cc}?
+class sparse_index_matrix
+{
+    // The sequence -> index -> column map.
+    std::vector<std::vector<int> > column_index;
+
+    // The column -> sequence -> index map.
+    std::map<int, std::map<int,int>> letters_for_column_;
+    
+    int next_column = 0;
+public:
+
+    int column(int seq, int index) const
+    {
+        assert(seq >= 0);
+        assert(index >= 0);
+        return column_index[seq][index];
+    }
+
+    const std::map<int, std::map<int,int>>& letters_for_column() const
+    {
+        return letters_for_column_;
+    }
+
+    std::map<int, std::map<int,int>>& letters_for_column()
+    {
+        return letters_for_column_;
+    }
+
+    const std::map<int,int>& letters_for_column(int col) const
+    {
+        return letters_for_column_.at(col);
+    }
+
+    int erase(int seq, int index);
+    void add(int seq, int index, int col);
+    void extend_sequence(int seq);
+    int new_column() {return next_column++;}
+
+    int seqlength(int seq) const {return column_index[seq].size();}
+
+    void check_column_indices() const;
+
+    int n_sequences() const {return column_index.size();}
+
+    int n_columns() const {return letters_for_column_.size();}
+
+    sparse_index_matrix(const matrix<int>& M);
+    sparse_index_matrix(int n);
+};
+
+
+
 class index_matrix: public matrix<int> 
 {
     std::vector<std::vector<int> > column_index;
@@ -104,6 +173,8 @@ index_matrix unaligned_matrix(const std::vector<int>& L);
 unsigned count_unknowns(const index_matrix& M,int c);
 
 matrix<int> get_ordered_matrix(const index_matrix& M);
+
+std::vector<int> get_ordered_columns(const sparse_index_matrix& M);
 
 alignment get_alignment(const matrix<int>& M, const alignment& A);
 

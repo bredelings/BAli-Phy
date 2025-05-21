@@ -135,6 +135,61 @@ void add_edges(Edges& E, const vector< matrix<int> >& Ms,
 	}
 }
 
+void sparse_index_matrix::add(int seq, int index, int col)
+{
+    assert(index < column_index[seq].size());
+    assert(column_index[seq][index] == -1);
+
+    // Map the (seq,index) pair to the column.
+    column_index[seq][index] = col;
+
+    // Then insert the (seq,index) into the set for the column,
+    // .. creating any empty set for col if necessary.
+    letters_for_column_[col].insert({seq,index});
+
+    next_column = std::max(next_column, col + 1);
+}
+
+int sparse_index_matrix::erase(int seq, int index)
+{
+    assert(index < column_index[seq].size());
+    int col = column_index[seq][index];
+    assert(col != -1);
+
+    // Erase the (seq,index) pair from the column.
+    column_index[seq][index] = -1;
+
+    letters_for_column_.at(col).erase(seq);
+
+    if (letters_for_column_.at(col).empty())
+        letters_for_column_.erase(col);
+
+    return col;
+}
+
+void sparse_index_matrix::extend_sequence(int seq)
+{
+    column_index[seq].push_back(-1);
+}
+
+sparse_index_matrix::sparse_index_matrix(const matrix<int>& M)
+{
+    column_index.resize(M.size2());
+
+    for(int seq=0; seq<M.size2(); seq++)
+    {
+        for(int col=0; col<M.size1(); col++)
+        {
+	    int index = M(col,seq);
+	    if (index >= 0)
+            {
+		extend_sequence(seq);
+                add(seq, index, col);
+            }
+	}
+    }
+}
+
 index_matrix unaligned_matrix(const vector<int>& L) 
 {
     index_matrix M(sum(L),L);
@@ -1001,21 +1056,124 @@ matrix<int> get_ordered_matrix(const index_matrix& M)
     return M2;
 }
 
+void sparse_index_matrix::check_column_indices() const
+{
+    for(int seq=0;seq<column_index.size();seq++)
+        for(int index=0;index<column_index[seq].size();index++)
+        {
+            int col = column_index[seq][index];
+            assert(col != -1);
+            assert(letters_for_column_.at(col).at(seq) == index);
+        }
+
+    for(auto& [col, letters]: letters_for_column_)
+    {
+        assert(not letters.empty());
+        for(auto& [seq,index]: letters)
+            assert(column(seq,index) == col);
+    }
+}
+
+int get_min(const std::map<int,int>& letters)
+{
+    int m = letters.begin()->first;
+    for(auto& [seq,index]: letters)
+        if (seq < m)
+            m = seq;
+    return m;
+}
+
+// There is a better algorithm in Section 7 "The mathematics of 
+// distance-based alignment" in the text S1 supplement of the the FSA paper.
+//
+// So... do we need to create a graph and do a topological sort?
+// 
+std::vector<int> get_ordered_columns(const sparse_index_matrix& M)
+{
+#ifndef NDEBUG
+    M.check_column_indices();
+#endif
+
+    // An ordered list of columns.
+    std::vector<int> column_order;
+
+    // Columns that are ready to add.
+    std::set<int> next_columns;
+
+    // In-edges for each column that haven't been completed yet.
+    std::map<int,std::set<int>> cols_before_col;
+
+    // Determine how which columns need to be issued before each column
+    for(auto& [col, letters]: M.letters_for_column())
+    {
+        // Find columns for preceding letters
+        auto& prev_cols = cols_before_col[col];
+        for(auto& [seq, index]: letters)
+            if (index > 0)
+            {
+                int prev_col = M.column(seq, index-1);
+                prev_cols.insert(prev_col);
+            }
+
+        // If there are none, then this is a starting column
+        if (prev_cols.empty())
+            next_columns.insert(col);
+    }
+
+    // Iteratively issue the next column until there are no more.
+    while(not next_columns.empty())
+    {
+        // Select the next column.
+        std::optional<std::pair<int,int>> best;
+        for(auto& col: next_columns)
+        {
+            int m = get_min(M.letters_for_column(col));
+            if (not best or m < best->second)
+                best = {col,m};
+        }
+
+        // Record the column
+        int col = best->first;
+        column_order.push_back(col);
+
+        // Remove the column from the pending set.
+        next_columns.erase(col);
+
+        // What columns come next and might become active?
+        std::set<int> new_cols;
+        for(auto& [seq,index]: M.letters_for_column(col))
+        {
+            if (index+1 < M.seqlength(seq))
+                new_cols.insert( M.column(seq,index+1) );
+        }
+
+        // Scan next columns to see if they are ready to add
+        for(int new_col: new_cols)
+        {
+            // Remove col as a dependence of new_col
+            auto& prev_cols = cols_before_col.at(new_col);
+            auto iter = prev_cols.find(col);
+            assert(iter != prev_cols.end());
+            prev_cols.erase(iter);
+
+            // All previous columns have been completed, then this one can be issued.
+            if (prev_cols.empty())
+                next_columns.insert(new_col);
+        }
+    }
+
+    assert(column_order.size() == M.letters_for_column().size());
+
+    return column_order;
+}
+
 alignment get_alignment(const matrix<int>& M, const alignment& A1) 
 {
     alignment A2 = A1;
     A2.changelength(M.size1());
 
     // Reconstruct the list of letters
-    vector<vector<int> > sequences;
-    for(int i=0;i<A1.n_sequences();i++) {
-	vector<int> sequence;
-	for(int c=0;c<A1.length();c++) {
-	    if (A1.character(c,i))
-		sequence.push_back(A1(c,i));
-	}
-	sequences.push_back(sequence);
-    }
+    auto sequences = A1.convert_to_letters();
 
     // Plug the letters into their slots
     for(int i=0;i<A2.n_sequences();i++) {
