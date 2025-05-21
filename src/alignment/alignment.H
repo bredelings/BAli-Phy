@@ -103,6 +103,7 @@ public:
 
     /// Get a list of sequences (with gaps) that represent the current alignment.
     std::vector<sequence> convert_to_sequences() const;
+    std::vector<std::vector<int>> convert_to_letters() const;
 
     /// Get a list of sequences (with gaps) that represent the current alignment.
     void write_sequences(sequence_format::dumper_t,std::ostream&) const;

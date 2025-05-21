@@ -331,6 +331,20 @@ vector<sequence> alignment::convert_to_sequences() const
 
     return seqs;
 }
+vector<vector<int>> alignment::convert_to_letters() const
+{
+    // Reconstruct the list of letters
+    vector<vector<int> > sequences;
+    for(int i=0;i<n_sequences();i++) {
+	vector<int> sequence;
+	for(int c=0;c<length();c++) {
+	    if (character(c,i))
+		sequence.push_back((*this)(c,i));
+	}
+	sequences.push_back(sequence);
+    }
+    return sequences;
+}
 
 void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file) const {
     vector<sequence> seqs = convert_to_sequences();
