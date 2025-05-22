@@ -1250,3 +1250,39 @@ alignment get_ordered_alignment(const alignment& A)
     return get_alignment(get_ordered_matrix(index_matrix(A)),A);
 }
 
+std::ostream& operator<<(std::ostream& o, const sparse_alignment& A)
+{
+    vector<int> ordered_columns = get_ordered_columns(A.homology);
+    std::map<int,int> order_for_column;
+    for(int i=0;i<ordered_columns.size();i++)
+    {
+        int col = ordered_columns[i];
+        assert(not order_for_column.count(col));
+        order_for_column.insert({col,i});
+    }
+
+    int L = A.homology.n_columns();
+    auto& a = *A.a;
+    for(int seq=0;seq<A.homology.n_sequences();seq++)
+    {
+        o<<">"<<A.names[seq]<<"\n";
+        int col = 0;
+        for(int i=0;i<A.homology.seqlength(seq);i++)
+        {
+            int next_col = A.homology.column(seq,i);
+            assert(A.homology.letters_for_column(next_col).size());
+            next_col = order_for_column.at(next_col);
+
+            for(;col<next_col;col++)
+                o<<a.gap_letter;
+            int letter = A.sequences[seq][i];
+            o<<a.lookup(letter);
+            col++;
+        }
+        for(;col<A.homology.n_columns();col++)
+            o<<a.gap_letter;
+        o<<"\n";
+    }
+
+    return o;
+}

@@ -170,6 +170,17 @@ public:
     index_matrix(const alignment& A);
 };
 
+struct sparse_alignment
+{
+    std::vector<std::string> names;
+    std::vector<std::vector<int>> sequences;
+    std::shared_ptr<const alphabet> a;
+
+    sparse_index_matrix homology;
+};
+
+std::ostream& operator<<(std::ostream& o, const sparse_alignment& a);
+
 index_matrix unaligned_matrix(const std::vector<int>& L);
 
 unsigned count_unknowns(const index_matrix& M,int c);

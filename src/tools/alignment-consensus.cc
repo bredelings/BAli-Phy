@@ -312,45 +312,13 @@ int main(int argc,char* argv[])
                 s++;
             }
 
-            // Determine a linear order for the columns that is readable
-            if (log_verbose) std::cerr<<"Sorting...";
-            vector<int> ordered_columns = get_ordered_columns(consensus);
-            std::map<int,int> order_for_column;
-            for(int i=0;i<ordered_columns.size();i++)
-            {
-                int col = ordered_columns[i];
-                assert(not order_for_column.count(col));
-                order_for_column.insert({col,i});
-            }
-            if (log_verbose) std::cerr<<"done.\n";
-
-            // Print the alignment
             auto& A = alignments[0];
-            auto& a = A.get_alphabet();
-
             auto sequences = A.convert_to_letters();
+            auto names = sequence_names(A);
+            auto a = A.get_alphabet_ptr();
+            sparse_alignment SA{names, sequences, a, consensus};
 
-            int L = consensus.n_columns();
-            for(int seq=0;seq<consensus.n_sequences();seq++)
-            {
-                std::cout<<">"<<A.seq(seq).name<<"\n";
-                int col = 0;
-                for(int i=0;i<consensus.seqlength(seq);i++)
-                {
-                    int next_col = consensus.column(seq,i);
-                    assert(consensus.letters_for_column(next_col).size());
-                    next_col = order_for_column.at(next_col);
-
-                    for(;col<next_col;col++)
-                        std::cout<<a.gap_letter;
-                    int letter = sequences[seq][i];
-                    std::cout<<a.lookup(letter);
-                    col++;
-                }
-                for(;col<consensus.n_columns();col++)
-                    std::cout<<a.gap_letter;
-                std::cout<<"\n";
-            }
+            std::cout<<SA<<"\n";
         }
         else
         {

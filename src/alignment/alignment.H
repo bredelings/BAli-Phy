@@ -146,6 +146,8 @@ public:
 
     /// Access the alignment's alphabet.
     const alphabet& get_alphabet() const {return *a;}
+    /// Access the alignment's alphabet.
+    std::shared_ptr<const alphabet> get_alphabet_ptr() const {return a;}
 
     /// Access the alignment's alphabet.
     bool has_alphabet() const {return bool(a);}
