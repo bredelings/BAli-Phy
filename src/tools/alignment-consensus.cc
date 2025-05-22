@@ -297,6 +297,7 @@ int main(int argc,char* argv[])
 
         if (cutoff_strict == 1.0 or cutoff == 1.0)
         {
+            // Compute the consensus
             auto consensus = SM(alignments[0]);
 
             int s = 0;
@@ -311,6 +312,7 @@ int main(int argc,char* argv[])
                 s++;
             }
 
+            // Determine a linear order for the columns that is readable
             if (log_verbose) std::cerr<<"Sorting...";
             vector<int> ordered_columns = get_ordered_columns(consensus);
             std::map<int,int> order_for_column;
@@ -322,6 +324,7 @@ int main(int argc,char* argv[])
             }
             if (log_verbose) std::cerr<<"done.\n";
 
+            // Print the alignment
             auto& A = alignments[0];
             auto& a = A.get_alphabet();
 
