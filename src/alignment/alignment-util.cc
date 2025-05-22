@@ -24,6 +24,7 @@
 ///
 
 #include "alignment-util.H"
+#include "index-matrix.H"
 
 #include <boost/program_options.hpp>
 #include "util/set.H"
@@ -156,26 +157,6 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves)
     }
 
     return result;
-}
-
-/// Replace each letter with its position in its sequence
-matrix<int> M(const alignment& A1) 
-{
-    matrix<int> A2(A1.length(),A1.n_sequences());
-    for(int i=0;i<A2.size2();i++) {
-	int pos=0;
-	for(int column=0;column<A2.size1();column++) {
-	    if (A1.character(column,i)) {
-		A2(column,i) = pos;
-		pos++;
-	    }
-	    else
-		A2(column,i) = A1(column,i);
-	}
-
-	assert(pos == A1.seqlength(i));
-    }
-    return A2;
 }
 
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?

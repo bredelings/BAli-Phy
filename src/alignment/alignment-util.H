@@ -53,9 +53,6 @@ alignment add_internal(alignment A,const SequenceTree& T);
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
 std::vector< std::vector<int> > column_lookup(const matrix<int>& M);
 
-/// Replace each letter with its position in its sequence
-matrix<int> M(const alignment& A1);
-
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?
 bool A_match(const matrix<int>& M1, int column, int s1, int s2, 
 	     const matrix<int>& M2,

@@ -26,6 +26,7 @@
 #include "util/io.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
+#include "alignment/index-matrix.H"
 #include "alignment/load.H"
 #include "tree/tree-util.H"
 #include "tree-align/link.H"

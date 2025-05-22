@@ -1384,7 +1384,7 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
     return columns;
 }
 
-vector<int> merge(const vector<int>& c1, const vector<int>& c2)
+vector<int> merge_columns(const vector<int>& c1, const vector<int>& c2)
 {
     vector<int> out;
     int i1 = 0;
@@ -1421,7 +1421,7 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
     for(auto& [n,L]: snp_lengths)
     {
         auto columns2 = get_allele_columns(consensus, A, seq_index, n, L);
-        columns = merge(columns, columns2);
+        columns = merge_columns(columns, columns2);
     }
     return columns;
 }

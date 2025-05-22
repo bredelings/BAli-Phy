@@ -135,6 +135,50 @@ void add_edges(Edges& E, const vector< matrix<int> >& Ms,
 	}
 }
 
+/// Replace each letter with its position in its sequence
+matrix<int> M(const alignment& A1) 
+{
+    matrix<int> A2(A1.length(),A1.n_sequences());
+    for(int i=0;i<A2.size2();i++) {
+	int pos=0;
+	for(int column=0;column<A2.size1();column++) {
+	    if (A1.character(column,i)) {
+		A2(column,i) = pos;
+		pos++;
+	    }
+	    else
+		A2(column,i) = A1(column,i);
+	}
+
+	assert(pos == A1.seqlength(i));
+    }
+    return A2;
+}
+
+/// Replace each letter with its position in its sequence
+sparse_index_matrix SM(const alignment& A1) 
+{
+    sparse_index_matrix A2(A1.n_sequences());
+
+    for(int seq=0; seq<A2.n_sequences(); seq++)
+    {
+	int index=0;
+	for(int column=0; column<A1.length(); column++)
+        {
+	    if (not A1.gap(column,seq))
+            {
+		A2.extend_sequence(seq);
+                A2.add(seq, index, column);
+		index++;
+	    }
+	}
+
+        // This doesn't count ?
+	// assert(index == A1.seqlength(seq));
+    }
+    return A2;
+}
+
 void sparse_index_matrix::add(int seq, int index, int col)
 {
     assert(index < column_index[seq].size());
@@ -167,15 +211,24 @@ int sparse_index_matrix::erase(int seq, int index)
     return col;
 }
 
+void sparse_index_matrix::add_sequence()
+{
+    column_index.push_back({});
+}
+
 void sparse_index_matrix::extend_sequence(int seq)
 {
     column_index[seq].push_back(-1);
 }
 
-sparse_index_matrix::sparse_index_matrix(const matrix<int>& M)
+sparse_index_matrix::sparse_index_matrix(int n)
+    :column_index(n)
 {
-    column_index.resize(M.size2());
+}
 
+sparse_index_matrix::sparse_index_matrix(const matrix<int>& M)
+    :sparse_index_matrix(M.size2())
+{
     for(int seq=0; seq<M.size2(); seq++)
     {
         for(int col=0; col<M.size1(); col++)
@@ -1196,3 +1249,4 @@ alignment get_ordered_alignment(const alignment& A)
     // distance-based alignment" in the text S1 supplement of the the FSA paper.
     return get_alignment(get_ordered_matrix(index_matrix(A)),A);
 }
+

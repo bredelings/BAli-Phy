@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
+#include "alignment/index-matrix.H"
 #include "alignment/load.H"
 #include "util/range.H"
 #include "util/cmdline.H"

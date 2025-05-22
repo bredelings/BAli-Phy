@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "findroot.H"
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
+#include "alignment/index-matrix.H" // for M( )
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>

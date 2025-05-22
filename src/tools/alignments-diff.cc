@@ -30,6 +30,7 @@
 #include "util/range.H"
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
+#include "alignment/index-matrix.H"
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>

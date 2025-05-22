@@ -57,7 +57,6 @@ void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
 	       int s1,int s2,int L1, int L2,double cutoff);
 
 
-
 /*
  * OK, so we want to avoid storing the entire matrix, including gaps.
  * And we also want to be able to modify the matrix.
@@ -106,9 +105,10 @@ public:
         return letters_for_column_.at(col);
     }
 
-    int erase(int seq, int index);
-    void add(int seq, int index, int col);
+    void add_sequence();
     void extend_sequence(int seq);
+    void add(int seq, int index, int col);
+    int erase(int seq, int index);
     int new_column() {return next_column++;}
 
     int seqlength(int seq) const {return column_index[seq].size();}
@@ -123,7 +123,9 @@ public:
     sparse_index_matrix(int n);
 };
 
-
+/// Replace each letter with its position in its sequence
+matrix<int> M(const alignment& A1);
+sparse_index_matrix SM(const alignment& A1);
 
 class index_matrix: public matrix<int> 
 {

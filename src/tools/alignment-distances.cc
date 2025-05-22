@@ -28,6 +28,7 @@
 #include "optimize.H"
 #include "findroot.H"
 #include "alignment/alignment-util.H"
+#include "alignment/index-matrix.H" // for M( )
 #include "alignment/load.H"
 #include "distance-methods.H"
 #include "distance-report.H"
