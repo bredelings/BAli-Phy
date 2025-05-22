@@ -377,7 +377,7 @@ vector<int> conserved_columns(const alignment& A, const vector<int>& keep, doubl
 {
     assert(keep.size() == A.n_sequences());
 
-    vector<int> conserved(A.n_sequences());
+    vector<int> conserved;
 
     for(int i=0;i<A.length();i++)
     {
