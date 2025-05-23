@@ -28,6 +28,11 @@
 
 using namespace std;
 
+
+// OK, so the reason that this is slow on Dora's data set is that
+// we create N*N*L lookup tables.
+
+// What do we USE the lookup tables for?
 Edges::Edges(const vector<int>& L)
     :lookup(L.size())
 {
@@ -90,34 +95,23 @@ int Edges::index_in_sequence(int s1,int x1,int s2) const
     }
 }
 
+template <typename T, typename U>
+const U& find_or(const std::map<T,U>& m, const T& t, const U& u)
+{
+    auto iter = m.find(t);
+    if (iter != m.end())
+        return iter->second;
+    else
+        return u;
+}
 
-void add_edges(Edges& E, const vector< matrix<int> >& Ms,
-	       int s1,int s2,int L1, int L2,double cutoff) 
-{ 
-    matrix<int> count(L1+1,L2+1);
-    for(int i=0;i<count.size1();i++)
-	for(int j=0;j<count.size2();j++)
-	    count(i,j) = 0;
-
-    // get counts of each against each
-    for(int i=0;i<Ms.size();i++) {
-	const matrix<int>& M = Ms[i];
-
-	for(int c=0;c<M.size1();c++) {
-	    int index1 = M(c,s1);
-	    int index2 = M(c,s2);
-	    if (index1 != -3 and index2 != -3)
-		count(index1 + 1, index2 + 1)++;
-	}
-    }
-    count(0,0) = 0;
-
-
+void add_edges(Edges& E, int s1, int s2, const matrix<int>& count, int N, double cutoff)
+{
     // determine Ml pairs
     for(int i=0;i<count.size1();i++) 
 	for(int j=0;j<count.size2();j++) 
 	{
-	    double Pr = double(count(i,j))/Ms.size();
+	    double Pr = double(count(i,j))/N;
 
 	    if (Pr > cutoff) {
 		Edge e;
@@ -133,6 +127,59 @@ void add_edges(Edges& E, const vector< matrix<int> >& Ms,
 		E.insert(e);
 	    }
 	}
+}
+
+void add_edges(Edges& E, const vector< matrix<int> >& Ms,
+	       int s1,int s2,int L1, int L2,double cutoff) 
+{ 
+    matrix<int> count(L1+1,L2+1);
+    for(int i=0;i<count.size1();i++)
+	for(int j=0;j<count.size2();j++)
+	    count(i,j) = 0;
+
+    // get counts of each against each
+    for(auto& M: Ms)
+	for(int c=0;c<M.size1();c++) {
+	    int index1 = M(c,s1);
+	    int index2 = M(c,s2);
+	    if (index1 != -3 and index2 != -3)
+		count(index1 + 1, index2 + 1)++;
+	}
+
+    count(0,0) = 0;
+
+    add_edges(E, s1, s2, count, Ms.size(), cutoff);
+}
+
+void add_edges(Edges& E, const vector< sparse_index_matrix >& SMs,
+	       int s1,int s2,int L1, int L2,double cutoff) 
+{ 
+    matrix<int> count(L1+1,L2+1);
+    for(int i=0;i<count.size1();i++)
+	for(int j=0;j<count.size2();j++)
+	    count(i,j) = 0;
+
+    // get counts of each against each
+    for(auto& SM: SMs)
+    {
+        for(int index1=0; index1<L1; index1++)
+        {
+            int col = SM.column(s1, index1);
+            int index2 = find_or(SM.letters_for_column(col), s2, -1);
+            count(index1+1, index2+1)++;
+        }
+
+        for(int index2=0; index2<L2; index2++)
+        {
+            int col = SM.column(s2, index2);
+            int index1 = find_or(SM.letters_for_column(col), s1, -1);
+            if (index1 == -1)
+                count(0, index2+1)++;
+	}
+    }
+    assert(count(0,0) == 0);
+
+    add_edges(E, s1, s2, count, SMs.size(), cutoff);
 }
 
 /// Replace each letter with its position in its sequence
@@ -266,6 +313,23 @@ index_matrix unaligned_matrix(const vector<int>& L)
 
     return M;
 }
+
+sparse_index_matrix unaligned_sparse_matrix(const vector<int>& L) 
+{
+    sparse_index_matrix SM(L.size());
+  
+    int col = 0;
+    for(int seq=0;seq<L.size();seq++)
+        for(int index=0;index < L[seq]; index)
+        {
+            SM.extend_sequence(seq);
+            SM.add(seq,index,col);
+            col++;
+        }
+
+    return SM;
+}
+
 
 index_matrix::index_matrix(const alignment& A)
     :matrix<int>(M(A)),
@@ -582,7 +646,6 @@ void check_empty(const vector<int>& mark)
 {
     for(int i=0;i<mark.size();i++)
     {
-	std::cerr<<"check_empty: not empty!";
 	if (mark[i]) abort();
     }
 }

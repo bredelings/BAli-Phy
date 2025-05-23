@@ -115,7 +115,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("cutoff",value<double>(),"ignore events below this probability")
         ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
         ("chop-to",value<int>(),"keep only the first arg taxa")
-        ("verbose,V","Output more log messages on stderr.")
+        ("verbose,V",value<int>()->implicit_value(1), "Output more log messages on stderr.")
         ;
 
     options_description all("All options");
@@ -136,7 +136,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         exit(0);
     }
 
-    if (args.count("verbose")) log_verbose = 1;
+    if (args.count("verbose")) log_verbose = args.at("verbose").as<int>();
 
     return args;
 }
@@ -322,26 +322,41 @@ int main(int argc,char* argv[])
         }
         else
         {
-            vector<matrix<int> > Ms;
+            vector<sparse_index_matrix> SMs;
+
+            if (N > 250)
+                std::cerr<<"\nWarning: this algorithm is quite slow and memory-intensive for > 250 sequences (N="<<N<<").  Consider computing a strict consensus by using --strict=1\n\n";
+
+            // Can we make a --fast version that uses 5*N*log(N) time?
+            // FSA --fast creates a minimum-spanning tree to ensure that we consider closely related pairs.
+            // How?
 
             //--------- Construct alignment indexes ---------//
             for(auto& alignment: alignments)
-                Ms.push_back(M(alignment));
+                SMs.push_back(SM(alignment));
 
             //--------- Get list of supported pairs ---------//
+            // Warning: This takes N*N*L memory for a lookup table!  And N*N time.
             Edges E(L);
 
+            // Warning: This should take N*N*L memory and time.
             for(int s1=0;s1<N;s1++)
-                for(int s2=0;s2<s1;s2++)
-                    add_edges(E,Ms,s1,s2,L[s1],L[s2],
-                              min(abs(cutoff),abs(cutoff_strict))
+            {
+                if (log_verbose >= 1) std::cerr<<"s1 = "<<s1+1<<"/"<<N<<"\n";
+                for(int s2=s1+1;s2<N;s2++)
+                {
+                    if (log_verbose >= 2) std::cerr<<"   s2 = "<<s2<<"/"<<N<<"\n";
+                    add_edges(E, SMs, s1, s2, L[s1], L[s2],
+                              min(abs(cutoff), abs(cutoff_strict))
                         );
+                }
+            }
 
 
             E.build_index();
 
             //-------- Build a beginning alignment --------//
-            index_matrix M = unaligned_matrix(L);
+            auto M = unaligned_matrix(L);
 
             map<unsigned,pair<unsigned,unsigned> > graph;
 
@@ -376,7 +391,7 @@ int main(int argc,char* argv[])
 
                 for(const auto& [count,x]: graph)
                 {
-                    double LOD = log10(statistics::odds(count,Ms.size(),1));
+                    double LOD = log10(statistics::odds(count, SMs.size(), 1));
                     auto& [columns, unknowns] = x;
                     graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
                 }

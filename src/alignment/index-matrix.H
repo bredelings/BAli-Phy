@@ -22,41 +22,6 @@
 #include <vector>
 #include "alignment/alignment.H"
 
-struct Edge 
-{
-    int s1;
-    int x1;
-
-    int s2;
-    int x2;
-
-    unsigned count;
-    double p;
-};
-
-struct edge_comp {
-    bool operator()(const Edge& E1, const Edge& E2) const {
-	return E1.p  > E2.p;
-    }
-};
-
-class Edges: public std::multiset<Edge,edge_comp>
-{
-    std::vector<std::vector<std::vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
-
-public:
-    void build_index();
-
-    double PP(int s1,int x1,int s2,int x2) const;
-    int index_in_sequence(int s1,int x1,int s2) const;
-
-    Edges(const std::vector<int>& L);
-};
-
-void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
-	       int s1,int s2,int L1, int L2,double cutoff);
-
-
 /*
  * OK, so we want to avoid storing the entire matrix, including gaps.
  * And we also want to be able to modify the matrix.
@@ -127,6 +92,46 @@ public:
 matrix<int> M(const alignment& A1);
 sparse_index_matrix SM(const alignment& A1);
 
+/// Structures for alignment-consensus.
+
+struct Edge 
+{
+    int s1;
+    int x1;
+
+    int s2;
+    int x2;
+
+    unsigned count;
+    double p;
+};
+
+struct edge_comp {
+    bool operator()(const Edge& E1, const Edge& E2) const {
+	return E1.p  > E2.p;
+    }
+};
+
+class Edges: public std::multiset<Edge,edge_comp>
+{
+    std::vector<std::vector<std::vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
+
+public:
+    void build_index();
+
+    double PP(int s1,int x1,int s2,int x2) const;
+    int index_in_sequence(int s1,int x1,int s2) const;
+
+    Edges(const std::vector<int>& L);
+};
+
+void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
+	       int s1,int s2,int L1, int L2,double cutoff);
+
+void add_edges(Edges& E, const std::vector< sparse_index_matrix >& Ms,
+	       int s1,int s2,int L1, int L2,double cutoff);
+
+
 class index_matrix: public matrix<int> 
 {
     std::vector<std::vector<int> > column_index;
@@ -152,6 +157,7 @@ public:
     bool consistent(int c1, int c2,const Edges& E, double cutoff) const;
 
     void merge_columns(int c1,int c2);
+
     std::map<unsigned,std::pair<unsigned,unsigned> > merge(const Edges& E,double p,bool strict);
 
     std::map<unsigned,std::pair<unsigned,unsigned> > merge2(const Edges& E,double p,bool strict);
@@ -182,6 +188,7 @@ struct sparse_alignment
 std::ostream& operator<<(std::ostream& o, const sparse_alignment& a);
 
 index_matrix unaligned_matrix(const std::vector<int>& L);
+sparse_index_matrix unaligned_sparse_matrix(const std::vector<int>& L);
 
 unsigned count_unknowns(const index_matrix& M,int c);
 
