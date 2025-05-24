@@ -18,9 +18,10 @@ import sys
 import logging
 import shlex
 
-scores = {'multiply': 'short',
-          'wsum':     'medium',
-          'sum':      'long'}
+scores = {'multiply': 'very short/log',
+          'wsum2':    'short/EA',
+          'wsum':     'medium/AMA',
+          'sum':      'long/TC'}
 
 def add_suffix(p,s):
     p = Path(p)
