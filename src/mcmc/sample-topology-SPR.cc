@@ -401,11 +401,6 @@ public:
 	    return v;
 	}
 
-    /// Construct a full range if we weren't passed a range - or an optional range?
-    spr_info(const TreeInterface& T, const tree_edge& b)
-	:spr_info(T, b, spr_full_range(T,b))
-	{ }
-
     spr_info(const TreeInterface& T, const tree_edge& b, const spr_range& r);
 };
 
@@ -425,7 +420,7 @@ void do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
     }
     else
     {
-	auto I = spr_info(P.t(), B1);
+	auto I = spr_info(P.t(), B1, spr_full_range(P.t(), B1));
 
 	// 1. Find the index in the attachment branch pairs
 	optional<int> index;
@@ -1444,7 +1439,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge, range);
 
     // 3. Construct data structure with information for incremental regrafting.
-    spr_info I(P.t(), subtree_edge);
+    spr_info I(P.t(), subtree_edge, range);
 
     // 4. Compute the nodes for each edge.
     map<tree_edge,vector<int>> nodes;
