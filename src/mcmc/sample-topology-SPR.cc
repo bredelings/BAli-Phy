@@ -957,12 +957,16 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
     // Orient the target branch to match the 3-way alignment
     if (get<0>(alignments) == b and get<1>(alignments) == a) std::swap(a,b);
 
-    assert(get<2>(alignments) == x);
-    assert(get<0>(alignments) == a and get<1>(alignments) == b);
     for(int i=0; i<P.n_data_partitions(); i++)
+    {
         if (P[i].has_pairwise_alignments())
             if (preserve_homology or not P[i].variable_alignment())
+            {
+                assert(get<2>(alignments) == x);
+                assert(get<0>(alignments) == a and get<1>(alignments) == b);
                 set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
+            }
+    }
 }
 
 
@@ -1370,8 +1374,8 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes0, false));
 
     // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
-    for(int j=1;j<edges.size();j++)
-	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
+//    for(int j=1;j<edges.size();j++)
+//	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
 
     // 6. Finally, regraft the subtree to the target edge and set branch lengths
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
