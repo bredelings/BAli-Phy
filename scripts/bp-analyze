@@ -18,6 +18,10 @@ import sys
 import logging
 import shlex
 
+scores = {'multiply': 'short',
+          'wsum':     'medium',
+          'sum':      'long'}
+
 def add_suffix(p,s):
     p = Path(p)
     if not p.name:
@@ -1591,25 +1595,37 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
 
     def compute_wpd_alignments(self):
-        print("\nComputing WPD alignments: ", end='',flush=True)
+        print("\nComputing consensus alignments via posterior decoding: ", end='',flush=True)
         for i in range(self.n_partitions()):
+
             if self.get_imodel_for_partition(i) is None:
                 continue
+
             afiles = self.get_alignments_for_partition(i)
-            name = f"P{i+1}.max"
-            self.alignments.append((name, self.get_alphabets()[i], "Best (WPD)"))
-            if not more_recent_than_all_of(self.outdir / f"Work/{name}-unordered.fasta",afiles):
+
+            for score,scorename in scores.items():
+                name = f"P{i+1}.consensus.pd-{score}"
+
+                self.alignments.append((name, self.get_alphabets()[i], f'Consensus (posterior-decoding: {scorename})'))
+
+                if more_recent_than_all_of(self.outdir / f"Work/{name}-unordered.fasta",afiles):
+                    continue;
+
                 cut_cmd=['cut-range']+afiles
+
                 if self.burnin is not None:
                     cut_cmd.append(f"--skip={self.burnin}")
+
                 if self.until is not None:
                     cut_cmd.append(f"--until={self.until}")
+
                 p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
                 chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                max_cmd=['alignment-max']
+                max_cmd=['alignment-max',f'--analysis={score}']
+
                 self.exec_show(max_cmd,stdin=p2.stdout, outfile=self.outdir / f"Work/{name}-unordered.fasta")
 
                 p1.wait()
@@ -1685,13 +1701,14 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
             print('*',end='',flush=True)
 
+        # Here we draw the alignment diffs
         for i in range(self.n_partitions()):
             if self.get_imodel_for_partition(i) is None:
                 continue
 
             outfile = self.outdir / f"P{i+1}.initial-diff.AU"
             initial = self.outdir / f"P{i+1}.initial.fasta"
-            wpd = self.outdir / f"P{i+1}.max.fasta"
+            wpd = self.outdir / f"P{i+1}.consensus.pd-wsum.fasta"
             self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
 
             outhtml = self.outdir / f"P{i+1}.initial-diff.html"
@@ -1717,7 +1734,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
             self.alignments.append((name,self.get_alphabets()[i], "Ancestral"))
 
-            template = self.outdir / f"P{i+1}.max.fasta"
+            template = self.outdir / f"P{i+1}.consensus.pd-wsum.fasta"
             if self.get_imodel_for_partition(i) is None:
                 template = self.outdir / f"P{i+1}.initial.fasta"
             tree = self.outdir / "greedy.tree"
