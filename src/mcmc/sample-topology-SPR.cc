@@ -983,7 +983,7 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
 //    Steps 5&6 maintain the invariant that for the edges that (x,y) is considered to attach to,
 //    we don't have a pairwise alignment.
 vector<HMM::bitmask_t>
-move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, int b_bd)
+move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, std::optional<int> b_bd)
 {
     constexpr int a_bit = 0;
     constexpr int b_bit = 1;
@@ -993,8 +993,15 @@ move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alig
 
     // 1. Construct 5-way alignment of {a,b,c,d,x}
     auto A_bc = convert_to_bits(P.get_pairwise_alignment(b_bc), b_bit, c_bit);
-    auto A_bd = convert_to_bits(P.get_pairwise_alignment(b_bd), b_bit, d_bit);
-    auto A_abxcd = Glue_A(alignment_prev,Glue_A(A_bc, A_bd));
+    decltype(A_bc) A_bcd;
+    if (b_bd)
+    {
+        auto A_bd = convert_to_bits(P.get_pairwise_alignment(*b_bd), b_bit, d_bit);
+        A_bcd = Glue_A(A_bc, A_bd);
+    }
+    else
+        auto A_bcd = std::move(A_bc);
+    auto A_abxcd = Glue_A(alignment_prev, A_bcd);
 
     // 2. Recompute presence/absence of character in b after moving x from ab to bc
     for(auto& a: A_abxcd)
@@ -1008,7 +1015,7 @@ move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alig
 
     // 3. Modify the pairwise alignments along ab and bd since b has been modified.
     P.set_pairwise_alignment(b_ab, get_pairwise_alignment_from_bits(A_abxcd, a_bit, b_bit));
-    P.set_pairwise_alignment(b_bd, get_pairwise_alignment_from_bits(A_abxcd, b_bit, d_bit));
+    if (b_bd) P.set_pairwise_alignment(*b_bd, get_pairwise_alignment_from_bits(A_abxcd, b_bit, d_bit));
     P.unset_pairwise_alignment(b_bc);
 
     // 4. Return alignment of bc with x.  (0 <- b, 1 <- c, 2 <- x)
@@ -1045,13 +1052,16 @@ move_pruned_subtree(Parameters& P,
     assert(b_next.node1 == b);
     int c = b_next.node2;
 
-    assert(b_sibling);
-    assert(b_sibling->node1 == b);
-    int d = b_sibling->node2;
-
     int b_ab = P.t().find_branch(a,b);
     int b_bc = P.t().find_branch(b,c);
-    int b_bd = P.t().find_branch(b,d);
+
+    std::optional<int> b_bd;
+    if (b_sibling)
+    {
+        assert(b_sibling->node1 == b);
+        int d = b_sibling->node2;
+        b_bd = P.t().find_branch(b,d);
+    }
 
     // 3. Adjust pairwise alignments and construct 3-node alignment for attaching to new edge
     vector<optional<vector<HMM::bitmask_t>>> alignments_next(P.n_data_partitions());
