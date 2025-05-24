@@ -305,8 +305,8 @@ spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
     spr_range range;
     std::optional<double> min_age;
 
-    // If the pruned branch points to a leaf, then quit.
-    if (T.is_leaf_node(b_parent.node2))
+    // If the pruned branch doesn't point to a degree-3 node, then quit.
+    if (T.degree(b_parent.node2) != 3)
         return range;
 
     // If the pruned branch doesn't point rootward, then quit.
