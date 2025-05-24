@@ -674,15 +674,23 @@ double TreeInterface::branch_length(int b) const
 {
     // FIXME: handle branch lengths on time trees!
 
-    assert(has_branch_lengths());
-
     b = undirected(b);
 
-    int array_reg = *branch_durations_reg();
+    if (branch_durations_reg())
+    {
+        int array_reg = *branch_durations_reg();
 
-    auto lengths = context_ptr{get_const_context(), array_reg};
+        auto lengths = context_ptr{get_const_context(), array_reg};
 
-    return lengths[b].value().as_double() * branch_rate(b);
+        return lengths[b].value().as_double() * branch_rate(b);
+    }
+    else if (has_node_times())
+    {
+        double T = std::abs(node_time(source(b)) - node_time(target(b)));
+        return T * branch_rate(b);
+    }
+    else
+        throw myexception()<<"TreeInterface::branch_length( ): tree has no branch lengths or node ages";
 }
 
 bool TreeInterface::can_set_branch_length(int b) const
