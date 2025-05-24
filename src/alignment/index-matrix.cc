@@ -320,7 +320,7 @@ sparse_index_matrix unaligned_sparse_matrix(const vector<int>& L)
   
     int col = 0;
     for(int seq=0;seq<L.size();seq++)
-        for(int index=0;index < L[seq]; index)
+        for(int index=0;index < L[seq]; index++)
         {
             SM.extend_sequence(seq);
             SM.add(seq,index,col);
