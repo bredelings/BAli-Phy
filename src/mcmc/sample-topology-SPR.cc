@@ -1366,7 +1366,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 
     // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
     for(int j=1;j<edges.size();j++)
-	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], *sibling_edges.at(edges[j]), false) );
+	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
 
     // 6. Finally, regraft the subtree to the target edge and set branch lengths
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
