@@ -1564,10 +1564,12 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
 
     for(int i=0;i<n;i++) 
     {
-	// Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-	int b1 = choose_subtree_branch_uniform2(PP.t());
+        if (log_verbose >= 4)  std::cerr<<"    sample_SPR_all: "<<i+1<<"/"<<n<<"\n";
 
-	sample_SPR_search_one(PP, Stats, PP.t().edge(b1));
+        // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
+        int b1 = choose_subtree_branch_uniform2(PP.t());
+
+        sample_SPR_search_one(PP, Stats, PP.t().edge(b1));
     }
 }
 

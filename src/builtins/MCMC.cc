@@ -939,6 +939,8 @@ extern "C" closure builtin_function_sampleSPRNodesRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[sample_SPR_all]\n";
+
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
