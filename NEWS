@@ -1,3 +1,14 @@
+* 4.1 (unreleased)
+- Show multiple different consensus alignments in bp-analyze.
+- Make SPR move work on rooted trees.
+- Initial version of variable ascertainment condition.
+- Fix alignment-consensus --strict=1
+- Fix character ranges for 1,2,3rd codon position.
+- Fix bp-analyze for Numeric(2) alphabet.
+- Fix default alphabet and smodel for binary data.
+- Fix allow scaling move to work on negative values.
+- Speed up coalescent tree probability.
+        
 * 4.0 (Feb 27, 2025)
 - Models
   + Allow indel rate variation, relative to the substitution rate.
