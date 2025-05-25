@@ -1625,7 +1625,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                max_cmd=['alignment-max',f'--analysis={score}']
+                max_cmd=['alignment-max',f'--score={score}']
 
                 self.exec_show(max_cmd,stdin=p2.stdout, outfile=self.outdir / f"Work/{name}-unordered.fasta")
 

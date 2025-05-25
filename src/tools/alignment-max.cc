@@ -97,7 +97,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
 	("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
-	("analysis",value<string>()->default_value("multiply"),"sum, wsum, wsum2, multiply")
+	("score",value<string>()->default_value("wsum2"),"sum, wsum, wsum2, multiply")
 	("column-pr",value<string>()->default_value("homology"),"homology, alignment")
         ("sort,S",value<bool>()->default_value(true),"Sort partially ordered columns to group similar gaps")
 	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
@@ -840,17 +840,17 @@ int main(int argc,char* argv[])
 	variables_map args = parse_cmd_line(argc,argv);
 
 	int type = -1;
-	string analysis = args["analysis"].as<string>();
-	if (analysis == "sum")
+	string score = args["score"].as<string>();
+	if (score == "sum")
 	    type = 0;
-	else if (analysis == "wsum")
+	else if (score == "wsum")
 	    type = 1;
-	else if (analysis == "multiply")
+	else if (score == "multiply")
 	    type = 2;
-        else if (analysis == "wsum2")
+        else if (score == "wsum2")
             type = 3;
 	else
-	    throw myexception()<<"I don't recognize analysis type '"<<analysis<<"'.";
+	    throw myexception()<<"I don't recognize score type '"<<score<<"'.";
 
 	//------------ Load alignment and tree ----------//
 	vector<alignment> alignments;
