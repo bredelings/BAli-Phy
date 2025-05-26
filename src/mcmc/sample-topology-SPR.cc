@@ -66,7 +66,7 @@ int random_int_from_double(double x)
 
 int n_SPR_moves(const Parameters& P)
 {
-    double f = get_setting_or("SPR_amount",0.1);
+    double f = get_setting_or("SPR_amount",0.5);
     if (P.t().has_node_times())
     {
         if (P.t().n_branches() <= 4) return 0;
@@ -75,8 +75,8 @@ int n_SPR_moves(const Parameters& P)
     {
         if (P.t().n_branches() < 4) return 0;
     }
-    int n = random_int_from_double(P.t().n_branches()*f);
-    return n+1;
+    double n = f * sqrt(P.t().n_branches());
+    return random_int_from_double(n) + 1;
 }
 
 template <typename I, typename T>
