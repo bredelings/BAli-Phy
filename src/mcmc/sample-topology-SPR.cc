@@ -1327,19 +1327,30 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 }
 
 //
-// NOTE: Why would we want to move the pruned subtree iteratively from edge(j-1) to edge(j) until we get to the target edge?
+// NOTE: Alignment bandwidth constraints on SPR at the target attachment site.
+//
+//       To use a simple alignment bandwidth constraint on SPR at the target attachment site we need an initial alignment there.
+//       We could use move_pruned_subtree to move the pruned subtree iteratively from edge(j-1) to edge(j) to the attachment site.
 //       This is necessary in order to get an initial alignment at the regrafting location.
 //       Such an alignment could possibly be used to create a bandwidth around the current path.
 //       We would need to check what bandwidth would be created around the initial alignment from the reverse proposal.
 //
 //       Currently move_pruned_subtree extends the homology of characters at the initial edge so that they are present at the target edge.
-//       Alternatively, we could unalign characters in the subtree that are not homologous to anything at the attachment point.
-//       I expect that the first option would result in higher likelihoods at the target edge.
+//       To attach at the final location, it seems like extending vanished homology would be wrong.
+//       So we would need an alternative method that unalign characters in the subtree that are not homologous to anything at the attachment point.
+//       I expect that extending the homology would result in higher likelihoods at the target edge.
+//       But it does not seem reversible.
 //
 //       So there are three options: none, extending vanish homology, unalign vanishing homology.
 //       Model with optional<bool>?
 //
-//       To attach at the final location, it seems like extending vanished homology would be wrong.
+//       Ideally we would use a full probability to assess attaching on each edge.
+//       Ideally we would really construct a new alignment on each edge.
+//       Constructing a new alignment would allow using the probability...
+//       If we used A5-2D, it would simplify a lot of things, but might be too slow...
+//
+//       PROBLEM: Sometimes the branch selected by SPR_search_all seems to be rejected, even when the alignment is fixed.
+//                How can that be?
 //
 //       - BDR 05/18/2025
 //
@@ -1373,7 +1384,8 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     alignments3way.reserve(I.attachment_branch_pairs.size());
     alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes0, false));
 
-    // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
+//  NOTE: This was for preliminary work to get an alignment bandwidth at the new attachment site...
+//    // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
 //    for(int j=1;j<edges.size();j++)
 //	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
 
