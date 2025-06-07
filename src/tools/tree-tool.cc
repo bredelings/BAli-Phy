@@ -85,6 +85,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     output.add_options()
         ("length","Report the total tree length")
         ("diameter","Report the tree diameter")
+        ("node-degrees","Report the tree diameter")
         ("count-leaves","Show the number of leaves")
         ("count-nodes","Show the number of nodes")
         ("show-leaves","Show the leaf names")
@@ -254,6 +255,15 @@ int main(int argc,char* argv[])
             std::cout<<T.n_leaves()<<std::endl;
         else if (args.count("count-nodes"))
             std::cout<<T.n_nodes()<<std::endl;
+        else if (args.count("node-degrees"))
+        {
+            std::vector<std::pair<int,string>> degrees;
+            for(int i=0; i<T.n_nodes(); i++)
+                degrees.push_back({T.node(i).degree(), T.get_label(i)});
+            std::sort(degrees.begin(), degrees.end(), [](const std::pair<int,string>& p1,const std::pair<int,string>& p2) {return p2.first < p1.first;});
+            for(auto& [degree,label]: degrees)
+                std::cout<<degree<<"\t"<<label<<"\n";
+        }
         else if (args.count("show-leaves"))
         {
             for(auto& label: T.get_leaf_labels())
