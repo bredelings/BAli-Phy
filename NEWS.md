@@ -1,14 +1,27 @@
-# 4.1 (unreleased)
+# 4.1 (Jun 9, 2025)
+
+## Features
 - Show multiple different consensus alignments in bp-analyze.
-- Make SPR move work on rooted trees.
-- Initial version of variable ascertainment condition.
+
+## Speed
+- Don't spend so much time on SPR for large trees.
+
+## Fixes
 - Fix alignment-consensus --strict=1
 - Fix character ranges for 1,2,3rd codon position.
 - Fix bp-analyze for Numeric(2) alphabet.
 - Fix default alphabet and smodel for binary data.
 - Fix allow scaling move to work on negative values.
+- Fix proposed alignments in SPR.
+
+## Unstable features
+- Allow conditioning on "variable" sites.
+- Make SPR move work on rooted trees.
 - Speed up coalescent tree probability.
-        
+
+## Internal
+- Refactor let-floating optimization ot use Core2 AST.
+
 # 4.0 (Feb 27, 2025)
 - Models
   - Allow indel rate variation, relative to the substitution rate.
