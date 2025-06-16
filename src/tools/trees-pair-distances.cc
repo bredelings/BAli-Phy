@@ -141,7 +141,7 @@ int main(int argc,char* argv[])
         //-------- Read in the tree samples --------//
         int skip = args["skip"].as<int>();
 
-        int max = -1;
+        std::optional<int> max;
         if (args.count("max"))
             max = args["max"].as<int>();
 
@@ -151,7 +151,7 @@ int main(int argc,char* argv[])
 
         count_pair_distances D(RF);
 
-        scan_trees(std::cin,skip,subsample,max, D);
+        scan_trees(std::cin, skip, max, subsample, D);
 
         //------- Merge lengths and topology -------//
         vector<string> s_out;
