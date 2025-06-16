@@ -73,9 +73,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 struct count_pair_distances:public accumulator<SequenceTree>
 {
     bool RF;
-    bool initialized;
-    int n_samples;
-    int N;
+    bool initialized = false;
+    int n_samples = 0;
+    int N = 0;
     valarray<double> m1;
     valarray<double> m2;
     vector<string> names;
@@ -93,16 +93,14 @@ struct count_pair_distances:public accumulator<SequenceTree>
         }
 
     count_pair_distances(bool b=false)
-        :RF(b),
-         initialized(false),
-         n_samples(0),
-         N(0)
+        :RF(b)
         {}
 };
 
 void count_pair_distances::operator()(const SequenceTree& T)
 {
-    if (not initialized) {
+    if (not initialized)
+    {
         N = T.n_leaves();
         names = T.get_leaf_labels();
         m1.resize(N*(N-1)/2);
@@ -126,6 +124,9 @@ void count_pair_distances::operator()(const SequenceTree& T)
                 D = T.edges_distance(i,j);
             else
                 D = T.distance(i,j);
+
+            assert( D >= 0);
+
             m1[k] += D;
             m2[k] += D*D;
         }
