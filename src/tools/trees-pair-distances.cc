@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree-dist.H"
 #include "util/myexception.H"
 #include "util/string/join.H"
+#include "util/matrix.H"
 
 #include <boost/program_options.hpp>
 
@@ -70,14 +71,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
+using bali_phy::matrix;
+
 struct count_pair_distances:public accumulator<SequenceTree>
 {
     bool RF;
     bool initialized = false;
     int n_samples = 0;
     int N = 0;
-    valarray<double> m1;
-    valarray<double> m2;
+    matrix<double> m1; // first  moment;
+    matrix<double> m2; // second moment;
     vector<string> names;
     void operator()(const SequenceTree&);
 
@@ -88,8 +91,11 @@ struct count_pair_distances:public accumulator<SequenceTree>
   
             m1 /= n_samples;
             m2 /= n_samples;
-            m2 -= m1*m1;
-            m2 = sqrt(m2);
+
+            // compute stddev
+            for(int i=0;i<N; i++)
+                for(int j=0;j<N; j++)
+                    m2(i,j) = sqrt(m2(i,j) - m1(i,j) * m1(i,j));
         }
 
     count_pair_distances(bool b=false)
@@ -103,10 +109,10 @@ void count_pair_distances::operator()(const SequenceTree& T)
     {
         N = T.n_leaves();
         names = T.get_leaf_labels();
-        m1.resize(N*(N-1)/2);
-        m2.resize(N*(N-1)/2);
-        m1 = 0;
-        m2 = 0;
+
+        m1.resize(N, N, 0);
+        m2.resize(N, N, 0);
+
         initialized = true;
     }
 
@@ -115,9 +121,8 @@ void count_pair_distances::operator()(const SequenceTree& T)
     // Theoretically, we could do this much faster, I think.
     //  vector<vector<int> > leaf_sets = partition_sets(T);
 
-    int k=0;
     for(int i=0;i<N;i++)
-        for(int j=0;j<i;j++,k++) 
+        for(int j=0;j<i;j++) 
         {
             double D = 0;
             if (RF)
@@ -127,8 +132,11 @@ void count_pair_distances::operator()(const SequenceTree& T)
 
             assert( D >= 0);
 
-            m1[k] += D;
-            m2[k] += D*D;
+            m1(i,j) += D;
+            m1(j,i) += D;
+
+            m2(i,j) += D*D;
+            m2(j,i) += D*D;
         }
 }
 
@@ -162,19 +170,17 @@ int main(int argc,char* argv[])
         v1_out.push_back(-1);
         v2_out.push_back(-2);
 
-        int k=0;
+        cout<<join(D.names,'\t')<<endl;
         for(int s1=0;s1<D.N;s1++)
-            for(int s2=0;s2<s1;s2++,k++) {
-                string name1 = D.names[s1];
-                string name2 = D.names[s2];
-                if (std::less<string>()(name2,name1)) std::swap(name1,name2);
-                s_out.push_back(name1 +"-"+name2);
-                v1_out.push_back(D.m1[k]);
-                v2_out.push_back(D.m2[k]);
+        {
+            for(int s2=0; s2<D.N; s2++)
+            {
+                cout<<D.m1(s1,s2);
+                if (s2 + 1 < D.N)
+                    cout<<'\t';
             }
-        cout<<join(s_out,'\t')<<endl;
-        cout<<join(v1_out,'\t')<<endl;
-        cout<<join(v2_out,'\t')<<endl;
+            cout<<endl;
+        }
     }
     catch (std::exception& e) {
         std::cerr<<"trees-pair-distances: Error! "<<e.what()<<endl;
