@@ -101,6 +101,12 @@ namespace bali_phy
 		    data_[i] = t;
 	    }
 
+	matrix<T>& operator*=(T t) {
+	    for(int i=0;i<size();i++)
+		data_[i] *= t;
+	    return *this;
+	}
+
 	matrix<T>& operator/=(T t) {
 	    for(int i=0;i<size();i++)
 		data_[i] /= t;
