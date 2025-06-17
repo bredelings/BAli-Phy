@@ -372,6 +372,30 @@ void Solver::add_inert(const Predicate& p)
         std::abort();
 }
 
+    // FIXME: GHC has removed flattening on Mar 19 2025.
+    //        The fix claims that flattening "doesn't really work" and is subsumed by
+    //        the ability of the unifier to return (MaybeApart subst) in addition to SurelyApart
+    //        and (Unifiable subst).
+    //
+    //        The modification is in the *pure* unifier.  When we try to unify e.g. (G Float) ~ Int,
+    //        the result is not MaybeApart, but we record the conditions under which its unifiable.
+    //        Then if we later see (G Float) ~ Double, we can return SurelyApart.
+    //
+    //        But it doesn't remove cycle-breaker variables!
+    //        What is it removing?
+    //
+    //        Apparently its removing the replacement of type family applications w/ fresh type variables.
+    //        If we do that then if we see
+    //            a a ~ (Var A) (Var B)   where Var is injective.
+    //        we end up with
+    //            a a ~ b c
+    //        which (I think) unifies under (b->a) and (c->a).  But if we track that Var A -> a, then
+    //        Var B -> a violates the injectivity constraint.
+    //        
+    //        Q: Recording the (G Float) ~ Int is equivalent to extending the type family with G Float -> Int.
+    //        But if we record (G Float) ~ (G Int), then do we record G Float -> G Int, or the other way?
+
+
     // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
     //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
     // where theta is the substitution -- which we should actually perform here instead of returning as an object.
