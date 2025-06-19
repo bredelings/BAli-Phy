@@ -81,7 +81,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("distances", value<string>()->default_value("splits:splits2:nonrecall:inaccuracy"),"Colon-separated list of distances.")
+	("distances", value<string>(),"Colon-separated list of distances.")
 	("analysis", value<string>(), "Analysis: score, AxA, NxN, compare, median, distances")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
@@ -229,8 +229,9 @@ long int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>&
     }
     return diff;
 }
+typedef double (*pairwise_alignment_distance_t)(int i, int j, const matrix<int>&, const vector< vector<int> >&,const matrix<int>&, const vector< vector<int> >&);
 
-double pairwise_alignment_distance(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+double pairwise_alignment_distance_symmetric(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
     int total_diff = pairwise_alignment_distance_asymmetric(i,j,M1,CI1,M2,CI2) + pairwise_alignment_distance_asymmetric(j,i,M1,CI1,M2,CI2);
 
@@ -240,13 +241,34 @@ double pairwise_alignment_distance(int i, int j, const matrix<int>& M1 ,const ve
     return double(total_diff)/(Li+Lj);
 }
 
-Matrix pairwise_alignment_distances(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+double pairwise_alignment_distance_nonrecall(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    int shared_homologies = pairwise_shared_homologies(i, j, M1, CI1, M2, CI2);
+    int true_homologies  = pairwise_shared_homologies(i, j, M1, CI1, M1, CI1);
+
+    assert(shared_homologies <= true_homologies);
+    
+    return double(true_homologies - shared_homologies) / true_homologies;
+}
+
+double pairwise_alignment_distance_inaccuracy(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    int shared_homologies = pairwise_shared_homologies(i, j, M1, CI1, M2, CI2);
+    int predicted_homologies  = pairwise_shared_homologies(i, j, M2, CI2, M2, CI2);
+
+    assert(shared_homologies <= predicted_homologies);
+    
+    return double(predicted_homologies - shared_homologies) / predicted_homologies;
+}
+
+Matrix pairwise_alignment_distances(pairwise_alignment_distance_t distance_fn, 
+                                    const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
     int N = CI1.size();
     Matrix D(N,N);
     for(int i=0;i<N;i++)
 	for(int j=0;j<N;j++)
-	    D(i,j) = pairwise_alignment_distance(i,j,M1,CI1,M2,CI2);
+	    D(i,j) = distance_fn(i,j,M1,CI1,M2,CI2);
 
     return D;
 }
@@ -419,12 +441,63 @@ int main(int argc,char* argv[])
 
         string analysis = args["analysis"].as<string>();
 
-	string distance_names = args["distances"].as<string>();
-
 	//--------------- filenames ---------------//
 	vector<string> files;
 	if (args.count("files"))
 	    files = args["files"].as<vector<string> >();
+
+	if (analysis == "NxN") 
+	{
+	    check_supplied_filenames(2,files,false);
+
+            string distance_names = "pairwise";
+            if (args.count("distances"))
+                distance_names = args["distances"].as<string>();
+            auto distances = split(distance_names,":");
+
+            pairwise_alignment_distance_t distance_fn = nullptr;
+
+            if (distances.size() != 1)
+                throw myexception()<<"alignment-distances NxN: provided "<<distances.size()<<" distances, but only 1 is allowed for NxN!";
+            if (distances[0] == "pairwise")
+                distance_fn = pairwise_alignment_distance_symmetric;
+            else if (distances[0] == "nonrecall")
+                distance_fn = pairwise_alignment_distance_nonrecall;
+            else if (distances[0] == "inaccuracy")
+                distance_fn = pairwise_alignment_distance_inaccuracy;
+            else
+                throw myexception()<<"alignment-distances NxN: distance '"<<distances[0]<<"' not recognized!\n  Allowed values: pairwise";
+
+	    alignment_sample A(args, files[0]);
+
+	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
+
+	    alignment_sample As(args, A.sequence_names(), A.get_alphabet(), files[1]);
+
+	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
+
+	    int N = A.sequence_names().size();
+	    Matrix D(N, N, 0);
+
+            for(int i=0;i<As.size();i++) 
+                D += pairwise_alignment_distances(distance_fn, A.Ms[0], A.column_indices[0], As.Ms[i], As.column_indices[i]);
+
+	    D /= As.size();
+
+	    cout<<join(As.sequence_names(), '\t')<<"\n";
+	    for(int i=0;i<D.size1();i++) {
+		vector<double> v(D.size2());
+		for(int j=0;j<v.size();j++)
+		    v[j] = D(i,j);
+		cout<<join(v,'\t')<<endl;
+	    }
+      
+	    exit(0);
+	}
+
+	string distance_names = "splits:splits2:nonrecall:inaccuracy";
+        if (args.count("distances"))
+            distance_names = args["distances"].as<string>();
 
 	//--------- Determine distance functions -------- //
 	vector<distance_fn> distance_fns;
@@ -493,41 +566,6 @@ int main(int argc,char* argv[])
 		    v.push_back( convertToString( D(As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]) ));
 		cout<<join(v,'\t')<<endl;
 	    }
-	    exit(0);
-	}
-	else if (analysis == "NxN") 
-	{
-	    check_supplied_filenames(2,files,false);
-
-	    alignment_sample A(args, files[0]);
-
-	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
-
-	    alignment_sample As(args, A.sequence_names(), A.get_alphabet(), files[1]);
-
-	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
-
-	    int N = A.sequence_names().size();
-	    Matrix D(N,N);
-
-	    for(int i=0;i<As.size();i++) 
-	    {
-		if (i == 0)
-		    D = pairwise_alignment_distances(A.Ms[0], A.column_indices[0], As.Ms[i], As.column_indices[i]);
-		else
-		    D += pairwise_alignment_distances(A.Ms[0], A.column_indices[0], As.Ms[i], As.column_indices[i]);
-	    }
-      
-	    D /= As.size();
-
-	    cout<<join(As.sequence_names(), '\t')<<"\n";
-	    for(int i=0;i<D.size1();i++) {
-		vector<double> v(D.size2());
-		for(int j=0;j<v.size();j++)
-		    v[j] = D(i,j);
-		cout<<join(v,'\t')<<endl;
-	    }
-      
 	    exit(0);
 	}
 	else if (analysis == "compare")
