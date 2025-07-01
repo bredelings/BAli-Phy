@@ -22,7 +22,6 @@ import Numeric.LogDouble
 -- 8 - alphabet
 -- 9 - n_states
 -- 10 - n_base_models
--- 11 - ?parsimony -- used through haskell, not parameters.cc
 
 -- Some of these things could be accessed through the distribution arguments:
 -- 6. state -> letter
