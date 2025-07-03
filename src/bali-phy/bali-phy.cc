@@ -605,15 +605,22 @@ int main(int argc,char* argv[])
         //---------- test optimizer ----------------
         if (args.count("test-module"))
         {
-            string filename = args["test-module"].as<string>();
-            auto M = L->load_module_from_file(filename);
+            string module_name = args["test-module"].as<string>();
+
+            std::shared_ptr<Module> M;
+            if (is_haskell_module_name(module_name))
+                M = L->load_module(module_name);
+            else
+                M = L->load_module_from_file(module_name);
 
             Program P(L,{M});
             auto M2 = P.get_module(M->name);
-            for(const auto& [name, body]: M2->code_defs())
+            for(auto& [name,symbol]: M2->exported_symbols())
             {
-                std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
+                TidyState tidy_state;
+                std::cerr<<name<<" :: "<<tidy_state.print(symbol->type)<<"\n\n";
             }
+
             exit(0);
         }
         else if (args.count("type"))
