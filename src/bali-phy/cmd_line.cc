@@ -291,7 +291,6 @@ po::options_description model_options(int level)
     if (level >= 2)
         model.add_options()
             ("model,m",value<vector<string>>()->multitoken(),"File containing hierarchical model.")
-            ("Model,M",value<vector<string>>()->multitoken(),"Module containing hierarchical model.")
             ("print,p",value<string>(),"Evaluate and print expression.");
     return model;
 }
@@ -435,12 +434,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
     load_bali_phy_rc(args,all);
 
     std::set<string> commands;
-    for(auto word : {"align", "Model", "model", "print", "test-module", "run", "type"})
+    for(auto word : {"align", "model", "print", "test-module", "run", "type"})
 	if (args.count(word))
 	    commands.insert(word);
 
     if (commands.empty())
-	throw myexception()<<"You must specify alignment files or a generic model (--model or --Model).\n\nTry `"<<argv[0]<<" --help' for more information.";
+	throw myexception()<<"You must specify alignment files or a generic model (with --model).\n\nTry `"<<argv[0]<<" --help' for more information.";
 
     if (commands.size() > 1)
     {

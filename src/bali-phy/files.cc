@@ -73,11 +73,6 @@ string run_name(const variables_map& args)
         fs::path filepath = args["model"].as<vector<string>>()[0];
         name = filepath.filename().stem().string();
     }
-    else if (args.count("Model"))
-    {
-	name = args["Model"].as<vector<string>>()[0];
-	name = get_unqualified_name(name);
-    }
 
     return name;
 }
