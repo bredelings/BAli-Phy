@@ -179,11 +179,20 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     // (1-e) * delta / (1-delta) = P(indel)
     // But move the (1-e) into the RATE to make things work
     double mu = D/(1.0-e);
-    double P_indel = 1.0 - exp(-mu);
+    double P_indel = -expm1(-mu);
+    double P_non_indel = exp(-mu);
     double A = P_indel;
 
     if (in_training) A = std::min(A,0.005);
 
+    // delta = 1-exp(-mu)/(1 + 1-exp(-mu)) = (1 - exp(-mu))/(2 - exp(-mu))
+
+    // 1-2*delta = (2 - e^-mu)/(2 - e^-mu) - (2 - 2e^-mu)/(2 - e^-mu)
+    //           = e^-mu/(2 - e^-mu)
+    //           = P_non_indel / (2 - P_non_indel)
+
+    // 1 - delta = (2 - e^-mu)/(2 - e^-mu) - (1 - e^-mu)/(2 - e^-mu)
+    //           = 1/(2 - e^-mu)
     double delta = A/(1+A);
 
     // Note: If the branch is disconnected, then t < -0.5
@@ -198,7 +207,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
 
     if (e > 1)
 	throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
-    
+
     assert(delta >= 0 and delta <= 1);
     assert(e >= 0 and e < 1);
 
@@ -206,7 +215,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     indel::PairHMM Q;
 
     Q(S ,S ) = 0;
-    Q(S ,M ) = 1 - 2*delta;
+    Q(S ,M ) = (P_indel < 0.5) ? (1 - 2*delta) : (P_non_indel/(2 - P_non_indel));
     Q(S ,G1) = delta;
     Q(S ,G2) = delta;
     Q(S ,E ) = 1 - delta;
