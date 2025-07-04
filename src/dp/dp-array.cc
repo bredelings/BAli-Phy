@@ -34,6 +34,9 @@ using std::vector;
 // We can ignore scale(i) here, because it factors out.
 log_double_t DParray::path_P(const vector<int>& g_path) const 
 {
+    // If all paths have probability 0, then this probability of choosing one of them is undefined.
+    assert(Pr_total > 0);
+
     const int I = size()-1;
     int i=I;
     int l=g_path.size()-1;
@@ -48,8 +51,12 @@ log_double_t DParray::path_P(const vector<int>& g_path) const
             transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
         int state1 = g_path[l-1];
+
+        // If forward probability of being in (i,j) in state1 and transitioning to state2 is 0, then the path has probability 0.
+        if (transition[state1] == 0) return 0;
+
+        // Otherwise we can compute the probability of choosing state1, and it should not be 0 or NaN.
         double p = choose_P(state1,transition);
-        assert(p > 0.0);
 
         if (di(state1)) i--;
 

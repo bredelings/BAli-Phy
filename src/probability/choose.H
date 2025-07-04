@@ -126,6 +126,8 @@ F choose_P(int s,const std::vector<F>& P) {
     for(int i=0;i<P.size();i++)
         sum  += P[i];
 
+    assert(sum > 0);
+
     return P[s]/sum;
 }
 

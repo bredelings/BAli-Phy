@@ -251,6 +251,9 @@ void DPmatrix::compute_Pr_sum_all_paths()
 
 log_double_t DPmatrix::path_P(const vector<int>& path) const 
 {
+    // If all paths have probability 0, then this probability of choosing one of them is undefined.
+    assert(Pr_total > 0);
+
     const int I = size1()-1;
     const int J = size2()-1;
     int i = I;
@@ -275,9 +278,12 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
 	    transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
 
 	int state1 = path[l-1];
+
+        // If forward probability of being in (i,j) in state1 and transitioning to state2 is 0, then the path has probability 0.
+        if (transition[state1] == 0) return 0;
+
+        // Otherwise we can compute the probability of choosing state1, and it should not be 0 or NaN.
 	double p = choose_P(state1,transition);
-	if (not (p > 0.0) and log_verbose > 1)
-	    std::cerr<<"p == "<<p<<" in DPmatrix::path_P( )\n";
 
 	if (di(state1)) i--;
 	if (dj(state1)) j--;
@@ -432,6 +438,7 @@ double DPmatrixEmit::emitMM(int i, int j) const
     if (B != 1.0)
 	total = pow(total,B);
 
+    assert(total > 0 or i < 2 or j < 2);
     return total;
 }
 
