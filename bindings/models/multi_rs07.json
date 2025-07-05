@@ -15,21 +15,21 @@
 	{
 	    "name": "f1",
 	    "type": "Double",
-	    "default_value": "~beta(2,2)",
-	    "description": "The fraction of indel-invariant sites"
+	    "default_value": "~beta(1,2)",
+	    "description": "The fraction of sites with the lower rate"
 	},
         {
-            "name": "rate1",
+            "name": "rate",
             "type": "Double",
             "default_value": "~logLaplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
-        {
-            "name": "rate2",
-            "type": "Double",
-            "default_value": "~logLaplace(-4,0.707)",
-            "description": "The insertion-deletion rate"
-        },
+	{
+	    "name": "logRatio",
+	    "type": "Double",
+	    "default_value": "~exponential(0.1)",
+	    "description": "The log-ratio between the two rates"
+	},
         {
             "name": "mean_length",
             "type": "Double",
@@ -41,6 +41,20 @@
             "type": "Topology",
             "default_value": "get_state(topology)"
         }
+    ],
+    "computed": [
+	{
+	    "name": "rate1",
+	    "value": "@rate / (@f1 + (1-@f1)*exp(@logRatio))"
+	},
+	{
+	    "name": "rate2",
+	    "value": "@rate / (@f1*exp(-@logRatio) + (1-@f1))"
+	},
+	{
+	    "name": "ratio",
+	    "value": "exp(@logRatio)"
+	}
     ],
     "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
     "extract": "all"
