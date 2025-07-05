@@ -266,7 +266,8 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     rate2 /= (1.0 - e);
 
     double fraction2 = 1 - fraction1;
-    double P_indel = fraction1 * (1.0 - exp(-rate1 * distance)) + fraction2 * (1.0 - exp(-rate2 * distance));
+    double P_indel = fraction1 * (-expm1(-rate1 * distance)) + fraction2 * (-expm1(-rate2 * distance));
+    double P_non_indel = fraction1 * exp(-rate1 * distance) + fraction2 * exp(-rate2 * distance);
     double A = P_indel;
 
     if (in_training) A = std::min(A,0.005);
@@ -293,7 +294,7 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     indel::PairHMM Q;
 
     Q(S ,S ) = 0;
-    Q(S ,M ) = 1 - 2*delta;
+    Q(S ,M ) = (P_indel < 0.5) ? (1 - 2*delta) : (P_non_indel/(2 - P_non_indel));
     Q(S ,G1) = delta;
     Q(S ,G2) = delta;
     Q(S ,E ) = 1 - delta;
