@@ -154,7 +154,7 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-log_double_t sample_alignment(Parameters& P,int b)
+log_double_t sample_alignment(Parameters& P, int b, bool initial_state_valid)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]\n";
@@ -234,64 +234,68 @@ log_double_t sample_alignment(Parameters& P,int b)
 		OP[i].push_back( 1 );
 	    }
 
+    // OS and OP never used!!
+
     //--------- Compute path probabilities and sampling probabilities ---------//
-    vector< vector<log_double_t> > PR(p.size());
-
-    for(int i=0;i<p.size();i++)
+    if (initial_state_valid)
     {
-	// sample_P(p[i][j], 1, 1, paths[i][j], *Matrices[j]);
-	PR[i] = vector<log_double_t>(4,1);
-	PR[i][0] = p[i].heated_probability();
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment())
-	    {
-		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-		PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-	    }
+        vector< vector<log_double_t> > PR(p.size());
+
+        for(int i=0;i<p.size();i++)
+        {
+            // sample_P(p[i][j], 1, 1, paths[i][j], *Matrices[j]);
+            PR[i] = vector<log_double_t>(4,1);
+            PR[i][0] = p[i].heated_probability();
+            for(int j=0;j<p[i].n_data_partitions();j++) 
+                if (p[i][j].variable_alignment())
+                {
+                    vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+                    PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+                }
+        }
+
+        if (log_verbose >= 4)
+        {
+            for(int i=0;i<p[1].n_data_partitions();i++) 
+            {
+                if (paths[0][i].size() > paths[1][i].size() and log_verbose > 0)
+                    std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
+                if (paths[0][i].size() < paths[1][i].size() and log_verbose > 0)
+                    std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
+            }
+        }
+
+        //--------- Check that each choice is sampled w/ the correct Probability ---------//
+        check_sampling_probabilities(PR);
+
+        //--------- Check construction of A  ---------//
+        if (log_verbose >= 4)
+        {
+            for(int j=0;j<P.n_data_partitions();j++) 
+            {
+                double diff = log(PR[0][0]) - log(PR[1][0]);
+                std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
+                    " diff = "<<diff<<std::endl;
+
+                if (diff < -10) {
+                    log_double_t L1 = p[1].likelihood();
+                    log_double_t L2 = p[0].likelihood();
+      
+                    log_double_t prior1 = p[1].prior();
+                    log_double_t prior2 = p[0].prior();
+      
+                    std::cerr<<"Yelp!\n";
+      
+                    std::cerr<<std::endl;
+                    std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
+                    std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
+                    std::cerr<<std::endl;
+      
+                    std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
+                }
+            }
+        }
     }
-
-    if (log_verbose >= 4)
-    {
-	for(int i=0;i<p[1].n_data_partitions();i++) 
-	{
-	    if (paths[0][i].size() > paths[1][i].size() and log_verbose > 0)
-		std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
-	    if (paths[0][i].size() < paths[1][i].size() and log_verbose > 0)
-		std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
-	}
-    }
-
-    //--------- Check that each choice is sampled w/ the correct Probability ---------//
-    check_sampling_probabilities(PR);
-
-    //--------- Check construction of A  ---------//
-    if (log_verbose >= 4)
-    {
-	for(int j=0;j<P.n_data_partitions();j++) 
-	{
-	    double diff = log(PR[0][0]) - log(PR[1][0]);
-	    std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
-		" diff = "<<diff<<std::endl;
-
-	    if (diff < -10) {
-		log_double_t L1 = p[1].likelihood();
-		log_double_t L2 = p[0].likelihood();
-      
-		log_double_t prior1 = p[1].prior();
-		log_double_t prior2 = p[0].prior();
-      
-		std::cerr<<"Yelp!\n";
-      
-		std::cerr<<std::endl;
-		std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
-		std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
-		std::cerr<<std::endl;
-      
-		std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
-	    }
-	}
-    }
-
 #endif
 
     P = p[0];

@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 #include "models/parameters.H"
 #include "result.H"
-
+#include "sample-alignment.H"  // log_double_t sample_alignment(Parameters&,int b,bool);
 
 void slide_node(owned_ptr<context>& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
@@ -31,9 +31,6 @@ void slice_sample_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
 void slice_sample_node_time(owned_ptr<context>&, MCMC::MoveStats&, int);
 void alignment_slice_sample_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_multi(owned_ptr<context>&, MCMC::MoveStats&, int);
-
-/// Resample the alignment parent->child
-log_double_t sample_alignment(Parameters&,int b);
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
 void tri_sample_alignment(Parameters& P,int node1,int node2);

@@ -180,7 +180,10 @@ double alignment_branch_length_slice_function::operator()(double x)
     if (count == 1) C0.evaluate_program();
     C = C0;
     set_value(x);
-    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C),b);
+
+    // Pass 'false' because the initial alignment may have zero probability under the new branch length x.
+    // Without this, check_sampling_probabilities may throw an exception.
+    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
