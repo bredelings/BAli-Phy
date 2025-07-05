@@ -327,12 +327,24 @@ inline void DParrayConstrained::forward(int i2)
     }
 
     //------- if exponent is too low, rescale ------//
-    if (maximum > 0 and maximum < fp_scale::lo_cutoff) {
-        int logs = -(int)log2(maximum);
-        double scale_ = pow2(logs);
-        for(int S2: states(i2))
-            (*this)(i2,S2) *= scale_;
-        scale(i2) -= logs;
+    if (maximum > 0)
+    {
+        if (maximum < std::numeric_limits<double>::min())
+        {
+            for(int S2: states(i2))
+                (*this)(i2,S2) = 0;
+        }
+        else if (maximum < fp_scale::lo_cutoff)
+        {
+            int logs = -(int)log2(maximum);
+            for(int S2: states(i2))
+            {
+                assert(std::isfinite((*this)(i2,S2)));
+                (*this)(i2,S2) = std::scalbn( (*this)(i2,S2), logs);
+                assert(std::isfinite((*this)(i2,S2)));
+            }
+            scale(i2) -= logs;
+        }
     }
 }
 
@@ -395,6 +407,7 @@ log_double_t DParrayConstrained::Pr_sum_all_paths_to_column(int i) const
     for(int state1: states(i))
         total += (*this)(i,state1) * GQ(state1,endstate());
 
+    assert(not std::isnan(total) and std::isfinite(total));
     return pow(log_double_t(2.0),scale(i)) * total;
 }
 
