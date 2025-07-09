@@ -111,7 +111,7 @@ const data_partition_constants& data_partition::DPC() const
 
 std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return property(8).value().as_<PtrBox<alphabet>>();
+    return property(5).value().as_<PtrBox<alphabet>>();
 }
 
 
@@ -137,7 +137,7 @@ bool data_partition::alignment_is_random() const
 
 expression_ref data_partition::get_node_CLV(int node) const
 {
-    auto maybe_node_CLV = property(7)[node];
+    auto maybe_node_CLV = property(9)[node];
     if (maybe_node_CLV.size() > 0)
 	return maybe_node_CLV[0].value();
     else
@@ -172,17 +172,17 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(10).value().as_int();
+    return property(7).value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(9).value().as_int();
+    return property(6).value().as_int();
 }
 
 object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix(int n) const
 {
-    return property(5)[n].value().as_ptr_to<Box<Matrix>>();
+    return property(8)[n].value().as_ptr_to<Box<Matrix>>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const

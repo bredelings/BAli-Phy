@@ -34,19 +34,17 @@ import Control.Monad.Fix -- for rec
 -- 2 - CLVs
 -- 3 - ?ancestral states         -- used through haskell, not parameters.cc
 -- 4 - likelihood
--- 5 - weightedfrequencymatrix   -- only variableA
--- 6 - state -> letter           -- unused
--- 7 - sequence likelihoods      -- only variableA: used to get node CLVs for dists2 when aligning 2 sequences. 
--- 8 - alphabet
--- 9 - n_states
--- 10 - n_base_models
+-- 5 - alphabet
+-- 6 - n_states
+-- 7 - n_base_models
+-- 8 - weightedfrequencymatrix   -- only variableA
+-- 9 - sequence likelihoods      -- only variableA: used to get node CLVs for dists2 when aligning 2 sequences. 
 
 -- Some of these things could be accessed through the distribution arguments:
--- 6. state -> letter
--- 7. sequences as EVector Int
--- 8. alphabet
--- 9. n_states
--- 10. n_base_models
+-- 5. alphabet
+-- 6. n_states
+-- 7. n_base_models
+-- 9-ish. sequences as EVector Int.
 
 
 data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
@@ -55,12 +53,11 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_cond_likes :: IntMap CondLikes,
       prop_variable_a_anc_seqs :: AlignedCharacterData,
       prop_variable_a_likelihood :: LogDouble,
-      prop_variable_a_get_weightedFrequencyMatrix :: IntMap (Matrix Double),   -- only variable A
-      prop_variable_a_smap :: EVector Int,
-      prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
       prop_variable_a_alphabet :: Alphabet,
       prop_variable_a_n_states :: Int,
-      prop_variable_a_n_base_models :: Int
+      prop_variable_a_n_base_models :: Int,
+      prop_variable_a_get_weightedFrequencyMatrix :: IntMap (Matrix Double),   -- only variable A
+      prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes)                     -- only variable A
     }
 
 
@@ -70,9 +67,6 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
     prop_cond_likes = prop_variable_a_cond_likes
     prop_anc_seqs = prop_variable_a_anc_seqs
     prop_likelihood = prop_variable_a_likelihood
-    prop_get_weightedFrequencyMatrix = prop_variable_a_get_weightedFrequencyMatrix
-    prop_smap = prop_variable_a_smap 
-    prop_nodeCLVs = prop_variable_a_nodeCLVs
     prop_alphabet = prop_variable_a_alphabet
     prop_n_states = prop_variable_a_n_states
     prop_n_base_models = prop_variable_a_n_base_models
@@ -108,7 +102,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs
 
   return ([likelihood], prop)
 
@@ -196,7 +190,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs
 
   return ([likelihood], prop)
 
@@ -255,7 +249,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs
 
   return ([likelihood], prop)
 

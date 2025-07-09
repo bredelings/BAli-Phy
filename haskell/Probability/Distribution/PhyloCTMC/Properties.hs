@@ -17,9 +17,6 @@ class PhyloCTMCProperties a where
       prop_cond_likes :: a -> IntMap CondLikes
       prop_anc_seqs :: a -> AlignedCharacterData
       prop_likelihood :: a -> LogDouble
-      prop_get_weightedFrequencyMatrix :: a -> IntMap (Matrix Double)    -- only variable A
-      prop_smap :: a -> EVector Int
-      prop_nodeCLVs :: a -> IntMap (Maybe CondLikes)                    -- only variable A
       prop_alphabet :: a -> Alphabet
       prop_n_states :: a -> Int
       prop_n_base_models :: a -> Int
