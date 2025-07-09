@@ -59,14 +59,8 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
-    prop_subst_root = prop_fixed_a_subst_root
-    prop_transition_ps = prop_fixed_a_transition_ps
-    prop_cond_likes = prop_fixed_a_cond_likes
-    prop_anc_seqs = prop_fixed_a_anc_seqs
     prop_likelihood = prop_fixed_a_likelihood
-    prop_alphabet = prop_fixed_a_alphabet
-    prop_n_states = prop_fixed_a_n_states
-    prop_n_base_models = prop_fixed_a_n_base_models
+    prop_anc_seqs = prop_fixed_a_anc_seqs
 
 
 sampleAncestralAlignment uncompressedNodeSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping =

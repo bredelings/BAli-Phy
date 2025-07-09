@@ -62,14 +62,8 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
-    prop_subst_root = prop_variable_a_subst_root
-    prop_transition_ps = prop_variable_a_transition_ps
-    prop_cond_likes = prop_variable_a_cond_likes
-    prop_anc_seqs = prop_variable_a_anc_seqs
     prop_likelihood = prop_variable_a_likelihood
-    prop_alphabet = prop_variable_a_alphabet
-    prop_n_states = prop_variable_a_n_states
-    prop_n_base_models = prop_variable_a_n_base_models
+    prop_anc_seqs = prop_variable_a_anc_seqs
                             
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
