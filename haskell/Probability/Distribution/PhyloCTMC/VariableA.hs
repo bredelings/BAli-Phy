@@ -58,7 +58,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -68,7 +68,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
 
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
-    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) = PhyloCTMCPropertiesVariableA
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment (scaleTo scale smodel)
 
 -- getSequencesFromTree :: IsGraph t, LabelType t ~ Text => t -> IntMap Sequence ->
@@ -146,7 +146,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -156,7 +156,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) wher
 
 
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
-    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCPropertiesVariableA
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment (scaleTo scale smodel)
 
 
@@ -205,7 +205,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls ancestralSequences likelihood fs smap nodeCLVs alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -215,7 +215,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
 
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
-    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCPropertiesVariableA
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where

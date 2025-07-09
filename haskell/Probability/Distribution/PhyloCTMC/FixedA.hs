@@ -78,7 +78,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -88,7 +88,7 @@ instance Dist (PhyloCTMC t Int s EquilibriumReversible) where
 
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumReversible) where
-    type DistProperties (PhyloCTMC t Int s EquilibriumReversible) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t Int s EquilibriumReversible) = PhyloCTMCPropertiesFixedA
     annotated_densities (PhyloCTMC tree length smodel scale) = annotated_subst_likelihood_fixed_A tree length (scaleTo scale smodel)
 
 -- This is imported twice, which is ugly.
@@ -160,7 +160,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
 
   return ([likelihood], prop)
 
@@ -170,7 +170,7 @@ instance Dist (PhyloCTMC t Int s EquilibriumNonReversible) where
 
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (PhyloCTMC t Int s EquilibriumNonReversible) where
-    type DistProperties (PhyloCTMC t Int s EquilibriumNonReversible) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t Int s EquilibriumNonReversible) = PhyloCTMCPropertiesFixedA
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s EquilibriumNonReversible) where
@@ -197,7 +197,7 @@ instance Dist (PhyloCTMC t Int s NonEquilibrium) where
 
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (PhyloCTMC t Int s NonEquilibrium) where
-    type DistProperties (PhyloCTMC t Int s NonEquilibrium) = PhyloCTMCProperties
+    type DistProperties (PhyloCTMC t Int s NonEquilibrium) = PhyloCTMCPropertiesFixedA
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedANonRev tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s NonEquilibrium) where
@@ -264,7 +264,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCProperties substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree))
+  let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood undefined smap undefined alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree))
 
   return ([likelihood,1/likelihood2], prop)
 
