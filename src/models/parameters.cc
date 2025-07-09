@@ -111,7 +111,7 @@ const data_partition_constants& data_partition::DPC() const
 
 std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return property(5).value().as_<PtrBox<alphabet>>();
+    return property(4).value().as_<PtrBox<alphabet>>();
 }
 
 
@@ -137,7 +137,7 @@ bool data_partition::alignment_is_random() const
 
 expression_ref data_partition::get_node_CLV(int node) const
 {
-    auto maybe_node_CLV = property(9)[node];
+    auto maybe_node_CLV = property(8)[node];
     if (maybe_node_CLV.size() > 0)
 	return maybe_node_CLV[0].value();
     else
@@ -172,17 +172,17 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(7).value().as_int();
+    return property(6).value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(6).value().as_int();
+    return property(5).value().as_int();
 }
 
 object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix(int n) const
 {
-    return property(8)[n].value().as_ptr_to<Box<Matrix>>();
+    return property(7)[n].value().as_ptr_to<Box<Matrix>>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -276,7 +276,7 @@ object_ptr<const Likelihood_Cache_Branch> data_partition::cache(int b) const
 log_double_t data_partition::likelihood() const 
 {
     substitution::total_likelihood++;
-    return property(4).value().as_log_double();
+    return property(3).value().as_log_double();
 }
 
 log_double_t data_partition::heated_likelihood() const 

@@ -34,27 +34,28 @@ import Control.Monad.Fix -- for rec
 -- 0 - subst_root
 -- 1 - transition_ps
 -- 2 - CLVs
--- 3 - ?ancestral states         -- used through haskell, not parameters.cc
--- 4 - likelihood
--- 5 - alphabet
--- 6 - n_states
--- 7 - n_base_models
+-- 3 - likelihood
+-- 4 - alphabet
+-- 5 - n_states
+-- 6 - n_base_models
+-- # - ?ancestral states         -- used through haskell, not parameters.cc
 
 -- Some of these things could be accessed through the distribution arguments:
--- 5. alphabet
--- 6. n_states
--- 7. n_base_models
+-- 4. alphabet
+-- 5. n_states
+-- 6. n_base_models
 
 
 data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_subst_root :: Int,
       prop_fixed_a_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fixed_a_cond_likes :: IntMap CondLikes,
-      prop_fixed_a_anc_seqs :: AlignedCharacterData,
       prop_fixed_a_likelihood :: LogDouble,
       prop_fixed_a_alphabet :: Alphabet,
       prop_fixed_a_n_states :: Int,
-      prop_fixed_a_n_base_models :: Int
+      prop_fixed_a_n_base_models :: Int,
+
+      prop_fixed_a_anc_seqs :: AlignedCharacterData
     }
 
 
@@ -111,7 +112,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralSequences
 
   return ([likelihood], prop)
 
@@ -193,7 +194,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralSequences
 
   return ([likelihood], prop)
 
@@ -297,7 +298,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls ancestralSequences likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree))
+  let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)) ancestralSequences
 
   return ([likelihood,1/likelihood2], prop)
 
