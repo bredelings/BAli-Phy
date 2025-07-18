@@ -65,7 +65,17 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
 instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
     prop_likelihood = prop_variable_a_likelihood
     prop_anc_seqs = prop_variable_a_anc_seqs
-                            
+{-
+ - rtree: translate from nodes to labels
+ - alignment: translates from sequences to aligned sequences
+ - smap: translates from states to letters
+ - alphabet: describes the letters
+ -}
+ancestralAlignment rtree alignment smap alphabet componentStateSequences =
+    Aligned $ CharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
+    where stateSequences = extractStates <$> componentStateSequences
+          alignedStateSequences = alignedSequences alignment stateSequences
+          alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let rtree = setRoot substRoot (makeRooted tree)
@@ -89,9 +99,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences rtree substRoot nodeCLVs as transitionPs f cls
 
-      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
-
-      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree rtree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+      ancestralSequences = ancestralAlignment rtree alignment smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "alignment" alignment
