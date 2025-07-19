@@ -64,12 +64,11 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_anc_seqs = prop_fixed_a_anc_seqs
 
 
-ancestralAlignment tree uncompressedNodeSequences smap alphabet componentStateSequences =
+ancestralAlignment tree observedMasks smap alphabet componentStateSequences =
 --    This also needs the map from columns to compressed columns:
       let ancestralStateSequences :: IntMap (EVector Int)
           ancestralStateSequences = extractStates <$> componentStateSequences
-          uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
-          ancestralStateSequences' = minimallyConnectCharacters uncompressedNodeMasks tree ancestralStateSequences
+          ancestralStateSequences' = minimallyConnectCharacters observedMasks tree ancestralStateSequences
           ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
       in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 
@@ -92,6 +91,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
 
       uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
       uncompressedNodeSequences = labelToNodeMap rtree $ getSequences sequenceData
+      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
 
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
@@ -104,7 +104,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = ancestralAlignment rtree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment rtree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -176,6 +176,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
 
       uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
       uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
+      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
 
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
@@ -188,7 +189,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = ancestralAlignment tree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment tree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -274,6 +275,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
       uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
       uncompressedNodeSequences = labelToNodeMap rtree $ getSequences sequenceData
+      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
 
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
@@ -294,7 +296,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = ancestralAlignment rtree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment rtree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
