@@ -138,15 +138,15 @@ getConnectedStates sequences tree =
                                                             ms -> foldr1 (.|.) [m1 .&. m2 | (m1,m2) <- pairs ms]
      in node_masks
 
-minimally_connect_characters leaf_sequences tree all_sequences = nodes & IntMap.fromSet sequenceForNode
-    where sequenceForNode n = maskSequence (node_masks IntMap.! n) (all_sequences IntMap.! n)
-          node_masks = getConnectedStates leaf_sequences tree
+minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.fromSet sequenceForNode
+    where sequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
+          nodeMasks = getConnectedStates leafSequences tree
           nodes = tree & getNodesSet
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
     where missingSequence = toVector $ replicate alignmentLength missingCharIndex
           alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
-          msg = "minimally_connect_characters': not all observed sequences are the same length!"
+          msg = "minimallyConnectCharacters': not all observed sequences are the same length!"
           observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
 

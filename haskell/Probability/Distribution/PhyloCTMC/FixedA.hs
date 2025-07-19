@@ -68,7 +68,7 @@ ancestralAlignment tree uncompressedNodeSequences smap alphabet componentStateSe
 --    This also needs the map from columns to compressed columns:
       let ancestralStateSequences :: IntMap (EVector Int)
           ancestralStateSequences = extractStates <$> componentStateSequences
-          ancestralStateSequences' = minimally_connect_characters uncompressedNodeSequences tree ancestralStateSequences
+          ancestralStateSequences' = minimallyConnectCharacters uncompressedNodeSequences tree ancestralStateSequences
           ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
       in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 

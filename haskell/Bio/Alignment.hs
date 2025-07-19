@@ -45,7 +45,7 @@ seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
 pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
                                                                                            let bits1 = bits ! sourceNode tree b,
                                                                                            let bits2 = bits ! targetNode tree b]
-    where bits = minimally_connect_characters a tree
+    where bits = minimallyConnectCharacters a tree
 -}
 
 {- NOTE: How should we handle forests?
@@ -138,7 +138,7 @@ select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (EVector Int))
           observedSequences = labelToNodeMap tree $ getSequences sequences
-          allSequences = minimally_connect_characters observedSequences tree (addAllMissingAncestors observedSequences tree)
+          allSequences = minimallyConnectCharacters observedSequences tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
           lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ stripGaps $ allSequences IntMap.! node)
           bits = fmap bitmaskFromSequence' allSequences
