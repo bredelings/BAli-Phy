@@ -108,13 +108,9 @@ charactersBehind sequence_masks tree = let
 
 
 {- Issues:
-   (a) This is quadritic in the node degree.
+   (a) This is quadratic in the node degree.
        We could fix this by COUNTING the number of bits at a node and recording a 1 if there are 2 or more.
        greaterThanBits 1 $ foldr1 addBits (zeroBits L) ms
-   (b) Its not clear how to handle observed data at internal nodes.
-       Suppose we have observed data at all nodes.  And suppose that we have "-" -> "N" -> "-".
-       What should we do?
-       Currently what we do is to treat an observed - as - even if there are Ns on both sides.
  -}
 getConnectedStates :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
 getConnectedStates sequence_masks tree =
@@ -128,12 +124,17 @@ getConnectedStates sequence_masks tree =
         pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
         mask_for_node node = case sequence_masks IntMap.! node of
-                               Just mask -> mask
-                               Nothing -> let edgesin = edgesTowardNode tree node
-                                              inputs = catMaybes $ toList $ fmap charBehind' edgesin
-                                          in case inputs of [] -> error $ "get_connected_states: No sequences at or behind node " ++ show node
-                                                            [m] -> m
-                                                            ms -> foldr1 (.|.) [m1 .&. m2 | (m1,m2) <- pairs ms]
+                               Just mask -> case inputs of []  -> mask
+                                                           [_] -> mask
+                                                           ms  -> foldr (.|.) mask [m1 .&. m2 | (m1,m2) <- pairs ms]
+
+                               Nothing   -> case inputs of []  -> error $ "get_connected_states: No sequences at or behind node " ++ show node
+                                                           [m] -> m
+                                                           ms  -> foldr1 (.|.) [m1 .&. m2 | (m1,m2) <- pairs ms]
+
+                             where edgesin = edgesTowardNode tree node
+                                   inputs = catMaybes $ toList $ fmap charBehind' edgesin
+
      in node_masks
 
 minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.fromSet sequenceForNode
