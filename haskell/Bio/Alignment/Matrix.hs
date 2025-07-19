@@ -116,11 +116,9 @@ charactersBehind sequence_masks tree = let
        What should we do?
        Currently what we do is to treat an observed - as - even if there are Ns on both sides.
  -}
-getConnectedStates :: IsTree t => IntMap (Maybe (EVector Int)) -> t -> IntMap BitVector
-getConnectedStates sequences tree =
+getConnectedStates :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
+getConnectedStates sequence_masks tree =
     let nodes = tree & getNodesSet
-
-        sequence_masks = fmap (fmap bitmaskFromSequence') sequences
 
         node_masks = nodes & IntMap.fromSet mask_for_node
 
@@ -140,7 +138,8 @@ getConnectedStates sequences tree =
 
 minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.fromSet sequenceForNode
     where sequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
-          nodeMasks = getConnectedStates leafSequences tree
+          leafMasks = fmap (fmap bitmaskFromSequence') leafSequences
+          nodeMasks = getConnectedStates leafMasks tree
           nodes = tree & getNodesSet
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
