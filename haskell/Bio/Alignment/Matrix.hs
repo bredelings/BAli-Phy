@@ -111,31 +111,28 @@ charactersBehind sequence_masks tree = let
    (a) This is quadratic in the node degree.
        We could fix this by COUNTING the number of bits at a node and recording a 1 if there are 2 or more.
        greaterThanBits 1 $ foldr1 addBits (zeroBits L) ms
+   (b) If we actually observed an internal node sequence as missing characters, does it really make sense to
+       pretend that those characters are present because they are present on both sides?
+       Shouldn't we instead signal an error?  Instead, we connect the characters present on both sides.
  -}
 getConnectedStates :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
-getConnectedStates sequence_masks tree =
-    let nodes = tree & getNodesSet
+getConnectedStates observedMasks tree = getNodesSet tree & IntMap.fromSet maskForNode
+    where charBehind = charactersBehind observedMasks tree
+          charBehind' e = charBehind IntMap.! e
 
-        node_masks = nodes & IntMap.fromSet mask_for_node
+          pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
-        charBehind = charactersBehind sequence_masks tree
-        charBehind' e = charBehind IntMap.! e
+          maskForNode node = case observedMasks IntMap.! node of
+                                 Just mask -> foldr (.|.) mask intersectingInputs
+                                              -- If an internal node is missing characters that are present on both sides, then we add them in.
 
-        pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
+                                 Nothing   -> case inputs of []  -> error $ "getConnectedStates: No observed sequences on tree -- at node:" ++ show node
+                                                             [m] -> m       -- this case handles leaves with no observations
+                                                             _   -> foldr1 (.|.) intersectingInputs
 
-        mask_for_node node = case sequence_masks IntMap.! node of
-                               Just mask -> case inputs of []  -> mask
-                                                           [_] -> mask
-                                                           ms  -> foldr (.|.) mask [m1 .&. m2 | (m1,m2) <- pairs ms]
-
-                               Nothing   -> case inputs of []  -> error $ "get_connected_states: No sequences at or behind node " ++ show node
-                                                           [m] -> m
-                                                           ms  -> foldr1 (.|.) [m1 .&. m2 | (m1,m2) <- pairs ms]
-
-                             where edgesin = edgesTowardNode tree node
-                                   inputs = catMaybes $ toList $ fmap charBehind' edgesin
-
-     in node_masks
+                               where edgesin = edgesTowardNode tree node
+                                     inputs = catMaybes $ toList $ fmap charBehind' edgesin
+                                     intersectingInputs = [m1 .&. m2 | (m1,m2) <- pairs inputs]
 
 minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.fromSet sequenceForNode
     where sequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
