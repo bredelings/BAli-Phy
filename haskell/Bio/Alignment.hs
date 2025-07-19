@@ -41,18 +41,6 @@ branch_hmms (model,_) tree scale = getUEdgesSet tree & IntMap.fromSet (model $ f
 seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
     b = head $ edgesOutOfNode tree node
 
-{-
-pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
-                                                                                           let bits1 = bits ! sourceNode tree b,
-                                                                                           let bits2 = bits ! targetNode tree b]
-    where bits = minimallyConnectCharacters a tree
--}
-
-{- NOTE: How should we handle forests?
-Currently we store the node sequence lengths directory only for nodes with observed data.
-We could alternatively store the node sequence lengths only for nodes not in a pairwise alignment.
--}
-
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
 data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
 
