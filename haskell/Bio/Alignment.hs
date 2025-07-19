@@ -127,6 +127,7 @@ alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree num
     where -- observedSequences :: IntMap (Maybe (EVector Int))
           observedSequences = labelToNodeMap tree $ getSequences sequences
           observedMasks = fmap (fmap bitmaskFromSequence') observedSequences
+          -- What is going on here with addAllMissingAncestors?
           allSequences = minimallyConnectCharacters observedMasks tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
           lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ stripGaps $ allSequences IntMap.! node)

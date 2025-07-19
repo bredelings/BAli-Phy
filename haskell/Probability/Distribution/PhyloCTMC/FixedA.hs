@@ -89,9 +89,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
-      uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
-      uncompressedNodeSequences = labelToNodeMap rtree $ getSequences sequenceData
-      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
+      leafAlignment = labelToNodeMap rtree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
 
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
@@ -104,7 +102,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = ancestralAlignment rtree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment rtree leafAlignment smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
