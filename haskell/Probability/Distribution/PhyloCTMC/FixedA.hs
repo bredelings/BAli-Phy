@@ -64,7 +64,7 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_anc_seqs = prop_fixed_a_anc_seqs
 
 
-sampleAncestralAlignment uncompressedNodeSequences tree alphabet smap componentStateSequences =
+ancestralAlignment tree uncompressedNodeSequences smap alphabet componentStateSequences =
 --    This also needs the map from columns to compressed columns:
       let ancestralStateSequences :: IntMap (EVector Int)
           ancestralStateSequences = extractStates <$> componentStateSequences
@@ -103,7 +103,7 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree alphabet smap ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment rtree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -187,7 +187,7 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree alphabet smap ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment tree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -293,7 +293,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
       ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
                                          
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree alphabet smap ancestralComponentStateSequences
+      ancestralSequences = ancestralAlignment rtree uncompressedNodeSequences smap alphabet ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
