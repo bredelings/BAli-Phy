@@ -36,3 +36,6 @@ instance Functor Maybe where
 
 instance Functor ((->) r) where
   fmap = (.)
+
+instance Functor ((,) a) where
+    fmap f (x,y) = (x, f y)
