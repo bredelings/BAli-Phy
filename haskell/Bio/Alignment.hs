@@ -126,7 +126,8 @@ select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (EVector Int))
           observedSequences = labelToNodeMap tree $ getSequences sequences
-          allSequences = minimallyConnectCharacters observedSequences tree (addAllMissingAncestors observedSequences tree)
+          observedMasks = fmap (fmap bitmaskFromSequence') observedSequences
+          allSequences = minimallyConnectCharacters observedMasks tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
           lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ stripGaps $ allSequences IntMap.! node)
           bits = fmap bitmaskFromSequence' allSequences

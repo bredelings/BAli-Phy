@@ -134,9 +134,8 @@ getConnectedStates observedMasks tree = getNodesSet tree & IntMap.fromSet maskFo
                                      inputs = catMaybes $ toList $ fmap charBehind' edgesin
                                      intersectingInputs = [m1 .&. m2 | (m1,m2) <- pairs inputs]
 
-minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.fromSet sequenceForNode
+minimallyConnectCharacters leafMasks tree allSequences = nodes & IntMap.fromSet sequenceForNode
     where sequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
-          leafMasks = fmap (fmap bitmaskFromSequence') leafSequences
           nodeMasks = getConnectedStates leafMasks tree
           nodes = tree & getNodesSet
 
@@ -144,6 +143,6 @@ minimallyConnectCharacters leafSequences tree allSequences = nodes & IntMap.from
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
     where missingSequence = toVector $ replicate alignmentLength missingCharIndex
           alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
-          msg = "minimallyConnectCharacters': not all observed sequences are the same length!"
+          msg = "addAllMissingAncestors: not all observed sequences are the same length!"
           observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
 
