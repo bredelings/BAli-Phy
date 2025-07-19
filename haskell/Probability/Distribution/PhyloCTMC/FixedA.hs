@@ -64,17 +64,12 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_anc_seqs = prop_fixed_a_anc_seqs
 
 
-sampleAncestralAlignment uncompressedNodeSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping =
+sampleAncestralAlignment uncompressedNodeSequences tree alphabet smap componentStateSequences =
 --    This also needs the map from columns to compressed columns:
-      let ancestralComponentStateSequences :: IntMap VectorPairIntInt
-          ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
-
-          ancestralStateSequences :: IntMap (EVector Int)
-          ancestralStateSequences = extractStates <$> ancestralComponentStateSequences
+      let ancestralStateSequences :: IntMap (EVector Int)
+          ancestralStateSequences = extractStates <$> componentStateSequences
           ancestralStateSequences' = minimally_connect_characters uncompressedNodeSequences tree ancestralStateSequences
-
           ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-
       in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
 
 
@@ -106,7 +101,9 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
       likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap substRoot column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+                                         
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree alphabet smap ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -188,7 +185,9 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
       likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap substRoot column_counts
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+                                         
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences tree alphabet smap ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
@@ -292,7 +291,9 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       cls2 = cached_conditional_likelihoods rtree nodeCLVs2 transitionPs
       likelihood2 = peel_likelihood_variable nodeCLVs2 rtree cls2 f alphabet smap substRoot column_counts2
 
-      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+                                         
+      ancestralSequences = sampleAncestralAlignment uncompressedNodeSequences rtree alphabet smap ancestralComponentStateSequences
 
   in_edge "tree" tree
   in_edge "smodel" smodel
