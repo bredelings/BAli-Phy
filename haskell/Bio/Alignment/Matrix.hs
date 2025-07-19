@@ -115,8 +115,8 @@ charactersBehind sequence_masks tree = let
        pretend that those characters are present because they are present on both sides?
        Shouldn't we instead signal an error?  Instead, we connect the characters present on both sides.
  -}
-getConnectedStates :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
-getConnectedStates observedMasks tree = getNodesSet tree & IntMap.fromSet maskForNode
+minimallyConnectMasks :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
+minimallyConnectMasks observedMasks tree = getNodesSet tree & IntMap.fromSet maskForNode
     where charBehind = charactersBehind observedMasks tree
           charBehind' e = charBehind IntMap.! e
 
@@ -134,10 +134,15 @@ getConnectedStates observedMasks tree = getNodesSet tree & IntMap.fromSet maskFo
                                      inputs = catMaybes $ toList $ fmap charBehind' edgesin
                                      intersectingInputs = [m1 .&. m2 | (m1,m2) <- pairs inputs]
 
-minimallyConnectCharacters leafMasks tree allSequences = nodes & IntMap.fromSet sequenceForNode
-    where sequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
-          nodeMasks = getConnectedStates leafMasks tree
-          nodes = tree & getNodesSet
+{- This routine does two things:
+     (i)  it constructs masks on internal nodes and then
+     (ii) it applies masks for each node to sequences as each node.
+   We could make something that applies an IntMap (Maybe BitVector) to an IntMap EVector Int.
+   That would allow minimallyConnectStates to return Nothing instead of an error if there are no observed masks.
+-}
+minimallyConnectCharacters leafMasks tree allSequences = getNodesSet tree & IntMap.fromSet maskedSequenceForNode
+    where nodeMasks = minimallyConnectMasks leafMasks tree
+          maskedSequenceForNode n = maskSequence (nodeMasks IntMap.! n) (allSequences IntMap.! n)
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
