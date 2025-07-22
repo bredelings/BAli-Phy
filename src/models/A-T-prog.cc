@@ -559,6 +559,7 @@ compute_logged_quantities(do_block& model,
 			  const expression_ref& properties,
 			  const expression_ref& alphabet_exp,
 			  const expression_ref& sequence_data,
+			  const expression_ref& smodel,
 			  std::optional<int> imodel_index,
 			  vector<expression_ref>& alignment_lengths,
 			  vector<expression_ref>& total_num_indels,
@@ -615,11 +616,22 @@ compute_logged_quantities(do_block& model,
     {
 	if (imodel_index or get_setting_or("write-fixed-alignments",false))
 	{
-	    // This should affect whether we allow modifying leaf sequences.
+            // FIXME: This should affect whether we allow modifying leaf sequences.
 	    // bool infer_ambiguous_observed = get_setting_or(keys, "infer-ambiguous-observed",false);
 
-	    var anc_alignment("anc_alignment"+part_suffix);
-	    model.let(anc_alignment, {var("toFasta"),{var("prop_anc_seqs"), properties} });
+            // Get the alignment variable
+            auto alignment = alignment_on_tree;
+            if (not imodel_index)
+            {
+                alignment = var("alignment" + part_suffix);
+                model.let(alignment, {var("leafAlignment"), tree, sequence_data});
+            }
+
+            var anc_states("ancStates");
+            model.let(anc_states,{var("prop_anc_cat_states"), properties});
+        
+	    var anc_alignment("ancAlignment"+part_suffix);
+	    model.let(anc_alignment, {var("toFasta"),{var("ancestralAlignment"), tree, alignment, {var("getSMap"),smodel}, alphabet_exp, anc_states}});
 	    alignment_exp = anc_alignment;
 	}
 
@@ -951,6 +963,7 @@ std::string generate_atmodel_program(const variables_map& args,
 						     properties,
 						     alphabet_exps[i],
 						     sequence_data,
+                                                     smodel,
 						     imodel_index,
 						     alignment_lengths,
 						     total_num_indels,

@@ -58,13 +58,13 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_get_weightedFrequencyMatrix :: IntMap (Matrix Double),   -- only variable A
       prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
 
-      prop_variable_a_anc_seqs :: AlignedCharacterData
+      prop_variable_a_anc_cat_states :: IntMap VectorPairIntInt
     }
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
     prop_likelihood = prop_variable_a_likelihood
-    prop_anc_seqs = prop_variable_a_anc_seqs
+    prop_anc_cat_states = prop_variable_a_anc_cat_states
 {-
  - rtree: translate from nodes to labels
  - alignment: translates from sequences to aligned sequences
@@ -92,15 +92,13 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       -- but instead we just ensure that the alignment is evaluated.
       likelihood  = peel_likelihood rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences rtree substRoot nodeCLVs as transitionPs f cls
-
-      ancestralSequences = ancestralAlignment rtree alignment smap alphabet ancestralComponentStateSequences
+      ancestralComponentStates = sample_ancestral_sequences rtree substRoot nodeCLVs as transitionPs f cls
 
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralSequences
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralComponentStates
 
   return ([likelihood], prop)
 
@@ -178,17 +176,13 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
       -- but instead we just ensure that the alignment is evaluated.
       likelihood  = peelLikelihoodEqNonRev tree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
-
-      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
-
-      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
 
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralSequences
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralComponentStates
 
   return ([likelihood], prop)
 
@@ -237,17 +231,13 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
       -- but instead we just ensure that the alignment is evaluated.
       likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f substRoot
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
-
-      ancestral_sequences = extractStates <$> ancestralComponentStateSequences
-
-      ancestralSequences = Aligned $ CharacterData alphabet (sequencesFromTree tree (statesToLetters smap <$> alignedSequences alignment ancestral_sequences))
+      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs as transitionPs f cls
 
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralSequences
+  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralComponentStates
 
   return ([likelihood], prop)
 

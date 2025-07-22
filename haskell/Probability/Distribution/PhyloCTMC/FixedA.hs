@@ -55,13 +55,13 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_n_states :: Int,
       prop_fixed_a_n_base_models :: Int,
 
-      prop_fixed_a_anc_seqs :: AlignedCharacterData
+      prop_fixed_a_anc_cat_states :: IntMap VectorPairIntInt
     }
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_likelihood = prop_fixed_a_likelihood
-    prop_anc_seqs = prop_fixed_a_anc_seqs
+    prop_anc_cat_states = prop_fixed_a_anc_cat_states
 
 {-
 ok, so how do we pass IntMaps to C++ functions?
@@ -79,8 +79,6 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
-      leafAlignment = labelToNodeMap rtree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
-
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodelOnTree
@@ -90,15 +88,13 @@ annotated_subst_likelihood_fixed_A tree length smodel sequenceData = do
       cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
       likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap substRoot column_counts
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
-                                         
-      ancestralSequences = ancestralAlignment rtree leafAlignment smap alphabet ancestralComponentStateSequences
+      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralSequences
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralComponentStates
 
   return ([likelihood], prop)
 
@@ -162,10 +158,6 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
-      uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
-      uncompressedNodeSequences = labelToNodeMap tree $ getSequences sequenceData
-      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
-
       n_nodes = numNodes tree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodelOnTree
@@ -175,15 +167,13 @@ annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
       cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
       likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap substRoot column_counts
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
-                                         
-      ancestralSequences = ancestralAlignment tree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
+      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralSequences
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralComponentStates
 
   return ([likelihood], prop)
 
@@ -261,10 +251,6 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
-      uncompressedNodeSequences :: IntMap (Maybe (EVector Int))
-      uncompressedNodeSequences = labelToNodeMap rtree $ getSequences sequenceData
-      uncompressedNodeMasks = fmap (fmap bitmaskFromSequence') uncompressedNodeSequences
-
       n_nodes = numNodes rtree
       alphabet = getAlphabet smodel
       smap   = stateLetters smodelOnTree
@@ -282,15 +268,13 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       cls2 = cached_conditional_likelihoods rtree nodeCLVs2 transitionPs
       likelihood2 = peel_likelihood_variable nodeCLVs2 rtree cls2 f alphabet smap substRoot column_counts2
 
-      ancestralComponentStateSequences = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
-                                         
-      ancestralSequences = ancestralAlignment rtree uncompressedNodeMasks smap alphabet ancestralComponentStateSequences
+      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)) ancestralSequences
+  let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)) ancestralComponentStates
 
   return ([likelihood,1/likelihood2], prop)
 

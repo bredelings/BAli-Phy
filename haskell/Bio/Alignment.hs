@@ -260,3 +260,4 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
               alignedStateSequences = alignedSequences alignment stateSequences
               alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
 
+leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData

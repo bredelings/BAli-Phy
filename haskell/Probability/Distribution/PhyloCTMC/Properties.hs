@@ -12,5 +12,5 @@ import SModel.Likelihood.CLV
 import Numeric.LogDouble
 
 class PhyloCTMCProperties a where
-      prop_anc_seqs :: a -> AlignedCharacterData
+      prop_anc_cat_states :: a -> IntMap VectorPairIntInt
       prop_likelihood :: a -> LogDouble

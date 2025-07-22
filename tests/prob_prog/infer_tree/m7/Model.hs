@@ -48,7 +48,8 @@ model sequenceData = do
     addMove 2 (scaleGroupsSlice [scale] (branchLengths tree))
     addMove 1 (scaleGroupsMH [scale] (branchLengths tree))
 
-    (m7_model, log_m7_model) <- gtr_m7_model (mkCodons dna (geneticCode "standard"))
+    let codons = mkCodons dna (geneticCode "standard")
+    (m7_model, log_m7_model) <- gtr_m7_model codons
 
     rate <- sample $ logLaplace (-4) 0.707
     meanLength <- sample $ shifted_exponential 10 1
@@ -62,8 +63,9 @@ model sequenceData = do
     let num_indels = totalNumIndels alignment
     let total_length_indels = totalLengthIndels alignment
     let prior_A = ln (probability propertiesA)
-    let anc_alignment = toFasta (prop_anc_seqs properties)
-    let substs = parsimony tree (unitCostMatrix (mkCodons dna standard_code)) (sequenceData, alignment)
+    let ancStates = prop_anc_cat_states properties
+    let ancAlignment = toFasta $ ancestralAlignment tree alignment (getSMap m7_model) codons ancStates
+    let substs = parsimony tree (unitCostMatrix codons) (sequenceData, alignment)
 
     let loggers =
             ["indelRates:sigma" %=% sigma
