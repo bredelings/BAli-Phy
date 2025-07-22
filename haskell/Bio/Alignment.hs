@@ -239,3 +239,24 @@ getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLa
           convert Forward  = 0
           convert Backward = 1
           cppDirection = convert direction
+
+class AncestralAlignment a where
+    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap VectorPairIntInt -> AlignedCharacterData
+
+instance AncestralAlignment (IntMap (Maybe BitVector)) where
+    ancestralAlignment tree observedMasks smap alphabet componentStateSequences =
+--    This also needs the map from columns to compressed columns:
+      let ancestralStateSequences :: IntMap (EVector Int)
+          ancestralStateSequences = extractStates <$> componentStateSequences
+          ancestralStateSequences' = minimallyConnectCharacters observedMasks tree ancestralStateSequences
+          ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
+      in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+
+
+instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
+    ancestralAlignment rtree alignment smap alphabet componentStateSequences =
+        Aligned $ CharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
+        where stateSequences = extractStates <$> componentStateSequences
+              alignedStateSequences = alignedSequences alignment stateSequences
+              alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
+

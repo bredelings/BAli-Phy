@@ -63,16 +63,6 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_likelihood = prop_fixed_a_likelihood
     prop_anc_seqs = prop_fixed_a_anc_seqs
 
-
-ancestralAlignment tree observedMasks smap alphabet componentStateSequences =
---    This also needs the map from columns to compressed columns:
-      let ancestralStateSequences :: IntMap (EVector Int)
-          ancestralStateSequences = extractStates <$> componentStateSequences
-          ancestralStateSequences' = minimallyConnectCharacters observedMasks tree ancestralStateSequences
-          ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-      in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
-
-
 {-
 ok, so how do we pass IntMaps to C++ functions?
 well, we could turn each IntMap into an EIntMap

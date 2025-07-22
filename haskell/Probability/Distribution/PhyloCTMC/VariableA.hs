@@ -71,11 +71,6 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
  - smap: translates from states to letters
  - alphabet: describes the letters
  -}
-ancestralAlignment rtree alignment smap alphabet componentStateSequences =
-    Aligned $ CharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
-    where stateSequences = extractStates <$> componentStateSequences
-          alignedStateSequences = alignedSequences alignment stateSequences
-          alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let rtree = setRoot substRoot (makeRooted tree)
