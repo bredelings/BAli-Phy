@@ -19,7 +19,10 @@ branch_categories (MixtureModels categories _) = categories
 mmm branch_cats m = MixtureModels branch_cats [m]
 
 instance HasAlphabet m => HasAlphabet (MixtureModels m) where
-    getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
+    getAlphabet (MixtureModels _ (m:ms)) = getAlphabet m
+
+instance HasSMap m => HasSMap (MixtureModels m) where
+    getSMap (MixtureModels _ (m:ms)) = getSMap m
 
 instance (HasSMap m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
     type instance IsReversible (MixtureModels m) = IsReversible m
