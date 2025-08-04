@@ -105,7 +105,6 @@ instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
 -- backward compatibility
 to_json = toJSON
 
-
 foreign import bpcall "Foreign:c_json" builtin_c_json :: EJSON -> CJSON
 c_json = builtin_c_json . deep_eval_json
 
@@ -124,6 +123,9 @@ cjsonToText = T.fromCppString . cjson_to_bytestring
 
 jsonToText :: JSON -> Text
 jsonToText = cjsonToText . c_json
+
+encode :: ToJSON a => a -> ByteString
+encode = toEncoding          
 
 deep_eval_json :: JSON -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ toVector $ map deep_eval_json xs
