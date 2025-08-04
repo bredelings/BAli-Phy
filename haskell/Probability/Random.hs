@@ -361,7 +361,7 @@ mcmc = runMCMCStrict 1.0
 
 makeMCMCModel m = makeModel $ runMCMCStrict 1.0 m
 
-foreign import bpcall "MCMC:" createContext :: [(Key,JSON)] -> CJSON -> IO ContextIndex
+foreign import bpcall "MCMC:" createContext :: [(Key,J.Value)] -> CJSON -> IO ContextIndex
 makeModel m = createContext prog log where
     prog = (unsafePerformIO m)
     log = c_json $ log_to_json $ prog

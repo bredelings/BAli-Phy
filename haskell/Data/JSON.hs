@@ -16,12 +16,12 @@ instance Show Key where
     show (Key t) = show t
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
-data JSON = Array [JSON] | Object [(Key,JSON)] | INumber Int | FNumber Double | Bool Bool | String Text | Null
+data Value = Array [Value] | Object [(Key,Value)] | INumber Int | FNumber Double | Bool Bool | String Text | Null
 
 -- BUG: No instance for 'Prelude.Show Compiler.Base.String' -- this is a mistake, because of type synonyms...
 -- Probably we need to check_type( ) on constructor argument types...
 
-instance Show JSON where
+instance Show Value where
     show Null = "null"
     show (INumber x) = show x
     show (FNumber x) = show x
@@ -47,9 +47,9 @@ instance ToJSONKey a => ToJSONKey [a] where
     toJSONKey l = toJSONKeyList l
 
 class ToJSON a where
-    toJSON :: a -> JSON
+    toJSON :: a -> Value
 
-    toJSONList :: [a] -> JSON
+    toJSONList :: [a] -> Value
     toJSONList x = Array $ map toJSON x
 
     toEncoding :: a -> ByteString
@@ -61,7 +61,7 @@ class ToJSON a where
     omitField :: a -> Bool
     omitField = const False
 
-instance ToJSON JSON where
+instance ToJSON Value where
     toJSON = id
 
 instance ToJSON () where
@@ -121,13 +121,13 @@ foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 cjsonToText :: CJSON -> Text
 cjsonToText = T.fromCppString . cjson_to_bytestring
 
-jsonToText :: JSON -> Text
+jsonToText :: Value -> Text
 jsonToText = cjsonToText . c_json
 
 encode :: ToJSON a => a -> ByteString
 encode = toEncoding          
 
-deep_eval_json :: JSON -> EJSON
+deep_eval_json :: Value -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ toVector $ map deep_eval_json xs
 deep_eval_json (Object xs) = ejson_object $ toVector [c_pair (T.toCppString key) (deep_eval_json value) | (Key key, value) <- xs]
 deep_eval_json (INumber i)  = ejson_inumber i
