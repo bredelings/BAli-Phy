@@ -4,6 +4,7 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Foreign.String
 import qualified Data.Map as M
+import Data.ByteString
 
 data CJSON
 
@@ -47,9 +48,18 @@ instance ToJSONKey a => ToJSONKey [a] where
 
 class ToJSON a where
     toJSON :: a -> JSON
-    toJSONList :: [a] -> JSON
 
+    toJSONList :: [a] -> JSON
     toJSONList x = Array $ map toJSON x
+
+    toEncoding :: a -> ByteString
+    toEncoding = jsonToText . toJSON
+
+    toEncodingList :: [a] -> ByteString
+    toEncodingList = jsonToText . toJSONList
+
+    omitField :: a -> Bool
+    omitField = const False
 
 instance ToJSON JSON where
     toJSON = id

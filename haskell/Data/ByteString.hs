@@ -1,5 +1,6 @@
 module Data.ByteString where
 
 import Data.Word
+import Data.Text    
 
-data ByteString
+type ByteString = Text
