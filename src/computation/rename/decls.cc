@@ -248,9 +248,8 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signatures, bool top)
+void renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signatures, const bound_var_info& binders, bool top)
 {
-    bound_var_info bound;
     map<Hs::LVar, Hs::LType> signatures2;
     for(auto& [lvar, ltype]: signatures)
     {
@@ -263,11 +262,13 @@ bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signat
             qualify_name(var2.name);
         signatures2.insert( {lvar2, ltype} );
 
-        bound.insert(var2.name);
+        if (not binders.count(var2.name))
+        {
+            error(lvar.loc, Note()<<"Signature but no definition for '"<<unloc(lvar).name<<"'");
+        }
     }
 
     signatures = std::move(signatures2);
-    return bound;
 }
 
 vector<Hs::Decls> split_decls(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls)
@@ -442,11 +443,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     auto binders = find_bound_vars_in_decls(decls, top);
 
-    auto sig_binders = rename_signatures(binds.signatures, top);
-
-    for(auto& sig_binder: sig_binders)
-        if (not binders.count(sig_binder))
-            error(Note()<<"Signature but no definition for '"<<sig_binder<<"'");
+    rename_signatures(binds.signatures, binders, top);
 
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);
