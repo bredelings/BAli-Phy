@@ -81,10 +81,10 @@ string :: String -> Encoding' a
 string = Encoding . T.pack
 
 emptyArray_ :: Encoding
-emptyArray = openBracket >< closeBracket               
+emptyArray_ = openBracket >< closeBracket               
 
 emptyObject_ :: Encoding
-emptyObject = openCurly >< closeCurly
+emptyObject_ = openCurly >< closeCurly
 
 wrapArray :: Encoding' a -> Encoding
 wrapArray e = retagEncoding $ openBracket >< e >< closeBracket
