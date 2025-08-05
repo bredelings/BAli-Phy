@@ -32,6 +32,8 @@ import qualified Foreign.IntMap as FIM
 import qualified Data.Map as Map
 import Data.Map (Map)
 
+import Data.JSON
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
@@ -261,3 +263,15 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
               alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
 
 leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
+
+
+foreign import bpcall "Foreign:" encodeVectorPairIntIntRaw :: VectorPairIntInt -> CPPString
+--foreign import bpcall "Foreign:" toJSONVectorPairIntIntRaw :: VectorPairIntInt -> EJSON
+--TODO: EJSON -> JSON.Value
+
+encodeVectorPairIntInt = Text.fromCppString . encodeVectorPairIntIntRaw
+
+instance ToJSON VectorPairIntInt where
+    toJSON = error "VectorPairIntInt.toJSON: not implemented"
+
+    toEncoding = encodeVectorPairIntInt

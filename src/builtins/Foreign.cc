@@ -15,6 +15,7 @@ using std::string_view;
 using std::vector;
 using std::set;
 using std::map;
+using std::pair;
 
 
 json::value c_json(const expression_ref& E)
@@ -171,5 +172,27 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     auto sample2 = MCON::atomize(MCON::unnest(sample), true);
 
     object_ptr<String> result = new String(MCON::tsv_line(MCON::get_row(mapping, sample2)));
+    return result;
+}
+
+extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& x = arg0.as_<Vector<pair<int,int>>>();
+
+    std::ostringstream o;
+    o<<"[";
+    
+    for(int i=0;i<x.size();i++)
+    {
+        auto& [y1,y2] = x[i];
+
+        o<<"["<<y1<<", "<<y2<<"]";
+        if (i+1 < x.size())
+            o<<", ";
+    }
+    o<<"]";
+
+    object_ptr<String> result = new String(o.str());
     return result;
 }
