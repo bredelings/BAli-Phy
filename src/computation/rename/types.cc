@@ -336,6 +336,12 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
         return I;
     }
 
+    if (not is_qualified_symbol(tc->name))
+    {
+        // If we get here, then an error should already have been emitted in rename_and_quantify_type(I.polytype) above.
+        return I;
+    }
+
     auto type_info = m.lookup_resolved_type(tc->name);
     if (not type_info)
     {
