@@ -100,7 +100,7 @@ pairs (Value v) = openCurly >< retagEncoding v >< closeCurly
 pairs Empty     = emptyObject_
 
 list :: (a -> Encoding) -> [a] -> Encoding
-list _ [] = emptyArray
+list _ [] = emptyArray_
 list to' (x:xs) = openBracket >< to' x >< commas xs >< closeBracket
     where
       commas = foldr (\v vs -> comma >< to' v >< vs) empty
