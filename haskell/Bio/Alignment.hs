@@ -34,6 +34,8 @@ import Data.Map (Map)
 
 import Data.JSON
 
+import qualified Data.JSON.Encoding as E
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
@@ -274,4 +276,4 @@ encodeVectorPairIntInt = Text.fromCppString . encodeVectorPairIntIntRaw
 instance ToJSON VectorPairIntInt where
     toJSON = error "VectorPairIntInt.toJSON: not implemented"
 
-    toEncoding = encodeVectorPairIntInt
+    toEncoding = E.unsafeToEncoding . Text.fromCppString . encodeVectorPairIntIntRaw

@@ -54,8 +54,8 @@ jsonToText = cjsonToText . c_json
 deep_eval_json :: Value -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ toVector $ map deep_eval_json xs
 deep_eval_json (Object xs) = ejson_object $ toVector [c_pair (T.toCppString key) (deep_eval_json value) | (Key key, value) <- xs]
-deep_eval_json (INumber i)  = ejson_inumber i
-deep_eval_json (FNumber f)  = ejson_fnumber f
+deep_eval_json (INumber i) = ejson_inumber i
+deep_eval_json (FNumber f) = ejson_fnumber f
 deep_eval_json (Bool b)    = ejson_bool b
 deep_eval_json (String s)  = ejson_string (T.toCppString s)
 deep_eval_json Null        = ejson_null ()

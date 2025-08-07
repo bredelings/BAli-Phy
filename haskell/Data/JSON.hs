@@ -1,6 +1,5 @@
 module Data.JSON (module Data.JSON.Types.Internal,
-                  module Data.JSON.Types.ToJSON,
-                  module Data.JSON.Encoding)
+                  module Data.JSON.Types.ToJSON)
     where
 
 import qualified Data.Text as T
@@ -13,3 +12,6 @@ import Data.JSON.Types.Internal
 import Data.JSON.Types.ToJSON
 import Data.JSON.Encoding
     
+encode :: ToJSON a => a -> Text
+encode = fromEncoding . toEncoding 
+

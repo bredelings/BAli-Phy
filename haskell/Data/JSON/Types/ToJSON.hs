@@ -1,6 +1,8 @@
 module Data.JSON.Types.ToJSON where
 
 import Data.JSON.Types.Internal
+import qualified Data.JSON.Encoding as E
+import Data.JSON.Encoding (Encoding, Encoding',Series {- , dict, emptyArray_ -} )
 
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -28,11 +30,11 @@ class ToJSON a where
     toJSONList :: [a] -> Value
     toJSONList x = Array $ map toJSON x
 
-    toEncoding :: a -> ByteString
-    toEncoding = jsonToText . toJSON
+    toEncoding :: a -> Encoding
+    toEncoding = toEncoding . toJSON
 
-    toEncodingList :: [a] -> ByteString
-    toEncodingList = jsonToText . toJSONList
+    toEncodingList :: [a] -> Encoding
+    toEncodingList = toEncoding . toJSONList
 
     omitField :: a -> Bool
     omitField = const False
@@ -40,18 +42,26 @@ class ToJSON a where
 instance ToJSON Value where
     toJSON = id
 
+    toEncoding = E.value
+
 instance ToJSON () where
     toJSON () = Null
+    toEncoding () = E.text $ T.pack $ "()"
 
 instance ToJSON Char where
     toJSON c = String (T.pack [c])
     toJSONList s = String (T.pack s)
 
+    toEncoding c = E.text $ T.pack $ [c]
+
 instance ToJSON Text where
     toJSON x = String x
 
+    toEncoding = E.text
+
 instance ToJSON Bool where
     toJSON x = Bool x
+    toEncoding = E.bool
 
 instance ToJSON Double where
     toJSON x = FNumber x
@@ -78,6 +88,21 @@ instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toJSON (x,y,z) = Array [toJSON x, toJSON y, toJSON z]
 
 
-encode :: ToJSON a => a -> ByteString
-encode = toEncoding          
+class KeyValue kv where
+    type KVOut kv
 
+    (.=) :: ToJSON v => Key -> v -> kv
+    infixr 8 .=
+
+    explicitToField :: (v-> KVOut kv) -> Key -> v -> kv
+
+instance KeyValue Series where
+    type KVOut Series = Encoding
+    (.=) = explicitToField toEncoding
+    explicitToField f name value = E.pair name (f value)
+
+
+instance (key ~ Key, value ~ Value) => KeyValue (key, value) where
+    type KVOut (key, value) = Value
+    (.=) = explicitToField toJSON
+    explicitToField f name value = (name, f value)

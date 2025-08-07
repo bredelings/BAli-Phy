@@ -5,21 +5,10 @@ import Data.Text (Text)
 import Data.Semigroup
 import Data.Monoid    
 
-import Prelude hiding (empty)
+import Prelude hiding (empty, bool)
+import Data.Text.Display (display)
 
-import Data.JSON.Types.Internal (Key(..), Value)
-
-{-     
-class KeyValue kv where
-  (.=) :: ToJSON v => Key -> v -> kv
-  infixr 8 .=
-
---instance KeyValue ByteString where
---    k .= v = ??
-
-instance (key ~ Key, value ~ Value) => KeyValue (key, value) where
-    k .= v = (k, toJSON v)
--}
+import Data.JSON.Types.Internal (Key(..), Value(..))
 
 -- Apparently tags include Text, Value, and InArray
 
@@ -75,10 +64,10 @@ key :: Key -> Encoding' a
 key = text . (\(Key t) -> t)
 
 text :: Text -> Encoding' a
-text = Encoding
+text t = Encoding (T.pack ['"'] <> t <> T.pack ['"'])
 
 string :: String -> Encoding' a
-string = Encoding . T.pack
+string s = text (T.pack s)
 
 emptyArray_ :: Encoding
 emptyArray_ = openBracket >< closeBracket               
@@ -105,6 +94,21 @@ list to' (x:xs) = openBracket >< to' x >< commas xs >< closeBracket
     where
       commas = foldr (\v vs -> comma >< to' v >< vs) empty
 
+null_ = Encoding (T.pack "null")
+
+object [] = emptyObject_
+object (x:xs) = openCurly >< one x >< rest xs 
+    where
+      rest (y:ys) = comma >< one y >< rest ys
+      rest []     = closeCurly
+      one (k,v) = key k >< colon >< value v
+
+array [] = emptyArray_
+array (x:xs) = openBracket >< value x >< rest xs
+    where
+      rest (y:ys) = comma >< value y >< rest ys
+      rest [] = closeBracket
+
 -- chars
 
 comma        = Encoding $ T.singleton ','
@@ -116,9 +120,19 @@ closeCurly   = Encoding $ T.singleton  '}'
 
 -- numbers
 
--- int :: Int -> Encoding
+int :: Int -> Encoding
+int i = text $ display i
 -- integer :: Integer -> Encoding
 -- float :: Float -> Encoding
--- double :: Double -> Encoding
 
--- value :: Value -> Encoding
+double :: Double -> Encoding
+double d = text $ display d
+
+value :: Value -> Encoding
+value (Array xs) = array xs
+value (Object kvs) = object kvs
+value (INumber i) = int i
+value (FNumber d) = double d
+value (Bool b) = bool b
+value (String t) = text t
+value Null = null_
