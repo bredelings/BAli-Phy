@@ -1,5 +1,6 @@
 module Data.JSON (module Data.JSON.Types.Internal,
-                  module Data.JSON.Types.ToJSON)
+                  module Data.JSON.Types.ToJSON,
+                  encode)
     where
 
 import qualified Data.Text as T

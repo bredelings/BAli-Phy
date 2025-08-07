@@ -23,6 +23,7 @@ import Data.Eq
 import Data.Semigroup
 import Data.Monoid
 import Control.DeepSeq
+import Data.String
 
 import qualified Foreign.String as FS
 
@@ -296,3 +297,6 @@ instance Semigroup Text where
 instance Monoid Text where
     mempty = empty
     mconcat = concat
+
+instance IsString Text where
+    fromString s = pack s

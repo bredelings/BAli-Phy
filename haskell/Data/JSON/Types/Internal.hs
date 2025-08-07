@@ -2,12 +2,16 @@ module Data.JSON.Types.Internal where
 
 import qualified Data.Text as T
 import Data.Text (Text)
+import Data.String    
     
 data Key = Key Text
 
 instance Show Key where
     show (Key t) = show t
 
+instance IsString Key where
+    fromString s = Key $ T.pack s
+                   
 data Value = Array [Value] | Object [(Key,Value)] | INumber Int | FNumber Double | Bool Bool | String Text | Null
 
 object = Object
