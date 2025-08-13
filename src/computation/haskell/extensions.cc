@@ -27,6 +27,7 @@ map<string,LangExt> ext_to_bit =
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
     {"NamedDefaults",               {LangExt::NamedDefaults}},
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
+    {"OverloadedLists",             {LangExt::OverloadedLists}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
     {"PolyKinds",                   {LangExt::PolyKinds}},

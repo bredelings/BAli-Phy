@@ -61,6 +61,7 @@ enum class LangExt
     NamedFieldPuns,
     NamedWildCards,
     NumericUnderscores,
+    OverloadedLists,
     OverloadedStrings,
     OverloadedRecordDot,
     OverlappingInstances,
