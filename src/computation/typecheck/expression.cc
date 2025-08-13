@@ -132,8 +132,26 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 {
     if (Lit.is_Char())
         set_expected_type( exp_type, char_type() );
-    else if (Lit.is_String())
-        set_expected_type( exp_type, list_type( char_type() ) );
+    else if (auto s = Lit.is_String())
+    {
+        if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
+        {
+            // 1. Typecheck fromString
+            auto fromString = Hs::Var("Data.String.fromString");
+            auto fromString_type = inferRho(fromString);
+
+            // 2. Check result type
+            auto [arg_type, result_type] = unify_function(fromString_type);
+            set_expected_type( exp_type, result_type );
+
+            // 3. The argument type should be [Char]
+            unify(arg_type, list_type(char_type()));
+
+            Lit = Hs::Literal(Hs::String(*s, fromString));
+        }
+        else
+            set_expected_type( exp_type, list_type( char_type() ) );
+    }
     else if (Lit.is_BoxedInteger())
         set_expected_type( exp_type, int_type() );
     else if (auto i = Lit.is_Integer())

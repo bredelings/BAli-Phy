@@ -634,7 +634,12 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto s = L->is_String())
         {
-            return Core2::unpack_cpp_string(*s);
+            auto core_string = Core2::unpack_cpp_string(*s);
+            Hs::String S = std::get<Hs::String>(L->literal);
+            if(S.fromStringOp)
+                return safe_apply(desugar(S.fromStringOp),{core_string});
+            else
+                return core_string;
         }
         else if (auto i = L->is_BoxedInteger())
         {

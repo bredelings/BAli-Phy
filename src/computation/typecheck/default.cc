@@ -16,6 +16,7 @@ using std::tuple;
 void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
     auto Num = find_prelude_tycon("Num");
+    auto IsString = TypeCon("Data.String.IsString");
 
     for(auto& [loc,default_decl]: M.default_decls)
     {
@@ -58,6 +59,12 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         default_env().insert({Num, {Integer, Double}});
     }
 
+    if (not default_env().count(IsString) and this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
+    {
+        Type String = list_type( char_type() );
+        default_env().insert({IsString, {String}});
+    }
+    
     /*
     if (this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules))
     {

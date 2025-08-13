@@ -39,7 +39,10 @@ struct String
 {
     std::string value;
     bool operator==(const String&) const = default;
+
+    expression_ref fromStringOp;
     String(const std::string& s):value(s) {}
+    String(const std::string& s, const expression_ref& op):value(s), fromStringOp(op) {}
 };
 
 struct Floating
