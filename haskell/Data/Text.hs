@@ -36,8 +36,7 @@ data Text = Text CPPString Int Int
 foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
 instance Show Text where
---    show s = show $ unpack s
-    show s = "\"" ++ unpack s ++ "\""
+    show s = show $ unpack s
 
 pack = fromCppString . builtin_pack . toVector
 
