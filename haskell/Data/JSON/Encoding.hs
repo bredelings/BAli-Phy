@@ -96,8 +96,8 @@ list to' (x:xs) = openBracket >< to' x >< commas xs >< closeBracket
 
 null_ = Encoding (T.pack "null")
 
-object [] = emptyObject_
-object (x:xs) = openCurly >< one x >< rest xs 
+eobject [] = emptyObject_
+eobject (x:xs) = openCurly >< one x >< rest xs 
     where
       rest (y:ys) = comma >< one y >< rest ys
       rest []     = closeCurly
@@ -130,7 +130,7 @@ double d = text $ display d
 
 value :: Value -> Encoding
 value (Array xs) = array xs
-value (Object kvs) = object kvs
+value (Object kvs) = eobject kvs
 value (INumber i) = int i
 value (FNumber d) = double d
 value (Bool b) = bool b

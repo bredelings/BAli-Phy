@@ -11,8 +11,14 @@ instance Show Key where
 
 instance IsString Key where
     fromString s = Key $ T.pack s
+
+type Pair = (Key, Value)
+
+type Object = [Pair]
+
+type Array = [Value]
                    
-data Value = Array [Value] | Object [(Key,Value)] | INumber Int | FNumber Double | Bool Bool | String Text | Null
+data Value = Array Array | Object Object | INumber Int | FNumber Double | Bool Bool | String Text | Null
 
 object = Object
 

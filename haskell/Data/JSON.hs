@@ -1,7 +1,25 @@
-module Data.JSON (module Data.JSON.Types.Internal,
-                  module Data.JSON.Types.ToJSON,
-                  encode)
+module Data.JSON
+    (
+     encode,
+     pairs,
+     -- Core types
+     Value(..),
+     Encoding,
+     fromEncoding,
+     Array,
+     Object,
+     Key,
+     -- Type conversion
+     ToJSON(..),
+     KeyValue(..),
+     ToJSONKey(..),
+     -- Constructors and accessors
+     Series,
+     object,
+     pairs
+    )
     where
+-- TODO: implement FromJSON
 
 import qualified Data.Text as T
 import Data.Text (Text)
