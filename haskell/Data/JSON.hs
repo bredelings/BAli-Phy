@@ -16,7 +16,12 @@ module Data.JSON
      -- Constructors and accessors
      Series,
      object,
-     pairs
+     pairs,
+     -- Foreign JSON things
+     CJSON,
+     cjsonToText,
+     jsonToText,
+     c_json
     )
     where
 -- TODO: implement FromJSON
