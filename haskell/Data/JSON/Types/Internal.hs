@@ -58,8 +58,9 @@ foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 cjsonToText :: CJSON -> Text
 cjsonToText = T.fromCppString . cjson_to_bytestring
 
-jsonToText :: Value -> Text
-jsonToText = cjsonToText . c_json
+-- QUESTION: Is this faster than "encode"?
+--jsonToText :: Value -> Text
+--jsonToText = cjsonToText . c_json
 
 deep_eval_json :: Value -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ toVector $ map deep_eval_json xs

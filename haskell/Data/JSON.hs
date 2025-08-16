@@ -20,7 +20,6 @@ module Data.JSON
      -- Foreign JSON things
      CJSON,
      cjsonToText,
-     jsonToText,
      c_json
     )
     where

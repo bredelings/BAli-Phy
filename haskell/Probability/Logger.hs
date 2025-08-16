@@ -80,7 +80,7 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
 writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $
-                                                           J.jsonToText $
+                                                           J.encode $
                                                            J.Object ["iter" %=% iter,
                                                                      "prior" %=% prior,
                                                                      "likelihood" %=% likelihood,
