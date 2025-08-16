@@ -109,14 +109,14 @@ optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
 bool
 TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
 {
-    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules);
+    // Rewrite this now that NamedDefaults has landed and (I think) been amended...
+    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules) or
+        this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
     bool ovl_string = this_mod().language_extensions.has_extension(LangExt::OverloadedStrings);
 
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
     set<string> interactive_classes_ = {"Eq", "Ord", "Show", "Foldable", "Traversable"};
-    if (ovl_string)
-        num_classes_.insert("IsString");
 
     add(std_classes_, num_classes_);
 
@@ -125,12 +125,16 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
     set<string> interactive_classes;
     for(auto& cls: num_classes_)
         num_classes.insert( find_prelude_tycon_name(cls) );
-
-    for(auto& cls: std_classes_)
-        std_classes.insert( find_prelude_tycon_name(cls) );
+    if (ovl_string)
+        num_classes.insert("Data.String.IsString");
 
     for(auto& cls: interactive_classes_)
         interactive_classes.insert( find_prelude_tycon_name(cls) );
+
+    for(auto& cls: std_classes_)
+        std_classes.insert( find_prelude_tycon_name(cls) );
+    std_classes.insert(num_classes.begin(), num_classes.end());
+    std_classes.insert(interactive_classes.begin(), interactive_classes.end());
 
     bool any_num = false;
     bool any_interactive = false;
@@ -152,19 +156,20 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
     }
 
     // Fail if none of the predicates is a numerical constraint
-    if (not any_num or (extended and not any_interactive and not any_num)) return false;
+    if (not any_num and (not extended or not any_interactive)) return false;
 
-    auto Num = find_prelude_tycon("Num");
-    for(auto& type: default_env().at(Num))
-    {
-        tv.fill(type);
-        auto wanteds = WantedConstraints(tv_wanteds);
-        entails({}, wanteds);
-        if (wanteds.empty())
-            return true;
-        else
-            tv.clear();
-    }
+    // FIXME: This is not the right algorithm anymore...
+    for(auto& [pred, types]: default_env())
+        for(auto& type: types)
+        {
+            tv.fill(type);
+            auto wanteds = WantedConstraints(tv_wanteds);
+            entails({}, wanteds);
+            if (wanteds.empty())
+                return true;
+            else
+                tv.clear();
+        }
 
     return false;
 }
