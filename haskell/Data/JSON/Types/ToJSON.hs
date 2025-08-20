@@ -14,6 +14,9 @@ class ToJSONKey a where
     toJSONKeyList :: [a] -> Key
     toJSONKeyList s = error "toJSONKeyList: not implemented for this type"
 
+instance ToJSONKey Key where
+    toJSONKey s = s
+
 instance ToJSONKey Text where
     toJSONKey s = Key s
 
