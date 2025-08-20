@@ -32,6 +32,7 @@ import Data.Semigroup
 import Data.Monoid
 
 import Data.JSON.Types.Internal
+import Data.JSON.Types.Foreign
 import Data.JSON.Types.ToJSON
 import Data.JSON.Encoding
     
