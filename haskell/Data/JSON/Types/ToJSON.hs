@@ -75,20 +75,27 @@ instance ToJSON Int where
 instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x
 
--- BUG: In instance for 'Data.JSON.ToJSON (Data.Map.Map Compiler.Base.String a)' for type 'Data.Map.Map Compiler.Base.String a': Compiler.Base.String is not a type variable!
+-- BUG: In instance for 'ToJSON (Map Compiler.Base.String a)' for type 'Map Compiler.Base.String a': Compiler.Base.String is not a type variable!
 -- BUG: If we just replace String with b, it checks... but should it?
 instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
     toJSON (M.Map xs) = object [(toJSONKey key, toJSON value) | (key, value) <- xs]
+    -- toEncoding (M.Map xs) = ...
 
 instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
+    -- toEncoding (x,y) = ...
 
+-- Apparently we need to so that we write
+--    pi[A]=value  pi[C]=value
+-- And not
+--    pi[1][1]="A"  pi[1][2] = value  pi[2][1] ="C"  pi[2][2]=value
 instance {-# INCOHERENT #-} ToJSON a => ToJSON ([Char],a) where
     toJSON (s,x) = Array [toJSON s, toJSON x]
     toJSONList xs = object [(toJSONKeyList key, toJSON value) | (key, value) <- xs]
 
 instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toJSON (x,y,z) = Array [toJSON x, toJSON y, toJSON z]
+    -- toEncoding (x,y,z) = ...
 
 
 class KeyValue kv where
