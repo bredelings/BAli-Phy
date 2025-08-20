@@ -139,8 +139,9 @@ signed       {negative}?
 "-}"         throw yy::parser::syntax_error(loc, "Too many -}");
 
 <nested_comment,nested_comment2>{
-"{-"/[^#]                    yy_push_state(nested_comment2);
-[^-\n]*      // eat a chunk with no newline or "-"
+"{-"         yy_push_state(nested_comment2);
+"{"          // eat a chunk with no newline or "-"
+[^-\n{]*     // eat a chunk with no newline or "-"
 "-"          // eat a "-" not followed by "}"
 [\n]         loc.lines(1);
 <<EOF>>      throw yy::parser::syntax_error(loc, "Unterminated {-");
