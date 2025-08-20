@@ -364,16 +364,16 @@ makeMCMCModel m = makeModel $ runMCMCStrict 1.0 m
 foreign import bpcall "MCMC:" createContext :: [(Key,J.Value)] -> CJSON -> IO ContextIndex
 makeModel m = createContext prog log where
     prog = (unsafePerformIO m)
-    log = c_json $ log_to_json $ prog
+    log = c_json $ logToJson $ prog
 
 foreign import bpcall "MCMC:" writeTraceGraph :: ContextIndex -> IO ()
 
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
 name %=% value = (toJSONKey name, toJSON value)
-prefix %>% subvalue = (toJSONKey $ prefix ++ "/", log_to_json subvalue)
+prefix %>% subvalue = (toJSONKey $ prefix ++ "/", logToJson subvalue)
 
-log_to_json loggers = J.Object $ loggers
+logToJson loggers = J.Object $ loggers
 
 -- Define some helper functions
 make_densities density x = return ([density x],())
