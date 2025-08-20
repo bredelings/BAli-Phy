@@ -25,6 +25,10 @@ import qualified Data.Text.IO as TIO
 
 import Probability.Dist
 
+import Data.Semigroup
+import Data.Monoid
+import Data.JSON.Encoding
+
 -------------------------- AnnotatedDensity ------------------------
 
 data AnnotatedDensity a where
@@ -362,6 +366,7 @@ mcmc = runMCMCStrict 1.0
 makeMCMCModel m = makeModel $ runMCMCStrict 1.0 m
 
 foreign import bpcall "MCMC:" createContext :: [(Key,J.Value)] -> CJSON -> IO ContextIndex
+
 makeModel m = createContext prog log where
     prog = (unsafePerformIO m)
     log = toCJSON $ logToJson $ prog
@@ -373,7 +378,14 @@ infix 1 %=%, %>%
 name %=% value = (toJSONKey name, toJSON value)
 prefix %>% subvalue = (toJSONKey $ prefix ++ "/", logToJson subvalue)
 
-logToJson loggers = J.Object $ loggers
+toSeries :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Series
+toSeries pairs = foldr (<>) mempty [toJSONKey k .= v | (k,v) <- pairs]
+
+(.>) :: (ToJSONKey k, ToJSON v) => String -> [(k,v)] -> Series
+prefix .> subvalue = pairStr (prefix ++ "/") (pairs $ toSeries subvalue)
+
+logToJson :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Value
+logToJson loggers = J.Object $ [(toJSONKey k, toJSON v) | (k,v) <- loggers]
 
 -- Define some helper functions
 make_densities density x = return ([density x],())

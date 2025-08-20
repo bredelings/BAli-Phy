@@ -82,7 +82,7 @@ wrapObject :: Encoding' a -> Encoding
 wrapObject e = retagEncoding $ openCurly >< e >< closeCurly
 
 bool True = Encoding (T.pack "true")
-bool False = Encoding (T.pack "false")            
+bool False = Encoding (T.pack "false")
 
 pairs :: Series -> Encoding
 pairs (Value v) = openCurly >< retagEncoding v >< closeCurly

@@ -79,14 +79,15 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
-writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $
-                                                           J.encode $
-                                                           J.Object ["iter" %=% iter,
-                                                                     "prior" %=% prior,
-                                                                     "likelihood" %=% likelihood,
-                                                                     "posterior" %=% posterior,
-                                                                     "parameters" %>% ljson]
-                                                          hFlush file
+writeJSONe file encoding = do T.hPutStrLn file $ J.fromEncoding encoding
+                              hFlush file
+
+writeJSON file ljson iter prior likelihood posterior = writeJSONe file $ J.toEncoding $
+                                                       J.Object ["iter" %=% iter,
+                                                                 "prior" %=% prior,
+                                                                 "likelihood" %=% likelihood,
+                                                                 "posterior" %=% posterior,
+                                                                 "parameters" %>% ljson]
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
 writeTree file tree iter _ _ _ = do T.hPutStrLn file $ writeNewick tree
