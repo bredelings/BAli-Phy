@@ -20,7 +20,7 @@ module Data.JSON
      -- Foreign JSON things
      CJSON,
      cjsonToText,
-     c_json
+     toCJSON
     )
     where
 -- TODO: implement FromJSON

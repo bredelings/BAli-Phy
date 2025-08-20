@@ -364,7 +364,7 @@ makeMCMCModel m = makeModel $ runMCMCStrict 1.0 m
 foreign import bpcall "MCMC:" createContext :: [(Key,J.Value)] -> CJSON -> IO ContextIndex
 makeModel m = createContext prog log where
     prog = (unsafePerformIO m)
-    log = c_json $ logToJson $ prog
+    log = toCJSON $ logToJson $ prog
 
 foreign import bpcall "MCMC:" writeTraceGraph :: ContextIndex -> IO ()
 

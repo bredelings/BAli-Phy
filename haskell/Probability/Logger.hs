@@ -106,7 +106,7 @@ writeTSV file firstFields stateref ljson iter prior likelihood posterior = do
                     "likelihood" %=% likelihood,
                     "posterior" %=% posterior,
                     "parameters" %>% ljson]
-      cj = J.c_json j
+      cj = J.toCJSON j
 
   state <- readIORef stateref
 

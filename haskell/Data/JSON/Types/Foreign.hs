@@ -12,8 +12,8 @@ data EJSON
 
 foreign import bpcall "Foreign:c_json" builtin_c_json :: EJSON -> CJSON
 
-c_json :: ToJSON v => v -> CJSON
-c_json = builtin_c_json . deep_eval_json . toJSON
+toCJSON :: ToJSON v => v -> CJSON
+toCJSON = builtin_c_json . deep_eval_json . toJSON
 
 foreign import bpcall "Foreign:" ejson_array   :: EVector EJSON -> EJSON
 foreign import bpcall "Foreign:" ejson_object  :: EVector (EPair CPPString EJSON) -> EJSON
@@ -30,7 +30,7 @@ cjsonToText = T.fromCppString . cjson_to_bytestring
 
 -- QUESTION: Is this faster than "encode"?
 --jsonToText :: Value -> Text
---jsonToText = cjsonToText . c_json
+--jsonToText = cjsonToText . toCJSON
 
 deep_eval_json :: Value -> EJSON
 deep_eval_json (Array xs)  = ejson_array $ toVector $ map deep_eval_json xs
