@@ -627,7 +627,7 @@ compute_logged_quantities(do_block& model,
                 model.let(alignment, {var("leafAlignment"), tree, sequence_data});
             }
 
-            var anc_states("ancStates");
+            var anc_states("ancStates" + part_suffix);
             model.let(anc_states,{var("prop_anc_cat_states"), properties});
         
 	    var anc_alignment("ancAlignment"+part_suffix);
