@@ -972,7 +972,7 @@ std::string generate_atmodel_program(const variables_map& args,
 						     total_prior_A,
 						     alignments);
 
-        var part_loggers("p"+part+"_loggers");
+        var part_loggers("part"+part+"Loggers");
         model.let(part_loggers,get_list(sub_loggers));
         model_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
         model.empty_stmt();
