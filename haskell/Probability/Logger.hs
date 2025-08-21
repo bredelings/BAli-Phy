@@ -1,15 +1,20 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
 module Probability.Logger where
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import System.IO
-import qualified Data.JSON as J
+import Data.JSON as J
+--import Data.JSON ( (.=), pairs )
 import Probability.Random
 import Foreign.String as FS
 import Foreign.Vector as FV
 
 import Tree
 import Tree.Newick
+
+import Data.Semigroup ((<>))
 
 -- addLogger subsample logger obj = addLoggingAction subsample (logAppend logger obj)
 
@@ -82,12 +87,14 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 writeJSONe file encoding = do T.hPutStrLn file $ J.fromEncoding encoding
                               hFlush file
 
-writeJSON file ljson iter prior likelihood posterior = writeJSONe file $ J.toEncoding $
-                                                       J.Object ["iter" %=% iter,
-                                                                 "prior" %=% prior,
-                                                                 "likelihood" %=% likelihood,
-                                                                 "posterior" %=% posterior,
-                                                                 "parameters" %>% ljson]
+writeJSON file ljson iter prior likelihood posterior = writeJSONe file $ pairs
+                                                       (
+                                                        "iter" .= iter <>
+                                                        "prior" .= prior <>
+                                                        "likelihood" .= likelihood <>
+                                                        "posterior" .= posterior <>
+                                                        "parameters" .> toSeries ljson
+                                                       )
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
 writeTree file tree iter _ _ _ = do T.hPutStrLn file $ writeNewick tree

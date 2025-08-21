@@ -381,8 +381,8 @@ prefix %>% subvalue = (toJSONKey $ prefix ++ "/", logToJson subvalue)
 toSeries :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Series
 toSeries pairs = foldr (<>) mempty [toJSONKey k .= v | (k,v) <- pairs]
 
-(.>) :: (ToJSONKey k, ToJSON v) => String -> [(k,v)] -> Series
-prefix .> subvalue = pairStr (prefix ++ "/") (pairs $ toSeries subvalue)
+(.>) :: String -> Series -> Series
+prefix .> subvalue = pairStr (prefix ++ "/") (pairs $ subvalue)
 
 logToJson :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Value
 logToJson loggers = J.Object $ [(toJSONKey k, toJSON v) | (k,v) <- loggers]
