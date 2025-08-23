@@ -5,12 +5,10 @@ import Compiler.Base (String)
 import Compiler.IO
 import Foreign.Vector
 import Foreign.Pair
-import Foreign.String    
+import Foreign.String
 import Data.Bool    
 import Data.Function
 import Data.List (map)
-import Data.Foldable (Foldable(toList))
-import Data.Functor ((<$>))
 import Numeric.LogDouble (LogDouble)
 
 class Translate a where
@@ -63,7 +61,7 @@ instance Translate a => Translate [a] where
     type Tr [a] = EVector (Tr a)
 
     toC xs = listToVector $ map toC xs
-    fromC v = fromC <$> toList v
+    fromC v = map fromC $ vectorToList v
 
 instance (Translate a, Translate b) => Translate (a, b) where
     type Tr (a, b) = EPair (Tr a) (Tr b)
