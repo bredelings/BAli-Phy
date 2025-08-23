@@ -293,3 +293,69 @@ extern "C" closure builtin_function_createUniqueDirectoryRaw(OperationArgs& Args
     return String(dir_path.string());
 }
 
+// IO FilePath
+extern "C" closure builtin_function_getCurrentDirectoryRaw(OperationArgs& Args)
+{
+    fs::path cwd = fs::current_path();
+
+    return String(cwd.string());
+}
+
+// FilePath -> IO ()
+extern "C" closure builtin_function_setCurrentDirectory(OperationArgs& Args)
+{
+    fs::path dirname = Args.evaluate(0).as_<String>().value();
+
+    fs::current_path(dirname);
+
+    return constructor("()",0);
+}
+
+// FilePath -> FilePath -> IO ()
+extern "C" closure builtin_function_copyFileRaw(OperationArgs& Args)
+{
+    fs::path from_path = Args.evaluate(0).as_<String>().value();
+    fs::path to_path = Args.evaluate(1).as_<String>().value();
+
+    fs::copy(from_path, to_path);
+
+    return constructor("()",0);
+}
+
+// FilePath -> FilePath -> IO ()
+extern "C" closure builtin_function_removeFileRaw(OperationArgs& Args)
+{
+    fs::path path = Args.evaluate(0).as_<String>().value();
+
+    if (fs::exists(path) and fs::is_directory(path))
+        throw myexception()<<"removeFile: can't remove "<<path<<" because it is a directory";
+
+    fs::remove(path);
+
+    return constructor("()",0);
+}
+
+// FilePath -> FilePath -> IO ()
+extern "C" closure builtin_function_renameFileRaw(OperationArgs& Args)
+{
+    fs::path from_path = Args.evaluate(0).as_<String>().value();
+    fs::path to_path = Args.evaluate(1).as_<String>().value();
+
+    if (fs::exists(from_path) and fs::is_directory(from_path))
+        throw myexception()<<"renameFile: can't rename "<<from_path<<" because it is a directory";
+
+    fs::rename(from_path, to_path);
+
+    return constructor("()",0);
+}
+
+// FilePath -> FilePath -> IO ()
+extern "C" closure builtin_function_renamePathRaw(OperationArgs& Args)
+{
+    fs::path from_path = Args.evaluate(0).as_<String>().value();
+    fs::path to_path = Args.evaluate(1).as_<String>().value();
+
+    fs::rename(from_path, to_path);
+
+    return constructor("()",0);
+}
