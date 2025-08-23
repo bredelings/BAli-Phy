@@ -26,6 +26,7 @@ import Control.DeepSeq
 import Data.String
 
 import qualified Foreign.String as FS
+import Compiler.Translate    
 
 -- We need to change this to Text CPPString Int {- offset -} Int {- length -}
 -- Ideally we'd have the strictness annotations ! as well.
@@ -299,3 +300,9 @@ instance Monoid Text where
 
 instance IsString Text where
     fromString s = pack s
+
+instance Translate Text where
+    type Tr Text = CPPString
+
+    toC (Text s i l) = FS.cppSubString s i l
+    fromC = fromCppString
