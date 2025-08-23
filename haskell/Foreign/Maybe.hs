@@ -4,6 +4,7 @@ module Foreign.Maybe where
 import Data.Bool -- for not
 import Data.Function -- for (.)
 import Data.Maybe
+import Compiler.Translate
 
 data CMaybe a
 
@@ -23,3 +24,13 @@ cIsNothing = not . cIsJust
 fromCMaybe x = if cIsJust x
                then Just $ cFromJust x
                else Nothing
+
+instance Translate a => Translate (Maybe a) where
+    type Tr (Maybe a) = CMaybe (Tr a)
+
+    toC (Just x) = cJust (toC x)
+    toC Nothing  = cNothing
+
+    fromC x = if cIsJust x
+              then Just $ fromC $ cFromJust x
+              else Nothing
