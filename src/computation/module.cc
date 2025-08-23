@@ -896,7 +896,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
-    auto tc_result = typecheck(MM->fresh_var_state(), M, *MM);
+    auto tc_result = std::make_shared<TypeChecker>( *MM )->typecheck_module( M );
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
@@ -1403,7 +1403,8 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
 
         int n_args = gen_type_arity(S->type);
 
-        auto [_,result_type] = gen_arg_result_types(S->type);
+        // Type synonyms have already been expanded during type checking.
+        auto [arg_types_,result_type] = gen_arg_result_types(S->type);
 
         Core2::Exp<> body;
 
@@ -1417,9 +1418,9 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
 
             body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
                                   {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f2 = f1 x1 .. xn in makeIO f2
-                  Core2::Apply<>{makeIO, {f2}}};                          // in makeIO fs
+                  Core2::Apply<>{makeIO, {f2}}};                          // in makeIO f2
 
-            body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO fs
+            body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
         }
         else
             body = parse_builtin(decl, n_args, L);

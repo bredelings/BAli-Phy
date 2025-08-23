@@ -840,8 +840,8 @@ Core2::Var<> TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type&
     return dvar;
 }
 
-TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m)
-    :FreshVarSource(fvs, s), local_state(new TypeCheckerContext)
+TypeChecker::TypeChecker(Module& m)
+    :FreshVarSource(m.fresh_var_state(), m.name), local_state(new TypeCheckerContext)
 {
     global_state = std::make_shared<global_tc_state>(m);
 }
@@ -1423,7 +1423,7 @@ pair<Hs::Binds,Core2::Decls<>> typechecker_result::all_binds() const
     return {all, all2};
 }
 
-typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Module& MM)
+typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -1447,69 +1447,67 @@ typechecker_result typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M, Modu
     //
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
-    auto tc_state = std::make_shared<TypeChecker>( fresh_vars, MM.name, MM);
-
     // 1. Get the types for defaulting.
-    tc_state->get_defaults( M );
+    get_defaults( M );
 
     // 2. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
-    tc_state->get_tycon_info( M.type_decls );
+    get_tycon_info( M.type_decls );
 
     // Quit early if there are errors in kind-checking.
     // This solves double-reporting of kind errors, since we re-king check data types in get_constructor_info( ).
-    show_messages(MM.file, std::cerr, tc_state->messages());
-    exit_on_error(tc_state->messages());
+    show_messages(this_mod().file, std::cerr, messages());
+    exit_on_error(messages());
 
     // 3. Annotate tyvars in types with their kind.
     // Do we need this, could we do it in infer_type_for_classes/synonyms/data?
-    M.type_decls = tc_state->add_type_var_kinds( M.type_decls );
+    M.type_decls = add_type_var_kinds( M.type_decls );
 
     // 4. Get type synonyms
-    tc_state->get_type_synonyms(M.type_decls);
+    get_type_synonyms(M.type_decls);
 
     // 5. Get type families declared outside of classes.
-    tc_state->get_type_families(M.type_decls);
+    get_type_families(M.type_decls);
 
     // 6. Get types for value constructors  (CVE_T = constructor types)
-    tc_state->get_constructor_info(M.type_decls);
+    get_constructor_info(M.type_decls);
 
     // 7. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    auto class_decls = tc_state->infer_type_for_classes(M.type_decls);
+    auto class_decls = infer_type_for_classes(M.type_decls);
 
     // 8. Get types and names for instances (pass 1)
-    auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
+    auto named_instances = infer_type_for_instances1(M.type_decls);
 
     // 9. Get types for foreign imports
-    tc_state->infer_type_for_foreign_imports(M.foreign_decls);
+    infer_type_for_foreign_imports(M.foreign_decls);
 
     // 10. Typecheck value decls
-    auto value_decls = tc_state->infer_type_for_binds_top(M.value_decls);
+    auto value_decls = infer_type_for_binds_top(M.value_decls);
 
     // 11. Typecheck default methods
-    auto dm_decls = tc_state->infer_type_for_default_methods(M.type_decls);
+    auto dm_decls = infer_type_for_default_methods(M.type_decls);
 
     // 12. Typecheck instance methods and generate dfuns (pass 2)
-    auto [instance_method_binds, dfun_decls] = tc_state->infer_type_for_instances2(named_instances);
+    auto [instance_method_binds, dfun_decls] = infer_type_for_instances2(named_instances);
 
     // 13. Default top-level ambiguous type vars.
-    auto top_simplify_decls = tc_state->simplify_and_default_top_level();
+    auto top_simplify_decls = simplify_and_default_top_level();
 
     // 14. Record types on the value symbol table
-    for(auto& [var,type]: tc_state->poly_env())
+    for(auto& [var,type]: poly_env())
     {
-        auto V = MM.lookup_local_symbol(var.name);
+        auto V = this_mod().lookup_local_symbol(var.name);
         assert(V->symbol_type != symbol_type_t::constructor);
         V->type = type;
     }
 
     // 15. Print messages sorted by location.
-    show_messages(MM.file, std::cerr, tc_state->messages());
+    show_messages(this_mod().file, std::cerr, messages());
 
     // If we throw an exception later, the stuff printed to cerr will be printed again.
     // Should we be printing to out_screen instead?
-    exit_on_error(tc_state->messages());
+    exit_on_error(messages());
 
-    tc_state->messages().clear();
+    messages().clear();
 
     Core2::Decls<> dfun_decls2;
     for(auto& [var,wrap,rhs]: dfun_decls)

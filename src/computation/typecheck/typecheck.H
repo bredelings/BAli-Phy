@@ -555,7 +555,9 @@ public:
 
     void get_defaults(const Hs::ModuleDecls& M);
 
-    TypeChecker(FreshVarState& fvs, const std::string& s, Module& m);
+    typechecker_result typecheck_module( Hs::ModuleDecls M );
+
+    TypeChecker(Module& m);
 };
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Type& constraint);
