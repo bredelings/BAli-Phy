@@ -1390,6 +1390,30 @@ Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const modu
     return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
 }
 
+/*
+ * IN theory we could use the type class in Compiler.Translate
+ * - we would need to write `f :: declared_type; f = Compiler.Translate.toC f$raw` BEFORE we do type-checking.
+ * - we would need to rewrite `Tr <declared type>` to find out how many lambda arguments to give parse_builtin.
+ * - we may need to complain about arguments that have no Translate instance.
+ * - we would need to write `f$raw :: Compiler.Translate.Tr <declared_type>`.
+ *   (if the result is IO a, then its n+1, otherwise n)
+ * - we also need to ensure that Compiler.Translate is loaded into the program
+ *   (we could add it to imports() if there are foreign declarations).
+ * - we need to ensure that the simplifier actually inlines all the many calls to fromC and toC.
+ * This seems like the way to go -- but its a fair amount of work.
+ */
+
+/*
+ * IN theory we could also write C++ functions
+ * - wrapper ToC(const Type& a);
+ * - wrapper FromC(const Type& a);
+ * However, we would need access to a unique name source.  For example, for ToC(a->b), we would have
+ *   f :: \x -> fromC (f (ToC x))
+ * But in core that would actually be
+ *   f :: \x -> fromC (let y = ToC x in f y)
+ * with y fresh.
+ */
+
 Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
 {
     Core2::Decls<> decls;
@@ -1404,7 +1428,7 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
         int n_args = gen_type_arity(S->type);
 
         // Type synonyms have already been expanded during type checking.
-        auto [arg_types_,result_type] = gen_arg_result_types(S->type);
+        auto [arg_types, result_type] = gen_arg_result_types(S->type);
 
         Core2::Exp<> body;
 
@@ -1417,7 +1441,7 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
             auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
 
             body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
-                                  {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f2 = f1 x1 .. xn in makeIO f2
+                                  {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
                   Core2::Apply<>{makeIO, {f2}}};                          // in makeIO f2
 
             body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
