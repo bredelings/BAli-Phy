@@ -76,6 +76,8 @@ import Foreign.String
 import System.IO (putChar, putStr, putStrLn, print, getChar, getLine, getContents, interact,
                   FilePath,readFile, writeFile, appendFile, readIO, readLn)
 
+import Compiler.Translate -- ensure this is typechecked
+    
 undefined = error "Prelude.undefined"
 
 -- zipWith' enforces equal lengths, unlike zipWith
