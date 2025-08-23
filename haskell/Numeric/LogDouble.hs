@@ -1,5 +1,15 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Numeric.LogDouble where
 
+import Data.Bool
+import Data.Eq
+import Data.Ord
+import Text.Show
+import Data.Function
+import Compiler.Base (error)
+import Compiler.Num
+import Compiler.Integral
+import Compiler.Fractional
 import Compiler.Floating
 import Compiler.Real
 import Data.Floating.Types
