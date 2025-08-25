@@ -1284,7 +1284,9 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
         // Add the unfolding for this variable.
         auto S = lookup_make_local_symbol(x.name);
 
-        if (simple_size(rhs) <= 5 or S->symbol_type == symbol_type_t::instance_dfun)
+        if (simple_size(rhs) <= 5 or
+            S->symbol_type == symbol_type_t::instance_dfun or
+            S->symbol_type == symbol_type_t::default_method)
         {
             // Label vars with whether they are used or not, and collect free vars.
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
