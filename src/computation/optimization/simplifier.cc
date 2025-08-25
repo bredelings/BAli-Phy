@@ -855,9 +855,9 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	else
 	{
             if (is_haskell_builtin_con_name(x->name))
-                ;
+                ; // OK
             else if (is_qualified_symbol(x->name) and get_module_name(x->name) != this_mod.name)
-                ;
+                ; // OK
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
