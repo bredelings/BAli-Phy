@@ -655,6 +655,38 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, c
     return rebuild(E2, bound_vars, context);
 }
 
+Occ::Exp make_sink_apply(const Occ::Exp& E, const Occ::Var& x)
+{
+    if (auto C = E.to_case())
+    {
+        auto alts2 = C->alts;
+        for(auto& [pat,body]: alts2)
+            body = make_sink_apply(body,x);
+        return Core2::Case{C->object, alts2};
+    }
+    else
+        return make_apply(E, x);
+}
+
+
+Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Var& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+{
+    // These lets should already be simplified, since we are rebuilding.
+    auto decls = strip_multi_let(E);
+
+    auto bound_vars2 = bind_decls(bound_vars, decls);
+
+    auto x = *simplify(arg, S, bound_vars2, make_stop_context()).to_var();
+
+    auto E2 = make_sink_apply(E, x);
+
+    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
+    for(auto& d: decls | views::reverse)
+        E2 = Occ::Let{d, E2};
+
+    return rebuild(E2, bound_vars, context);
+}
+
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
 Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
@@ -820,11 +852,7 @@ Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_v
     }
     else if (auto ac = context.is_apply_context())
     {
-        // FIXME: Should we lift let's out of E here?
-
-        auto x = *simplify(ac->arg, ac->subst, bound_vars, make_stop_context()).to_var();
-
-        return rebuild(make_apply(E,x) , bound_vars, ac->next);
+        return rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
     }
     else
         return E;
