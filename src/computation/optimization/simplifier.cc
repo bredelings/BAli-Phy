@@ -1056,7 +1056,7 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
 }
 
 
-vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, Module& m,
+vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
                                               const vector<Core2::Decls<>>& decl_groups_in)
 {
     simplifier_options options_gentle = options;
@@ -1068,7 +1068,7 @@ vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options,
     return state.simplify_module_one(decl_groups_in);
 }
 
-vector<Core2::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, Module& m,
+vector<Core2::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
                                const vector<Core2::Decls<>>& decl_groups_in)
 {
     SimplifierState state(options, fresh_var_state, m);
@@ -1083,7 +1083,7 @@ vector<Core2::Decls<>> simplify_module(const simplifier_options& options, FreshV
 }
 
 
-SimplifierState::SimplifierState(const simplifier_options& opts, FreshVarState& state, Module& m)
+SimplifierState::SimplifierState(const simplifier_options& opts, FreshVarState& state, const Module& m)
     :FreshVarSource(state), options(opts), this_mod(m)
 {
 }

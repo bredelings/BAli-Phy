@@ -24,14 +24,14 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n);
 
 class Module;
 
-std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, Module&, const std::vector<Core2::Decls<>>& decl_groups);
-std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, Module&, const std::vector<Core2::Decls<>>& decl_groups);
+std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
+std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 
 class SimplifierState: FreshVarSource
 {
     simplifier_options options;
 
-    Module& this_mod;
+    const Module& this_mod;
 
 public:
 
@@ -74,7 +74,7 @@ public:
     std::vector<Core2::Decls<>>
     simplify_module_one(const std::vector<Core2::Decls<>>& decl_groups);
 
-    SimplifierState(const simplifier_options& opts, FreshVarState& s, Module& m);
+    SimplifierState(const simplifier_options& opts, FreshVarState& s, const Module& m);
 };
 
 
