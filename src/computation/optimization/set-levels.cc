@@ -222,6 +222,9 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
 
             auto pattern2 = subst_pattern(pattern, env2);
 
+            /* We want to lift constant results out of case-alternatives so that our machinery
+               can recognize that we got the "same result" when re-evaluating the case and taking
+               the same branch */
             auto body2 = non_changeable?
                 set_level(body, level2, env2):
                 set_level_maybe_MFE(body, level2, env2);
@@ -258,6 +261,14 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
     int level2 = max_level(env, get_free_vars(E));
     if (level2 < level and not E.to_var()) // and not is_WHNF(E))
     {
+        // See note in set_level on why we want to lift constants out of case alternatives.
+        // If we have a 0-arg Constructure, then there's already a unique variable for it.
+        if (auto con = E.to_conApp(); con and con->args.empty())
+        {
+            assert(level2 == 0);
+            return Levels::Var(con->head, /*index*/ 0, /*level*/ 0);
+        }
+
         auto E2 = set_level(E, level2, env);
         Levels::Var v = new_unique_var("$v", level2);
         return Levels::Let({{v,E2}}, v);
