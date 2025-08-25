@@ -949,7 +949,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     {
         std::cerr<<"\nOptimized Core:\n";
         for(auto& [x,rhs] : value_decls)
-            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
+            std::cerr<<"["<<simple_size(rhs)<<"] "<<x.print()<<" = "<<rhs.print()<<"\n";
         std::cerr<<"\n\n";
     }
 
