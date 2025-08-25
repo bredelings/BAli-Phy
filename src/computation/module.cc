@@ -1281,11 +1281,11 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
         assert(not x.name.empty());
         assert(get_module_name(x.name) == name);
 
-        if (simple_size(rhs) <= 5)
-        {
-            // Add the unfolding for this variable.
-            auto S = lookup_make_local_symbol(x.name);
+        // Add the unfolding for this variable.
+        auto S = lookup_make_local_symbol(x.name);
 
+        if (simple_size(rhs) <= 5 or S->symbol_type == symbol_type_t::instance_dfun)
+        {
             // Label vars with whether they are used or not, and collect free vars.
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
 
