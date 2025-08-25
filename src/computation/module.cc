@@ -914,7 +914,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         std::cerr<<core_decls.print()<<"\n";
     }
 
-    // Updates exported_symols_ + exported_types_
+    // Updates exported_symbols_ + exported_types_
     MM->perform_exports();
 
     // look only in value_decls now
