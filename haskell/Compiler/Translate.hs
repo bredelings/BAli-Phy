@@ -69,7 +69,7 @@ instance (Translate a, Translate b) => Translate (a, b) where
     toC (x,y) = c_pair (toC x) (toC y)
     fromC xy = (fromC $ c_fst xy, fromC $ c_snd xy)
 
-instance Translate String where
+instance  {-# INCOHERENT #-} Translate String where
     type Tr String = CPPString
 
     toC = pack_cpp_string
