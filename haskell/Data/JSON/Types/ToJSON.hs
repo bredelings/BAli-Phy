@@ -85,7 +85,7 @@ instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
     -- toEncoding (x,y) = ...
 
--- Apparently we need to so that we write
+-- Apparently we need this so that we write
 --    pi[A]=value  pi[C]=value
 -- And not
 --    pi[1][1]="A"  pi[1][2] = value  pi[2][1] ="C"  pi[2][2]=value
