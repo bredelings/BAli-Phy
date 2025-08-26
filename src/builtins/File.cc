@@ -359,3 +359,12 @@ extern "C" closure builtin_function_renamePathRaw(OperationArgs& Args)
 
     return constructor("()",0);
 }
+
+// FilePath -> FilePath
+extern "C" closure builtin_function_takeFileNameRaw(OperationArgs& Args)
+{
+    fs::path pathname = Args.evaluate(0).as_<String>().value();
+
+    return String(pathname.filename().string());
+}
+
