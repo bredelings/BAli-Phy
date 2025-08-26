@@ -207,13 +207,15 @@ struct tree_edge
 	    return false;
 	}
 
+    tree_edge& operator=(const tree_edge&) = default;
+    
     tree_edge reverse() const;
 
     tree_edge():node1(-1),node2(-1) { }
     tree_edge(int s, int t):node1(s), node2(t) { }
     tree_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
     // The "explicit" is in order to avoid ambiguous conversions between 'const_branchview -> int' or 'const_branchview -> tree_edge'
-    tree_edge(const tree_edge&) = default;
+    tree_edge(const tree_edge& e) = default;
     tree_edge(const tree_dir_edge& e):node1(e.node1),node2(e.node2) {}
     explicit tree_edge(const const_branchview& b):node1(b.source()), node2(b.target()) { }
 };
