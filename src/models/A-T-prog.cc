@@ -1159,7 +1159,6 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 
     auto m = L->load_module_from_file(program_filename);
     auto P = std::make_unique<Program>(L,vector{m}, "Main.main");
-    L->args = {output_directory.string()};
     return P;
 }
 

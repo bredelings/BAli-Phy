@@ -474,8 +474,12 @@ std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int a
 }
 
 std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map& args, const shared_ptr<module_loader>& L,
-                                          int proc_id, const fs::path& output_dir, json::object info)
+                                          int proc_id, json::object info)
 {
+    fs::path tmpdir = std::tmpnam(nullptr);
+    if (not fs::create_directory(tmpdir))
+        throw myexception()<<"generate_program: failed to create temporary directory "<<tmpdir;
+
     std::unique_ptr<Program> P;
 
     if (args.count("run"))
@@ -492,7 +496,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     {
         // Change this into a pointer.
         Rules R(get_package_paths(args));
-        auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
+        auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, tmpdir);
         update(info, j);
         P = std::move(prog);
     }
@@ -500,7 +504,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     {
         auto [model_filename, args_v] = extract_prog_args(args, argc, argv, "model");
         L->args = args_v;
-        P = gen_model_program(args, L, output_dir, model_filename);
+        P = gen_model_program(args, L, tmpdir, model_filename);
     }
     else
     {
@@ -511,30 +515,29 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     //------ Write run info to C1.run.json ------//
     if ((args.count("align") or args.count("model")) and not args.count("test"))
     {
-        ofstream run_info( output_dir / "C1.run.json" );
+        ofstream run_info( tmpdir / "C1.run.json" );
 	run_info<<json::serialize_options({.allow_infinity_and_nan=true});
         run_info<<info<<std::endl;
         run_info.close();
-        cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
         long int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
 
         if (args.count("align"))
-            write_initial_alignments(args, proc_id, output_dir);
+            write_initial_alignments(args, proc_id, tmpdir);
 
         //------ Report log files -------//
         cout<<"\nBeginning MCMC computations."<<endl;
         auto log_formats = get_log_formats(args, args.count("align"));
         if (log_formats.count("json"))
-            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
+            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< tmpdir / "C1.log.json" <<" as JSON\n";
         if (log_formats.count("tsv"))
-            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< output_dir / "C1.log" << " as TSV\n";
+            cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "<< tmpdir / "C1.log" << " as TSV\n";
         if (args.count("align"))
         {
-            cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< output_dir / "C1.trees" <<endl;
-            cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
+            cout<<"   - Sampled "<<bold_green("trees")<<" logged to "<< tmpdir / "C1.trees" <<endl;
+            cout<<"   - Sampled "<<bold_red("alignments")<<" logged to "<< tmpdir / "C1.P<partition>.fastas" <<endl;
         }
 
         //------ Clarify lack of auto-stopping -----/
@@ -549,6 +552,11 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
             cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
         cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
         cout.flush();
+    }
+
+    if (args.count("align"))
+    {
+        // set L->args to the names of files in the tmpdir
     }
 
     return P;
@@ -646,41 +654,12 @@ int main(int argc,char* argv[])
             exit(0);
         }
 
-
-        //----------- Create output dir --------------//
-        fs::path output_dir;
-
-        if ((args.count("align") or args.count("model")) and not args.count("test"))
-        {
-#ifdef HAVE_MPI
-            // FIXME: Can we just use `broadcast(world, output_dir, 0)`?
-            //        This might require a serializer for fs::path.
-            if (not proc_id) {
-                output_dir = init_dir(args);
-
-                for(int dest=1;dest<n_procs;dest++) 
-                    world.send(dest, 0, output_dir.string());
-            }
-            else
-            {
-                string dir_name;
-                world.recv(0, 0, dir_name);
-                output_dir = dir_name;
-            }
-
-            // cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
-#else
-            output_dir = init_dir(args);
-#endif
-        }
-
         //---------- Create model object -----------//
         json::object info;
         run_info(info, proc_id, argc, argv);
         info["seed"] = seed;
-        info["subdirectory"] = fs::weakly_canonical(output_dir).make_preferred().string();
 
-        auto P = generate_program(argc, argv, args, L, proc_id, output_dir, info);
+        auto P = generate_program(argc, argv, args, L, proc_id, info);
 
         L.reset();
 
