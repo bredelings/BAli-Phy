@@ -240,7 +240,12 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         // We don't use instances for givens.
         if (P.flavor() == Given) return {};
 
-        if (auto inst = lookup_instance(dict->constraint.pred))
+        auto loc = dict->constraint.tc_state->source_span();
+        if (loc) push_source_span( *loc );
+        auto inst = lookup_instance(dict->constraint.pred);        
+        if (loc) pop_source_span();
+
+        if (inst)
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
