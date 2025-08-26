@@ -582,6 +582,8 @@ int getArity(const Hs::MRule& m);
 
 LIE float_wanteds(bool float_past_equalities, const WantedConstraints& wanteds, const std::set<TypeVar>& trapping_tvs = {});
 
+std::string class_arg_name(const Type& class_arg);
+
 template <typename R>
 std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type, R>
 TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Type>& nested_function)

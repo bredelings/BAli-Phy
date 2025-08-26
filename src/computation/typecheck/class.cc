@@ -96,7 +96,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& [method, match]: method_matches)
     {
         auto& method_name = method.name;
-        auto dm = get_fresh_Var("dm"+method_name, true);
+        auto dm = get_fresh_Var("dm$"+method_name, true);
         Hs::FunDecl FD({noloc,dm}, match);
         class_info.default_methods.insert({method_name, dm});
 

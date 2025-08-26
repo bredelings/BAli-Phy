@@ -816,9 +816,9 @@ Core2::Var<> TypeChecker::fresh_dvar(const Type& pred, bool qualified)
         // 1. Get constraint class
         name = get_unqualified_name(tc->name);
         if (name == "~")
-            name = "co";
+            name = "co$";
         else
-            name = "d" + name;
+            name = "d$" + name;
 
         // 2. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
         for(auto& class_arg: class_args)

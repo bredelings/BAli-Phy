@@ -459,8 +459,12 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     Hs::Decls decls;
 
     auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
-    string classdict_name = "d" + get_class_name_from_constraint(instance_head);
+    string classdict_name = "d$" + get_class_name_from_constraint(instance_head);
 
+    string spec_type = "";
+    for(auto& arg: instance_args)
+        spec_type += class_arg_name(arg);
+    
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     Core2::Decls<> dict_decls;
     for(const auto& [method, method_type]: class_info.members)
@@ -469,7 +473,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
         // push_note( Note()<<"In method `"<<method_name<<"`:" );
 
-        auto op = get_fresh_Var("i"+method_name, true);
+        auto op = get_fresh_Var("i$"+method_name, true);
 
         // forall b. Ix b => a -> b -> b
         Type op_type = remove_top_gen(method_type);
@@ -481,6 +485,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         // Don't write the op_type into the global type environment?
         // poly_env() = poly_env().insert( {op, op_type} );
 
+        string dict_entry_name = "de_" + method.name + "$" + spec_type;
         optional<Hs::FunDecl> FD;
         if (auto it = method_matches.find(method); it != method_matches.end())
         {
@@ -500,7 +505,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                auto dict_entry = get_fresh_core_var("de",false);
+                auto dict_entry = get_fresh_core_var(dict_entry_name,false);
                 dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.polytype.print() + "`") });
                 dict_entries.push_back( dict_entry );
 
@@ -509,7 +514,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
             }
         }
 
-        auto dict_entry = get_fresh_core_var("de",false);
+        auto dict_entry = get_fresh_core_var(dict_entry_name, false);
         dict_decls.push_back({dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))});
         dict_entries.push_back( dict_entry );
 
