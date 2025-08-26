@@ -1,4 +1,13 @@
-module System.Directory (createDirectory, getCurrentDirectory) where
+module System.Directory
+    (
+     createDirectory,
+     getCurrentDirectory,
+     withCurrentDirectory,
+     removeFile,
+     renameFile,
+     renamePath,
+     copyFile
+    ) where
 
 import System.IO
 
@@ -28,15 +37,15 @@ withCurrentDirectory dir action = do
   setCurrentDirectory cwd
   return result
 
-foreign import bpcall "File:" removeFileRaw :: FilePath -> FilePath -> IO ()
+foreign import bpcall "File:" removeFileRaw :: CPPString -> CPPString -> IO ()
 removeFile :: FilePath -> FilePath -> IO ()
 removeFile fromPath toPath = removeFileRaw (list_to_string fromPath) (list_to_string toPath)              
 
-foreign import bpcall "File:" renameFileRaw :: FilePath -> FilePath -> IO ()
+foreign import bpcall "File:" renameFileRaw :: CPPString -> CPPString -> IO ()
 renameFile :: FilePath -> FilePath -> IO ()
 renameFile fromPath toPath = renameFileRaw (list_to_string fromPath) (list_to_string toPath)              
 
-foreign import bpcall "Path:" renamePathRaw :: FilePath -> FilePath -> IO ()
+foreign import bpcall "File:" renamePathRaw :: CPPString -> CPPString -> IO ()
 renamePath :: FilePath -> FilePath -> IO ()
 renamePath fromPath toPath = renamePathRaw (list_to_string fromPath) (list_to_string toPath)              
 
