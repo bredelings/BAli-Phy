@@ -21,6 +21,7 @@
 #include "sequence/doublets.H"
 #include "sequence/RNAEdits.H"
 #include "bali-phy/cmd_line.H"                                // for get_log_formats
+#include "bali-phy/files.H"                                   // for run_name
 
 using std::vector;
 using std::string;
@@ -318,9 +319,22 @@ do_block generate_main(const variables_map& args,
     do_block main;
 
     expression_ref directory = var("directory");
-    vector<expression_ref> prog_args = {directory};
     if (not args.count("test"))
-        main.perform(get_list(prog_args), var("getArgs"));
+    {
+        main.perform(directory, {var("createUniqueDirectory"), String(run_name(args))});
+        // putStrLn $ "Created directory " ++ show directory ++ " for output files"
+        main.perform({var("$"),var("putStrLn"),{var("++"),String("Created directory "),{var("++"),{var("show"),directory},{String(" for output files")}}}});
+        main.empty_stmt();
+
+        // files <- getArgs
+        expression_ref files = var("files");
+        main.perform(files, var("getArgs"));
+        main.empty_stmt();
+
+        // storeFiles files
+        main.perform({var("storeFiles"), directory, files});
+        main.empty_stmt();
+    }
 
     auto unaligned_partitions = unaligned_sequence_data;
     auto aligned_partitions = aligned_sequence_data;
@@ -546,6 +560,8 @@ void write_header(std::ostream& program_file,
     program_file<<"\nimport Probability.Logger";
     program_file<<"\nimport System.Environment";
     program_file<<"\nimport System.FilePath";
+    program_file<<"\nimport BAliPhy.Util";
+    program_file<<"\nimport Data.Maybe (listToMaybe)";
 }
 
 vector<expression_ref>
