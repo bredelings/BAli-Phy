@@ -662,7 +662,7 @@ Occ::Exp make_sink_apply(const Occ::Exp& E, const Occ::Var& x)
         auto alts2 = C->alts;
         for(auto& [pat,body]: alts2)
             body = make_sink_apply(body,x);
-        return Core2::Case{C->object, alts2};
+        return Occ::Case{C->object, alts2};
     }
     else
         return make_apply(E, x);
