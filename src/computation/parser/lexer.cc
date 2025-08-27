@@ -3212,13 +3212,23 @@ yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
     return yy::parser::make_RATIONAL(r, loc);
 }
 
-std::optional<char> get_char(const char* s, int& i)
+char get_char(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int& i)
 {
-    char c = s[i];
+    assert(i < length);
+
+    char c = text[i];
     if (c == '\\')
     {
 	i++;
-	c = s[i];
+        if (i >= length)
+        {
+            assert(yyleng > 2 and yytext[yyleng-2] == '\\');
+            yy::parser::location_type loc2(loc.begin+i-1, loc.begin+i+1);
+            drv.push_error_message(loc2, Note()<<"invalid escape of ending quote");
+            return '?';
+        }
+
+	c = text[i];
 	if (c == 'a')
 	    c = '\a';
 	else if (c == 'b')
@@ -3240,7 +3250,14 @@ std::optional<char> get_char(const char* s, int& i)
 	else if (c == '\\')
 	    c = '\\';
 	else
-            return {};
+        {
+            yy::parser::location_type loc2(loc.begin+(i-1));
+            loc2 += 2;
+            auto msg = Note()<<"invalid escape sequence '\\"<<c<<"'";
+            drv.push_error_message(loc2, msg);
+
+            return '?';
+        }
     }
     return c;
 }
@@ -3248,32 +3265,9 @@ std::optional<char> get_char(const char* s, int& i)
 yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv)
 {
     int i=1;
-    auto c = get_char(yytext, i);
+    auto c = get_char(loc, drv, yytext, yyleng - 1, i);
 
-    // Check for unconsumed "\" right before the final "'"
-    if (i == yyleng - 1)
-    {
-        assert(yyleng > 2 and yytext[yyleng-2] == '\\');
-        yy::parser::location_type loc2(loc.begin+(yyleng-2));
-        loc2 += 2;
-        auto msg = Note()<<"invalid escape of ending quote";
-        drv.push_error_message(loc2, msg);
-
-        return yy::parser::make_CHAR('?',loc);
-    }
-
-    if (c)
-        return yy::parser::make_CHAR(*c,loc);
-    else
-    {
-        yy::parser::location_type loc2(loc.begin+1);
-        loc2 += 2;
-        auto msg = Note()<<"invalid escape sequence '"<<yytext[1]<<yytext[2]<<"'";
-        drv.push_error_message(loc2, msg);
-
-        return yy::parser::make_CHAR('?',loc);
-    }
-            
+    return yy::parser::make_CHAR(c,loc);
 }
 
 yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv)
@@ -3283,29 +3277,8 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver
     int j=0;
     for(int i=1;i<yyleng-1;i++)
     {
-        if (auto c = get_char(yytext, i))
-            s[j++] = *c;
-        else
-        {
-            yy::parser::location_type loc2(loc.begin+(i-1));
-            loc2 += 2;
-            auto msg = Note()<<"invalid escape sequence '"<<yytext[i-1]<<yytext[i]<<"'";
-            drv.push_error_message(loc2, msg);
-
-            s[j++] = '?';
-        }
-
-        // Check for unconsumed "\" right before the final "'"
-        if (i == yyleng - 1)
-        {
-            assert(yyleng > 2 and yytext[yyleng-2] == '\\');
-            yy::parser::location_type loc2(loc.begin+(yyleng-2));
-            loc2 += 2;
-            auto msg = Note()<<"invalid escape of ending quote";
-            drv.push_error_message(loc2, msg);
-
-            s[j-1] = '?';
-        }
+        char c = get_char(loc, drv, yytext, yyleng-1, i);
+        s[j++] = c;
     }
     s.resize(j);
 
