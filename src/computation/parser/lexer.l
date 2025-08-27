@@ -456,23 +456,57 @@ yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
     return yy::parser::make_RATIONAL(r, loc);
 }
 
-char get_char(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int& i)
+bool is_whitespace_char(char c)
+{
+    if (c == ' ') return true;
+    if (c == '\n') return true;
+    if (c == '\r') return true;
+    if (c == '\f') return true;
+    if (c == '\v') return true;
+    if (c == 5) return true;
+    else return false;
+}
+
+std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int start)
+{
+    assert(start<length);
+
+    if (not (start+1 < length and text[start] == '\\' and is_whitespace_char(text[start+1])))
+        return {};
+
+    int i = start+2;
+
+    while(i<length and is_whitespace_char(text[i]))
+        i++;
+
+    if (i< length and text[i] == '\\')
+    {
+        i++; // skip the ending backslash also
+    }
+    else
+    {
+        yy::parser::location_type loc2(loc.begin+start, loc.begin+i);
+        drv.push_error_message(loc2, Note()<<"invalid string: whitespace gap is missing final '\\'");
+    }
+    return i;
+}
+
+std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int i)
 {
     assert(i < length);
 
     char c = text[i];
     if (c == '\\')
     {
-	i++;
-        if (i >= length)
+        if (i+1 >= length)
         {
             assert(yyleng > 2 and yytext[yyleng-2] == '\\');
-            yy::parser::location_type loc2(loc.begin+i-1, loc.begin+i+1);
+            yy::parser::location_type loc2(loc.begin+i, loc.begin+i+2);
             drv.push_error_message(loc2, Note()<<"invalid escape of ending quote");
-            return '?';
+            return {'?',i+2};
         }
 
-	c = text[i];
+	c = text[i+1];
 	if (c == 'a')
 	    c = '\a';
 	else if (c == 'b')
@@ -495,36 +529,48 @@ char get_char(const yy::parser::location_type& loc, driver& drv, const char* tex
 	    c = '\\';
 	else
         {
-            yy::parser::location_type loc2(loc.begin+(i-1));
+            yy::parser::location_type loc2(loc.begin+i);
             loc2 += 2;
             auto msg = Note()<<"invalid escape sequence '\\"<<c<<"'";
             drv.push_error_message(loc2, msg);
 
-            return '?';
+            c = '?';
         }
+        return {c,i+2};
+    
     }
-    return c;
+    return {c,i+1};
 }
 
 yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv)
 {
     int i=1;
-    auto c = get_char(loc, drv, yytext, yyleng - 1, i);
+    auto [c,_] = get_char(loc, drv, yytext, yyleng - 1, i);
 
     return yy::parser::make_CHAR(c,loc);
 }
 
 yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv)
 {
+//    std::cerr<<"analyzing string: '"<<yytext<<"'\n";
     std::string s;
     s.resize(yyleng);
     int j=0;
-    for(int i=1;i<yyleng-1;i++)
+    for(int i=1;i<yyleng-1;)
     {
-        char c = get_char(loc, drv, yytext, yyleng-1, i);
-        s[j++] = c;
+//        std::cerr<<"   looking at: '"<<yytext+i<<"'\n";
+        if (auto after_gap = is_gap(loc, drv, yytext, yyleng-1, i))
+            i = *after_gap;
+        else
+        {
+            auto [c, next_pos] = get_char(loc, drv, yytext, yyleng-1, i);
+            s[j++] = c;
+            i = next_pos;
+        }
     }
     s.resize(j);
+
+//    std::cerr<<"got string: '"<<s<<"'\n";
 
     return yy::parser::make_STRING(s,loc);
 }
