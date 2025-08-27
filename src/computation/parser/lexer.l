@@ -99,9 +99,11 @@ octal        {octit}({numspc}{octit})*
 hexadecimal  {hexit}({numspc}{hexit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
+
+gap          \\{whitechar}+\\
 escape	     \\{charescape}
 escapechar   \\({charescape}|" "|{graphic})
-stringchar   {graphicnonqq}|" "|{escape}
+stringchar   {graphicnonqq}|" "|{escape}|{gap}
 /* We want to parse incorrect escapes as char/string so that we can give better error messages.
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
 char         {graphicnonq}|" "|{escapechar}
