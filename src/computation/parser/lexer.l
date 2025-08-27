@@ -44,8 +44,9 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver
 
 unispace     \x05
 nl           [\n\r\f]
+space        " "|{unispace}
+whitechar    {nl}|\v|{space}
 white_no_nl  [\v\ ]|{unispace}
-whitechar    {white_no_nl}|{nl}
 tab          \t
 
 ascdigit     [0-9]
@@ -72,6 +73,7 @@ unigraphic   \x06
 graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
+charescape   [a b f n r t v \\ \" \' \&]
 
 binit        [0-1]
 octit        [0-7]
@@ -97,11 +99,12 @@ octal        {octit}({numspc}{octit})*
 hexadecimal  {hexit}({numspc}{hexit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
-escape	     \\{escapechar}
-escapechar   [abfnrtv\"\'\\]
+escape	     \\{charescape}
+escapechar   \\({charescape}|" "|{graphic})
+stringchar   {graphicnonqq}|" "|{escape}
 /* We want to parse incorrect escapes as char/string so that we can give better error messages.
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
-escapish     \\({escapechar}|" "|{graphic})
+char         {graphicnonq}|" "|{escapechar}
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
@@ -238,8 +241,8 @@ signed       {negative}?
 <INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(loc);
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-<INITIAL>\'({graphicnonq}|" "|{escapish})\'         drv.set_closing_token(); return make_char(loc, drv);
-<INITIAL>[\"]({graphicnonqq}|" "|{escapish})*[\"]   drv.set_closing_token(); return make_string(loc, drv);
+<INITIAL>\'({char})\'         drv.set_closing_token(); return make_char(loc, drv);
+<INITIAL>[\"]({stringchar})*[\"]                drv.set_closing_token(); return make_string(loc, drv);
 
 <*>.          {
              throw yy::parser::syntax_error
