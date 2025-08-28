@@ -15,6 +15,7 @@ import Tree
 import Tree.Newick
 
 import Data.Semigroup ((<>))
+import MCMC.Loggers (LoggerAction)    
 
 -- addLogger subsample logger obj = addLoggingAction subsample (logAppend logger obj)
 
@@ -35,7 +36,7 @@ should match, instead of unifying.
 
 class Logger a where
     type LogValue a
-    logAppend :: a -> LogValue a -> Int -> LogDouble -> LogDouble -> LogDouble -> IO ()
+    logAppend :: a -> LogValue a -> LoggerAction
 
 data JSONLogger = JSONLogger Handle
 
@@ -87,17 +88,19 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
+
+writeJSONe :: Handle -> Encoding -> LoggerAction
 writeJSONe file encoding iter _ _ _ = do T.hPutStrLn file $ J.fromEncoding encoding
                                          hFlush file
 
-writeJSON file ljson iter prior likelihood posterior = writeJSONe file $ pairs
-                                                       (
-                                                        "iter" .= iter <>
-                                                        "prior" .= prior <>
-                                                        "likelihood" .= likelihood <>
-                                                        "posterior" .= posterior <>
-                                                        "parameters" .> toSeries ljson
-                                                       )
+writeJSON file ljson iter prior likelihood posterior = writeJSONe file encoding iter prior likelihood posterior
+    where encoding = pairs (
+                            "iter" .= iter <>
+                            "prior" .= prior <>
+                            "likelihood" .= likelihood <>
+                            "posterior" .= posterior <>
+                            "parameters" .> toSeries ljson
+                           ) 
 
 -- writeTree :: Handle -> (forall t. (Tree t, WriteNewickNode (Rooted t), HasRoot (Rooted t)) => t -> Int -> IO ())
 writeTree file tree iter _ _ _ = do T.hPutStrLn file $ writeNewick tree
