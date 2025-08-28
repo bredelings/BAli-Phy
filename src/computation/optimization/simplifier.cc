@@ -217,6 +217,10 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     {
         if (auto cu = to<CoreUnfolding>(var_info->unfolding))
             unfolding = cu->expr;
+        else if (auto mu = to<MethodUnfolding>(var_info->unfolding))
+        {
+            // std::cerr<<"method "<<x.name<<": index "<<mu->index<<"\n";
+        }
     }
 
     occurrence_info occ_info;

@@ -50,6 +50,7 @@ enum class symbol_type_t
 {
     variable = 0,
     constructor,
+    superclass_selector,
     class_method,
     default_method,
     instance_method,

@@ -4,6 +4,7 @@
 #include "computation/core/func.H"
 #include "computation/rename/rename.H"
 #include "tidy.H"
+#include "computation/varinfo.H"
 
 using std::string;
 using std::vector;
@@ -133,6 +134,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         // Is this right???
         class_info.fields.push_back(pair(get_dict, dict_type));
+
+        // Create the symbol for the superclass selector
+        auto S = symbol_info(get_dict.name, symbol_type_t::superclass_selector, class_name, {}, {});
+        S.type = dict_type;
+
+        // Default methods don't get an alias.
+        this_mod().add_symbol(S);
     }
     for(auto& [var,type]: class_info.members)
         class_info.fields.push_back({add_mod_name(var), type});
@@ -149,6 +157,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     int N = class_info.fields.size();
     for(auto& [var, type]: class_info.fields)
     {
+        auto S = this_mod().lookup_local_symbol(var.name);
+        S->var_info->unfolding = MethodUnfolding{i};
+
         decls.push_back( {Core2::Var<>(var.name), make_field_extractor(class_info.name, i, N, *this)} );
 
         i++;

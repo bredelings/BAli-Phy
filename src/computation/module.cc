@@ -1284,7 +1284,7 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
         // Add the unfolding for this variable.
         auto S = lookup_make_local_symbol(x.name);
 
-        if (simple_size(rhs) <= 5)
+        if (simple_size(rhs) <= 5 and to<std::monostate>(S->var_info->unfolding))
         {
             // Label vars with whether they are used or not, and collect free vars.
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
