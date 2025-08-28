@@ -8,6 +8,9 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Map as M
 import Data.ByteString
+import Data.Semigroup
+import Data.Monoid
+import qualified Data.JSON.Encoding as E
 
 class ToJSONKey a where
     toJSONKey :: a -> Key
@@ -37,11 +40,13 @@ class ToJSON a where
     toEncoding = toEncoding . toJSON
 
     toEncodingList :: [a] -> Encoding
-    toEncodingList = toEncoding . toJSONList
+    toEncodingList = listEncoding toEncoding
 
     omitField :: a -> Bool
     omitField = const False
 
+listEncoding = E.list
+                
 instance ToJSON Value where
     toJSON = id
 
@@ -74,12 +79,13 @@ instance ToJSON Int where
 
 instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x
+    toEncoding x = toEncodingList x
 
 -- BUG: In instance for 'ToJSON (Map Compiler.Base.String a)' for type 'Map Compiler.Base.String a': Compiler.Base.String is not a type variable!
 -- BUG: If we just replace String with b, it checks... but should it?
 instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
     toJSON (M.Map xs) = object [(toJSONKey key, toJSON value) | (key, value) <- xs]
-    -- toEncoding (M.Map xs) = ...
+    toEncoding (M.Map xs) = E.pairs (foldr (<>) mempty [toJSONKey k .= v | (k,v) <- xs])
 
 instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
