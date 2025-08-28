@@ -94,6 +94,17 @@ list to' (x:xs) = openBracket >< to' x >< commas xs >< closeBracket
     where
       commas = foldr (\v vs -> comma >< to' v >< vs) empty
 
+dict
+    :: (k -> Encoding' Key)                           -- ^ key encoding
+    -> (v -> Encoding)                                -- ^ value encoding
+    -> (forall a. (k -> v -> a -> a) -> a -> m -> a)  -- ^ @foldrWithKey@ - indexed fold
+    -> m                                              -- ^ container
+    -> Encoding
+dict encodeKey encodeVal foldrWithKey = pairs . foldrWithKey go mempty
+  where
+    go k v c = Value (encodeKV k v) <> c
+    encodeKV k v = retagEncoding (encodeKey k) >< colon >< retagEncoding (encodeVal v)
+
 null_ = Encoding (T.pack "null")
 
 eobject [] = emptyObject_
