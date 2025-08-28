@@ -17,6 +17,7 @@
 #include "computation/fresh_vars.H"
 #include "computation/varinfo.H"
 #include "haskell/ids.H"
+#include "util/variant.H"
 
 using std::optional;
 using std::string;
@@ -183,7 +184,7 @@ int reg_heap::reg_for_id(const var& x)
             assert(x.index == 0);
 
             auto sym = lookup_builtin_symbol(name);
-            auto code = maybe_occ_to_expression_ref(sym->var_info->unfolding);
+            auto code = maybe_occ_to_expression_ref(to<CoreUnfolding>(sym->var_info->unfolding)->expr);
             add_identifier(x.name);
 
 	    // get the root for each identifier

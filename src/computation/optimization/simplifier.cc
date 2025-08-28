@@ -1,6 +1,7 @@
 #include <iostream>
 #include "util/range.H" // for reverse( )
 #include "util/set.H" // for add( )
+#include "util/variant.H" // for to<type>(val)
 #include "computation/operations.H"
 #include "computation/expression/convert.H" // for to_core(Occ::Exp)
 #include "occurrence.H"
@@ -213,7 +214,10 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
     optional<Occ::Exp> unfolding;
     if (var_info)
-	unfolding = var_info->unfolding;
+    {
+        if (auto cu = to<CoreUnfolding>(var_info->unfolding))
+            unfolding = cu->expr;
+    }
 
     occurrence_info occ_info;
     occ_info.work_dup = amount_t::Many;
