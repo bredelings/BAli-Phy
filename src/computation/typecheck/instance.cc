@@ -418,7 +418,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 {
     push_note( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
 
-    // 1. Get instance head and constraints 
+    // 1. Get instance head and constraints (givens)
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
@@ -435,18 +435,18 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     auto class_name = class_con.name;
     auto class_info = *info_for_class(class_name);
 
-    // 3. Get constrained version of the class
+    // 3. Get substitution from general class to specific instance head.
     substitution_t subst;
     for(int i=0; i<class_info.type_vars.size(); i++)
         subst = subst.insert({class_info.type_vars[i], instance_args[i]});
 
-    // 4. Get (constrained) superclass constraints
+    // 4. Get (constrained) superclass constraints (wanteds)
     push_note(Note()<<"Deriving superclass constraints for "<<instance_head.print());
     vector<Type> superclass_constraints = class_info.context;
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
-    // 5. Construct binds_super
+    // 5. Compute the superclass dictionaries (wanteds) from the instance dictionaries (givens).
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
     auto wrap_let = Core2::WrapLet(decls_super);
