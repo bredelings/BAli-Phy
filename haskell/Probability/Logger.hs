@@ -59,6 +59,9 @@ jsonLogger filename = do
   hFlush handle
   return $ writeJSON handle
 
+ejsonLogger filename = do
+  handle <- openFile filename WriteMode
+  return $ writeJSONe handle
 
 tsvLogger filename firstFields = do
   handle <- openFile filename WriteMode
@@ -84,8 +87,8 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
-writeJSONe file encoding = do T.hPutStrLn file $ J.fromEncoding encoding
-                              hFlush file
+writeJSONe file encoding iter _ _ _ = do T.hPutStrLn file $ J.fromEncoding encoding
+                                         hFlush file
 
 writeJSON file ljson iter prior likelihood posterior = writeJSONe file $ pairs
                                                        (
