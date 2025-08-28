@@ -174,6 +174,8 @@ sequencesFromTree tree isequences = [(label, isequence) | n <- leafNodes tree ++
                                                              let label = addAncestralLabel n (getLabels tree),
                                                              let isequence = isequences IntMap.! n]
 
+labeledNodeMap tree objects = [(label, objects IntMap.! n) | n <- nodes tree, let Just label = getLabels tree IntMap.! n]
+
 foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
 instance Show VectorPairIntInt where
     show = unpack_cpp_string . showVectorPairIntInt
