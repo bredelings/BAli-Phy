@@ -453,6 +453,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
+    Hs::Decls decls;
     Core2::Decls<> dict_decls;
     vector<Core2::Var<>> dict_entries;
 
@@ -463,7 +464,6 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
             
 
     // 7. Construct binds_methods
-    Hs::Decls decls;
 
     auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
     string classdict_name = "d$" + get_class_name_from_constraint(instance_head);
