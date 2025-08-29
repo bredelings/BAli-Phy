@@ -453,7 +453,14 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
-    vector<Core2::Var<>> dict_entries = dict_vars_from_lie(wanteds);
+    Core2::Decls<> dict_decls;
+    vector<Core2::Var<>> dict_entries;
+
+    for(auto& dv: dict_vars_from_lie(wanteds))
+    {
+        dict_entries.push_back(dv);
+    }
+            
 
     // 7. Construct binds_methods
     Hs::Decls decls;
@@ -466,7 +473,6 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         spec_type += class_arg_name(arg);
     
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    Core2::Decls<> dict_decls;
     for(const auto& [method, method_type]: class_info.members)
     {
         auto& method_name = method.name;
