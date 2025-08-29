@@ -622,8 +622,6 @@ void mark_exported_decls(Core2::Decls<>& decls,
             x.is_exported = true;
             exported.erase(x.name);
         }
-        else
-            x.is_exported = false;
     }
 
     // Check that we don't export things that don't exist

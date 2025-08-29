@@ -233,6 +233,8 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
 
                 auto x_outer = make_core_var(info.outer_id);
 
+                x_outer.is_exported = info.is_exported;
+                    
                 decls.push_back({x_outer, info.wrap(tup_lambda)});
             }
             else
@@ -248,6 +250,8 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                     auto x_inner = make_core_var(info.inner_id);
                     auto x_tmp   = get_fresh_core_var("tmp");
 
+                    x_outer.is_exported = info.is_exported;
+                    
                     vector<Core2::Var<>> fields;
                     for(int j=0;j<N;j++)
                     {

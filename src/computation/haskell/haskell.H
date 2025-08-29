@@ -1151,8 +1151,11 @@ struct BindInfo
     // Wrapper to apply types and dicts to the tuple entry.
     Core2::wrapper wrap;
 
-    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core2::wrapper& w)
-        : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w)
+    // Mark the generated core variable as exported.
+    bool is_exported = false;
+
+    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core2::wrapper& w, bool e = false)
+        : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w), is_exported(e)
     { }
 };
 

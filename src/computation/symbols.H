@@ -54,6 +54,7 @@ enum class symbol_type_t
     class_method,
     default_method,
     instance_method,
+    instance_superclass_selector,
     instance_dfun,
     unknown
 };

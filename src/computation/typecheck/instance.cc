@@ -519,33 +519,34 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     Hs::Decls decls;
     Core2::Decls<> dict_decls;
     vector<Core2::Var<>> dict_entries;
+    auto instance_dict_args = dict_vars_from_lie(givens);
 
     for(auto& superclass_constraint: dictionary_constraints(wanteds))
     {
         auto dv = superclass_constraint.ev_var;
 
-        auto selector_name = "sc$" + get_class_name_from_constraint(superclass_constraint.pred) + "From" + class_name;
+        auto selector_name = get_class_name_from_constraint(superclass_constraint.pred) + "From" + get_unqualified_name(class_name);
 
         auto superclass_selector = get_fresh_Var("sc$"+selector_name, true);
 
-        // forall a.C1 a => SC a  : superclass selector type
-        // SC a: remove_top_gen
-        // SC [x]: subst
-        // forall x.(C1 x, C2 x) => SC [x] : add instance top_gen
-        // FD: body = dvar
-        // auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
-        // This should generate:
-        // \instance dvs -> superclass_dv
+        // SC a
+        auto selector_type = superclass_constraint.pred;
+        // SC [x]
+        selector_type = apply_subst(subst, selector_type);
+        // forall x. (C1 x, C2 x) => SC [x]
+        selector_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), selector_type));
 
-        // ALTERNATIVELY: we could do...
-        // \instance_dvs -> let decls_super in superclass_dv
-        // dict_decls += let de_<selector_name> = dv
-        // dict_entries.push_back(de_selector_name)
-        // make a GenBind for \instance_dvs -> superclass_dv
-        // add decls_super to the GenBind
+        // superclass_selector = forall instance tvs. \instance_dict_args -> let decls_super in superclass_constraint.ev_var
+        std::map<Hs::Var, Hs::BindInfo> bind_infos;
+        bind_infos.insert({superclass_selector, Hs::BindInfo(superclass_selector, Hs::Var(dv.name), {}, {}, {}, true)});
+        auto decl = Hs::GenBind(instance_tvs, instance_dict_args, {decls_super}, {}, bind_infos);
+        decls.push_back({noloc,decl});
 
-        // I don't understand how/why the decls_super is needed/helpful??
-        
+        // Create the symbol
+        auto S = symbol_info(superclass_selector.name, symbol_type_t::instance_superclass_selector, {}, {}, {});
+        S.type = selector_type;
+        this_mod().add_symbol(S);
+
         dict_entries.push_back(dv);
     }
 
