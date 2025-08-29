@@ -445,26 +445,35 @@ do_block generate_main(const variables_map& args,
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
     }
 
+    bool tsv_logger = false;
     if (not args.count("test"))
     {
         // Initialize the parameters logger
 	if (log_formats.count("tsv"))
 	{
+            tsv_logger = true;
 	    main.empty_stmt();
 	    main.perform(tsvLogger, {var("tsvLogger"),{var("</>"), directory, String("C1.log")},get_list(vector<String>{"iter"})});
+            // blue(numerical parameters)
+	    main.perform({var("putStrLn"), {var("++"), String("   - Logging sampled numerical parameters to "),{var("++"), {var("show"),{var("</>"), directory, String("C1.log")}}, String(" as TSV")}}});
 	}
 
 	if (log_formats.count("json"))
 	{
 	    main.empty_stmt();
 	    main.perform(jsonLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+            // blue(numerical parameters)
+	    main.perform({var("putStrLn"), {var("++"), String("   - Logging sampled numerical parameters to "),{var("++"), {var("show"),{var("</>"), directory, String("C1.log.json")}}, String(" as JSON")}}});
 	}
 
         // Initialize the tree logger
         if (not fixed.count("tree"))
         {
             main.empty_stmt();
-            main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
+            expression_ref tree_file = {var("</>"), directory, String("C1.trees")};
+            main.perform(treeLogger,{var("treeLogger"), tree_file});
+            // green(trees)
+	    main.perform({var("putStrLn"), {var("++"), String("   - Logging sampled trees to "),{var("show"),tree_file}}});
         }
 
         // Initialize the alignment loggers
@@ -478,6 +487,9 @@ do_block generate_main(const variables_map& args,
                 string filename = "C1.P"+std::to_string(i+1)+".fastas";
                 main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
             }
+            expression_ref alignment_files = {var("</>"), directory, String("C1.P<partition>.fasta")};
+            // red(alignments)
+	    main.perform({var("putStrLn"), {var("++"), String("   - Logging sampled alignments to "),{var("show"),alignment_files}}});
         }
     }
 
@@ -512,11 +524,23 @@ do_block generate_main(const variables_map& args,
     }
     else
     {
-        main.empty_stmt();
         // int subsample = args["subsample"].as<int>();
         int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
+
+        main.empty_stmt();
+        main.perform({var("putStrLn"), String("")});
+        main.perform({var("putStrLn"), String("BAli-Phy does NOT detect how many iterations is sufficient:")});
+        main.perform({var("putStrLn"), String("   You need to monitor convergence and kill it when done.")});
+        main.perform({var("putStrLn"), {var("++"),String("   Maximum number of iterations set to "),{var("show"),max_iterations}}});
+        main.perform({var("putStrLn"), String("")});
+        main.empty_stmt();
+        if (tsv_logger)
+            main.perform({var("putStrLn"), String("You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).")});
+        main.perform({var("putStrLn"), String("See the manual at http://www.bali-phy.org/README.xhtml for further information.")});
+
+        main.empty_stmt();
         main.perform({var("runMCMC"), max_iterations, var("mymodel")});
     }
 
@@ -1122,7 +1146,6 @@ std::string generate_atmodel_program(const variables_map& args,
 std::unique_ptr<Program>
 gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const std::shared_ptr<module_loader>& L,
-		    const fs::path& output_directory,
 		    const fs::path& program_filename,
 		    const vector<expression_ref>& alphabet_exps,
 		    const vector<pair<fs::path,string>>& filename_ranges,

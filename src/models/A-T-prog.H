@@ -18,7 +18,6 @@ class module_loader;
 std::unique_ptr<Program>
 gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const std::shared_ptr<module_loader>& L,
-		    const std::filesystem::path& output_directory,
 		    const std::filesystem::path& program_filename,
 		    const std::vector<expression_ref>& alphabet_exps,
 		    const std::vector<std::pair<std::filesystem::path,std::string>>& filename_ranges,
