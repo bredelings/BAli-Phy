@@ -37,7 +37,7 @@ struct Operation: public Object
 	return true;
     }
 
-    type_constant type() const {return operation_type;}
+    type_constant type() const {return type_constant::operation_type;}
     Operation(closure (*f)(OperationArgs&), const std::string& s):name_(s),op(f) { }
 };
 
@@ -47,7 +47,7 @@ std::string print_infix_expression(const std::vector<std::string>& arguments);
 
 inline bool is_non_apply_op(const expression_ref& E)
 {
-    return E.type() == operation_type;
+    return E.type() == type_constant::operation_type;
 }
 
 inline bool is_non_apply_op_exp(const expression_ref& E)

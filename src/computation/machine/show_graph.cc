@@ -494,7 +494,7 @@ bool print_as_record(const expression_ref& E)
 {
     if (E.head().is_a<IntMap>())
         return true;
-    else if (E.head().type() == operation_type or E.head().type() == constructor_type)
+    else if (E.head().type() == type_constant::operation_type or E.head().type() == type_constant::constructor_type)
     {
         if (not is_case(E) and not E.head().is_a<Apply>())
             return true;
@@ -591,7 +591,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
         }
         label += "</tr></table>";
     }
-    else if (F.type() == index_var_type)
+    else if (F.type() == type_constant::index_var_type)
     {
         int R2 = C[R].reg_for_index_var();
 
@@ -681,7 +681,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
 	}
         label += "</tr></table>";
     }
-    else if (F.type() == index_var_type)
+    else if (F.type() == type_constant::index_var_type)
     {
         int R2 = C[R].reg_for_index_var();
 

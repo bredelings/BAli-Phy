@@ -12,7 +12,7 @@ struct interchangeable: public Operation
 {
     interchangeable* clone() const {return new interchangeable(*this);}
 
-    type_constant type() const {return interchangeable_type;}
+    type_constant type() const {return type_constant::interchangeable_type;}
 
     interchangeable();
 };

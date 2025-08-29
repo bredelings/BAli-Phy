@@ -24,7 +24,7 @@ struct constructor: public Object
 
     std::string print() const {return f_name;}
 
-    type_constant type() const {return constructor_type;}
+    type_constant type() const {return type_constant::constructor_type;}
 
     constructor(const std::string&, int n);
 };
@@ -33,7 +33,7 @@ bool has_constructor(const expression_ref&, const std::string&);
 
 inline bool is_constructor(const expression_ref& E)
 {
-    return E.type() == constructor_type;
+    return E.type() == type_constant::constructor_type;
 }
 
 inline bool is_constructor_exp(const expression_ref& E)

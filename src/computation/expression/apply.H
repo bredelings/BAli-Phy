@@ -24,7 +24,7 @@ expression_ref apply_expression(const expression_ref& E, const std::vector< var 
 
 inline bool is_apply(const expression_ref& E)
 {
-    return E.type() == apply_type;
+    return E.type() == type_constant::apply_type;
 }
 
 

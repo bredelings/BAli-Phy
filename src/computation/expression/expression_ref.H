@@ -24,7 +24,7 @@ class expression_ref
 	log_double_t ld;
 	object_ptr<const Object> O;
     };
-    type_constant type_ = null_type;
+    type_constant type_ = type_constant::null_type;
 
 public:
 
@@ -37,22 +37,22 @@ public:
     
 	    switch(type_)
 	    {
-	    case null_type:
+	    case type_constant::null_type:
 		return true;
 		break;
-	    case int_type:
+	    case type_constant::int_type:
 		return (i == E2.as_int());
 		break;
-	    case double_type:
+	    case type_constant::double_type:
 		return (d == E2.as_double());
 		break;
-	    case log_double_type:
+	    case type_constant::log_double_type:
 		return (ld == E2.as_log_double());
 		break;
-	    case char_type:
+	    case type_constant::char_type:
 		return (c == E2.as_char());
 		break;
-	    case index_var_type:
+	    case type_constant::index_var_type:
 		return (i == E2.as_index_var());
 		break;
 	    default:
@@ -70,7 +70,7 @@ public:
 		return (*ptr() == O);
 	}
 
-    void clear() {destroy_ptr();type_=null_type;}
+    void clear() {destroy_ptr();type_=type_constant::null_type;}
 
     bool is_expression() const;
 
@@ -176,7 +176,7 @@ public:
 
     bool is_int() const
 	{
-	    return type_ == int_type;
+	    return type_ == type_constant::int_type;
 	}
 
     int as_int() const
@@ -188,7 +188,7 @@ public:
 
     bool is_double() const
 	{
-	    return type_ == double_type;
+	    return type_ == type_constant::double_type;
 	}
 
     double as_double() const
@@ -200,7 +200,7 @@ public:
 
     bool is_char() const
 	{
-	    return type_ == char_type;
+	    return type_ == type_constant::char_type;
 	}
 
     char as_char() const
@@ -212,7 +212,7 @@ public:
 
     bool is_log_double() const
 	{
-	    return type_ == log_double_type;
+	    return type_ == type_constant::log_double_type;
 	}
 
     log_double_t as_log_double() const
@@ -224,7 +224,7 @@ public:
 
     bool is_index_var() const
 	{
-	    return type_ == index_var_type;
+	    return type_ == type_constant::index_var_type;
 	}
   
     int as_index_var() const
@@ -244,7 +244,7 @@ public:
 
     inline explicit operator bool() const
 	{
-	    return (type_ != null_type);
+	    return (type_ != type_constant::null_type);
 	}
 
     std::string print() const;
@@ -285,14 +285,14 @@ public:
     expression_ref(const Object& o):expression_ref(o.clone()) { }
 
     // Builtin-type arguments
-    expression_ref(const int& i2):i(i2),type_(int_type) {}
-    expression_ref(const double& d2):d(d2),type_(double_type) {}
-    expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
+    expression_ref(const int& i2):i(i2),type_(type_constant::int_type) {}
+    expression_ref(const double& d2):d(d2),type_(type_constant::double_type) {}
+    expression_ref(const log_double_t& ld2):ld(ld2),type_(type_constant::log_double_type) {}
     expression_ref(const bool& b);
     expression_ref(const index_var& iv);
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
-    expression_ref(const char& c2):c(c2),type_(char_type) {}
+    expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}
     expression_ref(const String& s):expression_ref(s.clone()) { }
     expression_ref(const std::initializer_list<expression_ref>&);
 
@@ -365,7 +365,7 @@ struct expression: public Object
     bool operator==(const expression& E) const;
     bool operator==(const Object& o) const;
 
-    type_constant type() const {return expression_type;}
+    type_constant type() const {return type_constant::expression_type;}
 
     expression() {}
 
@@ -388,7 +388,7 @@ inline const expression_ref& expression_ref::head() const
 
 inline bool expression_ref::is_expression() const
 {
-    return (type_ == expression_type);
+    return (type_ == type_constant::expression_type);
 }
 
 inline std::vector<expression_ref> expression_ref::copy_sub() const
@@ -401,9 +401,9 @@ inline std::vector<expression_ref> expression_ref::copy_sub() const
 
 inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
 
-inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type) { }
+inline expression_ref::expression_ref(expression* e):O(e),type_(type_constant::expression_type) { }
 
-inline expression_ref::expression_ref(const expression* e):O(e),type_(expression_type) { }
+inline expression_ref::expression_ref(const expression* e):O(e),type_(type_constant::expression_type) { }
 
 inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
 
@@ -458,7 +458,7 @@ struct EPtree: public Vector<std::pair<std::string,expression_ref>>
     bool operator==(const EPtree& E) const;
     bool operator==(const Object& o) const;
 
-    type_constant type() const {return eptree_type;}
+    type_constant type() const {return type_constant::eptree_type;}
 
     int count(const std::string& key) const;
 

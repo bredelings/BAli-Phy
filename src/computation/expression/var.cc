@@ -87,7 +87,7 @@ std::set<var> get_bound_indices(const expression_ref& E)
     std::set<var> bound;
 
     // Make sure we don't try to substitute for lambda-quantified dummies
-    if (E.head().type() == lambda_type)
+    if (E.head().type() == type_constant::lambda_type)
     {
 	if (E.sub()[0].is_a<var>())
 	    bound.insert(E.sub()[0].as_<var>());
@@ -173,7 +173,7 @@ std::set<var> get_free_indices(const expression_ref& E)
 
 bool is_var(const expression_ref& E)
 {
-    return (E.head().type() == var_type);
+    return (E.head().type() == type_constant::var_type);
 }
 
 var qualified_var(const string& name)

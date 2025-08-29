@@ -24,7 +24,7 @@ struct let_exp: public Object
 
     bool operator==(const Object& o) const;
 
-    type_constant type() const {return let_type;}
+    type_constant type() const {return type_constant::let_type;}
 
     std::string print() const;
 

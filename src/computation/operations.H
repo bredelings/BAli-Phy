@@ -21,7 +21,7 @@ struct Apply: public Operation
 
     int precedence() const {return 10;}
 
-    type_constant type() const {return apply_type;}
+    type_constant type() const {return type_constant::apply_type;}
 
     Apply():Operation(apply_op,"@") {}
 };
@@ -32,7 +32,7 @@ struct Case: public Operation
 {
     virtual Case* clone() const {return new Case(*this);}
 
-    type_constant type() const {return case_type;}
+    type_constant type() const {return type_constant::case_type;}
 
     Case():Operation(case_op, "case") {}
 };
@@ -43,7 +43,7 @@ struct Let: public Operation
 {
     virtual Let* clone() const {return new Let(*this);}
 
-    type_constant type() const {return let2_type;}
+    type_constant type() const {return type_constant::let2_type;}
 
     std::string print() const;
 

@@ -50,21 +50,21 @@ std::string expression_ref::print() const
 {
     switch(type_)
     {
-    case null_type:
+    case type_constant::null_type:
         return "[NULL]";
-    case int_type:
+    case type_constant::int_type:
         return (i<0)?"("+convertToString(i)+")":convertToString(i);
         break;
-    case double_type:
+    case type_constant::double_type:
         return (d<0)?"("+double_to_string(d)+")":double_to_string(d);
         break;
-    case log_double_type:
+    case type_constant::log_double_type:
         return "LD"+convertToString(ld);
         break;
-    case char_type:
+    case type_constant::char_type:
         return std::string("'")+c+"'";
         break;
-    case index_var_type:
+    case type_constant::index_var_type:
         return std::string("%")+convertToString(i);
         break;
     default:
@@ -322,7 +322,7 @@ expression_ref::expression_ref(const bool& b)
     :expression_ref(b?bool_true:bool_false)
 {}
 
-expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
+expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(type_constant::index_var_type) {}
 
 expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
 {

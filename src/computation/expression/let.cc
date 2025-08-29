@@ -68,13 +68,13 @@ expression_ref let_expression(const vector<CDecls>& decl_groups, const expressio
 
 bool is_let_expression(const expression_ref& E)
 {
-    return (E.head().type() == let_type);
+    return (E.head().type() == type_constant::let_type);
 }
 
 std::optional<Let>
 parse_indexed_let_expression(const expression_ref& E)
 {
-    if (E.head().type() == let2_type)
+    if (E.head().type() == type_constant::let2_type)
         return E.as_<Let>();
     else
         return {};

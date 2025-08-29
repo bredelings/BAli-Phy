@@ -1301,7 +1301,7 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
 vector<expression_ref> peel_lambdas(expression_ref& E)
 {
     vector<expression_ref> args;
-    while(E.head().type() == lambda_type)
+    while(E.head().type() == type_constant::lambda_type)
     {
         args.push_back(E.sub()[0]);
         E = E.sub()[1];

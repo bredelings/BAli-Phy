@@ -53,7 +53,7 @@ modifiable::modifiable():
 
 bool is_modifiable(const expression_ref& E)
 {
-    bool result = E.head().type() == modifiable_type;
+    bool result = E.head().type() == type_constant::modifiable_type;
     assert(result == E.head().is_a<modifiable>());
     return result;
 }

@@ -12,7 +12,7 @@ struct modifiable: public Operation
 {
     modifiable* clone() const {return new modifiable(*this);}
 
-    type_constant type() const {return modifiable_type;}
+    type_constant type() const {return type_constant::modifiable_type;}
 
     modifiable();
 };

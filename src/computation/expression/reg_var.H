@@ -12,7 +12,7 @@ struct reg_var: public Object
 
     reg_var* clone() const {return new reg_var(*this);}
 
-    type_constant type() const {return reg_var_type;}
+    type_constant type() const {return type_constant::reg_var_type;}
     std::string print() const 
 	{
 	    return "<" + convertToString(target) + ">";

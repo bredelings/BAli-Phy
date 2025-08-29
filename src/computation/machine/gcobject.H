@@ -12,7 +12,7 @@ public:
 
     virtual void update_regs(const std::vector<int>& remap) const;
 
-    virtual type_constant type() const {return gc_type;}
+    virtual type_constant type() const {return type_constant::gc_type;}
 };
 
 

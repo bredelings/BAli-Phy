@@ -102,6 +102,6 @@ expression_ref make_if_expression(const expression_ref& condition, const express
 
 bool is_case(const expression_ref& E)
 {
-    return E.head().type() == case_type;
+    return E.head().type() == type_constant::case_type;
 }
 

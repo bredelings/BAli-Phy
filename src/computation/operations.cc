@@ -78,7 +78,7 @@ int get_n_lambdas(const expression_ref& E)
 {
     expression_ref E2 = E;
     int n = 0;
-    while(E2.head().type() == lambda2_type)
+    while(E2.head().type() == type_constant::lambda2_type)
     {
 	E2 = E2.sub()[0];
 	n++;
@@ -91,7 +91,7 @@ expression_ref peel_n_lambdas(const expression_ref& E, int n)
     expression_ref E2 = E;
     for(int i=0;i<n;i++)
     {
-	assert(E2.head().type() == lambda2_type);
+	assert(E2.head().type() == type_constant::lambda2_type);
 	E2 = E2.sub()[0];
     }
     return E2;
@@ -301,7 +301,7 @@ closure let_op(OperationArgs& Args)
 	C.exp = L.body;
 	do_trim(C);
     }
-    while (C.exp.head().type() == let2_type);
+    while (C.exp.head().type() == type_constant::let2_type);
 
     return C;
 }

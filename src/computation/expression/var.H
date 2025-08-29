@@ -30,7 +30,7 @@ struct var: public Object, public occurrence_info
   
     bool operator<(const var&) const;
 
-    type_constant type() const {return var_type;}
+    type_constant type() const {return type_constant::var_type;}
 
     bool is_wildcard() const {return index < 0 and not name.size();}
 

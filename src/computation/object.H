@@ -29,7 +29,7 @@ public:
 	    std::abort();
 	}
 
-    virtual type_constant type() const {return unknown_type;}
+    virtual type_constant type() const {return type_constant::unknown_type;}
 
     virtual std::string print() const;
 
