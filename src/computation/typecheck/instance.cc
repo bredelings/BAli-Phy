@@ -465,7 +465,6 @@ std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
     Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))};
 
     auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
-    decl2.dict_decls.insert( decl2.dict_decls.begin(), decls_super );
     decls.push_back({noloc,decl2});
 
     auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
