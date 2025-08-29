@@ -411,13 +411,12 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
-std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
+std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
     const string& spec_type,
     const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info,
-    std::shared_ptr<const Core2::Decls<>>& decls_super,
-    Hs::Decls& decls)
+    std::shared_ptr<const Core2::Decls<>>& decls_super)
 {
     // push_note( Note()<<"In method `"<<method_name<<"`:" );
 
@@ -434,44 +433,37 @@ std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
     // poly_env() = poly_env().insert( {op, op_type} );
 
     string dict_entry_name = "de_" + method.name + "$" + spec_type;
+    auto dict_entry = get_fresh_core_var(dict_entry_name,false);
+
     optional<Hs::FunDecl> FD;
     if (auto it = method_matches.find(method); it != method_matches.end())
     {
         FD = Hs::FunDecl({noloc,op}, it->second);
     }
+    else if (class_info.default_methods.count(method.name))
+    {
+        auto dm_var = class_info.default_methods.at(method.name);
+
+        FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
+    }
     else
     {
-        if (class_info.default_methods.count(method.name))
-        {
-            auto dm_var = class_info.default_methods.at(method.name);
+        record_warning( Note() <<"instance "<<inst_type<<" is missing method '"<<method.name<<"'" );
 
-            FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
-        }
-        else
-        {
-            record_warning( Note() <<"instance "<<inst_type<<" is missing method '"<<method.name<<"'" );
-
-            // We could synthesize an actual method to call...
-            // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-            auto dict_entry = get_fresh_core_var(dict_entry_name,false);
-            Core2::Decl<> dict_decl{dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_type.print() + "`") };
-
-            // pop_note();
-            return {dict_decl, dict_entry};
-        }
+        Hs::String msg("method `" + method.name + "` undefined in instance `" + inst_type.print() + "`");
+        Hs::LVar error{noloc,Hs::Var("Compiler.Error.error")};
+        FD = Hs::simple_decl({noloc,op}, Hs::apply(error,{{noloc,Hs::Literal(msg)}}));
     }
 
-    auto dict_entry = get_fresh_core_var(dict_entry_name, false);
     Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))};
 
-    auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
-    decls.push_back({noloc,decl2});
+    auto hs_decl = infer_type_for_single_fundecl_with_sig(*FD, op_type);
 
     auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
     S.type = op_type;
     this_mod().add_symbol(S);
 
-    return {dict_decl, dict_entry};
+    return {hs_decl, dict_decl, dict_entry};
 }
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
@@ -521,6 +513,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     vector<Core2::Var<>> dict_entries;
     auto instance_dict_args = dict_vars_from_lie(givens);
 
+    std::vector<Core2::Var<>> instance_sc_methods;
+
     for(auto& superclass_constraint: dictionary_constraints(wanteds))
     {
         auto dv = superclass_constraint.ev_var;
@@ -548,6 +542,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         this_mod().add_symbol(S);
 
         dict_entries.push_back(dv);
+
+        instance_sc_methods.push_back(Core2::Var<>(superclass_selector.name));
     }
 
 
@@ -563,11 +559,12 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto [dict_decl, dict_entry] = type_check_instance_method(method, method_type,
-                                                                  instance_tvs, givens, inst_type, subst,
-                                                                  spec_type, method_matches, class_info, decls_super, decls);
+        auto [hs_decl, dict_decl, dict_entry] = type_check_instance_method(method, method_type,
+                                                                           instance_tvs, givens, inst_type, subst,
+                                                                           spec_type, method_matches, class_info, decls_super);
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
+        decls.push_back({noloc, hs_decl});
     }
 
     // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
