@@ -896,29 +896,9 @@ Type TypeChecker::bool_type() const
     return find_prelude_tycon("Bool");
 }
 
-Type TypeChecker::char_type() const
-{
-    return find_prelude_tycon("Char");
-}
-
-Type TypeChecker::int_type() const
-{
-    return find_prelude_tycon("Int");
-}
-
-Type TypeChecker::integer_type() const
-{
-    return find_prelude_tycon("Integer");
-}
-
 Type TypeChecker::rational_type() const
 {
     return TypeCon("Compiler.Ratio.Rational", kind_type());
-}
-
-Type TypeChecker::double_type() const
-{
-    return find_prelude_tycon("Double");
 }
 
 bool TypeChecker::add_substitution(const MetaTypeVar& a, const Type& type)

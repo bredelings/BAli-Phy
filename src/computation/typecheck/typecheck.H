@@ -246,15 +246,7 @@ public:
 
     Type bool_type() const;
 
-    Type char_type() const;
-
-    Type int_type() const;
-
-    Type integer_type() const;
-
     Type rational_type() const;
-
-    Type double_type() const;
 
     bool add_substitution(const MetaTypeVar& a, const Type& type);
 

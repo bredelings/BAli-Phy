@@ -370,6 +370,26 @@ std::vector<Type> equality_preds(const std::vector<Type> constraints)
     return constraints2;
 }
 
+Type char_type()
+{
+    return TypeCon("Char");
+}
+
+Type int_type()
+{
+    return TypeCon("Int");
+}
+
+Type integer_type()
+{
+    return TypeCon("Integer");
+}
+
+Type double_type()
+{
+    return TypeCon("Double");
+}
+
 optional<Type> is_list_type(Type t)
 {
     if (auto tcapp = is_type_con_app(t))
