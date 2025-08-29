@@ -411,7 +411,13 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
-std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(const Hs::Var& method, const Type& method_type, const LIE& givens, std::vector<TypeVar>& instance_tvs, const string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info, std::shared_ptr<const Core2::Decls<>>& decls_super, Hs::Decls& decls, const substitution_t& subst, const Hs::LType& inst_type)
+std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
+    const Hs::Var& method, const Type& method_type,
+    const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
+    const string& spec_type,
+    const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info,
+    std::shared_ptr<const Core2::Decls<>>& decls_super,
+    Hs::Decls& decls)
 {
     // push_note( Note()<<"In method `"<<method_name<<"`:" );
 
@@ -557,7 +563,9 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto [dict_decl, dict_entry] = type_check_instance_method(method, method_type, givens, instance_tvs, spec_type, method_matches, class_info, decls_super, decls, subst, inst_decl.polytype);
+        auto [dict_decl, dict_entry] = type_check_instance_method(method, method_type,
+                                                                  instance_tvs, givens, inst_type, subst,
+                                                                  spec_type, method_matches, class_info, decls_super, decls);
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
     }

@@ -521,7 +521,8 @@ public:
     std::pair<Hs::Decls, std::tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
     infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
 
-    std::tuple<Core2::Decl<>, Core2::Var<>> type_check_instance_method(const Hs::Var& method, const Type& method_type, const LIE& givens, std::vector<TypeVar>& instance_tvs, const std::string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info, std::shared_ptr<const Core2::Decls<>>& decls_super, Hs::Decls& decls, const substitution_t& subst, const Hs::LType& inst_type);
+    std::tuple<Core2::Decl<>, Core2::Var<>>
+    type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info, std::shared_ptr<const Core2::Decls<>>& decls_super, Hs::Decls& decls);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
