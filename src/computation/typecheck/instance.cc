@@ -411,6 +411,64 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
+std::tuple<Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(const Hs::Var& method, const Type& method_type, const LIE& givens, std::vector<TypeVar>& instance_tvs, const string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info, std::shared_ptr<const Core2::Decls<>>& decls_super, Hs::Decls& decls, const substitution_t& subst, const Hs::LType& inst_type)
+{
+    // push_note( Note()<<"In method `"<<method_name<<"`:" );
+
+    auto op = get_fresh_Var("i$"+method.name, true);
+
+    // forall b. Ix b => a -> b -> b
+    Type op_type = remove_top_gen(method_type);
+    // forall b. Ix b => [x] -> b -> b
+    op_type = apply_subst(subst, op_type);
+    // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
+    op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
+
+    // Don't write the op_type into the global type environment?
+    // poly_env() = poly_env().insert( {op, op_type} );
+
+    string dict_entry_name = "de_" + method.name + "$" + spec_type;
+    optional<Hs::FunDecl> FD;
+    if (auto it = method_matches.find(method); it != method_matches.end())
+    {
+        FD = Hs::FunDecl({noloc,op}, it->second);
+    }
+    else
+    {
+        if (class_info.default_methods.count(method.name))
+        {
+            auto dm_var = class_info.default_methods.at(method.name);
+
+            FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
+        }
+        else
+        {
+            record_warning( Note() <<"instance "<<inst_type<<" is missing method '"<<method.name<<"'" );
+
+            // We could synthesize an actual method to call...
+            // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
+            auto dict_entry = get_fresh_core_var(dict_entry_name,false);
+            Core2::Decl<> dict_decl{dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_type.print() + "`") };
+
+            // pop_note();
+            return {dict_decl, dict_entry};
+        }
+    }
+
+    auto dict_entry = get_fresh_core_var(dict_entry_name, false);
+    Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))};
+
+    auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
+    decl2.dict_decls.insert( decl2.dict_decls.begin(), decls_super );
+    decls.push_back({noloc,decl2});
+
+    auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
+    S.type = op_type;
+    this_mod().add_symbol(S);
+
+    return {dict_decl, dict_entry};
+}
+
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
 pair<Hs::Decls, tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
@@ -495,68 +553,13 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     string spec_type = "";
     for(auto& arg: instance_args)
         spec_type += class_arg_name(arg);
-    
+
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto& method_name = method.name;
-
-        // push_note( Note()<<"In method `"<<method_name<<"`:" );
-
-        auto op = get_fresh_Var("i$"+method_name, true);
-
-        // forall b. Ix b => a -> b -> b
-        Type op_type = remove_top_gen(method_type);
-        // forall b. Ix b => [x] -> b -> b
-        op_type = apply_subst(subst, op_type);
-        // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
-        op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
-
-        // Don't write the op_type into the global type environment?
-        // poly_env() = poly_env().insert( {op, op_type} );
-
-        string dict_entry_name = "de_" + method.name + "$" + spec_type;
-        optional<Hs::FunDecl> FD;
-        if (auto it = method_matches.find(method); it != method_matches.end())
-        {
-            FD = Hs::FunDecl({noloc,op}, it->second);
-        }
-        else
-        {
-            if (class_info.default_methods.count(method_name))
-            {
-                auto dm_var = class_info.default_methods.at(method_name);
-
-                FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
-            }
-            else
-            {
-                record_warning( Note() <<"instance "<<inst_decl.polytype<<" is missing method '"<<method_name<<"'" );
-
-                // We could synthesize an actual method to call...
-                // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                auto dict_entry = get_fresh_core_var(dict_entry_name,false);
-                dict_decls.push_back({dict_entry, Core2::error("method `" + method.name + "` undefined in instance `" + inst_decl.polytype.print() + "`") });
-                dict_entries.push_back( dict_entry );
-
-                // pop_note();
-                continue;
-            }
-        }
-
-        auto dict_entry = get_fresh_core_var(dict_entry_name, false);
-        dict_decls.push_back({dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))});
-        dict_entries.push_back( dict_entry );
-
-        auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
-        decl2.dict_decls.insert( decl2.dict_decls.begin(), decls_super );
-        decls.push_back({noloc,decl2});
-
-        auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
-        S.type = op_type;
-        this_mod().add_symbol(S);
-
-        // pop_note();
+        auto [dict_decl, dict_entry] = type_check_instance_method(method, method_type, givens, instance_tvs, spec_type, method_matches, class_info, decls_super, decls, subst, inst_decl.polytype);
+        dict_decls.push_back(dict_decl);
+        dict_entries.push_back(dict_entry);
     }
 
     // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
