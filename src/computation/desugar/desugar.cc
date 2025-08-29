@@ -219,9 +219,11 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            Core2::Exp<> tup_body = make_let( *(gb->dict_decls),
-                                              make_let( desugar_decls(gb->body),
-                                                        Tuple(binders) ) );
+            Core2::Exp<> tup_body = make_let( desugar_decls(gb->body), Tuple(binders) );
+
+            for(auto& dd: gb->dict_decls | views::reverse)
+                tup_body = make_let (*dd, tup_body);
+        
             auto tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
             if (N == 1)

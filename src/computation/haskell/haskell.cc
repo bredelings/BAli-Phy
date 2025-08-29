@@ -1024,7 +1024,8 @@ string GenBind::print() const
         ds.push_back( darg.print() );
 
     string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
-    s += dict_decls->print()+"\n";
+    for(auto& dd: dict_decls)
+        s += dd->print()+"\n";
     s += body.print();
     return s;
 }

@@ -212,7 +212,7 @@ Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
                       const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
     decls = rename_from_bindinfo(decls, bind_infos);
-    return Hs::GenBind(tvs, dict_vars, ev_decls, decls, bind_infos);
+    return Hs::GenBind(tvs, dict_vars, {ev_decls}, decls, bind_infos);
 }
 
 // Why aren't we using `fixed_type_vars`?
@@ -252,7 +252,7 @@ classify_constraints(const LIE& lie, const set<TypeVar>& qtvs)
 }
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
-expression_ref
+Hs::GenBind
 TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& polytype)
 {
     // Q: Are we getting the monotype correct?

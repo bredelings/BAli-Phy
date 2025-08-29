@@ -452,7 +452,7 @@ public:
     Hs::Decls
     infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
 
-    expression_ref
+    Hs::GenBind
     infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& ltype);
 
     Hs::BindInfo compute_bind_info(const Hs::Var& poly_id, const Hs::Var& mono_id,
