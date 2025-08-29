@@ -1642,6 +1642,19 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     return S;
 }
 
+const_symbol_ptr lookup_magic_symbol(const std::string& name)
+{
+    symbol_ptr S;
+    if (name == "Compiler.Error.error")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.[Char] -> a
+        TypeVar a("a", kind_type());
+        S->type = add_forall_vars({a}, make_arrow_type(list_type(char_type()),a));
+    }
+    return S;
+}
+
 // Holding the symbols here permanently ensures that there is always a
 // reference to the VarInfo for these symbols.
 std::map<std::string, const_symbol_ptr> builtin_symbols_cache;
@@ -1724,7 +1737,11 @@ const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) 
     else if (name == get_module_name(symbol_name))
         return lookup_local_symbol(symbol_name);
 
-    // 3. Handle external names
+    // 3. Handle magic symbols
+    else if (auto result = lookup_magic_symbol(symbol_name))
+        return result;
+
+    // 4. Handle external names
     else
         return lookup_external_symbol(symbol_name);
 }
