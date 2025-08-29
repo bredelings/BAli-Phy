@@ -457,11 +457,35 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     Core2::Decls<> dict_decls;
     vector<Core2::Var<>> dict_entries;
 
-    for(auto& dv: dict_vars_from_lie(wanteds))
+    for(auto& superclass_constraint: dictionary_constraints(wanteds))
     {
+        auto dv = superclass_constraint.ev_var;
+
+        auto selector_name = "sc$" + get_class_name_from_constraint(superclass_constraint.pred) + "From" + class_name;
+
+        auto superclass_selector = get_fresh_Var("sc$"+selector_name, true);
+
+        // forall a.C1 a => SC a  : superclass selector type
+        // SC a: remove_top_gen
+        // SC [x]: subst
+        // forall x.(C1 x, C2 x) => SC [x] : add instance top_gen
+        // FD: body = dvar
+        // auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
+        // This should generate:
+        // \instance dvs -> superclass_dv
+
+        // ALTERNATIVELY: we could do...
+        // \instance_dvs -> let decls_super in superclass_dv
+        // dict_decls += let de_<selector_name> = dv
+        // dict_entries.push_back(de_selector_name)
+        // make a GenBind for \instance_dvs -> superclass_dv
+        // add decls_super to the GenBind
+
+        // I don't understand how/why the decls_super is needed/helpful??
+        
         dict_entries.push_back(dv);
     }
-            
+
 
     // 7. Construct binds_methods
 
