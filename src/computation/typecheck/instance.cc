@@ -519,6 +519,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         dict_entries.push_back( dict_entry );
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
+        decl2.dict_decls.insert( decl2.dict_decls.begin(), decls_super );
         decls.push_back({noloc,decl2});
 
         auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
