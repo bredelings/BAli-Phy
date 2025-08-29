@@ -1087,7 +1087,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // Can we pass the code_gen_state, to avoid stomping on generated haskell var names?
     auto prog = gen_atmodel_program(args,
-                                    L, dir,
+                                    L, 
                                     program_filename,
                                     alphabet_exps, filename_ranges, A[0].n_sequences(),
                                     decls,
