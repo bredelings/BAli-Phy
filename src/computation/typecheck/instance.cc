@@ -533,17 +533,21 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         // superclass_selector = forall instance tvs. \instance_dict_args -> let decls_super in superclass_constraint.ev_var
         std::map<Hs::Var, Hs::BindInfo> bind_infos;
         bind_infos.insert({superclass_selector, Hs::BindInfo(superclass_selector, Hs::Var(dv.name), {}, {}, {}, true)});
-        auto decl = Hs::GenBind(instance_tvs, instance_dict_args, {decls_super}, {}, bind_infos);
-        decls.push_back({noloc,decl});
+        auto hs_decl = Hs::GenBind(instance_tvs, instance_dict_args, {decls_super}, {}, bind_infos);
 
         // Create the symbol
         auto S = symbol_info(superclass_selector.name, symbol_type_t::instance_superclass_selector, {}, {}, {});
         S.type = selector_type;
         this_mod().add_symbol(S);
 
-        dict_entries.push_back(dv);
+        auto dict_entry = get_fresh_core_var("de$"+selector_name);
+        Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(superclass_selector)), dict_vars_from_lie(givens))};
 
         instance_sc_methods.push_back(Core2::Var<>(superclass_selector.name));
+
+        dict_entries.push_back(dict_entry);
+        dict_decls.push_back(dict_decl);
+        decls.push_back({noloc,hs_decl});
     }
 
 
@@ -575,7 +579,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         dict = dict_entries[0];
     dict = make_let(dict_decls, dict);
 
-    auto wrap = wrap_gen * wrap_let;
+    auto wrap = wrap_gen;
 
     pop_source_span();
 
