@@ -411,6 +411,37 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
+std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_superclass_entry(
+    const Constraint& superclass_constraint, const string& class_name,
+    const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
+    const std::vector<Core2::Var<>>& instance_dict_args, std::shared_ptr<const Core2::Decls<>>& decls_super)
+{
+    auto dv = superclass_constraint.ev_var;
+
+    auto selector_name = get_class_name_from_constraint(superclass_constraint.pred) + "From" + get_unqualified_name(class_name);
+
+    auto superclass_selector = get_fresh_Var("sc$"+selector_name, true);
+
+    // SC a
+    auto selector_type = superclass_constraint.pred;
+    // SC [x]
+    selector_type = apply_subst(subst, selector_type);
+    // forall x. (C1 x, C2 x) => SC [x]
+    selector_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), selector_type));
+
+    // superclass_selector = forall instance tvs. \instance_dict_args -> let decls_super in superclass_constraint.ev_var
+    std::map<Hs::Var, Hs::BindInfo> bind_infos;
+    bind_infos.insert({superclass_selector, Hs::BindInfo(superclass_selector, Hs::Var(dv.name), {}, {}, {}, true)});
+    auto hs_decl = Hs::GenBind(instance_tvs, instance_dict_args, {decls_super}, {}, bind_infos);
+
+    // Create the symbol
+    auto S = symbol_info(superclass_selector.name, symbol_type_t::instance_superclass_selector, {}, {}, {});
+    S.type = selector_type;
+    this_mod().add_symbol(S);
+
+    return {hs_decl, make_core_var(superclass_selector)};
+}
+
 std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
@@ -497,41 +528,20 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // 5. Compute the superclass dictionaries (wanteds) from the instance dictionaries (givens).
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
-    auto wrap_let = Core2::WrapLet(decls_super);
+
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
     Hs::Decls decls;
-    Core2::Decls<> dict_decls;
-    vector<Core2::Var<>> dict_entries;
     auto instance_dict_args = dict_vars_from_lie(givens);
 
     std::vector<Core2::Var<>> instance_sc_methods;
 
     for(auto& superclass_constraint: dictionary_constraints(wanteds))
     {
-        auto dv = superclass_constraint.ev_var;
-
-        auto selector_name = get_class_name_from_constraint(superclass_constraint.pred) + "From" + get_unqualified_name(class_name);
-
-        auto superclass_selector = get_fresh_Var("sc$"+selector_name, true);
-
-        // SC a
-        auto selector_type = superclass_constraint.pred;
-        // SC [x]
-        selector_type = apply_subst(subst, selector_type);
-        // forall x. (C1 x, C2 x) => SC [x]
-        selector_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), selector_type));
-
-        // superclass_selector = forall instance tvs. \instance_dict_args -> let decls_super in superclass_constraint.ev_var
-        std::map<Hs::Var, Hs::BindInfo> bind_infos;
-        bind_infos.insert({superclass_selector, Hs::BindInfo(superclass_selector, Hs::Var(dv.name), {}, {}, {}, true)});
-        auto hs_decl = Hs::GenBind(instance_tvs, instance_dict_args, {decls_super}, {}, bind_infos);
-
-        // Create the symbol
-        auto S = symbol_info(superclass_selector.name, symbol_type_t::instance_superclass_selector, {}, {}, {});
-        S.type = selector_type;
-        this_mod().add_symbol(S);
+        auto [hs_decl, superclass_selector] = type_check_superclass_entry(superclass_constraint, class_name,
+                                                                          instance_tvs, givens, subst,
+                                                                          instance_dict_args, decls_super);
 
         instance_sc_methods.push_back(Core2::Var<>(superclass_selector.name));
         decls.push_back({noloc,hs_decl});
@@ -553,6 +563,9 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     }
 
     // 8. Construct the dictionary from the constructor functions for its entries
+    // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
+    Core2::Decls<> dict_decls;
+    vector<Core2::Var<>> dict_entries;
     for(auto& op: instance_sc_methods)
     {
         auto dict_entry = get_fresh_core_var("de$",false);
@@ -560,8 +573,6 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
     }
-
-    // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
 
     // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
     Core2::Exp<> dict = Core2::ConApp<>(class_name, dict_entries);

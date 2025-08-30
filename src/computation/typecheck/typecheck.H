@@ -513,6 +513,11 @@ public:
     std::pair<Hs::Decls, Core2::Decl<>>
     infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
 
+    std::tuple<Hs::Decl,Core2::Var<>> type_check_superclass_entry(
+        const Constraint& superclass_constraint, const std::string& class_name,
+        const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
+        const std::vector<Core2::Var<>>& instance_dict_args, std::shared_ptr<const Core2::Decls<>>& decls_super);
+
     std::tuple<Hs::Decl, Core2::Var<>>
     type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info);
 
