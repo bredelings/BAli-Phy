@@ -75,7 +75,7 @@ if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')
 endif
 
-boost_modules = [ 'program_options', 'random', 'system', 'chrono', 'json']
+boost_modules = [ 'program_options', 'random', 'chrono', 'json']
 if get_option('with-mpi')
   boost_modules += ['serialization', 'mpi']
 endif
