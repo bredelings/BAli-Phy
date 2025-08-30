@@ -411,10 +411,9 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
-std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance_method(
+std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
-    const string& spec_type,
     const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info)
 {
     // push_note( Note()<<"In method `"<<method_name<<"`:" );
@@ -430,9 +429,6 @@ std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance
 
     // Don't write the op_type into the global type environment?
     // poly_env() = poly_env().insert( {op, op_type} );
-
-    string dict_entry_name = "de_" + method.name + "$" + spec_type;
-    auto dict_entry = get_fresh_core_var(dict_entry_name,false);
 
     optional<Hs::FunDecl> FD;
     if (auto it = method_matches.find(method); it != method_matches.end())
@@ -454,15 +450,13 @@ std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance
         FD = Hs::simple_decl({noloc,op}, Hs::apply(error,{{noloc,Hs::Literal(msg)}}));
     }
 
-    Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(op)), dict_vars_from_lie(givens))};
-
     auto hs_decl = infer_type_for_single_fundecl_with_sig(*FD, op_type);
 
     auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
     S.type = op_type;
     this_mod().add_symbol(S);
 
-    return {hs_decl, dict_decl, dict_entry};
+    return {hs_decl, make_core_var(op)};
 }
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
@@ -539,35 +533,32 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         S.type = selector_type;
         this_mod().add_symbol(S);
 
-        auto dict_entry = get_fresh_core_var("de$"+selector_name);
-        Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(make_core_var(superclass_selector)), dict_vars_from_lie(givens))};
-
         instance_sc_methods.push_back(Core2::Var<>(superclass_selector.name));
-
-        dict_entries.push_back(dict_entry);
-        dict_decls.push_back(dict_decl);
         decls.push_back({noloc,hs_decl});
     }
 
 
     // 7. Construct binds_methods
-
     auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
-    string classdict_name = "d$" + get_class_name_from_constraint(instance_head);
-
-    string spec_type = "";
-    for(auto& arg: instance_args)
-        spec_type += class_arg_name(arg);
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto [hs_decl, dict_decl, dict_entry] = type_check_instance_method(method, method_type,
-                                                                           instance_tvs, givens, inst_type, subst,
-                                                                           spec_type, method_matches, class_info);
+        auto [hs_decl, op] = type_check_instance_method(method, method_type,
+                                                        instance_tvs, givens, inst_type, subst,
+                                                        method_matches, class_info);
+
+        instance_sc_methods.push_back(op);
+        decls.push_back({noloc,hs_decl});
+    }
+
+    // 8. Construct the dictionary from the constructor functions for its entries
+    for(auto& op: instance_sc_methods)
+    {
+        auto dict_entry = get_fresh_core_var("de$",false);
+        Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(op), instance_dict_args)};
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
-        decls.push_back({noloc, hs_decl});
     }
 
     // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
@@ -577,8 +568,6 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     if (dict_entries.size() == 1)
         dict = dict_entries[0];
     dict = make_let(dict_decls, dict);
-
-    auto wrap = wrap_gen;
 
     pop_source_span();
 
