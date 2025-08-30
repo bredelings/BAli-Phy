@@ -1489,11 +1489,7 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 
     messages().clear();
 
-    Core2::Decls<> dfun_decls2;
-    for(auto& [var,wrap,rhs]: dfun_decls)
-        dfun_decls2.push_back({var, wrap(rhs)});
-
-    return {class_decls, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
+    return {class_decls, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
 }
 
 /*

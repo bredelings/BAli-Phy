@@ -415,8 +415,7 @@ std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
     const string& spec_type,
-    const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info,
-    std::shared_ptr<const Core2::Decls<>>& decls_super)
+    const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info)
 {
     // push_note( Note()<<"In method `"<<method_name<<"`:" );
 
@@ -468,7 +467,7 @@ std::tuple<Hs::Decl,Core2::Decl<>,Core2::Var<>> TypeChecker::type_check_instance
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
-pair<Hs::Decls, tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
+pair<Hs::Decls, Core2::Decl<>>
 TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
@@ -565,7 +564,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     {
         auto [hs_decl, dict_decl, dict_entry] = type_check_instance_method(method, method_type,
                                                                            instance_tvs, givens, inst_type, subst,
-                                                                           spec_type, method_matches, class_info, decls_super);
+                                                                           spec_type, method_matches, class_info);
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
         decls.push_back({noloc, hs_decl});
@@ -585,16 +584,16 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
     pop_note();
 
-    return {decls, {dfun, wrap, dict}};
+    return {decls, {dfun, wrap_gen(dict)}};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, vector<tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>>
+pair<Hs::Binds, Core2::Decls<>>
 TypeChecker::infer_type_for_instances2(const vector<pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
-    vector<tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>> dfun_decls;
+    Core2::Decls<> dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {

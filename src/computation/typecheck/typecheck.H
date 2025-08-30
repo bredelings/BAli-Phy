@@ -506,15 +506,15 @@ public:
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    std::pair<Hs::Binds, std::vector<std::tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>>
+    std::pair<Hs::Binds, Core2::Decls<>>
     infer_type_for_instances2(const std::vector<std::pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
-    std::pair<Hs::Decls, std::tuple<Core2::Var<>, Core2::wrapper, Core2::Exp<>>>
+    std::pair<Hs::Decls, Core2::Decl<>>
     infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
 
     std::tuple<Hs::Decl, Core2::Decl<>, Core2::Var<>>
-    type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info, std::shared_ptr<const Core2::Decls<>>& decls_super);
+    type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::string& spec_type, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
