@@ -11,6 +11,7 @@ import Data.ByteString
 import Data.Semigroup
 import Data.Monoid
 import qualified Data.JSON.Encoding as E
+import Data.JSON.Encoding ( (>*<) )
 
 class ToJSONKey a where
     toJSONKey :: a -> Key
@@ -89,7 +90,7 @@ instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
 
 instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
-    -- toEncoding (x,y) = ...
+    toEncoding (x,y) = E.wrapArray $ toEncoding x >*< toEncoding y
 
 -- Apparently we need this so that we write
 --    pi[A]=value  pi[C]=value
@@ -101,7 +102,7 @@ instance {-# INCOHERENT #-} ToJSON a => ToJSON ([Char],a) where
 
 instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toJSON (x,y,z) = Array [toJSON x, toJSON y, toJSON z]
-    -- toEncoding (x,y,z) = ...
+    toEncoding (x,y,z) = E.wrapArray $ toEncoding x >*< toEncoding y >*< toEncoding z
 
 
 class KeyValue kv where
