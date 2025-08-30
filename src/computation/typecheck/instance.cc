@@ -3,6 +3,7 @@
 #include "haskell/ids.H"
 #include "core/func.H"
 #include "rename/rename.H"
+#include "computation/varinfo.H"
 
 using std::string;
 using std::vector;
@@ -499,9 +500,10 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
     // 1. Get instance head and constraints (givens)
 
+    auto S = this_mod().lookup_local_symbol(dfun.name);
+
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
-    auto inst_type = inst_info->type();
+    auto inst_type = S->instance_info->type();
 
     push_source_span(*inst_decl.polytype.loc);
     // Instantiate it with rigid type variables.
@@ -579,6 +581,11 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     if (dict_entries.size() == 1)
         dict = dict_entries[0];
     dict = make_let(dict_decls, dict);
+
+    // We need to convert instance_dict_args and instance_sc_methods from Core2::<> to Occ::
+    S->var_info->unfolding = DFunUnfolding({/*instance_dict_args::Occ*/}, class_name, {/*instance_sc_methods*/});
+    // We also need to make sure that the instance methods are marked exported?
+    // Maybe we should export things that have symbols?
 
     pop_source_span();
 

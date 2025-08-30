@@ -48,7 +48,8 @@ struct EqInstanceInfo;
 // If we create a fixity environment instead, we could avoid that.
 enum class symbol_type_t
 {
-    variable = 0,
+    unknown,
+    variable,
     constructor,
     superclass_selector,
     class_method,
@@ -56,7 +57,6 @@ enum class symbol_type_t
     instance_method,
     instance_superclass_selector,
     instance_dfun,
-    unknown
 };
 
 struct symbol_info
