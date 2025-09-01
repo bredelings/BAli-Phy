@@ -97,15 +97,10 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 
 set<Occ::Var> get_free_vars(const Occ::Pattern& pattern)
 {
-    if (auto cp = pattern.to_con_pat())
-    {
-	set<Occ::Var> vars;
-	for(auto& arg: cp->args)
-            vars.insert(arg);
-	return vars;
-    }
-    else
-	return {};
+    set<Occ::Var> vars;
+    for(auto& arg: pattern.args)
+        vars.insert(arg);
+    return vars;
 }
 
 set<Occ::Var> get_free_vars(const Occ::Exp& E)
@@ -278,22 +273,12 @@ Occ::Var SimplifierState::rename_and_bind_var(const Occ::Var& x1, substitution& 
 }
 
 // Convert the pattern to an expression if it contains no wildcards.
-Occ::Exp pattern_to_expression(const Occ::ConPat& con_pat)
-{
-    return Occ::ConApp{con_pat.head, con_pat.args};
-}
-
-// Convert the pattern to an expression if it contains no wildcards.
 std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
 {
     if (pattern.is_wildcard_pat())
 	return {};
     else
-    {
-	auto con_pat = pattern.to_con_pat();
-	assert(con_pat);
-	return pattern_to_expression(*con_pat);
-    }
+	return Occ::ConApp{*pattern.head, pattern.args};
 }
 
 bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
@@ -330,12 +315,9 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
 {
     vector<Occ::Var> used;
 
-    if (auto con_pat = pattern.to_con_pat())
-    {
-	for(auto& x: con_pat->args)
-	    if (is_used_var(x))
-		used.push_back(x);
-    }
+    for(auto& x: pattern.args)
+        if (is_used_var(x))
+            used.push_back(x);
 
     return used;
 }
@@ -351,9 +333,9 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
         {
             return {{body, S}};
         }
-        else if (auto pat_con = pattern.to_con_pat(); pat_con and obj_con and pat_con->head == obj_con->head)
+        else if (pattern.is_con_pat() and obj_con and *pattern.head == obj_con->head)
         {
-            int N = pat_con->args.size();
+            int N = pattern.args.size();
             assert(N == obj_con->args.size());
 
             // 2. Rename and bind pattern variables
@@ -368,7 +350,7 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
             auto S2 = S;
             for(int j=0;j<N;j++)
             {
-                auto x = pat_con->args[j];
+                auto x = pattern.args[j];
                 auto obj_var = obj_con->args[j];
                 S2 = S2.erase(x);
                 S2 = S2.insert({x, {obj_var}});
@@ -431,13 +413,8 @@ SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const subst
     auto S2 = S;
     auto bound_vars = bound_vars_in;
 
-    if (auto con_pat = pattern.to_con_pat())
-    {
-	Occ::ConPat pattern2 = *con_pat;
-	for(auto& arg: pattern2.args)
-            arg = rename_and_bind_var(arg, S2, bound_vars);
-        pattern = pattern2;
-    }
+    for(auto& arg: pattern.args)
+        arg = rename_and_bind_var(arg, S2, bound_vars);
 
     return {S2, bound_vars};
 }
@@ -445,21 +422,14 @@ SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const subst
 // If we add pattern2 add the end of alts, would we never get to it?
 bool redundant_pattern(const Occ::Alts& alts, const Occ::Pattern& pattern2)
 {
-    auto con_pat2 = pattern2.to_con_pat();
-
     for(auto& [pattern1,_]: alts)
     {
         // If any pattern in alts is irrefutable, we could never get past the end.
         if (pattern1.is_irrefutable())
             return true;
         // If any pattern in alts is is a ConPat with the same head, then we would never get to pattern2
-        else
-        {
-            auto con_pat1 = pattern1.to_con_pat();
-            assert(con_pat1);
-            if (con_pat2 and con_pat1->head == con_pat2->head)
-                return true;
-        }
+        else if (pattern2.is_con_pat() and *pattern1.head == *pattern2.head)
+            return true;
     }
     return false;
 }
@@ -529,12 +499,10 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
 	// 2.1. Rename and bind pattern variables
 	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
-        auto con_pat = pattern.to_con_pat();
-
-        if (con_pat)
+        if (pattern.is_con_pat())
         {
 	    // Get type and its constructors
-            if (auto C = this_mod.lookup_resolved_symbol(con_pat->head))
+            if (auto C = this_mod.lookup_resolved_symbol(*pattern.head))
             {
                 string pattern_type = *C->parent;
                 if (object_type)
@@ -551,12 +519,12 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
                 }
 
                 // Remove this constructors from the total list of constructors
-                if (unseen_constructors.count(con_pat->head))
+                if (unseen_constructors.count(*pattern.head))
                 {
-                    unseen_constructors.erase(con_pat->head);
-                    seen_constructors.insert(con_pat->head);
+                    unseen_constructors.erase(*pattern.head);
+                    seen_constructors.insert(*pattern.head);
                 }
-                else if (seen_constructors.count(con_pat->head))
+                else if (seen_constructors.count(*pattern.head))
                 {
                     // we should ignore this branch!
                     // and this shouldn't happen.
@@ -566,7 +534,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
             }
             else
             {
-                auto T = this_mod.lookup_resolved_type(con_pat->head);
+                auto T = this_mod.lookup_resolved_type(*pattern.head);
                 assert(T);
                 assert(T->is_class());
                 assert(alts.size() == 1);

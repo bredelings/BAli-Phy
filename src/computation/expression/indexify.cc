@@ -202,21 +202,21 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 	    // Handle C x[1..n] -> body[i]
 	    expression_ref pattern2;
 	    expression_ref body2;
-	    if (to<Core2::WildcardPat>(pattern))
+	    if (pattern.is_wildcard_pat())
 	    {
 		pattern2 = var(-1);
 		body2 = indexify(body,variables);
 	    }
-	    else if (auto CP = to<Core2::ConPat<>>(pattern))
+	    else
 	    {
-		pattern2 = constructor(CP->head, CP->args.size());
+		pattern2 = constructor(*pattern.head, pattern.args.size());
 
-		for(auto& arg: CP->args)
+		for(auto& arg: pattern.args)
                     variables.push_back(arg);
 
 		body2 = indexify(body, variables);
 
-		for(auto& arg: CP->args)
+		for(auto& arg: pattern.args)
                     variables.pop_back();
 	    }
 	    alts2.push_back({pattern2, body2});

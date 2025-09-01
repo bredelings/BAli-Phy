@@ -14,8 +14,6 @@ namespace Levels
     using Decl = Core2::Decl<int>;
     using Decls = Core2::Decls<int>;
     using Case = Core2::Case<int>;
-    using WildcardPat = Core2::WildcardPat;
-    using ConPat = Core2::ConPat<int>;
     using Pattern = Core2::Pattern<int>;
     using Alt = Core2::Alt<int>;
     using Alts = Core2::Alts<int>;

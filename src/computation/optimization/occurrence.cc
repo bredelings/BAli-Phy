@@ -467,19 +467,12 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
             // Remove pattern vars from free variables
             // Copy occurrence info into pattern variables
             Occ::Pattern occ_pattern;
-            if (auto CP = pattern.to_con_pat())
+            occ_pattern.head = pattern.head;
+            for(auto& arg: pattern.args)
             {
-                Occ::ConPat con_pat;
-                con_pat.head = CP->head;
-                for(auto& arg: CP->args)
-                {
-                    auto x = remove_var_and_set_occurrence_info(arg, alt_free_vars);
-                    con_pat.args.push_back(x);
-                }
-                occ_pattern = con_pat;
+                auto x = remove_var_and_set_occurrence_info(arg, alt_free_vars);
+                occ_pattern.args.push_back(x);
             }
-            else
-                occ_pattern = Occ::WildcardPat();
 
             // Merge occurrences for this pattern into the occurrence for the whole set of alts.
             merge_occurrences_into(alts_free_vars, alt_free_vars, true);

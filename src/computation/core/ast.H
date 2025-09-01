@@ -491,69 +491,37 @@ namespace Core2
     template <typename NoteV, typename NoteE, typename T>
     Let(const T&, const Exp<NoteV,NoteE>&) -> Let<NoteV,NoteE>;
 
-    struct WildcardPat
-    {
-	std::string print() const;
-
-	std::strong_ordering operator<=>(const WildcardPat&) const = default;
-
-	template <class Archive>
-	void serialize(Archive&)
-	{ }
-    };
-
     template <typename NoteV = std::monostate>
-    struct ConPat
+    struct Pattern
     {
-	std::string head;
+        std::optional<std::string> head;
 	std::vector<Var<NoteV>> args;
 
-	bool operator==(const ConPat<NoteV>& v2) const
-	{
-	    return head == v2.head and args == v2.args;
-	}
-
-	std::strong_ordering operator<=>(const ConPat<NoteV>& v2) const
-	{
-	    auto cmp1 = head <=> v2.head;
-
-	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
-
-	    return args <=> v2.args;
-	}
-
 	std::string print() const;
+
+	std::strong_ordering operator<=>(const Pattern<NoteV>&) const = default;
+	bool operator==(const Pattern<NoteV>& v2) const = default;
+
+	bool is_wildcard_pat() const
+	{
+            return not head;
+	}
+
+        bool is_con_pat() const
+        {
+            return head.has_value();
+        }
+
+	bool is_irrefutable() const
+	{
+            return is_wildcard_pat();
+	}
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 	    ar(head, args);
 	}
-    };
-
-    template <typename NoteV = std::monostate>
-    struct Pattern: public std::variant<std::monostate, WildcardPat, ConPat<NoteV>>
-    {
-	std::string print() const;
-
-	using std::variant<std::monostate, WildcardPat, ConPat<NoteV>>::variant;
-
-	std::strong_ordering operator<=>(const Pattern<NoteV>&) const = default;
-
-	bool is_wildcard_pat() const
-	{
-	    return (this->index() == 1);
-	}
-
-	const ConPat<NoteV>* to_con_pat() const
-	{
-	    if (this->index() == 2)
-		return &std::get<ConPat<NoteV>>(*this);
-	    else
-		return nullptr;
-	}
-
-	bool is_irrefutable() const {return is_wildcard_pat();}
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -799,38 +767,29 @@ namespace Core2
 	return "let " + decls.print() + " in " + body.print();
     }
 
-    inline std::string WildcardPat::print() const
-    {
-	return "_";
-    }
-
-    template <typename NoteV>
-    std::string ConPat<NoteV>::print() const
-    {
-	std::vector<std::string> words;
-	words.push_back(head);
-	for(auto& v: args)
-	    words.push_back(v.print());
-
-	if (words.size() == 3 and words[0].starts_with(":"))
-	    return words[1]+words[0]+words[2];
-
-	if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
-	{
-	    words.erase(words.begin());
-	    return "("+join(words,", ")+")";
-	}
-
-	return join(words," ");
-    }
-
     template <typename NoteV>
     std::string Pattern<NoteV>::print() const
     {
-	if (this->index() == 0) return "NOPAT";
-	else if (this->index() == 1) return std::get<WildcardPat>(*this).print();
-	else if (this->index() == 2) return std::get<ConPat<NoteV>>(*this).print();
-	else std::abort();
+        if (not head)
+            return "_";
+        else
+        {
+            std::vector<std::string> words;
+            words.push_back(*head);
+            for(auto& v: args)
+                words.push_back(v.print());
+
+            if (words.size() == 3 and words[0].starts_with(":"))
+                return words[1]+words[0]+words[2];
+
+            if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
+            {
+                words.erase(words.begin());
+                return "("+join(words,", ")+")";
+            }
+
+            return join(words," ");
+        }
     }
 
     template <typename NoteV, typename NoteE>

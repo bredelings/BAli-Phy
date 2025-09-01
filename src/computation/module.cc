@@ -660,17 +660,10 @@ void erase_one(multiset<T>& mset, const T& elem)
 
 set<Core2::Var<>> vars_in_pattern(const Core2::Pattern<>& p)
 {
-    if (p.is_wildcard_pat())
-	return {};
-    else if (auto cp = p.to_con_pat())
-    {
-        set<Core2::Var<>> vars;
-        for(auto& arg: cp->args)
-            vars.insert(arg);
-        return vars;
-    }
-    else
-	std::abort();
+    set<Core2::Var<>> vars;
+    for(auto& arg: p.args)
+        vars.insert(arg);
+    return vars;
 }
 
 Core2::Var<> rename_var(const Core2::Var<>& x, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
@@ -1469,7 +1462,7 @@ Core2::Exp<> make_constructor(const std::string& con_name, const DataConInfo& in
     {
         int j = i + info.dict_arity();
         if (info.field_strictness[i])
-            body = Core2::Case<>{args[j],Core2::Alts<>{{{Core2::WildcardPat(), body}}}};
+            body = Core2::Case<>{args[j],Core2::Alts<>{{{/*wildcard pat*/{}, body}}}};
     }
 
     return lambda_quantify(args, body);

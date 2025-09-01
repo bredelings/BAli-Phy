@@ -201,7 +201,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 	for(int j=0;j< total_arity; j++)
 	    args.push_back( get_fresh_core_var("c") );
 
-        Core2::Pattern<> pat = Core2::ConPat<>{name, args};
+        Core2::Pattern<> pat{name, args};
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<Core2::Var<>> x2 = args;
@@ -236,7 +236,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 	simple_patterns.push_back( pat );
 	simple_bodies.push_back( match(x2, equations2) );
     }
-    simple_patterns.push_back( Core2::WildcardPat());
+    simple_patterns.push_back( /* wildcard pattern */ {} );
     simple_bodies.push_back(fail_identity());
 
     // 3. Construct a failable_expression.

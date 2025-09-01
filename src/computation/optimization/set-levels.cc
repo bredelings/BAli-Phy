@@ -72,12 +72,7 @@ vector<Core2::Var<>> strip_levels(const vector<Levels::Var>& xs)
 
 Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
 {
-    if (pattern.is_wildcard_pat())
-        return Core2::WildcardPat();
-
-    auto CP = pattern.to_con_pat();
-
-    return Core2::ConPat<>{CP->head, strip_levels(CP->args)};
+    return {pattern.head, strip_levels(pattern.args)};
 }
 
 Levels::Var add_level(const FV::Var& x, const level_env_t& env)
@@ -101,15 +96,7 @@ vector<Levels::Var> add_levels(const Vector<FV::Var>& xs, const level_env_t& env
 
 Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
 {
-    // I THINK that these should never be VARs in the current paradigm... but we should fix that.
-    if (pattern.is_wildcard_pat())
-        return Levels::WildcardPat();
-    else if (auto c = pattern.to_con_pat())
-    {
-        return Levels::ConPat{c->head, add_levels_no_missing(c->args, env)};
-    }
-    else
-        std::abort();
+    return {pattern.head, add_levels_no_missing(pattern.args, env)};
 }
 
 pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV::Decls& decls_in, const level_env_t& env)
@@ -214,7 +201,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
         {
             // Extend environment with pattern vars at level2
             auto env2 = env;
-            for(auto binder: get_vars(pattern))
+            for(auto binder: pattern.args)
             {
                 auto binder2 = new_unique_var(binder, level2);
                 env2 = env2.insert({binder,binder2});

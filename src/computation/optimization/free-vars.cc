@@ -14,14 +14,6 @@ FreeVars erase(const FreeVars& s, const vector<FV::Var>& xs)
     return s2;
 }
 
-vector<FV::Var> get_vars(const FV::Pattern& p)
-{
-    if (auto CP = p.to_con_pat())
-        return CP->args;
-    else
-        return {};
-}
-
 FreeVars get_union(const FreeVars& s1, const FreeVars& s2)
 {
     if (s1.size() >= s2.size())
@@ -110,11 +102,8 @@ add_free_variable_annotations(const Core2::Exp<>& E)
             auto fv_body = add_free_variable_annotations(body);
             auto alt_free_vars = get_free_vars(fv_body);
 
-            if (auto CP = pat.to_con_pat())
-            {
-                for(auto arg: CP->args)
-                    alt_free_vars = alt_free_vars.erase(arg);
-            }
+            for(auto arg: pat.args)
+                alt_free_vars = alt_free_vars.erase(arg);
 
             alts.push_back({pat, fv_body});
 

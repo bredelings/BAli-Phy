@@ -70,7 +70,7 @@ Core2::Pattern<NoteV> TuplePat(const std::vector<Core2::Var<NoteV>>& args)
     if (args.size() == 1)
         throw myexception()<<"TuplePat: can't construct a tuple of 1 element!";
 
-    return Core2::ConPat<NoteV>{tuple_name(args.size()), args};
+    return {tuple_name(args.size()), args};
 }
 
 class FreshVarSource;

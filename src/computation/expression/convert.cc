@@ -74,15 +74,13 @@ expression_ref to_expression_ref(const Core2::Let<>& L)
 
 expression_ref to_expression_ref(const Core2::Pattern<>& P)
 {
-    if (to<Core2::WildcardPat>(P))
+    if (P.is_wildcard_pat())
 	return var(-1);
-    else if (auto c = to<Core2::ConPat<>>(P))
-    {
-	auto args = c->args | ranges::views::transform( patarg_to_expression_ref ) | ranges::to<vector>();
-	return expression_ref(constructor(c->head, args.size()), args);
-    }
     else
-	std::abort();
+    {
+	auto args = P.args | ranges::views::transform( patarg_to_expression_ref ) | ranges::to<vector>();
+	return expression_ref(constructor(*P.head, args.size()), args);
+    }
 }
 
 expression_ref to_expression_ref(const Core2::Var<>& P)
@@ -310,15 +308,13 @@ Core2::Var<> core_patarg_to_expression_ref(const Occ::Var& V)
 
 Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
 {
-    if (to<Occ::WildcardPat>(P))
-        return Core2::WildcardPat();
-    else if (auto c = to<Occ::ConPat>(P))
-    {
-	auto args = c->args | ranges::views::transform( core_patarg_to_expression_ref ) | ranges::to<vector>();
-	return Core2::ConPat<>{c->head, args};
-    }
+    if (P.is_wildcard_pat())
+        return {};
     else
-        std::abort();
+    {
+	auto args = P.args | ranges::views::transform( core_patarg_to_expression_ref ) | ranges::to<vector>();
+	return {P.head, args};
+    }
 }
 
 Core2::Alts<> to_core_alts(const Occ::Alts& alts1)

@@ -17,8 +17,6 @@ namespace FV
     using Decl = Core2::Decl<std::monostate, FreeVars>;
     using Decls = Core2::Decls<std::monostate, FreeVars>;
     using Case = Core2::Case<std::monostate, FreeVars>;
-    using WildcardPat = Core2::WildcardPat;
-    using ConPat = Core2::ConPat<>;
     using Pattern = Core2::Pattern<>;
     using Alt = Core2::Alt<std::monostate, FreeVars>;
     using Alts = Core2::Alts<std::monostate, FreeVars>;
@@ -34,8 +32,6 @@ FV::Exp add_free_variable_annotations(const Core2::Exp<>& E);
 FreeVars get_union(const FreeVars& s1, const FreeVars& s2);
 
 [[nodiscard]] FreeVars erase(const FreeVars& s, const std::vector<FV::Var>& xs);
-
-std::vector<FV::Var> get_vars(const FV::Pattern& pattern);
 
 const FreeVars& get_free_vars(const FV::Exp& E);
 FreeVars& get_free_vars(FV::Exp& E);

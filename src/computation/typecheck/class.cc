@@ -35,7 +35,7 @@ Core2::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVar
             else
                 fields.push_back( source.get_fresh_core_var("w") );
         }
-        Core2::Pattern<> pattern = Core2::ConPat<>{con_name, fields};
+        Core2::Pattern<> pattern{con_name, fields};
 
         return lambda_quantify({x}, Core2::Exp<>(Core2::Case<>{x,{{pattern, d}}}));
     }

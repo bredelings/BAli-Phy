@@ -37,7 +37,7 @@ Core2::Exp<> declare_seq_info(Module& m)
     auto x = Core2::Var<>("x");
     auto y = Core2::Var<>("y");
 
-    Core2::Exp<> code = lambda_quantify({x,y}, Core2::Exp<>(Core2::Case<>{x,{{Core2::WildcardPat(),y}}}));
+    Core2::Exp<> code = lambda_quantify({x,y}, Core2::Exp<>(Core2::Case<>{x,{{ /* wildcard pattern */{}, y}}}));
     auto [occ_code, _] = occurrence_analyzer(m, code);
 
     // 2. seq :: forall a b. a -> b -> b
