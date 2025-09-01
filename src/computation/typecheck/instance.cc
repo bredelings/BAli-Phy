@@ -510,6 +510,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);
+    auto instance_dict_args = dict_vars_from_lie(givens);
 
     // 2. Get the class info
     auto class_con = get_class_for_constraint(instance_head);
@@ -521,21 +522,21 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     for(int i=0; i<class_info.type_vars.size(); i++)
         subst = subst.insert({class_info.type_vars[i], instance_args[i]});
 
-    // 4. Get (constrained) superclass constraints (wanteds)
+    // 4. Construct superclasses (wanteds) from instance dictionaries (givens)
+    //    For example in the instance Ord a => Ord [a] we need to construct Eq [a] as part of the dictionary.
+    //    So we need to do Ord a => Eq [a]
     push_note(Note()<<"Deriving superclass constraints for "<<instance_head.print());
     vector<Type> superclass_constraints = class_info.context;
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
-    // 5. Compute the superclass dictionaries (wanteds) from the instance dictionaries (givens).
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
 
     pop_note();
 
-    // 6. Start adding fields for the superclass dictionaries
+    // 5. Superclass fields in the instance dictionary.
     Hs::Decls decls;
-    auto instance_dict_args = dict_vars_from_lie(givens);
 
     std::vector<Core2::Var<>> instance_sc_methods;
 
@@ -550,7 +551,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     }
 
 
-    // 7. Construct binds_methods
+    // 6. Method fields in the instance dictionary.
     auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
@@ -564,8 +565,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         decls.push_back({noloc,hs_decl});
     }
 
-    // 8. Construct the dictionary from the constructor functions for its entries
-    // NOTE: See class.cc: dictionary_extractor( ) for the extractor functions.
+    // 7. Construct the dictionary from the constructor functions for its entries
+    //    (Extractor functions are implemented in class.cc: dictionary_extractor( ))
     Core2::Decls<> dict_decls;
     vector<Core2::Var<>> dict_entries;
     for(auto& op: instance_sc_methods)
@@ -576,16 +577,38 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         dict_entries.push_back(dict_entry);
     }
 
-    // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
+    // dfun = /\a1..an -> \dicts:theta -> <superdict_vars,method_vars>
     Core2::Exp<> dict = Core2::ConApp<>(class_name, dict_entries);
     if (dict_entries.size() == 1)
         dict = dict_entries[0];
     dict = make_let(dict_decls, dict);
 
+    // 8. Construct the DFunUnfolding
     // We need to convert instance_dict_args and instance_sc_methods from Core2::<> to Occ::
-    S->var_info->unfolding = DFunUnfolding({/*instance_dict_args::Occ*/}, class_name, {/*instance_sc_methods*/});
-    // We also need to make sure that the instance methods are marked exported?
-    // Maybe we should export things that have symbols?
+    vector<Occ::Var> occ_dvars;
+    for(auto& dv: instance_dict_args)
+    {
+        Occ::Var du(dv.name);
+        du.info.work_dup = amount_t::Once;
+        du.info.code_dup = amount_t::Once;
+        occ_dvars.push_back(du);
+    }
+    vector<Occ::Exp> occ_args;
+    for(auto& op: instance_sc_methods)
+    {
+        Occ::Var occ_op(op.name);
+        occ_op.info.work_dup = amount_t::Once;
+        occ_op.info.code_dup = amount_t::Once;
+        occ_args.push_back(make_apply<occurrence_info,std::monostate>(occ_op, occ_dvars));
+    }
+
+    S->var_info->unfolding = DFunUnfolding{occ_dvars, class_name, occ_args};
+    // We also need to make sure that the instance methods reference here are marked exported?
+    // What is the story on knowing what things to mark exported?
+    // Unlike other things, we don't week to retain a list of the instance_sc_methods anywhere, so
+    //  so mark_exported_decls doesn't have it.
+    // We could ask the module to give us a list of the symbols with type symbol_type_t::instance_superclass_selector and
+    //  symbol_type_t::instance_superclass_selector.
 
     pop_source_span();
 
