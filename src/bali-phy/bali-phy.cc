@@ -375,6 +375,24 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
     L->dump_desugared = args.count("dump-ds");
     L->dump_optimized = args.count("dump-opt");
 
+    if (args.count("recompile"))
+    {
+        auto recompile_string = args.at("recompile").as<string>();
+        if (recompile_string == "none" or recompile_string == "no")
+            ;
+        else if (recompile_string.empty())
+            L->recompile_all = true;
+        else
+        {
+            for(auto& modid: split(recompile_string, ','))
+                L->recompile_modules.insert(modid);
+        }
+    }
+    else if (args.count("test-module"))
+    {
+        L->recompile_modules.insert(args.at("test-module").as<string>());
+    }
+
     return L;
 }
 

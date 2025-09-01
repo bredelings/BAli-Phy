@@ -458,6 +458,8 @@ std::string extract_sha(std::string& data)
 
 std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_sha)
 {
+    if (loader.recompile_all or loader.recompile_modules.count(modid)) return {};
+
     if (auto path = loader.find_cached_module(modid))
     {
         try
@@ -1644,6 +1646,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
 
 const_symbol_ptr lookup_magic_symbol(const std::string& name)
 {
+    // See special_prelude_symbols
     symbol_ptr S;
     if (name == "Compiler.Error.error")
     {

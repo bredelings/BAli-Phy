@@ -22,6 +22,10 @@ public:
 
     std::vector<std::string> args;
 
+    bool recompile_all = false;
+
+    std::set<std::string> recompile_modules;
+
     mutable std::map<std::tuple<std::string,std::string>, void*> cached_builtins;
 
     bool try_add_plugin_path(const std::filesystem::path& path);
