@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <utility>
+#include <variant>
 
 #include "computation/optimization/occurrence.H"
 #include "computation/fresh_vars.H"
@@ -26,6 +27,34 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n);
 class Module;
 
 
+struct FloatLet
+{
+    Occ::Decls decls;
+};
+
+struct FloatCase
+{
+    Occ::Exp object;
+    // No case binder.
+    Occ::Pattern pattern;
+};
+
+typedef std::variant<FloatLet,FloatCase> Float;
+
+/* Here we make a continuation structure similar to the one used by the
+   simplifier but
+   * representing only function application.
+   * representing arguments as expressions, not variables.
+ */
+struct ConContObj;
+typedef std::shared_ptr<const ConContObj> ConCont;
+struct ConContObj
+{
+    Occ::Var arg;
+    ConCont next;
+    ConContObj(const Occ::Var& x, const ConCont& n):arg(x), next(n){}
+};
+
 std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 
@@ -41,6 +70,12 @@ public:
 
     Occ::Var rename_var(const Occ::Var& x, simplifier::substitution& S, const in_scope_set& bound_vars);
     Occ::Var rename_and_bind_var(const Occ::Var& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
+
+    std::optional<std::tuple<in_scope_set, std::string, std::vector<Occ::Exp>>>
+    exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& floats, const Occ::Exp& E, const ConCont& cont);
+
+    std::optional<std::tuple<in_scope_set, std::vector<Float>, std::string, std::vector<Occ::Exp>>>
+    exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& bound_vars);
 
     bool small_enough(const Occ::Exp& rhs, const inline_context& context);
 

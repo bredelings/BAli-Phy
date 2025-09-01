@@ -7,6 +7,7 @@
 #include "occurrence.H"
 #include "computation/module.H"
 #include "core/func.H"
+#include "core/subst.H"
 
 #include "simplifier.H"
 
@@ -173,6 +174,153 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
         std::abort();
 }
 
+ConCont add_app(const Occ::Var& arg, const ConCont& cont)
+{
+    return std::make_shared<ConContObj>(arg, cont);
+}
+
+bool safe_to_inline(const Occ::Var& x)
+{
+    if (x.info.is_loop_breaker) return false;
+    if (x.info.code_dup == amount_t::None and x.info.work_dup == amount_t::None) return true;
+    if (x.info.code_dup == amount_t::Once and x.info.work_dup == amount_t::Once) return true;
+    return false;
+}
+
+bool do_beta_by_substitution(const Occ::Var& x, const Occ::Exp& rhs)
+{
+    return rhs.to_var() or safe_to_inline(x);
+}
+
+bool is_data_con_wrapper(const Occ::Exp& fun)
+{
+    if (fun.to_conApp()) return true;
+    else if (auto L = fun.to_lambda())
+        return is_data_con_wrapper(L->body);
+    else
+        return false;
+}
+
+int count_cont_args(const ConCont& cont)
+{
+    if (not cont)
+        return 0;
+    else
+        return 1 + count_cont_args(cont->next);
+}
+
+// GHC has an InScopeEnv -- different from an InScopeSet -- that contains the unfolding?
+
+std::optional<std::tuple<in_scope_set, std::string, std::vector<Occ::Exp>>>
+SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& floats, const Occ::Exp& E, const ConCont& cont)
+{
+    if (auto app = E.to_apply())
+    {
+        return exprIsConApp_worker(S, floats, app->head, add_app( app->arg, cont));
+    }
+    else if (auto lam = E.to_lambda(); lam and cont)
+    {
+        auto S2 = bind_var(S, lam->x, cont->arg);
+        Float f = FloatLet{{{lam->x, cont->arg}}};
+        floats.push_back(f);
+        return exprIsConApp_worker(S2, floats, lam->body, cont->next);
+    }
+    else if (auto let = E.to_let())
+    {
+        Float f = FloatLet{let->decls};
+        floats.push_back(f);
+        auto S2 = S;
+        for(auto& [x,e]: let->decls)
+            S2 = bind_var(S, x, e);
+            
+        return exprIsConApp_worker(S2, floats, let->body, cont);
+    }
+    else if (auto C = E.to_case(); C and C->alts.size() == 1)
+    {
+        auto& [pat,body] = C->alts[0];
+
+        Float f = FloatCase{C->object, pat};
+        floats.push_back(f);
+        auto S2 = S;
+        for(auto& x: pat.args)
+            S2 = bind_var(S, x, {});
+
+        return exprIsConApp_worker(S2, floats, body, cont);
+    }
+    else if (auto C = E.to_conApp())
+    {
+        // There had better not be arguments applied to the con app!
+        assert(not cont);
+        vector<Occ::Exp> args;
+        for(auto& arg: C->args)
+            args.push_back(arg);
+        return {{S, C->head, args}};
+    }
+    else if (auto V = E.to_var())
+    {
+        // should we do something special for string literals?
+
+        auto& x = *V;
+        Unfolding unfolding;
+        if (is_local_symbol(x.name, this_mod.name))
+        {
+            const auto& [unf, _] = S.at(x);
+            unfolding = unf;
+        }
+        else
+        {
+            assert(not x.name.empty());
+
+            if (auto S = this_mod.lookup_resolved_symbol(x.name))
+                unfolding = S->unfolding;
+            else
+                throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
+        }
+
+        if (auto cu = to<CoreUnfolding>(unfolding))
+        {
+            auto expr = cu->expr;
+            if (expr.to_var() or is_data_con_wrapper(expr))
+                return exprIsConApp_worker(S, floats, expr, cont);
+        }
+        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size())
+        {
+            auto C = cont;
+            Occ::subst_t subst;
+            for(auto& x: du->binders)
+            {
+                subst = subst.insert({x, C->arg});
+                C = C->next;
+            }
+            assert(not C);
+            
+            vector<Occ::Exp> args;
+            for(auto& arg: du->args)
+                args.push_back(Core2::subst(subst, arg));
+
+            return {{S, du->head, args}};
+        }
+    }
+
+    return {};    
+}
+
+std::optional<std::tuple<in_scope_set, std::vector<Float>, std::string, std::vector<Occ::Exp>>>
+SimplifierState::exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& bound_vars)
+{
+    vector<Float> floats;
+    auto result = exprIsConApp_worker(bound_vars, floats, E, {});
+
+    if (not result)
+        return {};
+    else
+    {
+        auto [S, con, args] = *result;
+        return {{S, floats, con, args}};
+    }
+}
+
+
 // Do we have to explicitly skip loop breakers here?
 Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
@@ -196,6 +344,27 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
         occ_info.work_dup = amount_t::Many;
         occ_info.code_dup = amount_t::Many;
+    }
+
+    // Try and handling a method applied to a dfun
+    if (auto mu = to<MethodUnfolding>(unfolding))
+    {
+        if (auto app = context.is_apply_context())
+        {
+            // Apply substitution to the argument.
+            auto arg = *simplify(app->arg, app->subst, bound_vars, make_stop_context()).to_var();
+
+            if (auto constant = exprIsConApp_maybe(arg, bound_vars))
+            {
+                auto [bound_vars2, floats, con, args] = *constant;
+
+                auto expr = args[mu->index];
+
+                // apply floats?
+
+                // return rebuild(expr, bound_vars,  context);
+            }
+        }
     }
 
     if (do_inline(unfolding, occ_info, context))

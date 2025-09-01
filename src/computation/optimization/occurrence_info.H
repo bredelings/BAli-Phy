@@ -2,6 +2,7 @@
 #define OCCURRENCE_INFO_H
 
 #include "computation/core/ast.H"
+#include "computation/core/subst.H"
 
 enum class amount_t {Unknown, None, Once, Many};
 
@@ -42,6 +43,7 @@ namespace Occ
     using BuiltinOp = Core2::BuiltinOp<occurrence_info>;
     using Constant = Core2::Constant;
     using Exp = Core2::Exp<occurrence_info>;
+    using subst_t = Core2::subst_t<occurrence_info>;
 };
 
 #endif
