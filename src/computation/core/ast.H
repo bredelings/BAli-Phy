@@ -381,13 +381,13 @@ namespace Core2
     struct Apply
     {
 	Exp<NoteV, NoteE> head;
-	std::vector<Var<NoteV>> args;
+	Var<NoteV> arg;
 
 	std::string print() const;
 
 	bool operator==(const Apply<NoteV,NoteE>& a2) const
 	{
-	    return head == a2.head and args == a2.args;
+	    return head == a2.head and arg == a2.arg;
 	}
 
 	std::strong_ordering operator<=>(const Apply<NoteV,NoteE>& a2) const
@@ -396,21 +396,20 @@ namespace Core2
 
 	    if (cmp != std::strong_ordering::equivalent) return cmp;
 
-	    return args <=> a2.args;
+	    return arg <=> a2.arg;
 	}
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-	    ar(head, args);
+	    ar(head, arg);
 	}
 
         Apply() = default;
 
-        Apply(const Exp<NoteV,NoteE>& h, const std::vector<Var<NoteV>>& a)
-            :head(h), args(a)
+        Apply(const Exp<NoteV,NoteE>& h, const Var<NoteV>& a)
+            :head(h), arg(a)
         {
-            assert(not args.empty());
         }
     };
 
@@ -737,13 +736,11 @@ namespace Core2
     template <typename NoteV, typename NoteE>
     std::string Apply<NoteV,NoteE>::print() const
     {
-	std::vector<std::string> words;
-        words.push_back(head.print());
+        std::string result = head.print();
         if (not head.to_var() and not head.to_apply())
-            words[0] = "(" + words[0] + ")";
-	for(auto& v: args)
-	    words.push_back(v.print());
-	return join(words," ");
+            result = "(" + result + ")";
+        result += " " + arg.print();
+	return result;
     }
 
     template <typename NoteV, typename NoteE>

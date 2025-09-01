@@ -146,8 +146,7 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
     else if (auto app = E.to_apply())
     {
         auto free = get_free_vars(app->head);
-        for(auto& x: app->args)
-            free.insert(x);
+        free.insert(app->arg);
         return free;
     }
     else if (auto con = E.to_conApp())
@@ -794,30 +793,24 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
 Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
 {
-    // 1. Check that we have \x -> ($) ...
+    // 1. Check that we have \x -> (...)  x
     auto app = L.body.to_apply();
-    if (not app) return L;
+    if (not app or app->arg != L.x) return L;
 
-    // 2. Check that we have \x -> ($) ... x
-    if (app->args.back() != L.x) return L;
-
-    // 3. Check that the function is a variable different from x (and so cannot contain x)
-    if (not app->head.to_var() or app->head == L.x) return L;
-
-    // 4. Check that all entries are vars and are not x: \x -> ($) f a b c x
-    for(int i=0;i<app->args.size()-1;i++)
-        if (app->args[i] == L.x) return L;
-
-    // ($) f x  ==> f
-    if (app->args.size() == 1)
-        return app->head;
-    // ($) f y x ==> ($) f y
-    else
+    // 2. Check that L->body has the form (( ) a b c x) and all other arguments are not x.
+    Occ::Exp E = app->head;
+    while(auto A = E.to_apply())
     {
-        auto app2 = *app;
-        app2.args.pop_back();
-        return app2;
+        E = A->head;
+        if (A->arg == L.x) return L;
     }
+
+    // 3. Check that the head is a var that is not x.
+    auto V = E.to_var();
+    if (not V or *V == L.x) return L;
+    
+    // f x  ==> f
+    return app->head;
 }
 
 Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)

@@ -696,11 +696,9 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
     {
         auto head = rename(A->head, substitution, bound);
 
-        auto args = A->args;
-        for(auto& arg: args)
-            arg = rename_var(arg, substitution, bound);
+        auto arg = rename_var(A->arg, substitution, bound);
 
-        return Core2::Apply<>{head, args};
+        return Core2::Apply<>{head, arg};
     }
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())

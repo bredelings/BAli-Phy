@@ -66,9 +66,8 @@ add_free_variable_annotations(const Core2::Exp<>& E)
     {
         auto head = add_free_variable_annotations(A->head);
         auto free_vars = get_free_vars(head);
-        for(auto& arg: A->args)
-            free_vars = free_vars.insert(arg);
-        return FV::Exp(FV::Apply{head, A->args}, free_vars);
+        free_vars = free_vars.insert(A->arg);
+        return FV::Exp(FV::Apply{head, A->arg}, free_vars);
     }
     // 4. Let
     else if (auto L = E.to_let())

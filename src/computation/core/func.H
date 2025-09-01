@@ -8,14 +8,7 @@
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Core2::Var<NoteV>& x)
 {
-    if (auto app = E.to_apply())
-    {
-	auto A = *app;
-	A.args.push_back(x);
-	return A;
-    }
-    else
-	return Core2::Apply<NoteV,NoteE>{E,{x}};
+    return Core2::Apply<NoteV,NoteE>{E,{x}};
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>

@@ -39,8 +39,7 @@ expression_ref to_expression_ref(const Core2::Lambda<>& L)
 
 expression_ref to_expression_ref(const Core2::Apply<>& A)
 {
-    vector<expression_ref> args = A.args | ranges::views::transform( var_to_expression_ref ) | ranges::to<vector>();
-    return apply_expression(to_expression_ref(A.head), args);
+    return apply_expression(to_expression_ref(A.head), var_to_expression_ref(A.arg) );
 }
 
 vector<CDecls> decl_groups_to_expression_ref(const vector<Core2::Decls<>>& core_decl_groups)
@@ -286,14 +285,7 @@ Core2::Decls<> to_core(const Occ::Decls& decls)
 
 Core2::Apply<> to_core_apply(const Occ::Apply A)
 {
-    Core2::Apply<> A2;
-
-    A2.head = to_core_exp(A.head);
-
-    for(auto& arg: A.args)
-	A2.args.push_back(to_core(arg));
-
-    return A2;
+    return Core2::Apply<>{to_core_exp(A.head), to_core(A.arg)};
 }
 
 Core2::Let<> to_core_let(const Occ::Let& L)

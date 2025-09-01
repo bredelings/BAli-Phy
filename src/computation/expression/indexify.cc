@@ -167,11 +167,9 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
     else if (auto A = E.to_apply())
     {
 	auto head = indexify(A->head, variables);
-	vector<expression_ref> args;
-	for(auto& arg: A->args)
-	    args.push_back(indexify(arg, variables));
+        auto arg = indexify(A->arg, variables);
 
-	return apply_expression(head, args);
+	return apply_expression(head, arg);
     }
     // Let expression
     else if (auto L = E.to_let())

@@ -211,7 +211,7 @@ float_lets(const Levels::Exp& E, int level)
     {
         auto [head2, float_binds] = float_lets(A->head, level);
 
-        return {Core2::Apply{head2, strip_levels(A->args)}, float_binds};
+        return {Core2::Apply{head2, strip_level(A->arg)}, float_binds};
     }
 
     // 5. Lambda

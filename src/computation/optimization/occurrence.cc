@@ -343,23 +343,11 @@ maybe_eta_reduce(const Occ::Lambda& L)
     if (not A)
         return {};
 
-    assert(A->args.size());
-    if (A->args.back() != L.x)
+    if (A->arg != L.x)
         return {};
 
-    // ($) f x  ==> f
-    if (A->args.size() == 1)
-        return A->head;
-    // ($) f y x ==> ($) f y
-    else
-    {
-        // This case goes away if we make Apply only apply a single argument.
-        auto args2 = A->args;
-        args2.pop_back();
-
-        assert(not args2.empty());
-        return Occ::Apply{A->head, args2};
-    }
+    // f x  ==> f
+    return A->head;
 }
 
 pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var<> x_in, var_context context)
@@ -423,16 +411,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
         merge_occurrences_into(free_vars, head_free_vars);
 
-        vector<Occ::Var> args;
+        auto [arg, arg_free_vars] = occurrence_analyze_var(m, A->arg, var_context::argument);
+        merge_occurrences_into(free_vars, arg_free_vars);
 
-        for(auto& arg: A->args)
-        {
-            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
-            args.push_back(occ_arg);
-            merge_occurrences_into(free_vars, arg_free_vars);
-        }
-
-        return {Occ::Apply{head, args}, free_vars};
+        return {Occ::Apply{head, arg}, free_vars};
     }
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())

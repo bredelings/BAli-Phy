@@ -56,10 +56,7 @@ inline_context make_apply_context_one_arg(const Occ::Var& x, const simplifier::s
 
 inline_context make_apply_context(const Occ::Apply& A,  const simplifier::substitution& S, inline_context context)
 {
-    for(auto& x: A.args | views::reverse)
-	context = make_apply_context_one_arg(x, S, context);
-
-    return context;
+    return make_apply_context_one_arg(A.arg, S, context);
 }
 
 inline_context make_stop_context()
@@ -78,11 +75,7 @@ int simple_size(const Occ::Exp& E)
 	return 0;
 
     else if (auto app = E.to_apply())
-    {
-	int n_args = app->args.size();
-	assert(n_args > 0);
-	return simple_size(app->head) + n_args;
-    }
+	return simple_size(app->head) + 1;
 
     else if (auto lam = E.to_lambda())
 	return simple_size(lam->body);
@@ -114,11 +107,7 @@ int simple_size(const Core2::Exp<>& E)
 	return 0;
 
     else if (auto app = E.to_apply())
-    {
-	int n_args = app->args.size();
-	assert(n_args > 0);
-	return simple_size(app->head) + n_args;
-    }
+	return simple_size(app->head) + 1;
 
     else if (auto lam = E.to_lambda())
 	return simple_size(lam->body);

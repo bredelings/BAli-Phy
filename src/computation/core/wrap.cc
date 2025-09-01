@@ -81,23 +81,22 @@ namespace Core2
 
     struct WrapApplyObj: public WrapObj
     {
-        std::vector<Var<>> args;
+        Var<> arg;
 
         WrapApplyObj* clone() const {return new WrapApplyObj(*this);}
         Exp<> operator()(const Exp<>&) const;
 
-        WrapApplyObj(const std::vector<Var<>>& args);
+        WrapApplyObj(const Var<>& arg);
     };
 
     Exp<> WrapApplyObj::operator()(const Exp<>& e) const
     {
-        return Apply<>{e, args};
+        return Apply<>{e, arg};
     }
 
-    WrapApplyObj::WrapApplyObj(const vector<Var<>>& as)
+    WrapApplyObj::WrapApplyObj(const Var<>& a)
+        :arg(a)
     {
-        for(auto& a:as)
-            args.push_back(a);
     }
 
     /*    
@@ -109,13 +108,17 @@ namespace Core2
             return {WrapApplyObj(args)};
     }
     */
+    wrapper WrapApply(const Var<>& arg)
+    {
+        return {WrapApplyObj(arg)};
+    }
 
     wrapper WrapApply(const std::vector<Var<>>& args)
     {
-        if (args.empty())
-            return {};
-        else
-            return {WrapApplyObj(args)};
+        wrapper w;
+        for(auto& arg: args)
+            w = WrapApply(arg) * w;
+        return w;
     }
 
     struct WrapLambdaObj: public WrapObj
