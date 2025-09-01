@@ -214,7 +214,7 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 
 		body2 = indexify(body, variables);
 
-		for(auto& arg: pattern.args)
+		for(auto& _: pattern.args)
                     variables.pop_back();
 	    }
 	    alts2.push_back({pattern2, body2});
