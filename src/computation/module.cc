@@ -591,30 +591,13 @@ void mark_exported_decls(Core2::Decls<>& decls,
                          const InstanceEnv& instance_env,
                          const map<string,const_symbol_ptr>& exports,
                          const map<string,type_ptr>& type_exports,
-                         const string& module_name)
+                         const Module& M)
 {
     // Record exports
     set<string> exported;
     for(auto& [name,symbol]: exports)
-        if (get_module_name(symbol->name) == module_name)
+        if (get_module_name(symbol->name) == M.name)
             exported.insert(symbol->name);
-
-    // Instances are exported
-    for(auto& [dvar, _]: instance_env)
-        exported.insert(dvar.name);
-
-    for(auto& [tname,tinfo]: type_exports)
-    {
-        if (auto c = tinfo->is_class())
-        {
-            for(auto& [dvar, _]: c->info->superclass_extractors)
-                exported.insert(dvar.name);
-
-            // Default methods are exported
-            for(auto& [method, dm]: c->info->default_methods)
-                exported.insert(dm.name);
-        }
-    }
 
     // Mark exported vars as exported
     for(auto& [x,_]: decls)
@@ -624,6 +607,15 @@ void mark_exported_decls(Core2::Decls<>& decls,
             x.is_exported = true;
             exported.erase(x.name);
         }
+        else if (auto S = M.lookup_resolved_symbol(x.name))
+        {
+            // We don't have a way to find all the exported symbols
+            // and check that we have a top-level declaration for them.
+            if (S->symbol_type >= symbol_type_t::superclass_selector)
+            {
+                x.is_exported = true;
+            }
+        }
     }
 
     // Check that we don't export things that don't exist
@@ -631,7 +623,7 @@ void mark_exported_decls(Core2::Decls<>& decls,
     {
         // FIXME: class members don't have a value def, and so this doesn't work.
         myexception e;
-        e<<"Module '"<<module_name<<"' exports undefined symbols:\n";
+        e<<"Module '"<<M.name<<"' exports undefined symbols:\n";
         for(auto& name: exported)
             e<<"  "<<name;
         throw e;
@@ -939,7 +931,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, MM->name);
+    mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, *MM);
 
     value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
