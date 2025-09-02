@@ -607,11 +607,11 @@ void mark_exported_decls(Core2::Decls<>& decls,
             x.is_exported = true;
             exported.erase(x.name);
         }
-        else if (auto S = M.lookup_resolved_symbol(x.name))
+        else if (is_qualified_symbol(x.name))
         {
             // We don't have a way to find all the exported symbols
             // and check that we have a top-level declaration for them.
-            if (S->symbol_type >= symbol_type_t::superclass_selector)
+            if (auto S = M.lookup_resolved_symbol(x.name); S and S->symbol_type >= symbol_type_t::superclass_selector)
             {
                 x.is_exported = true;
             }
