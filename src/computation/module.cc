@@ -1790,13 +1790,13 @@ const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) 
     else if (name == get_module_name(symbol_name))
         return lookup_local_symbol(symbol_name);
 
-    // 3. Handle magic symbols
-    else if (auto result = lookup_magic_symbol(symbol_name))
+    // 3. Handle external names
+    else if (auto result = lookup_external_symbol(symbol_name))
         return result;
 
-    // 4. Handle external names
+    // 4. Handle magic symbols
     else
-        return lookup_external_symbol(symbol_name);
+        return lookup_magic_symbol(symbol_name);
 }
 
 const_symbol_ptr Module::lookup_local_symbol(const std::string& symbol_name) const
