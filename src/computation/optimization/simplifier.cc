@@ -189,22 +189,12 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
     // FIXME -- why is x.info->var_info empty?  Why can't we just use x.info->var_info->unfolding?
 
-    std::shared_ptr<VarInfo> var_info;
-    if (is_haskell_builtin_con_name(x.name))
-    {
-        auto S = lookup_builtin_symbol(x.name);
-        assert(S);
-	var_info = S->var_info;
-    }
-    else
-    {
-        assert(is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name);
+    auto S = this_mod.lookup_resolved_symbol(x.name);
+    if (not S)
+        throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
 
-        if (auto S = this_mod.lookup_external_symbol(x.name))
-	    var_info = S->var_info;
-        else if (not special_prelude_symbol(x.name))
-            throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
-    }
+    auto var_info = S->var_info;
+    assert(var_info);
 
     optional<Occ::Exp> unfolding;
     if (var_info)
