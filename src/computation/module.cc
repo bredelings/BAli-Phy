@@ -1639,7 +1639,6 @@ set<string> special_prelude_symbols =
     "Compiler.Enum.enumFromTo",
     "Compiler.Enum.enumFromThen",
     "Compiler.Enum.enumFromThenTo",
-    "Compiler.Enum.enumFrom",
     "Prelude.undefined"
 };
 
