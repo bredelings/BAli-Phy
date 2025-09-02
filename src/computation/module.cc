@@ -1660,6 +1660,12 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
         // forall a.[Char] -> a
         S->type = add_forall_vars({a}, make_arrow_type(list_type(char_type()),a));
     }
+    else if (name == "Foreign.String.unpack_cpp_string")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.[Char] -> a
+        S->type = make_arrow_type(TypeCon("CPPString"), list_type(char_type()));
+    }
     else if (name == "Data.OldList.concatMap")
     {
         S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
