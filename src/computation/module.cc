@@ -1651,13 +1651,60 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
 {
     // See special_prelude_symbols
     symbol_ptr S;
+
+    TypeVar a("a", kind_type());
+
     if (name == "Compiler.Error.error")
     {
         S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
         // forall a.[Char] -> a
-        TypeVar a("a", kind_type());
         S->type = add_forall_vars({a}, make_arrow_type(list_type(char_type()),a));
     }
+    else if (name == "Data.OldList.concatMap")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a b.(a -> [b]) -> [a] -> [b]
+        TypeVar b("b", kind_type());
+        S->type = add_forall_vars({a}, make_arrow_type(make_arrow_type(a,list_type(b)), make_arrow_type(list_type(a),list_type(b))));
+    }
+    else if (name == "Control.Monad.fail")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall m a.MonadFail m => String -> m a
+        TypeVar m("m", kind_type());
+        S->type = add_forall_vars({m,a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Monad"),m))}), make_arrow_type(list_type(char_type()), TypeApp(m,a))));
+    }
+    else if (name == "Compiler.Enum.enumFrom")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.Enum a => a -> [a]
+        S->type = add_forall_vars({a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Enum"),a))}), make_arrow_type(a, list_type(a))));
+    }
+    else if (name == "Compiler.Enum.enumFromTo")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.Enum a => a -> a -> [a]
+        S->type = add_forall_vars({a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Enum"),a))}), make_arrow_type(a, make_arrow_type(a, list_type(a)))));
+    }
+    else if (name == "Compiler.Enum.enumFromThen")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.Enum a => a -> a -> [a]
+        S->type = add_forall_vars({a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Enum"),a))}), make_arrow_type(a, make_arrow_type(a, list_type(a)))));
+    }
+    else if (name == "Compiler.Enum.enumFromThenTo")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.Enum a => a -> a -> a -> [a]
+        S->type = add_forall_vars({a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Enum"),a))}), make_arrow_type(a, make_arrow_type(a, make_arrow_type(a, list_type(a))))));
+    }
+    else if (name == "Prelude.undefined")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.a
+        S->type = add_forall_vars({a}, a);
+    }
+
     return S;
 }
 
