@@ -588,9 +588,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
 }
 
 void mark_exported_decls(Core2::Decls<>& decls,
-                         const InstanceEnv& instance_env,
                          const map<string,const_symbol_ptr>& exports,
-                         const map<string,type_ptr>& type_exports,
                          const Module& M)
 {
     // Record exports
@@ -922,7 +920,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    mark_exported_decls(value_decls, MM->local_instances, MM->exported_symbols(), MM->types, *MM);
+    mark_exported_decls(value_decls, MM->exported_symbols(), *MM);
 
     value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
