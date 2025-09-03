@@ -19,6 +19,7 @@ jobs:
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
                ubuntu-gcc-14-24.04,
+               ubuntu-gcc-14-arm,
                ubuntu-clang-17,
                macos13-xcode15-intel,
                macos14-xcode16-arm,
@@ -66,6 +67,13 @@ jobs:
 
           - name: ubuntu-gcc-14-24.04
             os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-14-arm
+            os: ubuntu-24.04-arm
             compiler: gcc
             version: "14"
             buildtype: "release"
@@ -144,10 +152,7 @@ jobs:
         fi
 
         sudo rm -rf /usr/local/share/boost
-        if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
-            # 24.04 has boost.json
-            sudo apt-get install -y libboost-all-dev
-        else
+        if [ ${{ matrix.os }} = ubuntu-22.04 ] ; then
             # 22.04 and earlier do not have boost.json
             ( cd
               curl -O -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
@@ -158,6 +163,9 @@ jobs:
               echo -e "\n    BOOST root is at $(cd ../installed-boost-1.87.0; pwd)\n"
               echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
             )
+        else
+            # 24.04 has boost.json
+            sudo apt-get install -y libboost-all-dev
         fi
 
     - name: Install (Linux -> Windows [cross])
@@ -274,7 +282,7 @@ jobs:
           if [ "${{ matrix.name }}" = "windows" ] ; then
             export WINEPATH=$(winepath -w $HOME/local/bin)
           fi
-          ninja -C build test
+          ninja -C build test -j2
         fi
 
     - name: Get version
