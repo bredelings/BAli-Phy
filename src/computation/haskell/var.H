@@ -11,8 +11,6 @@
 
 #include "computation/core/wrap.H"
 
-struct VarInfo;
-
 namespace Haskell
 {
 

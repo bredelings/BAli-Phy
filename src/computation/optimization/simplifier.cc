@@ -193,9 +193,9 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     if (not S)
         throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
 
-    optional<Occ::Exp> unfolding;
+    optional<CoreUnfolding> unfolding;
     if (auto cu = to<CoreUnfolding>(S->var_info->unfolding))
-        unfolding = cu->expr;
+        unfolding = *cu;
     else if (auto mu = to<MethodUnfolding>(S->var_info->unfolding))
     {
         // std::cerr<<"method "<<x.name<<": index "<<mu->index<<"\n";
@@ -206,10 +206,10 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     occ_info.code_dup = amount_t::Many;
 
     // FIXME -- pass var_info to do_inline( ).
-    if (unfolding and do_inline(*unfolding, occ_info, context))
-        return simplify(*unfolding, {}, bound_vars, context);
-    else if (S->var_info->always_unfold and (not context.is_stop_context() or is_trivial(*unfolding)))
-        return simplify(*unfolding, {}, bound_vars, context);
+    if (unfolding and do_inline(unfolding->expr, occ_info, context))
+        return simplify(unfolding->expr, {}, bound_vars, context);
+    else if (unfolding and unfolding->always_unfold and (not context.is_stop_context() or is_trivial(unfolding->expr)))
+        return simplify(unfolding->expr, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }

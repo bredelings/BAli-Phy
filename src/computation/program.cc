@@ -50,8 +50,7 @@ Core2::Exp<> declare_seq_info(Module& m)
 
     // 4. always unfold to code.
     auto info = std::make_shared<VarInfo>();
-    info->always_unfold = true;
-    info->unfolding = CoreUnfolding{occ_code};
+    info->unfolding = CoreUnfolding{occ_code, true};
 
     // 5. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
