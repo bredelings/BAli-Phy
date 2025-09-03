@@ -9,7 +9,6 @@
 #include "computation/optimization/occurrence_info.H"
 #include "expression_ref.H"
 
-struct VarInfo;
 struct Type;
 
 // a variable expression
