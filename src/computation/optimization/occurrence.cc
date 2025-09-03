@@ -336,18 +336,16 @@ set<Occ::Var> dup_work(set<Occ::Var>& vars)
 std::optional<Occ::Exp>
 maybe_eta_reduce(const Occ::Lambda& L)
 {
-    if (L.x.info.code_dup != amount_t::Once)
-        return {};
+    // We could also consider:
+    // * \x -> (let decls in f x)
+    // * \x -> case obj of pat1 -> f1 x; pat2 -> f2 x
+    // * \x -> (\y -> f y x)
 
-    auto A = L.body.to_apply();
-    if (not A)
+    // \x -> f x ==> f  (where x does not occur in f)
+    if (auto A = L.body.to_apply(); A and A->arg == L.x and L.x.info.code_dup == amount_t::Once)
+        return A->head;
+    else
         return {};
-
-    if (A->arg != L.x)
-        return {};
-
-    // f x  ==> f
-    return A->head;
 }
 
 pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var<> x_in, var_context context)

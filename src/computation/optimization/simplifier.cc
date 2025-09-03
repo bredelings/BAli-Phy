@@ -664,10 +664,11 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
     // 5.1 Rename and bind all variables.
     //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
     //     Renaming them is necessary to correctly simplify the bodies.
-    for(int i=0;i<n_decls;i++)
+    for(auto& [x,_]: orig_decls)
     {
-	auto& x = orig_decls[i].x;
 	auto x2 = rename_and_bind_var(x, S2, bound_vars);
+	if (x.is_exported) assert(x == x2);
+
 	new_names.push_back(x2);
     }
 
@@ -680,8 +681,6 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	auto F  = orig_decls[i].body;
 
 	auto x2 = new_names[i];
-
-	if (x.is_exported) assert(x == x2);
 
 	// 1. Any references to x in F must be to the x bound in this scope.
 	// 2. F can only contain references to x if x is a loop breaker.
