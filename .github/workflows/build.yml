@@ -21,7 +21,7 @@ jobs:
                ubuntu-gcc-14-24.04,
                ubuntu-gcc-14-arm,
                ubuntu-clang-17,
-               macos14-xcode16-arm,
+               macos-xcode16-arm,
                windows
                ]
 
@@ -85,8 +85,8 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos14-xcode16-arm
-            os: macos-14
+          - name: macos-xcode16-arm
+            os: macos-latest
             compiler: xcode
             version: "16"
             buildtype: "debugoptimized"
