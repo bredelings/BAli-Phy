@@ -29,7 +29,6 @@
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
 #include "computation/core/func.H"
-#include "computation/varinfo.H"
 #include "util/assert.hh"
 #include <boost/compute/detail/sha1.hpp>
 #include <fmt/chrono.h>
@@ -1247,7 +1246,6 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
     }
 
     assert(S);
-    assert(S->var_info);
 
     return S;
 }
@@ -1265,13 +1263,13 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
         // Add the unfolding for this variable.
         auto S = lookup_make_local_symbol(x.name);
 
-        if (simple_size(rhs) <= 5 and to<std::monostate>(S->var_info->unfolding))
+        if (simple_size(rhs) <= 5 and to<std::monostate>(S->unfolding))
         {
             // Label vars with whether they are used or not, and collect free vars.
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
 
             // The unfolding need to be occurrence analyzed.
-            S->var_info->unfolding = CoreUnfolding{occ_rhs};
+            S->unfolding = CoreUnfolding{occ_rhs};
 
             // Check that we have local symbols for everything that we've put in an unfolding.
             for(auto& y: free_vars)
@@ -1620,7 +1618,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     Module empty("Empty");
 
     auto [occ_U, free_vars] = occurrence_analyzer(empty, U);
-    S->var_info->unfolding = CoreUnfolding{occ_U};
+    S->unfolding = CoreUnfolding{occ_U};
     assert(free_vars.empty());
     return S;
 }
@@ -1714,7 +1712,7 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
     return S;
 }
 
-// Holding the symbols here permanently ensures that there is always a
+// Outdated: Holding the symbols here permanently ensures that there is always a
 // reference to the VarInfo for these symbols.
 std::map<std::string, const_symbol_ptr> builtin_symbols_cache;
 
@@ -2007,7 +2005,6 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
     auto S = symbol_info(cname, symbol_type_t::constructor, qualify_local_name(type_name), arity, {});
-    S.var_info->conlike = true;
     declare_symbol( S );
 }
 

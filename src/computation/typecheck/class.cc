@@ -4,7 +4,6 @@
 #include "computation/core/func.H"
 #include "computation/rename/rename.H"
 #include "tidy.H"
-#include "computation/varinfo.H"
 
 using std::string;
 using std::vector;
@@ -158,7 +157,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& [var, type]: class_info.fields)
     {
         auto S = this_mod().lookup_local_symbol(var.name);
-        S->var_info->unfolding = MethodUnfolding{i};
+        S->unfolding = MethodUnfolding{i};
 
         decls.push_back( {Core2::Var<>(var.name), make_field_extractor(class_info.name, i, N, *this)} );
 

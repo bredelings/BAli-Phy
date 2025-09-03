@@ -6,6 +6,7 @@
 #include <optional>
 #include <variant>
 #include "computation/haskell/haskell.H"
+#include "computation/unfolding.H"
 
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
@@ -39,7 +40,6 @@ struct OpInfo
 };
 
 
-struct VarInfo;
 struct DataConInfo;
 struct InstanceInfo;
 struct EqInstanceInfo;
@@ -67,7 +67,7 @@ struct symbol_info
     std::optional<int> arity;
     std::optional<fixity_info> fixity;
     Type type;
-    std::shared_ptr<VarInfo> var_info;
+    Unfolding unfolding;
     std::shared_ptr<DataConInfo> con_info;
     std::shared_ptr<InstanceInfo> instance_info;
     std::shared_ptr<EqInstanceInfo> eq_instance_info;
@@ -79,7 +79,7 @@ struct symbol_info
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(name, symbol_type, parent, arity, fixity, type, var_info, con_info, instance_info, eq_instance_info, visible);
+	ar(name, symbol_type, parent, arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, visible);
     }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});

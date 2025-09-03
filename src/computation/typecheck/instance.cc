@@ -3,7 +3,6 @@
 #include "haskell/ids.H"
 #include "core/func.H"
 #include "rename/rename.H"
-#include "computation/varinfo.H"
 
 using std::string;
 using std::vector;
@@ -602,7 +601,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         occ_args.push_back(make_apply<occurrence_info,std::monostate>(occ_op, occ_dvars));
     }
 
-    S->var_info->unfolding = DFunUnfolding{occ_dvars, class_name, occ_args};
+    S->unfolding = DFunUnfolding{occ_dvars, class_name, occ_args};
     // We also need to make sure that the instance methods reference here are marked exported?
     // What is the story on knowing what things to mark exported?
     // Unlike other things, we don't week to retain a list of the instance_sc_methods anywhere, so

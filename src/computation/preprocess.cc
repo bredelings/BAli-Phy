@@ -15,7 +15,6 @@
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
 #include "computation/fresh_vars.H"
-#include "computation/varinfo.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
 
@@ -184,7 +183,7 @@ int reg_heap::reg_for_id(const var& x)
             assert(x.index == 0);
 
             auto sym = lookup_builtin_symbol(name);
-            auto code = maybe_occ_to_expression_ref(to<CoreUnfolding>(sym->var_info->unfolding)->expr);
+            auto code = maybe_occ_to_expression_ref(to<CoreUnfolding>(sym->unfolding)->expr);
             add_identifier(x.name);
 
 	    // get the root for each identifier

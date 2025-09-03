@@ -5,7 +5,6 @@
 #include "computation/operations.H"
 #include "computation/expression/convert.H" // for to_core(Occ::Exp)
 #include "occurrence.H"
-#include "computation/varinfo.H"
 #include "computation/module.H"
 #include "core/func.H"
 
@@ -187,16 +186,14 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
     assert(not x.name.empty());
 
-    // FIXME -- why is x.info->var_info empty?  Why can't we just use x.info->var_info->unfolding?
-
     auto S = this_mod.lookup_resolved_symbol(x.name);
     if (not S)
         throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
 
     optional<CoreUnfolding> unfolding;
-    if (auto cu = to<CoreUnfolding>(S->var_info->unfolding))
+    if (auto cu = to<CoreUnfolding>(S->unfolding))
         unfolding = *cu;
-    else if (auto mu = to<MethodUnfolding>(S->var_info->unfolding))
+    else if (auto mu = to<MethodUnfolding>(S->unfolding))
     {
         // std::cerr<<"method "<<x.name<<": index "<<mu->index<<"\n";
     }
@@ -205,7 +202,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     occ_info.work_dup = amount_t::Many;
     occ_info.code_dup = amount_t::Many;
 
-    // FIXME -- pass var_info to do_inline( ).
+    // FIXME -- pass unfolding to do_inline( ).
     if (unfolding and do_inline(unfolding->expr, occ_info, context))
         return simplify(unfolding->expr, {}, bound_vars, context);
     else if (unfolding and unfolding->always_unfold and (not context.is_stop_context() or is_trivial(unfolding->expr)))

@@ -6,7 +6,6 @@
 #include "util/string/join.H"
 #include "util/mapping.H"
 #include "util/log-level.H"
-#include "computation/varinfo.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/machine/graph_register.H"
@@ -48,14 +47,10 @@ Core2::Exp<> declare_seq_info(Module& m)
     // 3. infixr 0 seq
     fixity_info fixity{Hs::Fixity::infixr, 0};
 
-    // 4. always unfold to code.
-    auto info = std::make_shared<VarInfo>();
-    info->unfolding = CoreUnfolding{occ_code, true};
-
-    // 5. create the symbol
+    // 4. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
     seq.type = type;
-    seq.var_info = info;
+    seq.unfolding = CoreUnfolding{occ_code, /* always_unfold */ true};
 
     m.declare_symbol(seq);
 
