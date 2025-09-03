@@ -6,6 +6,7 @@
 #include "inliner.H"
 #include "simplifier.H"
 #include "util/assert.hh"
+#include "util/variant.H" // for to<type>(val)
 
 #include "simplifier.H"
 
@@ -248,8 +249,20 @@ bool whnf_or_bottom(const Occ::Exp& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
-bool SimplifierState::do_inline(const Occ::Exp& rhs, const occurrence_info& occur, const inline_context& context)
+bool SimplifierState::do_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
+    auto cu = to<CoreUnfolding>(unfolding);
+    if (not cu) return false;
+
+    auto& rhs = cu->expr;
+
+    // If always_unfold
+    if (cu->always_unfold and (not context.is_stop_context() or is_trivial(rhs)))
+    {
+        assert(not occur.is_loop_breaker);
+        return true;
+    }
+
     // LoopBreaker
     if (occur.is_loop_breaker)
 	return false;

@@ -68,7 +68,12 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
     assert(not bound_vars.count(x));
     assert(x.info.work_dup != amount_t::Unknown);
     assert(x.info.code_dup != amount_t::Unknown);
-    return bound_vars.insert({x,{E,x.info}});
+
+    Unfolding unfolding;
+    if (E)
+        unfolding = CoreUnfolding{*E,false};
+
+    return bound_vars.insert({x,{unfolding,x.info}});
 }
 
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Occ::Exp& E)
@@ -171,42 +176,30 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
 // Do we have to explicitly skip loop breakers here?
 Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
+    occurrence_info occ_info;
+    Unfolding unfolding;
+
     if (is_local_symbol(x.name, this_mod.name))
     {
-        const auto& [rhs, occ_info] = bound_vars.at(x);
-
-//    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
-
-        // 1. If there's a binding x = E, and E = y for some variable y
-        if (rhs and do_inline(*rhs, occ_info, context))
-            return simplify(*rhs, {}, bound_vars, context);
-        else
-            return rebuild(x, bound_vars, context);
+        const auto& [unfolding2, occ_info2] = bound_vars.at(x);
+        unfolding = unfolding2;
+        occ_info = occ_info2;
     }
-
-    assert(not x.name.empty());
-
-    auto S = this_mod.lookup_resolved_symbol(x.name);
-    if (not S)
-        throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
-
-    optional<CoreUnfolding> unfolding;
-    if (auto cu = to<CoreUnfolding>(S->unfolding))
-        unfolding = *cu;
-    else if (auto mu = to<MethodUnfolding>(S->unfolding))
+    else
     {
-        // std::cerr<<"method "<<x.name<<": index "<<mu->index<<"\n";
+        assert(not x.name.empty());
+
+        if (auto S = this_mod.lookup_resolved_symbol(x.name))
+            unfolding = S->unfolding;
+        else
+            throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
+
+        occ_info.work_dup = amount_t::Many;
+        occ_info.code_dup = amount_t::Many;
     }
 
-    occurrence_info occ_info;
-    occ_info.work_dup = amount_t::Many;
-    occ_info.code_dup = amount_t::Many;
-
-    // FIXME -- pass unfolding to do_inline( ).
-    if (unfolding and do_inline(unfolding->expr, occ_info, context))
-        return simplify(unfolding->expr, {}, bound_vars, context);
-    else if (unfolding and unfolding->always_unfold and (not context.is_stop_context() or is_trivial(unfolding->expr)))
-        return simplify(unfolding->expr, {}, bound_vars, context);
+    if (do_inline(unfolding, occ_info, context))
+        return simplify(to<CoreUnfolding>(unfolding)->expr, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }

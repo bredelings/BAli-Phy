@@ -11,10 +11,11 @@
 #include "simplifier_options.H"
 #include "substitution.H"
 #include "inliner.H"
+#include "unfolding.H"
 
 class module_loader;
 
-typedef std::pair<std::optional<Occ::Exp>,occurrence_info> bound_variable_info;
+typedef std::pair<Unfolding,occurrence_info> bound_variable_info;
 
 typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 
@@ -23,6 +24,7 @@ int get_n_lambdas1(Occ::Exp E);
 Occ::Exp peel_n_lambdas1(Occ::Exp E, int n);
 
 class Module;
+
 
 std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
@@ -42,7 +44,7 @@ public:
 
     bool small_enough(const Occ::Exp& rhs, const inline_context& context);
 
-    bool do_inline(const Occ::Exp& rhs, const occurrence_info& occur, const inline_context& context);
+    bool do_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context);
 
     bool do_inline_multi(const Occ::Exp& rhs, const inline_context& context);
 
