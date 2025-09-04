@@ -271,8 +271,8 @@ void show_ending_messages()
     {
         cout<<endl;
         cout<<"Setup:"<<endl;
-        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_time_t))<<endl;
-	cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(start_work_time_t))<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", *std::localtime(&start_time_t))<<endl;
+	cout<<"    end: "<<fmt::format("{:%c}", *std::localtime(&start_work_time_t))<<endl;
         cout<<"  total (elapsed) time: "<<duration_string( start_work_time-start_time )<<endl;
         cout<<"  total (CPU) time: "<<duration_string( start_work_cpu_time )<<endl;
     }
@@ -281,8 +281,8 @@ void show_ending_messages()
     {
         cout<<endl;
         cout<<"Work:"<<endl;
-        cout<<"  start: "<<fmt::format("{:%c}", fmt::localtime(start_work_time_t))<<endl;
-        cout<<"    end: "<<fmt::format("{:%c}", fmt::localtime(end_time_t))<<endl;
+        cout<<"  start: "<<fmt::format("{:%c}", *std::localtime(&start_work_time_t))<<endl;
+        cout<<"    end: "<<fmt::format("{:%c}", *std::localtime(&end_time_t))<<endl;
         cout<<"  total (elapsed) time: "<<duration_string( end_time - start_work_time )<<endl;
         cout<<"  total (CPU) time: "<<duration_string( end_cpu_time - start_work_cpu_time )<<endl;
     }
