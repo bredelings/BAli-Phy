@@ -275,9 +275,8 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
 
         if (auto cu = to<CoreUnfolding>(unfolding))
         {
-            auto expr = cu->expr;
-            if (expr.to_var() or is_data_con_wrapper(expr))
-                return exprIsConApp_worker(S, floats, expr, cont);
+            // Ideally we would only do this if x has arity zero (i.e. its not a function)
+            return exprIsConApp_worker(S, floats, cu->expr, cont);
         }
         else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size())
         {
@@ -804,10 +803,7 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Var& arg, const s
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
 Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
-    // If the decl is empty, then we don't have to do anything special here.
-    auto bound_vars2 = bind_decls(bound_vars, decls);
-
-    auto E2 = simplify(E, S, bound_vars2, context);
+    auto E2 = simplify(E, S, bound_vars, context);
 
     return make_let(decls, E2);
 }
@@ -816,7 +812,7 @@ Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const
 
 // FIXME - Cache free vars on expressions!
 
-tuple<Occ::Decls, substitution>
+tuple<Occ::Decls, substitution, in_scope_set>
 SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
@@ -911,12 +907,18 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		bound_vars = rebind_var(bound_vars, x2, CoreUnfolding(F));
+                Unfolding unfolding = CoreUnfolding(F);
+                if (is_top_level and is_qualified_by_module(x2.name, this_mod.name))
+                {
+                    if (auto S = this_mod.lookup_resolved_symbol(x2.name); S and not to<std::monostate>(S->unfolding))
+                        unfolding = S->unfolding;
+                }
+                bound_vars = rebind_var(bound_vars, x2, unfolding);
 	    }
 	}
     }
 
-    return {new_decls, S2};
+    return {new_decls, S2, bound_vars};
 }
 
 // NOTE: See maybe_eta_reduce( ) in occurrence.cc
@@ -1029,7 +1031,9 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
             else
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
-                return rebuild_let({{x2,arg}}, lam->body, S2, bound_vars, ac->next);
+                Occ::Decls decls{{x2,arg}};
+                auto bound_vars2 = bind_decls(bound_vars, decls);
+                return rebuild_let(decls, lam->body, S2, bound_vars2, ac->next);
             }
         }
 
@@ -1072,10 +1076,10 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
     else if (auto let = E.to_let())
     {
 	auto decls = let->decls;
-	auto [decls2, S2] = simplify_decls(decls, S, bound_vars, false);
+	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(decls2, let->body, S2, bound_vars, context);
+	return rebuild_let(decls2, let->body, S2, bound_vars2, context);
     }
 
      // Do we need something to handle WHNF variables?
@@ -1149,10 +1153,10 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
     vector<substitution> S(1);
     for(auto& decls: decl_groups)
     {
-	auto [decls2, s] = simplify_decls(decls, S.back(), bound_vars, true);
+	auto [decls2, s, bound_vars2] = simplify_decls(decls, S.back(), bound_vars, true);
         decls = decls2;
 	S.push_back( s );
-	bound_vars = bind_decls(bound_vars, decls);
+        bound_vars = bound_vars2;
     }
 
     vector<Core2::Decls<>> decl_groups_out;
