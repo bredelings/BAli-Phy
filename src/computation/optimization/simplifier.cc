@@ -221,7 +221,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         floats.push_back(f);
         return exprIsConApp_worker(S2, floats, lam->body, cont->next);
     }
-    else if (auto let = E.to_let())
+    else if (auto let = E.to_let(); let and false)
     {
         Float f = FloatLet{let->decls};
         floats.push_back(f);
@@ -231,7 +231,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
     }
-    else if (auto C = E.to_case(); C and C->alts.size() == 1)
+    else if (auto C = E.to_case(); C and C->alts.size() == 1 and false)
     {
         auto& [pat,body] = C->alts[0];
 
@@ -278,7 +278,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
             // Ideally we would only do this if x has arity zero (i.e. its not a function)
             return exprIsConApp_worker(S, floats, cu->expr, cont);
         }
-        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size())
+        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size() and false)
         {
             auto C = cont;
             Occ::subst_t subst;
@@ -311,8 +311,25 @@ SimplifierState::exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& boun
     else
     {
         auto [S, con, args] = *result;
+        std::cerr<<"exprIsConApp_maybe: "<<E.print()<<" -> "<<con<<"\n";
         return {{S, floats, con, args}};
     }
+}
+
+
+Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
+{
+    for(auto& f: floats | views::reverse)
+    {
+        if (auto lf = to<FloatLet>(f))
+            E = Occ::Let(lf->decls,E);
+        else
+        {
+            auto cf = to<FloatCase>(f);
+            E = Occ::Case{cf->object,Occ::Alts{{Occ::Alt{cf->pattern,E}}}};
+        }
+    }
+    return E;
 }
 
 
@@ -355,9 +372,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
                 auto expr = args[mu->index];
 
-                // apply floats?
-
-                // return rebuild(expr, bound_vars,  context);
+                return simplify(apply_floats(floats, expr), {}, bound_vars, context);
             }
         }
     }
