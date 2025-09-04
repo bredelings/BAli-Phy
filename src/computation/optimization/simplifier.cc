@@ -63,27 +63,23 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
      return E;
 }
 
-[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const std::optional<Occ::Exp>& E)
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const Occ::Var& x, const Unfolding& unfolding)
 {
     assert(x.index >= 0);
     assert(not bound_vars.count(x));
     assert(x.info.work_dup != amount_t::Unknown);
     assert(x.info.code_dup != amount_t::Unknown);
 
-    Unfolding unfolding;
-    if (E)
-        unfolding = CoreUnfolding{*E,false};
-
     return bound_vars.insert({x,{unfolding,x.info}});
 }
 
-[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Occ::Exp& E)
+[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Unfolding& U)
 {
     bound_variable_info old_binding = bound_vars.at(x);
     bound_vars = bound_vars.erase(x);
     Occ::Var x2 = x;
     x2.info = old_binding.second;
-    return bind_var(bound_vars,x2,E);
+    return bind_var(bound_vars,x2,U);
 }
 
 [[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const Occ::Decls& decls)
@@ -220,7 +216,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
     }
     else if (auto lam = E.to_lambda(); lam and cont)
     {
-        auto S2 = bind_var(S, lam->x, cont->arg);
+        auto S2 = bind_var(S, lam->x, CoreUnfolding(cont->arg));
         Float f = FloatLet{{{lam->x, cont->arg}}};
         floats.push_back(f);
         return exprIsConApp_worker(S2, floats, lam->body, cont->next);
@@ -231,7 +227,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         floats.push_back(f);
         auto S2 = S;
         for(auto& [x,e]: let->decls)
-            S2 = bind_var(S, x, e);
+            S2 = bind_var(S, x, CoreUnfolding(e));
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
     }
@@ -696,9 +692,9 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
                 x.info.work_dup = amount_t::Many;
                 x.info.code_dup = amount_t::Many;
                 if (bound_vars2.count(x))
-                    bound_vars2 = rebind_var(bound_vars2, x, pattern_expression);
+                    bound_vars2 = rebind_var(bound_vars2, x, CoreUnfolding(pattern_expression));
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, pattern_expression);
+                    bound_vars2 = bind_var(bound_vars2, x, CoreUnfolding(pattern_expression));
             }
         }
 
@@ -899,7 +895,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
-			bound_vars = bind_var(bound_vars, decl.x, decl.body);
+			bound_vars = bind_var(bound_vars, decl.x, CoreUnfolding(decl.body));
 			new_names.push_back(decl.x);
 			new_decls.push_back(decl);
 		    }
@@ -915,7 +911,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		bound_vars = rebind_var(bound_vars, x2, F);
+		bound_vars = rebind_var(bound_vars, x2, CoreUnfolding(F));
 	    }
 	}
     }
