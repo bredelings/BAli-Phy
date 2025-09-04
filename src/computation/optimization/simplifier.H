@@ -105,7 +105,7 @@ public:
 
     Occ::Exp rebuild_apply(Occ::Exp E, const Occ::Var& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<Occ::Decls, simplifier::substitution>
+    std::tuple<Occ::Decls, simplifier::substitution, in_scope_set>
     simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
 
     std::vector<Core2::Decls<>>
