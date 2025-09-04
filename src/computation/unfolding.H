@@ -55,6 +55,10 @@ struct CoreUnfolding
     {
 	ar(expr, always_unfold);
     }
+
+    CoreUnfolding() = default; // for cereal
+    CoreUnfolding(const Occ::Exp& e):expr(e) {}
+    CoreUnfolding(const Occ::Exp& e,bool b):expr(e),always_unfold(b) {}
 };
 
 typedef std::variant<std::monostate, MethodUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
