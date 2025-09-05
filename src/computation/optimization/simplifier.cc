@@ -278,7 +278,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
             // Ideally we would only do this if x has arity zero (i.e. its not a function)
             return exprIsConApp_worker(S, floats, cu->expr, cont);
         }
-        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size() and false)
+        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size())
         {
             auto C = cont;
             Occ::subst_t subst;
@@ -288,7 +288,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
                 C = C->next;
             }
             assert(not C);
-            
+
             vector<Occ::Exp> args;
             for(auto& arg: du->args)
                 args.push_back(Core2::subst(subst, arg));
@@ -372,6 +372,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
                 auto expr = args[mu->index];
 
+                std::cerr<<"exprIsConApp_maybe:     "<<x.print()<<" "<<arg.print()<<"  ===>  "<<apply_floats(floats,expr).print()<<"\n";
                 return simplify(apply_floats(floats, expr), {}, bound_vars, context);
             }
         }
