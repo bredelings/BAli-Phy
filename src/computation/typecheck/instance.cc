@@ -596,8 +596,8 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     for(auto& op: instance_sc_methods)
     {
         Occ::Var occ_op(op.name);
-        occ_op.info.work_dup = amount_t::Once;
-        occ_op.info.code_dup = amount_t::Once;
+        occ_op.info.work_dup = amount_t::Many;
+        occ_op.info.code_dup = amount_t::Many;
         occ_args.push_back(make_apply<occurrence_info,std::monostate>(occ_op, occ_dvars));
     }
 
