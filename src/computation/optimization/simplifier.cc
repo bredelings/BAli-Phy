@@ -359,7 +359,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     }
 
     // Try and handling a method applied to a dfun
-    if (auto mu = to<MethodUnfolding>(unfolding))
+    if (auto mu = to<MethodUnfolding>(unfolding); mu and false)
     {
         if (auto app = context.is_apply_context())
         {
