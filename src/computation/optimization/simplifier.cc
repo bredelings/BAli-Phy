@@ -216,6 +216,14 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
     }
     else if (auto lam = E.to_lambda(); lam and cont and false)
     {
+        // TODO: We to rename lam->x to a fresh name.
+        //       But to be efficient, that requires a substitution.
+        //       GHC combines the set of active variables with the substitution --> perhaps that makes it easy to mint new names?
+        // auto [S2, in_scope_set2, x2] = rename_and_bind_var(x, CoreUnfolding(cont->arg));
+        // Float f = FloatLet{{{x2, cont->arg}}};
+        // floats.push_back(f);
+        // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
+
         auto S2 = bind_var(S, lam->x, CoreUnfolding(cont->arg));
         Float f = FloatLet{{{lam->x, cont->arg}}};
         floats.push_back(f);
