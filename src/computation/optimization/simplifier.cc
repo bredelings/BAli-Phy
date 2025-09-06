@@ -214,7 +214,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
     {
         return exprIsConApp_worker(S, floats, app->head, add_app( app->arg, cont));
     }
-    else if (auto lam = E.to_lambda(); lam and cont)
+    else if (auto lam = E.to_lambda(); lam and cont and false)
     {
         auto S2 = bind_var(S, lam->x, CoreUnfolding(cont->arg));
         Float f = FloatLet{{{lam->x, cont->arg}}};
