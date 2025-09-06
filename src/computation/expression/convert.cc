@@ -39,7 +39,19 @@ expression_ref to_expression_ref(const Core2::Lambda<>& L)
 
 expression_ref to_expression_ref(const Core2::Apply<>& A)
 {
-    return apply_expression(to_expression_ref(A.head), var_to_expression_ref(A.arg) );
+    // Note: we need to turn multiple single-arg applications into one multi-arg application!
+    vector<var> args;
+
+    Core2::Exp<> E = A;
+    while(auto A2 = E.to_apply())
+    {
+        args.push_back( to_var(A2->arg) );
+        E = A2->head;
+    }
+
+    args |= ranges::actions::reverse;
+    
+    return apply_expression(to_expression_ref(E), args );
 }
 
 vector<CDecls> decl_groups_to_expression_ref(const vector<Core2::Decls<>>& core_decl_groups)
