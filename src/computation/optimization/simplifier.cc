@@ -273,7 +273,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
                 throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
         }
 
-        if (auto cu = to<CoreUnfolding>(unfolding))
+        if (auto cu = to<CoreUnfolding>(unfolding); cu and not x.info.is_loop_breaker)
         {
             // Ideally we would only do this if x has arity zero (i.e. its not a function)
             return exprIsConApp_worker(S, floats, cu->expr, cont);
