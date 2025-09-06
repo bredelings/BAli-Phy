@@ -475,41 +475,13 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
     return used;
 }
 
-optional<tuple<Occ::Exp,substitution>>
-find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const substitution& S)
+std::optional<Occ::Alt> select_case_alternative(const string& con, const Occ::Alts& alts)
 {
-    auto obj_con = object.to_conApp();
-
-    for(auto& [pattern, body]: alts)
+    for(auto& alt: alts)
     {
-        if (pattern.is_wildcard_pat())
-        {
-            return {{body, S}};
-        }
-        else if (pattern.is_con_pat() and obj_con and *pattern.head == obj_con->head)
-        {
-            int N = pattern.args.size();
-            assert(N == obj_con->args.size());
-
-            // 2. Rename and bind pattern variables
-            // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
-            //   a. add substitutions y[i] -> z[i] for z[i] fresh (i.e. not overlapping x[i])
-            //   b. let {z[i] = x[i]} in f y[1] y[2] ... y[n]  => let {z[i] = x[i]} in f' z[1] z[2] ... z[n]
-            // In the next round of simplification,
-            //   a. we simplify all the x[i], possibly replacing them with another variable, or a larger expression.  But lets assume they are left unchanged.
-            //   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
-            // Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
-
-            auto S2 = S;
-            for(int j=0;j<N;j++)
-            {
-                auto x = pattern.args[j];
-                auto obj_var = obj_con->args[j];
-                S2 = S2.erase(x);
-                S2 = S2.insert({x, {obj_var}});
-            }
-            return {{body, S2}};
-        }
+        auto& [pattern,_] = alt;
+        if (not pattern.head or *pattern.head == con)
+            return alt;
     }
 
     return {};
@@ -609,6 +581,50 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
     return decl_groups;
 }
 
+
+/*
+optional<tuple<Occ::Exp,substitution>>
+find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const substitution& S)
+{
+    auto obj_con = object.to_conApp();
+
+    for(auto& [pattern, body]: alts)
+    {
+        if (pattern.is_wildcard_pat())
+        {
+            return {{body, S}};
+        }
+        else if (pattern.is_con_pat() and obj_con and *pattern.head == obj_con->head)
+        {
+            int N = pattern.args.size();
+            assert(N == obj_con->args.size());
+
+            // 2. Rename and bind pattern variables
+            // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
+            //   a. add substitutions y[i] -> z[i] for z[i] fresh (i.e. not overlapping x[i])
+            //   b. let {z[i] = x[i]} in f y[1] y[2] ... y[n]  => let {z[i] = x[i]} in f' z[1] z[2] ... z[n]
+            // In the next round of simplification,
+            //   a. we simplify all the x[i], possibly replacing them with another variable, or a larger expression.  But lets assume they are left unchanged.
+            //   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
+            // Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
+
+            auto S2 = S;
+            for(int j=0;j<N;j++)
+            {
+                auto x = pattern.args[j];
+                auto obj_var = obj_con->args[j];
+                S2 = S2.erase(x);
+                S2 = S2.insert({x, {obj_var}});
+            }
+            return {{body, S2}};
+        }
+    }
+
+    return {};
+}
+*/
+
+
 // case object of alts.  Here the object has been simplified, but the alts have not.
 Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const substitution& S, const in_scope_set& bound_vars)
 {
@@ -630,16 +646,35 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
 //    }
 
     // 1. Take a specific branch if the object is a constant
-    if (is_WHNF(object) and not object.to_var())
+    if (auto constant = exprIsConApp_maybe(object, bound_vars))
     {
-        if (auto found = find_constant_case_body(object, alts, S))
+        auto& [bound_vars2, floats, con, args] = *constant;
+        std::cerr<<"constant case: "<<object.print()<<" -> "<<con<<"\n";
+        if (auto found = select_case_alternative(con, alts))
         {
-            auto& [body, S2] = *found;
-            return simplify(body, S2, bound_vars, make_ok_context()); 
+            auto& [pattern, body] = *found;
+            assert(pattern.is_wildcard_pat() or pattern.args.size() == args.size());
+
+            // NOTE: the previous approach used substitutions, which worked because the 
+            auto S2 = S;
+            Occ::Decls decls;
+            for(int i=0;i<pattern.args.size();i++)
+            {
+                auto arg2 = rename_var(pattern.args[i], S2, bound_vars);
+                // args[i] is already simplified, arg2 is already renamed
+                decls.push_back({arg2, args[i]});
+            }
+            auto bound_vars2 = bind_decls(bound_vars, decls);
+            return rebuild_let(decls, body, S2, bound_vars2, make_ok_context());
         }
         else
-	    throw myexception()<<"Case object doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
+            throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
     }
+
+    // Everything that the old approach caught should be caught by exprIsConApp_maybe.
+    assert(not is_WHNF(object) or object.to_var());
+
+
 
     // 2. Simplify each alternative
     std::optional<int> last_index;
