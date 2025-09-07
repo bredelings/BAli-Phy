@@ -319,7 +319,6 @@ SimplifierState::exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& boun
     else
     {
         auto [S, con, args] = *result;
-        std::cerr<<"exprIsConApp_maybe: "<<E.print()<<" -> "<<con<<"\n";
         return {{S, floats, con, args}};
     }
 }
@@ -380,7 +379,6 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
 
                 auto expr = args[mu->index];
 
-                std::cerr<<"exprIsConApp_maybe:     "<<x.print()<<" "<<arg.print()<<"  ===>  "<<apply_floats(floats,expr).print()<<"\n";
                 return simplify(apply_floats(floats, expr), {}, bound_vars, app->next);
             }
         }
@@ -657,7 +655,6 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
     if (auto constant = exprIsConApp_maybe(object, bound_vars))
     {
         auto& [bound_vars2, floats, con, args] = *constant;
-        std::cerr<<"constant case: "<<object.print()<<" -> "<<con<<"\n";
         if (auto found = select_case_alternative(con, alts))
         {
             auto& [pattern, body] = *found;
