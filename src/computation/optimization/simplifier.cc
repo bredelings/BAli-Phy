@@ -367,7 +367,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
     }
 
     // Try and handling a method applied to a dfun
-    if (auto mu = to<MethodUnfolding>(unfolding); mu and false)
+    if (auto mu = to<MethodUnfolding>(unfolding); mu)
     {
         if (auto app = context.is_apply_context())
         {
@@ -381,7 +381,7 @@ Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set&
                 auto expr = args[mu->index];
 
                 std::cerr<<"exprIsConApp_maybe:     "<<x.print()<<" "<<arg.print()<<"  ===>  "<<apply_floats(floats,expr).print()<<"\n";
-                return simplify(apply_floats(floats, expr), {}, bound_vars, context);
+                return simplify(apply_floats(floats, expr), {}, bound_vars, app->next);
             }
         }
     }
