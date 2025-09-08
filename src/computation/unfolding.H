@@ -21,7 +21,8 @@ struct DFunUnfolding
     std::vector<Occ::Var> binders;
     std::string head;
     std::vector<Occ::Exp> args;
-
+    std::set<Occ::Var> free_vars;
+    
     template <class Archive>
     void serialize(Archive& ar)
     {

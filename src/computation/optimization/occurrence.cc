@@ -9,6 +9,7 @@
 #include "util/range.H"
 #include "util/mapping.H"
 #include "util/graph.H"
+#include "util/variant.H" // for to<T>(variant)
 
 #include "simplifier.H"
 
@@ -113,6 +114,20 @@ bool is_alive(const Occ::Var& x)
     return (x.is_exported or x.info.code_dup != amount_t::None);
 }
 
+const std::set<Occ::Var>* unfolding_free_vars(const Module& m, const Core2::Var<>& x)
+{
+    if (not is_qualified_symbol(x.name)) return nullptr;
+
+    if (auto S = m.lookup_resolved_symbol(x.name))
+    {
+        if (auto du = to<DFunUnfolding>(S->unfolding))
+            return &du->free_vars;
+    }
+
+    return nullptr;
+}
+
+
 tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
     const int L = decls_in.size();
@@ -145,7 +160,11 @@ tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, con
 	auto [occ_body, free_vars_i] = occurrence_analyzer(m, decls_in[i].body);
         decls[i].body = occ_body;
 
-	// 3.2 Record occurrences
+        // 3.2 Also record variables from DFunUnfoldings (and later, maybe INLINE-d statements)
+        if (auto uf_free_vars = unfolding_free_vars(m, decls_in[i].x))
+            merge_occurrences_into(free_vars_i, *uf_free_vars);
+        
+	// 3.3 Record occurrences the i-th var's body and unfolding.
 	merge_occurrences_into(free_vars, free_vars_i);
 
 	// 3.3. Check if other variables j are referenced from the i-th variable.

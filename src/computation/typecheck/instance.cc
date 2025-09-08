@@ -593,15 +593,17 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
         occ_dvars.push_back(du);
     }
     vector<Occ::Exp> occ_args;
+    set<Occ::Var> free_vars;
     for(auto& op: instance_sc_methods)
     {
         Occ::Var occ_op(op.name);
         occ_op.info.work_dup = amount_t::Many;
         occ_op.info.code_dup = amount_t::Many;
         occ_args.push_back(make_apply<occurrence_info,std::monostate>(occ_op, occ_dvars));
+        free_vars.insert(occ_op);
     }
-
-    S->unfolding = DFunUnfolding{occ_dvars, class_name, occ_args};
+    
+    S->unfolding = DFunUnfolding{occ_dvars, class_name, occ_args, free_vars};
     // We also need to make sure that the instance methods reference here are marked exported?
     // What is the story on knowing what things to mark exported?
     // Unlike other things, we don't week to retain a list of the instance_sc_methods anywhere, so
