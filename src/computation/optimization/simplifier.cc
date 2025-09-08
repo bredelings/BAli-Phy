@@ -286,7 +286,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
             // Ideally we would only do this if x has arity zero (i.e. its not a function)
             return exprIsConApp_worker(S, floats, cu->expr, cont);
         }
-        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->args.size())
+        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->binders.size())
         {
             auto C = cont;
             Occ::subst_t subst;
