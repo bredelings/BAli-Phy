@@ -908,18 +908,24 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     value_decls += MM->load_constructors(M.type_decls);
 
-    if (opts.dump_desugared)
-    {
-        std::cerr<<"\nCore:\n";
-        for(auto& [x,rhs] : value_decls)
-            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
-        std::cerr<<"\n\n";
-    }
-
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
     mark_exported_decls(value_decls, MM->exported_symbols(), *MM);
+
+    if (opts.dump_desugared)
+    {
+        std::cerr<<"\nCore:\n";
+        for(auto& [x,rhs] : value_decls)
+        {
+            if (x.is_exported)
+                std::cerr<<"[*] ";
+            else
+                std::cerr<<"    ";
+            std::cerr<<"["<<simple_size(rhs)<<"] "<<x.print()<<" = "<<rhs.print()<<"\n";
+        }
+        std::cerr<<"\n\n";
+    }
 
     value_decls = MM->optimize(opts, MM->fresh_var_state(), value_decls);
 
@@ -929,7 +935,13 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     {
         std::cerr<<"\nOptimized Core:\n";
         for(auto& [x,rhs] : value_decls)
+        {
+            if (x.is_exported)
+                std::cerr<<"[*] ";
+            else
+                std::cerr<<"    ";
             std::cerr<<"["<<simple_size(rhs)<<"] "<<x.print()<<" = "<<rhs.print()<<"\n";
+        }
         std::cerr<<"\n\n";
     }
 
