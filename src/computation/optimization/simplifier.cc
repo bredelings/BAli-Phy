@@ -327,7 +327,7 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
 
 
 // Do we have to explicitly skip loop breakers here?
-Occ::Exp SimplifierState::consider_inline(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
     auto [unfolding, occ_info] = get_unfolding(x, bound_vars);
 
@@ -1020,7 +1020,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return consider_inline(*x, bound_vars, context);
+	    return simplify_out_var(*x, bound_vars, context);
 	}
     }
 
