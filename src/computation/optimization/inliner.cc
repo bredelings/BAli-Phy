@@ -327,3 +327,84 @@ std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::
     }
     return {unfolding, occ_info};
 }
+
+arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n)
+{
+    if (auto x = E.to_var())
+    {
+        // Interesting, GHC ALWAYS replaces variables during the substitution.  Is that how it sets unfoldings everywhere?
+        if (auto it = S.find(*x))
+        {
+            if (it->S) // ContEx
+                return interesting_arg(it->E, *(it->S), bound_vars, n);
+            else // DoneEx
+                return interesting_arg(it->E, {}, bound_vars, n);
+        }
+        else // DoneId
+        {
+            if (is_haskell_con_name(x->name))
+                return arg_info::value;
+            // This is (?) for primops, which I can't really use?
+            // else if (x->arity > n)
+            //    return arg_info::value;
+            else if (n > 0)
+                return arg_info::non_trivial;
+            else
+            {
+                auto [unfolding,_] = get_unfolding(*x, bound_vars);
+                // OtherCon [] -> arg_info::non_trivial;
+                // OtherCon _  -> arg_info::value;
+                if (to<DFunUnfolding>(unfolding))
+                    return arg_info::value;
+                else if (auto cu = to<CoreUnfolding>(unfolding))
+                {
+                    if (cu->expr.to_conApp()) // uf_is_conlike
+                        return arg_info::value;
+                    else if (cu->expr.to_lambda()) // uf_is_value
+                        return arg_info::non_trivial;
+                    else
+                        return arg_info::trivial;
+                }
+                else
+                    return arg_info::trivial;
+            } 
+        }
+    }
+    else if (E.to_constant())
+    {
+        // We don't actually know how to use literals in the simplifier!
+        // So there is no benefit (I think) to knowing a literal value for a function.
+        return arg_info::trivial;
+        // ?? return arg_info::non_trivial;
+
+        // If we could actually simplify literals, then we could use this...
+        // return arg_info::value; 
+    }
+    else if (auto app = E.to_apply())
+    {
+        return interesting_arg(app->head, S, bound_vars, n+1);
+    }
+    else if (E.to_lambda())
+    {
+        if (n > 0)
+            return arg_info::non_trivial;
+        else
+            return arg_info::value;
+    }
+    else if (E.to_case())
+        return arg_info::non_trivial;
+    else if (E.to_builtinOp())
+    {
+        // I don't think we can use this to simplify things.. but maybe there is still some value to including them?
+        return arg_info::non_trivial;
+    }
+    else if (auto let = E.to_let())
+    {
+        // GHC adds the let-binders to the "env" .... to the substitution?
+        return interesting_arg(let->body, S, bound_vars, n);
+    }
+    else if (E.to_conApp())
+        return arg_info::non_trivial;
+    else
+        std::abort();
+}
