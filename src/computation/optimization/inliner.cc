@@ -21,11 +21,12 @@ using std::pair;
 using std::set;
 using std::map;
 using std::shared_ptr;
+using std::optional;
 
 using std::cerr;
 using std::endl;
 
-std::optional<inline_context> inline_context::prev_context() const
+optional<inline_context> inline_context::prev_context() const
 {
     if (auto c = is_case_context())
         return {c->next};
@@ -231,13 +232,16 @@ bool SimplifierState::small_enough(const Occ::Exp& rhs, const inline_context& co
     return (body_size - size_of_call - options.keenness*discounts <= options.inline_threshhold);
 }
 
-bool SimplifierState::do_inline_multi(const Occ::Exp& rhs, const inline_context& context)
+optional<Occ::Exp> SimplifierState::try_inline_multi(const Occ::Exp& rhs, const inline_context& context)
 {
-    if (no_size_increase(rhs,context)) return true;
+    if (no_size_increase(rhs,context)) return rhs;
 
-    if (boring(rhs,context)) return false;
+    if (boring(rhs,context)) return {};
 
-    return small_enough(rhs, context);
+    if(small_enough(rhs, context))
+        return rhs;
+    else
+        return {};
 }
 
 bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
@@ -250,10 +254,10 @@ bool whnf_or_bottom(const Occ::Exp& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
-bool SimplifierState::do_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
+optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
     auto cu = to<CoreUnfolding>(unfolding);
-    if (not cu) return false;
+    if (not cu) return {};
 
     auto& rhs = cu->expr;
 
@@ -261,44 +265,59 @@ bool SimplifierState::do_inline(const Unfolding& unfolding, const occurrence_inf
     if (cu->always_unfold and (not context.is_stop_context() or is_trivial(rhs)))
     {
         assert(not occur.is_loop_breaker);
-        return true;
+        return rhs;
     }
 
     // LoopBreaker
     if (occur.is_loop_breaker)
-	return false;
+	return {};
 
     // Function and constructor arguments
     else if (context.is_stop_context() and not is_trivial(rhs))
-	return false;
+	return {};
 
     // OnceSafe
     else if (occur.pre_inline())
     {
 //	if (options.pre_inline_unconditionally and not occur.is_exported and false)
 //	    throw myexception()<<"Trying to inline OnceSafe variable!";
-        return true;
+        return rhs;
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.
     if (rhs.to_constant() or rhs.to_conApp())
-	return true;
+	return rhs;
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return do_inline_multi(rhs, context);
+	return try_inline_multi(rhs, context);
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
-	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
+    {
+	if (whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context)))
+            return rhs;
+        else
+            return {};
 
+    }
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
-	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
+    {
+	if (whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context)))
+            return rhs;
+        else
+            return {};
+    }
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
+    {
+	if (whnf_or_bottom(rhs))
+            return try_inline_multi(rhs, context);
+        else
+            return {};
+    }
 
     std::abort();
 }

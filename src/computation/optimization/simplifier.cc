@@ -350,8 +350,8 @@ Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set
         }
     }
 
-    if (do_inline(unfolding, occ_info, context))
-        return simplify(to<CoreUnfolding>(unfolding)->expr, {}, bound_vars, context);
+    if (auto e = try_inline(unfolding, occ_info, context))
+        return simplify(*e, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }

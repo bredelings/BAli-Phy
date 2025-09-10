@@ -88,9 +88,9 @@ public:
 
     bool small_enough(const Occ::Exp& rhs, const inline_context& context);
 
-    bool do_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context);
+    std::optional<Occ::Exp> try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context);
 
-    bool do_inline_multi(const Occ::Exp& rhs, const inline_context& context);
+    std::optional<Occ::Exp> try_inline_multi(const Occ::Exp& rhs, const inline_context& context);
 
     arg_info interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n);
 
