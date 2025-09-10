@@ -66,6 +66,8 @@ class SimplifierState: FreshVarSource
 
 public:
 
+    std::tuple<Unfolding, occurrence_info> get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars);
+
     Occ::Var get_new_name(Occ::Var x, const in_scope_set& bound_vars);
 
     Occ::Var rename_var(const Occ::Var& x, simplifier::substitution& S, const in_scope_set& bound_vars);

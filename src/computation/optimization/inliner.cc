@@ -7,6 +7,7 @@
 #include "simplifier.H"
 #include "util/assert.hh"
 #include "util/variant.H" // for to<type>(val)
+#include "computation/module.H"
 
 #include "simplifier.H"
 
@@ -302,3 +303,27 @@ bool SimplifierState::do_inline(const Unfolding& unfolding, const occurrence_inf
     std::abort();
 }
 
+std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars)
+{
+    Unfolding unfolding;
+    occurrence_info occ_info;
+    if (is_local_symbol(x.name, this_mod.name))
+    {
+        const auto& [unfolding2, occ_info2] = bound_vars.at(x);
+        unfolding = unfolding2;
+        occ_info = occ_info2;
+    }
+    else
+    {
+        assert(not x.name.empty());
+
+        if (auto S = this_mod.lookup_resolved_symbol(x.name))
+            unfolding = S->unfolding;
+        else
+            throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
+
+        occ_info.work_dup = amount_t::Many;
+        occ_info.code_dup = amount_t::Many;
+    }
+    return {unfolding, occ_info};
+}
