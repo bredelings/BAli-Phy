@@ -249,7 +249,6 @@ po::options_description haskell_optimization()
 	("case-of-variable",value<bool>()->default_value(true),"Case of constant")
 	("case-of-case",value<bool>()->default_value(true),"Case of case")
 	("inline-threshold",value<int>()->default_value(8),"Inline threshold")
-	("keenness",value<double>()->default_value(1.5),"Keenness factor")
 	("beta-reduction",value<bool>()->default_value(true),"Beta-reduction")
 	("simplifier-max-iterations",value<int>()->default_value(4),"Bound on iterating simplifier")
 	;

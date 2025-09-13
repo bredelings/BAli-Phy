@@ -1,6 +1,8 @@
 #ifndef SIMPLIFIER_OPTIONS_H
 #define SIMPLIFIER_OPTIONS_H
 
+#include "inliner.H"
+
 struct pass_options
 {
     bool typecheck = true;
@@ -16,7 +18,9 @@ struct dump_options
     bool dump_optimized = false;
 };
 
-struct simplifier_options: public pass_options, public dump_options
+struct simplifier_options: public pass_options,
+                           public dump_options,
+                           public inliner_options
 {
     bool pre_inline_unconditionally = true;
     bool post_inline_unconditionally = true;
@@ -28,8 +32,6 @@ struct simplifier_options: public pass_options, public dump_options
     bool case_of_case = true;
     bool beta_reduction = true;
     int max_iterations = 4;
-    int inline_threshhold = 8;
-    double keenness = 1.5;
 
     bool fully_lazy = true;
 };

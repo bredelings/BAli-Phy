@@ -136,6 +136,27 @@ int simple_size(const Core2::Exp<>& E)
 	return 1;
 }
 
+ExprSize zero_size{{0},{},0};
+
+ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Exp& E)
+{
+    // QUESTION: ZeroBit Ids have no representation.
+    // In theory this would be true for (), for ((),()), etc.
+    if (auto V = E.to_var())
+    {
+        // Var f -> if zero_bit_id(f) then sizeZero else size_up_call x [] 0
+    }
+    else if (auto A = E.to_apply())
+    {
+        // App fun arg -> size_up_arg arg +NSD size_up_app fun [arg] (if zero_bit_id then 1 else 0)
+    }
+    else if (auto L = E.to_lambda())
+    {
+        // Lam b e -> lam_scrut_discount opts (size_up_e +N 10)
+    }
+    // 
+}
+
 inline_context remove_arguments(inline_context context, int n)
 {
     for(int i=0;i<n;i++)
@@ -229,7 +250,7 @@ bool SimplifierState::small_enough(const Occ::Exp& rhs, const inline_context& co
 
     int discounts = 0;
 
-    return (body_size - size_of_call - options.keenness*discounts <= options.inline_threshhold);
+    return (body_size - size_of_call - discounts <= options.inline_threshhold);
 }
 
 optional<Occ::Exp> SimplifierState::try_inline_multi(const Occ::Exp& rhs, const inline_context& context)

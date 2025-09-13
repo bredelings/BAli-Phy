@@ -12,6 +12,23 @@ struct stop_context;
 struct apply_context;
 struct case_context;
 
+struct inliner_options
+{
+    int inline_threshhold = 8;
+};
+
+
+struct ExprSize
+{
+    // if no size, the its too big.
+    std::optional<int> size;
+    immer::map<std::string,int> arg_discounts;
+    int case_obj_discount = 0;
+
+    bool too_big() const {return not size;}
+};
+
+
 class inline_context: public std::variant<std::shared_ptr<const ok_context>, std::shared_ptr<const stop_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
 {
 public:
@@ -90,6 +107,8 @@ bool is_trivial(const Occ::Exp& E);
 int simple_size(const Occ::Exp& E);
 
 int simple_size(const Core2::Exp<>& E);
+
+ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Exp& E);
 
 bool is_WHNF(const Occ::Exp& E);
 #endif

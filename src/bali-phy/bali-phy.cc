@@ -364,7 +364,6 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
     L->case_of_variable = args["case-of-variable"].as<bool>();
     L->case_of_case = args["case-of-case"].as<bool>();
     L->inline_threshhold = args["inline-threshold"].as<int>();
-    L->keenness = args["keenness"].as<double>();
     L->beta_reduction = args["beta-reduction"].as<bool>();
     L->max_iterations = args["simplifier-max-iterations"].as<int>();
 
