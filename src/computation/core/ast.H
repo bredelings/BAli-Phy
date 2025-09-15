@@ -553,20 +553,10 @@ namespace Core2
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-    struct Alts: public std::vector<Alt<NoteV, NoteE>>
-    {
-	std::string print() const;
-
-	std::strong_ordering operator<=>(const Alts<NoteV,NoteE>& v2) const = default;
-
-	using std::vector<Alt<NoteV,NoteE>>::vector;
-    };
-
-    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Case
     {
 	Exp<NoteV, NoteE> object;
-	Alts<NoteV, NoteE> alts;
+        std::vector<Alt<NoteV, NoteE>> alts;
 
 	bool operator==(const Case<NoteV,NoteE>& v2) const
 	{
@@ -796,18 +786,12 @@ namespace Core2
     }
 
     template <typename NoteV, typename NoteE>
-    std::string Alts<NoteV,NoteE>::print() const
-    {
-	std::vector<std::string> alts;
-	for(auto& alt: *this)
-	    alts.push_back(alt.print());
-	return "{"+join(alts,"; ")+"}";
-    }
-
-    template <typename NoteV, typename NoteE>
     std::string Case<NoteV,NoteE>::print() const
     {
-	return "case " + object.print() + " of " + alts.print();
+	std::vector<std::string> s_alts;
+	for(auto& alt: alts)
+	    s_alts.push_back(alt.print());
+	return "case " + object.print() + " of {"+join(s_alts,"; ")+"}";
     }
 
     template <typename NoteV>

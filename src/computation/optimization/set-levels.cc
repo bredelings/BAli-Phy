@@ -196,7 +196,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
         // If so, don't float out the entire case alternative if this isn't changeable.
         bool non_changeable = C->alts.size() == 1 and C->alts[0].pat.is_wildcard_pat();
 
-        Levels::Alts alts2;
+        vector<Levels::Alt> alts2;
         for(auto& [pattern, body]: C->alts)
         {
             // Extend environment with pattern vars at level2

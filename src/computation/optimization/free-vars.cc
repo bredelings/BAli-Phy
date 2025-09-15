@@ -95,7 +95,7 @@ add_free_variable_annotations(const Core2::Exp<>& E)
 
         auto free_vars = get_free_vars(object);
 
-        FV::Alts alts;
+        vector<FV::Alt> alts;
         for(auto& [pat, body]: C->alts)
         {
             auto fv_body = add_free_variable_annotations(body);

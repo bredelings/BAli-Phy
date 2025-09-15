@@ -319,7 +319,7 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
         else
         {
             auto cf = to<FloatCase>(f);
-            E = Occ::Case{cf->object,Occ::Alts{{Occ::Alt{cf->pattern,E}}}};
+            E = Occ::Case{cf->object,{Occ::Alt{cf->pattern,E}}};
         }
     }
     return E;
@@ -406,7 +406,7 @@ std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
 	return Occ::ConApp{*pattern.head, pattern.args};
 }
 
-bool is_identity_case(const Occ::Exp& object, const Occ::Alts& alts)
+bool is_identity_case(const Occ::Exp& object, const vector<Occ::Alt>& alts)
 {
     for(auto& [pattern, body]: alts)
     {
@@ -447,7 +447,7 @@ vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
     return used;
 }
 
-std::optional<Occ::Alt> select_case_alternative(const string& con, const Occ::Alts& alts)
+std::optional<Occ::Alt> select_case_alternative(const string& con, const vector<Occ::Alt>& alts)
 {
     for(auto& alt: alts)
     {
@@ -459,7 +459,7 @@ std::optional<Occ::Alt> select_case_alternative(const string& con, const Occ::Al
     return {};
 }
 
-Occ::Exp case_of_case(const Occ::Case& object, Occ::Alts alts, FreshVarSource& fresh_vars)
+Occ::Exp case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSource& fresh_vars)
 {
     auto& object2 = object.object;
     auto alts2 = object.alts;
@@ -517,7 +517,7 @@ SimplifierState::rename_and_bind_pattern_vars(Occ::Pattern& pattern, const subst
 }
 
 // If we add pattern2 add the end of alts, would we never get to it?
-bool redundant_pattern(const Occ::Alts& alts, const Occ::Pattern& pattern2)
+bool redundant_pattern(const vector<Occ::Alt>& alts, const Occ::Pattern& pattern2)
 {
     for(auto& [pattern1,_]: alts)
     {
@@ -598,7 +598,7 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
 
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, const substitution& S, const in_scope_set& bound_vars)
+Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not object.to_let());
 
@@ -774,7 +774,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, Occ::Alts alts, co
     return E2;
 }
 
-Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const Occ::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);

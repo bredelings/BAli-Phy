@@ -233,7 +233,7 @@ float_lets(const Levels::Exp& E, int level)
         auto [object2, float_binds] = float_lets(C->object, level);
         int level2 = level + 1;
 
-        Core2::Alts<> alts2;
+        vector<Core2::Alt<>> alts2;
         for(auto& [pattern, body]: C->alts)
         {
             auto pattern2 = strip_levels_from_pattern(pattern);

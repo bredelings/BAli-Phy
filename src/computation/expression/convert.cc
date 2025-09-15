@@ -99,7 +99,7 @@ expression_ref to_expression_ref(const Core2::Var<>& P)
     return to_var(P);
 }
 
-Core::Alts to_expression_ref(const Core2::Alts<>& A)
+Core::Alts to_expression_ref(const vector<Core2::Alt<>>& A)
 {
     Core::Alts alts;
     for(auto [pat,body]: A)
@@ -220,7 +220,7 @@ Core2::Let<> load_builtins(const module_loader& loader, Core2::Let<> L)
     return L;
 }
 
-Core2::Alts<> load_builtins(const module_loader& loader, Core2::Alts<> alts)
+vector<Core2::Alt<>> load_builtins(const module_loader& loader, vector<Core2::Alt<>> alts)
 {
     for(auto& [pat,body]: alts)
 	body = load_builtins(loader, body);
@@ -321,9 +321,9 @@ Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
     }
 }
 
-Core2::Alts<> to_core_alts(const Occ::Alts& alts1)
+vector<Core2::Alt<>> to_core_alts(const vector<Occ::Alt>& alts1)
 {
-    Core2::Alts<> alts2;
+    vector<Core2::Alt<>> alts2;
     for(auto& [pattern,body]: alts1)
 	alts2.push_back({to_core_pattern(pattern),to_core_exp(body)});
     return alts2;

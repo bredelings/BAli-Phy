@@ -457,7 +457,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         // Just normalize the bodies
         set<Occ::Var> alts_free_vars;
 
-        Occ::Alts alts;
+        vector<Occ::Alt> alts;
         for(auto& [pattern, body]: C->alts)
         {
             // Analyze the i-ith branch

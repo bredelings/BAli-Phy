@@ -79,10 +79,10 @@ struct apply_context
 
 struct case_context
 {
-    Occ::Alts alts;
+    std::vector<Occ::Alt> alts;
     const simplifier::substitution& subst;
     inline_context next;
-    case_context(const Occ::Alts& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
+    case_context(const std::vector<Occ::Alt>& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
 };
 
 // It is allowed to inline here.

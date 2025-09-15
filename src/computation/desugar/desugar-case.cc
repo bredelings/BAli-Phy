@@ -248,7 +248,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 
     auto result = [=](const Core2::Exp<>& otherwise)
     {
-        Core2::Alts<> alts;
+        vector<Core2::Alt<>> alts;
 	for(int i=0;i<simple_bodies.size();i++)
             alts.push_back({simple_patterns[i], simple_bodies[i].result(o)});
 

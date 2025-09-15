@@ -265,7 +265,7 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
                     // \dargs -> case (tup dargs) of (..fields..) -> field
                     auto x_tmp_body = lambda_quantify(gb->dict_args,
                                                       Core2::Exp<>(Core2::Case<>{ make_apply<>(Core2::Exp<>(tup), gb->dict_args),
-                                                              Core2::Alts<>({{pattern, x_inner}})}) );
+                                                              {{pattern, x_inner}}}) );
 
                     decls.push_back({x_tmp, x_tmp_body});
 

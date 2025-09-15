@@ -16,7 +16,6 @@ namespace Levels
     using Case = Core2::Case<int>;
     using Pattern = Core2::Pattern<int>;
     using Alt = Core2::Alt<int>;
-    using Alts = Core2::Alts<int>;
     using ConApp = Core2::ConApp<int>;
     using BuiltinOp = Core2::BuiltinOp<int>;
     using Constant = Core2::Constant;
