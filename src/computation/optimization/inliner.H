@@ -14,7 +14,10 @@ struct case_context;
 
 struct inliner_options
 {
-    int inline_threshhold = 8;
+    int creation_threshold = 75;
+    int inline_threshhold = 9; // use_threshold
+    int fun_app_discount = 6;
+    int dict_discount = 3;
 };
 
 
@@ -23,7 +26,7 @@ struct ExprSize
     // if no size, the its too big.
     std::optional<int> size;
     immer::map<std::string,int> arg_discounts;
-    int case_obj_discount = 0;
+    int inspect_discount = 0;
 
     bool too_big() const {return not size;}
 };

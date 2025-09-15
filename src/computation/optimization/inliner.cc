@@ -152,9 +152,38 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std
     }
     else if (auto L = E.to_lambda())
     {
-        // Lam b e -> lam_scrut_discount opts (size_up_e +N 10)
+        auto body_size = size_of_expr(opts, max_size, top_args, L->body);
+        body_size.inspect_discount = opts.fun_app_discount;
+
+        // Lam b e -> body_size (size_up_e +N 10)
     }
-    // 
+    else if (auto L = E.to_let())
+    {
+        //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
+    }
+    else if (auto C = E.to_case())
+    {
+        // Case e of alts
+        // * empty alts -> size_up e
+
+        // * e in top_args -> ???
+
+        // * otherwise ->  size_up e +NSD (size_up_alt alt1 `addAltSize` size_up_alt alt2 `addAltSize` case_size)
+    }
+    else if (auto C = E.to_constant())
+    {
+        // sizeN (litSize lit)
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        // Handled by Apply + Var?
+    }
+    else if (auto C = E.to_conApp())
+    {
+        // Handled by Apply + Var?
+    }
+    else
+        std::abort();
 }
 
 inline_context remove_arguments(inline_context context, int n)
