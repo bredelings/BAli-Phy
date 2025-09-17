@@ -64,11 +64,13 @@ namespace Core2
 
 	bool empty() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
             return std::holds_alternative<std::monostate>(exp_ptr);
 	}
 
 	const Var<NoteV>* to_var() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 1)
 		return std::get<cow_ptr<Var<NoteV>>>(exp_ptr).get();
 	    else
@@ -77,6 +79,7 @@ namespace Core2
 
 	Var<NoteV>* to_var_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 1)
 		return std::get<cow_ptr<Var<NoteV>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -85,6 +88,7 @@ namespace Core2
 
 	const Lambda<NoteV,NoteE>* to_lambda() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 2)
 		return std::get<cow_ptr<Lambda<NoteV,NoteE>>>(exp_ptr).get();
 	    else
@@ -93,6 +97,7 @@ namespace Core2
 
 	Lambda<NoteV,NoteE>* to_lambda_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 2)
 		return std::get<cow_ptr<Lambda<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -101,6 +106,7 @@ namespace Core2
 
 	const Apply<NoteV,NoteE>* to_apply() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 3)
 		return std::get<cow_ptr<Apply<NoteV,NoteE>>>(exp_ptr).get();
 	    else
@@ -109,6 +115,7 @@ namespace Core2
 
 	Apply<NoteV,NoteE>* to_apply_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 3)
 		return std::get<cow_ptr<Apply<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -117,6 +124,7 @@ namespace Core2
 
 	const Let<NoteV,NoteE>* to_let() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 4)
 		return std::get<cow_ptr<Let<NoteV,NoteE>>>(exp_ptr).get();
 	    else
@@ -125,6 +133,7 @@ namespace Core2
 
 	Let<NoteV,NoteE>* to_let_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 4)
 		return std::get<cow_ptr<Let<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -133,6 +142,7 @@ namespace Core2
 
 	const Case<NoteV,NoteE>* to_case() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 5)
 		return std::get<cow_ptr<Case<NoteV,NoteE>>>(exp_ptr).get();
 	    else
@@ -141,6 +151,7 @@ namespace Core2
 
 	Case<NoteV,NoteE>* to_case_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 5)
 		return std::get<cow_ptr<Case<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -149,6 +160,7 @@ namespace Core2
 
 	const ConApp<NoteV>* to_conApp() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 6)
 		return std::get<cow_ptr<ConApp<NoteV>>>(exp_ptr).get();
 	    else
@@ -157,6 +169,7 @@ namespace Core2
 
 	ConApp<NoteV>* to_conApp_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 6)
 		return std::get<cow_ptr<ConApp<NoteV>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -165,6 +178,7 @@ namespace Core2
 
 	const BuiltinOp<NoteV>* to_builtinOp() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 7)
 		return std::get<cow_ptr<BuiltinOp<NoteV>>>(exp_ptr).get();
 	    else
@@ -173,6 +187,7 @@ namespace Core2
 
 	BuiltinOp<NoteV>* to_builtinOp_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 7)
 		return std::get<cow_ptr<BuiltinOp<NoteV>>>(exp_ptr).modify_ptr().get();
 	    else
@@ -181,6 +196,7 @@ namespace Core2
 
 	const Constant* to_constant() const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 8)
 		return std::get<cow_ptr<Constant>>(exp_ptr).get();
 	    else
@@ -189,6 +205,7 @@ namespace Core2
 
 	Constant* to_constant_modify()
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 8)
 		return std::get<cow_ptr<Constant>>(exp_ptr).modify_ptr().get();
 	    else
@@ -197,6 +214,7 @@ namespace Core2
 
 	bool operator==(const Exp<NoteV,NoteE>& E2) const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() != E2.exp_ptr.index()) return false;
 
 	    if (empty())
@@ -223,6 +241,7 @@ namespace Core2
 
 	std::strong_ordering operator<=>(const Exp<NoteV,NoteE>& E2) const
 	{
+            assert(not exp_ptr.valueless_by_exception());
 	    auto cmp1 = exp_ptr.index() <=> E2.exp_ptr.index();
 
 	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
@@ -251,6 +270,7 @@ namespace Core2
 
         Exp<NoteV,NoteE>& operator=(const Exp<NoteV,NoteE>& E)
         {
+            assert(not E.exp_ptr.valueless_by_exception());
             // If *this points to a structure containing E,
             // then E can get destroyed during the operation, including E.note_.
 
@@ -680,6 +700,7 @@ namespace Core2
     template <typename NoteV, typename NoteE>
     std::string Exp<NoteV,NoteE>::print() const
     {
+        if (exp_ptr.valueless_by_exception()) return "INVALID";
 	if (empty()) return "NOEXP";
 
 	if (auto v = to_var()) return v->print();
