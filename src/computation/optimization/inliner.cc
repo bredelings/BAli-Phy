@@ -62,11 +62,6 @@ inline_context make_apply_context(const Occ::Apply& A,  const simplifier::substi
     return make_apply_context_one_arg(A.arg, S, context);
 }
 
-inline_context make_stop_context()
-{
-    return std::make_shared<const stop_context>();
-}
-
 inline_context make_ok_context()
 {
     return std::make_shared<const ok_context>();
@@ -362,7 +357,7 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     auto& rhs = cu->expr;
 
     // If always_unfold
-    if (cu->always_unfold and (not context.is_stop_context() or is_trivial(rhs)))
+    if (cu->always_unfold)
     {
         assert(not occur.is_loop_breaker);
         return rhs;
@@ -370,10 +365,6 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
     // LoopBreaker
     if (occur.is_loop_breaker)
-	return {};
-
-    // Function and constructor arguments
-    else if (context.is_stop_context() and not is_trivial(rhs))
 	return {};
 
     // OnceSafe
