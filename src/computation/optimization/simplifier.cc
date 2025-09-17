@@ -639,7 +639,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
                 decls.push_back({arg2, args[i]});
             }
             auto bound_vars2 = bind_decls(bound_vars, decls);
-            return rebuild_let(decls, body, S2, bound_vars2, make_ok_context());
+            return make_let(decls, simplify(body, S2, bound_vars2, make_ok_context()));
         }
         else
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -811,14 +811,6 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
         E2 = Occ::Let{d, E2};
 
     return rebuild(E2, bound_vars, context);
-}
-
-// let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-Occ::Exp SimplifierState::rebuild_let(const Occ::Decls& decls, Occ::Exp E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
-{
-    auto E2 = simplify(E, S, bound_vars, context);
-
-    return make_let(decls, E2);
 }
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
@@ -1046,7 +1038,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 Occ::Decls decls{{x2,arg}};
                 auto bound_vars2 = bind_decls(bound_vars, decls);
-                return rebuild_let(decls, lam->body, S2, bound_vars2, ac->next);
+                return make_let(decls, simplify(lam->body, S2, bound_vars2, ac->next));
             }
         }
 
@@ -1095,7 +1087,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(decls2, let->body, S2, bound_vars2, context);
+	return make_let(decls2, simplify(let->body, S2, bound_vars2, context));
     }
 
      // Do we need something to handle WHNF variables?

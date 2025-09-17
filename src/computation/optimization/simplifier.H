@@ -111,9 +111,6 @@ public:
     Occ::Exp
     rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
-    Occ::Exp
-    rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
-
     Occ::Exp rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<Occ::Decls, simplifier::substitution, in_scope_set>
