@@ -1265,8 +1265,18 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 
 void Module::export_small_decls(const Core2::Decls<>& decls)
 {
-    // FIXME: add a wrapper for EVERY constructor!
+    // Determine which decls are loop breakers, and give them empty unfoldings.
+    set<Occ::Var> occ_free_vars;
+    auto occ_decl_groups = occurrence_analyze_decl_groups(*this, {decls}, occ_free_vars);
+    set<Core2::Var<>> loop_breakers;
+    for(auto decl_group: occ_decl_groups)
+        for(auto& [x,_]: decl_group)
+            if (x.info.is_loop_breaker)
+            {
+                loop_breakers.insert(to_core_var(x));
+            }
 
+    // FIXME: add a wrapper for EVERY constructor!
     for(auto& [x,rhs]: decls)
     {
         assert(not x.name.empty());
@@ -1275,7 +1285,12 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
         // Add the unfolding for this variable.
         auto S = lookup_make_local_symbol(x.name);
 
-        if (simple_size(rhs) <= 75 and to<std::monostate>(S->unfolding))
+        if (loop_breakers.count(x))
+        {
+            S->unfolding = {};
+            assert(not S->unfolding.valueless_by_exception());
+        }
+        else if (simple_size(rhs) <= 75 and to<std::monostate>(S->unfolding))
         {
             // Label vars with whether they are used or not, and collect free vars.
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
