@@ -136,7 +136,7 @@ void run_info(json::object& info, int /*proc_id*/, int argc, char* argv[])
 	command.push_back(argv[i]);
 
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    string start_time = fmt::format("{:%c}", fmt::localtime(now));
+    string start_time = fmt::format("{:%c}", *std::localtime(&now));
     rtrim(start_time);
 
     json::object env;
