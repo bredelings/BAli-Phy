@@ -77,7 +77,8 @@ cd ${SYSROOT}
 # Note that the use of gcc-posix and g++-posix means that we need
 # *-posix/libgcc_s_seh-1.dll and *-posix2/libstdc++-6.dll instead
 # of the *-win32/ versions.
-PKGS="boost-1.84.0-2
+PKGS="boost-1.89.0-1
+boost-libs-1.89.0-1
 eigen3-3.4.0-1
 range-v3-0.12.0-1"
 # nlohmann-json-3.11.2-1   This breaks things, maybe because we end up using both versions?
