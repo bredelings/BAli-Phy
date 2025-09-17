@@ -295,11 +295,27 @@ float_lets(const Levels::Exp& E, int level)
 
     else if (auto C = E.to_conApp())
     {
-        return {Core2::ConApp<>{C->head, strip_levels(C->args)}, {}};
+        float_binds_t float_binds;
+        std::vector<Core2::Exp<>> args;
+        for(auto& arg: C->args)
+        {
+            auto [arg2, arg_float_binds] = float_lets(arg,level);
+            float_binds.append(arg_float_binds);
+            args.push_back(arg2);
+        }
+        return {Core2::ConApp<>{C->head, args}, float_binds};
     }
     else if (auto B = E.to_builtinOp())
     {
-        return {Core2::BuiltinOp<>{B->lib_name, B->func_name, strip_levels(B->args), B->op}, {}};
+        float_binds_t float_binds;
+        std::vector<Core2::Exp<>> args;
+        for(auto& arg: B->args)
+        {
+            auto [arg2, arg_float_binds] = float_lets(arg,level);
+            float_binds.append(arg_float_binds);
+            args.push_back(arg2);
+        }
+        return {Core2::BuiltinOp<>{B->lib_name, B->func_name, args, B->op}, float_binds};
     }
 
     std::abort();

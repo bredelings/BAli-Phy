@@ -114,18 +114,28 @@ add_free_variable_annotations(const Core2::Exp<>& E)
     // 6. ConApp
     else if (auto CA = E.to_conApp())
     {
+        vector<FV::Exp> fv_args;
         FreeVars free_vars;
         for(auto& arg: CA->args)
-            free_vars = free_vars.insert(arg);
-        return FV::Exp(*CA, free_vars);
+        {
+            auto fv_arg = add_free_variable_annotations(arg);
+            fv_args.push_back(fv_arg);
+            free_vars = get_union(free_vars, get_free_vars(fv_arg));
+        }
+        return FV::Exp(FV::ConApp(CA->head, fv_args), free_vars);
     }
     // 7. BuiltinOp
     else if (auto B = E.to_builtinOp())
     {
+        vector<FV::Exp> fv_args;
         FreeVars free_vars;
         for(auto& arg: B->args)
-            free_vars = free_vars.insert(arg);
-        return FV::Exp(*B, free_vars);
+        {
+            auto fv_arg = add_free_variable_annotations(arg);
+            fv_args.push_back(fv_arg);
+            free_vars = get_union(free_vars, get_free_vars(fv_arg));
+        }
+        return FV::Exp(FV::BuiltinOp{B->lib_name, B->func_name,fv_args,B->op}, free_vars);
     }
     else if (auto C = E.to_constant())
         return *C;

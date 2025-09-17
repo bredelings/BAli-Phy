@@ -34,8 +34,8 @@ namespace Core2
     template <typename NoteV, typename NoteE> struct Apply;
     template <typename NoteV, typename NoteE> struct Let;
     template <typename NoteV, typename NoteE> struct Case;
-    template <typename NoteV> struct ConApp;
-    template <typename NoteV> struct BuiltinOp;
+    template <typename NoteV, typename NoteE> struct ConApp;
+    template <typename NoteV, typename NoteE> struct BuiltinOp;
     struct Constant;
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
@@ -49,8 +49,8 @@ namespace Core2
 	    cow_ptr<Apply<NoteV,NoteE>>,
 	    cow_ptr<Let<NoteV,NoteE>>,
 	    cow_ptr<Case<NoteV,NoteE>>,
-	    cow_ptr<ConApp<NoteV>>,
-	    cow_ptr<BuiltinOp<NoteV>>,
+	    cow_ptr<ConApp<NoteV,NoteE>>,
+	    cow_ptr<BuiltinOp<NoteV,NoteE>>,
 	    cow_ptr<Constant>
 	>
 	exp_ptr;
@@ -158,38 +158,38 @@ namespace Core2
 		return nullptr;
 	}
 
-	const ConApp<NoteV>* to_conApp() const
+	const ConApp<NoteV,NoteE>* to_conApp() const
 	{
             assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 6)
-		return std::get<cow_ptr<ConApp<NoteV>>>(exp_ptr).get();
+		return std::get<cow_ptr<ConApp<NoteV,NoteE>>>(exp_ptr).get();
 	    else
 		return nullptr;
 	}
 
-	ConApp<NoteV>* to_conApp_modify()
+	ConApp<NoteV,NoteE>* to_conApp_modify()
 	{
             assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 6)
-		return std::get<cow_ptr<ConApp<NoteV>>>(exp_ptr).modify_ptr().get();
+		return std::get<cow_ptr<ConApp<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
 		return nullptr;
 	}
 
-	const BuiltinOp<NoteV>* to_builtinOp() const
+	const BuiltinOp<NoteV,NoteE>* to_builtinOp() const
 	{
             assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 7)
-		return std::get<cow_ptr<BuiltinOp<NoteV>>>(exp_ptr).get();
+		return std::get<cow_ptr<BuiltinOp<NoteV,NoteE>>>(exp_ptr).get();
 	    else
 		return nullptr;
 	}
 
-	BuiltinOp<NoteV>* to_builtinOp_modify()
+	BuiltinOp<NoteV,NoteE>* to_builtinOp_modify()
 	{
             assert(not exp_ptr.valueless_by_exception());
 	    if (exp_ptr.index() == 7)
-		return std::get<cow_ptr<BuiltinOp<NoteV>>>(exp_ptr).modify_ptr().get();
+		return std::get<cow_ptr<BuiltinOp<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
 	    else
 		return nullptr;
 	}
@@ -304,10 +304,10 @@ namespace Core2
 	Exp(const Let<NoteV,NoteE>& l, const NoteE& n):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ), note_(n) {}
 	Exp(const Case<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ) {}
 	Exp(const Case<NoteV,NoteE>& c, const NoteE& n):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ), note_(n) {}
-	Exp(const ConApp<NoteV>& c):exp_ptr( make_cow_ptr<ConApp<NoteV>>(c) ) {}
-	Exp(const ConApp<NoteV>& c, const NoteE& n):exp_ptr( make_cow_ptr<ConApp<NoteV>>(c)), note_(n) {}
-	Exp(const BuiltinOp<NoteV>& b):exp_ptr( make_cow_ptr<BuiltinOp<NoteV>>(b) ) {}
-	Exp(const BuiltinOp<NoteV>& b, const NoteE& n):exp_ptr( make_cow_ptr<BuiltinOp<NoteV>>(b) ), note_(n) {}
+	Exp(const ConApp<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<ConApp<NoteV,NoteE>>(c) ) {}
+	Exp(const ConApp<NoteV,NoteE>& c, const NoteE& n):exp_ptr( make_cow_ptr<ConApp<NoteV,NoteE>>(c)), note_(n) {}
+	Exp(const BuiltinOp<NoteV,NoteE>& b):exp_ptr( make_cow_ptr<BuiltinOp<NoteV,NoteE>>(b) ) {}
+	Exp(const BuiltinOp<NoteV,NoteE>& b, const NoteE& n):exp_ptr( make_cow_ptr<BuiltinOp<NoteV,NoteE>>(b) ), note_(n) {}
 	Exp(const Constant& c):exp_ptr( make_cow_ptr<Constant>(c) ) {}
 	Exp(const Constant& c, const NoteE& n):exp_ptr( make_cow_ptr<Constant>(c) ), note_(n) {}
 
@@ -601,20 +601,20 @@ namespace Core2
 	}
     };
     
-    template <typename NoteV = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct ConApp
     {
 	std::string head;
-	std::vector<Var<NoteV>> args;
+	std::vector<Exp<NoteV,NoteE>> args;
 
 	std::string print() const;
 
-	bool operator==(const ConApp<NoteV>& v2) const
+	bool operator==(const ConApp<NoteV,NoteE>& v2) const
 	{
 	    return head == v2.head and args == v2.args;
 	}
 
-	std::strong_ordering operator<=>(const ConApp<NoteV>& v2) const
+	std::strong_ordering operator<=>(const ConApp<NoteV,NoteE>& v2) const
 	{
 	    auto cmp1 = head <=> v2.head;
 
@@ -630,25 +630,25 @@ namespace Core2
 	}
 
         ConApp() = default;
-        ConApp(const std::string& h, const std::vector<Var<NoteV>>& a):head(h),args(a) {}
+        ConApp(const std::string& h, const std::vector<Exp<NoteV,NoteE>>& a):head(h),args(a) {}
     };
 
-    template <typename NoteV = std::monostate>
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct BuiltinOp
     {
 	std::string lib_name;
 	std::string func_name;
-	std::vector<Var<NoteV>> args;
+	std::vector<Exp<NoteV,NoteE>> args;
 	void* op = nullptr;
 
 	std::string print() const;
 
-	bool operator==(const BuiltinOp<NoteV>& v2) const
+	bool operator==(const BuiltinOp<NoteV,NoteE>& v2) const
 	{
 	    return lib_name == v2.lib_name and func_name == v2.func_name and args == v2.args;
 	}
 
-	std::strong_ordering operator<=>(const BuiltinOp<NoteV>& v2) const
+	std::strong_ordering operator<=>(const BuiltinOp<NoteV,NoteE>& v2) const
 	{
 	    auto cmp1 = lib_name <=> v2.lib_name;
 
@@ -817,8 +817,8 @@ namespace Core2
 	return "case " + object.print() + " of {"+join(s_alts,"; ")+"}";
     }
 
-    template <typename NoteV>
-    std::string ConApp<NoteV>::print() const
+    template <typename NoteV,typename NoteE>
+    std::string ConApp<NoteV,NoteE>::print() const
     {
 	std::vector<std::string> words;
 	words.push_back(head);
@@ -837,8 +837,8 @@ namespace Core2
 	return join(words," ");
     }
 
-    template <typename NoteV>
-    std::string BuiltinOp<NoteV>::print() const
+    template <typename NoteV, typename NoteE>
+    std::string BuiltinOp<NoteV,NoteE>::print() const
     {
 	std::vector<std::string> words;
 	words.push_back(lib_name + ":" + func_name);

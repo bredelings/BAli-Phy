@@ -116,10 +116,10 @@ expression_ref to_expression_ref(const Core2::Case<>& C)
 
 expression_ref to_expression_ref(const Core2::ConApp<>& C)
 {
-    vector<expression_ref> vars;
-    for(auto& v: C.args)
-	vars.push_back( to_var(v) );
-    return expression_ref(constructor(C.head,C.args.size()),vars);
+    vector<expression_ref> args;
+    for(auto& arg: C.args)
+	args.push_back( to_expression_ref(arg) );
+    return expression_ref(constructor(C.head,C.args.size()),args);
 }
 
 // How can we do this?
@@ -127,10 +127,10 @@ expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
 {
     Operation O( (operation_fn)B.op, B.lib_name+":"+B.func_name);
 
-    vector<expression_ref> vars;
-    for(auto& v: B.args)
-	vars.push_back( to_var(v) );
-    return expression_ref(O, vars);
+    vector<expression_ref> args;
+    for(auto& arg: B.args)
+	args.push_back( to_expression_ref(arg) );
+    return expression_ref(O, args);
 }
 
 expression_ref to_expression_ref(const Core2::Constant& C)
@@ -339,7 +339,7 @@ Core2::ConApp<> to_core_con_app(const Occ::ConApp& C)
     Core2::ConApp<> con_app;
     con_app.head = C.head;
     for(int i=0;i<C.args.size();i++)
-	con_app.args.push_back(to_core_var(C.args[i]));
+	con_app.args.push_back(to_core_exp(C.args[i]));
     return con_app;
 }
 
@@ -354,7 +354,7 @@ Core2::BuiltinOp<> to_core_builtin_op(const Occ::BuiltinOp& B)
     builtin.lib_name = B.lib_name;
     builtin.func_name = B.func_name;
     for(int i=0;i<B.args.size();i++)
-	builtin.args.push_back(to_core_var(B.args[i]));
+	builtin.args.push_back(to_core_exp(B.args[i]));
     return builtin;
 }
 

@@ -567,7 +567,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // 7. Construct the dictionary from the constructor functions for its entries
     //    (Extractor functions are implemented in class.cc: dictionary_extractor( ))
     Core2::Decls<> dict_decls;
-    vector<Core2::Var<>> dict_entries;
+    vector<Core2::Exp<>> dict_entries;
     for(auto& op: instance_sc_methods)
     {
         auto dict_entry = get_fresh_core_var("de$",false);

@@ -153,15 +153,15 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
     else if (auto con = E.to_conApp())
     {
         set<Occ::Var> free;
-        for(auto& x: con->args)
-            free.insert(x);
+        for(auto& arg: con->args)
+            add(free, get_free_vars(arg));
         return free;
     }
     else if (auto builtin = E.to_builtinOp())
     {
         set<Occ::Var> free;
-        for(auto& x: builtin->args)
-            free.insert(x);
+        for(auto& arg: builtin->args)
+            add(free, get_free_vars(arg));
         return free;
     }
     else if (E.to_constant())
@@ -403,7 +403,10 @@ std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
     if (pattern.is_wildcard_pat())
 	return {};
     else
-	return Occ::ConApp{*pattern.head, pattern.args};
+    {
+        auto args = pattern.args | ranges::to<vector<Occ::Exp>>;
+        return Occ::ConApp{*pattern.head, args};
+    }
 }
 
 bool is_identity_case(const Occ::Exp& object, const vector<Occ::Alt>& alts)
@@ -1031,7 +1034,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         if (auto ac = context.is_apply_context())
         {
             auto x = lam->x;
-            auto arg = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
+            auto arg = simplify(ac->arg, ac->subst, bound_vars, make_ok_context());
             if (x.info.pre_inline() and options.pre_inline_unconditionally)
             {
                 S2 = S2.erase(x);
@@ -1103,7 +1106,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
     {
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
-	    arg = *simplify(arg, S, bound_vars, make_stop_context()).to_var();
+	    arg = simplify(arg, S, bound_vars, make_ok_context());
 
 	return rebuild(C, bound_vars, context);
     }
@@ -1118,7 +1121,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 
 	for(auto& arg: builtin->args)
  	{
-	    auto arg2 = *simplify(arg, S, bound_vars, make_stop_context()).to_var();
+	    auto arg2 = simplify(arg, S, bound_vars, make_ok_context());
 	    builtin2.args.push_back(arg2);
  	}
 

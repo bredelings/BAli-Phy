@@ -49,12 +49,12 @@ std::vector<Core2::Var<NoteV>> make_vars(int n, char prefix = 'x', int start=1)
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV> Tuple(const std::vector<Core2::Var<NoteV>>& vars)
+Core2::Exp<NoteV> Tuple(const std::vector<Core2::Exp<NoteV,NoteE>>& args)
 {
-    if (vars.size() == 1)
-        return vars[0];
+    if (args.size() == 1)
+        return args[0];
     else
-        return Core2::ConApp<NoteV>{tuple_name(vars.size()),vars};
+        return Core2::ConApp<NoteV>{tuple_name(args.size()),args};
 }
 
 template <typename NoteV>

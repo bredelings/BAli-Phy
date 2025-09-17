@@ -236,9 +236,21 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     else if (auto C = E.to_constant())
         return *C;
     else if (auto C = E.to_conApp())
-        return Levels::ConApp{C->head, add_levels(C->args, env)};
+    {
+        vector<Levels::Exp> lv_args = C->args
+            | views::transform([&](const auto& arg) {return set_level_maybe_MFE(arg, level, env);})
+            | ranges::to<vector>;
+
+        return Levels::ConApp{C->head, lv_args};
+    }
     else if (auto B = E.to_builtinOp())
-        return Levels::BuiltinOp{B->lib_name, B->func_name, add_levels(B->args,env), B->op};
+    {
+        vector<Levels::Exp> lv_args = B->args
+            | views::transform([&](const auto& arg) {return set_level_maybe_MFE(arg, level, env);})
+            | ranges::to<vector>;
+
+        return Levels::BuiltinOp{B->lib_name, B->func_name, lv_args, B->op};
+    }
 
     std::abort();
 }

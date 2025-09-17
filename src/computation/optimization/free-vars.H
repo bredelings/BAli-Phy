@@ -19,8 +19,8 @@ namespace FV
     using Case = Core2::Case<std::monostate, FreeVars>;
     using Pattern = Core2::Pattern<>;
     using Alt = Core2::Alt<std::monostate, FreeVars>;
-    using ConApp = Core2::ConApp<>;
-    using BuiltinOp = Core2::BuiltinOp<>;
+    using ConApp = Core2::ConApp<std::monostate, FreeVars>;
+    using BuiltinOp = Core2::BuiltinOp<std::monostate, FreeVars>;
     using Constant = Core2::Constant;
     using Exp = Core2::Exp<std::monostate, FreeVars>;
 };

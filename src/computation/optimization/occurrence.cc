@@ -425,10 +425,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     else if (auto A = E.to_apply())
     {
         set<Occ::Var> free_vars;
-        auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
+        auto [head, head_free_vars] = occurrence_analyzer(m, A->head);
         merge_occurrences_into(free_vars, head_free_vars);
 
-        auto [arg, arg_free_vars] = occurrence_analyzer(m, A->arg, var_context::unknown);
+        auto [arg, arg_free_vars] = occurrence_analyzer(m, A->arg);
         merge_occurrences_into(free_vars, arg_free_vars);
 
         return {Occ::Apply{head, arg}, free_vars};
@@ -490,11 +490,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     {
         set<Occ::Var> free_vars;
 
-        vector<Occ::Var> args;
-
+        vector<Occ::Exp> args;
         for(auto& arg: C->args)
         {
-            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            auto [occ_arg, arg_free_vars] = occurrence_analyzer(m, arg);
             args.push_back(occ_arg);
             merge_occurrences_into(free_vars, arg_free_vars);
         }
@@ -506,11 +505,10 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
     {
         set<Occ::Var> free_vars;
 
-        vector<Occ::Var> args;
-
+        vector<Occ::Exp> args;
         for(auto& arg: B->args)
         {
-            auto [occ_arg, arg_free_vars] = occurrence_analyze_var(m, arg, var_context::argument);
+            auto [occ_arg, arg_free_vars] = occurrence_analyzer(m, arg);
             args.push_back(occ_arg);
             merge_occurrences_into(free_vars, arg_free_vars);
         }

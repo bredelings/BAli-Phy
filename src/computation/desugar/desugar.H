@@ -75,8 +75,6 @@ struct desugar_state: public FreshVarSource
     Core2::Decls<> desugar_decls(const Haskell::Decls&);
     Core2::Decls<> desugar_decls(const Haskell::Binds&);
 
-    std::tuple<Core2::Decls<>, std::vector<Core2::Var<>>> args_to_vars(const std::vector<Core2::Exp<>>& args);
-
     Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args);
 
     desugar_state(const Module&, FreshVarState&);

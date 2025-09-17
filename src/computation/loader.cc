@@ -12,6 +12,7 @@
 
 #include "util/io.H"
 #include <boost/compute/detail/sha1.hpp>
+#include <range/v3/all.hpp>
 
 namespace fs = std::filesystem;
 
@@ -240,8 +241,9 @@ Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
     auto args = make_vars<>(n);
+    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
 
-    Core2::Exp<> body = Core2::BuiltinOp<>{plugin_name, symbol_name, args, fn};
+    Core2::Exp<> body = Core2::BuiltinOp<>{plugin_name, symbol_name, args_exp, fn};
     return lambda_quantify(args, body);
 }
 

@@ -219,7 +219,8 @@ Core2::Decls<> desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            Core2::Exp<> tup_body = make_let( desugar_decls(gb->body), Tuple(binders) );
+            auto binders_exp = binders | ranges::to<vector<Core2::Exp<>>>;
+            Core2::Exp<> tup_body = make_let( desugar_decls(gb->body), Tuple(binders_exp) );
 
             for(auto& dd: gb->dict_decls | views::reverse)
                 tup_body = make_let (*dd, tup_body);
@@ -303,13 +304,6 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
     return rhs;
 }
 
-
-tuple<Core2::Decls<>, vector<Core2::Var<>>>
-desugar_state::args_to_vars(const vector<Core2::Exp<>>& args)
-{
-    return ::args_to_vars(args, *this);
-}
-
 Core2::Exp<> desugar_state::safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args)
 {
     return ::safe_apply(head, args, *this);
@@ -337,10 +331,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         Core2::Exp<> CL = Core2::ConApp<>("[]",{});
         for(auto& element: reverse(L->elements))
-        {
-            auto [decls, vars] = args_to_vars({desugar(element),CL});
-            CL = make_let(decls, Core2::Exp<>(Core2::ConApp<>(":",vars)));
-        }
+            CL = Core2::ConApp<>(":", {desugar(element), CL});
         return CL;
     }
     else if (auto L = E.to<Hs::ListFrom>())
@@ -461,8 +452,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         vector<Core2::Exp<>> elements;
         for(auto& element: T->elements)
             elements.push_back( desugar(element) );
-        auto [decls, vars] = args_to_vars(elements);
-        return make_let(decls, Tuple(vars));
+        return Tuple(elements);
     }
     else if (auto v = E.to<Hs::Var>())
     {

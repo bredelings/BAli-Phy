@@ -738,7 +738,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
     {
         auto args = C->args;
         for(auto& arg: args)
-            arg = rename_var(arg, substitution, bound);
+            arg = rename(arg, substitution, bound);
         return Core2::ConApp<>{C->head, args};
     }
     // 7. BuiltinOp
@@ -746,7 +746,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
     {
         auto args = B->args;
         for(auto& arg: args)
-            arg = rename_var(arg, substitution, bound);
+            arg = rename(arg, substitution, bound);
 
         return Core2::BuiltinOp<>{B->lib_name, B->func_name, args};
     }
@@ -1475,8 +1475,9 @@ Core2::Exp<> make_constructor(const std::string& con_name, const DataConInfo& in
     int arity = info.dict_arity() + info.arity();
 
     auto args = make_vars<>(arity);
+    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
 
-    Core2::Exp<> body = Core2::ConApp<>{con_name, args};
+    Core2::Exp<> body = Core2::ConApp<>{con_name, args_exp};
 
     // Force strict fields
     for(int i = info.arity()-1;i >= 0; i--)
@@ -1630,14 +1631,16 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
         auto args = make_vars<>(2,'l');
-        U = lambda_quantify(args, Core2::Exp<>(Core2::ConApp(":", args)));
+        auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
+        U = lambda_quantify(args, Core2::Exp<>(Core2::ConApp(":", args_exp)));
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
         auto args = make_vars<>(arity,'t');
-        U = lambda_quantify(args, Core2::Exp<>(Tuple(args)));
+        auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
+        U = lambda_quantify(args, Core2::Exp<>(Tuple(args_exp)));
     }
     else
         throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
