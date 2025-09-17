@@ -142,7 +142,7 @@ optional<Core2::Decls<>> TypeChecker::entails_by_superclass(const Constraint& gi
     {
         Core2::Exp<> dict_exp = given.ev_var;
         for(auto& extractor: *extractors | views::reverse)
-            dict_exp = safe_apply(extractor, {dict_exp}, *this);
+            dict_exp = Core2::Apply<>{extractor, dict_exp};
 
         // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
         return Core2::Decls<>( { {wanted.ev_var, dict_exp} } );

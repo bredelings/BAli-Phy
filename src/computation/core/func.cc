@@ -5,30 +5,13 @@
 using std::tuple;
 using std::vector;
 
-std::tuple<Core2::Decls<>, vector<Core2::Var<>>>
-args_to_vars(const vector<Core2::Exp<>>& args, FreshVarSource& source)
+Core2::Exp<> safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args)
 {
-    vector<Core2::Var<>> vars;
-    Core2::Decls<> decls;
+    auto E = head;
     for(auto& arg: args)
-    {
-        if (auto v = arg.to_var())
-            vars.push_back(*v);
-        else
-        {
-            auto a = source.get_fresh_core_var("a");
-            decls.push_back({a,arg});
-            vars.push_back(a);
-        }
-    }
-    return {decls, vars};
-}
+        E = Core2::Apply<>{E,arg};
 
-Core2::Exp<> safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args, FreshVarSource& source)
-{
-    auto [decls, vars] = args_to_vars(args, source);
-
-    return make_let(decls, make_apply(head,vars));
+    return E;
 }
 
 namespace Core2

@@ -306,7 +306,7 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 
 Core2::Exp<> desugar_state::safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args)
 {
-    return ::safe_apply(head, args, *this);
+    return ::safe_apply(head, args);
 }
 
 Core2::Exp<> desugar_state::desugar(const Hs::LExp& LE)
@@ -339,7 +339,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         Core2::Exp<> enumFrom = Core2::Var<>("Compiler.Enum.enumFrom");
         enumFrom = desugar(L->enumFromOp);
 
-        return safe_apply(enumFrom, {desugar(L->from)});
+        return Core2::Apply<>{enumFrom, desugar(L->from)};
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
@@ -440,7 +440,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::LeftSection>())
     {
-        return safe_apply(desugar(S->op), {desugar(S->l_arg)});
+        return Core2::Apply<>{desugar(S->op), desugar(S->l_arg)};
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
@@ -597,7 +597,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
         arg = app->arg_wrapper( arg );
 
-        A = safe_apply(A, {arg});
+        A = Core2::Apply<>{A, arg};
 
         A = app->res_wrapper( A );
 
