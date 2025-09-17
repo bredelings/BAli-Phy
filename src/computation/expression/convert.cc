@@ -203,6 +203,7 @@ Core2::Lambda<> load_builtins(const module_loader& loader, Core2::Lambda<> L)
 Core2::Apply<> load_builtins(const module_loader& loader, Core2::Apply<> A)
 {
     A.head = load_builtins(loader, A.head);
+    A.arg  = load_builtins(loader, A.arg);
     return A;
 }
 
@@ -234,11 +235,23 @@ Core2::Case<> load_builtins(const module_loader& loader, Core2::Case<> C)
     return C;
 }
 
+
+Core2::ConApp<> load_builtins(const module_loader& loader, Core2::ConApp<> C)
+{
+    for(auto& arg: C.args)
+        arg = load_builtins(loader, arg);
+    
+    return C;
+}
+
 // How can we do this?
 Core2::BuiltinOp<> load_builtins(const module_loader& loader, Core2::BuiltinOp<> B)
 {
     B.op = loader.load_builtin_ptr(B.lib_name, B.func_name);
 
+    for(auto& arg: B.args)
+        arg = load_builtins(loader, arg);
+    
     return B;
 }
 
@@ -254,8 +267,8 @@ Core2::Exp<> load_builtins(const module_loader& loader, const Core2::Exp<>& E)
 	return load_builtins(loader, *l);
     else if (auto c = E.to_case())
 	return load_builtins(loader, *c);
-    else if (E.to_conApp())
-	return E;
+    else if (auto c = E.to_conApp())
+	return load_builtins(loader, *c);
     else if (auto b = E.to_builtinOp())
 	return load_builtins(loader, *b);
     else if (E.to_constant())

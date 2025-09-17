@@ -1063,9 +1063,12 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
         //     depend on x here, so this SHOULD be safe...
-        auto E2 = maybe_eta_reduce2( L );
+        //
+        //     BROKEN: Now that the arguments can be expressions, there's no fast way to check if x occurs only once.
+        //     It seems like we should be able to look at the occurrence info... but that seems to be incorrect?
+        // auto E2 = maybe_eta_reduce2( L );
 
-        return rebuild(E2, bound_vars, context);
+        return rebuild(L, bound_vars, context);
     }
 
     // 6. Case
