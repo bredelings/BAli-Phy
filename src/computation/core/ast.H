@@ -751,7 +751,7 @@ namespace Core2
         if (not head.to_var() and not head.to_apply())
             s_head = "(" + s_head + ")";
         std::string s_arg = arg.print();
-        if (not arg.to_var())
+        if (not arg.to_var() and not arg.to_constant())
             s_arg = "("+s_arg+")";
 	return s_head + " " + s_arg;
     }
@@ -834,7 +834,13 @@ namespace Core2
 	    return "("+join(words,", ")+")";
 	}
 
-	return join(words," ");
+        // Parenthesize non-var arguments if this conapp isn't an operator or tuple.
+        for(int i=0;i<args.size();i++)
+        {
+            if (not args[i].to_var() and not args[i].to_constant())
+                words[i+1] = "(" + words[i+1] + ")";
+        }
+        return join(words," ");
     }
 
     template <typename NoteV, typename NoteE>
@@ -842,8 +848,13 @@ namespace Core2
     {
 	std::vector<std::string> words;
 	words.push_back(lib_name + ":" + func_name);
-	for(auto& v: args)
-	    words.push_back(v.print());
+	for(auto& arg: args)
+        {
+            std::string s_arg = arg.print();
+            if (not arg.to_var() and not arg.to_constant())
+                s_arg = "(" + s_arg + ")";
+	    words.push_back(s_arg);
+        }
 	return join(words," ");
     }
 
