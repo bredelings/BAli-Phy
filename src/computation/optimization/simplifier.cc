@@ -738,13 +738,14 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     vector<Occ::Decls> default_decls;
     if (alts.back().pat.is_wildcard_pat())
     {
-        auto& body = alts.back().body;
+        // Make a copy to ensure a reference after we drop the default pattern.
+        auto default_body = alts.back().body;
 
         // We can always lift any declarations out of the case body because they can't contain any pattern variables.
-        default_decls = strip_multi_let( body );
+        default_decls = strip_multi_let( default_body );
 
         // We could do this even if the object isn't a variable, right?
-        if (auto C = body.to_case(); C and C->object.to_var() and C->object == object)
+        if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
         {
             alts.pop_back();
             for(auto& [pattern2,body2]: C->alts)
