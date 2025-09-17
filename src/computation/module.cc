@@ -693,7 +693,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
     {
         auto head = rename(A->head, substitution, bound);
 
-        auto arg = rename_var(A->arg, substitution, bound);
+        auto arg = rename(A->arg, substitution, bound);
 
         return Core2::Apply<>{head, arg};
     }

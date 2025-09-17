@@ -428,7 +428,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
         auto [head, head_free_vars] = occurrence_analyzer(m, A->head, var_context::unknown);
         merge_occurrences_into(free_vars, head_free_vars);
 
-        auto [arg, arg_free_vars] = occurrence_analyze_var(m, A->arg, var_context::argument);
+        auto [arg, arg_free_vars] = occurrence_analyzer(m, A->arg, var_context::unknown);
         merge_occurrences_into(free_vars, arg_free_vars);
 
         return {Occ::Apply{head, arg}, free_vars};

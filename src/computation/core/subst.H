@@ -6,14 +6,14 @@
 namespace Core2
 {
 
-template <typename NoteV = std::monostate>
-using subst_t = immer::map<Var<NoteV>, Var<NoteV>>;
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+using subst_t = immer::map<Var<NoteV>, Exp<NoteV,NoteE>>;
 
 template <typename NoteV = std::monostate>
 Var<NoteV> subst_var(const subst_t<NoteV>& S, const Var<NoteV>& V)
 {
     if (auto iter = S.find(V))
-        return *iter;
+        return *iter->to_var();
     else
         return V;
 }
@@ -24,7 +24,12 @@ Exp<NoteV, NoteE> subst(const subst_t<NoteV>& S, const Exp<NoteV,NoteE>& E)
     if (S.empty()) return E;
 
     if (auto V = E.to_var())
-        return subst_var(S, *V);
+    {
+        if (auto iter = S.find(*V))
+            return *iter;
+        else
+            return E;
+    }
     else if (auto L = E.to_lambda())
     {
         auto S2 = S.erase(L->x);
@@ -32,7 +37,7 @@ Exp<NoteV, NoteE> subst(const subst_t<NoteV>& S, const Exp<NoteV,NoteE>& E)
     }
     else if (auto A = E.to_apply())
     {
-        return Apply<NoteV,NoteE>{subst(S, A->head), subst_var(S, A->arg)};
+        return Apply<NoteV,NoteE>{subst(S, A->head), subst(S, A->arg)};
     }
     else if (auto L = E.to_let())
     {

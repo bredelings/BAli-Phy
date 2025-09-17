@@ -181,7 +181,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     {
         auto head2 = set_level_maybe_MFE(A->head, level, env);
 
-        auto arg2 = add_level(A->arg, env);
+        auto arg2 = set_level_maybe_MFE(A->arg, level, env);
 
         return Levels::Apply{head2, arg2};
     }

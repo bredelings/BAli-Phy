@@ -147,7 +147,7 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
     else if (auto app = E.to_apply())
     {
         auto free = get_free_vars(app->head);
-        free.insert(app->arg);
+        add(free, get_free_vars(app->arg));
         return free;
     }
     else if (auto con = E.to_conApp())
@@ -170,7 +170,7 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
         std::abort();
 }
 
-ConCont add_app(const Occ::Var& arg, const ConCont& cont)
+ConCont add_app(const Occ::Exp& arg, const ConCont& cont)
 {
     return std::make_shared<ConContObj>(arg, cont);
 }
@@ -337,7 +337,7 @@ Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set
         if (auto app = context.is_apply_context())
         {
             // Apply substitution to the argument.
-            auto arg = *simplify(app->arg, app->subst, bound_vars, make_stop_context()).to_var();
+            auto arg = simplify(app->arg, app->subst, bound_vars, make_ok_context());
 
             if (auto constant = exprIsConApp_maybe(arg, bound_vars))
             {
@@ -791,30 +791,17 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
     return rebuild(E2, bound_vars, context);
 }
 
-Occ::Exp make_sink_apply(const Occ::Exp& E, const Occ::Var& x)
-{
-    if (auto C = E.to_case())
-    {
-        auto alts2 = C->alts;
-        for(auto& [pat,body]: alts2)
-            body = make_sink_apply(body,x);
-        return Occ::Case{C->object, alts2};
-    }
-    else
-        return make_apply(E, x);
-}
-
-
-Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Var& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(E);
 
     auto bound_vars2 = bind_decls(bound_vars, decls);
 
-    auto x = *simplify(arg, S, bound_vars2, make_stop_context()).to_var();
+    auto arg2 = simplify(arg, S, bound_vars2, make_ok_context());
 
-    auto E2 = make_sink_apply(E, x);
+    // Could we sink the apply info case alternatives -- if it is a variable?
+    Occ::Exp E2 = Occ::Apply{E, arg2};
 
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: decls | views::reverse)

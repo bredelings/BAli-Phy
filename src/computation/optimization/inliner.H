@@ -77,10 +77,10 @@ public:
 
 struct apply_context
 {
-    Occ::Var arg;
+    Occ::Exp arg;
     const simplifier::substitution& subst;
     inline_context next;
-    apply_context(const Occ::Var& x, const simplifier::substitution& s, const inline_context& i):arg(x), subst(s), next(i) {}
+    apply_context(const Occ::Exp& a, const simplifier::substitution& s, const inline_context& i):arg(a), subst(s), next(i) {}
 };
 
 struct case_context

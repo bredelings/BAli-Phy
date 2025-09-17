@@ -401,7 +401,7 @@ namespace Core2
     struct Apply
     {
 	Exp<NoteV, NoteE> head;
-	Var<NoteV> arg;
+	Exp<NoteV, NoteE> arg;
 
 	std::string print() const;
 
@@ -427,7 +427,7 @@ namespace Core2
 
         Apply() = default;
 
-        Apply(const Exp<NoteV,NoteE>& h, const Var<NoteV>& a)
+        Apply(const Exp<NoteV,NoteE>& h, const Exp<NoteV,NoteE>& a)
             :head(h), arg(a)
         {
         }
@@ -747,11 +747,13 @@ namespace Core2
     template <typename NoteV, typename NoteE>
     std::string Apply<NoteV,NoteE>::print() const
     {
-        std::string result = head.print();
+        std::string s_head = head.print();
         if (not head.to_var() and not head.to_apply())
-            result = "(" + result + ")";
-        result += " " + arg.print();
-	return result;
+            s_head = "(" + s_head + ")";
+        std::string s_arg = arg.print();
+        if (not arg.to_var())
+            s_arg = "("+s_arg+")";
+	return s_head + " " + s_arg;
     }
 
     template <typename NoteV, typename NoteE>

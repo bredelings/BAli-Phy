@@ -50,9 +50,9 @@ struct ConContObj;
 typedef std::shared_ptr<const ConContObj> ConCont;
 struct ConContObj
 {
-    Occ::Var arg;
+    Occ::Exp arg;
     ConCont next;
-    ConContObj(const Occ::Var& x, const ConCont& n):arg(x), next(n){}
+    ConContObj(const Occ::Exp& a, const ConCont& n):arg(a), next(n){}
 };
 
 enum class arg_info
@@ -114,7 +114,7 @@ public:
     Occ::Exp
     rebuild_let(const Occ::Decls& decls, Occ::Exp E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    Occ::Exp rebuild_apply(Occ::Exp E, const Occ::Var& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+    Occ::Exp rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<Occ::Decls, simplifier::substitution, in_scope_set>
     simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);

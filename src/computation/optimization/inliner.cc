@@ -52,9 +52,9 @@ inline_context make_case_context(const Occ::Case& C, const simplifier::substitut
     return std::make_shared<const case_context>(C.alts, S, context);
 }
 
-inline_context make_apply_context_one_arg(const Occ::Var& x, const simplifier::substitution& S, const inline_context& context)
+inline_context make_apply_context_one_arg(const Occ::Exp& arg, const simplifier::substitution& S, const inline_context& context)
 {
-    return std::make_shared<const apply_context>(x, S, context);
+    return std::make_shared<const apply_context>(arg, S, context);
 }
 
 inline_context make_apply_context(const Occ::Apply& A,  const simplifier::substitution& S, inline_context context)
