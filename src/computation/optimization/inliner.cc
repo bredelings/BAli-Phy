@@ -73,14 +73,14 @@ int simple_size(const Occ::Exp& E)
 	return 0;
 
     else if (auto app = E.to_apply())
-	return simple_size(app->head) + 1;
+	return simple_size(app->head) + 1 + simple_size(app->arg);
 
     else if (auto lam = E.to_lambda())
 	return simple_size(lam->body);
 
     else if (auto let = E.to_let())
     {
-	int size = simple_size(let->body);
+	int size = simple_size(let->body) + let->decls.size();
 
 	for(auto& [x,e]: let->decls)
 	    size += simple_size(e);
@@ -94,6 +94,20 @@ int simple_size(const Occ::Exp& E)
             alts_size = std::max(alts_size, simple_size(body));
 
 	return 1 + simple_size(C->object) + alts_size;
+    }
+    else if (auto C = E.to_conApp())
+    {
+        int S = 0;
+        for(auto& arg: C->args)
+            S += (1+simple_size(arg));
+        return S;
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        int S = 0;
+        for(auto& arg: B->args)
+            S += (1+simple_size(arg));
+        return S;
     }
     else
 	return 1;
@@ -105,14 +119,14 @@ int simple_size(const Core2::Exp<>& E)
 	return 0;
 
     else if (auto app = E.to_apply())
-	return simple_size(app->head) + 1;
+	return simple_size(app->head) + 1 + simple_size(app->arg);
 
     else if (auto lam = E.to_lambda())
 	return simple_size(lam->body);
 
     else if (auto let = E.to_let())
     {
-	int size = simple_size(let->body);
+	int size = simple_size(let->body) + let->decls.size();
 
 	for(auto& [x,e]: let->decls)
 	    size += simple_size(e);
@@ -126,6 +140,20 @@ int simple_size(const Core2::Exp<>& E)
             alts_size = std::max(alts_size, simple_size(body));
 
 	return 1 + simple_size(C->object) + alts_size;
+    }
+    else if (auto C = E.to_conApp())
+    {
+        int S = 0;
+        for(auto& arg: C->args)
+            S += (1+simple_size(arg));
+        return S;
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        int S = 0;
+        for(auto& arg: B->args)
+            S += (1+simple_size(arg));
+        return S;
     }
     else
 	return 1;
@@ -277,7 +305,7 @@ bool no_size_increase(const Occ::Exp& rhs, const inline_context& context)
 	int n_args_needed = get_n_lambdas1(rhs);
 	int n_args_used = std::min(n_args_needed, n_args_supplied);
 
-	int size_of_call = 1 + n_args_supplied;
+	int size_of_call = n_args_supplied;
 	auto body = peel_n_lambdas1(rhs, n_args_used);
 	int size_of_body = simple_size(body);
 
