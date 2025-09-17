@@ -25,6 +25,8 @@ expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E);
 
 //-----------------------------------------------------------------------
 
+Core2::Var<> to_core_var(const Occ::Var& x);
+
 Core2::Decls<> to_core(const Occ::Decls& decls);
 
 Core2::Exp<> to_core_exp(const Occ::Exp& E);

@@ -267,14 +267,14 @@ Core2::Exp<> load_builtins(const module_loader& loader, const Core2::Exp<>& E)
 
 //------------------------------------------------------------------------------------------------------
 
-Core2::Var<> to_core(const Occ::Var& V)
+Core2::Var<> to_core_var(const Occ::Var& V)
 {
     return Core2::Var<>{V.name, V.index, {}, V.is_exported};
 }
 
 Core2::Lambda<> to_core_lambda(const Occ::Lambda& L)
 {
-    return Core2::Lambda<>{to_core(L.x), to_core_exp(L.body)};
+    return Core2::Lambda<>{to_core_var(L.x), to_core_exp(L.body)};
 }
 
 vector<Core2::Decls<>> decl_groups_to_core(const vector<Occ::Decls>& decl_groups)
@@ -290,14 +290,14 @@ Core2::Decls<> to_core(const Occ::Decls& decls)
 {
     Core2::Decls<> decls2;
     for(auto& [x,E]: decls)
-	decls2.push_back(Core2::Decl<>{to_core(x), to_core_exp(E)});
+	decls2.push_back(Core2::Decl<>{to_core_var(x), to_core_exp(E)});
 
     return decls2;
 }
 
 Core2::Apply<> to_core_apply(const Occ::Apply A)
 {
-    return Core2::Apply<>{to_core_exp(A.head), to_core(A.arg)};
+    return Core2::Apply<>{to_core_exp(A.head), to_core_var(A.arg)};
 }
 
 Core2::Let<> to_core_let(const Occ::Let& L)
@@ -307,7 +307,7 @@ Core2::Let<> to_core_let(const Occ::Let& L)
 
 Core2::Var<> core_patarg_to_expression_ref(const Occ::Var& V)
 {
-    return to_core(V);
+    return to_core_var(V);
 }
 
 Core2::Pattern<> to_core_pattern(const Occ::Pattern& P)
@@ -339,7 +339,7 @@ Core2::ConApp<> to_core_con_app(const Occ::ConApp& C)
     Core2::ConApp<> con_app;
     con_app.head = C.head;
     for(int i=0;i<C.args.size();i++)
-	con_app.args.push_back(to_core(C.args[i]));
+	con_app.args.push_back(to_core_var(C.args[i]));
     return con_app;
 }
 
@@ -354,14 +354,14 @@ Core2::BuiltinOp<> to_core_builtin_op(const Occ::BuiltinOp& B)
     builtin.lib_name = B.lib_name;
     builtin.func_name = B.func_name;
     for(int i=0;i<B.args.size();i++)
-	builtin.args.push_back(to_core(B.args[i]));
+	builtin.args.push_back(to_core_var(B.args[i]));
     return builtin;
 }
 
 Core2::Exp<> to_core_exp(const Occ::Exp& E)
 {
     if (auto v = E.to_var())
-	return to_core(*v);
+	return to_core_var(*v);
     else if (auto l = E.to_lambda())
 	return to_core_lambda(*l);
     else if (auto a = E.to_apply())
