@@ -138,24 +138,74 @@ int simple_size(const Core2::Exp<>& E)
 
 ExprSize zero_size{{0},{},0};
 
+inline ExprSize operator+(ExprSize s1, int s2)
+{
+    s1.size += s2;
+    return s1;
+}
+
+discounts operator+(const discounts& d1, const discounts& d2)
+{
+    return {std::max(d1.max,d2.max), d1.sum + d2.sum};
+}
+
+inline ExprSize operator+(const ExprSize& s1, ExprSize s2)
+{
+    // combine the sizes
+    s2.size += s1.size;
+
+    // symmetric combination of the arg discounts
+    for(auto& [var, discounts1]: s1.arg_discounts)
+    {
+        auto it = s2.arg_discounts.find(var);
+        if (not it)
+            s2.arg_discounts = s2.arg_discounts.insert({var,discounts1});
+        else
+        {
+            discounts discounts2 = *it;
+            s2.arg_discounts = s2.arg_discounts.erase(var);
+            s2.arg_discounts = s2.arg_discounts.insert({var, discounts1 + discounts2});
+        }
+    }
+
+    // ignore the inspection discount of s1
+
+    return s2;
+}
+
+ExprSize size_of_call(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Var& x,
+                      const vector<Occ::Exp>& args)
+{
+
+}
+
+ExprSize size_of_app(const inliner_options& opts, int max_size, std::vector<std::string>& top_args,
+                     const Occ::Exp& E, const vector<Occ::Exp>& args)
+{
+}
+
+
 ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Exp& E)
 {
     // QUESTION: ZeroBit Ids have no representation.
     // In theory this would be true for (), for ((),()), etc.
     if (auto V = E.to_var())
     {
-        // Var f -> if zero_bit_id(f) then sizeZero else size_up_call x [] 0
+        // Var f -> size_up_call x []
+        return size_of_call(opts, max_size, top_args, *V, {});
     }
     else if (auto A = E.to_apply())
     {
-        // App fun arg -> size_up_arg arg +NSD size_up_app fun [arg] (if zero_bit_id then 1 else 0)
+        // App fun arg -> size_up arg +NSD size_up_app fun [arg] (if zero_bit_id then 1 else 0)
+        return size_of_expr(opts, max_size, top_args, A->arg) + 0;
     }
     else if (auto L = E.to_lambda())
     {
+        // Lam b e -> size_up e +N 10
         auto body_size = size_of_expr(opts, max_size, top_args, L->body);
         body_size.inspect_discount = opts.fun_app_discount;
 
-        // Lam b e -> body_size (size_up_e +N 10)
+        return body_size + 1;
     }
     else if (auto L = E.to_let())
     {

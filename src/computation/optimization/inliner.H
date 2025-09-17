@@ -21,14 +21,17 @@ struct inliner_options
 };
 
 
+struct discounts
+{
+    int max;
+    int sum;
+};
+
 struct ExprSize
 {
-    // if no size, the its too big.
-    std::optional<int> size;
-    immer::map<std::string,int> arg_discounts;
+    int size;
+    immer::map<Occ::Var, discounts> arg_discounts;
     int inspect_discount = 0;
-
-    bool too_big() const {return not size;}
 };
 
 
