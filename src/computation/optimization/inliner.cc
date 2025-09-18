@@ -6,6 +6,7 @@
 #include "inliner.H"
 #include "simplifier.H"
 #include "util/assert.hh"
+#include "util/set.H"    // for includes(vector,elem)
 #include "util/variant.H" // for to<type>(val)
 #include "computation/module.H"
 
@@ -161,15 +162,15 @@ int simple_size(const Core2::Exp<>& E)
 
 ExprSize zero_size{{0},{},0};
 
+ExprSize sizeN(int n)
+{
+    return {{n},{},0};
+}
+
 inline ExprSize operator+(ExprSize s1, int s2)
 {
     s1.size += s2;
     return s1;
-}
-
-discounts operator+(const discounts& d1, const discounts& d2)
-{
-    return {std::max(d1.max,d2.max), d1.sum + d2.sum};
 }
 
 inline ExprSize operator+(const ExprSize& s1, ExprSize s2)
@@ -196,20 +197,66 @@ inline ExprSize operator+(const ExprSize& s1, ExprSize s2)
     return s2;
 }
 
-ExprSize size_of_call(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Var& x,
+int call_size(int n_args)
+{
+    return 1 + n_args;
+}
+
+ExprSize fun_size(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Var& fun, int n_args)
+{
+    bool some_args = n_args > 0;
+
+    // 1. Size
+    int size = some_args ? 0 : call_size(n_args);
+
+    // 2. Argument discounts
+    immer::map<Occ::Var, discounts> arg_discounts;
+    if (some_args and includes(top_args, fun))
+        arg_discounts = arg_discounts.insert({fun, discounts(opts.fun_app_discount)});
+    
+    // 3. Inspection discount
+    int res_discount = 0;
+    // Discount for partial application?  Why?
+    // if (fun.arity > n_args)
+    //    res_discount = opts.fun_app_discount
+
+    return {{size}, arg_discounts, res_discount};
+}
+
+ExprSize size_of_call(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
                       const vector<Occ::Exp>& args)
 {
+    // FCall   -> sizeN (call_size(args))
+    // DataCon -> conSize con args.size()
+    // PrimOp  -> primOpSize op args.size()
+    // build (?)
+    // augment (?)
+    // otherwise -> funSize opts top_args fun args.size()
 
+    return fun_size(opts, max_size, top_args, fun, args.size());
 }
 
-ExprSize size_of_app(const inliner_options& opts, int max_size, std::vector<std::string>& top_args,
-                     const Occ::Exp& E, const vector<Occ::Exp>& args)
+ExprSize size_of_app(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args,
+                     const Occ::Exp& E, vector<Occ::Exp> args)
 {
+    if (auto A = E.to_apply())
+    {
+        // Convert to loop
+        args.push_back(A->arg);
+        return size_of_expr(opts, max_size, top_args, A->arg) + size_of_app(opts, max_size, top_args, E, args);
+    }
+    else if (auto V = E.to_var())
+        return size_of_call(opts, max_size, top_args, *V, args);
+    else
+        return size_of_expr(opts, max_size, top_args, E) + call_size(args.size());
 }
 
 
-ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Exp& E)
+ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E)
 {
+    // NOTE: operator+ is asymmetric!
+    //       It keeps the inspection discount for the right argument.
+
     // QUESTION: ZeroBit Ids have no representation.
     // In theory this would be true for (), for ((),()), etc.
     if (auto V = E.to_var())
@@ -220,7 +267,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std
     else if (auto A = E.to_apply())
     {
         // App fun arg -> size_up arg +NSD size_up_app fun [arg] (if zero_bit_id then 1 else 0)
-        return size_of_expr(opts, max_size, top_args, A->arg) + 0;
+        return size_of_expr(opts, max_size, top_args, A->arg) + size_of_app(opts, max_size, top_args, A->head, {A->arg});
     }
     else if (auto L = E.to_lambda())
     {
@@ -233,6 +280,12 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std
     else if (auto L = E.to_let())
     {
         //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
+        auto size = size_of_expr(opts, max_size, top_args, L->body) + L->decls.size();
+        for(auto& [x,e]: L->decls)
+        {
+            size = size_of_expr(opts, max_size, top_args, e) + size;
+        }
+        return size;
     }
     else if (auto C = E.to_case())
     {

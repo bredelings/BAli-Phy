@@ -24,11 +24,19 @@ struct discounts
 {
     int max;
     int sum;
+
+    inline discounts operator+(discounts d2) const
+    {
+        return discounts( std::max(max, d2.max), sum + d2.sum );
+    }
+
+    explicit discounts(int i):max(i),sum(i) {}
+    explicit discounts(int m, int s):max(m),sum(s) {}
 };
 
 struct ExprSize
 {
-    int size;
+    int size = 0;
     immer::map<Occ::Var, discounts> arg_discounts;
     int inspect_discount = 0;
 };
@@ -98,7 +106,7 @@ int simple_size(const Occ::Exp& E);
 
 int simple_size(const Core2::Exp<>& E);
 
-ExprSize size_of_expr(const inliner_options& opts, int max_size, std::vector<std::string>& top_args, const Occ::Exp& E);
+ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E);
 
 bool is_WHNF(const Occ::Exp& E);
 #endif
