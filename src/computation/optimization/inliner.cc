@@ -311,6 +311,9 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     // NOTE: operator+ is asymmetric!
     //       It keeps the inspection discount for the right argument.
 
+    // NOTE: s1 + sizeN(n) != s1 + n.
+    //       The second one is right.
+    
     // QUESTION: ZeroBit Ids have no representation.
     // In theory this would be true for (), for ((),()), etc.
     if (auto V = E.to_var())
@@ -344,12 +347,10 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     else if (auto L = E.to_let())
     {
         //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
-        auto size = size_of_expr(opts, max_size, top_args, L->body) + L->decls.size();
+        ExprSize rhs_sizes;
         for(auto& [x,e]: L->decls)
-        {
-            size = size_of_expr(opts, max_size, top_args, e) + size;
-        }
-        return size;
+            rhs_sizes = rhs_sizes + size_of_expr(opts, max_size, top_args, e);
+        return rhs_sizes + (size_of_expr(opts, max_size, top_args, L->body) + L->decls.size());
     }
     else if (auto C = E.to_case())
     {
@@ -390,7 +391,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     else if (auto B = E.to_builtinOp())
     {
         // Like fun_size, but no discount for applying top_args.
-        return size_sum(opts, max_size, top_args, B->args) + sizeN(B->args.size());
+        return size_sum(opts, max_size, top_args, B->args) + B->args.size();
     }
     else if (auto CA = E.to_conApp())
     {
