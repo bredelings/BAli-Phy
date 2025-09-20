@@ -34,10 +34,12 @@ struct discounts
     explicit discounts(int m, int s):max(m),sum(s) {}
 };
 
+typedef immer::map<Occ::Var, discounts> var_discounts;
+
 struct ExprSize
 {
     int size = 0;
-    immer::map<Occ::Var, discounts> arg_discounts;
+    var_discounts arg_discounts;
     int inspect_discount = 0;
 };
 

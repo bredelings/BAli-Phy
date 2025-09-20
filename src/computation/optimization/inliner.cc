@@ -173,27 +173,53 @@ inline ExprSize operator+(ExprSize s1, int s2)
     return s1;
 }
 
+var_discounts union_var_discounts(const var_discounts& d1, var_discounts d2)
+{
+    if (d1.size() <= d2.size())
+    {
+        // symmetric combination of the arg discounts
+        for(auto& [var, discounts1]: d1)
+        {
+            auto it = d2.find(var);
+            if (not it)
+                d2 = d2.insert({var,discounts1});
+            else
+            {
+                discounts discounts2 = *it;
+                d2 = d2.erase(var);
+                d2 = d2.insert({var, discounts1 + discounts2});
+            }
+        }
+        return d2;
+    }
+    else
+        return union_var_discounts(d2,d1);
+}
+
 inline ExprSize operator+(const ExprSize& s1, ExprSize s2)
 {
     // combine the sizes
     s2.size += s1.size;
 
     // symmetric combination of the arg discounts
-    for(auto& [var, discounts1]: s1.arg_discounts)
-    {
-        auto it = s2.arg_discounts.find(var);
-        if (not it)
-            s2.arg_discounts = s2.arg_discounts.insert({var,discounts1});
-        else
-        {
-            discounts discounts2 = *it;
-            s2.arg_discounts = s2.arg_discounts.erase(var);
-            s2.arg_discounts = s2.arg_discounts.insert({var, discounts1 + discounts2});
-        }
-    }
+    s2.arg_discounts = union_var_discounts(s1.arg_discounts, s2.arg_discounts);
 
     // ignore the inspection discount of s1
 
+    return s2;
+}
+
+inline ExprSize add_alts_size(const ExprSize& s1, ExprSize s2)
+{
+    // combine the sizes
+    s2.size += s1.size;
+
+    // symmetric combination of the arg discounts
+    s2.arg_discounts = union_var_discounts(s1.arg_discounts, s2.arg_discounts);
+
+    // include discounts for all case branches
+    s2.inspect_discount += s1.inspect_discount;
+    
     return s2;
 }
 
@@ -202,7 +228,27 @@ int call_size(int n_args)
     return 1 + n_args;
 }
 
-ExprSize fun_size(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Var& fun, int n_args)
+ExprSize con_size(const std::string& /*con_name*/, int n_args)
+{
+    ExprSize csize;
+    csize.inspect_discount = 1;
+
+    // if unary (i.e. (), ((),()), ?) then return sizeN(0)
+
+    if (n_args > 0) csize.size = 1;
+
+    return csize;
+}
+
+int lit_size(const Core2::Constant& lit)
+{
+    if (auto s = to<string>(lit.value))
+        return 1 + (s->size()+3)/40;
+    else
+        return 0; // Like a nullary constructor
+}
+
+ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_args, const Occ::Var& fun, int n_args)
 {
     bool some_args = n_args > 0;
 
@@ -223,7 +269,7 @@ ExprSize fun_size(const inliner_options& opts, int max_size, const std::vector<O
     return {{size}, arg_discounts, res_discount};
 }
 
-ExprSize size_of_call(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
+ExprSize size_of_call(const inliner_options& opts, int /*max_size*/, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
                       const vector<Occ::Exp>& args)
 {
     // FCall   -> sizeN (call_size(args))
@@ -233,24 +279,32 @@ ExprSize size_of_call(const inliner_options& opts, int max_size, const std::vect
     // augment (?)
     // otherwise -> funSize opts top_args fun args.size()
 
-    return fun_size(opts, max_size, top_args, fun, args.size());
-}
-
-ExprSize size_of_app(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args,
-                     const Occ::Exp& E, vector<Occ::Exp> args)
-{
-    if (auto A = E.to_apply())
-    {
-        // Convert to loop
-        args.push_back(A->arg);
-        return size_of_expr(opts, max_size, top_args, A->arg) + size_of_app(opts, max_size, top_args, E, args);
-    }
-    else if (auto V = E.to_var())
-        return size_of_call(opts, max_size, top_args, *V, args);
+    if (is_haskell_conid(fun.name))
+        return con_size(fun.name, args.size());
     else
-        return size_of_expr(opts, max_size, top_args, E) + call_size(args.size());
+        return fun_size(opts, top_args, fun, args.size());
 }
 
+ExprSize size_of_alt(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Alt& alt)
+{
+    return size_of_expr(opts, max_size, top_args, alt.body) + 1;
+}
+
+ExprSize size_max(const ExprSize& s1, const ExprSize& s2)
+{
+    if (s1.size > s2.size)
+        return s1;
+    else
+        return s2;
+}
+
+ExprSize size_sum(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const vector<Occ::Exp>& Es)
+{
+    ExprSize esize;
+    for(auto& E: Es)
+        esize = esize + size_of_expr(opts, max_size, top_args, E);
+    return esize;
+}
 
 ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E)
 {
@@ -266,8 +320,18 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     }
     else if (auto A = E.to_apply())
     {
-        // App fun arg -> size_up arg +NSD size_up_app fun [arg] (if zero_bit_id then 1 else 0)
-        return size_of_expr(opts, max_size, top_args, A->arg) + size_of_app(opts, max_size, top_args, A->head, {A->arg});
+        vector<Occ::Exp> args;
+        args.push_back(A->arg);
+        while((A = A->head.to_apply()))
+            args.push_back(A->arg);
+        auto head = A->head;
+
+        auto args_size = size_sum(opts, max_size, top_args, args);
+
+        if (auto V = A->head.to_var())
+            return args_size + size_of_call(opts, max_size, top_args, *V, args);
+        else
+            return args_size + (size_of_expr(opts, max_size, top_args, head) + call_size(args.size()));
     }
     else if (auto L = E.to_lambda())
     {
@@ -289,24 +353,49 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     }
     else if (auto C = E.to_case())
     {
-        // Case e of alts
-        // * empty alts -> size_up e
+        if (C->alts.empty())
+            return size_of_expr(opts, max_size, top_args, C->object);
+        else if (auto x = E.to_var(); x and includes(top_args, *x))
+        {
+            ExprSize sizeSum;
+            ExprSize sizeMax;
+            
+            for(auto& alt: C->alts)
+            {
+                auto size = size_of_expr(opts, max_size, top_args, alt.body);
+                sizeSum = add_alts_size(sizeSum, size);
+                sizeMax = size_max(sizeMax, size);
+            }
 
-        // * e in top_args -> ???
+            // Use sizeSum, but add var-discount that takes it from the sum down to the max
+            var_discounts object_discount;
+            object_discount = object_discount.insert({*x, discounts(2 + sizeSum.size - sizeMax.size)});
+            sizeSum.arg_discounts = union_var_discounts(sizeSum.arg_discounts, object_discount);
 
-        // * otherwise ->  size_up e +NSD (size_up_alt alt1 `addAltSize` size_up_alt alt2 `addAltSize` case_size)
+            return sizeSum;
+        }
+        else
+        {
+            ExprSize alts_size;
+            for(auto& alt: C->alts)
+                alts_size = add_alts_size(alts_size, size_of_expr(opts, max_size, top_args, alt.body));
+            return size_of_expr(opts, max_size, top_args, C->object) + alts_size;
+        }
     }
     else if (auto C = E.to_constant())
     {
         // sizeN (litSize lit)
+        return sizeN(lit_size(*C));
     }
     else if (auto B = E.to_builtinOp())
     {
-        // Handled by Apply + Var?
+        // Like fun_size, but no discount for applying top_args.
+        return size_sum(opts, max_size, top_args, B->args) + sizeN(B->args.size());
     }
-    else if (auto C = E.to_conApp())
+    else if (auto CA = E.to_conApp())
     {
-        // Handled by Apply + Var?
+        // Like size_of_call(...);
+        return size_sum(opts, max_size, top_args, CA->args) + con_size(CA->head, CA->args.size());
     }
     else
         std::abort();
