@@ -584,9 +584,27 @@ int ConstructorDecl::arity() const
         return std::get<0>(fields).size();
 }
 
+string FunDep::print() const
+{
+    vector<string> s_lhs;
+    for(auto& [loc,tv]: lhs)
+        s_lhs.push_back(tv.print());
+
+    vector<string> s_rhs;
+    for(auto& [loc,tv]: rhs)
+        s_rhs.push_back(tv.print());
+
+    return join(s_lhs,", ") + " -> " + join(s_rhs, ", ");
+}
+
 string ClassDecl::print() const
 {
     string result = "class " + show_type_or_class_header(context, con, type_vars);
+    vector<string> sfun_deps;
+    for(auto& fun_dep: fun_deps)
+        sfun_deps.push_back(fun_dep.print());
+    if (not fun_deps.empty())
+        result += " | " + join(sfun_deps,", ");;
 
     vector<string> decls;
     for(auto& decl: fixity_decls)

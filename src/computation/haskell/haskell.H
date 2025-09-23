@@ -624,6 +624,22 @@ struct FamilyDecl: public Object
     { }
 };
 
+
+struct FunDep: public Object
+{
+    std::vector<LTypeVar> lhs;
+    std::vector<LTypeVar> rhs;
+
+    FunDep* clone() const { return new FunDep(*this);}
+    std::string print() const;
+
+    FunDep() = default; // for the parser
+    FunDep(const std::vector<LTypeVar>& ltvs, const std::vector<LTypeVar>& rtvs)
+        :lhs(ltvs),
+         rhs(rtvs)
+        {}
+};
+
 struct ClassDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
@@ -634,6 +650,7 @@ struct ClassDecl: public Object
 
     std::vector<FixityDecl> fixity_decls;
 
+    std::vector<FunDep> fun_deps;
     std::vector<FamilyDecl> fam_decls;
     std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
     std::vector<SignatureDecl> sig_decls;
@@ -646,6 +663,7 @@ struct ClassDecl: public Object
               const LTypeCon& c,
               const std::vector<LTypeVar>& tvs,
               const std::vector<FixityDecl>& fxs,
+              const std::vector<FunDep>& fds,
               const std::vector<FamilyDecl>& tfds,
               const std::vector<TypeFamilyInstanceDecl>& tids,
               const std::vector<SignatureDecl>& sds,
@@ -654,6 +672,7 @@ struct ClassDecl: public Object
          con(c),
          type_vars(tvs),
          fixity_decls(fxs),
+         fun_deps(fds),
          fam_decls(tfds),
          default_type_inst_decls(tids),
          sig_decls(sds),

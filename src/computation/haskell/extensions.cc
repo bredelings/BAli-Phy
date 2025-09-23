@@ -15,6 +15,7 @@ map<string,LangExt> ext_to_bit =
     {"ExplicitForall",              {LangExt::ExplicitForall}},
     {"FieldSelectors",              {LangExt::FieldSelectors}},
     {"FlexibleInstances",           {LangExt::FlexibleInstances}},
+    {"FunctionalDependencies",      {LangExt::FunctionalDependencies}},  // implies MultiParamTypeClasses
     {"ForeignFunctionInterface",    {LangExt::ForeignFunctionInterface}},
     {"GADTSyntax",                  {LangExt::GADTSyntax}},
     {"GADTs",                       {LangExt::GADTs}},                // implies MonoLocalBinds

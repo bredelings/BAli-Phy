@@ -34,7 +34,7 @@
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs);
-  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::optional<Located<Hs::Decls>>& decls);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::vector<Hs::FunDep>& fds, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::LType& context);
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
@@ -348,12 +348,12 @@
 %type <Hs::LTypeVar> tv_bndr
 %type <Hs::LTypeVar> tv_bndr_no_braces
 
- /*
-%type <void> fds
-%type <void> fds1
-%type <void> fd
-%type <void> varids0
- */
+
+%type <std::vector<Hs::FunDep>> fds
+%type <std::vector<Hs::FunDep>> fds1
+%type <Hs::FunDep> fd
+%type <std::vector<Hs::LTypeVar>> varids0
+
 %type <Hs::Kind> kind
 
 %type <Hs::GADTConstructorsDecl> gadt_constrlist
@@ -672,7 +672,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        infixexp                              {$$ = $1;}
 
 
-cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3)};}
+cl_decl: "class" tycl_hdr fds where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3,$4)};}
 
 
 ty_decl: "type" type "=" ktype                                             {$$ = {@$, make_type_synonym($2,$4)};}
@@ -1053,18 +1053,19 @@ tv_bndr_no_braces:    tyvar                   {$$ = {@$,Hs::TypeVar($1)};}
 |                     "(" tyvar "::" kind ")" {$$ = {@$,Hs::TypeVar($2,$4)};}
 
 
-/* fds are functional dependencies = FunDeps 
-fds:        %empty
-|           "|" fds1
+/* fds are functional dependencies = FunDeps */
+fds:        %empty                  { /* default to empty */ }
+|           "|" fds1                { $$ = $2; }
 
-fds1:       fds1 "," fd
-|           fd
+fds1:       fds1 "," fd             { $$ = $1; $$.push_back($3); }
+|           fd                      { $$.push_back($1); }
 
-fd:         varids0 "->" varids0
 
-varids0:    %empty
-|           varids0 tyvar
-*/
+fd:         varids0 "->" varids0    { $$ = Hs::FunDep($1, $3); }
+
+varids0:    varids0 tyvar           { $$ = $1; $$.push_back({@2,$2});}
+|           %empty                  { /* default to empty */}
+
 
 /* ------------- Kinds ------------------------------------------- */
 
@@ -1772,7 +1773,8 @@ Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, con
     return {oprag, polytype, type_inst_decls, method_decls};
 }
 
-Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const optional<Located<Hs::Decls>>& decls)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header,
+                              const std::vector<Hs::FunDep>& fds, const optional<Located<Hs::Decls>>& decls)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
 
@@ -1799,7 +1801,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
                 throw myexception()<<"In declaration of class "<<con<<", I don't recognize declaration:\n   "<<decl.print();
         }
 
-    return {context, con, check_all_type_vars(type_args), fixity_decls, fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
+    return {context, con, check_all_type_vars(type_args), fixity_decls, fds, fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
 }
 
 // Can we change the context parsing rule to expect:

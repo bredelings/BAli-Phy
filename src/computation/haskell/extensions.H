@@ -45,6 +45,7 @@ enum class LangExt
     ExplicitForall,
     FlexibleContexts,
     FlexibleInstances,
+    FunctionalDependencies,
     GADTSyntax,
     GADTs,
     GeneralizedNewtypeDeriving,
