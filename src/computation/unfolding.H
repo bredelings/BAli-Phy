@@ -68,7 +68,9 @@ struct UnfoldIfGoodArgs
 
 typedef std::variant<UnfoldNever, UnfoldWhen, UnfoldIfGoodArgs> UnfoldingGuidance;
 
-UnfoldingGuidance make_unfolding_guidance(const inliner_options& opts, const Occ::Exp& e);
+class Module;
+
+UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e);
 
 struct CoreUnfolding
 {
@@ -106,6 +108,6 @@ struct CoreUnfolding
 
 typedef std::variant<std::monostate, MethodUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
 
-CoreUnfolding make_core_unfolding(const inliner_options& opts, const Occ::Exp& e);
+CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e);
 
 #endif

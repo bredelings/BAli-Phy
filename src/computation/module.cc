@@ -1296,7 +1296,7 @@ void Module::export_small_decls(const inliner_options& options, const Core2::Dec
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
 
             // The unfolding need to be occurrence analyzed.
-            S->unfolding = make_core_unfolding(options, occ_rhs);
+            S->unfolding = make_core_unfolding(*this, options, occ_rhs);
 
             // Check that we have local symbols for everything that we've put in an unfolding.
             for(auto& y: free_vars)

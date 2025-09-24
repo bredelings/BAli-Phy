@@ -113,7 +113,9 @@ int simple_size(const Occ::Exp& E);
 
 int simple_size(const Core2::Exp<>& E);
 
-ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E);
+class Module;
+
+ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E);
 
 bool is_WHNF(const Occ::Exp& E);
 #endif

@@ -253,7 +253,7 @@ ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_
     bool some_args = n_args > 0;
 
     // 1. Size
-    int size = some_args ? 0 : call_size(n_args);
+    int size = some_args ? call_size(n_args) : 0;
 
     // 2. Argument discounts
     immer::map<Occ::Var, discounts> arg_discounts;
@@ -289,8 +289,22 @@ ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>&
     return {1 + (int)args.size(), arg_discounts, 0};
 }
 
+bool is_class_op(const Module& m, const Occ::Var& fun)
+{
+    if (fun.index != 0) return false;
 
-ExprSize size_of_call(const inliner_options& opts, int /*max_size*/, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
+    if (not is_qualified_symbol(fun.name)) return false;
+
+    auto S = m.lookup_resolved_symbol(fun.name);
+
+    if (not S) return false;
+
+    return S->symbol_type == symbol_type_t::superclass_selector or S->symbol_type == symbol_type_t::class_method;
+}
+
+
+ExprSize size_of_call(const Module& m,
+                      const inliner_options& opts, int /*max_size*/, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
                       const vector<Occ::Exp>& args)
 {
     // FCall   -> sizeN (call_size(args))
@@ -302,15 +316,15 @@ ExprSize size_of_call(const inliner_options& opts, int /*max_size*/, const std::
 
     if (is_haskell_conid(fun.name))
         return con_size(fun.name, args.size());
-    else if (/* class op*/ false)
+    else if (is_class_op(m, fun))
         return class_op_size(opts, top_args, fun, args);
     else
         return fun_size(opts, top_args, fun, args.size());
 }
 
-ExprSize size_of_alt(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Alt& alt)
+ExprSize size_of_alt(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Alt& alt)
 {
-    return size_of_expr(opts, max_size, top_args, alt.body) + 1;
+    return size_of_expr(m, opts, max_size, top_args, alt.body) + 1;
 }
 
 ExprSize size_max(const ExprSize& s1, const ExprSize& s2)
@@ -321,15 +335,15 @@ ExprSize size_max(const ExprSize& s1, const ExprSize& s2)
         return s2;
 }
 
-ExprSize size_sum(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const vector<Occ::Exp>& Es)
+ExprSize size_sum(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const vector<Occ::Exp>& Es)
 {
     ExprSize esize;
     for(auto& E: Es)
-        esize = esize + size_of_expr(opts, max_size, top_args, E);
+        esize = esize + size_of_expr(m, opts, max_size, top_args, E);
     return esize;
 }
 
-ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E)
+ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E)
 {
     // NOTE: operator+ is asymmetric!
     //       It keeps the inspection discount for the right argument.
@@ -342,7 +356,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     if (auto V = E.to_var())
     {
         // Var f -> size_up_call x []
-        return size_of_call(opts, max_size, top_args, *V, {});
+        return size_of_call(m, opts, max_size, top_args, *V, {});
     }
     else if (auto A = E.to_apply())
     {
@@ -353,19 +367,21 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
             A = A->head.to_apply();
             args.push_back(A->arg);
         }
+        std::reverse(args.begin(), args.end());
+
         auto head = A->head;
 
-        auto args_size = size_sum(opts, max_size, top_args, args);
+        auto args_size = size_sum(m, opts, max_size, top_args, args);
 
         if (auto V = A->head.to_var())
-            return args_size + size_of_call(opts, max_size, top_args, *V, args);
+            return args_size + size_of_call(m, opts, max_size, top_args, *V, args);
         else
-            return args_size + (size_of_expr(opts, max_size, top_args, head) + call_size(args.size()));
+            return args_size + (size_of_expr(m, opts, max_size, top_args, head) + call_size(args.size()));
     }
     else if (auto L = E.to_lambda())
     {
         // Lam b e -> size_up e +N 10
-        auto body_size = size_of_expr(opts, max_size, top_args, L->body);
+        auto body_size = size_of_expr(m, opts, max_size, top_args, L->body);
         body_size.inspect_discount = opts.fun_app_discount;
 
         return body_size + 1;
@@ -375,13 +391,13 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
         //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
         ExprSize rhs_sizes;
         for(auto& [x,e]: L->decls)
-            rhs_sizes = rhs_sizes + size_of_expr(opts, max_size, top_args, e);
-        return rhs_sizes + (size_of_expr(opts, max_size, top_args, L->body) + L->decls.size());
+            rhs_sizes = rhs_sizes + size_of_expr(m, opts, max_size, top_args, e);
+        return rhs_sizes + (size_of_expr(m, opts, max_size, top_args, L->body) + L->decls.size());
     }
     else if (auto C = E.to_case())
     {
         if (C->alts.empty())
-            return size_of_expr(opts, max_size, top_args, C->object);
+            return size_of_expr(m, opts, max_size, top_args, C->object);
         else if (auto x = C->object.to_var(); x and includes(top_args, *x))
         {
             ExprSize sizeSum;
@@ -389,7 +405,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
             
             for(auto& alt: C->alts)
             {
-                auto size = size_of_expr(opts, max_size, top_args, alt.body);
+                auto size = size_of_expr(m, opts, max_size, top_args, alt.body);
                 sizeSum = add_alts_size(sizeSum, size);
                 sizeMax = size_max(sizeMax, size);
             }
@@ -405,8 +421,8 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
         {
             ExprSize alts_size;
             for(auto& alt: C->alts)
-                alts_size = add_alts_size(alts_size, size_of_expr(opts, max_size, top_args, alt.body));
-            return size_of_expr(opts, max_size, top_args, C->object) + alts_size;
+                alts_size = add_alts_size(alts_size, size_of_expr(m, opts, max_size, top_args, alt.body));
+            return size_of_expr(m, opts, max_size, top_args, C->object) + alts_size;
         }
     }
     else if (auto C = E.to_constant())
@@ -417,12 +433,12 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     else if (auto B = E.to_builtinOp())
     {
         // Like fun_size, but no discount for applying top_args.
-        return size_sum(opts, max_size, top_args, B->args) + B->args.size();
+        return size_sum(m, opts, max_size, top_args, B->args) + B->args.size();
     }
     else if (auto CA = E.to_conApp())
     {
         // Like size_of_call(...);
-        return size_sum(opts, max_size, top_args, CA->args) + con_size(CA->head, CA->args.size());
+        return size_sum(m, opts, max_size, top_args, CA->args) + con_size(CA->head, CA->args.size());
     }
     else
         std::abort();
@@ -747,12 +763,12 @@ bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
  */
 
 
-UnfoldingGuidance make_unfolding_guidance(const inliner_options& opts, const Occ::Exp& e)
+UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e)
 {
     auto top_binders = compute_top_binders(e);
     int n_binders = top_binders.size();
     int max_size = opts.creation_threshold;
-    auto size = size_of_expr(opts, max_size, top_binders, e);
+    auto size = size_of_expr(m, opts, max_size, top_binders, e);
 
     // We should actually be looking for an empty optional<ExprSize> here.
     if (size.size > max_size) return UnfoldNever();
@@ -782,7 +798,7 @@ UnfoldingGuidance make_unfolding_guidance(const inliner_options& opts, const Occ
     }
 }
 
-CoreUnfolding make_core_unfolding(const inliner_options& opts, const Occ::Exp& e)
+CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e)
 {
-    return CoreUnfolding(e, make_unfolding_guidance(opts,e));
+    return CoreUnfolding(e, make_unfolding_guidance(m, opts,e));
 }

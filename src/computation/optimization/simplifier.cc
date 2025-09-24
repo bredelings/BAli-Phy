@@ -82,17 +82,17 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
     return bind_var(bound_vars,x2,U);
 }
 
-[[nodiscard]] in_scope_set bind_decls(const inliner_options& opts, in_scope_set bound_vars, const Occ::Decls& decls)
+[[nodiscard]] in_scope_set bind_decls(const Module& m, const inliner_options& opts, in_scope_set bound_vars, const Occ::Decls& decls)
 {
     for(const auto& [x,rhs]: decls)
-	bound_vars = bind_var(bound_vars, x, make_core_unfolding(opts,rhs));
+	bound_vars = bind_var(bound_vars, x, make_core_unfolding(m, opts,rhs));
     return bound_vars;
 }
 
-[[nodiscard]] in_scope_set bind_decls(const inliner_options& opts, in_scope_set bound_vars, const vector<Occ::Decls>& decl_groups)
+[[nodiscard]] in_scope_set bind_decls(const Module& m, const inliner_options& opts, in_scope_set bound_vars, const vector<Occ::Decls>& decl_groups)
 {
     for(auto& decls: decl_groups)
-	bound_vars = bind_decls(opts, bound_vars, decls);
+	bound_vars = bind_decls(m, opts, bound_vars, decls);
     return bound_vars;
 }
 
@@ -224,7 +224,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         // floats.push_back(f);
         // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
 
-        auto S2 = bind_var(S, lam->x, make_core_unfolding(options, cont->arg));
+        auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, cont->arg));
         Float f = FloatLet{{{lam->x, cont->arg}}};
         floats.push_back(f);
         return exprIsConApp_worker(S2, floats, lam->body, cont->next);
@@ -235,7 +235,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         floats.push_back(f);
         auto S2 = S;
         for(auto& [x,e]: let->decls)
-            S2 = bind_var(S, x, make_core_unfolding(options,e));
+            S2 = bind_var(S, x, make_core_unfolding(this_mod, options,e));
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
     }
@@ -638,7 +638,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
                 // args[i] is already simplified, arg2 is already renamed
                 decls.push_back({arg2, args[i]});
             }
-            auto bound_vars2 = bind_decls(options, bound_vars, decls);
+            auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
             return make_let(decls, simplify(body, S2, bound_vars2, make_ok_context()));
         }
         else
@@ -709,16 +709,16 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
 	    auto pattern_expression = pattern_to_expression(pattern).value();
             auto x = *v;
             if (is_local_symbol(x.name, this_mod.name))
-                bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(options,pattern_expression));
+                bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(this_mod, options,pattern_expression));
             else
             {
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
                 x.info.work_dup = amount_t::Many;
                 x.info.code_dup = amount_t::Many;
                 if (bound_vars2.count(x))
-                    bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(options,pattern_expression));
+                    bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(this_mod, options,pattern_expression));
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, make_core_unfolding(options,pattern_expression));
+                    bound_vars2 = bind_var(bound_vars2, x, make_core_unfolding(this_mod, options, pattern_expression));
             }
         }
 
@@ -783,7 +783,7 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
 
-    auto bound_vars2 = bind_decls(options, bound_vars, decls);
+    auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
     
     auto E2 = rebuild_case_inner(object, alts, S, bound_vars2);
 
@@ -799,7 +799,7 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(E);
 
-    auto bound_vars2 = bind_decls(options, bound_vars, decls);
+    auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
 
     auto arg2 = simplify(arg, S, bound_vars2, make_ok_context());
 
@@ -896,7 +896,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
-			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(options,decl.body));
+			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
 			new_names.push_back(decl.x);
 			new_decls.push_back(decl);
 		    }
@@ -912,12 +912,16 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-                Unfolding unfolding = make_core_unfolding(options,F);
+                Unfolding unfolding;
                 if (is_top_level and is_qualified_by_module(x2.name, this_mod.name))
                 {
                     if (auto S = this_mod.lookup_resolved_symbol(x2.name); S and not to<std::monostate>(S->unfolding))
                         unfolding = S->unfolding;
                 }
+
+                if (to<std::monostate>(unfolding))
+                    unfolding = make_core_unfolding(this_mod, options, F);
+
                 bound_vars = rebind_var(bound_vars, x2, unfolding);
 	    }
 	}
@@ -1037,7 +1041,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 Occ::Decls decls{{x2,arg}};
-                auto bound_vars2 = bind_decls(options, bound_vars, decls);
+                auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
                 return make_let(decls, simplify(lam->body, S2, bound_vars2, ac->next));
             }
         }
