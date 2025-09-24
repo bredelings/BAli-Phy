@@ -269,6 +269,27 @@ ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_
     return {{size}, arg_discounts, res_discount};
 }
 
+ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>& top_args, const Occ::Var& fun, const vector<Occ::Exp>& args)
+{
+    // if the class is a unary class then return sizeN(0);
+
+    if (args.empty()) return sizeN(0);
+
+    var_discounts arg_discounts;
+    if (args.size() > 1)
+    {
+        if (auto x = args[0].to_var(); x and includes(top_args,*x))
+        {
+            // Dictionary discounts are case discounts, because dictionaries are objects.
+            discounts dict_discount(0, opts.dict_discount);
+            arg_discounts = arg_discounts.insert({*x, dict_discount});
+        }
+    }
+    
+    return {1 + (int)args.size(), arg_discounts, 0};
+}
+
+
 ExprSize size_of_call(const inliner_options& opts, int /*max_size*/, const std::vector<Occ::Var>& top_args, const Occ::Var& fun,
                       const vector<Occ::Exp>& args)
 {
@@ -361,7 +382,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     {
         if (C->alts.empty())
             return size_of_expr(opts, max_size, top_args, C->object);
-        else if (auto x = E.to_var(); x and includes(top_args, *x))
+        else if (auto x = C->object.to_var(); x and includes(top_args, *x))
         {
             ExprSize sizeSum;
             ExprSize sizeMax;
