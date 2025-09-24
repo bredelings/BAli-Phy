@@ -281,6 +281,8 @@ ExprSize size_of_call(const inliner_options& opts, int /*max_size*/, const std::
 
     if (is_haskell_conid(fun.name))
         return con_size(fun.name, args.size());
+    else if (/* class op*/ false)
+        return class_op_size(opts, top_args, fun, args);
     else
         return fun_size(opts, top_args, fun, args.size());
 }
