@@ -230,8 +230,6 @@ public:
 
 const_symbol_ptr lookup_builtin_symbol(const std::string& name);
 
-// Eliminate this_compiled_mod?
-
 // If Module builds some things, have CompiledModule steal them at the end?
 class CompiledModule
 {
