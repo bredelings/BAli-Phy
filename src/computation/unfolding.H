@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "computation/optimization/occurrence_info.H"
+#include "computation/optimization/inliner.H"
 
 struct MethodUnfolding
 {
@@ -30,6 +31,45 @@ struct DFunUnfolding
     }
 };
 
+struct UnfoldNever
+{
+    template <class Archive>
+    void serialize(Archive& /*ar*/)
+    {
+    }
+};
+
+struct UnfoldWhen
+{
+    bool unsaturated_ok = false;
+    bool boring_ok = false;
+    int arity = 0;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(unsaturated_ok, boring_ok, arity);
+    }
+};
+
+struct UnfoldIfGoodArgs
+{
+    std::vector<int> arg_discounts;
+    int size = 0;
+    int scrut_discount = 0;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(arg_discounts, size, scrut_discount);
+    }
+
+};
+
+typedef std::variant<UnfoldNever, UnfoldWhen, UnfoldIfGoodArgs> UnfoldingGuidance;
+
+UnfoldingGuidance make_unfolding_guidance(const inliner_options& opts, const Occ::Exp& e);
+
 struct CoreUnfolding
 {
     Occ::Exp expr;
@@ -39,10 +79,12 @@ struct CoreUnfolding
                           (iii) stable-system (wrapper or system-generated unfolding)
                           (iv)  compulsory (i.e. no RHS, so must be inlined)
     */
-    bool always_unfold = false;
+
+    UnfoldingGuidance unf_guidance;
 
     // GHC stores if this is a top-level binding.
-    // GHC stores size info
+
+    bool always_unfold = false;
 
     /* GHC caches and stores
        (i)   exprIsHNF
@@ -54,16 +96,16 @@ struct CoreUnfolding
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(expr, always_unfold);
+	ar(expr, unf_guidance, always_unfold);
     }
 
     CoreUnfolding() = default; // for cereal
-    CoreUnfolding(const Occ::Exp& e):expr(e) {}
-    CoreUnfolding(const Occ::Exp& e,bool b):expr(e),always_unfold(b) {}
+    CoreUnfolding(const Occ::Exp& e, const UnfoldingGuidance& g, bool b=false):expr(e),unf_guidance(g), always_unfold(b) {}
 };
+
 
 typedef std::variant<std::monostate, MethodUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
 
-
+CoreUnfolding make_core_unfolding(const inliner_options& opts, const Occ::Exp& e);
 
 #endif

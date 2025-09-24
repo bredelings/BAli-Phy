@@ -946,7 +946,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     }
 
     // this records unfoldings.
-    MM->export_small_decls(value_decls);
+    MM->export_small_decls(opts, value_decls);
 
     auto CM = std::make_shared<CompiledModule>(MM);
 
@@ -1263,7 +1263,7 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 }
 
 
-void Module::export_small_decls(const Core2::Decls<>& decls)
+void Module::export_small_decls(const inliner_options& options, const Core2::Decls<>& decls)
 {
     // Determine which decls are loop breakers, and give them empty unfoldings.
     set<Occ::Var> occ_free_vars;
@@ -1296,7 +1296,7 @@ void Module::export_small_decls(const Core2::Decls<>& decls)
             auto [occ_rhs, free_vars] = occurrence_analyzer(*this, rhs);
 
             // The unfolding need to be occurrence analyzed.
-            S->unfolding = CoreUnfolding{occ_rhs};
+            S->unfolding = make_core_unfolding(options, occ_rhs);
 
             // Check that we have local symbols for everything that we've put in an unfolding.
             for(auto& y: free_vars)
@@ -1648,7 +1648,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     Module empty("Empty");
 
     auto [occ_U, free_vars] = occurrence_analyzer(empty, U);
-    S->unfolding = CoreUnfolding{occ_U};
+    S->unfolding = CoreUnfolding(occ_U, UnfoldWhen());
     assert(free_vars.empty());
     return S;
 }

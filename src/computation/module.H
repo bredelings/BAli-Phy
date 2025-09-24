@@ -188,7 +188,7 @@ public:
 
     Core2::Decls<> desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
-    void export_small_decls(const Core2::Decls<>&);
+    void export_small_decls(const inliner_options& opts, const Core2::Decls<>&);
 
     Core2::Decls<> optimize(const simplifier_options&, FreshVarState&, Core2::Decls<>);
 

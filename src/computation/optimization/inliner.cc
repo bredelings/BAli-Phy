@@ -258,8 +258,8 @@ ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_
     // 2. Argument discounts
     immer::map<Occ::Var, discounts> arg_discounts;
     if (some_args and includes(top_args, fun))
-        arg_discounts = arg_discounts.insert({fun, discounts(opts.fun_app_discount)});
-    
+        arg_discounts = arg_discounts.insert({fun, discounts(opts.fun_app_discount, 0)});
+
     // 3. Inspection discount
     int res_discount = 0;
     // Discount for partial application?  Why?
@@ -325,8 +325,11 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
     {
         vector<Occ::Exp> args;
         args.push_back(A->arg);
-        while((A = A->head.to_apply()))
+        while(A->head.to_apply())
+        {
+            A = A->head.to_apply();
             args.push_back(A->arg);
+        }
         auto head = A->head;
 
         auto args_size = size_sum(opts, max_size, top_args, args);
@@ -370,7 +373,7 @@ ExprSize size_of_expr(const inliner_options& opts, int max_size, const std::vect
 
             // Use sizeSum, but add var-discount that takes it from the sum down to the max
             var_discounts object_discount;
-            object_discount = object_discount.insert({*x, discounts(2 + sizeSum.size - sizeMax.size)});
+            object_discount = object_discount.insert({*x, discounts(0, 2 + sizeSum.size - sizeMax.size)});
             sizeSum.arg_discounts = union_var_discounts(sizeSum.arg_discounts, object_discount);
 
             return sizeSum;
@@ -420,11 +423,13 @@ bool is_WHNF(const Occ::Exp& E)
     return (E.to_lambda() or E.to_conApp() or E.to_constant());
 }
 
-// Can be substituted into a function argument position -- variable or unlifted constant like 1#.
-bool is_trivial(const Occ::Exp& E)
+bool is_trivial(const Occ::Exp& e)
 {
-    // I think unlifted constants could be trivial as well, but we don't have those.
-    return (E.to_var());
+    // It doesn't seem like ghc wants to inline ConApps.  Perhaps because we can do case-of-constant w/o actually inlining them.  
+
+    // Should we inline simple literals, like `1`?
+
+    return e.to_var();
 }
 
 bool no_size_increase(const Occ::Exp& rhs, const inline_context& context)
@@ -688,4 +693,73 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
         return arg_info::non_trivial;
     else
         std::abort();
+}
+
+vector<Occ::Var> compute_top_binders(Occ::Exp E)
+{
+    vector<Occ::Var> args;
+    while (auto L = E.to_lambda())
+    {
+        args.push_back(L->x);
+        E = L->body;
+    }
+
+    return args;
+}
+
+bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
+{
+    if (arity > 0)
+        return (size <= arity + 1);
+    else
+        return is_trivial(e); // arity == 0, so rhs==expr
+}
+
+/*
+ * Problem: we don't know if arguments are functions or not.
+ * - We don't store information on variable types in Core.
+ * - So, if we case a function multiple times but never apply it, then we won't know if its a function or not.
+ * - Now, this can only happen when if we do `case x of _ -> `.
+ * 
+ */
+
+
+UnfoldingGuidance make_unfolding_guidance(const inliner_options& opts, const Occ::Exp& e)
+{
+    auto top_binders = compute_top_binders(e);
+    int n_binders = top_binders.size();
+    int max_size = opts.creation_threshold;
+    auto size = size_of_expr(opts, max_size, top_binders, e);
+
+    // We should actually be looking for an empty optional<ExprSize> here.
+    if (size.size > max_size) return UnfoldNever();
+    
+    if (unconditionally_inline(e, n_binders, size.size))
+        return UnfoldWhen(true, true, n_binders);
+    
+    // If this is a top bottoming expression return UnfoldNever()
+    else
+    {
+        std::vector<int> arg_discounts;
+        for(auto& x: top_binders)
+        {
+            int d = 0;
+            auto dd = size.arg_discounts.find(x);
+            if (dd)
+            {
+                if (dd->max > 0)
+                    d = dd->max;
+                else
+                    d = dd->sum;
+            }
+            arg_discounts.push_back(d);
+        }
+
+        return UnfoldIfGoodArgs(arg_discounts, size.size, size.inspect_discount);
+    }
+}
+
+CoreUnfolding make_core_unfolding(const inliner_options& opts, const Occ::Exp& e)
+{
+    return CoreUnfolding(e, make_unfolding_guidance(opts,e));
 }

@@ -50,7 +50,7 @@ Core2::Exp<> declare_seq_info(Module& m)
     // 4. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
     seq.type = type;
-    seq.unfolding = CoreUnfolding{occ_code, /* always_unfold */ true};
+    seq.unfolding = CoreUnfolding{occ_code, UnfoldWhen(), /* always_unfold */ true};
 
     m.declare_symbol(seq);
 

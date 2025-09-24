@@ -30,7 +30,6 @@ struct discounts
         return discounts( std::max(max, d2.max), sum + d2.sum );
     }
 
-    explicit discounts(int i):max(i),sum(i) {}
     explicit discounts(int m, int s):max(m),sum(s) {}
 };
 
@@ -41,6 +40,12 @@ struct ExprSize
     int size = 0;
     var_discounts arg_discounts;
     int inspect_discount = 0;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(size, arg_discounts, inspect_discount);
+    }
 };
 
 
