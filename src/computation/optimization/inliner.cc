@@ -608,7 +608,7 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
     }
     // OnceUnsafe
-    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
+    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once)
     {
 	if (whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context)))
             return rhs;
