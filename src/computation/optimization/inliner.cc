@@ -622,49 +622,67 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 	return {};
 
     // OnceSafe
-    else if (occur.pre_inline())
+    // These can occur if they are exported, so we can't delete them?
+
+    /*------------- Now we use the guidance --------------*/
+    auto& guidance = cu->unf_guidance;
+    bool lone_variable = false;
+    bool is_expandable = false;
+
+    bool is_wf = is_work_free(rhs);
+
+    if (occur.work_dup == amount_t::Many and not is_wf)
+        return {};
+
+    if (to<UnfoldNever>(guidance))
+        return {};
+
+    else if (auto uw = to<UnfoldWhen>(guidance))
     {
-//	if (options.pre_inline_unconditionally and not occur.is_exported and false)
-//	    throw myexception()<<"Trying to inline OnceSafe variable!";
-        return rhs;
-    }
+        // QUESTION: why NOT require work_free here? It seems like if code_dup = MANY, then we should.
 
-    // If its "trivial" but not a variable, we should substitute if we can.
-    if (rhs.to_constant() or rhs.to_conApp())
-	return rhs;
+        // QUESTION: when is uw->boring_ok=true?
 
-    // MultiSafe
-    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return try_inline_multi(rhs, context);
+        // Look at GHC from 2001?  Look at callSiteInline
 
-    // OnceUnsafe
-    else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
-    {
-	if (whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context)))
+        int n_args = 0;
+        bool interesting_args = false; // any nonTriv arg_infos;
+        auto c = context;
+        while(auto ac = c.is_apply_context())
+        {
+            n_args++;
+            interesting_args = interesting_args; // or interesting_arg(ac->arg, S, bound_vars, 0);
+            c = ac->next;
+        }
+
+        bool enough_args = (n_args >= uw->arity) or (uw->unsaturated_ok and n_args > 0);
+        bool saturated = n_args >= uw->arity;
+        bool over_saturated = n_args > uw->arity;
+
+        bool interesting_call = over_saturated or (n_args > 0 or not (lone_variable and is_expandable));
+
+        // This looks like `not boring(rhs, context);
+        bool some_benefit = interesting_args or (saturated and interesting_call);
+
+        if (enough_args and (uw->boring_ok or some_benefit))
             return rhs;
         else
             return {};
-
     }
-    // OnceUnsafe
-    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once)
+    else if (auto ui = to<UnfoldIfGoodArgs>(guidance))
     {
-	if (whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context)))
+        // QUESTION: If the var is NotInLambda, and n_br < (say) 100, then should we still require work_free?
+
+        auto& arg_discounts = ui->arg_discounts;
+
+        bool some_benefit = not boring(rhs, context); // interesting_args or (saturated and interesting_call)
+        if (is_wf and some_benefit and small_enough(rhs, context))
             return rhs;
         else
             return {};
     }
-
-    // MultiUnsafe
-    else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-    {
-	if (whnf_or_bottom(rhs))
-            return try_inline_multi(rhs, context);
-        else
-            return {};
-    }
-
-    std::abort();
+    else
+        std::abort();
 }
 
 std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars)
