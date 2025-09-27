@@ -564,6 +564,45 @@ bool whnf_or_bottom(const Occ::Exp& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
+bool is_work_free(const Occ::Exp& e) // , int n=0)
+{
+    // var + constant + lambda + conapp +
+    //   lets and cases where all parts are work_free.
+
+    if (e.to_var())
+        return true; // n == 0 or (n<x->arity) or x is a data constructor
+    else if (e.to_constant())
+        return true;
+    else if (e.to_conApp())
+        return true;
+    else if (e.to_apply())
+        return false; // is_work_free(a->head, 1);
+    else if (auto cs = e.to_case())
+    {
+        if (not is_work_free(cs->object)) return false;
+        for(auto& [pat,body]: cs->alts)
+            if (not is_work_free(body)) return false;
+        return true;
+    }
+    else if (e.to_lambda())
+    {
+        // We could call is_work_free(la->body, n-1) if n >= 1
+        return true;
+    }
+    else if (auto le = e.to_let())
+    {
+        if (not is_work_free(le->body)) return false;
+        for(auto& [x,e]: le->decls)
+            if (not is_work_free(e)) return false;
+        return true;
+    }
+    else if (e.to_builtinOp())
+        return false;
+    else
+        std::abort();
+}
+
+
 optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
     auto cu = to<CoreUnfolding>(unfolding);
