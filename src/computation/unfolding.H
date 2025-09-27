@@ -91,7 +91,7 @@ struct CoreUnfolding
     /* GHC caches and stores
        (i)   exprIsHNF
        (ii)  exprIsConLike
-       (iii) exprIsCheap
+       (iii) exprIsWorkFree
        (iv)  exprIsExpandable
     */
 
