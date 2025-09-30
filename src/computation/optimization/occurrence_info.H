@@ -18,8 +18,6 @@ struct occurrence_info
 
     bool is_loop_breaker = false;
 
-    bool pre_inline() const;
-
     template <class Archive>
     void serialize(Archive& ar)
     {

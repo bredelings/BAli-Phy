@@ -222,7 +222,7 @@ int get_score(const Occ::Decl& decl)
 	return 4;
     else if (decl.body.to_conApp() or decl.body.to_constant())
 	return 3;
-    else if (decl.x.info.pre_inline())
+    else if (pre_inline(decl.x))
 	return 1;
     else
 	return 0;

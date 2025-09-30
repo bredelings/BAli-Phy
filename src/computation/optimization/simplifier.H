@@ -122,6 +122,6 @@ public:
     SimplifierState(const simplifier_options& opts, FreshVarState& s, const Module& m);
 };
 
-
+bool pre_inline(const Occ::Var& x);
 
 #endif

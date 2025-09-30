@@ -813,6 +813,27 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
     return rebuild(E2, bound_vars, context);
 }
 
+bool pre_inline(const Occ::Var& x)
+{
+    // Don't eliminate exported variables!
+    if (x.is_exported) return false;
+
+    // Unlike in post_inline, here we DO need to keep occurrence info up-to-date.
+    if (x.info.is_loop_breaker) return false;
+
+    if (x.info.work_dup != amount_t::Once and x.info.work_dup != amount_t::None) return false;
+    if (x.info.code_dup != amount_t::Once and x.info.code_dup != amount_t::None) return false;
+
+    return true;
+}
+
+bool post_inline(const Occ::Var& x, const Occ::Exp& rhs)
+{
+    // Unlike in pre_inline, here we don't need to keep occurrence info up-to-date.
+    return is_trivial(rhs) and not x.is_exported and not x.info.is_loop_breaker;
+}
+  
+
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
 // FIXME - Cache free vars on expressions!
@@ -859,7 +880,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (x.info.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
+	if (pre_inline(x))
 	{
 	    S2 = S2.erase(x);
 	    S2 = S2.insert({x,{F,S2}});
@@ -902,7 +923,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		    }
 
 	    // what are the conditions for post-inlining unconditionally?
-	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.info.is_loop_breaker)
+	    if (post_inline(x,F))
 	    {
 		S2 = S2.erase(x);
 		S2 = S2.insert({x,F});
@@ -1037,7 +1058,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         {
             auto x = lam->x;
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_ok_context());
-            if (x.info.pre_inline() and options.pre_inline_unconditionally)
+            if (pre_inline(x))
             {
                 S2 = S2.erase(x);
                 S2 = S2.insert({x,arg});
