@@ -794,7 +794,7 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
         std::abort();
 }
 
-vector<Occ::Var> compute_top_binders(Occ::Exp E)
+std::tuple<vector<Occ::Var>,Occ::Exp> compute_top_binders(Occ::Exp E)
 {
     vector<Occ::Var> args;
     while (auto L = E.to_lambda())
@@ -803,7 +803,7 @@ vector<Occ::Var> compute_top_binders(Occ::Exp E)
         E = L->body;
     }
 
-    return args;
+    return {args, E};
 }
 
 bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
@@ -825,10 +825,10 @@ bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
 
 UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e)
 {
-    auto top_binders = compute_top_binders(e);
+    auto [top_binders,body] = compute_top_binders(e);
     int n_binders = top_binders.size();
     int max_size = opts.creation_threshold;
-    auto size = size_of_expr(m, opts, max_size, top_binders, e);
+    auto size = size_of_expr(m, opts, max_size, top_binders, body);
 
     // We should actually be looking for an empty optional<ExprSize> here.
     if (size.size > max_size) return UnfoldNever();
