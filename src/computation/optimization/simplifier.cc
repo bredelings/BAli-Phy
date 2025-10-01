@@ -645,6 +645,12 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
     }
 
+    if (object.to_constant())
+    {
+        assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
+        return simplify(alts[0].body, S, bound_vars, make_ok_context());
+    }
+
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
     assert(not is_WHNF(object) or object.to_var());
 
@@ -813,7 +819,11 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
     return rebuild(E2, bound_vars, context);
 }
 
-bool pre_inline(const Occ::Var& x)
+// QUESTION: Should I avoid inlining into cases because they might get re-executed?
+//           Right now I think I do not avoid it.
+//           However, I might try and let-float things out of cases.
+
+bool pre_inline(const Occ::Var& x, const Occ::Exp& rhs)
 {
     // Don't eliminate exported variables!
     if (x.is_exported) return false;
@@ -821,8 +831,25 @@ bool pre_inline(const Occ::Var& x)
     // Unlike in post_inline, here we DO need to keep occurrence info up-to-date.
     if (x.info.is_loop_breaker) return false;
 
-    if (x.info.work_dup != amount_t::Once and x.info.work_dup != amount_t::None) return false;
-    if (x.info.code_dup != amount_t::Once and x.info.code_dup != amount_t::None) return false;
+    // Eliminate dead/unreferenced variables.
+    if (x.info.work_dup == amount_t::None or x.info.code_dup == amount_t::None)
+    {
+        assert(x.info.work_dup == amount_t::None and x.info.code_dup == amount_t::None);
+        return true;
+    }
+
+    // If it occurs exactly once, and not inside a lambda, the inline it.
+    if (x.info.code_dup == amount_t::Once)
+    {
+        if (x.info.work_dup == amount_t::Once)
+            return true;
+        else
+        {
+            bool can_inline_in_lambda = (bool)rhs.to_constant() or (bool)rhs.to_lambda();
+            bool interesting_context = false; // apply or case head
+            return interesting_context and can_inline_in_lambda;
+        }
+    }
 
     return true;
 }
@@ -830,9 +857,18 @@ bool pre_inline(const Occ::Var& x)
 bool post_inline(const Occ::Var& x, const Occ::Exp& rhs)
 {
     // Unlike in pre_inline, here we don't need to keep occurrence info up-to-date.
-    return is_trivial(rhs) and not x.is_exported and not x.info.is_loop_breaker;
+    if (x.is_exported) return false;
+    if (x.info.is_loop_breaker) return false;
+    if (is_trivial(rhs)) return true;
+
+    // once -> smallEnoughToInline and ((not top-level and not in_lambda) or (isCheap and interesting_context))
+    //         smallEnoughToInline = CoreUnfolding of UnfoldIfGoodArgs with size < 8
+    //         interesting_context = case object of application head
+    // dead -> true
+    
+    return false;
 }
-  
+
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
@@ -880,7 +916,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (pre_inline(x))
+	if (pre_inline(x,F))
 	{
 	    S2 = S2.erase(x);
 	    S2 = S2.insert({x,{F,S2}});
@@ -1052,7 +1088,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         {
             auto x = lam->x;
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_ok_context());
-            if (pre_inline(x))
+            if (pre_inline(x,arg))
             {
                 S2 = S2.erase(x);
                 S2 = S2.insert({x,arg});

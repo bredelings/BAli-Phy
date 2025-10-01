@@ -629,21 +629,15 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     bool lone_variable = false;
     bool is_expandable = false;
 
-    bool is_wf = is_work_free(rhs);
-
-    if (occur.work_dup == amount_t::Many and not is_wf)
-        return {};
-
     if (to<UnfoldNever>(guidance))
         return {};
 
     else if (auto uw = to<UnfoldWhen>(guidance))
     {
-        // QUESTION: why NOT require work_free here? It seems like if code_dup = MANY, then we should.
-
         // QUESTION: when is uw->boring_ok=true?
 
-        // Look at GHC from 2001?  Look at callSiteInline
+        // This should only be true for lambdas and trivial expressions.
+        assert(is_work_free(rhs));
 
         int n_args = 0;
         bool interesting_args = false; // any nonTriv arg_infos;
@@ -672,6 +666,8 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     else if (auto ui = to<UnfoldIfGoodArgs>(guidance))
     {
         // QUESTION: If the var is NotInLambda, and n_br < (say) 100, then should we still require work_free?
+
+        bool is_wf = is_work_free(rhs);
 
         auto& arg_discounts = ui->arg_discounts;
 
@@ -791,7 +787,7 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
         std::abort();
 }
 
-vector<Occ::Var> compute_top_binders(Occ::Exp E)
+std::tuple<vector<Occ::Var>,Occ::Exp> compute_top_binders(Occ::Exp E)
 {
     vector<Occ::Var> args;
     while (auto L = E.to_lambda())
@@ -800,7 +796,7 @@ vector<Occ::Var> compute_top_binders(Occ::Exp E)
         E = L->body;
     }
 
-    return args;
+    return {args, E};
 }
 
 bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
@@ -822,14 +818,18 @@ bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
 
 UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e)
 {
-    auto top_binders = compute_top_binders(e);
+    auto [top_binders,body] = compute_top_binders(e);
     int n_binders = top_binders.size();
     int max_size = opts.creation_threshold;
-    auto size = size_of_expr(m, opts, max_size, top_binders, e);
+    auto size = size_of_expr(m, opts, max_size, top_binders, body);
 
     // We should actually be looking for an empty optional<ExprSize> here.
     if (size.size > max_size) return UnfoldNever();
     
+    // This unconditionally inlines when either
+    // (i) e is a FUNCTION and the body is smaller than the call
+    // (ii) e is TRIVIAL
+    // In both cases, e should be work-free.
     if (unconditionally_inline(e, n_binders, size.size))
         return UnfoldWhen(true, true, n_binders);
     
