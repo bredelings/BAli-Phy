@@ -819,7 +819,11 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
     return rebuild(E2, bound_vars, context);
 }
 
-bool pre_inline(const Occ::Var& x)
+// QUESTION: Should I avoid inlining into cases because they might get re-executed?
+//           Right now I think I do not avoid it.
+//           However, I might try and let-float things out of cases.
+
+bool pre_inline(const Occ::Var& x, const Occ::Exp& rhs)
 {
     // Don't eliminate exported variables!
     if (x.is_exported) return false;
@@ -895,7 +899,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (pre_inline(x))
+	if (pre_inline(x,F))
 	{
 	    S2 = S2.erase(x);
 	    S2 = S2.insert({x,{F,S2}});
@@ -1073,7 +1077,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         {
             auto x = lam->x;
             auto arg = simplify(ac->arg, ac->subst, bound_vars, make_ok_context());
-            if (pre_inline(x))
+            if (pre_inline(x,arg))
             {
                 S2 = S2.erase(x);
                 S2 = S2.insert({x,arg});
