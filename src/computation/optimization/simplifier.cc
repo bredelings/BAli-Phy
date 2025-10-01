@@ -645,6 +645,12 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
     }
 
+    if (object.to_constant())
+    {
+        assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
+        return simplify(alts[0].body, S, bound_vars, make_ok_context());
+    }
+
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
     assert(not is_WHNF(object) or object.to_var());
 
