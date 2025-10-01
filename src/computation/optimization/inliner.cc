@@ -629,21 +629,15 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     bool lone_variable = false;
     bool is_expandable = false;
 
-    bool is_wf = is_work_free(rhs);
-
-    if (occur.work_dup == amount_t::Many and not is_wf)
-        return {};
-
     if (to<UnfoldNever>(guidance))
         return {};
 
     else if (auto uw = to<UnfoldWhen>(guidance))
     {
-        // QUESTION: why NOT require work_free here? It seems like if code_dup = MANY, then we should.
-
         // QUESTION: when is uw->boring_ok=true?
 
-        // Look at GHC from 2001?  Look at callSiteInline
+        // This should only be true for lambdas and trivial expressions.
+        assert(is_work_free(rhs));
 
         int n_args = 0;
         bool interesting_args = false; // any nonTriv arg_infos;
@@ -672,6 +666,8 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     else if (auto ui = to<UnfoldIfGoodArgs>(guidance))
     {
         // QUESTION: If the var is NotInLambda, and n_br < (say) 100, then should we still require work_free?
+
+        bool is_wf = is_work_free(rhs);
 
         auto& arg_discounts = ui->arg_discounts;
 
@@ -833,6 +829,10 @@ UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options
     // We should actually be looking for an empty optional<ExprSize> here.
     if (size.size > max_size) return UnfoldNever();
     
+    // This unconditionally inlines when either
+    // (i) e is a FUNCTION and the body is smaller than the call
+    // (ii) e is TRIVIAL
+    // In both cases, e should be work-free.
     if (unconditionally_inline(e, n_binders, size.size))
         return UnfoldWhen(true, true, n_binders);
     
