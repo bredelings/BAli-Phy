@@ -836,9 +836,18 @@ bool pre_inline(const Occ::Var& x)
 bool post_inline(const Occ::Var& x, const Occ::Exp& rhs)
 {
     // Unlike in pre_inline, here we don't need to keep occurrence info up-to-date.
-    return is_trivial(rhs) and not x.is_exported and not x.info.is_loop_breaker;
+    if (x.is_exported) return false;
+    if (x.info.is_loop_breaker) return false;
+    if (is_trivial(rhs)) return true;
+
+    // once -> smallEnoughToInline and ((not top-level and not in_lambda) or (isCheap and interesting_context))
+    //         smallEnoughToInline = CoreUnfolding of UnfoldIfGoodArgs with size < 8
+    //         interesting_context = case object of application head
+    // dead -> true
+    
+    return false;
 }
-  
+
 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
