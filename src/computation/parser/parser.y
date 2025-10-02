@@ -1157,7 +1157,7 @@ sigdecl: sig_vars "::" sigtypedoc { $$ = {@$,Hs::SignatureDecl{$1,$3}}; }
 |        infix prec ops  { $$ = {@$,Hs::FixityDecl{$1,$2,$3}}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
-|        "{-# INLINE" activation qvar "#-}" { $$ = {@$, Hs::InlinePragma($1, $3)}; }
+|        "{-# INLINE" activation qvar "#-}" { $$ = {@$, Hs::InlinePragma({@1,$1},{@3,$3})}; }
 |        "{-# SCC" qvar "#-}" {}
 |        "{-# SCC" qvar STRING "#-}" {}
 |        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}" {}
@@ -1880,4 +1880,3 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& qtvs, const Hs:
     // 4. Otherwise make a normal constructor.
     return {qtvs, context, con, args};
 }
-

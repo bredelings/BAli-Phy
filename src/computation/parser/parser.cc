@@ -4086,7 +4086,7 @@ namespace yy {
 
   case 290: // sigdecl: "{-# INLINE" activation qvar "#-}"
 #line 1160 "parser.y"
-                                            { yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::InlinePragma(yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::string > ())}; }
+                                            { yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::InlinePragma({yystack_[3].location,yystack_[3].value.as < std::string > ()},{yystack_[1].location,yystack_[1].value.as < std::string > ()})}; }
 #line 4091 "parser.cc"
     break;
 
@@ -7784,4 +7784,3 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& qtvs, const Hs:
     // 4. Otherwise make a normal constructor.
     return {qtvs, context, con, args};
 }
-
