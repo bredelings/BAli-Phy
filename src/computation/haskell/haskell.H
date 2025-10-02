@@ -309,6 +309,18 @@ struct RecordExp: public Object
 typedef expression_ref Decl;
 typedef Located<Decl> LDecl;
 
+struct InlinePragma: public Object
+{
+    std::string command;
+    std::string var;
+    InlinePragma* clone() const { return new InlinePragma(*this);}
+
+    std::string print() const;
+
+    InlinePragma(const std::string& s1, const std::string& s2):command(s1), var(s2) {}
+};
+
+    
 struct Decls: public std::vector<LDecl>
 {
 public:

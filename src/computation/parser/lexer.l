@@ -192,7 +192,7 @@ signed       {negative}?
   /* <column_prag> */
 
   /* two-word pragmas */
-<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment);
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment); */
   /* one-word pragmas */
 <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment);
   /* end pragma */
@@ -273,12 +273,29 @@ driver::scan_end ()
 using namespace yy;
 
 std::map<std::string, std::function<yy::parser::symbol_type(const yy::parser::location_type&)>> pragmas = {
-    {"incoherent", yy::parser::make_INCOHERENT_PRAG},
-    {"inline"      , yy::parser::make_INLINE_PRAG},
-    {"overlappable", yy::parser::make_OVERLAPPABLE_PRAG},
-    {"overlapping", yy::parser::make_OVERLAPPING_PRAG},
-    {"overlaps", yy::parser::make_OVERLAPS_PRAG},
-    {"specialize", yy::parser::make_SPECIALIZE_PRAG}
+    // "rules"
+    {"inline"      , [](const parser::location_type& loc) {return parser::make_INLINE_PRAG("INLINE"   , loc);}}, 
+    {"inlinable"   , [](const parser::location_type& loc) {return parser::make_INLINE_PRAG("INLINABLE", loc);}}, 
+    {"inlineable"  , [](const parser::location_type& loc) {return parser::make_INLINE_PRAG("INLINABLE", loc);}}, 
+    {"noinline"    , [](const parser::location_type& loc) {return parser::make_INLINE_PRAG("NOTINLINE", loc);}}, 
+    {"notinline"   , [](const parser::location_type& loc) {return parser::make_INLINE_PRAG("NOTINLINE", loc);}}, 
+    // "opaque"
+    {"specialize", parser::make_SPECIALIZE_PRAG},
+    // "source"
+    // "warning"
+    // "deprecated"
+    // "scc"
+    // "unpack"
+    // "nounpack"
+    // "ann"
+    // "minimal"
+    {"overlaps", parser::make_OVERLAPS_PRAG},
+    {"overlappable", parser::make_OVERLAPPABLE_PRAG},
+    {"overlapping", parser::make_OVERLAPPING_PRAG},
+    {"incoherent", parser::make_INCOHERENT_PRAG},
+    // "ctype"
+    // "complete"
+    // "column"
 };
 
 std::string clean_pragma(std::string prag)

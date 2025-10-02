@@ -277,6 +277,11 @@ bool ValueDecl::operator==(const ValueDecl&) const
     std::abort();
 }
 
+std::string InlinePragma::print() const
+{
+    return "{-# " + command + " " + var + " #-}";
+}
+
 string Decls::print() const
 {
     vector<string> decl_string;

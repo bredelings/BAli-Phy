@@ -658,6 +658,7 @@ namespace yy {
       // top1
       char dummy52[sizeof (std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>)];
 
+      // "{-# INLINE"
       // "VARID"
       // "CONID"
       // "VARSYM"
@@ -884,71 +885,71 @@ namespace yy {
     TOK_UNIT = 309,                // "unit"
     TOK_SIGNATURE = 310,           // "signature"
     TOK_DEPENDENCY = 311,          // "dependency"
-    TOK_INLINE_PRAG = 312,         // "{-# INLINE"
-    TOK_SPECIALIZE_PRAG = 313,     // "{-# SPECIALIZE"
-    TOK_SPECIALIZE_INLINE_PRAG = 314, // "{-# SPECIALIZE_INLINE"
-    TOK_SOURCE_PRAG = 315,         // "{-# SOURCE"
-    TOK_RULES_PRAG = 316,          // "{-# RULES"
-    TOK_CORE_PRAG = 317,           // "{-# CORE"
-    TOK_SCC_PRAG = 318,            // "{-# SCC"
-    TOK_GENERATED_PRAG = 319,      // "{-# GENERATED"
-    TOK_DEPRECATED_PRAG = 320,     // "{-# DEPRECATED"
-    TOK_WARNING_PRAG = 321,        // "{-# WARNING"
-    TOK_UNPACK_PRAG = 322,         // "{-# UNPACK"
-    TOK_NOUNPACK_PRAG = 323,       // "{-# NOUNPACK"
-    TOK_ANN_PRAG = 324,            // "{-# ANN"
-    TOK_MINIMAL_PRAG = 325,        // "{-# MINIMAL"
-    TOK_CTYPE_PRAG = 326,          // "{-# CTYPE"
-    TOK_OVERLAPPING_PRAG = 327,    // "{-# OVERLAPPING"
-    TOK_OVERLAPPABLE_PRAG = 328,   // "{-# OVERLAPPABLE"
-    TOK_OVERLAPS_PRAG = 329,       // "{-# OVERLAPS"
-    TOK_INCOHERENT_PRAG = 330,     // "{-# INCOHERENT"
-    TOK_COMPLETE_PRAG = 331,       // "{-# COMPLETE"
-    TOK_CLOSE_PRAG = 332,          // "#-}"
-    TOK_DOTDOT = 333,              // ".."
-    TOK_COLON = 334,               // ":"
-    TOK_DCOLON = 335,              // "::"
-    TOK_EQUAL = 336,               // "="
-    TOK_LAM = 337,                 // "\\"
-    TOK_LCASE = 338,               // "lcase"
-    TOK_VBAR = 339,                // "|"
-    TOK_LARROW = 340,              // "<-"
-    TOK_RARROW = 341,              // "->"
-    TOK_TIGHT_INFIX_AT = 342,      // TIGHT_INFIX_AT
-    TOK_PREFIX_AT = 343,           // "@"
-    TOK_PREFIX_TILDE = 344,        // PREFIX_TILDE
-    TOK_TILDE = 345,               // "~"
-    TOK_DARROW = 346,              // "=>"
-    TOK_PREFIX_MINUS = 347,        // PREFIX_MINUS
-    TOK_MINUS = 348,               // "-"
-    TOK_PREFIX_BANG = 349,         // PREFIX_BANG
-    TOK_BANG = 350,                // "!"
-    TOK_STAR = 351,                // "*"
-    TOK_lARROWTAIL = 352,          // "-<"
-    TOK_rARROWTAIL = 353,          // ">-"
-    TOK_LARROWTAIL = 354,          // "-<<"
-    TOK_RARROWTAIL = 355,          // ">>-"
-    TOK_TIGHT_INFIX_DOT = 356,     // TIGHT_INFIX_DOT
-    TOK_PREFIX_DOT = 357,          // PREFIX_DOT
-    TOK_DOT = 358,                 // "."
-    TOK_OCURLY = 359,              // "{"
-    TOK_CCURLY = 360,              // "}"
-    TOK_VOCURLY = 361,             // "vocurly"
-    TOK_VCCURLY = 362,             // "vccurly"
-    TOK_OBRACK = 363,              // "["
-    TOK_CBRACK = 364,              // "]"
-    TOK_OPABRACK = 365,            // "[:"
-    TOK_CPABRACK = 366,            // ":]"
-    TOK_OPAREN = 367,              // "("
-    TOK_CPAREN = 368,              // ")"
-    TOK_OUBXPAREN = 369,           // "(#"
-    TOK_CUBXPAREN = 370,           // "#)"
-    TOK_OPARENBAR = 371,           // "(|"
-    TOK_CPARENBAR = 372,           // "|)"
-    TOK_SEMI = 373,                // ";"
-    TOK_COMMA = 374,               // ","
-    TOK_BACKQUOTE = 375,           // "`"
-    TOK_SIMPLEQUOTE = 376,         // "'"
+    TOK_SPECIALIZE_PRAG = 312,     // "{-# SPECIALIZE"
+    TOK_SPECIALIZE_INLINE_PRAG = 313, // "{-# SPECIALIZE_INLINE"
+    TOK_SOURCE_PRAG = 314,         // "{-# SOURCE"
+    TOK_RULES_PRAG = 315,          // "{-# RULES"
+    TOK_CORE_PRAG = 316,           // "{-# CORE"
+    TOK_SCC_PRAG = 317,            // "{-# SCC"
+    TOK_GENERATED_PRAG = 318,      // "{-# GENERATED"
+    TOK_DEPRECATED_PRAG = 319,     // "{-# DEPRECATED"
+    TOK_WARNING_PRAG = 320,        // "{-# WARNING"
+    TOK_UNPACK_PRAG = 321,         // "{-# UNPACK"
+    TOK_NOUNPACK_PRAG = 322,       // "{-# NOUNPACK"
+    TOK_ANN_PRAG = 323,            // "{-# ANN"
+    TOK_MINIMAL_PRAG = 324,        // "{-# MINIMAL"
+    TOK_CTYPE_PRAG = 325,          // "{-# CTYPE"
+    TOK_OVERLAPPING_PRAG = 326,    // "{-# OVERLAPPING"
+    TOK_OVERLAPPABLE_PRAG = 327,   // "{-# OVERLAPPABLE"
+    TOK_OVERLAPS_PRAG = 328,       // "{-# OVERLAPS"
+    TOK_INCOHERENT_PRAG = 329,     // "{-# INCOHERENT"
+    TOK_COMPLETE_PRAG = 330,       // "{-# COMPLETE"
+    TOK_CLOSE_PRAG = 331,          // "#-}"
+    TOK_DOTDOT = 332,              // ".."
+    TOK_COLON = 333,               // ":"
+    TOK_DCOLON = 334,              // "::"
+    TOK_EQUAL = 335,               // "="
+    TOK_LAM = 336,                 // "\\"
+    TOK_LCASE = 337,               // "lcase"
+    TOK_VBAR = 338,                // "|"
+    TOK_LARROW = 339,              // "<-"
+    TOK_RARROW = 340,              // "->"
+    TOK_TIGHT_INFIX_AT = 341,      // TIGHT_INFIX_AT
+    TOK_PREFIX_AT = 342,           // "@"
+    TOK_PREFIX_TILDE = 343,        // PREFIX_TILDE
+    TOK_TILDE = 344,               // "~"
+    TOK_DARROW = 345,              // "=>"
+    TOK_PREFIX_MINUS = 346,        // PREFIX_MINUS
+    TOK_MINUS = 347,               // "-"
+    TOK_PREFIX_BANG = 348,         // PREFIX_BANG
+    TOK_BANG = 349,                // "!"
+    TOK_STAR = 350,                // "*"
+    TOK_lARROWTAIL = 351,          // "-<"
+    TOK_rARROWTAIL = 352,          // ">-"
+    TOK_LARROWTAIL = 353,          // "-<<"
+    TOK_RARROWTAIL = 354,          // ">>-"
+    TOK_TIGHT_INFIX_DOT = 355,     // TIGHT_INFIX_DOT
+    TOK_PREFIX_DOT = 356,          // PREFIX_DOT
+    TOK_DOT = 357,                 // "."
+    TOK_OCURLY = 358,              // "{"
+    TOK_CCURLY = 359,              // "}"
+    TOK_VOCURLY = 360,             // "vocurly"
+    TOK_VCCURLY = 361,             // "vccurly"
+    TOK_OBRACK = 362,              // "["
+    TOK_CBRACK = 363,              // "]"
+    TOK_OPABRACK = 364,            // "[:"
+    TOK_CPABRACK = 365,            // ":]"
+    TOK_OPAREN = 366,              // "("
+    TOK_CPAREN = 367,              // ")"
+    TOK_OUBXPAREN = 368,           // "(#"
+    TOK_CUBXPAREN = 369,           // "#)"
+    TOK_OPARENBAR = 370,           // "(|"
+    TOK_CPARENBAR = 371,           // "|)"
+    TOK_SEMI = 372,                // ";"
+    TOK_COMMA = 373,               // ","
+    TOK_BACKQUOTE = 374,           // "`"
+    TOK_SIMPLEQUOTE = 375,         // "'"
+    TOK_INLINE_PRAG = 376,         // "{-# INLINE"
     TOK_VARID = 377,               // "VARID"
     TOK_CONID = 378,               // "CONID"
     TOK_VARSYM = 379,              // "VARSYM"
@@ -1044,71 +1045,71 @@ namespace yy {
         S_UNIT = 54,                             // "unit"
         S_SIGNATURE = 55,                        // "signature"
         S_DEPENDENCY = 56,                       // "dependency"
-        S_INLINE_PRAG = 57,                      // "{-# INLINE"
-        S_SPECIALIZE_PRAG = 58,                  // "{-# SPECIALIZE"
-        S_SPECIALIZE_INLINE_PRAG = 59,           // "{-# SPECIALIZE_INLINE"
-        S_SOURCE_PRAG = 60,                      // "{-# SOURCE"
-        S_RULES_PRAG = 61,                       // "{-# RULES"
-        S_CORE_PRAG = 62,                        // "{-# CORE"
-        S_SCC_PRAG = 63,                         // "{-# SCC"
-        S_GENERATED_PRAG = 64,                   // "{-# GENERATED"
-        S_DEPRECATED_PRAG = 65,                  // "{-# DEPRECATED"
-        S_WARNING_PRAG = 66,                     // "{-# WARNING"
-        S_UNPACK_PRAG = 67,                      // "{-# UNPACK"
-        S_NOUNPACK_PRAG = 68,                    // "{-# NOUNPACK"
-        S_ANN_PRAG = 69,                         // "{-# ANN"
-        S_MINIMAL_PRAG = 70,                     // "{-# MINIMAL"
-        S_CTYPE_PRAG = 71,                       // "{-# CTYPE"
-        S_OVERLAPPING_PRAG = 72,                 // "{-# OVERLAPPING"
-        S_OVERLAPPABLE_PRAG = 73,                // "{-# OVERLAPPABLE"
-        S_OVERLAPS_PRAG = 74,                    // "{-# OVERLAPS"
-        S_INCOHERENT_PRAG = 75,                  // "{-# INCOHERENT"
-        S_COMPLETE_PRAG = 76,                    // "{-# COMPLETE"
-        S_CLOSE_PRAG = 77,                       // "#-}"
-        S_DOTDOT = 78,                           // ".."
-        S_COLON = 79,                            // ":"
-        S_DCOLON = 80,                           // "::"
-        S_EQUAL = 81,                            // "="
-        S_LAM = 82,                              // "\\"
-        S_LCASE = 83,                            // "lcase"
-        S_VBAR = 84,                             // "|"
-        S_LARROW = 85,                           // "<-"
-        S_RARROW = 86,                           // "->"
-        S_TIGHT_INFIX_AT = 87,                   // TIGHT_INFIX_AT
-        S_PREFIX_AT = 88,                        // "@"
-        S_PREFIX_TILDE = 89,                     // PREFIX_TILDE
-        S_TILDE = 90,                            // "~"
-        S_DARROW = 91,                           // "=>"
-        S_PREFIX_MINUS = 92,                     // PREFIX_MINUS
-        S_MINUS = 93,                            // "-"
-        S_PREFIX_BANG = 94,                      // PREFIX_BANG
-        S_BANG = 95,                             // "!"
-        S_STAR = 96,                             // "*"
-        S_lARROWTAIL = 97,                       // "-<"
-        S_rARROWTAIL = 98,                       // ">-"
-        S_LARROWTAIL = 99,                       // "-<<"
-        S_RARROWTAIL = 100,                      // ">>-"
-        S_TIGHT_INFIX_DOT = 101,                 // TIGHT_INFIX_DOT
-        S_PREFIX_DOT = 102,                      // PREFIX_DOT
-        S_DOT = 103,                             // "."
-        S_OCURLY = 104,                          // "{"
-        S_CCURLY = 105,                          // "}"
-        S_VOCURLY = 106,                         // "vocurly"
-        S_VCCURLY = 107,                         // "vccurly"
-        S_OBRACK = 108,                          // "["
-        S_CBRACK = 109,                          // "]"
-        S_OPABRACK = 110,                        // "[:"
-        S_CPABRACK = 111,                        // ":]"
-        S_OPAREN = 112,                          // "("
-        S_CPAREN = 113,                          // ")"
-        S_OUBXPAREN = 114,                       // "(#"
-        S_CUBXPAREN = 115,                       // "#)"
-        S_OPARENBAR = 116,                       // "(|"
-        S_CPARENBAR = 117,                       // "|)"
-        S_SEMI = 118,                            // ";"
-        S_COMMA = 119,                           // ","
-        S_BACKQUOTE = 120,                       // "`"
-        S_SIMPLEQUOTE = 121,                     // "'"
+        S_SPECIALIZE_PRAG = 57,                  // "{-# SPECIALIZE"
+        S_SPECIALIZE_INLINE_PRAG = 58,           // "{-# SPECIALIZE_INLINE"
+        S_SOURCE_PRAG = 59,                      // "{-# SOURCE"
+        S_RULES_PRAG = 60,                       // "{-# RULES"
+        S_CORE_PRAG = 61,                        // "{-# CORE"
+        S_SCC_PRAG = 62,                         // "{-# SCC"
+        S_GENERATED_PRAG = 63,                   // "{-# GENERATED"
+        S_DEPRECATED_PRAG = 64,                  // "{-# DEPRECATED"
+        S_WARNING_PRAG = 65,                     // "{-# WARNING"
+        S_UNPACK_PRAG = 66,                      // "{-# UNPACK"
+        S_NOUNPACK_PRAG = 67,                    // "{-# NOUNPACK"
+        S_ANN_PRAG = 68,                         // "{-# ANN"
+        S_MINIMAL_PRAG = 69,                     // "{-# MINIMAL"
+        S_CTYPE_PRAG = 70,                       // "{-# CTYPE"
+        S_OVERLAPPING_PRAG = 71,                 // "{-# OVERLAPPING"
+        S_OVERLAPPABLE_PRAG = 72,                // "{-# OVERLAPPABLE"
+        S_OVERLAPS_PRAG = 73,                    // "{-# OVERLAPS"
+        S_INCOHERENT_PRAG = 74,                  // "{-# INCOHERENT"
+        S_COMPLETE_PRAG = 75,                    // "{-# COMPLETE"
+        S_CLOSE_PRAG = 76,                       // "#-}"
+        S_DOTDOT = 77,                           // ".."
+        S_COLON = 78,                            // ":"
+        S_DCOLON = 79,                           // "::"
+        S_EQUAL = 80,                            // "="
+        S_LAM = 81,                              // "\\"
+        S_LCASE = 82,                            // "lcase"
+        S_VBAR = 83,                             // "|"
+        S_LARROW = 84,                           // "<-"
+        S_RARROW = 85,                           // "->"
+        S_TIGHT_INFIX_AT = 86,                   // TIGHT_INFIX_AT
+        S_PREFIX_AT = 87,                        // "@"
+        S_PREFIX_TILDE = 88,                     // PREFIX_TILDE
+        S_TILDE = 89,                            // "~"
+        S_DARROW = 90,                           // "=>"
+        S_PREFIX_MINUS = 91,                     // PREFIX_MINUS
+        S_MINUS = 92,                            // "-"
+        S_PREFIX_BANG = 93,                      // PREFIX_BANG
+        S_BANG = 94,                             // "!"
+        S_STAR = 95,                             // "*"
+        S_lARROWTAIL = 96,                       // "-<"
+        S_rARROWTAIL = 97,                       // ">-"
+        S_LARROWTAIL = 98,                       // "-<<"
+        S_RARROWTAIL = 99,                       // ">>-"
+        S_TIGHT_INFIX_DOT = 100,                 // TIGHT_INFIX_DOT
+        S_PREFIX_DOT = 101,                      // PREFIX_DOT
+        S_DOT = 102,                             // "."
+        S_OCURLY = 103,                          // "{"
+        S_CCURLY = 104,                          // "}"
+        S_VOCURLY = 105,                         // "vocurly"
+        S_VCCURLY = 106,                         // "vccurly"
+        S_OBRACK = 107,                          // "["
+        S_CBRACK = 108,                          // "]"
+        S_OPABRACK = 109,                        // "[:"
+        S_CPABRACK = 110,                        // ":]"
+        S_OPAREN = 111,                          // "("
+        S_CPAREN = 112,                          // ")"
+        S_OUBXPAREN = 113,                       // "(#"
+        S_CUBXPAREN = 114,                       // "#)"
+        S_OPARENBAR = 115,                       // "(|"
+        S_CPARENBAR = 116,                       // "|)"
+        S_SEMI = 117,                            // ";"
+        S_COMMA = 118,                           // ","
+        S_BACKQUOTE = 119,                       // "`"
+        S_SIMPLEQUOTE = 120,                     // "'"
+        S_INLINE_PRAG = 121,                     // "{-# INLINE"
         S_VARID = 122,                           // "VARID"
         S_CONID = 123,                           // "CONID"
         S_VARSYM = 124,                          // "VARSYM"
@@ -1654,6 +1655,7 @@ namespace yy {
         value.move< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_INLINE_PRAG: // "{-# INLINE"
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -3047,6 +3049,7 @@ switch (yykind)
         value.template destroy< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();
         break;
 
+      case symbol_kind::S_INLINE_PRAG: // "{-# INLINE"
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -3369,7 +3372,7 @@ switch (yykind)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
-        YY_ASSERT ((token::TOK_VARID <= tok && tok <= token::TOK_LABELVARID)
+        YY_ASSERT ((token::TOK_INLINE_PRAG <= tok && tok <= token::TOK_LABELVARID)
                    || tok == token::TOK_STRING
                    || tok == token::TOK_PRIMSTRING);
 #endif
@@ -4275,21 +4278,6 @@ switch (yykind)
       make_DEPENDENCY (const location_type& l)
       {
         return symbol_type (token::TOK_DEPENDENCY, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_INLINE_PRAG (location_type l)
-      {
-        return symbol_type (token::TOK_INLINE_PRAG, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_INLINE_PRAG (const location_type& l)
-      {
-        return symbol_type (token::TOK_INLINE_PRAG, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -5255,6 +5243,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_INLINE_PRAG (std::string v, location_type l)
+      {
+        return symbol_type (token::TOK_INLINE_PRAG, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_INLINE_PRAG (const std::string& v, const location_type& l)
+      {
+        return symbol_type (token::TOK_INLINE_PRAG, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_VARID (std::string v, location_type l)
       {
         return symbol_type (token::TOK_VARID, std::move (v), std::move (l));
@@ -5882,7 +5885,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5597,     ///< Last index in yytable_.
+      yylast_ = 5573,     ///< Last index in yytable_.
       yynnts_ = 214,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -6236,6 +6239,7 @@ switch (yykind)
         value.copy< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_INLINE_PRAG: // "{-# INLINE"
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -6675,6 +6679,7 @@ switch (yykind)
         value.move< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_INLINE_PRAG: // "{-# INLINE"
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -6877,7 +6882,7 @@ switch (yykind)
 
 
 } // yy
-#line 6881 "parser.hh"
+#line 6886 "parser.hh"
 
 
 
