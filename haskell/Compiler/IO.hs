@@ -37,6 +37,7 @@ instance MonadFail IO where
 
 fixIO f   = IO (\state1 -> let result@(state2,x) = runIO (f x) state1 in result)
 
+{-# NOINLINE unsafePerformIO #-}
 unsafePerformIO :: IO c -> c
 unsafePerformIO f = let (s,x) = runIO f 0#
                     in x
