@@ -114,7 +114,6 @@
   SIGNATURE     "signature"
   DEPENDENCY    "dependency"
 
-  INLINE_PRAG             "{-# INLINE"
   SPECIALIZE_PRAG         "{-# SPECIALIZE"
   SPECIALIZE_INLINE_PRAG  "{-# SPECIALIZE_INLINE"
   SOURCE_PRAG             "{-# SOURCE"
@@ -183,6 +182,7 @@
   SIMPLEQUOTE   "'"
 ;
 
+%token <std::string> INLINE_PRAG "{-# INLINE"
 %token <std::string> VARID    "VARID"
 %token <std::string> CONID    "CONID"
 %token <std::string> VARSYM   "VARSYM"
@@ -1157,7 +1157,7 @@ sigdecl: sig_vars "::" sigtypedoc { $$ = {@$,Hs::SignatureDecl{$1,$3}}; }
 |        infix prec ops  { $$ = {@$,Hs::FixityDecl{$1,$2,$3}}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
-|        "{-# INLINE" activation qvar "#-}" {}
+|        "{-# INLINE" activation qvar "#-}" { $$ = {@$, Hs::InlinePragma($1, $3)}; }
 |        "{-# SCC" qvar "#-}" {}
 |        "{-# SCC" qvar STRING "#-}" {}
 |        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}" {}
