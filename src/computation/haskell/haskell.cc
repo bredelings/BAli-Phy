@@ -279,7 +279,26 @@ bool ValueDecl::operator==(const ValueDecl&) const
 
 std::string InlinePragma::print() const
 {
-    return "{-# " + command + " " + var + " #-}";
+    return "{-# " + command_string.obj + " " + var.obj + " #-}";
+}
+
+InlinePragma::InlinePragma(const Located<std::string>& s1, const Located<std::string>& s2)
+    :command_string(s1),
+     var(s2)
+{
+    auto [_, cstring] = command_string;
+
+    for(auto& c: cstring)
+        c = std::tolower(c);
+
+    if (cstring == "inline")
+        command = inline_pragma_t::INLINE;
+    else if (cstring == "inlinable" or cstring == "inlineable")
+        command = inline_pragma_t::INLINABLE;
+    else if (cstring == "noinline" or cstring == "notinline")
+        command = inline_pragma_t::NOINLINE;
+    else
+        throw myexception()<<"Unknown INLINE pragma {-# "<<command_string.obj<<" "<<s2.obj<<" #-}";
 }
 
 string Decls::print() const
@@ -1009,6 +1028,8 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             type_decls.push_back(ldecl);
         else if (auto d = decl.to<DefaultDecl>())
             default_decls.push_back({loc,*d});
+        else if (auto ip = decl.to<InlinePragma>())
+            value_decls.front().push_back({loc,*ip});
         else
             throw myexception()<<"I don't recognize declaration '"<<decl.print()<<"'";
     }

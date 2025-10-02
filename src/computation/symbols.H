@@ -71,6 +71,7 @@ struct symbol_info
     std::shared_ptr<DataConInfo> con_info;
     std::shared_ptr<InstanceInfo> instance_info;
     std::shared_ptr<EqInstanceInfo> eq_instance_info;
+    std::optional<Hs::inline_pragma_t> inline_pragma;
 
     // Set to false if this is just for exporting information about vars like Data.Bool.$v#55 that are created by optimization.
     // Variables like this currently have no type info.
@@ -79,7 +80,7 @@ struct symbol_info
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(name, symbol_type, parent, arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, visible);
+	ar(name, symbol_type, parent, arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, inline_pragma, visible);
     }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});

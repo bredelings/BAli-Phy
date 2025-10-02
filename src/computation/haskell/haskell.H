@@ -309,15 +309,19 @@ struct RecordExp: public Object
 typedef expression_ref Decl;
 typedef Located<Decl> LDecl;
 
+enum class inline_pragma_t {INLINE, INLINABLE, NOINLINE};
+
+
 struct InlinePragma: public Object
 {
-    std::string command;
-    std::string var;
+    Located<std::string> command_string;
+    inline_pragma_t command;
+    Located<std::string> var;
     InlinePragma* clone() const { return new InlinePragma(*this);}
 
     std::string print() const;
 
-    InlinePragma(const std::string& s1, const std::string& s2):command(s1), var(s2) {}
+    InlinePragma(const Located<std::string>& s1, const Located<std::string>& s2);
 };
 
     
