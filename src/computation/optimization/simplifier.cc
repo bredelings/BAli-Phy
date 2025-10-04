@@ -913,13 +913,19 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
                 Unfolding unfolding;
+                bool noinline = false;
                 if (is_top_level and is_qualified_by_module(x2.name, this_mod.name))
                 {
-                    if (auto S = this_mod.lookup_resolved_symbol(x2.name); S and not to<std::monostate>(S->unfolding))
-                        unfolding = S->unfolding;
+                    if (auto S = this_mod.lookup_resolved_symbol(x2.name))
+                    {
+                        noinline = S->inline_pragma == Hs::inline_pragma_t::NOINLINE;
+
+                        if (not to<std::monostate>(S->unfolding) and not noinline)
+                            unfolding = S->unfolding;
+                    }
                 }
 
-                if (to<std::monostate>(unfolding))
+                if (to<std::monostate>(unfolding) and not noinline)
                     unfolding = make_core_unfolding(this_mod, options, F);
 
                 bound_vars = rebind_var(bound_vars, x2, unfolding);

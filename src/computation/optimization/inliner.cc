@@ -643,7 +643,10 @@ std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::
         assert(not x.name.empty());
 
         if (auto S = this_mod.lookup_resolved_symbol(x.name))
-            unfolding = S->unfolding;
+        {
+            if (not S->inline_pragma or S->inline_pragma.value() != Hs::inline_pragma_t::NOINLINE)
+                unfolding = S->unfolding;
+        }
         else
             throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
 

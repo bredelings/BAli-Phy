@@ -867,6 +867,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.type_decls);
 
+    // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.value_decls[0]);
 
     for(auto& f: M.foreign_decls)
@@ -876,6 +877,13 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
+    // Set the inline pragma -- must happen after renaming.
+    for(auto& [lvar, ip]: M.value_decls.inline_sigs)
+    {
+        auto S = MM->lookup_local_symbol(unloc(lvar).name);
+        S->inline_pragma = ip;
+    }
+    
     auto tc_result = std::make_shared<TypeChecker>( *MM )->typecheck_module( M );
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
