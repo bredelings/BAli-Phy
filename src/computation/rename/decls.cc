@@ -101,6 +101,8 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         return E;
     else if (E.is_a<Hs::FixityDecl>())
         return E;
+    else if (E.is_a<Hs::InlinePragma>())
+        return E;
     else if (E.is_a<Hs::FamilyDecl>() or E.is_a<Hs::TypeFamilyInstanceDecl>())
     {
         // We get here for type family stuff inside of class declarations.
@@ -124,13 +126,13 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
 {
     map<Hs::LVar, Hs::LType> signatures;
 
-    Haskell::Decls decls2;
+    Hs::Decls decls2;
 
     for(int i=0;i<decls.size();i++)
     {
         auto [loc,decl] = decls[i];
         // Remove signature and fixity decls after recording signatures.
-        if (auto sd = decl.to<Haskell::SignatureDecl>())
+        if (auto sd = decl.to<Hs::SignatureDecl>())
         {
             for(auto& lvar: sd->vars)
             {
@@ -140,14 +142,18 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
                     signatures.insert({lvar, sd->type});
             }
         }
-        else if (decl.is_a<Haskell::FixityDecl>())
+        else if (decl.is_a<Hs::FixityDecl>())
         {
             // FixityDecls should survive up to this point so that we can properly segment decls.
             // But remove them here -> the type-checker shouldn't see them.
         }
-        else if (auto d = decl.to<Haskell::PatDecl>())
+        else if (auto d = decl.to<Hs::PatDecl>())
         {
             decls2.push_back({loc,*d});
+        }
+        else if (decl.to<Hs::InlinePragma>())
+        {
+            decls2.push_back( decls[i] );
         }
         else if (auto fvar = fundecl_head(decl))
         {
