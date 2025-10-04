@@ -60,7 +60,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Hs::TypeSigDecl& decl, bool top = false);
 
     std::vector<std::vector<int>> rename_grouped_decls(Hs::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
-    void rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, const bound_var_info& bound, bool top = false);
+    void rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, std::map<Hs::LVar, Hs::inline_pragma_t>& inline_sigs, const bound_var_info& bound, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);

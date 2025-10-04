@@ -282,6 +282,19 @@ std::string InlinePragma::print() const
     return "{-# " + command_string.obj + " " + var.obj + " #-}";
 }
 
+std::ostream& operator<<(std::ostream& o, inline_pragma_t ip)
+{
+    if (ip == inline_pragma_t::INLINE)
+        o<<"INLINE";
+    else if (ip == inline_pragma_t::INLINABLE)
+        o<<"INLINABLE";
+    else if (ip == inline_pragma_t::NOINLINE)
+        o<<"NOINLINE";
+    else
+        std::abort();
+    return o;
+}
+
 InlinePragma::InlinePragma(const Located<std::string>& s1, const Located<std::string>& s2)
     :command_string(s1),
      var(s2)
@@ -322,12 +335,14 @@ Binds operator+(const Binds& b1, const Binds& b2)
 
 string Binds::print() const
 {
-    vector<string> ds;
+    std::ostringstream out;
     for(auto& [var, type]: signatures)
-        ds.push_back( var.print() + " :: " + type.print() );
+        out<<var.print()<<" :: "<<type.print()<<"\n";
+    for(auto& [var, ip]: inline_sigs)
+        out<<"{#- "<<ip<<" "<<var.print()<<" #-}\n";
     for(auto& decls: *this)
-        ds.push_back(decls.print());
-    return join( ds, "\n");
+        out<<decls.print();
+    return out.str();
 }
 
 string ForeignDecl::print() const

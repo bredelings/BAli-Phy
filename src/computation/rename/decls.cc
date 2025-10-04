@@ -15,6 +15,7 @@
 using std::string;
 using std::vector;
 using std::pair;
+using std::tuple;
 using std::set;
 using std::optional;
 using std::map;
@@ -41,7 +42,7 @@ using std::deque;
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
+// tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
 bool is_definitely_pattern(const Haskell::Expression& lhs)
@@ -122,24 +123,26 @@ optional<Hs::LVar> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls)
+tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 {
-    map<Hs::LVar, Hs::LType> signatures;
+    map<Hs::LVar, Hs::LType> type_sigs;
+
+    map<Hs::LVar, Hs::inline_pragma_t> inline_sigs;
 
     Hs::Decls decls2;
 
     for(int i=0;i<decls.size();i++)
     {
         auto [loc,decl] = decls[i];
-        // Remove signature and fixity decls after recording signatures.
+        // Remove signature and fixity decls after recording type_sigs.
         if (auto sd = decl.to<Hs::TypeSigDecl>())
         {
             for(auto& lvar: sd->vars)
             {
-                if (signatures.count(lvar))
+                if (type_sigs.count(lvar))
                     throw myexception()<<"Second signature for var '"<<unloc(lvar).name<<"' at location "<<*lvar.loc;
                 else
-                    signatures.insert({lvar, sd->type});
+                    type_sigs.insert({lvar, sd->type});
             }
         }
         else if (decl.is_a<Hs::FixityDecl>())
@@ -151,9 +154,10 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
         {
             decls2.push_back({loc,*d});
         }
-        else if (decl.to<Hs::InlinePragma>())
+        else if (auto ip = decl.to<Hs::InlinePragma>())
         {
-            decls2.push_back( decls[i] );
+            Hs::Var x(unloc(ip->var));
+            inline_sigs.insert({{ip->var.loc, x}, ip->command});
         }
         else if (auto fvar = fundecl_head(decl))
         {
@@ -185,7 +189,7 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
             std::abort();
     }
 
-    return {signatures, decls2};
+    return {type_sigs, inline_sigs, decls2};
 }
 
 Hs::Decls group_fundecls(const Haskell::Decls& decls)
@@ -235,12 +239,13 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
 Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
 {
     assert(binds.size() == 1);
-    for(auto& [_,e]: binds[0])
+    for(auto& [_, e]: binds[0])
         e = rename_infix_decl(m, e);
 
-    auto [sigs,bind0] = group_decls(binds[0]);
+    auto [type_sigs, inline_sigs, bind0] = group_decls(binds[0]);
 
-    binds.signatures = sigs;
+    binds.signatures = type_sigs;
+    binds.inline_sigs = inline_sigs;
     binds[0] = bind0;
 
     return binds;
@@ -254,27 +259,53 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
-void renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signatures, const bound_var_info& binders, bool top)
+void renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& type_sigs, map<Hs::LVar, Hs::inline_pragma_t>& inline_sigs, const bound_var_info& binders, bool top)
 {
-    map<Hs::LVar, Hs::LType> signatures2;
-    for(auto& [lvar, ltype]: signatures)
+    map<Hs::LVar, Hs::LType> type_sigs2;
+    for(auto& [lvar, ltype]: type_sigs)
     {
-        assert(not is_qualified_symbol(unloc(lvar).name));
         ltype = rename_and_quantify_type(ltype);
+
+        if (is_qualified_symbol(unloc(lvar).name))
+        {
+            error(lvar.loc, Note()<<"Variable name may not be qualified!");
+            continue;
+        }
 
         auto lvar2 = lvar;
         auto& var2 = unloc(lvar2);
         if (top)
             qualify_name(var2.name);
-        signatures2.insert( {lvar2, ltype} );
+        type_sigs2.insert( {lvar2, ltype} );
 
         if (not binders.count(var2.name))
         {
             error(lvar.loc, Note()<<"Signature but no definition for '"<<unloc(lvar).name<<"'");
         }
     }
+    type_sigs = std::move(type_sigs2);
 
-    signatures = std::move(signatures2);
+    map<Hs::LVar, Hs::inline_pragma_t> inline_sigs2;
+    for(auto& [lvar, ip]: inline_sigs)
+    {
+        if (is_qualified_symbol(unloc(lvar).name))
+        {
+            error(lvar.loc, Note()<<"Variable name may not be qualified!");
+            continue;
+        }
+
+        auto lvar2 = lvar;
+        auto& var2 = unloc(lvar2);
+        if (top)
+            qualify_name(var2.name);
+        inline_sigs2.insert( {lvar2, ip} );
+
+        if (not binders.count(var2.name))
+        {
+            error(lvar.loc, Note()<<"Signature but no definition for '"<<unloc(lvar).name<<"'");
+        }
+    }
+    inline_sigs = std::move(inline_sigs2);
 }
 
 vector<Hs::Decls> split_decls(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls)
@@ -449,7 +480,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     auto binders = find_bound_vars_in_decls(decls, top);
 
-    rename_signatures(binds.signatures, binders, top);
+    rename_signatures(binds.signatures, binds.inline_sigs, binders, top);
 
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);

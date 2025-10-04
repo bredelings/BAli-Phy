@@ -311,6 +311,7 @@ typedef Located<Decl> LDecl;
 
 enum class inline_pragma_t {INLINE, INLINABLE, NOINLINE};
 
+std::ostream& operator<<(std::ostream& o, inline_pragma_t );    
 
 struct InlinePragma: public Object
 {
@@ -340,6 +341,8 @@ struct Binds: public std::vector<Decls>
 {
     // FIXME: I should keep the TypeSigDecl around for error messages.
     std::map<LVar, LType> signatures;
+
+    std::map<LVar, inline_pragma_t> inline_sigs;
 
     std::string print() const;
 
