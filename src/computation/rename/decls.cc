@@ -164,11 +164,11 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
                 m.push_back( FD.matches[0] );
 
                 if (m.back().patterns.size() != m.front().patterns.size())
-                    throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
+                    error(loc2, Note()<<"Function '"<<*fvar<<"' has different numbers of arguments!");
             }
 
             if (m[0].patterns.empty() and m.size() != 1)
-                throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
+                error(loc, Note()<<"Multiple definitions for variable "<<fvar->print()<<"!");
 
             decls2.push_back( {loc,Hs::FunDecl( *fvar, m )} );
 
