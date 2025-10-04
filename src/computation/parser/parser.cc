@@ -4068,7 +4068,7 @@ namespace yy {
 
   case 287: // sigdecl: sig_vars "::" sigtypedoc
 #line 1156 "parser.y"
-                                  { yylhs.value.as < Located<expression_ref> > () = {yylhs.location,Hs::SignatureDecl{yystack_[2].value.as < std::vector<Hs::LVar> > (),yystack_[0].value.as < Hs::LType > ()}}; }
+                                  { yylhs.value.as < Located<expression_ref> > () = {yylhs.location,Hs::TypeSigDecl{yystack_[2].value.as < std::vector<Hs::LVar> > (),yystack_[0].value.as < Hs::LType > ()}}; }
 #line 4073 "parser.cc"
     break;
 
@@ -7685,7 +7685,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
     std::vector<Hs::FixityDecl> fixity_decls;
     std::vector<Hs::FamilyDecl> fam_decls;
     std::vector<Hs::TypeFamilyInstanceDecl> default_type_inst_decls;
-    std::vector<Hs::SignatureDecl> sig_decls;
+    std::vector<Hs::TypeSigDecl> sig_decls;
     Hs::Decls default_method_decls;
 
     if (decls)
@@ -7697,7 +7697,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
                 fam_decls.push_back(*TF);
             else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
                 default_type_inst_decls.push_back(*TI);
-            else if (auto S = decl.to<Hs::SignatureDecl>())
+            else if (auto S = decl.to<Hs::TypeSigDecl>())
                 sig_decls.push_back(*S);
             else if (auto V = decl.to<Hs::ValueDecl>())
                 default_method_decls.push_back({loc,*V});

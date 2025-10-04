@@ -413,7 +413,7 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& bin
     return bound_names;
 }
 
-bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool is_top_level)
+bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::TypeSigDecl& decl, bool is_top_level)
 {
     bound_var_info bound_names;
 

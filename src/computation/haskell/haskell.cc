@@ -239,7 +239,7 @@ string FixityDecl::print() const
     return result;
 }
 
-string SignatureDecl::print() const
+string TypeSigDecl::print() const
 {
     vector<string> var_strings;
     for(auto& var: vars)
@@ -1011,7 +1011,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
     {
         auto& [loc,decl] = ldecl;
 
-	if (decl.is_a<ValueDecl>() or decl.is_a<SignatureDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
+	if (decl.is_a<ValueDecl>() or decl.is_a<TypeSigDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
             value_decls.front().push_back(ldecl);
         else if (auto f = decl.to<FixityDecl>())
         {

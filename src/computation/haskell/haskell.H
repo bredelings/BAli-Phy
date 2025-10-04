@@ -223,16 +223,16 @@ struct TypedExp: public Object
     TypedExp(const LExp& e, const LType& t): exp(e), type(t) {}
 };
 
-struct SignatureDecl: public Object
+struct TypeSigDecl: public Object
 {
     std::vector<LVar> vars;
     LType type;
 
-    SignatureDecl* clone() const { return new SignatureDecl(*this);}
+    TypeSigDecl* clone() const { return new TypeSigDecl(*this);}
     std::string print() const;
 
-    SignatureDecl() = default;
-    SignatureDecl(const std::vector<LVar>& vs, const LType& t): vars(vs), type(t) {}
+    TypeSigDecl() = default;
+    TypeSigDecl(const std::vector<LVar>& vs, const LType& t): vars(vs), type(t) {}
 };
 
 struct KindSigDecl: public Object
@@ -300,11 +300,11 @@ struct RecordExp: public Object
 
 // I think that these can originally be only
 // * FixityDecl
-// * SignatureDecl
+// * TypeSigDecl
 // * ValueDecl
 
 // Eventually we replace ValueDecl with PatDecl and FunDecl,
-// move SignatureDecls to a map, and remove FixityDecls.
+// move TypeSigDecls to a map, and remove FixityDecls.
 
 typedef expression_ref Decl;
 typedef Located<Decl> LDecl;
@@ -338,7 +338,7 @@ public:
 
 struct Binds: public std::vector<Decls>
 {
-    // FIXME: I should keep the SignatureDecl around for error messages.
+    // FIXME: I should keep the TypeSigDecl around for error messages.
     std::map<LVar, LType> signatures;
 
     std::string print() const;
@@ -669,7 +669,7 @@ struct ClassDecl: public Object
     std::vector<FunDep> fun_deps;
     std::vector<FamilyDecl> fam_decls;
     std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
-    std::vector<SignatureDecl> sig_decls;
+    std::vector<TypeSigDecl> sig_decls;
     Decls default_method_decls;
 
     ClassDecl* clone() const { return new ClassDecl(*this);}
@@ -682,7 +682,7 @@ struct ClassDecl: public Object
               const std::vector<FunDep>& fds,
               const std::vector<FamilyDecl>& tfds,
               const std::vector<TypeFamilyInstanceDecl>& tids,
-              const std::vector<SignatureDecl>& sds,
+              const std::vector<TypeSigDecl>& sds,
               const Decls& dms)
         :context(ct),
          con(c),

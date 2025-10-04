@@ -97,7 +97,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         }
         throw myexception()<<"I don't recognize this declaration:\n    "<<E.print();
     }
-    else if (E.is_a<Hs::SignatureDecl>())
+    else if (E.is_a<Hs::TypeSigDecl>())
         return E;
     else if (E.is_a<Hs::FixityDecl>())
         return E;
@@ -132,7 +132,7 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
     {
         auto [loc,decl] = decls[i];
         // Remove signature and fixity decls after recording signatures.
-        if (auto sd = decl.to<Hs::SignatureDecl>())
+        if (auto sd = decl.to<Hs::TypeSigDecl>())
         {
             for(auto& lvar: sd->vars)
             {
