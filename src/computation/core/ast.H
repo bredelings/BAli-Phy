@@ -814,7 +814,10 @@ namespace Core2
 	std::vector<std::string> s_alts;
 	for(auto& alt: alts)
 	    s_alts.push_back(alt.print());
-	return "case " + object.print() + " of {"+join(s_alts,"; ")+"}";
+        std::string obj = object.print();
+        if (not ((bool)object.to_var() or object.to_constant()))
+            obj = "("+obj+")";
+	return "case " + obj + " of {"+join(s_alts,"; ")+"}";
     }
 
     template <typename NoteV,typename NoteE>
