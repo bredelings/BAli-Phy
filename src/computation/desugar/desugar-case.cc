@@ -24,6 +24,52 @@ using std::pair;
 // See list in computation/loader.C
 //
 
+std::optional<string> selectMatchVar(const Hs::Pattern& pat)
+{
+    // FIXME: If we return core_var instead of string, we could use make_core_var(Hs::var) instead of get_fresh_var( ).
+    //        That would allow tracking some things, such as source location, possibly type, etc.
+
+    if (auto sp = pat.to<Hs::StrictPattern>())
+    {
+        return selectMatchVar( unloc(sp->pattern) );
+    }
+    else if (auto lp = pat.to<Hs::LazyPattern>())
+    {
+        return selectMatchVar( unloc(lp->pattern) );
+    }
+    else if (auto vp = pat.to<Hs::VarPattern>())
+    {
+        return unloc(vp->var).name;
+    }
+    else if (auto ap = pat.to<Hs::AsPattern>())
+    {
+        return unloc(ap->var).name;
+    }
+    else
+        return {};
+}
+
+vector<string> selectMatchVars(const vector<Hs::Pattern>& pats, const string& fallback)
+{
+    vector<string> names;
+    for(int i=0;i<pats.size();i++)
+    {
+        if (auto name = selectMatchVar(pats[i]))
+            names.push_back(*name);
+        else
+            names.push_back(fallback+std::to_string(i+1));
+    }
+    return names;
+}
+
+vector<string> selectMatchVars(const vector<Hs::LPat>& lpats, const string& fallback)
+{
+    vector<Hs::Pat> pats;
+    for(auto& lpat: lpats)
+        pats.push_back(unloc(lpat));
+    return selectMatchVars(pats, fallback);
+}
+
 failable_expression fail_identity()
 {
     return failable_expression{true, [](const Core2::Exp<>& o) {return o;}};
@@ -198,8 +244,10 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
 
 	// 2.2 Construct the simple pattern for constant C
 	vector<Core2::Var<>> args;
-	for(int j=0;j< total_arity; j++)
-	    args.push_back( get_fresh_core_var("c") );
+        for(int j=0;j< dict_arity; j++)
+            args.push_back( get_fresh_core_var("dvar"+std::to_string(j+1)) );
+        for(auto& var_name: selectMatchVars(equations[rules[c][0]].patterns[0].to<Hs::ConPattern>()->args, "c"))
+	    args.push_back( get_fresh_core_var(var_name) );
 
         Core2::Pattern<> pat{name, args};
 
@@ -504,41 +552,6 @@ failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const 
     return FE;
 }
 
-std::optional<string> selectMatchVar(const Hs::Pattern& pat)
-{
-    if (auto sp = pat.to<Hs::StrictPattern>())
-    {
-        return selectMatchVar( unloc(sp->pattern) );
-    }
-    else if (auto lp = pat.to<Hs::LazyPattern>())
-    {
-        return selectMatchVar( unloc(lp->pattern) );
-    }
-    else if (auto vp = pat.to<Hs::VarPattern>())
-    {
-        return unloc(vp->var).name;
-    }
-    else if (auto ap = pat.to<Hs::AsPattern>())
-    {
-        return unloc(ap->var).name;
-    }
-    else
-        return {};
-}
-
-vector<string> selectMatchVars(const vector<Hs::Pattern>& pats)
-{
-    vector<string> names;
-    for(int i=0;i<pats.size();i++)
-    {
-        if (auto name = selectMatchVar(pats[i]))
-            names.push_back(*name);
-        else
-            names.push_back("x"+std::to_string(i+1));
-    }
-    return names;
-}
-
 Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core2::Exp<>& otherwise)
 {
     // If the equations are empty, then we don't know how many patterns there are, so we can't return \x1 ...xn -> otherwise.
@@ -546,7 +559,7 @@ Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equati
 
     // 1. Get fresh vars for the arguments
     vector<Core2::Var<>> args;
-    auto var_names = selectMatchVars(equations[0].patterns);
+    auto var_names = selectMatchVars(equations[0].patterns,"x");
     for(auto& var_name: var_names)
 	args.push_back(get_fresh_core_var(var_name));
 
