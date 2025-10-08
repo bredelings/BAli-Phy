@@ -52,13 +52,6 @@ struct ConContObj
     ConContObj(const Occ::Exp& a, const ConCont& n):arg(a), next(n){}
 };
 
-enum class arg_info
-{
-    trivial,
-    non_trivial,
-    value
-};
-
 std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 

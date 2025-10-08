@@ -276,7 +276,7 @@ ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>&
     if (args.empty()) return sizeN(0);
 
     var_discounts arg_discounts;
-    if (args.size() > 1)
+    if (args.size() >= 1)
     {
         if (auto x = args[0].to_var(); x and includes(top_args,*x))
         {
@@ -633,9 +633,54 @@ bool calc_some_benefit(const vector<arg_info>& arg_infos, int n_func_args, bool 
         return interesting_args or interesting_call;
 }
 
+
+int compute_discount(const vector<int>& arg_discounts, int result_discount, const vector<arg_info>& arg_infos, CallCtxt call_ctxt)
+{
+    int total_arg_discount = 0;
+    int n_arg_discounts = std::min(arg_discounts.size(), arg_infos.size());
+    for(int i=0;i<n_arg_discounts;i++)
+    {
+        int arg_discount = 0;
+        if (arg_infos[i] == arg_info::non_trivial)
+            arg_discount = 1;
+        else if (arg_infos[i] == arg_info::value)
+            arg_discount = arg_discounts[i];
+        total_arg_discount += arg_discount;
+//        std::cerr<<"["<<arg_discount<<"] ";
+    }
+
+    int actual_result_discount = 0;
+    if (call_ctxt == CallCtxt::BoringCtxt)
+        ; // nothing
+    else if (call_ctxt == CallCtxt::ApplyCtxt)
+        actual_result_discount = result_discount;
+    else if (call_ctxt == CallCtxt::CaseCtxt)
+        actual_result_discount = result_discount;
+    else
+        actual_result_discount = std::min(4, result_discount);
+
+    int replace_call_discount = (1 + arg_infos.size());
+//    std::cerr<<"  ("<<actual_result_discount<<")   ("<< replace_call_discount<<")\n";
+    
+    return replace_call_discount + total_arg_discount + actual_result_discount;
+}
+
+
+CallCtxt interesting_call_context(const inline_context& context)
+{
+    if (context.is_case_context())
+        return CallCtxt::CaseCtxt;
+    else if (context.is_apply_context())
+        return CallCtxt::ApplyCtxt;
+    else
+        return CallCtxt::BoringCtxt;
+}
+
 optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
     auto [lone_variable, arg_infos, call_context] = continuation_args(context);
+
+    auto interesting_continuation = interesting_call_context(context);
 
     auto cu = to<CoreUnfolding>(unfolding);
     if (not cu) return {};
@@ -676,6 +721,9 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
         bool some_benefit = calc_some_benefit(arg_infos, uw->arity, true);
 
+//        std::cerr<<"ALWAYS: rhs = "<<rhs.print()<<"\n";
+//        std::cerr<<"   n_args = "<<n_args<<"   enough_args = "<<enough_args<<"  some_benefit = "<<some_benefit<<"  boring_ok = "<<uw->boring_ok<<"\n";
+
         if (enough_args and (uw->boring_ok or some_benefit))
             return rhs;
         else
@@ -687,11 +735,19 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
         bool is_wf = is_work_free(rhs);
 
-        auto& arg_discounts = ui->arg_discounts;
+        bool some_benefit = calc_some_benefit(arg_infos, ui->arg_discounts.size(), false);
 
-        bool some_benefit = calc_some_benefit(arg_infos, arg_discounts.size(), false);
+        int depth_penalty = 0;
+        int discount = compute_discount(ui->arg_discounts, ui->scrut_discount, arg_infos, interesting_continuation);
+        int adjusted_size = ui->size + depth_penalty - discount;
+        bool is_small_enough1 = adjusted_size <= options.inline_threshhold;
+        bool is_small_enough2 = small_enough(rhs,context);
 
-        if (is_wf and some_benefit and small_enough(rhs, context))
+//        std::cerr<<"MAYBE: rhs = "<<rhs.print()<<"\n";
+//        std::cerr<<"   some_benefit = "<<some_benefit<<"  small_enough1 = "<<is_small_enough1<<"   small_enough2 = "<<is_small_enough2<<"\n";
+//        std::cerr<<"   func_args = "<<ui->arg_discounts.size()<<"  n_args = "<<arg_infos.size()<<"  size = "<<ui->size<<"   discount = "<<discount<<"   threshhold = "<<options.inline_threshhold<<"\n";
+
+        if (is_wf and some_benefit and is_small_enough1)
             return rhs;
         else
             return {};
