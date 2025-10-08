@@ -542,18 +542,6 @@ bool SimplifierState::small_enough(const Occ::Exp& rhs, const inline_context& co
     return (body_size - size_of_call - discounts <= options.inline_threshhold);
 }
 
-optional<Occ::Exp> SimplifierState::try_inline_multi(const Occ::Exp& rhs, const inline_context& context)
-{
-    if (no_size_increase(rhs,context)) return rhs;
-
-    if (boring(rhs,context)) return {};
-
-    if(small_enough(rhs, context))
-        return rhs;
-    else
-        return {};
-}
-
 bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
 {
     return false;
@@ -621,8 +609,6 @@ SimplifierState::continuation_args(const inline_context& context_in)
 
 bool calc_some_benefit(const vector<arg_info>& arg_infos, int n_func_args, bool /*is_inline*/)
 {
-    return true; 
-
     int n_applied_args = arg_infos.size();
     bool saturated = n_applied_args >= n_func_args;
     bool over_saturated = n_applied_args > n_func_args;
@@ -631,7 +617,7 @@ bool calc_some_benefit(const vector<arg_info>& arg_infos, int n_func_args, bool 
     for(auto& arg: arg_infos)
         interesting_args = interesting_args or (arg != arg_info::trivial);
 
-    bool interesting_call = over_saturated;
+    bool interesting_call = true; // over_saturated;
     if (not interesting_call)
     {
         // CaseCtxt -> not (lone_variable && expandable)
@@ -684,24 +670,11 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
         // UnfoldWhen should only happen for lambdas and trivial expressions.
         assert(is_work_free(rhs));
 
-        int n_args = 0;
-        bool interesting_args = false; // any nonTriv arg_infos;
-        auto c = context;
-        while(auto ac = c.is_apply_context())
-        {
-            n_args++;
-            interesting_args = interesting_args; // or interesting_arg(ac->arg, S, bound_vars, 0);
-            c = ac->next;
-        }
+        int n_args = arg_infos.size();
 
         bool enough_args = (n_args >= uw->arity) or (uw->unsaturated_ok and n_args > 0);
-        bool saturated = n_args >= uw->arity;
-        bool over_saturated = n_args > uw->arity;
 
-        bool interesting_call = over_saturated or (n_args > 0 or not (lone_variable and is_expandable));
-
-        // This looks like `not boring(rhs, context);
-        bool some_benefit = interesting_args or (saturated and interesting_call);
+        bool some_benefit = calc_some_benefit(arg_infos, uw->arity, true);
 
         if (enough_args and (uw->boring_ok or some_benefit))
             return rhs;
@@ -716,7 +689,8 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
         auto& arg_discounts = ui->arg_discounts;
 
-        bool some_benefit = not boring(rhs, context); // interesting_args or (saturated and interesting_call)
+        bool some_benefit = calc_some_benefit(arg_infos, arg_discounts.size(), false);
+
         if (is_wf and some_benefit and small_enough(rhs, context))
             return rhs;
         else
