@@ -269,7 +269,7 @@ ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_
     return {{size}, arg_discounts, res_discount};
 }
 
-ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>& top_args, const Occ::Var& fun, const vector<Occ::Exp>& args)
+ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>& top_args, const Occ::Var& /*fun*/, const vector<Occ::Exp>& args)
 {
     // if the class is a unary class then return sizeN(0);
 
@@ -602,9 +602,55 @@ bool is_work_free(const Occ::Exp& e) // , int n=0)
         std::abort();
 }
 
+std::tuple<bool, std::vector<arg_info>, inline_context>
+SimplifierState::continuation_args(const inline_context& context_in)
+{
+    // This is a "lone variable"
+    if (not context_in.is_apply_context()) return {true, {}, context_in};
+
+    std::vector<arg_info> arg_infos;
+    auto context = context_in;
+    while(auto A = context.is_apply_context())
+    {
+        arg_infos.push_back(interesting_arg(A->arg, A->subst, A->bound_vars, 0));
+        context = A->next;
+    }
+
+    return  {false, arg_infos, context};
+}
+
+bool calc_some_benefit(const vector<arg_info>& arg_infos, int n_func_args, bool /*is_inline*/)
+{
+    return true; 
+
+    int n_applied_args = arg_infos.size();
+    bool saturated = n_applied_args >= n_func_args;
+    bool over_saturated = n_applied_args > n_func_args;
+
+    bool interesting_args = false;
+    for(auto& arg: arg_infos)
+        interesting_args = interesting_args or (arg != arg_info::trivial);
+
+    bool interesting_call = over_saturated;
+    if (not interesting_call)
+    {
+        // CaseCtxt -> not (lone_variable && expandable)
+        // ApplyCtxt -> true
+        // DiscountArgCtxt -> n_func_args > 0
+        // RHSNonRec -> is_inline ? (n_func_args >0) : false;
+        // _         -> false
+    }
+
+    if (not saturated)
+        return interesting_args;
+    else
+        return interesting_args or interesting_call;
+}
 
 optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
+    auto [lone_variable, arg_infos, call_context] = continuation_args(context);
+
     auto cu = to<CoreUnfolding>(unfolding);
     if (not cu) return {};
 
@@ -626,7 +672,6 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
     /*------------- Now we use the guidance --------------*/
     auto& guidance = cu->unf_guidance;
-    bool lone_variable = false;
     bool is_expandable = false;
 
     if (to<UnfoldNever>(guidance))
@@ -636,7 +681,7 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
     {
         // QUESTION: when is uw->boring_ok=true?
 
-        // This should only be true for lambdas and trivial expressions.
+        // UnfoldWhen should only happen for lambdas and trivial expressions.
         assert(is_work_free(rhs));
 
         int n_args = 0;
@@ -781,8 +826,15 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
     }
     else if (auto let = E.to_let())
     {
+        auto bound_vars2 = bound_vars;
+        for(auto& [x,e]: let->decls)
+        {
+            bound_vars2 = bound_vars2.erase(x);
+            bound_vars2 = bind_var(bound_vars2, x, {});
+        }
+
         // GHC adds the let-binders to the "env" .... to the substitution?
-        return interesting_arg(let->body, S, bound_vars, n);
+        return interesting_arg(let->body, S, bound_vars2, n);
     }
     else if (E.to_conApp())
         return arg_info::non_trivial;
