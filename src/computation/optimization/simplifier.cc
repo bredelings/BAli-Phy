@@ -822,6 +822,9 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     // 6. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object.to_case(); C and options.case_of_case)
         E2 = case_of_case(*C, alts, *this);
+    // 7. Handle useless single-alt cases, including seq.
+    else if (object_is_evaluated_var and alts.size() == 1 and all_dead_binders(alts[0].pat))
+        E2 = alts[0].body;
     else
         E2 = Occ::Case{object, alts};
 
