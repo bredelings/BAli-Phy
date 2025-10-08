@@ -15,7 +15,7 @@ using std::tuple;
 
 Core2::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVarSource& source)
 {
-    Core2::Var<> x("x");
+    Core2::Var<> x("dict");
 
     if (N == 1)
         return  lambda_quantify({x}, Core2::Exp<>(x));
