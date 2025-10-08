@@ -5,30 +5,7 @@
 #include <string>
 #include "computation/optimization/occurrence_info.H"
 
-struct MethodUnfolding
-{
-    int index;
-
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(index);
-    }
-};
-
-struct DFunUnfolding
-{
-    std::vector<Occ::Var> binders;
-    std::string head;
-    std::vector<Occ::Exp> args;
-    std::set<Occ::Var> free_vars;
-    
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(binders, head, args);
-    }
-};
+// UnfoldingGuidance - for CoreUnfolding
 
 struct UnfoldNever
 {
@@ -67,7 +44,44 @@ struct UnfoldIfGoodArgs
 
 typedef std::variant<UnfoldNever, UnfoldWhen, UnfoldIfGoodArgs> UnfoldingGuidance;
 
-class Module;
+// Unfoldings
+
+struct MethodUnfolding
+{
+    int index;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(index);
+    }
+};
+
+struct DFunUnfolding
+{
+    std::vector<Occ::Var> binders;
+    std::string head;
+    std::vector<Occ::Exp> args;
+    std::set<Occ::Var> free_vars;
+    
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(binders, head, args);
+    }
+};
+
+struct OtherConUnfolding
+{
+    std::vector<std::string> constructors_not_taken;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(constructors_not_taken);
+    }
+};
+
 
 struct CoreUnfolding
 {
@@ -103,6 +117,6 @@ struct CoreUnfolding
 };
 
 
-typedef std::variant<std::monostate, MethodUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
+typedef std::variant<std::monostate, MethodUnfolding, OtherConUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
 
 #endif
