@@ -599,6 +599,13 @@ find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const sub
 }
 */
 
+bool all_dead_binders(const Occ::Pattern& pat)
+{
+    for(auto& binder: pat.args)
+        if (binder.info.work_dup != amount_t::None or binder.info.code_dup != amount_t::None)
+            return false;
+    return true;
+}
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
 Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
@@ -695,9 +702,27 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
         }
     }
 
+    bool object_is_evaluated_var = false;
+    if (auto v = object.to_var())
+    {
+        if (auto found = bound_vars.find(*v))
+        {
+            if (auto ocu = to<OtherConUnfolding>(found->first))
+            {
+                object_is_evaluated_var = true;
+                for(auto& con: ocu->constructors_not_taken)
+                {
+                    // If the alts are _ -> body, unseen_constructors might not be set.
+                    assert(not object_type or unseen_constructors.count(con));
+                    unseen_constructors.erase(con);
+                    seen_constructors.insert(con);
+                }
+            }
+        }
+    }
+
     // 3. Simplify each alternative
-    std::optional<int> last_index;
-    int index = 0;
+    vector<Occ::Alt> alts2;
     for(auto& [pattern, body]: alts)
     {
 	// 3.1. Rename and bind pattern variables
@@ -716,8 +741,8 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
             }
             else if (seen_constructors.count(*pattern.head))
             {
-                // we should ignore this branch!
-                // and this shouldn't happen.
+                // We reach this branch as an alternative to pattern->head, so this cannot occur.
+                continue;
             }
             else
                 std::abort();
@@ -757,17 +782,13 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
 
 	// 3.4. Simplify the alternative body
 	body = simplify(body, S2, bound_vars2, make_ok_context());
+        alts2.push_back({pattern, body});
 
         if (pattern.is_irrefutable() or unseen_constructors.empty())
-        {
-            last_index = index;
             break;
-        }
-
-        index++;
     }
-    if (last_index and *last_index + 1 < alts.size())
-        alts.resize(*last_index + 1);
+
+    std::swap(alts, alts2);
 
     // 4. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
