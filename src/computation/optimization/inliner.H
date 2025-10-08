@@ -49,6 +49,16 @@ struct ExprSize
     }
 };
 
+enum CallCtxt
+{
+    BoringCtxt,
+    RhsRecCtxt,
+    RhcNonRecCtxt,
+    DiscountArgCtxt,
+    ApplyCtxt,
+    CaseCtxt
+};
+
 
 class inline_context: public std::variant<std::shared_ptr<const ok_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
 {
