@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include "computation/optimization/occurrence_info.H"
-#include "computation/optimization/inliner.H"
 
 struct MethodUnfolding
 {
@@ -70,8 +69,6 @@ typedef std::variant<UnfoldNever, UnfoldWhen, UnfoldIfGoodArgs> UnfoldingGuidanc
 
 class Module;
 
-UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e);
-
 struct CoreUnfolding
 {
     Occ::Exp expr;
@@ -107,7 +104,5 @@ struct CoreUnfolding
 
 
 typedef std::variant<std::monostate, MethodUnfolding, DFunUnfolding, CoreUnfolding> Unfolding;
-
-CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e);
 
 #endif

@@ -6,6 +6,7 @@
 #include <utility>
 #include <variant>
 
+#include "computation/optimization/simplifier_env.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/fresh_vars.H"
 #include "immer/map.hpp"
@@ -15,10 +16,6 @@
 #include "unfolding.H"
 
 class module_loader;
-
-typedef std::pair<Unfolding,occurrence_info> bound_variable_info;
-
-typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 
 int get_n_lambdas1(Occ::Exp E);
 

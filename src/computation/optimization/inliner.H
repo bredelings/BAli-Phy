@@ -6,6 +6,7 @@
 #include <variant>
 #include <memory>
 #include "substitution.H"
+#include "simplifier_env.H" // for Unfolding, Occ::Var, and rebind_var( )
 
 struct ok_context;
 struct apply_context;
@@ -118,4 +119,9 @@ class Module;
 ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E);
 
 bool is_WHNF(const Occ::Exp& E);
+
+UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e);
+
+CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e);
+
 #endif
