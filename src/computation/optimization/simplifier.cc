@@ -19,6 +19,16 @@ namespace views = ranges::views;
 
 using namespace simplifier;
 
+/* TODO:
+   1. Collect surrounding floats without re-applyin
+ */
+
+/*
+  rebuild :: returns (Floats, Expr)
+  rebuild_case :: returns (Floats, Expr)
+  
+ */
+
 // TODO: when building let expressions to bind variables, pass those expressions into the simplifier
 //       * 1. stop translating wildcards to named variables.
 //       * 2. make the occurrence analyzer replace dead variables with wildcards in case patterns and lambdas.
@@ -609,7 +619,7 @@ bool all_dead_binders(const Occ::Pattern& pat)
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not object.to_let());
 
@@ -647,7 +657,10 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
                 decls.push_back({arg2, args[i]});
             }
             auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-            return make_let(decls, simplify(body, S2, bound_vars2, make_ok_context()));
+            if (decls.empty())
+                return { vector<Occ::Decls>(), simplify(body, S2, bound_vars2, make_ok_context()) };
+            else
+                return { {decls}, simplify(body, S2, bound_vars2, make_ok_context()) };
         }
         else
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -656,7 +669,8 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     if (object.to_constant())
     {
         assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
-        return simplify(alts[0].body, S, bound_vars, make_ok_context());
+        vector<Occ::Decls> decls;
+        return { decls, simplify(alts[0].body, S, bound_vars, make_ok_context()) };
     }
 
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
@@ -829,11 +843,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     else
         E2 = Occ::Case{object, alts};
 
-    // 7. If we floated anything out, put it here.
-    for(auto& d: default_decls | views::reverse)
-	E2 = Occ::Let{d,E2};
-
-    return E2;
+    return { default_decls, E2};
 }
 
 Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
@@ -843,8 +853,11 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
 
     auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
     
-    auto E2 = rebuild_case_inner(object, alts, S, bound_vars2);
+    auto [decls2,E2] = rebuild_case_inner(object, alts, S, bound_vars2);
 
+    for(auto& d: decls2)
+        decls.push_back(d);
+    
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: decls | views::reverse)
 	E2 = Occ::Let{d, E2};
