@@ -498,18 +498,57 @@ failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const 
     for(int i=0; i<patterns.size(); i++)
 	equations.push_back( { {patterns[i]}, bodies[i]} );
 
-    auto x = get_fresh_core_var("x");
+    auto x = get_fresh_core_var("obj");
     auto FE = match({x}, equations);
     FE.add_binding({{x,T}});
     return FE;
 }
 
+std::optional<string> selectMatchVar(const Hs::Pattern& pat)
+{
+    if (auto sp = pat.to<Hs::StrictPattern>())
+    {
+        return selectMatchVar( unloc(sp->pattern) );
+    }
+    else if (auto lp = pat.to<Hs::LazyPattern>())
+    {
+        return selectMatchVar( unloc(lp->pattern) );
+    }
+    else if (auto vp = pat.to<Hs::VarPattern>())
+    {
+        return unloc(vp->var).name;
+    }
+    else if (auto ap = pat.to<Hs::AsPattern>())
+    {
+        return unloc(ap->var).name;
+    }
+    else
+        return {};
+}
+
+vector<string> selectMatchVars(const vector<Hs::Pattern>& pats)
+{
+    vector<string> names;
+    for(int i=0;i<pats.size();i++)
+    {
+        if (auto name = selectMatchVar(pats[i]))
+            names.push_back(*name);
+        else
+            names.push_back("x"+std::to_string(i+1));
+    }
+    return names;
+}
+
 Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core2::Exp<>& otherwise)
 {
+    // If the equations are empty, then we don't know how many patterns there are, so we can't return \x1 ...xn -> otherwise.
+    assert(not equations.empty());
+
     // 1. Get fresh vars for the arguments
     vector<Core2::Var<>> args;
-    for(int i=0;i<equations[0].patterns.size();i++)
-	args.push_back(get_fresh_core_var("x"));
+    auto var_names = selectMatchVars(equations[0].patterns);
+    for(auto& var_name: var_names)
+	args.push_back(get_fresh_core_var(var_name));
 
     // 2. Construct the case expression
     auto E = match(args, equations).result(otherwise);

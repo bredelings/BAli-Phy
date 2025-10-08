@@ -444,7 +444,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
     }
     else if (auto S = E.to<Hs::RightSection>())
     {
-        auto x = get_fresh_core_var("x");
+        auto x = get_fresh_core_var("rs");
         return lambda_quantify({x}, safe_apply(desugar(S->op), {x, desugar(S->r_arg)}) );
     }
     else if (auto T = E.to<Hs::Tuple>())
