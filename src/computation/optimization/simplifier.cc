@@ -667,6 +667,8 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
 	// 2.1. Rename and bind pattern variables
 	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
+        // 2.2 Look up the data type or constraint type from the constructor head.
+        //     FIXME: Can we just record the type in the Case object?
         if (pattern.is_con_pat())
         {
 	    // Get type and its constructors
@@ -709,22 +711,35 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
             }
         }
 
-        // 2.2 Define x = pattern in this branch only
-	if (auto v = object.to_var(); v and not pattern.is_irrefutable())
+        // 2.3 Set unfolding for x in this branch only.
+	if (auto v = object.to_var())
         {
-	    auto pattern_expression = pattern_to_expression(pattern).value();
+            // Compute the unfolding
             auto x = *v;
+            Unfolding unfolding;
+            if (pattern.is_irrefutable())
+            {
+                auto other_cons = seen_constructors | ranges::to<vector>;
+                unfolding = OtherConUnfolding(other_cons);
+            }
+            else
+            {
+                auto pattern_expression = pattern_to_expression(pattern).value();
+                unfolding = make_core_unfolding(this_mod, options, pattern_expression);
+            }
+
+            // Set the unfolding
             if (is_local_symbol(x.name, this_mod.name))
-                bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(this_mod, options,pattern_expression));
+                bound_vars2 = rebind_var(bound_vars2, x, unfolding);
             else
             {
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
                 x.info.work_dup = amount_t::Many;
                 x.info.code_dup = amount_t::Many;
                 if (bound_vars2.count(x))
-                    bound_vars2 = rebind_var(bound_vars2, x, make_core_unfolding(this_mod, options,pattern_expression));
+                    bound_vars2 = rebind_var(bound_vars2, x, unfolding);
                 else
-                    bound_vars2 = bind_var(bound_vars2, x, make_core_unfolding(this_mod, options, pattern_expression));
+                    bound_vars2 = bind_var(bound_vars2, x, unfolding);
             }
         }
 
