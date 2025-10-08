@@ -472,6 +472,7 @@ Occ::Exp case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSo
     // case object2 of C x y -> E   => let f x y = E in case object2 of C x y -> f x y
     //
     Occ::Decls cc_decls;
+    int join_point_index = 1;
     for(auto& [pattern, body]: alts)
     {
         // Don't both factoring out trivial expressions
@@ -479,7 +480,7 @@ Occ::Exp case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSo
 
         vector<Occ::Var> used_vars2 = get_used_vars(pattern);
 
-        auto f = fresh_vars.get_fresh_occ_var("_cc");
+        auto f = fresh_vars.get_fresh_occ_var("$j"+std::to_string(join_point_index++));
         f.info.work_dup = amount_t::Many;
         f.info.code_dup = amount_t::Many;
 
