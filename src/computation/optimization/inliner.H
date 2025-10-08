@@ -86,8 +86,9 @@ struct apply_context
 {
     Occ::Exp arg;
     const simplifier::substitution& subst;
+    in_scope_set bound_vars;
     inline_context next;
-    apply_context(const Occ::Exp& a, const simplifier::substitution& s, const inline_context& i):arg(a), subst(s), next(i) {}
+    apply_context(const Occ::Exp& a, const simplifier::substitution& s, const in_scope_set& bvs, const inline_context& i):arg(a), subst(s), bound_vars(bvs), next(i) {}
 };
 
 struct case_context
@@ -104,8 +105,8 @@ struct ok_context
 };
 
 inline_context make_ok_context();
-inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const Occ::Var& arg);
-inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, inline_context context);
+inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const in_scope_set& bound_vars, const Occ::Var& arg);
+inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, const in_scope_set& bound_vars, inline_context context);
 inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context);
 
 bool is_trivial(const Occ::Exp& E);

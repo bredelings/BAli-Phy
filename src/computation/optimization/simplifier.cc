@@ -1124,7 +1124,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
     else if (auto app = E.to_apply())
     {
         // Simplify the function
-	return simplify(app->head, S, bound_vars, make_apply_context(*app, S, context));
+	return simplify(app->head, S, bound_vars, make_apply_context(*app, S, bound_vars, context));
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
