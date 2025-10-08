@@ -654,19 +654,12 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
     assert(not is_WHNF(object) or object.to_var());
 
-
-
-    // 2. Simplify each alternative
-    std::optional<int> last_index;
-    int index = 0;
+    // 2. Determine the object type
     optional<string> object_type;
     set<string> seen_constructors;
     set<string> unseen_constructors;
     for(auto& [pattern, body]: alts)
     {
-	// 2.1. Rename and bind pattern variables
-	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
-
         // 2.2 Look up the data type or constraint type from the constructor head.
         //     FIXME: Can we just record the type in the Case object?
         if (pattern.is_con_pat())
@@ -687,20 +680,6 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
                     unseen_constructors = D->constructors;
                     assert(not unseen_constructors.empty());
                 }
-
-                // Remove this constructors from the total list of constructors
-                if (unseen_constructors.count(*pattern.head))
-                {
-                    unseen_constructors.erase(*pattern.head);
-                    seen_constructors.insert(*pattern.head);
-                }
-                else if (seen_constructors.count(*pattern.head))
-                {
-                    // we should ignore this branch!
-                    // and this shouldn't happen.
-                }
-                else
-                    std::abort();
             }
             else
             {
@@ -708,10 +687,43 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
                 assert(T);
                 assert(T->is_class());
                 assert(alts.size() == 1);
+
+                // This is a dictionary for a class.
+                object_type = *pattern.head;
+                unseen_constructors.insert(*pattern.head);
             }
         }
+    }
 
-        // 2.3 Set unfolding for x in this branch only.
+    // 3. Simplify each alternative
+    std::optional<int> last_index;
+    int index = 0;
+    for(auto& [pattern, body]: alts)
+    {
+	// 3.1. Rename and bind pattern variables
+	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+
+        // 3.2. Determine if the current pattern is excluded.
+        if (pattern.is_con_pat())
+        {
+            assert(object_type);
+
+            // Remove this constructors from the total list of constructors
+            if (unseen_constructors.count(*pattern.head))
+            {
+                unseen_constructors.erase(*pattern.head);
+                seen_constructors.insert(*pattern.head);
+            }
+            else if (seen_constructors.count(*pattern.head))
+            {
+                // we should ignore this branch!
+                // and this shouldn't happen.
+            }
+            else
+                std::abort();
+        }
+
+        // 3.3 Set unfolding for x in this branch only.
 	if (auto v = object.to_var())
         {
             // Compute the unfolding
@@ -743,7 +755,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
             }
         }
 
-	// 2.3. Simplify the alternative body
+	// 3.4. Simplify the alternative body
 	body = simplify(body, S2, bound_vars2, make_ok_context());
 
         if (pattern.is_irrefutable() or unseen_constructors.empty())
@@ -757,7 +769,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
     if (last_index and *last_index + 1 < alts.size())
         alts.resize(*last_index + 1);
 
-    // 3. If the _ branch cases on the same object, then we can lift
+    // 4. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
     vector<Occ::Decls> default_decls;
     if (alts.back().pat.is_wildcard_pat())
@@ -780,19 +792,19 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
         }
     }
 
-    // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
+    // 5. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
     Occ::Exp E2;
     if (is_identity_case(object, alts))
 	E2 = object;
-    // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
+    // 6. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object.to_case(); C and options.case_of_case)
         E2 = case_of_case(*C, alts, *this);
     else
         E2 = Occ::Case{object, alts};
 
-    // 6. If we floated anything out, put it here.
+    // 7. If we floated anything out, put it here.
     for(auto& d: default_decls | views::reverse)
 	E2 = Occ::Let{d,E2};
 
