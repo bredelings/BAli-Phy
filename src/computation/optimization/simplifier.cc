@@ -974,6 +974,8 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 
     const int n_decls = orig_decls.size();
 
+    SimplFloats result(bound_vars);
+
     Occ::Decls new_decls;
     vector<Occ::Var> new_names;
 
@@ -1037,19 +1039,24 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = wrap(simplify(F, S2, bound_vars, make_ok_context()));
-
+	    auto [F_floats, F2] = simplify(F, S2, bound_vars, make_ok_context());
+            
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
 	    // Float lets out of decl x = F
 	    if (options.let_float_from_let and (multi_let_body(F).to_conApp() or multi_let_body(F).to_lambda() or is_top_level))
-		for(auto& decls: strip_multi_let(F))
+            {
+                F = F2;
+		for(auto& decls: F_floats.decls)
 		    for(auto& decl: decls)
 		    {
 			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
 			new_names.push_back(decl.x);
 			new_decls.push_back(decl);
 		    }
+            }
+            else
+                F = wrap(F_floats, F2);
 
 	    // what are the conditions for post-inlining unconditionally?
 	    if (post_inline(x,F))
@@ -1083,9 +1090,8 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	}
     }
 
-    SimplFloats F(bound_vars);
-    F.append(this_mod, options, new_decls);
-    return {F, S2};
+    result.append(this_mod, options, new_decls);
+    return {result, S2};
 }
 
 // NOTE: See maybe_eta_reduce( ) in occurrence.cc
