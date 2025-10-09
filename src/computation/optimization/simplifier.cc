@@ -683,11 +683,15 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
                 // args[i] is already simplified, arg2 is already renamed
                 decls.push_back({arg2, args[i]});
             }
-            auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-            if (decls.empty())
-                return { SimplFloats({},bound_vars2), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
-            else
-                return { SimplFloats({decls}, bound_vars2), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
+
+            SimplFloats F(bound_vars);
+            F.append(this_mod, options, decls);
+
+            auto [F2, E2] = simplify(body, S2, F.bound_vars, make_ok_context());
+
+            F.append(this_mod, options, F2);
+
+            return { F, E2 };
         }
         else
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
