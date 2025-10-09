@@ -216,6 +216,21 @@ int count_cont_args(const ConCont& cont)
         return 1 + count_cont_args(cont->next);
 }
 
+Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
+{
+    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
+    for(auto& d: F.decls | views::reverse)
+        E = Occ::Let{d, E};
+
+    return E;
+}
+
+Occ::Exp wrap(const std::tuple<SimplFloats,Occ::Exp>& FE)
+{
+    auto& [F,E] = FE;
+    return wrap(F,E);
+}
+
 // GHC has an InScopeEnv -- different from an InScopeSet -- that contains the unfolding?
 
 std::optional<std::tuple<in_scope_set, std::string, std::vector<Occ::Exp>>>
@@ -364,7 +379,7 @@ Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set
     if (auto e = try_inline(unfolding, occ_info, context))
         return simplify(*e, {}, bound_vars, context);
     else
-        return rebuild(x, bound_vars, context);
+        return wrap(rebuild(x, bound_vars, context));
 }
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
@@ -861,7 +876,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
     for(auto& d: decls2)
         decls.push_back(d);
     
-    E2 = rebuild(E2, bound_vars3, context);
+    E2 = wrap(rebuild(E2, bound_vars3, context));
 
     return {SimplFloats(decls, bound_vars3), E2};
 }
@@ -878,7 +893,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, con
     // Could we sink the apply info case alternatives -- if it is a variable?
     Occ::Exp E2 = Occ::Apply{E, arg2};
 
-    return {SimplFloats(decls, bound_vars2), rebuild(E2, bound_vars, context)};
+    return {SimplFloats(decls, bound_vars2), wrap(rebuild(E2, bound_vars, context))};
 }
 
 // QUESTION: Should I avoid inlining into cases because they might get re-executed?
@@ -1070,33 +1085,18 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
     return app->head;
 }
 
-Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
-{
-    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-    for(auto& d: F.decls | views::reverse)
-        E = Occ::Let{d, E};
-
-    return E;
-}
-
-Occ::Exp wrap(const std::tuple<SimplFloats,Occ::Exp>& FE)
-{
-    auto& [F,E] = FE;
-    return wrap(F,E);
-}
-
-Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
+tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
     {
-        return wrap( rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next) );
+        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
-        return wrap( rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next) );
+        return rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
     }
     else
-        return E;
+        return {SimplFloats(), E};
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -1187,7 +1187,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         //     It seems like we should be able to look at the occurrence info... but that seems to be incorrect?
         // auto E2 = maybe_eta_reduce2( L );
 
-        return rebuild(L, bound_vars, context);
+        return wrap(rebuild(L, bound_vars, context));
     }
 
     // 6. Case
@@ -1221,7 +1221,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 
     // 5. Literal constant.  Treat as 0-arg constructor.
     else if (E.to_constant())
-        return rebuild(E, bound_vars, context);
+        return wrap(rebuild(E, bound_vars, context));
 
     // 4. Constructor
     else if (auto con = E.to_conApp())
@@ -1230,7 +1230,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	for(auto& arg: C.args)
 	    arg = simplify(arg, S, bound_vars, make_ok_context());
 
-	return rebuild(C, bound_vars, context);
+	return wrap(rebuild(C, bound_vars, context));
     }
 
     // 4. Builtin
@@ -1247,7 +1247,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	    builtin2.args.push_back(arg2);
  	}
 
-	return rebuild(builtin2, bound_vars, context);
+	return wrap(rebuild(builtin2, bound_vars, context));
     }
 
     std::abort();
