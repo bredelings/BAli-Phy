@@ -1187,8 +1187,12 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 Occ::Decls decls{{x2,arg}};
-                auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-                return { SimplFloats(), make_let(decls, wrap(simplify(lam->body, S2, bound_vars2, ac->next)))};
+                SimplFloats F(bound_vars);
+                F.append(this_mod, options, decls);
+                auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
+
+                F.append(this_mod, options, F2);
+                return { F, E2 };
             }
         }
 
