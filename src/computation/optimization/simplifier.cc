@@ -866,7 +866,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
     return {SimplFloats(decls, bound_vars3), E2};
 }
 
-Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(E);
@@ -878,11 +878,7 @@ Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const s
     // Could we sink the apply info case alternatives -- if it is a variable?
     Occ::Exp E2 = Occ::Apply{E, arg2};
 
-    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-    for(auto& d: decls | views::reverse)
-        E2 = Occ::Let{d, E2};
-
-    return rebuild(E2, bound_vars, context);
+    return {SimplFloats(decls, bound_vars2), rebuild(E2, bound_vars, context)};
 }
 
 // QUESTION: Should I avoid inlining into cases because they might get re-executed?
@@ -1088,7 +1084,12 @@ Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_v
     }
     else if (auto ac = context.is_apply_context())
     {
-        return rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
+        auto [floats, E2] = rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
+
+        // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
+        for(auto& d: floats.decls | views::reverse)
+            E2 = Occ::Let{d, E2};
+        return E2;
     }
     else
         return E;
