@@ -60,6 +60,10 @@ struct SimplFloats
     std::vector<Occ::Decls> decls;
     in_scope_set bound_vars;
 
+    void append(const Module& m, const inliner_options& opts, const Occ::Decls& d);
+    void append(const Module& m, const inliner_options& opts, const std::vector<Occ::Decls>& d);
+    void append(const Module& m, const inliner_options& opts, const SimplFloats& F);
+
     SimplFloats() {}
     SimplFloats(const in_scope_set& bv):bound_vars(bv) {}
     SimplFloats(const std::vector<Occ::Decls>& d, const in_scope_set& bv):decls(d),bound_vars(bv) {}
