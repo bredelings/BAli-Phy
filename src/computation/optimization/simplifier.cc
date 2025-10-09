@@ -852,18 +852,22 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
     auto decls = strip_multi_let(object);
 
     auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-    
+
     // FIXME2: We should be passing the continuation into here.
     auto [decls2,E2] = rebuild_case_inner(object, alts, S, bound_vars2);
+
+    auto bound_vars3 = bind_decls(this_mod, options, bound_vars2, decls2);
 
     for(auto& d: decls2)
         decls.push_back(d);
     
+    E2 = rebuild(E2, bound_vars3, context);
+
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: decls | views::reverse)
 	E2 = Occ::Let{d, E2};
 
-    return rebuild(E2, bound_vars, context);
+    return E2;
 }
 
 Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
