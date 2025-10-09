@@ -353,7 +353,8 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
 
 
 // Do we have to explicitly skip loop breakers here?
-Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
+tuple<SimplFloats,Occ::Exp>
+SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
     auto [unfolding, occ_info] = get_unfolding(x, bound_vars);
 
@@ -371,15 +372,15 @@ Occ::Exp SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set
 
                 auto expr = args[mu->index];
 
-                return simplify(apply_floats(floats, expr), {}, bound_vars, app->next);
+                return {SimplFloats(), simplify(apply_floats(floats, expr), {}, bound_vars, app->next)};
             }
         }
     }
 
     if (auto e = try_inline(unfolding, occ_info, context))
-        return simplify(*e, {}, bound_vars, context);
+        return {SimplFloats(),simplify(*e, {}, bound_vars, context)};
     else
-        return wrap(rebuild(x, bound_vars, context));
+        return rebuild(x, bound_vars, context);
 }
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
@@ -1130,7 +1131,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return simplify_out_var(*x, bound_vars, context);
+	    return wrap(simplify_out_var(*x, bound_vars, context));
 	}
     }
 
