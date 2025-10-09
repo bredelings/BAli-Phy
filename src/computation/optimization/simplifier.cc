@@ -1070,26 +1070,30 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
     return app->head;
 }
 
+Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
+{
+    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
+    for(auto& d: F.decls | views::reverse)
+        E = Occ::Let{d, E};
+
+    return E;
+}
+
+Occ::Exp wrap(const std::tuple<SimplFloats,Occ::Exp>& FE)
+{
+    auto& [F,E] = FE;
+    return wrap(F,E);
+}
+
 Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
     {
-        auto [floats, E2] = rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
-
-        // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-        for(auto& d: floats.decls | views::reverse)
-            E2 = Occ::Let{d, E2};
-
-        return E2;
+        return wrap( rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next) );
     }
     else if (auto ac = context.is_apply_context())
     {
-        auto [floats, E2] = rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
-
-        // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-        for(auto& d: floats.decls | views::reverse)
-            E2 = Occ::Let{d, E2};
-        return E2;
+        return wrap( rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next) );
     }
     else
         return E;
