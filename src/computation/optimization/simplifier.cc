@@ -20,7 +20,8 @@ namespace views = ranges::views;
 using namespace simplifier;
 
 /* TODO:
-   1. Collect surrounding floats without re-applyin
+   1. Collect surrounding floats without re-applying them.
+   2. Pass the continuation to rebuild_case( ) and just return its result.
  */
 
 /*
@@ -472,7 +473,7 @@ std::optional<Occ::Alt> select_case_alternative(const string& con, const vector<
     return {};
 }
 
-Occ::Exp case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSource& fresh_vars)
+tuple<vector<Occ::Decls>,Occ::Exp> case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSource& fresh_vars)
 {
     auto& object2 = object.object;
     auto alts2 = object.alts;
@@ -511,11 +512,12 @@ Occ::Exp case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSo
         body2 = Occ::Case{body2,alts};
 
     Occ::Exp E = Occ::Case{object2,alts2};
+    vector<Occ::Decls> decls;
     if (not cc_decls.empty())
-	E = Occ::Let{cc_decls,E};
+	decls.push_back(cc_decls);
 
     // 3. Reconstruct the case expression and add lets.
-    return E;
+    return {decls, E};
 }
 
 tuple<substitution, in_scope_set>
@@ -629,14 +631,6 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
     //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
     // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
     //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
-
-//    // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
-//    //    This transformation uses occurrence info.
-//    if (is_constant_case(patterns,bodies))
-//    {
-//        // We can ignore any let bindings inside the object, since we don't depend on the object.
-//	return simplify(bodies[0], S, bound_vars, context);
-//    }
 
     // 1. Take a specific branch if the object is a constant
     if (auto constant = exprIsConApp_maybe(object, bound_vars))
@@ -836,11 +830,17 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
 	E2 = object;
     // 6. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (auto C = object.to_case(); C and options.case_of_case)
-        E2 = case_of_case(*C, alts, *this);
+    {
+        auto [cc_decls, E3] = case_of_case(*C, alts, *this);
+        E2 = E3;
+        for(auto& d: cc_decls)
+            default_decls.push_back(d);
+    }
     // 7. Handle useless single-alt cases, including seq.
     else if (object_is_evaluated_var and alts.size() == 1 and all_dead_binders(alts[0].pat))
         E2 = alts[0].body;
     else
+        // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
         E2 = Occ::Case{object, alts};
 
     return { default_decls, E2};
@@ -853,6 +853,7 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
 
     auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
     
+    // FIXME2: We should be passing the continuation into here.
     auto [decls2,E2] = rebuild_case_inner(object, alts, S, bound_vars2);
 
     for(auto& d: decls2)
