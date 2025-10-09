@@ -216,6 +216,26 @@ int count_cont_args(const ConCont& cont)
         return 1 + count_cont_args(cont->next);
 }
 
+void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ::Decls& d)
+{
+    if (not d.empty())
+    {
+        bound_vars = bind_decls(m, opts, bound_vars, d);
+        decls.push_back(d);
+    }
+}
+
+void SimplFloats::append(const Module& m, const inliner_options& opts, const vector<Occ::Decls>& decl_groups)
+{
+    for(auto& decls: decl_groups)
+        append(m, opts, decls);
+}
+
+void SimplFloats::append(const Module& m, const inliner_options& opts, const SimplFloats& F)
+{
+    append(m, opts, F.decls);
+}
+
 Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
 {
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
