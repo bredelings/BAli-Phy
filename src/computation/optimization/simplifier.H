@@ -70,6 +70,8 @@ struct SimplFloats
 };
 
 
+
+
 class SimplifierState: FreshVarSource
 {
     simplifier_options options;
@@ -112,7 +114,7 @@ public:
     std::tuple<SimplFloats,Occ::Exp>
     rebuild_case(Occ::Exp object, const std::vector<Occ::Alt>& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<std::vector<Occ::Decls>,Occ::Exp>
+    std::tuple<SimplFloats,Occ::Exp>
     rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     std::tuple<SimplFloats,Occ::Exp>
