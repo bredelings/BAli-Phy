@@ -845,6 +845,8 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         // We can always lift any declarations out of the case body because they can't contain any pattern variables.
         default_decls = strip_multi_let( default_body );
 
+        auto bound_vars2 = bind_decls(this_mod, options, bound_vars, default_decls);
+
         // We could do this even if the object isn't a variable, right?
         if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
         {
@@ -1240,8 +1242,14 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 	auto decls = let->decls;
 	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
 
+        SimplFloats F({}, bound_vars);
+        F.append(this_mod, options, decls2);
+        
         // 5.2 Simplify the let-body
-	return {SimplFloats(), make_let(decls2, wrap(simplify(let->body, S2, bound_vars2, context)))};
+        auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
+
+        F.append(this_mod, options, F2);
+        return {F, E2};
     }
 
      // Do we need something to handle WHNF variables?
