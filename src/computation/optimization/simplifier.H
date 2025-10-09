@@ -94,7 +94,7 @@ public:
 
     arg_info interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n);
 
-    Occ::Exp
+    std::tuple<SimplFloats,Occ::Exp>
     simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
 
     Occ::Exp
