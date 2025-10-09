@@ -105,7 +105,7 @@ public:
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
-    Occ::Exp
+    std::tuple<SimplFloats,Occ::Exp>
     rebuild_case(Occ::Exp object, const std::vector<Occ::Alt>& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<std::vector<Occ::Decls>,Occ::Exp>

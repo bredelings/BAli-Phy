@@ -846,7 +846,7 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
     return { default_decls, E2};
 }
 
-Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
@@ -863,11 +863,7 @@ Occ::Exp SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& 
     
     E2 = rebuild(E2, bound_vars3, context);
 
-    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-    for(auto& d: decls | views::reverse)
-	E2 = Occ::Let{d, E2};
-
-    return E2;
+    return {SimplFloats(decls, bound_vars3), E2};
 }
 
 Occ::Exp SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
@@ -1082,7 +1078,13 @@ Occ::Exp SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_v
 {
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
+        auto [floats, E2] = rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
+
+        // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
+        for(auto& d: floats.decls | views::reverse)
+            E2 = Occ::Let{d, E2};
+
+        return E2;
     }
     else if (auto ac = context.is_apply_context())
     {
