@@ -1294,6 +1294,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     // 4. Builtin
     else if (auto builtin = E.to_builtinOp())
     {
+        SimplFloats F({}, bound_vars);
 	Occ::BuiltinOp builtin2;
 	builtin2.lib_name = builtin->lib_name;
 	builtin2.func_name = builtin->func_name;
@@ -1301,11 +1302,16 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 
 	for(auto& arg: builtin->args)
  	{
-	    auto arg2 = wrap(simplify(arg, S, bound_vars, make_ok_context()));
+	    auto [arg_floats, arg2] = simplify(arg, S, bound_vars, make_ok_context());
 	    builtin2.args.push_back(arg2);
+            F.append(this_mod, options, arg_floats);
  	}
 
-	return rebuild(builtin2, bound_vars, context);
+	auto [F2,E2] = rebuild(builtin2, F.bound_vars, context);
+
+        F.append(this_mod, options, F2);
+
+        return {F, E2};
     }
 
     std::abort();
