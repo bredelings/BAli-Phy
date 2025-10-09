@@ -531,17 +531,6 @@ bool boring(const Occ::Exp& rhs, const inline_context& context)
     return true;
 }
 
-bool SimplifierState::small_enough(const Occ::Exp& rhs, const inline_context& context)
-{
-    double body_size = simple_size(rhs);
-
-    double size_of_call = 1 + num_arguments(context);
-
-    int discounts = 0;
-
-    return (body_size - size_of_call - discounts <= options.inline_threshhold);
-}
-
 bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
 {
     return false;
@@ -740,14 +729,13 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
         int depth_penalty = 0;
         int discount = compute_discount(ui->arg_discounts, ui->scrut_discount, arg_infos, interesting_continuation);
         int adjusted_size = ui->size + depth_penalty - discount;
-        bool is_small_enough1 = adjusted_size <= options.inline_threshhold;
-        bool is_small_enough2 = small_enough(rhs,context);
+        bool is_small_enough = adjusted_size <= options.inline_threshhold;
 
 //        std::cerr<<"MAYBE: rhs = "<<rhs.print()<<"\n";
 //        std::cerr<<"   some_benefit = "<<some_benefit<<"  small_enough1 = "<<is_small_enough1<<"   small_enough2 = "<<is_small_enough2<<"\n";
 //        std::cerr<<"   func_args = "<<ui->arg_discounts.size()<<"  n_args = "<<arg_infos.size()<<"  size = "<<ui->size<<"   discount = "<<discount<<"   threshhold = "<<options.inline_threshhold<<"\n";
 
-        if (is_wf and some_benefit and is_small_enough1)
+        if (is_wf and some_benefit and is_small_enough)
             return rhs;
         else
             return {};
