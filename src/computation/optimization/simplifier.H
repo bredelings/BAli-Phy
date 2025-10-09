@@ -111,7 +111,8 @@ public:
     std::tuple<std::vector<Occ::Decls>,Occ::Exp>
     rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
-    Occ::Exp rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+    std::tuple<SimplFloats,Occ::Exp>
+    rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<Occ::Decls, simplifier::substitution, in_scope_set>
     simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
