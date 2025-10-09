@@ -76,8 +76,6 @@ public:
     std::optional<std::tuple<in_scope_set, std::vector<Float>, std::string, std::vector<Occ::Exp>>>
     exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& bound_vars);
 
-    bool small_enough(const Occ::Exp& rhs, const inline_context& context);
-
     std::tuple<bool, std::vector<arg_info>, inline_context>
     continuation_args(const inline_context& context_in);
 
