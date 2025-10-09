@@ -901,14 +901,18 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, con
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(E);
 
-    auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
+    SimplFloats F(bound_vars);
+    F.append(this_mod, options, decls);
+    
+    auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
 
-    auto arg2 = wrap(simplify(arg, S, bound_vars2, make_ok_context()));
+    F.append(this_mod, options, arg_floats);
+    
+    auto [F2, E2] = rebuild(Occ::Apply{E, arg2}, F.bound_vars, context);
+    
+    F.append(this_mod, options, F2);
 
-    // Could we sink the apply info case alternatives -- if it is a variable?
-    Occ::Exp E2 = Occ::Apply{E, arg2};
-
-    return {SimplFloats(decls, bound_vars2), wrap(rebuild(E2, bound_vars, context))};
+    return {F, E2};
 }
 
 // QUESTION: Should I avoid inlining into cases because they might get re-executed?
