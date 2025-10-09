@@ -364,7 +364,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
         if (auto app = context.is_apply_context())
         {
             // Apply substitution to the argument.
-            auto arg = simplify(app->arg, app->subst, bound_vars, make_ok_context());
+            auto arg = wrap(simplify(app->arg, app->subst, bound_vars, make_ok_context()));
 
             if (auto constant = exprIsConApp_maybe(arg, bound_vars))
             {
@@ -372,13 +372,13 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
 
                 auto expr = args[mu->index];
 
-                return {SimplFloats(), simplify(apply_floats(floats, expr), {}, bound_vars, app->next)};
+                return simplify(apply_floats(floats, expr), {}, bound_vars, app->next);
             }
         }
     }
 
     if (auto e = try_inline(unfolding, occ_info, context))
-        return {SimplFloats(),simplify(*e, {}, bound_vars, context)};
+        return simplify(*e, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
 }
@@ -668,9 +668,9 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
             }
             auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
             if (decls.empty())
-                return { vector<Occ::Decls>(), simplify(body, S2, bound_vars2, make_ok_context()) };
+                return { vector<Occ::Decls>(), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
             else
-                return { {decls}, simplify(body, S2, bound_vars2, make_ok_context()) };
+                return { {decls}, wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
         }
         else
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -680,7 +680,7 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
     {
         assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
         vector<Occ::Decls> decls;
-        return { decls, simplify(alts[0].body, S, bound_vars, make_ok_context()) };
+        return { decls, wrap(simplify(alts[0].body, S, bound_vars, make_ok_context())) };
     }
 
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
@@ -806,7 +806,7 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
         }
 
 	// 3.4. Simplify the alternative body
-	body = simplify(body, S2, bound_vars2, make_ok_context());
+	body = wrap(simplify(body, S2, bound_vars2, make_ok_context()));
         alts2.push_back({pattern, body});
 
         if (pattern.is_irrefutable() or unseen_constructors.empty())
@@ -889,7 +889,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, con
 
     auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
 
-    auto arg2 = simplify(arg, S, bound_vars2, make_ok_context());
+    auto arg2 = wrap(simplify(arg, S, bound_vars2, make_ok_context()));
 
     // Could we sink the apply info case alternatives -- if it is a variable?
     Occ::Exp E2 = Occ::Apply{E, arg2};
@@ -1005,7 +1005,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(F, S2, bound_vars, make_ok_context());
+	    F = wrap(simplify(F, S2, bound_vars, make_ok_context()));
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -1103,7 +1103,7 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(not E.empty());
 
@@ -1131,7 +1131,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	    else if (not bound_vars.count(*x))
 		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return wrap(simplify_out_var(*x, bound_vars, context));
+	    return simplify_out_var(*x, bound_vars, context);
 	}
     }
 
@@ -1154,7 +1154,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         if (auto ac = context.is_apply_context())
         {
             auto x = lam->x;
-            auto arg = simplify(ac->arg, ac->subst, bound_vars, make_ok_context());
+            auto arg = wrap(simplify(ac->arg, ac->subst, bound_vars, make_ok_context()));
             if (pre_inline(x,arg))
             {
                 S2 = S2.erase(x);
@@ -1166,7 +1166,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 Occ::Decls decls{{x2,arg}};
                 auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-                return make_let(decls, simplify(lam->body, S2, bound_vars2, ac->next));
+                return { SimplFloats(), make_let(decls, wrap(simplify(lam->body, S2, bound_vars2, ac->next)))};
             }
         }
 
@@ -1175,7 +1175,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	auto x2 = rename_and_bind_var(lam->x, S2, bound_vars_x);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(lam->body, S2, bound_vars_x, make_ok_context());
+	auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_ok_context()));
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
         auto L = Occ::Lambda{x2, new_body};
@@ -1188,7 +1188,7 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
         //     It seems like we should be able to look at the occurrence info... but that seems to be incorrect?
         // auto E2 = maybe_eta_reduce2( L );
 
-        return wrap(rebuild(L, bound_vars, context));
+        return rebuild(L, bound_vars, context);
     }
 
     // 6. Case
@@ -1215,23 +1215,23 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return make_let(decls2, simplify(let->body, S2, bound_vars2, context));
+	return {SimplFloats(), make_let(decls2, wrap(simplify(let->body, S2, bound_vars2, context)))};
     }
 
      // Do we need something to handle WHNF variables?
 
     // 5. Literal constant.  Treat as 0-arg constructor.
     else if (E.to_constant())
-        return wrap(rebuild(E, bound_vars, context));
+        return rebuild(E, bound_vars, context);
 
     // 4. Constructor
     else if (auto con = E.to_conApp())
     {
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
-	    arg = simplify(arg, S, bound_vars, make_ok_context());
+	    arg = wrap(simplify(arg, S, bound_vars, make_ok_context()));
 
-	return wrap(rebuild(C, bound_vars, context));
+	return rebuild(C, bound_vars, context);
     }
 
     // 4. Builtin
@@ -1244,11 +1244,11 @@ Occ::Exp SimplifierState::simplify(const Occ::Exp& E, const substitution& S, con
 
 	for(auto& arg: builtin->args)
  	{
-	    auto arg2 = simplify(arg, S, bound_vars, make_ok_context());
+	    auto arg2 = wrap(simplify(arg, S, bound_vars, make_ok_context()));
 	    builtin2.args.push_back(arg2);
  	}
 
-	return wrap(rebuild(builtin2, bound_vars, context));
+	return rebuild(builtin2, bound_vars, context);
     }
 
     std::abort();
