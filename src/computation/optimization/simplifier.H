@@ -55,6 +55,17 @@ struct ConContObj
 std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
 
+struct SimplFloats
+{
+    std::vector<Occ::Decls> decls;
+    in_scope_set bound_vars;
+
+    SimplFloats() {}
+    SimplFloats(const in_scope_set& bv):bound_vars(bv) {}
+    SimplFloats(const std::vector<Occ::Decls>& d, const in_scope_set& bv):decls(d),bound_vars(bv) {}
+};
+
+
 class SimplifierState: FreshVarSource
 {
     simplifier_options options;
