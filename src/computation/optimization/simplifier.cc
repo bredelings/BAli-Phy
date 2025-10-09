@@ -657,7 +657,7 @@ bool all_dead_binders(const Occ::Pattern& pat)
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not object.to_let());
 
@@ -688,9 +688,9 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
             }
             auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
             if (decls.empty())
-                return { vector<Occ::Decls>(), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
+                return { SimplFloats({},bound_vars2), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
             else
-                return { {decls}, wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
+                return { SimplFloats({decls}, bound_vars2), wrap(simplify(body, S2, bound_vars2, make_ok_context())) };
         }
         else
             throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
@@ -699,8 +699,7 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
     if (object.to_constant())
     {
         assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
-        vector<Occ::Decls> decls;
-        return { decls, wrap(simplify(alts[0].body, S, bound_vars, make_ok_context())) };
+        return { SimplFloats(), wrap(simplify(alts[0].body, S, bound_vars, make_ok_context())) };
     }
 
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
@@ -879,7 +878,9 @@ std::tuple<vector<Occ::Decls>,Occ::Exp> SimplifierState::rebuild_case_inner(Occ:
         // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
         E2 = Occ::Case{object, alts};
 
-    return { default_decls, E2};
+    SimplFloats F({}, bound_vars);
+    F.append(this_mod, options, default_decls);
+    return { F, E2};
 }
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
@@ -888,18 +889,19 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
     auto decls = strip_multi_let(object);
 
     auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
+    SimplFloats F({}, bound_vars);
+    F.append(this_mod, options, decls);
 
     // FIXME2: We should be passing the continuation into here.
-    auto [decls2,E2] = rebuild_case_inner(object, alts, S, bound_vars2);
+    auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
 
-    auto bound_vars3 = bind_decls(this_mod, options, bound_vars2, decls2);
-
-    for(auto& d: decls2)
-        decls.push_back(d);
+    F.append(this_mod, options, F2);
     
-    E2 = wrap(rebuild(E2, bound_vars3, context));
+    auto [F3,E3] = rebuild(E2, F.bound_vars, context);
 
-    return {SimplFloats(decls, bound_vars3), E2};
+    F.append(this_mod, options, F3);
+    
+    return {F, E3};
 }
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
