@@ -1253,11 +1253,21 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     // 4. Constructor
     else if (auto con = E.to_conApp())
     {
+        SimplFloats F({}, bound_vars);
+
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
-	    arg = wrap(simplify(arg, S, bound_vars, make_ok_context()));
+        {
+            auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
+            arg = arg2;
+            F.append(this_mod, options, arg_floats);
+        }
 
-	return rebuild(C, bound_vars, context);
+        auto [F2,E2] = rebuild(C, F.bound_vars, context);
+
+        F.append(this_mod, options, F2);
+
+        return {F, E2};
     }
 
     // 4. Builtin
