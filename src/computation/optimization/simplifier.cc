@@ -405,7 +405,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
 {
-    if (bound_vars.count(x))
+    if (not x.is_exported) //bound_vars.count(x))
     {
         x = get_fresh_var_copy(x);
 
@@ -509,7 +509,7 @@ std::optional<Occ::Alt> select_case_alternative(const string& con, const vector<
     return {};
 }
 
-tuple<vector<Occ::Decls>,Occ::Exp> case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSource& fresh_vars)
+tuple<Occ::Decls,Occ::Exp> case_of_case(const Occ::Case& object, vector<Occ::Alt> alts, FreshVarSource& fresh_vars)
 {
     auto& object2 = object.object;
     auto alts2 = object.alts;
@@ -548,12 +548,9 @@ tuple<vector<Occ::Decls>,Occ::Exp> case_of_case(const Occ::Case& object, vector<
         body2 = Occ::Case{body2,alts};
 
     Occ::Exp E = Occ::Case{object2,alts2};
-    vector<Occ::Decls> decls;
-    if (not cc_decls.empty())
-	decls.push_back(cc_decls);
 
     // 3. Reconstruct the case expression and add lets.
-    return {decls, E};
+    return {cc_decls, E};
 }
 
 tuple<substitution, in_scope_set>
@@ -833,17 +830,18 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     }
 
     std::swap(alts, alts2);
+    SimplFloats F({}, bound_vars);
 
     // 4. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
-    vector<Occ::Decls> default_decls;
     if (alts.back().pat.is_wildcard_pat())
     {
         // Make a copy to ensure a reference after we drop the default pattern.
         auto default_body = alts.back().body;
 
         // We can always lift any declarations out of the case body because they can't contain any pattern variables.
-        default_decls = strip_multi_let( default_body );
+        auto default_decls = strip_multi_let( default_body );
+        F.append(this_mod, options, default_decls);
 
         // We could do this even if the object isn't a variable, right?
         if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
@@ -856,7 +854,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
             }
         }
     }
-
+    
     // 5. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
@@ -864,12 +862,23 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     if (is_identity_case(object, alts))
 	E2 = object;
     // 6. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
-    else if (auto C = object.to_case(); C and options.case_of_case)
+    else if (auto C = object.to_case(); C and options.case_of_case and false)
     {
         auto [cc_decls, E3] = case_of_case(*C, alts, *this);
+
+/* OK, so the issue is that we haven't actually been simplifying the decls that we lifted out in order to create
+   case-of-case transformations!
+
+   But if we DO simplify them, then we could pre-inline things, which would create a substitution that applies to... what?
+   Could we just ... disable pre-inlining?
+
+ */
+        auto env2 = *this;
+        env2.options.pre_inline_unconditionally = false;
+        
+        auto [cc_decls2, _, bound_vars2] = env2.simplify_decls(cc_decls, S, F.bound_vars, false);
         E2 = E3;
-        for(auto& d: cc_decls)
-            default_decls.push_back(d);
+        F.append(this_mod, options, cc_decls2);
     }
     // 7. Handle useless single-alt cases, including seq.
     else if (object_is_evaluated_var and alts.size() == 1 and all_dead_binders(alts[0].pat))
@@ -878,8 +887,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
         E2 = Occ::Case{object, alts};
 
-    SimplFloats F({}, bound_vars);
-    F.append(this_mod, options, default_decls);
     return { F, E2};
 }
 
@@ -1240,8 +1247,14 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 	auto decls = let->decls;
 	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
 
+        SimplFloats F(bound_vars);
+        F.append(this_mod, options, decls2);
+
+        auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
+        F.append(this_mod, options, F2);
+
         // 5.2 Simplify the let-body
-	return {SimplFloats(), make_let(decls2, wrap(simplify(let->body, S2, bound_vars2, context)))};
+        return {F, E2};
     }
 
      // Do we need something to handle WHNF variables?
