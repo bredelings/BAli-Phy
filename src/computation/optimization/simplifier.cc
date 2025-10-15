@@ -580,29 +580,6 @@ bool redundant_pattern(const vector<Occ::Alt>& alts, const Occ::Pattern& pattern
     return false;
 }
 
-Occ::Exp multi_let_body(Occ::Exp E)
- {
-    while(auto let = E.to_let())
-    {
-	auto tmp = E;
-	E = let->body;
-    }
-    return E;
-}
- 
-std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
-{
-    std::vector<Occ::Decls> decl_groups;
-    while(auto let = E.to_let())
-    {
-	decl_groups.push_back(let->decls);
-	auto tmp = E;
-	E = let->body;
-    }
-    return decl_groups;
-}
-
-
 /*
 optional<tuple<Occ::Exp,substitution>>
 find_constant_case_body(const Occ::Exp& object, const Occ::Alts& alts, const substitution& S)
@@ -789,25 +766,20 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
 	// 3.4. Simplify the alternative body
 	auto [body_floats, body2] = simplify(body, S2, bound_vars2, make_ok_context());
 
-        if (pattern.is_irrefutable() or unseen_constructors.empty())
+        // In theory we could lift out floats if
+        // (i)  all_dead_binders(pattern)
+        // (ii) we don't substitute any of the binders into the body by putting them into the unfolding
+        if (pattern.is_irrefutable())
         {
-            body = wrap(body_floats, body2);
-
-            alts2.push_back({pattern, body});
-
-            break;
+            F.append(this_mod, options, body_floats);
+            body = body2;
         }
         else
-        {
-            // In theory we could lift out floats if
-            // (i)  all_dead_binders(pattern)
-            // (ii) we don't substitute any of the binders into the body by putting them into the unfolding
-
             body = wrap(body_floats, body2);
 
-            alts2.push_back({pattern, body});
-        }
+        alts2.push_back({pattern, body});
 
+        if (pattern.is_irrefutable() or unseen_constructors.empty()) break;
     }
 
     std::swap(alts, alts2);
@@ -818,10 +790,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     {
         // Make a copy to ensure a reference after we drop the default pattern.
         auto default_body = alts.back().body;
-
-        // We can always lift any declarations out of the case body because they can't contain any pattern variables.
-        auto default_decls = strip_multi_let( default_body );
-        F.append(this_mod, options, default_decls);
 
         // We could do this even if the object isn't a variable, right?
         if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
@@ -1037,7 +1005,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
 	    // Float lets out of decl x = rhs
-	    if (options.let_float_from_let and (multi_let_body(rhs).to_conApp() or multi_let_body(rhs).to_lambda() or is_top_level))
+	    if (options.let_float_from_let and (rhs2.to_conApp() or rhs2.to_lambda() or is_top_level))
             {
                 rhs = rhs2;
 		for(auto& decls: F2.decls)
