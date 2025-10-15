@@ -630,6 +630,17 @@ bool all_dead_binders(const Occ::Pattern& pat)
     return true;
 }
 
+const OtherConUnfolding* is_evaluated_var(const Occ::Exp& e, const in_scope_set& bound_vars)
+{
+    if (auto v = e.to_var())
+    {
+        if (auto found = bound_vars.find(*v))
+            return to<OtherConUnfolding>(found->first);
+    }
+
+    return nullptr;
+}
+
 // case object of alts.  Here the object has been simplified, but the alts have not.
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
@@ -684,21 +695,15 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     }
 
     bool object_is_evaluated_var = false;
-    if (auto v = object.to_var())
+    if (auto ocu = is_evaluated_var(object, bound_vars))
     {
-        if (auto found = bound_vars.find(*v))
+        object_is_evaluated_var = true;
+        for(auto& con: ocu->constructors_not_taken)
         {
-            if (auto ocu = to<OtherConUnfolding>(found->first))
-            {
-                object_is_evaluated_var = true;
-                for(auto& con: ocu->constructors_not_taken)
-                {
-                    // If the alts are _ -> body, unseen_constructors might not be set.
-                    assert(not object_type or unseen_constructors.count(con));
-                    unseen_constructors.erase(con);
-                    seen_constructors.insert(con);
-                }
-            }
+            // If the alts are _ -> body, unseen_constructors might not be set.
+            assert(not object_type or unseen_constructors.count(con));
+            unseen_constructors.erase(con);
+            seen_constructors.insert(con);
         }
     }
 
@@ -809,9 +814,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     Occ::Exp E2;
     if (is_identity_case(object, alts))
 	E2 = object;
-    // 7. Handle useless single-alt cases, including seq.
-    else if (object_is_evaluated_var and alts.size() == 1 and all_dead_binders(alts[0].pat))
-        E2 = alts[0].body;
     else
         // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
         E2 = Occ::Case{object, alts};
@@ -862,6 +864,12 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
     // Everything that the old approach caught should be caught by exprIsConApp_maybe.
     assert(not is_WHNF(object) or object.to_var());
+
+    if (alts.size() == 1)
+    {
+        if (all_dead_binders(alts[0].pat) and (bool)is_evaluated_var(object, bound_vars))
+            return simplify(alts[0].body, S, bound_vars, context);
+    }
 
     // FIXME2: We should be passing the continuation into here.
     auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
