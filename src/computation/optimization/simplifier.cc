@@ -472,7 +472,6 @@ bool is_identity_case(const Occ::Exp& object, const vector<Occ::Alt>& alts)
 	// Otherwise this branch is not OK.
 	return false;
     }
-
     return true;
 }
 
@@ -641,6 +640,38 @@ const OtherConUnfolding* is_evaluated_var(const Occ::Exp& e, const in_scope_set&
     return nullptr;
 }
 
+Occ::Exp make_case(const Occ::Exp& object, vector<Occ::Alt> alts)
+{
+    // 4. If the _ branch cases on the same object, then we can lift
+    //    out any cases not covered into the upper case and drop the others.
+    if (alts.back().pat.is_wildcard_pat())
+    {
+        // Make a copy to ensure a reference after we drop the default pattern.
+        auto default_body = alts.back().body;
+
+        // We could do this even if the object isn't a variable, right?
+        if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
+        {
+            alts.pop_back();
+            for(auto& [pattern2,body2]: C->alts)
+            {
+                assert(not redundant_pattern(alts, pattern2));
+                alts.push_back({pattern2, body2});
+            }
+        }
+    }
+    
+    // 5. If the case is an identity transformation: case obj of {A -> A; B y -> B y; C z -> obj; _ -> obj}
+    if (is_identity_case(object, alts))
+    {
+        // NOTE: this preserves strictness, because the object is still evaluated.
+        return object;
+    }
+    else
+        // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
+        return Occ::Case{object, alts};
+}
+
 // case object of alts.  Here the object has been simplified, but the alts have not.
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
@@ -694,10 +725,8 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
     }
 
-    bool object_is_evaluated_var = false;
     if (auto ocu = is_evaluated_var(object, bound_vars))
     {
-        object_is_evaluated_var = true;
         for(auto& con: ocu->constructors_not_taken)
         {
             // If the alts are _ -> body, unseen_constructors might not be set.
@@ -727,13 +756,11 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
                 unseen_constructors.erase(*pattern.head);
                 seen_constructors.insert(*pattern.head);
             }
-            else if (seen_constructors.count(*pattern.head))
+            else 
             {
-                // We reach this branch as an alternative to pattern->head, so this cannot occur.
+                assert(seen_constructors.count(*pattern.head));
                 continue;
             }
-            else
-                std::abort();
         }
 
         // 3.3 Set unfolding for x in this branch only.
@@ -789,36 +816,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
 
     std::swap(alts, alts2);
 
-    // 4. If the _ branch cases on the same object, then we can lift
-    //    out any cases not covered into the upper case and drop the others.
-    if (alts.back().pat.is_wildcard_pat())
-    {
-        // Make a copy to ensure a reference after we drop the default pattern.
-        auto default_body = alts.back().body;
-
-        // We could do this even if the object isn't a variable, right?
-        if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
-        {
-            alts.pop_back();
-            for(auto& [pattern2,body2]: C->alts)
-            {
-                assert(not redundant_pattern(alts, pattern2));
-                alts.push_back({pattern2, body2});
-            }
-        }
-    }
-    
-    // 5. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
-    // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
-    // NOTE: this preserves strictness, because the object is still evaluated.
-    Occ::Exp E2;
-    if (is_identity_case(object, alts))
-	E2 = object;
-    else
-        // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
-        E2 = Occ::Case{object, alts};
-
-    return { F, E2};
+    return { F, make_case(object, alts) };
 }
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
