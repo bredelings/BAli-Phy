@@ -829,8 +829,8 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
             alts.pop_back();
             for(auto& [pattern2,body2]: C->alts)
             {
-                if (not redundant_pattern(alts, pattern2))
-                    alts.push_back({pattern2, body2});
+                assert(not redundant_pattern(alts, pattern2));
+                alts.push_back({pattern2, body2});
             }
         }
     }
