@@ -819,6 +819,85 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     return { F, make_case(object, alts) };
 }
 
+bool alts_would_dup(const vector<Occ::Alt>& alts)
+{
+    return alts.size() > 1;
+}
+
+std::tuple<SimplFloats, inline_context> SimplifierState::make_dupable_case_cont(const substitution& S, const in_scope_set& bound_vars, const vector<Occ::Alt>& alts, const inline_context& cont)
+{
+    if (alts_would_dup(alts))
+    {
+        return make_dupable_cont(S, bound_vars, cont);
+    }
+    else
+    {
+        return {SimplFloats(bound_vars), cont};
+    }
+        
+}
+
+bool is_dupable(const inline_context& cont)
+{
+    if (cont.is_ok_context())
+    {
+        return true;
+    }
+    else if (auto ac = cont.is_apply_context())
+    {
+        return ac->dup_status == DupStatus::OkToDup and is_dupable(ac->next);
+    }
+    else if (auto cc = cont.is_case_context())
+    {
+        return cc->dup_status == DupStatus::OkToDup and is_dupable(cc->next);
+    }
+    else
+        std::abort();
+}
+
+std::tuple<DupStatus, in_scope_set, Occ::Exp>
+SimplifierState::simplifyArg(const in_scope_set& bound_vars, DupStatus dup_status, const substitution& arg_S, const in_scope_set& arg_bound_vars, const Occ::Exp& arg)
+{
+    if (dup_status == DupStatus::Simplified or dup_status == DupStatus::OkToDup)
+        return {dup_status, arg_bound_vars, arg};
+    else
+    {
+        // combine substitution from arg_env with in_scope_set from env
+        auto arg2 = wrap(simplify(arg, arg_S, bound_vars, make_ok_context()));
+        return {DupStatus::Simplified, bound_vars, arg2};
+    }
+}
+
+std::tuple<SimplFloats, inline_context>
+SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bound_vars, const inline_context& cont)
+{
+    if (is_dupable(cont))
+        return {SimplFloats(bound_vars), cont};
+
+    // ok_context handled above
+
+    else if (auto ac = cont.is_apply_context())
+    {
+        auto [floats1, cont1] = make_dupable_cont(S, bound_vars, ac->next);
+        // env' = (S, floats1.bound_vars)
+        auto [dup, bound_vars3, arg2] = simplifyArg(floats1.bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+        // makeTrivial env 
+        auto k = get_fresh_occ_var("karg");
+        k.info.work_dup = amount_t::Many;
+        k.info.code_dup = amount_t::Many;
+        Occ::Decls decls{{k,arg2}};
+        floats1.append(this_mod, options, decls);
+        auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, ac->next);
+        ac2->dup_status = DupStatus::OkToDup;
+        return {floats1, ac2};
+    }
+    else if (auto cc = cont.is_case_context())
+    {
+    }
+    else
+        std::abort();
+}
+
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(not object.to_let());
@@ -869,17 +948,36 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
             return simplify(alts[0].body, S, bound_vars, context);
     }
 
-    // FIXME2: We should be passing the continuation into here.
-    auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
+    if (options.case_of_case)
+    {
+        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
 
-    F.append(this_mod, options, F2);
-    
-    auto [F3,E3] = rebuild(E2, F.bound_vars, context);
+        // FIXME2: We should be passing the continuation into here.
+        auto [F2, E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
 
-    F.append(this_mod, options, F3);
+        F.append(this_mod, options, F2);
     
-    return {F, E3};
+        auto [F3,E3] = rebuild(E2, F.bound_vars, context);
+
+        F.append(this_mod, options, F3);
+    
+        return {F, E3};
+    }
+    else
+    {
+        // FIXME2: We should be passing the continuation into here.
+        auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
+
+        F.append(this_mod, options, F2);
+    
+        auto [F3,E3] = rebuild(E2, F.bound_vars, context);
+
+        F.append(this_mod, options, F3);
+    
+        return {F, E3};
+    }
 }
+
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {

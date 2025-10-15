@@ -59,6 +59,13 @@ enum CallCtxt
     CaseCtxt
 };
 
+enum DupStatus
+{
+    NoDup,           // unsimplified
+    Simplified,      // simplified, but cannot dup
+    OkToDup          // simplified, and ok to dup
+};
+
 
 class inline_context: public std::variant<std::shared_ptr<const ok_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
 {
@@ -94,6 +101,7 @@ public:
 
 struct apply_context
 {
+    DupStatus dup_status = DupStatus::NoDup;
     Occ::Exp arg;
     const simplifier::substitution& subst;
     in_scope_set bound_vars;
@@ -103,6 +111,7 @@ struct apply_context
 
 struct case_context
 {
+    DupStatus dup_status = DupStatus::NoDup;
     std::vector<Occ::Alt> alts;
     const simplifier::substitution& subst;
     inline_context next;

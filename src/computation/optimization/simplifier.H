@@ -106,7 +106,10 @@ public:
     std::tuple<SimplFloats,Occ::Exp>
     simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<SimplFloats,Occ::Exp>
+    std::tuple<DupStatus, in_scope_set, Occ::Exp>
+    simplifyArg(const in_scope_set& bound_vars, DupStatus dup_status, const simplifier::substitution& arg_S, const in_scope_set& arg_bound_vars, const Occ::Exp& arg);
+
+     std::tuple<SimplFloats,Occ::Exp>
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
@@ -119,6 +122,12 @@ public:
 
     std::tuple<SimplFloats,Occ::Exp>
     rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+
+    std::tuple<SimplFloats, inline_context>
+    make_dupable_cont( const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& cont);
+
+    std::tuple<SimplFloats, inline_context>
+    make_dupable_case_cont( const simplifier::substitution& S, const in_scope_set& bound_vars, const std::vector<Occ::Alt>& alts, const inline_context& cont);
 
     std::tuple<SimplFloats, simplifier::substitution>
     simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
