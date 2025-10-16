@@ -687,7 +687,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
             SimplFloats F(bound_vars);
             F.append(this_mod, options, decls);
 
-            auto [F2, E2] = simplify(body, S2, F.bound_vars, make_ok_context());
+            auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, make_ok_context());
 
             F.append(this_mod, options, F2);
 
