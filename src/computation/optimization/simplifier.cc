@@ -861,25 +861,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     Occ::Exp E2;
     if (is_identity_case(object, alts))
 	E2 = object;
-    // 6. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
-    else if (auto C = object.to_case(); C and options.case_of_case and false)
-    {
-        auto [cc_decls, E3] = case_of_case(*C, alts, *this);
-
-/* OK, so the issue is that we haven't actually been simplifying the decls that we lifted out in order to create
-   case-of-case transformations!
-
-   But if we DO simplify them, then we could pre-inline things, which would create a substitution that applies to... what?
-   Could we just ... disable pre-inlining?
-
- */
-        auto env2 = *this;
-        env2.options.pre_inline_unconditionally = false;
-        
-        auto [cc_decls2, _, bound_vars2] = env2.simplify_decls(cc_decls, S, F.bound_vars, false);
-        E2 = E3;
-        F.append(this_mod, options, cc_decls2);
-    }
     // 7. Handle useless single-alt cases, including seq.
     else if (object_is_evaluated_var and alts.size() == 1 and all_dead_binders(alts[0].pat))
         E2 = alts[0].body;
