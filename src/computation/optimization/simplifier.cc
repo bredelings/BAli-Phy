@@ -384,7 +384,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
         if (auto app = context.is_apply_context())
         {
             // Apply substitution to the argument.
-            auto arg = wrap(simplify(app->arg, app->subst, bound_vars, make_ok_context()));
+            auto [_, __, arg] = simplifyArg(bound_vars, app->dup_status, app->subst, app->bound_vars, app->arg);
 
             if (auto constant = exprIsConApp_maybe(arg, bound_vars))
             {
@@ -950,7 +950,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
     if (options.case_of_case)
     {
-        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
+//        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
 
         // FIXME2: We should be passing the continuation into here.
         auto [F2, E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
@@ -1201,7 +1201,9 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in
     }
     else if (auto ac = context.is_apply_context())
     {
-        return rebuild_apply(E, ac->arg, ac->subst, bound_vars, ac->next);
+        auto [_, __, arg2] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+
+        return rebuild(Occ::Apply{E, arg2}, bound_vars, ac->next);
     }
     else
         return {SimplFloats(), E};
@@ -1262,20 +1264,18 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
         {
             auto x = lam->x;
             SimplFloats F(bound_vars);
-            auto [argF,arg] = simplify(ac->arg, ac->subst, ac->bound_vars, make_ok_context());
-            F.append(this_mod, options, argF);
+            auto [_,__, arg] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
 
             if (pre_inline(x,arg))
             {
                 S2 = S2.erase(x);
                 S2 = S2.insert({x,arg});
-                auto [bodyF, body] = simplify(lam->body, S2, F.bound_vars, ac->next);
-                F.append(this_mod, options, bodyF);
-                return {F, body};
+                return simplify(lam->body, S2, bound_vars, ac->next);
             }
             else
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
+                SimplFloats F(bound_vars);
                 Occ::Decls decls{{x2,arg}};
                 F.append(this_mod, options, decls);
                 auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
