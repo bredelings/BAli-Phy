@@ -877,12 +877,9 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object, const vector<Occ::Alt>& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
-    // These lets should already be simplified, since we are rebuilding.
-    auto decls = strip_multi_let(object);
+    assert(not object.to_let());
 
-    auto bound_vars2 = bind_decls(this_mod, options, bound_vars, decls);
-    SimplFloats F({}, bound_vars);
-    F.append(this_mod, options, decls);
+    SimplFloats F(bound_vars);
 
     // FIXME2: We should be passing the continuation into here.
     auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
@@ -898,11 +895,9 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
 std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
-    // These lets should already be simplified, since we are rebuilding.
-    auto decls = strip_multi_let(E);
+    assert(not E.to_let());
 
     SimplFloats F(bound_vars);
-    F.append(this_mod, options, decls);
     
     auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
 
