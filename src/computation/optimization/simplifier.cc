@@ -953,7 +953,7 @@ bool post_inline(const Occ::Var& x, const Occ::Exp& rhs)
 
 // FIXME - Cache free vars on expressions!
 
-tuple<Occ::Decls, substitution, in_scope_set>
+tuple<SimplFloats, substitution>
 SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
@@ -1074,7 +1074,10 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	}
     }
 
-    return {new_decls, S2, bound_vars};
+    if (new_decls.empty())
+        return {SimplFloats({}, bound_vars), S2};
+    else
+        return {SimplFloats({new_decls}, bound_vars), S2};
 }
 
 // NOTE: See maybe_eta_reduce( ) in occurrence.cc
@@ -1239,10 +1242,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     else if (auto let = E.to_let())
     {
 	auto decls = let->decls;
-	auto [decls2, S2, bound_vars2] = simplify_decls(decls, S, bound_vars, false);
-
-        SimplFloats F(bound_vars);
-        F.append(this_mod, options, decls2);
+	auto [F, S2] = simplify_decls(decls, S, bound_vars, false);
 
         auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
         F.append(this_mod, options, F2);
@@ -1330,16 +1330,17 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
     in_scope_set bound_vars;
 
     vector<substitution> S(1);
+    vector<Occ::Decls> decl_groups2;
     for(auto& decls: decl_groups)
     {
-	auto [decls2, s, bound_vars2] = simplify_decls(decls, S.back(), bound_vars, true);
-        decls = decls2;
+	auto [F, s] = simplify_decls(decls, S.back(), bound_vars, true);
+        decl_groups2.insert(decl_groups2.end(), F.decls.begin(), F.decls.end());
 	S.push_back( s );
-        bound_vars = bound_vars2;
+        bound_vars = F.bound_vars;
     }
 
     vector<Core2::Decls<>> decl_groups_out;
-    for(auto& decls: decl_groups)
+    for(auto& decls: decl_groups2)
         decl_groups_out.push_back(to_core(decls));
 
     return decl_groups_out;
