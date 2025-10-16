@@ -766,6 +766,8 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
     }
 
+    SimplFloats F({}, bound_vars);
+
     // 3. Simplify each alternative
     vector<Occ::Alt> alts2;
     for(auto& [pattern, body]: alts)
@@ -826,15 +828,30 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
 
 	// 3.4. Simplify the alternative body
-	body = wrap(simplify(body, S2, bound_vars2, make_ok_context()));
-        alts2.push_back({pattern, body});
+	auto [body_floats, body2] = simplify(body, S2, bound_vars2, make_ok_context());
 
         if (pattern.is_irrefutable() or unseen_constructors.empty())
+        {
+            body = wrap(body_floats, body2);
+
+            alts2.push_back({pattern, body});
+
             break;
+        }
+        else
+        {
+            // In theory we could lift out floats if
+            // (i)  all_dead_binders(pattern)
+            // (ii) we don't substitute any of the binders into the body by putting them into the unfolding
+
+            body = wrap(body_floats, body2);
+
+            alts2.push_back({pattern, body});
+        }
+
     }
 
     std::swap(alts, alts2);
-    SimplFloats F({}, bound_vars);
 
     // 4. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
