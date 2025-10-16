@@ -665,47 +665,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
     // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
     //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
 
-    // 1. Take a specific branch if the object is a constant
-    if (auto constant = exprIsConApp_maybe(object, bound_vars))
-    {
-        auto& [bound_vars2, floats, con, args] = *constant;
-        if (auto found = select_case_alternative(con, alts))
-        {
-            auto& [pattern, body] = *found;
-            assert(pattern.is_wildcard_pat() or pattern.args.size() == args.size());
-
-            // NOTE: the previous approach used substitutions, which worked because the 
-            auto S2 = S;
-            Occ::Decls decls;
-            for(int i=0;i<pattern.args.size();i++)
-            {
-                auto arg2 = rename_var(pattern.args[i], S2, bound_vars);
-                // args[i] is already simplified, arg2 is already renamed
-                decls.push_back({arg2, args[i]});
-            }
-
-            SimplFloats F(bound_vars);
-            F.append(this_mod, options, decls);
-
-            auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, make_ok_context());
-
-            F.append(this_mod, options, F2);
-
-            return { F, E2 };
-        }
-        else
-            throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
-    }
-
-    if (object.to_constant())
-    {
-        assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
-        return simplify(alts[0].body, S, bound_vars, make_ok_context());
-    }
-
-    // Everything that the old approach caught should be caught by exprIsConApp_maybe.
-    assert(not is_WHNF(object) or object.to_var());
-
     // 2. Determine the object type
     optional<string> object_type;
     set<string> seen_constructors;
@@ -897,6 +856,44 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
     assert(not object.to_let());
 
     SimplFloats F(bound_vars);
+
+    // 1. Take a specific branch if the object is a constant
+    if (auto constant = exprIsConApp_maybe(object, bound_vars))
+    {
+        auto& [bound_vars2, floats, con, args] = *constant;
+        auto found = select_case_alternative(con, alts);
+        if (not found)
+            throw myexception()<<"Case object '"<<con<<"' doesn't match any alternative in '"<<Occ::Case{object,alts}.print()<<"'";
+
+        auto& [pattern, body] = *found;
+        assert(pattern.is_wildcard_pat() or pattern.args.size() == args.size());
+
+        // NOTE: the previous approach used substitutions, which worked because the 
+        auto S2 = S;
+        Occ::Decls decls;
+        for(int i=0;i<pattern.args.size();i++)
+        {
+            auto arg2 = rename_var(pattern.args[i], S2, bound_vars);
+            // args[i] is already simplified, arg2 is already renamed
+            decls.push_back({arg2, args[i]});
+        }
+
+        F.append(this_mod, options, decls);
+
+        auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, context);
+
+        F.append(this_mod, options, F2);
+
+        return { F, E2 };
+    }
+    else if (object.to_constant())
+    {
+        assert(alts.size() == 1 and alts[0].pat.is_wildcard_pat());
+        return simplify(alts[0].body, S, bound_vars, context);
+    }
+
+    // Everything that the old approach caught should be caught by exprIsConApp_maybe.
+    assert(not is_WHNF(object) or object.to_var());
 
     // FIXME2: We should be passing the continuation into here.
     auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
