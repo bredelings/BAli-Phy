@@ -1023,19 +1023,24 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    */
 
 	    // 5.1.2 Simplify rhs.
-	    rhs = wrap(simplify(rhs, S2, bound_vars, make_ok_context()));
+	    auto [F2, rhs2] = simplify(rhs, S2, bound_vars, make_ok_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
 	    // Float lets out of decl x = rhs
 	    if (options.let_float_from_let and (multi_let_body(rhs).to_conApp() or multi_let_body(rhs).to_lambda() or is_top_level))
-		for(auto& decls: strip_multi_let(rhs))
+            {
+                rhs = rhs2;
+		for(auto& decls: F2.decls)
 		    for(auto& decl: decls)
 		    {
 			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
 			new_names.push_back(decl.x);
 			new_decls.push_back(decl);
 		    }
+            }
+            else
+                rhs = wrap(F2,rhs2);
 
 	    // what are the conditions for post-inlining unconditionally?
 	    if (post_inline(x,rhs))
