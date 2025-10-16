@@ -1180,18 +1180,22 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
         if (auto ac = context.is_apply_context())
         {
             auto x = lam->x;
-            auto arg = wrap(simplify(ac->arg, ac->subst, bound_vars, make_ok_context()));
+            SimplFloats F(bound_vars);
+            auto [argF,arg] = simplify(ac->arg, ac->subst, ac->bound_vars, make_ok_context());
+            F.append(this_mod, options, argF);
+
             if (pre_inline(x,arg))
             {
                 S2 = S2.erase(x);
                 S2 = S2.insert({x,arg});
-                return simplify(lam->body, S2, bound_vars, ac->next);
+                auto [bodyF, body] = simplify(lam->body, S2, F.bound_vars, ac->next);
+                F.append(this_mod, options, bodyF);
+                return {F, body};
             }
             else
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 Occ::Decls decls{{x2,arg}};
-                SimplFloats F(bound_vars);
                 F.append(this_mod, options, decls);
                 auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
 
