@@ -980,30 +980,30 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	// If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
 	//                                     E[i] can only reference EARLIER x[k] and loop breakers.
 	auto x  = orig_decls[i].x;
-	auto F  = orig_decls[i].body;
+	auto rhs  = orig_decls[i].body;
 
 	auto x2 = new_names[i];
 
-	// 1. Any references to x in F must be to the x bound in this scope.
-	// 2. F can only contain references to x if x is a loop breaker.
+	// 1. Any references to x in rhs must be to the x bound in this scope.
+	// 2. rhs can only contain references to x if x is a loop breaker.
 	// 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
-	// 4. Therefore S2 is a good substitution for F.
-	assert(x.info.is_loop_breaker or not get_free_vars(F).count(x));
+	// 4. Therefore S2 is a good substitution for rhs.
+	assert(x.info.is_loop_breaker or not get_free_vars(rhs).count(x));
 
 	// A. Suspended substitutions created by pre-inlining won't be affected if we include unconditionally inlining later-occurring variables.
 	//   A.1 This is because substitutions for later-occuring variables that are loop-breakers has already been done.
-	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
+	//   A.2 Non-loop cannot occur in the bodies rhs that the suspended substitutions will be applied to.
 	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
-	if (pre_inline(x,F))
+	if (pre_inline(x,rhs))
 	{
 	    S2 = S2.erase(x);
-	    S2 = S2.insert({x,{F,S2}});
+	    S2 = S2.insert({x,{rhs,S2}});
 	}
 	else
 	{
-	    /* See the paper on inlining for why we should NOT consider if F is trivial until after we have
-                 simplified F.
+	    /* See the paper on inlining for why we should NOT consider if rhs is trivial until after we have
+                 simplified rhs.
 
 	       One case that seems kind of problematic is let {x=3,y=4,q=let {z=x,y=w} in (z,w)} in ...
                If we simplify the bodies of z and w then we get let {x=3,y=4,q=let {z=3,w=4} in (z,w)} in ...
@@ -1013,7 +1013,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 
                However, consider that we might have decided to unconditionally pre-inline x.  In that case,
                  replacing z with x is bad, since we would then replace z with 3 and get (3,w), which is illegal.
-               This the warning about not replacing z with x until after we simplify F (below) applies to this case.
+               This the warning about not replacing z with x until after we simplify rhs (below) applies to this case.
 
                In practice, it seems that we get around this problem by floating the let {z=w,y=w} up since (z,w)
                  is a constructor.  However, if we could somehow avoid substituting x unconditionally in these cases,
@@ -1022,14 +1022,14 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
                  is the body of a let.  So, maybe we just hope that floating lets out of less is sufficient for now.
 	    */
 
-	    // 5.1.2 Simplify F.
-	    F = wrap(simplify(F, S2, bound_vars, make_ok_context()));
+	    // 5.1.2 Simplify rhs.
+	    rhs = wrap(simplify(rhs, S2, bound_vars, make_ok_context()));
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
-	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and (multi_let_body(F).to_conApp() or multi_let_body(F).to_lambda() or is_top_level))
-		for(auto& decls: strip_multi_let(F))
+	    // Float lets out of decl x = rhs
+	    if (options.let_float_from_let and (multi_let_body(rhs).to_conApp() or multi_let_body(rhs).to_lambda() or is_top_level))
+		for(auto& decls: strip_multi_let(rhs))
 		    for(auto& decl: decls)
 		    {
 			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
@@ -1038,14 +1038,14 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 		    }
 
 	    // what are the conditions for post-inlining unconditionally?
-	    if (post_inline(x,F))
+	    if (post_inline(x,rhs))
 	    {
 		S2 = S2.erase(x);
-		S2 = S2.insert({x,F});
+		S2 = S2.insert({x,rhs});
 	    }
 	    else
 	    {
-		new_decls.push_back({x2,F});
+		new_decls.push_back({x2,rhs});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
                 Unfolding unfolding;
@@ -1062,7 +1062,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
                 }
 
                 if (to<std::monostate>(unfolding) and not noinline)
-                    unfolding = make_core_unfolding(this_mod, options, F);
+                    unfolding = make_core_unfolding(this_mod, options, rhs);
 
                 bound_vars = rebind_var(bound_vars, x2, unfolding);
 	    }
