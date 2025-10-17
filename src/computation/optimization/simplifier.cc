@@ -788,7 +788,7 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& cont)
 {
     assert(not object.to_let());
 
@@ -797,7 +797,7 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
 
     // 2. Simplify each alternative
     for(auto& alt: alts2)
-        alt = simplify_alt(object, seen_constructors, S, bound_vars, alt, make_ok_context());
+        alt = simplify_alt(object, seen_constructors, S, bound_vars, alt, cont);
 
     return make_case(object, alts2);
 }
@@ -987,13 +987,13 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 //        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
 
         // FIXME2: We should be passing the continuation into here.
-        auto E = rebuild_case_inner(object, alts, S, F.bound_vars);
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, make_ok_context());
 
         return rebuild(E, bound_vars, context);
     }
     else
     {
-        auto E = rebuild_case_inner(object, alts, S, F.bound_vars);
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, make_ok_context());
 
         return rebuild(E, bound_vars, context);
     }

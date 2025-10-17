@@ -124,7 +124,7 @@ public:
     rebuild_case(Occ::Exp object, const std::vector<Occ::Alt>& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     Occ::Exp
-    rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
+    rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<SimplFloats,Occ::Exp>
     rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
