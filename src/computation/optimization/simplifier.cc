@@ -788,76 +788,18 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
 }
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not object.to_let());
-
-    //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
-
-    // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
-    //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
-    // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
-    //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
 
     // 1. Drop impossible alternatives.
     auto [seen_constructors, alts2] = prepare_alts(bound_vars, object, alts);
 
     // 2. Simplify each alternative
-    SimplFloats F({}, bound_vars);
-    for(auto& [pattern, body]: alts2)
-    {
-	// 2.1. Rename and bind pattern variables
-	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+    for(auto& alt: alts2)
+        alt = simplify_alt(object, seen_constructors, S, bound_vars, alt, make_ok_context());
 
-        // 2.3 Set unfolding for x in this branch only.
-	if (auto v = object.to_var())
-        {
-            // Compute the unfolding
-            auto x = *v;
-            Unfolding unfolding;
-            if (pattern.is_irrefutable())
-            {
-                auto other_cons = seen_constructors | ranges::to<vector>;
-                unfolding = OtherConUnfolding(other_cons);
-            }
-            else
-            {
-                auto pattern_expression = pattern_to_expression(pattern).value();
-                unfolding = make_core_unfolding(this_mod, options, pattern_expression);
-            }
-
-            // Set the unfolding
-            if (is_local_symbol(x.name, this_mod.name))
-                bound_vars2 = rebind_var(bound_vars2, x, unfolding);
-            else
-            {
-                assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
-                x.info.work_dup = amount_t::Many;
-                x.info.code_dup = amount_t::Many;
-                if (bound_vars2.count(x))
-                    bound_vars2 = rebind_var(bound_vars2, x, unfolding);
-                else
-                    bound_vars2 = bind_var(bound_vars2, x, unfolding);
-            }
-        }
-
-	// 2.4. Simplify the alternative body
-	auto [body_floats, body2] = simplify(body, S2, bound_vars2, make_ok_context());
-
-        // 2.5 Lift lets out of the default alternative, so that we can merge case statements.
-        // In theory we could lift out floats if
-        // (i)  all_dead_binders(pattern)
-        // (ii) we don't substitute any of the binders into the body by putting them into the unfolding
-        if (pattern.is_irrefutable())
-        {
-            F.append(this_mod, options, body_floats);
-            body = body2;
-        }
-        else
-            body = wrap(body_floats, body2);
-    }
-
-    return { F, make_case(object, alts2) };
+    return make_case(object, alts2);
 }
 
 bool alts_would_dup(const vector<Occ::Alt>& alts)
@@ -907,6 +849,57 @@ SimplifierState::simplifyArg(const in_scope_set& bound_vars, DupStatus dup_statu
         auto arg2 = wrap(simplify(arg, arg_S, bound_vars, make_ok_context()));
         return {DupStatus::Simplified, bound_vars, arg2};
     }
+}
+
+Occ::Alt
+SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, const std::set<std::string>& seen_constructors,
+                              const simplifier::substitution& S, const in_scope_set& bound_vars,
+                              Occ::Alt alt, const inline_context& context)
+{
+    auto& [pattern, body] = alt;
+
+    // 1. Rename and bind pattern variables
+    auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+
+    // 2. Set unfolding for x in this branch only.
+    if (object)
+    {
+        if (auto v = object->to_var())
+        {
+            // Compute the unfolding
+            auto x = *v;
+            Unfolding unfolding;
+            if (pattern.is_irrefutable())
+            {
+                auto other_cons = seen_constructors | ranges::to<vector>;
+                unfolding = OtherConUnfolding(other_cons);
+            }
+            else
+            {
+                auto pattern_expression = pattern_to_expression(pattern).value();
+                unfolding = make_core_unfolding(this_mod, options, pattern_expression);
+            }
+
+            // Set the unfolding
+            if (is_local_symbol(x.name, this_mod.name))
+                bound_vars2 = rebind_var(bound_vars2, x, unfolding);
+            else
+            {
+                assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
+                x.info.work_dup = amount_t::Many;
+                x.info.code_dup = amount_t::Many;
+                if (bound_vars2.count(x))
+                    bound_vars2 = rebind_var(bound_vars2, x, unfolding);
+                else
+                    bound_vars2 = bind_var(bound_vars2, x, unfolding);
+            }
+        }
+    }
+
+    // 3. Simplify the body
+    body = wrap(simplify(body, S2, bound_vars2, context));
+
+    return alt;
 }
 
 std::tuple<SimplFloats, inline_context>
@@ -994,28 +987,15 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 //        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
 
         // FIXME2: We should be passing the continuation into here.
-        auto [F2, E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars);
 
-        F.append(this_mod, options, F2);
-    
-        auto [F3,E3] = rebuild(E2, F.bound_vars, context);
-
-        F.append(this_mod, options, F3);
-    
-        return {F, E3};
+        return rebuild(E, bound_vars, context);
     }
     else
     {
-        // FIXME2: We should be passing the continuation into here.
-        auto [F2,E2] = rebuild_case_inner(object, alts, S, F.bound_vars);
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars);
 
-        F.append(this_mod, options, F2);
-    
-        auto [F3,E3] = rebuild(E2, F.bound_vars, context);
-
-        F.append(this_mod, options, F3);
-    
-        return {F, E3};
+        return rebuild(E, bound_vars, context);
     }
 }
 

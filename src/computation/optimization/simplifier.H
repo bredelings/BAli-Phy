@@ -112,6 +112,9 @@ public:
     std::tuple<std::set<std::string>,std::vector<Occ::Alt>>
     prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& object, const std::vector<Occ::Alt>& alts);
 
+    Occ::Alt
+    simplify_alt(const std::optional<Occ::Exp>& object, const std::set<std::string>& seen_constructors, const simplifier::substitution& S, const in_scope_set& bound_vars, Occ::Alt alt, const inline_context& context);
+
      std::tuple<SimplFloats,Occ::Exp>
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
@@ -120,7 +123,7 @@ public:
     std::tuple<SimplFloats,Occ::Exp>
     rebuild_case(Occ::Exp object, const std::vector<Occ::Alt>& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<SimplFloats,Occ::Exp>
+    Occ::Exp
     rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     std::tuple<SimplFloats,Occ::Exp>
