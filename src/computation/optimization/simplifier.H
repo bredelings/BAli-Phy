@@ -109,6 +109,9 @@ public:
     std::tuple<DupStatus, in_scope_set, Occ::Exp>
     simplifyArg(const in_scope_set& bound_vars, DupStatus dup_status, const simplifier::substitution& arg_S, const in_scope_set& arg_bound_vars, const Occ::Exp& arg);
 
+    std::tuple<std::set<std::string>,std::vector<Occ::Alt>>
+    prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& object, const std::vector<Occ::Alt>& alts);
+
      std::tuple<SimplFloats,Occ::Exp>
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 

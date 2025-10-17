@@ -672,19 +672,10 @@ Occ::Exp make_case(const Occ::Exp& object, vector<Occ::Alt> alts)
         return Occ::Case{object, alts};
 }
 
-// case object of alts.  Here the object has been simplified, but the alts have not.
-std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+tuple<set<string>,vector<Occ::Alt>>
+SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& object, const vector<Occ::Alt>& alts)
 {
-    assert(not object.to_let());
-
-    //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
-
-    // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
-    //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
-    // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
-    //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
-
-    // 2. Determine the object type
+    // 1. Determine the object type
     optional<string> object_type;
     set<string> seen_constructors;
     set<string> unseen_constructors;
@@ -725,6 +716,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
     }
 
+    // 2. Move OtherCon constructors from the "unseen" to the "seen" set.
     if (auto ocu = is_evaluated_var(object, bound_vars))
     {
         for(auto& con: ocu->constructors_not_taken)
@@ -736,16 +728,10 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
     }
 
-    SimplFloats F({}, bound_vars);
-
-    // 3. Simplify each alternative
+    // 3. Drop unreachable alternatives
     vector<Occ::Alt> alts2;
     for(auto& [pattern, body]: alts)
     {
-	// 3.1. Rename and bind pattern variables
-	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
-
-        // 3.2. Determine if the current pattern is excluded.
         if (pattern.is_con_pat())
         {
             assert(object_type);
@@ -762,8 +748,39 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
                 continue;
             }
         }
+        alts2.push_back({pattern,body});
 
-        // 3.3 Set unfolding for x in this branch only.
+        // Currently if the alts contain a single irrefutable pattern, both seen and unseen will be empty.
+        // Doing this at the end makes sure the single alternative is retained in that case.
+        if (pattern.is_irrefutable() or unseen_constructors.empty()) break;
+    }
+
+    return {seen_constructors, alts2};
+}
+
+// case object of alts.  Here the object has been simplified, but the alts have not.
+std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> alts, const substitution& S, const in_scope_set& bound_vars)
+{
+    assert(not object.to_let());
+
+    //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
+
+    // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
+    //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
+    // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
+    //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
+
+    // 1. Drop impossible alternatives.
+    auto [seen_constructors, alts2] = prepare_alts(bound_vars, object, alts);
+
+    // 2. Simplify each alternative
+    SimplFloats F({}, bound_vars);
+    for(auto& [pattern, body]: alts2)
+    {
+	// 2.1. Rename and bind pattern variables
+	auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+
+        // 2.3 Set unfolding for x in this branch only.
 	if (auto v = object.to_var())
         {
             // Compute the unfolding
@@ -795,9 +812,10 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
             }
         }
 
-	// 3.4. Simplify the alternative body
+	// 2.4. Simplify the alternative body
 	auto [body_floats, body2] = simplify(body, S2, bound_vars2, make_ok_context());
 
+        // 2.5 Lift lets out of the default alternative, so that we can merge case statements.
         // In theory we could lift out floats if
         // (i)  all_dead_binders(pattern)
         // (ii) we don't substitute any of the binders into the body by putting them into the unfolding
@@ -808,15 +826,9 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case_inner(Occ::Exp o
         }
         else
             body = wrap(body_floats, body2);
-
-        alts2.push_back({pattern, body});
-
-        if (pattern.is_irrefutable() or unseen_constructors.empty()) break;
     }
 
-    std::swap(alts, alts2);
-
-    return { F, make_case(object, alts) };
+    return { F, make_case(object, alts2) };
 }
 
 bool alts_would_dup(const vector<Occ::Alt>& alts)
