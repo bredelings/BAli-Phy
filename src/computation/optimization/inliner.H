@@ -103,7 +103,7 @@ struct apply_context
 {
     DupStatus dup_status = DupStatus::NoDup;
     Occ::Exp arg;
-    const simplifier::substitution& subst;
+    simplifier::substitution subst;
     in_scope_set bound_vars;
     inline_context next;
     apply_context(const Occ::Exp& a, const simplifier::substitution& s, const in_scope_set& bvs, const inline_context& i):arg(a), subst(s), bound_vars(bvs), next(i) {}
@@ -113,7 +113,7 @@ struct case_context
 {
     DupStatus dup_status = DupStatus::NoDup;
     std::vector<Occ::Alt> alts;
-    const simplifier::substitution& subst;
+    simplifier::substitution subst;
     inline_context next;
     case_context(const std::vector<Occ::Alt>& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
 };
