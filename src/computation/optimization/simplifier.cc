@@ -640,14 +640,49 @@ const OtherConUnfolding* is_evaluated_var(const Occ::Exp& e, const in_scope_set&
     return nullptr;
 }
 
+std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
+{
+    std::vector<Occ::Decls> decl_groups;
+    while(auto let = E.to_let())
+    {
+       decl_groups.push_back(let->decls);
+       auto tmp = E;
+       E = let->body;
+    }
+    return decl_groups;
+}
+
+Occ::Exp make_lets(const vector<Occ::Decls>& decls, Occ::Exp E)
+{
+    for(auto& d: decls | views::reverse)
+        E = Occ::Let{d,E};
+
+    return E;
+}
+
+Occ::Exp make_case_1(const Occ::Exp& object, vector<Occ::Alt> alts)
+{
+    // 5. If the case is an identity transformation: case obj of {A -> A; B y -> B y; C z -> obj; _ -> obj}
+    if (is_identity_case(object, alts))
+    {
+        // NOTE: this preserves strictness, because the object is still evaluated.
+        return object;
+    }
+    else
+        // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
+        return Occ::Case{object, alts};
+}
+
 Occ::Exp make_case(const Occ::Exp& object, vector<Occ::Alt> alts)
 {
     // 4. If the _ branch cases on the same object, then we can lift
     //    out any cases not covered into the upper case and drop the others.
-    if (alts.back().pat.is_wildcard_pat())
+    vector<Occ::Decls> default_decls;
+    if (alts.back().pat.is_wildcard_pat() and object.to_var())
     {
         // Make a copy to ensure a reference after we drop the default pattern.
         auto default_body = alts.back().body;
+        auto default_decls = strip_multi_let(default_body);
 
         // We could do this even if the object isn't a variable, right?
         if (auto C = default_body.to_case(); C and C->object.to_var() and C->object == object)
@@ -658,18 +693,12 @@ Occ::Exp make_case(const Occ::Exp& object, vector<Occ::Alt> alts)
                 assert(not redundant_pattern(alts, pattern2));
                 alts.push_back({pattern2, body2});
             }
+
+            return make_lets(default_decls, make_case_1(object, alts));
         }
     }
-    
-    // 5. If the case is an identity transformation: case obj of {A -> A; B y -> B y; C z -> obj; _ -> obj}
-    if (is_identity_case(object, alts))
-    {
-        // NOTE: this preserves strictness, because the object is still evaluated.
-        return object;
-    }
-    else
-        // TODO: If its a constant case (i.e. all the bodies are 'r'), then mkCase can change it to (case object of _ -> r)
-        return Occ::Case{object, alts};
+
+    return make_case_1(object,alts);
 }
 
 tuple<set<string>,vector<Occ::Alt>>
