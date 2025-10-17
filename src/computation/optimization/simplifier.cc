@@ -902,6 +902,33 @@ SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, const std::
     return alt;
 }
 
+
+tuple<vector<Occ::Decls>, Occ::Alt>
+make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
+{
+    auto& [pattern, body] = alt;
+
+    vector<Occ::Var> used_vars = get_used_vars(pattern);
+
+    string alt_name;
+    if (pattern.head)
+        alt_name = get_unqualified_name(*pattern.head);
+    else
+        alt_name = "_";
+
+    auto f = fresh_vars.get_fresh_occ_var("$j$"+alt_name);
+    f.info.work_dup = amount_t::Many;
+    f.info.code_dup = amount_t::Many;
+
+    // f = \x y .. -> body
+    Occ::Decls join{{f, lambda_quantify(used_vars, body)}};
+
+    // body = f x y ...
+    body = make_apply(Occ::Exp(f), used_vars);
+
+    return {{join},{alt}};
+}
+
 std::tuple<SimplFloats, inline_context>
 SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bound_vars, const inline_context& cont)
 {
@@ -927,6 +954,22 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
     }
     else if (auto cc = cont.is_case_context())
     {
+        auto [floats, alt_cont] = make_dupable_case_cont(S, bound_vars, cc->alts, cc->next);
+        auto alts_bound_vars = floats.bound_vars;
+
+        auto alts = cc->alts;
+        for(auto& alt: alts)
+            alt = simplify_alt({}, {}, cc->subst, alts_bound_vars, alt, alt_cont);
+
+        for(auto& alt: alts)
+        {
+            auto [joins,alt2] = make_dupable_alt(alt, *this);
+            floats.append(this_mod, options, joins);
+        }
+
+        auto cc2 = std::make_shared<case_context>(alts, substitution(), make_ok_context());
+        cc2->dup_status = DupStatus::OkToDup;
+        return {floats, cc2};
     }
     else
         std::abort();
@@ -984,12 +1027,15 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
     if (options.case_of_case)
     {
-//        auto [F1, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
+        auto [F, context2] = make_dupable_case_cont(S, bound_vars, alts, context);
 
-        // FIXME2: We should be passing the continuation into here.
-        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, make_ok_context());
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, context2);
 
-        return rebuild(E, bound_vars, context);
+        auto [F2, E2] = rebuild(E, F.bound_vars, make_ok_context());
+
+        F.append(this_mod, options, F2);
+
+        return {F, E2};
     }
     else
     {
