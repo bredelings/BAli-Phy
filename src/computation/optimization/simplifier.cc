@@ -902,6 +902,39 @@ SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, const std::
     return alt;
 }
 
+// Is the expressing an application of only variables, with the number of variables <= n?
+// This is to check if the thing we are replacing is the same size as the jump we'd replace it with, or smaller.
+// GHC instead allows arguments to contain literals and simple applications: e.g. f (x 0) (z w)
+bool is_dupable(int n, const Occ::Exp& E)
+{
+    if (n <= 0)
+        return false;
+    else if (E.to_var())
+        return true;
+    else if (auto a = E.to_apply())
+    {
+        // f x y is OK if the total number of variables is <= n.
+        return ((bool)a->arg.to_var() and is_dupable(n-1, a->head));
+    }
+    else if (auto c = E.to_conApp())
+    {
+        // A x y y x z x is OK, no matter how many arguments.
+        for(auto & arg: c->args)
+            if (not arg.to_var())
+                return false;
+        return true;
+    }
+    else if (auto b = E.to_builtinOp())
+    {
+        // lib:op x y y x z x is OK, no matter how many arguments.
+        for(auto & arg: b->args)
+            if (not arg.to_var())
+                return false;
+        return true;
+    }
+    else
+        return false;
+}
 
 tuple<vector<Occ::Decls>, Occ::Alt>
 make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
@@ -916,17 +949,22 @@ make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
     else
         alt_name = "_";
 
-    auto f = fresh_vars.get_fresh_occ_var("$j$"+alt_name);
-    f.info.work_dup = amount_t::Many;
-    f.info.code_dup = amount_t::Many;
+    if (is_dupable(used_vars.size()+1, body))
+        return {{},{alt}};
+    else
+    {
+        auto f = fresh_vars.get_fresh_occ_var("$j$"+alt_name);
+        f.info.work_dup = amount_t::Many;
+        f.info.code_dup = amount_t::Many;
 
-    // f = \x y .. -> body
-    Occ::Decls join{{f, lambda_quantify(used_vars, body)}};
+        // f = \x y .. -> body
+        Occ::Decls join{{f, lambda_quantify(used_vars, body)}};
 
-    // body = f x y ...
-    body = make_apply(Occ::Exp(f), used_vars);
+        // body = f x y ...
+        body = make_apply(Occ::Exp(f), used_vars);
 
-    return {{join},{alt}};
+        return {{join},{alt}};
+    }
 }
 
 std::tuple<SimplFloats, inline_context>
