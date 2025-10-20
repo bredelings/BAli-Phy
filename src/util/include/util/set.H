@@ -5,6 +5,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <iterator>
 
 /// Does v include t?
 template <typename T>

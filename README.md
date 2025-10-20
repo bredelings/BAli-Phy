@@ -8,9 +8,9 @@ If you just want to install bali-phy, please visit the [release page](http://www
 Compiling
 ---------
 
-You will need a C++ compiler that understands C++20.
+You will need a C++ compiler that understands C++23.
  * gcc 12 (or higher) works
- * clang 17 (or higher) works
+ * clang 18 (or higher) works
  * XCode 15 (or higher) works
 
 Install Prerequisites

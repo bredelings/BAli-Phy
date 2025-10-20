@@ -18,6 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <cmath>
+#include <algorithm>
 #include "util/assert.hh"
 #include "statistics.H"
 
@@ -29,6 +30,7 @@ using std::pair;
 namespace statistics {
 
     using std::abs;
+    using std::sort;
 
     double fraction(const valarray<bool>& v) {
         return fraction(count(v),v.size(),0);
