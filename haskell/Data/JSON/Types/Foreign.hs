@@ -21,7 +21,7 @@ foreign import bpcall "Foreign:" ejson_inumber :: Int -> EJSON
 foreign import bpcall "Foreign:" ejson_fnumber :: Double -> EJSON
 foreign import bpcall "Foreign:" ejson_string  :: CPPString -> EJSON
 foreign import bpcall "Foreign:" ejson_bool    :: Bool -> EJSON
-foreign import bpcall "Foreign:" ejson_null    :: () -> EJSON
+foreign import bpcall "Foreign:" ejson_null    :: EJSON
 
 foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 
@@ -39,5 +39,5 @@ deep_eval_json (INumber i) = ejson_inumber i
 deep_eval_json (FNumber f) = ejson_fnumber f
 deep_eval_json (Bool b)    = ejson_bool b
 deep_eval_json (String s)  = ejson_string (T.toCppString s)
-deep_eval_json Null        = ejson_null ()
+deep_eval_json Null        = ejson_null
 

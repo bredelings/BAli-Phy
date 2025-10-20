@@ -8,7 +8,7 @@ import Compiler.Translate
 
 data CMaybe a
 
-foreign import bpcall "Prelude:cNothing" builtin_cNothing :: () -> CMaybe a
+foreign import bpcall "Prelude:" cNothing :: CMaybe a
 foreign import bpcall "Prelude:" cJust :: a -> CMaybe a
 
 foreign import bpcall "Prelude:" cIsJust :: CMaybe a -> Bool
@@ -16,8 +16,6 @@ foreign import bpcall "Prelude:" cFromJust :: CMaybe a -> a
 
 cMaybe Nothing  = cNothing
 cMaybe (Just x) = cJust x
-
-cNothing = builtin_cNothing ()
 
 cIsNothing = not . cIsJust
 

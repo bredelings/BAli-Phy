@@ -10,8 +10,6 @@ typedef Box<immer::set<int>> IntSet;
 
 extern "C" closure builtin_function_empty(OperationArgs& Args)
 {
-    Args.evaluate(0);
-
     IntSet S;
 
     return {S};

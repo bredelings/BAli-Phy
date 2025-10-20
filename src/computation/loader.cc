@@ -237,9 +237,6 @@ Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string
 {
     auto fn = load_builtin_ptr(plugin_name, symbol_name);
 
-    // If not, then I think its treated as being already in WHNF, and not evaluated.
-    if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
-
     auto args = make_vars<>(n);
     auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
 

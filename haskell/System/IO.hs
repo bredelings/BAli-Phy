@@ -37,20 +37,11 @@ intFromIOMode WriteMode = 1
 intFromIOMode AppendMode = 2
 intFromIOMode ReadWriteMode = 3
 
-foreign import bpcall "File:" getStdin :: () -> Handle
+foreign import bpcall "File:" stdin :: Handle
 
-foreign import bpcall "File:" getStdout :: () -> Handle
+foreign import bpcall "File:" stdout :: Handle
 
-foreign import bpcall "File:" getStderr :: () -> Handle
-
-stdin :: Handle
-stdin = getStdin ()
-
-stdout :: Handle
-stdout = getStdout ()
-
-stderr :: Handle
-stderr = getStderr ()
+foreign import bpcall "File:" stderr :: Handle
 
 withFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
 withFile path mode action = do

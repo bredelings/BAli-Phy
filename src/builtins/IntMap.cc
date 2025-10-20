@@ -18,8 +18,6 @@ typedef Box<std::map<int,expression_ref>> EIntMap;
 
 extern "C" closure builtin_function_empty(OperationArgs& Args)
 {
-    Args.evaluate(0);
-
     IntMap m;
 
     return {m};

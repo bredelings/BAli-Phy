@@ -46,8 +46,8 @@ unpack (Text array offset length) = FS.unpack_cpp_substring array offset length
 foreign import bpcall "Text:singleton" builtin_singleton :: Char -> CPPString
 singleton c = Text (builtin_singleton c) 0 1
 
-foreign import bpcall "Text:empty" builtin_empty :: () -> CPPString
-empty = Text (builtin_empty ()) 0 0
+foreign import bpcall "Text:empty" builtin_empty :: CPPString
+empty = Text builtin_empty 0 0
 
 infixr 5 `cons`
 foreign import bpcall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString

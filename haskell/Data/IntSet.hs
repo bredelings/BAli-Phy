@@ -12,8 +12,7 @@ data IntSet
 
 type Key = Int
 
-foreign import bpcall "IntSet:empty" _empty :: () -> IntSet
-empty = _empty ()
+foreign import bpcall "IntSet:" empty :: IntSet
 
 foreign import bpcall "IntSet:" singleton :: Key -> IntSet
 

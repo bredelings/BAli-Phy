@@ -32,19 +32,15 @@ foreign import bpcall "Alphabet:" mkTriplets :: Alphabet -> Alphabet
 
 foreign import bpcall "Alphabet:" mkCodons :: Alphabet -> GeneticCode -> Alphabet
 
-foreign import bpcall "Alphabet:dna" builtin_dna :: () -> Alphabet
-dna = builtin_dna ()
+foreign import bpcall "Alphabet:" dna :: Alphabet
 
-foreign import bpcall "Alphabet:rna" builtin_rna :: () -> Alphabet
-rna = builtin_rna ()
+foreign import bpcall "Alphabet:" rna :: Alphabet
 
-foreign import bpcall "Alphabet:aa" builtin_aa  :: () -> Alphabet
-aa  = builtin_aa  ()
-amino_acids = builtin_aa
+foreign import bpcall "Alphabet:" aa :: Alphabet
+amino_acids = aa
 
-foreign import bpcall "Alphabet:aaWithStop" builtin_aaWithStop :: () -> Alphabet
-aaWithStop = builtin_aaWithStop ()
-amino_acids_with_stop = builtin_aaWithStop ()
+foreign import bpcall "Alphabet:aaWithStop" aaWithStop :: Alphabet
+amino_acids_with_stop = aaWithStop
 
 foreign import bpcall "Alphabet:" mkNumeric :: Int -> Alphabet
 

@@ -13,8 +13,7 @@ data IntMap a
 
 type Key = Int
 
-foreign import bpcall "IntMap:empty" _empty :: () -> IntMap a
-empty = _empty ()
+foreign import bpcall "IntMap:" empty :: IntMap a
 
 foreign import bpcall "IntMap:" singleton :: Key -> a -> IntMap a
 
