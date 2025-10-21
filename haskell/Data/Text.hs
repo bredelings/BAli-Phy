@@ -301,7 +301,7 @@ instance Monoid Text where
 instance IsString Text where
     fromString s = pack s
 
-instance Translate Text where
+instance ToFromC Text where
     type ToC Text = CPPString
 
     toC (Text s i l) = FS.cppSubString s i l

@@ -23,7 +23,7 @@ fromCMaybe x = if cIsJust x
                then Just $ cFromJust x
                else Nothing
 
-instance Translate a => Translate (Maybe a) where
+instance ToFromC a => ToFromC (Maybe a) where
     type ToC (Maybe a) = CMaybe (ToC a)
 
     toC (Just x) = cJust (toC x)

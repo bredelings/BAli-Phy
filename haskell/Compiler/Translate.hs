@@ -11,65 +11,65 @@ import Data.Function
 import Data.List (map)
 import Numeric.LogDouble (LogDouble)
 
-class Translate a where
+class ToFromC a where
     type ToC a
     toC :: a -> ToC a
     fromC :: ToC a -> a
 
-instance Translate () where
+instance ToFromC () where
     type ToC () = ()
     toC = id
     fromC = id
 
-instance Translate Int where
+instance ToFromC Int where
     type ToC Int = Int
     toC = id
     fromC = id
 
-instance Translate Char where
+instance ToFromC Char where
     type ToC Char = Char
     toC = id
     fromC = id
 
-instance Translate Double where
+instance ToFromC Double where
     type ToC Double = Double
     toC = id
     fromC = id
 
-instance Translate LogDouble where
+instance ToFromC LogDouble where
     type ToC LogDouble = LogDouble
     toC = id
     fromC = id
 
-instance Translate Bool where
+instance ToFromC Bool where
     type ToC Bool = Bool
     toC = id
     fromC = id
 
-instance (Translate a, Translate b) => Translate (a->b) where
+instance (ToFromC a, ToFromC b) => ToFromC (a->b) where
     type ToC (a->b) = ToC a -> ToC b
 
     fromC f = fromC . f . toC
     toC f = toC . f . fromC
 
-instance Translate (IO a) where
+instance ToFromC (IO a) where
     type ToC (IO a) = RealWorld -> a
     toC i = (\s -> let (_,x) = runIO i s in x)
     fromC i = makeIO i
 
-instance Translate a => Translate [a] where
+instance ToFromC a => ToFromC [a] where
     type ToC [a] = EVector (ToC a)
 
     toC xs = listToVector $ map toC xs
     fromC v = map fromC $ vectorToList v
 
-instance (Translate a, Translate b) => Translate (a, b) where
+instance (ToFromC a, ToFromC b) => ToFromC (a, b) where
     type ToC (a, b) = EPair (ToC a) (ToC b)
 
     toC (x,y) = c_pair (toC x) (toC y)
     fromC xy = (fromC $ c_fst xy, fromC $ c_snd xy)
 
-instance  {-# INCOHERENT #-} Translate String where
+instance  {-# INCOHERENT #-} ToFromC String where
     type ToC String = CPPString
 
     toC = pack_cpp_string
