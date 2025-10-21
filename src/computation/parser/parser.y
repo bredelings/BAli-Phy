@@ -108,6 +108,7 @@
  /*  PATTERN       "pattern" */
   STATIC        "static"
   STOCK         "stock"
+  TRCALL        "trcall"
   ANYCLASS      "anyclass"
   VIA           "via"
   UNIT          "unit"
@@ -228,6 +229,7 @@
 %type <std::vector<Located<std::string>>> qcnames
 %type <std::vector<Located<std::string>>> qcnames1
 %type <Located<std::string>> qcname
+%type <Located<std::string>> call_conv
 
 %type <std::vector<Hs::LImpDecl>> importdecls
 %type <std::vector<Hs::LImpDecl>> importdecls_semi
@@ -661,7 +663,7 @@ topdecl: cl_decl                               {$$ = $1;}
 /*|        stand_alone_deriving */
 /*|        role_annot */
 |        "default" opt_class "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($2,$4)}; }
-|        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($4, {@5,$5}, $7)};}
+|        "foreign" "import" call_conv STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($3, $4, {@5,$5}, $7)};}
 /*
 |        "{-# DEPRECATED" deprecations "#-}"
 |        "{-# WARNING" warnings "#-}"
@@ -671,6 +673,9 @@ topdecl: cl_decl                               {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp                              {$$ = $1;}
 
+
+call_conv: "bpcall" {$$ = {@$,"bpcall"};}
+|          "trcall" {$$ = {@$,"trcall"};}
 
 cl_decl: "class" tycl_hdr fds where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3,$4)};}
 

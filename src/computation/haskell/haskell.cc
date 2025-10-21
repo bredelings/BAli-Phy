@@ -347,12 +347,12 @@ string Binds::print() const
 
 string ForeignDecl::print() const
 {
-    vector<string> v{"foreign", "import", "bpcall", '"'+string(plugin_name)+':'+string(symbol_name)+'"', unloc(function).name, "::", type.print()};
+    vector<string> v{"foreign", "import", unloc(call_conv), '"'+string(plugin_name)+':'+string(symbol_name)+'"', unloc(function).name, "::", type.print()};
     return join(v," ");
 }
 
-ForeignDecl::ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t)
-    : function(f), type(t)
+ForeignDecl::ForeignDecl(const Located<std::string>& conv, const std::string& n, const Hs::LVar& f, const LType& t)
+    : call_conv(conv), function(f), type(t)
 {
     vector<string> ns = split(n,":");
     if (ns.size() != 2)

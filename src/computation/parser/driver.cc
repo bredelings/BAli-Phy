@@ -103,6 +103,7 @@ driver::driver (const LanguageExtensions& exts)
         {"of",{parser::token::TOK_OF,0}},
         {"qualified",{parser::token::TOK_QUALIFIED,0}},
         {"then",{parser::token::TOK_THEN,0}},
+        {"trcall",{parser::token::TOK_TRCALL,0}},
         {"type",{parser::token::TOK_TYPE,0}},
         {"where",{parser::token::TOK_WHERE,0}},
         {"mdo", {parser::token::TOK_MDO,0}},

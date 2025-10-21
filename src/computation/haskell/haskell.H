@@ -249,6 +249,8 @@ struct KindSigDecl: public Object
 
 struct ForeignDecl: public Object
 {
+    Located<std::string> call_conv;
+
     std::string plugin_name;
     std::string symbol_name;
     Hs::LVar function;
@@ -257,7 +259,7 @@ struct ForeignDecl: public Object
     ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
-    ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t);
+    ForeignDecl(const Located<std::string>& conv, const std::string& n, const Hs::LVar& f, const LType& t);
 };
 
 struct FieldBinding: public Object
