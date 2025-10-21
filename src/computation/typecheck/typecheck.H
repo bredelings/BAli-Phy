@@ -473,8 +473,6 @@ public:
     std::tuple< std::map<Hs::Var, Hs::Var>, local_value_env >
     tc_decls_group_mono(const signature_env& sigs, Hs::Decls& decls);
 
-    void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);
-
     // Figures 13, 14, 15?
     Hs::Binds infer_type_for_binds_top(Hs::Binds binds);
 

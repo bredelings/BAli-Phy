@@ -45,17 +45,6 @@ Hs::Binds TypeChecker::infer_type_for_binds_top(Hs::Binds binds)
     return unloc(lbinds);
 }
 
-void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
-{
-    global_value_env fte;
-    for(auto& f: foreign_decls)
-    {
-        auto type = check_type( f.type );
-        auto FI = this_mod().lookup_local_symbol(unloc(f.function).name);
-        FI->type = expand_all_type_synonyms(type);
-    }
-}
-
 void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
 {
     auto& [loc, binds] = lbinds;

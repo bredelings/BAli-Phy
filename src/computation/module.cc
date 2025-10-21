@@ -877,13 +877,48 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
+    for(auto& fdecl: M.foreign_decls)
+    {
+        auto& call_conv = unloc(fdecl.call_conv);
+        auto& fname = unloc(fdecl.function).name;
+        auto loc = fdecl.function.loc;
+
+        if (call_conv == "bpcall")
+        {
+            // inject signature 
+            M.value_decls.signatures.insert({fdecl.function, fdecl.type});
+        }
+        else if (call_conv == "trcall")
+        {
+            string raw_name = fname +"$raw";
+            MM->def_function( raw_name );
+
+            Hs::LVar fromC = {noloc, Hs::Var("Compiler.FFI.ToFromC.fromC")};
+            Hs::LVar raw   = {noloc, Hs::Var(raw_name)};
+            Hs::LVar lhs   = fdecl.function;
+            Hs::LExp rhs   = {noloc, Hs::ApplyExp(fromC, raw)};
+            Hs::Decls decls;
+            decls.push_back({noloc, Hs::simple_decl(lhs,rhs)});
+
+            // fname :: <type>
+            // fname = fromC fname$builtin
+            M.value_decls.signatures.insert({fdecl.function, fdecl.type});
+            M.value_decls.push_back(decls);
+
+            // fname$builtin :: ToC <type>
+            Hs::TypeCon ToC("Compiler.FFI.ToFromC.ToC");
+            Hs::Type raw_type = Hs::TypeApp({loc,ToC},fdecl.type);
+            M.value_decls.signatures.insert({raw, {loc, raw_type}});
+        }
+    }
+
     // Set the inline pragma -- must happen after renaming.
     for(auto& [lvar, ip]: M.value_decls.inline_sigs)
     {
         auto S = MM->lookup_local_symbol(unloc(lvar).name);
         S->inline_pragma = ip;
     }
-    
+
     auto tc_result = std::make_shared<TypeChecker>( *MM )->typecheck_module( M );
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
@@ -1435,33 +1470,43 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
     {
         auto function_name = unloc(decl.function).name;
 
-        auto S = lookup_symbol(function_name);
-
-        function_name = S->name;
-
-        int n_args = gen_type_arity(S->type);
-
-        // Type synonyms have already been expanded during type checking.
-        auto [arg_types, result_type] = gen_arg_result_types(S->type);
-
         Core2::Exp<> body;
 
-        if (is_IO_type(result_type))
+        if (unloc(decl.call_conv) == "bpcall")
         {
-            auto builtin = parse_builtin(decl, n_args+1, L);
-            auto xs = make_vars<>(n_args);
-            auto f1 = Core2::Var<>("f1");
-            auto f2 = Core2::Var<>("f2");
-            auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
+            auto S = lookup_symbol(function_name);
+            
+            function_name = S->name;
 
-            body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
-                                  {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
-                  Core2::Apply<>{makeIO, {f2}}};                          // in makeIO f2
+            int n_args = gen_type_arity(S->type);
 
-            body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
+            // Type synonyms have already been expanded during type checking.
+            auto [arg_types, result_type] = gen_arg_result_types(S->type);
+
+            if (is_IO_type(result_type))
+            {
+                auto builtin = parse_builtin(decl, n_args+1, L);
+                auto xs = make_vars<>(n_args);
+                auto f1 = Core2::Var<>("f1");
+                auto f2 = Core2::Var<>("f2");
+                auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
+
+                body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
+                                      {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
+                    Core2::Apply<>{makeIO, {f2}}};                          // in makeIO f2
+
+                body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
+            }
+            else
+                body = parse_builtin(decl, n_args, L);
         }
-        else
+        else if (unloc(decl.call_conv) == "trcall")
+        {
+            function_name = unloc(decl.function).name + "$raw";
+            auto S = lookup_symbol(function_name);
+            int n_args = gen_type_arity(S->type);
             body = parse_builtin(decl, n_args, L);
+        }
 
         decls.push_back( { Core2::Var<>(function_name), body} );
     }
