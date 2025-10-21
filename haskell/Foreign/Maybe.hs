@@ -24,7 +24,7 @@ fromCMaybe x = if cIsJust x
                else Nothing
 
 instance Translate a => Translate (Maybe a) where
-    type Tr (Maybe a) = CMaybe (Tr a)
+    type ToC (Maybe a) = CMaybe (ToC a)
 
     toC (Just x) = cJust (toC x)
     toC Nothing  = cNothing

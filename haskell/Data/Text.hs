@@ -302,7 +302,7 @@ instance IsString Text where
     fromString s = pack s
 
 instance Translate Text where
-    type Tr Text = CPPString
+    type ToC Text = CPPString
 
     toC (Text s i l) = FS.cppSubString s i l
     fromC = fromCppString
