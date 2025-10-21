@@ -26,7 +26,7 @@ import Control.DeepSeq
 import Data.String
 
 import qualified Foreign.String as FS
-import Compiler.Translate    
+import Compiler.FFI.ToFromC    
 
 -- We need to change this to Text CPPString Int {- offset -} Int {- length -}
 -- Ideally we'd have the strictness annotations ! as well.

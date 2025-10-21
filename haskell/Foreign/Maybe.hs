@@ -4,7 +4,7 @@ module Foreign.Maybe where
 import Data.Bool -- for not
 import Data.Function -- for (.)
 import Data.Maybe
-import Compiler.Translate
+import Compiler.FFI.ToFromC
 
 data CMaybe a
 

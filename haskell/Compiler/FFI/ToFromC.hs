@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Compiler.Translate where
+module Compiler.FFI.ToFromC where
 
 import Compiler.Base (String)
 import Compiler.IO

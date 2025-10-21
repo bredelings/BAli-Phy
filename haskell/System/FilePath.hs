@@ -2,7 +2,7 @@
 module System.FilePath where
 
 import Compiler.Base (String)
-import Compiler.Translate    
+import Compiler.FFI.ToFromC    
 import Foreign.String
 
 type FilePath = String

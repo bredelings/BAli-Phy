@@ -76,7 +76,7 @@ import Foreign.String
 import System.IO (putChar, putStr, putStrLn, print, getChar, getLine, getContents, interact,
                   FilePath,readFile, writeFile, appendFile, readIO, readLn)
 
-import Compiler.Translate -- ensure this is typechecked
+import Compiler.FFI.ToFromC -- ensure this is typechecked
     
 undefined = error "Prelude.undefined"
 
