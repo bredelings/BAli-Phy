@@ -11,14 +11,14 @@ namespace simplifier
 
 struct substitution_range;
 
-typedef immer::map<Occ::Var, substitution_range> substitution;
+using substitution = immer::map<Occ::Var, substitution_range>;
 
 struct substitution_range
 {
     Occ::Exp E;
-    std::optional<substitution> S;
+    std::shared_ptr<const substitution> S;
     substitution_range(const Occ::Exp& e):E(e) {}
-    substitution_range(const Occ::Exp& e, const substitution& s):E(e),S(s) {}
+    substitution_range(const Occ::Exp& e, const substitution& s):E(e),S(std::make_shared<const substitution>(s)) {}
 };
 }
 
