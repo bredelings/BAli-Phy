@@ -42,7 +42,8 @@ struct no_capacity
     no_capacity(node_t* p, size_t s)
         : ptr{p}
         , size{s}
-    {}
+    {
+    }
 
     no_capacity(const no_capacity& other)
         : no_capacity{other.ptr, other.size}
@@ -108,7 +109,7 @@ struct no_capacity
                                bool> = true>
     static no_capacity from_range(Iter first, Sent last)
     {
-        auto count = static_cast<size_t>(distance(first, last));
+        auto count = static_cast<size_t>(detail::distance(first, last));
         if (count == 0)
             return empty();
         else

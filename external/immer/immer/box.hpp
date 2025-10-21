@@ -45,7 +45,8 @@ class box
         template <typename... Args>
         holder(Args&&... args)
             : value{std::forward<Args>(args)...}
-        {}
+        {
+        }
     };
 
     using heap = typename MemoryPolicy::heap::type;
@@ -54,7 +55,8 @@ class box
 
     box(holder* impl)
         : impl_{impl}
-    {}
+    {
+    }
 
 public:
     const holder* impl() const { return impl_; };
@@ -67,18 +69,19 @@ public:
      */
     box()
         : impl_{detail::make<heap, holder>()}
-    {}
+    {
+    }
 
     /*!
      * Constructs a box holding `T{arg}`
      */
     template <typename Arg,
               typename Enable = std::enable_if_t<
-                  !std::is_same<box, std::decay_t<Arg>>::value &&
-                  std::is_constructible<T, Arg>::value>>
+                  !std::is_same<box, std::decay_t<Arg>>::value>>
     box(Arg&& arg)
         : impl_{detail::make<heap, holder>(std::forward<Arg>(arg))}
-    {}
+    {
+    }
 
     /*!
      * Constructs a box holding `T{arg1, arg2, args...}`
@@ -88,7 +91,8 @@ public:
         : impl_{detail::make<heap, holder>(std::forward<Arg1>(arg1),
                                            std::forward<Arg2>(arg2),
                                            std::forward<Args>(args)...)}
-    {}
+    {
+    }
 
     friend void swap(box& a, box& b)
     {

@@ -23,7 +23,11 @@ namespace hamts {
 // For C++14 support.
 // Calling the destructor inline breaks MSVC in some obscure
 // corner cases.
-template <typename T> constexpr void destroy_at(T* p) { p->~T(); }
+template <typename T>
+constexpr void destroy_at(T* p)
+{
+    p->~T();
+}
 
 template <typename T,
           typename Hash,
@@ -43,6 +47,7 @@ struct node
     using edit_t      = typename transience::edit;
     using value_t     = T;
     using bitmap_t    = typename get_bitmap_type<B>::type;
+    using hash_t      = decltype(Hash{}(std::declval<const T&>()));
 
     enum class kind_t
     {
@@ -222,12 +227,11 @@ struct node
         return can_mutate(impl.d.data.inner.values, e);
     }
 
-    static node_t* make_inner_n(count_t n)
+    static node_t* make_inner_n_into(void* buffer, std::size_t size, count_t n)
     {
         assert(n <= branches<B>);
-        auto m = heap::allocate(sizeof_inner_n(n));
-        auto p = new (m) node_t;
-        assert(p == (node_t*) m);
+        assert(size >= sizeof_inner_n(n));
+        auto p = new (buffer) node_t;
 #if IMMER_TAGGED_NODE
         p->impl.d.kind = node_t::kind_t::inner;
 #endif
@@ -235,6 +239,13 @@ struct node
         p->impl.d.data.inner.datamap = 0;
         p->impl.d.data.inner.values  = nullptr;
         return p;
+    }
+
+    static node_t* make_inner_n(count_t n)
+    {
+        assert(n <= branches<B>);
+        auto m = heap::allocate(sizeof_inner_n(n));
+        return make_inner_n_into(m, sizeof_inner_n(n), n);
     }
 
     static node_t* make_inner_n(count_t n, values_t* values)
@@ -981,9 +992,9 @@ struct node
     static node_t*
     make_merged(shift_t shift, T v1, hash_t hash1, T v2, hash_t hash2)
     {
-        if (shift < max_shift<B>) {
-            auto idx1 = hash1 & (mask<B> << shift);
-            auto idx2 = hash2 & (mask<B> << shift);
+        if (shift < max_shift<hash_t, B>) {
+            auto idx1 = hash1 & (mask<hash_t, B> << shift);
+            auto idx2 = hash2 & (mask<hash_t, B> << shift);
             if (idx1 == idx2) {
                 auto merged = make_merged(
                     shift + B, std::move(v1), hash1, std::move(v2), hash2);
@@ -1010,9 +1021,9 @@ struct node
     static node_t* make_merged_e(
         edit_t e, shift_t shift, T v1, hash_t hash1, T v2, hash_t hash2)
     {
-        if (shift < max_shift<B>) {
-            auto idx1 = hash1 & (mask<B> << shift);
-            auto idx2 = hash2 & (mask<B> << shift);
+        if (shift < max_shift<hash_t, B>) {
+            auto idx1 = hash1 & (mask<hash_t, B> << shift);
+            auto idx2 = hash2 & (mask<hash_t, B> << shift);
             if (idx1 == idx2) {
                 auto merged = make_merged_e(
                     e, shift + B, std::move(v1), hash1, std::move(v2), hash2);
@@ -1087,7 +1098,7 @@ struct node
 
     static void delete_deep(node_t* p, shift_t s)
     {
-        if (s == max_depth<B>)
+        if (s == max_depth<hash_t, B>)
             delete_collision(p);
         else {
             auto fst = p->children();
@@ -1101,7 +1112,7 @@ struct node
 
     static void delete_deep_shift(node_t* p, shift_t s)
     {
-        if (s == max_shift<B>)
+        if (s == max_shift<hash_t, B>)
             delete_collision(p);
         else {
             auto fst = p->children();

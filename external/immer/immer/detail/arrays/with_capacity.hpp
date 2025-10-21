@@ -42,7 +42,8 @@ struct with_capacity
         : ptr{p}
         , size{s}
         , capacity{c}
-    {}
+    {
+    }
 
     with_capacity(const with_capacity& other)
         : with_capacity{other.ptr, other.size, other.capacity}
@@ -128,7 +129,7 @@ struct with_capacity
                                bool> = true>
     static with_capacity from_range(Iter first, Sent last)
     {
-        auto count = static_cast<size_t>(distance(first, last));
+        auto count = static_cast<size_t>(detail::distance(first, last));
         if (count == 0)
             return empty();
         else
