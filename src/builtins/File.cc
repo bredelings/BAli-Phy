@@ -294,7 +294,7 @@ extern "C" closure builtin_function_createUniqueDirectoryRaw(OperationArgs& Args
 }
 
 // IO FilePath
-extern "C" closure builtin_function_getCurrentDirectoryRaw(OperationArgs& Args)
+extern "C" closure builtin_function_getCurrentDirectoryRaw(OperationArgs& /*Args*/)
 {
     fs::path cwd = fs::current_path();
 

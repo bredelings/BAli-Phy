@@ -2092,7 +2092,7 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 
     vector< vector<BranchNode*> > tree_stack;
     vector< string > comments;
-    int N = 1;
+
     push_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
     int pos = 0;
     
@@ -2126,7 +2126,6 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
                 throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
 
             push_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
-            N++;
             pos = 0;
         }
         else if (word == ",")
@@ -2139,7 +2138,6 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
                 set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             append_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
-            N++;
             pos = 0;
         }
         else if (word == ")") 

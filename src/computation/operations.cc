@@ -278,8 +278,6 @@ closure let_op(OperationArgs& Args)
 
     auto C  = Args.current_closure();
 
-    int total_allocated_vars = 0;
-
     do
     {
 	int start = C.Env.size();
@@ -295,8 +293,6 @@ closure let_op(OperationArgs& Args)
 	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
 	for(int i=0;i<n_binds;i++)
 	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
-
-	total_allocated_vars += n_binds;
 
 	C.exp = L.body;
 	do_trim(C);

@@ -1105,7 +1105,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, con
 //           Right now I think I do not avoid it.
 //           However, I might try and let-float things out of cases.
 
-bool pre_inline(const Occ::Var& x, const Occ::Exp& rhs)
+bool pre_inline(const Occ::Var& x, const Occ::Exp& /*rhs*/)
 {
     // Don't eliminate exported variables!
     if (x.is_exported) return false;

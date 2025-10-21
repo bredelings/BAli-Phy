@@ -1276,7 +1276,7 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
 
     vector<pair<int,int>> positions;
 
-    int i_pos=0;
+//    int i_pos=0;
     int ref_pos=0;
     for(int c=0;c<A.length();c++)
     {
@@ -1285,8 +1285,8 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
         if (a.is_letter(li) and a.is_letter(lc) and li != lc)
             positions.push_back({ref_pos, li});
 
-        if (not A.gap(c,i))
-            i_pos++;
+//        if (not A.gap(c,i))
+//            i_pos++;
         if (not A.gap(c,0))
             ref_pos++;
     }
@@ -1838,8 +1838,8 @@ int main(int argc,char* argv[])
         valarray<int> count(a.size());
         valarray<int> count2(2);
 
-        int pi_count = 0;
-        int pi_total = 0;
+//        int pi_count = 0;
+//        int pi_total = 0;
 
         for(int c=0;c<A.length();c++) {
             count = 0;
@@ -1855,12 +1855,12 @@ int main(int argc,char* argv[])
                     count2[1]++;
             }
 
-            int total_letters = count.sum();
-            pi_total += total_letters*(total_letters-1)/2;
+//            int total_letters = count.sum();
+//            pi_total += total_letters*(total_letters-1)/2;
 
-            for(int l1=0;l1<a.size();l1++)
-                for(int l2=0;l2<l1;l2++)
-                    pi_count += count[l1]*count[l2];
+//            for(int l1=0;l1<a.size();l1++)
+//                for(int l2=0;l2<l1;l2++)
+//                    pi_count += count[l1]*count[l2];
 
             different[c]  =   is_informative(count ,0);
             informative[c]  = is_informative(count ,1);

@@ -24,8 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 
-const double max_float = 3.40282347e+38F;
-
 double rootdistance(const Tree& T,int leaf,int b,double x) 
 {
   assert( 0 <= x and x <= 1);

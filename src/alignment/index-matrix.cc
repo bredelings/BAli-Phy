@@ -1324,7 +1324,6 @@ std::ostream& operator<<(std::ostream& o, const sparse_alignment& A)
         order_for_column.insert({col,i});
     }
 
-    int L = A.homology.n_columns();
     auto& a = *A.a;
     for(int seq=0;seq<A.homology.n_sequences();seq++)
     {

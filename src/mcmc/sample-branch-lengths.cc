@@ -167,7 +167,7 @@ void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
 	Stats.inc("branch-length (slice) 4",result);
 }
 
-void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
+void slice_sample_node_time(owned_ptr<context>& P,MoveStats& /*Stats*/,int n)
 {
     Parameters& PP = *P.as<Parameters>();
     if (not PP.t().can_set_node_time(n))
@@ -178,7 +178,7 @@ void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
     PP.set_root(n);
 
     const double T = PP.t().node_time(n);
-    const double mu = PP.branch_mean();
+    // const double mu = PP.branch_mean();
 
     //------------- Find new length --------------//
     double sigma = get_setting_or("slice_branch_sigma",1.5);
@@ -187,7 +187,7 @@ void slice_sample_node_time(owned_ptr<context>& P,MoveStats& Stats,int n)
 
     node_time_slice_function logp(PP, n);
 
-    double T2 = slice_sample(T, logp, w, 50);
+    /* double T2 = */ slice_sample(T, logp, w, 50);
 }
 
 void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)

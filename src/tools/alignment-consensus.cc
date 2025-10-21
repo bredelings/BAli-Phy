@@ -215,9 +215,7 @@ matrix<int> split_alignment(const matrix<int>& M1, const matrix<int>& M2)
 
 sparse_index_matrix split_alignment(const sparse_index_matrix& M1, const sparse_index_matrix& M2)
 {
-    const int N = M1.n_sequences();
-
-    assert(M2.n_sequences() == N);
+    assert(M2.n_sequences() == M1.n_sequences());
 
     auto M3 = M1;
     for(auto& [col1,letters]: M1.letters_for_column())

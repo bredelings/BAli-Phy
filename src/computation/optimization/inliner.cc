@@ -160,11 +160,11 @@ int simple_size(const Core2::Exp<>& E)
 	return 1;
 }
 
-ExprSize zero_size{{0},{},0};
+ExprSize zero_size{0,{},0};
 
 ExprSize sizeN(int n)
 {
-    return {{n},{},0};
+    return {n,{},0};
 }
 
 inline ExprSize operator+(ExprSize s1, int s2)
@@ -266,7 +266,7 @@ ExprSize fun_size(const inliner_options& opts, const std::vector<Occ::Var>& top_
     // if (fun.arity > n_args)
     //    res_discount = opts.fun_app_discount
 
-    return {{size}, arg_discounts, res_discount};
+    return {size, arg_discounts, res_discount};
 }
 
 ExprSize class_op_size(const inliner_options& opts, const std::vector<Occ::Var>& top_args, const Occ::Var& /*fun*/, const vector<Occ::Exp>& args)
@@ -692,7 +692,7 @@ optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const
 
     /*------------- Now we use the guidance --------------*/
     auto& guidance = cu->unf_guidance;
-    bool is_expandable = false;
+    // bool is_expandable = false;
 
     if (to<UnfoldNever>(guidance))
         return {};

@@ -8,7 +8,7 @@
 
 typedef Box<immer::set<int>> IntSet;
 
-extern "C" closure builtin_function_empty(OperationArgs& Args)
+extern "C" closure builtin_function_empty(OperationArgs& /*Args*/)
 {
     IntSet S;
 

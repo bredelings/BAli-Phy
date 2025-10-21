@@ -386,14 +386,14 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     auto pi1 = arg4.as_<EVector>();
 
     // Compute the average rate at equilibrium for R1.
-    double rate = 0;
-    for(int i=0;i<4;i++)
-    {
-        double sum = 0;
-        for(int j=0;j<4;j++)
-            if (i!=j) sum += R1(i,j);
-        rate += pi1[i].as_double() * sum;
-    }
+//    double rate = 0;
+//    for(int i=0;i<4;i++)
+//    {
+//        double sum = 0;
+//        for(int j=0;j<4;j++)
+//            if (i!=j) sum += R1(i,j);
+//        rate += pi1[i].as_double() * sum;
+//    }
 
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
     assert(v2 >= 0);

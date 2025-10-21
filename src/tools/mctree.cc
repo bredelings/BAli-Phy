@@ -583,10 +583,10 @@ std::pair<dynamic_bitset<>, int> solve_conflicts(const matrix<int>& conflicts,
 	    if (conflicts(i,j) and invincible[i])
 		survives[j] = false;
 
-    int n=0;
-    for(int i=0;i<N;i++)
-	if (invincible[i])
-	    n++;
+//    int n=0;
+//    for(int i=0;i<N;i++)
+//	if (invincible[i])
+//	    n++;
 
     do {
 	vector<int> n_conflicts(N,0);
