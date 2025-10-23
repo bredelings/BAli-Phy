@@ -14,27 +14,27 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 
-annotatedSubstLikelihoodFixedANonRev tree length smodel sequenceData = do
-  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+annotatedSubstLikelihoodFixedANonRev rtree length smodel sequenceData = do
+  let substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
-      maybeNodeISequences = labelToNodeMap tree isequences
+      maybeNodeISequences = labelToNodeMap rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
       alphabet = getAlphabet smodel
       smap   = stateLetters smodelOnTree
-      smodelOnTree = SModelOnTree tree smodel
+      smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoodsNonRev tree nodeCLVs transitionPs f
-      likelihood = peelLikelihoodNonRev nodeCLVs tree cls f alphabet smap substRoot columnCounts
+      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
+      likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
-      ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStates = sampleAncestralSequences rtree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
-  in_edge "tree" tree
+  in_edge "tree" rtree
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
