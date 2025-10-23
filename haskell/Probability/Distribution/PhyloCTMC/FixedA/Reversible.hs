@@ -30,7 +30,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs
+      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs {- unused! -} f
       likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping

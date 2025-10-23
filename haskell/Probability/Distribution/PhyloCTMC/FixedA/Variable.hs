@@ -35,7 +35,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs
+      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs {- unused! -} f
       likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       -- computing the probability of the condition
@@ -43,7 +43,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       maybeNodeISequences2 = labelToNodeMap rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
-      cls2 = cachedConditionalLikelihoods rtree nodeCLVs2 transitionPs
+      cls2 = cachedConditionalLikelihoods rtree nodeCLVs2 transitionPs {- unused! -} f
       likelihood2 = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
