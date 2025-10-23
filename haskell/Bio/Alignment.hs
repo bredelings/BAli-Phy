@@ -48,7 +48,7 @@ seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
 data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
 
-pairwise_alignments (AlignmentOnTree _ _ _ as) = as
+pairwiseAlignments (AlignmentOnTree _ _ _ as) = as
 
 instance IsGraph t => Alignment (AlignmentOnTree t) where
     alignmentLength a@(AlignmentOnTree t _ _ as) = (sequenceLength a node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]

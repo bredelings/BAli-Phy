@@ -121,7 +121,7 @@ annotated_alignment_prs tree hmms model alignment = do
   in_edge "imodel" model
   let prs = alignment_prs hmms model alignment
       pr = product prs
-      as = pairwise_alignments alignment
+      as = pairwiseAlignments alignment
       ls = mkSequenceLengthsMap alignment
       lengthp = snd model
       length_prs = fmap lengthp ls

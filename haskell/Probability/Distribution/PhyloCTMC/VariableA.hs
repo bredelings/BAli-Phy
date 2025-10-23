@@ -4,6 +4,7 @@ module Probability.Distribution.PhyloCTMC.VariableA
     )
 where
 
+import Probability.Distribution.PhyloCTMC.VariableA.Sample
 import Probability.Distribution.PhyloCTMC.VariableA.Properties
 import Probability.Distribution.PhyloCTMC.Properties
 import Probability.Distribution.PhyloCTMC.PhyloCTMC
@@ -42,7 +43,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes rtree
-      as = pairwise_alignments alignment
+      as = pairwiseAlignments alignment
       maybeNodeSequences = labelToNodeMap rtree (getSequences sequenceData)
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
@@ -83,26 +84,8 @@ instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBra
 --  + alignmentLength can be implemented for both AlignmentMatrix and AlignmentOnTree
 --  + could we change AlignmentOnTree to be data AlignmentOnTree t = OneSequence { tree :: t, length :: Int } | ManySequences { tree :: t, paiwise_alignments :: IntMap PairwiseAlignment} ?
 --    one issue is that we can check EITHER the tree OR the alignment constructor to determin of there's only one sequence.
---    We could to AlignmentOnTree { tree :: t, singleLength :: Maybe Int, pairwise_alignments :: IntMap PairwiseAlignment }
+--    We could to AlignmentOnTree { tree :: t, singleLength :: Maybe Int, pairwiseAlignments :: IntMap PairwiseAlignment }
 --    In that case, if there's a single length, we still have an (empty) IntMap for the pairwise alignments.
-
-foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
-foreign import bpcall "Likelihood:" simulateSequenceFrom :: VectorPairIntInt -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
-
-sampleComponentStates rtree alignment smodel =  do
-  let smodelOnTree = SModelOnTree rtree smodel
-      as = pairwise_alignments alignment
-      ps = transitionPsMap smodelOnTree
-      f = (weightedFrequencyMatrix smodelOnTree)
-
-  rec let simulateSequenceForNode node = case branchToParent rtree node of
-                                   Nothing -> simulateRootSequence (sequenceLength alignment node) f
-                                   Just b' -> let b = reverseEdge b'
-                                                  parent = sourceNode rtree b
-                                             in simulateSequenceFrom (stateSequences IntMap.! parent) (as IntMap.! b) (ps IntMap.! b) f
-      stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
-  return stateSequences
-
 
 instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
@@ -126,7 +109,7 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
   let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
-      as = pairwise_alignments alignment
+      as = pairwiseAlignments alignment
       maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
@@ -181,7 +164,7 @@ annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let n_nodes = numNodes tree
-      as = pairwise_alignments alignment
+      as = pairwiseAlignments alignment
       maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences

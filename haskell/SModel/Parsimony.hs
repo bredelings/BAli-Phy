@@ -54,7 +54,7 @@ parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as
                                       in peel_muts t pc as root seqs alpha cost
 
 instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
-    parsimony tree costs (sequenceData,alignment) = let as = pairwise_alignments alignment
+    parsimony tree costs (sequenceData,alignment) = let as = pairwiseAlignments alignment
                                                         alphabet = getAlphabet sequenceData
                                                         maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
                                                     in parsimony_root tree maybeNodeSequences as alphabet costs
