@@ -822,7 +822,7 @@ std::tuple<SimplFloats, inline_context> SimplifierState::make_dupable_case_cont(
 
 bool is_dupable(const inline_context& cont)
 {
-    if (cont.is_ok_context())
+    if (cont.is_stop_context())
     {
         return true;
     }
@@ -846,7 +846,7 @@ SimplifierState::simplifyArg(const in_scope_set& bound_vars, DupStatus dup_statu
     else
     {
         // combine substitution from arg_env with in_scope_set from env
-        auto arg2 = wrap(simplify(arg, arg_S, bound_vars, make_ok_context()));
+        auto arg2 = wrap(simplify(arg, arg_S, bound_vars, make_stop_context()));
         return {DupStatus::Simplified, bound_vars, arg2};
     }
 }
@@ -973,7 +973,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
     if (is_dupable(cont))
         return {SimplFloats(bound_vars), cont};
 
-    // ok_context handled above
+    // stop_context handled above
 
     else if (auto ac = cont.is_apply_context())
     {
@@ -1005,7 +1005,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
             floats.append(this_mod, options, joins);
         }
 
-        auto cc2 = std::make_shared<case_context>(alts, substitution(), make_ok_context());
+        auto cc2 = std::make_shared<case_context>(alts, substitution(), make_stop_context());
         cc2->dup_status = DupStatus::OkToDup;
         return {floats, cc2};
     }
@@ -1069,7 +1069,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         auto E = rebuild_case_inner(object, alts, S, F.bound_vars, context2);
 
-        auto [F2, E2] = rebuild(E, F.bound_vars, make_ok_context());
+        auto [F2, E2] = rebuild(E, F.bound_vars, make_stop_context());
 
         F.append(this_mod, options, F2);
 
@@ -1077,7 +1077,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
     }
     else
     {
-        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, make_ok_context());
+        auto E = rebuild_case_inner(object, alts, S, F.bound_vars, make_stop_context());
 
         return rebuild(E, bound_vars, context);
     }
@@ -1090,7 +1090,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, con
 
     SimplFloats F(bound_vars);
     
-    auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
+    auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context());
 
     F.append(this_mod, options, arg_floats);
     
@@ -1209,7 +1209,7 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    */
 
 	    // 5.1.2 Simplify rhs.
-	    auto [F2, rhs2] = simplify(rhs, S2, bound_vars, make_ok_context());
+	    auto [F2, rhs2] = simplify(rhs, S2, bound_vars, make_stop_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -1395,7 +1395,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 	auto x2 = rename_and_bind_var(lam->x, S2, bound_vars_x);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_ok_context()));
+	auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_stop_context()));
 
 	// 2.4 Return (\x2 -> new_body) after eta-reduction
         auto L = Occ::Lambda{x2, new_body};
@@ -1455,7 +1455,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 	Occ::ConApp C = *con;
 	for(auto& arg: C.args)
         {
-            auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
+            auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context());
             arg = arg2;
             F.append(this_mod, options, arg_floats);
         }
@@ -1479,7 +1479,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 
 	for(auto& arg: builtin->args)
  	{
-	    auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_ok_context());
+	    auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context());
             F.append(this_mod, options, argF);
 	    builtin2.args.push_back(arg2);
  	}

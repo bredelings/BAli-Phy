@@ -8,7 +8,7 @@
 #include "substitution.H"
 #include "simplifier_env.H" // for Unfolding, Occ::Var, and rebind_var( )
 
-struct ok_context;
+struct stop_context;
 struct apply_context;
 struct case_context;
 
@@ -67,7 +67,7 @@ enum DupStatus
 };
 
 
-class inline_context: public std::variant<std::shared_ptr<const ok_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
+class inline_context: public std::variant<std::shared_ptr<const stop_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
 {
 public:
     std::shared_ptr<const case_context> is_case_context() const
@@ -86,10 +86,10 @@ public:
             return {};
     }
 
-    std::shared_ptr<const ok_context> is_ok_context() const
+    std::shared_ptr<const stop_context> is_stop_context() const
     {
         if (index() == 0)
-            return std::get<std::shared_ptr<const ok_context>>(*this);
+            return std::get<std::shared_ptr<const stop_context>>(*this);
         else
             return {};
     }
@@ -119,11 +119,11 @@ struct case_context
 };
 
 // It is allowed to inline here.
-struct ok_context
+struct stop_context
 {
 };
 
-inline_context make_ok_context();
+inline_context make_stop_context();
 inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const in_scope_set& bound_vars, const Occ::Var& arg);
 inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, const in_scope_set& bound_vars, inline_context context);
 inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context);

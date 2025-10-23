@@ -63,9 +63,9 @@ inline_context make_apply_context(const Occ::Apply& A,  const simplifier::substi
     return make_apply_context_one_arg(A.arg, S, bound_vars, context);
 }
 
-inline_context make_ok_context()
+inline_context make_stop_context()
 {
-    return std::make_shared<const ok_context>();
+    return std::make_shared<const stop_context>();
 }
 
 int simple_size(const Occ::Exp& E)
