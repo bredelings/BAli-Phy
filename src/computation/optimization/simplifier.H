@@ -96,7 +96,7 @@ public:
     std::tuple<bool, std::vector<arg_info>, inline_context>
     continuation_args(const inline_context& context_in);
 
-    std::optional<Occ::Exp> try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context);
+    std::optional<Occ::Exp> call_site_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context);
 
     arg_info interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n);
 

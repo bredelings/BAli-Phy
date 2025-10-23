@@ -606,9 +606,12 @@ bool calc_some_benefit(const vector<arg_info>& arg_infos, int n_func_args, bool 
     for(auto& arg: arg_infos)
         interesting_args = interesting_args or (arg != arg_info::trivial);
 
-    bool interesting_call = true; // over_saturated;
+    bool interesting_call = over_saturated;
     if (not interesting_call)
     {
+        // FIXME: Make use of CallCtxt from ... where?
+        interesting_call = true;
+
         // CaseCtxt -> not (lone_variable && expandable)
         // ApplyCtxt -> true
         // DiscountArgCtxt -> n_func_args > 0
@@ -665,7 +668,7 @@ CallCtxt interesting_call_context(const inline_context& context)
         return CallCtxt::BoringCtxt;
 }
 
-optional<Occ::Exp> SimplifierState::try_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
+optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
 {
     auto [lone_variable, arg_infos, call_context] = continuation_args(context);
 

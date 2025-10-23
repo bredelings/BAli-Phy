@@ -397,7 +397,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
         }
     }
 
-    if (auto e = try_inline(unfolding, occ_info, context))
+    if (auto e = call_site_inline(unfolding, occ_info, context))
         return simplify(*e, {}, bound_vars, context);
     else
         return rebuild(x, bound_vars, context);
