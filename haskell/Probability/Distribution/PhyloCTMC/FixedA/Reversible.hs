@@ -18,7 +18,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
   let rtree = setRoot substRoot (makeRooted tree)
       substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
-  let (isequences, columnCounts, mapping) = compress_alignment $ getSequences sequenceData
+  let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
       maybeNodeISequences = labelToNodeMap rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
@@ -30,10 +30,10 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cached_conditional_likelihoods rtree nodeCLVs transitionPs
-      likelihood = peel_likelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs
+      likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
-      ancestralComponentStates = sample_ancestral_sequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel

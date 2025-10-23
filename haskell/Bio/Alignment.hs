@@ -71,7 +71,7 @@ fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ 
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
 foreign import bpcall "Alignment:compress_alignment" builtin_compress_alignment :: EAlignment ->
                                                                                    EPair EAlignment (EPair (EVector Int) (EVector Int))
-compress_alignment a = (compressed, counts, mapping)
+compressAlignment a = (compressed, counts, mapping)
     where tmp123 = builtin_compress_alignment (toEAlignment a)
           (compressed', tmp23) = pair_from_c tmp123
           (counts, mapping) = pair_from_c tmp23
@@ -81,7 +81,7 @@ compress_alignment a = (compressed, counts, mapping)
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
 foreign import bpcall "Alignment:compress_alignment_var_nonvar" builtin_compress_alignment_var_nonvar :: EAlignment -> Alphabet ->
                                                                                                          EPair EAlignment (EVector Int)
-compress_alignment_var_nonvar a alphabet = (compressed, counts)
+compressAlignmentVarNonvar a alphabet = (compressed, counts)
     where tmp12 = builtin_compress_alignment_var_nonvar (toEAlignment a) alphabet
           (compressed', counts) = pair_from_c tmp12
           compressed = fromEAlignment compressed'
