@@ -31,10 +31,10 @@ foreign import bpcall "Likelihood:" peelBranchAwayFromRootNonEq :: EVector CondL
 
 foreign import bpcall "Likelihood:" propagateFrequencies :: Matrix Double -> EVector (Matrix Double) -> Matrix Double
 
-peelBranch nodeCLs branchCLs asIn ps f toward | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps f
-                                              | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs asIn ps f
+peelBranch toward nodeCLs branchCLs asIn ps eqF | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps eqF
+                                                | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs asIn ps eqF
 
-peelBranchNonEq nodeCLs branchCLs asIn ps rootF toward | toward    = peelBranchTowardRootNonEq   nodeCLs branchCLs asIn ps
+peelBranchNonEq toward nodeCLs branchCLs asIn ps rootF | toward    = peelBranchTowardRootNonEq   nodeCLs branchCLs asIn ps
                                                        | otherwise = peelBranchAwayFromRootNonEq nodeCLs branchCLs asIn ps rootF
 
 -- ancestral sequence sampling for connected-CLVs
@@ -45,15 +45,18 @@ simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int))
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
+cachedConditionalLikelihoodsWith peelBranch t nodeCLVs as ps f
+    = let lc    = getEdgesSet t & IntMap.fromSet lcf
+          lcf b = let p = ps IntMap.! b
+                      inEdges = edgesBeforeEdgeSet t b
+                      nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t b)
+                      branchCLVs = IntMap.restrictKeysToVector lc inEdges
+                      asIn  = IntMap.restrictKeysToVector as inEdges
+                  in peelBranch b nodeCLV branchCLVs asIn p f
+      in lc
+
 --- Eq Rev
-cachedConditionalLikelihoods t nodeCLVs as ps f = let lc    = getEdgesSet t & IntMap.fromSet lcf
-                                                      lcf b = let p = ps IntMap.! b
-                                                                  inEdges = edgesBeforeEdgeSet t b
-                                                                  nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t b)
-                                                                  branchCLVs = IntMap.restrictKeysToVector lc inEdges
-                                                                  asIn  = IntMap.restrictKeysToVector as inEdges
-                                                              in peelBranchTowardRoot nodeCLV branchCLVs asIn p f
-                                                  in lc
+cachedConditionalLikelihoods = cachedConditionalLikelihoodsWith (\_ -> peelBranchTowardRoot)
 
 peelLikelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t root
                                               nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! root
@@ -61,15 +64,7 @@ peelLikelihood t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t roo
                                               asIn  = IntMap.restrictKeysToVector as inEdges
                                           in calcProbAtRoot nodeCLV clsIn asIn f
 --- Eq NonRev
-cachedConditionalLikelihoodsEqNonRev t nodeCLVs as ps f = let lc    = getEdgesSet t & IntMap.fromSet lcf
-                                                              lcf b = let p = ps IntMap.! b
-                                                                          inEdges = edgesBeforeEdgeSet t b
-                                                                          node = sourceNode t b
-                                                                          nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                          branchCLVs = IntMap.restrictKeysToVector lc inEdges
-                                                                          asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                      in peelBranch nodeCLV branchCLVs asIn p f (towardRoot t b)
-                                                          in lc
+cachedConditionalLikelihoodsEqNonRev t = cachedConditionalLikelihoodsWith (\b -> peelBranch (towardRoot t b)) t
 
 peelLikelihoodEqNonRev t nodeCLVs cls as f root = let inEdges = edgesTowardNodeSet t root
                                                       nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! root
@@ -78,15 +73,7 @@ peelLikelihoodEqNonRev t nodeCLVs cls as f root = let inEdges = edgesTowardNodeS
                                                   in calcProb nodeCLV clsIn asIn f
 
 -- NonEq
-cachedConditionalLikelihoodsNonEq t nodeCLVs as ps rootF = let lc    = getEdgesSet t & IntMap.fromSet lcf
-                                                               lcf b = let p = ps IntMap.! b
-                                                                           inEdges = edgesBeforeEdgeSet t b
-                                                                           node = sourceNode t b
-                                                                           nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! node
-                                                                           branchCLVs = IntMap.restrictKeysToVector lc inEdges
-                                                                           asIn  = IntMap.restrictKeysToVector as inEdges
-                                                                       in peelBranchNonEq nodeCLV branchCLVs asIn p rootF (towardRoot t b)
-                                                           in lc
+cachedConditionalLikelihoodsNonEq t = cachedConditionalLikelihoodsWith (\b -> peelBranchNonEq (towardRoot t b)) t
 
 peelLikelihoodNonEq t nodeCLVs cls as rootF root = let inEdges = edgesTowardNodeSet t root
                                                        nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! root
