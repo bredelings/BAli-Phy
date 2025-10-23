@@ -121,9 +121,11 @@ struct case_context
 // It is allowed to inline here.
 struct stop_context
 {
+    CallCtxt call_context;
+    stop_context(CallCtxt c):call_context(c) {}
 };
 
-inline_context make_stop_context();
+inline_context make_stop_context(CallCtxt c);
 inline_context make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const in_scope_set& bound_vars, const Occ::Var& arg);
 inline_context make_apply_context(const Occ::Apply& A, const simplifier::substitution& S, const in_scope_set& bound_vars, inline_context context);
 inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context);
