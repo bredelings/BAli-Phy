@@ -21,7 +21,7 @@ void reg_heap::collect_garbage()
     total_regs = size();
     total_steps = steps.size();
 
-    if (log_verbose >= 2)
+    if (log_verbose >= 4)
         std::cerr<<"***********Garbage Collection******************"<<std::endl;
 
 #ifdef DEBUG_MACHINE
@@ -31,7 +31,7 @@ void reg_heap::collect_garbage()
 
     trace_and_reclaim_unreachable();
 
-    if (log_verbose >= 2)
+    if (log_verbose >= 4)
     {
         std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
         std::cerr<<"Steps: "<<steps.n_used()<<"/"<<steps.size()<<std::endl;
@@ -204,7 +204,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     check_used_regs();
 #endif
     // 0. Count the number of regs/steps in the root program.
-    if (log_verbose >= 2)
+    if (log_verbose >= 4)
         trace_root();
 
     //  vector<int>& tokens = get_scratch_list();

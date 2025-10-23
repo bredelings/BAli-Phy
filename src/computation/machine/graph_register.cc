@@ -2377,7 +2377,7 @@ void reg_heap::resize(int s)
     assert(regs.size() == s);
 
     auto old_size = prog_steps.size();
-    if (log_verbose)
+    if (log_verbose >= 3)
         std::cerr<<"Expanding VM heap from "<<old_size<<" -> "<<s<<".\n";
 
     // Extend program.  Use regs.size() instead of size()

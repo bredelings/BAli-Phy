@@ -468,7 +468,7 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
             string stored_archive_sha = extract_sha(data);
 
             string computed_archive_sha = boost::compute::detail::sha1(data);
-            if (log_verbose >= 2)
+            if (log_verbose >= 4)
                 std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_sha = "<<stored_archive_sha<<"     computed_archive_sha = "<<computed_archive_sha<<"\n";
 
             if (stored_archive_sha != computed_archive_sha)
@@ -494,12 +494,12 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
         }
         catch (std::exception& e)
         {
-            if (log_verbose)
+            if (log_verbose >= 2)
                 std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n  exception = "<<e.what()<<"\n";
         }
         catch (...)
         {
-            if (log_verbose)
+            if (log_verbose >= 2)
                 std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n";
         }
     }
@@ -550,7 +550,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             string data = buffer.str();
             string archive_sha = boost::compute::detail::sha1(data);
 
-            if (log_verbose >= 2)
+            if (log_verbose >= 4)
                 std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
 
             // Create parent directories if needed.
@@ -573,12 +573,12 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
         }
         catch (std::exception& e)
         {
-            if (log_verbose)
+            if (log_verbose >= 2)
                 std::cerr<<"  Failure writing cached compile artifact for "<<modid<<": "<<e.what()<<"\n    file = "<<*mod_path<<"\n";
         }
         catch (...)
         {
-            if (log_verbose)
+            if (log_verbose >= 2)
                 std::cerr<<"  Failure writing cached compile artifact for "<<modid<<"\n    file = "<<*mod_path<<"\n";
         }
     }
