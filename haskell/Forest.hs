@@ -30,7 +30,7 @@ Types:
 -}
 
 
-data MaybeRooted f = Unrooted | HasRoots f => Rooted
+data MaybeRooted f = Unrooted | (f ~ Rooted f, HasRoots f) => Rooted
 
 class IsGraph f => IsForest f where
     type family Rooted f
