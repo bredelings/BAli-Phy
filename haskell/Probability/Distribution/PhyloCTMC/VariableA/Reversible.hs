@@ -36,12 +36,12 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
       fs = getNodesSet rtree & IntMap.fromSet (\_ -> f)
-      cls = cached_conditional_likelihoods rtree nodeCLVs as transitionPs f
+      cls = cachedConditionalLikelihoods rtree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peel_likelihood rtree nodeCLVs cls as f substRoot
+      likelihood  = peelLikelihood rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStates = sample_ancestral_sequences rtree substRoot nodeCLVs as transitionPs f cls
+      ancestralComponentStates = sampleAncestralSequences rtree substRoot nodeCLVs as transitionPs f cls
 
   in_edge "tree" tree
   in_edge "alignment" alignment

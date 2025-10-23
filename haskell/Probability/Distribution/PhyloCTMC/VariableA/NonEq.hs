@@ -1,4 +1,4 @@
-module Probability.Distribution.PhyloCTMC.VariableA.EqNonRev where
+module Probability.Distribution.PhyloCTMC.VariableA.NonEq where
 
 import Probability.Distribution.PhyloCTMC.VariableA.Properties
 import Probability.Distribution.PhyloCTMC.VariableA.Sample
@@ -14,7 +14,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 
-annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
+annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let as = pairwiseAlignments alignment
@@ -26,11 +26,11 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
       smodelOnTree = SModelOnTree tree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      fs = getNodesSet tree & IntMap.fromSet (\_ -> f)
-      cls = cachedConditionalLikelihoodsEqNonRev tree nodeCLVs as transitionPs f
+      fs = frequenciesOnTree tree f transitionPs
+      cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodEqNonRev tree nodeCLVs cls as f substRoot
+      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f substRoot
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs as transitionPs f cls
 
@@ -42,17 +42,16 @@ annotatedSubstLikeOnTreeEqNonRev tree alignment smodel sequenceData = do
 
   return ([likelihood], prop)
 
-instance Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
-    type Result (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = UnalignedCharacterData
+instance Dist (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
+    type Result (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = UnalignedCharacterData
     dist_name _ = "PhyloCTMC"
 
+-- TODO: make this work on forests!                  -
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
+    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) = PhyloCTMCPropertiesVariableA
+    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeNonEq tree alignment (scaleTo scale smodel)
 
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
-    type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) = PhyloCTMCPropertiesVariableA
-    annotated_densities (PhyloCTMC tree alignment smodel scale) = annotatedSubstLikeOnTreeEqNonRev tree alignment (scaleTo scale smodel)
-
-
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
       let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
@@ -64,7 +63,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled tree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => Sampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumNonReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => Sampleable (PhyloCTMC t (AlignmentOnTree t2) s NonEquilibrium) where
     sample dist = RanDistribution2 dist do_nothing
 
-    
+
