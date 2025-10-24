@@ -13,6 +13,7 @@ import Data.Matrix
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
+import Reversible    
 
 
 {-
@@ -23,8 +24,10 @@ import qualified Data.IntMap as IntMap
  -}
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
-  let rtree = setRoot substRoot tree
-      substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+      rtree = if isReversible smodel
+              then setRoot substRoot tree
+              else tree
 
   let as = pairwiseAlignments alignment
       maybeNodeSequences = labelToNodeMap rtree (getSequences sequenceData)
@@ -36,10 +39,14 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
       fs = getNodesSet rtree & IntMap.fromSet (\_ -> f)
-      cls = cachedConditionalLikelihoods rtree nodeCLVs as transitionPs f
+      cls = if isStationary smodel
+            then cachedConditionalLikelihoodsEqNonRev rtree nodeCLVs as transitionPs f
+            else cachedConditionalLikelihoodsNonEq rtree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihood rtree nodeCLVs cls as f substRoot
+      likelihood  = if isStationary smodel
+                    then peelLikelihoodEqNonRev rtree nodeCLVs cls as f substRoot
+                    else peelLikelihoodNonEq rtree nodeCLVs cls as f substRoot
 
       ancestralComponentStates = sampleAncestralSequences rtree substRoot nodeCLVs as transitionPs f cls
 
