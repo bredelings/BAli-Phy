@@ -5,6 +5,7 @@ import           Markov (CTMC(..), CanMakeReversible(..), MkReversible (..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
+import           Reversible hiding (CanMakeReversible(..), reversible)
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
@@ -39,6 +40,9 @@ foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int ->
 -- Fields are: alphabet, smap, q, and cached rate.
 
 data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
+
+instance CheckReversible Markov where
+    getReversibility (Markov a smap m f) = getReversibility m
 
 instance CanMakeReversible Markov where
     reversible (Markov a smap m f) = Reversible $ Markov a smap m' f
