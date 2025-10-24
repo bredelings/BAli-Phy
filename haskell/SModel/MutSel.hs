@@ -13,7 +13,8 @@ import Reversible
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 
-mut_sel ws' m0@(Markov a smap _ _) = setReversibility EqRev $ markov a smap q pi where
+mut_sel ws' m0@(Markov a smap _ _) = setReversibility rv $ markov a smap q pi where
+    rv = getReversibility m0
     q0 = getQ m0
     pi0 = getEqFreqs m0
     ws = toVector ws'

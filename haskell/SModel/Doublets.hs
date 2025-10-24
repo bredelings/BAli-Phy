@@ -12,7 +12,8 @@ type DoubletAlphabet = Alphabet
 foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: DoubletAlphabet -> EVector Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:singlet_to_doublet_rates" singlet_to_doublet_rates :: DoubletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double
 
-x2x2 a m1 m2 = setReversibility EqRev $ markov a smap q pi where
+x2x2 a m1 m2 = setReversibility rv $ markov a smap q pi where
+    rv = minimum $ fmap getReversibility [m1,m2]
     smap = simpleSMap a
     q = singlet_to_doublet_rates a (getQ m1) (getQ m2)
     pi = f2x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2)
