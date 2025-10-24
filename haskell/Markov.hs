@@ -10,9 +10,7 @@ foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Mat
 foreign import bpcall "SModel:" fixupDiagonalRates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
-foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:" equilibriumLimit :: EVector Double -> Matrix Double -> EVector Double
-foreign import bpcall "SModel:compute_stationary_freqs" builtin_getEqFreqs :: Matrix Double -> EVector Double
 foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Double -> Bool
 foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool
 
@@ -71,8 +69,12 @@ data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibi
 markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
+uniformEquilibriumLimit q = equilibriumLimit pi0 q where
+    pi0 = toVector $ replicate n (1/fromIntegral n)
+    n = nrows q
+
 -- If we're starting from the equilibrium, then I guess we're EqNonRev?
-markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) EqNonRev where
+markov' q = Markov qFixed (uniformEquilibriumLimit qFixed) 1 (NoDecomp Nothing) EqNonRev where
     qFixed = fixupDiagonalRates q
 
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
