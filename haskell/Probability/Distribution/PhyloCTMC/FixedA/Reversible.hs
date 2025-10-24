@@ -13,10 +13,13 @@ import Data.Matrix
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
+import Reversible    
 
 annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
-  let rtree = setRoot substRoot tree
-      substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+  let substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+      rtree = if isReversible smodel
+              then setRoot substRoot tree
+              else tree
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
@@ -30,8 +33,8 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs {- unused! -} f
-      likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs {- unused! -} f
+      likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 
