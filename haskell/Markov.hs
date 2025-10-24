@@ -84,7 +84,14 @@ instance CheckReversible Markov where
     getReversibility (Markov _ _ _ _ r) = r
 
 instance R.CanMakeReversible Markov where
-    setReversibility r (Markov q f s e _) = (Markov q f s e r) 
+    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
+
+    setReversibility EqRev (Markov q pi s _ _ ) = Markov q pi s decomp EqRev
+        where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
+                                                   Nothing -> NoDecomp (Just NoDiagReason)
+    
+    setReversibility r      (Markov q f s _ _ ) = Markov q f s (NoDecomp Nothing) r
+                                        
                                           
 instance CTMC Markov where
     getQ  (Markov q _  factor _ _) = scaleMatrix factor q
