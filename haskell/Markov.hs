@@ -78,7 +78,7 @@ instance Scalable Markov where
     scaleBy f (Markov q pi s decomp rev) = Markov q pi (s*f) decomp rev
 
 instance CheckReversible Markov where
-    getReversibility (Markov _ _ _ _ r ) = r
+    getReversibility (Markov _ _ _ _ r) = r
 
 instance CTMC Markov where
     getQ  (Markov q _  factor _ _) = scaleMatrix factor q
@@ -94,6 +94,9 @@ instance CTMC Markov where
 
 data MkReversible m = Reversible  { nonreversible :: m }
 
+instance CheckReversible m => CheckReversible (MkReversible m) where
+    getReversibility (Reversible m) = getReversibility m
+                    
 class CanMakeReversible m where
     reversible :: m -> MkReversible m
 
@@ -130,6 +133,9 @@ equilibrium = Equilibrium
 instance Scalable m => Scalable (MkEquilibrium m) where
     scaleBy f (Equilibrium m) = Equilibrium $ scaleBy f m
 
+instance CheckReversible m => CheckReversible (MkEquilibrium m) where
+    getReversibility (Equilibrium m) = getReversibility m
+                    
 instance Show m => Show (MkEquilibrium m) where
     show (Equilibrium m) = show m
 
