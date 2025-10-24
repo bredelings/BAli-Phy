@@ -23,7 +23,7 @@ import qualified Data.IntMap as IntMap
  -}
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
-  let rtree = setRoot substRoot (makeRooted tree)
+  let rtree = setRoot substRoot tree
       substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
 
   let as = pairwiseAlignments alignment
@@ -56,7 +56,7 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
     dist_name _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) = PhyloCTMCPropertiesVariableA
     annotated_densities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment (scaleTo scale smodel)
 
@@ -70,10 +70,10 @@ instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBra
 --    We could to AlignmentOnTree { tree :: t, singleLength :: Maybe Int, pairwiseAlignments :: IntMap PairwiseAlignment }
 --    In that case, if there's a single length, we still have an (empty) IntMap for the pairwise alignments.
 
-instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => IOSampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
     sampleIO (PhyloCTMC tree alignment rawSmodel scale) = do
       let alphabet = getAlphabet smodel
-          rtree = makeRooted tree
+          rtree = tree
           smodel = scaleTo scale rawSmodel
           smap = stateLetters (SModelOnTree rtree smodel)
 
@@ -83,7 +83,7 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s, IsTree t2) => Sampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, IsTree t2) => Sampleable (PhyloCTMC t (AlignmentOnTree t2) s EquilibriumReversible) where
     sample dist = RanDistribution2 dist do_nothing
 
 
