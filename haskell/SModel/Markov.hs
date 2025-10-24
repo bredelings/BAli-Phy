@@ -67,7 +67,7 @@ simpleSMap a = toVector [0..(alphabetSize a)-1]
 markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov' a smap q = wrapMarkov a smap (Markov.markov' q)
+eqMarkov a smap q = wrapMarkov a smap (Markov.eqMarkov q)
 
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a

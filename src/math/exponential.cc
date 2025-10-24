@@ -632,6 +632,15 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matri
 
     auto eQ = toEigen(Q);
 
+    for(int i=0;i<n;i++)
+    {
+        double sum = 0;
+        for(int j=0;j<n;j++)
+            if (i!=j)
+                sum += eQ(i,j);
+        eQ(i,i) = -sum;
+    }
+
     auto epi = equilibriumLimit(epi0, eQ);
     
     // Check that all the rates are 0.

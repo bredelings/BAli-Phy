@@ -47,6 +47,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
       cls2 = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
+-- How about peelLikelihoodVariableNonRev?             
       likelihood2 = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping

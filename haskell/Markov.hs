@@ -14,20 +14,17 @@ foreign import bpcall "SModel:" equilibriumLimit :: EVector Double -> Matrix Dou
 foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Double -> Bool
 foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool
 
+-- NOTE: Rates
 -- We don't have rates here, because rates require a concept of states being "equal".
--- For cases like markov modulated models, the rate we care about is the rate of switching letter,
+-- For cases like markov modulated models, the rate we care about is the rate of switching letters,
 --   not the rate of switching states.
 -- For codon models, we could care about the rate of switching codons, nucleotides, or amino acids.
 --   -- we prefer to scale branch lengths in terms of nucleotide changes.
 -- We also only care about the rate at equilibrium.
--- Its possible to run nonreversible models from a non-equilibrium rate, but also we probably sometimes
---  want to use the equilibrium rate.
+-- For non-equilibrium models, we only care about the rate at equilibrium.
 
--- For functions like equ, f81, and gtr, maybe I also need versions that just construct the matrix?
-
--- Storing the rate separately means that we don't need to recompute the equilibrium frequencies
---    when we are just rescaling.
--- Originally, it probably was a way to avoid recomputing the eigensystem when rescaling.
+-- Storing the rate separately means that we don't need to recompute
+-- (i) the equilibrium frequencies or (ii) the eigensystem when we are just rescaling.
 
 class Scalable c => CTMC c where
     getQ :: c -> Matrix Double
@@ -38,34 +35,12 @@ class Scalable c => CTMC c where
     getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
     qExp m = mexp (getQ m) 1
 
--- Should I add gtr, equ n x, and f81 to this class? Probably...
-
--- Should I add SModel.ReversibleMarkov to this class?
-
--- Can I make an SModel.Markov?
-
-instance Scalable (Matrix Double) where
-    scaleBy f m = scaleMatrix f m
-
-instance CheckReversible (Matrix Double) where
-    getReversibility m | stat && rev = EqRev
-                       | stat        = EqNonRev
-                       | otherwise   = NonEq
-                       where stat = checkStationary (getQ m) (getStartFreqs m)
-                             rev = checkReversible (getQ m) (getEqFreqs m)
-
-instance CTMC (Matrix Double) where
-    getQ m = m
-    getStartFreqs = error "No start freqs for Matrix Double"
-
--- SHould I rename this to ctmc?
--- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
+-- TODO: I should probably hide the constructor to guarantee that rows sum to zero, and frequencies sum to 1.
+-- TODO: Should I rename Markov -> CTMC?
 
 -- Fields are: q, start frequencies, rate, possibly eigendecomposition, reversibility
 data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibility
 
--- can I hide the Markov constructor?
--- should I rename this function to ctmc?
 markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
@@ -73,9 +48,7 @@ uniformEquilibriumLimit q = equilibriumLimit pi0 q where
     pi0 = toVector $ replicate n (1/fromIntegral n)
     n = nrows q
 
--- If we're starting from the equilibrium, then I guess we're EqNonRev?
-markov' q = Markov qFixed (uniformEquilibriumLimit qFixed) 1 (NoDecomp Nothing) EqNonRev where
-    qFixed = fixupDiagonalRates q
+eqMarkov q = setReversibility EqNonRev $ markov q (uniformEquilibriumLimit q)
 
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 

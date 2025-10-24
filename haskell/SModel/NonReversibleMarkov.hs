@@ -12,7 +12,7 @@ import           SModel.Simple
 import           SModel.Rate
 import           Tree (HasBranchLengths(..))
 
-nonRev a rates = scaleTo 1 $ markov' a smap q
+nonRev a rates = scaleTo 1 $ eqMarkov a smap q
     where smap = simpleSMap a
           n = length $ getLetters a
           q = Markov.non_rev_from_list n rates
