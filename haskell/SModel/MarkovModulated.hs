@@ -105,7 +105,7 @@ covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesB
 
 covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
-covarionGtrSym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
+covarionGtrSym :: Matrix Double -> Discrete Markov -> Markov
 covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist

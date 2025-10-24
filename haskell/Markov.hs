@@ -3,7 +3,7 @@ module Markov where
 import Data.Matrix
 import SModel.Rate
 import EigenExp
-import Reversible hiding (CanMakeReversible(..), reversible)
+import Reversible    
 import qualified Reversible as R (CanMakeReversible(..), reversible)
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
@@ -78,10 +78,10 @@ markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) EqNon
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 
 instance Scalable Markov where
-    scaleBy f (Markov q pi s decomp rev) = Markov q pi (s*f) decomp rev
+    scaleBy f (Markov q pi s decomp rev ) = Markov q pi (s*f) decomp rev
 
 instance CheckReversible Markov where
-    getReversibility (Markov _ _ _ _ r) = r
+    getReversibility (Markov _ _ _ _ r ) = r
 
 instance R.CanMakeReversible Markov where
     setReversibility r (Markov q f s e _) = (Markov q f s e r) 
@@ -94,64 +94,25 @@ instance CTMC Markov where
         case lExp eigensys pi factor of Just mat -> mat
                                         Nothing -> mexp q factor
 
+
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
 -- Which is why it takes any type m.
 
-data MkReversible m = Reversible  { nonreversible :: m }
-
-instance CheckReversible m => CheckReversible (MkReversible m) where
-    getReversibility (Reversible m) = getReversibility m
-                    
-class CanMakeReversible m where
-    reversible :: m -> MkReversible m
 
 instance CanMakeReversible Markov where
-    reversible (Markov q pi s _ _) = Reversible $ Markov q pi s decomp EqRev
+    setReversibility (Markov q pi s _ _) EqRev = Markov q pi s decomp EqRev
         where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
                                                    Nothing -> NoDecomp (Just NoDiagReason)
 
-instance Scalable m => Scalable (MkReversible m) where
-    scaleBy f (Reversible m) = Reversible $ scaleBy f m
+    setReversibility (Markov q pi s _ _) r = Markov q pi s (NoDecomp Nothing) r
 
 instance Show Markov where
     show m@(Markov _ _ _ decomp _) = "Markov " ++ show decomp ++ "\n" ++ show (getQ m)
 
-instance Show m => Show (MkReversible m) where
-    show (Reversible m) = show m
-
-instance CTMC m => CTMC (MkReversible m) where
-    getQ  (Reversible m) = getQ m
-    getStartFreqs (Reversible m) = getStartFreqs m
-    getEqFreqs (Reversible m) = getStartFreqs m
-    qExp  (Reversible m) = qExp m
-    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
-       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
-
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
 -- Which is why it takes any type m.
-
-data MkEquilibrium m = Equilibrium  { nonequilibrium :: m }
-
-equilibrium = Equilibrium
-
-instance Scalable m => Scalable (MkEquilibrium m) where
-    scaleBy f (Equilibrium m) = Equilibrium $ scaleBy f m
-
-instance CheckReversible m => CheckReversible (MkEquilibrium m) where
-    getReversibility (Equilibrium m) = getReversibility m
-                    
-instance Show m => Show (MkEquilibrium m) where
-    show (Equilibrium m) = show m
-
-instance CTMC m => CTMC (MkEquilibrium m) where
-    getQ  (Equilibrium m) = getQ m
-    getStartFreqs (Equilibrium m) = getStartFreqs m
-    getEqFreqs (Equilibrium m) = getStartFreqs m
-    qExp  (Equilibrium m) = qExp m
-    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
-       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
 
 ----------------------------
 

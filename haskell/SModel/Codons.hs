@@ -47,7 +47,7 @@ x3x3 a m1 m2 m3 = reversible $ markov a smap q pi where
 x3_sym a s = singlet_to_triplet_rates a s s s
 x3 a q = x3x3 a q q q
 
-mnm :: CTMC m => TripletAlphabet -> Double -> Double -> m -> ReversibleMarkov
+mnm :: CTMC m => TripletAlphabet -> Double -> Double -> m -> Markov
 mnm a v2 v3 model = reversible $ markov a smap q pi where
     smap = simpleSMap a
     q = multiNucleotideMutationRates a v2 v3 (getQ model) (getEqFreqs model)
@@ -55,6 +55,6 @@ mnm a v2 v3 model = reversible $ markov a smap q pi where
     pi = f3x4_frequencies_builtin a pi' pi' pi'
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS omega m@(Reversible (Markov a s _ r)) = reversible $ markov a s q pi where
+dNdS omega m@(Markov a s _ r) = reversible $ markov a s q pi where
     pi = getEqFreqs m
     q = (getQ m) %*% dNdS_matrix a omega

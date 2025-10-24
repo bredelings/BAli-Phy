@@ -10,7 +10,6 @@ import Probability.Distribution.Discrete -- for mix
 import Probability.Dist                  -- for mean
 import Tree
 import Markov (CTMC(..))
-import Reversible hiding (CanMakeReversible(..), reversible)    
 
 import SModel.ReversibleMarkov
 
@@ -39,7 +38,7 @@ wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
 
 averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
 
-plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
+plusInv :: Double -> (Discrete Markov) -> (Discrete Markov)
 plusInv pInv ms = scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms
@@ -54,10 +53,9 @@ instance HasSMap m => HasSMap (Discrete m) where
     getSMap model = getSMap $ component model 0
 
 instance CheckReversible m => CheckReversible (Discrete m) where
-    getReversibility (Discrete ms) = minimum [getReversibility m | (m,_) <- ms]
-                    
+    getReversibility (Discrete ms) = EqRev -- minimum $ map (getReversibility . fst) ms
+
 instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
-    type instance IsReversible (Discrete m) = IsReversible m
     branchTransitionP (SModelOnTree tree model) b = concat [ branchTransitionP (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
     distribution (SModelOnTree tree model) = concat [(pr*) <$> distribution (SModelOnTree tree component) | (component, pr) <- unpackDiscrete model]
     componentFrequencies (SModelOnTree tree model) = concat [componentFrequencies (SModelOnTree tree component) | (component,_) <- unpackDiscrete model]

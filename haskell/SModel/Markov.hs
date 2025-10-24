@@ -1,11 +1,12 @@
 module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
 
+import           Reversible    
 import qualified Markov
-import           Markov (CTMC(..), CanMakeReversible(..), MkReversible (..))
+import           Markov (CTMC(..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
-import           Reversible hiding (CanMakeReversible(..), reversible)
+import           Reversible
 import qualified Reversible as R (CanMakeReversible(..), reversible)
 import           Bio.Alphabet
 import           Data.Matrix
@@ -46,8 +47,7 @@ instance CheckReversible Markov where
     getReversibility (Markov a smap m f) = getReversibility m
 
 instance CanMakeReversible Markov where
-    reversible (Markov a smap m f) = Reversible $ Markov a smap m' f
-        where Reversible m' = reversible m
+    setReversibility (Markov a smap m f) r = Markov a smap (setReversibility m r) f
 
 instance R.CanMakeReversible Markov where
     setReversibility r (Markov a smap m f) = Markov a smap (setReversibility r m) f

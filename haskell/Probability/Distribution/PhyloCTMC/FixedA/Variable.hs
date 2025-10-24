@@ -15,13 +15,15 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 
-data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
+data VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
 
 variable = Variable
 
 annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
-  let rtree = setRoot substRoot tree
-      substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+  let substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+      rtree = if isReversible smodel
+              then setRoot substRoot tree
+              else tree
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
@@ -35,15 +37,16 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs {- unused! -} f
-      likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
+      likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       -- computing the probability of the condition
       (isequences2, columnCounts2) = compressAlignmentVarNonvar (getSequences sequenceData) alphabet
       maybeNodeISequences2 = labelToNodeMap rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
-      cls2 = cachedConditionalLikelihoods rtree nodeCLVs2 transitionPs {- unused! -} f
+      cls2 = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
+-- How about peelLikelihoodVariableNonRev?             
       likelihood2 = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
@@ -56,19 +59,18 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
   return ([likelihood,1/likelihood2], prop)
 
-instance Dist (PhyloCTMC t Int s r) => Dist (VariablePhyloCTMC t s r) where
-    type Result (VariablePhyloCTMC t s r) = Result (PhyloCTMC t Int s r)
+instance Dist (PhyloCTMC t Int s) => Dist (VariablePhyloCTMC t s) where
+    type Result (VariablePhyloCTMC t s) = Result (PhyloCTMC t Int s)
     dist_name (Variable dist) = "Variable" ++ dist_name dist
 
 -- TODO: make this work on forests!
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (VariablePhyloCTMC t s EquilibriumReversible) where
-    type DistProperties (VariablePhyloCTMC t s EquilibriumReversible) = DistProperties (PhyloCTMC t Int s EquilibriumReversible)
+instance (CheckReversible s, HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (VariablePhyloCTMC t s) where
+    type DistProperties (VariablePhyloCTMC t s) = DistProperties (PhyloCTMC t Int s)
     annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s EquilibriumReversible) where
-    sampleIO (Variable (PhyloCTMC tree rootLength rawSmodel scale)) = do
-      let rtree = tree
-          alphabet = getAlphabet smodel
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s) where
+    sampleIO (Variable (PhyloCTMC rtree rootLength rawSmodel scale)) = do
+      let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
           smap = stateLetters (SModelOnTree rtree smodel)
 
@@ -78,7 +80,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (CheckReversible s, HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (VariablePhyloCTMC t s) where
     sample (Variable dist) = RanDistribution2 dist do_nothing
 
 

@@ -33,20 +33,12 @@ data SModelOnTree t m = SModelOnTree t m
    would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector EVector Double.
 -}
 
-data EquilibriumReversible
-
-data EquilibriumNonReversible
-
-data NonEquilibrium
-
 {-
 TODO: Remove stateLetters from SimpleSModel and just use getSMap directly?
 TODO: Rename to e.g. PhyloLikelihood?
 -}
 
 class CheckReversible m => SimpleSModel t m where
-    type family IsReversible m
-    type instance IsReversible m = NonEquilibrium
 
     getTree :: (SModelOnTree t m) -> t
     stateLetters :: (SModelOnTree t m) -> EVector Int
