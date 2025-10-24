@@ -4,6 +4,7 @@ import Data.Matrix
 import SModel.Rate
 import EigenExp
 import Reversible hiding (CanMakeReversible(..), reversible)
+import qualified Reversible as R (CanMakeReversible(..), reversible)
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
@@ -62,6 +63,7 @@ instance CTMC (Matrix Double) where
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
 
+-- Fields are: q, start frequencies, rate, possibly eigendecomposition, reversibility
 data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibility
 
 -- can I hide the Markov constructor?
@@ -69,7 +71,8 @@ data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibi
 markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
-markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) NonEq where
+-- If we're starting from the equilibrium, then I guess we're EqNonRev?
+markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) EqNonRev where
     qFixed = fixupDiagonalRates q
 
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
@@ -80,6 +83,9 @@ instance Scalable Markov where
 instance CheckReversible Markov where
     getReversibility (Markov _ _ _ _ r) = r
 
+instance R.CanMakeReversible Markov where
+    setReversibility r (Markov q f s e _) = (Markov q f s e r) 
+                                          
 instance CTMC Markov where
     getQ  (Markov q _  factor _ _) = scaleMatrix factor q
     getStartFreqs (Markov _ pi _ _ _) = pi
@@ -153,7 +159,7 @@ plus_f_matrix pi = plus_gwf_matrix pi 1
 
 gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = reversible $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr er pi = reversible $ R.setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

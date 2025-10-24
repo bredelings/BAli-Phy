@@ -24,13 +24,13 @@ class CheckReversible m where
     getReversibility :: m -> Reversibility
 
 class CheckReversible m => CanMakeReversible m where
-    setReversibility :: m -> Reversibility -> m
+    setReversibility :: Reversibility -> m -> m
 
 isReversible m = getReversibility m == EqRev
 isStationary m = getReversibility m /= NonEq
 
-reversible m = setReversibility m EqRev
-stationary m = setReversibility m EqNonRev
+reversible = setReversibility EqRev
+stationary = setReversibility EqNonRev
 
 data IsEqSame = SameEqs | MaybeDiffEqs
 

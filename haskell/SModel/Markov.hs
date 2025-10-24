@@ -6,6 +6,7 @@ import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
 import           Reversible hiding (CanMakeReversible(..), reversible)
+import qualified Reversible as R (CanMakeReversible(..), reversible)
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
@@ -47,6 +48,9 @@ instance CheckReversible Markov where
 instance CanMakeReversible Markov where
     reversible (Markov a smap m f) = Reversible $ Markov a smap m' f
         where Reversible m' = reversible m
+
+instance R.CanMakeReversible Markov where
+    setReversibility r (Markov a smap m f) = Markov a smap (setReversibility r m) f
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where

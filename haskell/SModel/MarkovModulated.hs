@@ -2,11 +2,12 @@ module SModel.MarkovModulated where
 
 import Foreign.Vector
 import Bio.Alphabet
+import Reversible hiding (reversible)
 import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
 import qualified Markov
-import Markov (getQ, getEqFreqs)
+import Markov (getQ, getStartFreqs, getEqFreqs)
 import Data.Matrix -- for fromLists, %*%
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -30,23 +31,24 @@ modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
    QUESTION: How would we record this?
  -}
 
-modulatedMarkov models ratesBetween levelProbs = reversible $ markov a smap q pi where
+modulatedMarkov models between = reversible $ setReversibility rev $ markov a smap q pi where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
     smaps = map getSMap models
-    q = modulatedMarkovRates qs ratesBetween
-    pi = modulatedMarkovPi pis levelProbs
+    q = modulatedMarkovRates qs (getQ between)
+    pi = modulatedMarkovPi pis (getStartFreqs between)
     smap = modulatedMarkovSmap smaps
+    rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
 
-markovModulateMixture nu dist = modulatedMarkov models ratesBetween levelProbs where
+markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween (toVector levelProbs)) where
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = Markov.equ (length models) nu
 
 -- We need to scaleTo submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
-tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] ratesBetween levelProbs where
+tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] (Markov.markov ratesBetween (toVector levelProbs)) where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
     ratesBetween = fromLists [[-s01,s01],[s10,-s10]]
 
@@ -63,7 +65,7 @@ huelsenbeck02Test s01 s10 fraction model = mix [1-fraction, fraction] [model & h
 huelsenbeck02Two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck02 s01b s10b,
                                                                                   model & huelsenbeck02 s01a s10a]
 
-galtier01Ssrv nu model = modulatedMarkov models ratesBetween levelProbs where
+galtier01Ssrv nu model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     nLevels = length models
@@ -95,7 +97,7 @@ wssr07Ext s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
           hb02gt01 = wssr07Ssrv s01 s10 nu model
 
 -- Instead of passing ratesBetween+levelProbs, could we just pass a q matrix?
-covarionGtrSsrv nu exchange model = modulatedMarkov models ratesBetween levelProbs where
+covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
     Discrete dist = scaleTo 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
@@ -104,7 +106,7 @@ covarionGtrSsrv nu exchange model = modulatedMarkov models ratesBetween levelPro
 covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
 covarionGtrSym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
-covarionGtrSym sym model = modulatedMarkov models ratesBetween levelProbs where
+covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = sym %*% (plus_f_matrix $ toVector levelProbs)
