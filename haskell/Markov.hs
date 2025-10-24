@@ -3,6 +3,7 @@ module Markov where
 import Data.Matrix
 import SModel.Rate
 import EigenExp
+import Reversible hiding (CanMakeReversible(..), reversible)
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
@@ -34,14 +35,9 @@ class Scalable c => CTMC c where
     getStartFreqs :: c -> EVector Double
     getEqFreqs :: c -> EVector Double
     qExp :: c -> Matrix Double
-    isReversible :: c -> Bool
-    isStationary :: c -> Bool
 
     getEqFreqs m = builtin_getEqFreqs (getQ m)
     qExp m = mexp (getQ m) 1
-
-    isReversible m = checkReversible (getQ m) (getEqFreqs m)
-    isStationary m = checkStationary (getQ m) (getStartFreqs m)
 
 -- Should I add gtr, equ n x, and f81 to this class? Probably...
 
@@ -52,6 +48,13 @@ class Scalable c => CTMC c where
 instance Scalable (Matrix Double) where
     scaleBy f m = scaleMatrix f m
 
+instance CheckReversible (Matrix Double) where
+    getReversibility m | stat && rev = EqRev
+                       | stat        = EqNonRev
+                       | otherwise   = NonEq
+                       where rev = checkReversible (getQ m) (getEqFreqs m)
+                             stat = checkStationary (getQ m) (getStartFreqs m)
+
 instance CTMC (Matrix Double) where
     getQ m = m
     getStartFreqs = error "No start freqs for Matrix Double"
@@ -59,26 +62,29 @@ instance CTMC (Matrix Double) where
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
 
-data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp
+data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibility
 
 -- can I hide the Markov constructor?
 -- should I rename this function to ctmc?
-markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) where
+markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
-markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) where
+markov' q = Markov qFixed (builtin_getEqFreqs qFixed) 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
 non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
 
 instance Scalable Markov where
-    scaleBy f (Markov q pi s decomp) = Markov q pi (s*f) decomp
+    scaleBy f (Markov q pi s decomp rev) = Markov q pi (s*f) decomp rev
+
+instance CheckReversible Markov where
+    getReversibility (Markov _ _ _ _ r ) = r
 
 instance CTMC Markov where
-    getQ  (Markov q _  factor _) = scaleMatrix factor q
-    getStartFreqs (Markov _ pi _ _) = pi
-    qExp   (Markov q _  factor (NoDecomp _)) = mexp q factor
-    qExp   (Markov q pi  factor (RealEigenDecomp eigensys)) =
+    getQ  (Markov q _  factor _ _) = scaleMatrix factor q
+    getStartFreqs (Markov _ pi _ _ _) = pi
+    qExp   (Markov q _  factor (NoDecomp _) _) = mexp q factor
+    qExp   (Markov q pi  factor (RealEigenDecomp eigensys) _) =
         case lExp eigensys pi factor of Just mat -> mat
                                         Nothing -> mexp q factor
 
@@ -92,7 +98,7 @@ class CanMakeReversible m where
     reversible :: m -> MkReversible m
 
 instance CanMakeReversible Markov where
-    reversible (Markov q pi s _) = Reversible $ Markov q pi s decomp
+    reversible (Markov q pi s _ _) = Reversible $ Markov q pi s decomp EqRev
         where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
                                                    Nothing -> NoDecomp (Just NoDiagReason)
 
@@ -100,7 +106,7 @@ instance Scalable m => Scalable (MkReversible m) where
     scaleBy f (Reversible m) = Reversible $ scaleBy f m
 
 instance Show Markov where
-    show m@(Markov _ _ _ decomp) = "Markov " ++ show decomp ++ "\n" ++ show (getQ m)
+    show m@(Markov _ _ _ decomp _) = "Markov " ++ show decomp ++ "\n" ++ show (getQ m)
 
 instance Show m => Show (MkReversible m) where
     show (Reversible m) = show m
