@@ -33,7 +33,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs {- unused! -} f
+      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
       likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
@@ -55,7 +55,7 @@ instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, Rate
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCPropertiesFixedA
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel)
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s) where
+instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s) where
     sampleIO (PhyloCTMC rtree rootLength rawSmodel scale) = do
       let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel

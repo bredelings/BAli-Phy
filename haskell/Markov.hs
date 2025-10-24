@@ -3,8 +3,7 @@ module Markov where
 import Data.Matrix
 import SModel.Rate
 import EigenExp
-import Reversible hiding (CanMakeReversible(..))
-import qualified Reversible as R (CanMakeReversible(..))
+import Reversible
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
@@ -83,7 +82,7 @@ instance Scalable Markov where
 instance CheckReversible Markov where
     getReversibility (Markov _ _ _ _ r) = r
 
-instance R.CanMakeReversible Markov where
+instance CanMakeReversible Markov where
 --    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
 
     setReversibility EqRev (Markov q pi s _ _ ) = Markov q pi s decomp EqRev
@@ -111,14 +110,13 @@ instance Show Markov where
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
 -- Which is why it takes any type m.
-
 ----------------------------
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 
 gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = R.setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr er pi = setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

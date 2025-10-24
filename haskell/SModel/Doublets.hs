@@ -5,7 +5,7 @@ import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import qualified Markov
 import Markov (getQ, getEqFreqs)
-import Reversible    
+import Reversible
 
 type DoubletAlphabet = Alphabet
 

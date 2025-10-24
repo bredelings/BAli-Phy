@@ -1,7 +1,9 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
-                                module SModel.Markov)
+                                module SModel.Markov,
+                                module Reversible)
     where
 
+import           Reversible
 import           Bio.Alphabet
 import           Markov (CTMC(..))
 import qualified Markov

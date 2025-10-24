@@ -1,11 +1,10 @@
 module Probability.Distribution.PhyloCTMC.PhyloCTMC where
 
 import SModel.Simple
-import Tree
-import Reversible    
+import Reversible
+import Tree -- for isRooted, makeRooted, setRoot
 
-data PhyloCTMC t a s where
-    PhyloCTMC :: t -> a -> s -> Double -> PhyloCTMC t a s
+data PhyloCTMC t a s = PhyloCTMC t a s Double
 
 phyloCTMC :: (IsTree t, CheckReversible s) => t -> a -> s -> Double -> PhyloCTMC (Rooted t) a s
 phyloCTMC tree alignment smodel scale = if isReversible smodel
