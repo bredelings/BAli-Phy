@@ -14,14 +14,17 @@ import Data.Matrix
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
+import Reversible
 
 data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
 
 variable = Variable
 
 annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
-  let rtree = setRoot substRoot tree
-      substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+      rtree = if isReversible smodel
+              then setRoot substRoot tree
+              else tree
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
@@ -35,15 +38,15 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoods rtree nodeCLVs transitionPs {- unused! -} f
-      likelihood = peelLikelihood nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
+      likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       -- computing the probability of the condition
       (isequences2, columnCounts2) = compressAlignmentVarNonvar (getSequences sequenceData) alphabet
       maybeNodeISequences2 = labelToNodeMap rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
-      cls2 = cachedConditionalLikelihoods rtree nodeCLVs2 transitionPs {- unused! -} f
+      cls2 = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
       likelihood2 = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
@@ -66,9 +69,8 @@ instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, Rate
     annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s EquilibriumReversible) where
-    sampleIO (Variable (PhyloCTMC tree rootLength rawSmodel scale)) = do
-      let rtree = tree
-          alphabet = getAlphabet smodel
+    sampleIO (Variable (PhyloCTMC rtree rootLength rawSmodel scale)) = do
+      let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
           smap = stateLetters (SModelOnTree rtree smodel)
 

@@ -13,10 +13,10 @@ import Data.Matrix
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
-import Reversible    
+import Reversible
 
 annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
-  let substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
+  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
       rtree = if isReversible smodel
               then setRoot substRoot tree
               else tree
@@ -56,9 +56,8 @@ instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, Rate
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s EquilibriumReversible) where
-    sampleIO (PhyloCTMC tree rootLength rawSmodel scale) = do
-      let rtree = tree
-          alphabet = getAlphabet smodel
+    sampleIO (PhyloCTMC rtree rootLength rawSmodel scale) = do
+      let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
           smap = stateLetters (SModelOnTree rtree smodel)
 
