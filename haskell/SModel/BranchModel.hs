@@ -2,6 +2,7 @@ module SModel.BranchModel where
 
 import qualified Markov
 import           Markov (CTMC(..))
+import           Reversible
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -32,6 +33,9 @@ instance HasAlphabet (BranchModel a) where
 
 instance HasSMap (BranchModel a) where
     getSMap (BranchModel _ smap _ _) = smap
+
+instance CheckReversible (BranchModel m) where
+    getReversibility _ = NonEq
 
 instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel m) where
     stateLetters (SModelOnTree tree model) = getSMap model

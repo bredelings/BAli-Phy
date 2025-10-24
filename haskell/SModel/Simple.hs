@@ -5,6 +5,7 @@ import Bio.Alphabet
 import Tree
 import Data.Matrix
 import qualified Data.IntMap as IntMap (fromSet)
+import Reversible
 
 data SingleBranchLengthModel a = SingleBranchLengthModel a Double
 
@@ -43,7 +44,7 @@ TODO: Remove stateLetters from SimpleSModel and just use getSMap directly?
 TODO: Rename to e.g. PhyloLikelihood?
 -}
 
-class SimpleSModel t m where
+class CheckReversible m => SimpleSModel t m where
     type family IsReversible m
     type instance IsReversible m = NonEquilibrium
 

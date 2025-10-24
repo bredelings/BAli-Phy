@@ -3,6 +3,7 @@ module SModel.PosSelection where
 import SModel.ASRV
 import SModel.BranchSiteMixture
 import Probability.Distribution.Beta (beta)
+import Reversible
 
 m1aOmegaDist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 
@@ -51,7 +52,7 @@ m8a mu gamma nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu gamma nBins po
 m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu gamma nBins posP posW posSelection
 
 -- Should we normalize the different entries to have the same rate?
-busted omegaDist posP posW posSelection modelFunc = BranchSiteMixture $ m3Test omegaDist posP posW posSelection modelFunc
+busted omegaDist posP posW posSelection modelFunc = BranchSiteMixture (m3Test omegaDist posP posW posSelection modelFunc) SameEqs
 
 bustedS omegaDist posP posW posSelection alpha n modelFunc = gammaRates alpha n $ always $ busted omegaDist posP posW posSelection modelFunc
 
