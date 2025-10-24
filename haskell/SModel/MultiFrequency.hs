@@ -10,6 +10,7 @@ import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import SModel.Frequency (frequenciesFromDict)
 import SModel.MarkovModulated
+import Reversible
 
 -- NOTE: The model here needs to know the list of node names on the tree.
 -- * QUESTION: Is it really separate from the tree then?
@@ -57,6 +58,8 @@ instance (HasRoot t, RateModel e) => RateModel (MultiFrequency t i e) where
      A: Sure, but letting it affect the root frequencies is the more general case.
 -}
 
+instance CheckReversible (MultiFrequency t i m) where
+    getReversibility _ = NonEq
 
 instance (HasRoot t, HasSMap m, RateModel m, CTMC m, HasBranchLengths t, t ~ t2) => SimpleSModel t (MultiFrequency t2 i m) where
     distribution model = [1]

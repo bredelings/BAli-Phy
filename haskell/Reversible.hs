@@ -21,7 +21,7 @@ instance Ord Reversibility where
 
 
 class CheckReversible m where
-    getReversibility :: m -> Reversibility 
+    getReversibility :: m -> Reversibility
 
 class CheckReversible m => CanMakeReversible m where
     setReversibility :: m -> Reversibility -> m
@@ -32,3 +32,13 @@ isStationary m = getReversibility m /= NonEq
 reversible m = setReversibility m EqRev
 stationary m = setReversibility m EqNonRev
 
+data IsEqSame = SameEqs | MaybeDiffEqs
+
+instance Eq IsEqSame where
+    SameEqs      == SameEqs      = True
+    MaybeDiffEqs == MaybeDiffEqs = True
+    _            == _            = False
+
+instance Ord IsEqSame where
+    SameEqs      <  MaybeDiffEqs = True
+    _            <  _            = False
