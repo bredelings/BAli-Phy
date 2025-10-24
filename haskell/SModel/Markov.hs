@@ -38,14 +38,17 @@ foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int ->
 --
 
 -- Fields are: alphabet, smap, q, and cached rate.
-
+-- PROBLEM: caching the rate is not quite right, since there are different rates:
+--    DNA rate, AA rate, Codon rate, synonymous rate, etc.
 data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
 
+wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m))
+
 instance CheckReversible Markov where
-    getReversibility (Markov a smap m f) = getReversibility m
+    getReversibility (Markov _ _ m _) = getReversibility m
 
 instance CanMakeReversible Markov where
-    setReversibility r (Markov a smap m f) = Markov a smap (setReversibility r m) f
+    setReversibility rv (Markov a smap m rate) = Markov a smap (setReversibility rv m) rate
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where
@@ -60,14 +63,11 @@ instance CTMC Markov where
 simpleSMap a = toVector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov a smap q pi = Markov a smap rm rate
-    where rm = Markov.markov q pi
-          rate = getEquilibriumRate a smap (getQ rm) (getEqFreqs rm)
+
+markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-markov' a smap q = Markov a smap rm rate
-    where rm = Markov.markov' q
-          rate = getEquilibriumRate a smap (getQ rm) (getEqFreqs rm)
+markov' a smap q = wrapMarkov a smap (Markov.markov' q)
 
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
