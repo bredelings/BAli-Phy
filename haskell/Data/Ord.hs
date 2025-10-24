@@ -35,10 +35,13 @@ class Eq a => Ord a where
                 | x == y    = EQ
                 | otherwise = GT
 
-    x <  y = not (x >= y)
+    x <  y = case compare x y of {LT -> True ; _ -> False}
     x >  y = not (x <= y)
     x >= y = x > y || x == y
     x <= y = x < y || x == y
+
+    {- For GHC, you can specify either compare or (<=).
+       Here you can specify either compare or (<). -}
 
 foreign import bpcall "Prelude:" lessthan_char :: Char -> Char -> Bool
 foreign import bpcall "Prelude:" lessthan_int :: Int -> Int -> Bool
