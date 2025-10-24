@@ -20,7 +20,7 @@ data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
 variable = Variable
 
 annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
-  let rtree = setRoot substRoot (makeRooted tree)
+  let rtree = setRoot substRoot tree
       substRoot = modifiable (head $ internalNodes rtree ++ leafNodes rtree)
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
@@ -61,13 +61,13 @@ instance Dist (PhyloCTMC t Int s r) => Dist (VariablePhyloCTMC t s r) where
     dist_name (Variable dist) = "Variable" ++ dist_name dist
 
 -- TODO: make this work on forests!
-instance (HasAlphabet s, LabelType (Rooted t) ~ Text, HasRoot (Rooted t), HasBranchLengths (Rooted t), RateModel s, IsTree t, SimpleSModel (Rooted t) s) => HasAnnotatedPdf (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (VariablePhyloCTMC t s EquilibriumReversible) where
     type DistProperties (VariablePhyloCTMC t s EquilibriumReversible) = DistProperties (PhyloCTMC t Int s EquilibriumReversible)
     annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
 
-instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s) => IOSampleable (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s EquilibriumReversible) where
     sampleIO (Variable (PhyloCTMC tree rootLength rawSmodel scale)) = do
-      let rtree = makeRooted tree
+      let rtree = tree
           alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
           smap = stateLetters (SModelOnTree rtree smodel)
@@ -78,7 +78,7 @@ instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Te
 
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot (Rooted t), LabelType (Rooted t) ~ Text, HasBranchLengths t, HasBranchLengths (Rooted t), RateModel s, SimpleSModel (Rooted t) s) => Sampleable (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (VariablePhyloCTMC t s EquilibriumReversible) where
     sample (Variable dist) = RanDistribution2 dist do_nothing
 
 
