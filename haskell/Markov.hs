@@ -37,7 +37,7 @@ class Scalable c => CTMC c where
     getEqFreqs :: c -> EVector Double
     qExp :: c -> Matrix Double
 
-    getEqFreqs m = builtin_getEqFreqs (getQ m)
+    getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
     qExp m = mexp (getQ m) 1
 
 -- Should I add gtr, equ n x, and f81 to this class? Probably...
