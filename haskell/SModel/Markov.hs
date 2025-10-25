@@ -62,7 +62,7 @@ simpleSMap a = toVector [0..(alphabetSize a)-1]
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 markov a smap q pi = Markov a smap rm rate
     where rm = Markov.markov q pi
-          rate = getEquilibriumRate a smap (getQ rm) pi
+          rate = getEquilibriumRate a smap (getQ rm) (getEqFreqs rm)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 markov' a smap q = Markov a smap rm rate
