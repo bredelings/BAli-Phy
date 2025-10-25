@@ -16,7 +16,7 @@ import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 import Reversible
 
-data VariablePhyloCTMC t s r = Variable (PhyloCTMC t Int s r)
+data VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
 
 variable = Variable
 
@@ -59,16 +59,16 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
   return ([likelihood,1/likelihood2], prop)
 
-instance Dist (PhyloCTMC t Int s r) => Dist (VariablePhyloCTMC t s r) where
-    type Result (VariablePhyloCTMC t s r) = Result (PhyloCTMC t Int s r)
+instance Dist (PhyloCTMC t Int s) => Dist (VariablePhyloCTMC t s) where
+    type Result (VariablePhyloCTMC t s) = Result (PhyloCTMC t Int s)
     dist_name (Variable dist) = "Variable" ++ dist_name dist
 
 -- TODO: make this work on forests!
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (VariablePhyloCTMC t s EquilibriumReversible) where
-    type DistProperties (VariablePhyloCTMC t s EquilibriumReversible) = DistProperties (PhyloCTMC t Int s EquilibriumReversible)
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (VariablePhyloCTMC t s) where
+    type DistProperties (VariablePhyloCTMC t s) = DistProperties (PhyloCTMC t Int s)
     annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s) where
     sampleIO (Variable (PhyloCTMC rtree rootLength rawSmodel scale)) = do
       let alphabet = getAlphabet smodel
           smodel = scaleTo scale rawSmodel
@@ -80,7 +80,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (VariablePhyloCTMC t s EquilibriumReversible) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (VariablePhyloCTMC t s) where
     sample (Variable dist) = RanDistribution2 dist do_nothing
 
 
