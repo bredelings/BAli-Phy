@@ -56,7 +56,6 @@ instance RateModel ReversibleMarkov where
     rate (Reversible m) = rate m
 
 instance HasBranchLengths t => SimpleSModel t (MkReversible Markov) where
-    type instance IsReversible (MkReversible Markov) = EquilibriumReversible
     branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
     stateLetters (SModelOnTree _ model) = getSMap model
     componentFrequencies (SModelOnTree tree smodel) = [getStartFreqs smodel]

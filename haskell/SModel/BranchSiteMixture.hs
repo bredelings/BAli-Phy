@@ -58,7 +58,6 @@ instance CheckReversible m => CheckReversible (BranchSiteMixture m) where
     getReversibility _                                             = NonEq
 
 instance (HasSMap m, CTMC m, HasAlphabet m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (BranchSiteMixture m) where
-    type instance IsReversible (BranchSiteMixture m) = IsReversible m
     branchTransitionP (SModelOnTree tree (BranchSiteMixture m r)) b = [ meanMatrix $ (qExp . scaleBy (branchLength tree b)) <$> m ]
     distribution _ = [1]
     stateLetters (SModelOnTree _ smodel) = getSMap model

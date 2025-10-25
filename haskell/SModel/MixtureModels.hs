@@ -31,7 +31,6 @@ instance CheckReversible m => CheckReversible (MixtureModels m) where
     getReversibility (MixtureModels _ _   _      ) = NonEq
 
 instance (HasSMap m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (MixtureModels m) where
-    type instance IsReversible (MixtureModels m) = IsReversible m
     branchTransitionP (SModelOnTree tree smodel@(MixtureModels branchCats mms _)) b = branchTransitionP (SModelOnTree tree mx) b
         where mx = scaleTo 1 $ mms!!(branchCats IntMap.! b)
     distribution           (SModelOnTree tree (MixtureModels _ (m:ms) _)) = distribution (SModelOnTree tree m)
