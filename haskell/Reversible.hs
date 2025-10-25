@@ -29,9 +29,6 @@ class CheckReversible m => CanMakeReversible m where
 isReversible m = getReversibility m == EqRev
 isStationary m = getReversibility m /= NonEq
 
-reversible = setReversibility EqRev
-stationary = setReversibility EqNonRev
-
 data IsEqSame = SameEqs | MaybeDiffEqs
 
 instance Eq IsEqSame where

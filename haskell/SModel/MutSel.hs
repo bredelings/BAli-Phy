@@ -8,11 +8,12 @@ import SModel.Frequency -- for get_ordered_elements
 import Bio.Alphabet
 import qualified Markov
 import Markov (getQ, getEqFreqs)
+import Reversible    
 
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 
-mut_sel ws' m0@(Reversible (Markov a smap _ _)) = reversible $ markov a smap q pi where
+mut_sel ws' m0@(Markov a smap _ _) = setReversibility EqRev $ markov a smap q pi where
     q0 = getQ m0
     pi0 = getEqFreqs m0
     ws = toVector ws'
@@ -23,7 +24,7 @@ mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (getLetters a) w' "fitnesses"
     a = getAlphabet q0
 
-mut_sel_aa ws q@(Reversible (Markov codon_a _ _ _)) = mut_sel (aa_to_codon codon_a ws) q
+mut_sel_aa ws q@(Markov codon_a _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (getLetters amino_alphabet) ws' "fitnesses"

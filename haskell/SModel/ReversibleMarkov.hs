@@ -1,23 +1,22 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
                                 module SModel.Markov,
-                                MkReversible(..),
-                                reversible,
-                                nonreversible)
+                                MkReversible(..))
     where
 
 import           Bio.Alphabet
-import           Markov (MkReversible(..), reversible, nonreversible, CTMC(..))
+import           Markov (MkReversible(..), CTMC(..))
 import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
 import           SModel.Rate
 import           Tree (HasBranchLengths(..))
+import           Reversible    
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
 gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
-gtr a s pi = scaleTo 1 $ reversible $ markov a (simpleSMap a) (s %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr a s pi = scaleTo 1 $ setReversibility EqRev $ markov a (simpleSMap a) (s %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 f81     pi a = gtr a (equ a) pi
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
@@ -38,7 +37,7 @@ gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (getLetters a)
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
-plus_gwf a pi f s = reversible $ markov a (simpleSMap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = toVector pi
+plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = toVector pi
 
 plus_f'  a pi s   = plus_f a (frequenciesFromDict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequenciesFromDict a pi) f s

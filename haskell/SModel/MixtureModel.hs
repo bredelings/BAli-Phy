@@ -10,7 +10,7 @@ import Probability.Distribution.Discrete -- for mix
 import Probability.Dist                  -- for mean
 import Tree
 import Markov (CTMC(..))
-import Reversible hiding (CanMakeReversible(..), reversible)    
+import Reversible hiding (CanMakeReversible(..))
 
 import SModel.ReversibleMarkov
 
@@ -39,7 +39,6 @@ wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
 
 averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
 
-plusInv :: Double -> (Discrete ReversibleMarkov) -> (Discrete ReversibleMarkov)
 plusInv pInv ms = scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms

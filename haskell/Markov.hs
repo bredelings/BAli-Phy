@@ -3,8 +3,8 @@ module Markov where
 import Data.Matrix
 import SModel.Rate
 import EigenExp
-import Reversible hiding (CanMakeReversible(..), reversible)
-import qualified Reversible as R (CanMakeReversible(..), reversible)
+import Reversible hiding (CanMakeReversible(..))
+import qualified Reversible as R (CanMakeReversible(..))
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
@@ -84,7 +84,7 @@ instance CheckReversible Markov where
     getReversibility (Markov _ _ _ _ r) = r
 
 instance R.CanMakeReversible Markov where
-    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
+--    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
 
     setReversibility EqRev (Markov q pi s _ _ ) = Markov q pi s decomp EqRev
         where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
@@ -110,14 +110,6 @@ data MkReversible m = Reversible  { nonreversible :: m }
 instance CheckReversible m => CheckReversible (MkReversible m) where
     getReversibility (Reversible m) = getReversibility m
                     
-class CanMakeReversible m where
-    reversible :: m -> MkReversible m
-
-instance CanMakeReversible Markov where
-    reversible (Markov q pi s _ _) = Reversible $ Markov q pi s decomp EqRev
-        where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
-                                                   Nothing -> NoDecomp (Just NoDiagReason)
-
 instance Scalable m => Scalable (MkReversible m) where
     scaleBy f (Reversible m) = Reversible $ scaleBy f m
 
@@ -166,7 +158,7 @@ plus_f_matrix pi = plus_gwf_matrix pi 1
 
 gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = reversible $ R.setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr er pi = R.setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

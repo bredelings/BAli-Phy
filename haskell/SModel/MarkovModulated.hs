@@ -2,7 +2,7 @@ module SModel.MarkovModulated where
 
 import Foreign.Vector
 import Bio.Alphabet
-import Reversible hiding (reversible)
+import Reversible
 import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
@@ -31,7 +31,7 @@ modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
    QUESTION: How would we record this?
  -}
 
-modulatedMarkov models between = reversible $ setReversibility rev $ markov a smap q pi where
+modulatedMarkov models between = setReversibility rev $ markov a smap q pi where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
@@ -105,7 +105,6 @@ covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesB
 
 covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
-covarionGtrSym :: Matrix Double -> Discrete ReversibleMarkov -> ReversibleMarkov
 covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist

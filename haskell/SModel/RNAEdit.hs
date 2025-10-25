@@ -7,13 +7,14 @@ import qualified Markov
 import Markov (getQ, getEqFreqs)
 import Probability.Distribution.Mixture
 import SModel.Doublets
+import Reversible    
 
 type RNAEditAlphabet = Alphabet
 
 foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
 foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
 
-siteEdit alphabet nucModel rnaRate edits = reversible $ markov alphabet smap q pi
+siteEdit alphabet nucModel rnaRate edits = setReversibility EqRev $ markov alphabet smap q pi
     where smap = simpleSMap alphabet
           nucs = getNucleotides alphabet
           qNuc = getQ nucModel
