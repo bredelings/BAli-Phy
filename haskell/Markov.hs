@@ -53,8 +53,8 @@ instance CheckReversible (Matrix Double) where
     getReversibility m | stat && rev = EqRev
                        | stat        = EqNonRev
                        | otherwise   = NonEq
-                       where rev = checkReversible (getQ m) (getEqFreqs m)
-                             stat = checkStationary (getQ m) (getStartFreqs m)
+                       where stat = checkStationary (getQ m) (getStartFreqs m)
+                             rev = checkReversible (getQ m) (getEqFreqs m)
 
 instance CTMC (Matrix Double) where
     getQ m = m
@@ -84,15 +84,15 @@ instance CheckReversible Markov where
     getReversibility (Markov _ _ _ _ r) = r
 
 instance CanMakeReversible Markov where
---    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
+    setReversibility r1  m@(Markov q f s e r2) | r1 == r2  = m
 
     setReversibility EqRev (Markov q pi s _ _ ) = Markov q pi s decomp EqRev
         where decomp = case getEigensystem q pi of Just e -> RealEigenDecomp e
                                                    Nothing -> NoDecomp (Just NoDiagReason)
     
     setReversibility r      (Markov q f s _ _ ) = Markov q f s (NoDecomp Nothing) r
-                                        
-                                          
+
+
 instance CTMC Markov where
     getQ  (Markov q _  factor _ _) = scaleMatrix factor q
     getStartFreqs (Markov _ pi _ _ _) = pi
@@ -100,6 +100,9 @@ instance CTMC Markov where
     qExp   (Markov q pi  factor (RealEigenDecomp eigensys) _) =
         case lExp eigensys pi factor of Just mat -> mat
                                         Nothing -> mexp q factor
+
+    getEqFreqs m | isStationary m = getStartFreqs m
+                 | otherwise      = equilibriumLimit (getStartFreqs m) (getQ m)
 
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
