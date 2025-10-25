@@ -1,10 +1,9 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
-                                module SModel.Markov,
-                                MkReversible(..))
+                                module SModel.Markov)
     where
 
 import           Bio.Alphabet
-import           Markov (MkReversible(..), CTMC(..))
+import           Markov (CTMC(..))
 import qualified Markov
 import           SModel.Markov
 import           SModel.Simple
@@ -41,22 +40,3 @@ plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (s %*% plus
 
 plus_f'  a pi s   = plus_f a (frequenciesFromDict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequenciesFromDict a pi) f s
-
-type ReversibleMarkov = MkReversible Markov
-
--- This is used both for observations, and also to determine which states are the same for computing rates.
-instance HasSMap m => HasSMap (MkReversible m) where
-    getSMap (Reversible m) = getSMap m
-
-instance HasAlphabet m => HasAlphabet (MkReversible m) where
-    getAlphabet (Reversible m) = getAlphabet m
-
-instance RateModel ReversibleMarkov where
-    rate (Reversible m) = rate m
-
-instance HasBranchLengths t => SimpleSModel t (MkReversible Markov) where
-    branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
-    stateLetters (SModelOnTree _ model) = getSMap model
-    componentFrequencies (SModelOnTree tree smodel) = [getStartFreqs smodel]
-
-

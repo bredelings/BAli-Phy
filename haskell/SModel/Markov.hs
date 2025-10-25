@@ -1,7 +1,7 @@
 module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
 
 import qualified Markov
-import           Markov (CTMC(..), MkReversible (..))
+import           Markov (CTMC(..))
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency

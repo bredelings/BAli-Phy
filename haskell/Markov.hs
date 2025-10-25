@@ -105,52 +105,12 @@ instance CTMC Markov where
 -- Used for both Markov.Markov and SModel.Markov.
 -- Which is why it takes any type m.
 
-data MkReversible m = Reversible  { nonreversible :: m }
-
-instance CheckReversible m => CheckReversible (MkReversible m) where
-    getReversibility (Reversible m) = getReversibility m
-                    
-instance Scalable m => Scalable (MkReversible m) where
-    scaleBy f (Reversible m) = Reversible $ scaleBy f m
-
 instance Show Markov where
     show m@(Markov _ _ _ decomp _) = "Markov " ++ show decomp ++ "\n" ++ show (getQ m)
-
-instance Show m => Show (MkReversible m) where
-    show (Reversible m) = show m
-
-instance CTMC m => CTMC (MkReversible m) where
-    getQ  (Reversible m) = getQ m
-    getStartFreqs (Reversible m) = getStartFreqs m
-    getEqFreqs (Reversible m) = getStartFreqs m
-    qExp  (Reversible m) = qExp m
-    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
-       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
 
 -- Wrapper class to mark things reversible AND at equilibrium.
 -- Used for both Markov.Markov and SModel.Markov.
 -- Which is why it takes any type m.
-
-data MkEquilibrium m = Equilibrium  { nonequilibrium :: m }
-
-equilibrium = Equilibrium
-
-instance Scalable m => Scalable (MkEquilibrium m) where
-    scaleBy f (Equilibrium m) = Equilibrium $ scaleBy f m
-
-instance CheckReversible m => CheckReversible (MkEquilibrium m) where
-    getReversibility (Equilibrium m) = getReversibility m
-                    
-instance Show m => Show (MkEquilibrium m) where
-    show (Equilibrium m) = show m
-
-instance CTMC m => CTMC (MkEquilibrium m) where
-    getQ  (Equilibrium m) = getQ m
-    getStartFreqs (Equilibrium m) = getStartFreqs m
-    getEqFreqs (Equilibrium m) = getStartFreqs m
-    qExp  (Equilibrium m) = qExp m
-    {- Q: If the getStartFreqs and getEqFreqs are the same, why define in terms of getStartFreqs?
-       A: The reason is that the start frequencies are cached, whereas the equilibrium frequencies are computed. -}
 
 ----------------------------
 
