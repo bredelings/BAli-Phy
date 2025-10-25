@@ -11,6 +11,7 @@ foreign import bpcall "SModel:" fixupDiagonalRates :: Matrix Double -> Matrix Do
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:compute_check_stationary_freqs" builtin_get_check_pi :: Matrix Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:" equilibriumLimit :: EVector Double -> Matrix Double -> EVector Double
 foreign import bpcall "SModel:compute_stationary_freqs" builtin_getEqFreqs :: Matrix Double -> EVector Double
 foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Double -> Bool
 foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool

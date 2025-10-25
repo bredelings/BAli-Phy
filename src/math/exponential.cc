@@ -24,6 +24,7 @@
 ///
 
 #include <vector>
+#include <set>
 #include <iostream>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "exponential.H"
@@ -437,5 +438,228 @@ bool checkReversible(const Matrix& Q, const std::vector<double>& pi, double tol)
         pi2[i] = pi[i];
 
     return checkReversible(Q2, pi2, tol);
+}
+
+
+
+// Find strongly connected components using Kosaraju's algorithm
+static std::vector<std::vector<int>> stronglyConnectedComponents(const Eigen::MatrixXd& Q) {
+    int n = Q.rows();
+    std::vector<std::vector<int>> adj(n), adjT(n);
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            if (i != j && Q(i, j) > 0) {
+                adj[i].push_back(j);
+                adjT[j].push_back(i);
+            }
+
+    std::vector<bool> visited(n, false);
+    std::vector<int> order;
+
+    std::function<void(int)> dfs1 = [&](int v) {
+        visited[v] = true;
+        for (int u : adj[v])
+            if (!visited[u]) dfs1(u);
+        order.push_back(v);
+    };
+
+    for (int i = 0; i < n; ++i)
+        if (!visited[i]) dfs1(i);
+
+    std::vector<int> comp(n, -1);
+    int cid = 0;
+
+    std::function<void(int)> dfs2 = [&](int v) {
+        comp[v] = cid;
+        for (int u : adjT[v])
+            if (comp[u] == -1) dfs2(u);
+    };
+
+    for (int i = n - 1; i >= 0; --i) {
+        int v = order[i];
+        if (comp[v] == -1) {
+            dfs2(v);
+            cid++;
+        }
+    }
+
+    std::vector<std::vector<int>> scc(cid);
+    for (int i = 0; i < n; ++i)
+        scc[comp[i]].push_back(i);
+    return scc;
+}
+
+// Check if SCC is closed (no outgoing edges)
+static bool isClosedClass(const Eigen::MatrixXd& Q, const std::vector<int>& cls) {
+    std::set<int> members(cls.begin(), cls.end());
+    for (int i : cls) {
+        for (int j = 0; j < Q.cols(); ++j) {
+            if (Q(i, j) > 0 && !members.count(j))
+                return false;
+        }
+    }
+    return true;
+}
+
+// Compute stationary distribution for irreducible closed class
+static Eigen::VectorXd stationaryDistribution(const Eigen::MatrixXd& Q) {
+    const Eigen::Index n = Q.rows();
+    assert(Q.cols() == n);
+
+    // Form A = Qᵀ so that we solve A * π = 0
+    Eigen::MatrixXd A = Q.transpose();
+
+    // 🔹 Step 1: Normalize to improve conditioning
+    double max_diag = A.diagonal().cwiseAbs().maxCoeff();
+    if (max_diag > 0.0)
+        A /= max_diag;  // scale so that the largest |rate| ≈ 1
+
+    // 🔹 Step 2: Replace one row with normalization constraint
+    //     sum_i π_i = 1
+    A.row(n - 1).setOnes();
+
+    // Right-hand side: all zeros except last = 1
+    Eigen::VectorXd b = Eigen::VectorXd::Zero(n);
+    b[n - 1] = 1.0;
+
+    // 🔹 Step 3: Solve A * π = b
+    // Use a stable QR decomposition (good for possibly rank-deficient Q)
+    Eigen::VectorXd pi = A.colPivHouseholderQr().solve(b);
+
+    // 🔹 Step 4: Handle numerical negatives and renormalize
+    for (Eigen::Index i = 0; i < n; ++i)
+        if (pi[i] < 0 && pi[i] > -1e-12)  // small roundoff
+            pi[i] = 0.0;
+
+    double sum_pi = pi.sum();
+    if (sum_pi != 0.0)
+        pi /= sum_pi;  // ensure sum = 1 exactly
+
+    return pi;
+}
+
+// Compute equilibrium limit
+Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::MatrixXd& Q)
+{
+    int n = Q.rows();
+    auto sccs = stronglyConnectedComponents(Q);
+    std::vector<std::vector<int>> closed, transient;
+
+    // Partition SCCs
+    for (auto& cls : sccs) {
+        if (isClosedClass(Q, cls))
+            closed.push_back(cls);
+        else
+            transient.push_back(cls);
+    }
+
+    // If everything is closed, just mix within initial support
+    if (transient.empty()) {
+        Eigen::VectorXd pi_inf = Eigen::VectorXd::Zero(n);
+        for (auto& cls : closed) {
+            Eigen::MatrixXd Qsub(cls.size(), cls.size());
+            for (int i = 0; i < (int)cls.size(); ++i)
+                for (int j = 0; j < (int)cls.size(); ++j)
+                    Qsub(i, j) = Q(cls[i], cls[j]);
+            Eigen::VectorXd pi_cls = stationaryDistribution(Qsub);
+
+            double weight = 0.0;
+            for (int i : cls) weight += pi0(i);
+
+            for (int k = 0; k < (int)cls.size(); ++k)
+                pi_inf(cls[k]) += weight * pi_cls(k);
+        }
+        return pi_inf;
+    }
+
+    // Build index maps
+    std::vector<int> T, R;
+    for (auto& cls : transient)
+        T.insert(T.end(), cls.begin(), cls.end());
+    for (auto& cls : closed)
+        R.insert(R.end(), cls.begin(), cls.end());
+
+    int nT = T.size(), nR = R.size();
+    Eigen::MatrixXd Q_TT(nT, nT), Q_TR(nT, nR);
+    for (int i = 0; i < nT; ++i)
+        for (int j = 0; j < nT; ++j)
+            Q_TT(i, j) = Q(T[i], T[j]);
+    for (int i = 0; i < nT; ++i)
+        for (int j = 0; j < nR; ++j)
+            Q_TR(i, j) = Q(T[i], R[j]);
+
+    // Compute absorption matrix B = (-Q_TT)^{-1} * Q_TR
+    Eigen::MatrixXd B = (-Q_TT).colPivHouseholderQr().solve(Q_TR);
+
+    // Compute alpha_R = pi0_T * B + pi0_R
+    Eigen::VectorXd pi0_T(nT), pi0_R(nR);
+    for (int i = 0; i < nT; ++i) pi0_T(i) = pi0(T[i]);
+    for (int i = 0; i < nR; ++i) pi0_R(i) = pi0(R[i]);
+    Eigen::VectorXd alpha_R = pi0_T.transpose() * B + pi0_R.transpose();
+
+    // Compute stationary for each closed class
+    Eigen::VectorXd pi_inf = Eigen::VectorXd::Zero(n);
+    int offset = 0;
+    for (auto& cls : closed) {
+        Eigen::MatrixXd Qsub(cls.size(), cls.size());
+        for (int i = 0; i < (int)cls.size(); ++i)
+            for (int j = 0; j < (int)cls.size(); ++j)
+                Qsub(i, j) = Q(cls[i], cls[j]);
+        Eigen::VectorXd pi_cls = stationaryDistribution(Qsub);
+
+        // total absorption weight for this class
+        double W = 0.0;
+        for (int i = 0; i < (int)cls.size(); ++i)
+            W += alpha_R(offset + i);
+        for (int i = 0; i < (int)cls.size(); ++i)
+            pi_inf(cls[i]) += W * pi_cls(i);
+        offset += cls.size();
+    }
+    return pi_inf;
+}
+
+
+// Compute lim_{t->inf} pi0*exp(Q*t)
+std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matrix& Q)
+{
+    constexpr double tol = 1.0e-7;
+
+    int n = Q.size1();
+
+    Eigen::VectorXd epi0(n+1);
+    for(int i=0;i<n;i++)
+        epi0[i] = pi0[i];
+
+    auto eQ = toEigen(Q);
+
+    auto epi = equilibriumLimit(epi0, eQ);
+    
+    // Check that all the rates are 0.
+    double err1 = (epi.transpose() * eQ).cwiseAbs().maxCoeff();
+
+    double err_neg = 0;
+    for(int i=0;i<n;i++)
+    {
+        err_neg = std::min(err_neg,epi[i]);
+        epi[i] = std::max<double>(epi[i],0);
+    }
+
+    double sum = epi.sum();
+    epi /= sum;
+
+    // Check that all the rates are 0.
+    double err2 = (epi.transpose() * eQ).cwiseAbs().maxCoeff();
+
+    if (err1 > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
+    {
+        std::cerr<<"compute_stationary_freqs: maxcoeff = "<<eQ.cwiseAbs().maxCoeff()<<"   err1 = "<<err1<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
+    }
+
+    // 5. Copy back to an EVector double;
+    std::vector<double> pi(n);
+    for(int i=0;i<n;i++)
+        pi[i] = epi[i];
+
+    return pi;
 }
 

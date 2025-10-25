@@ -50,4 +50,8 @@ bool checkStationary(const Matrix& Q, const std::vector<double>& pi, double tol 
 
 bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
 bool checkReversible(const Matrix& Q, const std::vector<double>& pi, double tol = 1.0e-9);
+
+Eigen::VectorXd     equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::MatrixXd& Q);
+std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matrix& Q);
+
 #endif

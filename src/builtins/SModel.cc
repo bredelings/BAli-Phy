@@ -9,6 +9,7 @@
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
+#include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
 
@@ -40,25 +41,65 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
     return pi;
 }
 
-extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)
+extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
-    int n = Q.size1();
-    assert(Q.size2() == n);
+    auto pi0 = (vector<double>)arg0.as_<EVector>();
 
-    // Set up equations Q pi = 0, sum(pi) = 1
+    auto arg1 = Args.evaluate(1);
+    auto& Q = arg1.as_<Box<Matrix>>();
+
+    // In exponential.cc
+    return (EVector)equilibriumLimit(pi0, Q);
+}
+
+extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)
+{
+    constexpr double tol = 1.0e-7;
+
+    auto arg0 = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+
+    assert(Q.size1() == Q.size2() );
+    int n = Q.size1();
+
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	    if (i != j)
+	    {
+		sum += Q(i,j);
+		assert(Q(i,j) >= 0);
+	    }
+	assert(std::abs(sum + Q(i,i)) < tol);
+    }
+
+    // We start with pi * Q = 0, sum(pi) = 1.
+    // We transpose to get Q * pi = 0.
+    // For the sum, We add an extra row of 1s to get 1[i] * pi[i] = 1.
 
     // 1. QQ = Q, but with an extra row of 1's
     Eigen::MatrixXd QQ(n+1,n);
     for(int i=0;i<n;i++)
+    {
         for(int j=0;j<n;j++)
             QQ(i,j) = Q(j,i); // transpose -- why?
-    // This sets up the sum(pi)
+
+        // Must be initialized for normalization below.
+        QQ(n,i) = 0;
+    }
+
+    // 2. Treat different multiples of Q the same.
+    //    This necessary to avoid ignoring the sum(pi)=1 constraint for large |Q|.
+    double scale = QQ.cwiseAbs().sum();
+    QQ /= scale;
+
+    // 3. This sets up the sum(pi)
     for(int j=0;j<n;j++)
         QQ(n,j) = 1;
 
-    // 2. b = 0*n + 1
+    // 3. b = 0*n + 1
     Eigen::VectorXd b(n+1);
     for(int i=0;i<n;i++)
         b[i] = 0;
@@ -1506,4 +1547,3 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
     }
     return FF;
 }
-
