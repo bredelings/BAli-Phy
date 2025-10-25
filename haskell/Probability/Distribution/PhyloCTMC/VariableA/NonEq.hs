@@ -13,26 +13,36 @@ import Data.Matrix
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
+import Reversible    
 
 annotatedSubstLikeOnTreeNonEq tree alignment smodel sequenceData = do
   let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+      rtree = if isReversible smodel
+              then setRoot substRoot tree
+              else tree
 
   let as = pairwiseAlignments alignment
-      maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+      maybeNodeSequences = labelToNodeMap rtree (getSequences sequenceData)
       nModels = nrows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodelOnTree
-      smodelOnTree = SModelOnTree tree smodel
+      smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      fs = frequenciesOnTree tree f transitionPs
-      cls = cachedConditionalLikelihoodsNonEq tree nodeCLVs as transitionPs f
+      fs = if isStationary smodel
+           then getNodesSet rtree & IntMap.fromSet (\_ -> f)
+           else frequenciesOnTree rtree f transitionPs
+      cls = if isStationary smodel
+            then cachedConditionalLikelihoodsEqNonRev rtree nodeCLVs as transitionPs f
+            else cachedConditionalLikelihoodsNonEq    rtree nodeCLVs as transitionPs f
       -- Possibly we should check that the sequence lengths match the alignment..
       -- but instead we just ensure that the alignment is evaluated.
-      likelihood  = peelLikelihoodNonEq tree nodeCLVs cls as f substRoot
+      likelihood  = if isStationary smodel
+                    then peelLikelihoodEqNonRev rtree nodeCLVs cls as f substRoot
+                    else peelLikelihoodNonEq    rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs as transitionPs f cls
+      ancestralComponentStates = sampleAncestralSequences rtree substRoot nodeCLVs as transitionPs f cls
 
   in_edge "tree" tree
   in_edge "alignment" alignment
