@@ -57,7 +57,6 @@ instance CheckReversible m => CheckReversible (Discrete m) where
     getReversibility (Discrete ms) = minimum [getReversibility m | (m,_) <- ms]
                     
 instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Discrete m) where
-    type instance IsReversible (Discrete m) = IsReversible m
     branchTransitionP (SModelOnTree tree model) b = concat [ branchTransitionP (SModelOnTree tree component) b | (component, _) <- unpackDiscrete model]
     distribution (SModelOnTree tree model) = concat [(pr*) <$> distribution (SModelOnTree tree component) | (component, pr) <- unpackDiscrete model]
     componentFrequencies (SModelOnTree tree model) = concat [componentFrequencies (SModelOnTree tree component) | (component,_) <- unpackDiscrete model]
