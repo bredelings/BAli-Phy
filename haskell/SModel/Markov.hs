@@ -9,6 +9,7 @@ import           SModel.Frequency
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
+import           Data.Array
 
 foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 
@@ -118,3 +119,11 @@ labelledEqFrequencies m = zip (getLetters a) frequencies
 labelledStartFrequencies m = zip (getLetters a) frequencies
     where frequencies = vectorToList $ getStartFreqs m
           a = getAlphabet m
+
+labelledUpperTriangle alphabet matrix tag = if n == nrows matrix && n == ncols matrix
+                                            then [ (tag ++ (letters!i) ++ (letters!j), getElem i j matrix) | (i, j) <- Markov.all_pairs [0..n-1]]
+                                            else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
+                                                 show (ncols matrix,nrows matrix) ++" matrix!"
+    where letters = listArray' (getLetters alphabet)
+          n = length letters
+
