@@ -61,4 +61,4 @@ computation_sources = [
 libcomputation = static_library('computation',
 				computation_sources,
 				include_directories: [root_inc, libutil_inc],
-				dependencies: [boost, eigen, libdl, math_dep, librange, immer, fmt, cereal])
+				dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal])

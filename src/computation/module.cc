@@ -30,10 +30,11 @@
 #include "computation/haskell/ids.H"
 #include "computation/core/func.H"
 #include "util/assert.hh"
-#include <boost/compute/detail/sha1.hpp>
 #include <fmt/chrono.h>
 
 #include <cereal/archives/binary.hpp>
+
+#include <xxhash.h>
 
 namespace views = ranges::views;
 
@@ -438,24 +439,37 @@ set<string> Module::dependencies() const
     return modules;
 }
 
-std::string extract_sha(std::string& data)
+std::string xxhash_to_hex(uint64_t hash) {
+    std::stringstream ss;
+    ss << std::hex << std::setw(16) << std::setfill('0') << hash;
+    return ss.str();
+}
+
+std::string xxhash64_hex(const std::string& s) {
+    uint64_t hash = XXH3_64bits(s.data(), s.size());
+    std::stringstream ss;
+    ss << std::hex << std::setw(16) << std::setfill('0') << hash;
+    return ss.str();
+}
+
+std::string extract_xxhash(std::string& data)
 {
     // 1. Check that we have 40 chars followed by a newline.
-    if (data[40] != '\n') throw myexception()<<"archive failed integrity check: failed to read stored SHA";
+    if (data[16] != '\n') throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
 
     // 2. Get the 40 chars and check that they are all hex digits.
-    string stored_archive_sha = data.substr(0,40);
-    stored_archive_sha.resize(40);
+    string stored_archive_sha = data.substr(0,16);
+    stored_archive_sha.resize(16);
     for(char c: stored_archive_sha)
-	if (not std::isxdigit(c)) throw myexception()<<"archive failed integrity check: failed to read stored SHA";
+	if (not std::isxdigit(c)) throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
 
-    // 3. Drop the first 41 chars -- 40 hex digits plus newline.
-    data = data.substr(41);
+    // 3. Drop the first 17 chars -- 16 hex digits plus newline.
+    data = data.substr(17);
 
     return stored_archive_sha;
 }
 
-std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_sha)
+std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_xxhash)
 {
     if (loader.recompile_all or loader.recompile_modules.count(modid)) return {};
 
@@ -465,31 +479,31 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
         {
             std::ifstream infile(*path, std::ios::binary);
             std::string data = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
-            string stored_archive_sha = extract_sha(data);
+            string stored_archive_xxhash = extract_xxhash(data);
 
-            string computed_archive_sha = boost::compute::detail::sha1(data);
+            string computed_archive_xxhash = xxhash64_hex(data);
             if (log_verbose >= 4)
-                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_sha = "<<stored_archive_sha<<"     computed_archive_sha = "<<computed_archive_sha<<"\n";
+                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_hash = "<<stored_archive_xxhash<<"     computed_archive_hash = "<<computed_archive_xxhash<<"\n";
 
-            if (stored_archive_sha != computed_archive_sha)
-                throw myexception()<<"archive failed integrity check: stored and computed archive SHAs did not match.";
+            if (stored_archive_xxhash != computed_archive_xxhash)
+                throw myexception()<<"archive failed integrity check: stored and computed archive integrity hash did not match.";
 
             std::istringstream data2(data);
             cereal::BinaryInputArchive archive( data2 );
 
             std::shared_ptr<CompiledModule> M;
 
-            std::string sha;
-            archive(sha);
+            std::string hash;
+            archive(hash);
 
-            if (sha == required_sha)
+            if (hash == required_xxhash)
             {
                 archive(M);
 
-                if (sha == M->all_inputs_sha())
+                if (hash == M->all_inputs_hash())
                     return M;
 
-                throw myexception()<<"Beginning and ending SHAs inside the archive do not match!";
+                throw myexception()<<"Beginning and ending integrity hash inside the archive do not match!";
             }
         }
         catch (std::exception& e)
@@ -544,14 +558,14 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             std::ostringstream buffer;
             {
                 cereal::BinaryOutputArchive archive( buffer );
-                archive(CM->all_inputs_sha());
+                archive(CM->all_inputs_hash());
                 archive(CM);
             }
             string data = buffer.str();
-            string archive_sha = boost::compute::detail::sha1(data);
+            string archive_hash = xxhash64_hex(data);
 
             if (log_verbose >= 4)
-                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    sha1 = "<<archive_sha<<"\n";
+                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    hash = "<<archive_hash<<"\n";
 
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
@@ -562,7 +576,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             if (not tmp_file) throw myexception()<<"Could not open file!";
 
             // Write the archive to the temporary file.
-            tmp_file<<archive_sha<<"\n";
+            tmp_file<<archive_hash<<"\n";
             tmp_file.write(data.c_str(),data.size());
             tmp_file.close();
 
@@ -825,7 +839,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
-    if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
+    if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_hash(P)))
     {
 	if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
 	C->inflate(P);
@@ -1000,10 +1014,10 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check the compile artifact
     if (log_verbose)
     {
-	if (auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_sha(P)))
+	if (auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_hash(P)))
 	{
 	    CM2->inflate(P);
-	    if (CM2->all_inputs_sha() != CM->all_inputs_sha())
+	    if (CM2->all_inputs_hash() != CM->all_inputs_hash())
 		std::cerr<<"Compiled module "<<MM->name<<" changed between writing and rereading!";
 	}
 	else if (ok)
@@ -2281,7 +2295,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     }
 }
 
-string exe_str()
+const string& exe_str()
 {
     static optional<string> str;
     if (not str)
@@ -2297,24 +2311,30 @@ string exe_str()
     return *str;
 }
 
-std::string Module::all_inputs_sha(const Program& P) const
+std::string Module::all_inputs_hash(const Program& P) const
 {
-    if (not _cached_sha)
+    if (not _cached_hash)
     {
-	boost::compute::detail::sha1 sha(exe_str());
+        XXH3_state_t* state = XXH3_createState();
+        XXH3_64bits_reset(state);
 
-	sha.process(file.contents);
+        auto exe = exe_str();
+        XXH3_64bits_update(state, exe.data(), exe.size());
+        XXH3_64bits_update(state, file.contents.data(), file.contents.size());
 
 	for(auto& dep_modid: dependencies())
 	{
 	    auto M2 = P.get_module( dep_modid );
-	    sha.process(M2->all_inputs_sha());
+            auto input_hash = M2->all_inputs_hash();
+            XXH3_64bits_update(state, input_hash.data(), input_hash.size());
 	}
+        uint64_t hash = XXH3_64bits_digest(state);
+	_cached_hash = xxhash_to_hex(hash);
 
-	_cached_sha = sha;
+        XXH3_freeState(state);
     }
 
-    return _cached_sha.value();
+    return _cached_hash.value();
 }
 
 
@@ -2482,10 +2502,10 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 
     std::swap(local_eq_instances_, m->local_eq_instances);
 
-    if (m->_cached_sha)
-	all_inputs_sha_ = m->_cached_sha.value();
+    if (m->_cached_hash)
+	all_inputs_hash_ = m->_cached_hash.value();
     else
-	throw myexception()<<"Module "<<m->name<<" has no SHA!";
+	throw myexception()<<"Module "<<m->name<<" has no integrity hash!";
 
     m->clear_symbol_table();
 }

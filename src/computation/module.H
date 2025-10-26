@@ -103,9 +103,9 @@ public:
 
     std::shared_ptr<FreshVarState> fresh_var_state_ptr() {return fresh_var_state_;}
 
-    std::string all_inputs_sha(const Program& P) const;
+    std::string all_inputs_hash(const Program& P) const;
 
-    mutable std::optional<std::string> _cached_sha;
+    mutable std::optional<std::string> _cached_hash;
 
     std::set<std::string> dependencies() const;
 
@@ -257,7 +257,7 @@ class CompiledModule
 
     EqInstanceEnv local_eq_instances_;
 
-    std::string all_inputs_sha_;
+    std::string all_inputs_hash_;
 
     std::map<std::string, std::shared_ptr<const CompiledModule>> transitively_imported_modules_;
 
@@ -284,7 +284,7 @@ public:
 	return transitively_imported_modules_;
     }
 
-    const std::string& all_inputs_sha() const {return all_inputs_sha_;}
+    const std::string& all_inputs_hash() const {return all_inputs_hash_;}
 
     const std::set<std::string>& dependencies() const {return dependencies_;}
 
@@ -320,7 +320,7 @@ public:
 	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
         ar( aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
-	ar( all_inputs_sha_ );
+	ar( all_inputs_hash_ );
 
 	// Maybe we should write the SHA at both beginning and end and then check them when we read it back.
     }

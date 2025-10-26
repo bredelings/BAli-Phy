@@ -73,7 +73,7 @@ shared_ptr<CompiledModule> compiler_prim_module()
 
     // 4. Copy symbols to the for-export maps.
     m->perform_exports();
-    m->_cached_sha = "12345";
+    m->_cached_hash = "12345";
 
     auto cm = std::make_shared<CompiledModule>(m);
     cm->finish_value_decls(value_decls);
