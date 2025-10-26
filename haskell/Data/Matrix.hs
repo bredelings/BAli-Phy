@@ -9,6 +9,8 @@ import Text.Show
 data Matrix a
 
 foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
+foreign import bpcall "Vector:" vectorToMatrix :: Int -> Int -> EVector Double -> Matrix Double
+foreign import bpcall "Vector:" matrixToVector :: Matrix Double -> EVector Double
 
 fromLists xss = fromVectors $ toVector $ map toVector xss
 

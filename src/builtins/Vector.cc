@@ -122,6 +122,13 @@ extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
     return s;
 }
 
+extern "C" closure builtin_function_showObject(OperationArgs& Args)
+{
+    auto arg = Args.evaluate(0);
+    String result = arg.print();
+    return result;
+}
+
 extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 {
     // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
@@ -147,9 +154,38 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
     return M;
 }
 
-extern "C" closure builtin_function_showObject(OperationArgs& Args)
+extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
 {
-    auto arg = Args.evaluate(0);
-    String result = arg.print();
-    return result;
+    auto arg0 = Args.evaluate(0);
+    auto& M = arg0.as_<Box<Matrix>>();
+
+    object_ptr<EVector> Vptr = new EVector;
+    auto& V = *Vptr;
+
+    for(int i=0;i<M.size1();i++)
+        for(int j=0;j<M.size2();j++)
+            V.push_back(M(i,j));
+
+    return V;
+}
+
+extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
+{
+    int s1 = Args.evaluate(0).as_int();
+    int s2 = Args.evaluate(1).as_int();
+    auto arg2 = Args.evaluate(2);
+    auto& V = arg2.as_<EVector>();
+
+    if (V.size() != s1*s2)
+        throw myexception()<<"vectorToMatrix: size = ("<<s1<<", "<<s2<<") so expected "<<s1*s2<<" elements, but got "<<V.size()<<"!";
+
+    auto Mptr = new Box<Matrix>(s1, s2);
+    auto& M = *Mptr;
+
+    int k=0;
+    for(int i=0;i<s1;i++)
+        for(int j=0;j<s2;j++)
+            M(i,j) = V[k++].as_double();
+
+    return Mptr;
 }
