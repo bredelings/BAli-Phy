@@ -14,6 +14,8 @@ fromLists xss = fromVectors $ toVector $ map toVector xss
 
 foreign import bpcall "Matrix:" nrows :: Matrix a -> Int
 foreign import bpcall "Matrix:" ncols :: Matrix a -> Int
+foreign import bpcall "Matrix:" getElem :: Int -> Int -> Matrix Double -> Double
+
 foreign import bpcall "Matrix:transpose" tr :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" scaleMatrix :: a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double

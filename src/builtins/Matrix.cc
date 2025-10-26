@@ -290,3 +290,13 @@ extern "C" closure builtin_function_transpose(OperationArgs& Args)
 
     return M2p;
 }
+
+extern "C" closure builtin_function_getElem(OperationArgs& Args)
+{
+    int i = Args.evaluate(0).as_int();
+    int j = Args.evaluate(1).as_int();
+    auto arg2 = Args.evaluate(2);
+    auto& M = arg2.as_<Box<Matrix>>();
+
+    return {M(i,j)};
+}
