@@ -40,7 +40,7 @@ instance HasSMap m => HasSMap (BranchSiteMixture m) where
      divide by the model rate in branchTransitionP.
  -}
 
-meanMatrix (Discrete mps) = foldl1 (%+%) [scaleMatrix p m | (m,p) <- mps]
+meanMatrix (Discrete mps) = foldl1 (+) [scaleMatrix p m | (m,p) <- mps]
 
 
 {-

@@ -77,12 +77,42 @@ extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
     int n2 = m1.size2();
 
     if (m2.size1() != n1 or m2.size2() != n2)
-	throw myexception()<<"Trying to multiply matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
+	throw myexception()<<"Trying to elementwise-multiply matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
 
     auto m3 = new Box<Matrix>(n1,n2);
     for(int i=0;i<n1;i++)
 	for(int j=0;j<n2;j++)
 	    (*m3)(i,j) = m1(i,j) * m2(i,j);
+
+    return m3;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_mat_mult(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    auto arg2 = Args.evaluate(1);
+    const Matrix& m2 = arg2.as_<Box<Matrix>>();
+
+    if (m1.size2() != m2.size1())
+	throw myexception()<<"Trying to multiply matrices of incompatible sizes ("<<m1.size1()<<","<<m1.size2()<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+    int n3 = m2.size2();
+
+    auto m3 = new Box<Matrix>(n1,n3);
+
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n3;j++)
+        {
+            double sum = 0;
+            for(int k=0;k<n2;k++)
+                sum += m1(i,k)*m2(k,j);
+            (*m3)(i,j) = sum;
+        }
 
     return m3;
 }
@@ -108,6 +138,85 @@ extern "C" closure builtin_function_elementwise_add(OperationArgs& Args)
 	    (*m3)(i,j) = m1(i,j) + m2(i,j);
 
     return m3;
+}
+
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_elementwise_sub(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    auto arg2 = Args.evaluate(1);
+    const Matrix& m2 = arg2.as_<Box<Matrix>>();
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+
+    if (m2.size1() != n1 or m2.size2() != n2)
+	throw myexception()<<"Trying to add matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
+
+    auto m3 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)
+	    (*m3)(i,j) = m1(i,j) - m2(i,j);
+
+    return m3;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_mat_negate(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+
+    auto m2 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)	
+            (*m2)(i,j) = -m1(i,j);
+
+    return m2;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+
+    auto m2 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)	
+            (*m2)(i,j) = std::abs(m1(i,j));
+
+    return m2;
+}
+
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+
+    auto m2 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)
+        {
+            double x = m1(i,j);
+            (*m2)(i,j) = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+        }
+
+    return m2;
 }
 
 
