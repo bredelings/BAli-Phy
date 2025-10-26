@@ -13,6 +13,10 @@ foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matr
 foreign import bpcall "SModel:" equilibriumLimit :: EVector Double -> Matrix Double -> EVector Double
 foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Double -> Bool
 foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool
+foreign import bpcall "SModel:" flow :: EVector Double -> Matrix Double -> Matrix Double
+
+flux pi q = f - transpose f
+    where f = flow pi q
 
 -- NOTE: Rates
 -- We don't have rates here, because rates require a concept of states being "equal".
@@ -34,6 +38,10 @@ class Scalable c => CTMC c where
 
     getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
     qExp m = mexp (getQ m) 1
+
+eqFlow m = flow (getEqFreqs m) (getQ m)
+
+eqFlux m = flux (getEqFreqs m) (getQ m)           
 
 -- TODO: I should probably hide the constructor to guarantee that rows sum to zero, and frequencies sum to 1.
 -- TODO: Should I rename Markov -> CTMC?

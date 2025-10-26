@@ -1547,3 +1547,32 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
     }
     return FF;
 }
+
+extern "C" closure builtin_function_flow(OperationArgs& Args)
+{
+    // Equilibrium frequencies
+    auto arg0 = Args.evaluate(0);
+    const auto& pi = arg0.as_<EVector>();
+
+    // Rate matrix
+    auto arg1 = Args.evaluate(1);
+    const auto& Q = arg1.as_<Box<Matrix>>();
+    assert(Q.size1() == Q.size2());
+
+    int n_states = pi.size();
+    assert(Q.size1() == n_states);
+
+    auto* Fptr = new Box<Matrix>(n_states, n_states);
+    auto& F = *Fptr;
+
+    for(int i=0;i<n_states;i++)
+        for(int j=0;j<n_states;j++)
+        {
+            if (i == j)
+                F(i,j) = 0;
+            else
+                F(i,j) = pi[i].as_double() * Q(i,j);
+        }
+
+    return Fptr;
+}
