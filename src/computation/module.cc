@@ -2301,11 +2301,22 @@ const string& exe_str()
     if (not str)
     {
         auto exe_path = find_exe_path();
+        std::ifstream exe_file(exe_path);
 
-	std::filesystem::file_time_type ftime = std::filesystem::last_write_time(exe_path);
-	auto epoch = ftime.time_since_epoch();
-	auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
-	str = exe_path.string() + "@" + fmt::format("{}",nano);
+        XXH3_state_t* state = XXH3_createState();
+        XXH3_64bits_reset(state);
+
+        vector<char> buffer(4096);
+        while (exe_file)
+        {
+            exe_file.read(buffer.data(), buffer.size());
+            std::streamsize n = exe_file.gcount();
+            XXH3_64bits_update(state, buffer.data(), n);
+        }
+        uint64_t hash = XXH3_64bits_digest(state);
+        str = xxhash_to_hex(hash);
+
+        XXH3_freeState(state);
     }
 
     return *str;
