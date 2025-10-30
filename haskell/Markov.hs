@@ -41,6 +41,7 @@ class Scalable c => CTMC c where
 
 eqFlow m = flow (getEqFreqs m) (getQ m)
 
+eqFlux :: Markov -> Matrix Double
 eqFlux m = flux (getEqFreqs m) (getQ m)           
 
 -- TODO: I should probably hide the constructor to guarantee that rows sum to zero, and frequencies sum to 1.

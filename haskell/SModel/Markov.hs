@@ -70,6 +70,10 @@ markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 eqMarkov a smap q = wrapMarkov a smap (Markov.eqMarkov q)
 
+eqFlow (Markov _ _ m _) = Markov.eqFlow m
+
+eqFlux (Markov _ _ m _) = Markov.eqFlux m
+
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 
@@ -120,10 +124,17 @@ labelledStartFrequencies m = zip (getLetters a) frequencies
     where frequencies = vectorToList $ getStartFreqs m
           a = getAlphabet m
 
-labelledUpperTriangle alphabet matrix tag = if n == nrows matrix && n == ncols matrix
-                                            then [ (tag ++ (letters!i) ++ (letters!j), getElem i j matrix) | (i, j) <- Markov.all_pairs [0..n-1]]
-                                            else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
-                                                 show (ncols matrix,nrows matrix) ++" matrix!"
+labelledUpperTriangle alphabet matrix = if n == nrows matrix && n == ncols matrix
+                                        then [ ((letters!i) ++ (letters!j), getElem i j matrix) | (i, j) <- Markov.all_pairs [0..n-1]]
+                                        else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
+                                             show (ncols matrix,nrows matrix) ++" matrix!"
+    where letters = listArray' (getLetters alphabet)
+          n = length letters
+
+labelledOffDiagonal alphabet matrix = if n == nrows matrix && n == ncols matrix
+                                      then [ ((letters!i) ++ (letters!j), getElem i j matrix) | i <- [0..n-1], j <- [0..n-1], i /= j]
+                                      else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
+                                             show (ncols matrix,nrows matrix) ++" matrix!"
     where letters = listArray' (getLetters alphabet)
           n = length letters
 

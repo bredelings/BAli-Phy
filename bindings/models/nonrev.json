@@ -22,6 +22,14 @@
 	{
 	    "name": "eqFrequencies",
 	    "value": "labelledEqFrequencies(nonRev'(@a,@rates))"
+	},
+	{
+	    "name": "flux",
+	    "value": "labelledUpperTriangle(@a, eqFlux(nonRev'(@a,@rates)))"
+	},
+	{
+	    "name": "flow",
+	    "value": "labelledOffDiagonal(@a, eqFlow(nonRev'(@a,@rates)))"
 	}
     ],
     "description": "The general non-reversible rate matrix Q(i,j)",
