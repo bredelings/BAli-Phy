@@ -205,12 +205,9 @@ bool is_haskell_consym(const string& s)
 
 bool is_haskell_var_name(const std::string& s)
 {
-    vector<string> path = haskell_name_path(s);
-    if (path.empty()) return false;
-    if (not is_haskell_varid(path.back()) and not is_haskell_varsym(path.back())) return false;
-    for(int i=0;i<path.size()-1;i++)
-        if (not is_haskell_conid(path[i])) return false;
-    return true;
+    auto uqname = get_unqualified_name(s);
+
+    return is_haskell_varid(uqname) or is_haskell_varsym(uqname);
 }
 
 bool is_haskell_builtin_con_name(const std::string& s)
@@ -231,18 +228,9 @@ bool is_haskell_builtin_type_name(const std::string& s)
         return false;
 }
 
-bool valid_path_prefix(const vector<string>& path)
-{
-    if (path.empty()) return false;
-    for(int i=0;i<path.size()-1;i++)
-        if (not is_haskell_conid(path[i])) return false;
-    return true;
-}
-
 bool is_haskell_qsym(const std::string& s)
 {
-    vector<string> path = haskell_name_path(s);
-    return valid_path_prefix(path) and is_haskell_uqsym(path.back());
+    return is_haskell_uqsym( get_unqualified_name(s) );
 }
 
 bool is_haskell_sym(const std::string& s)
@@ -252,8 +240,7 @@ bool is_haskell_sym(const std::string& s)
 
 bool is_haskell_qid(const std::string& s)
 {
-    vector<string> path = haskell_name_path(s);
-    return valid_path_prefix(path) and is_haskell_id(path.back());
+    return is_haskell_id( get_unqualified_name(s) );
 }
 
 bool is_haskell_normal_con_name(const std::string& s)
@@ -275,12 +262,15 @@ bool is_haskell_module_name(const std::string& s)
 
 bool is_qualified_symbol(const string& s)
 {
-    return find_module_separator(s).has_value();
+    return skip_conid_dot(s,0).has_value();
+//    return find_module_separator(s).has_value();
 //    return (not s.empty() and get_haskell_identifier_path(s).size() >= 2);
 }
 
 bool is_qualified_by_module(const std::string& s, const std::string& modid)
 {
+    if (not s.starts_with(modid)) return false;
+
     if (not is_qualified_symbol(s)) return false;
 
     return get_module_name(s) == modid;
