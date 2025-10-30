@@ -43,19 +43,48 @@ string tuple_name(int n)
 
 const std::regex rgx( R"(^([A-Z][a-zA-Z0-9_']*)\.)" );
 
+inline bool ok(char c)
+{
+    if (c >= 'a' and c <= 'z') return true;
+    if (c >= 'A' and c <= 'Z') return true;
+    if (c >= '0' and c <= '9') return true;
+    if (c == '_' or c == '\'') return true;
+    return false;
+}
+
+std::optional<int> find_next(const std::string& s, int i)
+{
+    if (i < s.size())
+    {
+        if (s[i] < 'A' or s[i] > 'Z')
+            return {};
+        else
+            i++;
+
+        while(i < s.size() and ok(s[i]))
+            i++;
+
+        if (i<s.size() and s[i]== '.')
+            return i;
+        else
+            return {};
+    }
+    else
+        return {};
+}
+
 vector<string> haskell_name_path(const std::string& s)
 {
     vector<string> path;
-    string rest = s;
-    std::smatch m;
-    while(std::regex_search(rest, m, rgx))
+    int i=0;
+    while(auto i2 = find_next(s,i))
     {
-        path.push_back(m[1]);
-        rest = m.suffix().str();
+        path.push_back(s.substr(i,*i2-i));
+        i=*i2+1;
     }
     // FIXME if the rest looks like (for example) BAli-Phy.name, but not if it looks like (for example) .|.
     // FIXME move splitting paths into components into the lexer.  That is, split there and store them already split.
-    path.push_back(rest);
+    path.push_back(s.substr(i));
     return path;
 }
 
