@@ -1,5 +1,6 @@
 {
-    "name": "nonrev",
+    "name": "nonRev",
+    "synonyms": ["nonrev"],
     "title":"The General Non-Reversible rate matrix",
     "result_type": "CTMC<a>",
     "call": "nonRev'(@a,@rates)",
