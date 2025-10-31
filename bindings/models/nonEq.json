@@ -1,35 +1,37 @@
 {
     "name": "nonEq",
-    "title":"The General Non-Reversible rate matrix",
+    "title":"Non-equilibrium Markov model",
     "result_type": "CTMC<a>",
-    "call": "nonEq'(@a,@rates,@pi)",
+    "call": "nonEq'(@initialFreq,@submodel)",
     "import": ["SModel"],
     "args": [
         {
-            "name": "rates",
-            "type": "List<(String,Double)>",
-	    "default_value":"~symmetric_dirichlet_on(ordered_letter_pairs(@a),1)",
+            "name": "submodel",
+            "type": "CTMC<a>",
+	    "default_value":"nonRev",
 	    "description":"rate matrix"
         },
         {
-            "name": "pi",
+            "name": "initialFreq",
             "type": "List<(String,Double)>",
             "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Initial letter frequencies"
+
         },
-        {
+	{
             "name": "a",
             "type": "a",
             "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
     ],
-    "computed": [
-	{
-	    "name": "eqFrequencies",
-	    "value": "labelledEqFrequencies(nonEq'(@a,@rates,@pi))"
-	}
+    "description": "A markov model with initial letter frequencies different from the equilibrium frequencies.  Requires a rooted tree.\n\nNote that even reversible models are directional if the initial frequencies are the equilibrium frequencues.",
+    "examples": [
+	"nonEq",
+	"gtr +> nonEq",
+	"nonRev +> nonEq",
+	"nonRev +> nonEq +> Rates.gamma(4) +> inv"
     ],
-    "description": "The general non-reversible rate matrix Q(i,j) with separate frequencies",
+    "see": ["gtr","nonRev"],
     "extract": "all"
 }

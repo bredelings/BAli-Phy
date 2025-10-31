@@ -97,10 +97,7 @@ instance RateModel Markov where
 instance Show Markov where
     show (Markov _ _ m _) = show m
 
-nonEq a rates pi = scaleTo 1 $ markov a smap q pi
-    where smap = simpleSMap a
-          n = length $ getLetters a
-          q = Markov.non_rev_from_list n rates
+nonEq pi m = scaleTo 1 $ markov (getAlphabet m) (getSMap m) (getQ m) pi
 
 pairNames ls = [l1 ++ l2 | (l1,l2) <- ls]
 
@@ -108,13 +105,8 @@ allOrderedPairs l = [(x,y) | x <- l, y <- l, x /= y]
 
 orderedLetterPairNames a = pairNames $ allOrderedPairs (getLetters a)
 
-nonEq' a rates' pi' = nonEq a rs pi
-    where lPairs = allOrderedPairs (getLetters a)
-          rs = if length lPairs == length rates' then
-                   [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
-               else
-                   error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
-          pi = toVector $ frequenciesFromDict a pi'
+nonEq' pi' m = nonEq pi m
+    where pi = toVector $ frequenciesFromDict (getAlphabet m) pi'
 
 labelledEqFrequencies m = zip (getLetters a) frequencies
     where frequencies = vectorToList $ getEqFreqs m

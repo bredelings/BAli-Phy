@@ -33,6 +33,6 @@
 	    "value": "labelledOffDiagonal(@a, eqFlow(nonRev'(@a,@rates)))"
 	}
     ],
-    "description": "The general non-reversible rate matrix Q(i,j)",
+    "description": "The general non-reversible rate matrix Q(i,j).  Requires a rooted tree.\n\nNon-reversible rate matrices create letter trajectories that have different probabilities in the forwards and backwards direction.  This means that likelihoods under non-reversible models depend on the root location and can be used to estimate the root location.\n\nAt equilibrium, non-reversible models contain directional circular flow around paths of 3 or more letters. The direction of flow around these paths is what indicates that time is going forward or backward.\n\nAlso note that even reversible models are directional if they start out of equilibrium.  Non-reversible models are directional even at equilibrium.  This model assumes that the initial frequencies are the equilibrium frequencies.",
     "extract": "all"
 }
