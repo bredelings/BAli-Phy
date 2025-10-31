@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "4.0"         >
+<!ENTITY  version        "4.2"         >
 
 <!ENTITY  source.file       "&version;.tar.gz"         >
 <!ENTITY  ubuntu2204.file   "bali-phy-&version;-ubuntu-22.04.tar.gz"         >
@@ -22,6 +22,8 @@
 <!ENTITY  exe.path          "&install.path;/bin/bali-phy"         >
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
+
+<!ENTITY  baliphy    "BAli-Phy" >
 
 <!ENTITY % dbcent 
 	 PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
@@ -1150,6 +1152,22 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   <section xml:id="subst_models">
     <info><title>Substitution models</title></info>
       
+    <section xml:id="nonreversible_models">
+      <info><title>Non-reversible models and rooted trees</title></info>
+
+      <para>
+        The default tree distribution for &baliphy; is unrooted.
+        This works fine for reversible substitution models, but if you specify a non-reversible substitution model then you will get an error:
+        <screen>bali-phy: Error! phyloCTMC: the tree is unrooted, but the model is not reversible!</screen>
+        In this case you will need to specify a rooted tree distribution.
+        The simplest approach is to add the following to the command line:
+        <screen><userinput>--tree '~uniform_rooted_tree(taxa)'</userinput></screen>
+        This distribution creates rooted trees by sampling an unrooted tree and choosing one of the nodes as the root.
+        So the root will <emphasis>not</emphasis> be in the middle of a branch.
+        &baliphy; will then estimate the root location.
+      </para>
+    </section>
+
     <section xml:id="dna_models">
       <info><title>DNA and RNA models</title></info>
 	
@@ -1223,6 +1241,20 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
 		(Tavare, 1986)
 	      </link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>nonRev</userinput></entry>
+	      <entry>11</entry>
+	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>nonEq</userinput></entry>
+	      <entry>14</entry>
+	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
 	      </entry>
 	    </row>
 	  
@@ -1361,7 +1393,22 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </link>
 	      </entry>
 	    </row>
-	  </tbody>
+
+	    <row>
+	      <entry><userinput>nonRev</userinput></entry>
+	      <entry>379</entry>
+	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>nonEq</userinput></entry>
+	      <entry>398</entry>
+	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
+	      </entry>
+	    </row>
+	  
+          </tbody>
 	</tgroup>
       </informaltable>
       </section>
@@ -1499,6 +1546,20 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	    </row>
 
+	    <row>
+	      <entry><userinput>nonRev</userinput></entry>
+	      <entry>239</entry>
+	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>nonEq</userinput></entry>
+	      <entry>254</entry>
+	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
+	      </entry>
+	    </row>
+	  
 	  </tbody>
 	</tgroup>
       </informaltable>

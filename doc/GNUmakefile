@@ -20,6 +20,6 @@ clean:
 	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
 
 %.pdf: %.xhtml
-	wkhtmltopdf --enable-local-file-access -B 10 -T 10 -R 10 -L 10 -s Letter $*.xhtml $*.pdf
+	weasyprint $*.xhtml $*.pdf
 
 #xalan -XSLT /usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl -IN %.xml
