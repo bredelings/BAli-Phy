@@ -18,6 +18,10 @@ foreign import bpcall "SModel:" flow :: EVector Double -> Matrix Double -> Matri
 flux pi q = f - transpose f
     where f = flow pi q
 
+relativeFlux pi q = (1/2) * sum(abs(flux')) / (sum(flow') + 1.0e-12) where
+    flow' = flow pi q
+    flux' = flow' - transpose flow'
+
 -- NOTE: Rates
 -- We don't have rates here, because rates require a concept of states being "equal".
 -- For cases like markov modulated models, the rate we care about is the rate of switching letters,
@@ -43,6 +47,8 @@ eqFlow m = flow (getEqFreqs m) (getQ m)
 
 eqFlux :: Markov -> Matrix Double
 eqFlux m = flux (getEqFreqs m) (getQ m)           
+
+eqRelFlux m = relativeFlux (getEqFreqs m) (getQ m)           
 
 -- TODO: I should probably hide the constructor to guarantee that rows sum to zero, and frequencies sum to 1.
 -- TODO: Should I rename Markov -> CTMC?

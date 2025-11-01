@@ -74,6 +74,8 @@ eqFlow (Markov _ _ m _) = Markov.eqFlow m
 
 eqFlux (Markov _ _ m _) = Markov.eqFlux m
 
+eqRelFlux (Markov _ _ m _) = Markov.eqRelFlux m
+
 instance HasAlphabet Markov where
     getAlphabet (Markov a _ _ _) = a
 

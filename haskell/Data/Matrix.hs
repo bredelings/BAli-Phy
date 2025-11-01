@@ -2,6 +2,8 @@ module Data.Matrix where
 
 import Foreign.Vector
 
+import qualified Data.Foldable as F    
+
 import Text.Show
 
 -- This is actually a C++ matrix<T> defined in "util/matrix.H"
@@ -36,7 +38,7 @@ foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) ->
 fromLists :: [[a]] -> Matrix a
 fromLists xss = fromVectors $ toVector $ map toVector xss
 
-foreign import bpcall "Vector:" matrixToVector :: Matrix Double -> EVector Double
+foreign import bpcall "Vector:" matrixToVector :: Matrix a -> EVector a
 -- toList :: Matrix a -> [a]
 toList = vectorToList . matrixToVector
 --toLists :: Matrix a -> [[a]]
@@ -117,6 +119,10 @@ instance Num a => Num (Matrix a) where
     (-) = elementwise_sub
 
     (*) = mat_mult
+
+
+instance F.Foldable Matrix where
+    toList = toList
 
 
 foreign import bpcall "Matrix:" elementwise_multiply :: Matrix a -> Matrix a -> Matrix a
