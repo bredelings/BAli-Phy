@@ -1,3 +1,18 @@
+# 4.2 (unreleased)
+
+## Features
+- Allow non-reversible models to work with Markov-modulated models.
+- Log departure from reversibility in terms of the flux.
+- Add documentation for nonRev and nonEq CTMC models.
+
+## Speed
+- Improve startup speed.
+
+## Internal
+- Refactor optimizer.
+- Improve specialization of functions for particular types.
+
+
 # 4.1 (Jun 9, 2025)
 
 ## Features
@@ -16,7 +31,7 @@
 
 ## Unstable features
 - Allow conditioning on "variable" sites.
-- Make SPR move work on rooted trees.
+- Make SPR move work on time-trees.
 - Speed up coalescent tree probability.
 
 ## Internal
