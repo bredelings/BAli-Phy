@@ -8,6 +8,10 @@ on:
     branches:
     - "*"
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     strategy:
@@ -16,9 +20,12 @@ jobs:
                ubuntu-gcc-12-22.04,
                ubuntu-gcc-12-debugoptimized,
                ubuntu-gcc-12-NDEBUG_DP,
+               ubuntu-gcc-13-NDEBUG_DP,
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
                ubuntu-gcc-14-24.04,
+               ubuntu-gcc-15,
+               ubuntu-gcc-15-debugoptimized,
                ubuntu-gcc-14-arm,
                ubuntu-clang-18,
                macos-intel,
@@ -50,6 +57,14 @@ jobs:
             cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
             arch: "linux64"
 
+          - name: ubuntu-gcc-13-NDEBUG_DP
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+            buildtype: "debugoptimized"  # test WITH assertions
+            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
+            arch: "linux64"
+
           - name: ubuntu-gcc-13-DEBUG_MACHINE
             os: ubuntu-24.04
             compiler: gcc
@@ -71,6 +86,22 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-15
+            os: ubuntu-latest
+            compiler: gcc
+            version: "15"
+            buildtype: "release"
+            image: ubuntu:25.04
+            arch: "linux64"
+
+          - name: ubuntu-gcc-15-debugoptimized
+            os: ubuntu-latest
+            compiler: gcc
+            version: "15"
+            buildtype: debugoptimized
+            image: ubuntu:25.04
             arch: "linux64"
 
           - name: ubuntu-gcc-14-arm
@@ -116,6 +147,8 @@ jobs:
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image || '' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -125,16 +158,14 @@ jobs:
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
 
-    - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-         key: ${{ matrix.name }}
-         restore-keys: |
-           ${{ matrix.name }}
-
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
+        # If we're running in a docker image, we are already root
+        if [ -n "${{ matrix.image }}" ]  ; then
+          apt-get update && apt-get install -y sudo build-essential git cmake
+        fi 
+
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
@@ -179,10 +210,11 @@ jobs:
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
-        # For mingw/gcc-12. 
-        cat /etc/apt/sources.list
-        sudo sed -i 's/jammy/lunar/g' /etc/apt/sources.list
-
+        # If we're running in a docker image, we are already root
+        if [ -n "${{ matrix.image }}" ]  ; then
+          apt-get update && apt-get install -y sudo build-essential git cmake wget pkgconf
+          echo HOME=/root >> "$GITHUB_ENV"
+        fi
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
@@ -219,6 +251,13 @@ jobs:
           brew install boost
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
           echo "BOOST_ROOT=${BOOST_ROOT}"
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+         key: ${{ matrix.name }}
+         restore-keys: |
+           ${{ matrix.name }}
 
     - name: Install meson
       run: |
