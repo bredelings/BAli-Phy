@@ -409,26 +409,18 @@ do_block generate_main(const variables_map& args,
             main.empty_stmt();
         }
     }
-    optional<fs::path> tree_filename;
-    if (fixed.count("tree"))
-	tree_filename = fixed.at("tree");
-    else if (fixed.count("topology"))
-	tree_filename = fixed.at("topology");
-
-    if ((fixed.count("tree") or fixed.count("topology")) and not tree_filename)
-    {
-        throw myexception()<<"The tree is fixed, but no tree file is given. (Use --tree)";
-    }
 
     if (fixed.count("tree"))
     {
+        auto tree_filename = fixed.at("tree");
         main.empty_stmt();
-        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename->string())}});
+        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename)}});
     }
     else if (fixed.count("topology"))
     {
+        auto tree_filename = fixed.at("topology");
         main.empty_stmt();
-        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename->string())}});
+        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename)}});
     }
 
     if (not args.count("test"))
