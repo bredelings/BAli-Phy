@@ -17,9 +17,6 @@ jobs:
     strategy:
       matrix:
         name: [
-               ubuntu-gcc-12-22.04,
-               ubuntu-gcc-12-debugoptimized,
-               ubuntu-gcc-12-NDEBUG_DP,
                ubuntu-gcc-13-NDEBUG_DP,
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
@@ -35,28 +32,6 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-12-22.04
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "12"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-12-debugoptimized
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "12"
-            buildtype: "debugoptimized"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-12-NDEBUG_DP
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "12"
-            buildtype: "debugoptimized"  # test WITH assertions
-            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
-            arch: "linux64"
-
           - name: ubuntu-gcc-13-NDEBUG_DP
             os: ubuntu-24.04
             compiler: gcc
