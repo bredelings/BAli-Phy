@@ -18,6 +18,9 @@ Pass a key-value pair into BAli-Phy.  The <value> is a json value.
    # Write fixed alignments (useful for ancestral sequence reconstruction) (default: false)
    bali-phy dna.fasta -I none --set write-fixed-alignments=true
 
+   # Write category and state of each leaf sequence as JSON (default: false)
+   bali-phy dna.fasta --set write-category-states=true
+
    # Stop enforcing low gap probabilities after 10 iterations (default: 10)
    bali-phy dna.fasta --set alignment-burnin=10
 

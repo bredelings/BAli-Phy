@@ -307,7 +307,8 @@ do_block generate_main(const variables_map& args,
 		       const expression_ref& jsonLogger,
 		       const expression_ref& treeLogger,
 		       const expression_ref& model_fn,
-		       vector<tuple<int,expression_ref,expression_ref>>& alignments)
+		       vector<tuple<int,expression_ref,expression_ref>>& alignment_loggers,
+		       vector<tuple<int,expression_ref,expression_ref>>& category_state_loggers)
 {
     auto fixed = get_fixed(args);
 
@@ -446,15 +447,28 @@ do_block generate_main(const variables_map& args,
         }
 
         // Initialize the alignment loggers
-        if (not alignments.empty())
+        if (not alignment_loggers.empty())
         {
             main.empty_stmt();
 
             // Create alignment loggers.
-            for(auto& [i,a,logger]: alignments)
+            for(auto& [i,a,logger]: alignment_loggers)
             {
                 string filename = "C1.P"+std::to_string(i+1)+".fastas";
                 main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
+            }
+        }
+
+        // Initialize the category-state loggers
+        if (not category_state_loggers.empty())
+        {
+            main.empty_stmt();
+
+            // Create alignment loggers.
+            for(auto& [i, cs, logger]: category_state_loggers)
+            {
+                string filename = "C1.catStates"+std::to_string(i+1)+".json";
+                main.perform(logger,{var("ejsonLogger"), {var("</>"), directory, String(filename)}});
             }
         }
     }
@@ -558,13 +572,13 @@ compute_logged_quantities(do_block& model,
 			  vector<expression_ref>& total_length_indels,
 			  vector<expression_ref>& total_substs,
 			  vector<expression_ref>& total_prior_A,
-			  vector<tuple<int,expression_ref,expression_ref>>& alignments)
+			  vector<tuple<int,expression_ref,expression_ref>>& alignment_loggers,
+			  vector<tuple<int,expression_ref,expression_ref>>& category_state_loggers)
 {
     string part = std::to_string(i+1);
     string part_suffix = (n_partitions>1) ? part : "";
 
     vector<expression_ref> sub_loggers;
-    expression_ref alignment_exp;
     if (imodel_index)
     {
 	var alignment_length("alignment_length"+part_suffix);
@@ -606,6 +620,13 @@ compute_logged_quantities(do_block& model,
 
     if (n_branches > 0)
     {
+        std::optional<var> anc_states;
+	if (imodel_index or get_setting_or("write-fixed-alignments",false) or get_setting_or("write-category-states", false))
+        {
+            anc_states = var("ancStates" + part_suffix);
+            model.let(*anc_states,{var("prop_anc_cat_states"), properties});
+        }
+        
 	if (imodel_index or get_setting_or("write-fixed-alignments",false))
 	{
             // FIXME: This should affect whether we allow modifying leaf sequences.
@@ -619,14 +640,18 @@ compute_logged_quantities(do_block& model,
                 model.let(alignment, {var("leafAlignment"), tree, sequence_data});
             }
 
-            var anc_states("ancStates" + part_suffix);
-            model.let(anc_states,{var("prop_anc_cat_states"), properties});
-        
 	    var anc_alignment("ancAlignment"+part_suffix);
-	    model.let(anc_alignment, {var("toFasta"),{var("ancestralAlignment"), tree, alignment, {var("getSMap"),smodel}, alphabet_exp, anc_states}});
-	    alignment_exp = anc_alignment;
+	    model.let(anc_alignment, {var("toFasta"),{var("ancestralAlignment"), tree, alignment, {var("getSMap"),smodel}, alphabet_exp, *anc_states}});
+            alignment_loggers.push_back({i, anc_alignment,var("logA"+part_suffix)});
 	}
 
+        if (get_setting_or("write-category-states", false))
+        {
+            var cat_states("catStates" + part_suffix);
+            model.let(cat_states, {var("labeledNodeMap"),tree, *anc_states});
+            category_state_loggers.push_back({i, {var("J.toEncoding"),cat_states}, var("logCatStates"+part_suffix)});
+        }
+        
 	var substs("substs"+part_suffix);
 	expression_ref costs = {var("unitCostMatrix"),alphabet_exp};
 	expression_ref aligned_data = sequence_data;
@@ -649,9 +674,6 @@ compute_logged_quantities(do_block& model,
 
 	total_substs.push_back(substs);
     }
-
-    if (alignment_exp)
-	alignments.push_back({i,alignment_exp,var("logA"+part_suffix)});
 
     return sub_loggers;
 }
@@ -871,7 +893,8 @@ std::string generate_atmodel_program(const variables_map& args,
     auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, model, model_loggers);
     model.empty_stmt();
 
-    vector<tuple<int,expression_ref,expression_ref>> alignments; // partition, alignment var, alignment logger
+    vector<tuple<int,expression_ref,expression_ref>> alignment_loggers; // partition, alignment var, alignment logger
+    vector<tuple<int,expression_ref,expression_ref>> category_state_loggers; // partition, category-state var, category-state logger
     vector<expression_ref> alignment_lengths;
     vector<expression_ref> total_num_indels;
     vector<expression_ref> total_length_indels;
@@ -962,7 +985,8 @@ std::string generate_atmodel_program(const variables_map& args,
 						     total_length_indels,
 						     total_substs,
 						     total_prior_A,
-						     alignments);
+						     alignment_loggers,
+						     category_state_loggers);
 
         var part_loggers("part"+part+"Loggers");
         model.let(part_loggers,get_list(sub_loggers));
@@ -996,10 +1020,6 @@ std::string generate_atmodel_program(const variables_map& args,
     if (not total_prior_A.empty())
         model_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
 
-    vector<expression_ref> alignment_loggers;
-    for(auto& [i,a,l]: alignments)
-        alignment_loggers.push_back(l);
-
     var sequences("sequences");
 
     expression_ref model_fn = var("model");
@@ -1031,7 +1051,21 @@ std::string generate_atmodel_program(const variables_map& args,
         if (not fixed.count("tree"))
             model_fn = {model_fn, treeLogger};
         if (not alignment_loggers.empty())
-        model_fn = {model_fn, get_list(alignment_loggers)};
+        {
+            vector<expression_ref> alignment_loggers_vec;
+            for(auto& [i,a,l]: alignment_loggers)
+                alignment_loggers_vec.push_back(l);
+
+            model_fn = {model_fn, get_list(alignment_loggers_vec)};
+        }
+        if (not category_state_loggers.empty())
+        {
+            vector<expression_ref> category_state_loggers_vec;
+            for(auto& [i,a,l]: category_state_loggers)
+                category_state_loggers_vec.push_back(l);
+
+            model_fn = {model_fn, get_list(category_state_loggers_vec)};
+        }
     }
 
     var loggers_var("loggers");
@@ -1064,10 +1098,16 @@ std::string generate_atmodel_program(const variables_map& args,
         }
 
         // Add the alignment loggers.
-        if (not alignments.empty())
+        if (not alignment_loggers.empty())
             model.empty_stmt();
-        for(auto& [i,a,l]: alignments)
+        for(auto& [i,a,l]: alignment_loggers)
             model.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,a}}}});
+
+        // Add the category-state loggers
+        if (not category_state_loggers.empty())
+            model.empty_stmt();
+        for(auto& [i,cs,l]: category_state_loggers)
+            model.perform({var("$"),var("addLogger"),{{var("$"),{var("every"),10},{l,cs}}}});
     }
 
     model.empty_stmt();
@@ -1088,7 +1128,8 @@ std::string generate_atmodel_program(const variables_map& args,
 			      jsonLogger,
 			      treeLogger,
 			      model_fn,
-			      alignments);
+			      alignment_loggers,
+                              category_state_loggers);
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
