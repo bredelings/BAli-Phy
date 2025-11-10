@@ -69,24 +69,20 @@ using std::vector;
 // compute the exp(M) - I from the SVD for M (i.e. M=O D O^t )
 Matrix expm1(const EigenValues& solution,double t) 
 {
+    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixE;
+
     auto& O = solution.eigenvectors();
     Eigen::VectorXd D = solution.eigenvalues();
     int n = D.size();
-    
-    // Exponentiate Eigenvalues
-    for(int i=0;i<n;i++)
-        D[i] = expm1(t*D[i]);
-
-    //Matrix E = prod(O,prod(D,trans(O)));
 
     Matrix E(n,n);
-    for(int i=0;i<n;i++)
-        for(int j=0;j<n;j++) {
-            double temp =0;
-            for(int k=0;k<n;k++)
-                temp += O(i,k)*O(j,k)*D[k];
-            E(i,j) = temp;
-        }
+    Eigen::Map<MatrixE> EE(E.begin(), n, n);
+
+    // Exponentiate Eigenvalues
+    D = (D.array() * t).expm1();
+
+    // Compute result matrix
+    EE = O*Eigen::DiagonalMatrix<double, Eigen::Dynamic>(D)*O.transpose();
 
 //#ifndef NDEBUG
 //    for(int i=0;i<E.size1();i++)
@@ -100,24 +96,18 @@ Matrix expm1(const EigenValues& solution,double t)
 // compute the exp(M) I from the SVD for M (i.e. M=O D O^t )
 Matrix exp(const EigenValues& solution,double t)
 {
+    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixE;
+
     auto& O = solution.eigenvectors();
     Eigen::VectorXd D = solution.eigenvalues();
     int n = D.size();
-    
-    // Exponentiate Eigenvalues
-    for(int i=0;i<n;i++)
-        D[i] = exp(t*D[i]);
 
-    //Matrix E = prod(O,prod(D,trans(O)));
+    // Exponentiate Eigenvalues
+    D = (D.array() * t).exp();
 
     Matrix E(n,n);
-    for(int i=0;i<n;i++)
-        for(int j=0;j<n;j++) {
-            double temp =0;
-            for(int k=0;k<n;k++)
-                temp += O(i,k)*O(j,k)*D[k];
-            E(i,j) = temp;
-        }
+    Eigen::Map<MatrixE> EE(E.begin(), n, n);
+    EE = O*Eigen::DiagonalMatrix<double, Eigen::Dynamic>(D)*O.transpose();
 
 //#ifndef NDEBUG
 //    for(int i=0;i<E.size1();i++)
