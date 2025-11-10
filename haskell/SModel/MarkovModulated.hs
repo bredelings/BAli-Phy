@@ -65,12 +65,10 @@ huelsenbeck02Test s01 s10 fraction model = mix [1-fraction, fraction] [model & h
 huelsenbeck02Two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck02 s01b s10b,
                                                                                   model & huelsenbeck02 s01a s10a]
 
-galtier01Ssrv nu model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
+galtier01Ssrv nu model = modulatedMarkov models (Markov.gtr (Markov.equ nLevels nu) (toVector levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     nLevels = length models
-    -- This is really a generic gtr...  We should be able to get this with f81
-    ratesBetween = (Markov.equ nLevels nu) %*% (plus_f_matrix $ toVector levelProbs)
 
 galtier01 nu pi model = (\nu' -> galtier01Ssrv nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)])
 
