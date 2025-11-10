@@ -1,17 +1,21 @@
 # 4.2 (unreleased)
 
 ## Features
-- Allow non-reversible models to work with Markov-modulated models.
-- Log departure from reversibility in terms of the flux.
-- Add documentation for nonRev and nonEq CTMC models.
+- Log departure from reversibility in terms of the flux and nonreversibility.
+
+## Fixes
+- Fix non-reversible models + Markov-modulated models.
 
 ## Speed
 - Improve startup speed.
+- Speed up transition probabilities for models with a lot of states (e.g. codon models, covarion models).
 
 ## Internal
 - Refactor optimizer.
-- Improve specialization of functions for particular types.
+- Improve specialization of polymorphic functions for particular types.
 
+## Documentation
+- Add documentation for nonRev and nonEq CTMC models.
 
 # 4.1 (Jun 9, 2025)
 
