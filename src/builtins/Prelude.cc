@@ -766,3 +766,12 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 }
 
 
+extern "C" closure builtin_function_isWindows(OperationArgs& Args)
+{
+#ifdef _WIN32
+    return bool_true;
+#else
+    return bool_false;
+#endif
+}
+
