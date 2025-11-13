@@ -4,6 +4,7 @@ import Foreign.Vector (EVector, toVector)
 import Probability.Distribution.Discrete (values)
 import SModel.Rate (rate)
 import Markov
+import qualified Data.JSON as J    
 
 data StateProperties a = StateProperties [a]
 
@@ -41,3 +42,7 @@ type Property = ComponentStateProperties Double
 rateProperty dist = ComponentStateProperties [StateProperties $ replicate (getNStates m) (rate m) | m <- values dist]
 
 markovModulateProperty (ComponentStateProperties csps) = StateProperties $ concat [ ps | StateProperties ps <- csps]
+
+instance J.ToJSON a => J.ToJSON (ComponentStateProperties a) where
+    toJSON (ComponentStateProperties csps) = J.toJSON [ sps | StateProperties sps <- csps]
+    toEncoding (ComponentStateProperties csps) = J.toEncoding [ sps | StateProperties sps <- csps]
