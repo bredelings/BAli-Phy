@@ -22,6 +22,7 @@ instance Ord Reversibility where
 
 class CheckReversible m where
     getReversibility :: m -> Reversibility
+    getReversibility _ = NonEq
 
 class CheckReversible m => CanMakeReversible m where
     setReversibility :: Reversibility -> m -> m
