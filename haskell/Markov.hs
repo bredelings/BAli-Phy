@@ -43,6 +43,8 @@ class Scalable c => CTMC c where
     getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
     qExp m = mexp (getQ m) 1
 
+getNStates m = nrows (getQ m)
+
 eqFlow m = flow (getEqFreqs m) (getQ m)
 
 eqFlux :: Markov -> Matrix Double
