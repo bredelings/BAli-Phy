@@ -10,6 +10,7 @@ import Data.Bool
 import Data.Function
 import Data.List (map)
 import Numeric.LogDouble (LogDouble)
+import Data.Functor
 
 class ToFromC a where
     type ToC a
@@ -52,10 +53,10 @@ instance (ToFromC a, ToFromC b) => ToFromC (a->b) where
     fromC f = fromC . f . toC
     toC f = toC . f . fromC
 
-instance ToFromC (IO a) where
-    type ToC (IO a) = RealWorld -> a
-    toC i = (\s -> let (_,x) = runIO i s in x)
-    fromC i = makeIO i
+instance ToFromC a => ToFromC (IO a) where
+    type ToC (IO a) = RealWorld -> ToC a
+    toC i = (\s -> let (_,x) = runIO i s in toC x)
+    fromC i = fromC <$> makeIO i
 
 instance ToFromC a => ToFromC [a] where
     type ToC [a] = EVector (ToC a)
