@@ -8,6 +8,10 @@ mkDiscrete xs ps = Discrete $ zip xs ps
 
 mix ps dists = join $ mkDiscrete dists ps
 
+values (Discrete xws) = map fst xws
+
+weights (Discrete xws) = map snd xws
+               
 unitMixture x = Discrete [(x, 1)]
 
 -- Instead of having a Delta a function, we can treat Discrete as a mixture of Deltas.
