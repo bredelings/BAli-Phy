@@ -17,12 +17,12 @@ getPropertyForComponentState (ComponentStateProperties csps) c s = sps!!s
 
 instance Functor StateProperties where
     fmap f (StateProperties ps) = StateProperties (fmap f ps)
-                                
+
 instance Functor ComponentStateProperties where
     fmap f (ComponentStateProperties csps) = ComponentStateProperties (fmap (fmap f) csps)
-                                
+
 type Property = ComponentStateProperties Double
-                                
+
 {- Suppose we use a function plus extents
    Then each component could have a different number of states.
    So we'd have ComponentStateProperties Int (Int -> Int) (Int -> Int -> Double)
@@ -40,3 +40,4 @@ type Property = ComponentStateProperties Double
 
 rateProperty dist = ComponentStateProperties [StateProperties $ replicate (getNStates m) (rate m) | m <- values dist]
 
+markovModulateProperty (ComponentStateProperties csps) = StateProperties $ concat [ ps | StateProperties ps <- csps]
