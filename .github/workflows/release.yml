@@ -44,21 +44,14 @@ jobs:
     strategy:
       matrix:
         name: [
-               ubuntu-gcc-12-22.04,
                ubuntu-gcc-14-24.04,
-               macos13-xcode15-intel,
-               macos14-xcode16-arm,
+               ubuntu-gcc-14-arm,
+               macos15-xcode16-intel,
+               macos16-xcode26-arm,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-12-22.04
-            os: ubuntu-22.04
-            compiler: gcc
-            version: "12"
-            buildtype: "release"
-            arch: "linux64"
-
           - name: ubuntu-gcc-14-24.04
             os: ubuntu-24.04
             compiler: gcc
@@ -66,17 +59,24 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos13-xcode15-intel
-            os: macos-13
+          - name: ubuntu-gcc-14-arm
+            os: ubuntu-24.04-arm
+            compiler: gcc
+            version: "14"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: macos15-xcode16-intel
+            os: macos-15-intel
             compiler: xcode
-            version: "15"
+            version: "16"
             buildtype: "release"
             arch: "mac-intel64"
 
-          - name: macos14-xcode16-arm
-            os: macos-14
+          - name: macos16-xcode26-arm
+            os: macos-latest
             compiler: xcode
-            version: "16"
+            version: "26"
             buildtype: "release"
             arch: "mac-arm64"
 
@@ -88,6 +88,8 @@ jobs:
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image || '' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -97,16 +99,14 @@ jobs:
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
 
-    - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-         key: ${{ matrix.name }}
-         restore-keys: |
-           ${{ matrix.name }}
-
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
+        # If we're running in a docker image, we are already root
+        if [ -n "${{ matrix.image }}" ]  ; then
+          apt-get update && apt-get install -y sudo build-essential git cmake
+        fi 
+
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
@@ -138,23 +138,19 @@ jobs:
         else
             # 22.04 and earlier do not have boost.json
             ( cd
-              curl -O -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
-              tar -xzf boost_1_87_0.tar.gz
-              cd boost_1_87_0
-              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.87.0
+              curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
+              tar -xzf boost_1_89_0.tar.gz
+              cd boost_1_89_0
+              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.89.0
               ./b2 install
-              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.87.0; pwd)\n"
-              echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
+              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.89.0; pwd)\n"
+              echo BOOST_ROOT=$(cd ../installed-boost-1.89.0; pwd) >> $GITHUB_ENV
             )
         fi
 
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
-        # For mingw/gcc-12. 
-        cat /etc/apt/sources.list
-        sudo sed -i 's/jammy/lunar/g' /etc/apt/sources.list
-
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
@@ -189,15 +185,22 @@ jobs:
           echo "CXX=ccache clang++" >> $GITHUB_ENV
 
           ( cd
-            curl -O -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
-            tar -xzf boost_1_87_0.tar.gz
-            cd boost_1_87_0
-            ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.87.0
+            curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
+            tar -xzf boost_1_89_0.tar.gz
+            cd boost_1_89_0
+            ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.89.0
             ./b2 install
-            echo -e "\n    BOOST root is at $(cd ../installed-boost-1.87.0; pwd)\n"
-            echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
+            echo -e "\n    BOOST root is at $(cd ../installed-boost-1.89.0; pwd)\n"
+            echo BOOST_ROOT=$(cd ../installed-boost-1.89.0; pwd) >> $GITHUB_ENV
           )
           echo "BOOST_ROOT=${BOOST_ROOT}"
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+         key: ${{ matrix.name }}
+         restore-keys: |
+           ${{ matrix.name }}
 
     - name: Install meson
       run: |

@@ -169,13 +169,13 @@ jobs:
         if [ ${{ matrix.os }} = ubuntu-22.04 ] ; then
             # 22.04 and earlier do not have boost.json
             ( cd
-              curl -O -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
-              tar -xzf boost_1_87_0.tar.gz
-              cd boost_1_87_0
-              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.87.0
+              curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
+              tar -xzf boost_1_89_0.tar.gz
+              cd boost_1_89_0
+              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.89.0
               ./b2 install
-              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.87.0; pwd)\n"
-              echo BOOST_ROOT=$(cd ../installed-boost-1.87.0; pwd) >> $GITHUB_ENV
+              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.89.0; pwd)\n"
+              echo BOOST_ROOT=$(cd ../installed-boost-1.89.0; pwd) >> $GITHUB_ENV
             )
         else
             # 24.04 has boost.json
