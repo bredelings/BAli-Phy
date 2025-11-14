@@ -123,11 +123,11 @@ array (x:xs) = openBracket >< value x >< rest xs
 -- chars
 
 comma        = Encoding $ T.singleton ','
-colon        = Encoding $ T.singleton  ':'
-openBracket  = Encoding $ T.singleton  '['
-closeBracket = Encoding $ T.singleton  ']'
-openCurly    = Encoding $ T.singleton  '{'
-closeCurly   = Encoding $ T.singleton  '}'
+colon        = Encoding $ T.singleton ':'
+openBracket  = Encoding $ T.singleton '['
+closeBracket = Encoding $ T.singleton ']'
+openCurly    = Encoding $ T.singleton '{'
+closeCurly   = Encoding $ T.singleton '}'
 
 -- numbers
 
