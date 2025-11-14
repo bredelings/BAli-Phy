@@ -132,12 +132,12 @@ closeCurly   = Encoding $ T.singleton  '}'
 -- numbers
 
 int :: Int -> Encoding
-int i = text $ display i
+int = Encoding . display
 -- integer :: Integer -> Encoding
 -- float :: Float -> Encoding
 
 double :: Double -> Encoding
-double d = text $ display d
+double = Encoding . display
 
 value :: Value -> Encoding
 value (Array xs) = array xs
