@@ -66,7 +66,6 @@ instance ToJSON Char where
 
 instance ToJSON Text where
     toJSON x = String x
-
     toEncoding = E.text
 
 instance ToJSON Bool where
@@ -75,9 +74,11 @@ instance ToJSON Bool where
 
 instance ToJSON Double where
     toJSON x = FNumber x
+    toEncoding x = E.double x
 
 instance ToJSON Int where
     toJSON x = INumber x
+    toEncoding x = E.int x
 
 instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x
