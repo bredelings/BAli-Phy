@@ -18,6 +18,7 @@ module Prelude (
         module Data.Foldable,
         module Data.Ord,
         module Data.IORef,
+        module Data.Semigroup,
         module Text.Show,
         module Text.Read,
         module Foreign.Pair,
@@ -66,6 +67,7 @@ import Data.Function
 import Data.Functor
 import Data.Ord
 import Data.IORef
+import Data.Semigroup
 import Text.Show
 import Text.Read
 import Control.Applicative
