@@ -62,6 +62,7 @@ instance ToJSON Char where
     toJSONList s = String (T.pack s)
 
     toEncoding c = E.text $ T.pack $ [c]
+    toEncodingList s = E.text $ T.pack s
 
 instance ToJSON Text where
     toJSON x = String x
