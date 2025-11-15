@@ -49,7 +49,8 @@ If your version of meson is less than 1.1, you need to install the most recent v
 Build BAli-Phy
 --------------
 
-This will build the latest unreleased 4.0-beta version of BAli-Phy, which fixes some memory issues in 3.6.  There are some changes to the model language.  Check the NEWS file for the details.
+This will build the latest version of BAli-Phy.  It may have some changes that have not yet been released.
+Check the [NEWS.md] file for the details.
 
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
