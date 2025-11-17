@@ -187,7 +187,10 @@ extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Arg
     {
         auto& [y1,y2] = x[i];
 
-        o<<"["<<y1<<", "<<y2<<"]";
+        if (y1 == -1 and y2 == -1)
+            o<<"null";
+        else
+            o<<"["<<y1<<", "<<y2<<"]";
         if (i+1 < x.size())
             o<<", ";
     }
