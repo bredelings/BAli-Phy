@@ -28,6 +28,7 @@
 #include <iostream>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "exponential.H"
+#include "util/log-level.H"
 
 
 // The approach used in this file works because of general properties
@@ -353,7 +354,7 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
 
     double err2 = (QQ * epi - b).cwiseAbs().sum();
 
-    if (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
+    if (log_verbose and (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
     {
         std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
@@ -649,7 +650,7 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matri
     // Check that all the rates are 0.
     double err2 = (epi.transpose() * eQ).cwiseAbs().maxCoeff();
 
-    if (err1 > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol)
+    if (log_verbose and (err1 > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
     {
         std::cerr<<"compute_stationary_freqs: maxcoeff = "<<eQ.cwiseAbs().maxCoeff()<<"   err1 = "<<err1<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
