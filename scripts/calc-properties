@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+
+import json
+import argparse
+import sys
+
+parser = argparse.ArgumentParser(description="Compute posterior mean property values for each letter.")
+
+parser.add_argument("filenames", help="Filenames with property values and category-states info for each letter.",nargs='+')
+parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
+parser.add_argument("--format", default="AU", help="Output format")
+args = parser.parse_args()
+
+# Hmm.. this isn't quite right... this just collects the properties for all the iterations.
+# But we actually want to read the catStates, and then create a sum of the properties
+
+def transform_by_property(cat_states, property_values):
+    # here we take a map from name -> [(Int,Int)]
+
+    return {
+        key: [
+            None if pair is None else property_values[pair[0]][pair[1]]
+            for pair in outer
+        ]
+        for key, outer in cat_states.items()
+    }
+
+# What if the sequences have different lengths?  It should error.
+# What if we try to add a None and a number? If should error.
+def add_sequence_properties(seq_properties1, seq_properties2):
+    return {
+        key: [
+            (a + b) if (a is not None and b is not None) else None
+            for a, b in zip(list1, seq_properties2[key])
+        ]
+        for key, list1 in seq_properties1.items()
+    }
+
+# What if the sequences have different lengths?  It should error.
+# What if we try to add a None and a number? If should error.
+def div_sequence_properties(seq_properties1, n):
+    return {
+        key: [
+            a/n if a is not None else None
+            for a in list1
+        ]
+        for key, list1 in seq_properties1.items()
+    }
+
+
+def read_samples_from_file(filename):
+
+    with open(filename) as json_data:
+        nsamples = 0
+        summed_properties = None
+
+        for line in json_data:
+            nsamples += 1;
+
+            line_data = json.loads(line)
+            cat_states = line_data['catStates']
+            props = line_data['properties']
+
+            if summed_properties is None:
+                summed_properties = dict()
+                for key in props.keys():
+                    summed_properties[key] = transform_by_property(cat_states, props[key])
+            else:
+                if summed_properties.keys() != props.keys():
+                    print(f"Property names changed within file {filename}.\n {summed_properties.keys()}\n {props.keys()}", file=sys.stderr)
+                    sys.exit(1)
+                for key in summed_properties.keys():
+                    summed_properties[key] = add_sequence_properties(summed_properties[key], transform_by_property(cat_states, props[key]))
+        return (nsamples, summed_properties)
+
+
+total_samples = 0
+summed_properties = None
+for filename in args.filenames:
+    (n, summed_properties_for_file) = read_samples_from_file(filename)
+    total_samples += n
+
+    if summed_properties is None:
+        summed_properties = summed_properties_for_file
+    else:
+        if summed_properties.keys() != summed_properties_for_file.keys():
+            print(f"Property names for file {filename} don't match previous property names.\n previous = {summed_properties.keys()}\n previous = {summed_properties.keys()}", file=sys.stderr)
+            sys.exit(1)
+        for key in summed_properties.keys():
+            summed_properties[key] = add_sequence_properties(summed_properties[key], summed_properties_for_file[key])
+
+for key in summed_properties.keys():
+    summed_properties[key] = div_sequence_properties(summed_properties[key], total_samples)
+
+print(json.dumps(summed_properties))
