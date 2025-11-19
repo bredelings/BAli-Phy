@@ -32,6 +32,7 @@
     ],
     "description": "The fMutSel model is identical to gtr +> x3 +> mut_sel +> dNdS",
     "extract": "all",
+    "see": ["mut_sel","fMutSel0"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",

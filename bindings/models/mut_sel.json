@@ -25,6 +25,7 @@
     ],
     "examples": ["gtr +> x3 +> mut_sel +> dNdS","gtr +> x2 +> mut_sel"],
     "extract": "all",
+    "see": ["mut_sel_aa","fMutSel0"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",

@@ -36,6 +36,20 @@
             "description": "The dN\/dS value for positively selected sites"
         }
     ],
+    "computed": [
+	{
+	    "name": "p1",
+	    "value": "1 - @p0"
+	},
+	{
+	    "name": "p0effective",
+	    "value": "@p0 * (1 - @posP)"
+	},
+	{
+	    "name": "p1effective",
+	    "value": "@p1 * (1 - @posP)"
+	}
+    ],
     "description":"A mixture of conserved, neutral, and positively-selected sites.  The conserved sites have dN/dS=omega0 and the positively-selected sites have dN/dS=posW.  In this parameterization of the M2a model, p0 is the probability of being conserved conditional on not being positively selected.\n\nThe M2a model modifies the M2 model to avoid forcing the conserved dN/dS to 0.",
     "citation":{"type": "article",
 		"title": "Accuracy and Power of Statistical Methods for Detecting Adaptive Evolution in Protein Coding Sequences and for Identifying Positively Selected Sites",

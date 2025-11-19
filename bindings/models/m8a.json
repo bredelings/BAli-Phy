@@ -36,7 +36,7 @@
             "description": "The fraction of *neutral* sites"
         }
     ],
-    "description": "The m8a model is an m7 model with an additional category of neutral sites. The additional category of sites has proportion posP.\n\nThe m8a model is also equivalent to m8[posW=1].  That is, you get m8a by constraining posW to 1 in the m8 model.  Therefore, the m8a model is nested within the m8 model.\n\nThe m8a model was created as an improved null hypothesis for use in a likelihood ratio test.  (See m8a_test)",
+    "description": "The m8a model is an m7 model with an additional category of neutral sites. The additional category of sites has proportion posP.\n\nThe m8a model is also equivalent to m8(posW=1).  That is, you get m8a by constraining posW to 1 in the m8 model.  Therefore, the m8a model is nested within the m8 model.\n\nThe m8a model was created as an improved null hypothesis for use in a likelihood ratio test.  (See m8a_test)",
     "see": ["m7","m8","m8a_test"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
