@@ -15,8 +15,9 @@ import qualified Data.IntSet as IntSet
 import           Data.Text (Text)
 
 import           Probability.Distribution.Tree.Util
-import           Probability.Distribution.Tree.Modifiable    
+import           Probability.Distribution.Tree.Modifiable
 import           Probability.Distribution.Tree.Moves
+import           Probability.Distribution.Gamma (gamma)
 
 -- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
 uniformTopologyEdges [l1]     _        = return []
@@ -76,6 +77,26 @@ instance Dist UniformTopology where
     type Result UniformTopology = Tree ()
     dist_name _ = "uniform_topology"
 
+-- Distribution for topology initialized to a specific structure
+-- but with uniform prior (for use with loaded initial trees)
+data UniformTopologyInitializedTo l = UniformTopologyInitializedTo (Tree l)
+
+instance Dist (UniformTopologyInitializedTo l) where
+    type Result (UniformTopologyInitializedTo l) = Tree l
+    dist_name _ = "uniform_topology_initialized_to"
+
+instance HasAnnotatedPdf (UniformTopologyInitializedTo l) where
+    annotated_densities (UniformTopologyInitializedTo topology) _ =
+        return ([uniformTopologyPr numLeaves], ())
+        where numLeaves = length $ leafNodes topology
+
+instance Sampleable (UniformTopologyInitializedTo l) where
+    sample dist@(UniformTopologyInitializedTo topology) =
+        RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (return topology)
+
+uniformTopologyInitializedTo :: Tree l -> UniformTopologyInitializedTo l
+uniformTopologyInitializedTo = UniformTopologyInitializedTo
+
 instance HasAnnotatedPdf UniformTopology where
     annotated_densities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
 
@@ -125,16 +146,41 @@ fixedTopologyTree topology dist = do
 
 -- | Initialize tree from loaded value and enable full tree moves
 -- The tree structure comes from parsing a Newick file, but we make it
--- modifiable by adding MCMC moves. This differs from fixedTopologyTree
--- because both topology and branch lengths can change.
+-- modifiable by reconstructing it with modifiable components. This differs
+-- from fixedTopologyTree because both topology and branch lengths can change.
 --
 -- The input tree from Newick parsing includes WithRoots wrapper, which we strip
 -- since BAli-Phy uses unrooted trees internally.
+--
+-- Key insight: We decompose the loaded tree and reconstruct it by sampling from
+-- constant distributions for each branch length. This creates modifiable parameters
+-- in the computational graph while initializing them to the loaded values.
 initialTreeWithMoves :: WithBranchLengths (WithRoots (Tree l)) -> Random (WithBranchLengths (Tree l))
-initialTreeWithMoves (WithBranchLengths (WithRoots tree _ _) lengths) = do
-  let unrootedTree = WithBranchLengths tree lengths
-  addTreeMoves 1 unrootedTree
-  return unrootedTree
+initialTreeWithMoves (WithBranchLengths (WithRoots tree _ _) initialLengths) = do
+  -- Create modifiable tree with BOTH topology and branch lengths modifiable
+  -- Topology: uniform prior, initialized to loaded structure
+  -- Branch lengths: gamma prior (tight distribution), initialized to loaded values
+
+  -- Sample topology from uniform distribution initialized to loaded structure
+  -- This creates modifiable topology (SPR/NNI moves can modify it)
+  topology <- RanSamplingRate 0 $ sample $ uniformTopologyInitializedTo tree
+
+  -- Sample branch lengths from gamma distributions centered on loaded values
+  -- gamma(shape, scale) has mean = shape * scale
+  -- Use high shape for tight distribution (low variance)
+  branchLengths <- RanSamplingRate 0 $ sample $ independent $
+                   IntMap.mapWithKey (\_ len ->
+                     let shape = 100.0  -- High shape = low variance
+                         scale = len / shape
+                     in gamma shape scale) initialLengths
+
+  -- Combine topology and branch lengths
+  let modifiableTree = branchLengthTree topology branchLengths
+
+  -- Add FULL tree moves (topology + branch lengths)
+  addTreeMoves 1 modifiableTree
+
+  return modifiableTree
 
 uniformRootedTopology n = do
   topology <- sample $ uniformTopology n

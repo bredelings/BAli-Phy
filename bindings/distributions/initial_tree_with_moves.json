@@ -1,0 +1,15 @@
+{
+    "name": "initial_tree_with_moves",
+    "result_type": "Distribution<Tree<Lengths>>",
+    "call": "initialTreeWithMoves(@tree)",
+    "import": ["Probability"],
+    "title": "Initialize a tree from a loaded value with MCMC moves enabled",
+    "description": "Creates a modifiable tree initialized to a specific value, enabling both topology and branch length moves. The input tree from Newick parsing includes root information which is automatically stripped.",
+    "args": [
+        {
+            "name": "tree",
+            "type": "Tree<Rooted<Lengths>>",
+	    "description": "The initial tree structure with branch lengths (rooted format from Newick)"
+        }
+    ]
+}

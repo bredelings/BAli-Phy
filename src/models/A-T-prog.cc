@@ -438,15 +438,6 @@ do_block generate_main(const variables_map& args,
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename)}});
     }
 
-    // Load initial tree value if provided (in main IO block)
-    if (initial_tree_newick)
-    {
-        main.empty_stmt();
-        main.perform(var("initialTreeValue"),
-                     {var("newickToBranchLengthTree"),
-                      {var("parse_newick"), String(*initial_tree_newick)}});
-    }
-
     if (not args.count("test"))
     {
         // Initialize the parameters logger
@@ -839,9 +830,10 @@ std::string generate_atmodel_program(const variables_map& args,
     // Load initial tree value if provided (in model block, before tree sampling)
     if (initial_tree_newick)
     {
-        model.let(var("initialTreeValue"),
-                  {var("newickToBranchLengthTree"),
-                   {var("parse_newick"), String(*initial_tree_newick)}});
+        model.perform(var("initialTreeValue"),
+                      {var("liftIO"),
+                       {var("newickToBranchLengthTree"),
+                        {var("parse_newick"), String(*initial_tree_newick)}}});
         model.empty_stmt();
     }
 
