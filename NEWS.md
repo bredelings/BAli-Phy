@@ -8,7 +8,7 @@
 
 ## Speed
 - Improve startup speed.
-- Speed up transition probabilities for models with a lot of states (e.g. codon models, covarion models).
+- Speed up likelihood calculations for models with lots of states (e.g. **4-fold speedup for codon models**).
 
 ## Internal
 - Refactor optimizer.
