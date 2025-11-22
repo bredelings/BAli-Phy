@@ -127,10 +127,14 @@ fixedTopologyTree topology dist = do
 -- The tree structure comes from parsing a Newick file, but we make it
 -- modifiable by adding MCMC moves. This differs from fixedTopologyTree
 -- because both topology and branch lengths can change.
-initialTreeWithMoves :: WithBranchLengths (Tree l) -> Random (WithBranchLengths (Tree l))
-initialTreeWithMoves tree = do
-  addTreeMoves 1 tree
-  return tree
+--
+-- The input tree from Newick parsing includes WithRoots wrapper, which we strip
+-- since BAli-Phy uses unrooted trees internally.
+initialTreeWithMoves :: WithBranchLengths (WithRoots (Tree l)) -> Random (WithBranchLengths (Tree l))
+initialTreeWithMoves (WithBranchLengths (WithRoots tree _ _) lengths) = do
+  let unrootedTree = WithBranchLengths tree lengths
+  addTreeMoves 1 unrootedTree
+  return unrootedTree
 
 uniformRootedTopology n = do
   topology <- sample $ uniformTopology n

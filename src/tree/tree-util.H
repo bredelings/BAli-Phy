@@ -31,6 +31,9 @@ RootedSequenceTree load_tree_from_file(const std::filesystem::path& filename);
 
 std::optional<SequenceTree> parse_sequence_tree(const std::string& text);
 
+/// Validate that all branch lengths in a tree are positive
+void validate_initial_tree_branch_lengths(const SequenceTree& tree);
+
 std::vector<SequenceTree> load_trees(const std::vector<std::string>& lines);
 std::vector<SequenceTree> load_trees(std::istream& file,int skip=0,int subsample=1,int max=-1) ;
 

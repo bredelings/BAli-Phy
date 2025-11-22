@@ -438,11 +438,12 @@ do_block generate_main(const variables_map& args,
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename)}});
     }
 
+    // Load initial tree value if provided (in main IO block)
     if (initial_tree_newick)
     {
         main.empty_stmt();
         main.perform(var("initialTreeValue"),
-                     {var("<$>"), var("newickToBranchLengthTree"),
+                     {var("newickToBranchLengthTree"),
                       {var("parse_newick"), String(*initial_tree_newick)}});
     }
 
@@ -835,6 +836,15 @@ std::string generate_atmodel_program(const variables_map& args,
 
     model.empty_stmt();
 
+    // Load initial tree value if provided (in model block, before tree sampling)
+    if (initial_tree_newick)
+    {
+        model.let(var("initialTreeValue"),
+                  {var("newickToBranchLengthTree"),
+                   {var("parse_newick"), String(*initial_tree_newick)}});
+        model.empty_stmt();
+    }
+
     // M4. Branch-length tree
     auto tree_var = var("tree");
     if (not fixed.count("tree"))
@@ -850,7 +860,10 @@ std::string generate_atmodel_program(const variables_map& args,
         auto code = tree_model.code;
 
         expression_ref E = var("sampleTree");
-        E = code.add_arguments(E,{{"taxa",taxon_names_var}});
+        std::map<std::string,expression_ref> args = {{"taxa",taxon_names_var}};
+        if (initial_tree_newick)
+            args["initialTreeValue"] = var("initialTreeValue");
+        E = code.add_arguments(E, args);
 
         tree_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
         branch_lengths = {var("branchLengths"), tree_var};

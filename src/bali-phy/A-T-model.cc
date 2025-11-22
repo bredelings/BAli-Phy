@@ -1015,11 +1015,16 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         else if (fixed.count("topology"))
             M = "~fixed_topology_tree(topology)";
         else if (args.count("initial-tree"))
-            M = "~initialTreeWithMoves(initialTreeValue)";
+            M = "~initial_tree_with_moves(initialTreeValue)";
         else
             M = "~uniform_tree(taxa)";
 
-        tree_model = compile_model(R, TC, code_gen_state, tree_type, M, "tree model", {});
+        // Declare initialTreeValue variable if using initial-tree
+        std::vector<std::pair<std::string,ptree>> tree_vars;
+        if (args.count("initial-tree"))
+            tree_vars.push_back({"initialTreeValue", parse_type("Tree<Rooted<t>>")});
+
+        tree_model = compile_model(R, TC, code_gen_state, tree_type, M, "tree model", tree_vars);
         tree_type = tree_model.type;
     }
 
