@@ -42,7 +42,7 @@ add_project_arguments(cpp.get_supported_arguments(warn_flags), language : 'cpp')
 # 3.2 Set optimization flags
 
 if get_option('optimization') == '2' or get_option('optimization') == '3'
-  opt_flags = ['-funroll-loops','-fno-math-errno','-fno-signed-zeros']
+  opt_flags = ['-funroll-loops','-fno-math-errno','-fno-signed-zeros','-march=native']
   add_project_arguments(cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
 
