@@ -9,7 +9,7 @@
         {
             "name": "tree",
             "type": "Tree<Rooted<Lengths>>",
-	    "description": "The initial tree structure with branch lengths (rooted format from Newick)"
+            "description": "The initial tree structure with branch lengths (rooted format from Newick)"
         }
     ]
 }

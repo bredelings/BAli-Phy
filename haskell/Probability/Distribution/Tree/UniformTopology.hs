@@ -144,42 +144,17 @@ fixedTopologyTree topology dist = do
   addLengthMoves 1 tree
   return tree
 
--- | Initialize tree from loaded value and enable full tree moves
--- The tree structure comes from parsing a Newick file, but we make it
--- modifiable by reconstructing it with modifiable components. This differs
--- from fixedTopologyTree because both topology and branch lengths can change.
---
--- The input tree from Newick parsing includes WithRoots wrapper, which we strip
--- since BAli-Phy uses unrooted trees internally.
---
--- Key insight: We decompose the loaded tree and reconstruct it by sampling from
--- constant distributions for each branch length. This creates modifiable parameters
--- in the computational graph while initializing them to the loaded values.
+-- | Initialize tree from loaded value with topology and branch length moves enabled
 initialTreeWithMoves :: WithBranchLengths (WithRoots (Tree l)) -> Random (WithBranchLengths (Tree l))
 initialTreeWithMoves (WithBranchLengths (WithRoots tree _ _) initialLengths) = do
-  -- Create modifiable tree with BOTH topology and branch lengths modifiable
-  -- Topology: uniform prior, initialized to loaded structure
-  -- Branch lengths: gamma prior (tight distribution), initialized to loaded values
-
-  -- Sample topology from uniform distribution initialized to loaded structure
-  -- This creates modifiable topology (SPR/NNI moves can modify it)
   topology <- RanSamplingRate 0 $ sample $ uniformTopologyInitializedTo tree
-
-  -- Sample branch lengths from gamma distributions centered on loaded values
-  -- gamma(shape, scale) has mean = shape * scale
-  -- Use high shape for tight distribution (low variance)
   branchLengths <- RanSamplingRate 0 $ sample $ independent $
                    IntMap.mapWithKey (\_ len ->
-                     let shape = 100.0  -- High shape = low variance
+                     let shape = 100.0  -- High shape for tight distribution around loaded value
                          scale = len / shape
                      in gamma shape scale) initialLengths
-
-  -- Combine topology and branch lengths
   let modifiableTree = branchLengthTree topology branchLengths
-
-  -- Add FULL tree moves (topology + branch lengths)
   addTreeMoves 1 modifiableTree
-
   return modifiableTree
 
 uniformRootedTopology n = do

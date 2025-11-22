@@ -827,7 +827,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     model.empty_stmt();
 
-    // Load initial tree value if provided (in model block, before tree sampling)
+    // Load initial tree value if provided
     if (initial_tree_newick)
     {
         model.perform(var("initialTreeValue"),

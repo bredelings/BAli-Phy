@@ -15,7 +15,7 @@ win64-cross.txt
 # User-specific files
 CLAUDE.md
 _ignore/
-initial-tree-feature.md
+_notes/
 
 #-------- Backups --------
 *.orig
