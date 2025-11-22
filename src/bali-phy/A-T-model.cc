@@ -883,6 +883,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         RootedSequenceTree RT = load_tree_from_file(tree_filename);
         SequenceTree initial_T = RT;
 
+        // Validate tree topology (must have root degree 3 for binary unrooted tree)
+        validate_initial_tree_topology(RT);
+
         // Validate taxa match
         try {
             remap_T_leaf_indices(initial_T, taxa);

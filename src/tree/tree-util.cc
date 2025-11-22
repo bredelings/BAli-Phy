@@ -326,4 +326,18 @@ void validate_initial_tree_branch_lengths(const SequenceTree& tree)
     }
 }
 
+void validate_initial_tree_topology(const RootedSequenceTree& tree)
+{
+    unsigned root_degree = tree.root().degree();
+
+    if (root_degree != 3)
+        throw myexception() << "Initial tree has root node with degree " << root_degree << ".\n"
+                           << "  BAli-Phy requires rooted trees with root degree 3 for --initial-tree.\n"
+                           << "  This represents an unrooted binary tree with root placed on an internal branch.\n"
+                           << "  Root degree 2 (binary rooted tree) is not supported.\n"
+                           << "  Root degree 4+ (polytomy) is not supported.\n"
+                           << "  Example valid tree: (A,B,(C,D)); [root has degree 3]\n"
+                           << "  Example invalid tree: ((A,B),(C,D)); [root has degree 2]";
+}
+
 
