@@ -262,7 +262,8 @@ po::options_description parameters_options(int level)
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
-	("tree,T",value<string>(),"Tree prior: ~uniform_tree(taxa), ~uniform_rooted_tree(taxa), ~yule(taxa), etc.");
+	("tree,T",value<string>(),"Tree prior: ~uniform_tree(taxa), ~uniform_rooted_tree(taxa), ~yule(taxa), etc.")
+	("initial-tree",value<string>(),"Initial tree for MCMC (kept modifiable)");
 
     if (level >= 1)
 	parameters.add_options()

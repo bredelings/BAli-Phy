@@ -34,7 +34,8 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const model_t& tree_model,
 		    const model_t& subst_rates_model,
 		    const model_t& indel_rates_model,
-		    const std::vector<int>& like_calcs);
+		    const std::vector<int>& like_calcs,
+		    const std::optional<std::string>& initial_tree_newick = std::nullopt);
 
 std::unique_ptr<Program>
 gen_model_program(const boost::program_options::variables_map& args,

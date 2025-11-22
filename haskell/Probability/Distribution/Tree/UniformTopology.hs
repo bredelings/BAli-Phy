@@ -123,6 +123,15 @@ fixedTopologyTree topology dist = do
   addLengthMoves 1 tree
   return tree
 
+-- | Initialize tree from loaded value and enable full tree moves
+-- The tree structure comes from parsing a Newick file, but we make it
+-- modifiable by adding MCMC moves. This differs from fixedTopologyTree
+-- because both topology and branch lengths can change.
+initialTreeWithMoves :: WithBranchLengths (Tree l) -> Random (WithBranchLengths (Tree l))
+initialTreeWithMoves tree = do
+  addTreeMoves 1 tree
+  return tree
+
 uniformRootedTopology n = do
   topology <- sample $ uniformTopology n
   root <- sample $ uniformCategoricalOn (nodes topology)

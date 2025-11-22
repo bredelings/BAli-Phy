@@ -308,9 +308,23 @@ do_block generate_main(const variables_map& args,
 		       const expression_ref& treeLogger,
 		       const expression_ref& model_fn,
 		       vector<tuple<int,expression_ref,expression_ref>>& alignment_loggers,
-		       vector<tuple<int,expression_ref,expression_ref>>& category_state_loggers)
+		       vector<tuple<int,expression_ref,expression_ref>>& category_state_loggers,
+		       const std::optional<std::string>& initial_tree_newick)
 {
     auto fixed = get_fixed(args);
+
+    // Validate initial-tree option conflicts
+    if (args.count("initial-tree"))
+    {
+        bool has_fix_tree = fixed.count("tree") || fixed.count("topology");
+        bool has_tree_prior = args.count("tree");
+
+        if (has_fix_tree)
+            throw myexception() << "--initial-tree cannot be used with --fix=tree or --fix=topology";
+
+        if (has_tree_prior)
+            throw myexception() << "--initial-tree cannot be used with --tree=<prior>";
+    }
 
     auto log_formats = get_log_formats(args, args.count("align"));
 
@@ -422,6 +436,14 @@ do_block generate_main(const variables_map& args,
         auto tree_filename = fixed.at("topology");
         main.empty_stmt();
         main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename)}});
+    }
+
+    if (initial_tree_newick)
+    {
+        main.empty_stmt();
+        main.perform(var("initialTreeValue"),
+                     {var("<$>"), var("newickToBranchLengthTree"),
+                      {var("parse_newick"), String(*initial_tree_newick)}});
     }
 
     if (not args.count("test"))
@@ -718,7 +740,8 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const model_t& tree_model,
                                      const model_t& subst_rates_model,
                                      const model_t& indel_rates_model,
-                                     const std::vector<int>& like_calcs)
+                                     const std::vector<int>& like_calcs,
+                                     const std::optional<std::string>& initial_tree_newick)
 {
     auto fixed = get_fixed(args);
 
@@ -1129,7 +1152,8 @@ std::string generate_atmodel_program(const variables_map& args,
 			      treeLogger,
 			      model_fn,
 			      alignment_loggers,
-                              category_state_loggers);
+                              category_state_loggers,
+                              initial_tree_newick);
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
@@ -1155,7 +1179,8 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const model_t& tree_model,
 		    const model_t& subst_rates_model,
 		    const model_t& indel_rates_model,
-		    const std::vector<int>& like_calcs)
+		    const std::vector<int>& like_calcs,
+		    const std::optional<std::string>& initial_tree_newick)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
@@ -1171,7 +1196,8 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
                                                tree_model,
                                                subst_rates_model,
                                                indel_rates_model,
-                                               like_calcs);
+                                               like_calcs,
+                                               initial_tree_newick);
     }
 
     auto m = L->load_module_from_file(program_filename);

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <map>
 #include <list>
+#include <cmath>
 #include "tree/tree-util.H"
 #include "util/myexception.H"
 #include "util/io.H"
@@ -305,6 +306,24 @@ bool extends(const Tree& T,const Tree& Q)
 
     vector<int> branch_map = extends_map(T,Q);
     return branch_map.size() != 0;
+}
+
+void validate_initial_tree_branch_lengths(const SequenceTree& tree)
+{
+    for (int b = 0; b < tree.n_branches(); b++)
+    {
+        auto branch = tree.directed_branch(b);
+        if (!branch.has_length())
+            throw myexception() << "Initial tree branch " << b << " has no branch length.\n"
+                               << "  All branches must have lengths.";
+
+        double len = branch.length();
+        if (len <= 1e-10)
+            throw myexception() << "Initial tree branch " << b << " has invalid length: " << len
+                               << "\n  All branch lengths must be positive (> 1e-10).";
+        if (std::isnan(len) || std::isinf(len))
+            throw myexception() << "Initial tree branch " << b << " has NaN/infinite length";
+    }
 }
 
 
