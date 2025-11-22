@@ -62,7 +62,7 @@ inline void DPmatrix::clear_cell(Cell C)
 {
     C.scale() = INT_MIN/2;
     for(int S=0;S<n_dp_states();S++)
-	C.prob_for_state(S) = 0;
+        C.prob_for_state(S) = 0;
 }
 
 // 1. dp_order( ) must be considered here, because the 3-way HMM has
@@ -80,37 +80,37 @@ inline void DPmatrix::forward_first_cell(Cell C)
 
     for(int s2=0;s2<n_dp_states();s2++) 
     {
-	double temp;
+        double temp;
 
-	int S2 = dp_order(s2);
-	if (di(S2) or dj(S2))
-	    temp = start_P[S2];
-	else {
-	    //--- compute arrival probability ----
-	    temp = 0;
-	    // bound is s2, since this is only for silent states
-	    for(int s1=0;s1<s2;s1++)  {
-		int S1 = dp_order(s1);
+        int S2 = dp_order(s2);
+        if (di(S2) or dj(S2))
+            temp = start_P[S2];
+        else {
+            //--- compute arrival probability ----
+            temp = 0;
+            // bound is s2, since this is only for silent states
+            for(int s1=0;s1<s2;s1++)  {
+                int S1 = dp_order(s1);
 
-		temp += C.prob_for_state(S1) * GQ(S1,S2);
-	    }
-	}
+                temp += C.prob_for_state(S1) * GQ(S1,S2);
+            }
+        }
 
-	// record maximum
-	if (temp > maximum) maximum = temp;
+        // record maximum
+        if (temp > maximum) maximum = temp;
 
-	// store the result
-	C.prob_for_state(S2) = temp;
+        // store the result
+        C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
     if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
     {
-	int logs = -(int)log2(maximum);
-	double scale_ = pow2(logs);
-	for(int S2=0;S2<n_dp_states();S2++) 
-	    C.prob_for_state(S2) *= scale_;
-	C.scale() -= logs;
+        int logs = -(int)log2(maximum);
+        double scale_ = pow2(logs);
+        for(int S2=0;S2<n_dp_states();S2++) 
+            C.prob_for_state(S2) *= scale_;
+        C.scale() -= logs;
     }
 } 
 
@@ -169,21 +169,21 @@ void DPmatrix::forward_band()
 
     // clear left border: x = -1 (what is adjacent to the first row?)
     {
-	int y1 = 1 + yboundaries[0].first;
-	int y2 = 1 + yboundaries[0].second;
-	assert(y1 <= y2);
-	for(int y=y1;y<=y2;y++)
-	    clear_cell( cell(x1-1,y) );
+        int y1 = 1 + yboundaries[0].first;
+        int y2 = 1 + yboundaries[0].second;
+        assert(y1 <= y2);
+        for(int y=y1;y<=y2;y++)
+            clear_cell( cell(x1-1,y) );
     }
 
     // forward first row, with exception for S(0,0): x = 0
     {
-	int y1 = 1 + yboundaries[0].first;
-	int y2 = 1 + yboundaries[0].second;
-	assert(y1 <= y2);
-	clear_cell( cell(x1,y1-1) );
-	forward_first_cell( cell(x1,y1) );
-	for(int y=y1+1;y<=y2;y++)
+        int y1 = 1 + yboundaries[0].first;
+        int y2 = 1 + yboundaries[0].second;
+        assert(y1 <= y2);
+        clear_cell( cell(x1,y1-1) );
+        forward_first_cell( cell(x1,y1) );
+        for(int y=y1+1;y<=y2;y++)
         {
             auto C = cell(x1,y);
             auto D = cell(x1-1,y);
@@ -199,23 +199,23 @@ void DPmatrix::forward_band()
     // forward other rows: x = 1...I-1
     for(int x=x1+1;x<=x2;x++) 
     {
-	int y1 = 1 + yboundaries[x-1].first;
-	int y2 = 1 + yboundaries[x-1].second;
-	assert(y1 <= y2);
-	assert(yboundaries[x-1].first >= yboundaries[x-2].first);
-	assert(yboundaries[x-1].second >= yboundaries[x-2].second);
+        int y1 = 1 + yboundaries[x-1].first;
+        int y2 = 1 + yboundaries[x-1].second;
+        assert(y1 <= y2);
+        assert(yboundaries[x-1].first >= yboundaries[x-2].first);
+        assert(yboundaries[x-1].second >= yboundaries[x-2].second);
 
-	// clear the untouched empty cells to our left
-	int z2 = 1 + yboundaries[x-2].second;
-	assert(z2 >= y1-1);
-	for(int y=z2+1;y<=y2;y++)
-	    clear_cell( cell(x-1,y) );
+        // clear the untouched empty cells to our left
+        int z2 = 1 + yboundaries[x-2].second;
+        assert(z2 >= y1-1);
+        for(int y=z2+1;y<=y2;y++)
+            clear_cell( cell(x-1,y) );
 
-	// clear the untouched empty cell below us
-	clear_cell( cell(x,y1-1) );
+        // clear the untouched empty cell below us
+        clear_cell( cell(x,y1-1) );
 
-	// compute the untouched cells in this row
-	for(int y=y1;y<=y2;y++)
+        // compute the untouched cells in this row
+        for(int y=y1;y<=y2;y++)
         {
             auto C = cell(x,y);
             auto D = cell(x-1,y);
@@ -240,7 +240,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
 
     double total = 0.0;
     for(int state1=0;state1<n_dp_states();state1++)
-	total += E.prob_for_state(state1)*GQ(state1,endstate());
+        total += E.prob_for_state(state1)*GQ(state1,endstate());
 
     Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
@@ -274,23 +274,23 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
     //   is at path[-1]
     while (l>0) {
         auto C = cell(i,j);
-	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
+        for(int state1=0;state1<n_dp_states();state1++)
+            transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
 
-	int state1 = path[l-1];
+        int state1 = path[l-1];
 
         // If forward probability of being in (i,j) in state1 and transitioning to state2 is 0, then the path has probability 0.
         if (transition[state1] == 0) return 0;
 
         // Otherwise we can compute the probability of choosing state1, and it should not be 0 or NaN.
-	double p = choose_P(state1,transition);
+        double p = choose_P(state1,transition);
 
-	if (di(state1)) i--;
-	if (dj(state1)) j--;
+        if (di(state1)) i--;
+        if (dj(state1)) j--;
 
-	l--;
-	state2 = state1;
-	Pr *= p;
+        l--;
+        state2 = state1;
+        Pr *= p;
     }
     assert(l == 0);
     assert(i == 1 and j == 1);
@@ -298,13 +298,13 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
     // include probability of choosing 'Start' vs ---+ !
     auto C = cell(1,1);
     for(int state1=0;state1<n_dp_states();state1++)
-	transition[state1] = C.prob_for_state(state1) * GQ(state1,state2);
+        transition[state1] = C.prob_for_state(state1) * GQ(state1,state2);
 
     // Get the probability that the previous state was 'Start'
     double p=0.0;
     for(int state1=0;state1<n_dp_states();state1++)  
-	if (not silent(state1))
-	    p += choose_P(state1,transition);
+        if (not silent(state1))
+            p += choose_P(state1,transition);
 
     Pr *= p;
 
@@ -318,7 +318,7 @@ vector<int> DPmatrix::sample_path() const
     auto total = Pr_sum_all_paths();
     if (not (std::isfinite(total.log()) and total > 0.0))
     {
-	throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is "<<total;
+        throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is "<<total;
     }
 
     vector<int> path;
@@ -338,43 +338,43 @@ vector<int> DPmatrix::sample_path() const
     // - check that we came from (0,0) though
     while (i>=1 and j>=1) 
     {
-	path.push_back(state2);
+        path.push_back(state2);
 
         auto C = cell(i,j);
-	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
+        for(int state1=0;state1<n_dp_states();state1++)
+            transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
 
-	int state1 = -1;
-	try {
-	    state1 = choose_scratch(transition);
-	}
-	catch (choose_exception<double>& c)
-	{
-	    std::cerr<<"DPMatrix\n";
-	    std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
-	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
-	    for(int state1=0;state1<n_dp_states();state1++)
-		std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
-	    for(int state1=0;state1<n_dp_states();state1++)
-		for(int state2=0;state2<n_dp_states();state2++)
-		{
-		    auto x = GQ(state1, state2);
-		    if (not std::isfinite(x))
-		    {
-			auto y = Q(state1,state2);
-			std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
-		    }
-		}
+        int state1 = -1;
+        try {
+            state1 = choose_scratch(transition);
+        }
+        catch (choose_exception<double>& c)
+        {
+            std::cerr<<"DPMatrix\n";
+            std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
+            std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
+            for(int state1=0;state1<n_dp_states();state1++)
+                std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+            for(int state1=0;state1<n_dp_states();state1++)
+                for(int state2=0;state2<n_dp_states();state2++)
+                {
+                    auto x = GQ(state1, state2);
+                    if (not std::isfinite(x))
+                    {
+                        auto y = Q(state1,state2);
+                        std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
+                    }
+                }
 
-	    c.prepend(__PRETTY_FUNCTION__);
+            c.prepend(__PRETTY_FUNCTION__);
 
-	    throw c;
-	}
+            throw c;
+        }
 
-	if (di(state1)) i--;
-	if (dj(state1)) j--;
+        if (di(state1)) i--;
+        if (dj(state1)) j--;
 
-	state2 = state1;
+        state2 = state1;
     }
     assert(i+di(state2)==1 and j+dj(state2)==1);
 
@@ -387,7 +387,7 @@ vector<int> DPmatrix::sample_path() const
 }
 
 DPmatrix::DPmatrix(MatrixShape&& ms,
-		   const HMM& M)
+                   const HMM& M)
     :DPengine(M),
      state_matrix(std::move(ms), n_dp_states())
 {
@@ -396,7 +396,7 @@ DPmatrix::DPmatrix(MatrixShape&& ms,
 
     auto E = cell(I,J);
     for(int state1=0;state1<n_dp_states();state1++)
-	E.prob_for_state(state1) = 0;
+        E.prob_for_state(state1) = 0;
 }
 
 inline double sum(const valarray<double>& v) {
@@ -409,14 +409,14 @@ log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const
     int i=1,j=1;
     for(int l=0;l<path.size();l++) 
     {
-	int state2 = path[l];
-	if (di(state2))
-	    i++;
-	if (dj(state2))
-	    j++;
+        int state2 = path[l];
+        if (di(state2))
+            i++;
+        if (dj(state2))
+            j++;
 
-	if (di(state2) and dj(state2))
-	    P_sub *= cell(i,j).emitMM();
+        if (di(state2) and dj(state2))
+            P_sub *= cell(i,j).emitMM();
     }
     assert(i == size1()-1 and j == size2()-1);
     return P_sub * Pr_extra_subst;
@@ -433,10 +433,10 @@ double DPmatrixEmit::emitMM(int i, int j) const
     double total=0;
     const int MS = dists1.matrix_size();
     for(int t=0;t<MS;t++)
-	total += m1[t] * m2[t];
+        total += m1[t] * m2[t];
 
     if (B != 1.0)
-	total = pow(total,B);
+        total = pow(total,B);
 
     assert(total > 0 or i < 2 or j < 2);
     return total;
@@ -444,9 +444,9 @@ double DPmatrixEmit::emitMM(int i, int j) const
 
 DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
                            const HMM& M,
-			   EmissionProbs&& d1,
-			   EmissionProbs&& d2,
-			   const Matrix& weighted_frequencies)
+                           EmissionProbs&& d1,
+                           EmissionProbs&& d2,
+                           const Matrix& weighted_frequencies)
     :DPmatrix(std::move(ms), M),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
@@ -461,56 +461,56 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
 
     Matrix WF = weighted_frequencies;
     if (dists1.away_from_root_WF)
-	WF = dists1.away_from_root_WF.value();
+        WF = dists1.away_from_root_WF.value();
     if (dists2.away_from_root_WF)
-	WF = dists2.away_from_root_WF.value();
+        WF = dists2.away_from_root_WF.value();
 
     for(int i=2;i<dists1.n_columns();i++)
     {
-	// `sum` is the emission probability of a Deletion.
-	// Dividing dists1 by this ensures that this probability is 1.0.
-	double sum;
-	// If the root is within dists1, then the frequencies are already included.
-	if (dists1.away_from_root_WF)
-	    sum = dists1.sum(i);
-	else
-	    sum = dists1.dot(i, WF);
+        // `sum` is the emission probability of a Deletion.
+        // Dividing dists1 by this ensures that this probability is 1.0.
+        double sum;
+        // If the root is within dists1, then the frequencies are already included.
+        if (dists1.away_from_root_WF)
+            sum = dists1.sum(i);
+        else
+            sum = dists1.dot(i, WF);
 
-	assert(sum <= 1.000000001);
+        assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
-	if (sum != 0)
-	{
-	    dists1.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
-	    prod *= sum;
-	}
+        if (sum != 0)
+        {
+            dists1.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
+            prod *= sum;
+        }
 
-	scale += dists1.scale(i);
+        scale += dists1.scale(i);
     }
 
     for(int i=2;i<dists2.n_columns();i++)
     {
-	// `sum` is the emission probability of a Insertion.
-	// Dividing dists1 by this ensures that this probability is 1.0.
-	double sum;
-	// If the root is within dists2, then the frequencies are already included.
-	if (dists2.away_from_root_WF)
-	    sum = dists2.sum(i);
-	else
-	    sum = dists2.dot(i, WF);
+        // `sum` is the emission probability of a Insertion.
+        // Dividing dists1 by this ensures that this probability is 1.0.
+        double sum;
+        // If the root is within dists2, then the frequencies are already included.
+        if (dists2.away_from_root_WF)
+            sum = dists2.sum(i);
+        else
+            sum = dists2.dot(i, WF);
 
-	assert(sum <= 1.000000001);
+        assert(sum <= 1.000000001);
         sum = std::min(sum,1.0);
-	if (sum != 0)
-	{
-	    dists2.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
-	    prod *= sum;
-	}
+        if (sum != 0)
+        {
+            dists2.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
+            prod *= sum;
+        }
 
-	scale += dists2.scale(i);
+        scale += dists2.scale(i);
 
-	// If we are at the root then we want the match probabilities to include WF.
-	if (at_root)
-	    dists2.mul(i, WF);
+        // If we are at the root then we want the match probabilities to include WF.
+        if (at_root)
+            dists2.mul(i, WF);
     }
     Pr_extra_subst = prod;
     Pr_extra_subst.log() += log_scale_min*scale;
@@ -545,7 +545,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
 
     for(int S2=0;S2<n_dp_states();S2++) 
     {
-	//--- Get (i1,j1) from (i2,j2) and S2
+        //--- Get (i1,j1) from (i2,j2) and S2
         int delta = 0;
         int i1 = i2;
         if (di(S2))
@@ -564,33 +564,33 @@ void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
         auto P = cells[delta];
 
         //--- Compute Arrival Probability ----
-	double temp  = 0;
-	for(int S1=0;S1<n_dp_states();S1++)
-	    temp += P.prob_for_state(S1) * GQ(S1,S2);
+        double temp  = 0;
+        for(int S1=0;S1<n_dp_states();S1++)
+            temp += P.prob_for_state(S1) * GQ(S1,S2);
 
-	//--- Include Emission Probability----
-	if (i1 != i2 and j1 != j2)
-	    temp *= C.emitMM();
+        //--- Include Emission Probability----
+        if (i1 != i2 and j1 != j2)
+            temp *= C.emitMM();
 
-	// rescale result to scale of this cell
-	if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
-	    temp *= pow2(scale_delta);
+        // rescale result to scale of this cell
+        if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
+            temp *= pow2(scale_delta);
 
-	// record maximum
-	if (temp > maximum) maximum = temp;
+        // record maximum
+        if (temp > maximum) maximum = temp;
 
-	// store the result
-	C.prob_for_state(S2) = temp;
+        // store the result
+        C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
     if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
     {
-	int logs = -(int)log2(maximum);
-	double scale_ = pow2(logs);
-	for(int S2=0;S2<n_dp_states();S2++) 
-	    C.prob_for_state(S2) *= scale_;
-	C.scale() -= logs;
+        int logs = -(int)log2(maximum);
+        double scale_ = pow2(logs);
+        for(int S2=0;S2<n_dp_states();S2++) 
+            C.prob_for_state(S2) *= scale_;
+        C.scale() -= logs;
     }
 } 
 
@@ -602,7 +602,7 @@ inline void DPmatrixConstrained::clear_cell(Cell C)
 {
     C.scale() = INT_MIN/2;
     for(int S=0;S<n_dp_states();S++)
-	C.prob_for_state(S) = 0;
+        C.prob_for_state(S) = 0;
 }
 
 inline void DPmatrixConstrained::forward_cell(int i2,int j2,Cell* cells)
@@ -622,9 +622,9 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,Cell* cells)
 
     for(int s2=0;s2<states(j2).size();s2++) 
     {
-	int S2 = states(j2)[s2];
+        int S2 = states(j2)[s2];
 
-	//--- Get (i1,j1) from (i2,j2) and S2
+        //--- Get (i1,j1) from (i2,j2) and S2
         int delta = 0;
         int i1 = i2;
         if (di(S2))
@@ -642,40 +642,40 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,Cell* cells)
 
         auto P = cells[delta];
 
-	//--- Compute Arrival Probability ----
-	unsigned MAX = states(j1).size();
-	if (not di(S2) and not dj(S2)) MAX = s2;
+        //--- Compute Arrival Probability ----
+        unsigned MAX = states(j1).size();
+        if (not di(S2) and not dj(S2)) MAX = s2;
 
-	double temp = 0.0;
-	for(int s1=0;s1<MAX;s1++) {
-	    int S1 = states(j1)[s1];
+        double temp = 0.0;
+        for(int s1=0;s1<MAX;s1++) {
+            int S1 = states(j1)[s1];
 
-	    temp += P.prob_for_state(S1) * GQ(S1,S2);
-	}
+            temp += P.prob_for_state(S1) * GQ(S1,S2);
+        }
 
-	//--- Include Emission Probability----
-	if (i1 != i2 and j1 != j2)
-	    temp *= C.emitMM();
+        //--- Include Emission Probability----
+        if (i1 != i2 and j1 != j2)
+            temp *= C.emitMM();
 
-	// rescale result to scale of this cell
-	if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
-	    temp *= pow2(scale_delta);
+        // rescale result to scale of this cell
+        if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
+            temp *= pow2(scale_delta);
 
-	// record maximum
-	if (temp > maximum) maximum = temp;
+        // record maximum
+        if (temp > maximum) maximum = temp;
 
-	// store the result
-	C.prob_for_state(S2) = temp;
+        // store the result
+        C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
     if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
     {
-	int logs = -(int)log2(maximum);
-	double scale_ = pow2(logs);
-	for(int S2: states(j2))
-	    C.prob_for_state(S2) *= scale_;
-	C.scale() -= logs;
+        int logs = -(int)log2(maximum);
+        double scale_ = pow2(logs);
+        for(int S2: states(j2))
+            C.prob_for_state(S2) *= scale_;
+        C.scale() -= logs;
     }
 }
 
@@ -688,8 +688,8 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
 
     double total = 0.0;
     for(int s1=0;s1<states(J).size();s1++) {
-	int S1 = states(J)[s1];
-	total += E.prob_for_state(S1)*GQ(S1,endstate());
+        int S1 = states(J)[s1];
+        total += E.prob_for_state(S1)*GQ(S1,endstate());
     }
 
     Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
@@ -724,26 +724,26 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     //   is at path[-1]
     while (l>0) 
     {
-	transition.resize(states(j).size());
+        transition.resize(states(j).size());
         auto C = cell(i,j);
-	for(int s1=0;s1<states(j).size();s1++)
-	{
-	    int S1 = states(j)[s1];
-	    transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
-	}
+        for(int s1=0;s1<states(j).size();s1++)
+        {
+            int S1 = states(j)[s1];
+            transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
+        }
 
-	int S1 = path[l-1];
-	auto s1 = find_index(states(j),S1);
+        int S1 = path[l-1];
+        auto s1 = find_index(states(j),S1);
 
-	double p = choose_P(*s1,transition);
-	assert(p > 0.0);
+        double p = choose_P(*s1,transition);
+        assert(p > 0.0);
 
-	if (di(S1)) i--;
-	if (dj(S1)) j--;
+        if (di(S1)) i--;
+        if (dj(S1)) j--;
 
-	l--;
-	S2 = S1;
-	Pr *= p;
+        l--;
+        S2 = S1;
+        Pr *= p;
     }
     assert(l == 0);
     assert(i == 1 and j == 1);
@@ -752,13 +752,13 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     auto C = cell(1,1);
     transition.resize(n_dp_states());
     for(int S1=0;S1<n_dp_states();S1++)
-	transition[S1] = C.prob_for_state(S1) * GQ(S1,S2);
+        transition[S1] = C.prob_for_state(S1) * GQ(S1,S2);
 
     // Get the probability that the previous state was 'Start'
     double p=0.0;
     for(int S1=0;S1<n_dp_states();S1++)  
-	if (not silent(S1))
-	    p += choose_P(S1,transition);
+        if (not silent(S1))
+            p += choose_P(S1,transition);
 
     Pr *= p;
 
@@ -772,7 +772,7 @@ vector<int> DPmatrixConstrained::sample_path() const
     auto total = Pr_sum_all_paths();
     if (not (std::isfinite(total.log()) and total > 0.0))
     {
-	throw myexception()<<"DPmatrixConstrained::sample_path( ): trying to sample when total probability is "<<total;
+        throw myexception()<<"DPmatrixConstrained::sample_path( ): trying to sample when total probability is "<<total;
     }
 
     vector<int> path;
@@ -793,51 +793,51 @@ vector<int> DPmatrixConstrained::sample_path() const
     // - check that we came from (0,0) though
     while (i>=1 and j>=1) 
     {
-	path.push_back(S2);
+        path.push_back(S2);
 
         auto C = cell(i,j);
-	transition.resize(states(j).size());
-	for(int s1=0;s1<states(j).size();s1++) 
-	{
-	    int S1 = states(j)[s1];
-	    transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
-	}
+        transition.resize(states(j).size());
+        for(int s1=0;s1<states(j).size();s1++) 
+        {
+            int S1 = states(j)[s1];
+            transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
+        }
 
-	int s1 = -1;
-	try {
-	    s1 = choose_scratch(transition);
-	}
-	catch (choose_exception<double>& c)
-	{
-	    std::cerr<<"DPMatrixConstrained\n";
-	    std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
-	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
-	    for(int s1=0;s1<states(j).size();s1++)
-	    {
-		int S1 = states(j)[s1];
-		std::cerr<<"transition["<<s1<<"] = "<<transition[s1]<<" = "<<C.prob_for_state(S1)<<" * "<<GQ(S1,S2)<<std::endl;
-	    }
+        int s1 = -1;
+        try {
+            s1 = choose_scratch(transition);
+        }
+        catch (choose_exception<double>& c)
+        {
+            std::cerr<<"DPMatrixConstrained\n";
+            std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
+            std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
+            for(int s1=0;s1<states(j).size();s1++)
+            {
+                int S1 = states(j)[s1];
+                std::cerr<<"transition["<<s1<<"] = "<<transition[s1]<<" = "<<C.prob_for_state(S1)<<" * "<<GQ(S1,S2)<<std::endl;
+            }
 
-	    for(int state1=0;state1<n_dp_states();state1++)
-		for(int state2=0;state2<n_dp_states();state2++)
-		{
-		    auto x = GQ(state1, state2);
-		    if (not std::isfinite(x))
-		    {
-			auto y = Q(state1,state2);
-			std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
-		    }
-		}
+            for(int state1=0;state1<n_dp_states();state1++)
+                for(int state2=0;state2<n_dp_states();state2++)
+                {
+                    auto x = GQ(state1, state2);
+                    if (not std::isfinite(x))
+                    {
+                        auto y = Q(state1,state2);
+                        std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
+                    }
+                }
 
-	    c.prepend(__PRETTY_FUNCTION__);
-	    throw c;
-	}
-	int S1 = states(j)[s1];
+            c.prepend(__PRETTY_FUNCTION__);
+            throw c;
+        }
+        int S1 = states(j)[s1];
 
-	if (di(S1)) i--;
-	if (dj(S1)) j--;
+        if (di(S1)) i--;
+        if (dj(S1)) j--;
 
-	S2 = S1;
+        S2 = S1;
     }
     assert(i+di(S2)==1 and j+dj(S2)==1);
 
@@ -853,7 +853,7 @@ vector<int> DPmatrixConstrained::sample_path() const
 int DPmatrixConstrained::order_of_computation() const {
     unsigned total=0;
     for(int c=0;c<allowed_states.size()-1;c++)
-	total += allowed_states[c].size() * allowed_states[c+1].size();
+        total += allowed_states[c].size() * allowed_states[c+1].size();
 
     return total;
 }
@@ -861,9 +861,9 @@ int DPmatrixConstrained::order_of_computation() const {
 
 DPmatrixConstrained::DPmatrixConstrained(MatrixShape&& ms,
                                          const HMM& M,
-					 EmissionProbs&& d1,
-					 EmissionProbs&& d2,
-					 const Matrix& f):
+                                         EmissionProbs&& d1,
+                                         EmissionProbs&& d2,
+                                         const Matrix& f):
     DPmatrixEmit(std::move(ms),M,std::move(d1),std::move(d2),f),
     allowed_states(dists2.n_columns())
 { }

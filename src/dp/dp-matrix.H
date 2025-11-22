@@ -93,8 +93,8 @@ public:
     Cell cell(int i,int j)
     {
         assert(data);
-	assert(0 <= i and i < s1);
-	assert(0 <= j and j < s2);
+        assert(0 <= i and i < s1);
+        assert(0 <= j and j < s2);
 
         assert(0 <= i and i < extents.size());
         i--;
@@ -109,8 +109,8 @@ public:
 
     const Cell cell(int i,int j) const {
         assert(data);
-	assert(0 <= i and i < s1);
-	assert(0 <= j and j < s2);
+        assert(0 <= i and i < s1);
+        assert(0 <= j and j < s2);
 
         assert(0 <= i and i < extents.size());
         i--;
@@ -124,7 +124,7 @@ public:
     }
 
     state_matrix(MatrixShape&& ms,int i3)
-	:shape_(std::move(ms)),
+        :shape_(std::move(ms)),
          s1(shape_.size1),
          s2(shape_.size2),
          s3(i3+2)
@@ -155,9 +155,9 @@ public:
             offset += length;
         }
 
-	long int mem = offset * s3;
-	if (mem > UINT_MAX)
-	    throw std::bad_alloc();
+        long int mem = offset * s3;
+        if (mem > UINT_MAX)
+            throw std::bad_alloc();
         data = new double[mem];
     }
 
@@ -239,9 +239,9 @@ public:
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(MatrixShape&& shape,
                  const HMM& M,
-		 EmissionProbs&& dists1,
-		 EmissionProbs&& dists2,
-		 const Matrix& frequency);
+                 EmissionProbs&& dists1,
+                 EmissionProbs&& dists2,
+                 const Matrix& frequency);
   
     virtual ~DPmatrixEmit() {}
 };
@@ -282,9 +282,9 @@ public:
 
     DPmatrixConstrained(MatrixShape&& shape,
                         const HMM& M,
-			EmissionProbs&& d1,
-			EmissionProbs&& d2, 
-			const Matrix& f);
+                        EmissionProbs&& d1,
+                        EmissionProbs&& d2, 
+                        const Matrix& f);
 
     virtual ~DPmatrixConstrained() {}
 };
