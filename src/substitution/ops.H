@@ -5,6 +5,7 @@
 #include "util/matrix.H"
 #include "computation/expression/expression_ref.H"
 #include "substitution/cache.H"
+#include <Eigen/Dense>
 
 inline void element_assign(Matrix& M1,double d)
 {
@@ -164,7 +165,7 @@ inline void element_prod_assign(double* __restrict__ M1,
                                 const double* __restrict__ M2,
                                 const double* __restrict__ M3,
                                 const double* __restrict__ M4,
-				int size)
+                                int size)
 {
     for(int i=0;i<size;i++)
         M1[i] = M2[i]*M3[i]*M4[i];
@@ -175,7 +176,7 @@ inline void element_prod_assign(double* __restrict__ M1,
                                 const double* __restrict__ M3,
                                 const double* __restrict__ M4,
                                 const double* __restrict__ M5,
-				int size)
+                                int size)
 {
     for(int i=0;i<size;i++)
         M1[i] = M2[i]*M3[i]*M4[i]*M5[i];
@@ -223,56 +224,189 @@ inline double element_prod_sum(const double* __restrict__ M1,
 
     return sum;
 }
+template <int N>
+inline void propagate_toward_root_fixed(double* R, int n_models, int& scale, const EVector& transition_P, const double* S)
+{
+    using Eigen::Map;
+    using Eigen::ArrayXd;
+    using Eigen::RowMajor;
+
+    // 1. Define Types
+    //    Using RowMajor matches your data layout exactly.
+    typedef Eigen::Matrix<double, N, N, RowMajor> FixedMatrix;
+    typedef Eigen::Matrix<double, N, 1> FixedVector;
+
+    // Map the full output array for the final batch scaling
+    Map<ArrayXd> r_all(R, n_models * N);
+    
+    bool need_scale = true;
+
+    for(int m = 0; m < n_models; m++)
+    {
+        // 1. Get pointer to raw data
+        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        
+        // 2. Map Q as Row-Major
+        Map<const FixedMatrix> Q(q_data);
+
+        // 3. Map S and R vectors for the current model
+        int offset = m * N;
+        Map<const FixedVector> s_vec(S + offset);
+        Map<FixedVector> r_vec(R + offset);
+
+        // 4. Calculate R = Q * S
+        r_vec = Q * s_vec;
+
+        // 5. Check Scaling
+        if (r_vec.maxCoeff() >= scale_min) {
+            need_scale = false;
+        }
+    }
+
+    // 6. Batch Scale if needed
+    if (need_scale)
+    {
+        scale++;
+        r_all *= scale_factor;
+    }
+}
 
 inline void propagate_toward_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
 {
-    int matrix_size = n_models * n_states;
-    bool need_scale = true;
-    for(int m=0;m<n_models;m++)
-    {
-	const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+    if (n_states==4)
+        return propagate_toward_root_fixed<4 >(R, n_models, scale, transition_P, S);
+    else if (n_states==20)
+        return propagate_toward_root_fixed<20>(R, n_models, scale, transition_P, S);
 
-	// compute the distribution at the target (parent) node - multiple letters
-	for(int s1=0;s1<n_states;s1++)
-	{
-	    double temp=0;
-	    for(int s2=0;s2<n_states;s2++)
-		temp += Q(s1,s2)*S[m*n_states + s2];
-	    R[m*n_states + s1] = temp;
-	    need_scale = need_scale and (temp < scale_min);
-	}
+    using Eigen::Map;
+    using Eigen::VectorXd;
+    using Eigen::ArrayXd;
+    using Eigen::Dynamic;
+    using Eigen::RowMajor;
+
+    bool need_scale = true;
+
+    for(int m = 0; m < n_models; m++)
+    {
+        // 1. Get pointer to raw data
+        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        
+        // 2. Map Q as Row-Major
+        Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> Q(q_data, n_states, n_states);
+
+        // 3. Map S and R vectors for the current model
+        int offset = m * n_states;
+        Map<const VectorXd> s_vec(S + offset, n_states);
+        Map<VectorXd> r_vec(R + offset, n_states);
+
+        // 4. Calculate R = Q * S
+        r_vec = Q * s_vec;
+
+        // 5. Check Scaling
+        if (r_vec.maxCoeff() >= scale_min) {
+            need_scale = false;
+        }
     }
+
+    // 6. Batch Scale if necessary
     if (need_scale)
     {
-	scale++;
-	for(int j=0; j<matrix_size; j++)
-	    R[j] *= scale_factor;
+        scale++;
+
+        Map<ArrayXd> r_all(R, n_models * n_states);
+        r_all *= scale_factor;
+    }
+}
+
+template <int N>
+inline void propagate_away_from_root_fixed(double* R, int n_models, int& scale, const EVector& transition_P, const double* S)
+{
+    using Eigen::Map;
+    using Eigen::ArrayXd;
+    using Eigen::RowMajor;
+
+    // 1. Define Types
+    typedef Eigen::Matrix<double, N, N, RowMajor> FixedMatrix;
+    typedef Eigen::Matrix<double, N, 1> FixedVector;
+
+    bool need_scale = true;
+
+    for(int m = 0; m < n_models; m++)
+    {
+        // 1. Get pointer to raw data
+        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        
+        // 2. Map Q as Row-Major
+        Map<const FixedMatrix> Q(q_data);
+
+        // 3. Map S and R vectors for the current model
+        int offset = m * N;
+        Map<const FixedVector> s_vec(S + offset);
+        Map<FixedVector> r_vec(R + offset);
+
+        // 4. Calculate R = Q.transpose() * S
+        r_vec = Q.transpose() * s_vec;
+
+        // 5. Check Scaling
+        if (r_vec.maxCoeff() >= scale_min) {
+            need_scale = false;
+        }
+    }
+
+    // 6. Batch Scale if needed
+    if (need_scale)
+    {
+        scale++;
+
+        Map<ArrayXd> r_all(R, n_models * N);
+        r_all *= scale_factor;
     }
 }
 
 inline void propagate_away_from_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
 {
-    int matrix_size = n_models * n_states;
-    bool need_scale = true;
-    for(int m=0;m<n_models;m++)
-    {
-	const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+    if (n_states==4)
+        return propagate_away_from_root_fixed<4 >(R, n_models, scale, transition_P, S);
+    else if (n_states==20)
+        return propagate_away_from_root_fixed<20>(R, n_models, scale, transition_P, S);
 
-	// compute the distribution at the target (parent) node - multiple letters
-	for(int s1=0;s1<n_states;s1++)
-	{
-	    double temp=0;
-	    for(int s2=0;s2<n_states;s2++)
-		temp += Q(s2,s1)*S[m*n_states + s2];
-	    R[m*n_states + s1] = temp;
-	    need_scale = need_scale and (temp < scale_min);
-	}
+    using Eigen::Map;
+    using Eigen::VectorXd;
+    using Eigen::ArrayXd;
+    using Eigen::Dynamic;
+    using Eigen::RowMajor;
+
+    bool need_scale = true;
+
+    for(int m = 0; m < n_models; m++)
+    {
+        // 1. Get pointer to raw data
+        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        
+        // 2. Map Q as Row-Major
+        Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> Q(q_data, n_states, n_states);
+
+        // 3. Map S and R vectors for the current model
+        int offset = m * n_states;
+        Map<const VectorXd> s_vec(S + offset, n_states);
+        Map<VectorXd> r_vec(R + offset, n_states);
+
+        // 4. Calculate R = Q.transpose() * S
+        r_vec = Q.transpose() * s_vec;
+
+        // 5. Check scaling
+        if (r_vec.maxCoeff() >= scale_min) {
+            need_scale = false;
+        }
     }
+
+    // 6. Batch Scale if necessary
     if (need_scale)
     {
-	scale++;
-	for(int j=0; j<matrix_size; j++)
-	    R[j] *= scale_factor;
+        scale++;
+
+        Map<ArrayXd> r_all(R, n_models * n_states);
+        r_all *= scale_factor;
     }
 }
 
