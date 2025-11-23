@@ -149,10 +149,11 @@ initialTreeWithMoves :: WithBranchLengths (WithRoots (Tree l)) -> Random (WithBr
 initialTreeWithMoves (WithBranchLengths (WithRoots tree _ _) initialLengths) = do
   topology <- RanSamplingRate 0 $ sample $ uniformTopologyInitializedTo tree
   branchLengths <- RanSamplingRate 0 $ sample $ independent $
-                   IntMap.mapWithKey (\_ len ->
-                     let shape = 100.0  -- High shape for tight distribution around loaded value
+                   getUEdgesSet topology & IntMap.fromSet (\edgeId ->
+                     let len = initialLengths IntMap.! edgeId
+                         shape = 100.0  -- High shape for tight distribution around loaded value
                          scale = len / shape
-                     in gamma shape scale) initialLengths
+                     in gamma shape scale)
   let modifiableTree = branchLengthTree topology branchLengths
   addTreeMoves 1 modifiableTree
   return modifiableTree

@@ -25,3 +25,4 @@ _notes/
 
 # Installation directory (build output)
 install/
+install-linux/
