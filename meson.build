@@ -41,10 +41,22 @@ add_project_arguments(cpp.get_supported_arguments(warn_flags), language : 'cpp')
 
 # 3.2 Set optimization flags
 
+opt_flags=[]
+insn_set='baseline'
+if get_option('cpu-arch') != 'baseline'
+  insn_flags = ['-march=' + get_option('cpu-arch')]
+  supp_insn_flags = cpp.get_supported_arguments(insn_flags)
+  if supp_insn_flags != []
+    insn_set=get_option('cpu-arch')
+    add_project_arguments(supp_insn_flags, language : 'cpp')
+  endif
+endif
+
 if get_option('optimization') == '2' or get_option('optimization') == '3'
-  opt_flags = ['-funroll-loops','-fno-math-errno','-fno-signed-zeros','-march=native']
+  opt_flags = opt_flags + ['-funroll-loops','-fno-math-errno','-fno-signed-zeros']
   add_project_arguments(cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
+
 
 # 3.3 Enable/Disable extra debugging for dynamic programming
 assertions_off = get_option('b_ndebug') == 'true' or (get_option('b_ndebug') == 'if-release' and
@@ -156,6 +168,7 @@ install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 # Print a summary of the configuration
 
 summary({'arch': host_machine.cpu_family(),
+         'instruction set': insn_set,
          'host': host_machine.system(),
         }, section: 'Architecture')
 
