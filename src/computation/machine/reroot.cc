@@ -560,25 +560,34 @@ void reg_heap::increment_counts_from_new_calls()
 {
     int t2 = tokens[root_token].children[0];
 
+    int n = 0;
+    
     for(auto& [r,_]: tokens[t2].vm_step.delta())
     {
         if (reg_is_forced(r))
         {
             int call = call_for_reg(r);
             if (reg_is_changeable_or_forcing(call))
+            {
                 inc_count(call);
+                n++;
+            }
         }
     }
+    std::cerr<<"increment_counts_from_new_calls: "<<n<<"/"<<tokens[t2].vm_step.delta().size()<<"\n";
 }
 
 void reg_heap::evaluate_unconditional_regs(const vector<int>& unshared_regs)
 {
+    int n = 0;
     for(int r: unshared_regs | views::reverse)
         if (regs[r].is_unconditionally_evaluated() and not has_result2(r))
         {
+            n++;
             incremental_evaluate2(r,false);
             assert(has_result2(r));
         }
+    std::cerr<<"evaluate_unconditional_regs: "<<n<<"/"<<unshared_regs.size()<<"\n";
 }
 
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
@@ -625,6 +634,7 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
     int n_invalid_control_flow = 0;
     for(int r : unshared_regs)
     {
+        std::cerr<<"   U:"<<expression_at(r).print()<<"\n";
         // At this point, unshare_step bit only picks out regs that are really -1,
         // and so excludes e.g. the calls from modifiables.
         if (prog_unshare[r].test(unshare_step_bit))
@@ -650,6 +660,7 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
     for(int i=0;i<zero_count_regs.size();i++)
     {
         int r = zero_count_regs[i];
+        std::cerr<<"   Z:"<<expression_at(r).print()<<"\n";
         for(auto [r2,_,__]: regs[r].used_regs)
             dec_force_count(r2);
         for(int r2: regs[r].forced_regs)
@@ -665,6 +676,9 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
                 dec_force_count(call);
         }
     }
+    std::cerr<<"unshared_regs: "<<unshared_regs.size()<<"\n";
+    std::cerr<<"zero_count_regs: "<<zero_count_regs.size()<<"\n";
+    std::cerr<<"\n";
 
 }
 
