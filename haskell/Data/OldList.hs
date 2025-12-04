@@ -104,6 +104,10 @@ maximum = foldl1 (max)
 
 minimum = foldl1 (min)
 
+minimumBy f = foldl1 (\x y -> if f x <= f y then x else y)
+
+maxmumBy f = foldl1 (\x y -> if f x >= f y then x else y)
+
 --
 
 scanl f z []      = [z]
