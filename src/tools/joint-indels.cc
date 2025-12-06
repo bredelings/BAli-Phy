@@ -184,11 +184,17 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	throw myexception() << "Must specify a unique partition of taxa by name.\n";
     vector<string> pnames = split(args["partition"].as<string>(),':');
 
+    bool output_details = args.count("details");
+
     //--------------------- Load (A,T) ------------------------//
-    std::cout << "Iter\tPart\tLen\tIndels" << endl;
-  
+    if (output_details)
+	std::cout << "Sample\tStart\tEnd\tType\tLength" << endl;
+    else
+	std::cout << "Iter\tPart\tLen\tIndels" << endl;
+
     int consistentsamples = 0;
     int numindels = 0;
+    int sample_num = 0;
 
     string line;
     for(auto& [A,T]: J)
@@ -196,43 +202,71 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	Partition part = full_partition_from_names(T.get_leaf_labels(),pnames);
 
 	bool exists = implies(T,part);
-	//cerr << part << "\n";
-	//cerr << "Does tree contain partition: " << exists << "\n";
 
 	if( exists ) {
 	    consistentsamples++;
 	    int b = which_branch(T,part);
 	    if (b == -1) throw myexception()<<"Can't find branch in tree!";
-	    //cerr << "Branch number = " << b << endl;
 	    vector<int> pairwiseA = get_path(A,T.branch(b).target(),T.branch(b).source());
-	    //cerr << pairwiseA << endl;
 
 	    int uniqueindels = 0;
 	    int laststate = states::M;
+	    int indel_start = -1;
+	    int current_indel_type = -1;
+
 	    for(int i=0; i<pairwiseA.size(); i++) {
-		//cerr << pairwiseA[i] << " ";
 		int currentstate = pairwiseA[i];
-		if( (laststate != currentstate) and ((currentstate == states::G1) or (currentstate == states::G2)) ) { // This is correct - BEN
+
+		// Entering an indel
+		if ((currentstate == states::G1 or currentstate == states::G2) and
+		    currentstate != laststate) {
+		    indel_start = i;
+		    current_indel_type = currentstate;
 		    uniqueindels++;
 		}
+
+		// Leaving an indel
+		if ((currentstate != states::G1 and currentstate != states::G2) and
+		    (laststate == states::G1 or laststate == states::G2)) {
+		    if (output_details) {
+			int indel_end = i - 1;
+			int indel_length = indel_end - indel_start + 1;
+			std::cout << sample_num << "\t" << indel_start << "\t"
+				  << indel_end << "\t"
+				  << (current_indel_type == states::G1 ? "G1" : "G2") << "\t"
+				  << indel_length << endl;
+		    }
+		}
+
 		laststate = currentstate;
 	    }
-	    //cerr << " l = " << pairwiseA.size() << " u =  " << uniqueindels << endl;
+
+	    // Handle indel at end of alignment
+	    if (laststate == states::G1 or laststate == states::G2) {
+		if (output_details) {
+		    int indel_end = pairwiseA.size() - 1;
+		    int indel_length = indel_end - indel_start + 1;
+		    std::cout << sample_num << "\t" << indel_start << "\t"
+			      << indel_end << "\t"
+			      << (current_indel_type == states::G1 ? "G1" : "G2") << "\t"
+			      << indel_length << endl;
+		}
+	    }
+
 	    if( uniqueindels > 0 ) {
 		numindels++;
 	    }
-	    std::cout << pairwiseA.size() << "\t" <<  uniqueindels << endl;
-	    //int nstart = T.branch(b).target();
-	    //int nend   = T.branch(b).source();
-	    //cerr << "Target: " << (A.seq(nstart)).name << endl;
-	    //cerr << "Source: " << (A.seq(nend)).name   << endl;
+
+	    if (not output_details)
+		std::cout << pairwiseA.size() << "\t" <<  uniqueindels << endl;
 	} else {
-	    std::cout << "NA\t0" << endl;
+	    if (output_details)
+		std::cout << sample_num << "\tNA" << endl;
+	    else
+		std::cout << "NA\t0" << endl;
 	}
 
-	//cerr<<A<<"\n";
-	//cerr<<T<<"\n";
-	//exit(0);
+	sample_num++;
     }
 
 
@@ -264,6 +298,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
 	("extract-sequences",value<string>(),"Extract sequences corresponding to tree")
+	("details", "output individual indel positions instead of counts")
 	;
 
     options_description all("All options");
