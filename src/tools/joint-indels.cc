@@ -186,9 +186,17 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 
     bool output_details = args.count("details");
 
+    // Struct to collect indel info before output (need total lengths first)
+    struct IndelInfo {
+	int start_pos1, start_pos2;
+	int end_pos1, end_pos2;
+	int type;
+	int length;
+    };
+
     //--------------------- Load (A,T) ------------------------//
     if (output_details)
-	std::cout << "Sample\tStart\tEnd\tType\tLength" << endl;
+	std::cout << "Sample\tStart1\tStart2\tEnd1\tEnd2\tType\tLength\tLen1\tLen2" << endl;
     else
 	std::cout << "Iter\tPart\tLen\tIndels" << endl;
 
@@ -211,8 +219,17 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 
 	    int uniqueindels = 0;
 	    int laststate = states::M;
-	    int indel_start = -1;
 	    int current_indel_type = -1;
+
+	    // Track positions in each sequence
+	    int pos1 = 0;  // position in sequence 1
+	    int pos2 = 0;  // position in sequence 2
+	    int indel_start_pos1 = -1;
+	    int indel_start_pos2 = -1;
+	    int indel_start_col = -1;  // for computing length
+
+	    // Collect indels to output after we know total lengths
+	    std::vector<IndelInfo> sample_indels;
 
 	    for(int i=0; i<pairwiseA.size(); i++) {
 		int currentstate = pairwiseA[i];
@@ -220,7 +237,9 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 		// Entering an indel
 		if ((currentstate == states::G1 or currentstate == states::G2) and
 		    currentstate != laststate) {
-		    indel_start = i;
+		    indel_start_pos1 = pos1;
+		    indel_start_pos2 = pos2;
+		    indel_start_col = i;
 		    current_indel_type = currentstate;
 		    uniqueindels++;
 		}
@@ -229,14 +248,28 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 		if ((currentstate != states::G1 and currentstate != states::G2) and
 		    (laststate == states::G1 or laststate == states::G2)) {
 		    if (output_details) {
-			int indel_end = i - 1;
-			int indel_length = indel_end - indel_start + 1;
-			std::cout << sample_num << "\t" << indel_start << "\t"
-				  << indel_end << "\t"
-				  << (current_indel_type == states::G1 ? "G1" : "G2") << "\t"
-				  << indel_length << endl;
+			int indel_length = i - indel_start_col;
+			int end_pos1, end_pos2;
+			if (current_indel_type == states::G2) {
+			    // G2: insertion in seq1 (gap in seq2)
+			    end_pos1 = indel_start_pos1 + indel_length - 1;
+			    end_pos2 = indel_start_pos2;
+			} else {
+			    // G1: insertion in seq2 (gap in seq1)
+			    end_pos1 = indel_start_pos1;
+			    end_pos2 = indel_start_pos2 + indel_length - 1;
+			}
+			sample_indels.push_back({indel_start_pos1, indel_start_pos2,
+						 end_pos1, end_pos2,
+						 current_indel_type, indel_length});
 		    }
 		}
+
+		// Update positions based on current state
+		if (currentstate == states::M or currentstate == states::G2)
+		    pos1++;
+		if (currentstate == states::M or currentstate == states::G1)
+		    pos2++;
 
 		laststate = currentstate;
 	    }
@@ -244,12 +277,32 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	    // Handle indel at end of alignment
 	    if (laststate == states::G1 or laststate == states::G2) {
 		if (output_details) {
-		    int indel_end = pairwiseA.size() - 1;
-		    int indel_length = indel_end - indel_start + 1;
-		    std::cout << sample_num << "\t" << indel_start << "\t"
-			      << indel_end << "\t"
-			      << (current_indel_type == states::G1 ? "G1" : "G2") << "\t"
-			      << indel_length << endl;
+		    int indel_length = pairwiseA.size() - indel_start_col;
+		    int end_pos1, end_pos2;
+		    if (current_indel_type == states::G2) {
+			end_pos1 = indel_start_pos1 + indel_length - 1;
+			end_pos2 = indel_start_pos2;
+		    } else {
+			end_pos1 = indel_start_pos1;
+			end_pos2 = indel_start_pos2 + indel_length - 1;
+		    }
+		    sample_indels.push_back({indel_start_pos1, indel_start_pos2,
+					     end_pos1, end_pos2,
+					     current_indel_type, indel_length});
+		}
+	    }
+
+	    // Output all indels with total lengths
+	    if (output_details) {
+		int len1 = pos1;
+		int len2 = pos2;
+		for (const auto& indel : sample_indels) {
+		    std::cout << sample_num << "\t"
+			      << indel.start_pos1 << "\t" << indel.start_pos2 << "\t"
+			      << indel.end_pos1 << "\t" << indel.end_pos2 << "\t"
+			      << (indel.type == states::G1 ? "G1" : "G2") << "\t"
+			      << indel.length << "\t"
+			      << len1 << "\t" << len2 << endl;
 		}
 	    }
 
