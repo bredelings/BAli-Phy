@@ -632,7 +632,7 @@ extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs&
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& A = arg0.as_checked<alignment>();
+    auto& A = arg0.as_checked<Box<alignment>>();
 
     int n = Args.evaluate(1).as_int();
 
