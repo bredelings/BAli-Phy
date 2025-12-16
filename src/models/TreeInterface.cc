@@ -28,7 +28,7 @@ using boost::dynamic_bitset;
 // To deref a field, we would look up the reg, get the field, and evaluate.
 
 tree_constants::tree_constants(context_ref& C, const expression_ref& E)
-    :tree_constants(C, E.as_<reg_var>().target)
+    :tree_constants(C, E.as_reg_var())
 {
 }
 

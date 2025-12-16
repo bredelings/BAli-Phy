@@ -97,7 +97,7 @@ bool is_WHNF(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-    return is_var(E) or is_reg_var(E) or E.is_index_var();
+    return is_var(E) or E.is_reg_var() or E.is_index_var();
 }
 
 expression_ref launchbury_unnormalize(const expression_ref& E)

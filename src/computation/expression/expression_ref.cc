@@ -14,6 +14,7 @@
 #include "bool.H"
 #include "do_block.H"
 #include "index_var.H"
+#include "reg_var.H"
 #include "computation/operations.H"
 #include "computation/module.H"
 #include <set>
@@ -66,6 +67,9 @@ std::string expression_ref::print() const
         break;
     case type_constant::index_var_type:
         return std::string("%")+convertToString(i);
+        break;
+    case type_constant::reg_var_type:
+        return std::string("@")+convertToString(i);
         break;
     default:
         return ptr()->print();

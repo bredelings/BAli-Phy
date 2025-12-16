@@ -45,10 +45,11 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
 
 expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_ref>& replace)
 {
-    if (auto rv = E.to<reg_var>())
+    if (E.is_reg_var())
     {
-	if (replace.contains(rv->target))
-	    return replace.at(rv->target);
+        int r = E.as_reg_var();
+	if (replace.contains(r))
+	    return replace.at(r);
 	else
 	    return E;
     }
@@ -368,9 +369,9 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 {
     if (not E.size())
     {
-	if (E.is_a<reg_var>())
+	if (E.is_reg_var())
 	{
-	    auto loc = ids.find(E.as_<reg_var>().target);
+	    auto loc = ids.find(E.as_reg_var());
 	    if (loc != ids.end())
 		return var(loc->second);  // Using var( ) here used to cause a problem if the name is not a legal Haskell identifier.
 	    else

@@ -186,9 +186,9 @@ expression_ref context_ref::recursive_evaluate_reg(int r) const
 	    int r = e.as_index_var();
 	    e = recursive_evaluate_reg(r);
 	}
-	else if (e.is_a<reg_var>())
+	else if (e.is_reg_var())
 	{
-	    int r = e.as_<reg_var>().target;
+	    int r = e.as_reg_var();
 	    e = recursive_evaluate_reg(r);
 	}
     }

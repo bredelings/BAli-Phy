@@ -217,8 +217,8 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     }
 
     // Replace parameters with the appropriate reg_var: of value whatever
-    else if (E.is_a<reg_var>())
-	reg = E.as_<reg_var>().target;
+    else if (E.is_reg_var())
+	reg = E.as_reg_var();
 
     if (reg)
     {

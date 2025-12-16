@@ -9,6 +9,7 @@
 #include "computation/object.H"
 #include "util/string/convert.H"
 #include "computation/type_constant.H"
+#include "reg_var.H"
 #include "index_var.H"
 #include <concepts>
 
@@ -59,6 +60,9 @@ public:
 		break;
 	    case type_constant::index_var_type:
 		return (i == E2.as_index_var());
+		break;
+	    case type_constant::reg_var_type:
+		return (i == E2.as_reg_var());
 		break;
 	    default:
                 if (ptr() == E2.ptr()) return true;
@@ -240,6 +244,18 @@ public:
 	    return i;
 	}
 
+    bool is_reg_var() const
+	{
+	    return type_ == type_constant::reg_var_type;
+	}
+  
+    int as_reg_var() const
+	{
+	    if (not is_reg_var())
+		throw myexception()<<"Treating '"<<*this<<"' as reg_var!";
+	    return i;
+	}
+
     inline const object_ptr<const Object>& ptr() const
 	{
 	    if (not is_object_type())
@@ -296,6 +312,7 @@ public:
     expression_ref(const log_double_t& ld2):ld(ld2),type_(type_constant::log_double_type) {}
     expression_ref(const bool& b);
     expression_ref(const index_var& iv):i(iv.index),type_(type_constant::index_var_type) {}
+    expression_ref(const reg_var& rv):i(rv.target),type_(type_constant::reg_var_type) { assert(rv.target > 0); }
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
     expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}
