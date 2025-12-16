@@ -21,6 +21,20 @@ struct closure
 
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
+    expression_ref arg_for_slot(int i) const
+    {
+        assert(i < exp.sub().size());
+        auto& E = exp.sub()[i];
+        if (E.is_index_var())
+        {
+            int index = E.as_index_var();
+            int r = lookup_in_env(index);
+            return expression_ref(reg_var(r));
+        }
+        else
+            return E;
+    }
+
     int reg_for_slot(int i) const
     {
         assert(i < exp.sub().size());
