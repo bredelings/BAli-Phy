@@ -9,6 +9,7 @@
 #include "computation/object.H"
 #include "util/string/convert.H"
 #include "computation/type_constant.H"
+#include "index_var.H"
 #include <concepts>
 
 template <typename T>
@@ -17,7 +18,6 @@ concept DerivedFromObject =
 
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression;
-struct index_var;
 
 class expression_ref
 {
@@ -295,7 +295,7 @@ public:
     expression_ref(const double& d2):d(d2),type_(type_constant::double_type) {}
     expression_ref(const log_double_t& ld2):ld(ld2),type_(type_constant::log_double_type) {}
     expression_ref(const bool& b);
-    expression_ref(const index_var& iv);
+    expression_ref(const index_var& iv):i(iv.index),type_(type_constant::index_var_type) {}
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
     expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}

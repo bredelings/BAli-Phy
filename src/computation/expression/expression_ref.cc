@@ -322,8 +322,6 @@ expression_ref::expression_ref(const bool& b)
     :expression_ref(b?bool_true:bool_false)
 {}
 
-expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(type_constant::index_var_type) {}
-
 expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
 {
     for(auto& e: es)
