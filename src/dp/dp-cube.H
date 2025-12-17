@@ -132,7 +132,7 @@ public:
     void forward_cube();
 
     /// Sample a path from the HMM
-    std::vector<int> sample_path() const;
+    std::optional<std::vector<int>> sample_path() const;
 
     log_double_t path_P(const std::vector<int>& path) const;
 

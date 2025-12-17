@@ -170,13 +170,15 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     Matrices->forward_band();
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
-    if (Matrices->Pr_sum_all_paths() <= 0.0)
-        return {Matrices,0};
+    auto path_g = Matrices->sample_path();
+    if (not path_g)
+    {
+	if (log_verbose > 0) std::cerr<<"sample_A5_2D_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
+	return {Matrices, 0};
+    }
 
     //------------- Sample a path from the matrix -------------------//
-
-    vector<int> path_g = Matrices->sample_path();
-    vector<int> path = Matrices->ungeneralize(path_g);
+    vector<int> path = Matrices->ungeneralize(*path_g);
 
     P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
     P.set_pairwise_alignment(b14, get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
@@ -185,7 +187,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
     // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices, sampling_pr};
 }

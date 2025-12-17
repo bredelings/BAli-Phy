@@ -179,13 +179,14 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     }
 */
 
-    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
-    if (Matrices->Pr_sum_all_paths() <= 0.0) 
-	return {Matrices,0};
+    auto path_g = Matrices->sample_path();
+    if (not path_g)
+    {
+	if (log_verbose > 0) std::cerr<<"tri_sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
+	return {Matrices, 0};
+    }
 
-    vector<int> path_g = Matrices->sample_path();
-
-    vector<int> path = Matrices->ungeneralize(path_g);
+    vector<int> path = Matrices->ungeneralize(*path_g);
 
     for(int i=0;i<3;i++) {
 	int b = t.find_branch(nodes[0],nodes[i+1]);
@@ -193,7 +194,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     }
 
     // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices,sampling_pr};
 }

@@ -203,7 +203,7 @@ public:
     void forward_band();
 
     /// Sample a path from the HMM
-    std::vector<int> sample_path() const;
+    std::optional<std::vector<int>> sample_path() const;
 
     log_double_t path_P(const std::vector<int>& path) const;
 
@@ -272,7 +272,7 @@ public:
     log_double_t path_P(const std::vector<int>& path) const;
 
     /// Sample a path from the HMM
-    std::vector<int> sample_path() const;
+    std::optional<std::vector<int>> sample_path() const;
 
     const std::vector<int>& states(int j) const {return allowed_states[j];}
     std::vector<int>& states(int j) {return allowed_states[j];}

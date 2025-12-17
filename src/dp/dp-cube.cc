@@ -261,10 +261,10 @@ log_double_t DPcube::path_P(const vector<int>& path) const
     return Pr;
 }
 
-vector<int> DPcube::sample_path() const 
+std::optional<vector<int>> DPcube::sample_path() const 
 {
-    if (Pr_sum_all_paths() <= 0.0)
-	throw myexception()<<"DPcube::sample_path( ): trying to sample when total probability is 0.";
+    auto total = Pr_sum_all_paths();
+    if (not (std::isfinite(total.log()) and total > 0.0)) return {};
 
     vector<int> path;
 

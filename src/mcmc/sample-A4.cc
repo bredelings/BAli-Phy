@@ -122,8 +122,14 @@ sample_A4_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345, c
 
     //------------- Sample a path from the matrix -------------------//
 
-    vector<int> path_g = Matrices->sample_path();
-    vector<int> path = Matrices->ungeneralize(path_g);
+    auto path_g = Matrices->sample_path();
+    if (not path_g)
+    {
+	if (log_verbose > 0) std::cerr<<"sample_A4_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
+	return {Matrices, 0};
+    }
+
+    vector<int> path = Matrices->ungeneralize(*path_g);
 
     const auto& nodes = order.nodes;
 
@@ -137,7 +143,7 @@ sample_A4_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345, c
     P.set_pairwise_alignment(b34, get_pairwise_alignment_from_path(path, *Matrices, 3, 4));
 
     // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices, sampling_pr};
 }

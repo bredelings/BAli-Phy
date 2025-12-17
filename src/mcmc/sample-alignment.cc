@@ -134,19 +134,16 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
 {
     auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
 
-    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
-    if (Matrices->Pr_sum_all_paths() <= 0.0)
+    auto path = Matrices->sample_path();
+    if (not path)
     {
-	if (log_verbose > 0)
-	    std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
-	return {Matrices,{}};
+	if (log_verbose > 0) std::cerr<<"sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
+	return {Matrices, 0};
     }
 
-    vector<int> path = Matrices->sample_path();
+    P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(*path));
 
-    P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path));
-
-    return {Matrices, Matrices->Pr_sum_all_paths() / Matrices->path_Q(path)};
+    return {Matrices, Matrices->Pr_sum_all_paths() / Matrices->path_Q(*path)};
 }
 
 pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)

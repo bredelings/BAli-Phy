@@ -27,6 +27,7 @@
 #define DP_ARRAY_H
 
 #include <vector>
+#include <optional>
 #include "dp-engine.H"
 
 class state_array
@@ -124,7 +125,7 @@ public:
     virtual void forward(int)=0;
 
     /// Sample a path from the HMM
-    virtual std::vector<int> sample_path() const;
+    virtual std::optional<std::vector<int>> sample_path() const;
 
     /// Compute the probability of all possible paths through theHMM
     log_double_t Pr_sum_all_paths() const;
@@ -163,7 +164,7 @@ public:
     log_double_t path_P(const std::vector<int>& path) const;
 
     /// Sample a path from the HMM
-    std::vector<int> sample_path() const;
+    std::optional<std::vector<int>> sample_path() const;
 
     void prune();
 

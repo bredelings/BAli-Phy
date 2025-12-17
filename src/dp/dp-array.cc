@@ -30,6 +30,7 @@
 #include "util/mapping.H"
 
 using std::vector;
+using std::optional;
 
 // We can ignore scale(i) here, because it factors out.
 log_double_t DParray::path_P(const vector<int>& g_path) const 
@@ -87,7 +88,12 @@ void DParray::forward() {
 }
 
 
-vector<int> DParray::sample_path() const {
+std::optional<vector<int>> DParray::sample_path() const
+{
+    // If the total probability isn't finite and positive, we can't sample a path.
+    auto total = Pr_sum_all_paths();
+    if (not (std::isfinite(total.log()) and total > 0.0)) return {};
+
     vector<int> path;
   
     const int I = size()-1;
@@ -236,7 +242,12 @@ log_double_t DParrayConstrained::path_P(const vector<int>& g_path) const
     return Pr;
 }
 
-vector<int> DParrayConstrained::sample_path() const {
+optional<vector<int>> DParrayConstrained::sample_path() const
+{
+    // If the total probability isn't finite and positive, we can't sample a path.
+    auto total = Pr_sum_all_paths();
+    if (not (std::isfinite(total.log()) and total > 0.0)) return {};
+
     vector<int> path;
   
     const int I = size()-1;

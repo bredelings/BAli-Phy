@@ -40,6 +40,7 @@ using std::max;
 using std::endl;
 using std::isfinite;
 using std::pair;
+using std::optional;
 
 MatrixShape::MatrixShape(const MatrixSize& ms, YBoundaries&& yb)
     :MatrixSize(ms),
@@ -313,13 +314,11 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
     return Pr;
 }
 
-vector<int> DPmatrix::sample_path() const 
+optional<vector<int>> DPmatrix::sample_path() const 
 {
+    // If the total probability isn't finite and positive, we can't sample a path.
     auto total = Pr_sum_all_paths();
-    if (not (std::isfinite(total.log()) and total > 0.0))
-    {
-        throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is "<<total;
-    }
+    if (not (std::isfinite(total.log()) and total > 0.0)) return {};
 
     vector<int> path;
 
@@ -767,13 +766,11 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     return Pr;
 }
 
-vector<int> DPmatrixConstrained::sample_path() const 
+optional<vector<int>> DPmatrixConstrained::sample_path() const 
 {
+    // If the total probability isn't finite and positive, we can't sample a path.
     auto total = Pr_sum_all_paths();
-    if (not (std::isfinite(total.log()) and total > 0.0))
-    {
-        throw myexception()<<"DPmatrixConstrained::sample_path( ): trying to sample when total probability is "<<total;
-    }
+    if (not (std::isfinite(total.log()) and total > 0.0)) return {};
 
     vector<int> path;
 

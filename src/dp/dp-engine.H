@@ -27,6 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef DPMATRIX_H
 #define DPMATRIX_H
 
+#include <optional>
+#include <vector>
 #include "dp_hmm.H"
 
 /// A generic class for performing dynamic programming computations with an HMM
@@ -37,7 +39,7 @@ protected:
 
 public:
   /// Sample a path from the HMM
-  virtual std::vector<int> sample_path() const =0;
+  virtual std::optional<std::vector<int>> sample_path() const =0;
 
   /// Calculates the (log) probability of all possible paths through theHMM
   virtual log_double_t Pr_sum_all_paths() const;
