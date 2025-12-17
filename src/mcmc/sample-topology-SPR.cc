@@ -23,6 +23,9 @@
 /// \brief Contains functions for subtree-prune-and-regraft (SPR) transition kernels.
 ///
 
+// This define causes assertion failures about the length of the root sequence in several tests.
+// #define DEBUG_SPR_ALL
+
 #include "dp/2way.H"
 #include <cmath>
 #include "util/assert.hh"
@@ -662,19 +665,19 @@ void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, const
 
     if (P.t().has_node_times())
     {
-        double T1 = P.t().node_time(B_unbroken_target.node1);
-        double T2 = P.t().node_time(B_unbroken_target.node2);
-        if (T1 > T2) std::swap(T1,T2);
-        assert(T1 < T2);
+        double T1a = P.t().node_time(B_unbroken_target.node1);
+        double T3 = P.t().node_time(B_unbroken_target.node2);
+        if (T1a > T3) std::swap(T1a,T3);
+        assert(T1a <= T3);
 
-        double T_min = P.t().node_time(subtree_edge.node1);
+        double T1b = P.t().node_time(subtree_edge.node1);
         assert(P.t().node_time(subtree_edge.node2) > P.t().node_time(subtree_edge.node1));
-        assert(T_min < T2);
-        T1 = std::max(T_min, T1);
-        assert(T1 < T2);
+        assert(T1b <= T3);
+        double T1 = std::max(T1a, T1b);
+        assert(T1 <= T3);
 
-        double T = T1 + U*(T2-T1);
-        P.t().set_node_time(subtree_edge.node2, T);
+        double T2 = T1 + U*(T3-T1);
+        P.t().set_node_time(subtree_edge.node2, T2);
     }
     else
     {
@@ -800,18 +803,19 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
 
     if (T.has_node_times())
     {
-        double T1 = T.node_time(initial_edge.node1);
+        double T1a = T.node_time(initial_edge.node1);
         double T3 = T.node_time(initial_edge.node2);
-        if (T1 > T3) std::swap(T1, T3);
-        assert(T1 <= T3);
+        if (T1a > T3) std::swap(T1a, T3);
+        assert(T1a <= T3);
+
+        double T1b = T.node_time(subtree_edge.node1);
+        double T1 = std::max(T1a, T1b);
 
         double T2 = T.node_time(subtree_edge.node2);
-        double age_min = T.node_time(subtree_edge.node1);
-        assert(age_min < T2);
-
-        assert(T1 <= T2 and T2 <= T3);
-        T1 = std::max(T1, age_min);
-        locations[initial_edge] = (T2 - age_min)/(T3 - age_min);
+        assert(T1b <= T2);
+        assert(T2 <= T3);
+        double U = (T2 - T1)/(T3 - T1);
+        locations[initial_edge] = U;
     }
     else
     {
@@ -1108,7 +1112,9 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     }
     // 3b. Compute substitution likelihood
     else
+    {
         Pr[target_edge] = p2.heated_likelihood();
+    }
 
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[target_edge] = p2.heated_likelihood();

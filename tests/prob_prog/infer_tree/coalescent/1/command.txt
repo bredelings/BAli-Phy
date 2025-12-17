@@ -1,1 +1,1 @@
--m Model 5seq.fasta --iter=5 --name ignore
+-m Model 5seq.fasta --iter=20 --name ignore
