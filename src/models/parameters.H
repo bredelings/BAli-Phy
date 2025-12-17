@@ -169,7 +169,7 @@ public:
     object_ptr<parameters_constants> PC;
     object_ptr<tree_constants> TC;
 
-    bool variable_alignment_;
+    bool variable_alignment_ = false;
 
             data_partition get_data_partition(int i) const;
 
