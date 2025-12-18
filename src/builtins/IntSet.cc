@@ -28,7 +28,8 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
 
 extern "C" closure builtin_function_size(OperationArgs& Args)
 {
-    auto& S = Args.evaluate(0).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S = arg0.as_<IntSet>();
 
     int s = S.size();
 
@@ -39,7 +40,8 @@ extern "C" closure builtin_function_member(OperationArgs& Args)
 {
     int e= Args.evaluate(0).as_int();
 
-    auto& S = Args.evaluate(1).as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S = arg1.as_<IntSet>();
 
     if (S.find(e))
         return bool_true;
@@ -51,7 +53,8 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
     int e = Args.evaluate(0).as_int();
 
-    auto S = Args.evaluate(1).as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto S = arg1.as_<IntSet>();
 
     S = S.erase(e);
 
@@ -72,7 +75,8 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
-    auto& S = Args.evaluate(0).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S = arg0.as_<IntSet>();
 
     EVector V;
 
@@ -200,7 +204,8 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
 
 extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
 {
-    auto& S1 = Args.evaluate(0).as_<IntSet>();
+    auto arg0 = Args.evaluate(0);
+    auto& S1 = arg0.as_<IntSet>();
 
     IntSet S2;
     for(int b: S1)

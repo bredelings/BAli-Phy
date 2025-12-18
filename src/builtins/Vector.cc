@@ -59,14 +59,16 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
-    const EVector& v = Args.evaluate(0).as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const EVector& v = arg0.as_<EVector>();
 
     return {(int)v.size()};
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
-    const EVector& v = Args.evaluate(0).as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const EVector& v = arg0.as_<EVector>();
     int i = Args.evaluate(1).as_int();
     auto x = Args.evaluate(2);
 
@@ -80,7 +82,8 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
 {
     int i = Args.evaluate(1).as_int();
-    const EVector& v = Args.evaluate(0).as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const EVector& v = arg0.as_<EVector>();
 
     return v[i];
 }

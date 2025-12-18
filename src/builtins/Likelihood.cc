@@ -270,7 +270,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& alignment = arg1.as_<Box<pairwise_alignment_t>>();
 
-    auto& arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate(2);
     auto& transition_ps = arg2.as_<EVector>();
 
     auto arg3 = Args.evaluate(3);
@@ -301,7 +301,7 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
     auto arg0 = Args.evaluate(0);
     auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
 
-    auto& arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate(1);
     auto& transition_ps = arg1.as_<EVector>();
 
     auto arg2 = Args.evaluate(2);

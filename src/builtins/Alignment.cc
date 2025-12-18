@@ -51,8 +51,10 @@ extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArg
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
-    const matrix<int>& counts = Args.evaluate(0).as_<Box<matrix<int>>>();
-    const indel::PairHMM& Q = Args.evaluate(1).as_<indel::PairHMM>();
+    auto arg0 = Args.evaluate(0);
+    const matrix<int>& counts = arg0.as_<Box<matrix<int>>>();
+    auto arg1 = Args.evaluate(1);
+    const indel::PairHMM& Q = arg1.as_<indel::PairHMM>();
 
     using namespace A2;
 
@@ -103,7 +105,8 @@ extern "C" closure builtin_function_numIndels(OperationArgs& Args)
 
 extern "C" closure builtin_function_lengthIndels(OperationArgs& Args)
 {
-    auto& a = Args.evaluate(0).as_<Box<pairwise_alignment_t>>();
+    auto arg0 = Args.evaluate(0);
+    auto& a = arg0.as_<Box<pairwise_alignment_t>>();
     return {a.count_delete() + a.count_insert()};
 }
 
@@ -124,7 +127,8 @@ extern "C" closure builtin_function_alignment_length(OperationArgs& Args)
 
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
-    const auto& A = Args.evaluate(0).as_<Box<pairwise_alignment_t>>().value();
+    auto arg0 = Args.evaluate(0);
+    const auto& A = arg0.as_<Box<pairwise_alignment_t>>().value();
 
     Box<matrix<int>> counts(5,5,0);
 
@@ -915,10 +919,10 @@ extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& 
     auto arg0 = Args.evaluate(0);
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
-    auto& arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate(1);
     auto& states = arg1.as_<EVector>();
 
-    auto& arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate(2);
     auto& smap = arg2.as_<EVector>();
 
     int n = states.size();

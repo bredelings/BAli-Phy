@@ -353,7 +353,8 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
-    const EVector& alleles = Args.evaluate(0).as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const EVector& alleles = arg0.as_<EVector>();
 
     EVector alleles2;
 
@@ -365,7 +366,8 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
-    const EVector& alleles = Args.evaluate(0).as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const EVector& alleles = arg0.as_<EVector>();
 
     int n_individuals = alleles.size();
     assert(n_individuals > 0);
@@ -437,7 +439,8 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
     const double theta = Args.evaluate(0).as_double();
-    const EVector& afs_ = Args.evaluate(1).as_<EVector>();
+    auto arg1 = Args.evaluate(1);
+    const EVector& afs_ = arg1.as_<EVector>();
 
     vector<int> afs;
     for(const auto& count: afs_)

@@ -19,7 +19,7 @@ extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
 
 extern "C" closure builtin_function_complement(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 = Args.evaluate(0);
 
     bitvector v2 = ~arg0.as_<bitvector>();
 
@@ -29,8 +29,8 @@ extern "C" closure builtin_function_complement(OperationArgs& Args)
 
 extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
-    auto& arg1 =Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
 
     bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
 
@@ -40,8 +40,8 @@ extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
 
 extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
-    auto& arg1 =Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
 
     bitvector v2 = arg0.as_<bitvector>() & arg1.as_<bitvector>();
 
@@ -50,8 +50,8 @@ extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
 
 extern "C" closure builtin_function_eq(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
-    auto& arg1 =Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
 
     bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
 
@@ -61,8 +61,8 @@ extern "C" closure builtin_function_eq(OperationArgs& Args)
 
 extern "C" closure builtin_function_neq(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
-    auto& arg1 =Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
 
     return { arg0.as_<bitvector>() != arg1.as_<bitvector>() };
 }
@@ -70,8 +70,8 @@ extern "C" closure builtin_function_neq(OperationArgs& Args)
 
 extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
-    auto& arg1 =Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
 
     bitvector v2 = arg0.as_<bitvector>() ^ arg1.as_<bitvector>();
 
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 
 extern "C" closure builtin_function_size(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
 
     int s = arg0.as_<bitvector>().size();
 
@@ -89,7 +89,7 @@ extern "C" closure builtin_function_size(OperationArgs& Args)
 
 extern "C" closure builtin_function_popcount(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
 
     int s = arg0.as_<bitvector>().count();
 
@@ -98,7 +98,7 @@ extern "C" closure builtin_function_popcount(OperationArgs& Args)
 
 extern "C" closure builtin_function_test_bit(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
     int n = Args.evaluate(1).as_int();
 
     return { arg0.as_<bitvector>().test(n) };
@@ -106,7 +106,7 @@ extern "C" closure builtin_function_test_bit(OperationArgs& Args)
 
 extern "C" closure builtin_function_set_bit(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
     auto x = arg0.as_<bitvector>();
 
     int n = Args.evaluate(1).as_int();
@@ -117,7 +117,7 @@ extern "C" closure builtin_function_set_bit(OperationArgs& Args)
 
 extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
     auto x = arg0.as_<bitvector>();
 
     int n = Args.evaluate(1).as_int();
@@ -143,9 +143,9 @@ extern "C" closure builtin_function_alignment_row_to_presence_bitvector(Operatio
 
 extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& Args)
 {
-    auto& arg0 =Args.evaluate(0);
+    auto arg0 =Args.evaluate(0);
     auto& v1 = arg0.as_checked<bitvector>();
-    auto& arg1 =Args.evaluate(1);
+    auto arg1 =Args.evaluate(1);
     auto& v2 = arg1.as_checked<bitvector>();
 
     object_ptr<Box<pairwise_alignment_t>> a = new Box<pairwise_alignment_t>;

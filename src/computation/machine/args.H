@@ -35,6 +35,8 @@ public:
 
     const expression_ref& reference(int slot) const;
 
+    expression_ref arg_for_slot(int slot) const;
+
     int reg_for_slot(int slot) const;
 
     // evaluating a changeable-or-forcing reg unchangeably will return the
@@ -58,21 +60,21 @@ public:
 
     const closure& evaluate_reg_to_closure_(int r2);
 
-    const closure& evaluate_slot_to_closure(int);
+    closure evaluate_slot_to_closure(int);
 
-    const closure& evaluate_slot_to_closure_(int);
+    closure evaluate_slot_to_closure_(int);
 
     const expression_ref& evaluate_reg_to_object(int);
 
     const expression_ref& evaluate_reg_to_object_(int);
 
-    const expression_ref& evaluate_slot_to_object(int);
+    expression_ref evaluate_slot_to_object(int);
 
-    const expression_ref& evaluate_slot_to_object_(int);
+    expression_ref evaluate_slot_to_object_(int);
 
-    const expression_ref& evaluate(int);
+    expression_ref evaluate(int);
 
-    const expression_ref& evaluate_(int);
+    expression_ref evaluate_(int);
 
     void stack_push(int);
 

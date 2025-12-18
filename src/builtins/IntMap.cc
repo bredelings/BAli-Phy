@@ -16,7 +16,7 @@ typedef Box<immer::set<int>> IntSet;
 
 typedef Box<std::map<int,expression_ref>> EIntMap;
 
-extern "C" closure builtin_function_empty(OperationArgs& Args)
+extern "C" closure builtin_function_empty(OperationArgs& /*Args*/)
 {
     IntMap m;
 
@@ -38,7 +38,8 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
 
 extern "C" closure builtin_function_size(OperationArgs& Args)
 {
-    auto& m = Args.evaluate(0).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
 
     int s = m.size();
 
@@ -49,7 +50,8 @@ extern "C" closure builtin_function_has_key(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();
 
-    auto& m = Args.evaluate(1).as_<IntMap>();
+    auto arg1 = Args.evaluate(1);
+    auto& m = arg1.as_<IntMap>();
 
     int result = m.has_key(key)?1:0;
 
@@ -60,7 +62,8 @@ extern "C" closure builtin_function_subscript(OperationArgs& Args)
 {
     int key = Args.evaluate(1).as_int();
 
-    auto& m = Args.evaluate(0).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
 
     if (not m.has_key(key))
         throw myexception()<<"IntMap.!: key "<<key<<" not found in map of size "<<m.size();
@@ -74,7 +77,8 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto& m = Args.evaluate(1).as_<IntMap>();
+    auto arg1 = Args.evaluate(1);
+    auto& m = arg1.as_<IntMap>();
 
     expression_ref apply_E;
     {
@@ -98,7 +102,8 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto& m = Args.evaluate(1).as_<IntMap>();
+    auto arg1 = Args.evaluate(1);
+    auto& m = arg1.as_<IntMap>();
 
     expression_ref apply_E;
     {
@@ -168,7 +173,8 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
-    auto& m = Args.evaluate(0).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
 
     EVector V;
 
@@ -180,8 +186,11 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
 {
-    auto& m1 = Args.evaluate(0).as_<IntMap>();
-    auto& m2 = Args.evaluate(1).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+
+    auto& m1 = arg0.as_<IntMap>();
+    auto& m2 = arg1.as_<IntMap>();
 
     // Loop over the smaller map
     if (m2.size() < m1.size())
@@ -208,8 +217,10 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
 extern "C" closure builtin_function_unionWith(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
-    auto& m1 = Args.evaluate(1).as_<IntMap>();
-    auto& m2 = Args.evaluate(2).as_<IntMap>();
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto& m1 = arg1.as_<IntMap>();
+    auto& m2 = arg2.as_<IntMap>();
 
     // optimize: loop over whichever of m1 or m2 is smaller
     if (m2.size() < m1.size())
@@ -252,8 +263,10 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
 
 extern "C" closure builtin_function_difference(OperationArgs& Args)
 {
-    auto& m1 = Args.evaluate(0).as_<IntMap>();
-    auto& m2 = Args.evaluate(1).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto& m1 = arg0.as_<IntMap>();
+    auto& m2 = arg1.as_<IntMap>();
 
     // Loop over the smaller map
     if (m1.size() < m2.size())
@@ -278,8 +291,10 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
 
 extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 {
-    auto& m1 = Args.evaluate(0).as_<IntMap>();
-    auto& m2 = Args.evaluate(1).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto& m1 = arg0.as_<IntMap>();
+    auto& m2 = arg1.as_<IntMap>();
 
     // Loop over the smaller map
     expression_ref E = 1;
@@ -300,8 +315,10 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
 {
-    auto& m1 = Args.evaluate(0).as_<IntMap>();
-    auto& m2 = Args.evaluate(1).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto& m1 = arg0.as_<IntMap>();
+    auto& m2 = arg1.as_<IntMap>();
 
     // Left-biased intersection - use the value from the left map
 
@@ -327,9 +344,12 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
 {
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+
     int f_reg = Args.reg_for_slot(0);
-    auto& m1 = Args.evaluate(1).as_<IntMap>();
-    auto& m2 = Args.evaluate(2).as_<IntMap>();
+    auto& m1 = arg1.as_<IntMap>();
+    auto& m2 = arg2.as_<IntMap>();
 
     expression_ref E =  {index_var(2), index_var(1), index_var(0)};
 
@@ -368,7 +388,8 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto& S = Args.evaluate(1).as_<IntSet>();
+    auto arg1 = Args.evaluate(1);
+    auto& S = arg1.as_<IntSet>();
 
     expression_ref apply_E;
     {
@@ -390,7 +411,8 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_keysSet(OperationArgs& Args)
 {
-    auto& m = Args.evaluate(0).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
 
     IntSet keys;
 
@@ -475,14 +497,16 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
 {
     int key = Args.evaluate(1).as_int();
 
-    auto& m = Args.evaluate(0).as_<EIntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<EIntMap>();
 
     return m.at(key);
 }
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 {
-    auto& m = Args.evaluate(0).as_<EIntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<EIntMap>();
 
     IntSet keys;
 
@@ -494,7 +518,8 @@ extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_forceAll(OperationArgs& Args)
 {
-    auto& m = Args.evaluate(0).as_<IntMap>();
+    auto arg0 = Args.evaluate(0);
+    auto& m = arg0.as_<IntMap>();
 
     for(auto& [_,r]: m)
 	Args.evaluate_reg_force(r);

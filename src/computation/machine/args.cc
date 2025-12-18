@@ -6,6 +6,11 @@
 
 using std::optional;
 
+expression_ref OperationArgs::arg_for_slot(int slot) const
+{
+    return current_closure().arg_for_slot(slot);
+}
+
 int OperationArgs::reg_for_slot(int slot) const
 {
     return current_closure().reg_for_slot(slot);
@@ -34,14 +39,22 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
     return M[r3];
 }
 
-const closure& OperationArgs::evaluate_slot_to_closure(int slot)
+closure OperationArgs::evaluate_slot_to_closure(int slot)
 {
-    return evaluate_reg_to_closure(reg_for_slot(slot));
+    auto S = arg_for_slot(slot);
+    if (S.is_reg_var())
+        return evaluate_reg_to_closure(S.as_reg_var());
+    else
+        return S;
 }
 
-const closure& OperationArgs::evaluate_slot_to_closure_(int slot)
+closure OperationArgs::evaluate_slot_to_closure_(int slot)
 {
-    return evaluate_reg_to_closure_(reg_for_slot(slot));
+    auto S = arg_for_slot(slot);
+    if (S.is_reg_var())
+        return evaluate_reg_to_closure_(S.as_reg_var());
+    else
+        return S;
 }
 
 int OperationArgs::evaluate_slot_force(int slot)
@@ -74,22 +87,30 @@ const expression_ref& OperationArgs::evaluate_reg_to_object_(int R2)
     return result;
 }
 
-const expression_ref& OperationArgs::evaluate_slot_to_object(int slot)
+expression_ref OperationArgs::evaluate_slot_to_object(int slot)
 {
-    return evaluate_reg_to_object(reg_for_slot(slot));
+    auto S = arg_for_slot(slot);
+    if (S.is_reg_var())
+        return evaluate_reg_to_object(S.as_reg_var());
+    else
+        return S;
 }
 
-const expression_ref& OperationArgs::evaluate_slot_to_object_(int slot)
+expression_ref OperationArgs::evaluate_slot_to_object_(int slot)
 {
-    return evaluate_reg_to_object_(reg_for_slot(slot));
+    auto S = arg_for_slot(slot);
+    if (S.is_reg_var())
+        return evaluate_reg_to_object_(S.as_reg_var());
+    else
+        return S;
 }
 
-const expression_ref& OperationArgs::evaluate(int slot)
+expression_ref OperationArgs::evaluate(int slot)
 {
     return evaluate_slot_to_object(slot);
 }
 
-const expression_ref& OperationArgs::evaluate_(int slot)
+expression_ref OperationArgs::evaluate_(int slot)
 {
     return evaluate_slot_to_object_(slot);
 }

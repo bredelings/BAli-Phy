@@ -21,6 +21,7 @@ struct closure
 
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
+    // Alternatively I could return std::variant<int,expression_ref>
     expression_ref arg_for_slot(int i) const
     {
         assert(i < exp.sub().size());
@@ -38,8 +39,11 @@ struct closure
     int reg_for_slot(int i) const
     {
         assert(i < exp.sub().size());
-	int index = exp.sub()[i].as_index_var();
-	return lookup_in_env(index);
+        auto& E = exp.sub()[i];
+        if (E.is_index_var())
+            return lookup_in_env(E.as_index_var());
+        else
+            std::abort();
     }
 
     int reg_for_index_var() const
