@@ -1,6 +1,5 @@
 module Control.DeepSeq where
 
-import           Foreign.Introspection
 import           Data.Array
 import           Data.Foldable
 

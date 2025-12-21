@@ -8,12 +8,10 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();
 
-    const closure& C = Args.current_closure();
-
     // We can't do negative-sized arrays
     assert(n >= 0);
     // The function should be represented as a heap variable...
-    int f_reg = C.reg_for_slot(1);
+    int f_reg = Args.reg_for_slot(1);
   
     object_ptr<expression> exp = new expression(constructor("Array",n));
     exp->sub.resize(n);
@@ -70,7 +68,7 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 
     if (n < 0 or n >= N)
 	throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
-      
+
     // Return a reference to the heap variable pointed to by the nth entry
     return {index_var(0), {C.Env[n]} };
 }

@@ -183,27 +183,6 @@ extern "C" closure builtin_function_rem_integer(OperationArgs& Args)
     return { Integer(x % y) };
 }
 
-extern "C" closure builtin_function_get_n_args(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    return {expression_ref(int(x.size()))};
-}
-
-extern "C" closure builtin_function_get_arg(OperationArgs& Args)
-{
-    auto& x = Args.evaluate_slot_to_closure(0);
-
-    int i = Args.evaluate(1).as_int();
-
-    if (i < 0 or i >= x.exp.size())
-        throw myexception()<<"Prelude:get_arg: Can't access argument "<<i<<" of '"<<x.print()<<"'";
-
-    int r = x.reg_for_slot(i);
-
-    return closure{index_var(0),{r}};
-}
-
-
 extern "C" closure builtin_function_increment_int(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_int();

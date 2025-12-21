@@ -1205,7 +1205,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
     // 2. Force the interchangeable and get its address
     Args.evaluate_(1);
 
-    int r_ix = Args.current_closure().reg_for_slot(1);
+    int r_ix = Args.reg_for_slot(1);
 
     auto& M = Args.memory();
 
@@ -1302,9 +1302,9 @@ extern "C" closure builtin_function_createContext(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int r_prog = Args.current_closure().reg_for_slot(0);
+    int r_prog = Args.reg_for_slot(0);
 
-    int r_log = Args.current_closure().reg_for_slot(1);
+    int r_log = Args.reg_for_slot(1);
 
     int c = M.get_first_context(r_prog, r_log);
 

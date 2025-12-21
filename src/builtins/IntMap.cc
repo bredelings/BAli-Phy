@@ -27,7 +27,7 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();
 
-    int v_reg = Args.current_closure().reg_for_slot(1);
+    int v_reg = Args.reg_for_slot(1);
 
     IntMap m;
 
@@ -72,9 +72,7 @@ extern "C" closure builtin_function_subscript(OperationArgs& Args)
 
 extern "C" closure builtin_function_map(OperationArgs& Args)
 {
-    const closure& C = Args.current_closure();
-
-    int f_reg = C.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
 
     auto& m = Args.evaluate(1).as_<IntMap>();
 
@@ -98,9 +96,7 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
 
 extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
 {
-    const closure& C = Args.current_closure();
-
-    int f_reg = C.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
 
     auto& m = Args.evaluate(1).as_<IntMap>();
 
@@ -140,7 +136,7 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();
 
-    int v_reg = Args.current_closure().reg_for_slot(1);
+    int v_reg = Args.reg_for_slot(1);
 
     auto m = Args.evaluate(2).as_<IntMap>();
 
@@ -151,11 +147,9 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 
 extern "C" closure builtin_function_insertWith(OperationArgs& Args)
 {
-    auto& C = Args.current_closure();
-
-    int f_reg = C.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
     int key   = Args.evaluate(1).as_int();
-    int v2_reg = C.reg_for_slot(2);
+    int v2_reg = Args.reg_for_slot(2);
 
     auto m = Args.evaluate(3).as_<IntMap>();
 
@@ -213,9 +207,7 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
 
 extern "C" closure builtin_function_unionWith(OperationArgs& Args)
 {
-    auto& C = Args.current_closure();
-
-    int f_reg = C.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
     auto& m1 = Args.evaluate(1).as_<IntMap>();
     auto& m2 = Args.evaluate(2).as_<IntMap>();
 
@@ -335,7 +327,7 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
 {
-    int f_reg = Args.current_closure().reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
     auto& m1 = Args.evaluate(1).as_<IntMap>();
     auto& m2 = Args.evaluate(2).as_<IntMap>();
 
@@ -374,9 +366,7 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
 
 extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 {
-    const closure& C = Args.current_closure();
-
-    int f_reg = C.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
 
     auto& S = Args.evaluate(1).as_<IntSet>();
 

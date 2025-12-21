@@ -21,7 +21,7 @@ int force_slot_to_safe_reg(OperationArgs& Args, int slot)
     // Force the slot so that we get a unique location for it.
     Args.evaluate_slot_force(slot);
 
-    int r = Args.current_closure().reg_for_slot(slot);
+    int r = Args.reg_for_slot(slot);
 
     return Args.memory().follow_index_var(r);
 }
@@ -33,7 +33,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     auto prob = Args.evaluate(1).as_log_double();
 
-    int r_prob = Args.current_closure().reg_for_slot(1);
+    int r_prob = Args.reg_for_slot(1);
 
     r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
@@ -53,7 +53,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     // We are supposed to evaluate the likelihood before we register
     auto prob = Args.evaluate(1).as_log_double();
 
-    int r_prob = Args.current_closure().reg_for_slot(1);
+    int r_prob = Args.reg_for_slot(1);
 
     r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
@@ -226,7 +226,7 @@ extern "C" closure builtin_function_withEffect(OperationArgs& Args)
 {
     Args.evaluate_slot_force(0);
 
-    int R = Args.current_closure().reg_for_slot(1);
+    int R = Args.reg_for_slot(1);
 
     return {index_var(0),{R}};
 }
