@@ -39,6 +39,28 @@
 
 extern int log_verbose;
 
+/// Group consecutive identical elements: [M,M,G1,G1,M] -> [[M,M],[G1,G1],[M]]
+template <typename T>
+std::vector<std::vector<T>> group_consecutive(const std::vector<T>& items)
+{
+    std::vector<std::vector<T>> groups;
+    if (items.empty()) return groups;
+
+    std::vector<T> current_group = {items[0]};
+    for (size_t i = 1; i < items.size(); i++)
+    {
+	if (items[i] == items[i-1])
+	    current_group.push_back(items[i]);
+	else
+	{
+	    groups.push_back(std::move(current_group));
+	    current_group = {items[i]};
+	}
+    }
+    groups.push_back(std::move(current_group));
+    return groups;
+}
+
 using std::cin;
 using std::cout;
 using std::cerr;
@@ -186,10 +208,12 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 
     bool output_details = args.count("details");
 
-    // Struct to collect indel info before output (need total lengths first)
+    // Struct to collect indel info
+    // Start1/Start2: chars emitted in each sequence BEFORE the indel
+    // End1/End2: chars emitted in each sequence AFTER the indel
     struct IndelInfo {
-	int start_pos1, start_pos2;
-	int end_pos1, end_pos2;
+	int start1, start2;  // chars in seq1/seq2 before indel
+	int end1, end2;      // chars in seq1/seq2 after indel
 	int type;
 	int length;
     };
@@ -217,79 +241,52 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	    if (b == -1) throw myexception()<<"Can't find branch in tree!";
 	    vector<int> pairwiseA = get_path(A,T.branch(b).target(),T.branch(b).source());
 
+	    // Group consecutive identical states
+	    auto groups = group_consecutive(pairwiseA);
+
 	    int uniqueindels = 0;
-	    int laststate = states::M;
-	    int current_indel_type = -1;
+	    int pos1 = 0;  // chars emitted in sequence 1
+	    int pos2 = 0;  // chars emitted in sequence 2
 
-	    // Track positions in each sequence
-	    int pos1 = 0;  // position in sequence 1
-	    int pos2 = 0;  // position in sequence 2
-	    int indel_start_pos1 = -1;
-	    int indel_start_pos2 = -1;
-	    int indel_start_col = -1;  // for computing length
-
-	    // Collect indels to output after we know total lengths
 	    std::vector<IndelInfo> sample_indels;
 
-	    for(int i=0; i<pairwiseA.size(); i++) {
-		int currentstate = pairwiseA[i];
+	    for (const auto& group : groups)
+	    {
+		int state = group[0];
+		int length = group.size();
 
-		// Entering an indel
-		if ((currentstate == states::G1 or currentstate == states::G2) and
-		    currentstate != laststate) {
-		    indel_start_pos1 = pos1;
-		    indel_start_pos2 = pos2;
-		    indel_start_col = i;
-		    current_indel_type = currentstate;
+		if (state == states::G1 or state == states::G2)
+		{
 		    uniqueindels++;
-		}
 
-		// Leaving an indel
-		if ((currentstate != states::G1 and currentstate != states::G2) and
-		    (laststate == states::G1 or laststate == states::G2)) {
-		    if (output_details) {
-			int indel_length = i - indel_start_col;
-			int end_pos1, end_pos2;
-			if (current_indel_type == states::G2) {
-			    // G2: insertion in seq1 (gap in seq2)
-			    end_pos1 = indel_start_pos1 + indel_length - 1;
-			    end_pos2 = indel_start_pos2;
-			} else {
-			    // G1: insertion in seq2 (gap in seq1)
-			    end_pos1 = indel_start_pos1;
-			    end_pos2 = indel_start_pos2 + indel_length - 1;
-			}
-			sample_indels.push_back({indel_start_pos1, indel_start_pos2,
-						 end_pos1, end_pos2,
-						 current_indel_type, indel_length});
+		    if (output_details)
+		    {
+			int start1 = pos1;
+			int start2 = pos2;
+
+			// Update positions for this indel group
+			if (state == states::G1)
+			    pos2 += length;  // G1: chars added to seq2
+			else
+			    pos1 += length;  // G2: chars added to seq1
+
+			sample_indels.push_back({start1, start2, pos1, pos2, state, length});
+		    }
+		    else
+		    {
+			// Still need to update positions even without details
+			if (state == states::G1)
+			    pos2 += length;
+			else
+			    pos1 += length;
 		    }
 		}
-
-		// Update positions based on current state
-		if (currentstate == states::M or currentstate == states::G2)
-		    pos1++;
-		if (currentstate == states::M or currentstate == states::G1)
-		    pos2++;
-
-		laststate = currentstate;
-	    }
-
-	    // Handle indel at end of alignment
-	    if (laststate == states::G1 or laststate == states::G2) {
-		if (output_details) {
-		    int indel_length = pairwiseA.size() - indel_start_col;
-		    int end_pos1, end_pos2;
-		    if (current_indel_type == states::G2) {
-			end_pos1 = indel_start_pos1 + indel_length - 1;
-			end_pos2 = indel_start_pos2;
-		    } else {
-			end_pos1 = indel_start_pos1;
-			end_pos2 = indel_start_pos2 + indel_length - 1;
-		    }
-		    sample_indels.push_back({indel_start_pos1, indel_start_pos2,
-					     end_pos1, end_pos2,
-					     current_indel_type, indel_length});
+		else if (state == states::M)
+		{
+		    pos1 += length;
+		    pos2 += length;
 		}
+		// states::S and states::E don't emit characters
 	    }
 
 	    // Output all indels with total lengths
@@ -298,8 +295,8 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 		int len2 = pos2;
 		for (const auto& indel : sample_indels) {
 		    std::cout << sample_num << "\t"
-			      << indel.start_pos1 << "\t" << indel.start_pos2 << "\t"
-			      << indel.end_pos1 << "\t" << indel.end_pos2 << "\t"
+			      << indel.start1 << "\t" << indel.start2 << "\t"
+			      << indel.end1 << "\t" << indel.end2 << "\t"
 			      << (indel.type == states::G1 ? "G1" : "G2") << "\t"
 			      << indel.length << "\t"
 			      << len1 << "\t" << len2 << endl;

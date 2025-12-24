@@ -1,0 +1,12 @@
+iterations = 0
+
+>seq1
+ACG-TA
+>seq2
+ACGCTA
+>seq3
+ACGCTA
+>A4
+ACGCTA
+>A5
+ACGCTA
