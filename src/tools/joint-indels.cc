@@ -259,27 +259,17 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 		{
 		    uniqueindels++;
 
-		    if (output_details)
-		    {
-			int start1 = pos1;
-			int start2 = pos2;
+		    int start1 = pos1;
+		    int start2 = pos2;
 
-			// Update positions for this indel group
-			if (state == states::G1)
-			    pos2 += length;  // G1: chars added to seq2
-			else
-			    pos1 += length;  // G2: chars added to seq1
-
-			sample_indels.push_back({start1, start2, pos1, pos2, state, length});
-		    }
+		    // Update positions for this indel group
+		    if (state == states::G1)
+			pos2 += length;  // G1: chars added to seq2
 		    else
-		    {
-			// Still need to update positions even without details
-			if (state == states::G1)
-			    pos2 += length;
-			else
-			    pos1 += length;
-		    }
+			pos1 += length;  // G2: chars added to seq1
+
+		    if (output_details)
+			sample_indels.push_back({start1, start2, pos1, pos2, state, length});
 		}
 		else if (state == states::M)
 		{

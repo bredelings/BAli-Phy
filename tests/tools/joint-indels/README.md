@@ -32,7 +32,7 @@ Or from the build directory:
 Each test directory contains:
 - `test.fastas` - MCMC alignment sample (with ancestral sequences)
 - `test.trees` - Newick tree with internal node labels
-- `command.txt` - Arguments to pass to joint-indels
+- `args.txt` - Arguments to pass to joint-indels
 - `expected-output` - Expected stdout
 
 ## Output Format

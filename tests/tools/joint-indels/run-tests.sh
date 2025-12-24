@@ -14,8 +14,8 @@ echo ""
 for example in example1 example2 example3; do
     cd "$SCRIPT_DIR/$example"
 
-    # Read command from file
-    CMD=$(cat command.txt)
+    # Read command args from file
+    CMD=$(cat args.txt)
 
     # Run joint-indels
     OUTPUT=$("$JOINT_INDELS" $CMD 2>&1)
