@@ -228,7 +228,6 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     int numindels = 0;
     int sample_num = 0;
 
-    string line;
     for(auto& [A,T]: J)
     {
 	Partition part = full_partition_from_names(T.get_leaf_labels(),pnames);

@@ -2,7 +2,14 @@
 # Run joint-indels unit tests
 # Usage: ./run-tests.sh [path-to-joint-indels-binary]
 
-JOINT_INDELS="${1:-joint-indels}"
+# Convert to absolute path if relative
+if [[ "${1:-}" = /* ]]; then
+    JOINT_INDELS="$1"
+elif [[ -n "${1:-}" ]]; then
+    JOINT_INDELS="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+else
+    JOINT_INDELS="joint-indels"
+fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FAILED=0
 PASSED=0
