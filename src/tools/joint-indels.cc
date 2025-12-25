@@ -238,7 +238,7 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	    consistentsamples++;
 	    int b = which_branch(T,part);
 	    if (b == -1) throw myexception()<<"Can't find branch in tree!";
-	    vector<int> pairwiseA = get_path(A,T.branch(b).target(),T.branch(b).source());
+	    vector<int> pairwiseA = get_path(A,T.directed_branch(b).target(),T.directed_branch(b).source());
 
 	    // Group consecutive identical states
 	    auto groups = group_consecutive(pairwiseA);
