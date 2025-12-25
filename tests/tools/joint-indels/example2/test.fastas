@@ -1,12 +1,12 @@
 iterations = 0
 
 >seq1
-AC---A
+A--A
 >seq2
-ACGGGA
+AGGA
 >seq3
-ACGGGA
+A--A
 >A4
-ACGGGA
+A--A
 >A5
-ACGGGA
+A--A

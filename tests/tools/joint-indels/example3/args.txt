@@ -1,1 +1,1 @@
-test.fastas test.trees --partition seq2 --details
+test.fastas test.trees --partition seq1 --details
