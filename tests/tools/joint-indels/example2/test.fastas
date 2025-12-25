@@ -1,0 +1,12 @@
+iterations = 0
+
+>seq1
+A--A
+>seq2
+AGGA
+>seq3
+A--A
+>A4
+A--A
+>A5
+A--A

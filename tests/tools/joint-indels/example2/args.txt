@@ -1,0 +1,1 @@
+test.fastas test.trees --partition seq2 --details

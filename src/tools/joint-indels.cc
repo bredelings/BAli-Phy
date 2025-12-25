@@ -39,6 +39,28 @@
 
 extern int log_verbose;
 
+/// Group consecutive identical elements: [M,M,G1,G1,M] -> [[M,M],[G1,G1],[M]]
+template <typename T>
+std::vector<std::vector<T>> group_consecutive(const std::vector<T>& items)
+{
+    std::vector<std::vector<T>> groups;
+    if (items.empty()) return groups;
+
+    std::vector<T> current_group = {items[0]};
+    for (size_t i = 1; i < items.size(); i++)
+    {
+	if (items[i] == items[i-1])
+	    current_group.push_back(items[i]);
+	else
+	{
+	    groups.push_back(std::move(current_group));
+	    current_group = {items[i]};
+	}
+    }
+    groups.push_back(std::move(current_group));
+    return groups;
+}
+
 using std::cin;
 using std::cout;
 using std::cerr;
@@ -184,55 +206,106 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
 	throw myexception() << "Must specify a unique partition of taxa by name.\n";
     vector<string> pnames = split(args["partition"].as<string>(),':');
 
+    bool output_details = args.count("details");
+
+    // Struct to collect indel info
+    // Start1/Start2: chars emitted in each sequence BEFORE the indel
+    // End1/End2: chars emitted in each sequence AFTER the indel
+    struct IndelInfo {
+	int start1, start2;  // chars in seq1/seq2 before indel
+	int end1, end2;      // chars in seq1/seq2 after indel
+	int type;
+	int length;
+    };
+
     //--------------------- Load (A,T) ------------------------//
-    std::cout << "Iter\tPart\tLen\tIndels" << endl;
-  
+    if (output_details)
+	std::cout << "Sample\tStart1\tStart2\tEnd1\tEnd2\tType\tLength\tLen1\tLen2" << endl;
+    else
+	std::cout << "Iter\tPart\tLen\tIndels" << endl;
+
     int consistentsamples = 0;
     int numindels = 0;
+    int sample_num = 0;
 
-    string line;
     for(auto& [A,T]: J)
     {
 	Partition part = full_partition_from_names(T.get_leaf_labels(),pnames);
 
 	bool exists = implies(T,part);
-	//cerr << part << "\n";
-	//cerr << "Does tree contain partition: " << exists << "\n";
 
 	if( exists ) {
 	    consistentsamples++;
 	    int b = which_branch(T,part);
 	    if (b == -1) throw myexception()<<"Can't find branch in tree!";
-	    //cerr << "Branch number = " << b << endl;
-	    vector<int> pairwiseA = get_path(A,T.branch(b).target(),T.branch(b).source());
-	    //cerr << pairwiseA << endl;
+	    vector<int> pairwiseA = get_path(A,T.directed_branch(b).target(),T.directed_branch(b).source());
+
+	    // Group consecutive identical states
+	    auto groups = group_consecutive(pairwiseA);
 
 	    int uniqueindels = 0;
-	    int laststate = states::M;
-	    for(int i=0; i<pairwiseA.size(); i++) {
-		//cerr << pairwiseA[i] << " ";
-		int currentstate = pairwiseA[i];
-		if( (laststate != currentstate) and ((currentstate == states::G1) or (currentstate == states::G2)) ) { // This is correct - BEN
+	    int pos1 = 0;  // chars emitted in sequence 1
+	    int pos2 = 0;  // chars emitted in sequence 2
+
+	    std::vector<IndelInfo> sample_indels;
+
+	    for (const auto& group : groups)
+	    {
+		int state = group[0];
+		int length = group.size();
+
+		if (state == states::G1 or state == states::G2)
+		{
 		    uniqueindels++;
+
+		    int start1 = pos1;
+		    int start2 = pos2;
+
+		    // Update positions for this indel group
+		    if (state == states::G1)
+			pos2 += length;  // G1: chars added to seq2
+		    else
+			pos1 += length;  // G2: chars added to seq1
+
+		    if (output_details)
+			sample_indels.push_back({start1, start2, pos1, pos2, state, length});
 		}
-		laststate = currentstate;
+		else if (state == states::M)
+		{
+		    pos1 += length;
+		    pos2 += length;
+		}
+		// states::S and states::E don't emit characters
 	    }
-	    //cerr << " l = " << pairwiseA.size() << " u =  " << uniqueindels << endl;
+
+	    // Output all indels with total lengths
+	    if (output_details) {
+		int len1 = pos1;
+		int len2 = pos2;
+		for (const auto& indel : sample_indels) {
+		    std::cout << sample_num << "\t"
+			      << indel.start1 << "\t" << indel.start2 << "\t"
+			      << indel.end1 << "\t" << indel.end2 << "\t"
+			      << (indel.type == states::G1 ? "I" : "D") << "\t"
+			      << indel.length << "\t"
+			      << len1 << "\t" << len2 << endl;
+		}
+	    }
+
 	    if( uniqueindels > 0 ) {
 		numindels++;
 	    }
-	    std::cout << pairwiseA.size() << "\t" <<  uniqueindels << endl;
-	    //int nstart = T.branch(b).target();
-	    //int nend   = T.branch(b).source();
-	    //cerr << "Target: " << (A.seq(nstart)).name << endl;
-	    //cerr << "Source: " << (A.seq(nend)).name   << endl;
+
+	    if (not output_details)
+		std::cout << pairwiseA.size() << "\t" <<  uniqueindels << endl;
 	} else {
-	    std::cout << "NA\t0" << endl;
+	    if (output_details)
+		std::cout << sample_num << "\tNA" << endl;
+	    else
+		std::cout << "NA\t0" << endl;
 	}
 
-	//cerr<<A<<"\n";
-	//cerr<<T<<"\n";
-	//exit(0);
+	sample_num++;
     }
 
 
@@ -264,6 +337,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
 	("extract-sequences",value<string>(),"Extract sequences corresponding to tree")
+	("details", "output individual indel positions instead of counts")
 	;
 
     options_description all("All options");

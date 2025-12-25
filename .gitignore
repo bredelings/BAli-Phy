@@ -8,6 +8,7 @@ history.txt
 win64-cross.txt
 
 .vscode
+.cache/
 
 #-------- Backups --------
 *.orig

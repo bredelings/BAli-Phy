@@ -33,6 +33,10 @@ Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 **--extract-sequences** _arg_
 : Extract sequences corresponding to tree
 
+**--details**
+: Output detailed indel information (Start/End positions, I/D type, lengths).
+  See <https://github.com/bredelings/BAli-Phy/blob/master/tests/tools/joint-indels/README.md> for output format documentation.
+
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
