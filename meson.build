@@ -102,7 +102,7 @@ eigen = dependency('eigen3').as_system()
 
 fmt = dependency('fmt', static: true).as_system()
 
-libxxhash = dependency('libxxhash').as_system()
+libxxhash = dependency('libxxhash', static: true, fallback: ['xxhash', 'xxhash_dep']).as_system()
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
