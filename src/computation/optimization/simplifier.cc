@@ -371,6 +371,14 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
     return E;
 }
 
+std::map<Occ::Var, std::vector<BuiltinRule>> generate_builtin_rules()
+{
+    std::map<Occ::Var, std::vector<BuiltinRule>> rules;
+    return rules;
+}
+
+auto builtin_rules = generate_builtin_rules();
+
 
 // Do we have to explicitly skip loop breakers here?
 tuple<SimplFloats,Occ::Exp>
