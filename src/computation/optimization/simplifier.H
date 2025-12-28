@@ -45,7 +45,7 @@ struct Rule
     // orphan -- is the rule an orphan?
 };
 
-typedef std::optional<Occ::Exp> (*RuleFun)(const in_scope_set& bound_vars, const std::string& id, const std::vector<Occ::Exp>& args);
+typedef std::optional<Occ::Exp> (*RuleFun)(const in_scope_set& bound_vars, const Occ::Var& id, const std::vector<Occ::Exp>& args);
 
 struct BuiltinRule
 {
