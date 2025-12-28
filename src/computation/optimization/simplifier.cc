@@ -371,14 +371,58 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
     return E;
 }
 
+std::optional<Occ::Exp> simplifyIntegerToInt(const SimplifierState& SS, const in_scope_set& bound_vars, const Occ::Var& f, const vector<Occ::Exp>& args)
+{
+    if (args.size() < 1) return {};
+
+    auto arg = args[0];
+    if (auto x = arg.to_var())
+    {
+        auto [unfolding, occ_info] = SS.get_unfolding(*x, bound_vars);
+        if (auto cu = to<CoreUnfolding>(unfolding); cu and not x->info.is_loop_breaker)
+            arg = cu->expr;
+    }
+
+    auto c = arg.to_constant();
+    if (not c) return {};
+
+    auto i = to<integer_container>(c->value);
+    if (not i) return {};
+
+    if (auto ii = i->try_convert<int>())
+    {
+        Occ::Constant c;
+        c.value = *ii;
+        return Occ::Exp(c);
+    }
+    else
+        return {};
+};
+
+
 std::map<Occ::Var, std::vector<BuiltinRule>> generate_builtin_rules()
 {
     std::map<Occ::Var, std::vector<BuiltinRule>> rules;
+    
+    // Num:integerToInt
+    // Num:integerToChar
+    // Num:integerToDouble
+    BuiltinRule rule{"integerToInt", Occ::Var("integerToInt"), 1, simplifyIntegerToInt};
+    rules.insert({Occ::Var("integerToInt"), {rule}});
+
     return rules;
 }
 
 auto builtin_rules = generate_builtin_rules();
 
+std::vector<BuiltinRule> rules_for_var(const Occ::Var& x)
+{
+    // Rewrite rules: here they go BEFORE argument simplification.
+    if (auto iter = builtin_rules.find(x); iter != builtin_rules.end())
+        return iter->second;
+    else
+        return {};
+}
 
 // Do we have to explicitly skip loop breakers here?
 tuple<SimplFloats,Occ::Exp>

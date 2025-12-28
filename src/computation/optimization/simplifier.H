@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include <variant>
+#include <functional> // for std::function
 
 #include "computation/optimization/simplifier_env.H"
 #include "computation/optimization/occurrence.H"
@@ -45,7 +46,9 @@ struct Rule
     // orphan -- is the rule an orphan?
 };
 
-typedef std::optional<Occ::Exp> (*RuleFun)(const in_scope_set& bound_vars, const Occ::Var& id, const std::vector<Occ::Exp>& args);
+class SimplifierState;
+
+typedef std::function<std::optional<Occ::Exp>(const SimplifierState& S, const in_scope_set&, const Occ::Var&, const std::vector<Occ::Exp>&)> RuleFun;
 
 struct BuiltinRule
 {
