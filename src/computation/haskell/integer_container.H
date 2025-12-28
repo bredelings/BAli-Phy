@@ -17,6 +17,14 @@ struct integer_container
 
     std::strong_ordering operator<=>(const integer_container&) const = default;
 
+    template <typename T>
+    std::optional<T> try_convert() const {
+        if (i >= std::numeric_limits<T>::min() && i <= std::numeric_limits<T>::max()) {
+            return i.template convert_to<T>();
+        }
+        return std::nullopt;
+    }
+
     template <class Archive>
     void load(Archive& ar)
     {
