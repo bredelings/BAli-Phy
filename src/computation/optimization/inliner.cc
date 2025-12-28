@@ -747,7 +747,7 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
         std::abort();
 }
 
-std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars)
+std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars) const
 {
     Unfolding unfolding;
     occurrence_info occ_info;
