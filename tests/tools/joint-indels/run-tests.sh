@@ -21,12 +21,12 @@ echo ""
 for example in example1 example2 example3; do
     cd "$SCRIPT_DIR/$example"
 
-    # Read command args from file
-    CMD=$(cat args.txt)
+    # Read command args from file (normalize line endings for Windows)
+    CMD=$(cat args.txt | tr -d '\r')
 
-    # Run joint-indels
-    OUTPUT=$("$JOINT_INDELS" $CMD 2>&1)
-    EXPECTED=$(cat expected-output)
+    # Run joint-indels (normalize line endings for Windows compatibility)
+    OUTPUT=$("$JOINT_INDELS" $CMD 2>&1 | tr -d '\r')
+    EXPECTED=$(cat expected-output | tr -d '\r')
 
     if [ "$OUTPUT" = "$EXPECTED" ]; then
         echo "✓ $example: PASSED"
