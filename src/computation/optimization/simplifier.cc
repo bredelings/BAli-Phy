@@ -1335,6 +1335,28 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
     return app->head;
 }
 
+std::optional<std::pair<int, Occ::Exp>> try_rules(const SimplifierState& SS, const in_scope_set& bound_vars, 
+                                                  const vector<BuiltinRule>& rules,
+                                                  const Occ::Var& f, const vector<Occ::Exp>& args)
+{
+    vector<pair<int,Occ::Exp>> results;
+    for (auto& rule: rules)
+    {
+        auto rhs = rule.maybe_rhs(SS, bound_vars, f, args);
+        if (rhs)
+            results.push_back({rule.n_args, *rhs});
+    }
+
+    if (results.empty())
+        return {};
+    else if (results.size() == 1)
+        return {results[0]};
+    else
+        throw myexception()<<"Multiple rules fire for "<<f.name;
+}
+
+
+
 tuple<SimplFloats,Occ::Exp> SimplifierState::rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context)
 {
     vector<Occ::Exp> args;
@@ -1348,8 +1370,22 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuildCall(const Occ::Var& f, cons
         context = ac->next;
     }
 
+    // Here we do rules AFTER args are simplified.
+    auto rules = rules_for_var(f);
 
-    return rebuild(make_apply(Occ::Exp(f), args), bound_vars, context);
+    if (auto ok = try_rules(*this, bound_vars, rules, f, args))
+    {
+        auto [n, rhs] = *ok;
+
+        // Drop n args -- that is, skip n args and apply the rest!
+        Occ::Exp E = rhs;
+        for(int i=n;i<args.size();i++)
+            E = Occ::Apply{E,args[i]};
+
+        return simplify(E, {}, bound_vars, context);
+    }
+    else
+        return rebuild(make_apply(Occ::Exp(f), args), bound_vars, context);
 }
 
 tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
