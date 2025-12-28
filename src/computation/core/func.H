@@ -22,6 +22,22 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Core2::Exp<NoteV, NoteE>& arg)
+{
+    return Core2::Apply<NoteV,NoteE>{E,{arg}};
+}
+
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std::vector<Core2::Exp<NoteV, NoteE>>& args)
+{
+    auto E2 = E;
+    for(auto& arg: args)
+	E2 = make_apply(E2,arg);
+
+    return E2;
+}
+
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& xs, Core2::Exp<NoteV, NoteE> E)
 {
     for(auto& x: xs | ranges::views::reverse)
