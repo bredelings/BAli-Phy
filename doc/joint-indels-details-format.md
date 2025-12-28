@@ -97,7 +97,7 @@ Start1=1, Start2=1, End1=3, End2=1, Type=D, Length=2, Len1=4, Len2=2, Sequence=X
 
 ## Example 4: `M M M G1 G2 G1 M M` (mixed indels)
 
-This produces two separate indel events:
+This produces three separate indel events:
 
 | State | seq1 chars | seq2 chars |
 |-------|------------|------------|
