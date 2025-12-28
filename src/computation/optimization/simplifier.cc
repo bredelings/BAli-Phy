@@ -1088,23 +1088,6 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 }
 
 
-std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_apply(Occ::Exp E, const Occ::Exp& arg, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
-{
-    assert(not E.to_let());
-
-    SimplFloats F(bound_vars);
-    
-    auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
-
-    F.append(this_mod, options, arg_floats);
-    
-    auto [F2, E2] = rebuild(Occ::Apply{E, arg2}, F.bound_vars, context);
-    
-    F.append(this_mod, options, F2);
-
-    return {F, E2};
-}
-
 // QUESTION: Should I avoid inlining into cases because they might get re-executed?
 //           Right now I think I do not avoid it.
 //           However, I might try and let-float things out of cases.
