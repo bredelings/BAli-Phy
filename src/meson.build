@@ -171,6 +171,8 @@ extra_sources = {'alignment-draw': ['tools/colors.cc'], 'trees-bootstrap': ['too
 
 extra_deps = {'draw-tree': [cairo]}
 
+joint_indels_exe = disabler()
+
 foreach tool: tools + prefixed_tools
   sources = ['tools/' + tool + '.cc']
   if tool in extra_sources
@@ -198,4 +200,17 @@ foreach tool: tools + prefixed_tools
 			install: true)
 
   test(tool + ' --help', tool_exe, args:['--help'])
+
+  if tool == 'joint-indels'
+    joint_indels_exe = tool_exe
+  endif
 endforeach
+
+# joint-indels unit tests (only if extra-tools enabled)
+if not is_disabler(joint_indels_exe)
+  joint_indels_test_script = files('../tests/tools/joint-indels/run-tests.sh')
+  test('joint-indels --details',
+       find_program('bash'),
+       args: [joint_indels_test_script, joint_indels_exe],
+       workdir: meson.project_source_root())
+endif
