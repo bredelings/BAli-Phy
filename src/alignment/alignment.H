@@ -70,6 +70,9 @@ public:
     /// Get the sorted list of columns that contain characters
     std::vector<int> get_columns_for_characters(int row) const;
 
+    /// Get the sequence (actual letters) for a row
+    std::string get_sequence_for_row(int row) const;
+
     /// The i-th sequence
     const sequence& seq(int i) const { return sequences[i];}
     /// The i-th sequence
