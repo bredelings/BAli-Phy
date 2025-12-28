@@ -404,7 +404,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
     if (auto e = call_site_inline(unfolding, occ_info, context))
         return simplify(*e, {}, bound_vars, context);
     else
-        return rebuild(x, bound_vars, context);
+        return rebuildCall(x, bound_vars, context);
 }
 
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
@@ -1283,6 +1283,23 @@ Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
     
     // f x  ==> f
     return app->head;
+}
+
+tuple<SimplFloats,Occ::Exp> SimplifierState::rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context)
+{
+    vector<Occ::Exp> args;
+
+    while(auto ac = context.is_apply_context())
+    {
+        auto [_, __, arg2] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+
+        args.push_back(arg2);
+
+        context = ac->next;
+    }
+
+
+    return rebuild(make_apply(Occ::Exp(f), args), bound_vars, context);
 }
 
 tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)

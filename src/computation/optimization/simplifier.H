@@ -115,7 +115,10 @@ public:
     Occ::Alt
     simplify_alt(const std::optional<Occ::Exp>& object, const std::set<std::string>& seen_constructors, const simplifier::substitution& S, const in_scope_set& bound_vars, Occ::Alt alt, const inline_context& context);
 
-     std::tuple<SimplFloats,Occ::Exp>
+    std::tuple<SimplFloats,Occ::Exp>
+    rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context);
+
+    std::tuple<SimplFloats,Occ::Exp>
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
