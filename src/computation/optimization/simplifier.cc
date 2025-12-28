@@ -376,9 +376,7 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
 tuple<SimplFloats,Occ::Exp>
 SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
 {
-    // Rewrite rules go here.
-    // How do they match, given that arguments are not yet simplified?
-    
+    // Try rewrite rules here: the BEFORE plan - before argument simplification.
     
     auto [unfolding, occ_info] = get_unfolding(x, bound_vars);
 
