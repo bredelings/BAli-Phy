@@ -8,12 +8,12 @@ using std::vector;
 
 //********** Builtins for Num Int ****************//
 
-extern "C" closure builtin_function_add_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_add_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
-    integer y = Args.evaluate(1).as_<Integer>();
+    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
-    return Integer(x + y);
+    return Integer( x + y );
 }
 
 extern "C" closure builtin_function_subtract_integer(OperationArgs& Args)
@@ -58,10 +58,10 @@ extern "C" closure builtin_function_signum_integer(OperationArgs& Args)
 
 //********** Builtins for Num Int ****************//
 
-extern "C" closure builtin_function_add_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_add_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
-    auto y = Args.evaluate(1).as_int();
+    int y = get_arg(args).as_int();
+    int x = get_arg(args).as_int();
 
     return { x + y };
 }

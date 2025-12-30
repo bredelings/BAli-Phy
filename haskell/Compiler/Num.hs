@@ -35,7 +35,7 @@ instance Num Char where
     fromInteger x = integerToChar x
 
 
-foreign import bpcall "Num:" add_integer :: Integer -> Integer -> Integer
+foreign import ecall "Num:" add_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" subtract_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" multiply_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" abs_integer :: Integer -> Integer
@@ -52,7 +52,7 @@ instance Num Integer where
     fromInteger x = x
 
 
-foreign import bpcall "Num:" add_int :: Int -> Int -> Int
+foreign import ecall "Num:" add_int :: Int -> Int -> Int
 foreign import bpcall "Num:" subtract_int :: Int -> Int -> Int
 foreign import bpcall "Num:" multiply_int :: Int -> Int -> Int
 foreign import bpcall "Num:" abs_int :: Int -> Int
