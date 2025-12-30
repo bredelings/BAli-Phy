@@ -109,6 +109,7 @@
   STATIC        "static"
   STOCK         "stock"
   TRCALL        "trcall"
+  ECALL         "ecall"
   ANYCLASS      "anyclass"
   VIA           "via"
   UNIT          "unit"
@@ -676,6 +677,7 @@ topdecl: cl_decl                               {$$ = $1;}
 
 call_conv: "bpcall" {$$ = {@$,"bpcall"};}
 |          "trcall" {$$ = {@$,"trcall"};}
+|          "ecall"  {$$ = {@$,"ecall"};}
 
 cl_decl: "class" tycl_hdr fds where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3,$4)};}
 

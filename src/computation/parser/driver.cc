@@ -85,6 +85,7 @@ driver::driver (const LanguageExtensions& exts)
         {"default",{parser::token::TOK_DEFAULT,0}},
         {"deriving",{parser::token::TOK_DERIVING,0}},
         {"do",{parser::token::TOK_DO,0}},
+        {"ecall",{parser::token::TOK_ECALL,0}},
         {"else",{parser::token::TOK_ELSE,0}},
         {"family",{parser::token::TOK_FAMILY,0}},
         {"forall",{parser::token::TOK_FORALL,0}},

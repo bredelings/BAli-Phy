@@ -902,6 +902,11 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
             // inject signature 
             M.value_decls.signatures.insert({fdecl.function, fdecl.type});
         }
+        else if (call_conv == "ecall")
+        {
+            // inject signature 
+            M.value_decls.signatures.insert({fdecl.function, fdecl.type});
+        }
         else if (call_conv == "trcall")
         {
             string raw_name = fname +"$raw";
@@ -1486,7 +1491,7 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
 
         Core2::Exp<> body;
 
-        if (unloc(decl.call_conv) == "bpcall")
+        if (unloc(decl.call_conv) == "bpcall" or unloc(decl.call_conv) == "ecall")
         {
             auto S = lookup_symbol(function_name);
             
