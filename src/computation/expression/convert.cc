@@ -125,12 +125,24 @@ expression_ref to_expression_ref(const Core2::ConApp<>& C)
 // How can we do this?
 expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
 {
-    Operation O( (operation_fn)B.op, B.lib_name+":"+B.func_name);
-
     vector<expression_ref> args;
     for(auto& arg: B.args)
 	args.push_back( to_expression_ref(arg) );
-    return expression_ref(O, args);
+
+    if (B.call_conv == "bpcall" or B.call_conv == "trcall")
+    {
+        Operation O( (o_operation_fn)B.op, B.lib_name+":"+B.func_name);
+
+        return expression_ref{O, args};
+    }
+    else if (B.call_conv == "ecall")
+    {
+        Operation O( (e_operation_fn)B.op, B.lib_name+":"+B.func_name);
+
+        return expression_ref{O, args};
+    }
+    else
+        throw myexception()<<"Unrecognized calling convention '"<<B.call_conv<<"'";
 }
 
 expression_ref to_expression_ref(const Core2::Constant& C)
@@ -247,7 +259,7 @@ Core2::ConApp<> load_builtins(const module_loader& loader, Core2::ConApp<> C)
 // How can we do this?
 Core2::BuiltinOp<> load_builtins(const module_loader& loader, Core2::BuiltinOp<> B)
 {
-    B.op = loader.load_builtin_ptr(B.lib_name, B.func_name);
+    B.op = loader.load_builtin_ptr(B.lib_name, B.func_name, B.call_conv);
 
     for(auto& arg: B.args)
         arg = load_builtins(loader, arg);
@@ -363,12 +375,11 @@ Core2::Constant to_core_constant(const Occ::Constant& C)
 
 Core2::BuiltinOp<> to_core_builtin_op(const Occ::BuiltinOp& B)
 {
-    Core2::BuiltinOp<> builtin;
-    builtin.lib_name = B.lib_name;
-    builtin.func_name = B.func_name;
+    vector<Core2::Exp<>> args;
     for(int i=0;i<B.args.size();i++)
-	builtin.args.push_back(to_core_exp(B.args[i]));
-    return builtin;
+	args.push_back(to_core_exp(B.args[i]));
+
+    return {B.lib_name, B.func_name, B.call_conv, args, B.op};
 }
 
 Core2::Exp<> to_core_exp(const Occ::Exp& E)

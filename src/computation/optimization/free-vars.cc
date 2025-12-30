@@ -135,7 +135,7 @@ add_free_variable_annotations(const Core2::Exp<>& E)
             fv_args.push_back(fv_arg);
             free_vars = get_union(free_vars, get_free_vars(fv_arg));
         }
-        return FV::Exp(FV::BuiltinOp{B->lib_name, B->func_name,fv_args,B->op}, free_vars);
+        return FV::Exp(FV::BuiltinOp(B->lib_name, B->func_name, B->call_conv, fv_args, B->op), free_vars);
     }
     else if (auto C = E.to_constant())
         return *C;

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <variant>
 
 #include "computation/object.H"
 
@@ -11,13 +12,32 @@ class OperationArgs;
 #include "closure.H"
 #include "type_constant.H"
 
-typedef closure (*operation_fn)(OperationArgs&);
+typedef closure (*o_operation_fn)(OperationArgs&);
+
+// An operation with unboxed arguments and unboxed result.
+//   #
+//   # -> #
+//   # -> # -> #
+//   # -> # -> # -> #
+// etc.
+//
+// In theory we could handle
+//   # -> * -> #
+// if we knew not to evaluate the 2nd arg.
+typedef expression_ref (*e_operation_fn)(std::vector<expression_ref>&);
+
+closure evaluate_e_op_to_c(OperationArgs& Args);
 
 struct Operation: public Object
 {
     std::string name_;
 
-    operation_fn op = 0;
+    o_operation_fn op = nullptr;
+
+    e_operation_fn e_op = nullptr;
+    
+    // If we have an e_operation_op, then are arguments used or forced?
+    bool force_only = false;
 
     virtual Operation* clone() const {return new Operation(*this);}
 
@@ -38,7 +58,8 @@ struct Operation: public Object
     }
 
     type_constant type() const {return type_constant::operation_type;}
-    Operation(closure (*f)(OperationArgs&), const std::string& s):name_(s),op(f) { }
+    Operation(o_operation_fn f, const std::string& s):name_(s),op(f) { }
+    Operation(e_operation_fn f, const std::string& s):name_(s),op(evaluate_e_op_to_c),e_op(f) { }
 };
 
 std::string print_operator_expression(const std::vector<std::string>& arguments);

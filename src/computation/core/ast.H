@@ -638,6 +638,7 @@ namespace Core2
     {
 	std::string lib_name;
 	std::string func_name;
+        std::string call_conv;
 	std::vector<Exp<NoteV,NoteE>> args;
 	void* op = nullptr;
 
@@ -645,7 +646,7 @@ namespace Core2
 
 	bool operator==(const BuiltinOp<NoteV,NoteE>& v2) const
 	{
-	    return lib_name == v2.lib_name and func_name == v2.func_name and args == v2.args;
+	    return lib_name == v2.lib_name and func_name == v2.func_name and call_conv == v2.call_conv and args == v2.args;
 	}
 
 	std::strong_ordering operator<=>(const BuiltinOp<NoteV,NoteE>& v2) const
@@ -658,21 +659,38 @@ namespace Core2
 
 	    if (cmp2 != std::strong_ordering::equivalent) return cmp2;
 
-	    return args <=> v2.args;
+            auto cmp3 = call_conv <=> v2.call_conv;
+
+	    if (cmp3 != std::strong_ordering::equivalent) return cmp3;
+
+            return args <=> v2.args;
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
-	    ar(lib_name, func_name, args);
+	    ar(lib_name, func_name, call_conv, args);
 	    op = nullptr;
+            assert(not call_conv.empty());
 	}
 
 	template <class Archive>
 	void save(Archive& ar) const
 	{
-	    ar(lib_name, func_name, args);
+            assert(not call_conv.empty());
+	    ar(lib_name, func_name, call_conv, args);
 	}
+
+
+        BuiltinOp(const std::string& lib, const std::string& func, const std::string& conv, const std::vector<Exp<NoteV,NoteE>>& a, void* o)
+            :lib_name(lib), func_name(func), call_conv(conv), args(a), op(o)
+        {
+            assert(not call_conv.empty());
+        }
+    private:
+        BuiltinOp() = default;
+
+        friend cereal::access;
     };
 
     struct Constant

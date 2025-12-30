@@ -315,7 +315,7 @@ float_lets(const Levels::Exp& E, int level)
             float_binds.append(arg_float_binds);
             args.push_back(arg2);
         }
-        return {Core2::BuiltinOp<>{B->lib_name, B->func_name, args, B->op}, float_binds};
+        return {Core2::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op), float_binds};
     }
 
     std::abort();

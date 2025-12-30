@@ -1476,17 +1476,15 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     {
         SimplFloats F(bound_vars);
 
-	Occ::BuiltinOp builtin2;
-	builtin2.lib_name = builtin->lib_name;
-	builtin2.func_name = builtin->func_name;
-	builtin2.op = builtin->op;
-
+        vector<Occ::Exp> args;
 	for(auto& arg: builtin->args)
  	{
 	    auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
             F.append(this_mod, options, argF);
-	    builtin2.args.push_back(arg2);
+	    args.push_back(arg2);
  	}
+
+        Occ::BuiltinOp builtin2(builtin->lib_name, builtin->func_name, builtin->call_conv, args, builtin->op);
 
 	auto [F2, E2] = rebuild(builtin2, F.bound_vars, context);
 

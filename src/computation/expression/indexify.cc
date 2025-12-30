@@ -237,9 +237,20 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 	for(auto& arg: B->args)
 	    args.push_back( indexify(arg, variables) );
 
-	Operation O( (operation_fn)B->op, B->lib_name+":"+B->func_name);
+        if (B->call_conv == "bpcall" or B->call_conv == "trcall")
+        {
+            Operation O( (o_operation_fn)B->op, B->lib_name+":"+B->func_name);
 
-	return expression_ref{O, args};
+            return expression_ref{O, args};
+        }
+        else if (B->call_conv == "ecall")
+        {
+            Operation O( (e_operation_fn)B->op, B->lib_name+":"+B->func_name);
+
+            return expression_ref{O, args};
+        }
+        else
+            throw myexception()<<"Unrecognized calling convention '"<<B->call_conv<<"'";
     }
     else if (auto C = E.to_constant())
     {

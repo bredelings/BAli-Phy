@@ -98,4 +98,6 @@ public:
     virtual ~OperationArgs();
 };
 
+expression_ref get_arg(std::vector<expression_ref>& args);
+
 #endif

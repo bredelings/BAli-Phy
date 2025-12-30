@@ -762,7 +762,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         for(auto& arg: args)
             arg = rename(arg, substitution, bound);
 
-        return Core2::BuiltinOp<>{B->lib_name, B->func_name, args};
+        return Core2::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op);
     }
     // 8. Constant
     else if (E.to_constant())
@@ -1455,7 +1455,9 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
 
 Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
-    return L.load_builtin(B.plugin_name, B.symbol_name, n_args);
+    auto call_conv = unloc(B.call_conv);
+    assert(not call_conv.empty());
+    return L.load_builtin(B.plugin_name, B.symbol_name, call_conv, n_args);
 }
 
 /*

@@ -198,9 +198,21 @@ fs::path module_loader::find_plugin(const string& plugin_name) const
 
 #include <dlfcn.h>
 
-void* load_builtin_(const fs::path& filename, const string& raw_symbol_name)
+std::string function_prefix(const std::string& call_conv)
 {
-    const string builtin_prefix = "builtin_function_";
+    if (call_conv == "bpcall")
+        return "builtin_function_";
+    else if (call_conv == "trcall")
+        return "builtin_function_";
+    else if (call_conv == "ecall")
+        return "simple_function_";
+    else
+        throw myexception()<<"Calling convention '"<<call_conv<<"' not recognized";
+}
+
+void* load_builtin_(const fs::path& filename, const string& raw_symbol_name, const std::string& call_conv)
+{
+    const string builtin_prefix = function_prefix(call_conv);
 
     string symbol_name = builtin_prefix + raw_symbol_name;
 
@@ -221,26 +233,27 @@ void* load_builtin_(const fs::path& filename, const string& raw_symbol_name)
     return fn;
 }
 
-void* module_loader::load_builtin_ptr(const string& plugin_name, const string& symbol_name) const
+void* module_loader::load_builtin_ptr(const string& plugin_name, const string& symbol_name, const string& call_conv) const
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
 
     auto op = tuple<string,string>(plugin_name, symbol_name);
     if (not cached_builtins.count(op))
-	cached_builtins.insert({op, load_builtin_(filename, symbol_name)});
+	cached_builtins.insert({op, load_builtin_(filename, symbol_name, call_conv)});
 
     return cached_builtins.at(op);
 }
 
-Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string& symbol_name, int n) const
+Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string& symbol_name, const string& call_conv, int n) const
 {
-    auto fn = load_builtin_ptr(plugin_name, symbol_name);
+    assert(not call_conv.empty());
+    auto fn = load_builtin_ptr(plugin_name, symbol_name, call_conv);
 
     auto args = make_vars<>(n);
     auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
 
-    Core2::Exp<> body = Core2::BuiltinOp<>{plugin_name, symbol_name, args_exp, fn};
+    Core2::Exp<> body = Core2::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
     return lambda_quantify(args, body);
 }
 

@@ -183,3 +183,10 @@ OperationArgs::~OperationArgs()
     for(int i=0;i<n_allocated;i++)
 	M.pop_temp_head();
 }
+
+expression_ref get_arg(std::vector<expression_ref>& args)
+{
+    auto arg = std::move(args.back());
+    args.pop_back();
+    return arg;
+}

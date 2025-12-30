@@ -513,7 +513,7 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::E
             merge_occurrences_into(free_vars, arg_free_vars);
         }
 
-        return {Occ::BuiltinOp{B->lib_name, B->func_name, args}, free_vars};
+        return {Occ::BuiltinOp(B->lib_name, B->func_name, B->call_conv, args, B->op), free_vars};
     }
     // 8. Constant
     else if (auto C = E.to_constant())

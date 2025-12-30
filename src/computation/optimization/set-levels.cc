@@ -249,7 +249,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
             | views::transform([&](const auto& arg) {return set_level_maybe_MFE(arg, level, env);})
             | ranges::to<vector>;
 
-        return Levels::BuiltinOp{B->lib_name, B->func_name, lv_args, B->op};
+        return Levels::BuiltinOp(B->lib_name, B->func_name, B->call_conv, lv_args, B->op);
     }
 
     std::abort();
