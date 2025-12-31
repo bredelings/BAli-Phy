@@ -153,10 +153,28 @@ expression_ref to_expression_ref(const Core2::Constant& C)
 	return *i;
     else if (auto i = to<integer_container>(C.value))
 	return Integer(i->i);
+    else if (auto d = to<double>(C.value))
+	return *d;
     else if (auto s = to<std::string>(C.value))
 	return String(*s);
     else
 	std::abort();
+}
+
+std::optional<Core2::Constant> to_core_constant(const expression_ref& E)
+{
+    if (E.is_char())
+        return Core2::Constant{{E.as_char()}};
+    else if (E.is_int())
+        return Core2::Constant{{E.as_int()}};
+    else if (E.is_double())
+        return Core2::Constant{{E.as_double()}};
+    else if (E.is_a<Integer>())
+        return Core2::Constant{{integer_container(E.as_<Integer>())}};
+    else if (E.is_a<String>())
+        return Core2::Constant{{E.as_<String>()}};
+    else
+	return {};
 }
 
 expression_ref to_expression_ref(const Core2::Exp<>& E)

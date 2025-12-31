@@ -11,11 +11,17 @@ expression_ref to_expression_ref(const Core2::Exp<>& E);
 
 expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E);
 
+expression_ref to_expression_ref(const Core2::Constant& C);
+
 CDecl to_expression_ref(const Core2::Decl<>& decl);
 
 CDecls to_expression_ref(const Core2::Decls<>& decls);
 
 std::vector<CDecls> decl_groups_to_expression_ref(const std::vector<Core2::Decls<>>& decls);
+
+//-----------------------------------------------------------------------
+
+std::optional<Core2::Constant> to_core_constant(const expression_ref& E);
 
 //-----------------------------------------------------------------------
 
