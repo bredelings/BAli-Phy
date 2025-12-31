@@ -171,13 +171,15 @@ vector<expression_ref> e_value_stack;
 
 expression_ref evaluate_e_op(OperationArgs& Args, const closure& C)
 {
+    int n = C.exp.size();
     int initial_size = e_value_stack.size();
+    e_value_stack.resize(initial_size+n);
     for(int i=0;i<C.exp.size();i++)
     {
         int r = C.reg_for_slot(i);
-        e_value_stack.push_back( Args.evaluate_reg_to_object(r) );
+        e_value_stack[initial_size+i] = Args.evaluate_reg_to_object(r);
     }
-    assert(e_value_stack.size() == initial_size + C.exp.size());
+    assert(e_value_stack.size() == initial_size + n);
     auto f = C.exp.head().as_ptr_to<Operation>()->e_op;
     expression_ref result = f(e_value_stack);
     assert(e_value_stack.size() == initial_size);

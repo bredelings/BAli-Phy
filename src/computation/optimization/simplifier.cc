@@ -1477,16 +1477,44 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
         SimplFloats F(bound_vars);
 
         vector<Occ::Exp> args;
+        bool all_constant_args = true;
 	for(auto& arg: builtin->args)
  	{
 	    auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
             F.append(this_mod, options, argF);
 	    args.push_back(arg2);
+
+            if (not arg.to_constant())
+                all_constant_args = false;
  	}
 
         Occ::BuiltinOp builtin2(builtin->lib_name, builtin->func_name, builtin->call_conv, args, builtin->op);
 
-	auto [F2, E2] = rebuild(builtin2, F.bound_vars, context);
+        Occ::Exp BB = builtin2;
+        if (all_constant_args and builtin->call_conv == "ecall")
+        {
+            auto f = e_operation_fn(builtin2.op);
+            int n = builtin->args.size();
+            vector<expression_ref> op_args(n);
+            for(int i=0;i<n;i++)
+                op_args[i] = to_expression_ref(*builtin2.args[i].to_constant());
+
+            try
+            {
+                expression_ref result = f(op_args);
+                if (auto C = to_core_constant(result))
+                {
+                    BB = *C;
+//                    std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
+                }
+            }
+            catch (...)
+            {
+                std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<" inside the simplifier!";
+            }
+        }
+
+        auto [F2, E2] = rebuild(BB, F.bound_vars, context);
 
         F.append(this_mod, options, F2);
 
