@@ -70,14 +70,14 @@ instance Num Int where
     fromInteger = integerToInt
 
 
-foreign import bpcall "Num:" add_double :: Double -> Double -> Double
-foreign import bpcall "Num:" subtract_double :: Double -> Double -> Double
-foreign import bpcall "Num:" multiply_double :: Double -> Double -> Double
-foreign import bpcall "Num:" abs_double :: Double -> Double
-foreign import bpcall "Num:" negate_double :: Double -> Double
-foreign import bpcall "Num:" signum_double :: Double -> Double
---foreign import bpcall "Num:" intToDouble :: Int -> Double -- used by Enum Double
-foreign import bpcall "Num:" integerToDouble :: Integer -> Double
+foreign import ecall "Num:" add_double :: Double -> Double -> Double
+foreign import ecall "Num:" subtract_double :: Double -> Double -> Double
+foreign import ecall "Num:" multiply_double :: Double -> Double -> Double
+foreign import ecall "Num:" abs_double :: Double -> Double
+foreign import ecall "Num:" negate_double :: Double -> Double
+foreign import ecall "Num:" signum_double :: Double -> Double
+--foreign import ecall "Num:" intToDouble :: Int -> Double -- used by Enum Double
+foreign import ecall "Num:" integerToDouble :: Integer -> Double
 
 instance Num Double where
     (+) = add_double
@@ -90,6 +90,6 @@ instance Num Double where
 
 -- These may get used in other modules...
 foreign import ecall "Num:" intToInteger :: Int -> Integer
-foreign import bpcall "Num:" intToDouble :: Int -> Double
+foreign import ecall "Num:" intToDouble :: Int -> Double
 foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
 

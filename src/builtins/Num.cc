@@ -212,63 +212,63 @@ extern "C" closure builtin_function_charToInt(OperationArgs& Args)
 
 //********** Builtins for Num Double ****************//
 
-extern "C" closure builtin_function_add_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_add_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
-    auto y = Args.evaluate(1).as_double();
+    auto y = get_arg(args).as_double();
+    auto x = get_arg(args).as_double();
 
     return { x + y };
 }
 
-extern "C" closure builtin_function_subtract_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_subtract_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
-    auto y = Args.evaluate(1).as_double();
+    auto y = get_arg(args).as_double();
+    auto x = get_arg(args).as_double();
 
     return { x - y };
 }
 
-extern "C" closure builtin_function_multiply_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_multiply_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
-    auto y = Args.evaluate(1).as_double();
+    auto y = get_arg(args).as_double();
+    auto x = get_arg(args).as_double();
 
     return { x * y };
 }
 
-extern "C" closure builtin_function_abs_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_abs_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
+    auto x = get_arg(args).as_double();
 
     return { std::abs(x) };
 }
 
 
-extern "C" closure builtin_function_negate_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_negate_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
+    auto x = get_arg(args).as_double();
 
     return { -x };
 }
 
-extern "C" closure builtin_function_signum_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_signum_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
+    auto x = get_arg(args).as_double();
 
     double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? -1.0 : 0.0);
 
     return {result};
 }
 
-extern "C" closure builtin_function_integerToDouble(OperationArgs& Args)
+extern "C" expression_ref simple_function_integerToDouble(vector<expression_ref>& args)
 {
-    integer i = Args.evaluate(0).as_<Integer>();
+    integer i = get_arg(args).as_<Integer>();
     return {i.convert_to<double>()};
 }
 
-extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
+extern "C" expression_ref simple_function_intToDouble(vector<expression_ref>& args)
 {
-    int i = Args.evaluate(0).as_int();
+    int i = get_arg(args).as_int();
     return {double(i)};
 }
 
