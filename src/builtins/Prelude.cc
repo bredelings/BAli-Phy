@@ -52,12 +52,12 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
     return {xi};
 }
 
-extern "C" closure builtin_function_divide_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_divide_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    auto y = get_arg(args).as_double();
+    auto x = get_arg(args).as_double();
 
-    return {x.as_double() / y.as_double()};
+    return {x / y};
 }
 
 extern "C" closure builtin_function_divide_logdouble(OperationArgs& Args)
@@ -68,9 +68,9 @@ extern "C" closure builtin_function_divide_logdouble(OperationArgs& Args)
     return {x.as_log_double() / y.as_log_double()};
 }
 
-extern "C" closure builtin_function_recip_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_recip_double(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_double();
+    auto x = get_arg(args).as_double();
     x = 1.0/x;
 
     return {x};

@@ -15,8 +15,8 @@ class Num a => Fractional a where
     recip y = 1 / y
     fromRational (Ratio top bottom) = fromInteger top / fromInteger bottom
 
-foreign import bpcall "Prelude:" divide_double :: Double -> Double -> Double
-foreign import bpcall "Prelude:" recip_double :: Double -> Double
+foreign import ecall "Prelude:" divide_double :: Double -> Double -> Double
+foreign import ecall "Prelude:" recip_double :: Double -> Double
 
 instance Fractional Double where
     (/) = divide_double
