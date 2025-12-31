@@ -66,40 +66,40 @@ extern "C" expression_ref simple_function_add_int(vector<expression_ref>& args)
     return { x + y };
 }
 
-extern "C" closure builtin_function_subtract_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_subtract_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
-    auto y = Args.evaluate(1).as_int();
+    int y = get_arg(args).as_int();
+    int x = get_arg(args).as_int();
 
     return { x - y };
 }
 
-extern "C" closure builtin_function_multiply_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_multiply_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
-    auto y = Args.evaluate(1).as_int();
+    int y = get_arg(args).as_int();
+    int x = get_arg(args).as_int();
 
     return { x * y };
 }
 
-extern "C" closure builtin_function_abs_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_abs_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
+    int x = get_arg(args).as_int();
 
     return { std::abs(x) };
 }
 
 
-extern "C" closure builtin_function_negate_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_negate_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
+    int x = get_arg(args).as_int();
 
     return { -x };
 }
 
-extern "C" closure builtin_function_signum_int(OperationArgs& Args)
+extern "C" expression_ref simple_function_signum_int(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0).as_int();
+    int x = get_arg(args).as_int();
 
     auto result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
 
@@ -107,9 +107,9 @@ extern "C" closure builtin_function_signum_int(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_integerToInt(OperationArgs& Args)
+extern "C" expression_ref simple_function_integerToInt(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
     int result = x.convert_to<int>();
 
@@ -117,9 +117,9 @@ extern "C" closure builtin_function_integerToInt(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_intToInteger(OperationArgs& Args)
+extern "C" expression_ref simple_function_intToInteger(vector<expression_ref>& args)
 {
-    int x = Args.evaluate(0).as_int();
+    int x = get_arg(args).as_int();
 
     return Integer(x);
 }

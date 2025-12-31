@@ -53,12 +53,12 @@ instance Num Integer where
 
 
 foreign import ecall "Num:" add_int :: Int -> Int -> Int
-foreign import bpcall "Num:" subtract_int :: Int -> Int -> Int
-foreign import bpcall "Num:" multiply_int :: Int -> Int -> Int
-foreign import bpcall "Num:" abs_int :: Int -> Int
-foreign import bpcall "Num:" negate_int :: Int -> Int
-foreign import bpcall "Num:" signum_int :: Int -> Int
-foreign import bpcall "Num:" integerToInt :: Integer -> Int
+foreign import ecall "Num:" subtract_int :: Int -> Int -> Int
+foreign import ecall "Num:" multiply_int :: Int -> Int -> Int
+foreign import ecall "Num:" abs_int :: Int -> Int
+foreign import ecall "Num:" negate_int :: Int -> Int
+foreign import ecall "Num:" signum_int :: Int -> Int
+foreign import ecall "Num:" integerToInt :: Integer -> Int
 
 instance Num Int where
     (+) = add_int
@@ -89,7 +89,7 @@ instance Num Double where
     fromInteger = integerToDouble
 
 -- These may get used in other modules...
-foreign import bpcall "Num:" intToInteger :: Int -> Integer
+foreign import ecall "Num:" intToInteger :: Int -> Integer
 foreign import bpcall "Num:" intToDouble :: Int -> Double
 foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
 
