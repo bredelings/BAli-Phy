@@ -9,6 +9,7 @@
 #include "util/cow-ptr.H"
 #include "util/string/join.H"
 #include "util/math/log-double.H"
+#include "util/variant.H"
 #include "computation/haskell/ids.H"
 #include "computation/haskell/integer_container.H"
 
@@ -695,7 +696,7 @@ namespace Core2
 
     struct Constant
     {
-	std::variant<char,int,integer_container,std::string> value;
+	std::variant<char,int,integer_container,double,std::string> value;
 
 	std::string print() const;
 
@@ -881,14 +882,16 @@ namespace Core2
 
     inline std::string Constant::print() const
     {
-	if (std::holds_alternative<char>(value))
-	    return (std::string("'") + std::get<char>(value) + "'");
-	else if (std::holds_alternative<int>(value))
-	    return std::to_string(std::get<int>(value));
-	else if (std::holds_alternative<integer_container>(value))
-	    return std::get<integer_container>(value).i.str();
-	else if (std::holds_alternative<std::string>(value))
-	    return (std::string("\"") + std::get<std::string>(value) + "\"");
+	if (auto c = to<char>(value))
+	    return (std::string("'") + *c + "'");
+	else if (auto i = to<int>(value))
+	    return std::to_string(*i) + "#";
+	else if (auto ic = to<integer_container>(value))
+	    return ic->i.str();
+	else if (auto d = to<double>(value))
+	    return std::to_string(*d) + "##";
+        else if (auto s = to<std::string>(value))
+	    return (std::string("\"") + *s + "\"#");
 	else
 	    std::abort();
     }
