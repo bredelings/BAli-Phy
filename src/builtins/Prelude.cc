@@ -54,8 +54,8 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
 
 extern "C" expression_ref simple_function_divide_double(vector<expression_ref>& args)
 {
-    auto y = get_arg(args).as_double();
     auto x = get_arg(args).as_double();
+    auto y = get_arg(args).as_double();
 
     return {x / y};
 }

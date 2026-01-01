@@ -177,7 +177,7 @@ expression_ref evaluate_e_op(OperationArgs& Args, const closure& C)
     for(int i=0;i<C.exp.size();i++)
     {
         int r = C.reg_for_slot(i);
-        e_value_stack[initial_size+i] = Args.evaluate_reg_to_object(r);
+        e_value_stack[initial_size+n-1-i] = Args.evaluate_reg_to_object(r);
     }
     assert(e_value_stack.size() == initial_size + n);
     auto f = C.exp.head().as_ptr_to<Operation>()->e_op;

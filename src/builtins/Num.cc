@@ -10,8 +10,8 @@ using std::vector;
 
 extern "C" expression_ref simple_function_add_integer(vector<expression_ref>& args)
 {
-    integer y = get_arg(args).as_<Integer>();
     integer x = get_arg(args).as_<Integer>();
+    integer y = get_arg(args).as_<Integer>();
 
     return Integer( x + y );
 }
@@ -60,24 +60,24 @@ extern "C" closure builtin_function_signum_integer(OperationArgs& Args)
 
 extern "C" expression_ref simple_function_add_int(vector<expression_ref>& args)
 {
-    int y = get_arg(args).as_int();
     int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
 
     return { x + y };
 }
 
 extern "C" expression_ref simple_function_subtract_int(vector<expression_ref>& args)
 {
-    int y = get_arg(args).as_int();
     int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
 
     return { x - y };
 }
 
 extern "C" expression_ref simple_function_multiply_int(vector<expression_ref>& args)
 {
-    int y = get_arg(args).as_int();
     int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
 
     return { x * y };
 }
@@ -214,24 +214,24 @@ extern "C" closure builtin_function_charToInt(OperationArgs& Args)
 
 extern "C" expression_ref simple_function_add_double(vector<expression_ref>& args)
 {
-    auto y = get_arg(args).as_double();
     auto x = get_arg(args).as_double();
+    auto y = get_arg(args).as_double();
 
     return { x + y };
 }
 
 extern "C" expression_ref simple_function_subtract_double(vector<expression_ref>& args)
 {
-    auto y = get_arg(args).as_double();
     auto x = get_arg(args).as_double();
+    auto y = get_arg(args).as_double();
 
     return { x - y };
 }
 
 extern "C" expression_ref simple_function_multiply_double(vector<expression_ref>& args)
 {
-    auto y = get_arg(args).as_double();
     auto x = get_arg(args).as_double();
+    auto y = get_arg(args).as_double();
 
     return { x * y };
 }

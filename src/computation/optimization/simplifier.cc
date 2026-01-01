@@ -1497,7 +1497,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
             int n = builtin->args.size();
             vector<expression_ref> op_args(n);
             for(int i=0;i<n;i++)
-                op_args[i] = to_expression_ref(*builtin2.args[i].to_constant());
+                op_args[n-1-i] = to_expression_ref(*builtin2.args[i].to_constant());
 
             try
             {
