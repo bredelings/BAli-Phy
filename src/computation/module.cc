@@ -33,6 +33,8 @@
 #include <fmt/chrono.h>
 
 #include <cereal/archives/binary.hpp>
+#define CEREAL_FUTURE_EXPERIMENTAL 1
+#include <cereal/archives/adapters.hpp>
 
 #include <xxhash.h>
 
@@ -489,7 +491,7 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
                 throw myexception()<<"archive failed integrity check: stored and computed archive integrity hash did not match.";
 
             std::istringstream data2(data);
-            cereal::BinaryInputArchive archive( data2 );
+            cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive( loader, data2 );
 
             std::shared_ptr<CompiledModule> M;
 
@@ -2501,8 +2503,6 @@ void CompiledModule::inflate(const Program& P)
 	for(auto& [mod_name, mod]: M2->transitively_imported_modules())
 	    transitively_imported_modules_.insert({mod_name, mod});
     }
-
-    value_decls = load_builtins(*P.get_module_loader(), value_decls);
 }
 
 CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)

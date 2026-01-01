@@ -18,6 +18,10 @@
 #include <cereal/types/tuple.hpp>
 #include <cereal/types/variant.hpp>
 #include <cereal/types/vector.hpp>
+#define CEREAL_FUTURE_EXPERIMENTAL 1
+#include <cereal/archives/adapters.hpp>
+
+#include "computation/loader.H" // for module_loader
 
 #include "range/v3/all.hpp"
 
@@ -671,14 +675,17 @@ namespace Core2
 	void load(Archive& ar)
 	{
 	    ar(lib_name, func_name, call_conv, args);
-	    op = nullptr;
+            const module_loader& loader = get_user_data<const module_loader>(ar);
+            op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
             assert(not call_conv.empty());
+            assert(op);
 	}
 
 	template <class Archive>
 	void save(Archive& ar) const
 	{
             assert(not call_conv.empty());
+            assert(op);
 	    ar(lib_name, func_name, call_conv, args);
 	}
 
@@ -687,6 +694,7 @@ namespace Core2
             :lib_name(lib), func_name(func), call_conv(conv), args(a), op(o)
         {
             assert(not call_conv.empty());
+            assert(op);
         }
     private:
         BuiltinOp() = default;
