@@ -3,6 +3,7 @@
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/operations.H"
+#include "computation/core/ast.H"
 #include "expression/lambda.H"
 #include "util/file-paths.H"
 #include "parser/driver.hh"
@@ -243,17 +244,5 @@ void* module_loader::load_builtin_ptr(const string& plugin_name, const string& s
 	cached_builtins.insert({op, load_builtin_(filename, symbol_name, call_conv)});
 
     return cached_builtins.at(op);
-}
-
-Core2::Exp<> module_loader::load_builtin(const string& plugin_name, const string& symbol_name, const string& call_conv, int n) const
-{
-    assert(not call_conv.empty());
-    auto fn = load_builtin_ptr(plugin_name, symbol_name, call_conv);
-
-    auto args = make_vars<>(n);
-    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
-
-    Core2::Exp<> body = Core2::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
-    return lambda_quantify(args, body);
 }
 

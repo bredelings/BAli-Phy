@@ -1452,12 +1452,23 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
  * - cs_rec_map :: out_exp -> out_exp.  This is a separate map for self-recursive bindings.
  */
 
+Core2::Exp<> load_builtin(const module_loader& loader, const string& plugin_name, const string& symbol_name, const string& call_conv, int n)
+{
+    assert(not call_conv.empty());
+    auto fn = loader.load_builtin_ptr(plugin_name, symbol_name, call_conv);
+
+    auto args = make_vars<>(n);
+    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
+
+    Core2::Exp<> body = Core2::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
+    return lambda_quantify(args, body);
+}
 
 Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
     auto call_conv = unloc(B.call_conv);
     assert(not call_conv.empty());
-    return L.load_builtin(B.plugin_name, B.symbol_name, call_conv, n_args);
+    return load_builtin(L, B.plugin_name, B.symbol_name, call_conv, n_args);
 }
 
 /*

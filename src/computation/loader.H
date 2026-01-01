@@ -7,7 +7,6 @@
 #include <map>
 #include <filesystem>
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
-#include "computation/core/ast.H"
 
 class Module;
 
@@ -41,8 +40,6 @@ public:
     std::shared_ptr<Module> load_module(const std::string&) const;
 
     void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name, const std::string& call_conv) const;
-
-    Core2::Exp<> load_builtin(const std::string& lib_name, const std::string& func_name, const std::string& call_conv, int n) const;
 
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };
