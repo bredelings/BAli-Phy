@@ -36,11 +36,11 @@ instance Num Char where
 
 
 foreign import ecall "Num:" add_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Num:" subtract_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Num:" multiply_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Num:" abs_integer :: Integer -> Integer
-foreign import bpcall "Num:" negate_integer :: Integer -> Integer
-foreign import bpcall "Num:" signum_integer :: Integer -> Integer
+foreign import ecall "Num:" subtract_integer :: Integer -> Integer -> Integer
+foreign import ecall "Num:" multiply_integer :: Integer -> Integer -> Integer
+foreign import ecall "Num:" abs_integer :: Integer -> Integer
+foreign import ecall "Num:" negate_integer :: Integer -> Integer
+foreign import ecall "Num:" signum_integer :: Integer -> Integer
 
 instance Num Integer where
     (+) = add_integer

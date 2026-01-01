@@ -16,40 +16,40 @@ extern "C" expression_ref simple_function_add_integer(vector<expression_ref>& ar
     return Integer( x + y );
 }
 
-extern "C" closure builtin_function_subtract_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_subtract_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
-    integer y = Args.evaluate(1).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
+    integer y = get_arg(args).as_<Integer>();
 
     return Integer( x - y );
 }
 
-extern "C" closure builtin_function_multiply_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_multiply_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
-    integer y = Args.evaluate(1).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
+    integer y = get_arg(args).as_<Integer>();
 
     return Integer( x * y );
 }
 
-extern "C" closure builtin_function_abs_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_abs_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
     return Integer( (x < 0) ? -x : x );
 }
 
 
-extern "C" closure builtin_function_negate_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_negate_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
     return Integer( -x );
 }
 
-extern "C" closure builtin_function_signum_integer(OperationArgs& Args)
+extern "C" expression_ref simple_function_signum_integer(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
     integer result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
 
