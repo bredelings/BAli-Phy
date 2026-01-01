@@ -169,26 +169,47 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
 
 vector<expression_ref> e_value_stack;
 
-expression_ref evaluate_e_op(OperationArgs& Args, const closure& C)
+expression_ref evaluate_e_op(OperationArgs& Args, int r)
 {
-    int n = C.exp.size();
     int initial_size = e_value_stack.size();
-    e_value_stack.resize(initial_size+n);
-    for(int i=0;i<C.exp.size();i++)
+
+    // Can we stop referencing M?
+    // The problem is that after each evaluation, closure pointers might be modified
+    //   to point to a non-index-var.
+    // If we could assume that closures that are currently being executed will not
+    //   be modified, that would be helpful for writing simpler code I expect.
+    auto& M = Args.memory();
+    int n_args = M.expression_at(r).size();
+    auto f = M.expression_at(r).head().as_ptr_to<Operation>()->e_op;
+
+    // Reserve space for the n_args arguments.
+    e_value_stack.resize(initial_size + n_args);
+
+    // Evaluate the arguments in left-to-right order.
+    for(int i=0;i<n_args;i++)
     {
-        int r = C.reg_for_slot(i);
-        e_value_stack[initial_size+n-1-i] = Args.evaluate_reg_to_object(r);
+        // This can change during GC, so we need to evaluate it as late as possible.
+        int r_arg = M[r].reg_for_slot(i);
+
+        // In theory M[r].reg_for_slot(i) could change if it initially points to an index_var.
+        e_value_stack[initial_size+n_args-1-i] = Args.evaluate_reg_to_object( r_arg );
     }
-    assert(e_value_stack.size() == initial_size + n);
-    auto f = C.exp.head().as_ptr_to<Operation>()->e_op;
+
+    // Any new args pushed only the stack by evaluating arguments should be popped before we get here.
+    assert(e_value_stack.size() == initial_size + n_args);
+
+    // Compute the result.
     expression_ref result = f(e_value_stack);
+
+    // After evaluating f, the n_args arguments that we added should also be popped.
     assert(e_value_stack.size() == initial_size);
+
     return result;
 }
 
 closure evaluate_e_op_to_c(OperationArgs& Args)
 {
-    return evaluate_e_op(Args, Args.current_closure());
+    return evaluate_e_op(Args, Args.current_reg());
 }
 
 pair<int,int> reg_heap::incremental_evaluate1_(int r)

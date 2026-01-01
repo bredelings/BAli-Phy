@@ -25,7 +25,11 @@ public:
 
     const reg_heap& memory() const {return M;}
 
-    const closure& current_closure() const { return M.closure_at(r); }
+    // This reg should be on the stack
+    int current_reg() const { return r; }
+
+    // If the heap is grown, this could end up pointing to bad memory.
+    const closure& current_closure() const { return M.closure_at(current_reg()); }
 
     virtual bool evaluate_changeables() const = 0;
 

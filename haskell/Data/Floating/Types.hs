@@ -1,8 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Floating.Types where
 
-foreign import bpcall "Num:" intToDouble :: Int -> Double
-foreign import bpcall "Num:" integerToDouble :: Integer -> Double
+foreign import ecall "Num:" intToDouble :: Int -> Double
+foreign import ecall "Num:" integerToDouble :: Integer -> Double
 
 class FloatConvert a b where
     toFloating :: a -> b

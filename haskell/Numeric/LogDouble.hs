@@ -16,11 +16,11 @@ import Data.Floating.Types
 
 data LogDouble
 
-foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Num:" integerToLogDouble :: Integer -> LogDouble
+foreign import ecall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import ecall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import ecall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import ecall "Num:" signum_logdouble :: LogDouble -> LogDouble
+foreign import ecall "Num:" integerToLogDouble :: Integer -> LogDouble
 foreign import bpcall "Prelude:" lessthan_log_double :: LogDouble -> LogDouble -> Bool
 foreign import bpcall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
