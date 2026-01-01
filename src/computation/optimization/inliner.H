@@ -7,19 +7,11 @@
 #include <memory>
 #include "substitution.H"
 #include "simplifier_env.H" // for Unfolding, Occ::Var, and rebind_var( )
+#include "simplifier_options.H"
 
 struct stop_context;
 struct apply_context;
 struct case_context;
-
-struct inliner_options
-{
-    int creation_threshold = 75;
-    int inline_threshhold = 9; // use_threshold
-    int fun_app_discount = 6;
-    int dict_discount = 3;
-};
-
 
 struct discounts
 {

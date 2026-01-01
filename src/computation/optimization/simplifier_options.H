@@ -1,8 +1,6 @@
 #ifndef SIMPLIFIER_OPTIONS_H
 #define SIMPLIFIER_OPTIONS_H
 
-#include "inliner.H"
-
 struct pass_options
 {
     bool typecheck = true;
@@ -17,6 +15,15 @@ struct dump_options
     bool dump_desugared = false;
     bool dump_optimized = false;
 };
+
+struct inliner_options
+{
+    int creation_threshold = 75;
+    int inline_threshhold = 9; // use_threshold
+    int fun_app_discount = 6;
+    int dict_discount = 3;
+};
+
 
 struct simplifier_options: public pass_options,
                            public dump_options,
