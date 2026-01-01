@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <filesystem>
+#include <optional>
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
 
 class Module;
