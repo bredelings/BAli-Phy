@@ -19,27 +19,27 @@ class Fractional a => Floating a where
     asinh, atanh, acosh :: a -> a
     log1p, expm1, log1pexp, log1mexp :: a -> a
 
-foreign import bpcall "Real:exp" exp_double :: Double -> Double
-foreign import bpcall "Real:sqrt" sqrt_a :: a -> a
-foreign import bpcall "Real:log" log_a :: a -> Double
-foreign import bpcall "Real:pow" pow_a :: a -> Double -> a
-foreign import bpcall "Real:logBase" logBase_a :: a -> Double -> a
-foreign import bpcall "Real:sin" sin_double :: Double -> Double
-foreign import bpcall "Real:tan" tan_double :: Double -> Double
-foreign import bpcall "Real:cos" cos_double :: Double -> Double
-foreign import bpcall "Real:asin" asin_double :: Double -> Double
-foreign import bpcall "Real:atan" atan_double :: Double -> Double
-foreign import bpcall "Real:acos" acos_double :: Double -> Double
-foreign import bpcall "Real:sinh" sinh_double :: Double -> Double
-foreign import bpcall "Real:tanh" tanh_double :: Double -> Double
-foreign import bpcall "Real:cosh" cosh_double :: Double -> Double
-foreign import bpcall "Real:asinh" asinh_double :: Double -> Double
-foreign import bpcall "Real:atanh" atanh_double :: Double -> Double
-foreign import bpcall "Real:acosh" acosh_double :: Double -> Double
-foreign import bpcall "Real:expm1" expm1_double :: Double -> Double
-foreign import bpcall "Real:log1p" log1p_double :: Double -> Double
-foreign import bpcall "Real:log1pexp" log1pexp_double :: Double -> Double
-foreign import bpcall "Real:log1mexp" log1mexp_double :: Double -> Double
+foreign import ecall "Real:exp" exp_double :: Double -> Double
+foreign import ecall "Real:sqrt" sqrt_a :: a -> a
+foreign import ecall "Real:log" log_a :: a -> Double
+foreign import ecall "Real:pow" pow_a :: a -> Double -> a
+foreign import ecall "Real:logBase" logBase_a :: a -> Double -> a
+foreign import ecall "Real:sin" sin_double :: Double -> Double
+foreign import ecall "Real:tan" tan_double :: Double -> Double
+foreign import ecall "Real:cos" cos_double :: Double -> Double
+foreign import ecall "Real:asin" asin_double :: Double -> Double
+foreign import ecall "Real:atan" atan_double :: Double -> Double
+foreign import ecall "Real:acos" acos_double :: Double -> Double
+foreign import ecall "Real:sinh" sinh_double :: Double -> Double
+foreign import ecall "Real:tanh" tanh_double :: Double -> Double
+foreign import ecall "Real:cosh" cosh_double :: Double -> Double
+foreign import ecall "Real:asinh" asinh_double :: Double -> Double
+foreign import ecall "Real:atanh" atanh_double :: Double -> Double
+foreign import ecall "Real:acosh" acosh_double :: Double -> Double
+foreign import ecall "Real:expm1" expm1_double :: Double -> Double
+foreign import ecall "Real:log1p" log1p_double :: Double -> Double
+foreign import ecall "Real:log1pexp" log1pexp_double :: Double -> Double
+foreign import ecall "Real:log1mexp" log1mexp_double :: Double -> Double
 
 instance Floating Double where
     pi = 3.14159265358979323846

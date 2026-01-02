@@ -1505,7 +1505,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
                 if (auto C = to_core_constant(result))
                 {
                     BB = *C;
-//                    std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
+                    std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
                 }
             }
             catch (...)

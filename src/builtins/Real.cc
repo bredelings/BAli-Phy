@@ -10,51 +10,51 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
-extern "C" closure builtin_function_exp(OperationArgs& Args)
+extern "C" expression_ref simple_function_exp(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (not x.is_double())
         throw myexception()<<"exp: object '"<<x.print()<<"' is not double!";
 
     double xx = x.as_double();
 
-    return {exp(xx)};
+    return exp(xx);
 }
 
-extern "C" closure builtin_function_expm1(OperationArgs& Args)
+extern "C" expression_ref simple_function_expm1(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (not x.is_double())
         throw myexception()<<"expm1: object '"<<x.print()<<"' is not double!";
 
     double xx = x.as_double();
-    return {expm1(xx)};
+    return expm1(xx);
 }
 
-extern "C" closure builtin_function_log(OperationArgs& Args)
+extern "C" expression_ref simple_function_log(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (x.is_double())
     {
 	double xx = x.as_double();
 	assert(xx > 0.0);
-	return {log(xx)};
+	return log(xx);
     }
     else if (x.is_log_double())
     {
 	log_double_t xx = x.as_log_double();
-	return {log(xx)};
+	return log(xx);
     }
 
     throw myexception()<<"log: object '"<<x.print()<<"' is not double or log_double";
 }
 
-extern "C" closure builtin_function_log1p(OperationArgs& Args)
+extern "C" expression_ref simple_function_log1p(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (not x.is_double())
         throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
@@ -63,12 +63,12 @@ extern "C" closure builtin_function_log1p(OperationArgs& Args)
 
     double xx = x.as_double();
     assert(xx >= -1.0);
-    return {log1p(xx)};
+    return log1p(xx);
 }
 
-extern "C" closure builtin_function_log1pexp(OperationArgs& Args)
+extern "C" expression_ref simple_function_log1pexp(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (not x.is_double())
         throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
@@ -76,12 +76,12 @@ extern "C" closure builtin_function_log1pexp(OperationArgs& Args)
     // QUESTION: should we implement this for logdouble?
 
     double xx = x.as_double();
-    return {log1pexp(xx)};
+    return log1pexp(xx);
 }
 
-extern "C" closure builtin_function_log1mexp(OperationArgs& Args)
+extern "C" expression_ref simple_function_log1mexp(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (not x.is_double())
         throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
@@ -89,13 +89,13 @@ extern "C" closure builtin_function_log1mexp(OperationArgs& Args)
     // QUESTION: should we implement this for logdouble?
 
     double xx = x.as_double();
-    return {log1mexp(xx)};
+    return log1mexp(xx);
 }
 
-extern "C" closure builtin_function_pow(OperationArgs& Args)
+extern "C" expression_ref simple_function_pow(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    auto x = get_arg(args);
+    auto y = get_arg(args);
 
     double yy = 0;
     if (y.is_double())
@@ -110,177 +110,177 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
     if (x.is_double())
     {
 	double xx = x.as_double();
-	return {pow(xx,yy)};
+	return pow(xx,yy);
     }
     else if (x.is_int())
     {
 	double xx = x.as_int();
-	return {pow(xx,yy)};
+	return pow(xx,yy);
     }
     else if (x.is_log_double())
     {
 	log_double_t xx = x.as_log_double();
-	return {pow(xx,yy)};
+	return pow(xx,yy);
     }
 
     throw myexception()<<"pow: object '"<<x.print()<<"' is not double, int, or log_double";
 }
 
-extern "C" closure builtin_function_sqrt(OperationArgs& Args)
+extern "C" expression_ref simple_function_sqrt(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
+    auto x = get_arg(args);
 
     if (x.is_double())
-	return {sqrt(x.as_double())};
+	return sqrt(x.as_double());
     else if (x.is_log_double())
-	return {sqrt(x.as_log_double())};
+	return sqrt(x.as_log_double());
     else
 	std::abort();
 }
 
-extern "C" closure builtin_function_logBase(OperationArgs& Args)
+extern "C" expression_ref simple_function_logBase(vector<expression_ref>& args)
 {
-    auto x = Args.evaluate(0);
-    auto base = Args.evaluate(1);
+    auto x = get_arg(args);
+    auto base = get_arg(args);
 
     if (x.is_double())
-	return {log(x.as_double())/log(base.as_double())};
+	return log(x.as_double())/log(base.as_double());
     else if (x.is_log_double())
-	return {log(x.as_log_double())/log(base.as_log_double())};
+	return log(x.as_log_double())/log(base.as_log_double());
     else
 	std::abort();
 }
 
-extern "C" closure builtin_function_sin(OperationArgs& Args)
+extern "C" expression_ref simple_function_sin(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {sin(x)};
+    return sin(x);
 }
 
-extern "C" closure builtin_function_tan(OperationArgs& Args)
+extern "C" expression_ref simple_function_tan(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {tan(x)};
+    return tan(x);
 }
 
-extern "C" closure builtin_function_cos(OperationArgs& Args)
+extern "C" expression_ref simple_function_cos(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {cos(x)};
+    return cos(x);
 }
 
-extern "C" closure builtin_function_asin(OperationArgs& Args)
+extern "C" expression_ref simple_function_asin(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {asin(x)};
+    return asin(x);
 }
 
-extern "C" closure builtin_function_atan(OperationArgs& Args)
+extern "C" expression_ref simple_function_atan(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {atan(x)};
+    return atan(x);
 }
 
-extern "C" closure builtin_function_acos(OperationArgs& Args)
+extern "C" expression_ref simple_function_acos(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {acos(x)};
+    return acos(x);
 }
 
-extern "C" closure builtin_function_sinh(OperationArgs& Args)
+extern "C" expression_ref simple_function_sinh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {sinh(x)};
+    return sinh(x);
 }
 
-extern "C" closure builtin_function_tanh(OperationArgs& Args)
+extern "C" expression_ref simple_function_tanh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {tanh(x)};
+    return tanh(x);
 }
 
-extern "C" closure builtin_function_cosh(OperationArgs& Args)
+extern "C" expression_ref simple_function_cosh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {cosh(x)};
+    return cosh(x);
 }
 
-extern "C" closure builtin_function_asinh(OperationArgs& Args)
+extern "C" expression_ref simple_function_asinh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {asinh(x)};
+    return asinh(x);
 }
 
-extern "C" closure builtin_function_atanh(OperationArgs& Args)
+extern "C" expression_ref simple_function_atanh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {atanh(x)};
+    return atanh(x);
 }
 
-extern "C" closure builtin_function_acosh(OperationArgs& Args)
+extern "C" expression_ref simple_function_acosh(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {acosh(x)};
+    return acosh(x);
 }
 
-extern "C" closure builtin_function_isDoubleNaN(OperationArgs& Args)
+extern "C" expression_ref simple_function_isDoubleNaN(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {std::isnan(x)};
+    return std::isnan(x);
 }
 
-extern "C" closure builtin_function_isDoubleFinite(OperationArgs& Args)
+extern "C" expression_ref simple_function_isDoubleFinite(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {std::isfinite(x)};
+    return std::isfinite(x);
 }
 
-extern "C" closure builtin_function_isDoubleInfinite(OperationArgs& Args)
+extern "C" expression_ref simple_function_isDoubleInfinite(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {std::isinf(x)};
+    return std::isinf(x);
 }
 
-extern "C" closure builtin_function_isDoubleDenormalized(OperationArgs& Args)
+extern "C" expression_ref simple_function_isDoubleDenormalized(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {std::fpclassify(x) == FP_SUBNORMAL};
+    return std::fpclassify(x) == FP_SUBNORMAL;
 }
 
-extern "C" closure builtin_function_isDoubleNegativeZero(OperationArgs& Args)
+extern "C" expression_ref simple_function_isDoubleNegativeZero(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
 
-    return {x == 0 and std::signbit(x)};
+    return x == 0 and std::signbit(x);
 }
 
-extern "C" closure builtin_function_atan2_double(OperationArgs& Args)
+extern "C" expression_ref simple_function_atan2_double(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
-    double y = Args.evaluate(1).as_double();
+    double x = get_arg(args).as_double();
+    double y = get_arg(args).as_double();
 
-    return {atan2(x,y)};
+    return atan2(x,y);
 }
 
-extern "C" closure builtin_function_decodeDoubleRaw(OperationArgs& Args)
+extern "C" expression_ref simple_function_decodeDoubleRaw(vector<expression_ref>& args)
 {
-    double x = Args.evaluate(0).as_double();
+    double x = get_arg(args).as_double();
     int64_t sig = 0;
     int exp = 0;
     if (x)
@@ -291,17 +291,17 @@ extern "C" closure builtin_function_decodeDoubleRaw(OperationArgs& Args)
     return EPair(Integer(sig),exp);
 }
 
-extern "C" closure builtin_function_encodeDouble(OperationArgs& Args)
+extern "C" expression_ref simple_function_encodeDouble(vector<expression_ref>& args)
 {
-    auto sig = (int64_t)Args.evaluate(0).as_<Integer>();
-    auto exp = Args.evaluate(1).as_int();
+    auto sig = (int64_t)get_arg(args).as_<Integer>();
+    auto exp = get_arg(args).as_int();
 
     return { std::ldexp(sig,exp) };
 }
 
-extern "C" closure builtin_function_integerToInvLogOdds(OperationArgs& Args)
+extern "C" expression_ref simple_function_integerToInvLogOdds(vector<expression_ref>& args)
 {
-    integer x = Args.evaluate(0).as_<Integer>();
+    integer x = get_arg(args).as_<Integer>();
 
     double result = 0;
 

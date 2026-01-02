@@ -54,14 +54,14 @@ instance RealFloat Double where
     atan2 x y = atan2_double x y
 
 
-foreign import bpcall "Real:" isDoubleNaN :: Double -> Bool
-foreign import bpcall "Real:" isDoubleInfinite :: Double -> Bool
-foreign import bpcall "Real:" isDoubleFinite :: Double -> Bool
-foreign import bpcall "Real:" isDoubleDenormalized :: Double -> Bool
-foreign import bpcall "Real:" isDoubleNegativeZero :: Double -> Bool
-foreign import bpcall "Real:" atan2_double :: Double -> Double -> Double
-foreign import bpcall "Real:" decodeDoubleRaw :: Double -> EPair Integer Int
-foreign import bpcall "Real:" encodeDouble :: Integer -> Int -> Double
+foreign import ecall "Real:" isDoubleNaN :: Double -> Bool
+foreign import ecall "Real:" isDoubleInfinite :: Double -> Bool
+foreign import ecall "Real:" isDoubleFinite :: Double -> Bool
+foreign import ecall "Real:" isDoubleDenormalized :: Double -> Bool
+foreign import ecall "Real:" isDoubleNegativeZero :: Double -> Bool
+foreign import ecall "Real:" atan2_double :: Double -> Double -> Double
+foreign import ecall "Real:" decodeDoubleRaw :: Double -> EPair Integer Int
+foreign import ecall "Real:" encodeDouble :: Integer -> Int -> Double
 
 decodeDouble = pair_from_c . decodeDoubleRaw
 
