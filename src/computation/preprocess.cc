@@ -98,13 +98,26 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 
+        bool constant_arg_ok = false;
+        if (auto O = E.head().to<Operation>(); O and O->e_op)
+            constant_arg_ok = true;
+
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
 	vector<pair<var, expression_ref>> decls;
 	for(int i=0;i<E2->size();i++)
 	{
 	    E2->sub[i] = graph_normalize(source, E.sub()[i]);
 
-	    if (not is_reglike(E2->sub[i]))
+            // Is the arg OK as is, or do we need to replace with a variable?
+            bool arg_ok = is_reglike(E2->sub[i]);
+            if (not arg_ok and constant_arg_ok)
+            {
+                auto& arg = E2->sub[i];
+                // This matches the condition for NOT lifting constants out of lambdas.
+                arg_ok = arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<String>() or arg.is_a<Integer>();
+            }
+
+            if (not arg_ok)
 	    {
 		auto x = source.get_fresh_var();
 

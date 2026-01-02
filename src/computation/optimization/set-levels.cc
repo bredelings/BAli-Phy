@@ -245,8 +245,16 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     }
     else if (auto B = E.to_builtinOp())
     {
+        bool allow_constant_args = B->call_conv == "ecall";
+
         vector<Levels::Exp> lv_args = B->args
-            | views::transform([&](const auto& arg) {return set_level_maybe_MFE(arg, level, env);})
+            | views::transform([&](const auto& arg) {
+                // This matches the condition in process.cc for NOT replacing constants with a variable.
+                if (allow_constant_args and arg.to_constant())
+                    return set_level(arg, level, env);
+                else
+                    return set_level_maybe_MFE(arg, level, env);
+            })
             | ranges::to<vector>;
 
         return Levels::BuiltinOp(B->lib_name, B->func_name, B->call_conv, lv_args, B->op);
