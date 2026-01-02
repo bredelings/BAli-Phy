@@ -28,7 +28,7 @@ pack_cpp_string = list_to_string
 -- Possibly this should just be "empty", but then we'd have to import this qualified and use something like FS.empty
 empty_cpp_string = list_to_string ""
 
-foreign import bpcall "Prelude:" show_int :: Int -> CPPString
-foreign import bpcall "Prelude:" show_integer :: Integer -> CPPString
-foreign import bpcall "Prelude:" show_double :: Double -> CPPString
+foreign import ecall "Prelude:" show_int :: Int -> CPPString
+foreign import ecall "Prelude:" show_integer :: Integer -> CPPString
+foreign import ecall "Prelude:" show_double :: Double -> CPPString
 

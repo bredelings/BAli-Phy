@@ -17,6 +17,6 @@ instance Read Double where
     read [] = error "Can't convert empty string to double."
     read s = read_double (list_to_string s)
 
-foreign import bpcall "Prelude:" read_int :: CPPString -> Int
-foreign import bpcall "Prelude:" read_double :: CPPString -> Double
+foreign import ecall "Prelude:" read_int :: CPPString -> Int
+foreign import ecall "Prelude:" read_double :: CPPString -> Double
 

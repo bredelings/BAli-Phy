@@ -91,5 +91,5 @@ instance Num Double where
 -- These may get used in other modules...
 foreign import ecall "Num:" intToInteger :: Int -> Integer
 foreign import ecall "Num:" intToDouble :: Int -> Double
-foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
+foreign import ecall "Prelude:" doubleToInt :: Double -> Int
 

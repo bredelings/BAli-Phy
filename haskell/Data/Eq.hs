@@ -16,25 +16,25 @@ class Eq a where
 x /= y = not (x == y)
 
 -- Eq Char
-foreign import bpcall "Prelude:" equals_char :: Char -> Char -> Bool
+foreign import ecall "Prelude:" equals_char :: Char -> Char -> Bool
 
 instance Eq Char where
     (==) = equals_char
 
 -- Eq Int
-foreign import bpcall "Prelude:" equals_int :: Int -> Int -> Bool
+foreign import ecall "Prelude:" equals_int :: Int -> Int -> Bool
 
 instance Eq Int where
     (==) = equals_int
 
 -- Eq Integer
-foreign import bpcall "Prelude:" equals_integer :: Integer -> Integer-> Bool
+foreign import ecall "Prelude:" equals_integer :: Integer -> Integer-> Bool
 
 instance Eq Integer where
     (==) = equals_integer
 
 -- Eq Double
-foreign import bpcall "Prelude:" equals_double :: Double -> Double -> Bool
+foreign import ecall "Prelude:" equals_double :: Double -> Double -> Bool
 
 instance Eq Double where
     (==) = equals_double

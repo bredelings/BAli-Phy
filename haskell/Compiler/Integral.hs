@@ -31,15 +31,15 @@ class (Real a, Enum a) => Integral a  where
 
     quotRem x y = (x `quot` y, x `rem` y)
 
-foreign import bpcall "Prelude:"  div_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:"  mod_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:"  quot_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:"  rem_int :: Int -> Int -> Int
+foreign import ecall "Prelude:"  div_int :: Int -> Int -> Int
+foreign import ecall "Prelude:"  mod_int :: Int -> Int -> Int
+foreign import ecall "Prelude:"  quot_int :: Int -> Int -> Int
+foreign import ecall "Prelude:"  rem_int :: Int -> Int -> Int
 
-foreign import bpcall "Prelude:"  div_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Prelude:"  mod_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Prelude:"  quot_integer :: Integer -> Integer -> Integer
-foreign import bpcall "Prelude:"  rem_integer :: Integer -> Integer -> Integer
+foreign import ecall "Prelude:"  div_integer :: Integer -> Integer -> Integer
+foreign import ecall "Prelude:"  mod_integer :: Integer -> Integer -> Integer
+foreign import ecall "Prelude:"  quot_integer :: Integer -> Integer -> Integer
+foreign import ecall "Prelude:"  rem_integer :: Integer -> Integer -> Integer
 
 instance Integral Int where
     quot = quot_int

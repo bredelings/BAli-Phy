@@ -15,7 +15,7 @@ data Matrix a
 foreign import bpcall "Matrix:" nrows :: Matrix a -> Int
 foreign import bpcall "Matrix:" ncols :: Matrix a -> Int
 
-foreign import bpcall "Prelude:show" showMatrix :: Matrix a -> CPPString
+foreign import ecall "Prelude:show" showMatrix :: Matrix a -> CPPString
 -- prettyMatrix :: Show a => Matrix a -> String
 -- forceMatrix :: Matrix a -> Matrix a                                         
 -- matrix :: Int -> Int -> ((Int, Int) -> a) -> Matrix a

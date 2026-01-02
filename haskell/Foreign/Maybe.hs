@@ -8,11 +8,11 @@ import Compiler.FFI.ToFromC
 
 data CMaybe a
 
-foreign import bpcall "Prelude:" cNothing :: CMaybe a
-foreign import bpcall "Prelude:" cJust :: a -> CMaybe a
+foreign import ecall "Prelude:" cNothing :: CMaybe a
+foreign import ecall "Prelude:" cJust :: a -> CMaybe a
 
-foreign import bpcall "Prelude:" cIsJust :: CMaybe a -> Bool
-foreign import bpcall "Prelude:" cFromJust :: CMaybe a -> a
+foreign import ecall "Prelude:" cIsJust :: CMaybe a -> Bool
+foreign import ecall "Prelude:" cFromJust :: CMaybe a -> a
 
 cMaybe Nothing  = cNothing
 cMaybe (Just x) = cJust x

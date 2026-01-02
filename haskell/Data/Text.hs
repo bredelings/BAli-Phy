@@ -283,7 +283,7 @@ instance Eq Text where
 instance Ord Text where
     (Text arr1 off1 len1) < (Text arr2 off2 len2) = builtin_less_than arr1 off1 len1 arr2 off2 len2
 
-foreign import bpcall "Prelude:show_double" doubleToCPPString :: Double -> CPPString
+foreign import ecall "Prelude:show_double" doubleToCPPString :: Double -> CPPString
 doubleToText d = Text arr 0 (FS.sizeOfString arr) where arr = doubleToCPPString d
 
 

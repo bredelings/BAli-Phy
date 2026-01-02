@@ -21,12 +21,12 @@ foreign import ecall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogD
 foreign import ecall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import ecall "Num:" signum_logdouble :: LogDouble -> LogDouble
 foreign import ecall "Num:" integerToLogDouble :: Integer -> LogDouble
-foreign import bpcall "Prelude:" lessthan_log_double :: LogDouble -> LogDouble -> Bool
-foreign import bpcall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Prelude:" doubleToLogDouble :: Double -> LogDouble
-foreign import bpcall "Prelude:" equals_log_double :: LogDouble -> LogDouble -> Bool
-foreign import bpcall "Prelude:" expToLogDouble :: Double -> LogDouble
+foreign import ecall "Prelude:" lessthan_log_double :: LogDouble -> LogDouble -> Bool
+foreign import ecall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import ecall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
+foreign import ecall "Prelude:" doubleToLogDouble :: Double -> LogDouble
+foreign import ecall "Prelude:" equals_log_double :: LogDouble -> LogDouble -> Bool
+foreign import ecall "Prelude:" expToLogDouble :: Double -> LogDouble
 
 
 instance Eq LogDouble where

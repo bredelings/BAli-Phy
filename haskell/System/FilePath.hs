@@ -20,7 +20,7 @@ type FilePath = String
 infixr 7 <.>, -<.> 
 infixr 5 </>
 
-foreign import bpcall "Prelude:" isWindows :: Bool
+foreign import ecall "Prelude:" isWindows :: Bool
 
 isPosix = not isWindows
                                               

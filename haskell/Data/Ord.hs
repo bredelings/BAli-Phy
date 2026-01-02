@@ -47,10 +47,10 @@ class Eq a => Ord a where
     {- For GHC, you can specify either compare or (<=).
        Here you can specify either compare or (<). -}
 
-foreign import bpcall "Prelude:" lessthan_char :: Char -> Char -> Bool
-foreign import bpcall "Prelude:" lessthan_int :: Int -> Int -> Bool
-foreign import bpcall "Prelude:" lessthan_integer :: Integer -> Integer -> Bool
-foreign import bpcall "Prelude:" lessthan_double :: Double -> Double -> Bool
+foreign import ecall "Prelude:" lessthan_char :: Char -> Char -> Bool
+foreign import ecall "Prelude:" lessthan_int :: Int -> Int -> Bool
+foreign import ecall "Prelude:" lessthan_integer :: Integer -> Integer -> Bool
+foreign import ecall "Prelude:" lessthan_double :: Double -> Double -> Bool
 
 instance Ord Char where
     (<) = lessthan_char
