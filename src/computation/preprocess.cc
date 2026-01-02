@@ -93,29 +93,38 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
     else if (not E.size()) return E;
 
-    // 4. Constructor
+    // 4. Constructor or Operation
     if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 
-        bool constant_arg_ok = false;
+        bool sub_exp_ok = false;
         if (auto O = E.head().to<Operation>(); O and O->e_op)
-            constant_arg_ok = true;
+            sub_exp_ok = true;
 
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
 	vector<pair<var, expression_ref>> decls;
+        bool sub_exp = false;
 	for(int i=0;i<E2->size();i++)
 	{
 	    E2->sub[i] = graph_normalize(source, E.sub()[i]);
 
             // Is the arg OK as is, or do we need to replace with a variable?
             bool arg_ok = is_reglike(E2->sub[i]);
-            if (not arg_ok and constant_arg_ok)
+            if (not arg_ok and sub_exp_ok)
             {
                 auto& arg = E2->sub[i];
                 // This matches the condition for NOT lifting constants out of lambdas.
                 arg_ok = arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<String>() or arg.is_a<Integer>();
             }
+            if (not arg_ok and sub_exp_ok)
+            {
+                auto& arg = E2->sub[i];
+                auto O = arg.head().to<Operation>();
+                arg_ok = O and O->e_op;
+            }
+            if (not is_reglike(E2->sub[i]) and arg_ok)
+                sub_exp = true;
 
             if (not arg_ok)
 	    {
