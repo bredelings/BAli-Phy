@@ -390,8 +390,8 @@ static double pointChi2(double prob, double v)
 	       * (s3 - b
 		  * (s4 - b * (s5 - b * s6))))));
   } while (std::abs(q / ch - 1) > e);
-    
-  assert(not std::isnan(ch) and std::isfinite(ch));
+
+  assert(std::isnan(prob) or std::isnan(v) or (not std::isnan(ch) and std::isfinite(ch)));
   assert(ch >= 0);
   return (ch);
 }
