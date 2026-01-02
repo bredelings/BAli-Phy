@@ -188,11 +188,16 @@ expression_ref evaluate_e_op(OperationArgs& Args, int r)
     // Evaluate the arguments in left-to-right order.
     for(int i=0;i<n_args;i++)
     {
-        // This can change during GC, so we need to evaluate it as late as possible.
-        int r_arg = M[r].reg_for_slot(i);
+        auto arg = M[r].arg_for_slot(i);
+        if (arg.is_reg_var())
+        {
+            // This can change during GC, so we need to evaluate it as late as possible.
+            int r_arg = M[r].reg_for_slot(i);
 
-        // In theory M[r].reg_for_slot(i) could change if it initially points to an index_var.
-        e_value_stack[initial_size+n_args-1-i] = Args.evaluate_reg_to_object( r_arg );
+            // In theory M[r].reg_for_slot(i) could change if it initially points to an index_var.
+            arg = Args.evaluate_reg_to_object( r_arg );
+        }
+        e_value_stack[initial_size+n_args-1-i] = arg;
     }
 
     // Any new args pushed only the stack by evaluating arguments should be popped before we get here.
