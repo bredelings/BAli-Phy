@@ -202,6 +202,10 @@ expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 
             arg = Args.evaluate_reg_to_object( r_arg );
         }
+        else if (auto O = arg.head().to<Operation>(); O and O->e_op)
+        {
+            arg = evaluate_e_op(Args, arg);
+        }
         else
         {
             assert(arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<Integer>() or arg.is_a<String>());
