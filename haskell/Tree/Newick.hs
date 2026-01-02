@@ -47,7 +47,7 @@ instance WriteNewickNode t => WriteNewickNode (WithRoots t) where
     node_info (WithRoots tree _ _) = node_info tree
     branch_info (WithRoots tree _ _) = branch_info tree
 
-foreign import bpcall "Text:" quoteLabelRaw :: CPPString -> CPPString
+foreign import ecall "Text:" quoteLabelRaw :: CPPString -> CPPString
 quoteLabel l = T.fromCppString $ quoteLabelRaw $ T.toCppString l
 
 instance WriteNewickNode t => WriteNewickNode (WithBranchLengths t) where

@@ -34,7 +34,7 @@ import Compiler.FFI.ToFromC
 -- These should all be strict.
 data Text = Text CPPString Int Int
 
-foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
+foreign import ecall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
 instance Show Text where
     show s = show $ unpack s
@@ -43,23 +43,23 @@ pack = fromCppString . builtin_pack . toVector
 
 unpack (Text array offset length) = FS.unpack_cpp_substring array offset length
 
-foreign import bpcall "Text:singleton" builtin_singleton :: Char -> CPPString
+foreign import ecall "Text:singleton" builtin_singleton :: Char -> CPPString
 singleton c = Text (builtin_singleton c) 0 1
 
-foreign import bpcall "Text:empty" builtin_empty :: CPPString
+foreign import ecall "Text:empty" builtin_empty :: CPPString
 empty = Text builtin_empty 0 0
 
 infixr 5 `cons`
-foreign import bpcall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString
+foreign import ecall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString
 cons c t = append (singleton c) t
 
-foreign import bpcall "Text:snoc" builtin_snoc :: CPPString -> Char -> CPPString
+foreign import ecall "Text:snoc" builtin_snoc :: CPPString -> Char -> CPPString
 snoc t c = append t (singleton c)
 
 text arr off len | len == 0  = empty
                  | otherwise = Text arr off len
 
-foreign import bpcall "Text:append" builtin_append :: CPPString -> Int -> Int ->
+foreign import ecall "Text:append" builtin_append :: CPPString -> Int -> Int ->
                                                       CPPString -> Int -> Int ->
                                                       CPPString
 append t1@(Text array1 offset1 len1) t2@(Text array2 offset2 len2)
@@ -138,7 +138,7 @@ intercalate i ts = concat $ P.intersperse i ts
 
 fromCppString s = Text s 0 (FS.sizeOfString s)
 
-foreign import bpcall "Text:" concatRaw :: EVector CPPString -> CPPString
+foreign import ecall "Text:" concatRaw :: EVector CPPString -> CPPString
 
 concat :: [Text] -> Text
 concat texts = fromCppString $ concatRaw $ toVector $ map toCppString texts
@@ -269,11 +269,11 @@ concat texts = fromCppString $ concatRaw $ toVector $ map toCppString texts
 
 -- measureOff :: Int -> Text -> Int
 
-foreign import bpcall "Text:equals" builtin_equals :: CPPString -> Int -> Int ->
+foreign import ecall "Text:equals" builtin_equals :: CPPString -> Int -> Int ->
                                                       CPPString -> Int -> Int ->
                                                       Bool
 
-foreign import bpcall "Text:less_than" builtin_less_than :: CPPString -> Int -> Int ->
+foreign import ecall "Text:less_than" builtin_less_than :: CPPString -> Int -> Int ->
                                                             CPPString -> Int -> Int ->
                                                             Bool
 
