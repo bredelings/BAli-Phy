@@ -105,6 +105,16 @@ vector<int> alignment::get_columns_for_characters(int row) const
     return columns;
 }
 
+std::string alignment::get_sequence_for_row(int row) const
+{
+    std::string seq;
+    seq.reserve(length());
+    for(int c=0;c<length();c++)
+	if (character(c,row))
+	    seq += a->lookup(array(c,row));
+    return seq;
+}
+
 void alignment::changelength(int l) 
 {
     array.resize(l,array.size2());

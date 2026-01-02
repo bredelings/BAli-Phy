@@ -16,8 +16,12 @@ Output columns:
 - `Start1/Start2`: Characters emitted to each sequence before the indel
 - `End1/End2`: Characters emitted to each sequence at the end of the indel
 - `Len1/Len2`: Total sequence lengths (for context; these vary across MCMC samples)
+- `Sequence`: The actual nucleotide/amino acid sequence of the indel
 
 The indel length is `End - Start` for the sequence that received characters.
+
+For Type=I (insertion in Seq2): sequence is extracted from Seq2.
+For Type=D (insertion in Seq1): sequence is extracted from Seq1.
 
 ## Tree Structure (all examples)
 
@@ -51,7 +55,7 @@ A5:    ACGGGA
 | G1    | (gap)     | G         | 2               | 5               |
 | M     | A         | A         | 3               | 6               |
 
-**Output**: `Start1=2, Start2=2, End1=2, End2=5, I, Length=3, Len1=3, Len2=6`
+**Output**: `Start1=2, Start2=2, End1=2, End2=5, I, Length=3, Len1=3, Len2=6, Sequence=GGG`
 
 - Before the G1 block: 2 characters emitted to each
 - After the G1 block: Seq1 still at 2, Seq2 advances to 5
@@ -81,7 +85,7 @@ A5:    A--A
 | G2    | G         | (gap)     | 3               | 1               |
 | M     | A         | A         | 4               | 2               |
 
-**Output**: `Start1=1, Start2=1, End1=3, End2=1, D, Length=2, Len1=4, Len2=2`
+**Output**: `Start1=1, Start2=1, End1=3, End2=1, D, Length=2, Len1=4, Len2=2, Sequence=GG`
 
 - Before the G2 block: 1 character emitted to each
 - After the G2 block: Seq1 advances to 3, Seq2 still at 1
@@ -117,9 +121,9 @@ A5:    ACGC-TAA
 
 **Output** (3 indels):
 ```
-Start1=3, Start2=3, End1=3, End2=4, I, Length=1, Len1=6, Len2=7
-Start1=3, Start2=4, End1=4, End2=4, D, Length=1, Len1=6, Len2=7
-Start1=4, Start2=4, End1=4, End2=5, I, Length=1, Len1=6, Len2=7
+Start1=3, Start2=3, End1=3, End2=4, I, Length=1, Len1=6, Len2=7, Sequence=C
+Start1=3, Start2=4, End1=4, End2=4, D, Length=1, Len1=6, Len2=7, Sequence=T
+Start1=4, Start2=4, End1=4, End2=5, I, Length=1, Len1=6, Len2=7, Sequence=T
 ```
 
 This example shows:

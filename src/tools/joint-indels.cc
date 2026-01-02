@@ -216,11 +216,12 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
         int end1, end2;      // chars in seq1/seq2 after indel
         int type;
         int length;
+        std::string sequence;  // the actual indel sequence
     };
 
     //--------------------- Load (A,T) ------------------------//
     if (output_details)
-        std::cout << "Sample\tStart1\tStart2\tEnd1\tEnd2\tType\tLength\tLen1\tLen2" << endl;
+        std::cout << "Sample\tStart1\tStart2\tEnd1\tEnd2\tType\tLength\tLen1\tLen2\tSequence" << endl;
     else
         std::cout << "Iter\tPart\tLen\tIndels" << endl;
 
@@ -238,7 +239,14 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
             consistentsamples++;
             int b = which_branch(T,part);
             if (b == -1) throw myexception()<<"Can't find branch in tree!";
-            vector<int> pairwiseA = get_path(A,T.directed_branch(b).target(),T.directed_branch(b).source());
+
+            int node1 = T.directed_branch(b).target();
+            int node2 = T.directed_branch(b).source();
+            vector<int> pairwiseA = get_path(A, node1, node2);
+
+            // Get sequences for extracting indel characters
+            std::string seq1 = A.get_sequence_for_row(node1);
+            std::string seq2 = A.get_sequence_for_row(node2);
 
             // Group consecutive identical states
             auto groups = group_consecutive(pairwiseA);
@@ -261,14 +269,19 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
                     int start1 = pos1;
                     int start2 = pos2;
 
-                    // Update positions for this indel group
-                    if (state == states::G1)
-                        pos2 += length;  // G1: chars added to seq2
-                    else
-                        pos1 += length;  // G2: chars added to seq1
+                    std::string indel_seq;
+                    if (state == states::G1) {
+                        // G1: gap in seq1, chars in seq2
+                        indel_seq = seq2.substr(pos2, length);
+                        pos2 += length;
+                    } else {
+                        // G2: gap in seq2, chars in seq1
+                        indel_seq = seq1.substr(pos1, length);
+                        pos1 += length;
+                    }
 
                     if (output_details)
-                        sample_indels.push_back({start1, start2, pos1, pos2, state, length});
+                        sample_indels.push_back({start1, start2, pos1, pos2, state, length, indel_seq});
                 }
                 else if (state == states::M)
                 {
@@ -288,7 +301,8 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
                               << indel.end1 << "\t" << indel.end2 << "\t"
                               << (indel.type == states::G1 ? "I" : "D") << "\t"
                               << indel.length << "\t"
-                              << len1 << "\t" << len2 << endl;
+                              << len1 << "\t" << len2 << "\t"
+                              << indel.sequence << endl;
                 }
             }
 
@@ -317,8 +331,8 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     }
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
+variables_map parse_cmd_line(int argc,char* argv[])
+{
     using namespace po;
 
     // named options
@@ -347,12 +361,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
     positional_options_description p;
     p.add("alignments", 1);
     p.add("trees", 2);
-  
-    variables_map args;     
+
+    variables_map args;
     store(command_line_parser(argc, argv).
           options(all).positional(p).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
+    notify(args);
 
     if (args.count("help")) {
         cout<<"Usage: joint-indels <alignments file> <trees file> [OPTIONS]\n";
@@ -366,7 +380,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 int main(int argc,char* argv[])
-{ 
+{
     try {
         variables_map args = parse_cmd_line(argc,argv);
         //Arguments args;
