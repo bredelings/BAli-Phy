@@ -169,18 +169,17 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
 
 vector<expression_ref> e_value_stack;
 
-expression_ref evaluate_e_op(OperationArgs& Args, int r)
+expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 {
     int initial_size = e_value_stack.size();
 
-    // Can we stop referencing M?
+    // Can we stop referencing the current closure?
     // The problem is that after each evaluation, closure pointers might be modified
     //   to point to a non-index-var.
     // If we could assume that closures that are currently being executed will not
     //   be modified, that would be helpful for writing simpler code I expect.
-    auto& M = Args.memory();
-    int n_args = M.expression_at(r).size();
-    auto f = M.expression_at(r).head().as_ptr_to<Operation>()->e_op;
+    int n_args = E.size();
+    auto f = E.head().as_ptr_to<Operation>()->e_op;
 
     // Reserve space for the n_args arguments.
     e_value_stack.resize(initial_size + n_args);
@@ -188,15 +187,26 @@ expression_ref evaluate_e_op(OperationArgs& Args, int r)
     // Evaluate the arguments in left-to-right order.
     for(int i=0;i<n_args;i++)
     {
-        auto arg = M[r].arg_for_slot(i);
+        auto arg = E.sub()[i];
         if (arg.is_reg_var())
         {
-            // This can change during GC, so we need to evaluate it as late as possible.
-            int r_arg = M[r].reg_for_slot(i);
+            int r_arg = arg.as_reg_var();
 
-            // In theory M[r].reg_for_slot(i) could change if it initially points to an index_var.
             arg = Args.evaluate_reg_to_object( r_arg );
         }
+        else if (arg.is_index_var())
+        {
+            // In theory r_arg could change if r_i initially points to an index_var.
+            int r_i = arg.as_index_var();
+            int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
+
+            arg = Args.evaluate_reg_to_object( r_arg );
+        }
+        else
+        {
+            assert(arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<Integer>() or arg.is_a<String>());
+        }
+
         e_value_stack[initial_size+n_args-1-i] = arg;
     }
 
@@ -214,7 +224,7 @@ expression_ref evaluate_e_op(OperationArgs& Args, int r)
 
 closure evaluate_e_op_to_c(OperationArgs& Args)
 {
-    return evaluate_e_op(Args, Args.current_reg());
+    return evaluate_e_op(Args, Args.current_closure().exp);
 }
 
 pair<int,int> reg_heap::incremental_evaluate1_(int r)
