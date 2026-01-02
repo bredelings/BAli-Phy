@@ -1,4 +1,5 @@
 #include <iostream>
+#include "util/log-level.H" // for log_verbose
 #include "util/range.H" // for reverse( )
 #include "util/set.H" // for add( )
 #include "util/variant.H" // for to<type>(val)
@@ -1508,9 +1509,29 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
                     // std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
                 }
             }
+            catch (const std::exception& e)
+            {
+                if (log_verbose >= 2)
+                {
+                    std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
+                    vector<string> sargs;
+                    for(int i=0;i<n;i++)
+                        sargs.push_back(builtin2.args[i].print());
+                    std::cerr<<join(sargs,",");
+                    std::cerr<<") inside the simplifier!: "<<e.what()<<"\n";
+                }
+            }
             catch (...)
             {
-                std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<" inside the simplifier!";
+                if (log_verbose >= 2)
+                {
+                    std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
+                    vector<string> sargs;
+                    for(int i=0;i<n;i++)
+                        sargs.push_back(builtin2.args[i].print());
+                    std::cerr<<join(sargs,",");
+                    std::cerr<<") inside the simplifier!\n";
+                }
             }
         }
 
