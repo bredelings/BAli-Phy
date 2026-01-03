@@ -228,7 +228,9 @@ expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 
 closure evaluate_e_op_to_c(OperationArgs& Args)
 {
-    return evaluate_e_op(Args, Args.current_closure().exp);
+    // Make a copy here because the location of Args.current_closure() can change if the heap grows.
+    auto E = Args.current_closure().exp;
+    return evaluate_e_op(Args, E);
 }
 
 pair<int,int> reg_heap::incremental_evaluate1_(int r)
