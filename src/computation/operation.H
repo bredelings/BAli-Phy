@@ -27,6 +27,7 @@ typedef closure (*o_operation_fn)(OperationArgs&);
 typedef expression_ref (*e_operation_fn)(std::vector<expression_ref>&);
 
 closure evaluate_e_op_to_c(OperationArgs& Args);
+expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E);
 
 struct Operation: public Object
 {
@@ -76,4 +77,13 @@ inline bool is_non_apply_op_exp(const expression_ref& E)
     return is_non_apply_op(E.head());
 }
 
+
+inline bool is_eop_exp(const expression_ref& E)
+{
+    auto O = E.head().to<Operation>();
+    if (O and O->e_op)
+        return true;
+    else
+        return false;
+}
 #endif
