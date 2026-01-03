@@ -5,9 +5,9 @@ import Foreign.CList
 
 data CPPString
 
-foreign import bpcall "Vector:getStringElement" getStringElement :: CPPString -> Int -> Char
+foreign import ecall "Vector:getStringElement" getStringElement :: CPPString -> Int -> Char
 
-foreign import bpcall "Vector:sizeOfString" sizeOfString :: CPPString -> Int
+foreign import ecall "Vector:sizeOfString" sizeOfString :: CPPString -> Int
 
 listFromString s = unpack_cpp_string s
 

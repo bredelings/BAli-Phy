@@ -13,36 +13,18 @@
 using boost::dynamic_pointer_cast;
 using std::vector;
 
-template<typename T>
-closure VectorSize(OperationArgs& Args)
+extern "C" expression_ref simple_function_sizeOfString(vector<expression_ref>& args)
 {
-    auto v = Args.evaluate(0);
-    return {(int)v.as_<Box<std::vector<T> > >().size()};
+    return (int)get_arg(args).as_<String>().size();
 }
 
-template<typename T>
-closure GetVectorElement(OperationArgs& Args)
+extern "C" expression_ref simple_function_getStringElement(vector<expression_ref>& args)
 {
-    auto v = Args.evaluate(0);
-    int i = Args.evaluate(1).as_int();
+    auto arg0 = get_arg(args);
+    const std::string& s = arg0.as_<String>();
+    int i = get_arg(args).as_int();
 
-    const T& t = v.as_<Vector<T>>()[i];
-    return {t};
-}
-
-extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
-{
-    const std::string& s = Args.evaluate(0).as_<String>();
-
-    return {(int)s.size()};
-}
-
-extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
-{
-    const std::string& s = Args.evaluate(0).as_<String>();
-    int i = Args.evaluate(1).as_int();
-
-    return {s[i]};
+    return s[i];
 }
 
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
@@ -57,12 +39,12 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 	return {String(s.substr(offset,length))};
 }
 
-extern "C" closure builtin_function_vector_size(OperationArgs& Args)
+extern "C" expression_ref simple_function_vector_size(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     const EVector& v = arg0.as_<EVector>();
 
-    return {(int)v.size()};
+    return (int)v.size();
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
@@ -79,10 +61,10 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
+extern "C" expression_ref simple_function_get_vector_index(vector<expression_ref>& args)
 {
-    int i = Args.evaluate(1).as_int();
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
+    int i = get_arg(args).as_int();
     const EVector& v = arg0.as_<EVector>();
 
     return v[i];

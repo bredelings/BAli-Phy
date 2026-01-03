@@ -8,9 +8,9 @@ import Data.Function
 
 data EVector a
 
-foreign import bpcall "Vector:" get_vector_index :: EVector a -> Int -> a
+foreign import ecall "Vector:" get_vector_index :: EVector a -> Int -> a
 
-foreign import bpcall "Vector:" vector_size :: EVector a -> Int
+foreign import ecall "Vector:" vector_size :: EVector a -> Int
 
 foreign import bpcall "Vector:" clist_to_vector :: CList a -> EVector a
 
