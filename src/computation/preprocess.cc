@@ -38,6 +38,23 @@ CDecls graph_normalize(FreshVarSource& source, CDecls decls)
     return decls;
 }
 
+bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
+{
+    if (is_reglike(arg)) return true;
+
+    if (sub_exp_ok)
+    {
+        // This matches the condition for NOT lifting constants out of lambdas.
+        if (arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<String>() or arg.is_a<Integer>())
+            return true;
+
+        if (auto O = arg.head().to<Operation>(); O and O->e_op)
+            return true;
+    }
+
+    return false;
+}
+
 // This version is used in module.cc
 expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
@@ -104,29 +121,12 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
 	vector<pair<var, expression_ref>> decls;
-        bool sub_exp = false;
 	for(int i=0;i<E2->size();i++)
 	{
 	    E2->sub[i] = graph_normalize(source, E.sub()[i]);
 
             // Is the arg OK as is, or do we need to replace with a variable?
-            bool arg_ok = is_reglike(E2->sub[i]);
-            if (not arg_ok and sub_exp_ok)
-            {
-                auto& arg = E2->sub[i];
-                // This matches the condition for NOT lifting constants out of lambdas.
-                arg_ok = arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<String>() or arg.is_a<Integer>();
-            }
-            if (not arg_ok and sub_exp_ok)
-            {
-                auto& arg = E2->sub[i];
-                auto O = arg.head().to<Operation>();
-                arg_ok = O and O->e_op;
-            }
-            if (not is_reglike(E2->sub[i]) and arg_ok)
-                sub_exp = true;
-
-            if (not arg_ok)
+            if (not is_ok_arg(E2->sub[i], sub_exp_ok))
 	    {
 		auto x = source.get_fresh_var();
 
