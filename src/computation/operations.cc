@@ -162,9 +162,11 @@ closure case_op(OperationArgs& Args)
         }
     }
 
+    auto& in_object = Args.reference(0);
+
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = Args.evaluate_slot_to_closure(0);
+    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_closure(0);
 
     // Therefore, we must compute this *after* we do the computation above, since
     // we're going to hold on to it.  Otherwise the held reference would become

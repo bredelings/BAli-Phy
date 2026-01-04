@@ -145,8 +145,8 @@ expression_ref trim_normalize(const expression_ref& E)
     else if (auto case_exp = parse_case_expression(E))
     {
         auto& [object, alts] = *case_exp;
-	// object should already be a variable, so don't bother about it.
-	assert(object.is_index_var());
+
+	// object should not contain any lets or case-alts, so don't bother about it.
 
 	for(auto& [pattern, body]: alts)
 	    body = trim(trim_normalize(body));
@@ -332,8 +332,7 @@ expression_ref trim_unnormalize(const expression_ref& E)
     else if (auto case_exp = parse_case_expression(E))
     {
         auto& [object, alts] = *case_exp;
-	// object should already be a variable, so don't bother about it.
-	assert(object.is_index_var());
+	// object should not contain any lets or case-alts, so don't bother about it.
 
 	for(auto& [pattern, body]: alts)
 	    body = trim_unnormalize(untrim(body));

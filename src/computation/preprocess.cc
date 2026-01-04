@@ -82,7 +82,8 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 	for(auto& [pattern, body]: alts)
 	    body = graph_normalize(source, body);
 
-	if (is_reglike(object))
+        // We allow variables, e-ops, and constants
+	if (is_ok_arg(object, true))
 	    return make_case_expression(object, alts);
 	else
 	{
