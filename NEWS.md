@@ -2,13 +2,15 @@
 
 ## Features
 - Log departure from reversibility in terms of the flux and nonreversibility.
+- The `joint-indels` tool learned how to show indel size, location, and sequence (Thanks to Erik Matsen).
 
 ## Fixes
 - Fix non-reversible models + Markov-modulated models.
 
 ## Speed
-- Improve startup speed.
-- Speed up likelihood calculations for models with lots of states (e.g. **4-fold speedup for codon models**).
+- Faster loading of compiled modules at startup.
+- Faster likelihood calculations for models with lots of states (e.g. **4-fold speedup for codon models**).
+- Faster model execution.
 
 ## Internal
 - Refactor optimizer.
