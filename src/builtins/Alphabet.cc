@@ -6,16 +6,17 @@
 #include "sequence/codons.H"
 
 using Alphabet = PtrBox<alphabet>;
+using std::vector;
 
-extern "C" closure builtin_function_alphabetSize(OperationArgs& Args)
+extern "C" expression_ref simple_function_alphabetSize(vector<expression_ref>& args)
 {
-    auto arg = Args.evaluate(0);
+    auto arg = get_arg(args);
 
     if (not arg.is_a<Alphabet>())
 	throw myexception()<<"alphabetSize: object "<<arg.print()<<" is not an alphabet.";
 
     const alphabet& a = *arg.as_<Alphabet>();
-    return {a.n_letters()};
+    return a.n_letters();
 }
 
 extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
@@ -33,20 +34,18 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
     return v;
 }
 
-extern "C" closure builtin_function_find_letter(OperationArgs& Args)
+extern "C" expression_ref simple_function_find_letter(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     if (not arg0.is_a<Alphabet>())
 	throw myexception()<<"alphabetSize: object "<<arg0.print()<<" is not an alphabet.";
 
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = get_arg(args);
     auto& letter = arg1.as_<String>();
 
-    int index = a.find_letter(letter);
-
-    return {index};
+    return a.find_letter(letter);
 }
 
 extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
@@ -159,15 +158,15 @@ extern "C" closure builtin_function_mkNumeric(OperationArgs& Args)
     return Alphabet(new Numeric(n));
 }
 
-extern "C" closure builtin_function_translate(OperationArgs& Args)
+extern "C" expression_ref simple_function_translate(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    int codon = Args.evaluate(1).as_int();
+    int codon = get_arg(args).as_int();
 
     if (auto c = dynamic_cast<const Codons*>(&a))
-	return {c->translate(codon)};
+	return c->translate(codon);
     else
 	throw myexception()<<"translate: object "<<a.print()<<" is not a Codons alphabet.";
 }
