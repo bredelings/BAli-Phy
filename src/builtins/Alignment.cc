@@ -110,19 +110,21 @@ extern "C" closure builtin_function_lengthIndels(OperationArgs& Args)
     return {a.count_delete() + a.count_insert()};
 }
 
-extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
+extern "C" expression_ref simple_function_pairwise_alignment_length1(vector<expression_ref>& args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().length1()};
+    
+    return get_arg(args).as_<Box<pairwise_alignment_t>>().length1();
 }
 
-extern "C" closure builtin_function_pairwise_alignment_length2(OperationArgs& Args)
+extern "C" expression_ref simple_function_pairwise_alignment_length2(vector<expression_ref>& args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().length2()};
+    
+    return get_arg(args).as_<Box<pairwise_alignment_t>>().length2();
 }
 
-extern "C" closure builtin_function_alignment_length(OperationArgs& Args)
+extern "C" expression_ref simple_function_alignment_length(vector<expression_ref>& args)
 {
-    return {Args.evaluate(0).as_<Box<alignment>>().length()};
+    return get_arg(args).as_<Box<alignment>>().length();
 }
 
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)

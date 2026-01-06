@@ -17,7 +17,7 @@ import Data.Foldable (toList)
 
 data AlignmentMatrix
 
-foreign import bpcall "Alignment:alignment_length" alignment_length :: AlignmentMatrix -> Int
+foreign import ecall "Alignment:" alignment_length :: AlignmentMatrix -> Int
 
 foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alphabet -> CPPString -> IO AlignmentMatrix
 

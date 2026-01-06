@@ -23,9 +23,9 @@ foreign import bpcall "Alignment:" numIndels :: PairwiseAlignment -> Int
 
 foreign import bpcall "Alignment:" lengthIndels :: PairwiseAlignment -> Int
 
-foreign import bpcall "Alignment:pairwise_alignment_length1" pairwise_alignment_length1 :: PairwiseAlignment -> Int
+foreign import ecall "Alignment:" pairwise_alignment_length1 :: PairwiseAlignment -> Int
 
-foreign import bpcall "Alignment:pairwise_alignment_length2" pairwise_alignment_length2 :: PairwiseAlignment -> Int
+foreign import ecall "Alignment:" pairwise_alignment_length2 :: PairwiseAlignment -> Int
 
 foreign import bpcall "Bits:pairwise_alignment_from_bits" builtin_pairwise_alignment_from_bits :: CBitVector -> CBitVector -> PairwiseAlignment
 
