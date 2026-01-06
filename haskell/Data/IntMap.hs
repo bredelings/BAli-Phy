@@ -13,7 +13,7 @@ data IntMap a
 
 type Key = Int
 
-foreign import bpcall "IntMap:" empty :: IntMap a
+foreign import ecall "IntMap:" empty :: IntMap a
 
 foreign import bpcall "IntMap:" singleton :: Key -> a -> IntMap a
 
@@ -65,8 +65,7 @@ findWithDefault def key m = case lookup key m of
                               Just x  -> x
                               Nothing -> def
 
-foreign import bpcall "IntMap:has_key" builtin_member :: Int -> IntMap a -> Int
-member key m = case builtin_member key m of 1 -> True ; _ -> False
+foreign import ecall "IntMap:" member :: Int -> IntMap a -> Bool
 
 notMember k = not . member k
 
@@ -77,7 +76,7 @@ notMember k = not . member k
             
 null m = size m == 0
 
-foreign import bpcall "IntMap:" size :: IntMap a -> Int
+foreign import ecall "IntMap:" size :: IntMap a -> Int
 
 foreign import bpcall "IntMap:" union :: IntMap a -> IntMap a -> IntMap a
                                         

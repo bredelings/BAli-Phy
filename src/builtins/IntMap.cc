@@ -12,15 +12,17 @@
 
 namespace views = ranges::views;
 
+using std::vector;
+
 typedef Box<immer::set<int>> IntSet;
 
 typedef Box<std::map<int,expression_ref>> EIntMap;
 
-extern "C" closure builtin_function_empty(OperationArgs& /*Args*/)
+extern "C" expression_ref simple_function_empty(vector<expression_ref>& /*args*/)
 {
     IntMap m;
 
-    return {m};
+    return m;
 }
 
 extern "C" closure builtin_function_singleton(OperationArgs& Args)
@@ -36,26 +38,23 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
     return {m};
 }
 
-extern "C" closure builtin_function_size(OperationArgs& Args)
+extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     auto& m = arg0.as_<IntMap>();
 
-    int s = m.size();
 
-    return {s};
+    return (int)m.size();
 }
 
-extern "C" closure builtin_function_has_key(OperationArgs& Args)
+extern "C" expression_ref simple_function_member(vector<expression_ref>& args)
 {
-    int key = Args.evaluate(0).as_int();
+    int key = get_arg(args).as_int();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = get_arg(args);
     auto& m = arg1.as_<IntMap>();
 
-    int result = m.has_key(key)?1:0;
-
-    return {result};
+    return m.has_key(key);
 }
 
 extern "C" closure builtin_function_subscript(OperationArgs& Args)
