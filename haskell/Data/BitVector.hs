@@ -10,10 +10,10 @@ foreign import bpcall "Bits:bitwise_and" builtin_bitwise_and :: CBitVector -> CB
 foreign import bpcall "Bits:bitwise_xor" builtin_bitwise_xor :: CBitVector -> CBitVector -> CBitVector
 foreign import bpcall "Bits:eq" builtin_eq :: CBitVector -> CBitVector -> Bool
 foreign import bpcall "Bits:neq" builtin_neq :: CBitVector -> CBitVector -> Bool
-foreign import bpcall "Bits:test_bit" builtin_test_bit :: CBitVector -> Int -> Bool
+foreign import ecall  "Bits:test_bit" builtin_test_bit :: CBitVector -> Int -> Bool
 foreign import bpcall "Bits:set_bit" builtin_set_bit :: CBitVector -> Int -> CBitVector
 foreign import bpcall "Bits:clear_bit" builtin_clear_bit :: CBitVector -> Int -> CBitVector
-foreign import bpcall "Bits:size" builtin_size :: CBitVector -> Int
+foreign import ecall "Bits:size" builtin_size :: CBitVector -> Int
 foreign import bpcall "Bits:popcount" builtin_popcount :: CBitVector -> Int
 
 -- see Boost.Multiprecision

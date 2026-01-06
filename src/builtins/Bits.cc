@@ -8,6 +8,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+using std::vector;
+
 typedef Box<boost::dynamic_bitset<>> bitvector;
 
 extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
@@ -78,13 +80,9 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
     return { v2 };
 }
 
-extern "C" closure builtin_function_size(OperationArgs& Args)
+extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
 {
-    auto arg0 =Args.evaluate(0);
-
-    int s = arg0.as_<bitvector>().size();
-
-    return { s };
+    return (int)get_arg(args).as_<bitvector>().size();
 }
 
 extern "C" closure builtin_function_popcount(OperationArgs& Args)
@@ -96,12 +94,12 @@ extern "C" closure builtin_function_popcount(OperationArgs& Args)
     return { s };
 }
 
-extern "C" closure builtin_function_test_bit(OperationArgs& Args)
+extern "C" expression_ref simple_function_test_bit(vector<expression_ref>& args)
 {
-    auto arg0 =Args.evaluate(0);
-    int n = Args.evaluate(1).as_int();
+    auto arg0 = get_arg(args);
+    int n = get_arg(args).as_int();
 
-    return { arg0.as_<bitvector>().test(n) };
+    return arg0.as_<bitvector>().test(n);
 }
 
 extern "C" closure builtin_function_set_bit(OperationArgs& Args)
