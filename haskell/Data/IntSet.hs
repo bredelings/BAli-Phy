@@ -12,9 +12,9 @@ data IntSet
 
 type Key = Int
 
-foreign import bpcall "IntSet:" empty :: IntSet
+foreign import ecall "IntSet:" empty :: IntSet
 
-foreign import bpcall "IntSet:" singleton :: Key -> IntSet
+foreign import ecall "IntSet:" singleton :: Key -> IntSet
 
 -- Should this be more efficient? With immer it might be OK, but maybe we should
 -- convert to an EVector Int, and then convert that to an IntSet
@@ -25,7 +25,7 @@ foreign import bpcall "IntSet:" insert :: Key -> IntSet -> IntSet
 
 foreign import bpcall "IntSet:" delete :: Key -> IntSet -> IntSet
 
-foreign import bpcall "IntSet:" member :: Int -> IntSet -> Bool
+foreign import ecall "IntSet:" member :: Int -> IntSet -> Bool
 
 notMember k = not . member k
 
@@ -36,7 +36,7 @@ notMember k = not . member k
 
 null m = size m == 0
 
-foreign import bpcall "IntSet:" size :: IntSet -> Int
+foreign import ecall "IntSet:" size :: IntSet -> Int
 
 foreign import bpcall "IntSet:" union :: IntSet -> IntSet -> IntSet
 

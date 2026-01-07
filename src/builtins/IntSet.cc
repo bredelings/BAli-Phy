@@ -8,45 +8,42 @@
 
 typedef Box<immer::set<int>> IntSet;
 
-extern "C" closure builtin_function_empty(OperationArgs& /*Args*/)
+using std::vector;
+
+extern "C" expression_ref simple_function_empty(vector<expression_ref>& /*args*/)
 {
     IntSet S;
 
-    return {S};
+    return S;
 }
 
-extern "C" closure builtin_function_singleton(OperationArgs& Args)
+extern "C" expression_ref simple_function_singleton(vector<expression_ref>& args)
 {
-    int key = Args.evaluate(0).as_int();
+    int key = get_arg(args).as_int();
 
     IntSet S;
 
     S = S.insert(key);
 
-    return {S};
+    return S;
 }
 
-extern "C" closure builtin_function_size(OperationArgs& Args)
+extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     auto& S = arg0.as_<IntSet>();
 
-    int s = S.size();
-
-    return {s};
+    return (int)S.size();
 }
 
-extern "C" closure builtin_function_member(OperationArgs& Args)
+extern "C" expression_ref simple_function_member(vector<expression_ref>& args)
 {
-    int e= Args.evaluate(0).as_int();
+    int e= get_arg(args).as_int();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = get_arg(args);
     auto& S = arg1.as_<IntSet>();
 
-    if (S.find(e))
-        return bool_true;
-    else
-        return bool_false;
+    return (bool)S.find(e);
 }
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
