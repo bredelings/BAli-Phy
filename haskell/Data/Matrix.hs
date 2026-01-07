@@ -12,8 +12,8 @@ import Text.Show
 -- It looks like the haskell Data.Matrix is more like a lazy array with index type (i,j).
 data Matrix a
 
-foreign import bpcall "Matrix:" nrows :: Matrix a -> Int
-foreign import bpcall "Matrix:" ncols :: Matrix a -> Int
+foreign import ecall "Matrix:" nrows :: Matrix a -> Int
+foreign import ecall "Matrix:" ncols :: Matrix a -> Int
 
 foreign import ecall "Prelude:show" showMatrix :: Matrix a -> CPPString
 -- prettyMatrix :: Show a => Matrix a -> String
@@ -44,7 +44,7 @@ toList = vectorToList . matrixToVector
 --toLists :: Matrix a -> [[a]]
 
 -- getElem :: Int -> Itt -> Matrix a -> a
-foreign import bpcall "Matrix:" getElem :: Int -> Int -> Matrix Double -> Double
+foreign import ecall "Matrix:" getElem :: Int -> Int -> Matrix Double -> Double
 -- unsafeGet :: Int -> Int -> Matrix a -> a           
 -- safeGet :: Int -> Int -> Matrix a -> Maybe a
 -- safeSet :: a -> (Int,Int) -> Matrix a -> Maybe (Matrix a)

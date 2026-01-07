@@ -24,25 +24,21 @@ using std::abs;
 using Alphabet = PtrBox<alphabet>;
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" closure builtin_function_nrows(OperationArgs& Args)
+extern "C" expression_ref simple_function_nrows(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     const Matrix& m = arg0.as_<Box<Matrix>>();
 
-    int n1 = m.size1();
-
-    return { n1 } ;
+    return (int)m.size1();
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" closure builtin_function_ncols(OperationArgs& Args)
+extern "C" expression_ref simple_function_ncols(vector<expression_ref>& args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = get_arg(args);
     const Matrix& m = arg0.as_<Box<Matrix>>();
 
-    int n2 = m.size2();
-
-    return { n2 } ;
+    return (int)m.size2();
 }
 
 // scaleMatrix :: a -> Matrix a -> Matrix a
@@ -400,12 +396,12 @@ extern "C" closure builtin_function_transpose(OperationArgs& Args)
     return M2p;
 }
 
-extern "C" closure builtin_function_getElem(OperationArgs& Args)
+extern "C" expression_ref simple_function_getElem(vector<expression_ref>& args)
 {
-    int i = Args.evaluate(0).as_int();
-    int j = Args.evaluate(1).as_int();
-    auto arg2 = Args.evaluate(2);
+    int i = get_arg(args).as_int();
+    int j = get_arg(args).as_int();
+    auto arg2 = get_arg(args);
     auto& M = arg2.as_<Box<Matrix>>();
 
-    return {M(i,j)};
+    return M(i,j);
 }
