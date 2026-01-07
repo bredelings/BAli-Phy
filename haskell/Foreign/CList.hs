@@ -5,9 +5,14 @@ import Data.Bool
 
 data CList a
 
-foreign import bpcall "Pair:c_pair" c_cons :: a -> CList a -> CList a
+-- These builtins have type variables but refer to unlifted types.
 
-foreign import bpcall "Pair:c_nil" c_nil :: CList a
+-- In order for these unlifted types to represent C++ objects and lists we currently
+--   rely on expression_ref.
+    
+foreign import ecall "Pair:c_pair" c_cons :: a -> CList a -> CList a
+
+foreign import ecall "Pair:c_nil" c_nil :: CList a
 
 -- If we use "error" here, then we get an error defining error in Compiler.Base
 listToCList :: [a] -> CList a

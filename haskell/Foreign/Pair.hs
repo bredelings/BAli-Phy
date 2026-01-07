@@ -3,11 +3,16 @@ module Foreign.Pair where
 
 data EPair a b
 
-foreign import bpcall "Pair:c_fst" c_fst :: EPair a b -> a
+-- These builtins have type variables but refer to unlifted types.
 
-foreign import bpcall "Pair:c_snd" c_snd :: EPair a b -> b
+-- In order for these unlifted types to represent C++ objects we currently
+--   rely on expression_ref.
+    
+foreign import ecall "Pair:" c_fst :: EPair a b -> a
 
-foreign import bpcall "Pair:c_pair" c_pair :: a -> b -> EPair a b
+foreign import ecall "Pair:" c_snd :: EPair a b -> b
+
+foreign import ecall "Pair:" c_pair :: a -> b -> EPair a b
 
 c_pair' (x,y) = c_pair x y
 

@@ -3,27 +3,27 @@
 #include "util/myexception.H"
 #include <algorithm>
 
-using boost::dynamic_pointer_cast;
+using std::vector;
 
-extern "C" closure builtin_function_c_fst(OperationArgs& Args)
+extern "C" expression_ref simple_function_c_fst(vector<expression_ref>& args)
 {
-  return Args.evaluate(0).as_<EPair>().first;
+    return get_arg(args).as_<EPair>().first;
 }
 
-extern "C" closure builtin_function_c_snd(OperationArgs& Args)
+extern "C" expression_ref simple_function_c_snd(vector<expression_ref>& args)
 {
-  return Args.evaluate(0).as_<EPair>().second;
+    return get_arg(args).as_<EPair>().second;
 }
 
-extern "C" closure builtin_function_c_pair(OperationArgs& Args)
+extern "C" expression_ref simple_function_c_pair(vector<expression_ref>& args)
 {
-  auto fst = Args.evaluate(0);
-  auto snd = Args.evaluate(1);
+    auto fst = get_arg(args);
+    auto snd = get_arg(args);
 
-  return EPair(fst,snd);
+    return EPair(fst, snd);
 }
 
-extern "C" closure builtin_function_c_nil(OperationArgs& /*Args*/)
+extern "C" expression_ref simple_function_c_nil(vector<expression_ref>& /*args*/)
 {
     expression_ref nil;
     nil = 42;
