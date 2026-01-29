@@ -39,6 +39,7 @@ c = ['ccache','x86_64-w64-mingw32-gcc-posix']
 cpp = ['ccache','x86_64-w64-mingw32-g++-posix']
 ar = 'x86_64-w64-mingw32-ar'
 strip = 'x86_64-w64-mingw32-strip'
+dlltool = 'x86_64-w64-mingw32-dlltool'
 pkg-config = 'pkg-config'
 exe_wrapper = 'wine' # A command used to run generated executables.
 
