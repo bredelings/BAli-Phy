@@ -299,7 +299,7 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
                     std::cout << sample_num << "\t"
                               << indel.start1 << "\t" << indel.start2 << "\t"
                               << indel.end1 << "\t" << indel.end2 << "\t"
-                              << (indel.type == states::G1 ? "I" : "D") << "\t"
+                              << (indel.type == states::G1 ? "D" : "I") << "\t"
                               << indel.length << "\t"
                               << len1 << "\t" << len2 << "\t"
                               << indel.sequence << endl;
