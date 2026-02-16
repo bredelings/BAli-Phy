@@ -63,9 +63,9 @@ peelLikelihoodWith  calcProbAtRoot t nodeCLVs cls as f root
       in calcProbAtRoot nodeCLV clsIn asIn f
 
 --- Eq Rev
-cachedConditionalLikelihoods = cachedConditionalLikelihoodsWith (\_ -> peelBranchTowardRoot)
+cachedConditionalLikelihoodsEqRev = cachedConditionalLikelihoodsWith (\_ -> peelBranchTowardRoot)
 
-peelLikelihood = peelLikelihoodWith calcProbAtRoot
+peelLikelihoodEqRev = peelLikelihoodWith calcProbAtRoot
 
 --- Eq NonRev
 cachedConditionalLikelihoodsEqNonRev t = cachedConditionalLikelihoodsWith (\b -> peelBranch (towardRoot t b)) t
