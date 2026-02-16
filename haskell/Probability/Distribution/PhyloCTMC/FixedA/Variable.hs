@@ -38,17 +38,21 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
-      cls = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
-      likelihood = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+      cls | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs transitionPs f
+          | otherwise           = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
+      likelihood | isReversible smodel = peelLikelihoodEqRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
+                 | otherwise           = peelLikelihoodNonRev nodeCLVs rtree cls f alphabet smap substRoot columnCounts
 
       -- computing the probability of the condition
       (isequences2, columnCounts2) = compressAlignmentVarNonvar (getSequences sequenceData) alphabet
       maybeNodeISequences2 = labelToNodeMap rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
-      cls2 = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
+      cls2 | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs2 transitionPs f
+           | otherwise           = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
+      likelihood2 | isReversible smodel = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 -- How about peelLikelihoodVariableNonRev?             
-      likelihood2 = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
+                  | otherwise           = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
       ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
 

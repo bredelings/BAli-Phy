@@ -63,9 +63,9 @@ peelLikelihoodWith calcProb nodeCLVs t cls f alpha smap root counts
       in calcProb nodeCLs clsIn f counts
 
 -- EqRev
-cachedConditionalLikelihoods = cachedConditionalLikelihoodsWith (\b nodeCLs clsIn p f -> peelBranchTowardRoot nodeCLs clsIn p)
+cachedConditionalLikelihoodsEqRev = cachedConditionalLikelihoodsWith (\b nodeCLs clsIn p f -> peelBranchTowardRoot nodeCLs clsIn p)
 
-peelLikelihood = peelLikelihoodWith calcProbAtRoot
+peelLikelihoodEqRev = peelLikelihoodWith calcProbAtRoot
 
 -- EqNonRev + NonEq
                  
@@ -77,7 +77,9 @@ peelLikelihoodNonRev = peelLikelihoodWith calcProb
                        
 peelLikelihoodVariable = peelLikelihoodWith calcProbAtRootVariable
 
---
+-- EqNonRev + noNEq | variable
+
+-- FIXME!!
 
 sampleAncestralSequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
     let rt = addRoot root t
