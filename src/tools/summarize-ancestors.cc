@@ -597,7 +597,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description invisible("Invisible options");
     invisible.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ;
 
     // named options
@@ -610,6 +609,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
         ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
+        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
         ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
         ("max,m",value<unsigned>()->default_value(500),"Thin (alignment,tree) pairs down to this number of samples.")
