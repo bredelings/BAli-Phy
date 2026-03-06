@@ -1,3 +1,5 @@
+Warning: ignoring additional definition of function 'nonrev' from file '"/home/bredelings/Devel/bali-phy/local/gcc-15-debug-O/lib/bali-phy/bindings/models/nonrev.json"'
 bali-phy: Error! In file 'test.fasta': Can't guess alphabet!
- Seems to be DNA or RNA but contains both U and T:
-  AUTGCN=100%   T=33%   U=5%
+   AUTGCN=100%    T = 33%   U = 5%
+   ARNDCQEGHILKMFPSTWYVX=94%   QEILKFPXJZ = 0%
+   0123456789=0%

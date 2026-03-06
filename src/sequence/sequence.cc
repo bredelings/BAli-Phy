@@ -71,75 +71,113 @@ bool operator==(const sequence& s1,const sequence& s2) {
 	(string&)s1 == (string&)s2;
 }
 
-int total_length(const vector<sequence>& sequences)
+int total_length(const vector<int>& letter_counts)
 {
     int count = 0;
-    for(const auto& sequence: sequences)
-	count += sequence.size();
+    for(int letter_count: letter_counts)
+	count += letter_count;
     return count;
 }
 
-int letter_count(const string& letters, const string& s)
+int letter_count(const string& letters, const vector<int>& letter_counts)
 {
     int count = 0;
-    for(int i=0;i<s.size();i++)
-	if (letters.find(s[i]) != std::string::npos)
-	    count++;
+    for(char c: letters)
+	count += letter_counts[c];
     return count;
 }
 
-double letter_count(const string& letters, const vector<sequence>& sequences)
+double letter_fraction(const string& letters, const string& gaps, const vector<int>& letter_counts)
 {
-    int count = 0;
-    for(const auto& sequence: sequences)
-	count += letter_count(letters, sequence);
-    return count;
+    int count = letter_count(letters, letter_counts);
+    int total = total_length(letter_counts) - letter_count(gaps, letter_counts);
+
+    if (total <= 0)
+        return 0.0;
+    else
+        return double(count)/total;
 }
 
-double letter_fraction(const string& letters, const string& gaps, const vector<sequence>& sequences)
+std::vector<int> count_letters(const vector<sequence>& sequences)
 {
-    int count = letter_count(letters, sequences);
-    int total = total_length(sequences) - letter_count(gaps, sequences);
+    std::vector<int> counts(256, 0);
 
-    return double(count)/total;
+    for(auto& sequence: sequences)
+        for(char c: sequence)
+            counts[c]++;
+
+    return counts;
 }
 
 string guess_alphabet(const vector<sequence>& sequences)
 {
-    if (total_length(sequences) <= 0)
-	throw myexception()<<"Can't get alphabet from 0 letters!";
+    auto letter_counts = count_letters(sequences);
+    
+    if (total_length(letter_counts) <= 0)
+	throw myexception()<<"Can't guess alphabet from 0 letters!";
 
-    // FIXME - we should maybe count things one time into a map from char -> int.
-    double ATGCN = letter_fraction("ATGCN","-?=",sequences);
-    double AUGCN = letter_fraction("AUGCN","-?=",sequences);
-    double AUTGCN = letter_fraction("AUTGCN","-?=",sequences);
-    if (ATGCN > 0.95 and AUGCN <= ATGCN)
-	return "DNA";
-    else if (AUGCN > 0.95)
-	return "RNA";
+    double ATGCN  = letter_fraction("ATGCN",  "-?=", letter_counts);
+    double AUGCN  = letter_fraction("AUGCN",  "-?=", letter_counts);
+    double AUTGCN = letter_fraction("AUTGCN", "-?=", letter_counts);
 
-    if (AUTGCN > 0.95)
-    {
-	double T = letter_fraction("T","-?=",sequences);
-	double U = letter_fraction("U","-?=",sequences);
-	throw myexception()<<"Can't guess alphabet!\n Seems to be DNA or RNA but contains both U and T:\n  AUTGCN="<<int(AUTGCN*100)<<"%   T="<<int(T*100)<<"%   U="<<int(U*100)<<"%";
-    }
+    // two-letter code show up both with data ambiguity for 1 letter, and in heterozygous samples
+    double dna_two_letters = letter_fraction("ACGTNYRWSKM",      "-?=",letter_counts);
+    double rna_two_letters = letter_fraction("ACGUNYRWSKM",      "-?=",letter_counts);
 
-    double digits = letter_fraction("0123456789","-?X=",sequences);
-    // FIXME - We can check the largest number ... but each column might have a different highest number.
+    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","*-?=",letter_counts);
+    double aa_with_stop_ambig = letter_fraction("ARNDCQEGHILKMFPSTWYVXBJZ*","-?=",letter_counts);
+    double aa_not_nuc_fraction = letter_fraction("QEILFPXJZ", "-?=", letter_counts);
+
+    double digits = letter_fraction("0123456789","-?X=",letter_counts);
+
     if (digits > 0.95)
-	return "Numeric(2)";
-
-    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?=",sequences);
-    if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and AUTGCN<0.5)
     {
-	if (letter_count("*",sequences) > 0)
+        // 0123 -> Numeric
+
+        // PROBLEM: If each column is numeric but has a different number of characters, then we should
+        // maybe choose a "Numeric" alphabet that doesn't specify an upper bound??
+
+        return "Numeric(2)";
+    }
+    else if (ATGCN > 0.95 and AUGCN <= ATGCN)
+    {
+        // A -> DNA
+	return "DNA";
+    }
+    else if (AUGCN > 0.95 and ATGCN <= AUGCN)
+    {
+        // U -> RNA
+	return "RNA";
+    }
+    else if (aa_with_stop_ambig > 0.95 and aa > 0.9 and (AUTGCN < 0.5 or aa_not_nuc_fraction > 0.04))
+    {
+        // ATGCP -> Amino-Acids
+        // ATGCP* -> Amino-Acids+stop
+
+	if (letter_counts['*'] > 0)
 	    return "Amino-Acids+stop";
 	else
 	    return "Amino-Acids";
     }
+    else if (dna_two_letters > 0.95 and ATGCN > 0.5 and AUGCN < ATGCN)
+    {
+        return "DNA";
+    }
+    else if (rna_two_letters > 0.95 and AUGCN > 0.5 and AUGCN > ATGCN)
+    {
+        return "RNA";
+    }
 
-    throw myexception()<<"Can't guess alphabet!\n AUTGCN="<<int(AUTGCN*100)<<"%   0123456789="<<int(digits*100)<<"%   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%";
+    double T = letter_fraction("T","-?=",letter_counts);
+    double U = letter_fraction("U","-?=",letter_counts);
+
+    myexception e;
+    e<<"Can't guess alphabet!\n"
+     <<"   AUTGCN="<<int(AUTGCN*100)<<"%    T = "<<int(T*100)<<"%   U = "<<int(U*100)<<"%\n"
+     <<"   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%   QEILKFPXJZ = "<<int(aa_not_nuc_fraction*100)<<"%\n"
+     <<"   0123456789="<<int(digits*100)<<"%";
+
+    throw e;
 }
 
 string guess_nucleotides_for(const string& name, const vector<sequence>& sequences)
