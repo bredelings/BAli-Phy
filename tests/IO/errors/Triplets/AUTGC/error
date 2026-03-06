@@ -1,4 +1,3 @@
-Warning: ignoring additional definition of function 'nonrev' from file '"/home/bredelings/Devel/bali-phy/local/gcc-15-debug-O/lib/bali-phy/bindings/models/nonrev.json"'
 bali-phy: Error! In file 'test.fasta': Can't guess alphabet!
    AUTGCN=100%    T = 33%   U = 5%
    ARNDCQEGHILKMFPSTWYVX=94%   QEILKFPXJZ = 0%
