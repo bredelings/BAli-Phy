@@ -111,70 +111,63 @@ std::vector<int> count_letters(const vector<sequence>& sequences)
 
 string guess_alphabet(const vector<sequence>& sequences)
 {
+    // Error model:
+    // * If the sequences contain a few typos, we don't have to catch them here.
+    //   The first letter than doesn't fit the alphabet will be reported later.
+    // * If there are broad errors in letter frequency, report them here
+    //   where we have better diagnostics.
+
     auto letter_counts = count_letters(sequences);
-    
+
+    // If there are no informative letters, maybe we should call DNA?
     if (total_length(letter_counts) <= 0)
 	throw myexception()<<"Can't guess alphabet from 0 letters!";
 
+    if (total_length(letter_counts) <= letter_count("-?=", letter_counts) )
+	throw myexception()<<"Can't guess alphabet from only '-', '?', and '='!";
+
     double ATGCN  = letter_fraction("ATGCN",  "-?=", letter_counts);
     double AUGCN  = letter_fraction("AUGCN",  "-?=", letter_counts);
-    double AUTGCN = letter_fraction("AUTGCN", "-?=", letter_counts);
+    double AUTGC  = letter_fraction("AUTGC",  "-?=", letter_counts);
 
     // two-letter code show up both with data ambiguity for 1 letter, and in heterozygous samples
-    double dna_two_letters = letter_fraction("ACGTNYRWSKM",      "-?=",letter_counts);
-    double rna_two_letters = letter_fraction("ACGUNYRWSKM",      "-?=",letter_counts);
+    double dna_two_letters = letter_fraction("ACGTNYRWSKM",      "-?=", letter_counts);
+    double rna_two_letters = letter_fraction("ACGUNYRWSKM",      "-?=", letter_counts);
 
-    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","*-?=",letter_counts);
-    double aa_with_stop_ambig = letter_fraction("ARNDCQEGHILKMFPSTWYVXBJZ*","-?=",letter_counts);
-    double aa_not_nuc_fraction = letter_fraction("QEILFPXJZ", "-?=", letter_counts);
+    double aa         = letter_fraction("ARNDCQEGHILKMFPSTWYVX", "*-?=", letter_counts);
+    double aa_not_nuc = letter_fraction("QEILFPJZ*",             "-?=",  letter_counts); // X used in DNA masking?
 
     double digits = letter_fraction("0123456789","-?X=",letter_counts);
 
-    if (digits > 0.95)
-    {
-        // 0123 -> Numeric
+    // PROBLEM: If each column is numeric but has a different number of characters, then we should
+    // maybe choose a "Numeric" alphabet that doesn't specify an upper bound??
+    if (digits > 0.95) return "Numeric(2)"; // 0123
 
-        // PROBLEM: If each column is numeric but has a different number of characters, then we should
-        // maybe choose a "Numeric" alphabet that doesn't specify an upper bound??
+    // ATGCP -> Amino-Acids
+    // ATGCP* -> Amino-Acids+stop
+    // ACGTNYRWSM -> DNA, because no QEILFPXJZ*
+    if (aa > 0.9 and aa_not_nuc > 0.005)
+    {
+        bool is_protein = (AUTGC < 0.5 or aa_not_nuc > 0.01) and (AUTGC < 0.8 or aa_not_nuc > 0.02);
 
-        return "Numeric(2)";
-    }
-    else if (ATGCN > 0.95 and AUGCN <= ATGCN)
-    {
-        // A -> DNA
-	return "DNA";
-    }
-    else if (AUGCN > 0.95 and ATGCN <= AUGCN)
-    {
-        // U -> RNA
-	return "RNA";
-    }
-    else if (aa_with_stop_ambig > 0.95 and aa > 0.9 and (AUTGCN < 0.5 or aa_not_nuc_fraction > 0.04))
-    {
-        // ATGCP -> Amino-Acids
-        // ATGCP* -> Amino-Acids+stop
-
-	if (letter_counts['*'] > 0)
-	    return "Amino-Acids+stop";
-	else
-	    return "Amino-Acids";
-    }
-    else if (dna_two_letters > 0.95 and ATGCN > 0.5 and AUGCN < ATGCN)
-    {
-        return "DNA";
-    }
-    else if (rna_two_letters > 0.95 and AUGCN > 0.5 and AUGCN > ATGCN)
-    {
-        return "RNA";
+        if (is_protein)
+            return (letter_counts['*'] > 0) ? "Amino-Acids+stop" : "Amino-Acids";
     }
 
-    double T = letter_fraction("T","-?=",letter_counts);
-    double U = letter_fraction("U","-?=",letter_counts);
+    if (ATGCN > 0.95 and AUGCN <= ATGCN) return "DNA"; // T, A, N
+    if (AUGCN > 0.95 and AUGCN >= ATGCN) return "RNA"; // U
+
+    if (ATGCN > 0.8 and dna_two_letters > 0.95 and AUGCN < ATGCN) return "DNA"; // YAGCT
+    if (AUGCN > 0.8 and rna_two_letters > 0.95 and AUGCN > ATGCN) return "RNA"; // YAGCU
+
+    double T = letter_fraction("T", "-?=", letter_counts);
+    double U = letter_fraction("U", "-?=", letter_counts);
+    double AUTGCN = letter_fraction("AUTGCN", "-?=", letter_counts);
 
     myexception e;
     e<<"Can't guess alphabet!\n"
      <<"   AUTGCN="<<int(AUTGCN*100)<<"%    T = "<<int(T*100)<<"%   U = "<<int(U*100)<<"%\n"
-     <<"   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%   QEILKFPXJZ = "<<int(aa_not_nuc_fraction*100)<<"%\n"
+     <<"   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%   QEILKFPJZ* = "<<int(aa_not_nuc*100)<<"%\n"
      <<"   0123456789="<<int(digits*100)<<"%";
 
     throw e;
