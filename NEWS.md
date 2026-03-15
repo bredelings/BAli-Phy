@@ -6,6 +6,7 @@
 
 ## Fixes
 - Fix non-reversible models + Markov-modulated models.
+- Fix guessing of the amino-acid alphabet when the sequences contain a lot of A/T/G/C/N.
 
 ## Speed
 - Faster loading of compiled modules at startup.
@@ -13,8 +14,11 @@
 - Faster model execution.
 
 ## Internal
-- Refactor optimizer.
+- Refactor Haskell optimizer.
 - Improve specialization of polymorphic functions for particular types.
+- Switch to C++23.
+- Allow logging of ancestral categories, as well as states.
+- Add infrastructure for logging JSON.
 
 ## Documentation
 - Add documentation for nonRev and nonEq CTMC models.
@@ -41,7 +45,7 @@
 - Speed up coalescent tree probability.
 
 ## Internal
-- Refactor let-floating optimization ot use Core2 AST.
+- Refactor let-floating optimization to use Core2 AST.
 
 # 4.0 (Feb 27, 2025)
 - Models
