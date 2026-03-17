@@ -16,6 +16,7 @@ module Prelude (
         Functor(fmap, (<$)), (<$>),
 
         module Data.Foldable,
+        module Data.Traversable,
         module Data.Ord,
         module Data.IORef,
         module Data.Semigroup,
@@ -61,8 +62,9 @@ import Data.Either
 import Data.Eq
 import Data.Tuple
 import Data.Maybe
-import Data.List
+import Data.List    
 import Data.Foldable hiding (fold, foldMap', toList, foldl', foldr')
+import Data.Traversable (Traversable(traverse, sequenceA, mapM, sequence))
 import Data.Function
 import Data.Functor
 import Data.Ord
@@ -71,7 +73,7 @@ import Data.Semigroup
 import Text.Show
 import Text.Read
 import Control.Applicative
-import Control.Monad
+import Control.Monad hiding (sequence, mapM)
 import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
@@ -81,12 +83,6 @@ import System.IO (putChar, putStr, putStrLn, print, getChar, getLine, getContent
 import Compiler.FFI.ToFromC -- ensure this is typechecked
     
 undefined = error "Prelude.undefined"
-
--- zipWith' enforces equal lengths, unlike zipWith
-zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
-zipWith' _ [] []         =  []
-
-zip' = zipWith' (,)
 
 foreign import bpcall "Vector:showObject" showVector :: EVector a -> CPPString
 instance Show (EVector a) where

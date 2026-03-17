@@ -60,6 +60,13 @@ class Foldable t where
 instance Foldable [] where
     toList xs = xs
 
+instance Foldable Maybe where
+    toList Nothing = []
+    toList (Just x) = [x]
+
+instance Foldable ((,) a) where
+    toList (x,y) = [y]
+
 notElem x c = not (elem x c)
 
 concat xs   = foldr (L.++) [] xs

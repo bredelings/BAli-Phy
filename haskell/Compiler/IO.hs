@@ -8,7 +8,7 @@ import Data.Tuple     -- for snd
 import Data.Function  -- for (.)
 import Data.Functor
 import Control.Applicative
-import Control.Monad
+import Control.Monad hiding (sequence, mapM)
 
 type RealWorld = Int
 
