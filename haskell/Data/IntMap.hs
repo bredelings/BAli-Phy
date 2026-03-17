@@ -3,11 +3,13 @@ module Data.IntMap where
 import Prelude hiding (map,empty,lookup,(!))
 import Data.Functor
 import qualified Data.Foldable as F
+import qualified Data.Traversable as T    
 import Foreign.Vector
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Control.DeepSeq
 import qualified Data.JSON as J
+
 
 data IntMap a
 
@@ -163,6 +165,9 @@ instance Show a => Show (IntMap a) where
 instance Foldable IntMap where
     toList = elems
     length = size
+
+instance Traversable IntMap where
+    traverse f m = fromList <$> sequenceA [ ((,) k) <$> (f v) | (k,v) <- toList m]
 
 instance J.ToJSON a => J.ToJSON (IntMap a) where
     toJSON im = J.toJSON [ (key, im!key) | key <- keys im]
