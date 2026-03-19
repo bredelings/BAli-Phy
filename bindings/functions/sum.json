@@ -2,6 +2,7 @@
     "name": "sum",
     "result_type": "a",
     "no_log": true,
+    "constraints": ["Num<a>"],
     "call": "sum(@xs)",
     "args": [
         {
