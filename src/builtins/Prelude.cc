@@ -619,3 +619,54 @@ extern "C" expression_ref simple_function_isWindows(vector<expression_ref>&)
 #endif
 }
 
+/* (ST m) >>= k
+    = ST (\s ->
+      case (m s) of (# new_s, r #) ->
+      case (k r) of (ST k2 ->
+      (k2 new_s)))
+      
+    = ST (andThenST m k s)
+*/
+extern "C" closure builtin_function_andThenST(OperationArgs& Args)
+{
+    closure m = Args.evaluate_slot_to_closure(0);
+
+    int s_reg = Args.current_closure().reg_for_slot(2);
+
+    m.exp = peel_n_lambdas(m.exp, 1);
+    m.Env.push_back(s_reg);
+
+    // ms_result <- perform m as an operation with step S
+    // ms_result SHOULD be in WHNF and have for the form (new_s_reg , r_reg)
+    int new_s_reg = -1;
+    int r_reg = -1;
+
+    
+    closure k = Args.evaluate_slot_to_closure(1);
+    k.exp = peel_n_lambdas(k.exp, 1);
+    k.Env.push_back(r_reg);
+
+    // kr_result <- perform k as an operation with step S
+    // kr_result SHOULD be in WHNF and have the form (ST k2_reg)
+
+    int k2_reg = -1;
+
+    closure k2 = Args.evaluate_slot_to_closure(k2_reg);
+    k2.exp = peel_n_lambdas(k2.exp, 1);
+    k2.Env.push_back(new_s_reg);
+
+    // k2_new_result <- perform k2 as an operation with step S
+    // k2_new_result should have the form (new_s2, x)
+
+    // PROBLEM: The uses/forces of a reg should be FIXED and not depend on values of used regs,
+    //            since those can change.
+    //          So its ok to evaluate m and k, since those depend on the regs passed in.
+    //          But its NOT ok to evaluate (m s), (k r), and (k2 new_s), since those depend
+    //             on the VALUES passed in!
+
+    // Normally we allocate a new expression and call it when the next step of evaluation depends
+    // on the inputs.  However, our current architecture means that we should RE-PERFORM the next
+    // action on the output of the current action, whereas we actually want to invalidate the current
+    // action (m s) if the results of the next action (k2 new_s) change.
+    std::exit(1);
+}
