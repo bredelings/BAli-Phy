@@ -1,0 +1,12 @@
+{
+    "name": "sum",
+    "result_type": "a",
+    "no_log": true,
+    "call": "sum(@xs)",
+    "args": [
+        {
+            "name": "xs",
+            "type": "List<a>"
+        }
+    ]
+}
