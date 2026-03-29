@@ -56,6 +56,11 @@ bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
 }
 
 // This version is used in module.cc
+// (f x + 1) * (g y - 2) --> does this work?
+// I think we have to handle LET-expressions in arguments for this to actually work.
+// (let z = f x in z+1) * (let w = g y in w - 2)
+// => let z = f x in z+1 in let w = g y in w-2 in (z+1)*(w-2)
+// This should avoid 3 allocations, I think...
 expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
     if (not E) return E;
