@@ -6,8 +6,8 @@ import Bio.Alphabet
 import SModel.Simple
 import SModel.Rate
 import SModel.Frequency
-import Probability.Distribution.Discrete -- for mix
-import Probability.Dist                  -- for mean
+import Probability.Distribution.Discrete
+import Probability.Dist (mean)                 
 import Tree
 import Markov (CTMC(..))
 import Reversible hiding (CanMakeReversible(..))

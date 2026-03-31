@@ -1,0 +1,23 @@
+{
+    "name": "lg4x",
+    "result_type": "DiscreteDist<CTMC<AA>>",
+    "call": "SModel.lg4x(@rateDist)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "rateDist",
+            "type": "DiscreteDist<Double>",
+            "default_value": "~dirichlet_on_dirichlet(4,2,2)",
+	    "description" : "Rates for each category"
+        }
+    ],
+    "description": "Empirically derived collection of 4 rate matrices, designed for free ASRV.",
+    "citation":{"type": "article",
+		"title": "Modeling Protein Evolution with Several Amino Acid Replacement Matrices Depending on Site Rates",
+		"year": "2012",
+		"author": [{"name": "Le, Si Quang"}, {"name": "Dang, Cuong Cao"}, {"name": "Gascuel, Olivier"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "29", "number": "10", "pages": "2921--2936"},
+		"identifier": [{"type":"doi","id":"10.1093/molbev/mss112"}]
+	       },
+    "examples": ["lg4x"]
+}

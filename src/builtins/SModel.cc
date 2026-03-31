@@ -931,6 +931,38 @@ extern "C" closure builtin_function_empirical(OperationArgs& Args)
     return Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>());
 }
 
+extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationArgs& Args)
+{
+    // 1. Get the arguments
+    auto n = Args.evaluate(0).as_int();
+    assert(n >= 0);
+
+    auto arg1 = Args.evaluate(1);
+    auto& xs = arg1.as_<EVector>();
+    
+
+    // 2. Check that we have the right number of entries
+    if (xs.size() != n*(n-1)/2)
+        throw myexception()<<"matrixFromLowerTriangle: expected "<<n*(n-1)/2
+                           <<" entries for matrix of size "<<n<<", but only got "<<xs.size();
+
+    // 3. Create the matrix
+    object_ptr<Box<Matrix>> M(new Box<Matrix>(n,n));
+
+    // 4. Fill the matrix
+    int k=0;
+    for(int i=0;i<n;i++)
+    {
+        (*M)(i,i) = 0;
+	for(int j=0;j<i;j++)
+            (*M)(j,i) = (*M)(i,j) = xs[k++].as_double();
+    }
+
+
+    // 5. Return the matrix
+    return object_ptr<const Object>(M);
+}
+
 object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 {
     istringstream file(
