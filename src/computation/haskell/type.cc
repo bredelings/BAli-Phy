@@ -70,6 +70,8 @@ std::string Type::print() const
         return as_<LazyType>().print();
     else if (is_a<FieldDecls>())
         return as_<FieldDecls>().print();
+    else if (is_a<TypeOfKind>())
+        return as_<TypeOfKind>().print();
 
     std::abort();
 }
