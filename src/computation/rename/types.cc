@@ -325,7 +325,8 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     for(auto& constraint: context)
         for(auto& [tv,count]: counted_free_type_variables(constraint))
             if (count > head_tvs[tv])
-                error(constraint.loc, Note()<<"Variable '"<<tv.print()<<"' occurs more times in the constraint '"<<constraint.print()<<"' than in the instance head '"<<head.print()<<"'");
+                if (not m.language_extensions.has_extension(LangExt::UndecidableInstances))
+                    error(constraint.loc, Note()<<"Variable '"<<tv.print()<<"' occurs more times in the constraint '"<<constraint.print()<<"' than in the instance head '"<<head.print()<<"'");
 
 
     // 6. Check that the instance head is a class application
