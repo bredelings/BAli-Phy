@@ -38,6 +38,7 @@ map<string,LangExt> ext_to_bit =
     {"TypeOperators",               {LangExt::TypeOperators}},
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
     {"StarIsType",                  {LangExt::StarIsType}},
+    {"UndecidableInstances",        {LangExt::UndecidableInstances}}
 };
 
 set<LangExt> haskell98_extensions =

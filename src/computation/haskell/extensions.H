@@ -79,6 +79,7 @@ enum class LangExt
     TypeOperators,
     TypeSections,
     TypeSynonymInstances,
+    UndecidableInstances,
     Last
 };
 
