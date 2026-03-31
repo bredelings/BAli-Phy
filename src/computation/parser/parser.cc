@@ -7612,6 +7612,17 @@ vector<Hs::LTypeVar> check_all_type_vars(const vector<Hs::LType>& ltypes)
         {
             ltype_vars.push_back({loc,*tv});
         }
+        else if (auto tok = type.to<Hs::TypeOfKind>())
+        {
+            if (auto tv = unloc(tok->type).to<Hs::TypeVar>())
+            {
+                auto tvok = *tv;
+                tvok.kind = tok->kind;
+                ltype_vars.push_back({loc,tvok});
+            }
+            else
+                throw myexception()<<"Type '"<<type<<"' is not a type variable";
+        }
         else
         {
             throw myexception()<<"Type '"<<type<<"' is not a type variable";
