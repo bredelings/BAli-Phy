@@ -19,6 +19,7 @@ module SModel (module SModel,
                module SModel.PosSelection,
                module SModel.ASRV,
                module SModel.Property,
+               module SModel.CXX,
                frequenciesFromDict) where
 
 import SModel.Nucleotides
@@ -41,6 +42,7 @@ import SModel.BranchSiteMixture
 import SModel.PosSelection
 import SModel.ASRV
 import SModel.Property
+import SModel.CXX
 
 infixl 2 +>
 submodel +> model = model submodel

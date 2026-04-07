@@ -20,6 +20,12 @@ unitMixture x = Discrete [(x, 1)]
 --   values of the components are equal.
 always = unitMixture
 
+applyModifiers fs (Discrete xps) = go fs xps where
+    go [] [] = []
+    go (f:fs) ((x,p):xps) = (f x,p):go fs xps
+    go [] _ = error "applyModifiers: more elements than operations!"
+    go _ [] = error "applyModifiers: more operations than elements!"
+
 uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
 uniformDiscretize dist n = quantile dist <$> uniformGrid n
