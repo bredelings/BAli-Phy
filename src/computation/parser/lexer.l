@@ -154,11 +154,12 @@ signed       {negative}?
 "{-"/[^#]                    yy_push_state(nested_comment);
 
 
-
-
+  /* These rules should not be active in a nested comment */
+<INITIAL,bol,layout,layout_do,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
+}
 
   /* bol state */
 <bol>[\n]  loc.lines(1); loc.step();
