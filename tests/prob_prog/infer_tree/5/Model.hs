@@ -31,7 +31,7 @@ model seqData nucs logTree = do
     alpha <- sample $ logLaplace 6 2
 
     let multiFreqModel = multiFrequency tree nodeMap tn93Model
-        gammaModel = always multiFreqModel +> gammaRates alpha 4
+        gammaModel = always multiFreqModel +> gammaRatesOn alpha 4
 
     observe seqData $ phyloCTMC tree (alignmentLength seqData) gammaModel scale
 
