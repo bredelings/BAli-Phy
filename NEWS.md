@@ -1,5 +1,9 @@
 # 4.2 (unreleased)
 
+## Models
+- Add amino-acid profile mixture models C10, C20, ... , C60.
+- Add amino-acid models LG4M and LG4X.
+
 ## Features
 - Log departure from reversibility in terms of the flux and nonreversibility.
 - The `joint-indels` tool learned how to show indel size, location, and sequence (Thanks to Erik Matsen).
