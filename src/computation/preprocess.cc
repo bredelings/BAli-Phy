@@ -55,6 +55,30 @@ bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
     return false;
 }
 
+
+std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, const expression_ref& E, bool sub_exp_ok)
+{
+    CDecls decls;
+    if (sub_exp_ok)
+    {
+        if (auto O = E.head().to<Operation>(); O and O->e_op)
+        {
+            
+        }
+    }
+
+    auto E2 = graph_normalize(source, E);
+
+    if (not is_ok_arg(E2, sub_exp_ok))
+    {
+        auto x = source.get_fresh_var();
+        decls.push_back({x,E2});
+        E2 = x;
+    }
+
+    return {decls, E2};
+}
+
 // This version is used in module.cc
 // (f x + 1) * (g y - 2) --> does this work?
 // I think we have to handle LET-expressions in arguments for this to actually work.
@@ -80,22 +104,14 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     {
         auto& [object, alts] = *C;
 
-	// Normalize the object
-	object = graph_normalize(source, object);
-
 	// Just normalize the bodies
 	for(auto& [pattern, body]: alts)
 	    body = graph_normalize(source, body);
 
-        // We allow variables, e-ops, and constants
-	if (is_ok_arg(object, true))
-	    return make_case_expression(object, alts);
-	else
-	{
-	    auto x = source.get_fresh_var();
+	// Normalize the object
+	auto [decls2, object2] = graph_normalize_lift(source, object, true);
 
-	    return let_expression({{x,object}},make_case_expression(x, alts));
-	}
+        return let_expression(decls2, make_case_expression(object2, alts));
     }
 
     // 5. Let
@@ -129,19 +145,12 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 	vector<pair<var, expression_ref>> decls;
 	for(int i=0;i<E2->size();i++)
 	{
-	    E2->sub[i] = graph_normalize(source, E.sub()[i]);
+            auto [decls2, arg2] = graph_normalize_lift(source, E.sub()[i], sub_exp_ok);
 
-            // Is the arg OK as is, or do we need to replace with a variable?
-            if (not is_ok_arg(E2->sub[i], sub_exp_ok))
-	    {
-		auto x = source.get_fresh_var();
+	    E2->sub[i] = arg2;
 
-		// 1. Let-bind the argument expression
-		decls.push_back( {x, E2->sub[i]} );
-
-		// 2. Replace the argument expression with the let var.
-		E2->sub[i] = x;
-	    }
+            for(auto& decl: decls2)
+                decls.push_back(decl);
 	}
 
 	return let_expression(decls, object_ptr<const expression>(E2));
