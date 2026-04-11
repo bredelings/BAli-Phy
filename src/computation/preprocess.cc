@@ -63,7 +63,18 @@ std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, c
     {
         if (auto O = E.head().to<Operation>(); O and O->e_op)
         {
-            
+            object_ptr<expression> E2 = E.as_expression().clone();
+
+            for(auto& arg: E2->sub)
+            {
+                auto [decls2, arg2] = graph_normalize_lift(source, arg, true);
+
+                arg = arg2;
+
+                std::ranges::move(decls2, std::back_inserter(decls));
+            }
+
+            return {decls, *E2};
         }
     }
 
@@ -149,8 +160,7 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 
 	    E2->sub[i] = arg2;
 
-            for(auto& decl: decls2)
-                decls.push_back(decl);
+            std::ranges::move(decls2, std::back_inserter(decls));
 	}
 
 	return let_expression(decls, object_ptr<const expression>(E2));
