@@ -1308,13 +1308,15 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	<info><title>Substitution rates</title></info>
       <informaltable>
 	  
-	<tgroup cols="3">
+	<tgroup cols="4">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
 	  <colspec colnum="2" colname="col2" colwidth="1*"/>
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
+	  <colspec colnum="4" colname="col4" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
 	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&nbsp;&nbsp;mixture components&nbsp;&nbsp;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 	  
@@ -1322,6 +1324,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>jc69</userinput></entry>
 	      <entry>0</entry>
+	      <entry>1</entry>
 	      <entry><para>Equal rates and equal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link></entry>
 	    </row>
@@ -1329,6 +1332,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>f81</userinput></entry>
 	      <entry>19</entry>
+	      <entry>1</entry>
 	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
 		(Felsenstein, 1981)
@@ -1341,6 +1345,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<para><userinput>jtt&nbsp;+>&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
+	      <entry>1</entry>
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/bioinformatics/8.3.275">
@@ -1354,6 +1359,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<para><userinput>wag&nbsp;+>&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
+	      <entry>1</entry>
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003851">
@@ -1367,6 +1373,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<para><userinput>lg08&nbsp;+>&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
+	      <entry>1</entry>
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msn067">
@@ -1377,9 +1384,108 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
+		<para><userinput>ul2</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>2</entry>
+	      <entry>
+		<para>Empirical exchange rates, all proteins.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c10</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>10</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 10 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c20</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>20</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 20 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c30</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>30</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 30 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c40</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>40</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 40 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c50</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>50</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 50 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>c60</userinput></para>
+	      </entry>
+	      <entry>0</entry>
+	      <entry>60</entry>
+	      <entry>
+		<para>Empirical profile mixture model, 60 categories</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1098/rstb.2008.0180">
+		  (Le, Gascuel, and Lartillot, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
 		<para><userinput>empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
+	      <entry>1</entry>
 	      <entry>
 	      </entry>
 	    </row>
@@ -1387,6 +1493,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>gtr</userinput></entry>
 	      <entry>208</entry>
+	      <entry>1</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
 		(Tavare, 1986)
@@ -1397,6 +1504,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>nonRev</userinput></entry>
 	      <entry>379</entry>
+	      <entry>1</entry>
 	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
 	      </entry>
 	    </row>
@@ -1404,6 +1512,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>nonEq</userinput></entry>
 	      <entry>398</entry>
+	      <entry>1</entry>
 	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
 	      </entry>
 	    </row>
