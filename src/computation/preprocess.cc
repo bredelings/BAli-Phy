@@ -56,11 +56,19 @@ bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
 }
 
 
+// If we have an expensive e_op that does something like ExpensiveOp1(1,ExpensiveOp2(2,x+y)), 
+//  then we don't need to float out ExpensiveOp2, because ExpensiveOp1 can only be invalidated when
+//  ExpensiveOp2 changes anyway.
+
 std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, const expression_ref& E, bool sub_exp_ok)
 {
     CDecls decls;
     if (sub_exp_ok)
     {
+        // If we have something like 1 + (2*(4+factorial 5))) then we want to
+        // (a) float the (factorial 5) out, and also
+        // (b) treat the 2*_ as a cheap e_op.
+        // So 
         if (auto O = E.head().to<Operation>(); O and O->e_op)
         {
             object_ptr<expression> E2 = E.as_expression().clone();
@@ -90,12 +98,11 @@ std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, c
     return {decls, E2};
 }
 
-// This version is used in module.cc
-// (f x + 1) * (g y - 2) --> does this work?
-// I think we have to handle LET-expressions in arguments for this to actually work.
-// (let z = f x in z+1) * (let w = g y in w - 2)
-// => let z = f x in z+1 in let w = g y in w-2 in (z+1)*(w-2)
-// This should avoid 3 allocations, I think...
+// PROBLEM: Ideally we want to normalize arguments and then analyze them.
+// Right now, in order to handle e_ops, we have to analyze the e_ops before they are analyzed
+//   in order to ensure that we only float vars that we have just created.
+// SOLUTION: Do this in core and rename all the variables.
+//   Then we can be sure that floating vars won't induce any aliasing.
 expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
     if (not E) return E;
