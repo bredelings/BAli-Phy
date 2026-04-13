@@ -942,9 +942,12 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
     
 
     // 2. Check that we have the right number of entries
-    if (xs.size() != n*(n-1)/2)
+    if (xs.size() < n*(n-1)/2)
         throw myexception()<<"matrixFromLowerTriangle: expected "<<n*(n-1)/2
                            <<" entries for matrix of size "<<n<<", but only got "<<xs.size();
+    if (xs.size() > n*(n-1)/2)
+        throw myexception()<<"matrixFromLowerTriangle: expected "<<n*(n-1)/2
+                           <<" entries for matrix of size "<<n<<", but got "<<xs.size();
 
     // 3. Create the matrix
     object_ptr<Box<Matrix>> M(new Box<Matrix>(n,n));

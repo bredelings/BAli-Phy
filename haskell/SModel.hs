@@ -22,6 +22,7 @@ module SModel (module SModel,
                module SModel.CXX,
                module SModel.LG4M,
                module SModel.LG4X,
+               module SModel.UL2,
                frequenciesFromDict) where
 
 import SModel.Nucleotides
@@ -47,6 +48,7 @@ import SModel.Property
 import SModel.CXX
 import SModel.LG4M
 import SModel.LG4X
+import SModel.UL2
 
 infixl 2 +>
 submodel +> model = model submodel

@@ -1,0 +1,28 @@
+{
+    "name": "ul2",
+    "result_type": "DiscreteDist<CTMC<AA>>",
+    "call": "SModel.ul2(@weights)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "weights",
+            "type": "List<Double>",
+
+            "default_value": "~symmetric_dirichlet(2,2)",
+	    "description" : "Relative frequencies for mixture component"
+        }
+    ],
+    "description": "Empirically derived collection of 2 rate matrices.",
+    "citation": {"type": "article",
+		 "title": "Phylogenetic mixture models for proteins",
+		 "year": "2008",
+		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
+		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
+			     "volume": "363",
+			     "number": "1512",
+			     "pages": "3965--3976"},
+		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
+		},
+    "examples": ["ul2","ul2 +> Rates.gamma"],
+    "see": ["ul3","ex2", "ex3", "eho"]
+}
