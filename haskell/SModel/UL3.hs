@@ -1,4 +1,4 @@
-module SModel.UL3 (ul3) where
+module SModel.UL3 (ul3, ul3_rw, ul3_rw3, ul3_f) where
 
 import SModel.Empirical
 import Bio.Alphabet
@@ -6,12 +6,25 @@ import SModel.ReversibleMarkov
 import SModel.Rate
 import Probability.Distribution.Discrete
 
-ul3 freqs = mkDiscrete [q1, q2, q3] freqs
+ul3 freqs = mkDiscrete [q1 pi1, q2 pi2, q3 pi3] freqs
+
+ul3_rw componentFreqs aaWeights = mkDiscrete [q1_rw aaWeights, q2_rw aaWeights, q3_rw aaWeights] componentFreqs
+ul3_rw3 componentFreqs aaWeights1 aaWeights2 aaWeights3 = mkDiscrete [q1_rw aaWeights1, q2_rw aaWeights2, q2_rw aaWeights3] componentFreqs
+ul3_f componentFreqs freqs1 freqs2 freqs3 = mkDiscrete [q1 freqs1, q2 freqs2, q3 freqs3] componentFreqs
+
+reweightFrequencies freqs weights
+    | length freqs == length weights = normalize [ f*w | (f,w) <- zip freqs weights ]
+    | otherwise                      = error "reweightFrequencies: frequencies and weight have different lengths!"
 
 -- No scaling, fixed component rates
-q1 = gtr aa e1 pi1
-q2 = gtr aa e2 pi2
-q3 = gtr aa e3 pi3
+q1 pi = scaleTo 1.6470 $ gtr aa e1 pi
+q2 pi = scaleTo 0.7021 $ gtr aa e2 pi
+q3 pi = scaleTo 0.6901 $ gtr aa e3 pi
+
+q1_rw ws = q1 (reweightFrequencies pi1 ws)
+q2_rw ws = q2 (reweightFrequencies pi2 ws)
+q3_rw ws = q3 (reweightFrequencies pi3 ws)
+
 
 pi1 = normalize $ [ 0.104307, 0.092553, 0.043722, 0.085643, 0.003218, 0.074342, 0.163928, 0.024243, 0.022216, 0.016012, 0.038591, 0.105577, 0.011434, 0.016126, 0.018057, 0.061232, 0.061373, 0.004086, 0.020876, 0.032465 ]
 pi2 = normalize $ [ 0.044015, 0.021591, 0.056258, 0.102405, 0.003260, 0.018409, 0.041364, 0.168549, 0.015843, 0.064277, 0.118096, 0.036061, 0.027358, 0.036695, 0.124914, 0.047807, 0.022696, 0.005866, 0.018644, 0.025892 ]
