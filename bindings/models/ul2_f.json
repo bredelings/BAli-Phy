@@ -1,0 +1,42 @@
+{
+    "name": "ul2_f",
+    "result_type": "DiscreteDist<CTMC<AA>>",
+    "call": "SModel.ul2_f(@component_freqs, @letter_freqs1, @letter_freqs2)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "component_freqs",
+            "type": "List<Double>",
+
+            "default_value": "~symmetric_dirichlet(2,2)",
+	    "description" : "Relative frequencies for mixture component"
+        },
+        {
+            "name": "letter_freqs1",
+            "type": "List<Double>",
+
+            "default_value": "~symmetric_dirichlet(20,5)",
+	    "description" : "Letter frequencies for first mixture component"
+        },
+        {
+            "name": "letter_freqs2",
+            "type": "List<Double>",
+
+            "default_value": "~symmetric_dirichlet(20,5)",
+	    "description" : "Letter frequencies for second mixture component"
+        }
+    ],
+    "description": "Empirically derived collection of 2 rate matrices, with amino-acid frequencies for the two components based on the paper, but reweighted",
+    "citation": {"type": "article",
+		 "title": "Phylogenetic mixture models for proteins",
+		 "year": "2008",
+		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
+		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
+			     "volume": "363",
+			     "number": "1512",
+			     "pages": "3965--3976"},
+		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
+		},
+    "examples": ["ul2","ul2 +> Rates.gamma"],
+    "see": ["ul3","ex2", "ex3", "eho"]
+}
