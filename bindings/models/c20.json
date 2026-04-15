@@ -7,8 +7,14 @@
         {
             "name": "weights",
             "type": "List<Double>",
-	    "default_value":"~symmetric_dirichlet(20, 20)",
+	    "default_value":"~symmetric_dirichlet(20, @alpha)",
 	    "description": "The relative frequencies of the components"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+	    "default_value":"2",
+	    "description": "Concentration parameter"
         }
     ],
     "title": "Mixture model",
