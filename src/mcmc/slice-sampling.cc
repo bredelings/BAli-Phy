@@ -462,14 +462,14 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
     std::optional<double> gL_cached;
     auto gL = [&]() {
         if (not gL_cached)
-            gL_cached = (g.in_range(L))?g(L):log_0;
+            gL_cached = (g.in_range(L))?g(L):-std::numeric_limits<double>::infinity();
         return *gL_cached;
     };
 
     std::optional<double> gR_cached;
     auto gR = [&]() {
         if (not gR_cached)
-            gR_cached = (g.in_range(R))?g(R):log_0;
+            gR_cached = (g.in_range(R))?g(R):-std::numeric_limits<double>::infinity();
         return *gR_cached;
     };
 
@@ -592,13 +592,13 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
 
     auto gL = [&]() {
         if (not gL_cached)
-            gL_cached = (g.in_range(L))?g(L):log_0;
+            gL_cached = (g.in_range(L))?g(L):-std::numeric_limits<double>::infinity();
         return *gL_cached;
     };
 
     auto gR = [&]() {
         if (not gR_cached)
-            gR_cached = (g.in_range(R))?g(R):log_0;
+            gR_cached = (g.in_range(R))?g(R):-std::numeric_limits<double>::infinity();
         return *gR_cached;
     };
 

@@ -24,24 +24,12 @@
 #include <numbers>
 #include "util/assert.hh"
 
-constexpr double max_float = 3.40282347e+38F;
-constexpr double log_limit = -max_float/100;
-constexpr double log_0 = -max_float;
-
-// For Pentium I (exp & log are base 2)
-// fadd = 3,1
-// fmul = 3,1
-// f2xm1 = 13-57
-// fyl2x = 22-111
-// fdiv  = 39
-// [ and fscale... ?]
-
 // NATS is 52*log(2) for 52 bits of precision
-// HMM... the long doubles have 64 bits of precision...
+// Although... the long doubles have 64 bits of precision...
 constexpr double NATS = 40;
 
 // log(1 + exp(x))
-// domain: [0, Inf)
+// domain: (-Inf, Inf)
 inline double log1pexp(double x)
 {
     if (x < 18.0)
@@ -57,49 +45,59 @@ inline double log1pexp(double x)
 inline double log1mexp(double x)
 {
     assert(x <= 0);
-    if (x > std::numbers::ln2) // log(2)
+    if (x > -std::numbers::ln2) // -log(2)
         return log(-expm1(x));
     else
         return log1p(-exp(x));
 }
 
-inline double logsum_nocheck(double x, double y) {
-    if (std::abs(x-y) > NATS)
-	return ((x > y) ? x : y);
-    else
-	return (x + log1p(exp(y - x)));
-}
-
 inline double logsum(double x, double y)
 {
-    double temp = y-x;
-    if (temp > NATS or x < log_limit)
-	return y;
-    else if (temp < -NATS or y < log_limit)
-	return x;
+    if (x == -std::numeric_limits<double>::infinity()) return y;
+    if (y == -std::numeric_limits<double>::infinity()) return x;
+    
+    const double hi = std::max(x, y); // could be branchless on some archs
+    const double lo = std::min(x, y); // could be branchless on some archs
+    const double diff = lo - hi;  // always ≤ 0
+    
+    if (diff < -NATS)
+        return hi;
+    else if (diff == 0.0)
+        return hi + std::numbers::ln2;
     else
-	return (x + log1p(exp(temp)));
+        return hi + std::log1p(std::exp(diff));
 }
 
-inline void loginc(double& x, double y)
+// log(exp(x) - exp(y)), requires x >= y
+// domain: (-inf, +inf), with x >= y
+inline double logdiff(double x, double y)
 {
-    double temp = y-x;
-    if (temp > NATS or x < log_limit)
-	x=y;
-    else if (temp < -NATS or y < log_limit)
-	;
-    else
-	x += log1p(exp(temp));
+    assert(x >= y);
+    
+    // Handle -inf cases explicitly
+    if (y == -std::numeric_limits<double>::infinity()) {
+        // log(exp(x) - 0) = x
+        return x;
+    }
+    if (x == -std::numeric_limits<double>::infinity()) {
+        // Then y must also be -inf by precondition; log(0 - 0) = -inf
+        return -std::numeric_limits<double>::infinity();
+    }
+    
+    if (x == y) {
+        return -std::numeric_limits<double>::infinity();
+    }
+    
+    const double diff = y - x;  // always ≤ 0
+    
+    if (diff < -NATS) {
+        // exp(y)/exp(x) is below double precision; exp(x) - exp(y) ≈ exp(x)
+        return x;
+    }
+    
+    // Accurate for all diff ∈ (-NATS, 0)
+    // -expm1(diff) is in (0, 1] since diff ∈ (-NATS, 0)
+    return x + std::log(-std::expm1(diff));
 }
 
-inline double logdiff(double x, double y) {
-    assert(x >= y);
-    double temp = y-x;
-    if (temp < -NATS or y < log_limit)
-	return x;
-    else if (x == y)
-	return log_0;
-    else
-	return (x + log1p(-exp(temp)));
-}
 #endif

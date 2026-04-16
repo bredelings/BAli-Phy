@@ -40,7 +40,7 @@ double Pr_harmonic(const valarray<double>& v) {
   for(int i=0;i<v.size();i++)
     sum += v[i];
 
-  double denominator=log_0;
+  double denominator=-std::numeric_limits<double>::infinity();
 
   for(int i=0;i<v.size();i++)
     denominator = logsum(denominator,sum-v[i]);
@@ -123,7 +123,7 @@ double Pr_smoothed(const valarray<double>& v) {
     // if we aren't converging, warn and don't give an answer
     if (iterations >400) {
       std::cerr<<"model_P: Probabilities not converging!!!\n";
-      return log_0;
+      return -std::numeric_limits<double>::infinity();
       //      exit(1);
     }
     

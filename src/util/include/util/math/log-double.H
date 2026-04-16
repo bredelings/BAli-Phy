@@ -27,7 +27,7 @@
 /// A class for handling positive real number in terms of their natural log.
 class log_double_t {
     /// Natural log of the number.
-    double value;
+    double value = -std::numeric_limits<double>::infinity();
 public:
 
     /// Access the log of the number.
@@ -35,27 +35,31 @@ public:
     /// Access the log of the number.
     constexpr double& log()       {return value;}
 
-    log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
+    log_double_t& operator +=(const log_double_t& y) {value = logsum(value,y.log()); return *this;}
     log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
     constexpr log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
     constexpr log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
 
     explicit operator double() const {return exp(value);}
 
-    constexpr log_double_t& operator=(double y) {
-	assert(std::isnan(y) or y >= 0);
+    constexpr log_double_t& operator=(double y)
+    {
+	assert(not (y<0));
+
 	if (y == 0)
-	    value = log_0;
+	    value = -std::numeric_limits<double>::infinity();
 	else if (y == 1)
 	    value = 0;
 	else
 	    value = ::log(y);
+
 	return *this;
     }
 
-    constexpr log_double_t():value(log_0) {}
+    constexpr log_double_t() {}
 
-    constexpr log_double_t(double x):value(0) {
+    constexpr log_double_t(double x)
+    {
 	operator=(x);
     }
 };
@@ -111,11 +115,9 @@ constexpr bool operator>=(log_double_t x, log_double_t y) {
 
 /******** Begin: Comparisons with 0 ********/
 
-constexpr bool operator>(log_double_t x, double y) {
-    if (y == 0)
-	return log(x) > log_limit;
-    else
-	return x > log_double_t(y);
+constexpr bool operator>(log_double_t x, double y)
+{
+    return x > log_double_t(y);
 }
 
 // NOTE: no operator<(log_double_t x,double y) since x<0 isn't a thing.
@@ -125,10 +127,7 @@ constexpr bool operator<(double x, log_double_t y) {
 }
 
 constexpr bool operator==(log_double_t x, double y) {
-    if (y == 0)
-	return log(x) <= log_limit;
-    else
-	return x == log_double_t(y);
+    return x == log_double_t(y);
 }
 
 constexpr bool operator==(double x, log_double_t y) { return (y == x);}
@@ -144,17 +143,6 @@ constexpr log_double_t pow(log_double_t x,double p)
 constexpr log_double_t sqrt(log_double_t x)
 {
     return pow(x,0.5);
-}
-
-inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
-{
-    double diff = log(x) - log(y);
-
-    if (std::abs(diff)<tol) return false;
-
-    if (x == y) return false;
-
-    return true;
 }
 
 template<class T> T exp_to(double);
