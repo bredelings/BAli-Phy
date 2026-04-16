@@ -28,8 +28,8 @@
 
 struct log_prod_underflow
 {
-    log_double_t accum = 1.0;
-    double prod = 1.0;
+    mutable NeumaierMultiplier accum;
+    mutable double prod = 1.0;
 
     log_prod_underflow& operator*=(log_double_t x)
     {
@@ -91,7 +91,16 @@ struct log_prod_underflow
 	return *this;
     }
 
-    log_double_t value() const {return accum * prod;}
+    log_double_t value() const
+    {
+        if (prod != 1)
+        {
+            accum *= prod;
+            prod = 1;
+        }
+        return (log_double_t)accum;
+    }
+
     operator log_double_t () const {return value();}
     bool is_zero() const {return value() <= 0.0;}
     constexpr log_prod_underflow() {}
