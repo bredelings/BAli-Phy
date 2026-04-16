@@ -16,7 +16,6 @@
 #include "computation/loader.H"
 #include "util/assert.hh"
 #include "util/bitmask.H"
-#include "kahan.H"
 #include "mcmc/prob_ratios.H"
 #include "mapping.H"
 #include "effects.H"
