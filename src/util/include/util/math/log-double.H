@@ -46,15 +46,20 @@ public:
     {
 	assert(not (y<0));
 
+        // It seems that log(0) may raise FE_DIVBYZERO.
+        // Normally this is silent. But can be made trapping with feenableexcept( ).
 	if (y == 0)
 	    value = -std::numeric_limits<double>::infinity();
+        // This could help if we inline this function.
 	else if (y == 1)
-	    value = 0;
+            value = 0;
 	else
 	    value = ::log(y);
 
 	return *this;
     }
+
+    constexpr bool is_zero() const  {return value == -std::numeric_limits<double>::infinity();}
 
     constexpr log_double_t() {}
 
@@ -92,47 +97,13 @@ constexpr log_double_t operator/(log_double_t x, log_double_t y) {
     return z;
 }
 
+constexpr auto operator<=>(log_double_t x, log_double_t y) {
+    return log(x) <=> log(y);
+}
+
 constexpr bool operator==(log_double_t x, log_double_t y) {
-    return log(x)==log(y);
+    return log(x) == log(y);
 }
-
-constexpr bool operator< (log_double_t x, log_double_t y) {
-    return log(x)<log(y);
-}
-
-constexpr bool operator> (log_double_t x, log_double_t y) {
-    return log(x)>log(y);
-}
-
-constexpr bool operator<=(log_double_t x, log_double_t y) {
-    return log(x)<=log(y);
-}
-
-constexpr bool operator>=(log_double_t x, log_double_t y) {
-    return log(x)>=log(y);
-}
-
-
-/******** Begin: Comparisons with 0 ********/
-
-constexpr bool operator>(log_double_t x, double y)
-{
-    return x > log_double_t(y);
-}
-
-// NOTE: no operator<(log_double_t x,double y) since x<0 isn't a thing.
-
-constexpr bool operator<(double x, log_double_t y) {
-    return (y > x);
-}
-
-constexpr bool operator==(log_double_t x, double y) {
-    return x == log_double_t(y);
-}
-
-constexpr bool operator==(double x, log_double_t y) { return (y == x);}
-
-/******** End: Comparisons with 0 ********/
 
 constexpr log_double_t pow(log_double_t x,double p)
 {
@@ -153,6 +124,7 @@ template<> constexpr log_double_t exp_to<log_double_t>(double x) {
     return y;
 }
 
+// Prints the log of the number, not the number itself
 inline std::ostream& operator<<(std::ostream& o,const log_double_t& e) {
     return o<<log(e);
 }
