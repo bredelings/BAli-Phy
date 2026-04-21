@@ -10,7 +10,7 @@ normalize xs = map (/sum xs) xs
     C20 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c20 weights = mkDiscrete [f81 pi aa | pi <- c20_pis] weights
+c20 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c20_pis] weights
 
 c20Fixed = c20 c20MixtureWeights
 

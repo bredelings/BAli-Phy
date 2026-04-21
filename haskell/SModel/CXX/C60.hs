@@ -10,7 +10,7 @@ normalize xs = map (/sum xs) xs
     C60 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c60 weights = mkDiscrete [f81 pi aa | pi <- c60_pis] weights
+c60 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c60_pis] weights
 
 c60Fixed = c60 c60MixtureWeights
 

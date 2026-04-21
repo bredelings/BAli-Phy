@@ -10,7 +10,7 @@ normalize xs = map (/sum xs) xs
     C50 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c50 weights = mkDiscrete [f81 pi aa | pi <- c50_pis] weights
+c50 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c50_pis] weights
 
 c50Fixed = c50 c50MixtureWeights
 

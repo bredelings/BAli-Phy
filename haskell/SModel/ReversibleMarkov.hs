@@ -17,9 +17,13 @@ equ a = Markov.equ (alphabetSize a) 1.0
 
 gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
-gtr a s pi = scaleTo 1 $ wrapMarkov a (simpleSMap a) $ Markov.gtr s pi
+gtr a s pi = scaleTo 1 $ unscaled_gtr a s pi
+unscaled_gtr a s pi = wrapMarkov a (simpleSMap a) $ Markov.gtr s pi
 
 f81     pi a = gtr a (equ a) pi
+
+unscaled_f81 pi a = unscaled_gtr a (equ a) pi
+
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
 
 gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequenciesFromDict a pi)

@@ -10,7 +10,7 @@ normalize xs = map (/sum xs) xs
     C40 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c40 weights = mkDiscrete [f81 pi aa | pi <- c40_pis] weights
+c40 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c40_pis] weights
 
 c40Fixed = c40 c40MixtureWeights
 
