@@ -40,7 +40,6 @@
 #include "util/matrix.H"                            // for matrix
 #include "util/myexception.H"                       // for myexception
 #include "util/ptree.H"                             // for ptree
-#include "util/settings.H"                          // for load_settings
 #include "util/string/convert.H"                    // for convertTo, conver...
 #include "util/string/join.H"                       // for join
 #include "util/string/split.H"                      // for split, split_on_last
@@ -1048,9 +1047,6 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                 throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
 
     //--------------- Create the Parameters object---------------//
-    if (args.count("set"))
-        load_settings(args["set"].as<vector<string> >());
-
     // check that smodel mapping has correct size.
     if (smodel_mapping.size() != filename_ranges.size())
         throw myexception()<<"There are "<<filename_ranges.size()

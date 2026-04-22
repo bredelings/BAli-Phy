@@ -55,6 +55,7 @@ namespace mpi = boost::mpi;
 #include "util/log-level.H"
 #include "util/set.H"
 #include "util/text.H"
+#include "util/settings.H"                          // for load_settings
 #include "models/parameters.H"
 #include "models/rules.H"
 #include "models/compile.H"
@@ -590,17 +591,24 @@ int main(int argc,char* argv[])
     int retval=0;
 
     try {
-// This should probably be a run-time switch.
-#if defined(HAVE_FEENABLEEXCEPT) && defined(DEBUG_FPE)
-        feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
-#endif
-#if defined(HAVE_CLEAREXCEPT) && !defined(DEBUG_FPE)
-        feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
-#endif
-        fp_scale::initialize();
-
         //---------- Parse command line  ---------//
         variables_map args = parse_cmd_line(argc,argv);
+
+        if (args.count("set"))
+            load_settings(args["set"].as<vector<string> >());
+
+#if defined(HAVE_CLEAREXCEPT)
+        feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+#endif
+
+#if defined(HAVE_FEENABLEEXCEPT)
+        if (setting_exists("debug-nan") and get_setting("debug-nan") == true)
+        {
+            feenableexcept(FE_INVALID);
+        }
+#endif
+
+        fp_scale::initialize();
 
         //------ Increase precision for (cout,cerr) if we are testing ------//
         if (args.count("test"))
