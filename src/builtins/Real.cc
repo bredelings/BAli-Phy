@@ -319,7 +319,10 @@ extern "C" expression_ref simple_function_integerToInvLogOdds(vector<expression_
     else
     {
 	double p = (double)x;
-	result = (-log(p) - log1p(-1/p));
+        if (p == 1)
+            result = std::numeric_limits<double>::infinity();
+        else
+            result = (-log(p) - log1p(-1/p));
     }
 
     return { result };
