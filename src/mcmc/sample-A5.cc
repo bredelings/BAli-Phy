@@ -424,7 +424,7 @@ int sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 	}
 
 	log_double_t choice_ratio = 1;
-	if (i<Pr.size())
+	if (i > 0 and i<Pr.size())
 	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
 	else
 	    choice_ratio = 1;

@@ -243,7 +243,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     for(int i=0;i<p.size();i++) 
     {
 	log_double_t choice_ratio = 1;
-	if (i<Pr.size())
+	if (i > 0 and i<Pr.size())
 	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
 	else
 	    choice_ratio = 1;
