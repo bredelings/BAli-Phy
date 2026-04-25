@@ -206,6 +206,13 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const C
     return get_trimmed(result);
 }
 
+bool is_seq(const expression_ref& E)
+{
+    assert(is_case(E));
+    auto& alts = E.sub()[1].as_<Core::Alts>();
+    return alts.size() == 1 and is_var(alts[0].pattern);
+}
+
 // Should we do this transformation before runtime?
 closure seq_op(OperationArgs& Args)
 {
@@ -229,9 +236,10 @@ closure case_op(OperationArgs& Args)
 
     // Handle case x of _ -> E = x `seq` E
     {
-        auto& alts = Args.reference(1).as_<Core::Alts>();
-        if (alts.size() == 1 and is_var(alts[0].pattern))
+        if (is_seq(Args.current_closure().exp))
+        {
             return seq_op(Args);
+        }
     }
 
     auto& in_object = Args.reference(0);
