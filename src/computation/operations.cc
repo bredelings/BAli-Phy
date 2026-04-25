@@ -206,6 +206,22 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const C
     return get_trimmed(result);
 }
 
+// Should we do this transformation before runtime?
+closure seq_op(OperationArgs& Args)
+{
+    auto& alts = Args.reference(1).as_<Core::Alts>();
+    assert(is_wildcard(alts[0].pattern));
+
+    // Force x
+    Args.evaluate_slot_force(0);
+
+    // Get the current Env -- AFTER we force x, so GC can't invalidate it.
+    closure result(alts[0].body, Args.current_closure().Env);
+
+    // Trim the result.
+    return get_trimmed( std::move(result) );
+}
+
 closure case_op(OperationArgs& Args)
 {
     extern long total_case_op;
@@ -215,18 +231,7 @@ closure case_op(OperationArgs& Args)
     {
         auto& alts = Args.reference(1).as_<Core::Alts>();
         if (alts.size() == 1 and is_var(alts[0].pattern))
-        {
-	    assert(is_wildcard(alts[0].pattern));
-
-            // Force x
-            Args.evaluate_slot_force(0);
-
-            // Get the current Env -- AFTER we force x, so GC can't invalidate it.
-            closure result(alts[0].body, Args.current_closure().Env);
-
-            // Trim the result.
-            return get_trimmed(result);
-        }
+            return seq_op(Args);
     }
 
     auto& in_object = Args.reference(0);
