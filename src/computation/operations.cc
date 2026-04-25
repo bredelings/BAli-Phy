@@ -139,41 +139,8 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-closure case_op(OperationArgs& Args)
+static closure alts_op(const closure::Env_t& Env, const closure& object, const Core::Alts& alts)
 {
-    extern long total_case_op;
-    total_case_op++;
-
-    // Handle case x of _ -> E = x `seq` E
-    {
-        auto& alts = Args.reference(1).as_<Core::Alts>();
-        if (alts.size() == 1 and is_var(alts[0].pattern))
-        {
-	    assert(is_wildcard(alts[0].pattern));
-
-            // Force x
-            Args.evaluate_slot_force(0);
-
-            // Get the current Env -- AFTER we force x, so GC can't invalidate it.
-            closure result(alts[0].body, Args.current_closure().Env);
-
-            // Trim the result.
-            return get_trimmed(result);
-        }
-    }
-
-    auto& in_object = Args.reference(0);
-
-    // Resizing of the memory can occur here, invalidating previously computed pointers
-    // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_closure(0);
-
-    // Therefore, we must compute this *after* we do the computation above, since
-    // we're going to hold on to it.  Otherwise the held reference would become
-    // *invalid* after the call above!
-    const closure& C = Args.current_closure();
-
-    auto& alts = Args.reference(1).as_<Core::Alts>();
     int L = alts.size();
 
 #ifndef NDEBUG
@@ -190,7 +157,7 @@ closure case_op(OperationArgs& Args)
 #endif
 
     closure result;
-    result.Env = C.Env;
+    result.Env = Env;
 
     for(int i=0;i<L and not result;i++)
     {
@@ -232,13 +199,51 @@ closure case_op(OperationArgs& Args)
 #ifdef NDEBUG
 	throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative";
 #else
-    throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative in '"<<make_case_expression(object.exp, cases, bodies)<<"'";
+        throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative in '"<<make_case_expression(object.exp, cases, bodies)<<"'";
 #endif
 
     // Trim the result.
     return get_trimmed(result);
 }
 
+closure case_op(OperationArgs& Args)
+{
+    extern long total_case_op;
+    total_case_op++;
+
+    // Handle case x of _ -> E = x `seq` E
+    {
+        auto& alts = Args.reference(1).as_<Core::Alts>();
+        if (alts.size() == 1 and is_var(alts[0].pattern))
+        {
+	    assert(is_wildcard(alts[0].pattern));
+
+            // Force x
+            Args.evaluate_slot_force(0);
+
+            // Get the current Env -- AFTER we force x, so GC can't invalidate it.
+            closure result(alts[0].body, Args.current_closure().Env);
+
+            // Trim the result.
+            return get_trimmed(result);
+        }
+    }
+
+    auto& in_object = Args.reference(0);
+
+    // Resizing of the memory can occur here, invalidating previously computed pointers
+    // to closures.  The *index* within the memory shouldn't change, though.
+    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_closure(0);
+
+    auto& C = Args.current_closure();
+
+    // Therefore, we must compute this *after* we do the computation above, since
+    // we're going to hold on to it.  Otherwise the held reference would become
+    // *invalid* after the call above!
+    auto& alts = Args.reference(1).as_<Core::Alts>();
+
+    return alts_op(C.Env, object, alts);
+}
 
 /*
  * Let's are not really 'changeable', but we'd like to stop replacing (contingent) let's with their call.
