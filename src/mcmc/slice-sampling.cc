@@ -526,6 +526,8 @@ double search_interval(double x0,double L, double R, slice_function& g, double l
     if (g.above_upper_bound(R)) R = *g.upper_bound;
 
     //  assert(g(x0) > g(L) and g(x0) > g(R));
+    assert(not std::isnan(logy));
+    assert(std::isfinite(logy)); 
     assert(g(x0) >= logy);
     assert(L < R);
     assert(L <= x0 and x0 <= R);
