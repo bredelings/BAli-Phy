@@ -4,7 +4,6 @@
 #include <tuple>
 #include <utility>
 #include "util/io.H"
-#include "models/parameters.H"
 #include "computation/loader.H"
 #include "computation/haskell/haskell.H"
 #include "desugar.H"

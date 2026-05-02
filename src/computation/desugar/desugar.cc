@@ -5,7 +5,6 @@
 #include <tuple>
 #include <utility>
 #include "util/io.H"
-#include "models/parameters.H"
 #include "computation/loader.H"
 #include "desugar.H"
 #include "util/assert.hh"
