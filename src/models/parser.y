@@ -59,8 +59,6 @@ ptree add_arg(const ptree& p1, const ptree& p2);
   BAR           "|"
   OBRACK        "["
   CBRACK        "]"
-  OANGLE        "<"
-  CANGLE        ">"
   OPAREN        "("
   CPAREN        ")"
   OCURLY        "{"
@@ -73,6 +71,16 @@ ptree add_arg(const ptree& p1, const ptree& p2);
   MINUS         "-"
   TIMES         "*"
   DIVIDE        "/"
+  MOD           "%"
+
+  AND           "&&"
+  OR            "||"
+  GT            ">"
+  GE            ">="
+  LT            "<"
+  LE            "<="
+  EQ            "=="
+  NE            "!="
 
   STACK         "+>"
   ARROW         "->"
@@ -116,9 +124,12 @@ ptree add_arg(const ptree& p1, const ptree& p2);
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
 
+%left "||"
+%left "&&"
+%nonassoc "==" "!=" "<" ">" "<=" ">="
 %left "+>"
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
 %left "~"
 %right "->"
 
@@ -159,6 +170,15 @@ term: qvarid                      { $$ = ptree($1); }
 |     term "-" term               { $$ = ptree("-",{{"",ptree($1)},{"",$3}}); }
 |     term "*" term               { $$ = ptree("*",{{"",ptree($1)},{"",$3}}); }
 |     term "/" term               { $$ = ptree("/",{{"",ptree($1)},{"",$3}}); }
+|     term "%" term               { $$ = ptree("%",{{"",ptree($1)},{"",$3}}); }
+|     term "==" term              { $$ = ptree("==",{{"",ptree($1)},{"",$3}}); }
+|     term "!=" term              { $$ = ptree("!=",{{"",ptree($1)},{"",$3}}); }
+|     term "<" term               { $$ = ptree("<",{{"",ptree($1)},{"",$3}}); }
+|     term ">" term               { $$ = ptree(">",{{"",ptree($1)},{"",$3}}); }
+|     term "<=" term              { $$ = ptree("<=",{{"",ptree($1)},{"",$3}}); }
+|     term ">=" term              { $$ = ptree(">=",{{"",ptree($1)},{"",$3}}); }
+|     term "&&" term              { $$ = ptree("&&",{{"",ptree($1)},{"",$3}}); }
+|     term "||" term              { $$ = ptree("||",{{"",ptree($1)},{"",$3}}); }
 |     term "+>" fncall            { $$ = add_arg($1,$3); }
 |     term "+>" qvarid            { $$ = add_arg($1,ptree($3)); }
 |     "_"                         { $$ = ptree("_"); }

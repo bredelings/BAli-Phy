@@ -1,0 +1,18 @@
+{
+    "name": "%",
+    "result_type": "a",
+    "no_log": true,
+    "constraints": ["Integral<a>"],
+    "call": "mod(@x,@y)",
+    "args": [
+        {
+            "name": "x",
+            "type": "a"
+        },
+        {
+            "name": "y",
+            "type": "a"
+        }
+    ],
+    "title":"The modulo operator"
+}

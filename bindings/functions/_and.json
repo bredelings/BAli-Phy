@@ -1,0 +1,17 @@
+{
+    "name": "&&",
+    "result_type": "Bool",
+    "no_log": true,
+    "call": "@x && @y",
+    "args": [
+        {
+            "name": "x",
+            "type": "Bool"
+        },
+        {
+            "name": "y",
+            "type": "Bool"
+        }
+    ],
+    "title":"The and operator"
+}

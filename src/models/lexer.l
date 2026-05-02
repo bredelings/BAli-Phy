@@ -29,6 +29,10 @@ zz::parser::symbol_type zz_make_float(const zz::parser::location_type& loc);
 
 zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc);
 
+zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc);
+
+zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc);
+
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
@@ -136,8 +140,6 @@ signed       {negative}?
 "|"      return zz::parser::make_BAR    (loc);
 "["      return zz::parser::make_OBRACK (loc);
 "]"      return zz::parser::make_CBRACK (loc);
-"<"      return zz::parser::make_OANGLE (loc);
-">"      return zz::parser::make_CANGLE (loc);
 "{"      return zz::parser::make_OCURLY (loc);
 "}"      return zz::parser::make_CCURLY (loc);
 ","      return zz::parser::make_COMMA  (loc);
@@ -152,7 +154,17 @@ signed       {negative}?
 "-"      return zz::parser::make_MINUS  (loc);
 "*"      return zz::parser::make_TIMES  (loc);
 "/"      return zz::parser::make_DIVIDE (loc);
+"%"      return zz::parser::make_MOD    (loc);
 
+"<="     return zz::parser::make_LE (loc);
+">="     return zz::parser::make_GE (loc);
+ /* Note that LT and GT are also used in types like List<a> */
+"<"      return zz::parser::make_LT (loc);
+">"      return zz::parser::make_GT (loc);
+"=="     return zz::parser::make_EQ (loc);
+"!="     return zz::parser::make_NE (loc);
+"&&"     return zz::parser::make_AND (loc);
+"||"     return zz::parser::make_OR  (loc);
 
 
 {qvarid}      return zz::parser::make_QVARID (yytext, loc);
@@ -160,11 +172,19 @@ signed       {negative}?
 {varid}       return drv.varid(loc);
 {conid}       return drv.varid(loc);
 
- /* {varsym}      return zz::parser::make_VARSYM  (yytext,loc);
+ /* {varsym}      return zz_make_varsym(loc);
+
     This rule causes problems because it matches ">>" before the ">" rule.
     Presumably because the longest match wins?
-    And that doesn't work with types like List<List>>. */
-{qvarsym}     return zz::parser::make_QVARSYM  (yytext,loc);
+    And that doesn't work with types like List<List>>.
+
+    So, right now we can't do (\=)(@x,@y) in a call.
+    We need to do (Prelude.\=)(@x,@y).
+    
+    Maybe we should have a different parser for types?
+ */
+
+{qvarsym}     return zz_make_varsym(loc);
 
 {decimal}                              return zz_make_integer10(loc);
 
@@ -280,6 +300,26 @@ zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc)
 	s[j++] = zz_get_char(yytext,i);
     s.resize(j);
     return zz::parser::make_STRING(s,loc);
+}
+
+zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc)
+{
+    return zz::parser::make_QVARSYM(yytext,loc);    
+}
+
+zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc)
+{
+    // Right now we are not using this.
+    // We need to parser recognized varsyms as their own tokens to take advantage of
+    //   the associativity and precedence rules in the parser.
+    
+    if (std::string_view(yytext) == "/")
+        return zz::parser::make_DIVIDE (loc);
+
+    // Put other special symbols here
+
+    else
+        return zz::parser::make_VARSYM(yytext,loc);    
 }
 
 void zz_use_things() {

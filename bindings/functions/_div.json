@@ -2,7 +2,7 @@
     "name": "/",
     "result_type": "Double",
     "no_log": true,
-    "call": "@x \/ @y",
+    "call": "@x / @y",
     "args": [
         {
             "name": "x",
