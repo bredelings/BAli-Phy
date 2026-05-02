@@ -30,6 +30,12 @@ public:
         return *this;
     }
 
+    constexpr NeumaierAccumulator& operator-=(const NeumaierAccumulator& other) noexcept {
+        *this -= other.sum_;
+        compensation_ -= other.compensation_;
+        return *this;
+    }
+
     constexpr double total() const noexcept {
         return sum_ + compensation_;
     }
@@ -51,6 +57,9 @@ struct NeumaierMultiplier
     NeumaierMultiplier& operator /=(log_double_t x) {data -= x.log(); return *this;}
 
     void reset() {data.reset();}
+
+    NeumaierMultiplier& operator *=(const NeumaierMultiplier& m2) {data += m2.data; return *this;}
+    NeumaierMultiplier& operator /=(const NeumaierMultiplier& m2) {data -= m2.data; return *this;}
 
     explicit operator log_double_t() {return exp_to_log_space(data.total());}
 };

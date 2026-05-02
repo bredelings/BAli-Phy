@@ -1036,6 +1036,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     evaluate_program(c2);
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
+
     prob_ratios_t R;
     R.variables_changed = (not random_vars_added.empty()) or (not random_vars_removed.empty());
 
@@ -1052,12 +1053,22 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         auto it2 = priors2.find(r_pdf1);
 
         if (it2 == priors2.end())
+        {
+            // Apparently its possible to have r_pdf1 not exist in C2, but
+            // have r_dist1 NOT be part of random_vars_removed?
             R.prior_ratio /= pdf1;
+        }
         else
         {
             auto& [r_dist2, pdf2] = it2->second;
             assert(r_dist2 == r_dist1);
             R.prior_ratio *= (pdf2 / pdf1);
+
+            // If pdf1 and pdf2 are both large, and very similar, then their difference could still be rather small.
+            // So presumably we are doing this ratio in order to keep more precision.
+            // Should we instead use an extended value with more precision?
+            // __float128 for example?
+            // Or Neumaier summation?
         }
     }
 

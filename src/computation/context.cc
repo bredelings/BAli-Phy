@@ -622,7 +622,8 @@ log_double_t context_ref::heated_probability() const
 
 log_double_t context_ref::heated_probability_ratio(const context_ref& C1) const
 {
-    return heated_probability_ratios(C1).total_ratio();
+    double lg = (double)heated_probability_ratios(C1).total_ratio().log();
+    return exp_to_log_space(lg); 
 }
 
 void context_ref::collect_garbage() const

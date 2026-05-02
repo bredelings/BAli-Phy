@@ -64,7 +64,7 @@ log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 
         context C2 = C1;
         C2.set_reg_value(r, expression_ref(1-i));
-        auto ratio = C2.probability_ratios(C1).total_ratio();
+        log_double_t ratio = C2.probability_ratios(C1).total_ratio();
         if (uniform() < ratio/(1.0+ratio))
         {
             C1 = C2;
@@ -127,7 +127,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     auto multiplier2 = get_multiplier(C2, I_regs);
 
     //------------- 5. Choose to accept or not, depending on the relative probabilities.
-    auto ratio = C2.probability_ratios(C1).total_ratio();
+    log_double_t ratio = C2.probability_ratios(C1).total_ratio();
 
     int choice = choose2(multiplier1, ratio*multiplier2);
 
