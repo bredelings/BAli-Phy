@@ -28,6 +28,19 @@
 // Although... the long doubles have 64 bits of precision...
 constexpr double NATS = 40;
 
+
+// 1. Primary template: Declared but NOT defined.
+// This prevents infinity<T> from working for arbitrary types (like int).
+template <typename T>
+constexpr T infinity;
+
+// 2. Explicit specializations for the types you want to support.
+template <>
+inline constexpr float infinity<float> = std::numeric_limits<float>::infinity();
+
+template <>
+inline constexpr double infinity<double> = std::numeric_limits<double>::infinity();
+
 // log(1 + exp(x))
 // domain: (-Inf, Inf)
 inline double log1pexp(double x)
