@@ -61,6 +61,7 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
+            sanitize: "undefined"
             arch: "linux64"
 
           - name: ubuntu-gcc-15
@@ -353,6 +354,7 @@ jobs:
 
     - name: Test
       run: |
+        export UBSAN_OPTIONS=halt_on_error=1
         export seed=$RANDOM
         if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
