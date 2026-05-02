@@ -34,8 +34,6 @@ public:
         return sum_ + compensation_;
     }
 
-    constexpr explicit operator double () const {return total();}
-
     constexpr void reset() noexcept {
         sum_ = 0.0;
         compensation_ = 0.0;
@@ -54,7 +52,7 @@ struct NeumaierMultiplier
 
     void reset() {data.reset();}
 
-    explicit operator log_double_t() {return exp_to<log_double_t>(double(data));}
+    explicit operator log_double_t() {return exp_to_log_space(data.total());}
 };
 
 #endif

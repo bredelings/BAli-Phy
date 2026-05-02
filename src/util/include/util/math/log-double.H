@@ -25,108 +25,121 @@
 #include "util/math/logsum.H"
 
 /// A class for handling positive real number in terms of their natural log.
-class log_double_t {
+template <typename T>
+class LogNum {
     /// Natural log of the number.
-    double value = -std::numeric_limits<double>::infinity();
+    T value = -infinity<T>;
 public:
+    typedef T log_value_type;
+    
+    /// Access the log of the number.
+    constexpr T  log() const {return value;}
 
     /// Access the log of the number.
-    constexpr double  log() const {return value;}
-    /// Access the log of the number.
-    constexpr double& log()       {return value;}
+    /// Possibly replace this...
+    constexpr T& log()       {return value;}
 
-    log_double_t& operator +=(const log_double_t& y) {value = logsum(value,y.log()); return *this;}
-    log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
-    constexpr log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
-    constexpr log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
+    LogNum& operator +=(const LogNum& y) {value = logsum(value,y.log()); return *this;}
+    LogNum& operator -=(const LogNum& y) {value = logdiff(log(),y.log()); return *this;}
+    constexpr LogNum& operator *=(const LogNum& y) {value += y.log(); return *this;}
+    constexpr LogNum& operator /=(const LogNum& y) {value -= y.log(); return *this;}
 
-    explicit operator double() const {return exp(value);}
+    friend constexpr LogNum operator+(const LogNum& x, const LogNum& y) {
+        LogNum z = x;
+        z += y;
+        return z;
+    }
 
-    constexpr log_double_t& operator=(double y)
+    friend constexpr LogNum operator-(const LogNum& x, const LogNum& y) {
+        LogNum z = x;
+        z -= y;
+        return z;
+    }
+
+    friend constexpr LogNum operator*(const LogNum& x, const LogNum& y) {
+        LogNum z = x;
+        z *= y;
+        return z;
+    }
+
+    friend constexpr LogNum operator/(const LogNum& x, const LogNum& y) {
+        LogNum z=x;
+        z /= y;
+        return z;
+    }
+
+    friend constexpr auto operator<=>(const LogNum& x, const LogNum& y) {
+        return x.log() <=> y.log();
+    }
+
+    friend constexpr bool operator==(const LogNum& x, const LogNum& y) {
+        return x.log() == y.log();
+    }
+
+    explicit operator T() const {return exp(value);}
+
+    constexpr LogNum& operator=(const T& y)
     {
 	assert(not (y<0));
 
         // It seems that log(0) may raise FE_DIVBYZERO.
         // Normally this is silent. But can be made trapping with feenableexcept( ).
 	if (y == 0)
-	    value = -std::numeric_limits<double>::infinity();
+	    value = -infinity<T>;
         // This could help if we inline this function.
 	else if (y == 1)
-            value = 0;
+            value = T(0);
 	else
-	    value = ::log(y);
+	    value = T(::log(y));
 
 	return *this;
     }
 
-    constexpr bool is_zero() const  {return value == -std::numeric_limits<double>::infinity();}
+    constexpr bool is_zero() const  {return value == -infinity<T>;}
 
-    constexpr log_double_t() {}
+    constexpr LogNum() {}
 
-    constexpr log_double_t(double x)
+
+    // Possibly change this to a function from_linear(T), or to_log(T).
+    // That would require manual changing to-and-from log-space.
+    constexpr LogNum(const T& x)
     {
 	operator=(x);
     }
 };
 
-constexpr double log(log_double_t x) {
+template <typename T>
+constexpr T log(const LogNum<T>& x) {
     return x.log();
 }
 
-inline log_double_t operator+(log_double_t x, log_double_t y) {
-    log_double_t z = x;
-    z += y;
-    return z;
-}
-
-inline log_double_t operator-(log_double_t x, log_double_t y) {
-    log_double_t z = x;
-    z -= y;
-    return z;
-}
-
-constexpr log_double_t operator*(log_double_t x, log_double_t y) {
-    log_double_t z = x;
-    z *= y;
-    return z;
-}
-
-constexpr log_double_t operator/(log_double_t x, log_double_t y) {
-    log_double_t z=x;
-    z /= y;
-    return z;
-}
-
-constexpr auto operator<=>(log_double_t x, log_double_t y) {
-    return log(x) <=> log(y);
-}
-
-constexpr bool operator==(log_double_t x, log_double_t y) {
-    return log(x) == log(y);
-}
-
-constexpr log_double_t pow(log_double_t x,double p)
+template <typename T>
+constexpr LogNum<T> pow(LogNum<T> x, double p)
 {
     x.log() *= p;
     return x;
 }
 
-constexpr log_double_t sqrt(log_double_t x)
+template <typename T>
+constexpr LogNum<T> sqrt(const LogNum<T>& x)
 {
     return pow(x,0.5);
 }
 
-template<class T> T exp_to(double);
-
-template<> constexpr log_double_t exp_to<log_double_t>(double x) {
-    log_double_t y;
+template<typename T> constexpr LogNum<T> exp_to_log_space(const T& x)
+{
+    LogNum<T> y;
     y.log() = x;
     return y;
 }
 
+
 // Prints the log of the number, not the number itself
-inline std::ostream& operator<<(std::ostream& o,const log_double_t& e) {
+template <typename T>
+inline std::ostream& operator<<(std::ostream& o,const LogNum<T>& e) {
     return o<<log(e);
 }
+
+typedef LogNum<double> log_double_t;
 
 #endif

@@ -163,19 +163,19 @@ log_double_t exp_exponential_pdf(double y, double mu, double delta) {
   double x = exp(y)-delta;
   assert(x >= 0);
 
-  return exp_to<log_double_t>(-x/mu + y)/mu;
+  return exp_to_log_space(-x/mu + y)/mu;
 }
 
 log_double_t exponential_pdf(double x, double mu) {
   if (x < 0) 
     return 0;
 
-  return exp_to<log_double_t>(-x/mu)/mu;
+  return exp_to_log_space(-x/mu)/mu;
 }
 
 log_double_t laplace_pdf(double x, double mu, double b) 
 {
-  return exp_to<log_double_t>(-std::abs(x-mu)/b)/(2.0*b);
+  return exp_to_log_space(-std::abs(x-mu)/b)/(2.0*b);
 }
 
 log_double_t cauchy_pdf(double x, double l, double s)
@@ -472,7 +472,7 @@ log_double_t binomial_pdf(int n, double p, int k)
 
 log_double_t L_gamma(double x)
 {
-    return exp_to<log_double_t>(std::lgamma(x));
+    return exp_to_log_space(std::lgamma(x));
 }
 
 log_double_t L_factorial(int k)

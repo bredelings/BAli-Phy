@@ -529,6 +529,7 @@ double search_interval(double x0,double L, double R, slice_function& g, double l
     assert(not std::isnan(logy));
     assert(std::isfinite(logy)); 
     assert(g(x0) >= logy);
+    assert(std::isfinite(g()));
     assert(L < R);
     assert(L <= x0 and x0 <= R);
 
@@ -731,7 +732,7 @@ inline static void inc(double& x, double w, const slice_function& g, bool& hit_u
 std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function& g,double logy,
 						      double w,int /*m*/)
 {
-    // the initial point should be within the bounds, if the exist
+    // the initial point should be within the bounds, if they exist
     assert(not g.below_lower_bound(x0));
     assert(not g.above_upper_bound(x0));
 

@@ -388,7 +388,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, in
 
     for(int i=0;i<branches.size();i++) {
 
-	auto factor = exp_to<log_double_t>(gaussian(0,0.05));
+	auto factor = exp_to_log_space(gaussian(0,0.05));
 
 	double L = p[1].t().branch_length( branches[i] ) * double(factor);
 

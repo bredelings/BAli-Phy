@@ -328,7 +328,7 @@ extern "C" expression_ref simple_function_lessthan_log_double(vector<expression_
 extern "C" expression_ref simple_function_expToLogDouble(vector<expression_ref>& args)
 {
     double d = get_arg(args).as_double();
-    return exp_to<log_double_t>(d);
+    return exp_to_log_space(d);
 }
 
 extern "C" expression_ref simple_function_doubleToLogDouble(vector<expression_ref>& args)

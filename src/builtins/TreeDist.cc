@@ -113,7 +113,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
         
         double nChoose2 = n*(n-1)/2;
         double rate = 1/N;
-        auto PrInterval = exp_to<log_double_t>( -rate * nChoose2 * (t2-t1) );
+        auto PrInterval = exp_to_log_space( -rate * nChoose2 * (t2-t1) );
         
         auto type = events[i].type;
         if (type == RateChange)

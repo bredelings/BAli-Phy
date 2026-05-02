@@ -32,7 +32,7 @@ using std::abs;
 
 log_double_t scale_gaussian(double& x, double sigma)
 {
-    auto scale = exp_to<log_double_t>( gaussian(0,sigma) );
+    auto scale = exp_to_log_space( gaussian(0,sigma) );
     x *= (double)scale;
     return scale;
 }
@@ -331,7 +331,7 @@ log_double_t slide_node_no_expand_branch(vector<double>& lengths,double)
 
 log_double_t slide_node_expand_branch(vector<double>& lengths,double sigma) 
 {
-    auto ratio = exp_to<log_double_t>( gaussian(0,sigma) );
+    auto ratio = exp_to_log_space( gaussian(0,sigma) );
 
     double L = (lengths[0] + lengths[1]) * double(ratio);
 
@@ -454,9 +454,9 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
 
     for(int i=0;i<20;i++) 
     {
-	auto R12 = exp_to<log_double_t>(gaussian(0,sigma));
-	auto R23 = exp_to<log_double_t>(gaussian(0,sigma));
-	auto R31 = exp_to<log_double_t>(gaussian(0,sigma));
+	auto R12 = exp_to_log_space(gaussian(0,sigma));
+	auto R23 = exp_to_log_space(gaussian(0,sigma));
+	auto R31 = exp_to_log_space(gaussian(0,sigma));
 
 	double S12_ = double(S12 * R12);
 	double S23_ = double(S23 * R23);

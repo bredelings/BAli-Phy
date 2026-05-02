@@ -1002,7 +1002,7 @@ void exchange_random_pairs(int iterations, Parameters& P, MCMC::MoveStats& /*Sta
 	    cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
 
 	    // db * dL = -db*dE   because E = -L = -log(likelihood)
-	    log_double_t ratio = exp_to<log_double_t>( (b2-b1)*(L1-L2) );
+	    log_double_t ratio = exp_to_log_space( (b2-b1)*(L1-L2) );
 	    int exchange = 0;
 	    if (ratio >= 1 or uniform() < ratio)
 		exchange = 1;

@@ -1892,7 +1892,7 @@ log_double_t shift_gaussian(context_ref& C, int r, double scale)
 
     C.set_reg_value(r, {x});
 
-    return exp_to<log_double_t>(0.0);
+    return exp_to_log_space(0.0);
 }
 
 Proposal shift_gaussian(int r, double scale)
@@ -1908,7 +1908,7 @@ log_double_t shift_laplace(context_ref& C, int r, double scale)
 
     C.set_reg_value(r, {x});
 
-    return exp_to<log_double_t>(0.0);
+    return exp_to_log_space(0.0);
 }
 
 Proposal shift_laplace(int r, double scale)
@@ -1921,8 +1921,8 @@ log_double_t propose_two_titres_constant_sum(context_ref& C, int r1, int r2)
     double x1 = C.evaluate_reg(r1).as_double();
     double x2 = C.evaluate_reg(r2).as_double();
 
-    log_double_t w1 = exp_to<log_double_t>(x1);
-    log_double_t w2 = exp_to<log_double_t>(x2);
+    log_double_t w1 = exp_to_log_space(x1);
+    log_double_t w2 = exp_to_log_space(x2);
 
     log_double_t total = w1 + w2;
 
