@@ -44,6 +44,11 @@ public:
     constexpr LogNum& operator *=(const LogNum& y) {value += y.log(); return *this;}
     constexpr LogNum& operator /=(const LogNum& y) {value -= y.log(); return *this;}
 
+    template <typename U> constexpr LogNum& operator *=(const LogNum<U>& y) {value += y.log(); return *this;}
+    template <typename U> constexpr LogNum& operator /=(const LogNum<U>& y) {value -= y.log(); return *this;}
+
+    // These all need to be in-class friends to allow conversion from double to LogNum
+
     friend constexpr LogNum operator+(const LogNum& x, const LogNum& y) {
         LogNum z = x;
         z += y;
@@ -78,7 +83,7 @@ public:
 
     explicit operator T() const {return exp(value);}
 
-    constexpr LogNum& operator=(const T& y)
+    constexpr LogNum& operator=(double y)
     {
 	assert(not (y<0));
 
@@ -95,14 +100,21 @@ public:
 	return *this;
     }
 
+    LogNum& operator=(const LogNum&) = default;
+    template <typename U>
+    LogNum& operator=(const LogNum<U>& u) {value = T(u.log()); return *this;}
+
     constexpr bool is_zero() const  {return value == -infinity<T>;}
 
     constexpr LogNum() {}
 
+    LogNum(const LogNum&) = default;
+    template <typename U>
+    LogNum(const LogNum<U>& u): value(u.log()) {}
 
     // Possibly change this to a function from_linear(T), or to_log(T).
     // That would require manual changing to-and-from log-space.
-    constexpr LogNum(const T& x)
+    constexpr LogNum(double x)
     {
 	operator=(x);
     }
