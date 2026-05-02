@@ -12,12 +12,12 @@ log_double_t reg_heap::prior_for_context(int c)
     evaluate_program(c);
     reroot_at_context(c);
 
-    NeumaierMultiplier Pr;
+    NeumaierMultiplier<double> Pr;
 
     for(auto& [s, E]: prior_terms)
 	Pr *= E.prob;
 
-    return (log_double_t)Pr;
+    return Pr.result();
 }
 
 log_double_t reg_heap::likelihood_for_context(int c)
@@ -27,10 +27,10 @@ log_double_t reg_heap::likelihood_for_context(int c)
     evaluate_program(c);
     reroot_at_context(c);
 
-    NeumaierMultiplier Pr;
+    NeumaierMultiplier<double> Pr;
     for(auto& [s,E]: likelihood_terms)
 	Pr *= E.prob;
 
-    return (log_double_t)Pr;
+    return Pr.result();
 }
 

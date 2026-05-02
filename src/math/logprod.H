@@ -20,15 +20,15 @@
 #ifndef LOGPROD_H
 #define LOGPROD_H
 
+#include <iostream>
 #include <cmath>
-#include "util/assert.hh"
 #include "util/math/log-double.H"
 #include "util/math/neumaier.H"
-#include <iostream>
+#include "util/assert.hh"
 
 struct log_prod_underflow
 {
-    mutable NeumaierMultiplier accum;
+    mutable NeumaierMultiplier<double> accum;
     mutable double prod = 1.0;
 
     log_prod_underflow& operator*=(log_double_t x)
@@ -98,7 +98,7 @@ struct log_prod_underflow
             accum *= prod;
             prod = 1;
         }
-        return (log_double_t)accum;
+        return accum.result();
     }
 
     operator log_double_t () const {return value();}
