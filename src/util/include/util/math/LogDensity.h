@@ -181,9 +181,9 @@ public:
             return std::nan("1"); // handles NANs from +Inf + -Inf
     }
 
-    LogDensity() = default;
+    constexpr LogDensity() = default;
 
-    /*explicit*/ LogDensity(double y)
+    constexpr /*explicit*/ LogDensity(double y)
     {
         if (std::isnan(y))
             nans_ = 1;
@@ -198,7 +198,7 @@ public:
 	    ones_ = y;
     }
 
-    explicit LogDensity(double x, double y, double z=0, int n =0)
+    constexpr explicit LogDensity(double x, double y, double z=0, int n =0)
 	:neginfs_(x), ones_(y), infs_(z), nans_(n)
     { }
 };
