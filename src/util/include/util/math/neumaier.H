@@ -17,9 +17,16 @@ public:
 
     constexpr NeumaierAccumulator& operator+=(T x) noexcept {
         const double t = sum_ + x;
-        compensation_ += (std::abs(sum_) >= std::abs(x))
-            ? (sum_ - t) + x
-            : (x - t) + sum_;
+
+        // If t is Inf or -Inf, then the compensation code will return a NaN.
+        // However, if t isn't finite, then there's no point in trying to preserve
+        //  extra bits of precision anyway, since the final result will be Inf, -Inf or NaN.
+        if (std::isfinite(t))
+        {
+            compensation_ += (std::abs(sum_) >= std::abs(x))
+                ? (sum_ - t) + x
+                : (x - t) + sum_;
+        }
         sum_ = t;
         return *this;
     }
