@@ -21,10 +21,12 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FENV_H
-extern "C" {
-#include "fenv.h"
-}
+#include <cfenv>
+
+#if defined(_WIN32)
+    #include <float.h>
+#elif defined(__APPLE__) && defined(__x86_64__)
+    #include <xmmintrin.h>
 #endif
 
 #include "util/time.H"
@@ -573,6 +575,31 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
 }
 
 
+// Optionally enable trapping on FE_INVALID for NaN debugging.
+static inline void enable_nan_trapping(void)
+{
+    std::feclearexcept(FE_INVALID);
+
+#if defined(_WIN32)
+    unsigned int current;
+    _controlfp_s(&current, 0, 0);
+    _controlfp_s(NULL, current & ~_EM_INVALID, _MCW_EM);
+
+#elif defined(HAVE_FEENABLEEXCEPT)
+    feenableexcept(FE_INVALID);
+
+#elif defined(__APPLE__) && defined(__x86_64__)
+    unsigned int mxcsr = _mm_getcsr();
+    _mm_setcsr(mxcsr & ~(1 << 10));
+
+#elif defined(__APPLE__) && defined(__aarch64__)
+    unsigned long fpcr;
+    __asm__ __volatile__("mrs %0, fpcr" : "=r"(fpcr));
+    __asm__ __volatile__("msr fpcr, %0" : : "r"(fpcr | (1 << 8)));
+#endif
+}
+
+
 int main(int argc,char* argv[])
 { 
     int n_procs = 1;
@@ -604,7 +631,7 @@ int main(int argc,char* argv[])
 #if defined(HAVE_FEENABLEEXCEPT)
         if (setting_exists("debug-nan") and get_setting("debug-nan") == true)
         {
-            feenableexcept(FE_INVALID);
+            enable_nan_trapping();
         }
 #endif
 

@@ -22,9 +22,11 @@ conf_data.set_quoted('_COMPILER_', cpp.get_id() + ' ' + cpp.version() + ' ' + ho
 
 # 2.2. Write header and function checks to'config.h'
 conf_data.set('HAVE_SYS_RESOURCE_H', cpp.has_header('sys/resource.h'))
-conf_data.set('HAVE_FENV_H', cpp.has_header('fenv.h'))
 conf_data.set('HAVE_LOG_2', cpp.has_function('log2'))
-conf_data.set('HAVE_FEENABLEEXCEPT', cpp.has_function('feenableexcept'))
+conf_data.set('HAVE_FEENABLEEXCEPT', cpp.compiles(
+  '#include <fenv.h>\nint main() { feenableexcept(FE_INVALID); return 0; }',
+  name: 'feenableexcept'
+))
 
 # 2.3. Write config file, get root_inc to include it, and tell the compiler it exists.
 configure_file(output : 'config.h', configuration : conf_data)
