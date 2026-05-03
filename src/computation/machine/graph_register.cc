@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "util/truncate.H"
 #include "util/log-level.H"
+#include "util/math/neumaier.H"
 #include "util/string/join.H"
 #include "util/io/vector.H"
 #include "util/set.H"
@@ -1037,9 +1038,12 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
 
-    prob_ratios_t R;
-    R.variables_changed = (not random_vars_added.empty()) or (not random_vars_removed.empty());
+    NeumaierMultiplier<LogDensity> prior_product1;
+    NeumaierMultiplier<LogDensity> prior_product2;
 
+    NeumaierMultiplier<LogDensity> likelihood_product1;
+    NeumaierMultiplier<LogDensity> likelihood_product2;
+    
     for(auto [r_pdf1, r_dist_and_pdf1]: priors1)
     {
         auto& [r_dist1, pdf1] = r_dist_and_pdf1;
@@ -1050,26 +1054,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
             continue;
         }
 
-        auto it2 = priors2.find(r_pdf1);
-
-        if (it2 == priors2.end())
-        {
-            // Apparently its possible to have r_pdf1 not exist in C2, but
-            // have r_dist1 NOT be part of random_vars_removed?
-            R.prior_ratio /= pdf1;
-        }
-        else
-        {
-            auto& [r_dist2, pdf2] = it2->second;
-            assert(r_dist2 == r_dist1);
-            R.prior_ratio *= (pdf2 / pdf1);
-
-            // If pdf1 and pdf2 are both large, and very similar, then their difference could still be rather small.
-            // So presumably we are doing this ratio in order to keep more precision.
-            // Should we instead use an extended value with more precision?
-            // __float128 for example?
-            // Or Neumaier summation?
-        }
+        prior_product1 *= pdf1;
     }
 
     for(auto [r_pdf2, r_dist_and_pdf2]: priors2)
@@ -1082,30 +1067,23 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
             continue;
         }
 
-        if (not priors2.count(r_pdf2))
-            R.prior_ratio *= pdf2;
+        prior_product2 *= pdf2;
     }
 
     for(auto [r_likelihood, likelihood1]: likelihoods1)
     {
-        auto it2 = likelihoods2.find(r_likelihood);
-
-        if (it2 == likelihoods2.end())
-            R.likelihood_ratio /= likelihood1;
-        else
-        {
-            auto likelihood2 = it2->second;
-            R.likelihood_ratio *= (likelihood2 / likelihood1);
-        }
+        likelihood_product1 *= likelihood1;
     }
 
     for(auto [r_likelihood, likelihood2]: likelihoods2)
     {
-        auto it1 = likelihoods1.find(r_likelihood);
-
-        if (it1 == likelihoods1.end())
-            R.likelihood_ratio *= likelihood2;
+        likelihood_product2 *= likelihood2;
     }
+
+    prob_ratios_t R;
+    R.variables_changed = (not random_vars_added.empty()) or (not random_vars_removed.empty());
+    R.prior_ratio = (prior_product2 / prior_product1).result();
+    R.likelihood_ratio = (likelihood_product2 / likelihood_product1).result();
 
 #if DEBUG_MACHINE >= 2
     for(auto x : prog_temp)
