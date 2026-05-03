@@ -320,10 +320,13 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     for(int i=0;i<n;i++)
     {
         // symmetrizing may be ill-conditioned -- fail
-        if (pi[i]*n < 1.0e-13) return {EMaybe()};
+        if (not (pi[i]*n > 1.0e-13)) return {EMaybe()};
 
         sqrt_pi[i] = sqrt(pi[i]);
         inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
+
+        // fail if we see Inf, -Inf or Nan.
+        if (not std::isfinite(pi[i]) or not std::isfinite(inverse_sqrt_pi[i])) return {EMaybe()};
     }
 
     //--------------- Calculate eigensystem -----------------//
@@ -345,6 +348,8 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 	    else
 		assert (Q(i,j) <= 0);
 #endif
+            // fail if we see Inf, -Inf or Nan.
+            if (not std::isfinite(S(i,j))) return {EMaybe()};
 	}
 
     //---------------- Compute eigensystem ------------------//
