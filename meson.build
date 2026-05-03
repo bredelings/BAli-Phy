@@ -30,6 +30,7 @@ conf_data.set('HAVE_FEENABLEEXCEPT', cpp.has_function('feenableexcept'))
 configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.','src')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
+add_global_arguments('-DXXH_NO_INLINE_HINTS=1', language: 'c')
 
 
 # 3. Set compiler flags
