@@ -135,6 +135,20 @@ jobs:
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
 
+    - name: Use a faster apt mirror
+      if: runner.os == 'Linux'
+      run: |
+        # Use a faster, more reliable mirror
+        if [ -n "${{ matrix.image }}" ]  ; then
+            sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list
+            sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
+            apt-get update
+        else
+            sudo sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list
+            sudo sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
+            sudo apt-get update
+        fi
+
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
@@ -245,6 +259,15 @@ jobs:
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
+
+    - name: Download testiphy test suite
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: |
+          cd
+          git clone https://gitlab.com/testiphy/testiphy.git
 
     - name: Mark installs complete
       run: echo "INSTALLS_COMPLETE=true" >> $GITHUB_ENV
@@ -412,7 +435,7 @@ jobs:
         fi
 
         if [ "$skip" != "most" ] ; then
-           git clone https://gitlab.com/testiphy/testiphy.git
+           cd
            cd testiphy
            rm -rf tests/likelihood/one-sequence
 
