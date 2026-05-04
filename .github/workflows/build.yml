@@ -239,6 +239,7 @@ jobs:
          key: ${{ matrix.name }}-${{ github.sha }}
          restore-keys: |
            ${{ matrix.name }}-
+         verbose: true
 
     - name: Configure ccache
       run: |
