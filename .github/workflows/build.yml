@@ -228,13 +228,23 @@ jobs:
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
+      # This is supposed to
+      # (i) first look for an exact match of matrix.name-SHA on the same branch
+      # (ii) if not found, look for any key starting with matrix.name- on the same branch
+      # (iii) if not found, look for any key starting with matrix.name- on the master branch
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-         key: ${{ matrix.name }}
+         key: ${{ matrix.name }}-${{ github.sha }}
          restore-keys: |
-           ${{ matrix.name }}
+           ${{ matrix.name }}-
 
+    - name: Configure ccache
+      run: |
+        ccache --set-config=compression=true
+        ccache --set-config=compression_level=6
+        ccache --set-config=sloppiness=file_macro,time_macros
+           
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
