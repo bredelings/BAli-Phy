@@ -54,7 +54,7 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
-            sanitize: "address"
+            sanitize: "address,undefined"
             arch: "linux64"
 
           - name: ubuntu-gcc-14-24.04
@@ -62,7 +62,6 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
-            sanitize: "undefined"
             arch: "linux64"
 
           - name: ubuntu-gcc-15
