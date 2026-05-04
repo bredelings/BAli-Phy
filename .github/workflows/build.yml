@@ -236,20 +236,18 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-         key: ${{ matrix.name }}-${{ github.sha }}
+         key: ${{ matrix.name }}-${{ github.ref }}
          restore-keys: |
            ${{ matrix.name }}-
-         verbose: true
+         verbose: 2
+         append-timestamp: false
 
-    - name: Configure ccache
-      run: |
-        ccache --set-config=compression=true
-        ccache --set-config=compression_level=6
-        ccache --set-config=sloppiness=file_macro,time_macros
-           
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
+
+    - name: Mark installs complete
+      run: echo "INSTALLS_COMPLETE=true" >> $GITHUB_ENV
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
@@ -429,13 +427,13 @@ jobs:
 
     - name: Upload tests if they failed
       uses: actions/upload-artifact@v4
-      if: failure()
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
       with:
         name: tests-${{ matrix.name }}
         path: tests
 
     - name: Setup tmate session on failure
-      if: failure()
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
