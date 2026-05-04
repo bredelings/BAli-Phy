@@ -468,8 +468,9 @@ jobs:
           });
           return commit.data.commit.author.email;
         result-encoding: string
+
         
-    - name: Email notification for tmate session
+    - name: Email notification for upterm session
       if: failure() && env.INSTALLS_COMPLETE == 'true'
       uses: dawidd6/action-send-mail@v3
       with:
@@ -477,11 +478,11 @@ jobs:
         server_port: 465
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "tmate session available: ${{ matrix.name }} on ${{ github.ref_name }}"
+        subject: "upterm session available: ${{ matrix.name }} on ${{ github.ref_name }}"
         to: ${{ steps.get_email.outputs.result }}
         from: ${{ secrets.EMAIL_USERNAME }}
         body: |
-          A build failure triggered a tmate debug session.
+          A build failure triggered an upterm debug session.
 
           Job: ${{ matrix.name }}
           Branch: ${{ github.ref_name }}
@@ -490,10 +491,11 @@ jobs:
           Check the Actions log for SSH connection details:
           ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-    - name: Setup tmate session on failure
+
+    - name: Setup upterm session on failure
       if: failure() && env.INSTALLS_COMPLETE == 'true'
-      uses: mxschmitt/action-tmate@v3
+      uses: owenthereal/action-upterm@v1
       with:
         limit-access-to-actor: true
-        timeout-minutes: 30
-
+        wait-timeout-minutes: 30
+        
