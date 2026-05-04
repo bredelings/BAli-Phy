@@ -234,7 +234,7 @@ jobs:
       # (ii) if not found, look for any key starting with matrix.name- on the same branch
       # (iii) if not found, look for any key starting with matrix.name- on the master branch
     - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
          key: ${{ matrix.name }}-${{ github.ref }}
          restore-keys: |
