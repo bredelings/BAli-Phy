@@ -91,13 +91,27 @@ jobs:
     container:
       image: ${{ matrix.image || '' }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12
 
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
+
+    - name: Use a faster apt mirror
+      if: runner.os == 'Linux'
+      run: |
+        # Use a faster, more reliable mirror
+        if [ -n "${{ matrix.image }}" ]  ; then
+            sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list
+            sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
+            apt-get update
+        else
+            sudo sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list
+            sudo sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
+            sudo apt-get update
+        fi
 
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
@@ -132,10 +146,7 @@ jobs:
         fi
 
         sudo rm -rf /usr/local/share/boost
-        if [ ${{ matrix.os }} = ubuntu-24.04 ] ; then
-            # 24.04 has boost.json
-            sudo apt-get install -y libboost-all-dev
-        else
+        if [ ${{ matrix.os }} = ubuntu-22.04 ] ; then
             # 22.04 and earlier do not have boost.json
             ( cd
               curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
@@ -146,11 +157,19 @@ jobs:
               echo -e "\n    BOOST root is at $(cd ../installed-boost-1.89.0; pwd)\n"
               echo BOOST_ROOT=$(cd ../installed-boost-1.89.0; pwd) >> $GITHUB_ENV
             )
+        else
+            # 24.04 has boost.json
+            sudo apt-get install -y libboost-all-dev
         fi
 
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
+        # If we're running in a docker image, we are already root
+        if [ -n "${{ matrix.image }}" ]  ; then
+          apt-get update && apt-get install -y sudo build-essential git cmake wget pkgconf
+          echo HOME=/root >> "$GITHUB_ENV"
+        fi
         sudo apt-get update
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
@@ -196,15 +215,29 @@ jobs:
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
     - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
-         key: ${{ matrix.name }}
+         key: ${{ matrix.name }}-${{ github.ref }}
          restore-keys: |
-           ${{ matrix.name }}
+           ${{ matrix.name }}-
+         verbose: 2
+         append-timestamp: false
 
     - name: Install meson
       run: |
         python3 -mpip install meson ninja
+
+    - name: Download testiphy test suite
+      uses: nick-fields/retry@v4
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: |
+          cd
+          git clone https://gitlab.com/testiphy/testiphy.git
+
+    - name: Mark installs complete
+      run: echo "INSTALLS_COMPLETE=true" >> $GITHUB_ENV
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
@@ -272,7 +305,7 @@ jobs:
           if [ "${{ matrix.name }}" = "windows" ] ; then
             export WINEPATH=$(winepath -w $HOME/local/bin)
           fi
-          ninja -C build test
+          ninja -C build test -j2
         fi
 
     - name: Get version
@@ -322,6 +355,7 @@ jobs:
 
     - name: Test
       run: |
+        export UBSAN_OPTIONS=halt_on_error=1
         export seed=$RANDOM
         if [ "${{ matrix.name }}" = "windows" ] ; then
           export WINEPATH=$(winepath -w $HOME/local/bin)
@@ -369,7 +403,7 @@ jobs:
         fi
 
         if [ "$skip" != "most" ] ; then
-           git clone https://gitlab.com/testiphy/testiphy.git
+           cd
            cd testiphy
            rm -rf tests/likelihood/one-sequence
 
@@ -384,11 +418,11 @@ jobs:
 
     - name: Upload tests if they failed
       uses: actions/upload-artifact@v4
-      if: failure()
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
       with:
         name: tests-${{ matrix.name }}
         path: tests
-
+        
     - name: Create tarball
       id: create_tarball
       run: |
@@ -410,3 +444,47 @@ jobs:
         files: ./${{ steps.create_tarball.outputs.archive }}
         draft: true
         prerelease: false
+
+    - name: Get committer email
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      id: get_email
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const commit = await github.rest.repos.getCommit({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: context.sha
+          });
+          return commit.data.commit.author.email;
+        result-encoding: string
+
+    - name: Email notification for upterm session
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "upterm session available: ${{ matrix.name }} on ${{ github.ref_name }}"
+        to: ${{ steps.get_email.outputs.result }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        body: |
+          A build failure triggered an upterm debug session.
+
+          Job: ${{ matrix.name }}
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+
+          Check the Actions log for SSH connection details:
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+
+    - name: Setup upterm session on failure
+      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      uses: owenthereal/action-upterm@v1
+      with:
+        limit-access-to-actor: true
+        wait-timeout-minutes: 30
+        

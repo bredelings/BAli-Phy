@@ -127,8 +127,8 @@ jobs:
     container:
       image: ${{ matrix.image || '' }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12
 
@@ -243,10 +243,6 @@ jobs:
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
-      # This is supposed to
-      # (i) first look for an exact match of matrix.name-SHA on the same branch
-      # (ii) if not found, look for any key starting with matrix.name- on the same branch
-      # (iii) if not found, look for any key starting with matrix.name- on the master branch
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
@@ -261,7 +257,7 @@ jobs:
         python3 -mpip install meson ninja
 
     - name: Download testiphy test suite
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@v4
       with:
         timeout_minutes: 5
         max_attempts: 3
@@ -379,11 +375,12 @@ jobs:
         OUTPUT=$HOME/local
         brew install findutils file-formula
         for exe in $(gfind ${OUTPUT} -type f -executable -exec file --mime-type '{}' \; | grep x-mach-binary | sed 's/: application.*//') ; do
-           echo codesign -s - ${exe}
-           codesign -s - ${exe}
+           echo codesign --sign - --force --timestamp=none ${exe}
+           codesign --sign - --force --timestamp=none ${exe}
         done
         otool -L ${OUTPUT}/bin/bali-phy
         # otool -l ${OUTPUT}/bin/bali-phy
+        codesign -d --verbose=4 ${OUTPUT}/bin/bali-phy
 
     - name: Test
       run: |
@@ -469,7 +466,6 @@ jobs:
           return commit.data.commit.author.email;
         result-encoding: string
 
-        
     - name: Email notification for upterm session
       if: failure() && env.INSTALLS_COMPLETE == 'true'
       uses: dawidd6/action-send-mail@v3
