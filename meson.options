@@ -2,3 +2,4 @@ option('with-mpi', type : 'boolean', value : false, description: 'Compile with M
 option('static-cpp-libs', type: 'boolean', value: false, description: 'Link in libgcc and libstdc++ statically')
 option('extra-tools', type: 'boolean', value: true, description: 'Build extra tools')
 option('cpu-arch', type: 'string', value: 'baseline', description: 'Enable CPU instructions for specific architecture')
+option('test_seed', type: 'string', value: '', description: 'Random seed for tests')

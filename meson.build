@@ -146,13 +146,20 @@ if host_machine.system() == 'windows'
   wrapper = ['wine']
 endif
 
+randomseed = get_option('test_seed')
+if randomseed == ''
+  seed_result = run_command('python3', '-c', 'import random; print(random.randint(0, 2**32-1))', check: true)
+  randomseed = seed_result.stdout().strip()
+endif
+message('Test seed: ' + randomseed)
+
 test_list = run_command(run_tests, 'listdir', test_dir, baliphy.full_path(), check: false).stdout().split()
 foreach test: test_list
   test('bali-phy testsuite ' + test,
        run_tests,
        timeout: 300,
        workdir: test_dir,
-       args:['run', test, wrapper, baliphy.full_path(), packagepath])
+       args:['run', test, wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
 endforeach
 
 # Install non-executable files
