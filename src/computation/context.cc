@@ -812,8 +812,24 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
 
     ProbDensity ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
 
-    bool accept = (ratio >= 1.0 or uniform() < ratio);
+    // ALWAYS sample a uniform here.
+    // We don't want the accept/reject logic to affect synchronization of the random number stream.
+    double U = uniform();
 
+    bool accept = false;
+    if (ratio.log().nans() != 0)
+        accept = ratio.log().nans() < 0;
+    else if (ratio.log().infs() != 0)
+        accept = ratio.log().infs() < 0;
+    else if (ratio.log().neginfs() != 0)
+        accept = ratio.log().neginfs() < 0;
+    else
+    {
+        // In theory handling neginfs should be automatic here,
+        // since if they go down, ratio should be Inf.
+        accept = U < ratio;
+    }
+    
     if (log_verbose >=3) std::cerr<<"accept_MH: log(ratio) = "<<ratio<<"   accept = "<<accept<<endl;
 
     return accept;
