@@ -395,7 +395,7 @@ void context_ref::perform_logger(int s, long iteration)
 
     int r = e.reg_for_slot(0);
     assert(memory()->reg_is_constant(r));
-    expression_ref E = {reg_var(r), (int)iteration, prior().log(), likelihood().log(), probability().log()};
+    expression_ref E = {reg_var(r), (int)iteration, (double)prior().log(), (double)likelihood().log(), (double)probability().log()};
     perform_expression(E, true);
 }
 
@@ -568,17 +568,17 @@ std::optional<std::string> context_ref::dist_type(int s) const
         return it->second;
 }
 
-log_double_t context_ref::prior() const
+ProbDensity context_ref::prior() const
 {
     return memory()->prior_for_context(context_index);
 }
 
-log_double_t context_ref::likelihood() const
+ProbDensity context_ref::likelihood() const
 {
     return memory()->likelihood_for_context(context_index);
 }
 
-log_double_t context_ref::probability() const
+ProbDensity context_ref::probability() const
 {
     return memory()->probability_for_context(context_index);
 }
@@ -606,7 +606,7 @@ void context_ref::set_beta(double)
     //                  * make a beta reg in the machine that won't be forgotten when unused.
     throw myexception()<<"Setting heat/beta for a context is not implemented.  See  context.cc";
 }
-log_double_t context_ref::heated_likelihood() const
+ProbDensity context_ref::heated_likelihood() const
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.
     if (get_beta() == 0)
@@ -615,14 +615,14 @@ log_double_t context_ref::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
-log_double_t context_ref::heated_probability() const
+ProbDensity context_ref::heated_probability() const
 {
     return prior() * heated_likelihood();
 }
 
-log_double_t context_ref::heated_probability_ratio(const context_ref& C1) const
+ProbDensity context_ref::heated_probability_ratio(const context_ref& C1) const
 {
-    double lg = (double)heated_probability_ratios(C1).total_ratio().log();
+    auto lg = heated_probability_ratios(C1).total_ratio().log();
     return exp_to_log_space(lg); 
 }
 
@@ -810,7 +810,7 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         std::cerr<<endl<<endl;
     }
 
-    log_double_t ratio = rho*C2.heated_probability_ratio(C1);
+    ProbDensity ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
 
     bool accept = (ratio >= 1.0 or uniform() < ratio);
 

@@ -185,7 +185,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
             }
         }
 
-        Pr[i] *= p[i].heated_probability();
+        Pr[i] *= (log_double_t)p[i].heated_probability();
     }
 
     assert(Pr[0] > 0.0);

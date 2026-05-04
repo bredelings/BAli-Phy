@@ -293,7 +293,7 @@ size_t reg_heap::size() const
     return regs.size();
 }
 
-log_double_t reg_heap::probability_for_context(int c)
+ProbDensity reg_heap::probability_for_context(int c)
 {
     total_context_pr++;
 

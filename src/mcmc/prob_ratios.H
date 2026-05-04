@@ -1,17 +1,16 @@
 #ifndef PROB_RATIOS_H
 #define PROB_RATIOS_H
 
-#include "util/math/log-double.H"
-#include "util/math/LogDensity.h"
+#include "util/math/ProbDensity.H"
 
 struct prob_ratios_t
 {
     bool variables_changed = false;
 
-    LogNum<LogDensity> prior_ratio = 1.0;
-    LogNum<LogDensity> likelihood_ratio = 1.0;
+    ProbDensity prior_ratio = 1.0;
+    ProbDensity likelihood_ratio = 1.0;
 
-    LogNum<LogDensity> total_ratio() const {return prior_ratio * likelihood_ratio;}
+    ProbDensity total_ratio() const {return prior_ratio * likelihood_ratio;}
 
     void heat(double b)
     {

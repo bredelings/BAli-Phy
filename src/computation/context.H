@@ -160,18 +160,18 @@ public:
 
     expression_ref get_expression(int i) const;
 
-    log_double_t prior() const;
-    log_double_t likelihood() const;
-    log_double_t probability() const;
+    ProbDensity prior() const;
+    ProbDensity likelihood() const;
+    ProbDensity probability() const;
 
     virtual double get_beta() const;
     virtual void set_beta(double);
-    log_double_t heated_likelihood() const;
-    log_double_t heated_probability() const;
+    ProbDensity heated_likelihood() const;
+    ProbDensity heated_probability() const;
 
     prob_ratios_t probability_ratios(const context_ref& C1) const;
     prob_ratios_t heated_probability_ratios(const context_ref& C1) const;
-    log_double_t heated_probability_ratio(const context_ref&) const;
+    ProbDensity heated_probability_ratio(const context_ref&) const;
 
 protected:  
     void collect_garbage() const;

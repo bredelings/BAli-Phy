@@ -352,11 +352,11 @@ public:
 
     /* ---- */
 
-    log_double_t prior_for_context(int c);
+    ProbDensity prior_for_context(int c);
 
-    log_double_t likelihood_for_context(int c);
+    ProbDensity likelihood_for_context(int c);
 
-    log_double_t probability_for_context(int c);
+    ProbDensity probability_for_context(int c);
 
     prob_ratios_t probability_ratios(int c1, int c2);
 

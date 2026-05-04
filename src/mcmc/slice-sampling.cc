@@ -187,7 +187,7 @@ double alignment_branch_length_slice_function::operator()(double x)
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
-    current_fn_value = C.heated_probability_ratio(C0)*alignment_sum_ratio_1/alignment_sum_ratio_0;
+    current_fn_value = log_double_t(C.heated_probability_ratio(C0)) * (alignment_sum_ratio_1/alignment_sum_ratio_0);
     return operator()();
 }
 

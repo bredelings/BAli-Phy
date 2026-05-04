@@ -344,7 +344,7 @@ int sample_A4_multi(vector<Parameters>& p,const vector<A4::hmm_order>& order_,
         // Don't compute the probability if the alignment wasn't resampled!
         // Should we treat i=0 differently, since the old alignment is consistent?
         if (ok)
-            Pr[i] *= p[i].heated_probability();
+            Pr[i] *= log_double_t(p[i].heated_probability());
         else
             Pr[i] = 0;
     }

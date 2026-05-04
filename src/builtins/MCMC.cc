@@ -1368,9 +1368,9 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
     json::object j;
 
     j["iter"] = t;
-    j["prior"] = log(C.prior());
-    j["likelihood"] = log(C.likelihood());
-    j["posterior"] = log(C.probability());
+    j["prior"] = (double)log(C.prior());
+    j["likelihood"] = (double)log(C.likelihood());
+    j["posterior"] = (double)log(C.probability());
     // Probably we should put this into the machine.
     j["parameters/"] = C.get_logged_parameters();
 
@@ -1404,7 +1404,7 @@ extern "C" closure builtin_function_prior(OperationArgs& Args)
     int c = Args.evaluate(0).as_int();
     context_ref C(M, c);
 
-    return {C.prior()};
+    return {(log_double_t)C.prior()};
 }
 
 extern "C" closure builtin_function_likelihood(OperationArgs& Args)
@@ -1415,7 +1415,7 @@ extern "C" closure builtin_function_likelihood(OperationArgs& Args)
     int c = Args.evaluate(0).as_int();
     context_ref C(M, c);
 
-    return {C.likelihood()};
+    return {(log_double_t)C.likelihood()};
 }
 
 extern "C" closure builtin_function_posterior(OperationArgs& Args)
@@ -1426,6 +1426,6 @@ extern "C" closure builtin_function_posterior(OperationArgs& Args)
     int c = Args.evaluate(0).as_int();
     context_ref C(M, c);
 
-    return {C.probability()};
+    return {(log_double_t)C.probability()};
 }
 

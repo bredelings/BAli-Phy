@@ -2216,7 +2216,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 
     for(int i=0;i<N;i++)
         C1.set_reg_value(haplotype_regs[i], new_haplotypes1[i]);
-    auto Pr1_over_Pr0 = C1.heated_probability_ratio(C0);
+    auto Pr1_over_Pr0 = (log_double_t)C1.heated_probability_ratio(C0);
 
     // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
     //        Pr(h1)/Pr(h0) = sample_hap1 / sample_hap0
@@ -2224,7 +2224,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 
     for(int i=0;i<N;i++)
         C2.set_reg_value(haplotype_regs[i], new_haplotypes2[i]);
-    auto Pr2_over_Pr0 = C2.heated_probability_ratio(C0);
+    auto Pr2_over_Pr0 = (log_double_t)C2.heated_probability_ratio(C0);
 
     if (log_verbose >= 4)
     {

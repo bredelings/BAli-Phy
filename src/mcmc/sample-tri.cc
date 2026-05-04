@@ -399,7 +399,7 @@ void sample_A3_multi_calculation::run_dp()
         // Don't compute the probability if the alignment wasn't resampled!
         // Should we treat i=0 differently, since the old alignment is consistent?
         if (ok)
-            Pr[i] *= p[i].heated_probability();
+            Pr[i] *= (log_double_t)p[i].heated_probability();
         else
             Pr[i] = 0;
     }

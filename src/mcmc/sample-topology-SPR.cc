@@ -1106,7 +1106,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
         //Resample the alignment and compute the sampling probability.
         auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
         if (A_sampling_pr)
-            Pr[target_edge] = p2.heated_probability() / *A_sampling_pr;
+            Pr[target_edge] = log_double_t(p2.heated_probability()) / *A_sampling_pr;
         else
             Pr[target_edge] = 0;
     }
@@ -1150,7 +1150,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         P.set_root(root_node);
         auto A_sampling_pr = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_) ;
         if (A_sampling_pr)
-            Pr[I.initial_edge] = P.heated_probability() / *A_sampling_pr;
+            Pr[I.initial_edge] = log_double_t(P.heated_probability()) / *A_sampling_pr;
         else
             Pr[I.initial_edge] = 0;
     }
