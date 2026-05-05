@@ -249,7 +249,7 @@ jobs:
 
     - name: Configure
       run: |
-        CPPARGS="-g"
+        # CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
         fi
