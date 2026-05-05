@@ -65,7 +65,6 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
-            cxxflags: "-march=x86-64-v3"
             arch: "linux64"
 
           - name: macos15-xcode16-intel
