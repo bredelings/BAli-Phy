@@ -105,7 +105,8 @@ jobs:
             os: macos-latest
             compiler: xcode
             version: "16"
-            buildtype: "debugoptimized"
+            buildtype: "release"
+            sanitize: "undefined,local-bounds"
             arch: "mac-arm64"
 
           - name: macos-xcode26-arm
