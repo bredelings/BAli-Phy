@@ -57,6 +57,7 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
+            cxxflags: "-march=x86-64-v3"
             arch: "linux64"
 
           - name: ubuntu-gcc-14-arm
@@ -64,6 +65,7 @@ jobs:
             compiler: gcc
             version: "14"
             buildtype: "release"
+            cxxflags: "-march=x86-64-v3"
             arch: "linux64"
 
           - name: macos15-xcode16-intel
@@ -71,6 +73,7 @@ jobs:
             compiler: xcode
             version: "16"
             buildtype: "release"
+            cxxflags: "-march=x86-64-v3"
             arch: "mac-intel64"
 
           - name: macos16-xcode26-arm

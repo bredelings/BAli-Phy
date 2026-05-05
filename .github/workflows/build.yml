@@ -69,6 +69,7 @@ jobs:
             compiler: gcc
             version: "15"
             buildtype: "release"
+            cxxflags: "-march=x86-64-v3"
             image: ubuntu:25.04
             arch: "linux64"
 
