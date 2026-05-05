@@ -1,4 +1,4 @@
-# 4.2 (unreleased)
+# 4.2 (May 5, 2026)
 
 ## Models
 - Add amino-acid profile mixture models C10, C20, ... , C60.
