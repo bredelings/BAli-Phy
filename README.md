@@ -3,13 +3,13 @@
 Install
 -------
 
-If you just want to install bali-phy, please visit the [release page](http://www.bali-phy.org/download.php).  If you want to compile BAli-phy from source, the quick start instructions are below.
+If you just want to install bali-phy, please visit the [release page](http://www.bali-phy.org/download.php).  If you want to compile BAli-phy from source, the quick-start instructions are below.
 
 Compiling
 ---------
 
 You will need a C++ compiler that understands C++23.
- * gcc 12 (or higher) works
+ * gcc 13 (or higher) works
  * clang 18 (or higher) works
  * XCode 15 (or higher) works
 
@@ -17,7 +17,7 @@ Install Prerequisites
 ---------------------
 On Ubuntu 24.04 (or higher), or on Debian testing, you can use apt-get:
 ```bash
-sudo apt-get install g++ libcairo2-dev meson libboost-all-dev
+sudo apt-get install g++ libcairo2-dev meson libboost-all-dev pandoc
 ```
 
 On Mac (or Linux, actually) you can use homebrew:
@@ -70,11 +70,11 @@ Installed locations
 
 If you installed in `$HOME/Applications/bali-phy/` as recommended above, then files will be in:
 
-| Location                                                       | Files                   |
-| -------------------------------------------------------------- | ----------------------- |
-| ~/Applications/bali-phy/bin                                    | Binary executables.     |
-| ~/Applications/bali-phy/share/bali-phy/examples/sequences      | Example files.          |
-| ~/Applications/bali-phy/share/doc/bali-phy/                    | Documentation.          |
+| Location                                           | Files                   |
+| -------------------------------------------------- | ----------------------- |
+| ~/Applications/bali-phy/bin                        | Binary executables.     |
+| ~/Applications/bali-phy/share/bali-phy/examples/   | Example files.          |
+| ~/Applications/bali-phy/share/doc/bali-phy/        | Documentation.          |
 
 
 Further Documentation
