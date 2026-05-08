@@ -34,6 +34,7 @@
 extern int log_verbose;
 
 using std::vector;
+using std::optional;
 
 double slice_function::current_value() const
 {
@@ -51,8 +52,10 @@ context_slice_function::context_slice_function(context_ref& c, const bounds<doub
     current_fn_value.log() = 0;
 }
 
-double context_slice_function::operator()(double x)
+optional<LogDensity> context_slice_function::operator()(double x)
 {
+    if(not in_range(x)) return {}; 
+
     count++;
 
     // We are intentionally only calling context::operator==( ) here.
@@ -75,7 +78,7 @@ double context_slice_function::operator()(double x)
     return operator()();
 }
 
-double context_slice_function::operator()()
+LogDensity context_slice_function::operator()()
 {
     return log(current_fn_value);
 }
@@ -171,8 +174,10 @@ node_time_slice_function::node_time_slice_function(Parameters& P,int n_)
 
 // ******************************* branch length slice function *************************************** //
 
-double alignment_branch_length_slice_function::operator()(double x)
+optional<LogDensity> alignment_branch_length_slice_function::operator()(double x)
 {
+    if (not in_range(x)) return {};
+
     count++;
 
     // We are intentionally only calling context::operator==( ) here.
@@ -278,7 +283,7 @@ double scale_groups_slice_function::log_average_scale() const
     return log(initial_average_scale) + log_current_factor;
 }
 
-double scale_groups_slice_function::operator()()
+LogDensity scale_groups_slice_function::operator()()
 {
     // return pi * (\sum_i \mu_i)^(n-B)
     return context_slice_function::operator()() + log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
@@ -359,7 +364,7 @@ void constant_sum_modifiable_slice_function::set_value(double t)
 }
 
 
-double constant_sum_modifiable_slice_function::operator()()
+LogDensity constant_sum_modifiable_slice_function::operator()()
 {
     auto& P = static_cast<Parameters&>(C);
     const int N = indices.size();
@@ -398,7 +403,7 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(c
 //       the new state is accepted.
 
 std::pair<double,double> 
-find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, double w,int m)
+find_slice_boundaries_stepping_out(double x0,slice_function& g,const LogDensity& logy, double w,int m)
 {
     assert(x0 + w > x0);
     assert(g.in_range(x0));
@@ -447,8 +452,17 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
     return {L,R};
 }
 
-std::tuple<double,double,std::optional<double>,std::optional<double>>
-find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w, int K)
+std::ostream& operator<<(std::ostream& o, optional<LogDensity> l)
+{
+    if (l)
+        o<<"OOB";
+    else
+        o<<l.value();
+    return o;
+}
+
+std::tuple<double,double,std::optional<optional<LogDensity>>,std::optional<optional<LogDensity>>>
+find_slice_boundaries_doubling(double x0,slice_function& g,const LogDensity& logy, double w, int K)
 {
     assert(x0 + w > x0);
     assert(g.in_range(x0));
@@ -459,17 +473,17 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
     assert(L < x0);
     assert(x0 < R);
 
-    std::optional<double> gL_cached;
+    optional<optional<LogDensity>> gL_cached;
     auto gL = [&]() {
         if (not gL_cached)
-            gL_cached = (g.in_range(L))?g(L):-std::numeric_limits<double>::infinity();
+            gL_cached = g(L);
         return *gL_cached;
     };
 
-    std::optional<double> gR_cached;
+    std::optional<optional<LogDensity>> gR_cached;
     auto gR = [&]() {
         if (not gR_cached)
-            gR_cached = (g.in_range(R))?g(R):-std::numeric_limits<double>::infinity();
+            gR_cached = g(R);
         return *gR_cached;
     };
 
@@ -519,17 +533,17 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
 // Does this x0 really need to be the original point?
 // I think it just serves to let you know which way the interval gets shrunk...
 
-double search_interval(double x0,double L, double R, slice_function& g, double logy)
+double search_interval(double x0,double L, double R, slice_function& g, const LogDensity& logy)
 {
     // Shrink interval to lower and upper bounds.
     if (g.below_lower_bound(L)) L = *g.lower_bound;
     if (g.above_upper_bound(R)) R = *g.upper_bound;
 
     //  assert(g(x0) > g(L) and g(x0) > g(R));
-    assert(not std::isnan(logy));
-    assert(std::isfinite(logy)); 
+    assert(not logy.isnan());
+    assert(logy.isfinite());
     assert(g(x0) >= logy);
-    assert(std::isfinite(g()));
+    assert(g().isfinite());
     assert(L < R);
     assert(L <= x0 and x0 <= R);
 
@@ -540,7 +554,7 @@ double search_interval(double x0,double L, double R, slice_function& g, double l
     for(int i=0;i<200;i++)
     {
 	double x1 = L + uniform()*(R-L);
-	double gx1 = g(x1);
+	auto gx1 = g(x1);
 	if (log_verbose >= 4)
 	    std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   x = "<<x1<<"  R  = "<<R<<"     g(x) = "<<gx1<<std::endl;
 
@@ -554,7 +568,7 @@ double search_interval(double x0,double L, double R, slice_function& g, double l
     }
     std::cerr.precision(17);
     std::cerr<<"Warning!  Is size of the interval really ZERO?"<<std::endl;
-    double logy_x0 = g(x0);  
+    auto logy_x0 = g(x0);  
     std::cerr<<"    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
     std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
     std::cerr<<"    log(f(x0)*U)  = "<<logy<<"  log(f(x0)) = "<<logy_x0<<"  log(f(x_current)) = "<<g()<<std::endl;
@@ -575,21 +589,21 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g)
 
     assert(g.in_range(x0));
 
-    double gx0 = g();
-    double gx0_v2 = gx0;
+    auto gx0 = g();
+    LogDensity gx0_v2 = gx0;
     if (log_verbose >= 4)
-        gx0_v2 = g(x0);
+        gx0_v2 = *g(x0);
 #ifndef NDEBUG
     else
-        gx0_v2 = g(x0);
+        gx0_v2 = *g(x0);
 #endif
-    if (std::abs(gx0 - gx0_v2) > 1.0e-9)
-        throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<gx0_v2<<"   diff = "<<std::abs(gx0 - gx0_v2);
+    if (std::abs(double(gx0 - gx0_v2)) > 1.0e-9)
+        throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<gx0_v2<<"   diff = "<<std::abs(double(gx0 - gx0_v2));
 
     return true;
 }
 
-bool can_propose_same_interval_doubling(double x0, double x1, double w, double L, double R, std::optional<double> gL_cached, std::optional<double> gR_cached, slice_function& g, double log_y)
+bool can_propose_same_interval_doubling(double x0, double x1, double w, double L, double R, std::optional<optional<LogDensity>> gL_cached, std::optional<optional<LogDensity>> gR_cached, slice_function& g, optional<LogDensity> log_y)
 {
     bool D = false;
 
@@ -645,12 +659,14 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
 
 double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 {
+    double E = exponential(1);
+
     // 0. Check that the values are OK
     if (not pre_slice_sampling_check_OK(x0, g))
         return x0;
 
     // 1. Determine the slice level, in log terms.
-    double logy = g() - exponential(1);
+    auto logy = g() - E;
 
     // 2. Find the initial interval to sample from.
     auto [L,R] = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
@@ -673,7 +689,7 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
         return x0;
 
     // 1. Determine the slice level, in log terms.
-    double logy = g() - exponential(1);
+    LogDensity logy = g() - exponential(1);
 
     // 2. Find the initial interval to sample from.
     auto [L,R,gL_cached,gR_cached] = find_slice_boundaries_doubling(x0,g,logy,w,m);
@@ -729,7 +745,7 @@ inline static void inc(double& x, double w, const slice_function& g, bool& hit_u
 
 
 // Assumes uni-modal
-std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function& g,double logy,
+std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function& g,optional<LogDensity> logy,
 						      double w,int /*m*/)
 {
     // the initial point should be within the bounds, if they exist
@@ -739,7 +755,7 @@ std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function&
     bool hit_lower_bound=false;
     bool hit_upper_bound=false;
 
-    double gx0 = g(x0);
+    optional<LogDensity> gx0 = g(x0);
 
     double L = x0;
     double R = L;
@@ -751,8 +767,8 @@ std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function&
 
     while(1)
     {
-	double gL = g(L);
-	double gR = g(R);
+	optional<LogDensity> gL = g(L);
+	optional<LogDensity> gR = g(R);
 
 	if (gx0 < logy and gL > gx0) {
 	    x0 = L;
@@ -824,7 +840,7 @@ double sample_from_interval(const std::pair<double,double>& interval)
 std::pair<int,double> search_multi_intervals(vector<double>& X0,
 					     vector< std::pair<double,double> >& intervals,
 					     vector< slice_function* >& g,
-					     double logy)
+					     optional<LogDensity> logy)
 {
     const int N = X0.size();
     assert(intervals.size() == N);
@@ -851,11 +867,11 @@ std::pair<int,double> search_multi_intervals(vector<double>& X0,
     
 	double x1 = sample_from_interval(intervals[C]);
     
-	double gx1 = (*g[C])(x1);
+	optional<LogDensity> gx1 = (*g[C])(x1);
     
 	if (gx1 >= logy) return std::pair<int,double>(C,x1);
     
-	double gx0 = (*g[C])(X0[C]);
+	optional<LogDensity> gx0 = (*g[C])(X0[C]);
     
 	//      std::cerr<<"L2 = "<<L2<<"   x0_2 = "<<x0_2<<"   R2 = "<<R2<<"     x1 = "<<x1<<"\n";
     
@@ -883,13 +899,14 @@ std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_functi
 {
     int N = g.size();
 
-    double g1x0 = (*g[0])();
+    auto g1x0 = (*g[0])();
+    assert(g[0]->in_range(X0[0]));
 
-    assert(std::abs(g1x0 - (*g[0])(X0[0])) < 1.0e-9);
+    assert(std::abs(double(g1x0 - (*g[0])(X0[0]).value())) < 1.0e-9);
 
     // Determine the slice level, in log terms.
 
-    double logy = g1x0 - exponential(1);
+    LogDensity logy = g1x0 - exponential(1);
 
     // Find the initial interval to sample from - in G[0]
 

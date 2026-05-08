@@ -482,9 +482,9 @@ void three_way_topology_sample_slice(owned_ptr<context>& P, MoveStats& Stats, in
     branch_length_slice_function logp3(p[2],b);
 
 #ifndef NDEBUG
-    assert(std::abs(Pr1.log() - logp1(L)) < 1.0e-9);
-    assert(std::abs(Pr2.log() - logp2(L)) < 1.0e-9);
-    assert(std::abs(Pr3.log() - logp3(L)) < 1.0e-9);
+    assert(std::abs(double(Pr1.log() - logp1(L).value())) < 1.0e-9);
+    assert(std::abs(double(Pr2.log() - logp2(L).value())) < 1.0e-9);
+    assert(std::abs(double(Pr3.log() - logp3(L).value())) < 1.0e-9);
 #endif
 
     vector<slice_function*> logp;

@@ -43,10 +43,10 @@ class variables_changed_exception: public myexception
 struct slice_function: public bounds<double>
 {
     /// Compute the value of the function evaluated at x 
-    virtual double operator()(double x)=0;
+    virtual std::optional<LogDensity> operator()(double x)=0;
 
     /// Compute the value of the function evaluated at the current value
-    virtual double operator()()=0;
+    virtual LogDensity operator()()=0;
 
     /// Return the current value of x
     virtual double current_value() const;
@@ -83,9 +83,9 @@ public:
     // The proposed point
     context_ref& C;
 
-    double operator()(double);
+    std::optional<LogDensity> operator()(double);
 
-    virtual double operator()();
+    virtual LogDensity operator()();
 
     virtual void set_value(double x) = 0;
 
@@ -156,8 +156,8 @@ struct alignment_branch_length_slice_function: public context_slice_function
     log_double_t alignment_sum_ratio_0;
     int b;
 
-    double operator()() {return context_slice_function::operator()();};
-    double operator()(double x);
+    LogDensity operator()() {return context_slice_function::operator()();};
+    std::optional<LogDensity> operator()(double x);
 
     void set_value(double);
 
@@ -208,10 +208,10 @@ struct scale_groups_slice_function: public context_slice_function
 
     double log_average_scale() const;
 
-    double operator()(double x) {return context_slice_function::operator()(x);}
+    std::optional<LogDensity> operator()(double x) {return context_slice_function::operator()(x);}
 
     // We need to override the probability_ratio to add a jacobian.
-    double operator()();
+    LogDensity operator()();
 
     void set_value(double);
 
@@ -237,10 +237,10 @@ struct constant_sum_modifiable_slice_function: public context_slice_function
     /// Which of the above indices is the one that we are resampling?
     int n;
 
-    double operator()(double x) {return context_slice_function::operator()(x);}
+    std::optional<LogDensity> operator()(double x) {return context_slice_function::operator()(x);}
 
     /// return the probability * mu^(B-1)
-    double operator()();
+    LogDensity operator()();
 
     void set_value(double);
 
