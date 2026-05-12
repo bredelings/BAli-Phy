@@ -60,14 +60,6 @@ string git_commit_date()
     return s.str();
 }
 
-
-string build_date()
-{
-    ostringstream s;
-    s<<__DATE__<<" "<<__TIME__;
-    return s.str();
-}
-
 string arch()
 {
     ostringstream s;
@@ -111,7 +103,6 @@ void print_version_info(ostream& file)
 	file<<"  ("<<git_commit_date()<<")";
     file<<endl;
 
-    file<<"BUILD: "<<build_date()<<endl;
     if (arch().size())
 	file<<"ARCH: "<<arch()<<endl;
     if (compiler().size())
@@ -124,7 +115,6 @@ json::object version_info()
 {
     json::object info;
     info["version"] = version();
-    info["build-date"] = build_date();
     if (arch().size())
 	info["arch"] = arch();
     if (compiler().size())
