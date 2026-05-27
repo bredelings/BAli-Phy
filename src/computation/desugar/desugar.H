@@ -58,6 +58,7 @@ struct desugar_state: public FreshVarSource
     failable_expression match_constructor(const std::vector<Core2::Var<>>& x, const std::vector<equation_info_t>& equations);
     failable_expression match_literal(const std::vector<Core2::Var<>>& x, const std::vector<equation_info_t>& equations);
     failable_expression match_var(const std::vector<Core2::Var<>>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_wrap(const std::vector<Core2::Var<>>& x, const std::vector<equation_info_t>& equations);
     failable_expression match_empty(const std::vector<Core2::Var<>>& x, const std::vector<equation_info_t>& equations);
 
     failable_expression combine(const failable_expression& E1, const failable_expression& E2);

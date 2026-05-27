@@ -167,6 +167,10 @@ pattern_type classify_equation(const equation_info_t& equation)
     else if (pat.is_a<Hs::LiteralPattern>())
 	return pattern_type::literal;
 
+    // Type signature or wrapper
+    else if (pat.is_a<Hs::TypedPattern>())
+	return pattern_type::wrap;
+
     // Strict
     else if (pat.is_a<Haskell::StrictPattern>())
     {
@@ -414,6 +418,35 @@ failable_expression desugar_state::match_var(const vector<Core2::Var<>>& x, cons
     return match(remove_first(x), equations2);
 }
 
+failable_expression desugar_state::match_wrap(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+{
+    assert(not x.empty());
+    assert(not equations.empty());
+
+    vector<failable_expression> bodies;
+
+    for(auto equation: equations)
+    {
+        assert(not equation.patterns.empty());
+
+        auto tpat = equation.patterns[0].to<Hs::TypedPattern>();
+        assert(tpat);
+
+        auto y = get_fresh_core_var("typed");
+
+        auto x2 = x;
+        x2[0] = y;
+
+        equation.patterns[0] = unloc(tpat->pat);
+
+        auto body = match(x2, {equation});
+        body.add_binding({{y, tpat->wrap(x[0])}});
+        bodies.push_back(std::move(body));
+    }
+
+    return fold(bodies);
+}
+
 
 failable_expression desugar_state::match_empty(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
@@ -492,13 +525,6 @@ void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn
 	pat1 = unloc(AP.pattern);
 	clean_up_pattern(x, eqn);
     }
-    // case x of (pat::type) -> rhs  => case wrap(x) of pat -> rhs
-    else if (auto tp = pat1.to<Haskell::TypedPattern>())
-    {
-        // FIXME: this ignores the wrapper!
-	pat1 = unloc(tp->pat);
-        clean_up_pattern(x, eqn);
-    }
 }
 
 failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
@@ -531,6 +557,8 @@ failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const ve
 	    E = combine(match_var(x, block.second), E);
         else if (block.first == pattern_type::literal)
 	    E = combine(match_literal(x, block.second), E);
+        else if (block.first == pattern_type::wrap)
+	    E = combine(match_wrap(x, block.second), E);
 	else
 	    E = combine(match_constructor(x, block.second), E);
     }
@@ -571,4 +599,3 @@ Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equati
 
     return E;
 }
-

@@ -248,6 +248,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         auto type = check_type(TP.type);
         tcPat(penv, TP.pat, Check(type), sigs, a);
         TP.wrap = instPatSigma(type, exp_type);
+        pat = TP;
         // I think we should translate this to case (wrap(x)) of pat -> E
         // Does this undermine the grouping of constructors in desugaring?
         // Does it only happen when pat is a var, so that we have
@@ -384,5 +385,4 @@ rename_pattern_from_bindinfo(Hs::LPat lpat, const map<Hs::Var, Hs::BindInfo>& bi
 
     return lpat;
 }
-
 
