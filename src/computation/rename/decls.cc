@@ -398,6 +398,18 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::LVar>>> get_indices_for_names
     return {index_for_name, duplicate_defs};
 }
 
+bool is_strict_binding_pattern(const Hs::LPat& lpat)
+{
+    auto& pat = unloc(lpat);
+
+    if (pat.is_a<Hs::StrictPattern>())
+        return true;
+    else if (auto tpat = pat.to<Hs::TypedPattern>())
+        return is_strict_binding_pattern(tpat->pat);
+    else
+        return false;
+}
+
 vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     // NOTE: bound already includes the binder names.
@@ -409,6 +421,9 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         if (decl.is_a<Hs::PatDecl>())
         {
             auto PD = decl.as_<Hs::PatDecl>();
+
+            if (top and is_strict_binding_pattern(PD.lhs))
+                error(PD.lhs.loc, Note()<<"Strict pattern bindings are not allowed at top level.");
 
             rename_pattern( PD.lhs, top);
             PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
@@ -490,5 +505,4 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     return binders;
 }
-
 
