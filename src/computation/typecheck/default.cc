@@ -30,11 +30,11 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         {
             bool named_defaults = this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
             if (not named_defaults)
+            {
                 record_error(default_decl.maybe_class->loc, Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
-            else
                 continue;
-
-            if (auto d = find_tycon(unloc(*default_decl.maybe_class)))
+            }
+            else if (auto d = find_tycon(unloc(*default_decl.maybe_class)))
                 dclass = *d;
             else
             {
