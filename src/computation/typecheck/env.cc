@@ -157,7 +157,7 @@ DataFamInfo::DataFamInfo(const vector<TypeVar>& as, const Kind& k, const optiona
 
 RenameTyvarEnv2 rename_binders2(RenameTyvarEnv2 env, const vector<TypeVar>& tvs1, const vector<TypeVar>& tvs2)
 {
-    assert(tvs1 == tvs2);
+    assert(tvs1.size() == tvs2.size());
     for(int i=0;i<tvs1.size();i++)
     {
         env = rename_binder2(env, tvs1[i], tvs2[i]);

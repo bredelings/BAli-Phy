@@ -192,12 +192,15 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         //push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
         TypeCon tf_con(unloc(def_inst.con).name);
-        if (not class_info.associated_type_families.count(tf_con))
+        std::optional<TypeFamilyInstanceDecl>* default_instance = nullptr;
+        auto default_iter = class_info.associated_type_families.find(tf_con);
+        if (default_iter == class_info.associated_type_families.end())
             record_error(def_inst.con.loc, Note()<<"Type family '"<<tf_con<<"' is not defined in class '"<<class_name<<"'");
-
         // An associated type family can have only one default instance.
-        if (class_info.associated_type_families.at(tf_con))
+        else if (default_iter->second)
             record_error(def_inst.con.loc, Note()<<"Associated type family '"<<tf_con.print()<<"' may only have one default instance!");
+        else
+            default_instance = &default_iter->second;
 
         // All type arguments must be variables.
         // The type variables may not be repeated.
@@ -221,7 +224,8 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto [inst_con, inst_args] = decompose_type_apps(lhs);
 
         // This type family has a default instance now.
-        class_info.associated_type_families.at(tf_con) = TypeFamilyInstanceDecl{tf_con, inst_args, rhs};
+        if (default_instance)
+            *default_instance = TypeFamilyInstanceDecl{tf_con, inst_args, rhs};
 
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});
