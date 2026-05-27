@@ -61,6 +61,13 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
+Core2::Exp<> desugar_state::pattern_match_failure(const std::optional<yy::location>& loc, const string& message) const
+{
+    Note note;
+    note<<message;
+    return Core2::error(Message{ErrorMsg, loc, {note}}.print(m.file));
+}
+
 Hs::VarPattern make_VarPattern(const Core2::Var<>& v)
 {
     assert(v.index == 0);
@@ -233,13 +240,10 @@ desugared_decls desugar_state::desugar_decls(const Hs::Decls& v)
 
             auto binder_exps = pattern_binding_payload(binders);
 
-            std::ostringstream o;
-            o<<*pat.loc<<": pattern binding " + pat.print() + ": failed pattern match";
-
             auto matched_binders = case_expression(rhs.result(Core2::Constant{0}),
                                                    {unloc(pat)},
                                                    {failable_expression(Tuple(binder_exps))});
-            decls.decls.push_back( {z, matched_binders.result(Core2::error(o.str()))});
+            decls.decls.push_back( {z, matched_binders.result(pattern_match_failure(pat.loc, "pattern binding failed pattern match"))});
 	    assert(not rhs.can_fail);
 
             if (is_strict_desugared_binding_pattern(pat))
@@ -275,7 +279,7 @@ desugared_decls desugar_state::desugar_decls(const Hs::Decls& v)
             auto fvar = make_core_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
-            auto otherwise = Core2::error(m.name + "." + fvar.name+": pattern match failure");
+            auto otherwise = pattern_match_failure(fd->v.loc, "pattern match failure in function");
 
             decls.decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
@@ -650,9 +654,8 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto L = E.as_<Hs::LambdaExp>();
 
         auto equation = desugar_match(L.match);
-	// what top-level function is the lambda in?
-	// what line is it on?
-        auto otherwise = Core2::error(m.name + " lambda: pattern match failure");
+        auto loc = L.match.patterns.empty()? std::optional<yy::location>{} : L.match.patterns[0].loc;
+        auto otherwise = pattern_match_failure(loc, "pattern match failure in lambda");
 
         return def_function({equation}, otherwise);
     }
@@ -687,7 +690,7 @@ Core2::Exp<> desugar_state::desugar(const Hs::Exp& E)
             patterns.push_back( unloc(alt_patterns[0]) );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
-        return case_expression(obj, patterns, bodies).result(Core2::error("case: failed pattern match"));
+        return case_expression(obj, patterns, bodies).result(pattern_match_failure(C.object.loc, "case expression failed pattern match"));
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {

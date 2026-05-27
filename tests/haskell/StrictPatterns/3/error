@@ -1,1 +1,5 @@
-bali-phy: Error! Main.hs:2.7-15: pattern binding !(Data.Maybe.Just x_30348): failed pattern match
+bali-phy: Error! [1mMain.hs:2.7-15:[1;31m error:[0m[1m
+   • pattern binding failed pattern match
+  [1;34m|[0m
+[1;34m2[0m [1;34m| [0m  let [1;31m!(Just x)[0m = Nothing
+  [1;34m|[0m       [1;31m^^^^^^^^^[0m

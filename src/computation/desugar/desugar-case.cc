@@ -514,7 +514,7 @@ void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
             auto y = make_core_var(unloc(v));
-	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(Core2::error("lazy pattern: failed pattern match"))});
+	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(pattern_match_failure(LP.pattern.loc, "lazy pattern failed pattern match"))});
         }
 	rhs.add_binding(binds);
 	pat1 = Hs::WildcardPattern();

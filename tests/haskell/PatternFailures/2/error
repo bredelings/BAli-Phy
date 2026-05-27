@@ -1,0 +1,6 @@
+bali-phy: Error! [1mMain.hs:2.12-19:[1;31m error:[0m[1m
+   • pattern match failure in lambda
+  [1;34m|[0m
+[1;34m2[0m [1;34m| [0m  let f = \[1;31m(Just x)[0m -> x
+  [1;34m|[0m            [1;31m^^^^^^^^[0m
+

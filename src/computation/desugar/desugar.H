@@ -60,6 +60,8 @@ struct desugar_state: public FreshVarSource
 {
     const Module& m;
 
+    Core2::Exp<> pattern_match_failure(const std::optional<yy::location>&, const std::string&) const;
+
     Core2::Exp<> def_function(const std::vector< equation_info_t >&, const Core2::Exp<>& otherwise);
 
     failable_expression case_expression(const Core2::Exp<>& T, const std::vector<Hs::Pattern>& patterns, const std::vector<failable_expression>& bodies);

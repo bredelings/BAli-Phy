@@ -1,0 +1,6 @@
+bali-phy: Error! [1mMain.hs:2.26-32:[1;31m error:[0m[1m
+   • case expression failed pattern match
+  [1;34m|[0m
+[1;34m2[0m [1;34m| [0m  putStrLn $ show $ case [1;31mNothing[0m of
+  [1;34m|[0m                          [1;31m^^^^^^^[0m
+
