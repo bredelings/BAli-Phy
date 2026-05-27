@@ -174,7 +174,6 @@ pattern_type classify_equation(const equation_info_t& equation)
     // Strict
     else if (pat.is_a<Haskell::StrictPattern>())
     {
-	throw myexception()<<"The BangPattern extension is not implemented!";
         return pattern_type::bang;
     }
 
@@ -418,6 +417,33 @@ failable_expression desugar_state::match_var(const vector<Core2::Var<>>& x, cons
     return match(remove_first(x), equations2);
 }
 
+failable_expression desugar_state::match_bang(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+{
+    assert(not x.empty());
+    assert(not equations.empty());
+
+    auto equations2 = equations;
+    for(auto& equation: equations2)
+    {
+        assert(not equation.patterns.empty());
+
+        auto strict_pat = equation.patterns[0].to<Hs::StrictPattern>();
+        assert(strict_pat);
+
+        equation.patterns[0] = unloc(strict_pat->pattern);
+    }
+
+    auto body = match(x, equations2);
+    auto x0 = x[0];
+
+    auto result = [body,x0](const Core2::Exp<>& otherwise)
+    {
+        return Core2::Case<>{x0, {{{}, body.result(otherwise)}}};
+    };
+
+    return {body.can_fail, result};
+}
+
 failable_expression desugar_state::match_wrap(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
 {
     assert(not x.empty());
@@ -494,28 +520,6 @@ void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn
 	pat1 = Hs::WildcardPattern();
     }
 
-    // case x of {!pat -> rhs; _ -> rhs_fail}  =>  x `seq` case x of {pat -> rhs, _ -> rhs_fail}
-    else if (pat1.is_a<Haskell::StrictPattern>())
-    {
-        // Note that let !(x,y) = e is handled differently -- this is considered a bang-pattern binding,
-        // and is not really part of handling case x of !pat.
-
-        // "A bang only really has an effect if it precedes a variable or wild-card pattern: "
-        // f !(x,y) = E  is the same as f (x,y) = E, since we have f = \z -> case z of (x,y) -> E.
-
-        // Recursively clean up the strict pattern underneat the strictness mark,
-        //  then restore the strictness mark.
-        // We could end up with (for example) a strict wildcard.
-        auto SP = pat1.as_<Haskell::StrictPattern>();
-        pat1 = unloc(SP.pattern);
-        clean_up_pattern(x, eqn);
-        pat1 = Haskell::StrictPattern({noloc,pat1});
-
-        // FIXME: does this work?
-
-	throw myexception()<<"The BangPattern extension is not implemented!";
-    }
-
     // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs
     else if (pat1.is_a<Haskell::AsPattern>())
     {
@@ -557,6 +561,8 @@ failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const ve
 	    E = combine(match_var(x, block.second), E);
         else if (block.first == pattern_type::literal)
 	    E = combine(match_literal(x, block.second), E);
+        else if (block.first == pattern_type::bang)
+	    E = combine(match_bang(x, block.second), E);
         else if (block.first == pattern_type::wrap)
 	    E = combine(match_wrap(x, block.second), E);
 	else
