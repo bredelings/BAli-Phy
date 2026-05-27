@@ -1010,6 +1010,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         for(auto& alt: alts)
         {
             auto [joins,alt2] = make_dupable_alt(alt, *this);
+            alt = alt2;
             floats.append(this_mod, options, joins);
         }
 
