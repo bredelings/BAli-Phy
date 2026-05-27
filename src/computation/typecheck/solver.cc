@@ -315,9 +315,8 @@ void Solver::add_to_work_list(const std::vector<Predicate>& ps)
             work_list.push_back(p);
 }
 
-vector<Predicate> kickout_after_unification2(const MetaTypeVar& mtv, std::vector<Predicate>& preds)
+void kickout_after_unification2(const MetaTypeVar& mtv, std::vector<Predicate>& preds, vector<Predicate>& work_list)
 {
-    vector<Predicate> work_list;
     // kick-out for inerts that are rewritten by p
     for(int i=0;i<preds.size();i++)
     {
@@ -332,18 +331,17 @@ vector<Predicate> kickout_after_unification2(const MetaTypeVar& mtv, std::vector
             i--;
         }
     }
-
-    return work_list;
 }
 
 void Solver::kickout_after_unification(const MetaTypeVar& mtv)
 {
     // kick-out for inerts containing mtv
-    kickout_after_unification2(mtv, inerts.tv_eqs);
-    kickout_after_unification2(mtv, inerts.mtv_eqs);
-    kickout_after_unification2(mtv, inerts.tyfam_eqs);
-    kickout_after_unification2(mtv, inerts.dicts);
-    kickout_after_unification2(mtv, inerts.irreducible);
+    kickout_after_unification2(mtv, inerts.tv_eqs, work_list);
+    kickout_after_unification2(mtv, inerts.mtv_eqs, work_list);
+    kickout_after_unification2(mtv, inerts.tyfam_eqs, work_list);
+    kickout_after_unification2(mtv, inerts.dicts, work_list);
+    kickout_after_unification2(mtv, inerts.irreducible, work_list);
+    kickout_after_unification2(mtv, inerts.failed, work_list);
 }
 
 void Solver::add_inert(const Predicate& p)
