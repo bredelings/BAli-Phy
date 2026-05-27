@@ -14,9 +14,41 @@ std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
         strictness = true;
         ltype = strict_type->type;
     }
+    else if (auto lazy_type = type.to<Hs::LazyType>())
+    {
+        ltype = lazy_type->type;
+    }
     return {ltype, strictness};
 }
 
+std::pair<Hs::LType,vector<bool>> pop_constructor_signature_strictness(Hs::LType ltype)
+{
+    auto& [loc, type] = ltype;
+
+    if (auto forall_type = type.to<Hs::ForallType>())
+    {
+        auto [inner_type, strictness] = pop_constructor_signature_strictness(forall_type->type);
+        return {{loc, Hs::ForallType(forall_type->type_var_binders, inner_type)}, strictness};
+    }
+
+    if (auto constrained_type = type.to<Hs::ConstrainedType>())
+    {
+        auto [inner_type, strictness] = pop_constructor_signature_strictness(constrained_type->type);
+        return {{loc, Hs::ConstrainedType(constrained_type->context, inner_type)}, strictness};
+    }
+
+    if (auto function_type = Hs::is_function_type(ltype))
+    {
+        auto [arg_type, result_type] = *function_type;
+        auto [field_type, strictness] = pop_strictness(arg_type);
+        auto [stripped_result_type, result_strictness] = pop_constructor_signature_strictness(result_type);
+
+        result_strictness.insert(result_strictness.begin(), strictness);
+        return {Hs::make_arrow_type(field_type, stripped_result_type), result_strictness};
+    }
+
+    return {ltype, {}};
+}
 
 // Technically, we could add (forall tvs.<>) on the hs_con_type, and that would work.
 // But that would bind free kind vars to the tvs, whereas actually we know the kinds.
@@ -117,9 +149,8 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             DataConInfo info;
 
             // 1. Kind-check and add foralls for free type vars.
-
-            // BUG: We don't handle strictness annotations on the fields here!
-            auto written_type = check_type( data_cons_decl.type );
+            auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(data_cons_decl.type);
+            auto written_type = check_type( hs_constructor_type );
 
             // 2. Extract tyvar, givens, and rho type.
             auto [written_tvs, written_constraints, rho_type] = peel_top_gen( written_type );
@@ -160,7 +191,8 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
                 exi_tvs_set.erase(u_tv);
 
             info.field_types = field_types;
-            info.field_strictness = std::vector<bool>( info.field_types.size(), false); // FIXME
+            info.field_strictness = field_strictness;
+            assert(info.field_strictness.size() == info.field_types.size());
             info.data_type = data_type_con;
             info.written_constraints = constraints;
             info.top_constraints = data_context;
@@ -192,4 +224,3 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         }
     }
 }
-

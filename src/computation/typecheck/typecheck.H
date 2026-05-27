@@ -32,6 +32,9 @@ Hs::ModuleDecls typecheck(const std::string& s, Module& m, Hs::ModuleDecls M);
 
 Type type_check_class_method_type(kindchecker_state& K, Type type, const Type& constraint);
 
+std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype);
+std::pair<Hs::LType,std::vector<bool>> pop_constructor_signature_strictness(Hs::LType ltype);
+
 std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
 type_check_type_class(Module& m, const Haskell::ClassDecl& class_decl);
 
@@ -628,5 +631,4 @@ TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE
 }
 
 #endif
-
 

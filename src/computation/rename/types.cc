@@ -224,6 +224,12 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
         St.type = rename_type(St.type);
         type = St;
     }
+    else if (auto lt = type.to<Hs::LazyType>())
+    {
+        auto Lt = *lt;
+        Lt.type = rename_type(Lt.type);
+        type = Lt;
+    }
     else
         throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";
 
@@ -537,4 +543,3 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 
     return decls;
 }
-

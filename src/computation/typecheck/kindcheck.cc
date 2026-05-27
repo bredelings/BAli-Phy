@@ -364,8 +364,6 @@ Context kindchecker_state::kind_check_context(const Hs::Context& hs_context)
     return context;
 }
 
-std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype);
-
 void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor)
 {
     // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
@@ -445,16 +443,14 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     // f. Handle GADT constructor terms (class variables are NOT in scope)
     if (data_decl.is_gadt_decl())
     {
-        // BUG: We don't handle strictness annotations on the fields here!
-
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
         {
-            // FIXME! Handle strict fields: Con :: forall b. C b a => a -> !b -> T Int
             // FIXME! Handle record fields: Con :: { field1, field2 :: Int } -> T Int
             // OK: Con :: T Int
             // OK: Con :: a -> b -> T Int
-            kind_and_type_check_type(data_cons_decl.type);
+            auto [constructor_type, _] = pop_constructor_signature_strictness(data_cons_decl.type);
+            kind_and_type_check_type(constructor_type);
         }
     }
 }

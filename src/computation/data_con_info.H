@@ -27,7 +27,7 @@ struct DataConInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, data_type);
+	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_strictness, data_type);
     }
 };
 
