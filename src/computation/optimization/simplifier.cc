@@ -1489,7 +1489,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
             F.append(this_mod, options, argF);
 	    args.push_back(arg2);
 
-            if (not arg.to_constant())
+            if (not arg2.to_constant())
                 all_constant_args = false;
  	}
 
