@@ -185,8 +185,8 @@ expression_ref unlet(const expression_ref& E)
         auto L = E.as_<let_exp>();
 	// unnormalize T and the bodies
 	L.body = unlet(L.body);
-	for(int i=0; i<L.binds.size(); i++)
-	    L.binds[i].second = unlet(L.binds[i].second);
+	for(auto& [x,F]: L.binds)
+	    F = unlet(F);
 
 	// substitute for non-recursive lets
 	bool changed = true;
@@ -196,17 +196,21 @@ expression_ref unlet(const expression_ref& E)
 
 	    for(int i=L.binds.size()-1; i>=0; i--)
 	    {
+                auto& [x,F] = L.binds[i];
+
                 // If the variables binds to a case expression, then don't substitute.
-                if (is_case(L.binds[i].second)) continue;
+                if (is_case(F)) continue;
 
-		if (n_free_occurrences(L.binds[i].second, L.binds[i].first)) continue;
+                // If x occurs in its own RHS, then don't substitute.
+		if (n_free_occurrences(F, x)) continue;
 
-		int count = n_free_occurrences(L.body, L.binds[i].first);
-		for(const auto& decl: L.binds)
-		    count += n_free_occurrences(decl.second, decl.first);
-
+                // If x occurs more than once in the let body and all RHS's together, then don't substitute.
+		int count = n_free_occurrences(L.body, x);
+		for(const auto& [_, rhs]: L.binds)
+		    count += n_free_occurrences(rhs, x);
 		if (count != 1) continue;
 
+                // OK, now we can substitute.
 		changed = true;
 	
 		auto decl = L.binds[i];
