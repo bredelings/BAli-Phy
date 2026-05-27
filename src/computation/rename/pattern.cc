@@ -139,7 +139,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     }
     else if (auto tpat = pat.to<Hs::TypedPattern>())
     {
-        return find_vars_in_pattern(tpat->pat);
+        return find_vars_in_pattern(tpat->pat, top);
     }
     // 3. Handle x@pat
     else if (pat.is_a<Hs::AsPattern>())
