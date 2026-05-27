@@ -983,15 +983,18 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
     else if (auto ac = cont.is_apply_context())
     {
         auto [floats1, cont1] = make_dupable_cont(S, bound_vars, ac->next);
+
         // env' = (S, floats1.bound_vars)
         auto [dup, bound_vars3, arg2] = simplifyArg(floats1.bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+
         // makeTrivial env 
         auto k = get_fresh_occ_var("karg");
         k.info.work_dup = amount_t::Many;
         k.info.code_dup = amount_t::Many;
         Occ::Decls decls{{k,arg2}};
         floats1.append(this_mod, options, decls);
-        auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, ac->next);
+
+        auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
         ac2->dup_status = DupStatus::OkToDup;
         return {floats1, ac2};
     }
