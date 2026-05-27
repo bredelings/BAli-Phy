@@ -521,6 +521,8 @@ void write_header(std::ostream& program_file,
 		  const vector<model_t>& SMs,
 		  const vector<model_t>& IMs,
 		  const vector<model_t>& scaleMs,
+		  const model_t& subst_rates_model,
+		  const model_t& indel_rates_model,
 		  const model_t& tree_model)
 {
     set<string> imports;
@@ -540,6 +542,8 @@ void write_header(std::ostream& program_file,
         add(imports, m.imports);
     for(auto& m: scaleMs)
         add(imports, m.imports);
+    add(imports, subst_rates_model.imports);
+    add(imports, indel_rates_model.imports);
     add(imports, tree_model.imports);
 
     program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
@@ -731,7 +735,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // Write pragmas, module, imports.
     std::ostringstream program_file;
-    write_header(program_file, decls, SMs, IMs, scaleMs, tree_model);
+    write_header(program_file, decls, SMs, IMs, scaleMs, subst_rates_model, indel_rates_model, tree_model);
     program_file<<"\n\n";
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
