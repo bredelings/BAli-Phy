@@ -138,25 +138,27 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
         unify_solve_(origin, *s1,  t2);
     else if (auto s2 = expand_type_synonym(t2))
         unify_solve_(origin,  t1, *s2);
-
-    auto app1 = is_type_app(t1);
-    auto app2 = is_type_app(t2);
-    if (app1 and app2)
-    {
-        auto& [fun1, arg1] = *app1;
-        auto& [fun2, arg2] = *app2;
-
-        unify_solve_(origin, fun1, fun2);
-        unify_solve_(origin, arg1, arg2);
-    }
-    else if (t1.is_a<TypeCon>() and
-             t2.is_a<TypeCon>() and
-             t1.as_<TypeCon>() == t2.as_<TypeCon>())
-    { }
-    else if (same_type(t1, t2))
-    { }
     else
-        unify_defer(origin, t1, t2);
+    {
+        auto app1 = is_type_app(t1);
+        auto app2 = is_type_app(t2);
+        if (app1 and app2)
+        {
+            auto& [fun1, arg1] = *app1;
+            auto& [fun2, arg2] = *app2;
+
+            unify_solve_(origin, fun1, fun2);
+            unify_solve_(origin, arg1, arg2);
+        }
+        else if (t1.is_a<TypeCon>() and
+                 t2.is_a<TypeCon>() and
+                 t1.as_<TypeCon>() == t2.as_<TypeCon>())
+        { }
+        else if (same_type(t1, t2))
+        { }
+        else
+            unify_defer(origin, t1, t2);
+    }
 }
 
 bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const std::variant<TypeVar,MetaTypeVar>& btv1, const Type& t2, bsubstitution_t& s) const
