@@ -803,7 +803,7 @@ optional<translation_result_t> CodeGenState::get_model_list(const ptree& model) 
         bool do_log = is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
-        if (do_log and not is_var(element_result.code.E))
+        else if (do_log and not is_var(element_result.code.E))
             result.code.stmts.let(x, element_result.code.E);
         else
             argument_environment[i] = element_result.code.E;
@@ -863,7 +863,7 @@ optional<translation_result_t> CodeGenState::get_model_tuple(const ptree& model)
         bool do_log = is_unlogged_random(element) and is_loggable_type(type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
-        if (do_log and not is_var(element_result.code.E))
+        else if (do_log and not is_var(element_result.code.E))
             result.code.stmts.let(x, element_result.code.E);
         else
             argument_environment[i] = element_result.code.E;
