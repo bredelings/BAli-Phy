@@ -7,6 +7,9 @@
 #include <vector>
 #include <utility>                                  // for pair
 #include <iostream>
+#include <filesystem>
+#include <optional>
+#include <cstdint>
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/extensions.H"
 #include "computation/core/ast.H"
@@ -233,11 +236,21 @@ const_symbol_ptr lookup_builtin_symbol(const std::string& name);
 // If Module builds some things, have CompiledModule steal them at the end?
 class CompiledModule
 {
+    struct cached_value_decls_ref
+    {
+        std::filesystem::path path;
+        std::uint64_t offset = 0;
+        std::uint64_t size = 0;
+        std::string hash;
+    };
+
     std::string modid;
 
     std::set<std::string> dependencies_;
 
-    Core2::Decls<> value_decls;
+    mutable std::optional<Core2::Decls<>> value_decls;
+
+    mutable std::optional<cached_value_decls_ref> value_decls_cache_;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
 
@@ -270,7 +283,7 @@ public:
     void clear_symbol_table();
 
     // Now discard the code -- what is left?
-    void clear_code() { value_decls.clear(); }
+    void clear_code();
 
     const FreshVarState& fresh_var_state() const {return *fresh_var_state_;}
 
@@ -309,15 +322,22 @@ public:
 
     void finish_value_decls( const Core2::Decls<>& decls );
 
+    const Core2::Decls<>& cached_value_decls(const module_loader&) const;
+
+    void set_lazy_value_decls(const std::filesystem::path& path,
+                              std::uint64_t offset,
+                              std::uint64_t size,
+                              const std::string& hash) const;
+
     // Why do we have code that isn't for this module?
-    std::map<Core2::Var<>,Core2::Exp<>> code_defs() const;
+    std::map<Core2::Var<>,Core2::Exp<>> code_defs(const module_loader&) const;
 
     void inflate(const Program& P);
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
+	ar( modid, dependencies_, symbols, types, exported_symbols_, exported_types_ );
         ar( aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_ );

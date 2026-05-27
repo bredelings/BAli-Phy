@@ -2,6 +2,10 @@
 #include <regex>
 #include <tuple>
 #include <fstream>
+#include <sstream>
+#include <string_view>
+#include <cctype>
+#include <limits>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
@@ -447,28 +451,117 @@ std::string xxhash_to_hex(uint64_t hash) {
     return ss.str();
 }
 
-std::string xxhash64_hex(const std::string& s) {
+std::string xxhash64_hex(std::string_view s) {
     uint64_t hash = XXH3_64bits(s.data(), s.size());
     std::stringstream ss;
     ss << std::hex << std::setw(16) << std::setfill('0') << hash;
     return ss.str();
 }
 
-std::string extract_xxhash(std::string& data)
+namespace
 {
-    // 1. Check that we have 40 chars followed by a newline.
-    if (data[16] != '\n') throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
+const string module_cache_magic = "bali-phy-module-cache-v2";
+constexpr std::size_t xxhash_hex_size = 16;
 
-    // 2. Get the 40 chars and check that they are all hex digits.
-    string stored_archive_sha = data.substr(0,16);
-    stored_archive_sha.resize(16);
-    for(char c: stored_archive_sha)
-	if (not std::isxdigit(c)) throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
+class memory_input_buffer: public std::streambuf
+{
+public:
+    explicit memory_input_buffer(std::string_view data)
+    {
+        auto begin = const_cast<char*>(data.data());
+        setg(begin, begin, begin + data.size());
+    }
+};
 
-    // 3. Drop the first 17 chars -- 16 hex digits plus newline.
-    data = data.substr(17);
+class memory_input_stream: public std::istream
+{
+    memory_input_buffer buffer;
 
-    return stored_archive_sha;
+public:
+    explicit memory_input_stream(std::string_view data)
+        :std::istream(nullptr),
+         buffer(data)
+    {
+        rdbuf(&buffer);
+    }
+};
+
+bool is_xxhash_hex(const string& hash)
+{
+    if (hash.size() != xxhash_hex_size) return false;
+
+    for(char c: hash)
+        if (not std::isxdigit(static_cast<unsigned char>(c))) return false;
+
+    return true;
+}
+
+string read_header_line(std::istream& in, const string& name)
+{
+    string line;
+    if (not std::getline(in, line))
+        throw myexception()<<"archive failed integrity check: failed to read "<<name;
+    return line;
+}
+
+string read_hash_header(std::istream& in, const string& name)
+{
+    auto hash = read_header_line(in, name);
+    if (not is_xxhash_hex(hash))
+        throw myexception()<<"archive failed integrity check: failed to read "<<name;
+    return hash;
+}
+
+std::uint64_t read_size_header(std::istream& in, const string& name)
+{
+    auto line = read_header_line(in, name);
+    std::size_t parsed = 0;
+    auto size = std::stoull(line, &parsed);
+    if (parsed != line.size())
+        throw myexception()<<"archive failed integrity check: failed to read "<<name;
+    return size;
+}
+
+string read_exactly(std::istream& in, std::uint64_t size, const string& section)
+{
+    if (size > static_cast<std::uint64_t>(std::numeric_limits<std::streamsize>::max()))
+        throw myexception()<<"archive failed integrity check: "<<section<<" section is too large";
+
+    string data(size, '\0');
+    in.read(data.data(), static_cast<std::streamsize>(size));
+
+    if (static_cast<std::uint64_t>(in.gcount()) != size)
+        throw myexception()<<"archive failed integrity check: failed to read "<<section<<" section";
+
+    return data;
+}
+
+Core2::Decls<> read_cached_value_decls(const module_loader& loader,
+                                       const std::filesystem::path& path,
+                                       std::uint64_t offset,
+                                       std::uint64_t size,
+                                       const string& expected_hash)
+{
+    std::ifstream infile(path, std::ios::binary);
+    if (not infile)
+        throw myexception()<<"Could not open cached compile artifact!";
+
+    infile.seekg(static_cast<std::streamoff>(offset));
+    if (not infile)
+        throw myexception()<<"Could not seek to cached code section!";
+
+    auto data = read_exactly(infile, size, "code");
+    auto computed_hash = xxhash64_hex(data);
+    if (expected_hash != computed_hash)
+        throw myexception()<<"archive failed integrity check: stored and computed code section hashes did not match.";
+
+    memory_input_stream data_stream(data);
+    cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive(loader, data_stream);
+
+    Core2::Decls<> value_decls;
+    archive(value_decls);
+    return value_decls;
+}
 }
 
 std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_xxhash)
@@ -480,18 +573,30 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
         try
         {
             std::ifstream infile(*path, std::ios::binary);
-            std::string data = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
-            string stored_archive_xxhash = extract_xxhash(data);
 
-            string computed_archive_xxhash = xxhash64_hex(data);
+            auto magic = read_header_line(infile, "cache format");
+            if (magic != module_cache_magic)
+                throw myexception()<<"unsupported cache format";
+
+            string stored_interface_xxhash = read_hash_header(infile, "interface integrity hash");
+            string stored_code_xxhash = read_hash_header(infile, "code integrity hash");
+            std::uint64_t interface_size = read_size_header(infile, "interface size");
+            std::uint64_t code_size = read_size_header(infile, "code size");
+
+            auto interface_data = read_exactly(infile, interface_size, "interface");
+            auto code_offset = infile.tellg();
+            if (code_offset < 0)
+                throw myexception()<<"archive failed integrity check: failed to locate code section";
+
+            string computed_interface_xxhash = xxhash64_hex(interface_data);
             if (log_verbose >= 4)
-                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_hash = "<<stored_archive_xxhash<<"     computed_archive_hash = "<<computed_archive_xxhash<<"\n";
+                std::cerr<<"    Read archive interface for "<<modid<<":    length = "<<interface_data.size()<<"    stored_interface_hash = "<<stored_interface_xxhash<<"     computed_interface_hash = "<<computed_interface_xxhash<<"    code_length = "<<code_size<<"    code_hash = "<<stored_code_xxhash<<"\n";
 
-            if (stored_archive_xxhash != computed_archive_xxhash)
-                throw myexception()<<"archive failed integrity check: stored and computed archive integrity hash did not match.";
+            if (stored_interface_xxhash != computed_interface_xxhash)
+                throw myexception()<<"archive failed integrity check: stored and computed interface section hashes did not match.";
 
-            std::istringstream data2(data);
-            cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive( loader, data2 );
+            memory_input_stream data_stream(interface_data);
+            cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive(loader, data_stream);
 
             std::shared_ptr<CompiledModule> M;
 
@@ -503,7 +608,10 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
                 archive(M);
 
                 if (hash == M->all_inputs_hash())
+                {
+                    M->set_lazy_value_decls(*path, static_cast<std::uint64_t>(code_offset), code_size, stored_code_xxhash);
                     return M;
+                }
 
                 throw myexception()<<"Beginning and ending integrity hash inside the archive do not match!";
             }
@@ -557,17 +665,26 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
 
         try
         {
-            std::ostringstream buffer;
+            std::ostringstream interface_buffer;
             {
-                cereal::BinaryOutputArchive archive( buffer );
+                cereal::BinaryOutputArchive archive( interface_buffer );
                 archive(CM->all_inputs_hash());
                 archive(CM);
             }
-            string data = buffer.str();
-            string archive_hash = xxhash64_hex(data);
+
+            std::ostringstream code_buffer;
+            {
+                cereal::BinaryOutputArchive archive( code_buffer );
+                archive(CM->cached_value_decls(*P.get_module_loader()));
+            }
+
+            string interface_data = interface_buffer.str();
+            string code_data = code_buffer.str();
+            string interface_hash = xxhash64_hex(interface_data);
+            string code_hash = xxhash64_hex(code_data);
 
             if (log_verbose >= 4)
-                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    hash = "<<archive_hash<<"\n";
+                std::cerr<<"    Writing archive for "<<modid<<":    interface_length = "<<interface_data.size()<<"    interface_hash = "<<interface_hash<<"    code_length = "<<code_data.size()<<"    code_hash = "<<code_hash<<"\n";
 
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
@@ -578,8 +695,13 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             if (not tmp_file) throw myexception()<<"Could not open file!";
 
             // Write the archive to the temporary file.
-            tmp_file<<archive_hash<<"\n";
-            tmp_file.write(data.c_str(),data.size());
+            tmp_file<<module_cache_magic<<"\n";
+            tmp_file<<interface_hash<<"\n";
+            tmp_file<<code_hash<<"\n";
+            tmp_file<<interface_data.size()<<"\n";
+            tmp_file<<code_data.size()<<"\n";
+            tmp_file.write(interface_data.data(), interface_data.size());
+            tmp_file.write(code_data.data(), code_data.size());
             tmp_file.close();
 
             // Move the temporary file to the correct location.
@@ -2402,11 +2524,11 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
+map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs(const module_loader& loader) const
 {
     map<Core2::Var<>,Core2::Exp<>> code;
 
-    for(const auto& [x,rhs]: value_decls)
+    for(const auto& [x,rhs]: cached_value_decls(loader))
     {
         assert(is_qualified_symbol(x.name));
 
@@ -2424,6 +2546,39 @@ map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
 void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
 {
     value_decls = decls;
+    value_decls_cache_.reset();
+}
+
+const Core2::Decls<>& CompiledModule::cached_value_decls(const module_loader& loader) const
+{
+    if (not value_decls)
+    {
+        if (not value_decls_cache_)
+            throw myexception()<<"No cached code section is available for module "<<name();
+
+        value_decls = read_cached_value_decls(loader,
+                                              value_decls_cache_->path,
+                                              value_decls_cache_->offset,
+                                              value_decls_cache_->size,
+                                              value_decls_cache_->hash);
+    }
+
+    return *value_decls;
+}
+
+void CompiledModule::set_lazy_value_decls(const std::filesystem::path& path,
+                                          std::uint64_t offset,
+                                          std::uint64_t size,
+                                          const std::string& hash) const
+{
+    value_decls.reset();
+    value_decls_cache_ = cached_value_decls_ref{path, offset, size, hash};
+}
+
+void CompiledModule::clear_code()
+{
+    value_decls = Core2::Decls<>{};
+    value_decls_cache_.reset();
 }
 
 const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const
@@ -2538,4 +2693,3 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 
     m->clear_symbol_table();
 }
-

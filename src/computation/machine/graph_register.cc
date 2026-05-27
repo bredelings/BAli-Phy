@@ -3132,13 +3132,16 @@ void reg_heap::allocate_identifiers_for_program()
         add_identifier(name);
 
     // 2. Give each identifier a pointer to an unused location; define parameter bodies.
+    const auto& loader = *program->get_module_loader();
     for(auto& M: *program)
     {
+        auto code_defs = M->code_defs(loader);
+
         // 2.1 Pre-allocate locations for all symbols in the module.
-        for(const auto& [x, _]: M->code_defs())
+        for(const auto& [x, _]: code_defs)
             add_identifier(x.name);
 
-        for(const auto& [x, body]: M->code_defs())
+        for(const auto& [x, body]: code_defs)
         {
             // get the root for each identifier
             auto loc = identifiers.find(x.name);
