@@ -289,6 +289,8 @@ bool expression::operator==(const expression& E) const
 {
     if (head != E.head) return false;
 
+    if (size() != E.size()) return false;
+    
     for(int i=0;i<size();i++) 
 	if (sub[i] != E.sub[i]) return false;
 
