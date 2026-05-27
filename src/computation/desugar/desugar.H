@@ -12,6 +12,16 @@ Core2::Exp<> desugar(const Module& p, FreshVarState&, const expression_ref&);
 Core2::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Decls&);
 Core2::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
 
+struct desugared_decls
+{
+    Core2::Decls<> decls;
+    std::vector<Core2::Var<>> strict_vars;
+
+    void append(const desugared_decls&);
+    Core2::Exp<> wrap_body(const Core2::Exp<>&) const;
+    std::string print() const {return decls.print();}
+};
+
 struct failable_expression: public Object
 {
     bool can_fail;
@@ -23,6 +33,7 @@ struct failable_expression: public Object
     std::string print() const {return "("+std::to_string(can_fail)+","+convertToString(result(Core2::Var<>("FAIL")))+")";}
 
     void add_binding(const Core2::Decls<>& binds);
+    void add_binding(const desugared_decls& binds);
 
     failable_expression(bool b, std::function<Core2::Exp<>(const Core2::Exp<>&)> f)
 	:can_fail(b), result(f)
@@ -74,8 +85,8 @@ struct desugar_state: public FreshVarSource
 
     Core2::Exp<> desugar(const Hs::Exp& E);
     Core2::Exp<> desugar(const Hs::LExp& E);
-    Core2::Decls<> desugar_decls(const Haskell::Decls&);
-    Core2::Decls<> desugar_decls(const Haskell::Binds&);
+    desugared_decls desugar_decls(const Haskell::Decls&);
+    desugared_decls desugar_decls(const Haskell::Binds&);
 
     Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args);
 

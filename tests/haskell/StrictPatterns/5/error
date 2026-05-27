@@ -1,0 +1,6 @@
+[1mMain.hs:1.1-2:[1;31m error:[0m[1m
+   • Strict pattern bindings are not allowed at top level.
+  [1;34m|[0m
+[1;34m1[0m [1;34m| [0m[1;31m!x[0m = 1
+  [1;34m|[0m [1;31m^^[0m
+
