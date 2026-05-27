@@ -1,6 +1,7 @@
 #include "unification.H"
 #include <set>
 #include <regex>
+#include <cassert>
 #include "util/set.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
@@ -385,7 +386,7 @@ set<string> equations::referenced_vars() const
     return vars;
 }
 
-bool is_variable(const ptree& p)
+bool is_type_variable(const ptree& p)
 {
     if (p.size()) return false;
 
@@ -399,7 +400,7 @@ bool is_variable(const ptree& p)
 set<string> find_variables_in_type(const ptree& p)
 {
     set<string> vars;
-    if (is_variable(p))
+    if (is_type_variable(p))
 	vars.insert(p.get_value<string>());
     else
 	for(const auto& x: p)
@@ -469,7 +470,7 @@ equations operator&&(const equations& E1, const equations& E2)
 
 void substitute(const equations& E, term_t& T)
 {
-    if (is_variable(T))
+    if (is_type_variable(T))
     {
 	string name = T.get_value<string>();
 	if (E.value_of_var(name))
@@ -490,7 +491,7 @@ void substitute(const equations& E, term_t& T)
 
 void substitute(const map<string,term_t>& R, term_t& T)
 {
-    if (is_variable(T))
+    if (is_type_variable(T))
     {
 	string name = T.get_value<string>();
 	if (R.count(name))
@@ -507,16 +508,16 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     if (is_wildcard(T1) or is_wildcard(T2))
 	return valid();
 
-    else if (is_variable(T1))
+    else if (is_type_variable(T1))
     {
 	// 2. var1 = var2
-	if (is_variable(T2))
+	if (is_type_variable(T2))
 	    return add_var_condition(T1, T2);
 	// 3. var1 = T2
 	else
 	    return add_condition(T1, T2);
     }
-    else if (is_variable(T2))
+    else if (is_type_variable(T2))
 	// 4. var2 = T1
 	return add_condition(T2, T1);
     else if (T1.size() == 0)

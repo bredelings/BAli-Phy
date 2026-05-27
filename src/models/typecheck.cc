@@ -22,6 +22,8 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     if (E)
 	return E;
 
+    assert(not is_type_variable(t1) and not is_type_variable(t2));
+
     auto [head2,args2] = get_type_apps(t2);
 
     if (head2 == "Double")
@@ -197,8 +199,12 @@ ptree convert_to(const equations& eqs, ptree model, type_t type, type_t required
     substitute(eqs, required_type);
     if (not (eqs && convertible_to(model, type, required_type)))
     {
-	throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(type)
-			   <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+        auto type_str = unparse_type(type);
+        auto required_str = unparse_type(required_type);
+        myexception e;
+        e << "Term '" << unparse(model) << "' of type '" << type_str
+          << "' cannot be converted to type '" << required_str << "'";
+        throw e;
     }
 
     return model;
@@ -718,7 +724,16 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
             auto scope3 = *this;
             scope3.args = arg_env;
 	    auto alphabet_required_type = get_fresh_type_var("a");
-            auto alphabet_value2= scope3.typecheck_and_annotate(alphabet_required_type, *alphabet_expression);
+            ptree alphabet_value2;
+            try
+            {
+                alphabet_value2 = scope3.typecheck_and_annotate(alphabet_required_type, *alphabet_expression);
+            }
+            catch(myexception& e)
+            {
+                e.prepend("In alphabet for argument '" + arg_name + "' of command '" + name + "': ");
+                throw;
+            }
             eqs = eqs && scope3.eqs;
             if (not eqs)
                 throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
@@ -727,7 +742,16 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
             alphabet_value = alphabet_value2;
         }
 
-        auto arg_value2 = scope2.typecheck_and_annotate(arg_required_type, arg_value);
+        ptree arg_value2;
+        try
+        {
+            arg_value2 = scope2.typecheck_and_annotate(arg_required_type, arg_value);
+        }
+        catch(myexception& e)
+        {
+            e.prepend("In argument '" + arg_name + "' of command '" + name + "': ");
+            throw;
+        }
         eqs = eqs && scope2.eqs;
         if (not eqs)
             throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";

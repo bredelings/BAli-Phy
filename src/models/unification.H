@@ -71,11 +71,19 @@ public:
 equations unify(const term_t& T1, const term_t& T2);
 
 std::set<std::string> find_variables_in_type(const term_t& p);
+bool is_type_variable(const ptree& p);
 
 struct FVSource
 {
     mutable int index = 0;
-    term_t get_fresh_type_var(const std::string& s) const {return term_t(s + "#" + std::to_string(index++));}
+    term_t get_fresh_type_var(const std::string& s) const
+    {
+        // Fresh type variables must remain recognizable by is_type_variable().
+        const std::string prefix = (!s.empty() and s[0] >= 'a' and s[0] <= 'z') ? s : "t";
+        auto v = term_t(prefix + "#" + std::to_string(index++));
+        assert(is_type_variable(v));
+        return v;
+    }
 };
 
 std::map<std::string, term_t> alpha_rename(const std::set<std::string>& vars, const FVSource&);
