@@ -121,7 +121,15 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
 
 Type Solver::rewrite_app(ConstraintFlavor flavor, const Type& fun, const Type& arg)
 {
-    return TypeApp(rewrite(flavor, fun), rewrite(flavor, arg));
+    Type t = TypeApp(rewrite(flavor, fun), rewrite(flavor, arg));
+
+    if (auto tc = is_type_con_app(t))
+    {
+        auto& [tycon, args] = *tc;
+        return rewrite_type_con_app(flavor, tycon, args);
+    }
+    else
+        return t;
 }
 
 Type Solver::rewrite(ConstraintFlavor flavor, Type t)
@@ -154,4 +162,3 @@ Type Solver::rewrite(ConstraintFlavor flavor, Type t)
     else
         std::abort();
 }
-
