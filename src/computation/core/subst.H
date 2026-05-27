@@ -66,7 +66,7 @@ Exp<NoteV, NoteE> subst(const subst_t<NoteV>& S, const Exp<NoteV,NoteE>& E)
     }
     else if (auto B = E.to_builtinOp())
     {
-        auto b2 = *C;
+        auto b2 = *B;
         for(auto& arg: b2.args)
             arg = subst(S, arg);
         return b2;
