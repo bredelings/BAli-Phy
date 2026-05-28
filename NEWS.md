@@ -1,4 +1,4 @@
-# 4.2 (May 5, 2026)
+# 4.2 (May 21, 2026)
 
 ## Models
 - Add amino-acid profile mixture models C10, C20, ... , C60.
@@ -11,6 +11,7 @@
 ## Fixes
 - Fix non-reversible models + Markov-modulated models.
 - Fix guessing of the amino-acid alphabet when the sequences contain a lot of A/T/G/C/N.
+- Fix failure to parse models in bioconda ARM builds.
 
 ## Speed
 - Faster loading of compiled modules at startup.
@@ -18,6 +19,8 @@
 - Faster model execution.
 
 ## Internal
+- Implement strict patterns and strict bindings.
+- Better error messages for failed pattern match.
 - Refactor Haskell optimizer.
 - Improve specialization of polymorphic functions for particular types.
 - Switch to C++23.
