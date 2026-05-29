@@ -10,7 +10,7 @@ class mapping
     std::vector<std::pair<int,int>> delta_;
 
 public:
-    mapping& operator=(mapping&) = default;
+    mapping& operator=(const mapping&) = default;
 
     mapping& operator=(mapping&& vm) noexcept
 	{
