@@ -14,6 +14,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
+#include "computation/expression/runtime_views.H"
 #include "computation/fresh_vars.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
@@ -36,6 +37,138 @@ CDecls graph_normalize(FreshVarSource& source, CDecls decls)
         e = graph_normalize(source, e);
 
     return decls;
+}
+
+Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls);
+Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E);
+
+Core2::Exp<> make_let(const Core2::Decls<>& decls, const Core2::Exp<>& body)
+{
+    if (decls.empty())
+        return body;
+    else
+        return Core2::Let<>{decls, body};
+}
+
+bool is_simple_core_arg(const Core2::Exp<>& E, bool sub_exp_ok)
+{
+    if (E.to_var())
+        return true;
+
+    if (sub_exp_ok)
+    {
+        if (E.to_constant())
+            return true;
+
+        if (auto B = E.to_builtinOp(); B and B->call_conv == "ecall")
+            return true;
+    }
+
+    return false;
+}
+
+std::tuple<Core2::Decls<>, Core2::Exp<>>
+graph_normalize_lift(FreshVarSource& source, const Core2::Exp<>& E, bool sub_exp_ok)
+{
+    Core2::Decls<> decls;
+
+    if (sub_exp_ok)
+    {
+        if (auto B = E.to_builtinOp(); B and B->call_conv == "ecall")
+        {
+            auto E2 = *B;
+
+            for(auto& arg: E2.args)
+            {
+                auto [decls2, arg2] = graph_normalize_lift(source, arg, true);
+                arg = arg2;
+                std::ranges::move(decls2, std::back_inserter(decls));
+            }
+
+            return {decls, E2};
+        }
+    }
+
+    auto E2 = graph_normalize(source, E);
+
+    if (not is_simple_core_arg(E2, sub_exp_ok))
+    {
+        auto x = source.get_fresh_core_var("gn");
+        decls.push_back({x, E2});
+        E2 = x;
+    }
+
+    return {decls, E2};
+}
+
+Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls)
+{
+    for(auto& [_, e]: decls)
+        e = graph_normalize(source, e);
+
+    return decls;
+}
+
+Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
+{
+    if (E.empty())
+        return E;
+    else if (E.to_var() or E.to_constant())
+        return E;
+    else if (auto L = E.to_lambda())
+        return Core2::Lambda<>{L->x, graph_normalize(source, L->body)};
+    else if (auto A = E.to_apply())
+    {
+        auto [head_decls, head] = graph_normalize_lift(source, A->head, false);
+        auto [arg_decls, arg] = graph_normalize_lift(source, A->arg, false);
+
+        head_decls.insert(head_decls.end(), arg_decls.begin(), arg_decls.end());
+        return make_let(head_decls, Core2::Apply<>{head, arg});
+    }
+    else if (auto L = E.to_let())
+    {
+        auto decls = graph_normalize(source, L->decls);
+        auto body = graph_normalize(source, L->body);
+        return Core2::Let<>{decls, body};
+    }
+    else if (auto C = E.to_case())
+    {
+        auto [decls, object] = graph_normalize_lift(source, C->object, true);
+        auto alts = C->alts;
+        for(auto& [_, body]: alts)
+            body = graph_normalize(source, body);
+
+        return make_let(decls, Core2::Case<>{object, alts});
+    }
+    else if (auto C = E.to_conApp())
+    {
+        Core2::Decls<> decls;
+        auto args = C->args;
+        for(auto& arg: args)
+        {
+            auto [decls2, arg2] = graph_normalize_lift(source, arg, false);
+            arg = arg2;
+            std::ranges::move(decls2, std::back_inserter(decls));
+        }
+
+        return make_let(decls, Core2::ConApp<>{C->head, args});
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        Core2::Decls<> decls;
+        auto args = B->args;
+        bool sub_exp_ok = B->call_conv == "ecall";
+        for(auto& arg: args)
+        {
+            auto [decls2, arg2] = graph_normalize_lift(source, arg, sub_exp_ok);
+            arg = arg2;
+            std::ranges::move(decls2, std::back_inserter(decls));
+        }
+
+        return make_let(decls, Core2::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op});
+    }
+    else
+        std::abort();
 }
 
 bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
@@ -108,19 +241,19 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     if (not E) return E;
 
     // 2. Lambda
-    if (E.head().is_a<lambda>())
+    if (auto L = RuntimeView::lambda(E))
     {
-	assert(E.size() == 2);
 	object_ptr<expression> V = E.as_expression().clone();
-	V->sub[1] = graph_normalize(source, E.sub()[1]);
+	V->sub[1] = graph_normalize(source, L->body);
 
 	return V;
     }
 
     // 6. Case
-    if (auto C = parse_case_expression(E))
+    if (auto C = RuntimeView::case_(E))
     {
-        auto& [object, alts] = *C;
+        auto object = C->object;
+        auto alts = C->alts;
 
 	// Just normalize the bodies
 	for(auto& [pattern, body]: alts)
@@ -133,9 +266,9 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     }
 
     // 5. Let
-    if (is_let_expression(E))
+    if (auto Let = RuntimeView::let(E))
     {
-        auto L = E.as_<let_exp>();
+        auto L = *Let->value;
 
 	// Normalize the body
 	L.body = graph_normalize(source, L.body);
@@ -151,7 +284,7 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     else if (not E.size()) return E;
 
     // 4. Constructor or Operation
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    if (RuntimeView::constructor_app(E) or RuntimeView::operation_app(E))
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 
@@ -215,7 +348,9 @@ closure trim_normalize(closure&& C)
 
 closure reg_heap::preprocess(const Core2::Exp<>& E)
 {
-    return preprocess(to_expression_ref(E));
+    FreshVarSource source(fresh_var_state);
+    auto E2 = graph_normalize(source, E);
+    return trim_normalize( indexify( translate_refs( closure(to_expression_ref(E2)) ) ) );
 }
 
 closure reg_heap::preprocess(const closure& C)
@@ -317,4 +452,3 @@ closure reg_heap::translate_refs(closure&& C)
     C2.exp = translate_refs(C2.exp, C2.Env);
     return C2;
 }
-
