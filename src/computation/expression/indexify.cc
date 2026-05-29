@@ -260,6 +260,8 @@ expression_ref indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
 	    return *i;
 	else if (auto i = to<integer_container>(C->value))
 	    return Integer(i->i);
+	else if (auto d = to<double>(C->value))
+	    return *d;
 	else if (auto s = to<std::string>(C->value))
 	    return String(*s);
 	else
@@ -380,4 +382,3 @@ expression_ref deindexify(const expression_ref& E)
 {
     return deindexify(E,vector<expression_ref>{});
 }
-
