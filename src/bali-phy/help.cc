@@ -101,12 +101,12 @@ string header(const string& text)
 
 optional<string> get_authors(const Rule& rule)
 {
-    auto citation = rule.get_child_optional("citation");
-    if (not citation)
+    if (not rule.docs.citation)
 	return {};
+    auto citation = *rule.docs.citation;
 
     vector<string> authors;
-    if (auto authors_ = citation->get_child_optional("author"))
+    if (auto authors_ = citation.get_child_optional("author"))
 	for(auto& author: *authors_)
 	    if (auto name = author.second.get_optional<string>("name"))
 	    {
@@ -143,16 +143,16 @@ optional<string> get_authors(const Rule& rule)
 
 optional<string> get_citation(const Rule& rule, bool show_title)
 {
-    auto citation = rule.get_child_optional("citation");
-    if (not citation)
+    if (not rule.docs.citation)
 	return {};
+    auto citation = *rule.docs.citation;
 
-    if (citation->is_a<string>())
-	return citation->get_value<string>();
+    if (citation.is_a<string>())
+	return citation.get_value<string>();
 
     vector<string> cite;
-    auto title = citation->get_optional<string>("title");
-    auto year = citation->get_optional<string>("year");
+    auto title = citation.get_optional<string>("title");
+    auto year = citation.get_optional<string>("year");
     auto authors = get_authors(rule);
 
     if (authors)
@@ -177,11 +177,11 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 optional<string> get_citation_id(const Rule& rule, const string& idtype)
 {
     // 1. Check if there is a citation field.
-    auto citation = rule.get_child_optional("citation");
-    if (not citation) return {};
+    if (not rule.docs.citation) return {};
+    auto citation = *rule.docs.citation;
 
     // 2. Try to get the DOI
-    if (auto identifiers = citation->get_child_optional("identifier"))
+    if (auto identifiers = citation.get_child_optional("identifier"))
     {
 	for(auto& identifier: *identifiers)
 	{
@@ -199,11 +199,11 @@ optional<string> get_citation_id(const Rule& rule, const string& idtype)
 optional<string> get_citation_url(const Rule& rule)
 {
     // 1. Check if there is a citation field.
-    auto citation = rule.get_child_optional("citation");
-    if (not citation) return {};
+    if (not rule.docs.citation) return {};
+    auto citation = *rule.docs.citation;
 
     // 2. Try to get the URL from the "link" field.
-    if (auto links = citation->get_child_optional("link"))
+    if (auto links = citation.get_child_optional("link"))
     {
 	for(auto& link: *links)
 	{
@@ -238,25 +238,24 @@ optional<string> get_citation_url(const Rule& rule)
 string get_help_for_rule(const Rule& rule)
 {
     std::ostringstream help;
-    if (auto title = rule.get_optional<string>("title"))
+    if (auto title = rule.docs.title)
 	help<<bold(*title)<<std::endl<<std::endl;
 
-    string name = rule.get<string>("name");
-    string result_type = unparse_type(rule.get_child("result_type"));
-    auto args = rule.get_child("args");
+    string name = rule.name;
+    string result_type = unparse_type(rule.result_type);
     vector<string> args_names_types;
     // Actually, we may have a problem here...
-    if (auto constraints = rule.get_child_optional("constraints"))
+    if (not rule.constraints.empty())
     {
 	vector<string> cs;
-	for(auto& x: *constraints)
-	    cs.push_back(unparse_type(x.second));
+	for(auto& x: rule.constraints)
+	    cs.push_back(unparse_type(x));
 //		help<<join(cs,", ")<<" => ";
     }
-    for(auto& [_,arg]: args)
+    for(auto& arg: rule.args)
     {
-	string arg_name = arg.get<string>("name");
-	string arg_type = unparse_type(arg.get_child("type"));
+	string arg_name = arg.name;
+	string arg_type = unparse_type(arg.type);
 	args_names_types.push_back(blue(arg_name) + bold(": ") + red(arg_type));
     }
     help<<header("Usage");
@@ -265,31 +264,31 @@ string get_help_for_rule(const Rule& rule)
     help<<" "<<bold("->")<<" "<<red(result_type);
     help<<"\n\n";
 
-    if (auto synonyms = rule.get_child_optional("synonyms"))
+    if (not rule.synonyms.empty())
     {
 	vector<string> syn;
-	for(auto& x: *synonyms)
-	    syn.push_back(x.second);
+	for(auto& x: rule.synonyms)
+	    syn.push_back(x);
 	help<<header("Synonyms");
 	help<<indent_and_wrap(3, terminal_width(),join(syn,", "))<<"\n\n";
     }
 
-    if (not args.empty())
+    if (not rule.args.empty())
 	help<<header("Arguments");
-    for(auto& [_,arg]: args)
+    for(auto& arg: rule.args)
     {
 	// 1. arg: description
-	auto description = arg.get_optional<string>("description");
-	help<<"   "<<blue(arg.get<string>("name"))<<": "<<description<<".\n";
+	auto description = arg.description.value_or("");
+	help<<"   "<<blue(arg.name)<<": "<<description<<".\n";
 
 	// 2. default =/~ default
-	if (auto default_value = arg.get_child_optional("default_value"))
-	    help<<"       default "<<show_model(*default_value)<<"\n";
+	if (arg.default_value)
+	    help<<"       default "<<show_model(*arg.default_value)<<"\n";
 
 	help<<std::endl;
     }
 
-    if (auto description = rule.get_optional<string>("description"))
+    if (auto description = rule.docs.description)
     {
 	help<<header("Description");
         auto text = indent_and_wrap_pars(3, terminal_width(), *description);
@@ -300,12 +299,12 @@ string get_help_for_rule(const Rule& rule)
 	help<<text<<std::endl<<std::endl;
     }
 
-    if (auto examples = rule.get_child_optional("examples"))
+    if (not rule.docs.examples.empty())
     {
 	help<<header("Examples");
-	for(auto& x: *examples)
+	for(auto& x: rule.docs.examples)
 	{
-	    help<<indent(3, x.second.get_value<string>())<<"\n\n";
+	    help<<indent(3, x)<<"\n\n";
 	}
     }
 
@@ -318,11 +317,11 @@ string get_help_for_rule(const Rule& rule)
 	help<<std::endl;
     }
     
-    if (auto see_also = rule.get_child_optional("see"))
+    if (not rule.docs.see.empty())
     {
 	vector<string> see;
-	for(auto& x: *see_also)
-	    see.push_back(bold(x.second));
+	for(auto& x: rule.docs.see)
+	    see.push_back(bold(x));
 	help<<header("See also");
 	help<<indent_and_wrap(3, terminal_width(),join(see,", "))<<"\n\n";
     }
@@ -409,16 +408,10 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
     Rules R(package_paths);
     for(auto& [_,rule]: R.get_rules())
     {
-	if (auto name = rule.get_child_optional("name"))
-	{
-	    vector<string> category;
-	    if (auto cat = rule.get_child_optional("category"))
-		for(auto& [_,s]: *cat)
-		    category.push_back(s);
-	    category.push_back(*name);
-	    string text = get_help_for_rule(rule);
-	    help.make_path(category).put_value(text);
-	}
+	vector<string> category = rule.docs.category;
+	category.push_back(rule.name);
+	string text = get_help_for_rule(rule);
+	help.make_path(category).put_value(text);
     }
 
     return help;

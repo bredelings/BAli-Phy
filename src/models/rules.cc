@@ -111,13 +111,13 @@ namespace fs = std::filesystem;
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
 
-ptree parse_constraints(const ptree& cc)
+vector<RuleConstraint> parse_constraints(const ptree& cc)
 {
-    ptree constraints;
+    vector<RuleConstraint> constraints;
     for(auto& c: cc)
     {
 	string s = c.second.get_value<string>();
-	constraints.push_back({"", parse_type(s)});
+	constraints.push_back(parse_type(s));
     }
     return constraints;
 }
@@ -133,6 +133,40 @@ ptree parse_value(ptree call)
 }
 
 
+vector<string> get_string_array(const ptree& rule, const string& key, const string& rule_name)
+{
+    vector<string> result;
+    if (auto p = rule.get_child_optional(key))
+    {
+        if (not p->value_is_empty())
+            throw myexception()<<"In rule for "<<rule_name<<": \""<<key<<"\" must be an array";
+        for(auto& [_, x]: *p)
+        {
+            if (not x.is_a<string>())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \""<<key<<"\" is not a string";
+            result.push_back(x.get_value<string>());
+        }
+    }
+    return result;
+}
+
+std::set<string> get_imports(const ptree& rule, const string& rule_name)
+{
+    std::set<string> result;
+    if (auto p = rule.get_child_optional("import"))
+    {
+        if (not p->value_is_empty())
+            throw myexception()<<"In rule for "<<rule_name<<": \"import\" must be an array";
+        for(auto& [_, x]: *p)
+        {
+            if (not x.is_a<string>())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \"import\" is not a string";
+            result.insert(x.get_value<string>());
+        }
+    }
+    return result;
+}
+
 /* NOTE: convert_rule parses and processes strings.  It converts:
 
    - "result_type" -> type
@@ -144,36 +178,43 @@ ptree parse_value(ptree call)
    - "alphabet" -> expression -> fill in default values
    - "computed" -> expression
 */
-ptree convert_rule(const Rules& R, const string& name, Rule rule)
+Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 {
+    Rule rule;
+    rule.name = name;
+
     {
-	ptree& result_type = rule.get_child("result_type");
-	result_type = parse_type(result_type.get_value<string>());
+	auto result_type = raw_rule.get_child("result_type");
+        if (not result_type.has_value<string>())
+            throw myexception()<<"In rules for '"<<name<<"', result_type is not a string.";
+	rule.result_type = parse_type(result_type.get_value<string>());
     }
 
     {
-	if (not rule.get_child_optional("constraints"))
-	    rule.push_back({"constraints",ptree()});
-	ptree& constraints = rule.get_child("constraints");
-	constraints = parse_constraints(constraints);
+	ptree constraints;
+	if (auto constraints_ = raw_rule.get_child_optional("constraints"))
+            constraints = *constraints_;
+	rule.constraints = parse_constraints(constraints);
     }
 
     {
-	ptree& call = rule.get_child("call");
-	call = parse_value(call);
+	auto call = raw_rule.get_child("call");
+	rule.call = parse_value(call);
     }
 
-    for(auto& [_,x]: rule.get_child("args"))
+    for(auto& [_,x]: raw_rule.get_child("args"))
     {
         string arg_name = x.get_child("name").get_value<string>();
+        RuleArg arg;
+        arg.name = arg_name;
 
 	{
-	    ptree& arg_type = x.get_child("type");
+	    auto arg_type = x.get_child("type");
 
 	    if (not arg_type.has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', type for argument '"<<arg_name<<"' is not a string.";
 
-	    arg_type = parse_type(arg_type.get_value<string>());
+	    arg.type = parse_type(arg_type.get_value<string>());
 	}
 
 	if (auto default_value = x.get_child_optional("default_value"))
@@ -181,7 +222,7 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 	    if (not default_value->has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', default value for argument '"<<arg_name<<"' is not a string.";
 
-	    (*default_value) = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
+	    arg.default_value = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
 
 	if (auto alphabet = x.get_child_optional("alphabet"))
@@ -189,18 +230,60 @@ ptree convert_rule(const Rules& R, const string& name, Rule rule)
 	    if (not alphabet->has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
 
-	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
+	    arg.alphabet = parse(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
 	}
+
+        if (auto description = x.get_optional<string>("description"))
+            arg.description = *description;
+
+        rule.args.push_back(std::move(arg));
     }
 
     // Handle optional element "computed".
-    if (auto computed = rule.get_child_optional("computed"))
+    if (auto computed = raw_rule.get_child_optional("computed"))
     {
 	for(auto& [_,x]: *computed)
 	{
-	    ptree& value = x.get_child("value");
-	    value = parse_value(value);
+            ComputedRule c;
+            c.name = x.get_child("name").get_value<string>();
+	    c.value = parse_value(x.get_child("value"));
+            rule.computed.push_back(std::move(c));
 	}
+    }
+
+    rule.imports = get_imports(raw_rule, name);
+    rule.no_log = raw_rule.get("no_log", false);
+    rule.perform = raw_rule.get("perform", false);
+    if (auto extract = raw_rule.get_optional<string>("extract"))
+        rule.extract = *extract;
+
+    rule.synonyms = get_string_array(raw_rule, "synonyms", name);
+    rule.deprecated_synonyms = get_string_array(raw_rule, "deprecated-synonyms", name);
+
+    if (auto title = raw_rule.get_optional<string>("title"))
+        rule.docs.title = *title;
+    if (auto description = raw_rule.get_optional<string>("description"))
+        rule.docs.description = *description;
+    rule.docs.examples = get_string_array(raw_rule, "examples", name);
+    rule.docs.see = get_string_array(raw_rule, "see", name);
+    if (auto citation = raw_rule.get_child_optional("citation"))
+        rule.docs.citation = *citation;
+    if (auto category = raw_rule.get_child_optional("category"))
+        for(auto& [_, x]: *category)
+            rule.docs.category.push_back(x.get_value<string>());
+
+    return rule;
+}
+
+Rule make_rule_stub(const string& name, const ptree& raw_rule)
+{
+    Rule rule;
+    rule.name = name;
+    for(auto& [_, x]: raw_rule.get_child("args"))
+    {
+        RuleArg arg;
+        arg.name = x.get_child("name").get_value<string>();
+        rule.args.push_back(std::move(arg));
     }
     return rule;
 }
@@ -213,14 +296,16 @@ const map<std::string, Rule>& Rules::get_rules() const
 optional<Rule> Rules::get_rule_for_func(const string& s) const
 {
     auto it = rules.find(s);
-    if (it == rules.end())
-	return {};
-    else if (auto syn = it->second.get_optional<string>("synonym"))
-	return get_rule_for_func(*syn);
-    else if (auto syn = it->second.get_optional<string>("deprecated-synonym"))
-	throw myexception()<<"I don't recognize '"<<s<<"'.  Perhaps you meant '"<<*syn<<"'?";
-    else
+    if (it != rules.end())
 	return it->second;
+
+    if (auto syn = synonyms.find(s); syn != synonyms.end())
+	return get_rule_for_func(syn->second);
+
+    if (auto syn = deprecated_synonyms.find(s); syn != deprecated_synonyms.end())
+	throw myexception()<<"I don't recognize '"<<s<<"'.  Perhaps you meant '"<<syn->second<<"'?";
+
+    return {};
 }
 
 Rule Rules::require_rule_for_func(const string& s) const
@@ -231,41 +316,61 @@ Rule Rules::require_rule_for_func(const string& s) const
 	throw myexception()<<"No function '"<<s<<"'.";
 }
 
-optional<ptree> maybe_get_arg(const Rule& rule, const string& arg_name)
+std::optional<std::size_t> Rule::arg_index(const string& arg_name) const
 {
-    for(const auto& arg: rule.get_child("args"))
-	if (arg.second.get<string>("name") == arg_name)
-	    return arg.second;
+    for(std::size_t i=0; i<args.size(); i++)
+        if (args[i].name == arg_name)
+            return i;
     return {};
 }
 
-ptree get_arg(const Rule& rule, const string& arg_name)
+const RuleArg* Rule::maybe_arg(const string& arg_name) const
 {
-    auto arg = maybe_get_arg(rule, arg_name);
-    if (not arg)
-	// FIXME give info about function here?
-	throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
-    else
-	return *arg;
+    if (auto i = arg_index(arg_name))
+        return &args[*i];
+    return nullptr;
+}
+
+RuleArg* Rule::maybe_arg(const string& arg_name)
+{
+    if (auto i = arg_index(arg_name))
+        return &args[*i];
+    return nullptr;
+}
+
+const RuleArg& Rule::require_arg(const string& arg_name) const
+{
+    if (auto arg = maybe_arg(arg_name))
+        return *arg;
+    throw myexception()<<"Rule for function '"<<name<<"' has no argument '"<<arg_name<<"'";
+}
+
+string Rule::keyword_for_positional_arg(std::size_t i) const
+{
+    if (i >= args.size())
+	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<name<<"', which only has "<<args.size()<<" positional arguments.";
+
+    return args[i].name;
+}
+
+const RuleArg* maybe_get_arg(const Rule& rule, const string& arg_name)
+{
+    return rule.maybe_arg(arg_name);
+}
+
+const RuleArg& get_arg(const Rule& rule, const string& arg_name)
+{
+    return rule.require_arg(arg_name);
 }
 
 string get_keyword_for_positional_arg(const Rule& rule, int i)
 {
-    const auto arguments = rule.get_child("args");
-    auto name = rule.get<string>("name");
-    if (i >= arguments.size())
-	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<name<<"', which only has "<<arguments.size()<<" positional arguments.";
-
-    auto it = arguments.begin();
-    for(int j=0;j<i;j++)
-	it++;
-	
-    return it->second.get<string>("name");
+    return rule.keyword_for_positional_arg(i);
 }
 
 ptree get_type_for_arg(const Rule& rule, const string& arg)
 {
-    return get_arg(rule,arg).get_child("type");
+    return get_arg(rule,arg).type;
 }
 
 /*
@@ -290,7 +395,7 @@ ptree Rules::get_result_type(const ptree& model_rep) const
 	return ptree("String");
 
     if (auto rule = get_rule_for_func(model_rep.get_value<string>()))
-	return rule->get_child("result_type");
+	return rule->result_type;
     else
 	return ptree("?");
 }
@@ -342,11 +447,11 @@ ptree json_to_ptree(const json::value& j)
     return p;
 }
 
-void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
+void Rules::add_rule_json(const fs::path& path, const fs::path& rel_path)
 {
     checked_ifstream infile(path, "function file");
 
-    Rule rule;
+    ptree rule;
     try {
 	json::value j;
 	infile>>j;
@@ -367,10 +472,10 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 
     string name = rule.get<string>("name");
 
-    if (rules.count(name))
+    if (raw_rules.count(name))
 	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'\n";
     else
-	rules[name] = rule;
+	raw_rules[name] = rule;
 
     if (auto syn = rule.get_child_optional("synonyms"))
     {
@@ -391,8 +496,8 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 	    if (not synonym_pair.second.is_a<string>())
 		throw myexception()<<"Synonym for rule '"<<name<<"' is not a string!";
 	    auto synonym = (string)synonym_pair.second;
-	    if (not rules.count(synonym))
-		rules[synonym] = ptree({{"synonym",ptree(name)}});
+	    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym))
+		this->synonyms[synonym] = name;
 	}
     }
 
@@ -403,8 +508,8 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 	    if (not synonym_pair.second.is_a<string>())
 		throw myexception()<<"Deprecated synonym for rule '"<<name<<"' is not a string!";
 	    auto synonym = (string)synonym_pair.second;
-	    if (not rules.count(synonym))
-		rules[synonym] = ptree({{"deprecated-synonym",ptree(name)}});
+	    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym) and not deprecated_synonyms.count(synonym))
+		deprecated_synonyms[synonym] = name;
 	}
     }
 }
@@ -426,20 +531,21 @@ Rules::Rules(const vector<fs::path>& pl)
 
 	for(auto& dir_entry: fs::recursive_directory_iterator(path))
 	{
-	    auto abs_path = dir_entry.path();
+		auto abs_path = dir_entry.path();
 	    if (abs_path.extension() == ".json" and abs_path.filename().string()[0] != '.')
 	    {
 		auto rel_path = fs::relative(dir_entry.path(), path);
-		add_rule(abs_path, rel_path.parent_path());
+		add_rule_json(abs_path, rel_path.parent_path());
 	    }
 	}
     }
 
-    // 3. Convert the rules - FIXME: should we convert default args in a later step?
-    for(auto& [name, rule]: rules)
-    {
-	if (rule.get_child_optional("synonym")) continue;
-	if (rule.get_child_optional("deprecated-synonym")) continue;
-	rule = convert_rule(*this, name, rule);
-    }
+    // 3. Seed the rules map so that parsing default values can still resolve
+    // positional arguments for rules that have not been fully converted yet.
+    for(auto& [name, raw_rule]: raw_rules)
+	rules[name] = make_rule_stub(name, raw_rule);
+
+    // 4. Convert the rules - FIXME: should we convert default args in a later step?
+    for(auto& [name, raw_rule]: raw_rules)
+	rules[name] = convert_rule(*this, name, raw_rule);
 }

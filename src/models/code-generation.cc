@@ -40,7 +40,7 @@ bool is_loggable_function(const Rules& R, const string& name)
     if (name == "function") return true;
 
     if (not rule) return false;
-    return not rule->get("no_log",false);
+    return not rule->no_log;
 }
 
 void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
@@ -270,15 +270,10 @@ CodeGenState& CodeGenState::extend_modify_scope(const string& var, const var_inf
     return *this;
 }
 
-int get_index_for_arg_name(const ptree& rule, const string& arg_name)
+int get_index_for_arg_name(const Rule& rule, const string& arg_name)
 {
-    ptree args = rule.get_child("args");
-    for(int i=0; i < args.size(); i++)
-    {
-        auto argi = array_index(args,i);
-        if (arg_name == argi.get_child("name").get_value<string>())
-            return i;
-    }
+    if (auto i = rule.arg_index(arg_name))
+        return *i;
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
@@ -894,16 +889,11 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
     // 1. Get the rule for the function
     auto rule = R->get_rule_for_func(name);
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
-    if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
-    if (auto rule_imports = rule->get_child_optional("import"))
-    {
-        for(auto& [_, mod]: *rule_imports)
-            result.imports.insert(mod.get_value<string>());
-    }
+    result.imports = rule->imports;
 
-    result.code.perform_function = rule->get("perform",false);
-    ptree call = rule->get_child("call");
-    ptree args = rule->get_child("args");
+    result.code.perform_function = rule->perform;
+    ptree call = rule->call;
+    const auto& args = rule->args;
 
     if (not is_haskell_qid(call.get_value<string>()) and
         not is_haskell_qsym(call.get_value<string>()) and
@@ -919,8 +909,7 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
     vector<set<string>> used_args_for_arg(args.size());
     for(int i=0;i<args.size();i++)
     {
-        auto argi = array_index(args,i);
-        arg_names[i] = argi.get_child("name").get_value<string>();
+        arg_names[i] = args[i].name;
 
         auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
@@ -1049,17 +1038,17 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
 	add(scope2.haskell_vars, arg_scope.haskell_vars);
     }
 
-    if (auto computed = rule->get_child_optional("computed"))
+    if (not rule->computed.empty())
     {
-	for(auto& [_,x]: *computed)
+	for(auto& x: rule->computed)
 	{
 	    // A. Generate a unique haskell name for the computed variable
-	    auto x_name = x.get_child("name").get_value<string>();
+	    auto x_name = x.name;
 	    auto x_log_name = name + ":" + x_name;
 	    auto x_var = scope2.get_var(x_name);
 
 	    // B. Each computed variable can only reference earlier computed variables.
-	    auto& value = x.get_child("value");
+	    auto& value = x.value;
 	    auto x_type = ptree("unknown_type");
 	    result.code.stmts.let(x_var, make_call(value, argument_environment));
 
@@ -1165,4 +1154,3 @@ translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
     // 9. Functions
     return get_model_function(model_rep);
 }
-

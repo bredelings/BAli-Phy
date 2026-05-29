@@ -121,23 +121,21 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     return E;
 }
 
-set<string> find_rule_type_vars(const ptree& rule)
+set<string> find_rule_type_vars(const Rule& rule)
 {
-    set<string> vars = find_variables_in_type(rule.get_child("result_type"));
-    for(const auto& x: rule.get_child("args"))
-	add(vars, find_variables_in_type( x.second.get_child("type") ) );
+    set<string> vars = find_variables_in_type(rule.result_type);
+    for(const auto& arg: rule.args)
+	add(vars, find_variables_in_type(arg.type));
     return vars;
 }
 
 Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
 {
-    substitute(renaming, rule.get_child("result_type") );
-    substitute(renaming, rule.get_child("constraints") );
-    for(auto& x: rule.get_child("args"))
-    {
-	ptree& arg_type = x.second.get_child("type");
-	substitute( renaming, arg_type );
-    }
+    substitute(renaming, rule.result_type);
+    for(auto& constraint: rule.constraints)
+        substitute(renaming, constraint);
+    for(auto& arg: rule.args)
+	substitute(renaming, arg.type);
     return rule;
 }
 
@@ -173,13 +171,11 @@ term_t valueize(const term_t& T)
 
 Rule substitute_in_rule_types(const equations& renaming, Rule rule)
 {
-    substitute(renaming, rule.get_child("result_type") );
-    substitute(renaming, rule.get_child("constraints") );
-    for(auto& x: rule.get_child("args"))
-    {
-	ptree& arg_type = x.second.get_child("type");
-	substitute( renaming, arg_type );
-    }
+    substitute(renaming, rule.result_type);
+    for(auto& constraint: rule.constraints)
+        substitute(renaming, constraint);
+    for(auto& arg: rule.args)
+	substitute(renaming, arg.type);
     return rule;
 }
 
@@ -658,14 +654,14 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
-    auto result_type = rule.get_child("result_type");
+    auto result_type = rule.result_type;
 
     // 2. Unify required type with rule result type
     if (auto model2 = unify_or_convert(model, result_type, required_type))
 	return typecheck_and_annotate(required_type, *model2);
 
-    for(const auto& constraint: rule.get_child("constraints"))
-        eqs.add_constraint(constraint.second);
+    for(const auto& constraint: rule.constraints)
+        eqs.add_constraint(constraint);
 
     // 5.1 Update required type and rules with discovered constraints
     rule = substitute_in_rule_types(eqs, rule);
@@ -673,7 +669,7 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
     // Create the new model tree with args in correct order
     ptree model2;
     set<string> used_args;
-    model2.value =rule.get<string>("name"); 
+    model2.value = rule.name;
 
     // 6. Check that we didn't supply unreferenced arguments.
     map<string,int> arg_count;
@@ -687,29 +683,28 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
     }
 
     map<string,ptree> arg_env;
-    for(const auto& [_, argument]: rule.get_child("args"))
+    for(const auto& argument: rule.args)
     {
-	string arg_name = argument.get<string>("name");
-
-	auto arg_required_type = argument.get_child("type");
+	string arg_name = argument.name;
+	auto arg_required_type = argument.type;
         arg_env.insert({arg_name, arg_required_type});
     }
 
     // 7. Handle arguments in rule order
-    for(const auto& [_,argument]: rule.get_child("args"))
+    for(const auto& argument: rule.args)
     {
-	string arg_name = argument.get<string>("name");
+	string arg_name = argument.name;
 
-	auto arg_required_type = argument.get_child("type");
+	auto arg_required_type = argument.type;
 	substitute(eqs, arg_required_type);
 	ptree arg_value;
 	bool is_default = false;
 	if (model.count(arg_name))
 	    arg_value = model.get_child(arg_name);
-	else if (argument.count("default_value"))
+	else if (argument.default_value)
 	{
 	    is_default = true;
-	    arg_value = argument.get_child("default_value");
+	    arg_value = *argument.default_value;
 	}
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
@@ -719,7 +714,7 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
             scope2.args = arg_env;
 
         optional<ptree> alphabet_value;
-        if (auto alphabet_expression = argument.get_child_optional("alphabet"))
+        if (auto alphabet_expression = argument.alphabet)
         {
             auto scope3 = *this;
             scope3.args = arg_env;
@@ -766,10 +761,10 @@ ptree TypecheckingState::typecheck_and_annotate_function(const ptree& required_t
     }
 
     model2 = ptree({{"value",model2},{"type",result_type}});
-    if (rule.get("no_log",false))
+    if (rule.no_log)
 	model2.push_back({"no_log",ptree(true)});
-    if (auto extract = rule.get_child_optional("extract"))
-	model2.push_back({"extract",*extract});
+    if (rule.extract)
+	model2.push_back({"extract",ptree(*rule.extract)});
 
     set_used_args(model2, used_args);
 
