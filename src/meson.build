@@ -135,7 +135,17 @@ libbaliphy = static_library('baliphy', libbaliphy_sources,
 			    
 subdir('bali-phy')
 
+builtins_path = builtins
 subdir('builtins')
+
+runtime_ast_serialization_test = executable('runtime-ast-serialization-test',
+                                            'computation/runtime/ast-serialization-test.cc',
+                                            include_directories: [root_inc, libutil_inc, libmcon_inc],
+                                            dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
+                                            link_with: [libcomputation, libcommon, libmcon, libutil],
+                                            export_dynamic: true)
+
+test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path])
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])

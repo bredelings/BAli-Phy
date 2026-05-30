@@ -53,6 +53,11 @@ namespace Runtime
     {
     }
 
+    OperationApp::OperationApp()
+        :head((o_operation_fn)nullptr, "")
+    {
+    }
+
     OperationApp::OperationApp(Operation op, std::string lib, std::string func, std::string conv)
         :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
     {
