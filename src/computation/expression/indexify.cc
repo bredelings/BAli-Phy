@@ -205,7 +205,7 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
 
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     else if (E.is_index_var())
-        return Runtime::make(Runtime::Atom{index_var(E.as_index_var() + variables.size())});
+        return Runtime::make(Runtime::IndexVar{E.as_index_var() + int(variables.size())});
 
     // Variable
     else if (E.is_a<var>())
@@ -217,7 +217,7 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
         if (index == -1)
             throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
         else
-            return Runtime::make(Runtime::Atom{index_var(index)});
+            return Runtime::make(Runtime::IndexVar{index});
     }
     // Constant or 0-arg constructor
     else if (is_literal_type(E.type()) or is_constructor(E))
@@ -408,7 +408,7 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
         if (index == -1)
             throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
         else
-            return Runtime::make(Runtime::Atom{index_var(index)});
+            return Runtime::make(Runtime::IndexVar{index});
     }
     // Lambda expression - /\x.e
     else if (auto L = E.to_lambda())

@@ -17,6 +17,11 @@ namespace Runtime
         expression_ref value;
     };
 
+    struct IndexVar
+    {
+        int index;
+    };
+
     struct Lambda
     {
         ExpPtr body;
@@ -54,9 +59,10 @@ namespace Runtime
 
     struct Exp
     {
-        std::variant<Atom, Lambda, Let, Case, App, Trim> value;
+        std::variant<Atom, IndexVar, Lambda, Let, Case, App, Trim> value;
 
         explicit Exp(const Atom& a):value(a) {}
+        explicit Exp(const IndexVar& i):value(i) {}
         explicit Exp(const Lambda& l):value(l) {}
         explicit Exp(const Let& l):value(l) {}
         explicit Exp(const Case& c):value(c) {}
@@ -65,6 +71,7 @@ namespace Runtime
     };
 
     ExpPtr make(const Atom&);
+    ExpPtr make(const IndexVar&);
     ExpPtr make(const Lambda&);
     ExpPtr make(const Let&);
     ExpPtr make(const Case&);

@@ -1,6 +1,7 @@
 #include "ast.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
+#include "computation/expression/index_var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
 #include "computation/expression/runtime_views.H"
@@ -13,6 +14,7 @@ using std::vector;
 namespace Runtime
 {
     ExpPtr make(const Atom& a)   { return std::make_shared<Exp>(a); }
+    ExpPtr make(const IndexVar& i) { return std::make_shared<Exp>(i); }
     ExpPtr make(const Lambda& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const Let& l)    { return std::make_shared<Exp>(l); }
     ExpPtr make(const Case& c)   { return std::make_shared<Exp>(c); }
@@ -52,6 +54,9 @@ namespace Runtime
                              from_indexed_expression_ref(T->value->sub()[1])});
         }
 
+        if (E.is_index_var())
+            return make(IndexVar{E.as_index_var()});
+
         if (E.is_atomic())
             return make(Atom{E});
 
@@ -76,6 +81,10 @@ namespace Runtime
             if constexpr (std::is_same_v<T, Atom>)
             {
                 return e.value;
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                return index_var(e.index);
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {

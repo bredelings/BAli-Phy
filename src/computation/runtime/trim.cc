@@ -64,10 +64,11 @@ namespace Runtime
 
             if constexpr (std::is_same_v<T, Atom>)
             {
-                if (e.value.is_index_var())
-                    return {e.value.as_index_var()};
-                else
-                    return {};
+                return {};
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                return {e.index};
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
@@ -135,16 +136,16 @@ namespace Runtime
 
             if constexpr (std::is_same_v<T, Atom>)
             {
-                if (e.value.is_index_var())
+                return E;
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                int delta = e.index - depth;
+                if (delta >= 0)
                 {
-                    int index = e.value.as_index_var();
-                    int delta = index - depth;
-                    if (delta >= 0)
-                    {
-                        assert(delta < mapping.size());
-                        assert(mapping[delta] != -1);
-                        return make(Atom{index_var(depth + mapping[delta])});
-                    }
+                    assert(delta < mapping.size());
+                    assert(mapping[delta] != -1);
+                    return make(IndexVar{depth + mapping[delta]});
                 }
 
                 return E;
@@ -228,6 +229,10 @@ namespace Runtime
             using T = std::decay_t<decltype(e)>;
 
             if constexpr (std::is_same_v<T, Atom>)
+            {
+                return make(e);
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 return make(e);
             }
