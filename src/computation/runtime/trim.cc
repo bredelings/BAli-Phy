@@ -55,6 +55,7 @@ namespace Runtime
             if constexpr (std::is_same_v<T, Atom> or
                           std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
                           std::is_same_v<T, IntegerLiteral> or
@@ -137,6 +138,7 @@ namespace Runtime
             if constexpr (std::is_same_v<T, Atom> or
                           std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
                           std::is_same_v<T, IntegerLiteral> or
@@ -241,6 +243,7 @@ namespace Runtime
             if constexpr (std::is_same_v<T, Atom> or
                           std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
                           std::is_same_v<T, IntegerLiteral> or

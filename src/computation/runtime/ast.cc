@@ -21,6 +21,7 @@ namespace Runtime
     ExpPtr make(const Atom& a)   { return std::make_shared<Exp>(a); }
     ExpPtr make(const IntLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const DoubleLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const LogDoubleLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const CharLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const StringLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const IntegerLiteral& l) { return std::make_shared<Exp>(l); }
@@ -123,6 +124,8 @@ namespace Runtime
             return make(IntLiteral{E.as_int()});
         else if (E.is_double())
             return make(DoubleLiteral{E.as_double()});
+        else if (E.is_log_double())
+            return make(LogDoubleLiteral{E.as_log_double()});
         else if (E.is_char())
             return make(CharLiteral{E.as_char()});
         else if (E.is_a<String>())
@@ -210,6 +213,10 @@ namespace Runtime
                 return e.value;
             }
             else if constexpr (std::is_same_v<T, DoubleLiteral>)
+            {
+                return e.value;
+            }
+            else if constexpr (std::is_same_v<T, LogDoubleLiteral>)
             {
                 return e.value;
             }

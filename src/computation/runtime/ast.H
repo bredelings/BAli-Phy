@@ -32,6 +32,11 @@ namespace Runtime
         double value;
     };
 
+    struct LogDoubleLiteral
+    {
+        log_double_t value;
+    };
+
     struct CharLiteral
     {
         char value;
@@ -139,12 +144,13 @@ namespace Runtime
 
     struct Exp
     {
-        std::variant<Atom, IntLiteral, DoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
+        std::variant<Atom, IntLiteral, DoubleLiteral, LogDoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
                      ConstructorValue, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
 
         explicit Exp(const Atom& a):value(a) {}
         explicit Exp(const IntLiteral& l):value(l) {}
         explicit Exp(const DoubleLiteral& l):value(l) {}
+        explicit Exp(const LogDoubleLiteral& l):value(l) {}
         explicit Exp(const CharLiteral& l):value(l) {}
         explicit Exp(const StringLiteral& l):value(l) {}
         explicit Exp(const IntegerLiteral& l):value(l) {}
@@ -162,6 +168,7 @@ namespace Runtime
     ExpPtr make(const Atom&);
     ExpPtr make(const IntLiteral&);
     ExpPtr make(const DoubleLiteral&);
+    ExpPtr make(const LogDoubleLiteral&);
     ExpPtr make(const CharLiteral&);
     ExpPtr make(const StringLiteral&);
     ExpPtr make(const IntegerLiteral&);
