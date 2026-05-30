@@ -86,12 +86,8 @@ namespace Runtime
         constructor head;
     };
 
-    struct RawPattern
-    {
-        expression_ref value;
-    };
-
-    using Pattern = std::variant<WildcardPattern, ConstructorPattern, RawPattern>;
+    // I might want to add literals here, especially a literal int pattern.
+    using Pattern = std::variant<WildcardPattern, ConstructorPattern>;
 
     struct Alt
     {

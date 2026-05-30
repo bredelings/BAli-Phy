@@ -73,7 +73,7 @@ namespace Runtime
         else if (pattern.head().is_a<constructor>())
             return ConstructorPattern{pattern.head().as_<constructor>()};
         else
-            return RawPattern{pattern};
+            std::abort();
     }
 
     int expression_pattern_arity(const expression_ref& pattern)
@@ -94,10 +94,6 @@ namespace Runtime
                 return 0;
             else if constexpr (std::is_same_v<T, ConstructorPattern>)
                 return p.head.n_args();
-            else if constexpr (std::is_same_v<T, RawPattern>)
-                return expression_pattern_arity(p.value);
-            else
-                std::abort();
         }, pattern);
     }
 
@@ -111,10 +107,6 @@ namespace Runtime
                 return var(-1);
             else if constexpr (std::is_same_v<T, ConstructorPattern>)
                 return p.head;
-            else if constexpr (std::is_same_v<T, RawPattern>)
-                return p.value;
-            else
-                std::abort();
         }, pattern);
     }
 
