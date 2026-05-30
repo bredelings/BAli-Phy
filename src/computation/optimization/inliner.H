@@ -126,7 +126,7 @@ bool is_trivial(const Occ::Exp& E);
 
 int simple_size(const Occ::Exp& E);
 
-int simple_size(const Core2::Exp<>& E);
+int simple_size(const Core::Exp<>& E);
 
 class Module;
 

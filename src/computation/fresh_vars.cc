@@ -50,11 +50,11 @@ var FreshVarSource::get_fresh_var(const std::string& name)
     return var(name, get_index() );
 }
 
-Core2::Var<> FreshVarSource::get_fresh_core_var(const std::string& name)
+Core::Var<> FreshVarSource::get_fresh_core_var(const std::string& name)
 {
     assert(not is_haskell_builtin_con_name(name));
 //    assert(name.empty() or not is_qualified_symbol(name));
-    return Core2::Var<>(name, get_index() );
+    return Core::Var<>(name, get_index() );
 }
 
 Occ::Var FreshVarSource::get_fresh_occ_var(const std::string& name)
@@ -82,7 +82,7 @@ var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
     return var(name2);
 }
 
-Core2::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qualified)
+Core::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qualified)
 {
     assert(not is_haskell_builtin_con_name(name));
     string name2 = add_suffix(get_unqualified_name(name), get_index() );
@@ -90,7 +90,7 @@ Core2::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qu
     if (qualified)
         name2 = qualified_name(name2);
 
-    return Core2::Var<>(name2);
+    return Core::Var<>(name2);
 }
 
 var FreshVarSource::get_fresh_var(const var& x)
@@ -198,10 +198,10 @@ var make_var(const Hs::Var& v)
     return v2;
 }
 
-Core2::Var<> make_core_var(const Hs::Var& v)
+Core::Var<> make_core_var(const Hs::Var& v)
 {
     assert(v.wrap.is_identity());
-    Core2::Var v2(v.name);
+    Core::Var v2(v.name);
 
     return v2;
 }

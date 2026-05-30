@@ -60,17 +60,17 @@ Levels::Var let_floater_state::new_unique_var(const string& name, int level)
     return x;
 }
 
-Core2::Var<> strip_level(const Levels::Var& x)
+Core::Var<> strip_level(const Levels::Var& x)
 {
-    return Core2::Var<>(x.name, x.index, {}, x.is_exported);
+    return Core::Var<>(x.name, x.index, {}, x.is_exported);
 }
 
-vector<Core2::Var<>> strip_levels(const vector<Levels::Var>& xs)
+vector<Core::Var<>> strip_levels(const vector<Levels::Var>& xs)
 {
     return xs | ranges::views::transform( [&](auto& x) {return strip_level(x);} ) | ranges::to<vector>();
 }
 
-Core2::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
+Core::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
 {
     return {pattern.head, strip_levels(pattern.args)};
 }
@@ -284,7 +284,7 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
         return set_level(E, level, env);
 }
 
-vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core2::Decls<>>& decl_groups)
+vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core::Decls<>>& decl_groups)
 {
     let_floater_state state(fresh_var_state);
     level_env_t env;

@@ -45,7 +45,7 @@ FreeVars& get_free_vars(FV::Exp& E)
 }
 
 FV::Exp
-add_free_variable_annotations(const Core2::Exp<>& E)
+add_free_variable_annotations(const Core::Exp<>& E)
 {
     // 1. Var
     if (auto V = E.to_var())

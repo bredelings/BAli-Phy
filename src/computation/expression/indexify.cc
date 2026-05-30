@@ -45,7 +45,7 @@ bool is_global_var(const var& x)
 }
 
 template <typename NoteV>
-var to_runtime_var(const Core2::Var<NoteV>& x)
+var to_runtime_var(const Core::Var<NoteV>& x)
 {
     return var(x.name, x.index, x.is_exported);
 }
@@ -154,7 +154,7 @@ expression_ref indexify(const expression_ref& E)
     return indexify(E,variables);
 }
 
-Runtime::Exp runtime_atom_from_constant(const Core2::Constant& C)
+Runtime::Exp runtime_atom_from_constant(const Core::Constant& C)
 {
     if (auto c = to<char>(C.value))
         return Runtime::Char(*c);
@@ -170,7 +170,7 @@ Runtime::Exp runtime_atom_from_constant(const Core2::Constant& C)
         std::abort();
 }
 
-Runtime::Exp runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
+Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
 {
     // Variable
     if (auto V = E.to_var())
@@ -281,9 +281,9 @@ Runtime::Exp runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& varia
     std::abort();
 }
 
-Runtime::Exp runtime_indexify(const Core2::Exp<>& E)
+Runtime::Exp runtime_indexify(const Core::Exp<>& E)
 {
-    vector<Core2::Var<>> variables;
+    vector<Core::Var<>> variables;
     return runtime_indexify(E, variables);
 }
 

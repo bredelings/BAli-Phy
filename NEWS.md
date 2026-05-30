@@ -52,7 +52,7 @@
 - Speed up coalescent tree probability.
 
 ## Internal
-- Refactor let-floating optimization to use Core2 AST.
+- Refactor let-floating optimization to use Core AST.
 
 # 4.0 (Feb 27, 2025)
 - Models
@@ -104,7 +104,7 @@
   - Fill out Data.Semigroup and Data.Monoid
   - Handle annotations of overlapping instances.
 - Internal:
-  - Rewrite the simplifier optimization pass to use the Core2 AST representation.
+  - Rewrite the simplifier optimization pass to use the Core AST representation.
 
 # 4.0-beta15 (Jul 25, 2024)
 - Speed increases:

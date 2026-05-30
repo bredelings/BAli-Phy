@@ -52,8 +52,8 @@ struct ConContObj
     ConContObj(const Occ::Exp& a, const ConCont& n):arg(a), next(n){}
 };
 
-std::vector<Core2::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
-std::vector<Core2::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core2::Decls<>>& decl_groups);
+std::vector<Core::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core::Decls<>>& decl_groups);
+std::vector<Core::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core::Decls<>>& decl_groups);
 
 struct SimplFloats
 {
@@ -138,8 +138,8 @@ public:
     std::tuple<SimplFloats, simplifier::substitution>
     simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
 
-    std::vector<Core2::Decls<>>
-    simplify_module_one(const std::vector<Core2::Decls<>>& decl_groups);
+    std::vector<Core::Decls<>>
+    simplify_module_one(const std::vector<Core::Decls<>>& decl_groups);
 
     SimplifierState(const simplifier_options& opts, FreshVarState& s, const Module& m);
 };

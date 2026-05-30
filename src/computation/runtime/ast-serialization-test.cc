@@ -16,11 +16,11 @@ namespace
             throw std::runtime_error(message);
     }
 
-    Core2::Exp<> int_constant(int x)
+    Core::Exp<> int_constant(int x)
     {
-        Core2::Constant c;
+        Core::Constant c;
         c.value = x;
-        return Core2::Exp<>(c);
+        return Core::Exp<>(c);
     }
 
     void check_pinned_global_translation(const std::shared_ptr<module_loader>& loader)
@@ -156,10 +156,10 @@ int main(int argc, char** argv)
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, std::vector<std::filesystem::path>{argv[1], argv[2]});
     auto op = loader->load_builtin_ptr("Num", "add_int", "ecall");
 
-    std::vector<Core2::Exp<>> args = {int_constant(1), int_constant(2)};
-    Core2::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
+    std::vector<Core::Exp<>> args = {int_constant(1), int_constant(2)};
+    Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
 
-    auto before = runtime_indexify(Core2::Exp<>(builtin));
+    auto before = runtime_indexify(Core::Exp<>(builtin));
     Runtime::check_invariants(before);
 
     std::stringstream buffer;

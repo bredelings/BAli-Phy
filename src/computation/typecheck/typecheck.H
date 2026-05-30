@@ -208,9 +208,9 @@ public:
 
     WantedConstraints& current_wanteds();
 
-    Core2::Var<> fresh_dvar(const Type& constraint, bool qualified = false);
+    Core::Var<> fresh_dvar(const Type& constraint, bool qualified = false);
 
-    Core2::Var<> add_wanted(const ConstraintOrigin& origin, const Type& constraint);
+    Core::Var<> add_wanted(const ConstraintOrigin& origin, const Type& constraint);
 
     // ------ End: Functions handling the LIE ---
 
@@ -295,7 +295,7 @@ public:
 
     bool default_preds( WantedConstraints& wanteds );
 
-    Core2::Decls<> simplify_and_default_top_level();
+    Core::Decls<> simplify_and_default_top_level();
 
     std::bitset<8> check_type_equality(const Type& lhs, const Type& rhs) const;
 
@@ -313,27 +313,27 @@ public:
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
-    std::tuple<Core2::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);
+    std::tuple<Core::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);
 
-    Core2::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2);
+    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2);
 
-    Core2::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
+    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
 
-    Core2::wrapper instantiateSigma(const ConstraintOrigin& origin, const Type& t, const Expected& exp_rho);
+    Core::wrapper instantiateSigma(const ConstraintOrigin& origin, const Type& t, const Expected& exp_rho);
 
-    std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
 
-    std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type> skolemize_and(const Type& t, const tc_action<Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize_and(const Type& t, const tc_action<Type>& nested_action);
 
     template <typename R>
-    std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Located<Hs::Qual>>& stmts, const Expected& exp_type);
 
-    std::shared_ptr<const Core2::Decls<>> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
+    std::shared_ptr<const Core::Decls<>> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
 
     template <typename R>
-    std::tuple<std::shared_ptr<const Core2::Decls<>>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
+    std::tuple<std::shared_ptr<const Core::Decls<>>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
 
     // Figure 22.
     void infer_quals_type(std::vector<Located<Hs::Qual>>& quals);
@@ -360,14 +360,14 @@ public:
 
     void checkPat(local_value_env& penv, Hs::LVar& lv, const SigmaType& exp_type, const signature_env& sigs);
 
-    Core2::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
+    Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
 
     std::tuple<Type, local_value_env>
     infer_lhs_type(Hs::LDecl& decl, const signature_env& sigs);
 
     void infer_rhs_type(Hs::LDecl& decl, const Expected& type);
 
-    Core2::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
+    Core::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
 
     template <typename T>
     void checkRho(T& t, const Type& exp_rho)
@@ -435,13 +435,13 @@ public:
     void tcMatches(const Hs::MatchContext& ctx, Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);
 
     template <typename A>
-    Core2::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);
+    Core::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);
 
     template <typename A>
-    Core2::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a);
+    Core::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a);
 
     template <typename A>
-    Core2::wrapper tcMatchesFun(int arity, const Expected&, const A& a);
+    Core::wrapper tcMatchesFun(int arity, const Expected&, const A& a);
 
     // Figures 13, 14, 15?
     Hs::Decls
@@ -462,7 +462,7 @@ public:
 
     std::vector<Type> get_quantifiable_preds(bool restricted, const std::vector<Type>& preds, const std::set<TypeVar>& qtvs) const;
 
-    std::tuple<std::set<TypeVar>, LIE, Core2::Decls<>> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
+    std::tuple<std::set<TypeVar>, LIE, Core::Decls<>> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
 
     Hs::Decls
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);
@@ -485,9 +485,9 @@ public:
 
     void get_type_families(const Hs::Decls& decls);
 
-    Core2::Decls<> infer_type_for_classes(const Hs::Decls& decls);
+    Core::Decls<> infer_type_for_classes(const Hs::Decls& decls);
 
-    std::tuple<ClassInfo,Core2::Decls<>>
+    std::tuple<ClassInfo,Core::Decls<>>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     DataConInfo infer_type_for_constructor(const Hs::LTypeCon& con, const std::vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor);
@@ -499,27 +499,27 @@ public:
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::optional<Core2::Var<>>
+    std::optional<Core::Var<>>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
-    std::vector< std::pair<Core2::Var<>, Hs::InstanceDecl> >
+    std::vector< std::pair<Core::Var<>, Hs::InstanceDecl> >
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    std::pair<Hs::Binds, Core2::Decls<>>
-    infer_type_for_instances2(const std::vector<std::pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances);
+    std::pair<Hs::Binds, Core::Decls<>>
+    infer_type_for_instances2(const std::vector<std::pair<Core::Var<>, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
-    std::pair<Hs::Decls, Core2::Decl<>>
-    infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
+    std::pair<Hs::Decls, Core::Decl<>>
+    infer_type_for_instance2(const Core::Var<>& dfun, const Hs::InstanceDecl& instance_decl);
 
-    std::tuple<Hs::Decl,Core2::Var<>> type_check_superclass_entry(
+    std::tuple<Hs::Decl,Core::Var<>> type_check_superclass_entry(
         const Constraint& superclass_constraint, const std::string& class_name,
         const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
-        const std::vector<Core2::Var<>>& instance_dict_args, std::shared_ptr<const Core2::Decls<>>& decls_super);
+        const std::vector<Core::Var<>>& instance_dict_args, std::shared_ptr<const Core::Decls<>>& decls_super);
 
-    std::tuple<Hs::Decl, Core2::Var<>>
+    std::tuple<Hs::Decl, Core::Var<>>
     type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
@@ -536,20 +536,20 @@ public:
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     LIE preds_to_constraints(const ConstraintOrigin&, ConstraintFlavor, const std::vector<Type>&);
 
-    std::vector<std::pair<Core2::Var<>, Type>> superclass_constraints(const Type& constraint);
+    std::vector<std::pair<Core::Var<>, Type>> superclass_constraints(const Type& constraint);
 
-    std::optional<std::vector<Core2::Var<>>>
+    std::optional<std::vector<Core::Var<>>>
     is_superclass_of(const Type&, const Type&);
 
-    std::optional<Core2::Decls<>>
+    std::optional<Core::Decls<>>
     entails_by_superclass(const Constraint& to_keep, const Constraint& to_remove);
 
-    Core2::Decls<> simplify(const LIE& givens, LIE& wanteds);
+    Core::Decls<> simplify(const LIE& givens, LIE& wanteds);
 
-    Core2::Decls<> entails(const LIE& lie1, WantedConstraints& lie2);
+    Core::Decls<> entails(const LIE& lie1, WantedConstraints& lie2);
 
     bool more_specific_than(const Type&, const Type&);
-    std::optional<std::pair<Core2::Exp<>,LIE>> lookup_instance(const Type& constraint);
+    std::optional<std::pair<Core::Exp<>,LIE>> lookup_instance(const Type& constraint);
 
     bool find_type_eq_instance_1way(const Type& t1, const Type& t2);
     bool find_type_eq_instance(const Type& t1, const Type& t2);
@@ -586,7 +586,7 @@ LIE float_wanteds(bool float_past_equalities, const WantedConstraints& wanteds, 
 std::string class_arg_name(const Type& class_arg);
 
 template <typename R>
-std::tuple<Core2::wrapper, std::vector<TypeVar>, LIE, Type, R>
+std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R>
 TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Type>& nested_function)
 {
     // 1. Skolemize the type at level
@@ -599,14 +599,14 @@ TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Typ
     auto [ev_decls, result] = maybe_implication_result<R>(tvs, givens, [&,&rho_type=rho_type](auto& tc) -> R {return nested_function(rho_type, tc);});
 
     // 3. Combine the wrappers
-    return {wrap * Core2::WrapLet(ev_decls), tvs, givens, rho_type, result};
+    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type, result};
 }
 
 template <typename R>
-std::tuple<std::shared_ptr<const Core2::Decls<>>, R>
+std::tuple<std::shared_ptr<const Core::Decls<>>, R>
 TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
 {
-    auto ev_decls = std::make_shared<Core2::Decls<>>();
+    auto ev_decls = std::make_shared<Core::Decls<>>();
 
     bool need_implication = not (tvs.empty() and givens.empty());
 

@@ -50,7 +50,7 @@ struct EqInstanceInfo
     }
 };
 
-typedef std::map<Core2::Var<>, InstanceInfo> InstanceEnv;
-typedef std::map<Core2::Var<>, EqInstanceInfo> EqInstanceEnv;
+typedef std::map<Core::Var<>, InstanceInfo> InstanceEnv;
+typedef std::map<Core::Var<>, EqInstanceInfo> EqInstanceEnv;
 
 #endif

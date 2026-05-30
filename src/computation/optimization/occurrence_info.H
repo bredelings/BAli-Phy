@@ -27,20 +27,20 @@ struct occurrence_info
 
 namespace Occ
 {
-    using Var = Core2::Var<occurrence_info>;
-    using Lambda = Core2::Lambda<occurrence_info>;
-    using Apply = Core2::Apply<occurrence_info>;
-    using Let = Core2::Let<occurrence_info>;
-    using Decl = Core2::Decl<occurrence_info>;
-    using Decls = Core2::Decls<occurrence_info>;
-    using Case = Core2::Case<occurrence_info>;
-    using Pattern = Core2::Pattern<occurrence_info>;
-    using Alt = Core2::Alt<occurrence_info>;
-    using ConApp = Core2::ConApp<occurrence_info>;
-    using BuiltinOp = Core2::BuiltinOp<occurrence_info>;
-    using Constant = Core2::Constant;
-    using Exp = Core2::Exp<occurrence_info>;
-    using subst_t = Core2::subst_t<occurrence_info>;
+    using Var = Core::Var<occurrence_info>;
+    using Lambda = Core::Lambda<occurrence_info>;
+    using Apply = Core::Apply<occurrence_info>;
+    using Let = Core::Let<occurrence_info>;
+    using Decl = Core::Decl<occurrence_info>;
+    using Decls = Core::Decls<occurrence_info>;
+    using Case = Core::Case<occurrence_info>;
+    using Pattern = Core::Pattern<occurrence_info>;
+    using Alt = Core::Alt<occurrence_info>;
+    using ConApp = Core::ConApp<occurrence_info>;
+    using BuiltinOp = Core::BuiltinOp<occurrence_info>;
+    using Constant = Core::Constant;
+    using Exp = Core::Exp<occurrence_info>;
+    using subst_t = Core::subst_t<occurrence_info>;
 };
 
 #endif

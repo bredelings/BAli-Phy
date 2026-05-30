@@ -6,13 +6,13 @@
 #include "computation/haskell/ids.H"
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Core2::Var<NoteV>& x)
+Core::Exp<NoteV, NoteE> make_apply(const Core::Exp<NoteV, NoteE>& E, const Core::Var<NoteV>& x)
 {
-    return Core2::Apply<NoteV,NoteE>{E,{x}};
+    return Core::Apply<NoteV,NoteE>{E,{x}};
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std::vector<Core2::Var<NoteV>>& xs)
+Core::Exp<NoteV, NoteE> make_apply(const Core::Exp<NoteV, NoteE>& E, const std::vector<Core::Var<NoteV>>& xs)
 {
     auto E2 = E;
     for(auto& x: xs)
@@ -22,13 +22,13 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const Core2::Exp<NoteV, NoteE>& arg)
+Core::Exp<NoteV, NoteE> make_apply(const Core::Exp<NoteV, NoteE>& E, const Core::Exp<NoteV, NoteE>& arg)
 {
-    return Core2::Apply<NoteV,NoteE>{E,{arg}};
+    return Core::Apply<NoteV,NoteE>{E,{arg}};
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std::vector<Core2::Exp<NoteV, NoteE>>& args)
+Core::Exp<NoteV, NoteE> make_apply(const Core::Exp<NoteV, NoteE>& E, const std::vector<Core::Exp<NoteV, NoteE>>& args)
 {
     auto E2 = E;
     for(auto& arg: args)
@@ -38,43 +38,43 @@ Core2::Exp<NoteV, NoteE> make_apply(const Core2::Exp<NoteV, NoteE>& E, const std
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core2::Var<NoteV>>& xs, Core2::Exp<NoteV, NoteE> E)
+Core::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core::Var<NoteV>>& xs, Core::Exp<NoteV, NoteE> E)
 {
     for(auto& x: xs | ranges::views::reverse)
-	E = Core2::Lambda<NoteV,NoteE>{x, E};
+	E = Core::Lambda<NoteV,NoteE>{x, E};
 
     return E;
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV, NoteE> make_let(const Core2::Decls<NoteV,NoteE>& decls, const Core2::Exp<NoteV, NoteE>& body)
+Core::Exp<NoteV, NoteE> make_let(const Core::Decls<NoteV,NoteE>& decls, const Core::Exp<NoteV, NoteE>& body)
 {
     if (decls.empty())
 	return body;
     else
-	return Core2::Let<NoteV,NoteE>{decls,body};
+	return Core::Let<NoteV,NoteE>{decls,body};
 }
 
 template <typename NoteV = std::monostate>
-std::vector<Core2::Var<NoteV>> make_vars(int n, char prefix = 'x', int start=1)
+std::vector<Core::Var<NoteV>> make_vars(int n, char prefix = 'x', int start=1)
 {
-    std::vector<Core2::Var<>> xs;
+    std::vector<Core::Var<>> xs;
     for(int i=0;i<n;i++)
         xs.push_back({prefix+std::to_string(start+i)});
     return xs;
 }
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core2::Exp<NoteV> Tuple(const std::vector<Core2::Exp<NoteV,NoteE>>& args)
+Core::Exp<NoteV> Tuple(const std::vector<Core::Exp<NoteV,NoteE>>& args)
 {
     if (args.size() == 1)
         return args[0];
     else
-        return Core2::ConApp<NoteV>{tuple_name(args.size()),args};
+        return Core::ConApp<NoteV>{tuple_name(args.size()),args};
 }
 
 template <typename NoteV>
-Core2::Pattern<NoteV> TuplePat(const std::vector<Core2::Var<NoteV>>& args)
+Core::Pattern<NoteV> TuplePat(const std::vector<Core::Var<NoteV>>& args)
 {
     if (args.size() == 1)
         throw myexception()<<"TuplePat: can't construct a tuple of 1 element!";
@@ -84,9 +84,9 @@ Core2::Pattern<NoteV> TuplePat(const std::vector<Core2::Var<NoteV>>& args)
 
 class FreshVarSource;
 
-Core2::Exp<> safe_apply(const Core2::Exp<>& head, const std::vector<Core2::Exp<>>& args);
+Core::Exp<> safe_apply(const Core::Exp<>& head, const std::vector<Core::Exp<>>& args);
 
-namespace Core2
+namespace Core
 {
     Var<> unpack_cpp_string();
     Var<> error();
@@ -96,8 +96,8 @@ namespace Core2
     Exp<> error(const std::string&);
     Exp<> unsafePerformIO(const Exp<>&);
 
-    bool is_bool_true(const Core2::Exp<>&);
-    bool is_bool_false(const Core2::Exp<>&);
-    bool is_otherwise(const Core2::Exp<>&);
+    bool is_bool_true(const Core::Exp<>&);
+    bool is_bool_false(const Core::Exp<>&);
+    bool is_otherwise(const Core::Exp<>&);
 }
 #endif

@@ -57,16 +57,16 @@ int get_level(const Levels::Decls& decl_group)
 
 struct float_binds_t
 {
-    Core2::Decls<> top_binds;
-    std::map<int,vector<Core2::Decls<>>> level_binds;
+    Core::Decls<> top_binds;
+    std::map<int,vector<Core::Decls<>>> level_binds;
 
-    vector<Core2::Decls<>> get_decl_groups_at_level(int level);
+    vector<Core::Decls<>> get_decl_groups_at_level(int level);
 
-    void append_top(Core2::Decls<>&);
+    void append_top(Core::Decls<>&);
 
-    void append_level(int level, Core2::Decls<>&);
+    void append_level(int level, Core::Decls<>&);
 
-    void append_level(int level, vector<Core2::Decls<>>&);
+    void append_level(int level, vector<Core::Decls<>>&);
 
     void append(float_binds_t& float_binds2);
 
@@ -77,13 +77,13 @@ struct float_binds_t
     float_binds_t& operator=(float_binds_t&&) = default;
 };
 
-vector<Core2::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
+vector<Core::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
 {
     auto iter = level_binds.find(level);
     if (iter == level_binds.end())
         return {};
 
-    vector<Core2::Decls<>> decl_groups;
+    vector<Core::Decls<>> decl_groups;
     std::swap(decl_groups, iter->second);
     level_binds.erase(iter);
 
@@ -102,18 +102,18 @@ tuple<vector<Levels::Var>,Levels::Exp> get_lambda_binders(Levels::Exp E)
     return {std::move(binders), E};
 }
 
-tuple<Core2::Exp<>, float_binds_t>
+tuple<Core::Exp<>, float_binds_t>
 float_lets(const Levels::Exp& E, int level);
 
-Core2::Exp<> install_current_level(float_binds_t& float_binds, int level, Core2::Exp<> E)
+Core::Exp<> install_current_level(float_binds_t& float_binds, int level, Core::Exp<> E)
 {
     auto decl_groups_here = float_binds.get_decl_groups_at_level(level);
     for(auto& decls: decl_groups_here | views::reverse)
-        E = Core2::Let<>(decls, E);
+        E = Core::Let<>(decls, E);
     return E;
 }
 
-tuple<Core2::Exp<>, float_binds_t>
+tuple<Core::Exp<>, float_binds_t>
 float_lets_install_current_level(const Levels::Exp& E, int level)
 {
     auto [E2, float_binds] = float_lets(E,level);
@@ -121,14 +121,14 @@ float_lets_install_current_level(const Levels::Exp& E, int level)
     return {E3, float_binds};
 }
 
-void append(vector<Core2::Decls<>>& decl_groups1, vector<Core2::Decls<>>& decl_groups2)
+void append(vector<Core::Decls<>>& decl_groups1, vector<Core::Decls<>>& decl_groups2)
 {
     assert(&decl_groups1 != &decl_groups2);
     for(auto& decls: decl_groups2)
         decl_groups1.push_back(std::move(decls));
 }
 
-void float_binds_t::append_top(Core2::Decls<>& decls)
+void float_binds_t::append_top(Core::Decls<>& decls)
 {
     if (not top_binds.empty())
     {
@@ -141,7 +141,7 @@ void float_binds_t::append_top(Core2::Decls<>& decls)
         std::swap(top_binds,decls);
 }
 
-void float_binds_t::append_level(int level, vector<Core2::Decls<>>& decl_groups)
+void float_binds_t::append_level(int level, vector<Core::Decls<>>& decl_groups)
 {
     if (auto iter = level_binds.find(level); iter != level_binds.end())
     {
@@ -153,9 +153,9 @@ void float_binds_t::append_level(int level, vector<Core2::Decls<>>& decl_groups)
         std::swap(level_binds[level], decl_groups);
 }
 
-void float_binds_t::append_level(int level, Core2::Decls<>& decls)
+void float_binds_t::append_level(int level, Core::Decls<>& decls)
 {
-    vector<Core2::Decls<>> decl_groups;
+    vector<Core::Decls<>> decl_groups;
     decl_groups.push_back( std::move(decls) );
     append_level( level, decl_groups );
 }
@@ -170,9 +170,9 @@ void float_binds_t::append(float_binds_t& float_binds2)
         append_level(level, decl_groups);
 }
 
-tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::Decls& decls_in)
+tuple<Core::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::Decls& decls_in)
 {
-    Core2::Decls<> decls_out;
+    Core::Decls<> decls_out;
     int level2 = get_level(decls_in);
 
     float_binds_t float_binds;
@@ -198,7 +198,7 @@ tuple<Core2::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::
     return {std::move(decls_out), std::move(float_binds), level2};
 }
 
-tuple<Core2::Exp<>,float_binds_t>
+tuple<Core::Exp<>,float_binds_t>
 float_lets(const Levels::Exp& E, int level)
 {
     // 1. Var
@@ -216,7 +216,7 @@ float_lets(const Levels::Exp& E, int level)
 
         float_binds.append(arg_float_binds);
 
-        return {Core2::Apply{head2, arg2}, float_binds};
+        return {Core::Apply{head2, arg2}, float_binds};
     }
 
     // 5. Lambda
@@ -238,7 +238,7 @@ float_lets(const Levels::Exp& E, int level)
         auto [object2, float_binds] = float_lets(C->object, level);
         int level2 = level + 1;
 
-        vector<Core2::Alt<>> alts2;
+        vector<Core::Alt<>> alts2;
         for(auto& [pattern, body]: C->alts)
         {
             auto pattern2 = strip_levels_from_pattern(pattern);
@@ -248,7 +248,7 @@ float_lets(const Levels::Exp& E, int level)
             float_binds.append(float_binds_alt);
         }
 
-        return {Core2::Case<>{object2, alts2}, float_binds};
+        return {Core::Case<>{object2, alts2}, float_binds};
     }
 
     // 7. Let
@@ -262,7 +262,7 @@ float_lets(const Levels::Exp& E, int level)
 
         float_binds.append(float_binds_from_body);
 
-        Core2::Exp<> E2;
+        Core::Exp<> E2;
         if (level2 < level)
         {
             // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
@@ -283,7 +283,7 @@ float_lets(const Levels::Exp& E, int level)
             E2 = install_current_level(float_binds, level, body);
 
             if (not Lbinds.empty())
-                E2 = Core2::Let<>(Lbinds, E2);
+                E2 = Core::Let<>(Lbinds, E2);
         }
 
         return {E2, float_binds};
@@ -297,36 +297,36 @@ float_lets(const Levels::Exp& E, int level)
     else if (auto C = E.to_conApp())
     {
         float_binds_t float_binds;
-        std::vector<Core2::Exp<>> args;
+        std::vector<Core::Exp<>> args;
         for(auto& arg: C->args)
         {
             auto [arg2, arg_float_binds] = float_lets(arg,level);
             float_binds.append(arg_float_binds);
             args.push_back(arg2);
         }
-        return {Core2::ConApp<>{C->head, args}, float_binds};
+        return {Core::ConApp<>{C->head, args}, float_binds};
     }
     else if (auto B = E.to_builtinOp())
     {
         float_binds_t float_binds;
-        std::vector<Core2::Exp<>> args;
+        std::vector<Core::Exp<>> args;
         for(auto& arg: B->args)
         {
             auto [arg2, arg_float_binds] = float_lets(arg,level);
             float_binds.append(arg_float_binds);
             args.push_back(arg2);
         }
-        return {Core2::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op), float_binds};
+        return {Core::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op), float_binds};
     }
 
     std::abort();
 }
 
-void float_out_from_module(FreshVarState& fresh_var_state, vector<Core2::Decls<>>& core_decl_groups)
+void float_out_from_module(FreshVarState& fresh_var_state, vector<Core::Decls<>>& core_decl_groups)
 {
     auto decl_groups = set_level_for_module(fresh_var_state, core_decl_groups);
 
-    vector<Core2::Decls<>> core_decl_groups2;
+    vector<Core::Decls<>> core_decl_groups2;
 
     for(auto& decl_group: decl_groups)
     {

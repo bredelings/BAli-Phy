@@ -114,7 +114,7 @@ int simple_size(const Occ::Exp& E)
 	return 1;
 }
 
-int simple_size(const Core2::Exp<>& E)
+int simple_size(const Core::Exp<>& E)
 {
     if (E.to_var())
 	return 0;
@@ -240,7 +240,7 @@ ExprSize con_size(const std::string& /*con_name*/, int n_args)
     return csize;
 }
 
-int lit_size(const Core2::Constant& lit)
+int lit_size(const Core::Constant& lit)
 {
     if (auto s = to<string>(lit.value))
         return 1 + (s->size()+3)/40;

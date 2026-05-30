@@ -78,9 +78,9 @@ int Predicate::level() const
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
-vector<pair<Core2::Var<>, Type>> TypeChecker::superclass_constraints(const Type& constraint)
+vector<pair<Core::Var<>, Type>> TypeChecker::superclass_constraints(const Type& constraint)
 {
-    vector<pair<Core2::Var<>, Type>> constraints;
+    vector<pair<Core::Var<>, Type>> constraints;
 
     auto class_name = get_full_class_name_from_constraint(constraint);
 
@@ -115,9 +115,9 @@ vector<pair<Core2::Var<>, Type>> TypeChecker::superclass_constraints(const Type&
 }
 
 // We are trying to eliminate the *first* argument.
-optional<vector<Core2::Var<>>> TypeChecker::is_superclass_of(const Type& constraint1, const Type& constraint2)
+optional<vector<Core::Var<>>> TypeChecker::is_superclass_of(const Type& constraint1, const Type& constraint2)
 {
-    vector<Core2::Var<>> extractors;
+    vector<Core::Var<>> extractors;
     if (same_type(constraint1, constraint2))
         return extractors;
     else
@@ -136,16 +136,16 @@ optional<vector<Core2::Var<>>> TypeChecker::is_superclass_of(const Type& constra
     }
 }
 
-optional<Core2::Decls<>> TypeChecker::entails_by_superclass(const Constraint& given, const Constraint& wanted)
+optional<Core::Decls<>> TypeChecker::entails_by_superclass(const Constraint& given, const Constraint& wanted)
 {
     if (auto extractors = is_superclass_of(wanted.pred, given.pred))
     {
-        Core2::Exp<> dict_exp = given.ev_var;
+        Core::Exp<> dict_exp = given.ev_var;
         for(auto& extractor: *extractors | views::reverse)
-            dict_exp = Core2::Apply<>{extractor, dict_exp};
+            dict_exp = Core::Apply<>{extractor, dict_exp};
 
         // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
-        return Core2::Decls<>( { {wanted.ev_var, dict_exp} } );
+        return Core::Decls<>( { {wanted.ev_var, dict_exp} } );
     }
     else
         return {};
@@ -505,7 +505,7 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
     }
 }
 
-Core2::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
+Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {};
 
@@ -621,9 +621,9 @@ Core2::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-Core2::Decls<> TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
+Core::Decls<> TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 {
-    Core2::Decls<> decls;
+    Core::Decls<> decls;
     bool update = false;
     do
     {

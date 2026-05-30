@@ -332,7 +332,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
 
             vector<Occ::Exp> args;
             for(auto& arg: du->args)
-                args.push_back(Core2::subst(subst, arg));
+                args.push_back(Core::subst(subst, arg));
 
             return {{S, du->head, args}};
         }
@@ -1562,8 +1562,8 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
  */
 
 
-vector<Core2::Decls<>>
-SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_in)
+vector<Core::Decls<>>
+SimplifierState::simplify_module_one(const vector<Core::Decls<>>& decl_groups_in)
 {
     set<Occ::Var> free_vars;
 
@@ -1591,7 +1591,7 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
         bound_vars = F.bound_vars;
     }
 
-    vector<Core2::Decls<>> decl_groups_out;
+    vector<Core::Decls<>> decl_groups_out;
     for(auto& decls: decl_groups2)
         decl_groups_out.push_back(to_core(decls));
 
@@ -1599,8 +1599,8 @@ SimplifierState::simplify_module_one(const vector<Core2::Decls<>>& decl_groups_i
 }
 
 
-vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
-                                              const vector<Core2::Decls<>>& decl_groups_in)
+vector<Core::Decls<>> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
+                                              const vector<Core::Decls<>>& decl_groups_in)
 {
     simplifier_options options_gentle = options;
     options_gentle.case_of_case = false;
@@ -1611,8 +1611,8 @@ vector<Core2::Decls<>> simplify_module_gently(const simplifier_options& options,
     return state.simplify_module_one(decl_groups_in);
 }
 
-vector<Core2::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
-                               const vector<Core2::Decls<>>& decl_groups_in)
+vector<Core::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
+                               const vector<Core::Decls<>>& decl_groups_in)
 {
     SimplifierState state(options, fresh_var_state, m);
     auto decl_groups = decl_groups_in;

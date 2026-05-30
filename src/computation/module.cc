@@ -603,7 +603,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
     return false;
 }
 
-void mark_exported_decls(Core2::Decls<>& decls,
+void mark_exported_decls(Core::Decls<>& decls,
                          const map<string,const_symbol_ptr>& exports,
                          const Module& M)
 {
@@ -644,9 +644,9 @@ void mark_exported_decls(Core2::Decls<>& decls,
     }
 }
 
-std::optional<Core2::Var<>> find_first_duplicate_var(const Core2::Decls<>& decls)
+std::optional<Core::Var<>> find_first_duplicate_var(const Core::Decls<>& decls)
 {
-    set<Core2::Var<>> vars;
+    set<Core::Var<>> vars;
     for(auto& [x,_]: decls)
     {
 	if (vars.count(x))
@@ -657,7 +657,7 @@ std::optional<Core2::Var<>> find_first_duplicate_var(const Core2::Decls<>& decls
     return {};
 }
 
-void check_duplicate_var(const Core2::Decls<>& decls)
+void check_duplicate_var(const Core::Decls<>& decls)
 {
     auto var = find_first_duplicate_var(decls);
     if (var)
@@ -672,15 +672,15 @@ void erase_one(multiset<T>& mset, const T& elem)
     mset.erase(it);
 }
 
-set<Core2::Var<>> vars_in_pattern(const Core2::Pattern<>& p)
+set<Core::Var<>> vars_in_pattern(const Core::Pattern<>& p)
 {
-    set<Core2::Var<>> vars;
+    set<Core::Var<>> vars;
     for(auto& arg: p.args)
         vars.insert(arg);
     return vars;
 }
 
-Core2::Var<> rename_var(const Core2::Var<>& x, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
+Core::Var<> rename_var(const Core::Var<>& x, const map<Core::Var<>,Core::Var<>>& substitution, multiset<Core::Var<>>& bound)
 {
     // 1.1 If there's a substitution x -> E
     if (not bound.count(x) and substitution.count(x))
@@ -689,7 +689,7 @@ Core2::Var<> rename_var(const Core2::Var<>& x, const map<Core2::Var<>,Core2::Var
         return x;
 }
 
-Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>& substitution, multiset<Core2::Var<>>& bound)
+Core::Exp<> rename(const Core::Exp<>& E, const map<Core::Var<>,Core::Var<>>& substitution, multiset<Core::Var<>>& bound)
 {
     assert(not E.empty());
 
@@ -703,7 +703,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         auto body = rename(L->body, substitution, bound);
         erase_one(bound, L->x);
 
-        return Core2::Lambda<>{L->x,body};
+        return Core::Lambda<>{L->x,body};
     }
     // 3. Apply
     else if (auto A = E.to_apply())
@@ -712,7 +712,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
 
         auto arg = rename(A->arg, substitution, bound);
 
-        return Core2::Apply<>{head, arg};
+        return Core::Apply<>{head, arg};
     }
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())
@@ -729,7 +729,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         for(auto& [x,e]: L->decls)
             erase_one(bound, x);
 
-        return Core2::Let<>{decls, body};
+        return Core::Let<>{decls, body};
     }
     // 5. Case
     else if (auto C = E.to_case())
@@ -748,7 +748,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
             for(auto& x: pat_vars)
                 erase_one(bound, x);
         }
-        return Core2::Case<>{object, alts};
+        return Core::Case<>{object, alts};
     }
     // 6. ConApp
     else if (auto C = E.to_conApp())
@@ -756,7 +756,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         auto args = C->args;
         for(auto& arg: args)
             arg = rename(arg, substitution, bound);
-        return Core2::ConApp<>{C->head, args};
+        return Core::ConApp<>{C->head, args};
     }
     // 7. BuiltinOp
     else if (auto B = E.to_builtinOp())
@@ -765,7 +765,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
         for(auto& arg: args)
             arg = rename(arg, substitution, bound);
 
-        return Core2::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op);
+        return Core::BuiltinOp<>(B->lib_name, B->func_name, B->call_conv, args, B->op);
     }
     // 8. Constant
     else if (E.to_constant())
@@ -775,7 +775,7 @@ Core2::Exp<> rename(const Core2::Exp<>& E, const map<Core2::Var<>,Core2::Var<>>&
 }
 
 
-std::optional<string> get_new_name(const Core2::Var<>& x, const string& module_name)
+std::optional<string> get_new_name(const Core::Var<>& x, const string& module_name)
 {
     assert(not is_haskell_builtin_con_name(x.name));
 
@@ -790,13 +790,13 @@ std::optional<string> get_new_name(const Core2::Var<>& x, const string& module_n
     return module_name + "." + x.name + "#" + convertToString(x.index);
 }
 
-Core2::Decls<> rename_top_level(const Core2::Decls<>& decls, const string& module_name)
+Core::Decls<> rename_top_level(const Core::Decls<>& decls, const string& module_name)
 {
-    map<Core2::Var<>, Core2::Var<>> substitution;
+    map<Core::Var<>, Core::Var<>> substitution;
 
-    set<Core2::Var<>> top_level_vars;
+    set<Core::Var<>> top_level_vars;
 
-    Core2::Decls<> decls2;
+    Core::Decls<> decls2;
 
 #ifndef NDEBUG
     check_duplicate_var(decls);
@@ -810,7 +810,7 @@ Core2::Decls<> rename_top_level(const Core2::Decls<>& decls, const string& modul
 
         if (auto new_name = get_new_name(x, module_name))
         {
-            x2 = Core2::Var<>(*new_name);
+            x2 = Core::Var<>(*new_name);
             assert(not substitution.count(x2));
             substitution.insert({x,x2});
         }
@@ -822,7 +822,7 @@ Core2::Decls<> rename_top_level(const Core2::Decls<>& decls, const string& modul
         top_level_vars.insert(x2);
     }
 
-    multiset<Core2::Var<>> bound;
+    multiset<Core::Var<>> bound;
     for(auto& [_,rhs]: decls2)
     {
         assert(bound.empty());
@@ -1299,7 +1299,7 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     return M;
 }
 
-Core2::Decls<> Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
+Core::Decls<> Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
 {
     auto cdecls = ::desugar(*this, state, topdecls);
 
@@ -1328,12 +1328,12 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 }
 
 
-void Module::export_small_decls(const inliner_options& options, const Core2::Decls<>& decls)
+void Module::export_small_decls(const inliner_options& options, const Core::Decls<>& decls)
 {
     // Determine which decls are loop breakers, and give them empty unfoldings.
     set<Occ::Var> occ_free_vars;
     auto occ_decl_groups = occurrence_analyze_decl_groups(*this, {decls}, occ_free_vars);
-    set<Core2::Var<>> loop_breakers;
+    set<Core::Var<>> loop_breakers;
     for(auto decl_group: occ_decl_groups)
         for(auto& [x,_]: decl_group)
             if (x.info.is_loop_breaker)
@@ -1382,11 +1382,11 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
     return args;
 }
 
-Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core2::Decls<> decls)
+Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core::Decls<> decls)
 {
     if (not opts.optimize) return decls;
 
-    vector<Core2::Decls<>> core_decl_groups = {decls};
+    vector<Core::Decls<>> core_decl_groups = {decls};
 
     // Pass: Simplify gently, Static argument
 
@@ -1455,19 +1455,19 @@ Core2::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& f
  * - cs_rec_map :: out_exp -> out_exp.  This is a separate map for self-recursive bindings.
  */
 
-Core2::Exp<> load_builtin(const module_loader& loader, const string& plugin_name, const string& symbol_name, const string& call_conv, int n)
+Core::Exp<> load_builtin(const module_loader& loader, const string& plugin_name, const string& symbol_name, const string& call_conv, int n)
 {
     assert(not call_conv.empty());
     auto fn = loader.load_builtin_ptr(plugin_name, symbol_name, call_conv);
 
     auto args = make_vars<>(n);
-    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
+    auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
 
-    Core2::Exp<> body = Core2::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
+    Core::Exp<> body = Core::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
     return lambda_quantify(args, body);
 }
 
-Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
+Core::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const module_loader& L)
 {
     auto call_conv = unloc(B.call_conv);
     assert(not call_conv.empty());
@@ -1498,14 +1498,14 @@ Core2::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const modu
  * with y fresh.
  */
 
-Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
+Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
 {
-    Core2::Decls<> decls;
+    Core::Decls<> decls;
     for(const auto& decl: foreign_decls)
     {
         auto function_name = unloc(decl.function).name;
 
-        Core2::Exp<> body;
+        Core::Exp<> body;
 
         if (unloc(decl.call_conv) == "bpcall" or unloc(decl.call_conv) == "ecall")
         {
@@ -1522,13 +1522,13 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
             {
                 auto builtin = parse_builtin(decl, n_args+1, L);
                 auto xs = make_vars<>(n_args);
-                auto f1 = Core2::Var<>("f1");
-                auto f2 = Core2::Var<>("f2");
-                auto makeIO = Core2::Var<>("Compiler.IO.makeIO");
+                auto f1 = Core::Var<>("f1");
+                auto f2 = Core::Var<>("f2");
+                auto makeIO = Core::Var<>("Compiler.IO.makeIO");
 
-                body = Core2::Let<>{ {{f1, builtin},                          // let f1 = builtin
-                                      {f2, make_apply(Core2::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
-                    Core2::Apply<>{makeIO, {f2}}};                          // in makeIO f2
+                body = Core::Let<>{ {{f1, builtin},                          // let f1 = builtin
+                                      {f2, make_apply(Core::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
+                    Core::Apply<>{makeIO, {f2}}};                          // in makeIO f2
 
                 body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
             }
@@ -1543,7 +1543,7 @@ Core2::Decls<> Module::load_builtins(const module_loader& L, const std::vector<H
             body = parse_builtin(decl, n_args, L);
         }
 
-        decls.push_back( { Core2::Var<>(function_name), body} );
+        decls.push_back( { Core::Var<>(function_name), body} );
     }
 
     return decls;
@@ -1557,31 +1557,31 @@ string get_constructor_name(const Hs::LType& constr)
     return tc->name;
 }
 
-Core2::Exp<> make_constructor(const std::string& con_name, const DataConInfo& info)
+Core::Exp<> make_constructor(const std::string& con_name, const DataConInfo& info)
 {
     assert(info.field_strictness.size() == info.arity());
     int arity = info.dict_arity() + info.arity();
 
     auto args = make_vars<>(arity);
-    auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
+    auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
 
-    Core2::Exp<> body = Core2::ConApp<>{con_name, args_exp};
+    Core::Exp<> body = Core::ConApp<>{con_name, args_exp};
 
     // Force strict fields
     for(int i = info.arity()-1;i >= 0; i--)
     {
         int j = i + info.dict_arity();
         if (info.field_strictness[i])
-            body = Core2::Case<>{args[j],{{/*wildcard pat*/{}, body}}};
+            body = Core::Case<>{args[j],{{/*wildcard pat*/{}, body}}};
     }
 
     return lambda_quantify(args, body);
 }
 
 
-Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
+Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 {
-    Core2::Decls<> decls;
+    Core::Decls<> decls;
 
     for(const auto& [_,decl]: topdecls)
     {
@@ -1596,7 +1596,7 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                 auto info = lookup_resolved_symbol(con_name)->con_info;
                 assert(info);
                 auto exp = make_constructor(con_name, *info);
-                decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , exp} );
+                decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
             }
         }
         else if (d->is_gadt_decl())
@@ -1608,7 +1608,7 @@ Core2::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
                     auto info = lookup_resolved_symbol(con_name)->con_info;
                     assert(info);
                     auto exp = make_constructor(con_name, *info);
-                    decls.push_back( Core2::Decl<>{ Core2::Var<>(con_name) , exp} );
+                    decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
                 }
         }
     }
@@ -1703,32 +1703,32 @@ bool Module::type_is_declared(const std::string& name) const
 const_symbol_ptr make_builtin_symbol(const std::string& name)
 {
     symbol_ptr S;
-    Core2::Exp<> U;
+    Core::Exp<> U;
     if (name == "()")
     {
         S = std::make_shared<symbol_info>("()", symbol_type_t::constructor, "()", 0);
-        U = Core2::ConApp("()",{});
+        U = Core::ConApp("()",{});
     }
     else if (name == "[]")
     {
         S = std::make_shared<symbol_info>("[]", symbol_type_t::constructor, "[]", 0);
-        U = Core2::ConApp("[]",{});
+        U = Core::ConApp("[]",{});
     }
     else if (name == ":")
     {
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
         S = std::make_shared<symbol_info>(cons);
         auto args = make_vars<>(2,'l');
-        auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
-        U = lambda_quantify(args, Core2::Exp<>(Core2::ConApp(":", args_exp)));
+        auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+        U = lambda_quantify(args, Core::Exp<>(Core::ConApp(":", args_exp)));
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
         auto args = make_vars<>(arity,'t');
-        auto args_exp = args | ranges::to<vector<Core2::Exp<>>>;
-        U = lambda_quantify(args, Core2::Exp<>(Tuple(args_exp)));
+        auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+        U = lambda_quantify(args, Core::Exp<>(Tuple(args_exp)));
     }
     else
         throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
@@ -2403,9 +2403,9 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-map<Core2::Var<>,Runtime::Exp> CompiledModule::prepared_code_defs() const
+map<Core::Var<>,Runtime::Exp> CompiledModule::prepared_code_defs() const
 {
-    map<Core2::Var<>,Runtime::Exp> code;
+    map<Core::Var<>,Runtime::Exp> code;
 
     for(const auto& [x,rhs]: prepared_value_decls)
     {
@@ -2423,7 +2423,7 @@ map<Core2::Var<>,Runtime::Exp> CompiledModule::prepared_code_defs() const
     return code;
 }
 
-void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
+void CompiledModule::finish_value_decls( const Core::Decls<>& decls )
 {
     prepared_value_decls.clear();
 

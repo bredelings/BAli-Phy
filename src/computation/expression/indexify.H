@@ -13,7 +13,7 @@ namespace Runtime
 
 expression_ref indexify(const expression_ref&);
 
-Runtime::Exp runtime_indexify(const Core2::Exp<>&);
+Runtime::Exp runtime_indexify(const Core::Exp<>&);
 
 expression_ref deindexify(const expression_ref&, const std::vector<expression_ref>&);
 expression_ref deindexify(const expression_ref&);

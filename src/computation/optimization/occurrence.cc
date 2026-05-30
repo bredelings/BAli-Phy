@@ -77,7 +77,7 @@ void merge_occurrences_into(set<Occ::Var>& free_vars1, const set<Occ::Var>& free
     }
 }
 
-Occ::Var remove_var_and_set_occurrence_info(const Core2::Var<>& x_in, set<Occ::Var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(const Core::Var<>& x_in, set<Occ::Var>& free_vars)
 {
     Occ::Var x{x_in.name, x_in.index, {}, x_in.is_exported};
 
@@ -103,7 +103,7 @@ Occ::Var remove_var_and_set_occurrence_info(const Core2::Var<>& x_in, set<Occ::V
     return x;
 }
 
-Occ::Var remove_var_and_set_occurrence_info(const Core2::Exp<>& E, set<Occ::Var>& free_vars)
+Occ::Var remove_var_and_set_occurrence_info(const Core::Exp<>& E, set<Occ::Var>& free_vars)
 {
     return remove_var_and_set_occurrence_info(*E.to_var(), free_vars);
 }
@@ -114,7 +114,7 @@ bool is_alive(const Occ::Var& x)
     return (x.is_exported or x.info.code_dup != amount_t::None);
 }
 
-const std::set<Occ::Var>* unfolding_free_vars(const Module& m, const Core2::Var<>& x)
+const std::set<Occ::Var>* unfolding_free_vars(const Module& m, const Core::Var<>& x)
 {
     if (not is_qualified_symbol(x.name)) return nullptr;
 
@@ -128,7 +128,7 @@ const std::set<Occ::Var>* unfolding_free_vars(const Module& m, const Core2::Var<
 }
 
 
-tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
+tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, const Core::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
     const int L = decls_in.size();
     Occ::Decls decls(L);
@@ -249,7 +249,7 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //
 
 vector<Occ::Decls>
-occurrence_analyze_decl_groups(const Module& m, const std::vector<Core2::Decls<>>& decl_groups, set<Occ::Var>& free_vars)
+occurrence_analyze_decl_groups(const Module& m, const std::vector<Core::Decls<>>& decl_groups, set<Occ::Var>& free_vars)
 {
     vector<vector<Occ::Decls>> output;
     for(const auto& decls: reverse(decl_groups))
@@ -260,7 +260,7 @@ occurrence_analyze_decl_groups(const Module& m, const std::vector<Core2::Decls<>
 }
 
 vector<Occ::Decls>
-occurrence_analyze_decls(const Module& m, const Core2::Decls<>& decls_in, set<Occ::Var>& free_vars)
+occurrence_analyze_decls(const Module& m, const Core::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
     // 1. Determine which vars are alive or dead.
     // 2. Construct reference graph between (live) vars.
@@ -367,7 +367,7 @@ maybe_eta_reduce(const Occ::Lambda& L)
         return {};
 }
 
-pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var<> x_in, var_context context)
+pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core::Var<> x_in, var_context context)
 {
     Occ::Var x{x_in.name, x_in.index, {}, x_in.is_exported};
 
@@ -391,7 +391,7 @@ pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core2::Var
     }
 }
 
-pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core2::Exp<>& E, var_context context)
+pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core::Exp<>& E, var_context context)
 {
     assert(not E.empty());
 

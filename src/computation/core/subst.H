@@ -3,7 +3,7 @@
 #include "computation/core/ast.H"
 #include <immer/map.hpp>
 
-namespace Core2
+namespace Core
 {
 
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>

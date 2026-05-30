@@ -6,7 +6,7 @@
 #include <optional>
 
 #include "computation/expression/var.H" // for var
-#include "computation/optimization/occurrence_info.H" // for Core2::Var<>, Occ::Var
+#include "computation/optimization/occurrence_info.H" // for Core::Var<>, Occ::Var
 #include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 #include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
 
@@ -78,8 +78,8 @@ public:
     Hs::Var get_fresh_Var(const var& x, bool qualified);
     Hs::Var get_fresh_Var(const Hs::Var& x, bool qualified);
 
-    Core2::Var<> get_fresh_core_var(const std::string& name);
-    Core2::Var<> get_fresh_core_var(const std::string& name, bool qualified);
+    Core::Var<> get_fresh_core_var(const std::string& name);
+    Core::Var<> get_fresh_core_var(const std::string& name, bool qualified);
 
     // "Rigid" type vars come from forall-quantified variables.
     // "Meta" type vars are unification type vars.
@@ -98,7 +98,7 @@ public:
 
 var make_var(const Hs::Var& v);
 
-Core2::Var<> make_core_var(const Hs::Var& v);
+Core::Var<> make_core_var(const Hs::Var& v);
 
 std::vector<var> make_vars(const std::vector<Hs::Var>& vs);
 

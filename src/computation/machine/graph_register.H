@@ -451,7 +451,7 @@ public:
 
     closure preprocess(Runtime::Exp E, closure::Env_t Env = {});
 
-    closure preprocess(const Core2::Exp<>& E);
+    closure preprocess(const Core::Exp<>& E);
 
     /*----- Modifiable regs ----*/
 private:
@@ -664,7 +664,7 @@ public:
 
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head(closure&& C);
-    int add_compute_expression(const Core2::Exp<>&);
+    int add_compute_expression(const Core::Exp<>&);
     int add_compute_closure(closure&&);
 
     /// Allocate a reg in context t and put it on the top of the temporary-head stack.

@@ -5,7 +5,7 @@
 
 using std::vector;
 
-namespace Core2
+namespace Core
 {
     bool wrapper::is_identity() const
     {
@@ -170,12 +170,12 @@ namespace Core2
 }
 
 
-Core2::wrapper operator*(const Core2::wrapper& w1, const Core2::wrapper& w2)
+Core::wrapper operator*(const Core::wrapper& w1, const Core::wrapper& w2)
 {
     if (w1.is_identity())
         return w2;
     else if (w2.is_identity())
         return w1;
     else
-        return {Core2::WrapCompose(w1,w2)};
+        return {Core::WrapCompose(w1,w2)};
 }

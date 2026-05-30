@@ -2273,7 +2273,7 @@ void reg_heap::reclaim_used(int r)
 }
 
 /// Add an expression that may be replaced by its reduced form
-int reg_heap::add_compute_expression(const Core2::Exp<>& E)
+int reg_heap::add_compute_expression(const Core::Exp<>& E)
 {
     allocate_head(preprocess(E));
 
@@ -3223,7 +3223,7 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
 
     if (program->get_main_name())
     {
-        main_head = add_compute_expression(Core2::unsafePerformIO(Core2::Var<>(*program->get_main_name())));
+        main_head = add_compute_expression(Core::unsafePerformIO(Core::Var<>(*program->get_main_name())));
     }
 }
 

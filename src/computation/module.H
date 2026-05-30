@@ -24,7 +24,7 @@ class Program;
 
 struct typechecker_result
 {
-    Core2::Decls<> class_decls;
+    Core::Decls<> class_decls;
 
     Hs::Binds value_decls;
 
@@ -32,11 +32,11 @@ struct typechecker_result
 
     Hs::Binds instance_method_decls;
 
-    Core2::Decls<> dfun_decls;
+    Core::Decls<> dfun_decls;
 
-    Core2::Decls<> top_simplify_decls;
+    Core::Decls<> top_simplify_decls;
 
-    std::pair<Hs::Binds, Core2::Decls<>> all_binds() const;
+    std::pair<Hs::Binds, Core::Decls<>> all_binds() const;
 };
 
 typedef std::shared_ptr<symbol_info> symbol_ptr;
@@ -187,15 +187,15 @@ public:
 
     Hs::ModuleDecls rename(const simplifier_options&, Hs::ModuleDecls);
 
-    Core2::Decls<> desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
+    Core::Decls<> desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
-    void export_small_decls(const inliner_options& opts, const Core2::Decls<>&);
+    void export_small_decls(const inliner_options& opts, const Core::Decls<>&);
 
-    Core2::Decls<> optimize(const simplifier_options&, FreshVarState&, Core2::Decls<>);
+    Core::Decls<> optimize(const simplifier_options&, FreshVarState&, Core::Decls<>);
 
-    Core2::Decls<> load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&);
+    Core::Decls<> load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&);
 
-    Core2::Decls<> load_constructors(const Hs::Decls&);
+    Core::Decls<> load_constructors(const Hs::Decls&);
 
     bool is_refutable_pattern(const Hs::LPat& pattern) const;
 
@@ -238,7 +238,7 @@ class CompiledModule
 
     std::set<std::string> dependencies_;
 
-    std::map<Core2::Var<>, Runtime::Exp> prepared_value_decls;
+    std::map<Core::Var<>, Runtime::Exp> prepared_value_decls;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
 
@@ -308,9 +308,9 @@ public:
 
     const_symbol_ptr lookup_symbol(const std::string&) const;
 
-    void finish_value_decls( const Core2::Decls<>& decls );
+    void finish_value_decls( const Core::Decls<>& decls );
 
-    std::map<Core2::Var<>,Runtime::Exp> prepared_code_defs() const;
+    std::map<Core::Var<>,Runtime::Exp> prepared_code_defs() const;
 
     void inflate(const Program& P);
 

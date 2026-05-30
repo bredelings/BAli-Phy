@@ -84,8 +84,8 @@ struct ConPattern: public Object
     // Extra stuff for typechecking
     std::vector<::TypeVar> universal_tyvars;        // What do we do with this?
     std::vector<::TypeVar> existential_tyvars;      // What do we do with this?
-    std::vector<Core2::Var<>> given_dict_vars;
-    std::shared_ptr<const Core2::Decls<>> ev_binds;
+    std::vector<Core::Var<>> given_dict_vars;
+    std::shared_ptr<const Core::Decls<>> ev_binds;
 
     // get given variables for dictionaries only (nothing for type equalities)
     ConPattern* clone() const { return new ConPattern(*this);}
@@ -98,7 +98,7 @@ struct TypedPattern: public Object
 {
     LPat pat;
     LType type;
-    Core2::wrapper wrap;
+    Core::wrapper wrap;
 
     TypedPattern* clone() const { return new TypedPattern(*this);}
     std::string print() const;

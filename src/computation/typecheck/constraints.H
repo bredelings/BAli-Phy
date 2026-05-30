@@ -6,7 +6,7 @@
 
 #include "computation/haskell/coretype.H"
 #include "computation/haskell/haskell.H" // for Hs::LExp
-#include "computation/core/ast.H" // for Core2::Decls
+#include "computation/core/ast.H" // for Core::Decls
 #include "util/cow-ptr.H"
 
 struct OccurrenceOrigin
@@ -69,13 +69,13 @@ struct Constraint
     cow_ptr<TypeCheckerContext> tc_state;
 
     ConstraintFlavor flavor;
-    Core2::Var<> ev_var;
+    Core::Var<> ev_var;
     Type pred;
 
     int level() const;
     std::string print() const;
 
-    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core2::Var<>, Type, const cow_ptr<TypeCheckerContext>& s);
+    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core::Var<>, Type, const cow_ptr<TypeCheckerContext>& s);
 };
 
 typedef std::vector<Constraint> LIE;
@@ -131,7 +131,7 @@ struct Implication
 
     // Pointer to a set of evidence bindings.
     // We can append new bindings to this object.
-    std::shared_ptr<Core2::Decls<>> evidence_binds;
+    std::shared_ptr<Core::Decls<>> evidence_binds;
 
     std::vector<TypeVar> tvs;
 
@@ -143,12 +143,12 @@ struct Implication
 
     std::string print() const;
 
-    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core2::Decls<>>& eb, const cow_ptr<TypeCheckerContext>& c);
+    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls<>>& eb, const cow_ptr<TypeCheckerContext>& c);
 };
 
 std::vector<Type> preds_from_lie(const LIE& lie);
 
-std::vector<Core2::Var<>> dict_vars_from_lie(const LIE& lie);
+std::vector<Core::Var<>> dict_vars_from_lie(const LIE& lie);
 
 std::string print(const LIE& lie);
 

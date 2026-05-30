@@ -71,18 +71,18 @@ vector<string> selectMatchVars(const vector<Hs::LPat>& lpats, const string& fall
 
 failable_expression fail_identity()
 {
-    return failable_expression{true, [](const Core2::Exp<>& o) {return o;}};
+    return failable_expression{true, [](const Core::Exp<>& o) {return o;}};
 }
 
 failable_expression desugar_state::combine(const failable_expression& E1, const failable_expression& E2)
 {
     if (not E1.can_fail) return E1;
 
-    std::function<Core2::Exp<>(const Core2::Exp<>&)> result;
+    std::function<Core::Exp<>(const Core::Exp<>&)> result;
 
     // result = \o -> let o2 = e2 o in e1 o2
     auto o2 = get_fresh_core_var("o");
-    result = [E1,E2,o2](const Core2::Exp<>& o) {
+    result = [E1,E2,o2](const Core::Exp<>& o) {
 	return make_let({{o2,E2.result(o)}},E1.result(o2));
     };
 
@@ -198,7 +198,7 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
     return partitions;
 }
 
-failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_constructor(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -229,7 +229,7 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
     }
 
     // 2. Find the alternatives in the simple case expression
-    vector<Core2::Pattern<>> simple_patterns;
+    vector<Core::Pattern<>> simple_patterns;
     vector<failable_expression> simple_bodies;
 
     for(int c=0;c<constants.size();c++)
@@ -245,16 +245,16 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
         int total_arity = dict_arity + field_arity;
 
 	// 2.2 Construct the simple pattern for constant C
-	vector<Core2::Var<>> args;
+	vector<Core::Var<>> args;
         for(int j=0;j< dict_arity; j++)
             args.push_back( get_fresh_core_var("dvar"+std::to_string(j+1)) );
         for(auto& var_name: selectMatchVars(equations[rules[c][0]].patterns[0].to<Hs::ConPattern>()->args, "c"))
 	    args.push_back( get_fresh_core_var(var_name) );
 
-        Core2::Pattern<> pat{name, args};
+        Core::Pattern<> pat{name, args};
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<Core2::Var<>> x2 = args;
+	vector<Core::Var<>> x2 = args;
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
@@ -296,20 +296,20 @@ failable_expression desugar_state::match_constructor(const vector<Core2::Var<>>&
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
     auto o = get_fresh_core_var("o");
 
-    auto result = [=](const Core2::Exp<>& otherwise)
+    auto result = [=](const Core::Exp<>& otherwise)
     {
-        vector<Core2::Alt<>> alts;
+        vector<Core::Alt<>> alts;
 	for(int i=0;i<simple_bodies.size();i++)
             alts.push_back({simple_patterns[i], simple_bodies[i].result(o)});
 
-	return make_let<>(Core2::Decls<>({{o,otherwise}}), Core2::Exp<>(Core2::Case<>{x0, alts}));
+	return make_let<>(Core::Decls<>({{o,otherwise}}), Core::Exp<>(Core::Case<>{x0, alts}));
     };
 
     return failable_expression{true, result};
 }
 
 
-failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_literal(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -344,7 +344,7 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
 	auto pat = constants[c];
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<Core2::Var<>> x2;
+	vector<Core::Var<>> x2;
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
@@ -372,9 +372,9 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
 
-    std::function<Core2::Exp<>(const Core2::Exp<>&)> result = [=,this](const Core2::Exp<>& otherwise)
+    std::function<Core::Exp<>(const Core::Exp<>&)> result = [=,this](const Core::Exp<>& otherwise)
     {
-        Core2::Exp<> E = otherwise;
+        Core::Exp<> E = otherwise;
 
         for(int i=constants.size()-1; i>= 0; i--)
         {
@@ -397,7 +397,7 @@ failable_expression desugar_state::match_literal(const vector<Core2::Var<>>& x, 
 }
 
 
-failable_expression desugar_state::match_var(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_var(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -417,7 +417,7 @@ failable_expression desugar_state::match_var(const vector<Core2::Var<>>& x, cons
     return match(remove_first(x), equations2);
 }
 
-failable_expression desugar_state::match_bang(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_bang(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     assert(not x.empty());
     assert(not equations.empty());
@@ -436,15 +436,15 @@ failable_expression desugar_state::match_bang(const vector<Core2::Var<>>& x, con
     auto body = match(x, equations2);
     auto x0 = x[0];
 
-    auto result = [body,x0](const Core2::Exp<>& otherwise)
+    auto result = [body,x0](const Core::Exp<>& otherwise)
     {
-        return Core2::Case<>{x0, {{{}, body.result(otherwise)}}};
+        return Core::Case<>{x0, {{{}, body.result(otherwise)}}};
     };
 
     return {body.can_fail, result};
 }
 
-failable_expression desugar_state::match_wrap(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_wrap(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     assert(not x.empty());
     assert(not equations.empty());
@@ -474,7 +474,7 @@ failable_expression desugar_state::match_wrap(const vector<Core2::Var<>>& x, con
 }
 
 
-failable_expression desugar_state::match_empty(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_empty(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     assert(x.size() == 0);
 
@@ -487,7 +487,7 @@ failable_expression desugar_state::match_empty(const vector<Core2::Var<>>& x, co
 }
 
 // Make this a member function of equation_info_t?
-void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn)
+void desugar_state::clean_up_pattern(const Core::Var<>& x, equation_info_t& eqn)
 {
     auto& patterns = eqn.patterns;
     auto& pat1 = patterns[0];
@@ -510,7 +510,7 @@ void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn
     else if (pat1.is_a<Haskell::LazyPattern>())
     {
         auto& LP = pat1.as_<Haskell::LazyPattern>();
-        Core2::Decls<> binds = {};
+        Core::Decls<> binds = {};
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
             auto y = make_core_var(unloc(v));
@@ -531,7 +531,7 @@ void desugar_state::clean_up_pattern(const Core2::Var<>& x, equation_info_t& eqn
     }
 }
 
-failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -572,7 +572,7 @@ failable_expression desugar_state::match(const vector<Core2::Var<>>& x, const ve
 }
 
 // For `case T of patterns[i] -> bodies[i]`
-failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
+failable_expression desugar_state::case_expression(const Core::Exp<>& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
 {
     assert(patterns.size() == bodies.size());
     vector<equation_info_t> equations;
@@ -585,13 +585,13 @@ failable_expression desugar_state::case_expression(const Core2::Exp<>& T, const 
     return FE;
 }
 
-Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core2::Exp<>& otherwise)
+Core::Exp<> desugar_state::def_function(const vector< equation_info_t >& equations, const Core::Exp<>& otherwise)
 {
     // If the equations are empty, then we don't know how many patterns there are, so we can't return \x1 ...xn -> otherwise.
     assert(not equations.empty());
 
     // 1. Get fresh vars for the arguments
-    vector<Core2::Var<>> args;
+    vector<Core::Var<>> args;
     auto var_names = selectMatchVars(equations[0].patterns,"x");
     for(auto& var_name: var_names)
 	args.push_back(get_fresh_core_var(var_name));
@@ -601,7 +601,7 @@ Core2::Exp<> desugar_state::def_function(const vector< equation_info_t >& equati
 
     // 3. Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
-	E = Core2::Lambda<>{args[i], E};
+	E = Core::Lambda<>{args[i], E};
 
     return E;
 }

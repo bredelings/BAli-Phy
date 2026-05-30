@@ -32,7 +32,7 @@
  *    Use optional<Exp> instead?
  */
 
-namespace Core2
+namespace Core
 {
     template <typename NoteV> struct Var;
     template <typename NoteV, typename NoteE> struct Lambda;
@@ -320,7 +320,7 @@ namespace Core2
     };
 
     template <typename NoteV, typename NoteE>
-    inline std::ostream& operator<<(std::ostream& o,const Core2::Exp<NoteV,NoteE>& E)
+    inline std::ostream& operator<<(std::ostream& o,const Core::Exp<NoteV,NoteE>& E)
     {
 	return o<<E.print();
     }
@@ -367,7 +367,7 @@ namespace Core2
     };
 
     template <typename NoteV>
-    inline std::ostream& operator<<(std::ostream& o,const Core2::Var<NoteV>& V)
+    inline std::ostream& operator<<(std::ostream& o,const Core::Var<NoteV>& V)
     {
 	return o<<V.print();
     }
@@ -909,9 +909,9 @@ namespace Core2
 namespace std
 {
     template <typename NoteV>
-    class hash < Core2::Var<NoteV> >{
+    class hash < Core::Var<NoteV> >{
     public :
-        size_t operator()(const Core2::Var<NoteV> &x) const
+        size_t operator()(const Core::Var<NoteV> &x) const
         {
             size_t h =   std::hash<int>()(x.index) ^ std::hash<std::string>()(x.name);
             return  h ;

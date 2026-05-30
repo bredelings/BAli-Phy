@@ -30,18 +30,18 @@ using std::cerr;
 using std::endl;
 
 
-Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls);
-Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E);
+Core::Decls<> graph_normalize(FreshVarSource& source, Core::Decls<> decls);
+Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E);
 
-Core2::Exp<> make_let(const Core2::Decls<>& decls, const Core2::Exp<>& body)
+Core::Exp<> make_let(const Core::Decls<>& decls, const Core::Exp<>& body)
 {
     if (decls.empty())
         return body;
     else
-        return Core2::Let<>{decls, body};
+        return Core::Let<>{decls, body};
 }
 
-bool is_simple_core_arg(const Core2::Exp<>& E, bool sub_exp_ok)
+bool is_simple_core_arg(const Core::Exp<>& E, bool sub_exp_ok)
 {
     if (E.to_var())
         return true;
@@ -58,10 +58,10 @@ bool is_simple_core_arg(const Core2::Exp<>& E, bool sub_exp_ok)
     return false;
 }
 
-std::tuple<Core2::Decls<>, Core2::Exp<>>
-graph_normalize_lift(FreshVarSource& source, const Core2::Exp<>& E, bool sub_exp_ok)
+std::tuple<Core::Decls<>, Core::Exp<>>
+graph_normalize_lift(FreshVarSource& source, const Core::Exp<>& E, bool sub_exp_ok)
 {
-    Core2::Decls<> decls;
+    Core::Decls<> decls;
 
     if (sub_exp_ok)
     {
@@ -92,7 +92,7 @@ graph_normalize_lift(FreshVarSource& source, const Core2::Exp<>& E, bool sub_exp
     return {decls, E2};
 }
 
-Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls)
+Core::Decls<> graph_normalize(FreshVarSource& source, Core::Decls<> decls)
 {
     for(auto& [_, e]: decls)
         e = graph_normalize(source, e);
@@ -100,27 +100,27 @@ Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls)
     return decls;
 }
 
-Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
+Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
 {
     if (E.empty())
         return E;
     else if (E.to_var() or E.to_constant())
         return E;
     else if (auto L = E.to_lambda())
-        return Core2::Lambda<>{L->x, graph_normalize(source, L->body)};
+        return Core::Lambda<>{L->x, graph_normalize(source, L->body)};
     else if (auto A = E.to_apply())
     {
         auto [head_decls, head] = graph_normalize_lift(source, A->head, false);
         auto [arg_decls, arg] = graph_normalize_lift(source, A->arg, false);
 
         head_decls.insert(head_decls.end(), arg_decls.begin(), arg_decls.end());
-        return make_let(head_decls, Core2::Apply<>{head, arg});
+        return make_let(head_decls, Core::Apply<>{head, arg});
     }
     else if (auto L = E.to_let())
     {
         auto decls = graph_normalize(source, L->decls);
         auto body = graph_normalize(source, L->body);
-        return Core2::Let<>{decls, body};
+        return Core::Let<>{decls, body};
     }
     else if (auto C = E.to_case())
     {
@@ -129,11 +129,11 @@ Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
         for(auto& [_, body]: alts)
             body = graph_normalize(source, body);
 
-        return make_let(decls, Core2::Case<>{object, alts});
+        return make_let(decls, Core::Case<>{object, alts});
     }
     else if (auto C = E.to_conApp())
     {
-        Core2::Decls<> decls;
+        Core::Decls<> decls;
         auto args = C->args;
         for(auto& arg: args)
         {
@@ -142,11 +142,11 @@ Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
             std::ranges::move(decls2, std::back_inserter(decls));
         }
 
-        return make_let(decls, Core2::ConApp<>{C->head, args});
+        return make_let(decls, Core::ConApp<>{C->head, args});
     }
     else if (auto B = E.to_builtinOp())
     {
-        Core2::Decls<> decls;
+        Core::Decls<> decls;
         auto args = B->args;
         bool sub_exp_ok = B->call_conv == "ecall";
         for(auto& arg: args)
@@ -156,7 +156,7 @@ Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
             std::ranges::move(decls2, std::back_inserter(decls));
         }
 
-        return make_let(decls, Core2::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op});
+        return make_let(decls, Core::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op});
     }
     else
         std::abort();
@@ -167,7 +167,7 @@ Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
-Runtime::Exp runtime_prepare_for_translation(FreshVarSource& source, const Core2::Exp<>& E)
+Runtime::Exp runtime_prepare_for_translation(FreshVarSource& source, const Core::Exp<>& E)
 {
     auto E2 = graph_normalize(source, E);
     auto R = runtime_indexify(E2);
@@ -177,7 +177,7 @@ Runtime::Exp runtime_prepare_for_translation(FreshVarSource& source, const Core2
     return R;
 }
 
-Runtime::Exp runtime_prepare_for_translation(FreshVarState& state, const Core2::Exp<>& E)
+Runtime::Exp runtime_prepare_for_translation(FreshVarState& state, const Core::Exp<>& E)
 {
     FreshVarSource source(state);
     return runtime_prepare_for_translation(source, E);
@@ -215,7 +215,7 @@ closure reg_heap::preprocess_prepared(Runtime::Exp E, closure::Env_t Env)
     return translate_prepared(*this, E, std::move(C));
 }
 
-closure reg_heap::preprocess(const Core2::Exp<>& E)
+closure reg_heap::preprocess(const Core::Exp<>& E)
 {
     return preprocess_prepared(runtime_prepare_for_translation(fresh_var_state, E));
 }

@@ -5,16 +5,16 @@
 using std::tuple;
 using std::vector;
 
-Core2::Exp<> safe_apply(const Core2::Exp<>& head, const vector<Core2::Exp<>>& args)
+Core::Exp<> safe_apply(const Core::Exp<>& head, const vector<Core::Exp<>>& args)
 {
     auto E = head;
     for(auto& arg: args)
-        E = Core2::Apply<>{E,arg};
+        E = Core::Apply<>{E,arg};
 
     return E;
 }
 
-namespace Core2
+namespace Core
 {
     Var<> unpack_cpp_string()
     {
@@ -49,18 +49,18 @@ namespace Core2
         return Let<>({{x, e}}, Apply<>(unsafePerformIO(),{x}));
     }
 
-    bool is_bool_true(const Core2::Exp<>& E)
+    bool is_bool_true(const Core::Exp<>& E)
     {
-        return E == Core2::ConApp("Data.Bool.True",{});
+        return E == Core::ConApp("Data.Bool.True",{});
     }
 
-    bool is_bool_false(const Core2::Exp<>& E)
+    bool is_bool_false(const Core::Exp<>& E)
     {
-        return E == Core2::ConApp("Data.Bool.False",{});
+        return E == Core::ConApp("Data.Bool.False",{});
     }
 
-    bool is_otherwise(const Core2::Exp<>& E)
+    bool is_otherwise(const Core::Exp<>& E)
     {
-        return E == Core2::Var("Data.Bool.otherwise");
+        return E == Core::Var("Data.Bool.otherwise");
     }
 }

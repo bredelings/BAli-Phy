@@ -3,7 +3,7 @@
 
 #include "ast.H"
 
-namespace Core2
+namespace Core
 {
     // Wrappers
     struct WrapObj
@@ -43,5 +43,5 @@ namespace Core2
     extern wrapper WrapId;
 };
 
-Core2::wrapper operator*(const Core2::wrapper&, const Core2::wrapper&);
+Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);
 #endif

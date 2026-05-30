@@ -30,13 +30,13 @@ const std::shared_ptr<module_loader>& Program::get_module_loader() const
     return loader;
 }
 
-Core2::Exp<> declare_seq_info(Module& m)
+Core::Exp<> declare_seq_info(Module& m)
 {
     // 1. seq = \x y -> case x of _ -> y
-    auto x = Core2::Var<>("x");
-    auto y = Core2::Var<>("y");
+    auto x = Core::Var<>("x");
+    auto y = Core::Var<>("y");
 
-    Core2::Exp<> code = lambda_quantify({x,y}, Core2::Exp<>(Core2::Case<>{x,{{ /* wildcard pattern */{}, y}}}));
+    Core::Exp<> code = lambda_quantify({x,y}, Core::Exp<>(Core::Case<>{x,{{ /* wildcard pattern */{}, y}}}));
     auto [occ_code, _] = occurrence_analyzer(m, code);
 
     // 2. seq :: forall a b. a -> b -> b
@@ -65,11 +65,11 @@ shared_ptr<CompiledModule> compiler_prim_module()
     // 2. No implicit Prelude
     m->language_extensions.set_extension(LangExt::ImplicitPrelude, false);
 
-    Core2::Decls<> value_decls;
+    Core::Decls<> value_decls;
 
     // 3. Add seq.
     auto seq_code = declare_seq_info(*m);
-    value_decls.push_back({Core2::Var<>("Compiler.Prim.seq"), seq_code});
+    value_decls.push_back({Core::Var<>("Compiler.Prim.seq"), seq_code});
 
     // 4. Copy symbols to the for-export maps.
     m->perform_exports();

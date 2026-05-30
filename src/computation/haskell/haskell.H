@@ -95,8 +95,8 @@ struct ApplyExp: public Object
     LExp head;
     LExp arg;
 
-    Core2::wrapper arg_wrapper;
-    Core2::wrapper res_wrapper;
+    Core::wrapper arg_wrapper;
+    Core::wrapper res_wrapper;
 
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
@@ -213,7 +213,7 @@ struct TypedExp: public Object
 {
     LExp exp;
     LType type;
-    Core2::wrapper wrap;
+    Core::wrapper wrap;
 
     TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;
@@ -1188,12 +1188,12 @@ struct BindInfo
     ::Type polytype;
 
     // Wrapper to apply types and dicts to the tuple entry.
-    Core2::wrapper wrap;
+    Core::wrapper wrap;
 
     // Mark the generated core variable as exported.
     bool is_exported = false;
 
-    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core2::wrapper& w, bool e = false)
+    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core::wrapper& w, bool e = false)
         : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w), is_exported(e)
     { }
 };
@@ -1203,10 +1203,10 @@ struct GenBind: public Object
     std::vector<::TypeVar> tv_args;
 
     // These variables MUST be type-annotated!
-    std::vector<Core2::Var<>> dict_args;
+    std::vector<Core::Var<>> dict_args;
 
     // Information for calling each of the binders in the group.
-    std::vector<std::shared_ptr<const Core2::Decls<>>> dict_decls;
+    std::vector<std::shared_ptr<const Core::Decls<>>> dict_decls;
 
     // These are the actual declarations.
     Decls body;
@@ -1218,8 +1218,8 @@ struct GenBind: public Object
     std::string print() const;
 
     GenBind(const std::vector<::TypeVar>& v1,
-            const std::vector<Core2::Var<>>& v2,
-            const std::vector<std::shared_ptr<const Core2::Decls<>>>& ev,
+            const std::vector<Core::Var<>>& v2,
+            const std::vector<std::shared_ptr<const Core::Decls<>>>& ev,
             const Decls& d,
             const std::map<Var, BindInfo>& bi)
         :tv_args(v1),

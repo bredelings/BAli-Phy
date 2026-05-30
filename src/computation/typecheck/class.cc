@@ -13,20 +13,20 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-Core2::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVarSource& source)
+Core::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVarSource& source)
 {
-    Core2::Var<> x("dict");
+    Core::Var<> x("dict");
 
     if (N == 1)
-        return  lambda_quantify({x}, Core2::Exp<>(x));
+        return  lambda_quantify({x}, Core::Exp<>(x));
     else
     {
         // extractor (_,field,_,_) = field;
         // extractor = \x -> case x of ConName _ d _ _ -> d
 
-        Core2::Var<> d("d");
+        Core::Var<> d("d");
     
-        vector<Core2::Var<>> fields;
+        vector<Core::Var<>> fields;
         for(int j=0;j<N;j++)
         {
             if (i == j)
@@ -34,9 +34,9 @@ Core2::Exp<> make_field_extractor(const string& con_name, int i, int N, FreshVar
             else
                 fields.push_back( source.get_fresh_core_var("w") );
         }
-        Core2::Pattern<> pattern{con_name, fields};
+        Core::Pattern<> pattern{con_name, fields};
 
-        return lambda_quantify({x}, Core2::Exp<>(Core2::Case<>{x,{{pattern, d}}}));
+        return lambda_quantify({x}, Core::Exp<>(Core::Case<>{x,{{pattern, d}}}));
     }
 }
 
@@ -53,7 +53,7 @@ Hs::Var unqualified(Hs::Var v)
 // * Hs::Decls           = { name         = \dict -> case dict of K _ _ method _ _ -> method }
 //                       = { made-up-name = \dict -> case dict of K superdict _ _ _ _ -> superdict }
 
-tuple<ClassInfo, Core2::Decls<>>
+tuple<ClassInfo, Core::Decls<>>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<TidyState().print(TypeCon(unloc(class_decl.con).name))<<"':" );
@@ -145,7 +145,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         class_info.fields.push_back({add_mod_name(var), type});
 
     // 5. Define superclass extractors and member function extractors
-    Core2::Decls<> decls;
+    Core::Decls<> decls;
 
     vector<Type> types;
     for(auto& [_,type]: class_info.fields)
@@ -159,7 +159,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto S = this_mod().lookup_local_symbol(var.name);
         S->unfolding = MethodUnfolding{i};
 
-        decls.push_back( {Core2::Var<>(var.name), make_field_extractor(class_info.name, i, N, *this)} );
+        decls.push_back( {Core::Var<>(var.name), make_field_extractor(class_info.name, i, N, *this)} );
 
         i++;
     }
@@ -237,9 +237,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {class_info, decls};
 }
 
-Core2::Decls<> TypeChecker::infer_type_for_classes(const Hs::Decls& hs_decls)
+Core::Decls<> TypeChecker::infer_type_for_classes(const Hs::Decls& hs_decls)
 {
-    Core2::Decls<> core_decls;
+    Core::Decls<> core_decls;
 
     for(auto& [_,decl]: hs_decls)
     {

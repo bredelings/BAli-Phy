@@ -249,7 +249,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     add_type_instance(free_tvs, lhs, rhs);
 }
 
-std::optional<Core2::Var<>>
+std::optional<Core::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     auto inst_loc = inst_decl.polytype.loc;
@@ -326,10 +326,10 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 // See Tc/TyCl/Instance.hs
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-vector<pair<Core2::Var<>,Hs::InstanceDecl>>
+vector<pair<Core::Var<>,Hs::InstanceDecl>>
 TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
 {
-    vector<pair<Core2::Var<>, Hs::InstanceDecl>> named_instances;
+    vector<pair<Core::Var<>, Hs::InstanceDecl>> named_instances;
 
     for(auto& [loc,decl]: decls)
     {
@@ -411,10 +411,10 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
-std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_superclass_entry(
+std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_superclass_entry(
     const Constraint& superclass_constraint, const string& class_name,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
-    const std::vector<Core2::Var<>>& instance_dict_args, std::shared_ptr<const Core2::Decls<>>& decls_super)
+    const std::vector<Core::Var<>>& instance_dict_args, std::shared_ptr<const Core::Decls<>>& decls_super)
 {
     auto dv = superclass_constraint.ev_var;
 
@@ -442,7 +442,7 @@ std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_superclass_entry(
     return {hs_decl, make_core_var(superclass_selector)};
 }
 
-std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_instance_method(
+std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
     const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info)
@@ -492,8 +492,8 @@ std::tuple<Hs::Decl,Core2::Var<>> TypeChecker::type_check_instance_method(
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
-pair<Hs::Decls, Core2::Decl<>>
-TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
+pair<Hs::Decls, Core::Decl<>>
+TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
 
@@ -537,7 +537,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
     // 5. Superclass fields in the instance dictionary.
     Hs::Decls decls;
 
-    std::vector<Core2::Var<>> instance_sc_methods;
+    std::vector<Core::Var<>> instance_sc_methods;
 
     for(auto& superclass_constraint: dictionary_constraints(wanteds))
     {
@@ -545,7 +545,7 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
                                                                           instance_tvs, givens, subst,
                                                                           instance_dict_args, decls_super);
 
-        instance_sc_methods.push_back(Core2::Var<>(superclass_selector.name));
+        instance_sc_methods.push_back(Core::Var<>(superclass_selector.name));
         decls.push_back({noloc,hs_decl});
     }
 
@@ -566,24 +566,24 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
     // 7. Construct the dictionary from the constructor functions for its entries
     //    (Extractor functions are implemented in class.cc: dictionary_extractor( ))
-    Core2::Decls<> dict_decls;
-    vector<Core2::Exp<>> dict_entries;
+    Core::Decls<> dict_decls;
+    vector<Core::Exp<>> dict_entries;
     for(auto& op: instance_sc_methods)
     {
         auto dict_entry = get_fresh_core_var("de$",false);
-        Core2::Decl<> dict_decl{dict_entry, make_apply<>(Core2::Exp<>(op), instance_dict_args)};
+        Core::Decl<> dict_decl{dict_entry, make_apply<>(Core::Exp<>(op), instance_dict_args)};
         dict_decls.push_back(dict_decl);
         dict_entries.push_back(dict_entry);
     }
 
     // dfun = /\a1..an -> \dicts:theta -> <superdict_vars,method_vars>
-    Core2::Exp<> dict = Core2::ConApp<>(class_name, dict_entries);
+    Core::Exp<> dict = Core::ConApp<>(class_name, dict_entries);
     if (dict_entries.size() == 1)
         dict = dict_entries[0];
     dict = make_let(dict_decls, dict);
 
     // 8. Construct the DFunUnfolding
-    // We need to convert instance_dict_args and instance_sc_methods from Core2::<> to Occ::
+    // We need to convert instance_dict_args and instance_sc_methods from Core::<> to Occ::
     vector<Occ::Var> occ_dvars;
     for(auto& dv: instance_dict_args)
     {
@@ -620,11 +620,11 @@ TypeChecker::infer_type_for_instance2(const Core2::Var<>& dfun, const Hs::Instan
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, Core2::Decls<>>
-TypeChecker::infer_type_for_instances2(const vector<pair<Core2::Var<>, Hs::InstanceDecl>>& named_instances)
+pair<Hs::Binds, Core::Decls<>>
+TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var<>, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
-    Core2::Decls<> dfun_decls;
+    Core::Decls<> dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {
@@ -708,9 +708,9 @@ EqInstanceInfo TypeChecker::freshen(EqInstanceInfo info)
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
 // FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
-optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
+optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
-    vector<tuple<pair<Core2::Exp<>, LIE>,Type,Type,InstanceInfo>> matching_instances;
+    vector<tuple<pair<Core::Exp<>, LIE>,Type,Type,InstanceInfo>> matching_instances;
 
     vector<InstanceInfo> unifying_instances;
 
@@ -741,7 +741,7 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
 
                 auto type = apply_subst(*subst, instance_head);
 
-                Core2::Exp<> dfun_exp = make_apply<>(Core2::Exp<>(dfun), dict_vars_from_lie(wanteds));
+                Core::Exp<> dfun_exp = make_apply<>(Core::Exp<>(dfun), dict_vars_from_lie(wanteds));
 
                 matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
             }
@@ -755,7 +755,7 @@ optional<pair<Core2::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<tuple<pair<Core2::Exp<>, LIE>,Type,Type,InstanceInfo>> surviving_instances;
+    vector<tuple<pair<Core::Exp<>, LIE>,Type,Type,InstanceInfo>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {

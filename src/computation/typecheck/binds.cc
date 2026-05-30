@@ -195,8 +195,8 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<Hs::Var, Hs::BindInfo>&
 }
 
 Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
-                      const vector<Core2::Var<>>& dict_vars,
-                      const shared_ptr<const Core2::Decls<>>& ev_decls,
+                      const vector<Core::Var<>>& dict_vars,
+                      const shared_ptr<const Core::Decls<>>& ev_decls,
                       Hs::Decls decls,
                       const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
@@ -253,7 +253,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
     auto [wrap_gen, tvs, givens, rho_type, wrap_match] =
-        skolemize_and_result<Core2::wrapper>(polytype,
+        skolemize_and_result<Core::wrapper>(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
 
                           // 3. Record the mapping from inner_id -> rho_type for error messages
@@ -275,7 +275,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 
     Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen * wrap_match);
 
-    auto decl = mkGenBind( {}, {}, std::make_shared<Core2::Decls<>>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls<>>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
 
     // pop_note();
 
@@ -672,7 +672,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Va
 
     auto dict_args = dict_vars_from_lie( lie_used );
     auto tup_dict_args = dict_vars_from_lie( lie_all );
-    auto wrap = Core2::WrapLambda(dict_args) * Core2::WrapApply(tup_dict_args);
+    auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
 
     auto constraints_used = preds_from_lie(lie_used);
     Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
@@ -761,7 +761,7 @@ TypeChecker::get_quantifiable_preds(bool restricted, const vector<Type>& preds, 
     return keep;
 }
 
-tuple<set<TypeVar>, LIE, Core2::Decls<>>
+tuple<set<TypeVar>, LIE, Core::Decls<>>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
     // 1. Try and solve the wanteds.  (See simplifyInfer)
@@ -855,7 +855,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     // 3. Determine what to quantify over and stuff
     auto [qtvs, givens, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
-    auto ev_decls = std::make_shared<Core2::Decls<>>(solve_decls);
+    auto ev_decls = std::make_shared<Core::Decls<>>(solve_decls);
 
     auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 
@@ -885,7 +885,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     add_binders(poly_binder_env);
 
     // 8. Construct the quantified declaration to return
-    vector< Core2::Var<> > dict_vars = dict_vars_from_lie(givens);
+    vector< Core::Var<> > dict_vars = dict_vars_from_lie(givens);
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
     Hs::Decls decls2({{noloc, gen_bind }});
 
