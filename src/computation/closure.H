@@ -42,6 +42,8 @@ struct closure
         auto& E = exp.sub()[i];
         if (E.is_index_var())
             return lookup_in_env(E.as_index_var());
+        else if (E.is_reg_var())
+            return E.as_reg_var();
         else
             std::abort();
     }

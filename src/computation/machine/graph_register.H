@@ -91,6 +91,7 @@ struct Step
 constexpr int reg_is_on_stack_bit = 3;
 constexpr int reg_is_unforgettable_bit = 4;
 constexpr int reg_is_always_evaluated_bit = 6;
+constexpr int reg_is_pinned_bit = 7;
 
 constexpr int non_computed_index = -1;
 
@@ -261,6 +262,8 @@ public:
     bool reg_is_unforgettable(int r) const;
     bool reg_is_forgettable(int r) const;
     void mark_reg_unforgettable(int r);
+    bool reg_is_pinned(int r) const;
+    void mark_reg_pinned(int r);
 
     void set_used_reg(int r1, int r2);
     int set_forced_reg(int r1, int r2);
@@ -276,6 +279,7 @@ public:
     int allocate_reg_from_step(int s, closure&& C);
     void mark_reg_created_by_step(int r, int s);
     void mark_step_with_effect(int s);
+    void check_reg_vars_are_pinned(const expression_ref&) const;
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 
@@ -863,6 +867,18 @@ inline void reg_heap::mark_reg_unforgettable(int r)
 {
     assert(reg_is_changeable(r));
     regs[r].flags.set(reg_is_unforgettable_bit);
+}
+
+inline bool reg_heap::reg_is_pinned(int r) const
+{
+    return regs[r].flags.test(reg_is_pinned_bit);
+}
+
+inline void reg_heap::mark_reg_pinned(int r)
+{
+    assert(r > 0);
+    assert(regs.is_used(r));
+    regs[r].flags.set(reg_is_pinned_bit);
 }
 
 inline void reg_heap::mark_reg_unevaluated(int r)

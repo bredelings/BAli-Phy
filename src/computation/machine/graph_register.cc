@@ -2011,10 +2011,35 @@ void reg_heap::clear_call_for_reg(int R)
         clear_call( s );
 }
 
+void reg_heap::check_reg_vars_are_pinned(const expression_ref& E) const
+{
+    if (not E)
+        return;
+
+    if (E.is_reg_var())
+    {
+        int r = E.as_reg_var();
+        assert(regs.is_valid_address(r));
+        assert(regs.is_used(r));
+        assert(reg_is_pinned(r));
+        return;
+    }
+
+    if (not E.is_expression())
+        return;
+
+    check_reg_vars_are_pinned(E.head());
+    for(const auto& sub: E.sub())
+        check_reg_vars_are_pinned(sub);
+}
+
 void reg_heap::set_C(int R, closure&& C)
 {
     assert(C);
     assert(not C.exp.head().is_a<expression>());
+#ifndef NDEBUG
+    check_reg_vars_are_pinned(C.exp);
+#endif
     clear_C(R);
 
     regs.access(R).C = std::move(C);
@@ -2238,6 +2263,7 @@ void reg_heap::reclaim_used(int r)
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     assert(not has_step1(r));
     assert(not has_result1(r));
+    assert(not reg_is_pinned(r));
 
     // Clear any force counts.
     // This reg was in a tip token that could have forced it.  But no other programs will force it.
@@ -3105,13 +3131,18 @@ int reg_heap::add_identifier(const string& name)
     // if there's already an 's', then complain
     if (identifiers.count(name))
     {
+        int R = identifiers.at(name);
         if (special_prelude_symbols.count(name))
-            return identifiers.at(name);
+        {
+            assert(reg_is_pinned(R));
+            return R;
+        }
         else
             throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
     }
 
     int R = allocate();
+    mark_reg_pinned(R);
 
     identifiers[name] = R;
     return R;

@@ -47,6 +47,12 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 {
     if (remap[r]) return;
 
+    if (M.reg_is_pinned(r))
+    {
+        remap[r] = r;
+        return;
+    }
+
     const closure& C = M[r];
 
     // If we are currently evaluating a reg (i.e. its on the stack), it could have state UNEVALUTED but still have forces.
@@ -146,6 +152,15 @@ void reg_heap::trace(vector<int>& remap)
     for(int r:roots)
 	mark_reg(r);
 
+    // 3.1 Pinned regs are literal global locations.  They remain roots even if
+    //     they are temporarily absent from the identifier table roots.
+    for(auto i = regs.begin(); i != regs.end(); i++)
+    {
+        int r = i.addr();
+        if (reg_is_pinned(r))
+            mark_reg(r);
+    }
+
     // There shouldn't be any steps if there are no tokens.
     if (not get_n_tokens()) assert(steps.size() == steps.n_null());
 
@@ -226,7 +241,10 @@ void reg_heap::trace_and_reclaim_unreachable()
         int r = i.addr();
         i++;
 	if (not regs.is_marked(r))
+        {
             assert(not has_result1(r));
+            assert(not reg_is_pinned(r));
+        }
     }
 
     // Would it be faster to register a clearing callback?
@@ -238,6 +256,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 	{
             clear_back_edges_for_reg(r);
             assert(not has_result1(r));
+            assert(not reg_is_pinned(r));
             regs.reclaim_used(r);
 	}
         else
