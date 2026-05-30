@@ -141,9 +141,109 @@ expression_ref indexify(const expression_ref& E)
     return indexify(E,variables);
 }
 
+Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables)
+{
+    // Lambda expression - /\x.e
+    if (E.head().is_a<lambda>())
+    {
+	variables.push_back(E.sub()[0].as_<var>());
+	auto E2 = Runtime::make(Runtime::Lambda{runtime_indexify(E.sub()[1], variables)});
+	variables.pop_back();
+	return E2;
+    }
+
+    // Let expression
+    else if (is_let_expression(E))
+    {
+        auto& L = E.as_<let_exp>();
+	for(auto& [x,_]: L.binds)
+	    variables.push_back(x);
+
+        vector<Runtime::ExpPtr> binds;
+	for(auto& [_,e]: L.binds)
+	    binds.push_back(runtime_indexify(e, variables));
+
+        auto body = runtime_indexify(L.body, variables);
+
+	for(int i=0;i<L.binds.size();i++)
+	    variables.pop_back();
+
+	return Runtime::make(Runtime::Let{binds, body});
+    }
+
+    // case expression
+    else if (auto case_exp = parse_case_expression(E))
+    {
+        auto& [object, alts] = *case_exp;
+
+	auto object2 = runtime_indexify(object, variables);
+
+	vector<Runtime::Alt> alts2;
+	for(auto& [pattern, body]: alts)
+	{
+	    // Handle C x[1..n] -> body[i]
+
+#ifndef NDEBUG
+	    // FIXME - I guess this doesn't handle case a of b -> f(b)?
+	    if (is_var(pattern))
+		assert(is_wildcard(pattern));
+#endif
+
+	    for(int j=0;j<pattern.size();j++)
+		variables.push_back(pattern.sub()[j].as_<var>());
+
+	    auto body2 = runtime_indexify(body, variables);
+
+	    for(int j=0;j<pattern.size();j++)
+		variables.pop_back();
+
+	    alts2.push_back({pattern.head(), body2});
+	}
+
+	return Runtime::make(Runtime::Case{object2, alts2});
+    }
+
+    // Indexed Variable - This is assumed to be a free variable, so just shift it.
+    else if (E.is_index_var())
+        return Runtime::make(Runtime::Atom{index_var(E.as_index_var() + variables.size())});
+
+    // Variable
+    else if (E.is_a<var>())
+    {
+        auto& D = E.as_<var>();
+        assert(not is_wildcard(E));
+
+        int index = find_index_backward(variables, D);
+        if (index == -1)
+            throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
+        else
+            return Runtime::make(Runtime::Atom{index_var(index)});
+    }
+    // Constant or 0-arg constructor
+    else if (is_literal_type(E.type()) or is_constructor(E))
+        return Runtime::make(Runtime::Atom{E});
+    else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
+    {
+        // This handles (modifiable) with no arguments.
+        if (E.is_atomic())
+            return Runtime::make(Runtime::Atom{E});
+        else
+        {
+            vector<Runtime::ExpPtr> args;
+            for(const auto& arg: E.sub())
+                args.push_back(runtime_indexify(arg, variables));
+
+            return Runtime::make(Runtime::App{E.head(), args});
+        }
+    }
+
+    std::abort();
+}
+
 Runtime::ExpPtr runtime_indexify(const expression_ref& E)
 {
-    return Runtime::from_indexed_expression_ref(indexify(E));
+    vector<var> variables;
+    return runtime_indexify(E, variables);
 }
 
 /// Convert to using de Bruijn indices.
