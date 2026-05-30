@@ -3,6 +3,7 @@
 #include "effect.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/modifiable.H"
+#include "computation/runtime/ast.H"
 
 using std::optional;
 
@@ -11,12 +12,24 @@ expression_ref OperationArgs::arg_for_slot(int slot) const
     return current_closure().arg_for_slot(slot);
 }
 
+Runtime::Exp OperationArgs::runtime_arg_for_slot(int slot) const
+{
+    return current_closure().runtime_arg_for_slot(slot);
+}
+
 int OperationArgs::reg_for_slot(int slot) const
 {
     return current_closure().reg_for_slot(slot);
 }
 
+int OperationArgs::runtime_reg_for_slot(int slot) const
+{
+    return current_closure().runtime_reg_for_slot(slot);
+}
+
 int OperationArgs::n_args() const {return current_closure().exp.size();}
+
+int OperationArgs::runtime_n_args() const {return current_closure().runtime_n_args();}
 
 const expression_ref& OperationArgs::reference(int slot) const
 {

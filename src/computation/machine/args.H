@@ -7,6 +7,7 @@
 
 // class expression_ref;
 // class reg_heap;
+namespace Runtime { struct Exp; }
 
 class OperationArgs
 {
@@ -37,11 +38,17 @@ public:
 
     int n_args() const;
 
+    int runtime_n_args() const;
+
     const expression_ref& reference(int slot) const;
 
     expression_ref arg_for_slot(int slot) const;
 
+    Runtime::Exp runtime_arg_for_slot(int slot) const;
+
     int reg_for_slot(int slot) const;
+
+    int runtime_reg_for_slot(int slot) const;
 
     // evaluating a changeable-or-forcing reg unchangeably will return the
     // reg instead of throwing a no_context() exception.

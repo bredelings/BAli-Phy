@@ -66,6 +66,30 @@ namespace
         require(Runtime::to_expression_ref(*C.runtime_exp) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
     }
 
+    void check_runtime_closure_argument_helpers(const std::shared_ptr<module_loader>& loader)
+    {
+        auto io_module = loader->load_module("Compiler.IO");
+        auto program = std::make_unique<Program>(loader, std::vector<std::shared_ptr<Module>>{io_module}, "Compiler.Prim.seq");
+        reg_heap heap(std::move(program));
+
+        int local_reg = heap.allocate();
+        Runtime::Exp app = Runtime::apply(Runtime::RegRef(local_reg), {Runtime::Int(9)});
+        auto C = heap.preprocess(app);
+
+        require(C.runtime_n_args() == 2, "runtime closure App should report its argument count");
+        require(C.runtime_reg_for_slot(0) == local_reg, "runtime closure should map IndexVar slots through the closure environment");
+
+        auto function_arg = C.runtime_arg_for_slot(0);
+        auto function_ref = function_arg.to<Runtime::RegRef>();
+        require(bool(function_ref), "runtime closure function slot should become a RegRef");
+        require(function_ref->target == local_reg, "runtime closure function RegRef target mismatch");
+
+        auto argument_arg = C.runtime_arg_for_slot(1);
+        auto argument = argument_arg.to<Runtime::Int>();
+        require(bool(argument), "runtime closure literal argument should remain an Int");
+        require(argument->value == 9, "runtime closure literal argument value mismatch");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -206,6 +230,7 @@ int main(int argc, char** argv)
 
     check_pinned_global_translation(loader);
     check_local_reg_refs_are_captured_before_trimming(loader);
+    check_runtime_closure_argument_helpers(loader);
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();

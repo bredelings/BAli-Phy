@@ -3,6 +3,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/trim.H"
+#include "computation/runtime/ast.H"
 #include "util/string/join.H" // for join( )
 
 using std::vector;
@@ -21,6 +22,61 @@ string closure::print() const
     if (Env.size())
 	result += " {" + join(Env,", ") + "}";
     return result;
+}
+
+int closure::runtime_n_args() const
+{
+    if (runtime_exp)
+    {
+        if (auto app = runtime_exp->to<Runtime::App>())
+            return app->args.size();
+        else
+            return 0;
+    }
+    else
+        return exp.size();
+}
+
+Runtime::Exp closure::runtime_arg_for_slot(int i) const
+{
+    if (runtime_exp)
+    {
+        auto app = runtime_exp->to<Runtime::App>();
+        assert(app);
+        assert(i < app->args.size());
+
+        auto& E = app->args[i];
+        if (auto index_var = E.to<Runtime::IndexVar>())
+            return Runtime::RegRef(lookup_in_env(index_var->index));
+        else
+            return E;
+    }
+
+    auto E = arg_for_slot(i);
+    if (E.is_reg_var())
+        return Runtime::RegRef(E.as_reg_var());
+    else
+        return Runtime::ObjectValue(E);
+}
+
+int closure::runtime_reg_for_slot(int i) const
+{
+    if (runtime_exp)
+    {
+        auto app = runtime_exp->to<Runtime::App>();
+        assert(app);
+        assert(i < app->args.size());
+
+        auto& E = app->args[i];
+        if (auto index_var = E.to<Runtime::IndexVar>())
+            return lookup_in_env(index_var->index);
+        else if (auto reg_ref = E.to<Runtime::RegRef>())
+            return reg_ref->target;
+        else
+            std::abort();
+    }
+
+    return reg_for_slot(i);
 }
 
 closure get_trimmed(const closure& C)
