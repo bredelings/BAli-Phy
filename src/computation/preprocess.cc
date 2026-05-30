@@ -402,20 +402,24 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
     }, E->value);
 }
 
-closure indexify_translate_and_trim(reg_heap& heap, closure&& C)
+closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
 {
-    auto E = runtime_indexify(expression_ref(C.exp));
     E = heap.translate_refs(E, C.Env);
     E = Runtime::trim_normalize(E);
     C.exp = Runtime::to_expression_ref(E);
     return std::move(C);
 }
 
+closure indexify_translate_and_trim(reg_heap& heap, closure&& C)
+{
+    return translate_and_trim(heap, runtime_indexify(expression_ref(C.exp)), std::move(C));
+}
+
 closure reg_heap::preprocess(const Core2::Exp<>& E)
 {
     FreshVarSource source(fresh_var_state);
     auto E2 = graph_normalize(source, E);
-    return indexify_translate_and_trim(*this, closure(to_expression_ref(E2)));
+    return translate_and_trim(*this, runtime_indexify(E2), closure());
 }
 
 closure reg_heap::preprocess(const closure& C)
