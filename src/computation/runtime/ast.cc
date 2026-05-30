@@ -1,4 +1,9 @@
 #include "ast.H"
+#include <cstdlib>
+#include <iostream>
+#include <set>
+#include <string>
+#include <typeinfo>
 #include "computation/expression/apply.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
@@ -118,6 +123,27 @@ namespace Runtime
         }, pattern);
     }
 
+#ifndef NDEBUG
+    std::string raw_atom_description(const expression_ref& E)
+    {
+        std::string description = "type=" + std::to_string(int(E.type()));
+        if (E.is_object_type())
+            description += " object=" + std::string(typeid(*E.ptr()).name());
+        return description;
+    }
+
+    void trace_raw_atom(const expression_ref& E)
+    {
+        if (not std::getenv("BALI_PHY_TRACE_RUNTIME_ATOMS"))
+            return;
+
+        static std::set<std::string> seen;
+        auto description = raw_atom_description(E);
+        if (seen.insert(description).second)
+            std::cerr<<"Runtime::Atom fallback: "<<description<<"\n";
+    }
+#endif
+
     ExpPtr atom_from_expression_ref(const expression_ref& E)
     {
         if (E.is_int())
@@ -135,7 +161,12 @@ namespace Runtime
         else if (is_constructor(E))
             return make(ConstructorValue{E.as_<constructor>()});
         else
+        {
+#ifndef NDEBUG
+            trace_raw_atom(E);
+#endif
             return make(Atom{E});
+        }
     }
 
     ExpPtr from_indexed_expression_ref(const expression_ref& E)
