@@ -104,26 +104,14 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate_expression_(closure&&,bool=true) const;
 
-    /// Return the value of a particular index, computing it if necessary
-    const closure& lazy_evaluate_expression(const expression_ref&,bool=true) const;
-
     /// Return the value of a runtime expression, computing it if necessary
     const closure& lazy_evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
-
-    /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate_expression(const expression_ref&,bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
     const expression_ref& evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
 
-    /// Return the value of a particular index, computing it if necessary
-    const expression_ref& perform_expression(const expression_ref&,bool=false) const;
-
     /// Perform a runtime IO expression with an explicit closure environment.
     const expression_ref& perform_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=false) const;
-
-    /// Compute and the return the value of a function application.
-    const expression_ref& evaluate_apply(const expression_ref& f, const expression_ref& x, bool=true) const;
 
     /// Evaluate a particular reg and return the value.
     const expression_ref& evaluate_reg(int r) const;

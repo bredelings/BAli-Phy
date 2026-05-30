@@ -220,30 +220,14 @@ const expression_ref& context_ref::evaluate_expression_(closure&& C,bool ec) con
     return result;
 }
 
-const closure& context_ref::lazy_evaluate_expression(const expression_ref& E, bool ec) const
-{
-    return lazy_evaluate_expression_( preprocess(E), ec);
-}
-
 const closure& context_ref::lazy_evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
 {
     return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
-const expression_ref& context_ref::evaluate_expression(const expression_ref& E,bool ec) const
-{
-    return evaluate_expression_( preprocess(E), ec);
-}
-
 const expression_ref& context_ref::evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
 {
     return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
-}
-
-const expression_ref& context_ref::perform_expression(const expression_ref& E,bool ec) const
-{
-    expression_ref perform_io = get_expression(*(memory()->perform_io_head));
-    return evaluate_apply(perform_io, E, ec);
 }
 
 const expression_ref& context_ref::perform_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
@@ -254,18 +238,12 @@ const expression_ref& context_ref::perform_expression(Runtime::ExpPtr E, closure
     // Storing it first in a plain temp head would let a non-contingent closure
     // point at contingent environment registers created by earlier effects.
     Env.insert(Env.begin(), perform_io_reg);
-    int perform_io_index = Env.size();
+    int perform_io_index = int(Env.size());
     auto argument = shift_free_indices(E, 1);
     auto app = Runtime::make(Runtime::Let{{argument},
-                                          Runtime::make(Runtime::App{Runtime::FunctionApply{},
-                                                                     {Runtime::make(Runtime::IndexVar{perform_io_index}),
-                                                                      Runtime::make(Runtime::IndexVar{0})}})});
+                                          Runtime::make_apply(Runtime::make(Runtime::IndexVar{perform_io_index}),
+                                                              {Runtime::make(Runtime::IndexVar{0})})});
     return evaluate_expression(std::move(app), std::move(Env), ec);
-}
-
-const expression_ref& context_ref::evaluate_apply(const expression_ref& f, const expression_ref& x, bool ec) const
-{
-    return evaluate_expression( {f, x}, ec);
 }
 
 const expression_ref& context_ref::evaluate_reg(int r) const
@@ -470,10 +448,7 @@ void context_ref::perform_transition_kernel(int s)
     int r = e.reg_for_slot(1);
     assert(memory()->reg_is_constant(r));
 
-    auto E = Runtime::make(Runtime::Let{{Runtime::make(Runtime::IntLiteral{get_context_index()})},
-                                        Runtime::make(Runtime::App{Runtime::FunctionApply{},
-                                                                   {Runtime::make(Runtime::IndexVar{1}),
-                                                                    Runtime::make(Runtime::IndexVar{0})}})});
+    auto E = Runtime::make_apply_with_bound_args(0, {Runtime::make(Runtime::IntLiteral{get_context_index()})});
     perform_expression(E, {r});
 }
 
@@ -507,16 +482,10 @@ void context_ref::perform_logger(int s, long iteration)
     int r = e.reg_for_slot(0);
     assert(memory()->reg_is_constant(r));
 
-    auto E = Runtime::make(Runtime::Let{{Runtime::make(Runtime::IntLiteral{int(iteration)}),
-                                         Runtime::make(Runtime::DoubleLiteral{double(prior().log())}),
-                                         Runtime::make(Runtime::DoubleLiteral{double(likelihood().log())}),
-                                         Runtime::make(Runtime::DoubleLiteral{double(probability().log())})},
-                                        Runtime::make(Runtime::App{Runtime::FunctionApply{},
-                                                                   {Runtime::make(Runtime::IndexVar{4}),
-                                                                    Runtime::make(Runtime::IndexVar{3}),
-                                                                    Runtime::make(Runtime::IndexVar{2}),
-                                                                    Runtime::make(Runtime::IndexVar{1}),
-                                                                    Runtime::make(Runtime::IndexVar{0})}})});
+    auto E = Runtime::make_apply_with_bound_args(0, {Runtime::make(Runtime::IntLiteral{int(iteration)}),
+                                                     Runtime::make(Runtime::DoubleLiteral{double(prior().log())}),
+                                                     Runtime::make(Runtime::DoubleLiteral{double(likelihood().log())}),
+                                                     Runtime::make(Runtime::DoubleLiteral{double(probability().log())})});
     perform_expression(E, {r}, true);
 }
 

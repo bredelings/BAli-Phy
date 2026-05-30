@@ -191,6 +191,9 @@ namespace Runtime
     ExpPtr make(const App&);
     ExpPtr make(const Trim&);
 
+    ExpPtr make_apply(ExpPtr, std::vector<ExpPtr>);
+    ExpPtr make_apply_with_bound_args(int, std::vector<ExpPtr>);
+
     ExpPtr from_indexed_expression_ref(const expression_ref&);
     ExpPtr atom_from_expression_ref(const expression_ref&);
 

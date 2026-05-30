@@ -38,6 +38,23 @@ namespace Runtime
     ExpPtr make(const App& a)    { return std::make_shared<Exp>(a); }
     ExpPtr make(const Trim& t)   { return std::make_shared<Exp>(t); }
 
+    ExpPtr make_apply(ExpPtr function, vector<ExpPtr> args)
+    {
+        args.insert(args.begin(), std::move(function));
+        return make(App{FunctionApply{}, std::move(args)});
+    }
+
+    ExpPtr make_apply_with_bound_args(int function_index, vector<ExpPtr> args)
+    {
+        vector<ExpPtr> app_args;
+        app_args.push_back(make(IndexVar{function_index + int(args.size())}));
+
+        for(int i = int(args.size()) - 1; i >= 0; --i)
+            app_args.push_back(make(IndexVar{i}));
+
+        return make(Let{std::move(args), make(App{FunctionApply{}, std::move(app_args)})});
+    }
+
     static Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         if (call_conv == "bpcall" or call_conv == "trcall")

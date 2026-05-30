@@ -85,7 +85,21 @@ context_ptr context_ptr::operator[](int i) const
 
 expression_ref context_ptr::operator()(const expression_ref& x) const
 {
-    return C.evaluate_apply(reg_var(reg), x);
+    int arg = C.memory()->push_temp_head(C.preprocess(x));
+
+    try
+    {
+        auto app = Runtime::make_apply(Runtime::make(Runtime::IndexVar{1}), {Runtime::make(Runtime::IndexVar{0})});
+        const expression_ref result = C.evaluate_expression(std::move(app), {reg, arg});
+
+        C.memory()->pop_temp_head();
+        return result;
+    }
+    catch (...)
+    {
+        C.memory()->pop_temp_head();
+        throw;
+    }
 }
 
 context_ptr context_ptr::list_element(int index) const
@@ -221,4 +235,3 @@ context_ptr::context_ptr(const context_ref& c, int r1)
     // Apparently this does not look through index-var-with-force, but incremental_evaluate(i) does:
     // int r2 = C.incremental_evaluate_unchangeable(r1);
 }
-
