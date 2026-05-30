@@ -351,18 +351,26 @@ closure trim_normalize(closure&& C)
     return std::move(C);
 }
 
+closure indexify_and_trim(closure&& C)
+{
+    auto E = runtime_indexify(expression_ref(C.exp));
+    E = Runtime::trim_normalize(E);
+    C.exp = Runtime::to_expression_ref(E);
+    return std::move(C);
+}
+
 closure reg_heap::preprocess(const Core2::Exp<>& E)
 {
     FreshVarSource source(fresh_var_state);
     auto E2 = graph_normalize(source, E);
-    return trim_normalize( indexify( translate_refs( closure(to_expression_ref(E2)) ) ) );
+    return indexify_and_trim( translate_refs( closure(to_expression_ref(E2)) ) );
 }
 
 closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
     //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-    return trim_normalize( indexify( graph_normalize( fresh_var_state, translate_refs( closure(C) ) ) ) );
+    return indexify_and_trim( graph_normalize( fresh_var_state, translate_refs( closure(C) ) ) );
 }
 
 int reg_heap::reg_for_id(const var& x)
