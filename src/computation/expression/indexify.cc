@@ -254,7 +254,7 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
             for(const auto& arg: E.sub())
                 args.push_back(runtime_indexify(arg, variables));
 
-            return Runtime::make(Runtime::App{E.head(), args});
+            return Runtime::make(Runtime::App{Runtime::app_head_from_expression_ref(E.head()), args});
         }
     }
 
@@ -454,7 +454,7 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
         auto head = runtime_indexify(A->head, variables);
         auto arg = runtime_indexify(A->arg, variables);
 
-        return Runtime::make(Runtime::App{Apply(), {head, arg}});
+        return Runtime::make(Runtime::App{Runtime::FunctionApply{}, {head, arg}});
     }
     // Let expression
     else if (auto L = E.to_let())
@@ -515,7 +515,7 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
             args.push_back(runtime_indexify(arg, variables));
 
         auto c = constructor(C->head, C->args.size());
-        return Runtime::make(Runtime::App{c, args});
+        return Runtime::make(Runtime::App{Runtime::ConstructorApp{c}, args});
     }
     else if (auto B = E.to_builtinOp())
     {
@@ -527,13 +527,13 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
         {
             Operation O( (o_operation_fn)B->op, B->lib_name+":"+B->func_name);
 
-            return Runtime::make(Runtime::App{O, args});
+            return Runtime::make(Runtime::App{Runtime::OperationApp{O}, args});
         }
         else if (B->call_conv == "ecall")
         {
             Operation O( (e_operation_fn)B->op, B->lib_name+":"+B->func_name);
 
-            return Runtime::make(Runtime::App{O, args});
+            return Runtime::make(Runtime::App{Runtime::OperationApp{O}, args});
         }
         else
             throw myexception()<<"Unrecognized calling convention '"<<B->call_conv<<"'";

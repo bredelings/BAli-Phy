@@ -4,8 +4,10 @@
 #include <memory>
 #include <variant>
 #include <vector>
+#include "computation/expression/constructor.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
+#include "computation/operation.H"
 
 namespace Runtime
 {
@@ -56,9 +58,29 @@ namespace Runtime
         std::vector<Alt> alts;
     };
 
-    struct App
+    struct FunctionApply
+    { };
+
+    struct ConstructorApp
+    {
+        constructor head;
+    };
+
+    struct OperationApp
+    {
+        Operation head;
+    };
+
+    struct RawAppHead
     {
         expression_ref head;
+    };
+
+    using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp, RawAppHead>;
+
+    struct App
+    {
+        AppHead head;
         std::vector<ExpPtr> args;
     };
 
@@ -94,7 +116,10 @@ namespace Runtime
     ExpPtr make(const Trim&);
 
     ExpPtr from_indexed_expression_ref(const expression_ref&);
+    AppHead app_head_from_expression_ref(const expression_ref&);
+
     expression_ref to_expression_ref(const ExpPtr&);
+    expression_ref to_expression_ref(const AppHead&);
 }
 
 #endif

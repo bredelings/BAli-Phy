@@ -1,4 +1,5 @@
 #include "ast.H"
+#include "computation/expression/apply.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/index_var.H"
@@ -25,6 +26,37 @@ namespace Runtime
     ExpPtr make(const Case& c)   { return std::make_shared<Exp>(c); }
     ExpPtr make(const App& a)    { return std::make_shared<Exp>(a); }
     ExpPtr make(const Trim& t)   { return std::make_shared<Exp>(t); }
+
+    AppHead app_head_from_expression_ref(const expression_ref& head)
+    {
+        if (head.is_a<Apply>())
+            return FunctionApply{};
+        else if (head.is_a<constructor>())
+            return ConstructorApp{head.as_<constructor>()};
+        else if (head.is_a<Operation>())
+            return OperationApp{head.as_<Operation>()};
+        else
+            return RawAppHead{head};
+    }
+
+    expression_ref to_expression_ref(const AppHead& head)
+    {
+        return std::visit([](const auto& h) -> expression_ref
+        {
+            using T = std::decay_t<decltype(h)>;
+
+            if constexpr (std::is_same_v<T, FunctionApply>)
+                return Apply();
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+                return h.head;
+            else if constexpr (std::is_same_v<T, OperationApp>)
+                return h.head;
+            else if constexpr (std::is_same_v<T, RawAppHead>)
+                return h.head;
+            else
+                std::abort();
+        }, head);
+    }
 
     ExpPtr from_indexed_expression_ref(const expression_ref& E)
     {
@@ -80,7 +112,7 @@ namespace Runtime
             for(const auto& arg: E.sub())
                 args.push_back(from_indexed_expression_ref(arg));
 
-            return make(App{E.head(), args});
+            return make(App{app_head_from_expression_ref(E.head()), args});
         }
 
         throw myexception()<<"Cannot convert expression_ref '"<<E<<"' to Runtime::Exp";
@@ -134,7 +166,7 @@ namespace Runtime
                 for(const auto& arg: e.args)
                     args.push_back(to_expression_ref(arg));
 
-                return expression_ref(e.head, args);
+                return expression_ref(to_expression_ref(e.head), args);
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
