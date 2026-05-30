@@ -567,6 +567,48 @@ namespace Runtime
 #endif
     }
 
+    void check_no_reg_refs(const ExpPtr& E)
+    {
+#ifndef NDEBUG
+        check_invariants(E);
+
+        std::visit([](const auto& e)
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, RegRef>)
+            {
+                std::abort();
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                check_no_reg_refs(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                for(const auto& bind: e.binds)
+                    check_no_reg_refs(bind);
+                check_no_reg_refs(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                check_no_reg_refs(e.object);
+                for(const auto& alt: e.alts)
+                    check_no_reg_refs(alt.body);
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                for(const auto& arg: e.args)
+                    check_no_reg_refs(arg);
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                check_no_reg_refs(e.body);
+            }
+        }, E->value);
+#endif
+    }
+
     void check_translated(const ExpPtr& E)
     {
 #ifndef NDEBUG

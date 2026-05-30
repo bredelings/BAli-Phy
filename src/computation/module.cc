@@ -2414,6 +2414,7 @@ map<Core2::Var<>,Runtime::ExpPtr> CompiledModule::prepared_code_defs() const
         if (name() == get_module_name(x.name))
         {
             assert(rhs);
+            Runtime::check_no_reg_refs(rhs);
 
             code[x] = rhs;
         }
@@ -2428,7 +2429,10 @@ void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
 
     FreshVarSource source(*fresh_var_state_);
     for(const auto& [x,rhs]: decls)
+    {
         prepared_value_decls[x] = runtime_prepare_for_translation(source, rhs);
+        Runtime::check_no_reg_refs(prepared_value_decls[x]);
+    }
 }
 
 const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const

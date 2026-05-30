@@ -211,6 +211,7 @@ namespace Runtime
     std::ostream& operator<<(std::ostream&, const Exp&);
 
     void check_invariants(const ExpPtr&);
+    void check_no_reg_refs(const ExpPtr&);
     void check_translated(const ExpPtr&);
 
     template <class Archive>
