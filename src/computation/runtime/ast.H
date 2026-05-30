@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <memory>
 #include <iosfwd>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -34,6 +35,7 @@ namespace Runtime
     struct String;
     struct Integer;
     struct Constructor;
+    struct ObjectValue;
     struct IndexVar;
     struct GlobalVar;
     struct RegRef;
@@ -53,6 +55,7 @@ namespace Runtime
             std::shared_ptr<const String>,
             std::shared_ptr<const Integer>,
             std::shared_ptr<const Constructor>,
+            std::shared_ptr<const ObjectValue>,
             std::shared_ptr<const IndexVar>,
             std::shared_ptr<const GlobalVar>,
             std::shared_ptr<const RegRef>,
@@ -73,6 +76,7 @@ namespace Runtime
         Exp(String);
         Exp(Integer);
         Exp(Constructor);
+        Exp(ObjectValue);
         Exp(IndexVar);
         Exp(GlobalVar);
         Exp(RegRef);
@@ -238,6 +242,26 @@ namespace Runtime
             int arity;
             ar(name, arity);
             value = constructor(name, arity);
+        }
+    };
+
+    struct ObjectValue
+    {
+        expression_ref value;
+
+        ObjectValue() = default;
+        ObjectValue(expression_ref v):value(std::move(v)) {}
+
+        template <class Archive>
+        void save(Archive&) const
+        {
+            throw std::runtime_error("Runtime::ObjectValue is not serializable");
+        }
+
+        template <class Archive>
+        void load(Archive&)
+        {
+            throw std::runtime_error("Runtime::ObjectValue is not serializable");
         }
     };
 

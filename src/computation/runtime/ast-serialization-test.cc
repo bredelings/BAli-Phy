@@ -62,6 +62,8 @@ namespace
         auto C = heap.preprocess(local_let);
         require(C.Env.size() == 1, "preprocess should capture one local RegRef");
         require(C.Env[0] == local_reg, "preprocess captured the wrong local RegRef");
+        require(bool(C.runtime_exp), "preprocess should retain a runtime AST sidecar");
+        require(Runtime::to_expression_ref(*C.runtime_exp) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
     }
 
     void check_shift_free_indices()
@@ -147,6 +149,27 @@ namespace
                                                          Runtime::Int(1))});
         check_archive_roundtrip(case_);
     }
+
+    void check_object_value_bridge()
+    {
+        expression_ref legacy = ::String("legacy");
+        Runtime::Exp value = Runtime::ObjectValue(legacy);
+
+        require(Runtime::print(value) == legacy.print(), "ObjectValue print should delegate to its expression_ref value");
+        require(Runtime::to_expression_ref(value) == legacy, "ObjectValue should convert back to its expression_ref value");
+
+        bool threw = false;
+        try
+        {
+            archive_roundtrip(value);
+        }
+        catch (const std::runtime_error&)
+        {
+            threw = true;
+        }
+
+        require(threw, "ObjectValue should not serialize into compiled runtime archives");
+    }
 }
 
 int main(int argc, char** argv)
@@ -186,4 +209,5 @@ int main(int argc, char** argv)
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();
+    check_object_value_bridge();
 }

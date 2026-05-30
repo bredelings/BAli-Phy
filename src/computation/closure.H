@@ -3,9 +3,12 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
+
+namespace Runtime { struct Exp; }
 
 struct closure
 {
@@ -13,6 +16,12 @@ struct closure
   
     /// The expression
     expression_ref exp;
+    /// Runtime AST sidecar for closures that were created from runtime code.
+    ///
+    /// The VM still executes exp.  This field is deliberately optional during
+    /// the transition so expression_ref-only value paths can remain unchanged
+    /// while individual consumers move to the structured runtime AST.
+    std::shared_ptr<const Runtime::Exp> runtime_exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
 
@@ -76,6 +85,7 @@ struct closure
     closure& operator=(closure&& C) noexcept
 	{
 	    exp = C.exp;
+	    runtime_exp = std::move(C.runtime_exp);
 	    Env = std::move(C.Env);
 	    return *this;
 	}
@@ -87,6 +97,7 @@ struct closure
 
     closure(closure&& C) noexcept
 	:exp(C.exp),
+         runtime_exp(std::move(C.runtime_exp)),
 	 Env( std::move(C.Env) )
 	{ }
 

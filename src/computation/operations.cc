@@ -111,6 +111,7 @@ closure apply_op(OperationArgs& Args)
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
     C.exp = peel_n_lambdas(C.exp, n_args_applied);
+    C.runtime_exp.reset();
     for(int i=0;i<n_args_applied;i++)
     {
 	int arg = Args.current_closure().reg_for_slot(i+1);
@@ -315,6 +316,7 @@ closure let_op(OperationArgs& Args)
 	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
 
 	C.exp = L.body;
+        C.runtime_exp.reset();
 	do_trim(C);
     }
     while (C.exp.head().type() == type_constant::let2_type);

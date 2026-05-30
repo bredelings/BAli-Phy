@@ -11,6 +11,7 @@ using std::string;
 void closure::clear()
 {
     exp.clear();
+    runtime_exp.reset();
     Env.clear();
 }
 
@@ -36,6 +37,7 @@ void do_trim(closure& C)
 	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
 	C.exp = C.exp.sub()[1];
+        C.runtime_exp.reset();
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)
@@ -70,6 +72,6 @@ closure trim_unnormalize(const closure& C)
 {
     closure C2 = C;
     C2.exp = trim_unnormalize(C2.exp);
+    C2.runtime_exp.reset();
     return C2;
 }
-

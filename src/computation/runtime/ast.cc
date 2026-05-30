@@ -38,6 +38,7 @@ namespace Runtime
     Exp::Exp(String node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Integer node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Constructor node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(ObjectValue node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(IndexVar node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(GlobalVar node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(RegRef node):value(make_exp_value(std::move(node))) {}
@@ -74,10 +75,11 @@ namespace Runtime
                           std::is_same_v<T, Double> or
                           std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
-                          std::is_same_v<T, String> or
-                          std::is_same_v<T, Integer> or
-                          std::is_same_v<T, Constructor> or
-                          std::is_same_v<T, GlobalVar> or
+                              std::is_same_v<T, String> or
+                              std::is_same_v<T, Integer> or
+                              std::is_same_v<T, Constructor> or
+                              std::is_same_v<T, ObjectValue> or
+                              std::is_same_v<T, GlobalVar> or
                           std::is_same_v<T, RegRef>)
             {
                 return e;
@@ -238,6 +240,10 @@ namespace Runtime
             {
                 return e.value;
             }
+            else if constexpr (std::is_same_v<T, ObjectValue>)
+            {
+                return e.value;
+            }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 return index_var(e.index);
@@ -310,6 +316,7 @@ namespace Runtime
                    std::is_same_v<T, String> or
                    std::is_same_v<T, Integer> or
                    std::is_same_v<T, Constructor> or
+                   std::is_same_v<T, ObjectValue> or
                    std::is_same_v<T, IndexVar> or
                    std::is_same_v<T, GlobalVar> or
                    std::is_same_v<T, RegRef>;
@@ -378,6 +385,10 @@ namespace Runtime
                 return e.value.str();
             }
             else if constexpr (std::is_same_v<T, Constructor>)
+            {
+                return e.value.print();
+            }
+            else if constexpr (std::is_same_v<T, ObjectValue>)
             {
                 return e.value.print();
             }
@@ -495,7 +506,8 @@ namespace Runtime
                           std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
-                          std::is_same_v<T, Integer>)
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, ObjectValue>)
             {
             }
             else if constexpr (std::is_same_v<T, Constructor>)
