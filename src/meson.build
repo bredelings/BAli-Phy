@@ -145,7 +145,7 @@ runtime_ast_serialization_test = executable('runtime-ast-serialization-test',
                                             link_with: [libcomputation, libcommon, libmcon, libutil],
                                             export_dynamic: true)
 
-test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path])
+test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])
