@@ -46,9 +46,24 @@ namespace Runtime
         ExpPtr body;
     };
 
+    struct WildcardPattern
+    { };
+
+    struct ConstructorPattern
+    {
+        constructor head;
+    };
+
+    struct RawPattern
+    {
+        expression_ref value;
+    };
+
+    using Pattern = std::variant<WildcardPattern, ConstructorPattern, RawPattern>;
+
     struct Alt
     {
-        expression_ref pattern;
+        Pattern pattern;
         ExpPtr body;
     };
 
@@ -116,9 +131,13 @@ namespace Runtime
     ExpPtr make(const Trim&);
 
     ExpPtr from_indexed_expression_ref(const expression_ref&);
+    Pattern pattern_from_expression_ref(const expression_ref&);
+    int pattern_arity(const Pattern&);
+
     AppHead app_head_from_expression_ref(const expression_ref&);
 
     expression_ref to_expression_ref(const ExpPtr&);
+    expression_ref to_expression_ref(const Pattern&);
     expression_ref to_expression_ref(const AppHead&);
 }
 

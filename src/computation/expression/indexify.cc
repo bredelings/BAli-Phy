@@ -210,7 +210,7 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
 	    for(int j=0;j<pattern.size();j++)
 		variables.pop_back();
 
-	    alts2.push_back({pattern.head(), body2});
+	    alts2.push_back({Runtime::pattern_from_expression_ref(pattern.head()), body2});
 	}
 
 	return Runtime::make(Runtime::Case{object2, alts2});
@@ -482,17 +482,17 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
         vector<Runtime::Alt> alts2;
         for(auto& [pattern, body]: C->alts)
         {
-            expression_ref pattern2;
+            Runtime::Pattern pattern2;
             Runtime::ExpPtr body2;
 
             if (pattern.is_wildcard_pat())
             {
-                pattern2 = var(-1);
+                pattern2 = Runtime::WildcardPattern{};
                 body2 = runtime_indexify(body, variables);
             }
             else
             {
-                pattern2 = constructor(*pattern.head, pattern.args.size());
+                pattern2 = Runtime::ConstructorPattern{constructor(*pattern.head, pattern.args.size())};
 
                 for(auto& arg: pattern.args)
                     variables.push_back(arg);

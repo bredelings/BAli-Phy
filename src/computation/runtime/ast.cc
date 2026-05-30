@@ -58,6 +58,58 @@ namespace Runtime
         }, head);
     }
 
+    Pattern pattern_from_expression_ref(const expression_ref& pattern)
+    {
+        if (is_wildcard(pattern))
+            return WildcardPattern{};
+        else if (pattern.head().is_a<constructor>())
+            return ConstructorPattern{pattern.head().as_<constructor>()};
+        else
+            return RawPattern{pattern};
+    }
+
+    int expression_pattern_arity(const expression_ref& pattern)
+    {
+        if (pattern.head().is_a<constructor>())
+            return pattern.head().as_<constructor>().n_args();
+        else
+            return 0;
+    }
+
+    int pattern_arity(const Pattern& pattern)
+    {
+        return std::visit([](const auto& p) -> int
+        {
+            using T = std::decay_t<decltype(p)>;
+
+            if constexpr (std::is_same_v<T, WildcardPattern>)
+                return 0;
+            else if constexpr (std::is_same_v<T, ConstructorPattern>)
+                return p.head.n_args();
+            else if constexpr (std::is_same_v<T, RawPattern>)
+                return expression_pattern_arity(p.value);
+            else
+                std::abort();
+        }, pattern);
+    }
+
+    expression_ref to_expression_ref(const Pattern& pattern)
+    {
+        return std::visit([](const auto& p) -> expression_ref
+        {
+            using T = std::decay_t<decltype(p)>;
+
+            if constexpr (std::is_same_v<T, WildcardPattern>)
+                return var(-1);
+            else if constexpr (std::is_same_v<T, ConstructorPattern>)
+                return p.head;
+            else if constexpr (std::is_same_v<T, RawPattern>)
+                return p.value;
+            else
+                std::abort();
+        }, pattern);
+    }
+
     ExpPtr from_indexed_expression_ref(const expression_ref& E)
     {
         if (not E)
@@ -79,7 +131,7 @@ namespace Runtime
         {
             vector<Alt> alts;
             for(const auto& alt: C->alts)
-                alts.push_back({alt.pattern, from_indexed_expression_ref(alt.body)});
+                alts.push_back({pattern_from_expression_ref(alt.pattern), from_indexed_expression_ref(alt.body)});
 
             return make(Case{from_indexed_expression_ref(C->object), alts});
         }
@@ -156,7 +208,7 @@ namespace Runtime
             {
                 Core::Alts alts;
                 for(const auto& alt: e.alts)
-                    alts.push_back({alt.pattern, to_expression_ref(alt.body)});
+                    alts.push_back({to_expression_ref(alt.pattern), to_expression_ref(alt.body)});
 
                 return make_case_expression(to_expression_ref(e.object), alts);
             }

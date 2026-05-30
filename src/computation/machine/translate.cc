@@ -1,19 +1,7 @@
 #include "graph_register.H"
-#include "computation/expression/constructor.H"
 #include "computation/runtime/ast.H"
 
 using std::vector;
-
-namespace
-{
-int pattern_arity(const expression_ref& pattern)
-{
-    if (pattern.head().is_a<constructor>())
-        return pattern.head().as_<constructor>().n_args();
-    else
-        return 0;
-}
-}
 
 Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_t& Env, int depth)
 {
@@ -55,7 +43,7 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
         {
             vector<Runtime::Alt> alts;
             for(const auto& alt: e.alts)
-                alts.push_back({alt.pattern, translate_refs(alt.body, Env, depth + pattern_arity(alt.pattern))});
+                alts.push_back({alt.pattern, translate_refs(alt.body, Env, depth + Runtime::pattern_arity(alt.pattern))});
 
             return Runtime::make(Runtime::Case{translate_refs(e.object, Env, depth), alts});
         }

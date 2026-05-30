@@ -1,6 +1,4 @@
 #include "trim.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/index_var.H"
 
 using std::vector;
 
@@ -46,14 +44,6 @@ namespace Runtime
         assert(v3.size() >= v1.size());
         assert(v3.size() >= v2.size());
         return v3;
-    }
-
-    int pattern_arity(const expression_ref& pattern)
-    {
-        if (pattern.head().is_a<constructor>())
-            return pattern.head().as_<constructor>().n_args();
-        else
-            return 0;
     }
 
     vector<int> get_free_index_vars(const ExpPtr& E)
