@@ -3,6 +3,7 @@
 #include <tuple>
 #include <fstream>
 #include "computation/module.H"
+#include "computation/preprocess.H"
 #include "util/myexception.H"
 #include "util/variant.H"
 #include "util/io.H"
@@ -2421,9 +2422,33 @@ map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
     return code;
 }
 
+map<Core2::Var<>,Runtime::ExpPtr> CompiledModule::prepared_code_defs() const
+{
+    map<Core2::Var<>,Runtime::ExpPtr> code;
+
+    for(const auto& [x,rhs]: prepared_value_decls)
+    {
+        assert(is_qualified_symbol(x.name));
+
+        if (name() == get_module_name(x.name))
+        {
+            assert(rhs);
+
+            code[x] = rhs;
+        }
+    }
+
+    return code;
+}
+
 void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
 {
     value_decls = decls;
+    prepared_value_decls.clear();
+
+    FreshVarSource source(*fresh_var_state_);
+    for(const auto& [x,rhs]: value_decls)
+        prepared_value_decls[x] = runtime_prepare_for_translation(source, rhs);
 }
 
 const_symbol_ptr CompiledModule::lookup_local_symbol(const std::string& symbol_name) const
@@ -2538,4 +2563,3 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 
     m->clear_symbol_table();
 }
-

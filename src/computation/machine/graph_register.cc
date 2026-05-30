@@ -3168,10 +3168,10 @@ void reg_heap::allocate_identifiers_for_program()
     for(auto& M: *program)
     {
         // 2.1 Pre-allocate locations for all symbols in the module.
-        for(const auto& [x, _]: M->code_defs())
+        for(const auto& [x, _]: M->prepared_code_defs())
             add_identifier(x.name);
 
-        for(const auto& [x, body]: M->code_defs())
+        for(const auto& [x, body]: M->prepared_code_defs())
         {
             // get the root for each identifier
             auto loc = identifiers.find(x.name);
@@ -3180,12 +3180,12 @@ void reg_heap::allocate_identifiers_for_program()
 
 #ifdef DEBUG_OPTIMIZE
             std::cerr<<"     "<<x<<" := "<<body<<"\n\n";
-            std::cerr<<"     "<<x<<" := "<<preprocess(body).exp<<"\n\n\n\n";
+            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).exp<<"\n\n\n\n";
 #endif
 
             // load the body into the machine
             assert(R != -1);
-            set_C(R, preprocess(body) );
+            set_C(R, preprocess_prepared(body) );
         }
 
         M->clear_code();

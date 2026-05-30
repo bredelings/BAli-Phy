@@ -274,6 +274,7 @@ public:
     void clear_call_for_reg(int R);
     void clear_C(int R);
     void set_C(int R, closure&& C);
+    closure preprocess_prepared(Runtime::ExpPtr E, closure::Env_t Env={});
     int allocate();
     int allocate_reg_from_step(int s);
     int allocate_reg_from_step(int s, closure&& C);

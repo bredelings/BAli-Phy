@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include "computation/preprocess.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
 #include "operations.H"
@@ -325,7 +326,30 @@ CDecls graph_normalize(FreshVarState& state, const CDecls& decls)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
+Runtime::ExpPtr runtime_prepare_for_translation(FreshVarSource& source, const Core2::Exp<>& E)
+{
+    auto E2 = graph_normalize(source, E);
+    auto R = runtime_indexify(E2);
+    Runtime::check_invariants(R);
+    R = Runtime::trim_normalize(R);
+    Runtime::check_invariants(R);
+    return R;
+}
 
+Runtime::ExpPtr runtime_prepare_for_translation(FreshVarState& state, const Core2::Exp<>& E)
+{
+    FreshVarSource source(state);
+    return runtime_prepare_for_translation(source, E);
+}
+
+closure translate_prepared(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
+{
+    Runtime::check_invariants(E);
+    E = heap.translate_refs(E, C.Env);
+    Runtime::check_translated(E);
+    C.exp = Runtime::to_expression_ref(E);
+    return std::move(C);
+}
 
 closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
 {
@@ -333,11 +357,7 @@ closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
     E = heap.capture_local_reg_refs(E, C.Env);
     Runtime::check_invariants(E);
     E = Runtime::trim_normalize(E);
-    Runtime::check_invariants(E);
-    E = heap.translate_refs(E, C.Env);
-    Runtime::check_translated(E);
-    C.exp = Runtime::to_expression_ref(E);
-    return std::move(C);
+    return translate_prepared(heap, E, std::move(C));
 }
 
 closure reg_heap::preprocess(Runtime::ExpPtr E, closure::Env_t Env)
@@ -347,11 +367,16 @@ closure reg_heap::preprocess(Runtime::ExpPtr E, closure::Env_t Env)
     return translate_and_trim(*this, E, std::move(C));
 }
 
+closure reg_heap::preprocess_prepared(Runtime::ExpPtr E, closure::Env_t Env)
+{
+    closure C;
+    C.Env = std::move(Env);
+    return translate_prepared(*this, E, std::move(C));
+}
+
 closure reg_heap::preprocess(const Core2::Exp<>& E)
 {
-    FreshVarSource source(fresh_var_state);
-    auto E2 = graph_normalize(source, E);
-    return translate_and_trim(*this, runtime_indexify(E2), closure());
+    return preprocess_prepared(runtime_prepare_for_translation(fresh_var_state, E));
 }
 
 int reg_heap::reg_for_id(const var& x)

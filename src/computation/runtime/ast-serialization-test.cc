@@ -41,6 +41,22 @@ namespace
         assert(local_env.size() == 1);
         assert(local_env[0] == local_reg);
     }
+
+    void check_local_reg_refs_are_captured_before_trimming(const std::shared_ptr<module_loader>& loader)
+    {
+        auto io_module = loader->load_module("Compiler.IO");
+        auto program = std::make_unique<Program>(loader, std::vector<std::shared_ptr<Module>>{io_module}, "Compiler.Prim.seq");
+        reg_heap heap(std::move(program));
+
+        int local_reg = heap.allocate();
+        auto bind = Runtime::make(Runtime::RegRef{local_reg});
+        auto body = Runtime::make(Runtime::IndexVar{0});
+        auto local_let = Runtime::make(Runtime::Let{{bind}, body});
+
+        auto C = heap.preprocess(local_let);
+        assert(C.Env.size() == 1);
+        assert(C.Env[0] == local_reg);
+    }
 }
 
 int main(int argc, char** argv)
@@ -76,4 +92,5 @@ int main(int argc, char** argv)
     assert(before_ref.print() == after_ref.print());
 
     check_pinned_global_translation(loader);
+    check_local_reg_refs_are_captured_before_trimming(loader);
 }

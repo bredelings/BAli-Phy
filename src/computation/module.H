@@ -10,6 +10,7 @@
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/extensions.H"
 #include "computation/core/ast.H"
+#include "computation/runtime/ast.H"
 #include "computation/optimization/simplifier_options.H"
 #include "computation/fresh_vars.H"
 #include "computation/instance_info.H"
@@ -239,6 +240,8 @@ class CompiledModule
 
     Core2::Decls<> value_decls;
 
+    std::map<Core2::Var<>, Runtime::ExpPtr> prepared_value_decls;
+
     std::multimap<std::string, const_symbol_ptr> aliases;
 
     std::map<std::string, symbol_ptr> symbols;
@@ -270,7 +273,7 @@ public:
     void clear_symbol_table();
 
     // Now discard the code -- what is left?
-    void clear_code() { value_decls.clear(); }
+    void clear_code() { value_decls.clear(); prepared_value_decls.clear(); }
 
     const FreshVarState& fresh_var_state() const {return *fresh_var_state_;}
 
@@ -312,12 +315,14 @@ public:
     // Why do we have code that isn't for this module?
     std::map<Core2::Var<>,Core2::Exp<>> code_defs() const;
 
+    std::map<Core2::Var<>,Runtime::ExpPtr> prepared_code_defs() const;
+
     void inflate(const Program& P);
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar( modid, dependencies_, value_decls, symbols, types, exported_symbols_, exported_types_ );
+	ar( modid, dependencies_, value_decls, prepared_value_decls, symbols, types, exported_symbols_, exported_types_ );
         ar( aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_ );
