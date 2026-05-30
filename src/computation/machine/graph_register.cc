@@ -2280,14 +2280,6 @@ int reg_heap::add_compute_expression(const Core2::Exp<>& E)
     return heads.size() - 1;
 }
 
-int reg_heap::add_compute_expression(const expression_ref& E)
-{
-    auto E2 = graph_normalize(fresh_var_state, E);
-    allocate_head(preprocess(runtime_indexify(E2)));
-
-    return heads.size() - 1;
-}
-
 int reg_heap::add_compute_closure(closure&& C)
 {
     allocate_head(std::move(C));

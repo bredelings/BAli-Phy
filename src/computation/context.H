@@ -70,8 +70,6 @@ public:
 
     const closure& operator[](int i) const;
 
-    closure preprocess(const expression_ref& E) const;
-
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
     bool reg_is_modifiable(int p) const;
@@ -150,9 +148,6 @@ public:
 
     std::set<int> tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>&);
     std::set<int> find_affected_sampling_events(const std::function<void(context_ref&)>&);
-
-    /// Add a literal expression that MAY be reduced
-    int add_compute_expression(const expression_ref& e);
 
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);

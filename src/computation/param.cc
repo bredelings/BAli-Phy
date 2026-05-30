@@ -83,25 +83,6 @@ context_ptr context_ptr::operator[](int i) const
     return {C, r};
 }
 
-expression_ref context_ptr::operator()(const expression_ref& x) const
-{
-    int arg = C.memory()->push_temp_head(C.preprocess(x));
-
-    try
-    {
-        auto app = Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)});
-        const expression_ref result = C.evaluate_expression(std::move(app), {reg, arg});
-
-        C.memory()->pop_temp_head();
-        return result;
-    }
-    catch (...)
-    {
-        C.memory()->pop_temp_head();
-        throw;
-    }
-}
-
 context_ptr context_ptr::list_element(int index) const
 {
     context_ptr L = result();

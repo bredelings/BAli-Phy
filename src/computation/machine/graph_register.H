@@ -662,7 +662,6 @@ public:
 
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head(closure&& C);
-    int add_compute_expression(const expression_ref&);
     int add_compute_expression(const Core2::Exp<>&);
     int add_compute_closure(closure&&);
 
@@ -810,12 +809,6 @@ public:
     reg_heap(std::unique_ptr<Program> P);
     reg_heap(const Program& P);
 };
-
-expression_ref graph_normalize(FreshVarState&, const expression_ref& R);
-CDecls graph_normalize(FreshVarState&, const CDecls&);
-
-expression_ref graph_normalize(FreshVarSource&, const expression_ref& R);
-CDecls graph_normalize(FreshVarSource&, CDecls);
 
 void write_dot_graph(const reg_heap& C, std::ostream& o);
 

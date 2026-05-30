@@ -117,12 +117,6 @@ const std::vector<int>& context_ref::heads() const {return memory()->get_heads()
 
 const closure& context_ref::operator[](int i) const {return (*memory())[i];}
 
-closure context_ref::preprocess(const expression_ref& E) const
-{
-    auto E2 = graph_normalize(memory()->fresh_var_state, E);
-    return memory()->preprocess(runtime_indexify(E2));
-}
-
 closure context_ref::preprocess(Runtime::Exp E, closure::Env_t Env) const
 {
     return memory()->preprocess(std::move(E), std::move(Env));
@@ -565,12 +559,6 @@ std::set<int> context_ref::find_affected_sampling_events(const std::function<voi
 {
     context C2 = *this;
     return C2.tweak_and_find_affected_sampling_events(tweak);
-}
-
-/// Add an expression that may be replaced by its reduced form
-int context_ref::add_compute_expression(const expression_ref& E)
-{
-    return add_compute_expression_(preprocess(E));
 }
 
 /// Add an expression that may be replaced by its reduced form

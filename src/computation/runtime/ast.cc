@@ -94,18 +94,6 @@ namespace Runtime
         return OperationApp(operation_from_builtin(op, lib_name, func_name, call_conv), lib_name, func_name, call_conv);
     }
 
-    AppHead app_head_from_expression_ref(const expression_ref& head)
-    {
-        if (head.is_a<Apply>())
-            return FunctionApply{};
-        else if (head.is_a<constructor>())
-            return ConstructorApp(head.as_<constructor>());
-        else if (head.is_a<Operation>())
-            return OperationApp(head.as_<Operation>());
-        else
-            std::abort();
-    }
-
     expression_ref to_expression_ref(const AppHead& head)
     {
         return std::visit([](const auto& h) -> expression_ref
@@ -119,16 +107,6 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, OperationApp>)
                 return h.head;
         }, head);
-    }
-
-    Pattern pattern_from_expression_ref(const expression_ref& pattern)
-    {
-        if (is_wildcard(pattern))
-            return WildcardPattern{};
-        else if (pattern.head().is_a<constructor>())
-            return ConstructorPattern(pattern.head().as_<constructor>());
-        else
-            std::abort();
     }
 
     int pattern_arity(const Pattern& pattern)
@@ -155,88 +133,6 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorPattern>)
                 return p.head;
         }, pattern);
-    }
-
-    Exp atom_from_expression_ref(const expression_ref& E)
-    {
-        if (E.is_int())
-            return Int(E.as_int());
-        else if (E.is_double())
-            return Double(E.as_double());
-        else if (E.is_log_double())
-            return LogDouble(E.as_log_double());
-        else if (E.is_char())
-            return Char(E.as_char());
-        else if (E.is_a<::String>())
-            return String(E.as_<::String>().value());
-        else if (E.is_a<::Integer>())
-            return Integer(E.as_<::Integer>().value());
-        else if (is_constructor(E))
-            return Constructor(E.as_<constructor>());
-        else
-        {
-            std::abort();
-        }
-    }
-
-    Exp from_indexed_expression_ref(const expression_ref& E)
-    {
-        if (not E)
-            throw myexception()<<"Cannot convert empty expression_ref to Runtime::Exp";
-
-        if (auto L = RuntimeView::indexed_lambda(E))
-            return Lambda(from_indexed_expression_ref(L->body));
-
-        if (auto L = RuntimeView::indexed_let(E))
-        {
-            vector<Exp> binds;
-            for(const auto& bind: L->value.binds)
-                binds.push_back(from_indexed_expression_ref(bind));
-
-            return Let(binds, from_indexed_expression_ref(L->value.body));
-        }
-
-        if (auto C = RuntimeView::case_(E))
-        {
-            vector<Alt> alts;
-            for(const auto& alt: C->alts)
-                alts.push_back(Alt(pattern_from_expression_ref(alt.pattern), from_indexed_expression_ref(alt.body)));
-
-            return Case(from_indexed_expression_ref(C->object), alts);
-        }
-
-        if (auto T = RuntimeView::trim(E))
-        {
-            assert(T->value->size() == 2);
-            return Trim(T->value->sub()[0].as_<Vector<int>>(),
-                        from_indexed_expression_ref(T->value->sub()[1]));
-        }
-
-        if (E.is_index_var())
-            return IndexVar(E.as_index_var());
-
-        if (E.is_reg_var())
-            return RegRef(E.as_reg_var());
-
-        if (is_qualified_var(E))
-            return GlobalVar(E.as_<var>());
-
-        if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
-            return GlobalVar(E.as_<var>());
-
-        if (E.is_atomic())
-            return atom_from_expression_ref(E);
-
-        if (RuntimeView::apply(E) or RuntimeView::constructor_app(E) or RuntimeView::operation_app(E))
-        {
-            vector<Exp> args;
-            for(const auto& arg: E.sub())
-                args.push_back(from_indexed_expression_ref(arg));
-
-            return App(app_head_from_expression_ref(E.head()), args);
-        }
-
-        throw myexception()<<"Cannot convert expression_ref '"<<E<<"' to Runtime::Exp";
     }
 
     expression_ref to_expression_ref(const Exp& E)
