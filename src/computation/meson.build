@@ -40,6 +40,7 @@ computation_sources = [
   'expression/do_block.cc',
 
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
+  'machine/translate.cc',
   'machine/show_graph.cc', 'machine/evaluate.cc', 'machine/sums.cc',
   'machine/gc.cc','machine/reroot.cc', 'machine/effects.cc', 'machine/mapping.cc',
   'machine/gcobject.cc',
