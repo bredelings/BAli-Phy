@@ -6,6 +6,12 @@ using std::vector;
 
 Runtime::ExpPtr reg_heap::capture_local_reg_refs(const Runtime::ExpPtr& E, closure::Env_t& Env, int depth)
 {
+    // Compatibility bridge for expression_ref-only VM/API entry points.
+    // Some callers build executable expressions with reg_var atoms because they
+    // cannot pass a closure environment alongside an expression_ref.  Convert
+    // those local RegRefs to IndexVars before trimming so Trim nodes can remap
+    // the corresponding closure slots.  Long term, prefer APIs that accept a
+    // Runtime expression plus Env directly, avoiding local RegRefs here.
     return std::visit([&](const auto& e) -> Runtime::ExpPtr
     {
         using T = std::decay_t<decltype(e)>;

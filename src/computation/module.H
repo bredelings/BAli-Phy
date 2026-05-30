@@ -238,6 +238,10 @@ class CompiledModule
 
     std::set<std::string> dependencies_;
 
+    // Keep Core code temporarily while some consumers still inspect it.
+    // The VM loads prepared_value_decls, so value_decls should eventually go
+    // away from the serialized compiled-module archive once those consumers
+    // either disappear or use a cheaper representation.
     Core2::Decls<> value_decls;
 
     std::map<Core2::Var<>, Runtime::ExpPtr> prepared_value_decls;
