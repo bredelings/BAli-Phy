@@ -17,11 +17,6 @@ namespace Runtime
 
     using ExpPtr = std::shared_ptr<const Exp>;
 
-    struct Atom
-    {
-        expression_ref value;
-    };
-
     struct IntLiteral
     {
         int value;
@@ -144,10 +139,9 @@ namespace Runtime
 
     struct Exp
     {
-        std::variant<Atom, IntLiteral, DoubleLiteral, LogDoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
+        std::variant<IntLiteral, DoubleLiteral, LogDoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
                      ConstructorValue, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
 
-        explicit Exp(const Atom& a):value(a) {}
         explicit Exp(const IntLiteral& l):value(l) {}
         explicit Exp(const DoubleLiteral& l):value(l) {}
         explicit Exp(const LogDoubleLiteral& l):value(l) {}
@@ -165,7 +159,6 @@ namespace Runtime
         explicit Exp(const Trim& t):value(t) {}
     };
 
-    ExpPtr make(const Atom&);
     ExpPtr make(const IntLiteral&);
     ExpPtr make(const DoubleLiteral&);
     ExpPtr make(const LogDoubleLiteral&);

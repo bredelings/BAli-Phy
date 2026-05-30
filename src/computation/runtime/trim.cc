@@ -52,8 +52,7 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom> or
-                          std::is_same_v<T, IntLiteral> or
+            if constexpr (std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
@@ -135,8 +134,7 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom> or
-                          std::is_same_v<T, IntLiteral> or
+            if constexpr (std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
@@ -240,8 +238,7 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom> or
-                          std::is_same_v<T, IntLiteral> or
+            if constexpr (std::is_same_v<T, IntLiteral> or
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, LogDoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or

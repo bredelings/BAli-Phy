@@ -23,7 +23,6 @@ using std::vector;
 
 namespace Runtime
 {
-    ExpPtr make(const Atom& a)   { return std::make_shared<Exp>(a); }
     ExpPtr make(const IntLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const DoubleLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const LogDoubleLiteral& l) { return std::make_shared<Exp>(l); }
@@ -123,27 +122,6 @@ namespace Runtime
         }, pattern);
     }
 
-#ifndef NDEBUG
-    std::string raw_atom_description(const expression_ref& E)
-    {
-        std::string description = "type=" + std::to_string(int(E.type()));
-        if (E.is_object_type())
-            description += " object=" + std::string(typeid(*E.ptr()).name());
-        return description;
-    }
-
-    void trace_raw_atom(const expression_ref& E)
-    {
-        if (not std::getenv("BALI_PHY_TRACE_RUNTIME_ATOMS"))
-            return;
-
-        static std::set<std::string> seen;
-        auto description = raw_atom_description(E);
-        if (seen.insert(description).second)
-            std::cerr<<"Runtime::Atom fallback: "<<description<<"\n";
-    }
-#endif
-
     ExpPtr atom_from_expression_ref(const expression_ref& E)
     {
         if (E.is_int())
@@ -162,10 +140,7 @@ namespace Runtime
             return make(ConstructorValue{E.as_<constructor>()});
         else
         {
-#ifndef NDEBUG
-            trace_raw_atom(E);
-#endif
-            return make(Atom{E});
+            std::abort();
         }
     }
 
@@ -235,11 +210,7 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, IntLiteral>)
+            if constexpr (std::is_same_v<T, IntLiteral>)
             {
                 return e.value;
             }
