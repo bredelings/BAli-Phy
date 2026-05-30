@@ -39,6 +39,78 @@ using std::endl;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
+namespace
+{
+    Runtime::ExpPtr shift_free_indices(const Runtime::ExpPtr& E, int amount, int depth = 0)
+    {
+        return std::visit([&](const auto& e) -> Runtime::ExpPtr
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Runtime::IntLiteral> or
+                          std::is_same_v<T, Runtime::DoubleLiteral> or
+                          std::is_same_v<T, Runtime::LogDoubleLiteral> or
+                          std::is_same_v<T, Runtime::CharLiteral> or
+                          std::is_same_v<T, Runtime::StringLiteral> or
+                          std::is_same_v<T, Runtime::IntegerLiteral> or
+                          std::is_same_v<T, Runtime::ConstructorValue> or
+                          std::is_same_v<T, Runtime::GlobalVar> or
+                          std::is_same_v<T, Runtime::RegRef>)
+            {
+                return Runtime::make(e);
+            }
+            else if constexpr (std::is_same_v<T, Runtime::IndexVar>)
+            {
+                if (e.index >= depth)
+                    return Runtime::make(Runtime::IndexVar{e.index + amount});
+                else
+                    return Runtime::make(e);
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Lambda>)
+            {
+                return Runtime::make(Runtime::Lambda{shift_free_indices(e.body, amount, depth + 1)});
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Let>)
+            {
+                int n = e.binds.size();
+
+                vector<Runtime::ExpPtr> binds;
+                for(const auto& bind: e.binds)
+                    binds.push_back(shift_free_indices(bind, amount, depth + n));
+
+                return Runtime::make(Runtime::Let{binds, shift_free_indices(e.body, amount, depth + n)});
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Case>)
+            {
+                vector<Runtime::Alt> alts;
+                for(const auto& alt: e.alts)
+                    alts.push_back({alt.pattern, shift_free_indices(alt.body, amount, depth + Runtime::pattern_arity(alt.pattern))});
+
+                return Runtime::make(Runtime::Case{shift_free_indices(e.object, amount, depth), alts});
+            }
+            else if constexpr (std::is_same_v<T, Runtime::App>)
+            {
+                vector<Runtime::ExpPtr> args;
+                for(const auto& arg: e.args)
+                    args.push_back(shift_free_indices(arg, amount, depth));
+
+                return Runtime::make(Runtime::App{e.head, args});
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Trim>)
+            {
+                auto indices = e.indices;
+                for(int& index: indices)
+                    if (index >= depth)
+                        index += amount;
+
+                return Runtime::make(Runtime::Trim{indices, e.body});
+            }
+            else
+                std::abort();
+        }, E->value);
+    }
+}
+
 object_ptr<reg_heap>& context_ref::memory() const {return memory_;}
 
 const std::vector<int>& context_ref::heads() const {return memory()->get_heads();}
@@ -49,6 +121,11 @@ closure context_ref::preprocess(const expression_ref& E) const
 {
     auto E2 = graph_normalize(memory()->fresh_var_state, E);
     return memory()->preprocess(runtime_indexify(E2));
+}
+
+closure context_ref::preprocess(Runtime::ExpPtr E, closure::Env_t Env) const
+{
+    return memory()->preprocess(std::move(E), std::move(Env));
 }
 
 const closure* context_ref::precomputed_value_for_reg(int r) const
@@ -106,7 +183,7 @@ const expression_ref& context_ref::perform_head(int index, bool ec) const
 {
     int R = heads()[index];
 
-    return perform_expression(reg_var(R), ec);
+    return perform_expression(Runtime::make(Runtime::IndexVar{0}), {R}, ec);
 }
 
 const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
@@ -148,15 +225,42 @@ const closure& context_ref::lazy_evaluate_expression(const expression_ref& E, bo
     return lazy_evaluate_expression_( preprocess(E), ec);
 }
 
+const closure& context_ref::lazy_evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+{
+    return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
+}
+
 const expression_ref& context_ref::evaluate_expression(const expression_ref& E,bool ec) const
 {
     return evaluate_expression_( preprocess(E), ec);
+}
+
+const expression_ref& context_ref::evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+{
+    return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
 const expression_ref& context_ref::perform_expression(const expression_ref& E,bool ec) const
 {
     expression_ref perform_io = get_expression(*(memory()->perform_io_head));
     return evaluate_apply(perform_io, E, ec);
+}
+
+const expression_ref& context_ref::perform_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+{
+    int perform_io_reg = heads()[*(memory()->perform_io_head)];
+
+    // Keep the argument inside the same execute-token evaluation as performIO.
+    // Storing it first in a plain temp head would let a non-contingent closure
+    // point at contingent environment registers created by earlier effects.
+    Env.insert(Env.begin(), perform_io_reg);
+    int perform_io_index = Env.size();
+    auto argument = shift_free_indices(E, 1);
+    auto app = Runtime::make(Runtime::Let{{argument},
+                                          Runtime::make(Runtime::App{Runtime::FunctionApply{},
+                                                                     {Runtime::make(Runtime::IndexVar{perform_io_index}),
+                                                                      Runtime::make(Runtime::IndexVar{0})}})});
+    return evaluate_expression(std::move(app), std::move(Env), ec);
 }
 
 const expression_ref& context_ref::evaluate_apply(const expression_ref& f, const expression_ref& x, bool ec) const
@@ -365,8 +469,12 @@ void context_ref::perform_transition_kernel(int s)
 
     int r = e.reg_for_slot(1);
     assert(memory()->reg_is_constant(r));
-    expression_ref E = {reg_var(r), get_context_index()};
-    perform_expression(E);
+
+    auto E = Runtime::make(Runtime::Let{{Runtime::make(Runtime::IntLiteral{get_context_index()})},
+                                        Runtime::make(Runtime::App{Runtime::FunctionApply{},
+                                                                   {Runtime::make(Runtime::IndexVar{1}),
+                                                                    Runtime::make(Runtime::IndexVar{0})}})});
+    perform_expression(E, {r});
 }
 
 int context_ref::n_transition_kernels() const
@@ -398,8 +506,18 @@ void context_ref::perform_logger(int s, long iteration)
 
     int r = e.reg_for_slot(0);
     assert(memory()->reg_is_constant(r));
-    expression_ref E = {reg_var(r), (int)iteration, (double)prior().log(), (double)likelihood().log(), (double)probability().log()};
-    perform_expression(E, true);
+
+    auto E = Runtime::make(Runtime::Let{{Runtime::make(Runtime::IntLiteral{int(iteration)}),
+                                         Runtime::make(Runtime::DoubleLiteral{double(prior().log())}),
+                                         Runtime::make(Runtime::DoubleLiteral{double(likelihood().log())}),
+                                         Runtime::make(Runtime::DoubleLiteral{double(probability().log())})},
+                                        Runtime::make(Runtime::App{Runtime::FunctionApply{},
+                                                                   {Runtime::make(Runtime::IndexVar{4}),
+                                                                    Runtime::make(Runtime::IndexVar{3}),
+                                                                    Runtime::make(Runtime::IndexVar{2}),
+                                                                    Runtime::make(Runtime::IndexVar{1}),
+                                                                    Runtime::make(Runtime::IndexVar{0})}})});
+    perform_expression(E, {r}, true);
 }
 
 int context_ref::n_loggers() const

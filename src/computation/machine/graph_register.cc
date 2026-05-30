@@ -698,9 +698,9 @@ void reg_heap::first_evaluate_program(int r_prog, int r_log, int c)
     if (program_result_head or logging_head)
         throw myexception()<<"Trying first_evaluate_program for a second time!";
 
-    program_result_head = add_compute_expression(reg_var(r_prog));
+    program_result_head = add_compute_closure(closure(index_var(0), {r_prog}));
 
-    logging_head = add_compute_expression(reg_var(r_log));
+    logging_head = add_compute_closure(closure(index_var(0), {r_log}));
 
     assert(get_prev_prog_token_for_context(c));
 
@@ -2277,6 +2277,13 @@ int reg_heap::add_compute_expression(const expression_ref& E)
 {
     auto E2 = graph_normalize(fresh_var_state, E);
     allocate_head(preprocess(runtime_indexify(E2)));
+
+    return heads.size() - 1;
+}
+
+int reg_heap::add_compute_closure(closure&& C)
+{
+    allocate_head(std::move(C));
 
     return heads.size() - 1;
 }

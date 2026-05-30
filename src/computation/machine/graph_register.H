@@ -664,6 +664,7 @@ public:
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head(closure&& C);
     int add_compute_expression(const expression_ref&);
+    int add_compute_closure(closure&&);
 
     /// Allocate a reg in context t and put it on the top of the temporary-head stack.
     int push_temp_head();

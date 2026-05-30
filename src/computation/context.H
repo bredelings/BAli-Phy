@@ -5,6 +5,7 @@
 #include <vector>
 #include "computation/closure.H"
 #include "computation/program.H"
+#include "computation/runtime/ast.H"
 #include "util/math/log-double.H"
 #include "util/bounds.H"
 #include "mcmc/prob_ratios.H"
@@ -48,6 +49,8 @@ protected:
     const std::vector<int>& heads() const;
 
     closure preprocess(const expression_ref& E) const;
+
+    closure preprocess(Runtime::ExpPtr, closure::Env_t = {}) const;
 
 public:
 
@@ -104,11 +107,20 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_expression(const expression_ref&,bool=true) const;
 
+    /// Return the value of a runtime expression, computing it if necessary
+    const closure& lazy_evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
+
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate_expression(const expression_ref&,bool=true) const;
 
+    /// Return the value of a runtime expression, computing it if necessary
+    const expression_ref& evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
+
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform_expression(const expression_ref&,bool=false) const;
+
+    /// Perform a runtime IO expression with an explicit closure environment.
+    const expression_ref& perform_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=false) const;
 
     /// Compute and the return the value of a function application.
     const expression_ref& evaluate_apply(const expression_ref& f, const expression_ref& x, bool=true) const;
