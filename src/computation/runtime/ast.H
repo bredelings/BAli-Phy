@@ -6,6 +6,7 @@
 #include <memory>
 #include <iosfwd>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -26,27 +27,133 @@ namespace Runtime
 {
     struct Exp;
 
-    using ExpPtr = std::shared_ptr<const Exp>;
+    struct Int;
+    struct Double;
+    struct LogDouble;
+    struct Char;
+    struct String;
+    struct Integer;
+    struct Constructor;
+    struct IndexVar;
+    struct GlobalVar;
+    struct RegRef;
+    struct Lambda;
+    struct Let;
+    struct Case;
+    struct App;
+    struct Trim;
 
-    struct IntLiteral
+    struct Exp
+    {
+        using value_type = std::variant<
+            std::shared_ptr<const Int>,
+            std::shared_ptr<const Double>,
+            std::shared_ptr<const LogDouble>,
+            std::shared_ptr<const Char>,
+            std::shared_ptr<const String>,
+            std::shared_ptr<const Integer>,
+            std::shared_ptr<const Constructor>,
+            std::shared_ptr<const IndexVar>,
+            std::shared_ptr<const GlobalVar>,
+            std::shared_ptr<const RegRef>,
+            std::shared_ptr<const Lambda>,
+            std::shared_ptr<const Let>,
+            std::shared_ptr<const Case>,
+            std::shared_ptr<const App>,
+            std::shared_ptr<const Trim>
+        >;
+
+        value_type value;
+
+        Exp() = default;
+        Exp(Int);
+        Exp(Double);
+        Exp(LogDouble);
+        Exp(Char);
+        Exp(String);
+        Exp(Integer);
+        Exp(Constructor);
+        Exp(IndexVar);
+        Exp(GlobalVar);
+        Exp(RegRef);
+        Exp(Lambda);
+        Exp(Let);
+        Exp(Case);
+        Exp(App);
+        Exp(Trim);
+
+        bool empty() const
+        {
+            return std::visit([](const auto& ptr) { return not ptr; }, value);
+        }
+
+        explicit operator bool() const { return not empty(); }
+
+        template <typename T>
+        const T* to() const
+        {
+            if (std::holds_alternative<std::shared_ptr<const T>>(value))
+                return std::get<std::shared_ptr<const T>>(value).get();
+            else
+                return nullptr;
+        }
+
+        template <typename T>
+        bool is_a() const { return to<T>(); }
+
+        template <typename T>
+        bool is() const { return to<T>(); }
+
+        template <typename T>
+        const T& as() const
+        {
+            auto ptr = to<T>();
+            assert(ptr);
+            return *ptr;
+        }
+
+        template <typename F>
+        decltype(auto) visit(F&& f) const
+        {
+            return std::visit([&](const auto& ptr) -> decltype(auto)
+            {
+                assert(ptr);
+                return std::forward<F>(f)(*ptr);
+            }, value);
+        }
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(value); }
+    };
+
+    struct Int
     {
         int value;
 
+        Int() = default;
+        Int(int x):value(x) {}
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
 
-    struct DoubleLiteral
+    struct Double
     {
         double value;
 
+        Double() = default;
+        Double(double x):value(x) {}
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
 
-    struct LogDoubleLiteral
+    struct LogDouble
     {
         log_double_t value;
+
+        LogDouble() = default;
+        LogDouble(log_double_t x):value(x) {}
 
         template <class Archive>
         void save(Archive& ar) const
@@ -64,25 +171,34 @@ namespace Runtime
         }
     };
 
-    struct CharLiteral
+    struct Char
     {
         char value;
 
+        Char() = default;
+        Char(char x):value(x) {}
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
 
-    struct StringLiteral
+    struct String
     {
         std::string value;
 
+        String() = default;
+        String(std::string x):value(std::move(x)) {}
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
 
-    struct IntegerLiteral
+    struct Integer
     {
         integer value;
+
+        Integer() = default;
+        Integer(integer x):value(std::move(x)) {}
 
         template <class Archive>
         void save(Archive& ar) const
@@ -100,12 +216,12 @@ namespace Runtime
         }
     };
 
-    struct ConstructorValue
+    struct Constructor
     {
         constructor value;
 
-        ConstructorValue():value("", 0) {}
-        ConstructorValue(constructor c):value(std::move(c)) {}
+        Constructor():value("", 0) {}
+        Constructor(constructor c):value(std::move(c)) {}
 
         template <class Archive>
         void save(Archive& ar) const
@@ -127,7 +243,10 @@ namespace Runtime
 
     struct IndexVar
     {
-        int index;
+        int index = 0;
+
+        IndexVar() = default;
+        IndexVar(int i):index(i) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(index); }
@@ -137,13 +256,19 @@ namespace Runtime
     {
         var name;
 
+        GlobalVar() = default;
+        GlobalVar(var x):name(std::move(x)) {}
+
         template <class Archive>
         void serialize(Archive& ar) { ar(name); }
     };
 
     struct RegRef
     {
-        int target;
+        int target = 0;
+
+        RegRef() = default;
+        RegRef(int r):target(r) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(target); }
@@ -151,7 +276,10 @@ namespace Runtime
 
     struct Lambda
     {
-        ExpPtr body;
+        Exp body;
+
+        Lambda() = default;
+        Lambda(Exp b):body(std::move(b)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(body); }
@@ -159,8 +287,11 @@ namespace Runtime
 
     struct Let
     {
-        std::vector<ExpPtr> binds;
-        ExpPtr body;
+        std::vector<Exp> binds;
+        Exp body;
+
+        Let() = default;
+        Let(std::vector<Exp> bs, Exp b):binds(std::move(bs)), body(std::move(b)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(binds, body); }
@@ -203,7 +334,10 @@ namespace Runtime
     struct Alt
     {
         Pattern pattern;
-        ExpPtr body;
+        Exp body;
+
+        Alt() = default;
+        Alt(Pattern p, Exp b):pattern(std::move(p)), body(std::move(b)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(pattern, body); }
@@ -211,8 +345,11 @@ namespace Runtime
 
     struct Case
     {
-        ExpPtr object;
+        Exp object;
         std::vector<Alt> alts;
+
+        Case() = default;
+        Case(Exp e, std::vector<Alt> as):object(std::move(e)), alts(std::move(as)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(object, alts); }
@@ -287,7 +424,10 @@ namespace Runtime
     struct App
     {
         AppHead head;
-        std::vector<ExpPtr> args;
+        std::vector<Exp> args;
+
+        App() = default;
+        App(AppHead h, std::vector<Exp> as):head(std::move(h)), args(std::move(as)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(head, args); }
@@ -296,60 +436,20 @@ namespace Runtime
     struct Trim
     {
         std::vector<int> indices;
-        ExpPtr body;
+        Exp body;
+
+        Trim() = default;
+        Trim(std::vector<int> is, Exp b):indices(std::move(is)), body(std::move(b)) {}
 
         template <class Archive>
         void serialize(Archive& ar) { ar(indices, body); }
     };
 
-    struct Exp
-    {
-        std::variant<IntLiteral, DoubleLiteral, LogDoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
-                     ConstructorValue, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
+    Exp apply(Exp, std::vector<Exp>);
+    Exp apply_env_function(int, std::vector<Exp>);
 
-        explicit Exp(const IntLiteral& l):value(l) {}
-        explicit Exp(const DoubleLiteral& l):value(l) {}
-        explicit Exp(const LogDoubleLiteral& l):value(l) {}
-        explicit Exp(const CharLiteral& l):value(l) {}
-        explicit Exp(const StringLiteral& l):value(l) {}
-        explicit Exp(const IntegerLiteral& l):value(l) {}
-        explicit Exp(const ConstructorValue& c):value(c) {}
-        explicit Exp(const IndexVar& i):value(i) {}
-        explicit Exp(const GlobalVar& g):value(g) {}
-        explicit Exp(const RegRef& r):value(r) {}
-        explicit Exp(const Lambda& l):value(l) {}
-        explicit Exp(const Let& l):value(l) {}
-        explicit Exp(const Case& c):value(c) {}
-        explicit Exp(const App& a):value(a) {}
-        explicit Exp(const Trim& t):value(t) {}
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(value); }
-
-        Exp():value(IntLiteral{0}) {}
-    };
-
-    ExpPtr make(const IntLiteral&);
-    ExpPtr make(const DoubleLiteral&);
-    ExpPtr make(const LogDoubleLiteral&);
-    ExpPtr make(const CharLiteral&);
-    ExpPtr make(const StringLiteral&);
-    ExpPtr make(const IntegerLiteral&);
-    ExpPtr make(const ConstructorValue&);
-    ExpPtr make(const IndexVar&);
-    ExpPtr make(const GlobalVar&);
-    ExpPtr make(const RegRef&);
-    ExpPtr make(const Lambda&);
-    ExpPtr make(const Let&);
-    ExpPtr make(const Case&);
-    ExpPtr make(const App&);
-    ExpPtr make(const Trim&);
-
-    ExpPtr make_apply(ExpPtr, std::vector<ExpPtr>);
-    ExpPtr make_apply_with_bound_args(int, std::vector<ExpPtr>);
-
-    ExpPtr from_indexed_expression_ref(const expression_ref&);
-    ExpPtr atom_from_expression_ref(const expression_ref&);
+    Exp from_indexed_expression_ref(const expression_ref&);
+    Exp atom_from_expression_ref(const expression_ref&);
 
     Pattern pattern_from_expression_ref(const expression_ref&);
     int pattern_arity(const Pattern&);
@@ -357,19 +457,19 @@ namespace Runtime
     AppHead app_head_from_expression_ref(const expression_ref&);
     OperationApp builtin_operation_app(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 
-    expression_ref to_expression_ref(const ExpPtr&);
+    expression_ref to_expression_ref(const Exp&);
     expression_ref to_expression_ref(const Pattern&);
     expression_ref to_expression_ref(const AppHead&);
 
-    std::string print(const ExpPtr&);
+    std::string print(const Exp&);
     std::string print(const Pattern&);
     std::string print(const AppHead&);
 
     std::ostream& operator<<(std::ostream&, const Exp&);
 
-    void check_invariants(const ExpPtr&);
-    void check_no_reg_refs(const ExpPtr&);
-    void check_translated(const ExpPtr&);
+    void check_invariants(const Exp&);
+    void check_no_reg_refs(const Exp&);
+    void check_translated(const Exp&);
 
 }
 

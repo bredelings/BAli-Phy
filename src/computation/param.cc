@@ -89,7 +89,7 @@ expression_ref context_ptr::operator()(const expression_ref& x) const
 
     try
     {
-        auto app = Runtime::make_apply(Runtime::make(Runtime::IndexVar{1}), {Runtime::make(Runtime::IndexVar{0})});
+        auto app = Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)});
         const expression_ref result = C.evaluate_expression(std::move(app), {reg, arg});
 
         C.memory()->pop_temp_head();

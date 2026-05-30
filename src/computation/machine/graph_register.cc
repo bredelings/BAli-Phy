@@ -9,7 +9,7 @@
 #include "util/set.H"
 #include "graph_register.H"
 #include "computation/module.H"
-#include "computation/expression/core.H"
+#include "computation/core/func.H"
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
@@ -2273,6 +2273,13 @@ void reg_heap::reclaim_used(int r)
 }
 
 /// Add an expression that may be replaced by its reduced form
+int reg_heap::add_compute_expression(const Core2::Exp<>& E)
+{
+    allocate_head(preprocess(E));
+
+    return heads.size() - 1;
+}
+
 int reg_heap::add_compute_expression(const expression_ref& E)
 {
     auto E2 = graph_normalize(fresh_var_state, E);
@@ -2308,7 +2315,7 @@ optional<int> reg_heap::lookup_named_head(const string& name)
 
 int reg_heap::add_perform_io_head()
 {
-    perform_io_head = add_compute_expression( Core::unsafePerformIO() );
+    perform_io_head = add_compute_expression(Core2::unsafePerformIO());
     return *perform_io_head;
 }
 
@@ -3220,8 +3227,7 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
 
     if (program->get_main_name())
     {
-        expression_ref M = var( *program->get_main_name() );
-        main_head = add_compute_expression( Core::unsafePerformIO(M) );
+        main_head = add_compute_expression(Core2::unsafePerformIO(Core2::Var<>(*program->get_main_name())));
     }
 
     add_perform_io_head();

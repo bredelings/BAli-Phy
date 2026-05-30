@@ -46,19 +46,19 @@ namespace Runtime
         return v3;
     }
 
-    vector<int> get_free_index_vars(const ExpPtr& E)
+    vector<int> get_free_index_vars(const Exp& E)
     {
-        return std::visit([](const auto& e) -> vector<int>
+        return E.visit([](const auto& e) -> vector<int>
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral> or
-                          std::is_same_v<T, DoubleLiteral> or
-                          std::is_same_v<T, LogDoubleLiteral> or
-                          std::is_same_v<T, CharLiteral> or
-                          std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral> or
-                          std::is_same_v<T, ConstructorValue>)
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor>)
             {
                 return {};
             }
@@ -114,10 +114,10 @@ namespace Runtime
             }
             else
                 std::abort();
-        }, E->value);
+        });
     }
 
-    ExpPtr make_trim(const ExpPtr& E, const vector<int>& indices)
+    Exp make_trim(const Exp& E, const vector<int>& indices)
     {
 #ifndef NDEBUG
         auto vars = get_free_index_vars(E);
@@ -125,22 +125,22 @@ namespace Runtime
         for(int i = 0; i < vars.size(); i++)
             assert(vars[i] == i);
 #endif
-        return make(Trim{indices, E});
+        return Trim(indices, E);
     }
 
-    ExpPtr remap_free_indices(const ExpPtr& E, const vector<int>& mapping, int depth)
+    Exp remap_free_indices(const Exp& E, const vector<int>& mapping, int depth)
     {
-        return std::visit([&](const auto& e) -> ExpPtr
+        return E.visit([&](const auto& e) -> Exp
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral> or
-                          std::is_same_v<T, DoubleLiteral> or
-                          std::is_same_v<T, LogDoubleLiteral> or
-                          std::is_same_v<T, CharLiteral> or
-                          std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral> or
-                          std::is_same_v<T, ConstructorValue>)
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor>)
             {
                 return E;
             }
@@ -151,7 +151,7 @@ namespace Runtime
                 {
                     assert(delta < mapping.size());
                     assert(mapping[delta] != -1);
-                    return make(IndexVar{depth + mapping[delta]});
+                    return IndexVar(depth + mapping[delta]);
                 }
 
                 return E;
@@ -162,17 +162,17 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
-                return make(Lambda{remap_free_indices(e.body, mapping, depth + 1)});
+                return Lambda(remap_free_indices(e.body, mapping, depth + 1));
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
                 int n = e.binds.size();
 
-                vector<ExpPtr> binds;
+                vector<Exp> binds;
                 for(const auto& bind: e.binds)
                     binds.push_back(remap_free_indices(bind, mapping, depth + n));
 
-                return make(Let{binds, remap_free_indices(e.body, mapping, depth + n)});
+                return Let(binds, remap_free_indices(e.body, mapping, depth + n));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -181,18 +181,18 @@ namespace Runtime
                 for(const auto& alt: e.alts)
                 {
                     int n = pattern_arity(alt.pattern);
-                    alts.push_back({alt.pattern, remap_free_indices(alt.body, mapping, depth + n)});
+                    alts.push_back(Alt(alt.pattern, remap_free_indices(alt.body, mapping, depth + n)));
                 }
 
-                return make(Case{remap_free_indices(e.object, mapping, depth), alts});
+                return Case(remap_free_indices(e.object, mapping, depth), alts);
             }
             else if constexpr (std::is_same_v<T, App>)
             {
-                vector<ExpPtr> args;
+                vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(remap_free_indices(arg, mapping, depth));
 
-                return make(App{e.head, args});
+                return App(e.head, args);
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -213,10 +213,10 @@ namespace Runtime
             }
             else
                 std::abort();
-        }, E->value);
+        });
     }
 
-    ExpPtr trim(const ExpPtr& E)
+    Exp trim(const Exp& E)
     {
         auto indices = get_free_index_vars(E);
 
@@ -232,64 +232,64 @@ namespace Runtime
         return make_trim(remap_free_indices(E, mapping, 0), indices);
     }
 
-    ExpPtr trim_normalize(const ExpPtr& E)
+    Exp trim_normalize(const Exp& E)
     {
-        return std::visit([](const auto& e) -> ExpPtr
+        return E.visit([](const auto& e) -> Exp
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral> or
-                          std::is_same_v<T, DoubleLiteral> or
-                          std::is_same_v<T, LogDoubleLiteral> or
-                          std::is_same_v<T, CharLiteral> or
-                          std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral> or
-                          std::is_same_v<T, ConstructorValue>)
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor>)
             {
-                return make(e);
+                return e;
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
-                return make(e);
+                return e;
             }
             else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
             {
-                return make(e);
+                return e;
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
-                return make(Lambda{trim_normalize(e.body)});
+                return Lambda(trim_normalize(e.body));
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                vector<ExpPtr> binds;
+                vector<Exp> binds;
                 for(const auto& bind: e.binds)
                     binds.push_back(trim(trim_normalize(bind)));
 
-                return make(Let{binds, trim(trim_normalize(e.body))});
+                return Let(binds, trim(trim_normalize(e.body)));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
                 vector<Alt> alts;
                 for(const auto& alt: e.alts)
-                    alts.push_back({alt.pattern, trim(trim_normalize(alt.body))});
+                    alts.push_back(Alt(alt.pattern, trim(trim_normalize(alt.body))));
 
-                return make(Case{e.object, alts});
+                return Case(e.object, alts);
             }
             else if constexpr (std::is_same_v<T, App>)
             {
-                vector<ExpPtr> args;
+                vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(trim_normalize(arg));
 
-                return make(App{e.head, args});
+                return App(e.head, args);
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
-                return make(Trim{e.indices, trim_normalize(e.body)});
+                return Trim(e.indices, trim_normalize(e.body));
             }
             else
                 std::abort();
-        }, E->value);
+        });
     }
 }

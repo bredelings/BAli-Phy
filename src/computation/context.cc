@@ -41,60 +41,60 @@ using Bounds = Box<bounds<T>>;
 
 namespace
 {
-    Runtime::ExpPtr shift_free_indices(const Runtime::ExpPtr& E, int amount, int depth = 0)
+    Runtime::Exp shift_free_indices(const Runtime::Exp& E, int amount, int depth = 0)
     {
-        return std::visit([&](const auto& e) -> Runtime::ExpPtr
+        return E.visit([&](const auto& e) -> Runtime::Exp
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Runtime::IntLiteral> or
-                          std::is_same_v<T, Runtime::DoubleLiteral> or
-                          std::is_same_v<T, Runtime::LogDoubleLiteral> or
-                          std::is_same_v<T, Runtime::CharLiteral> or
-                          std::is_same_v<T, Runtime::StringLiteral> or
-                          std::is_same_v<T, Runtime::IntegerLiteral> or
-                          std::is_same_v<T, Runtime::ConstructorValue> or
+            if constexpr (std::is_same_v<T, Runtime::Int> or
+                          std::is_same_v<T, Runtime::Double> or
+                          std::is_same_v<T, Runtime::LogDouble> or
+                          std::is_same_v<T, Runtime::Char> or
+                          std::is_same_v<T, Runtime::String> or
+                          std::is_same_v<T, Runtime::Integer> or
+                          std::is_same_v<T, Runtime::Constructor> or
                           std::is_same_v<T, Runtime::GlobalVar> or
                           std::is_same_v<T, Runtime::RegRef>)
             {
-                return Runtime::make(e);
+                return e;
             }
             else if constexpr (std::is_same_v<T, Runtime::IndexVar>)
             {
                 if (e.index >= depth)
-                    return Runtime::make(Runtime::IndexVar{e.index + amount});
+                    return Runtime::IndexVar(e.index + amount);
                 else
-                    return Runtime::make(e);
+                    return e;
             }
             else if constexpr (std::is_same_v<T, Runtime::Lambda>)
             {
-                return Runtime::make(Runtime::Lambda{shift_free_indices(e.body, amount, depth + 1)});
+                return Runtime::Lambda(shift_free_indices(e.body, amount, depth + 1));
             }
             else if constexpr (std::is_same_v<T, Runtime::Let>)
             {
                 int n = e.binds.size();
 
-                vector<Runtime::ExpPtr> binds;
+                vector<Runtime::Exp> binds;
                 for(const auto& bind: e.binds)
                     binds.push_back(shift_free_indices(bind, amount, depth + n));
 
-                return Runtime::make(Runtime::Let{binds, shift_free_indices(e.body, amount, depth + n)});
+                return Runtime::Let(binds, shift_free_indices(e.body, amount, depth + n));
             }
             else if constexpr (std::is_same_v<T, Runtime::Case>)
             {
                 vector<Runtime::Alt> alts;
                 for(const auto& alt: e.alts)
-                    alts.push_back({alt.pattern, shift_free_indices(alt.body, amount, depth + Runtime::pattern_arity(alt.pattern))});
+                    alts.push_back(Runtime::Alt(alt.pattern, shift_free_indices(alt.body, amount, depth + Runtime::pattern_arity(alt.pattern))));
 
-                return Runtime::make(Runtime::Case{shift_free_indices(e.object, amount, depth), alts});
+                return Runtime::Case(shift_free_indices(e.object, amount, depth), alts);
             }
             else if constexpr (std::is_same_v<T, Runtime::App>)
             {
-                vector<Runtime::ExpPtr> args;
+                vector<Runtime::Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(shift_free_indices(arg, amount, depth));
 
-                return Runtime::make(Runtime::App{e.head, args});
+                return Runtime::App(e.head, args);
             }
             else if constexpr (std::is_same_v<T, Runtime::Trim>)
             {
@@ -103,11 +103,11 @@ namespace
                     if (index >= depth)
                         index += amount;
 
-                return Runtime::make(Runtime::Trim{indices, e.body});
+                return Runtime::Trim(indices, e.body);
             }
             else
                 std::abort();
-        }, E->value);
+        });
     }
 }
 
@@ -123,7 +123,7 @@ closure context_ref::preprocess(const expression_ref& E) const
     return memory()->preprocess(runtime_indexify(E2));
 }
 
-closure context_ref::preprocess(Runtime::ExpPtr E, closure::Env_t Env) const
+closure context_ref::preprocess(Runtime::Exp E, closure::Env_t Env) const
 {
     return memory()->preprocess(std::move(E), std::move(Env));
 }
@@ -183,7 +183,7 @@ const expression_ref& context_ref::perform_head(int index, bool ec) const
 {
     int R = heads()[index];
 
-    return perform_expression(Runtime::make(Runtime::IndexVar{0}), {R}, ec);
+    return perform_expression(Runtime::IndexVar(0), {R}, ec);
 }
 
 const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
@@ -220,17 +220,17 @@ const expression_ref& context_ref::evaluate_expression_(closure&& C,bool ec) con
     return result;
 }
 
-const closure& context_ref::lazy_evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+const closure& context_ref::lazy_evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
-const expression_ref& context_ref::evaluate_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+const expression_ref& context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
-const expression_ref& context_ref::perform_expression(Runtime::ExpPtr E, closure::Env_t Env, bool ec) const
+const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     int perform_io_reg = heads()[*(memory()->perform_io_head)];
 
@@ -240,9 +240,9 @@ const expression_ref& context_ref::perform_expression(Runtime::ExpPtr E, closure
     Env.insert(Env.begin(), perform_io_reg);
     int perform_io_index = int(Env.size());
     auto argument = shift_free_indices(E, 1);
-    auto app = Runtime::make(Runtime::Let{{argument},
-                                          Runtime::make_apply(Runtime::make(Runtime::IndexVar{perform_io_index}),
-                                                              {Runtime::make(Runtime::IndexVar{0})})});
+    auto app = Runtime::Let({argument},
+                            Runtime::apply(Runtime::IndexVar(perform_io_index),
+                                           {Runtime::IndexVar(0)}));
     return evaluate_expression(std::move(app), std::move(Env), ec);
 }
 
@@ -448,7 +448,7 @@ void context_ref::perform_transition_kernel(int s)
     int r = e.reg_for_slot(1);
     assert(memory()->reg_is_constant(r));
 
-    auto E = Runtime::make_apply_with_bound_args(0, {Runtime::make(Runtime::IntLiteral{get_context_index()})});
+    auto E = Runtime::apply_env_function(0, {Runtime::Int(get_context_index())});
     perform_expression(E, {r});
 }
 
@@ -482,10 +482,10 @@ void context_ref::perform_logger(int s, long iteration)
     int r = e.reg_for_slot(0);
     assert(memory()->reg_is_constant(r));
 
-    auto E = Runtime::make_apply_with_bound_args(0, {Runtime::make(Runtime::IntLiteral{int(iteration)}),
-                                                     Runtime::make(Runtime::DoubleLiteral{double(prior().log())}),
-                                                     Runtime::make(Runtime::DoubleLiteral{double(likelihood().log())}),
-                                                     Runtime::make(Runtime::DoubleLiteral{double(probability().log())})});
+    auto E = Runtime::apply_env_function(0, {Runtime::Int(int(iteration)),
+                                                     Runtime::Double(double(prior().log())),
+                                                     Runtime::Double(double(likelihood().log())),
+                                                     Runtime::Double(double(probability().log()))});
     perform_expression(E, {r}, true);
 }
 
@@ -570,7 +570,7 @@ std::set<int> context_ref::find_affected_sampling_events(const std::function<voi
 /// Add an expression that may be replaced by its reduced form
 int context_ref::add_compute_expression(const expression_ref& E)
 {
-    return add_compute_expression_( preprocess(E) );
+    return add_compute_expression_(preprocess(E));
 }
 
 /// Add an expression that may be replaced by its reduced form

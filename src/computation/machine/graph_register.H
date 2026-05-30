@@ -23,7 +23,6 @@
 namespace Runtime
 {
     struct Exp;
-    using ExpPtr = std::shared_ptr<const Exp>;
 }
 
 struct prev_prog_token_t
@@ -274,7 +273,7 @@ public:
     void clear_call_for_reg(int R);
     void clear_C(int R);
     void set_C(int R, closure&& C);
-    closure preprocess_prepared(Runtime::ExpPtr E, closure::Env_t Env={});
+    closure preprocess_prepared(Runtime::Exp E, closure::Env_t Env={});
     int allocate();
     int allocate_reg_from_step(int s);
     int allocate_reg_from_step(int s, closure&& C);
@@ -443,12 +442,12 @@ public:
     /// Get the memory location (reg) for a given identifier (string)
     int reg_for_id(const var&);
     /// Capture non-pinned register references before trimming so trims can see them.
-    Runtime::ExpPtr capture_local_reg_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
+    Runtime::Exp capture_local_reg_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
 
     /// Translate runtime global references into pinned register references after trimming.
-    Runtime::ExpPtr translate_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
+    Runtime::Exp translate_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
 
-    closure preprocess(Runtime::ExpPtr E, closure::Env_t Env = {});
+    closure preprocess(Runtime::Exp E, closure::Env_t Env = {});
 
     closure preprocess(const Core2::Exp<>& E);
 
@@ -664,6 +663,7 @@ public:
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head(closure&& C);
     int add_compute_expression(const expression_ref&);
+    int add_compute_expression(const Core2::Exp<>&);
     int add_compute_closure(closure&&);
 
     /// Allocate a reg in context t and put it on the top of the temporary-head stack.

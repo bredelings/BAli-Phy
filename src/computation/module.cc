@@ -2403,9 +2403,9 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-map<Core2::Var<>,Runtime::ExpPtr> CompiledModule::prepared_code_defs() const
+map<Core2::Var<>,Runtime::Exp> CompiledModule::prepared_code_defs() const
 {
-    map<Core2::Var<>,Runtime::ExpPtr> code;
+    map<Core2::Var<>,Runtime::Exp> code;
 
     for(const auto& [x,rhs]: prepared_value_decls)
     {

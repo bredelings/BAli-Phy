@@ -48,9 +48,7 @@ protected:
 
     const std::vector<int>& heads() const;
 
-    closure preprocess(const expression_ref& E) const;
-
-    closure preprocess(Runtime::ExpPtr, closure::Env_t = {}) const;
+    closure preprocess(Runtime::Exp, closure::Env_t = {}) const;
 
 public:
 
@@ -71,6 +69,8 @@ public:
     const closure& access_result_for_reg(int i) const;
 
     const closure& operator[](int i) const;
+
+    closure preprocess(const expression_ref& E) const;
 
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
@@ -105,13 +105,13 @@ public:
     const expression_ref& evaluate_expression_(closure&&,bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
-    const closure& lazy_evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
+    const closure& lazy_evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
-    const expression_ref& evaluate_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=true) const;
+    const expression_ref& evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
     /// Perform a runtime IO expression with an explicit closure environment.
-    const expression_ref& perform_expression(Runtime::ExpPtr, closure::Env_t = {}, bool=false) const;
+    const expression_ref& perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
 
     /// Evaluate a particular reg and return the value.
     const expression_ref& evaluate_reg(int r) const;
@@ -153,6 +153,7 @@ public:
 
     /// Add a literal expression that MAY be reduced
     int add_compute_expression(const expression_ref& e);
+
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);
 

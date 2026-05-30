@@ -30,17 +30,16 @@ using std::cerr;
 using std::endl;
 
 
+Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls);
+Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E);
+
 CDecls graph_normalize(FreshVarSource& source, CDecls decls)
 {
-    // Just normalize the bound statements
     for(auto& [x,e]: decls)
         e = graph_normalize(source, e);
 
     return decls;
 }
-
-Core2::Decls<> graph_normalize(FreshVarSource& source, Core2::Decls<> decls);
-Core2::Exp<> graph_normalize(FreshVarSource& source, const Core2::Exp<>& E);
 
 Core2::Exp<> make_let(const Core2::Decls<>& decls, const Core2::Exp<>& body)
 {
@@ -177,7 +176,6 @@ bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
 
     if (sub_exp_ok)
     {
-        // This matches the condition for NOT lifting constants out of lambdas.
         if (arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<String>() or arg.is_a<Integer>())
             return true;
 
@@ -188,20 +186,11 @@ bool is_ok_arg(const expression_ref& arg, bool sub_exp_ok)
     return false;
 }
 
-
-// If we have an expensive e_op that does something like ExpensiveOp1(1,ExpensiveOp2(2,x+y)), 
-//  then we don't need to float out ExpensiveOp2, because ExpensiveOp1 can only be invalidated when
-//  ExpensiveOp2 changes anyway.
-
 std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, const expression_ref& E, bool sub_exp_ok)
 {
     CDecls decls;
     if (sub_exp_ok)
     {
-        // If we have something like 1 + (2*(4+factorial 5))) then we want to
-        // (a) float the (factorial 5) out, and also
-        // (b) treat the 2*_ as a cheap e_op.
-        // So 
         if (auto O = E.head().to<Operation>(); O and O->e_op)
         {
             object_ptr<expression> E2 = E.as_expression().clone();
@@ -231,79 +220,61 @@ std::tuple<CDecls,expression_ref> graph_normalize_lift(FreshVarSource& source, c
     return {decls, E2};
 }
 
-// PROBLEM: Ideally we want to normalize arguments and then analyze them.
-// Right now, in order to handle e_ops, we have to analyze the e_ops before they are analyzed
-//   in order to ensure that we only float vars that we have just created.
-// SOLUTION: Do this in core and rename all the variables.
-//   Then we can be sure that floating vars won't induce any aliasing.
 expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
     if (not E) return E;
 
-    // 2. Lambda
     if (auto L = RuntimeView::lambda(E))
     {
-	object_ptr<expression> V = E.as_expression().clone();
-	V->sub[1] = graph_normalize(source, L->body);
+        object_ptr<expression> V = E.as_expression().clone();
+        V->sub[1] = graph_normalize(source, L->body);
 
-	return V;
+        return V;
     }
 
-    // 6. Case
     if (auto C = RuntimeView::case_(E))
     {
         auto object = C->object;
         auto alts = C->alts;
 
-	// Just normalize the bodies
-	for(auto& [pattern, body]: alts)
-	    body = graph_normalize(source, body);
+        for(auto& [pattern, body]: alts)
+            body = graph_normalize(source, body);
 
-	// Normalize the object
-	auto [decls2, object2] = graph_normalize_lift(source, object, true);
+        auto [decls2, object2] = graph_normalize_lift(source, object, true);
 
         return let_expression(decls2, make_case_expression(object2, alts));
     }
 
-    // 5. Let
     if (auto Let = RuntimeView::let(E))
     {
         auto L = *Let->value;
 
-	// Normalize the body
-	L.body = graph_normalize(source, L.body);
+        L.body = graph_normalize(source, L.body);
+        L.binds = graph_normalize(source, L.binds);
 
-	// Just normalize the bound statements
-	L.binds = graph_normalize(source, L.binds);
-
-	return L;
+        return L;
     }
-
-    // 1. Var
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
     else if (not E.size()) return E;
 
-    // 4. Constructor or Operation
     if (RuntimeView::constructor_app(E) or RuntimeView::operation_app(E))
     {
-	object_ptr<expression> E2 = E.as_expression().clone();
+        object_ptr<expression> E2 = E.as_expression().clone();
 
         bool sub_exp_ok = false;
         if (auto O = E.head().to<Operation>(); O and O->e_op)
             sub_exp_ok = true;
 
-	// Actually we probably just need x[i] not to be free in E.sub()[i]
-	vector<pair<var, expression_ref>> decls;
-	for(int i=0;i<E2->size();i++)
-	{
+        vector<pair<var, expression_ref>> decls;
+        for(int i = 0; i < E2->size(); i++)
+        {
             auto [decls2, arg2] = graph_normalize_lift(source, E.sub()[i], sub_exp_ok);
 
-	    E2->sub[i] = arg2;
+            E2->sub[i] = arg2;
 
             std::ranges::move(decls2, std::back_inserter(decls));
-	}
+        }
 
-	return let_expression(decls, object_ptr<const expression>(E2));
+        return let_expression(decls, object_ptr<const expression>(E2));
     }
 
     throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
@@ -326,7 +297,7 @@ CDecls graph_normalize(FreshVarState& state, const CDecls& decls)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
-Runtime::ExpPtr runtime_prepare_for_translation(FreshVarSource& source, const Core2::Exp<>& E)
+Runtime::Exp runtime_prepare_for_translation(FreshVarSource& source, const Core2::Exp<>& E)
 {
     auto E2 = graph_normalize(source, E);
     auto R = runtime_indexify(E2);
@@ -336,13 +307,13 @@ Runtime::ExpPtr runtime_prepare_for_translation(FreshVarSource& source, const Co
     return R;
 }
 
-Runtime::ExpPtr runtime_prepare_for_translation(FreshVarState& state, const Core2::Exp<>& E)
+Runtime::Exp runtime_prepare_for_translation(FreshVarState& state, const Core2::Exp<>& E)
 {
     FreshVarSource source(state);
     return runtime_prepare_for_translation(source, E);
 }
 
-closure translate_prepared(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
+closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
 {
     Runtime::check_invariants(E);
     E = heap.translate_refs(E, C.Env);
@@ -351,7 +322,7 @@ closure translate_prepared(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
     return std::move(C);
 }
 
-closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
+closure translate_and_trim(reg_heap& heap, Runtime::Exp E, closure&& C)
 {
     Runtime::check_invariants(E);
     E = heap.capture_local_reg_refs(E, C.Env);
@@ -360,14 +331,14 @@ closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
     return translate_prepared(heap, E, std::move(C));
 }
 
-closure reg_heap::preprocess(Runtime::ExpPtr E, closure::Env_t Env)
+closure reg_heap::preprocess(Runtime::Exp E, closure::Env_t Env)
 {
     closure C;
     C.Env = std::move(Env);
     return translate_and_trim(*this, E, std::move(C));
 }
 
-closure reg_heap::preprocess_prepared(Runtime::ExpPtr E, closure::Env_t Env)
+closure reg_heap::preprocess_prepared(Runtime::Exp E, closure::Env_t Env)
 {
     closure C;
     C.Env = std::move(Env);

@@ -26,16 +26,16 @@ namespace
         int global_reg = heap.add_identifier("Test.global");
 
         closure::Env_t global_env;
-        auto global = heap.translate_refs(Runtime::make(Runtime::GlobalVar{var("Test.global")}), global_env);
-        auto global_ref = std::get_if<Runtime::RegRef>(&global->value);
+        auto global = heap.translate_refs(Runtime::GlobalVar(var("Test.global")), global_env);
+        auto global_ref = global.to<Runtime::RegRef>();
         assert(global_ref);
         assert(global_ref->target == global_reg);
         assert(global_env.empty());
 
         int local_reg = heap.allocate();
         closure::Env_t local_env;
-        auto local = heap.translate_refs(Runtime::make(Runtime::RegRef{local_reg}), local_env);
-        auto local_ref = std::get_if<Runtime::IndexVar>(&local->value);
+        auto local = heap.translate_refs(Runtime::RegRef(local_reg), local_env);
+        auto local_ref = local.to<Runtime::IndexVar>();
         assert(local_ref);
         assert(local_ref->index == 0);
         assert(local_env.size() == 1);
@@ -49,9 +49,9 @@ namespace
         reg_heap heap(std::move(program));
 
         int local_reg = heap.allocate();
-        auto bind = Runtime::make(Runtime::RegRef{local_reg});
-        auto body = Runtime::make(Runtime::IndexVar{0});
-        auto local_let = Runtime::make(Runtime::Let{{bind}, body});
+        Runtime::Exp bind = Runtime::RegRef(local_reg);
+        Runtime::Exp body = Runtime::IndexVar(0);
+        Runtime::Exp local_let = Runtime::Let({bind}, body);
 
         auto C = heap.preprocess(local_let);
         assert(C.Env.size() == 1);
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
         archive(before);
     }
 
-    Runtime::ExpPtr after;
+    Runtime::Exp after;
     {
         cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive(*loader, buffer);
         archive(after);

@@ -238,7 +238,7 @@ class CompiledModule
 
     std::set<std::string> dependencies_;
 
-    std::map<Core2::Var<>, Runtime::ExpPtr> prepared_value_decls;
+    std::map<Core2::Var<>, Runtime::Exp> prepared_value_decls;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
 
@@ -310,7 +310,7 @@ public:
 
     void finish_value_decls( const Core2::Decls<>& decls );
 
-    std::map<Core2::Var<>,Runtime::ExpPtr> prepared_code_defs() const;
+    std::map<Core2::Var<>,Runtime::Exp> prepared_code_defs() const;
 
     void inflate(const Program& P);
 

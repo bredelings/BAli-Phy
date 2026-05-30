@@ -22,37 +22,46 @@ using std::vector;
 
 namespace Runtime
 {
-    ExpPtr make(const IntLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const DoubleLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const LogDoubleLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const CharLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const StringLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const IntegerLiteral& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const ConstructorValue& c) { return std::make_shared<Exp>(c); }
-    ExpPtr make(const IndexVar& i) { return std::make_shared<Exp>(i); }
-    ExpPtr make(const GlobalVar& g) { return std::make_shared<Exp>(g); }
-    ExpPtr make(const RegRef& r) { return std::make_shared<Exp>(r); }
-    ExpPtr make(const Lambda& l) { return std::make_shared<Exp>(l); }
-    ExpPtr make(const Let& l)    { return std::make_shared<Exp>(l); }
-    ExpPtr make(const Case& c)   { return std::make_shared<Exp>(c); }
-    ExpPtr make(const App& a)    { return std::make_shared<Exp>(a); }
-    ExpPtr make(const Trim& t)   { return std::make_shared<Exp>(t); }
-
-    ExpPtr make_apply(ExpPtr function, vector<ExpPtr> args)
+    namespace
     {
-        args.insert(args.begin(), std::move(function));
-        return make(App{FunctionApply{}, std::move(args)});
+        template <typename T>
+        Exp::value_type make_exp_value(T node)
+        {
+            return std::shared_ptr<const T>(new T(std::move(node)));
+        }
     }
 
-    ExpPtr make_apply_with_bound_args(int function_index, vector<ExpPtr> args)
+    Exp::Exp(Int node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Double node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(LogDouble node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Char node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(String node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Integer node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Constructor node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(IndexVar node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(GlobalVar node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(RegRef node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Lambda node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Let node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Case node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(App node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(Trim node):value(make_exp_value(std::move(node))) {}
+
+    Exp apply(Exp function, vector<Exp> args)
     {
-        vector<ExpPtr> app_args;
-        app_args.push_back(make(IndexVar{function_index + int(args.size())}));
+        args.insert(args.begin(), std::move(function));
+        return App(FunctionApply{}, std::move(args));
+    }
+
+    Exp apply_env_function(int function_index, vector<Exp> args)
+    {
+        vector<Exp> app_args;
+        app_args.push_back(IndexVar(function_index + int(args.size())));
 
         for(int i = int(args.size()) - 1; i >= 0; --i)
-            app_args.push_back(make(IndexVar{i}));
+            app_args.push_back(IndexVar(i));
 
-        return make(Let{std::move(args), make(App{FunctionApply{}, std::move(app_args)})});
+        return Let(std::move(args), App(FunctionApply{}, std::move(app_args)));
     }
 
     Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
@@ -90,9 +99,9 @@ namespace Runtime
         if (head.is_a<Apply>())
             return FunctionApply{};
         else if (head.is_a<constructor>())
-            return ConstructorApp{head.as_<constructor>()};
+            return ConstructorApp(head.as_<constructor>());
         else if (head.is_a<Operation>())
-            return OperationApp{head.as_<Operation>()};
+            return OperationApp(head.as_<Operation>());
         else
             std::abort();
     }
@@ -117,17 +126,9 @@ namespace Runtime
         if (is_wildcard(pattern))
             return WildcardPattern{};
         else if (pattern.head().is_a<constructor>())
-            return ConstructorPattern{pattern.head().as_<constructor>()};
+            return ConstructorPattern(pattern.head().as_<constructor>());
         else
             std::abort();
-    }
-
-    int expression_pattern_arity(const expression_ref& pattern)
-    {
-        if (pattern.head().is_a<constructor>())
-            return pattern.head().as_<constructor>().n_args();
-        else
-            return 0;
     }
 
     int pattern_arity(const Pattern& pattern)
@@ -156,119 +157,119 @@ namespace Runtime
         }, pattern);
     }
 
-    ExpPtr atom_from_expression_ref(const expression_ref& E)
+    Exp atom_from_expression_ref(const expression_ref& E)
     {
         if (E.is_int())
-            return make(IntLiteral{E.as_int()});
+            return Int(E.as_int());
         else if (E.is_double())
-            return make(DoubleLiteral{E.as_double()});
+            return Double(E.as_double());
         else if (E.is_log_double())
-            return make(LogDoubleLiteral{E.as_log_double()});
+            return LogDouble(E.as_log_double());
         else if (E.is_char())
-            return make(CharLiteral{E.as_char()});
-        else if (E.is_a<String>())
-            return make(StringLiteral{E.as_<String>().value()});
-        else if (E.is_a<Integer>())
-            return make(IntegerLiteral{E.as_<Integer>().value()});
+            return Char(E.as_char());
+        else if (E.is_a<::String>())
+            return String(E.as_<::String>().value());
+        else if (E.is_a<::Integer>())
+            return Integer(E.as_<::Integer>().value());
         else if (is_constructor(E))
-            return make(ConstructorValue{E.as_<constructor>()});
+            return Constructor(E.as_<constructor>());
         else
         {
             std::abort();
         }
     }
 
-    ExpPtr from_indexed_expression_ref(const expression_ref& E)
+    Exp from_indexed_expression_ref(const expression_ref& E)
     {
         if (not E)
             throw myexception()<<"Cannot convert empty expression_ref to Runtime::Exp";
 
         if (auto L = RuntimeView::indexed_lambda(E))
-            return make(Lambda{from_indexed_expression_ref(L->body)});
+            return Lambda(from_indexed_expression_ref(L->body));
 
         if (auto L = RuntimeView::indexed_let(E))
         {
-            vector<ExpPtr> binds;
+            vector<Exp> binds;
             for(const auto& bind: L->value.binds)
                 binds.push_back(from_indexed_expression_ref(bind));
 
-            return make(Let{binds, from_indexed_expression_ref(L->value.body)});
+            return Let(binds, from_indexed_expression_ref(L->value.body));
         }
 
         if (auto C = RuntimeView::case_(E))
         {
             vector<Alt> alts;
             for(const auto& alt: C->alts)
-                alts.push_back({pattern_from_expression_ref(alt.pattern), from_indexed_expression_ref(alt.body)});
+                alts.push_back(Alt(pattern_from_expression_ref(alt.pattern), from_indexed_expression_ref(alt.body)));
 
-            return make(Case{from_indexed_expression_ref(C->object), alts});
+            return Case(from_indexed_expression_ref(C->object), alts);
         }
 
         if (auto T = RuntimeView::trim(E))
         {
             assert(T->value->size() == 2);
-            return make(Trim{T->value->sub()[0].as_<Vector<int>>(),
-                             from_indexed_expression_ref(T->value->sub()[1])});
+            return Trim(T->value->sub()[0].as_<Vector<int>>(),
+                        from_indexed_expression_ref(T->value->sub()[1]));
         }
 
         if (E.is_index_var())
-            return make(IndexVar{E.as_index_var()});
+            return IndexVar(E.as_index_var());
 
         if (E.is_reg_var())
-            return make(RegRef{E.as_reg_var()});
+            return RegRef(E.as_reg_var());
 
         if (is_qualified_var(E))
-            return make(GlobalVar{E.as_<var>()});
+            return GlobalVar(E.as_<var>());
 
         if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
-            return make(GlobalVar{E.as_<var>()});
+            return GlobalVar(E.as_<var>());
 
         if (E.is_atomic())
             return atom_from_expression_ref(E);
 
         if (RuntimeView::apply(E) or RuntimeView::constructor_app(E) or RuntimeView::operation_app(E))
         {
-            vector<ExpPtr> args;
+            vector<Exp> args;
             for(const auto& arg: E.sub())
                 args.push_back(from_indexed_expression_ref(arg));
 
-            return make(App{app_head_from_expression_ref(E.head()), args});
+            return App(app_head_from_expression_ref(E.head()), args);
         }
 
         throw myexception()<<"Cannot convert expression_ref '"<<E<<"' to Runtime::Exp";
     }
 
-    expression_ref to_expression_ref(const ExpPtr& E)
+    expression_ref to_expression_ref(const Exp& E)
     {
-        return std::visit([](const auto& e) -> expression_ref
+        return E.visit([](const auto& e) -> expression_ref
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral>)
+            if constexpr (std::is_same_v<T, Int>)
             {
                 return e.value;
             }
-            else if constexpr (std::is_same_v<T, DoubleLiteral>)
+            else if constexpr (std::is_same_v<T, Double>)
             {
                 return e.value;
             }
-            else if constexpr (std::is_same_v<T, LogDoubleLiteral>)
+            else if constexpr (std::is_same_v<T, LogDouble>)
             {
                 return e.value;
             }
-            else if constexpr (std::is_same_v<T, CharLiteral>)
+            else if constexpr (std::is_same_v<T, Char>)
             {
                 return e.value;
             }
-            else if constexpr (std::is_same_v<T, StringLiteral>)
+            else if constexpr (std::is_same_v<T, String>)
             {
-                return String(e.value);
+                return ::String(e.value);
             }
-            else if constexpr (std::is_same_v<T, IntegerLiteral>)
+            else if constexpr (std::is_same_v<T, Integer>)
             {
-                return Integer(e.value);
+                return ::Integer(e.value);
             }
-            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            else if constexpr (std::is_same_v<T, Constructor>)
             {
                 return e.value;
             }
@@ -321,7 +322,7 @@ namespace Runtime
             }
             else
                 std::abort();
-        }, E->value);
+        });
     }
 
     static std::string parenthesize_if(bool b, const std::string& s)
@@ -332,22 +333,22 @@ namespace Runtime
             return s;
     }
 
-    static bool prints_atomically(const ExpPtr& E)
+    static bool prints_atomically(const Exp& E)
     {
-        return std::visit([](const auto& e) -> bool
+        return E.visit([](const auto& e) -> bool
         {
             using T = std::decay_t<decltype(e)>;
-            return std::is_same_v<T, IntLiteral> or
-                   std::is_same_v<T, DoubleLiteral> or
-                   std::is_same_v<T, LogDoubleLiteral> or
-                   std::is_same_v<T, CharLiteral> or
-                   std::is_same_v<T, StringLiteral> or
-                   std::is_same_v<T, IntegerLiteral> or
-                   std::is_same_v<T, ConstructorValue> or
+            return std::is_same_v<T, Int> or
+                   std::is_same_v<T, Double> or
+                   std::is_same_v<T, LogDouble> or
+                   std::is_same_v<T, Char> or
+                   std::is_same_v<T, String> or
+                   std::is_same_v<T, Integer> or
+                   std::is_same_v<T, Constructor> or
                    std::is_same_v<T, IndexVar> or
                    std::is_same_v<T, GlobalVar> or
                    std::is_same_v<T, RegRef>;
-        }, E->value);
+        });
     }
 
     std::string print(const Pattern& pattern)
@@ -378,40 +379,40 @@ namespace Runtime
         }, head);
     }
 
-    std::string print(const ExpPtr& E)
+    std::string print(const Exp& E)
     {
         if (not E)
             return "NOEXP";
 
-        return std::visit([](const auto& e) -> std::string
+        return E.visit([](const auto& e) -> std::string
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral>)
+            if constexpr (std::is_same_v<T, Int>)
             {
                 return std::to_string(e.value) + "#";
             }
-            else if constexpr (std::is_same_v<T, DoubleLiteral>)
+            else if constexpr (std::is_same_v<T, Double>)
             {
                 return std::to_string(e.value) + "##";
             }
-            else if constexpr (std::is_same_v<T, LogDoubleLiteral>)
+            else if constexpr (std::is_same_v<T, LogDouble>)
             {
                 return std::to_string(e.value.log()) + "L#";
             }
-            else if constexpr (std::is_same_v<T, CharLiteral>)
+            else if constexpr (std::is_same_v<T, Char>)
             {
                 return std::string("'") + e.value + "'";
             }
-            else if constexpr (std::is_same_v<T, StringLiteral>)
+            else if constexpr (std::is_same_v<T, String>)
             {
                 return std::string("\"") + e.value + "\"#";
             }
-            else if constexpr (std::is_same_v<T, IntegerLiteral>)
+            else if constexpr (std::is_same_v<T, Integer>)
             {
                 return e.value.str();
             }
-            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            else if constexpr (std::is_same_v<T, Constructor>)
             {
                 return e.value.print();
             }
@@ -466,12 +467,12 @@ namespace Runtime
                 return "Trim {" + join(indices, ",") + "} " +
                        parenthesize_if(not prints_atomically(e.body), print(e.body));
             }
-        }, E->value);
+        });
     }
 
     std::ostream& operator<<(std::ostream& o, const Exp& E)
     {
-        return o << print(std::make_shared<Exp>(E));
+        return o << print(E);
     }
 
     static void check_pattern_invariants(const Pattern& pattern)
@@ -515,24 +516,24 @@ namespace Runtime
 #endif
     }
 
-    void check_invariants(const ExpPtr& E)
+    void check_invariants(const Exp& E)
     {
 #ifndef NDEBUG
         assert(E);
 
-        std::visit([](const auto& e)
+        E.visit([](const auto& e)
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, IntLiteral> or
-                          std::is_same_v<T, DoubleLiteral> or
-                          std::is_same_v<T, LogDoubleLiteral> or
-                          std::is_same_v<T, CharLiteral> or
-                          std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral>)
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer>)
             {
             }
-            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            else if constexpr (std::is_same_v<T, Constructor>)
             {
                 assert(e.value.n_args() >= 0);
             }
@@ -580,16 +581,16 @@ namespace Runtime
                     assert(e.indices[i-1] < e.indices[i]);
                 check_invariants(e.body);
             }
-        }, E->value);
+        });
 #endif
     }
 
-    void check_no_reg_refs(const ExpPtr& E)
+    void check_no_reg_refs(const Exp& E)
     {
 #ifndef NDEBUG
         check_invariants(E);
 
-        std::visit([](const auto& e)
+        E.visit([](const auto& e)
         {
             using T = std::decay_t<decltype(e)>;
 
@@ -622,16 +623,16 @@ namespace Runtime
             {
                 check_no_reg_refs(e.body);
             }
-        }, E->value);
+        });
 #endif
     }
 
-    void check_translated(const ExpPtr& E)
+    void check_translated(const Exp& E)
     {
 #ifndef NDEBUG
         check_invariants(E);
 
-        std::visit([](const auto& e)
+        E.visit([](const auto& e)
         {
             using T = std::decay_t<decltype(e)>;
 
@@ -664,7 +665,7 @@ namespace Runtime
             {
                 check_translated(e.body);
             }
-        }, E->value);
+        });
 #endif
     }
 }

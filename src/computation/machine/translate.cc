@@ -4,7 +4,7 @@
 
 using std::vector;
 
-Runtime::ExpPtr reg_heap::capture_local_reg_refs(const Runtime::ExpPtr& E, closure::Env_t& Env, int depth)
+Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::Env_t& Env, int depth)
 {
     // Compatibility bridge for expression_ref-only VM/API entry points.
     // Some callers build executable expressions with reg_var atoms because they
@@ -12,60 +12,60 @@ Runtime::ExpPtr reg_heap::capture_local_reg_refs(const Runtime::ExpPtr& E, closu
     // those local RegRefs to IndexVars before trimming so Trim nodes can remap
     // the corresponding closure slots.  Long term, prefer APIs that accept a
     // Runtime expression plus Env directly, avoiding local RegRefs here.
-    return std::visit([&](const auto& e) -> Runtime::ExpPtr
+    return E.visit([&](const auto& e) -> Runtime::Exp
     {
         using T = std::decay_t<decltype(e)>;
 
         if constexpr (std::is_same_v<T, Runtime::RegRef>)
         {
             if (reg_is_pinned(e.target))
-                return Runtime::make(e);
+                return e;
 
             int index = depth + Env.size();
             Env.insert(Env.begin(), e.target);
-            return Runtime::make(Runtime::IndexVar{index});
+            return Runtime::IndexVar(index);
         }
-        else if constexpr (std::is_same_v<T, Runtime::IntLiteral> or
-                           std::is_same_v<T, Runtime::DoubleLiteral> or
-                           std::is_same_v<T, Runtime::LogDoubleLiteral> or
-                           std::is_same_v<T, Runtime::CharLiteral> or
-                           std::is_same_v<T, Runtime::StringLiteral> or
-                           std::is_same_v<T, Runtime::IntegerLiteral> or
-                           std::is_same_v<T, Runtime::ConstructorValue> or
+        else if constexpr (std::is_same_v<T, Runtime::Int> or
+                           std::is_same_v<T, Runtime::Double> or
+                           std::is_same_v<T, Runtime::LogDouble> or
+                           std::is_same_v<T, Runtime::Char> or
+                           std::is_same_v<T, Runtime::String> or
+                           std::is_same_v<T, Runtime::Integer> or
+                           std::is_same_v<T, Runtime::Constructor> or
                            std::is_same_v<T, Runtime::IndexVar> or
                            std::is_same_v<T, Runtime::GlobalVar>)
         {
-            return Runtime::make(e);
+            return e;
         }
         else if constexpr (std::is_same_v<T, Runtime::Lambda>)
         {
-            return Runtime::make(Runtime::Lambda{capture_local_reg_refs(e.body, Env, depth + 1)});
+            return Runtime::Lambda(capture_local_reg_refs(e.body, Env, depth + 1));
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
             int n = e.binds.size();
 
-            vector<Runtime::ExpPtr> binds;
+            vector<Runtime::Exp> binds;
             for(const auto& bind: e.binds)
                 binds.push_back(capture_local_reg_refs(bind, Env, depth + n));
 
-            return Runtime::make(Runtime::Let{binds, capture_local_reg_refs(e.body, Env, depth + n)});
+            return Runtime::Let(binds, capture_local_reg_refs(e.body, Env, depth + n));
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {
             vector<Runtime::Alt> alts;
             for(const auto& alt: e.alts)
-                alts.push_back({alt.pattern, capture_local_reg_refs(alt.body, Env, depth + Runtime::pattern_arity(alt.pattern))});
+                alts.push_back(Runtime::Alt(alt.pattern, capture_local_reg_refs(alt.body, Env, depth + Runtime::pattern_arity(alt.pattern))));
 
-            return Runtime::make(Runtime::Case{capture_local_reg_refs(e.object, Env, depth), alts});
+            return Runtime::Case(capture_local_reg_refs(e.object, Env, depth), alts);
         }
         else if constexpr (std::is_same_v<T, Runtime::App>)
         {
-            vector<Runtime::ExpPtr> args;
+            vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(capture_local_reg_refs(arg, Env, depth));
 
-            return Runtime::make(Runtime::App{e.head, args});
+            return Runtime::App(e.head, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::Trim>)
         {
@@ -75,16 +75,16 @@ Runtime::ExpPtr reg_heap::capture_local_reg_refs(const Runtime::ExpPtr& E, closu
             if (Env.size() != env_size)
                 throw myexception()<<"Cannot capture non-pinned register reference inside already-trimmed runtime expression";
 
-            return Runtime::make(Runtime::Trim{e.indices, body});
+            return Runtime::Trim(e.indices, body);
         }
         else
             std::abort();
-    }, E->value);
+    });
 }
 
-Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_t& Env, int depth)
+Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env, int depth)
 {
-    return std::visit([&](const auto& e) -> Runtime::ExpPtr
+    return E.visit([&](const auto& e) -> Runtime::Exp
     {
         using T = std::decay_t<decltype(e)>;
 
@@ -94,57 +94,57 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
             if (not reg_is_pinned(r))
                 throw myexception()<<"Global variable '"<<e.name<<"' resolved to unpinned register "<<r;
 
-            return Runtime::make(Runtime::RegRef{r});
+            return Runtime::RegRef(r);
         }
         else if constexpr (std::is_same_v<T, Runtime::RegRef>)
         {
             if (reg_is_pinned(e.target))
-                return Runtime::make(e);
+                return e;
 
             int index = depth + Env.size();
             Env.insert(Env.begin(), e.target);
-            return Runtime::make(Runtime::IndexVar{index});
+            return Runtime::IndexVar(index);
         }
-        else if constexpr (std::is_same_v<T, Runtime::IntLiteral> or
-                           std::is_same_v<T, Runtime::DoubleLiteral> or
-                           std::is_same_v<T, Runtime::LogDoubleLiteral> or
-                           std::is_same_v<T, Runtime::CharLiteral> or
-                           std::is_same_v<T, Runtime::StringLiteral> or
-                           std::is_same_v<T, Runtime::IntegerLiteral> or
-                           std::is_same_v<T, Runtime::ConstructorValue> or
+        else if constexpr (std::is_same_v<T, Runtime::Int> or
+                           std::is_same_v<T, Runtime::Double> or
+                           std::is_same_v<T, Runtime::LogDouble> or
+                           std::is_same_v<T, Runtime::Char> or
+                           std::is_same_v<T, Runtime::String> or
+                           std::is_same_v<T, Runtime::Integer> or
+                           std::is_same_v<T, Runtime::Constructor> or
                            std::is_same_v<T, Runtime::IndexVar>)
         {
-            return Runtime::make(e);
+            return e;
         }
         else if constexpr (std::is_same_v<T, Runtime::Lambda>)
         {
-            return Runtime::make(Runtime::Lambda{translate_refs(e.body, Env, depth + 1)});
+            return Runtime::Lambda(translate_refs(e.body, Env, depth + 1));
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
             int n = e.binds.size();
 
-            vector<Runtime::ExpPtr> binds;
+            vector<Runtime::Exp> binds;
             for(const auto& bind: e.binds)
                 binds.push_back(translate_refs(bind, Env, depth + n));
 
-            return Runtime::make(Runtime::Let{binds, translate_refs(e.body, Env, depth + n)});
+            return Runtime::Let(binds, translate_refs(e.body, Env, depth + n));
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {
             vector<Runtime::Alt> alts;
             for(const auto& alt: e.alts)
-                alts.push_back({alt.pattern, translate_refs(alt.body, Env, depth + Runtime::pattern_arity(alt.pattern))});
+                alts.push_back(Runtime::Alt(alt.pattern, translate_refs(alt.body, Env, depth + Runtime::pattern_arity(alt.pattern))));
 
-            return Runtime::make(Runtime::Case{translate_refs(e.object, Env, depth), alts});
+            return Runtime::Case(translate_refs(e.object, Env, depth), alts);
         }
         else if constexpr (std::is_same_v<T, Runtime::App>)
         {
-            vector<Runtime::ExpPtr> args;
+            vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(translate_refs(arg, Env, depth));
 
-            return Runtime::make(Runtime::App{e.head, args});
+            return Runtime::App(e.head, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::Trim>)
         {
@@ -154,9 +154,9 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
             if (Env.size() != env_size)
                 throw myexception()<<"Cannot translate non-pinned register reference inside trimmed runtime expression";
 
-            return Runtime::make(Runtime::Trim{e.indices, body});
+            return Runtime::Trim(e.indices, body);
         }
         else
             std::abort();
-    }, E->value);
+    });
 }
