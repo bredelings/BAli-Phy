@@ -330,9 +330,11 @@ CDecls graph_normalize(FreshVarState& state, const CDecls& decls)
 closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
 {
     Runtime::check_invariants(E);
-    E = heap.translate_refs(E, C.Env);
-    Runtime::check_translated(E);
+    E = heap.capture_local_reg_refs(E, C.Env);
+    Runtime::check_invariants(E);
     E = Runtime::trim_normalize(E);
+    Runtime::check_invariants(E);
+    E = heap.translate_refs(E, C.Env);
     Runtime::check_translated(E);
     C.exp = Runtime::to_expression_ref(E);
     return std::move(C);

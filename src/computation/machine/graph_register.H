@@ -441,7 +441,10 @@ public:
     // FIXME: maybe this should really take a FastString = (String, Int)
     /// Get the memory location (reg) for a given identifier (string)
     int reg_for_id(const var&);
-    /// Translate runtime global and register references into closure environment references
+    /// Capture non-pinned register references before trimming so trims can see them.
+    Runtime::ExpPtr capture_local_reg_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
+
+    /// Translate runtime global references into pinned register references after trimming.
     Runtime::ExpPtr translate_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
 
     closure preprocess(Runtime::ExpPtr E, closure::Env_t Env = {});
