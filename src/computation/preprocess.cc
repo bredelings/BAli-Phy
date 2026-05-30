@@ -16,6 +16,7 @@
 #include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
 #include "computation/expression/runtime_views.H"
 #include "computation/runtime/ast.H"
+#include "computation/runtime/trim.H"
 #include "computation/fresh_vars.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
@@ -344,7 +345,9 @@ closure indexify(closure&& C)
 
 closure trim_normalize(closure&& C)
 {
-    C.exp = trim_normalize(expression_ref(C.exp));
+    auto E = Runtime::from_indexed_expression_ref(expression_ref(C.exp));
+    E = Runtime::trim_normalize(E);
+    C.exp = Runtime::to_expression_ref(E);
     return std::move(C);
 }
 

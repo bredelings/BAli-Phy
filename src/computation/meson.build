@@ -45,6 +45,7 @@ computation_sources = [
   'machine/gcobject.cc',
 
   'runtime/ast.cc',
+  'runtime/trim.cc',
 
   'typecheck/kind.cc', 'typecheck/kindcheck.cc', 'typecheck/typecheck.cc', 'typecheck/substitution.cc',
   'typecheck/env.cc', 'typecheck/alphabetize.cc', 'typecheck/types.cc', 'typecheck/instance.cc',
