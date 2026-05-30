@@ -113,6 +113,12 @@ namespace Runtime
     struct OperationApp
     {
         Operation head;
+        std::string lib_name;
+        std::string func_name;
+        std::string call_conv;
+
+        OperationApp(Operation);
+        OperationApp(Operation, std::string, std::string, std::string);
     };
 
     using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp>;
@@ -174,6 +180,7 @@ namespace Runtime
     int pattern_arity(const Pattern&);
 
     AppHead app_head_from_expression_ref(const expression_ref&);
+    OperationApp builtin_operation_app(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 
     expression_ref to_expression_ref(const ExpPtr&);
     expression_ref to_expression_ref(const Pattern&);

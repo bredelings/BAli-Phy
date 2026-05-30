@@ -523,20 +523,7 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
         for(auto& arg: B->args)
             args.push_back(runtime_indexify(arg, variables));
 
-        if (B->call_conv == "bpcall" or B->call_conv == "trcall")
-        {
-            Operation O( (o_operation_fn)B->op, B->lib_name+":"+B->func_name);
-
-            return Runtime::make(Runtime::App{Runtime::OperationApp{O}, args});
-        }
-        else if (B->call_conv == "ecall")
-        {
-            Operation O( (e_operation_fn)B->op, B->lib_name+":"+B->func_name);
-
-            return Runtime::make(Runtime::App{Runtime::OperationApp{O}, args});
-        }
-        else
-            throw myexception()<<"Unrecognized calling convention '"<<B->call_conv<<"'";
+        return Runtime::make(Runtime::App{Runtime::builtin_operation_app(B->op, B->lib_name, B->func_name, B->call_conv), args});
     }
     else if (auto C = E.to_constant())
         return Runtime::atom_from_expression_ref(constant_to_expression_ref(*C));

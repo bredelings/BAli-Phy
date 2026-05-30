@@ -38,6 +38,31 @@ namespace Runtime
     ExpPtr make(const App& a)    { return std::make_shared<Exp>(a); }
     ExpPtr make(const Trim& t)   { return std::make_shared<Exp>(t); }
 
+    static Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    {
+        if (call_conv == "bpcall" or call_conv == "trcall")
+            return Operation((o_operation_fn)op, lib_name+":"+func_name);
+        else if (call_conv == "ecall")
+            return Operation((e_operation_fn)op, lib_name+":"+func_name);
+        else
+            throw myexception()<<"Unrecognized calling convention '"<<call_conv<<"'";
+    }
+
+    OperationApp::OperationApp(Operation op)
+        :head(std::move(op))
+    {
+    }
+
+    OperationApp::OperationApp(Operation op, std::string lib, std::string func, std::string conv)
+        :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
+    {
+    }
+
+    OperationApp builtin_operation_app(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    {
+        return OperationApp(operation_from_builtin(op, lib_name, func_name, call_conv), lib_name, func_name, call_conv);
+    }
+
     AppHead app_head_from_expression_ref(const expression_ref& head)
     {
         if (head.is_a<Apply>())
