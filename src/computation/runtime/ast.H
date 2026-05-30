@@ -220,7 +220,7 @@ namespace Runtime
     {
         constructor value;
 
-        Constructor():value("", 0) {}
+        Constructor():value("()", 0) {}
         Constructor(constructor c):value(std::move(c)) {}
 
         template <class Archive>
@@ -307,7 +307,7 @@ namespace Runtime
     {
         constructor head;
 
-        ConstructorPattern():head("", 0) {}
+        ConstructorPattern():head("()", 0) {}
         ConstructorPattern(constructor c):head(std::move(c)) {}
 
         template <class Archive>
@@ -367,7 +367,7 @@ namespace Runtime
     {
         constructor head;
 
-        ConstructorApp():head("", 0) {}
+        ConstructorApp():head("()", 0) {}
         ConstructorApp(constructor c):head(std::move(c)) {}
 
         template <class Archive>

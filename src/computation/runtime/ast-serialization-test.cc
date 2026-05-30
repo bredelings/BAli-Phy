@@ -5,6 +5,7 @@
 #include "computation/module.H"
 #include "computation/program.H"
 #include <cassert>
+#include <stdexcept>
 #include <sstream>
 #include <cereal/archives/binary.hpp>
 
@@ -101,6 +102,46 @@ namespace
         assert(reg_ref.is_reg_var());
         assert(reg_ref.as_reg_var() == 7);
     }
+
+    Runtime::Exp archive_roundtrip(const Runtime::Exp& before)
+    {
+        std::stringstream buffer;
+        {
+            cereal::BinaryOutputArchive archive(buffer);
+            archive(before);
+        }
+
+        Runtime::Exp after;
+        {
+            cereal::BinaryInputArchive archive(buffer);
+            archive(after);
+        }
+
+        return after;
+    }
+
+    void check_archive_roundtrip(const Runtime::Exp& before)
+    {
+        auto after = archive_roundtrip(before);
+        if (Runtime::print(after) != Runtime::print(before))
+            throw std::runtime_error("Runtime AST archive roundtrip mismatch");
+    }
+
+    void check_constructor_serialization()
+    {
+        constructor c("Data.Bool.True", 0);
+
+        Runtime::Exp literal = Runtime::Constructor(c);
+        check_archive_roundtrip(literal);
+
+        Runtime::Exp app = Runtime::App(Runtime::ConstructorApp(c), {});
+        check_archive_roundtrip(app);
+
+        Runtime::Exp case_ = Runtime::Case(Runtime::Constructor(c),
+                                           {Runtime::Alt(Runtime::ConstructorPattern(c),
+                                                         Runtime::Int(1))});
+        check_archive_roundtrip(case_);
+    }
 }
 
 int main(int argc, char** argv)
@@ -139,4 +180,5 @@ int main(int argc, char** argv)
     check_local_reg_refs_are_captured_before_trimming(loader);
     check_shift_free_indices();
     check_deindexify_reg_refs();
+    check_constructor_serialization();
 }
