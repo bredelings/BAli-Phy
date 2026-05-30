@@ -238,12 +238,6 @@ class CompiledModule
 
     std::set<std::string> dependencies_;
 
-    // Keep Core code temporarily while some consumers still inspect it.
-    // The VM loads prepared_value_decls, so value_decls should eventually go
-    // away from the serialized compiled-module archive once those consumers
-    // either disappear or use a cheaper representation.
-    Core2::Decls<> value_decls;
-
     std::map<Core2::Var<>, Runtime::ExpPtr> prepared_value_decls;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
@@ -277,7 +271,7 @@ public:
     void clear_symbol_table();
 
     // Now discard the code -- what is left?
-    void clear_code() { value_decls.clear(); prepared_value_decls.clear(); }
+    void clear_code() { prepared_value_decls.clear(); }
 
     const FreshVarState& fresh_var_state() const {return *fresh_var_state_;}
 
@@ -316,9 +310,6 @@ public:
 
     void finish_value_decls( const Core2::Decls<>& decls );
 
-    // Why do we have code that isn't for this module?
-    std::map<Core2::Var<>,Core2::Exp<>> code_defs() const;
-
     std::map<Core2::Var<>,Runtime::ExpPtr> prepared_code_defs() const;
 
     void inflate(const Program& P);
@@ -326,7 +317,7 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar( modid, dependencies_, value_decls, prepared_value_decls, symbols, types, exported_symbols_, exported_types_ );
+	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_types_ );
         ar( aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_ );

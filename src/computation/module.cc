@@ -2403,25 +2403,6 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-map<Core2::Var<>,Core2::Exp<>> CompiledModule::code_defs() const
-{
-    map<Core2::Var<>,Core2::Exp<>> code;
-
-    for(const auto& [x,rhs]: value_decls)
-    {
-        assert(is_qualified_symbol(x.name));
-
-        if (name() == get_module_name(x.name))
-        {
-            assert(not rhs.empty());
-
-            code[x] = rhs;
-        }
-    }
-
-    return code;
-}
-
 map<Core2::Var<>,Runtime::ExpPtr> CompiledModule::prepared_code_defs() const
 {
     map<Core2::Var<>,Runtime::ExpPtr> code;
@@ -2443,11 +2424,10 @@ map<Core2::Var<>,Runtime::ExpPtr> CompiledModule::prepared_code_defs() const
 
 void CompiledModule::finish_value_decls( const Core2::Decls<>& decls )
 {
-    value_decls = decls;
     prepared_value_decls.clear();
 
     FreshVarSource source(*fresh_var_state_);
-    for(const auto& [x,rhs]: value_decls)
+    for(const auto& [x,rhs]: decls)
         prepared_value_decls[x] = runtime_prepare_for_translation(source, rhs);
 }
 
@@ -2497,8 +2477,6 @@ void CompiledModule::clear_symbol_table()
     dependencies_.clear();
 
     // modid = keep
-
-    // value_decls = keep, for now
 
     symbols.clear();
 
