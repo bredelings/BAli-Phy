@@ -8,6 +8,7 @@
 #include "apply.H"
 #include "util/variant.H"
 #include "computation/haskell/Integer.H" // for Integer
+#include "computation/runtime/ast.H"
 
 using std::pair;
 using std::vector;
@@ -138,6 +139,11 @@ expression_ref indexify(const expression_ref& E)
 {
     vector<var> variables;
     return indexify(E,variables);
+}
+
+Runtime::ExpPtr runtime_indexify(const expression_ref& E)
+{
+    return Runtime::from_indexed_expression_ref(indexify(E));
 }
 
 /// Convert to using de Bruijn indices.
@@ -275,6 +281,11 @@ expression_ref indexify(const Core2::Exp<>& E)
 {
     vector<Core2::Var<>> variables;
     return indexify(E,variables);
+}
+
+Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E)
+{
+    return Runtime::from_indexed_expression_ref(indexify(E));
 }
 
 /// Convert to using de Bruijn indices.

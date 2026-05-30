@@ -15,6 +15,7 @@
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
 #include "computation/expression/runtime_views.H"
+#include "computation/runtime/ast.H"
 #include "computation/fresh_vars.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
@@ -336,7 +337,8 @@ closure graph_normalize(FreshVarState& state, closure&& C)
 
 closure indexify(closure&& C)
 {
-    C.exp = indexify(expression_ref(C.exp));
+    auto E = runtime_indexify(expression_ref(C.exp));
+    C.exp = Runtime::to_expression_ref(E);
     return std::move(C);
 }
 
