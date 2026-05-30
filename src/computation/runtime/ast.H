@@ -2,11 +2,13 @@
 #define RUNTIME_AST_H
 
 #include <memory>
+#include <string>
 #include <variant>
 #include <vector>
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/integer_container.H"
 #include "computation/operation.H"
 
 namespace Runtime
@@ -18,6 +20,31 @@ namespace Runtime
     struct Atom
     {
         expression_ref value;
+    };
+
+    struct IntLiteral
+    {
+        int value;
+    };
+
+    struct DoubleLiteral
+    {
+        double value;
+    };
+
+    struct CharLiteral
+    {
+        char value;
+    };
+
+    struct StringLiteral
+    {
+        std::string value;
+    };
+
+    struct IntegerLiteral
+    {
+        integer value;
     };
 
     struct IndexVar
@@ -107,9 +134,15 @@ namespace Runtime
 
     struct Exp
     {
-        std::variant<Atom, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
+        std::variant<Atom, IntLiteral, DoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
+                     IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
 
         explicit Exp(const Atom& a):value(a) {}
+        explicit Exp(const IntLiteral& l):value(l) {}
+        explicit Exp(const DoubleLiteral& l):value(l) {}
+        explicit Exp(const CharLiteral& l):value(l) {}
+        explicit Exp(const StringLiteral& l):value(l) {}
+        explicit Exp(const IntegerLiteral& l):value(l) {}
         explicit Exp(const IndexVar& i):value(i) {}
         explicit Exp(const GlobalVar& g):value(g) {}
         explicit Exp(const RegRef& r):value(r) {}
@@ -121,6 +154,11 @@ namespace Runtime
     };
 
     ExpPtr make(const Atom&);
+    ExpPtr make(const IntLiteral&);
+    ExpPtr make(const DoubleLiteral&);
+    ExpPtr make(const CharLiteral&);
+    ExpPtr make(const StringLiteral&);
+    ExpPtr make(const IntegerLiteral&);
     ExpPtr make(const IndexVar&);
     ExpPtr make(const GlobalVar&);
     ExpPtr make(const RegRef&);
@@ -131,6 +169,8 @@ namespace Runtime
     ExpPtr make(const Trim&);
 
     ExpPtr from_indexed_expression_ref(const expression_ref&);
+    ExpPtr atom_from_expression_ref(const expression_ref&);
+
     Pattern pattern_from_expression_ref(const expression_ref&);
     int pattern_arity(const Pattern&);
 

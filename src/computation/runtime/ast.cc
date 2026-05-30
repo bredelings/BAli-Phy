@@ -9,6 +9,7 @@
 #include "computation/expression/runtime_views.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/Integer.H"
 #include "computation/haskell/ids.H"
 #include "computation/operation.H"
 #include "util/myexception.H"
@@ -18,6 +19,11 @@ using std::vector;
 namespace Runtime
 {
     ExpPtr make(const Atom& a)   { return std::make_shared<Exp>(a); }
+    ExpPtr make(const IntLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const DoubleLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const CharLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const StringLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const IntegerLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const IndexVar& i) { return std::make_shared<Exp>(i); }
     ExpPtr make(const GlobalVar& g) { return std::make_shared<Exp>(g); }
     ExpPtr make(const RegRef& r) { return std::make_shared<Exp>(r); }
@@ -110,6 +116,22 @@ namespace Runtime
         }, pattern);
     }
 
+    ExpPtr atom_from_expression_ref(const expression_ref& E)
+    {
+        if (E.is_int())
+            return make(IntLiteral{E.as_int()});
+        else if (E.is_double())
+            return make(DoubleLiteral{E.as_double()});
+        else if (E.is_char())
+            return make(CharLiteral{E.as_char()});
+        else if (E.is_a<String>())
+            return make(StringLiteral{E.as_<String>().value()});
+        else if (E.is_a<Integer>())
+            return make(IntegerLiteral{E.as_<Integer>().value()});
+        else
+            return make(Atom{E});
+    }
+
     ExpPtr from_indexed_expression_ref(const expression_ref& E)
     {
         if (not E)
@@ -156,7 +178,7 @@ namespace Runtime
             return make(GlobalVar{E.as_<var>()});
 
         if (E.is_atomic())
-            return make(Atom{E});
+            return atom_from_expression_ref(E);
 
         if (RuntimeView::apply(E) or RuntimeView::constructor_app(E) or RuntimeView::operation_app(E))
         {
@@ -179,6 +201,26 @@ namespace Runtime
             if constexpr (std::is_same_v<T, Atom>)
             {
                 return e.value;
+            }
+            else if constexpr (std::is_same_v<T, IntLiteral>)
+            {
+                return e.value;
+            }
+            else if constexpr (std::is_same_v<T, DoubleLiteral>)
+            {
+                return e.value;
+            }
+            else if constexpr (std::is_same_v<T, CharLiteral>)
+            {
+                return e.value;
+            }
+            else if constexpr (std::is_same_v<T, StringLiteral>)
+            {
+                return String(e.value);
+            }
+            else if constexpr (std::is_same_v<T, IntegerLiteral>)
+            {
+                return Integer(e.value);
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {

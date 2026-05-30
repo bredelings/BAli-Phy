@@ -242,12 +242,12 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
     }
     // Constant or 0-arg constructor
     else if (is_literal_type(E.type()) or is_constructor(E))
-        return Runtime::make(Runtime::Atom{E});
+        return Runtime::atom_from_expression_ref(E);
     else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
     {
         // This handles (modifiable) with no arguments.
         if (E.is_atomic())
-            return Runtime::make(Runtime::Atom{E});
+            return Runtime::atom_from_expression_ref(E);
         else
         {
             vector<Runtime::ExpPtr> args;
@@ -539,7 +539,7 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
             throw myexception()<<"Unrecognized calling convention '"<<B->call_conv<<"'";
     }
     else if (auto C = E.to_constant())
-        return Runtime::make(Runtime::Atom{constant_to_expression_ref(*C)});
+        return Runtime::atom_from_expression_ref(constant_to_expression_ref(*C));
 
     std::abort();
 }

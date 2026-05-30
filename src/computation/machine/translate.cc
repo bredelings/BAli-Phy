@@ -21,7 +21,13 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
             Env.insert(Env.begin(), e.target);
             return Runtime::make(Runtime::IndexVar{index});
         }
-        else if constexpr (std::is_same_v<T, Runtime::Atom> or std::is_same_v<T, Runtime::IndexVar>)
+        else if constexpr (std::is_same_v<T, Runtime::Atom> or
+                           std::is_same_v<T, Runtime::IntLiteral> or
+                           std::is_same_v<T, Runtime::DoubleLiteral> or
+                           std::is_same_v<T, Runtime::CharLiteral> or
+                           std::is_same_v<T, Runtime::StringLiteral> or
+                           std::is_same_v<T, Runtime::IntegerLiteral> or
+                           std::is_same_v<T, Runtime::IndexVar>)
         {
             return Runtime::make(e);
         }

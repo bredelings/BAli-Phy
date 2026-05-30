@@ -52,7 +52,12 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom>)
+            if constexpr (std::is_same_v<T, Atom> or
+                          std::is_same_v<T, IntLiteral> or
+                          std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, CharLiteral> or
+                          std::is_same_v<T, StringLiteral> or
+                          std::is_same_v<T, IntegerLiteral>)
             {
                 return {};
             }
@@ -128,7 +133,12 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom>)
+            if constexpr (std::is_same_v<T, Atom> or
+                          std::is_same_v<T, IntLiteral> or
+                          std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, CharLiteral> or
+                          std::is_same_v<T, StringLiteral> or
+                          std::is_same_v<T, IntegerLiteral>)
             {
                 return E;
             }
@@ -226,7 +236,12 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, Atom>)
+            if constexpr (std::is_same_v<T, Atom> or
+                          std::is_same_v<T, IntLiteral> or
+                          std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, CharLiteral> or
+                          std::is_same_v<T, StringLiteral> or
+                          std::is_same_v<T, IntegerLiteral>)
             {
                 return make(e);
             }
