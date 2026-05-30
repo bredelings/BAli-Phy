@@ -7,11 +7,8 @@
 #include "computation/expression/case.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/index_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/constructor.H"
-#include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
 #include "computation/expression/runtime_views.H"
@@ -336,29 +333,6 @@ closure graph_normalize(FreshVarState& state, closure&& C)
     return std::move(C);
 }
 
-closure indexify(closure&& C)
-{
-    auto E = runtime_indexify(expression_ref(C.exp));
-    C.exp = Runtime::to_expression_ref(E);
-    return std::move(C);
-}
-
-closure trim_normalize(closure&& C)
-{
-    auto E = Runtime::from_indexed_expression_ref(expression_ref(C.exp));
-    E = Runtime::trim_normalize(E);
-    C.exp = Runtime::to_expression_ref(E);
-    return std::move(C);
-}
-
-closure indexify_and_trim(closure&& C)
-{
-    auto E = runtime_indexify(expression_ref(C.exp));
-    E = Runtime::trim_normalize(E);
-    C.exp = Runtime::to_expression_ref(E);
-    return std::move(C);
-}
-
 int pattern_arity(const expression_ref& pattern)
 {
     if (pattern.head().is_a<constructor>())
@@ -447,7 +421,6 @@ closure reg_heap::preprocess(const Core2::Exp<>& E)
 closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
-    //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
     return indexify_translate_and_trim(*this, graph_normalize( fresh_var_state, closure(C) ) );
 }
 
@@ -480,66 +453,4 @@ int reg_heap::reg_for_id(const var& x)
     }
 
     return loc->second;
-}
-
-expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t& Env)
-{
-    optional<int> reg;
-
-    // Replace dummies that are either qualified ids, or builtin constructor names
-    if (is_qualified_var(E))
-    {
-	reg = reg_for_id( E.as_<var>() );
-    }
-    else if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
-    {
-	reg = reg_for_id( E.as_<var>() );
-    }
-
-    // Replace parameters with the appropriate reg_var: of value whatever
-    else if (E.is_reg_var())
-	reg = E.as_reg_var();
-
-    if (reg)
-    {
-	int index = Env.size();
-	Env.insert(Env.begin(), *reg);
-
-	return index_var(index);
-    }
-    else if (is_let_expression(E))
-    {
-        auto L = E.as_<let_exp>();
-        for(auto& [_,e]: L.binds)
-            e = translate_refs(e, Env);
-        L.body = translate_refs(L. body, Env);
-        return L;
-    }
-    else if (is_case(E))
-    {
-        auto object = translate_refs(E.sub()[0], Env);
-        auto alts = E.sub()[1].as_<Core::Alts>();
-        for(auto& alt: alts)
-            alt.body = translate_refs(alt.body, Env);
-        return make_case_expression(object, alts);
-    }
-    
-    // Other constants have no parts, and don't need to be translated
-    else if (not E.size()) return E;
-    else
-    {
-        // Translate the parts of the expression
-        object_ptr<expression> V = E.as_expression().clone();
-        for(int i=0;i<V->size();i++)
-            V->sub[i] = translate_refs(V->sub[i], Env);
-
-        return V;
-    }
-}
-
-closure reg_heap::translate_refs(closure&& C)
-{
-    closure C2 = C;
-    C2.exp = translate_refs(C2.exp, C2.Env);
-    return C2;
 }
