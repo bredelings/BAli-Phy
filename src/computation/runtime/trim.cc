@@ -57,7 +57,8 @@ namespace Runtime
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral>)
+                          std::is_same_v<T, IntegerLiteral> or
+                          std::is_same_v<T, ConstructorValue>)
             {
                 return {};
             }
@@ -138,7 +139,8 @@ namespace Runtime
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral>)
+                          std::is_same_v<T, IntegerLiteral> or
+                          std::is_same_v<T, ConstructorValue>)
             {
                 return E;
             }
@@ -241,7 +243,8 @@ namespace Runtime
                           std::is_same_v<T, DoubleLiteral> or
                           std::is_same_v<T, CharLiteral> or
                           std::is_same_v<T, StringLiteral> or
-                          std::is_same_v<T, IntegerLiteral>)
+                          std::is_same_v<T, IntegerLiteral> or
+                          std::is_same_v<T, ConstructorValue>)
             {
                 return make(e);
             }

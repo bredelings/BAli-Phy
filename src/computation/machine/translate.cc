@@ -27,6 +27,7 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
                            std::is_same_v<T, Runtime::CharLiteral> or
                            std::is_same_v<T, Runtime::StringLiteral> or
                            std::is_same_v<T, Runtime::IntegerLiteral> or
+                           std::is_same_v<T, Runtime::ConstructorValue> or
                            std::is_same_v<T, Runtime::IndexVar>)
         {
             return Runtime::make(e);

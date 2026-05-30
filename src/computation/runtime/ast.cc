@@ -24,6 +24,7 @@ namespace Runtime
     ExpPtr make(const CharLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const StringLiteral& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const IntegerLiteral& l) { return std::make_shared<Exp>(l); }
+    ExpPtr make(const ConstructorValue& c) { return std::make_shared<Exp>(c); }
     ExpPtr make(const IndexVar& i) { return std::make_shared<Exp>(i); }
     ExpPtr make(const GlobalVar& g) { return std::make_shared<Exp>(g); }
     ExpPtr make(const RegRef& r) { return std::make_shared<Exp>(r); }
@@ -128,6 +129,8 @@ namespace Runtime
             return make(StringLiteral{E.as_<String>().value()});
         else if (E.is_a<Integer>())
             return make(IntegerLiteral{E.as_<Integer>().value()});
+        else if (is_constructor(E))
+            return make(ConstructorValue{E.as_<constructor>()});
         else
             return make(Atom{E});
     }
@@ -221,6 +224,10 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, IntegerLiteral>)
             {
                 return Integer(e.value);
+            }
+            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            {
+                return e.value;
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {

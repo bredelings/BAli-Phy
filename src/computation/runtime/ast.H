@@ -47,6 +47,11 @@ namespace Runtime
         integer value;
     };
 
+    struct ConstructorValue
+    {
+        constructor value;
+    };
+
     struct IndexVar
     {
         int index;
@@ -135,7 +140,7 @@ namespace Runtime
     struct Exp
     {
         std::variant<Atom, IntLiteral, DoubleLiteral, CharLiteral, StringLiteral, IntegerLiteral,
-                     IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
+                     ConstructorValue, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
 
         explicit Exp(const Atom& a):value(a) {}
         explicit Exp(const IntLiteral& l):value(l) {}
@@ -143,6 +148,7 @@ namespace Runtime
         explicit Exp(const CharLiteral& l):value(l) {}
         explicit Exp(const StringLiteral& l):value(l) {}
         explicit Exp(const IntegerLiteral& l):value(l) {}
+        explicit Exp(const ConstructorValue& c):value(c) {}
         explicit Exp(const IndexVar& i):value(i) {}
         explicit Exp(const GlobalVar& g):value(g) {}
         explicit Exp(const RegRef& r):value(r) {}
@@ -159,6 +165,7 @@ namespace Runtime
     ExpPtr make(const CharLiteral&);
     ExpPtr make(const StringLiteral&);
     ExpPtr make(const IntegerLiteral&);
+    ExpPtr make(const ConstructorValue&);
     ExpPtr make(const IndexVar&);
     ExpPtr make(const GlobalVar&);
     ExpPtr make(const RegRef&);
