@@ -11,8 +11,6 @@ namespace Runtime
     struct Exp;
 }
 
-expression_ref indexify(const expression_ref&);
-
 Runtime::Exp runtime_indexify(const Core::Exp<>&);
 
 expression_ref deindexify(const expression_ref&, const std::vector<expression_ref>&);
