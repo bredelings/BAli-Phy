@@ -94,6 +94,13 @@ namespace
         assert(trim_body);
         assert(trim_body->index == 1);
     }
+
+    void check_deindexify_reg_refs()
+    {
+        auto reg_ref = deindexify(Runtime::to_expression_ref(Runtime::RegRef(7)));
+        assert(reg_ref.is_reg_var());
+        assert(reg_ref.as_reg_var() == 7);
+    }
 }
 
 int main(int argc, char** argv)
@@ -131,4 +138,5 @@ int main(int argc, char** argv)
     check_pinned_global_translation(loader);
     check_local_reg_refs_are_captured_before_trimming(loader);
     check_shift_free_indices();
+    check_deindexify_reg_refs();
 }

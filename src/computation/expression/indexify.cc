@@ -367,6 +367,9 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 
         return variables[variables.size()-1 - index];
     }
+    // Pinned runtime register references are already literal references.
+    else if (E.is_reg_var())
+        return E;
     // Constant or 0-arg constructor
     else if (is_literal_type(E.type()) or is_constructor(E))
         return E;
