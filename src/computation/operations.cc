@@ -139,7 +139,7 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-static closure alts_op(const closure::Env_t& Env, const closure& object, const Core::Alts& alts)
+static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts)
 {
     int L = alts.size();
 
@@ -209,14 +209,14 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const C
 bool is_seq(const expression_ref& E)
 {
     assert(is_case(E));
-    auto& alts = E.sub()[1].as_<Core::Alts>();
+    auto& alts = E.sub()[1].as_<Expression::CaseAlts>();
     return alts.size() == 1 and is_var(alts[0].pattern);
 }
 
 // Should we do this transformation before runtime?
 closure seq_op(OperationArgs& Args)
 {
-    auto& alts = Args.reference(1).as_<Core::Alts>();
+    auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
     assert(is_wildcard(alts[0].pattern));
 
     // Force x
@@ -253,7 +253,7 @@ closure case_op(OperationArgs& Args)
     // Therefore, we must compute this *after* we do the computation above, since
     // we're going to hold on to it.  Otherwise the held reference would become
     // *invalid* after the call above!
-    auto& alts = Args.reference(1).as_<Core::Alts>();
+    auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
 
     return alts_op(C.Env, object, alts);
 }

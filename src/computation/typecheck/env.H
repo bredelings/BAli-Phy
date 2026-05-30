@@ -132,7 +132,7 @@ struct ClassInfo
     void serialize(Archive& ar)
     {
 	// PROBLEM: Should we be storing Hs::Var with all its annotations, or just a (string,int) pair?
-	// PROBLEM: Should we be storing Core::Var with all its annotations, or just a (string,int) pair?
+	// PROBLEM: Should we be storing Core2::Var with all its annotations, or just a (string,int) pair?
 	ar(name, type_vars, context, members, superclass_extractors, default_methods, fields, associated_type_families);
     }
 };

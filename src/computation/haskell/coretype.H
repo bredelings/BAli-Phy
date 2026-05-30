@@ -9,7 +9,6 @@
 
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
-#include "core.H"
 
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>

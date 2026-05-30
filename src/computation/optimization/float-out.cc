@@ -4,6 +4,7 @@
 #include "float-out.H"
 #include "computation/module.H"
 #include "computation/core/func.H"  // for lambda_quantify( )
+#include "computation/expression/let.H"
 #include "util/set.H"
 
 #include "free-vars.H"

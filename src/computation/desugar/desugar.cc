@@ -204,7 +204,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 
 equation_info_t desugar_state::desugar_match(const Hs::MRule& rule)
 {
-    std::vector<Core::Pat> patterns;
+    std::vector<Hs::Pattern> patterns;
     for(auto& pattern: rule.patterns)
         patterns.push_back( unloc(pattern) );
     return {patterns, desugar_rhs(rule.rhs)};

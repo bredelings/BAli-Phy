@@ -11,7 +11,6 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
 
-#include "core.H"
 #include "var.H"
 #include "literal.H"
 #include "pattern.H"

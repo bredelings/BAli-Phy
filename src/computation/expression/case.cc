@@ -10,20 +10,20 @@
 using std::vector;
 using std::string;
 
-namespace Core
+namespace Expression
 {
 
-string Alt::print() const
+string CaseAlt::print() const
 {
     return pattern.print() + " -> " + body.print();
 }
 
-bool Alt::operator==(const Alt& a) const
+bool CaseAlt::operator==(const CaseAlt& a) const
 {
     return pattern == a.pattern and body == a.body;
 }
 
-string Alts::print() const
+string CaseAlts::print() const
 {
     vector<string> as;
     for(auto& a: *this)
@@ -32,9 +32,9 @@ string Alts::print() const
     return "{" + join(as,"; ") + "}";
 }
 
-bool Alts::operator==(const Object& o) const
+bool CaseAlts::operator==(const Object& o) const
 {
-    const Alts* As = dynamic_cast<const Alts*>(&o);
+    const CaseAlts* As = dynamic_cast<const CaseAlts*>(&o);
 
     if (not As)
         return false;
@@ -42,7 +42,7 @@ bool Alts::operator==(const Object& o) const
     return (*this) == *As;
 }
 
-bool Alts::operator==(const Alts& as) const
+bool CaseAlts::operator==(const CaseAlts& as) const
 {
     if (size() != as.size()) return false;
 
@@ -53,33 +53,33 @@ bool Alts::operator==(const Alts& as) const
     return true;
 }
 
-} // end namespace Core
+} // end namespace Expression
 
 /// R = case T of {patterns[i] -> bodies[i]}
-std::optional<std::tuple<expression_ref, Core::Alts>> parse_case_expression(const expression_ref& E)
+std::optional<std::tuple<expression_ref, Expression::CaseAlts>> parse_case_expression(const expression_ref& E)
 {
     if (not is_case(E)) return {};
 
     auto object = E.sub()[0];
 
-    auto alts = E.sub()[1].as_<Core::Alts>();
+    auto alts = E.sub()[1].as_<Expression::CaseAlts>();
 
     return {{object, alts}};
 }
 
-Core::Alts make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+Expression::CaseAlts make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     assert(patterns.size() == bodies.size());
     assert(not patterns.empty());
 
-    Core::Alts alts;
+    Expression::CaseAlts alts;
     for(int i=0;i<patterns.size();i++)
 	alts.push_back({patterns[i],bodies[i]});
     return alts;
 }
 
 
-expression_ref make_case_expression(const expression_ref& object, const Core::Alts& alts)
+expression_ref make_case_expression(const expression_ref& object, const Expression::CaseAlts& alts)
 {
     assert(object);
 
@@ -104,4 +104,3 @@ bool is_case(const expression_ref& E)
 {
     return E.head().type() == type_constant::case_type;
 }
-

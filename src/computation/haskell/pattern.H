@@ -14,8 +14,6 @@
 #include "computation/core/ast.H"
 #include "computation/core/wrap.H"
 
-#include "core.H"
-
 #include "var.H"
 #include "literal.H"
 #include "type.H"

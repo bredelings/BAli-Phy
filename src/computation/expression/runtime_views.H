@@ -38,7 +38,7 @@ namespace RuntimeView
     struct Case
     {
         expression_ref object;
-        Core::Alts alts;
+        Expression::CaseAlts alts;
     };
 
     struct Apply

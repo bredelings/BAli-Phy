@@ -3,6 +3,7 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
+#include "computation/operation.H"
 
 #include "computation/machine/gcobject.H"
 #include "immer/set.hpp"

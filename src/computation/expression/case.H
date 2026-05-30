@@ -7,7 +7,7 @@
 #include <tuple>
 #include "expression_ref.H"
 
-namespace Core
+namespace Expression
 {
 
 // This isn't really the form that is run, because its not indexified yet!
@@ -17,38 +17,38 @@ namespace Core
 // * a desugared form (let_exp)
 // * an indexified and runnable form (Let, which is an Operation)
 
-struct Alt
+struct CaseAlt
 {
     std::string print() const;
 
     expression_ref pattern;
     expression_ref body;
 
-    bool operator==(const Alt& a) const;
+    bool operator==(const CaseAlt& a) const;
 };
 
-struct Alts: public Object, public std::vector<Alt>
+struct CaseAlts: public Object, public std::vector<CaseAlt>
 {
     std::string print() const;
-    Alts* clone() const {return new Alts(*this);}
+    CaseAlts* clone() const {return new CaseAlts(*this);}
 
     bool operator==(const Object& o) const;
-    bool operator==(const Alts& a) const;
+    bool operator==(const CaseAlts& a) const;
 
-    using std::vector<Alt>::vector;
+    using std::vector<CaseAlt>::vector;
 };
 
 }
 
-Core::Alts make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+Expression::CaseAlts make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref make_case_expression(const expression_ref& object, const Core::Alts& alts);
+expression_ref make_case_expression(const expression_ref& object, const Expression::CaseAlts& alts);
 
 expression_ref make_if_expression(const expression_ref& condition, const expression_ref& true_branch, const expression_ref& false_branch);
 
-std::optional<std::tuple<expression_ref, Core::Alts>> parse_case_expression(const expression_ref& E);
+std::optional<std::tuple<expression_ref, Expression::CaseAlts>> parse_case_expression(const expression_ref& E);
 
 bool is_case(const expression_ref& E);
 

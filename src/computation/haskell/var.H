@@ -7,8 +7,6 @@
 
 #include "type.H"
 #include "coretype.H"
-#include "core.H"
-
 #include "computation/core/wrap.H"
 
 namespace Haskell

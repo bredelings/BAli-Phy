@@ -264,7 +264,7 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
-                Core::Alts alts;
+                Expression::CaseAlts alts;
                 for(const auto& alt: e.alts)
                     alts.push_back({to_expression_ref(alt.pattern), to_expression_ref(alt.body)});
 

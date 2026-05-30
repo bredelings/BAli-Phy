@@ -53,9 +53,9 @@ expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_
 	else
 	    return E;
     }
-    else if (auto alts = E.to<Core::Alts>())
+    else if (auto alts = E.to<Expression::CaseAlts>())
     {
-	auto alts2 = new Core::Alts(*alts);
+	auto alts2 = new Expression::CaseAlts(*alts);
 	for(auto& [pattern,body]: *alts2)
 	{
 	    pattern = subst_reg_vars(pattern, replace);
@@ -219,9 +219,9 @@ expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env
 	else
 	    return E;
     }
-    else if (auto alts = E.to<Core::Alts>())
+    else if (auto alts = E.to<Expression::CaseAlts>())
     {
-	auto alts2 = new Core::Alts(*alts);
+	auto alts2 = new Expression::CaseAlts(*alts);
 	for(auto& [pattern,body]: *alts2)
 	{
 	    pattern = subst_referenced_vars(pattern, Env, names);
