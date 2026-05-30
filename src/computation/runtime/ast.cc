@@ -55,7 +55,7 @@ namespace Runtime
         return make(Let{std::move(args), make(App{FunctionApply{}, std::move(app_args)})});
     }
 
-    static Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         if (call_conv == "bpcall" or call_conv == "trcall")
             return Operation((o_operation_fn)op, lib_name+":"+func_name);
