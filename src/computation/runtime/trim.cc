@@ -70,6 +70,10 @@ namespace Runtime
             {
                 return {e.index};
             }
+            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
+            {
+                return {};
+            }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
                 return pop_vars(1, get_free_index_vars(e.body));
@@ -148,6 +152,10 @@ namespace Runtime
                     return make(IndexVar{depth + mapping[delta]});
                 }
 
+                return E;
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
+            {
                 return E;
             }
             else if constexpr (std::is_same_v<T, Lambda>)
@@ -233,6 +241,10 @@ namespace Runtime
                 return make(e);
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                return make(e);
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
             {
                 return make(e);
             }

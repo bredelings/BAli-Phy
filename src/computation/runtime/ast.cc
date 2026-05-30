@@ -4,8 +4,11 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
+#include "computation/expression/reg_var.H"
 #include "computation/expression/runtime_views.H"
 #include "computation/expression/trim.H"
+#include "computation/expression/var.H"
+#include "computation/haskell/ids.H"
 #include "computation/operation.H"
 #include "util/myexception.H"
 
@@ -15,6 +18,8 @@ namespace Runtime
 {
     ExpPtr make(const Atom& a)   { return std::make_shared<Exp>(a); }
     ExpPtr make(const IndexVar& i) { return std::make_shared<Exp>(i); }
+    ExpPtr make(const GlobalVar& g) { return std::make_shared<Exp>(g); }
+    ExpPtr make(const RegRef& r) { return std::make_shared<Exp>(r); }
     ExpPtr make(const Lambda& l) { return std::make_shared<Exp>(l); }
     ExpPtr make(const Let& l)    { return std::make_shared<Exp>(l); }
     ExpPtr make(const Case& c)   { return std::make_shared<Exp>(c); }
@@ -57,6 +62,15 @@ namespace Runtime
         if (E.is_index_var())
             return make(IndexVar{E.as_index_var()});
 
+        if (E.is_reg_var())
+            return make(RegRef{E.as_reg_var()});
+
+        if (is_qualified_var(E))
+            return make(GlobalVar{E.as_<var>()});
+
+        if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
+            return make(GlobalVar{E.as_<var>()});
+
         if (E.is_atomic())
             return make(Atom{E});
 
@@ -85,6 +99,14 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 return index_var(e.index);
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar>)
+            {
+                return e.name;
+            }
+            else if constexpr (std::is_same_v<T, RegRef>)
+            {
+                return reg_var(e.target);
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {

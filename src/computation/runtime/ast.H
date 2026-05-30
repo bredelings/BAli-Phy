@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/var.H"
 
 namespace Runtime
 {
@@ -20,6 +21,16 @@ namespace Runtime
     struct IndexVar
     {
         int index;
+    };
+
+    struct GlobalVar
+    {
+        var name;
+    };
+
+    struct RegRef
+    {
+        int target;
     };
 
     struct Lambda
@@ -59,10 +70,12 @@ namespace Runtime
 
     struct Exp
     {
-        std::variant<Atom, IndexVar, Lambda, Let, Case, App, Trim> value;
+        std::variant<Atom, IndexVar, GlobalVar, RegRef, Lambda, Let, Case, App, Trim> value;
 
         explicit Exp(const Atom& a):value(a) {}
         explicit Exp(const IndexVar& i):value(i) {}
+        explicit Exp(const GlobalVar& g):value(g) {}
+        explicit Exp(const RegRef& r):value(r) {}
         explicit Exp(const Lambda& l):value(l) {}
         explicit Exp(const Let& l):value(l) {}
         explicit Exp(const Case& c):value(c) {}
@@ -72,6 +85,8 @@ namespace Runtime
 
     ExpPtr make(const Atom&);
     ExpPtr make(const IndexVar&);
+    ExpPtr make(const GlobalVar&);
+    ExpPtr make(const RegRef&);
     ExpPtr make(const Lambda&);
     ExpPtr make(const Let&);
     ExpPtr make(const Case&);

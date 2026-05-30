@@ -8,6 +8,8 @@
 #include "apply.H"
 #include "util/variant.H"
 #include "computation/haskell/Integer.H" // for Integer
+#include "computation/haskell/ids.H"
+#include "computation/expression/reg_var.H"
 #include "computation/runtime/ast.H"
 
 using std::pair;
@@ -35,6 +37,17 @@ var get_named_var(int n)
 	return var(string{char(97+n)});
     else
 	return var(n-26);
+}
+
+bool is_global_var(const var& x)
+{
+    return is_qualified_symbol(x.name) or is_haskell_builtin_con_name(x.name);
+}
+
+template <typename NoteV>
+var to_runtime_var(const Core2::Var<NoteV>& x)
+{
+    return var(x.name, x.index, x.is_exported);
 }
 
 /// Convert to using de Bruijn indices.
@@ -207,6 +220,9 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
     else if (E.is_index_var())
         return Runtime::make(Runtime::IndexVar{E.as_index_var() + int(variables.size())});
 
+    else if (E.is_reg_var())
+        return Runtime::make(Runtime::RegRef{E.as_reg_var()});
+
     // Variable
     else if (E.is_a<var>())
     {
@@ -215,7 +231,12 @@ Runtime::ExpPtr runtime_indexify(const expression_ref& E, vector<var>& variables
 
         int index = find_index_backward(variables, D);
         if (index == -1)
-            throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
+        {
+            if (is_global_var(D))
+                return Runtime::make(Runtime::GlobalVar{D});
+            else
+                throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
+        }
         else
             return Runtime::make(Runtime::IndexVar{index});
     }
@@ -406,7 +427,13 @@ Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& va
     {
         int index = find_index_backward(variables, *V);
         if (index == -1)
-            throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
+        {
+            auto x = to_runtime_var(*V);
+            if (is_global_var(x))
+                return Runtime::make(Runtime::GlobalVar{x});
+            else
+                throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
+        }
         else
             return Runtime::make(Runtime::IndexVar{index});
     }
