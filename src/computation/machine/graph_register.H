@@ -294,12 +294,14 @@ public:
     int add_named_head(const std::string&, int);
     std::optional<int> lookup_named_head(const std::string&);
 
-    std::optional<int> perform_io_head;
     std::optional<int> main_head;
     std::optional<int> program_result_head;
     std::optional<int> logging_head;
+    std::optional<int> perform_io_reg_;
 
-    int add_perform_io_head();
+    /// Return the pinned global register for unsafePerformIO.
+    /// Runtime perform calls use this directly instead of adding a closure Env slot.
+    int perform_io_reg();
 
     // the list of regs that are currently being evaluated
     std::vector<int> stack;

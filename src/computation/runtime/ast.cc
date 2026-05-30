@@ -64,6 +64,75 @@ namespace Runtime
         return Let(std::move(args), App(FunctionApply{}, std::move(app_args)));
     }
 
+    Exp shift_free_indices(const Exp& E, int amount, int depth)
+    {
+        return E.visit([&](const auto& e) -> Exp
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor> or
+                          std::is_same_v<T, GlobalVar> or
+                          std::is_same_v<T, RegRef>)
+            {
+                return e;
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                if (e.index >= depth)
+                    return IndexVar(e.index + amount);
+                else
+                    return e;
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                return Lambda(shift_free_indices(e.body, amount, depth + 1));
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                int n = e.binds.size();
+
+                vector<Exp> binds;
+                for(const auto& bind: e.binds)
+                    binds.push_back(shift_free_indices(bind, amount, depth + n));
+
+                return Let(binds, shift_free_indices(e.body, amount, depth + n));
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                vector<Alt> alts;
+                for(const auto& alt: e.alts)
+                    alts.push_back(Alt(alt.pattern, shift_free_indices(alt.body, amount, depth + pattern_arity(alt.pattern))));
+
+                return Case(shift_free_indices(e.object, amount, depth), alts);
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                vector<Exp> args;
+                for(const auto& arg: e.args)
+                    args.push_back(shift_free_indices(arg, amount, depth));
+
+                return App(e.head, args);
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                auto indices = e.indices;
+                for(int& index: indices)
+                    if (index >= depth)
+                        index += amount;
+
+                return Trim(indices, e.body);
+            }
+            else
+                std::abort();
+        });
+    }
+
     Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         if (call_conv == "bpcall" or call_conv == "trcall")

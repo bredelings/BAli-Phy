@@ -2305,10 +2305,12 @@ optional<int> reg_heap::lookup_named_head(const string& name)
         return it->second;
 }
 
-int reg_heap::add_perform_io_head()
+int reg_heap::perform_io_reg()
 {
-    perform_io_head = add_compute_expression(Core2::unsafePerformIO());
-    return *perform_io_head;
+    assert(perform_io_reg_);
+    int r = *perform_io_reg_;
+    assert(reg_is_pinned(r));
+    return r;
 }
 
 void reg_heap::stack_push(int r)
@@ -3216,13 +3218,13 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
      prog_unshare(1)
 {
     allocate_identifiers_for_program();
+    perform_io_reg_ = reg_for_id(var("Compiler.IO.unsafePerformIO"));
+    assert(reg_is_pinned(*perform_io_reg_));
 
     if (program->get_main_name())
     {
         main_head = add_compute_expression(Core2::unsafePerformIO(Core2::Var<>(*program->get_main_name())));
     }
-
-    add_perform_io_head();
 }
 
 void reg_heap::release_scratch_list() const

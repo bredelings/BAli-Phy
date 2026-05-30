@@ -39,78 +39,6 @@ using std::endl;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
-namespace
-{
-    Runtime::Exp shift_free_indices(const Runtime::Exp& E, int amount, int depth = 0)
-    {
-        return E.visit([&](const auto& e) -> Runtime::Exp
-        {
-            using T = std::decay_t<decltype(e)>;
-
-            if constexpr (std::is_same_v<T, Runtime::Int> or
-                          std::is_same_v<T, Runtime::Double> or
-                          std::is_same_v<T, Runtime::LogDouble> or
-                          std::is_same_v<T, Runtime::Char> or
-                          std::is_same_v<T, Runtime::String> or
-                          std::is_same_v<T, Runtime::Integer> or
-                          std::is_same_v<T, Runtime::Constructor> or
-                          std::is_same_v<T, Runtime::GlobalVar> or
-                          std::is_same_v<T, Runtime::RegRef>)
-            {
-                return e;
-            }
-            else if constexpr (std::is_same_v<T, Runtime::IndexVar>)
-            {
-                if (e.index >= depth)
-                    return Runtime::IndexVar(e.index + amount);
-                else
-                    return e;
-            }
-            else if constexpr (std::is_same_v<T, Runtime::Lambda>)
-            {
-                return Runtime::Lambda(shift_free_indices(e.body, amount, depth + 1));
-            }
-            else if constexpr (std::is_same_v<T, Runtime::Let>)
-            {
-                int n = e.binds.size();
-
-                vector<Runtime::Exp> binds;
-                for(const auto& bind: e.binds)
-                    binds.push_back(shift_free_indices(bind, amount, depth + n));
-
-                return Runtime::Let(binds, shift_free_indices(e.body, amount, depth + n));
-            }
-            else if constexpr (std::is_same_v<T, Runtime::Case>)
-            {
-                vector<Runtime::Alt> alts;
-                for(const auto& alt: e.alts)
-                    alts.push_back(Runtime::Alt(alt.pattern, shift_free_indices(alt.body, amount, depth + Runtime::pattern_arity(alt.pattern))));
-
-                return Runtime::Case(shift_free_indices(e.object, amount, depth), alts);
-            }
-            else if constexpr (std::is_same_v<T, Runtime::App>)
-            {
-                vector<Runtime::Exp> args;
-                for(const auto& arg: e.args)
-                    args.push_back(shift_free_indices(arg, amount, depth));
-
-                return Runtime::App(e.head, args);
-            }
-            else if constexpr (std::is_same_v<T, Runtime::Trim>)
-            {
-                auto indices = e.indices;
-                for(int& index: indices)
-                    if (index >= depth)
-                        index += amount;
-
-                return Runtime::Trim(indices, e.body);
-            }
-            else
-                std::abort();
-        });
-    }
-}
-
 object_ptr<reg_heap>& context_ref::memory() const {return memory_;}
 
 const std::vector<int>& context_ref::heads() const {return memory()->get_heads();}
@@ -226,16 +154,16 @@ const expression_ref& context_ref::evaluate_expression(Runtime::Exp E, closure::
 
 const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
-    int perform_io_reg = heads()[*(memory()->perform_io_head)];
+    int perform_io_reg = memory()->perform_io_reg();
 
     // Keep the argument inside the same execute-token evaluation as performIO.
     // Storing it first in a plain temp head would let a non-contingent closure
     // point at contingent environment registers created by earlier effects.
-    Env.insert(Env.begin(), perform_io_reg);
-    int perform_io_index = int(Env.size());
-    auto argument = shift_free_indices(E, 1);
+    // unsafePerformIO is a pinned global symbol, so it can be referenced
+    // directly instead of occupying another closure environment slot.
+    auto argument = Runtime::shift_free_indices(E, 1);
     auto app = Runtime::Let({argument},
-                            Runtime::apply(Runtime::IndexVar(perform_io_index),
+                            Runtime::apply(Runtime::RegRef(perform_io_reg),
                                            {Runtime::IndexVar(0)}));
     return evaluate_expression(std::move(app), std::move(Env), ec);
 }

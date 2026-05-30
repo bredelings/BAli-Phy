@@ -57,6 +57,43 @@ namespace
         assert(C.Env.size() == 1);
         assert(C.Env[0] == local_reg);
     }
+
+    void check_shift_free_indices()
+    {
+        Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
+                                      Runtime::apply(Runtime::IndexVar(1),
+                                                     {Runtime::IndexVar(0),
+                                                      Runtime::RegRef(7)}));
+
+        auto shifted = Runtime::shift_free_indices(e, 1);
+        auto let = shifted.to<Runtime::Let>();
+        assert(let);
+
+        auto bind = let->binds[0].to<Runtime::IndexVar>();
+        assert(bind);
+        assert(bind->index == 2);
+
+        auto app = let->body.to<Runtime::App>();
+        assert(app);
+        auto fn = app->args[0].to<Runtime::IndexVar>();
+        auto bound_arg = app->args[1].to<Runtime::IndexVar>();
+        auto reg_ref = app->args[2].to<Runtime::RegRef>();
+        assert(fn);
+        assert(bound_arg);
+        assert(reg_ref);
+        assert(fn->index == 2);
+        assert(bound_arg->index == 0);
+        assert(reg_ref->target == 7);
+
+        Runtime::Exp trim_exp = Runtime::Trim({0, 2}, Runtime::IndexVar(1));
+        auto shifted_trim = Runtime::shift_free_indices(trim_exp, 1);
+        auto trim = shifted_trim.to<Runtime::Trim>();
+        assert(trim);
+        assert((trim->indices == std::vector<int>{1, 3}));
+        auto trim_body = trim->body.to<Runtime::IndexVar>();
+        assert(trim_body);
+        assert(trim_body->index == 1);
+    }
 }
 
 int main(int argc, char** argv)
@@ -93,4 +130,5 @@ int main(int argc, char** argv)
 
     check_pinned_global_translation(loader);
     check_local_reg_refs_are_captured_before_trimming(loader);
+    check_shift_free_indices();
 }

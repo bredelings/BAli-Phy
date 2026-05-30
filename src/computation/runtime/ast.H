@@ -447,6 +447,7 @@ namespace Runtime
 
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
+    Exp shift_free_indices(const Exp&, int amount, int depth = 0);
 
     int pattern_arity(const Pattern&);
 
