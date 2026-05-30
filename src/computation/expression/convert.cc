@@ -1,10 +1,5 @@
 #include "convert.H"
 #include "computation/expression/var.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/constructor.H"
 #include "computation/haskell/Integer.H"
 #include "util/variant.H"
 
@@ -20,129 +15,6 @@ using std::string;
 var to_var(const Core2::Var<>& V)
 {
     return var(V.name, V.index, V.is_exported);
-}
-
-expression_ref var_to_expression_ref(const Core2::Var<>& V)
-{
-    return to_var(V);
-}
-
-expression_ref patarg_to_expression_ref(const Core2::Var<>& V)
-{
-    return to_var(V);
-}
-
-expression_ref to_expression_ref(const Core2::Lambda<>& L)
-{
-    return lambda_quantify(to_var(L.x), to_expression_ref(L.body));
-}
-
-expression_ref to_expression_ref(const Core2::Apply<>& A)
-{
-    // Note: we need to turn multiple single-arg applications into one multi-arg application!
-    vector<expression_ref> args;
-
-    Core2::Exp<> E = A;
-    while(auto A2 = E.to_apply())
-    {
-        args.push_back( to_expression_ref(A2->arg) );
-        E = A2->head;
-    }
-
-    args |= ranges::actions::reverse;
-    
-    return apply_expression(to_expression_ref(E), args );
-}
-
-vector<CDecls> decl_groups_to_expression_ref(const vector<Core2::Decls<>>& core_decl_groups)
-{
-    vector<CDecls> decl_groups;
-    for(auto& core_decl_group: core_decl_groups)
-	decl_groups.push_back(to_expression_ref(core_decl_group));
-    return decl_groups;
-}
-
-CDecls to_expression_ref(const Core2::Decls<>& decls)
-{
-    CDecls decls2;
-    for(auto& [x,E]: decls)
-	decls2.push_back({to_var(x),to_expression_ref(E)});
-    return decls2;
-}
-
-CDecl to_expression_ref(const Core2::Decl<>& decl)
-{
-    auto& [x,E] = decl;
-    return {to_var(x),to_expression_ref(E)};
-}
-
-expression_ref to_expression_ref(const Core2::Let<>& L)
-{
-    auto decls = to_expression_ref(L.decls);
-    auto body = to_expression_ref(L.body);
-    return let_expression(decls, body);
-}
-
-expression_ref to_expression_ref(const Core2::Pattern<>& P)
-{
-    if (P.is_wildcard_pat())
-	return var(-1);
-    else
-    {
-	auto args = P.args | ranges::views::transform( patarg_to_expression_ref ) | ranges::to<vector>();
-	return expression_ref(constructor(*P.head, args.size()), args);
-    }
-}
-
-expression_ref to_expression_ref(const Core2::Var<>& P)
-{
-    return to_var(P);
-}
-
-Core::Alts to_expression_ref(const vector<Core2::Alt<>>& A)
-{
-    Core::Alts alts;
-    for(auto [pat,body]: A)
-	alts.push_back({to_expression_ref(pat), to_expression_ref(body)});
-    return alts;
-}
-
-expression_ref to_expression_ref(const Core2::Case<>& C)
-{
-    auto object = to_expression_ref(C.object);
-    auto alts = to_expression_ref(C.alts);
-    return make_case_expression(object, alts);
-}
-
-expression_ref to_expression_ref(const Core2::ConApp<>& C)
-{
-    vector<expression_ref> args;
-    for(auto& arg: C.args)
-	args.push_back( to_expression_ref(arg) );
-    return expression_ref(constructor(C.head,C.args.size()),args);
-}
-
-// How can we do this?
-expression_ref to_expression_ref(const Core2::BuiltinOp<>& B)
-{
-    vector<expression_ref> args;
-    for(auto& arg: B.args)
-	args.push_back( to_expression_ref(arg) );
-
-    if (B.call_conv == "bpcall" or B.call_conv == "trcall")
-    {
-        Operation O( (o_operation_fn)B.op, B.lib_name+":"+B.func_name);
-
-        return expression_ref{O, args};
-    }
-    else if (B.call_conv == "ecall")
-    {
-        Operation O( (e_operation_fn)B.op, B.lib_name+":"+B.func_name);
-
-        return expression_ref{O, args};
-    }
-    else
-        throw myexception()<<"Unrecognized calling convention '"<<B.call_conv<<"'";
 }
 
 expression_ref to_expression_ref(const Core2::Constant& C)
@@ -177,52 +49,7 @@ std::optional<Core2::Constant> to_core_constant(const expression_ref& E)
 	return {};
 }
 
-expression_ref to_expression_ref(const Core2::Exp<>& E)
-{
-    if (auto v = E.to_var())
-	return to_var(*v);
-    else if (auto l = E.to_lambda())
-	return to_expression_ref(*l);
-    else if (auto a = E.to_apply())
-	return to_expression_ref(*a);
-    else if (auto l = E.to_let())
-	return to_expression_ref(*l);
-    else if (auto c = E.to_case())
-	return to_expression_ref(*c);
-    else if (auto c = E.to_conApp())
-	return to_expression_ref(*c);
-    else if (auto b = E.to_builtinOp())
-	return to_expression_ref(*b);
-    else if (auto c = E.to_constant())
-	return to_expression_ref(*c);
-
-    std::abort();
-}
-
-expression_ref maybe_to_expression_ref(const std::optional<Core2::Exp<>>& E)
-{
-    if (not E)
-	return {};
-    else
-	return to_expression_ref(*E);
-}
-
 //------------------------------------------------------------------------------------------------------------
-
-expression_ref occ_to_expression_ref(const Occ::Exp& E)
-{
-    return to_expression_ref(to_core_exp(E));
-}
-
-expression_ref maybe_occ_to_expression_ref(const std::optional<Occ::Exp>& E)
-{
-    if (not E)
-	return {};
-    else
-	return occ_to_expression_ref(*E);
-}
-
-//----------------------------------------------------------------------//
 
 Core2::Var<> to_core_var(const Occ::Var& V)
 {
@@ -335,4 +162,3 @@ Core2::Exp<> to_core_exp(const Occ::Exp& E)
     else
         std::abort();
 }
-

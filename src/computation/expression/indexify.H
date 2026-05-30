@@ -14,8 +14,6 @@ namespace Runtime
 
 expression_ref indexify(const expression_ref&);
 
-expression_ref indexify(const Core2::Exp<>&);
-
 Runtime::ExpPtr runtime_indexify(const expression_ref&);
 
 Runtime::ExpPtr runtime_indexify(const Core2::Exp<>&);
