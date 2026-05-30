@@ -383,9 +383,144 @@ expression_ref indexify(const Core2::Exp<>& E)
     return indexify(E,variables);
 }
 
+expression_ref constant_to_expression_ref(const Core2::Constant& C)
+{
+    if (auto c = to<char>(C.value))
+        return *c;
+    else if (auto i = to<int>(C.value))
+        return *i;
+    else if (auto i = to<integer_container>(C.value))
+        return Integer(i->i);
+    else if (auto d = to<double>(C.value))
+        return *d;
+    else if (auto s = to<std::string>(C.value))
+        return String(*s);
+    else
+        std::abort();
+}
+
+Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E, vector<Core2::Var<>>& variables)
+{
+    // Variable
+    if (auto V = E.to_var())
+    {
+        int index = find_index_backward(variables, *V);
+        if (index == -1)
+            throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
+        else
+            return Runtime::make(Runtime::Atom{index_var(index)});
+    }
+    // Lambda expression - /\x.e
+    else if (auto L = E.to_lambda())
+    {
+        variables.push_back(L->x);
+
+        auto E2 = Runtime::make(Runtime::Lambda{runtime_indexify(L->body, variables)});
+
+        variables.pop_back();
+
+        return E2;
+    }
+    // Apply expression
+    else if (auto A = E.to_apply())
+    {
+        auto head = runtime_indexify(A->head, variables);
+        auto arg = runtime_indexify(A->arg, variables);
+
+        return Runtime::make(Runtime::App{Apply(), {head, arg}});
+    }
+    // Let expression
+    else if (auto L = E.to_let())
+    {
+        for(auto& [x,_]: L->decls)
+            variables.push_back(x);
+
+        vector<Runtime::ExpPtr> binds;
+        for(auto& [_,e]: L->decls)
+            binds.push_back(runtime_indexify(e, variables));
+
+        auto body = runtime_indexify(L->body, variables);
+
+        for(int i=0;i<L->decls.size();i++)
+            variables.pop_back();
+
+        return Runtime::make(Runtime::Let{binds, body});
+    }
+
+    // case expression
+    else if (auto C = E.to_case())
+    {
+        auto object2 = runtime_indexify(C->object, variables);
+
+        vector<Runtime::Alt> alts2;
+        for(auto& [pattern, body]: C->alts)
+        {
+            expression_ref pattern2;
+            Runtime::ExpPtr body2;
+
+            if (pattern.is_wildcard_pat())
+            {
+                pattern2 = var(-1);
+                body2 = runtime_indexify(body, variables);
+            }
+            else
+            {
+                pattern2 = constructor(*pattern.head, pattern.args.size());
+
+                for(auto& arg: pattern.args)
+                    variables.push_back(arg);
+
+                body2 = runtime_indexify(body, variables);
+
+                for(auto& _: pattern.args)
+                    variables.pop_back();
+            }
+
+            alts2.push_back({pattern2, body2});
+        }
+
+        return Runtime::make(Runtime::Case{object2, alts2});
+    }
+    else if (auto C = E.to_conApp())
+    {
+        vector<Runtime::ExpPtr> args;
+        for(auto& arg: C->args)
+            args.push_back(runtime_indexify(arg, variables));
+
+        auto c = constructor(C->head, C->args.size());
+        return Runtime::make(Runtime::App{c, args});
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        vector<Runtime::ExpPtr> args;
+        for(auto& arg: B->args)
+            args.push_back(runtime_indexify(arg, variables));
+
+        if (B->call_conv == "bpcall" or B->call_conv == "trcall")
+        {
+            Operation O( (o_operation_fn)B->op, B->lib_name+":"+B->func_name);
+
+            return Runtime::make(Runtime::App{O, args});
+        }
+        else if (B->call_conv == "ecall")
+        {
+            Operation O( (e_operation_fn)B->op, B->lib_name+":"+B->func_name);
+
+            return Runtime::make(Runtime::App{O, args});
+        }
+        else
+            throw myexception()<<"Unrecognized calling convention '"<<B->call_conv<<"'";
+    }
+    else if (auto C = E.to_constant())
+        return Runtime::make(Runtime::Atom{constant_to_expression_ref(*C)});
+
+    std::abort();
+}
+
 Runtime::ExpPtr runtime_indexify(const Core2::Exp<>& E)
 {
-    return Runtime::from_indexed_expression_ref(indexify(E));
+    vector<Core2::Var<>> variables;
+    return runtime_indexify(E, variables);
 }
 
 /// Convert to using de Bruijn indices.
