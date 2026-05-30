@@ -303,8 +303,8 @@ ProbDensity reg_heap::probability_for_context(int c)
 
 int reg_heap::follow_index_var(int r) const
 {
-    while(expression_at(r).is_index_var())
-        r = closure_at(r).reg_for_index_var();
+    while(closure_at(r).is_reg_ref())
+        r = closure_at(r).reg_for_ref();
     return r;
 }
 
@@ -316,11 +316,11 @@ int reg_heap::follow_index_var_target(int r) const
 
     if (reg_is_index_var_with_force(r))
     {
-	r = closure_at(r).reg_for_index_var();
+	r = closure_at(r).reg_for_ref();
 	assert(regs.is_free(r) or not reg_is_unevaluated(r));
     }
 
-    assert(not expression_at(r).is_index_var());
+    assert(not closure_at(r).is_reg_ref());
 
     return r;
 }
@@ -328,7 +328,7 @@ int reg_heap::follow_index_var_target(int r) const
 int reg_heap::follow_index_var_no_force(int r) const
 {
     while(reg_is_index_var_no_force(r))
-        r = closure_at(r).reg_for_index_var();
+        r = closure_at(r).reg_for_ref();
     return r;
 }
 
@@ -2196,9 +2196,9 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     }
 
     // 4. If the value is a pre-existing reg_var, then call it.
-    if (value.exp.is_index_var())
+    if (value.is_reg_ref())
     {
-        int Q = value.reg_for_index_var();
+        int Q = value.reg_for_ref();
 
         // Never set the call to an index var.
         Q = follow_index_var_no_force(Q);

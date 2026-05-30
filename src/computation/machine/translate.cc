@@ -11,12 +11,19 @@ Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_
 
         if constexpr (std::is_same_v<T, Runtime::GlobalVar>)
         {
+            int r = reg_for_id(e.name);
+            if (reg_is_pinned(r))
+                return Runtime::make(Runtime::RegRef{r});
+
             int index = depth + Env.size();
-            Env.insert(Env.begin(), reg_for_id(e.name));
+            Env.insert(Env.begin(), r);
             return Runtime::make(Runtime::IndexVar{index});
         }
         else if constexpr (std::is_same_v<T, Runtime::RegRef>)
         {
+            if (reg_is_pinned(e.target))
+                return Runtime::make(e);
+
             int index = depth + Env.size();
             Env.insert(Env.begin(), e.target);
             return Runtime::make(Runtime::IndexVar{index});

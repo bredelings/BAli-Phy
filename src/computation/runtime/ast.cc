@@ -576,7 +576,7 @@ namespace Runtime
         {
             using T = std::decay_t<decltype(e)>;
 
-            if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
+            if constexpr (std::is_same_v<T, GlobalVar>)
             {
                 std::abort();
             }

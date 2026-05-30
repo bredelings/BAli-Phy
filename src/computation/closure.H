@@ -48,10 +48,24 @@ struct closure
             std::abort();
     }
 
+    bool is_reg_ref() const
+    {
+        return exp.is_index_var() or exp.is_reg_var();
+    }
+
+    int reg_for_ref() const
+    {
+        if (exp.is_index_var())
+            return lookup_in_env(exp.as_index_var());
+        else if (exp.is_reg_var())
+            return exp.as_reg_var();
+        else
+            std::abort();
+    }
+
     int reg_for_index_var() const
     {
-	int index = exp.as_index_var();
-	return lookup_in_env(index);
+        return reg_for_ref();
     }
 
     int lookup_in_env(int i) const;

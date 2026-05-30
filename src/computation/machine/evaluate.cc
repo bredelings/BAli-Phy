@@ -299,13 +299,13 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
     }
     else if (unevaluated_reg_is_index_var_no_force(r))
     {
-        int r2 = closure_at(r).reg_for_index_var();
+        int r2 = closure_at(r).reg_for_ref();
         return incremental_evaluate1(r2);
     }
     else if (reg_is_index_var_with_force(r))
     {
 	// We don't have to force the forced regs in evaluate1.
-	int r2 = closure_at(r).reg_for_index_var();
+	int r2 = closure_at(r).reg_for_ref();
 	auto [r3, result3] = incremental_evaluate1(r2);
 
 	assert(not reg_is_unevaluated(r));
@@ -321,7 +321,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 #endif
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        if (expression_at(r).is_index_var())
+        if (closure_at(r).is_reg_ref())
         {
             assert( not reg_is_changeable(r) );
 
@@ -329,12 +329,13 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             assert( not has_step1(r) );
 
-            int r2 = closure_at(r).reg_for_index_var();
+            bool was_index_var = expression_at(r).is_index_var();
+            int r2 = closure_at(r).reg_for_ref();
 
             auto [r3, result] = incremental_evaluate1(r2);
 
             // Update the index_var to point to the end of the index_var_no_force chain.
-            if (r2 != r3) regs[r].C.Env[0] = r3;
+            if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
             if (regs[r].forced_regs.empty())
             {
@@ -343,7 +344,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             }
 
 	    int r4 = follow_index_var(r3);
-	    if (r3 != r4) regs[r].C.Env[0] = r4;
+	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
 
 	    mark_reg_index_var_with_force(r);
 
@@ -426,9 +427,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     mark_reg_changeable(r);
 
                     int r2;
-                    if (value.exp.is_index_var())
+                    if (value.is_reg_ref())
                     {
-                        r2 = value.reg_for_index_var();
+                        r2 = value.reg_for_ref();
                     }
                     else
                     {
@@ -703,7 +704,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         return incremental_evaluate2_changeable_(r);
     else if (unevaluated_reg_is_index_var_no_force(r))
     {
-        int r2 = closure_at(r).reg_for_index_var();
+        int r2 = closure_at(r).reg_for_ref();
         return incremental_evaluate2(r2, false);
     }
     else if (reg_is_index_var_with_force(r))
@@ -739,7 +740,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         assert(expression_at(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        if (expression_at(r).is_index_var())
+        if (closure_at(r).is_reg_ref())
         {
             assert( not reg_is_changeable(r) );
 
@@ -747,11 +748,12 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            int r2 = closure_at(r).reg_for_index_var();
+            bool was_index_var = expression_at(r).is_index_var();
+            int r2 = closure_at(r).reg_for_ref();
             auto [r3, result] = incremental_evaluate2(r2, false);
 
             // Update the index_var to point to the end of the index_var_no_force chain.
-            if (r2 != r3) regs[r].C.Env[0] = r3;
+            if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
             if (regs[r].forced_regs.empty())
             {
@@ -760,7 +762,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             }
 
 	    int r4 = follow_index_var(r3);
-	    if (r3 != r4) regs[r].C.Env[0] = r4;
+	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
 
 	    mark_reg_index_var_with_force(r);
 
@@ -852,9 +854,9 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                     mark_reg_changeable(r);
 
                     int r2;
-                    if (value.exp.is_index_var())
+                    if (value.is_reg_ref())
                     {
-                        r2 = value.reg_for_index_var();
+                        r2 = value.reg_for_ref();
                     }
                     else
                     {
@@ -909,7 +911,7 @@ pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
     assert(not has_result1(r));
     assert(not has_result2(r));
 
-    int r2 = closure_at(r).reg_for_index_var();
+    int r2 = closure_at(r).reg_for_ref();
 
     /*
      * NOTE: If we are going to evaluate the same reg twice, once do_count=true
@@ -1035,9 +1037,9 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         total_changeable_reductions2++;
 
         int r2;
-        if (value.exp.is_index_var())
+        if (value.is_reg_ref())
         {
-            r2 = value.reg_for_index_var();
+            r2 = value.reg_for_ref();
         }
         else
         {
@@ -1165,23 +1167,24 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
         else if (unevaluated_reg_is_index_var_no_force(r))
         {
-            int r2 = closure_at(r).reg_for_index_var();
+            int r2 = closure_at(r).reg_for_ref();
             return incremental_evaluate_unchangeable(r2);
         }
         else
             assert(reg_is_unevaluated(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        if (expression_at(r).is_index_var())
+        if (closure_at(r).is_reg_ref())
         {
             mark_reg_index_var_no_force(r);
 
-            int r2 = closure_at(r).reg_for_index_var();
+            bool was_index_var = expression_at(r).is_index_var();
+            int r2 = closure_at(r).reg_for_ref();
 
             int r3 = incremental_evaluate_unchangeable( r2 );
 
             // If we point to r3 through an intermediate index_var chain, then change us to point to the end
-            if (r3 != r2)
+            if (was_index_var and r3 != r2)
                 set_C(r, closure(index_var(0),{r3}));
 
             return r3;
@@ -1249,4 +1252,3 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
     return r;
 }
-
