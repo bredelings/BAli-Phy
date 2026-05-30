@@ -1,9 +1,6 @@
 #include "ast.H"
+#include <cassert>
 #include <cstdlib>
-#include <iostream>
-#include <set>
-#include <string>
-#include <typeinfo>
 #include "computation/expression/apply.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
@@ -276,5 +273,157 @@ namespace Runtime
             else
                 std::abort();
         }, E->value);
+    }
+
+    static void check_pattern_invariants(const Pattern& pattern)
+    {
+#ifndef NDEBUG
+        std::visit([](const auto& p)
+        {
+            using T = std::decay_t<decltype(p)>;
+
+            if constexpr (std::is_same_v<T, WildcardPattern>)
+            {
+            }
+            else if constexpr (std::is_same_v<T, ConstructorPattern>)
+            {
+                assert(p.head.n_args() >= 0);
+            }
+        }, pattern);
+#endif
+    }
+
+    static void check_app_head_invariants(const AppHead& head, int n_args)
+    {
+#ifndef NDEBUG
+        std::visit([&](const auto& h)
+        {
+            using T = std::decay_t<decltype(h)>;
+
+            if constexpr (std::is_same_v<T, FunctionApply>)
+            {
+                assert(n_args >= 2);
+            }
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+            {
+                assert(h.head.n_args() == n_args);
+            }
+            else if constexpr (std::is_same_v<T, OperationApp>)
+            {
+                assert(n_args >= 0);
+            }
+        }, head);
+#endif
+    }
+
+    void check_invariants(const ExpPtr& E)
+    {
+#ifndef NDEBUG
+        assert(E);
+
+        std::visit([](const auto& e)
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, IntLiteral> or
+                          std::is_same_v<T, DoubleLiteral> or
+                          std::is_same_v<T, LogDoubleLiteral> or
+                          std::is_same_v<T, CharLiteral> or
+                          std::is_same_v<T, StringLiteral> or
+                          std::is_same_v<T, IntegerLiteral>)
+            {
+            }
+            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            {
+                assert(e.value.n_args() >= 0);
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                assert(e.index >= 0);
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar>)
+            {
+                assert(not e.name.name.empty());
+            }
+            else if constexpr (std::is_same_v<T, RegRef>)
+            {
+                assert(e.target > 0);
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                check_invariants(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                for(const auto& bind: e.binds)
+                    check_invariants(bind);
+                check_invariants(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                check_invariants(e.object);
+                for(const auto& alt: e.alts)
+                {
+                    check_pattern_invariants(alt.pattern);
+                    check_invariants(alt.body);
+                }
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                check_app_head_invariants(e.head, e.args.size());
+                for(const auto& arg: e.args)
+                    check_invariants(arg);
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                assert(e.indices.size() == 0 or e.indices.front() >= 0);
+                for(int i = 1; i < e.indices.size(); i++)
+                    assert(e.indices[i-1] < e.indices[i]);
+                check_invariants(e.body);
+            }
+        }, E->value);
+#endif
+    }
+
+    void check_translated(const ExpPtr& E)
+    {
+#ifndef NDEBUG
+        check_invariants(E);
+
+        std::visit([](const auto& e)
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
+            {
+                std::abort();
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                check_translated(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                for(const auto& bind: e.binds)
+                    check_translated(bind);
+                check_translated(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                check_translated(e.object);
+                for(const auto& alt: e.alts)
+                    check_translated(alt.body);
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                for(const auto& arg: e.args)
+                    check_translated(arg);
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                check_translated(e.body);
+            }
+        }, E->value);
+#endif
     }
 }

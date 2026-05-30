@@ -177,6 +177,9 @@ namespace Runtime
     expression_ref to_expression_ref(const ExpPtr&);
     expression_ref to_expression_ref(const Pattern&);
     expression_ref to_expression_ref(const AppHead&);
+
+    void check_invariants(const ExpPtr&);
+    void check_translated(const ExpPtr&);
 }
 
 #endif

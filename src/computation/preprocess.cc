@@ -335,8 +335,11 @@ closure graph_normalize(FreshVarState& state, closure&& C)
 
 closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
 {
+    Runtime::check_invariants(E);
     E = heap.translate_refs(E, C.Env);
+    Runtime::check_translated(E);
     E = Runtime::trim_normalize(E);
+    Runtime::check_translated(E);
     C.exp = Runtime::to_expression_ref(E);
     return std::move(C);
 }
