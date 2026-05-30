@@ -1209,7 +1209,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
 
     auto& M = Args.memory();
 
-    r_ix = M.follow_index_var_no_force(r_ix);
+    r_ix = M.follow_reg_ref_no_force(r_ix);
 
     assert(M.expression_at(r_ix).head().is_a<interchangeable>());
 
@@ -1428,4 +1428,3 @@ extern "C" closure builtin_function_posterior(OperationArgs& Args)
 
     return {(log_double_t)C.probability()};
 }
-

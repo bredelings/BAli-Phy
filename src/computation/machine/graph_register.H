@@ -114,10 +114,10 @@ public:
     enum class type_t
     {
         unevaluated=0,
-        index_var_no_force=1,
+        ref_no_force=1,
         constant=2,
         changeable=3,
-        index_var_with_force=4
+        ref_with_force=4
     };
 
     type_t type = type_t::unevaluated;
@@ -248,11 +248,11 @@ public:
     void mark_reg_constant(int r);
     bool reg_is_changeable(int r) const;
     void mark_reg_changeable(int r);
-    bool unevaluated_reg_is_index_var_no_force(int r) const;
-    bool reg_is_index_var_no_force(int r) const;
-    void mark_reg_index_var_no_force(int r);
-    bool reg_is_index_var_with_force(int r) const;
-    void mark_reg_index_var_with_force(int r);
+    bool unevaluated_reg_is_ref_no_force(int r) const;
+    bool reg_is_ref_no_force(int r) const;
+    void mark_reg_ref_no_force(int r);
+    bool reg_is_ref_with_force(int r) const;
+    void mark_reg_ref_with_force(int r);
     bool reg_is_changeable_or_forcing(int r) const;
     bool reg_is_to_changeable(int r) const;
     bool reg_has_forces(int r) const;
@@ -692,10 +692,10 @@ public:
     bool has_result1(int r) const;
     bool has_result2(int r) const;
     bool reg_has_value(int r) const;
-    int follow_index_var(int r) const;
-    int follow_index_var_target(int r) const;
-    int follow_index_var_no_force(int r) const;
-    int follow_single_force_index_var(int r) const;
+    int follow_reg_ref(int r) const;
+    int follow_reg_ref_target(int r) const;
+    int follow_reg_ref_no_force(int r) const;
+    int follow_single_force_ref(int r) const;
     bool reg_is_forced(int r) const;
     int inc_count(int r);
     int dec_count(int r);
@@ -775,7 +775,7 @@ public:
 private:  
     std::pair<int,int> incremental_evaluate1_(int R);
     std::pair<int,int> incremental_evaluate2_(int R);
-    std::pair<int,int> incremental_evaluate2_index_var_with_force_(int R);
+    std::pair<int,int> incremental_evaluate2_ref_with_force_(int R);
     std::pair<int,int> incremental_evaluate2_changeable_(int R);
     std::pair<int,int> incremental_evaluate2_unevaluated_(int R);
     int incremental_evaluate_unchangeable_(int R);
@@ -910,34 +910,36 @@ inline void reg_heap::mark_reg_changeable(int r)
     regs.access(r).type = reg::type_t::changeable;
 }
 
-inline bool reg_heap::unevaluated_reg_is_index_var_no_force(int r) const
+inline bool reg_heap::unevaluated_reg_is_ref_no_force(int r) const
 {
-    return regs.access(r).type == reg::type_t::index_var_no_force;
+    return regs.access(r).type == reg::type_t::ref_no_force;
 }
 
-inline bool reg_heap::reg_is_index_var_no_force(int r) const
+inline bool reg_heap::reg_is_ref_no_force(int r) const
 {
     assert(not reg_is_unevaluated(r));
-    return unevaluated_reg_is_index_var_no_force(r);
+    return unevaluated_reg_is_ref_no_force(r);
 }
 
-inline void reg_heap::mark_reg_index_var_no_force(int r)
+inline void reg_heap::mark_reg_ref_no_force(int r)
 {
-    assert( unevaluated_reg_is_index_var_no_force(r) or reg_is_unevaluated(r));
+    assert( unevaluated_reg_is_ref_no_force(r) or reg_is_unevaluated(r));
+    assert( closure_at(r).is_reg_ref() );
 
-    regs.access(r).type = reg::type_t::index_var_no_force;
+    regs.access(r).type = reg::type_t::ref_no_force;
 }
 
-inline bool reg_heap::reg_is_index_var_with_force(int r) const
+inline bool reg_heap::reg_is_ref_with_force(int r) const
 {
-    return regs.access(r).type == reg::type_t::index_var_with_force;
+    return regs.access(r).type == reg::type_t::ref_with_force;
 }
 
-inline void reg_heap::mark_reg_index_var_with_force(int r)
+inline void reg_heap::mark_reg_ref_with_force(int r)
 {
-    assert( reg_is_index_var_with_force(r) or reg_is_unevaluated(r) );
+    assert( reg_is_ref_with_force(r) or reg_is_unevaluated(r) );
+    assert( closure_at(r).is_reg_ref() );
 
-    regs.access(r).type = reg::type_t::index_var_with_force;
+    regs.access(r).type = reg::type_t::ref_with_force;
 }
 
 inline bool reg_heap::reg_is_changeable_or_forcing(int r) const
@@ -947,7 +949,7 @@ inline bool reg_heap::reg_is_changeable_or_forcing(int r) const
 
 inline bool reg_heap::reg_is_to_changeable(int r) const
 {
-    return reg_is_changeable(follow_index_var_target(r));
+    return reg_is_changeable(follow_reg_ref_target(r));
 }
 
 inline bool reg_heap::reg_is_forced(int r) const

@@ -757,7 +757,7 @@ std::optional<int> context_ref::lazy_attribute_map::get(const string& attribute)
         r = C.memory()->closure_at(r).Env[0];
         // See params.cc: class context_ptr
         auto [r1,_] = C.incremental_evaluate(r);
-        int r2 = C.memory()->follow_index_var(r1);
+        int r2 = C.memory()->follow_reg_ref(r1);
         return r2;
     }
 }

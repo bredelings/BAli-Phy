@@ -23,7 +23,7 @@ int force_slot_to_safe_reg(OperationArgs& Args, int slot)
 
     int r = Args.reg_for_slot(slot);
 
-    return Args.memory().follow_index_var(r);
+    return Args.memory().follow_reg_ref(r);
 }
 
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
@@ -35,7 +35,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     int r_prob = Args.reg_for_slot(1);
 
-    r_prob = Args.memory().follow_index_var_no_force(r_prob);
+    r_prob = Args.memory().follow_reg_ref_no_force(r_prob);
 
     object_ptr<effect> e(new register_prior(r_from_dist, r_prob, prob));
 
@@ -55,7 +55,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     int r_prob = Args.reg_for_slot(1);
 
-    r_prob = Args.memory().follow_index_var_no_force(r_prob);
+    r_prob = Args.memory().follow_reg_ref_no_force(r_prob);
 
     object_ptr<effect> e(new register_likelihood(r_from_dist, r_prob, prob));
 

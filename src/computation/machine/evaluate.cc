@@ -96,11 +96,11 @@ class RegOperationArgs1 final: public OperationArgs
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2) override
         {
-            // Compute the value, and follow index_var chains (which are not changeable).
+            // Compute the value, and follow register-reference chains (which are not changeable).
             auto [r3, result] = M.incremental_evaluate1(r2);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
-            // found from r2 through a non-changeable reg_var chain.
+            // found from r2 through a non-changeable register-reference chain.
             if (M.reg_is_to_changeable(r3))
             {
                 make_changeable();
@@ -142,8 +142,8 @@ public:
         { }
 };
 
-/// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
-/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
+/// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
+/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
 pair<int,int> reg_heap::incremental_evaluate1(int r)
 {
     assert(execution_allowed_at_root());
@@ -156,7 +156,7 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     stack.push_back(r);
 
     auto result = incremental_evaluate1_(r);
-    assert(not reg_is_index_var_no_force(result.first));
+    assert(not reg_is_ref_no_force(result.first));
     assert(not reg_is_unevaluated(result.first));
     assert(not reg_is_unevaluated(r));
     assert(reg_is_on_stack(r));
@@ -175,7 +175,7 @@ expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 
     // Can we stop referencing the current closure?
     // The problem is that after each evaluation, closure pointers might be modified
-    //   to point to a non-index-var.
+    //   to point to a non-reference.
     // If we could assume that closures that are currently being executed will not
     //   be modified, that would be helpful for writing simpler code I expect.
     int n_args = E.size();
@@ -244,10 +244,10 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
-        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }
-    if (unevaluated_reg_is_index_var_no_force(r))
+    if (unevaluated_reg_is_ref_no_force(r))
         assert(not has_result1(r));
 #endif
 
@@ -272,11 +272,11 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             auto [call, result] = incremental_evaluate1(steps[s].call);
 
 	    // If the back-edge has not been set, then we need to update the call to look through
-	    // index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
+	    // ref_no_force and set the back-edge on the first non-reference if it is changeable.
             if (not steps[s].call_edge)
             {
                 // This should only ever happen for modifiable values set with set_reg_value( ).
-                // In such cases, we need this, because the value we set could evaluate to an index_var.
+                // In such cases, we need this, because the value we set could evaluate to a register reference.
                 // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
                 clear_call_for_reg(r);
                 set_call(s, call);
@@ -297,12 +297,12 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             return {r, result};
         }
     }
-    else if (unevaluated_reg_is_index_var_no_force(r))
+    else if (unevaluated_reg_is_ref_no_force(r))
     {
         int r2 = closure_at(r).reg_for_ref();
         return incremental_evaluate1(r2);
     }
-    else if (reg_is_index_var_with_force(r))
+    else if (reg_is_ref_with_force(r))
     {
 	// We don't have to force the forced regs in evaluate1.
 	int r2 = closure_at(r).reg_for_ref();
@@ -334,19 +334,19 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             auto [r3, result] = incremental_evaluate1(r2);
 
-            // Update the index_var to point to the end of the index_var_no_force chain.
+            // If this is an index_var, update it to point to the end of the ref_no_force chain.
             if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
             if (regs[r].forced_regs.empty())
             {
-                mark_reg_index_var_no_force(r);
+                mark_reg_ref_no_force(r);
                 return {r3,result};
             }
 
-	    int r4 = follow_index_var(r3);
+	    int r4 = follow_reg_ref(r3);
 	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
 
-	    mark_reg_index_var_with_force(r);
+	    mark_reg_ref_with_force(r);
 
             if (not reg_is_constant(r3))
 		set_forced_reg(r,r3);
@@ -492,9 +492,9 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
     int evaluate_reg_force(int r2)
         {
-            r2 = M.follow_index_var_no_force(r2);
+            r2 = M.follow_reg_ref_no_force(r2);
 
-            assert(M.reg_is_constant(M.follow_index_var_target(r2)) or M.has_result2(M.follow_index_var_target(r2)));
+            assert(M.reg_is_constant(M.follow_reg_ref_target(r2)) or M.has_result2(M.follow_reg_ref_target(r2)));
 
             return M.value_for_reg(r2);
         }
@@ -502,9 +502,9 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
     int evaluate_reg_use(int r2)
         {
-            r2 = M.follow_index_var_no_force(r2);
+            r2 = M.follow_reg_ref_no_force(r2);
 
-            assert(M.reg_is_constant(M.follow_index_var_target(r2)) or M.has_result2(M.follow_index_var_target(r2)));
+            assert(M.reg_is_constant(M.follow_reg_ref_target(r2)) or M.has_result2(M.follow_reg_ref_target(r2)));
 
             return M.value_for_reg(r2);
         }
@@ -561,11 +561,11 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2) override
         {
-            // Compute the value, and follow index_var chains (which are not changeable).
+            // Compute the value, and follow register-reference chains (which are not changeable).
             auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
-            // found from r2 through a non-changeable reg_var chain.
+            // found from r2 through a non-changeable register-reference chain.
             if (M.reg_is_to_changeable(r3))
             {
                 make_changeable();
@@ -652,8 +652,8 @@ int reg_heap::dec_count(int r)
     return end;
 }
 
-/// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
-/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
+/// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
+/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
 pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
 {
     assert(execution_allowed_at_root());
@@ -666,7 +666,7 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     stack.push_back(r);
 
     auto result = incremental_evaluate2_(r);
-    assert(not reg_is_index_var_no_force(result.first));
+    assert(not reg_is_ref_no_force(result.first));
     assert(not reg_is_unevaluated(result.first));
     assert(not reg_is_unevaluated(r));
 
@@ -691,10 +691,10 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
-        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }
-    if (unevaluated_reg_is_index_var_no_force(r))
+    if (unevaluated_reg_is_ref_no_force(r))
         assert(not has_result1(r));
 #endif
 
@@ -702,13 +702,13 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 	return {r,r};
     else if (reg_is_changeable(r))
         return incremental_evaluate2_changeable_(r);
-    else if (unevaluated_reg_is_index_var_no_force(r))
+    else if (unevaluated_reg_is_ref_no_force(r))
     {
         int r2 = closure_at(r).reg_for_ref();
         return incremental_evaluate2(r2, false);
     }
-    else if (reg_is_index_var_with_force(r))
-        return incremental_evaluate2_index_var_with_force_(r);
+    else if (reg_is_ref_with_force(r))
+        return incremental_evaluate2_ref_with_force_(r);
     else
         return incremental_evaluate2_unevaluated_(r);
 
@@ -728,10 +728,10 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
-        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }
-    if (unevaluated_reg_is_index_var_no_force(r))
+    if (unevaluated_reg_is_ref_no_force(r))
         assert(not has_result1(r));
 #endif
 
@@ -752,19 +752,19 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             int r2 = closure_at(r).reg_for_ref();
             auto [r3, result] = incremental_evaluate2(r2, false);
 
-            // Update the index_var to point to the end of the index_var_no_force chain.
+            // If this is an index_var, update it to point to the end of the ref_no_force chain.
             if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
             if (regs[r].forced_regs.empty())
             {
-                mark_reg_index_var_no_force(r);
+                mark_reg_ref_no_force(r);
                 return {r3,result};
             }
 
-	    int r4 = follow_index_var(r3);
+	    int r4 = follow_reg_ref(r3);
 	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
 
-	    mark_reg_index_var_with_force(r);
+	    mark_reg_ref_with_force(r);
 
             if (not reg_is_constant(r3))
 	    {
@@ -903,7 +903,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
+pair<int,int> reg_heap::incremental_evaluate2_ref_with_force_(int r)
 {
     if (not reg_is_forced(r))
 	force_reg_no_call(r);
@@ -952,11 +952,11 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         auto [call, result] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
 
 	// If the back-edge has not been set, then we need to update the call to look through
-	// index-var-no-force and set the back-edge on the first non-index-var if it is changeable.
+	// ref_no_force and set the back-edge on the first non-reference if it is changeable.
         if (not steps[s].call_edge)
         {
             // This should only ever happen for modifiable values set with set_reg_value( ).
-            // In such cases, we need this, because the value we set could evaluate to an index_var.
+            // In such cases, we need this, because the value we set could evaluate to a register reference.
             // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
             clear_call_for_reg(r);
             set_call(s, call);
@@ -1165,7 +1165,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         if (reg_is_constant(r) or reg_is_changeable_or_forcing(r))
             break;
 
-        else if (unevaluated_reg_is_index_var_no_force(r))
+        else if (unevaluated_reg_is_ref_no_force(r))
         {
             int r2 = closure_at(r).reg_for_ref();
             return incremental_evaluate_unchangeable(r2);
@@ -1176,14 +1176,14 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         /*---------- Below here, there is no call, and no value. ------------*/
         if (closure_at(r).is_reg_ref())
         {
-            mark_reg_index_var_no_force(r);
+            mark_reg_ref_no_force(r);
 
             bool was_index_var = expression_at(r).is_index_var();
             int r2 = closure_at(r).reg_for_ref();
 
             int r3 = incremental_evaluate_unchangeable( r2 );
 
-            // If we point to r3 through an intermediate index_var chain, then change us to point to the end
+            // If we point to r3 through an intermediate index_var chain, then change us to point to the end.
             if (was_index_var and r3 != r2)
                 set_C(r, closure(index_var(0),{r3}));
 

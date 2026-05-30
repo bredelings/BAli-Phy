@@ -301,20 +301,20 @@ ProbDensity reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
-int reg_heap::follow_index_var(int r) const
+int reg_heap::follow_reg_ref(int r) const
 {
     while(closure_at(r).is_reg_ref())
         r = closure_at(r).reg_for_ref();
     return r;
 }
 
-int reg_heap::follow_index_var_target(int r) const
+int reg_heap::follow_reg_ref_target(int r) const
 {
     assert(not reg_is_unevaluated(r));
 
-    assert(not reg_is_index_var_no_force(r));
+    assert(not reg_is_ref_no_force(r));
 
-    if (reg_is_index_var_with_force(r))
+    if (reg_is_ref_with_force(r))
     {
 	r = closure_at(r).reg_for_ref();
 	assert(regs.is_free(r) or not reg_is_unevaluated(r));
@@ -325,9 +325,9 @@ int reg_heap::follow_index_var_target(int r) const
     return r;
 }
 
-int reg_heap::follow_index_var_no_force(int r) const
+int reg_heap::follow_reg_ref_no_force(int r) const
 {
-    while(reg_is_index_var_no_force(r))
+    while(reg_is_ref_no_force(r))
         r = closure_at(r).reg_for_ref();
     return r;
 }
@@ -1253,7 +1253,7 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 
 void reg_heap::register_in_edge(int r, int /* s */)
 {
-    // NOTE: the source node is lazy -- it could be an index-var
+    // NOTE: the source node is lazy -- it could be a register reference.
     // int r_from_node = closure_at(r).reg_for_slot(0);
     int r_to_dist   = expression_at(r).sub()[1].as_int();
     string arg_name = expression_at(r).sub()[2].as_<String>();
@@ -1274,7 +1274,7 @@ void reg_heap::register_in_edge(int r, int /* s */)
 
 void reg_heap::unregister_in_edge(int r, int /* s */)
 {
-    // NOTE: the source node is lazy -- it could be an index-var
+    // NOTE: the source node is lazy -- it could be a register reference.
     // int r_from_node = closure_at(r).reg_for_slot(0);
     int r_to_dist   = expression_at(r).sub()[1].as_int();
     string arg_name = expression_at(r).sub()[2].as_<String>();
@@ -1375,7 +1375,7 @@ void reg_heap::register_dist_property(int r, int /* s */)
 {
     int r_from_dist = expression_at(r).sub()[0].as_int();
     const string& property =  expression_at(r).sub()[1].as_<String>();
-    // NOTE: the target (property) reg is lazy -- it could be an index-var.
+    // NOTE: the target (property) reg is lazy -- it could be a register reference.
     // int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
@@ -1415,7 +1415,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
     else
         return {};
 
-    // This does NOT handle index_var_with_force!
+    // This does NOT handle ref-with-force redirects.
 }
 
 optional<int> reg_heap::find_modifiable_reg(int R)
@@ -1439,8 +1439,8 @@ optional<int> reg_heap::find_precomputed_const_or_modifiable_reg(int r)
 
         if (reg_is_unevaluated(r))  // 0
             return {};
-        else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
-            r = C.reg_for_index_var();
+        else if (reg_is_ref_no_force(r) or reg_is_ref_with_force(r)) // 1, 4, 5
+            r = C.reg_for_ref();
         else if (reg_is_constant(r)) // 2, 6
             return r;
         else if (reg_is_changeable(r)) // 3
@@ -1471,9 +1471,9 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
 
         if (reg_is_unevaluated(r))  // 0
             return {};
-        // Here we follow unforced index_var_with_force
-        else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
-            r = C.reg_for_index_var();
+        // Here we follow unforced ref-with-force redirects.
+        else if (reg_is_ref_no_force(r) or reg_is_ref_with_force(r)) // 1, 4, 5
+            r = C.reg_for_ref();
         else if (reg_is_constant(r)) // 2, 6
             return {};
         else if (reg_is_changeable(r)) // 3
@@ -1514,9 +1514,9 @@ optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
 
         if (reg_is_unevaluated(r))  // 0
             return {};
-        // Here we follow unforced index_var_with_force
-        else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
-            r = C.reg_for_index_var();
+        // Here we follow unforced ref-with-force redirects.
+        else if (reg_is_ref_no_force(r) or reg_is_ref_with_force(r)) // 1, 4, 5
+            r = C.reg_for_ref();
         else if (reg_is_constant(r)) // 2, 6
             return {};
         else if (reg_is_changeable(r)) // 3
@@ -1546,7 +1546,7 @@ optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
 
 optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 {
-    R = follow_index_var(R);
+    R = follow_reg_ref(R);
 
     if (reg_is_constant(R)) return {};
 
@@ -1577,7 +1577,7 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 
 int reg_heap::find_const_or_modifiable_reg_in_context(int R, int c1)
 {
-    R = follow_index_var(R);
+    R = follow_reg_ref(R);
 
     if (reg_is_constant(R)) return R;
 
@@ -1623,8 +1623,8 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 bool reg_heap::reg_has_value(int r) const
 {
     // We can't assume that r is evaluated in all callers...
-    if (reg_is_index_var_with_force(r))
-	r = closure_at(r).reg_for_index_var();
+    if (reg_is_ref_with_force(r))
+	r = closure_at(r).reg_for_ref();
 
     if (reg_is_constant(r))
         return true;
@@ -1677,7 +1677,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
+        assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
         assert(reg_is_forced(r2));
     }
 
@@ -1690,7 +1690,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         incremental_evaluate2(r2, zero_count);
 
-	assert(follow_index_var_target(r2) == r3);
+	assert(follow_reg_ref_target(r2) == r3);
         assert(reg_is_forced(r3));
         assert(reg_is_constant(r3) or reg_is_changeable(r3));
         assert(reg_is_constant(r3) or has_result2(r3));
@@ -1713,7 +1713,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
+        assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
         assert(reg_is_forced(r2));
     }
 
@@ -1723,7 +1723,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(reg_is_constant(follow_index_var_target(r2)) or has_result2(follow_index_var_target(r2)));
+        assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
         assert(reg_is_forced(r2));
     }
 }
@@ -1749,9 +1749,9 @@ void reg_heap::force_reg_with_call(int r)
         // If r has a result, then shouldn't its call have a result?
         // In this case, the call is to a constant-with-force.
         // Do those have results?
-        assert(reg_is_constant(follow_index_var_target(call)) or has_result2(follow_index_var_target(call)));
+        assert(reg_is_constant(follow_reg_ref_target(call)) or has_result2(follow_reg_ref_target(call)));
         incremental_evaluate2(call, true);
-	assert(reg_is_constant(follow_index_var_target(call)) or has_result2(follow_index_var_target(call)));
+	assert(reg_is_constant(follow_reg_ref_target(call)) or has_result2(follow_reg_ref_target(call)));
         assert(reg_is_forced(call));
     }
 }
@@ -1760,7 +1760,7 @@ int reg_heap::value_for_reg(int r) const
 {
     assert(not reg_is_unevaluated(r));
 
-    r = follow_index_var_target(r);
+    r = follow_reg_ref_target(r);
 
     if (reg_is_constant(r))
         return r;
@@ -1821,12 +1821,12 @@ void reg_heap::set_used_reg(int r1, int r2)
     assert(closure_at(r2));
     assert(reg_has_value(r2));
 
-    // An index_var's value only changes if the thing the index-var points to also changes.
-    // So, we may as well forbid using an index_var as an input.
-    assert(not reg_is_index_var_no_force(r2));
+    // A register reference's value only changes if the thing it points to also changes.
+    // So, we may as well forbid using a no-force reference as an input.
+    assert(not reg_is_ref_no_force(r2));
 
-    // We are going to put the back-edge on the first non-index-var that we see.
-    int r3 = follow_index_var_target(r2);
+    // We are going to put the back-edge on the first non-reference that we see.
+    int r3 = follow_reg_ref_target(r2);
 
     assert(reg_is_changeable(r3));
 
@@ -1841,7 +1841,7 @@ void reg_heap::set_used_reg(int r1, int r2)
 }
 
 
-int reg_heap::follow_single_force_index_var(int r) const
+int reg_heap::follow_single_force_ref(int r) const
 {
     assert(regs.is_used(r));
 
@@ -1853,7 +1853,7 @@ int reg_heap::follow_single_force_index_var(int r) const
 
     assert(reg_has_value(r));
 
-    while(reg_is_index_var_with_force(r) and regs[r].forced_regs.size() == 1)
+    while(reg_is_ref_with_force(r) and regs[r].forced_regs.size() == 1)
     {
 	r = regs[r].forced_regs[0];
 
@@ -1875,7 +1875,7 @@ int reg_heap::follow_single_force_index_var(int r) const
 
 std::optional<int> reg_heap::reg_has_single_force(int r1) const
 {
-    if (expression_at(r1).is_index_var() and regs[r1].forced_regs.size() == 1)
+    if (closure_at(r1).is_reg_ref() and regs[r1].forced_regs.size() == 1)
 	return regs[r1].forced_regs[0];
     else
 	return {};
@@ -1893,9 +1893,9 @@ int reg_heap::set_forced_reg(int r1, int r2)
 
     assert(reg_has_value(r2));
 
-    // An index_var's value only changes if the thing the index-var points to also changes.
-    // So, we may as well forbid using an index_var as an input.
-    assert(not reg_is_index_var_no_force(r2));
+    // A register reference's value only changes if the thing it points to also changes.
+    // So, we may as well forbid using a no-force reference as an input.
+    assert(not reg_is_ref_no_force(r2));
 
     if (auto r3 = reg_has_single_force(r2))
     {
@@ -1913,7 +1913,7 @@ int reg_heap::set_forced_reg(int r1, int r2)
 
 	assert(reg_has_value(r2));
 
-	assert(not reg_is_index_var_no_force(r2));
+	assert(not reg_is_ref_no_force(r2));
     }
 
     regs[r1].forced_regs.push_back(r2);
@@ -1940,16 +1940,16 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
     // Set the call
     S1.call = r2;
 
-    // We may need a call edge to index-var-with-force nodes in order to achieve the proper force count.
+    // We may need a call edge to ref_with_force nodes in order to achieve the proper force count.
     // But back-edges can only be on changeables.
     // In order to achieve that, we only set call back-edges when the target is evaluated.
     if (not unsafe)
     {
 	assert(not reg_is_unevaluated(r2));
 
-	// put the back-edge on the first non-index-var that we see
+	// put the back-edge on the first non-reference that we see
 	int r3 = r2;
-	r2 = follow_index_var(r2);
+	r2 = follow_reg_ref(r2);
 
 	if (reg_is_changeable(r2))
 	{
@@ -1984,7 +1984,7 @@ void reg_heap::clear_call(int s)
 
 	if (r2 > 0 and not regs.is_free(r2))
 	{
-	    assert(follow_index_var(call) == r2);
+	    assert(follow_reg_ref(call) == r2);
 	    auto& backward = regs[r2].called_by;
 	    assert(0 <= j and j < backward.size());
 
@@ -2201,7 +2201,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
         int Q = value.reg_for_ref();
 
         // Never set the call to an index var.
-        Q = follow_index_var_no_force(Q);
+        Q = follow_reg_ref_no_force(Q);
 
         // Never call something unevaluated either.
         assert(not reg_is_unevaluated(Q));
@@ -2915,14 +2915,14 @@ bool reg_heap::execution_allowed_at_root() const
 
 const closure& reg_heap::value_for_precomputed_reg(int r) const
 {
-    r = follow_index_var(r);
+    r = follow_reg_ref(r);
     return access_value_for_reg(r);
 }
 
 optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
     // QUESTION: Should I replace this with incremental_evaluate_unchangeable?
-    r = follow_index_var(r);
+    r = follow_reg_ref(r);
 
     if (reg_is_constant(r))
 	return r;
@@ -2951,7 +2951,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     check_used_regs();
 #endif
 
-    R = follow_index_var(R);
+    R = follow_reg_ref(R);
 
     if (reg_is_constant(R)) return {R,R};
 

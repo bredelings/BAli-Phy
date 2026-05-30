@@ -443,7 +443,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
 	    if (rname.size() and rname[0] != '#') continue;
 	}
 
-	if (C[R].exp.is_index_var()) continue;
+	if (C[R].is_reg_ref()) continue;
 
 	if (is_modifiable(C[R].exp)) continue;
 
@@ -532,18 +532,18 @@ string reg_name(int R, const map<int,expression_ref>& replace)
     return name;
 }
 
-closure follow_index_var(const reg_heap& M, closure C)
+closure follow_reg_ref(const reg_heap& M, closure C)
 {
     for(int& r: C.Env)
-	r = M.follow_index_var(r);
+	r = M.follow_reg_ref(r);
     return C;
 }
 
-string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& replace, bool skip_index_var = false)
+string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& replace, bool skip_ref = false)
 {
     auto CR = C[R];
-    if (skip_index_var)
-	CR = follow_index_var(C, CR);
+    if (skip_ref)
+	CR = follow_reg_ref(C, CR);
 
     expression_ref F = CR.exp;
     // node label = R/name: expression
@@ -592,9 +592,9 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
         }
         label += "</tr></table>";
     }
-    else if (F.type() == type_constant::index_var_type)
+    else if (CR.is_reg_ref())
     {
-        int R2 = C[R].reg_for_index_var();
+        int R2 = C[R].reg_for_ref();
 
         label += reg_name(R2, replace);
 
@@ -632,7 +632,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
 {
     auto CR = C[R];
     for(int& r: CR.Env)
-        r = C.follow_index_var(r);
+        r = C.follow_reg_ref(r);
 
     expression_ref F = CR.exp;
     // node label = R/name: expression
@@ -682,9 +682,9 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
 	}
         label += "</tr></table>";
     }
-    else if (F.type() == type_constant::index_var_type)
+    else if (CR.is_reg_ref())
     {
-        int R2 = C[R].reg_for_index_var();
+        int R2 = C[R].reg_for_ref();
 
         string reg_name = " ";
         if (reg_names.count(R2))
@@ -794,7 +794,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	    o<<",fillcolor=\"#007700\",fontcolor=white";
 	else if (C.reg_is_changeable(R))
 	    o<<",fillcolor=\"#770000\",fontcolor=white";
-	else if (C[R].exp.is_index_var())
+	else if (C[R].is_reg_ref())
 	    o<<",fillcolor=\"#77bbbb\"";
 	else if (C.reg_is_constant(R))
 	    o<<",fillcolor=\"#bbbb77\"";
@@ -984,14 +984,14 @@ void context_ref::write_factor_graph(std::ostream& o) const
             for(auto& arg_name: in_edges->arg_names())
             {
                 int r = *in_edges->get(arg_name);
-                int r2 = M.follow_index_var(r);
+                int r2 = M.follow_reg_ref(r);
                 D.inputs.insert({arg_name,r2});
                 regs2_set.insert(r2);
             }
 
         // Characterize the out-edge here.
         int r_out = *out_edges_from_dist(s);
-        r_out = M.follow_index_var(r_out);
+        r_out = M.follow_reg_ref(r_out);
 
         // Get a node number for the distribution.
         int S = s;
@@ -1027,7 +1027,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
         if (is_modifiable(M[r].exp)) continue;
         for(auto r2: M[r].Env)
         {
-            r2 = M.follow_index_var(r2);
+            r2 = M.follow_reg_ref(r2);
             if (not regs2_set.count(r2))
             {
                 regs2_set.insert(r2);
@@ -1064,7 +1064,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
                     {
                         int index = E.as_index_var();
                         int r2 = M[r].lookup_in_env( index );
-                        r2 = M.follow_index_var(r2);
+                        r2 = M.follow_reg_ref(r2);
                         targets.push_back(r2);
                     }
                 }
@@ -1092,7 +1092,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
 	    {
 		if (not M.reg_is_used(r2)) continue;
 
-                r2 = M.follow_index_var(r2);
+                r2 = M.follow_reg_ref(r2);
 		string name2 = "r" + convertToString(r2);
 
 		// Don't draw ref edges to things like fmap.
@@ -1155,4 +1155,3 @@ void write_token_graph(const reg_heap& C)
     write_token_graph(C, file);
     file.close();
 }
-

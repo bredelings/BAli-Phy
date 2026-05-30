@@ -63,11 +63,6 @@ struct closure
             std::abort();
     }
 
-    int reg_for_index_var() const
-    {
-        return reg_for_ref();
-    }
-
     int lookup_in_env(int i) const;
 
     /// Clear the closure.
