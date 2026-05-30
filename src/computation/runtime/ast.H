@@ -118,12 +118,7 @@ namespace Runtime
         Operation head;
     };
 
-    struct RawAppHead
-    {
-        expression_ref head;
-    };
-
-    using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp, RawAppHead>;
+    using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp>;
 
     struct App
     {

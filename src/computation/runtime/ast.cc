@@ -48,7 +48,7 @@ namespace Runtime
         else if (head.is_a<Operation>())
             return OperationApp{head.as_<Operation>()};
         else
-            return RawAppHead{head};
+            std::abort();
     }
 
     expression_ref to_expression_ref(const AppHead& head)
@@ -63,10 +63,6 @@ namespace Runtime
                 return h.head;
             else if constexpr (std::is_same_v<T, OperationApp>)
                 return h.head;
-            else if constexpr (std::is_same_v<T, RawAppHead>)
-                return h.head;
-            else
-                std::abort();
         }, head);
     }
 
