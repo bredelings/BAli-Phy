@@ -2,6 +2,7 @@
 #define RUNTIME_AST_H
 
 #include <memory>
+#include <iosfwd>
 #include <string>
 #include <variant>
 #include <vector>
@@ -177,6 +178,12 @@ namespace Runtime
     expression_ref to_expression_ref(const ExpPtr&);
     expression_ref to_expression_ref(const Pattern&);
     expression_ref to_expression_ref(const AppHead&);
+
+    std::string print(const ExpPtr&);
+    std::string print(const Pattern&);
+    std::string print(const AppHead&);
+
+    std::ostream& operator<<(std::ostream&, const Exp&);
 
     void check_invariants(const ExpPtr&);
     void check_translated(const ExpPtr&);

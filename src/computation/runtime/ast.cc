@@ -1,6 +1,7 @@
 #include "ast.H"
 #include <cassert>
 #include <cstdlib>
+#include <ostream>
 #include "computation/expression/apply.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
@@ -15,6 +16,7 @@
 #include "computation/haskell/ids.H"
 #include "computation/operation.H"
 #include "util/myexception.H"
+#include "util/string/join.H"
 
 using std::vector;
 
@@ -273,6 +275,156 @@ namespace Runtime
             else
                 std::abort();
         }, E->value);
+    }
+
+    static std::string parenthesize_if(bool b, const std::string& s)
+    {
+        if (b)
+            return "(" + s + ")";
+        else
+            return s;
+    }
+
+    static bool prints_atomically(const ExpPtr& E)
+    {
+        return std::visit([](const auto& e) -> bool
+        {
+            using T = std::decay_t<decltype(e)>;
+            return std::is_same_v<T, IntLiteral> or
+                   std::is_same_v<T, DoubleLiteral> or
+                   std::is_same_v<T, LogDoubleLiteral> or
+                   std::is_same_v<T, CharLiteral> or
+                   std::is_same_v<T, StringLiteral> or
+                   std::is_same_v<T, IntegerLiteral> or
+                   std::is_same_v<T, ConstructorValue> or
+                   std::is_same_v<T, IndexVar> or
+                   std::is_same_v<T, GlobalVar> or
+                   std::is_same_v<T, RegRef>;
+        }, E->value);
+    }
+
+    std::string print(const Pattern& pattern)
+    {
+        return std::visit([](const auto& p) -> std::string
+        {
+            using T = std::decay_t<decltype(p)>;
+
+            if constexpr (std::is_same_v<T, WildcardPattern>)
+                return "_";
+            else if constexpr (std::is_same_v<T, ConstructorPattern>)
+                return p.head.print();
+        }, pattern);
+    }
+
+    std::string print(const AppHead& head)
+    {
+        return std::visit([](const auto& h) -> std::string
+        {
+            using T = std::decay_t<decltype(h)>;
+
+            if constexpr (std::is_same_v<T, FunctionApply>)
+                return "@";
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+                return h.head.print();
+            else if constexpr (std::is_same_v<T, OperationApp>)
+                return h.head.print();
+        }, head);
+    }
+
+    std::string print(const ExpPtr& E)
+    {
+        if (not E)
+            return "NOEXP";
+
+        return std::visit([](const auto& e) -> std::string
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, IntLiteral>)
+            {
+                return std::to_string(e.value) + "#";
+            }
+            else if constexpr (std::is_same_v<T, DoubleLiteral>)
+            {
+                return std::to_string(e.value) + "##";
+            }
+            else if constexpr (std::is_same_v<T, LogDoubleLiteral>)
+            {
+                return std::to_string(e.value.log()) + "L#";
+            }
+            else if constexpr (std::is_same_v<T, CharLiteral>)
+            {
+                return std::string("'") + e.value + "'";
+            }
+            else if constexpr (std::is_same_v<T, StringLiteral>)
+            {
+                return std::string("\"") + e.value + "\"#";
+            }
+            else if constexpr (std::is_same_v<T, IntegerLiteral>)
+            {
+                return e.value.str();
+            }
+            else if constexpr (std::is_same_v<T, ConstructorValue>)
+            {
+                return e.value.print();
+            }
+            else if constexpr (std::is_same_v<T, IndexVar>)
+            {
+                return "#" + std::to_string(e.index);
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar>)
+            {
+                return e.name.print();
+            }
+            else if constexpr (std::is_same_v<T, RegRef>)
+            {
+                return "$" + std::to_string(e.target);
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                return "\\ -> " + print(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                vector<std::string> binds;
+                for(const auto& bind: e.binds)
+                    binds.push_back(print(bind));
+                return "let {" + join(binds, "; ") + "} in " + print(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                vector<std::string> alts;
+                for(const auto& alt: e.alts)
+                    alts.push_back(print(alt.pattern) + " -> " + print(alt.body));
+
+                return "case " + parenthesize_if(not prints_atomically(e.object), print(e.object)) +
+                       " of {" + join(alts, "; ") + "}";
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                vector<std::string> args;
+                for(const auto& arg: e.args)
+                    args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
+
+                if (std::holds_alternative<FunctionApply>(e.head) and args.size() >= 2)
+                    return args[0] + " " + join(vector<std::string>(args.begin()+1, args.end()), " ");
+                else
+                    return print(e.head) + " " + join(args, " ");
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                vector<std::string> indices;
+                for(auto i: e.indices)
+                    indices.push_back(std::to_string(i));
+                return "Trim {" + join(indices, ",") + "} " +
+                       parenthesize_if(not prints_atomically(e.body), print(e.body));
+            }
+        }, E->value);
+    }
+
+    std::ostream& operator<<(std::ostream& o, const Exp& E)
+    {
+        return o << print(std::make_shared<Exp>(E));
     }
 
     static void check_pattern_invariants(const Pattern& pattern)
