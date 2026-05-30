@@ -20,6 +20,12 @@
 #include "mapping.H"
 #include "effects.H"
 
+namespace Runtime
+{
+    struct Exp;
+    using ExpPtr = std::shared_ptr<const Exp>;
+}
+
 struct prev_prog_token_t
 {
     int token;
@@ -433,6 +439,8 @@ public:
     int reg_for_id(const var&);
     /// Translate named identifiers (struct var) into reg_var references
     expression_ref translate_refs(const expression_ref& R, closure::Env_t&);
+    /// Translate runtime global and register references into closure environment references
+    Runtime::ExpPtr translate_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
     /// Translate named identifiers (struct var) into reg_var references
     closure translate_refs(closure&& C);
 

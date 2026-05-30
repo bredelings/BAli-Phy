@@ -359,18 +359,96 @@ closure indexify_and_trim(closure&& C)
     return std::move(C);
 }
 
+int pattern_arity(const expression_ref& pattern)
+{
+    if (pattern.head().is_a<constructor>())
+        return pattern.head().as_<constructor>().n_args();
+    else
+        return 0;
+}
+
+Runtime::ExpPtr reg_heap::translate_refs(const Runtime::ExpPtr& E, closure::Env_t& Env, int depth)
+{
+    return std::visit([&](const auto& e) -> Runtime::ExpPtr
+    {
+        using T = std::decay_t<decltype(e)>;
+
+        if constexpr (std::is_same_v<T, Runtime::GlobalVar>)
+        {
+            int index = depth + Env.size();
+            Env.insert(Env.begin(), reg_for_id(e.name));
+            return Runtime::make(Runtime::IndexVar{index});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::RegRef>)
+        {
+            int index = depth + Env.size();
+            Env.insert(Env.begin(), e.target);
+            return Runtime::make(Runtime::IndexVar{index});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Atom> or std::is_same_v<T, Runtime::IndexVar>)
+        {
+            return Runtime::make(e);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Lambda>)
+        {
+            return Runtime::make(Runtime::Lambda{translate_refs(e.body, Env, depth + 1)});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Let>)
+        {
+            int n = e.binds.size();
+
+            vector<Runtime::ExpPtr> binds;
+            for(const auto& bind: e.binds)
+                binds.push_back(translate_refs(bind, Env, depth + n));
+
+            return Runtime::make(Runtime::Let{binds, translate_refs(e.body, Env, depth + n)});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Case>)
+        {
+            vector<Runtime::Alt> alts;
+            for(const auto& alt: e.alts)
+                alts.push_back({alt.pattern, translate_refs(alt.body, Env, depth + pattern_arity(alt.pattern))});
+
+            return Runtime::make(Runtime::Case{translate_refs(e.object, Env, depth), alts});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::App>)
+        {
+            vector<Runtime::ExpPtr> args;
+            for(const auto& arg: e.args)
+                args.push_back(translate_refs(arg, Env, depth));
+
+            return Runtime::make(Runtime::App{e.head, args});
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Trim>)
+        {
+            return Runtime::make(Runtime::Trim{e.indices, translate_refs(e.body, Env, depth)});
+        }
+        else
+            std::abort();
+    }, E->value);
+}
+
+closure indexify_translate_and_trim(reg_heap& heap, closure&& C)
+{
+    auto E = runtime_indexify(expression_ref(C.exp));
+    E = heap.translate_refs(E, C.Env);
+    E = Runtime::trim_normalize(E);
+    C.exp = Runtime::to_expression_ref(E);
+    return std::move(C);
+}
+
 closure reg_heap::preprocess(const Core2::Exp<>& E)
 {
     FreshVarSource source(fresh_var_state);
     auto E2 = graph_normalize(source, E);
-    return indexify_and_trim( translate_refs( closure(to_expression_ref(E2)) ) );
+    return indexify_translate_and_trim(*this, closure(to_expression_ref(E2)));
 }
 
 closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
     //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-    return indexify_and_trim( graph_normalize( fresh_var_state, translate_refs( closure(C) ) ) );
+    return indexify_translate_and_trim(*this, graph_normalize( fresh_var_state, closure(C) ) );
 }
 
 int reg_heap::reg_for_id(const var& x)
