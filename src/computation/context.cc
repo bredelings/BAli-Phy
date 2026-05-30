@@ -19,6 +19,8 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include "computation/expression/indexify.H"
+#include "computation/runtime/ast.H"
 
 using std::string;
 using std::vector;
@@ -43,9 +45,10 @@ const std::vector<int>& context_ref::heads() const {return memory()->get_heads()
 
 const closure& context_ref::operator[](int i) const {return (*memory())[i];}
 
-closure context_ref::preprocess(const closure& C) const
+closure context_ref::preprocess(const expression_ref& E) const
 {
-    return memory()->preprocess(C);
+    auto E2 = graph_normalize(memory()->fresh_var_state, E);
+    return memory()->preprocess(runtime_indexify(E2));
 }
 
 const closure* context_ref::precomputed_value_for_reg(int r) const
@@ -965,4 +968,3 @@ std::string show_parameters(const context_ref& C)
     show_parameters(oss,C);
     return oss.str();
 }
-

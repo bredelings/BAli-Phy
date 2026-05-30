@@ -10,7 +10,7 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression.H" // for is_reglike( )
-#include "computation/expression/convert.H" // for maybe_occ_to_expression_ref( )
+#include "computation/expression/convert.H" // for to_core_exp( )
 #include "computation/expression/runtime_views.H"
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
@@ -327,12 +327,6 @@ CDecls graph_normalize(FreshVarState& state, const CDecls& decls)
 
 
 
-closure graph_normalize(FreshVarState& state, closure&& C)
-{
-    C.exp = graph_normalize(state, expression_ref(C.exp));
-    return std::move(C);
-}
-
 closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
 {
     Runtime::check_invariants(E);
@@ -344,9 +338,11 @@ closure translate_and_trim(reg_heap& heap, Runtime::ExpPtr E, closure&& C)
     return std::move(C);
 }
 
-closure indexify_translate_and_trim(reg_heap& heap, closure&& C)
+closure reg_heap::preprocess(Runtime::ExpPtr E, closure::Env_t Env)
 {
-    return translate_and_trim(heap, runtime_indexify(expression_ref(C.exp)), std::move(C));
+    closure C;
+    C.Env = std::move(Env);
+    return translate_and_trim(*this, E, std::move(C));
 }
 
 closure reg_heap::preprocess(const Core2::Exp<>& E)
@@ -354,12 +350,6 @@ closure reg_heap::preprocess(const Core2::Exp<>& E)
     FreshVarSource source(fresh_var_state);
     auto E2 = graph_normalize(source, E);
     return translate_and_trim(*this, runtime_indexify(E2), closure());
-}
-
-closure reg_heap::preprocess(const closure& C)
-{
-    assert(C.exp);
-    return indexify_translate_and_trim(*this, graph_normalize( fresh_var_state, closure(C) ) );
 }
 
 int reg_heap::reg_for_id(const var& x)
@@ -374,7 +364,7 @@ int reg_heap::reg_for_id(const var& x)
             assert(x.index == 0);
 
             auto sym = lookup_builtin_symbol(name);
-            auto code = maybe_occ_to_expression_ref(to<CoreUnfolding>(sym->unfolding)->expr);
+            auto code = to_core_exp(to<CoreUnfolding>(sym->unfolding)->expr);
             add_identifier(x.name);
 
 	    // get the root for each identifier

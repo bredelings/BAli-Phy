@@ -440,7 +440,7 @@ public:
     /// Translate runtime global and register references into closure environment references
     Runtime::ExpPtr translate_refs(const Runtime::ExpPtr& R, closure::Env_t&, int depth = 0);
 
-    closure preprocess(const closure& C);
+    closure preprocess(Runtime::ExpPtr E, closure::Env_t Env = {});
 
     closure preprocess(const Core2::Exp<>& E);
 

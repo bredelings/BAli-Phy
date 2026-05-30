@@ -47,7 +47,7 @@ protected:
 
     const std::vector<int>& heads() const;
 
-    closure preprocess(const closure& C) const;
+    closure preprocess(const expression_ref& E) const;
 
 public:
 

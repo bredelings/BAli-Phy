@@ -13,6 +13,7 @@
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
+#include "computation/expression/indexify.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
@@ -2248,7 +2249,8 @@ void reg_heap::reclaim_used(int r)
 /// Add an expression that may be replaced by its reduced form
 int reg_heap::add_compute_expression(const expression_ref& E)
 {
-    allocate_head(preprocess(E));
+    auto E2 = graph_normalize(fresh_var_state, E);
+    allocate_head(preprocess(runtime_indexify(E2)));
 
     return heads.size() - 1;
 }
