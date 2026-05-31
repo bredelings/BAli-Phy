@@ -126,7 +126,13 @@ void do_trim(closure& C)
 	expression_ref old = C.exp;
 	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
-	C.set_legacy_expression(C.exp.sub()[1]);
+        if (auto runtime_trim = C.runtime_exp.to<Runtime::Trim>())
+        {
+            assert(runtime_trim->indices == keep);
+            C.set_runtime_expression(runtime_trim->body);
+        }
+        else
+            C.set_legacy_expression(C.exp.sub()[1]);
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)

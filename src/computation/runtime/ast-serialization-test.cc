@@ -90,6 +90,22 @@ namespace
         require(argument->value == 9, "runtime closure literal argument value mismatch");
     }
 
+    void check_runtime_trimmed_closure()
+    {
+        closure C;
+        C.Env = {10, 20, 30};
+        C.set_runtime_expression(Runtime::Trim({0, 2}, Runtime::IndexVar(1)));
+
+        do_trim(C);
+
+        require(bool(C.runtime_exp), "do_trim should preserve a runtime Trim body");
+        auto index = C.runtime_exp.to<Runtime::IndexVar>();
+        require(bool(index), "trimmed runtime closure should contain the Trim body");
+        require(index->index == 1, "trimmed runtime closure body index mismatch");
+        require((C.Env == closure::Env_t{10, 30}), "trimmed runtime closure environment mismatch");
+        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "trimmed runtime closure should keep both representations in sync");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -231,6 +247,7 @@ int main(int argc, char** argv)
     check_pinned_global_translation(loader);
     check_local_reg_refs_are_captured_before_trimming(loader);
     check_runtime_closure_argument_helpers(loader);
+    check_runtime_trimmed_closure();
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();
