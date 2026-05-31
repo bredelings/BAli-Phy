@@ -73,7 +73,8 @@ namespace
         reg_heap heap(std::move(program));
 
         int local_reg = heap.allocate();
-        Runtime::Exp app = Runtime::apply(Runtime::RegRef(local_reg), {Runtime::Int(9)});
+        int argument_reg = heap.allocate();
+        Runtime::Exp app = Runtime::apply(Runtime::RegRef(local_reg), {Runtime::RegRef(argument_reg)});
         auto C = heap.preprocess(app);
 
         require(C.runtime_n_args() == 2, "runtime closure App should report its argument count");
@@ -85,9 +86,20 @@ namespace
         require(function_ref->target == local_reg, "runtime closure function RegRef target mismatch");
 
         auto argument_arg = C.runtime_arg_for_slot(1);
-        auto argument = argument_arg.to<Runtime::Int>();
-        require(bool(argument), "runtime closure literal argument should remain an Int");
-        require(argument->value == 9, "runtime closure literal argument value mismatch");
+        auto argument_ref = argument_arg.to<Runtime::RegRef>();
+        require(bool(argument_ref), "runtime closure argument slot should become a RegRef");
+        require(argument_ref->target == argument_reg, "runtime closure argument RegRef target mismatch");
+
+        Runtime::Exp case_ = Runtime::Case(Runtime::RegRef(local_reg),
+                                           {Runtime::Alt(Runtime::WildcardPattern{},
+                                                         Runtime::Int(10))});
+        auto case_closure = heap.preprocess(case_);
+        require(case_closure.runtime_n_args() == 2, "runtime closure Case should preserve legacy child count");
+
+        auto scrutinee_arg = case_closure.runtime_arg_for_slot(0);
+        auto scrutinee_ref = scrutinee_arg.to<Runtime::RegRef>();
+        require(bool(scrutinee_ref), "runtime closure Case scrutinee slot should become a RegRef");
+        require(scrutinee_ref->target == local_reg, "runtime closure Case scrutinee RegRef target mismatch");
     }
 
     void check_runtime_trimmed_closure()

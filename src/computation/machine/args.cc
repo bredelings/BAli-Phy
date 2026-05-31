@@ -70,6 +70,32 @@ closure OperationArgs::evaluate_slot_to_closure_(int slot)
         return S;
 }
 
+closure OperationArgs::evaluate_slot_to_runtime_closure(int slot)
+{
+    auto S = runtime_arg_for_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_closure(reg_ref->target);
+    else
+    {
+        closure C;
+        C.set_runtime_expression(std::move(S));
+        return C;
+    }
+}
+
+closure OperationArgs::evaluate_slot_to_runtime_closure_(int slot)
+{
+    auto S = runtime_arg_for_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_closure_(reg_ref->target);
+    else
+    {
+        closure C;
+        C.set_runtime_expression(std::move(S));
+        return C;
+    }
+}
+
 int OperationArgs::evaluate_slot_force(int slot)
 {
     return evaluate_reg_force(reg_for_slot(slot));
@@ -114,6 +140,50 @@ expression_ref OperationArgs::evaluate_slot_to_object_(int slot)
     auto S = arg_for_slot(slot);
     if (S.is_reg_var())
         return evaluate_reg_to_object_(S.as_reg_var());
+    else
+        return S;
+}
+
+Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object(int R2)
+{
+    const closure& C = evaluate_reg_to_closure(R2);
+#ifndef NDEBUG
+    if (C.exp.head().is_a<lambda2>())
+	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
+#endif
+    if (C.runtime_exp)
+        return C.runtime_exp;
+    else
+        return Runtime::ObjectValue(C.exp);
+}
+
+Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object_(int R2)
+{
+    const closure& C = evaluate_reg_to_closure_(R2);
+#ifndef NDEBUG
+    if (C.exp.head().is_a<lambda2>())
+	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
+#endif
+    if (C.runtime_exp)
+        return C.runtime_exp;
+    else
+        return Runtime::ObjectValue(C.exp);
+}
+
+Runtime::Exp OperationArgs::evaluate_slot_to_runtime_object(int slot)
+{
+    auto S = runtime_arg_for_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_runtime_object(reg_ref->target);
+    else
+        return S;
+}
+
+Runtime::Exp OperationArgs::evaluate_slot_to_runtime_object_(int slot)
+{
+    auto S = runtime_arg_for_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_runtime_object_(reg_ref->target);
     else
         return S;
 }

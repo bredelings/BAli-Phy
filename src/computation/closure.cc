@@ -5,10 +5,52 @@
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
 #include "util/string/join.H" // for join( )
+#include <optional>
 #include <utility>
 
 using std::vector;
 using std::string;
+
+namespace
+{
+    Runtime::Exp resolve_runtime_slot(Runtime::Exp E, const closure::Env_t& Env)
+    {
+        if (auto index_var = E.to<Runtime::IndexVar>())
+        {
+            assert(0 <= index_var->index);
+            assert(index_var->index < Env.size());
+            return Runtime::RegRef(lookup_in_env(Env, index_var->index));
+        }
+        else
+            return E;
+    }
+
+    std::optional<Runtime::Exp> runtime_slot(const Runtime::Exp& E, int i)
+    {
+        if (auto app = E.to<Runtime::App>())
+        {
+            assert(0 <= i);
+            assert(i < app->args.size());
+            return app->args[i];
+        }
+        else if (auto case_ = E.to<Runtime::Case>())
+        {
+            // The slot helpers expose the legacy expression_ref child layout.
+            // For Case, only the scrutinee is runtime code; the alternatives
+            // object remains an expression_ref value during the transition.
+            if (i == 0)
+                return case_->object;
+        }
+        else if (auto trim = E.to<Runtime::Trim>())
+        {
+            // Trim slot 0 is the keep-vector object; slot 1 is the body.
+            if (i == 1)
+                return trim->body;
+        }
+
+        return {};
+    }
+}
 
 void closure::clear()
 {
@@ -56,13 +98,8 @@ int closure::runtime_n_args() const
 {
     check_runtime_expression();
 
-    if (runtime_exp)
-    {
-        if (auto app = runtime_exp.to<Runtime::App>())
-            return app->args.size();
-        else
-            return 0;
-    }
+    if (auto app = runtime_exp.to<Runtime::App>())
+        return app->args.size();
     else
         return exp.size();
 }
@@ -73,15 +110,8 @@ Runtime::Exp closure::runtime_arg_for_slot(int i) const
 
     if (runtime_exp)
     {
-        auto app = runtime_exp.to<Runtime::App>();
-        assert(app);
-        assert(i < app->args.size());
-
-        auto& E = app->args[i];
-        if (auto index_var = E.to<Runtime::IndexVar>())
-            return Runtime::RegRef(lookup_in_env(index_var->index));
-        else
-            return E;
+        if (auto E = runtime_slot(runtime_exp, i))
+            return resolve_runtime_slot(std::move(*E), Env);
     }
 
     auto E = arg_for_slot(i);
@@ -97,17 +127,16 @@ int closure::runtime_reg_for_slot(int i) const
 
     if (runtime_exp)
     {
-        auto app = runtime_exp.to<Runtime::App>();
-        assert(app);
-        assert(i < app->args.size());
-
-        auto& E = app->args[i];
-        if (auto index_var = E.to<Runtime::IndexVar>())
-            return lookup_in_env(index_var->index);
-        else if (auto reg_ref = E.to<Runtime::RegRef>())
-            return reg_ref->target;
-        else
-            std::abort();
+        auto E = runtime_slot(runtime_exp, i);
+        if (E)
+        {
+            if (auto index_var = E->to<Runtime::IndexVar>())
+                return lookup_in_env(index_var->index);
+            else if (auto reg_ref = E->to<Runtime::RegRef>())
+                return reg_ref->target;
+            else
+                std::abort();
+        }
     }
 
     return reg_for_slot(i);

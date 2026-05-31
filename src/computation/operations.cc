@@ -124,7 +124,7 @@ Runtime::Exp peel_n_lambdas(const Runtime::Exp& E, int n)
 
 closure apply_op(OperationArgs& Args)
 {
-    closure C = Args.evaluate_slot_to_closure(0);
+    closure C = Args.evaluate_slot_to_runtime_closure(0);
     int n_args_given = Args.n_args()-1;
 
     if (not C.exp.head().is_a<lambda2>())
@@ -325,7 +325,7 @@ closure case_op(OperationArgs& Args)
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_closure(0);
+    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_runtime_closure(0);
 
     auto& C = Args.current_closure();
 

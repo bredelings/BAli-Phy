@@ -75,6 +75,10 @@ public:
 
     closure evaluate_slot_to_closure_(int);
 
+    closure evaluate_slot_to_runtime_closure(int);
+
+    closure evaluate_slot_to_runtime_closure_(int);
+
     const expression_ref& evaluate_reg_to_object(int);
 
     const expression_ref& evaluate_reg_to_object_(int);
@@ -82,6 +86,14 @@ public:
     expression_ref evaluate_slot_to_object(int);
 
     expression_ref evaluate_slot_to_object_(int);
+
+    Runtime::Exp evaluate_reg_to_runtime_object(int);
+
+    Runtime::Exp evaluate_reg_to_runtime_object_(int);
+
+    Runtime::Exp evaluate_slot_to_runtime_object(int);
+
+    Runtime::Exp evaluate_slot_to_runtime_object_(int);
 
     expression_ref evaluate(int);
 
