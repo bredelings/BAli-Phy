@@ -110,8 +110,7 @@ closure apply_op(OperationArgs& Args)
     assert(n_args_given >= 1);
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
-    C.exp = peel_n_lambdas(C.exp, n_args_applied);
-    C.runtime_exp.reset();
+    C.set_legacy_expression(peel_n_lambdas(C.exp, n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
 	int arg = Args.current_closure().reg_for_slot(i+1);
@@ -172,7 +171,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 	    assert(is_wildcard(this_case));
 	    assert(i == L-1);
       
-	    result.exp = this_body;
+	    result.set_legacy_expression(this_body);
 	}
 	else
 	{
@@ -188,7 +187,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
 		}
 #endif	
-		result.exp = this_body;
+		result.set_legacy_expression(this_body);
 	
 		for(int j=0;j<object.exp.size();j++)
 		    result.Env.push_back( object.reg_for_slot(j) );
@@ -315,8 +314,7 @@ closure let_op(OperationArgs& Args)
 	for(int i=0;i<n_binds;i++)
 	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
 
-	C.exp = L.body;
-        C.runtime_exp.reset();
+	C.set_legacy_expression(L.body);
 	do_trim(C);
     }
     while (C.exp.head().type() == type_constant::let2_type);

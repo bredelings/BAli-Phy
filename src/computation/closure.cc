@@ -5,6 +5,7 @@
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
 #include "util/string/join.H" // for join( )
+#include <utility>
 
 using std::vector;
 using std::string;
@@ -24,8 +25,37 @@ string closure::print() const
     return result;
 }
 
+void closure::set_runtime_expression(Runtime::Exp E)
+{
+    Runtime::check_translated(E);
+    runtime_exp = std::make_shared<Runtime::Exp>(std::move(E));
+    exp = Runtime::to_expression_ref(*runtime_exp);
+    check_runtime_expression();
+}
+
+void closure::set_legacy_expression(expression_ref E)
+{
+    exp = std::move(E);
+    clear_runtime_expression();
+}
+
+void closure::clear_runtime_expression()
+{
+    runtime_exp.reset();
+}
+
+void closure::check_runtime_expression() const
+{
+#ifndef NDEBUG
+    if (runtime_exp)
+        assert(Runtime::to_expression_ref(*runtime_exp) == exp);
+#endif
+}
+
 int closure::runtime_n_args() const
 {
+    check_runtime_expression();
+
     if (runtime_exp)
     {
         if (auto app = runtime_exp->to<Runtime::App>())
@@ -39,6 +69,8 @@ int closure::runtime_n_args() const
 
 Runtime::Exp closure::runtime_arg_for_slot(int i) const
 {
+    check_runtime_expression();
+
     if (runtime_exp)
     {
         auto app = runtime_exp->to<Runtime::App>();
@@ -61,6 +93,8 @@ Runtime::Exp closure::runtime_arg_for_slot(int i) const
 
 int closure::runtime_reg_for_slot(int i) const
 {
+    check_runtime_expression();
+
     if (runtime_exp)
     {
         auto app = runtime_exp->to<Runtime::App>();
@@ -92,8 +126,7 @@ void do_trim(closure& C)
 	expression_ref old = C.exp;
 	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
-	C.exp = C.exp.sub()[1];
-        C.runtime_exp.reset();
+	C.set_legacy_expression(C.exp.sub()[1]);
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)
@@ -127,7 +160,6 @@ expression_ref deindexify(const closure& C)
 closure trim_unnormalize(const closure& C)
 {
     closure C2 = C;
-    C2.exp = trim_unnormalize(C2.exp);
-    C2.runtime_exp.reset();
+    C2.set_legacy_expression(trim_unnormalize(C2.exp));
     return C2;
 }

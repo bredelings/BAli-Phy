@@ -63,6 +63,14 @@ struct closure
 
     int runtime_reg_for_slot(int i) const;
 
+    void set_runtime_expression(Runtime::Exp E);
+
+    void set_legacy_expression(expression_ref E);
+
+    void clear_runtime_expression();
+
+    void check_runtime_expression() const;
+
     bool is_reg_ref() const
     {
         return exp.is_index_var() or exp.is_reg_var();

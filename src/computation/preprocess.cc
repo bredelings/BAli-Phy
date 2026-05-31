@@ -189,8 +189,7 @@ closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
     Runtime::check_invariants(E);
     E = heap.translate_refs(E, C.Env);
     Runtime::check_translated(E);
-    C.runtime_exp = std::make_shared<Runtime::Exp>(E);
-    C.exp = Runtime::to_expression_ref(E);
+    C.set_runtime_expression(std::move(E));
     return std::move(C);
 }
 
