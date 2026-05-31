@@ -22,7 +22,8 @@
 #include "computation/expression/var.H"
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
-#include "computation/operation.H"
+
+struct Operation;
 
 namespace Runtime
 {
@@ -386,6 +387,7 @@ namespace Runtime
     };
 
     Operation operation_from_builtin(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
+    std::shared_ptr<const Operation> operation_ptr_from_builtin(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 
     struct ConstructorApp
     {
@@ -414,7 +416,7 @@ namespace Runtime
 
     struct OperationApp
     {
-        Operation head;
+        std::shared_ptr<const Operation> head;
         std::string lib_name;
         std::string func_name;
         std::string call_conv;
@@ -439,7 +441,7 @@ namespace Runtime
 
             const module_loader& loader = get_user_data<const module_loader>(ar);
             void* op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
-            head = operation_from_builtin(op, lib_name, func_name, call_conv);
+            head = operation_ptr_from_builtin(op, lib_name, func_name, call_conv);
         }
     };
 

@@ -63,7 +63,7 @@ namespace
         require(C.Env.size() == 1, "preprocess should capture one local RegRef");
         require(C.Env[0] == local_reg, "preprocess captured the wrong local RegRef");
         require(bool(C.runtime_exp), "preprocess should retain a runtime AST sidecar");
-        require(Runtime::to_expression_ref(*C.runtime_exp) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
+        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
     }
 
     void check_runtime_closure_argument_helpers(const std::shared_ptr<module_loader>& loader)

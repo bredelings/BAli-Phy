@@ -303,18 +303,38 @@ closure let_op(OperationArgs& Args)
 	int start = C.Env.size();
 
 	auto& L = C.exp.as_<Let>();
+        const Runtime::Let* runtime_let = C.runtime_exp.to<Runtime::Let>();
+        assert(not C.runtime_exp or runtime_let);
 
 	int n_binds = L.binds.size();
+        assert(not runtime_let or runtime_let->binds.size() == n_binds);
 
 	// 1. Allocate the new vars on the heap
 	for(int i=0;i<n_binds;i++)
 	    C.Env.push_back( Args.allocate_reg() );
       
 	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-	for(int i=0;i<n_binds;i++)
-	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
+        if (runtime_let)
+        {
+            Runtime::Let runtime_L = *runtime_let;
 
-	C.set_legacy_expression(L.body);
+            for(int i=0;i<n_binds;i++)
+            {
+                closure bind;
+                bind.Env = C.Env;
+                bind.set_runtime_expression(runtime_L.binds[i]);
+                M.set_C(C.Env[start+i], get_trimmed(std::move(bind)));
+            }
+
+            C.set_runtime_expression(runtime_L.body);
+        }
+        else
+        {
+            for(int i=0;i<n_binds;i++)
+                M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
+
+            C.set_legacy_expression(L.body);
+        }
 	do_trim(C);
     }
     while (C.exp.head().type() == type_constant::let2_type);

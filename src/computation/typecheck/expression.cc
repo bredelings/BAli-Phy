@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "match.H" // for tcMatchesFun
+#include "computation/operation.H"
 
 using std::string;
 using std::vector;
@@ -469,4 +470,3 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     else
         throw note_exception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
-

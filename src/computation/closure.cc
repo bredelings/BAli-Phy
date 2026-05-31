@@ -13,7 +13,7 @@ using std::string;
 void closure::clear()
 {
     exp.clear();
-    runtime_exp.reset();
+    runtime_exp = {};
     Env.clear();
 }
 
@@ -28,8 +28,8 @@ string closure::print() const
 void closure::set_runtime_expression(Runtime::Exp E)
 {
     Runtime::check_translated(E);
-    runtime_exp = std::make_shared<Runtime::Exp>(std::move(E));
-    exp = Runtime::to_expression_ref(*runtime_exp);
+    runtime_exp = std::move(E);
+    exp = Runtime::to_expression_ref(runtime_exp);
     check_runtime_expression();
 }
 
@@ -41,14 +41,14 @@ void closure::set_legacy_expression(expression_ref E)
 
 void closure::clear_runtime_expression()
 {
-    runtime_exp.reset();
+    runtime_exp = {};
 }
 
 void closure::check_runtime_expression() const
 {
 #ifndef NDEBUG
     if (runtime_exp)
-        assert(Runtime::to_expression_ref(*runtime_exp) == exp);
+        assert(Runtime::to_expression_ref(runtime_exp) == exp);
 #endif
 }
 
@@ -58,7 +58,7 @@ int closure::runtime_n_args() const
 
     if (runtime_exp)
     {
-        if (auto app = runtime_exp->to<Runtime::App>())
+        if (auto app = runtime_exp.to<Runtime::App>())
             return app->args.size();
         else
             return 0;
@@ -73,7 +73,7 @@ Runtime::Exp closure::runtime_arg_for_slot(int i) const
 
     if (runtime_exp)
     {
-        auto app = runtime_exp->to<Runtime::App>();
+        auto app = runtime_exp.to<Runtime::App>();
         assert(app);
         assert(i < app->args.size());
 
@@ -97,7 +97,7 @@ int closure::runtime_reg_for_slot(int i) const
 
     if (runtime_exp)
     {
-        auto app = runtime_exp->to<Runtime::App>();
+        auto app = runtime_exp.to<Runtime::App>();
         assert(app);
         assert(i < app->args.size());
 

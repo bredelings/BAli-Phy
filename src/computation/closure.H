@@ -7,8 +7,7 @@
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
-
-namespace Runtime { struct Exp; }
+#include "computation/runtime/ast.H"
 
 struct closure
 {
@@ -21,7 +20,7 @@ struct closure
     /// The VM still executes exp.  This field is deliberately optional during
     /// the transition so expression_ref-only value paths can remain unchanged
     /// while individual consumers move to the structured runtime AST.
-    std::shared_ptr<const Runtime::Exp> runtime_exp;
+    Runtime::Exp runtime_exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
 

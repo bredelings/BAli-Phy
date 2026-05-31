@@ -145,18 +145,23 @@ namespace Runtime
             throw myexception()<<"Unrecognized calling convention '"<<call_conv<<"'";
     }
 
+    std::shared_ptr<const Operation> operation_ptr_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    {
+        return std::make_shared<Operation>(operation_from_builtin(op, lib_name, func_name, call_conv));
+    }
+
     OperationApp::OperationApp(Operation op)
-        :head(std::move(op))
+        :head(std::make_shared<Operation>(std::move(op)))
     {
     }
 
     OperationApp::OperationApp()
-        :head((o_operation_fn)nullptr, "")
     {
     }
 
     OperationApp::OperationApp(Operation op, std::string lib, std::string func, std::string conv)
-        :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
+        :head(std::make_shared<Operation>(std::move(op))),
+         lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
     {
     }
 
@@ -176,7 +181,7 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorApp>)
                 return h.head;
             else if constexpr (std::is_same_v<T, OperationApp>)
-                return h.head;
+                return expression_ref(*h.head);
         }, head);
     }
 
@@ -347,7 +352,7 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorApp>)
                 return h.head.print();
             else if constexpr (std::is_same_v<T, OperationApp>)
-                return h.head.print();
+                return h.head->print();
         }, head);
     }
 
@@ -486,6 +491,7 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, OperationApp>)
             {
+                assert(h.head);
                 assert(n_args >= 0);
             }
         }, head);
