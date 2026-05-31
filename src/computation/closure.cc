@@ -54,7 +54,7 @@ namespace
 
 void closure::clear()
 {
-    exp.clear();
+    exp_cache_.clear();
     runtime_exp = {};
     Env.clear();
 }
@@ -71,19 +71,16 @@ void closure::set_runtime_expression(Runtime::Exp E)
 {
     Runtime::check_translated(E);
     runtime_exp = std::move(E);
-    exp = Runtime::to_expression_ref(runtime_exp);
+    exp_cache_ = Runtime::to_expression_ref(runtime_exp);
     check_runtime_expression();
 }
 
 void closure::set_legacy_expression(expression_ref E)
 {
-    exp = std::move(E);
-    clear_runtime_expression();
-}
-
-void closure::clear_runtime_expression()
-{
-    runtime_exp = {};
+    if (E)
+        set_runtime_expression(Runtime::ObjectValue(std::move(E)));
+    else
+        clear();
 }
 
 void closure::check_runtime_expression() const

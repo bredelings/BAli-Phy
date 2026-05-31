@@ -11,15 +11,19 @@
 
 struct closure
 {
+private:
+    expression_ref exp_cache_;
+
+public:
     typedef boost::container::small_vector<int,10> Env_t;
   
-    /// The expression
-    expression_ref exp;
-    /// Runtime AST sidecar for closures that were created from runtime code.
+    /// Legacy expression_ref view derived from runtime_exp.
     ///
-    /// The VM still executes exp.  This field is deliberately optional during
-    /// the transition so expression_ref-only value paths can remain unchanged
-    /// while individual consumers move to the structured runtime AST.
+    /// The expression_ref form is a compatibility cache.  Code outside closure
+    /// may inspect it, but semantic updates should go through runtime_exp via
+    /// set_runtime_expression().
+    const expression_ref& exp;
+    /// Runtime AST representation for this closure.
     Runtime::Exp runtime_exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
@@ -66,9 +70,12 @@ struct closure
 
     void set_legacy_expression(expression_ref E);
 
-    void clear_runtime_expression();
-
     void check_runtime_expression() const;
+
+    bool has_structured_runtime_expression() const
+    {
+        return runtime_exp and not runtime_exp.is<Runtime::ObjectValue>();
+    }
 
     bool is_reg_ref() const
     {
@@ -92,36 +99,47 @@ struct closure
 
     std::string print() const;
 
-    // Assignment operators
-    closure& operator=(const closure&) = default;
-
     closure& operator=(closure&& C) noexcept
 	{
-	    exp = C.exp;
+	    exp_cache_ = std::move(C.exp_cache_);
 	    runtime_exp = std::move(C.runtime_exp);
 	    Env = std::move(C.Env);
 	    return *this;
 	}
 
-    // Default
-    closure() = default;
+    closure& operator=(const closure& C)
+	{
+	    exp_cache_ = C.exp_cache_;
+	    runtime_exp = C.runtime_exp;
+	    Env = C.Env;
+	    return *this;
+	}
 
-    closure(const closure&) = default;
+    // Default
+    closure():exp(exp_cache_) {}
+
+    closure(const closure& C)
+        :exp_cache_(C.exp_cache_),
+         exp(exp_cache_),
+         runtime_exp(C.runtime_exp),
+	 Env(C.Env)
+        { }
 
     closure(closure&& C) noexcept
-	:exp(C.exp),
+	:exp_cache_(std::move(C.exp_cache_)),
+         exp(exp_cache_),
          runtime_exp(std::move(C.runtime_exp)),
 	 Env( std::move(C.Env) )
 	{ }
 
     // Constructing from an expression_ref
     closure(const expression_ref& e)
-	:exp(e)
-	{ }
+	:closure()
+	{ set_legacy_expression(e); }
 
     closure(const expression_ref& e, const Env_t& E)
-	:exp(e), Env(E)
-	{ }
+	:closure(e)
+	{ Env = E; }
 
     closure(const expression_ref& e, std::initializer_list<int> E)
 	:closure(e, Env_t(E))

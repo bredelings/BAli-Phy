@@ -1,5 +1,6 @@
 #include "computation/runtime/ast.H"
 #include "computation/expression/indexify.H"
+#include "computation/expression/lambda.H"
 #include "computation/loader.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
@@ -222,6 +223,16 @@ namespace
 
         require(threw, "ObjectValue should not serialize into compiled runtime archives");
     }
+
+    void check_legacy_closure_runtime_value_bridge()
+    {
+        expression_ref legacy_lambda = expression_ref(lambda2(), {expression_ref(1)});
+        closure C(legacy_lambda);
+
+        require(bool(C.runtime_exp), "legacy closures should keep a runtime bridge value");
+        require(not C.has_structured_runtime_expression(), "ObjectValue bridge should not be treated as structured runtime code");
+        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "legacy runtime bridge should match the expression_ref cache");
+    }
 }
 
 int main(int argc, char** argv)
@@ -264,4 +275,5 @@ int main(int argc, char** argv)
     check_deindexify_reg_refs();
     check_constructor_serialization();
     check_object_value_bridge();
+    check_legacy_closure_runtime_value_bridge();
 }

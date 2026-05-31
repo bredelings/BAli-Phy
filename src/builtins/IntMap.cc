@@ -474,7 +474,7 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
 	i++;
     }
-    result.exp = Operation(makeEVector,"makeEVector");
+    result.set_legacy_expression(Operation(makeEVector,"makeEVector"));
 
     return result;
 }

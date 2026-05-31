@@ -134,7 +134,7 @@ closure apply_op(OperationArgs& Args)
     assert(n_args_given >= 1);
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
-    if (C.runtime_exp)
+    if (C.has_structured_runtime_expression())
     {
         assert(get_n_lambdas(C.runtime_exp) == n_args_needed);
         C.set_runtime_expression(peel_n_lambdas(C.runtime_exp, n_args_applied));
@@ -383,7 +383,7 @@ closure let_op(OperationArgs& Args)
 
 	auto& L = C.exp.as_<Let>();
         const Runtime::Let* runtime_let = C.runtime_exp.to<Runtime::Let>();
-        assert(not C.runtime_exp or runtime_let);
+        assert(not C.has_structured_runtime_expression() or runtime_let);
 
 	int n_binds = L.binds.size();
         assert(not runtime_let or runtime_let->binds.size() == n_binds);
