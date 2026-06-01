@@ -29,6 +29,7 @@ jobs:
                macos-intel,
                macos-xcode16-arm,
                macos-xcode26-arm,
+               macos-homebrew-llvm-libcxx,
                windows
                ]
 
@@ -115,6 +116,13 @@ jobs:
             compiler: xcode
             version: "26"
             buildtype: "debugoptimized"
+            arch: "mac-arm64"
+
+          - name: macos-homebrew-llvm-libcxx
+            os: macos-latest
+            compiler: llvm
+            version: "N/A"
+            buildtype: "release"
             arch: "mac-arm64"
 
           - name: windows
@@ -212,7 +220,7 @@ jobs:
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
 
     - name: Select XCode version (macOS)
-      if: runner.os == 'macOS'
+      if: runner.os == 'macOS' && matrix.compiler == 'xcode'
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: ${{ matrix.version }}
@@ -237,8 +245,17 @@ jobs:
           brew install pandoc ccache coreutils
           brew install eigen range-v3 cairo fmt
           brew install gnuplot r
-          echo "CC=ccache clang" >> $GITHUB_ENV
-          echo "CXX=ccache clang++" >> $GITHUB_ENV
+          if [ "${{ matrix.compiler }}" = "llvm" ] ; then
+            brew install llvm
+            LLVM_PREFIX="$(brew --prefix llvm)"
+            echo "LLVM_PREFIX=${LLVM_PREFIX}" >> $GITHUB_ENV
+            echo "CC=ccache ${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
+            echo "CXX=ccache ${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+            "${LLVM_PREFIX}/bin/clang++" --version
+          else
+            echo "CC=ccache clang" >> $GITHUB_ENV
+            echo "CXX=ccache clang++" >> $GITHUB_ENV
+          fi
 
           brew install boost
           if [[ $(uname -m) == 'arm64' ]] ; then echo "BOOST_ROOT=/opt/homebrew" >> $GITHUB_ENV ; fi
