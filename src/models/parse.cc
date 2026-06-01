@@ -657,7 +657,7 @@ ptree add_arg(const ptree& p1, const ptree& p2)
 	throw myexception()<<"Placeholder '_' may only occur once.";
 
     if (n_placeholders == 0)
-	p3.insert(p3.begin(), {"",p1});
+	p3.children().insert(p3.children().begin(), {"",p1});
 
     return p3;
 }

@@ -3,13 +3,22 @@
 #include "util/string/convert.H"
 #include "util/myexception.H"
 
+#include <algorithm>
+#include <variant>
+
 using std::string;
 using std::vector;
 using std::pair;
 
 using std::optional;
 
-std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
+namespace
+{
+    std::strong_ordering compare_values(const ptree::value_t& x, const ptree::value_t& y)
+    {
+        return x <=> y;
+    }
+}
 
 bool ptree::value_is_empty() const
 {
@@ -18,22 +27,22 @@ bool ptree::value_is_empty() const
 
 bool ptree::is_null() const
 {
-    return value_is_empty() and empty();
+    return value_is_empty() and children().empty();
 }
 
 void ptree::erase(const std::string& key)
 {
     vector<pair<string,ptree>> children2;
-    for(auto& x: (*this))
+    for(auto& x: children())
 	if (x.first != key)
 	    children2.push_back(std::move(x));
-    std::swap(*this, children2);
+    children() = std::move(children2);
 }
 
 optional<int> ptree::get_child_index(const std::string& key) const
 {
-    for(int i=0;i<size();i++)
-	if ((*this)[i].first == key)
+    for(int i=0;i<children().size();i++)
+	if (children()[i].first == key)
 	    return i;
     return {};
 }
@@ -41,22 +50,40 @@ optional<int> ptree::get_child_index(const std::string& key) const
 int ptree::count(const std::string& key) const
 {
     int i=0;
-    for(auto& x: (*this))
+    for(auto& x: children())
 	if (x.first == key)
 	    i++;
     return i;
 }
 
-bool ptree::operator==(const ptree& p2) const
+std::strong_ordering ptree::operator<=>(const ptree& p2) const
 {
-    return (value == p2.value) and ((vector<pair<string,ptree>>&)(*this) == (vector<pair<string,ptree>>&)p2);
+    if (auto cmp = compare_values(value, p2.value); cmp != 0)
+        return cmp;
+
+    const auto& children1 = children();
+    const auto& children2 = p2.children();
+
+    auto n = std::min(children1.size(), children2.size());
+    for(auto i = decltype(n){0}; i < n; i++)
+    {
+        if (auto cmp = children1[i].first <=> children2[i].first; cmp != 0)
+            return cmp;
+        if (auto cmp = children1[i].second.operator<=>(children2[i].second); cmp != 0)
+            return cmp;
+    }
+
+    if (auto cmp = children1.size() <=> children2.size(); cmp != 0)
+        return cmp;
+
+    return std::strong_ordering::equivalent;
 }
 
 ptree*
 ptree::get_child_optional(const std::string& key)
 {
     if (auto index = get_child_index(key))
-	return &(*this)[*index].second;
+	return &children()[*index].second;
     else
 	return {};
 }
@@ -65,7 +92,7 @@ const ptree*
 ptree::get_child_optional(const std::string& key) const
 {
     if (auto index = get_child_index(key))
-	return &(*this)[*index].second;
+	return &children()[*index].second;
     else
 	return {};
 }
@@ -137,15 +164,15 @@ int ptree::make_index(const string& key)
 {
     if (auto index = get_child_index(key))
 	return *index;
-    int index = size();
-    push_back({key,{}});
+    int index = children().size();
+    children().push_back({key,{}});
     return index;
 }
 
 ptree& ptree::make_child(const string& key)
 {
     int index = make_index(key);
-    return (*this)[index].second;
+    return children()[index].second;
 }
 
 ptree& ptree::make_path(const vector<string>& path, int i)
@@ -202,7 +229,7 @@ string show(const ptree& pt, std::optional<int> depth)
     if (depth)
     {
         string indent2(*depth+2,' ');
-        for(auto& [key,value]: pt)
+        for(auto& [key,value]: pt.children())
         {
             result += "\n" + indent2 + key + " : ";
             result += show(value, *depth+4);
@@ -211,7 +238,7 @@ string show(const ptree& pt, std::optional<int> depth)
     else
     {
         vector<string> pairs;
-        for(auto& [key,value]: pt)
+        for(auto& [key,value]: pt.children())
         {
             pairs.push_back(key + ": " + show(value));
         }
@@ -228,7 +255,7 @@ string show(const ptree& pt, std::optional<int> depth)
 
 std::ostream& operator<<(std::ostream& o, const ptree::value_t& v)
 {
-    if (std::holds_alternative<monostate>(v))
+    if (std::holds_alternative<std::monostate>(v))
         o<<"()";
     else if (std::holds_alternative<bool>(v))
         o<<std::get<bool>(v);
@@ -236,10 +263,9 @@ std::ostream& operator<<(std::ostream& o, const ptree::value_t& v)
         o<<std::get<int>(v);
     else if (std::holds_alternative<std::string>(v))
         o<<"'"<<std::get<string>(v)<<"'";
-    else if (std::holds_alternative<double>(v))
-        o<<std::get<double>(v);
+    else if (std::holds_alternative<OrderedDouble>(v))
+        o<<std::get<OrderedDouble>(v).value;
     else
         std::abort();
     return o;
 }
-

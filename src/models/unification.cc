@@ -261,31 +261,6 @@ optional<term_t> equations::value_of_var(const string& x) const
 	return {};
 }
 
-bool compare(const ptree& a, const ptree& b)
-{
-    if (a.value < b.value) return true;
-    if (a.value > b.value) return false;
-
-    if (a.size() < b.size()) return true;
-    if (a.size() > b.size()) return false;
-
-    for(auto it1 = a.begin(), it2 = b.begin();it1 != a.end(); it1++, it2++)
-    {
-	if (it1->first < it2-> first) return true;
-	if (it1->first > it2-> first) return false;
-
-	if (compare(it1->second,it2->second)) return true;
-	if (compare(it2->second,it1->second)) return false;
-    }
-
-    return false;
-}
-
-bool std::less<term_t>::operator()(const term_t& a, const term_t& b) const
-{
-    return compare(a,b);
-}
-
 map<string,term_t> equations::eliminate_variable(const string& x)
 {
     map<string,term_t>  S;

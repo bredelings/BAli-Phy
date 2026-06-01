@@ -8,14 +8,6 @@
 
 typedef ptree term_t;
 
-// GCC5 can't handle 'struct std::less<>'
-namespace std
-{
-template<> struct less<term_t> {
-    bool operator()(const term_t& a, const term_t& b) const;
-};
-}
-
 class equations
 {
     std::vector<std::pair<term_t,term_t>> failed;

@@ -635,7 +635,7 @@ TypecheckingState::typecheck_and_annotate_constant(const ptree& required_type, c
 
     // 3. If this is a constant or variable, then we are done here.
     if (not model.empty())
-        throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
+        throw myexception()<<"Term '"<<model.show(false)<<"' of type '"<<unparse_type(result_type)
                            <<"' should not have arguments!";
 
     auto model2 = ptree({{"value",model},{"type",result_type}});

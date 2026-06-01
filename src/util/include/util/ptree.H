@@ -7,31 +7,80 @@
 #include <utility>
 #include <vector>
 
+#include <compare>
+#include <cmath>
+#include <initializer_list>
 #include <variant>
 #include <optional>
 
 #include "util/json.hh"
 #include "util/myexception.H"
 
-struct monostate{};
-std::ostream& operator<<(std::ostream& o,const monostate&);
-inline bool operator<(const monostate&, const monostate&) {return false;}
-inline bool operator>(const monostate&, const monostate&) {return false;}
-inline bool operator==(const monostate&, const monostate&) {return true;}
+struct OrderedDouble
+{
+    double value = 0.0;
 
-struct ptree;
-struct ptree: public std::vector<std::pair<std::string,ptree>>
+    OrderedDouble() = default;
+    OrderedDouble(double x):value(x) {}
+
+    operator double() const {return value;}
+};
+
+inline std::strong_ordering operator<=>(OrderedDouble x, OrderedDouble y)
+{
+    const bool x_nan = std::isnan(x.value);
+    const bool y_nan = std::isnan(y.value);
+
+    if (x_nan or y_nan)
+    {
+        if (x_nan == y_nan) return std::strong_ordering::equivalent;
+        return x_nan ? std::strong_ordering::less : std::strong_ordering::greater;
+    }
+
+    if (x.value < y.value) return std::strong_ordering::less;
+    if (y.value < x.value) return std::strong_ordering::greater;
+    return std::strong_ordering::equivalent;
+}
+
+inline bool operator==(OrderedDouble x, OrderedDouble y)
+{
+    return (x <=> y) == 0;
+}
+
+struct ptree
 {
 public:
-    typedef std::variant<monostate,std::string,int,double,bool> value_t;
+    typedef std::pair<std::string,ptree> child_t;
+    typedef std::vector<child_t> children_t;
+    typedef std::variant<std::monostate,std::string,int,OrderedDouble,bool> value_t;
+
     value_t value;
+
+private:
+    children_t children_;
+
+public:
+    children_t& children() {return children_;}
+    const children_t& children() const {return children_;}
+
+    bool empty() const {return children().empty();}
+    auto size() const {return children().size();}
+    auto begin() {return children().begin();}
+    auto begin() const {return children().begin();}
+    auto end() {return children().end();}
+    auto end() const {return children().end();}
+    child_t& operator[](std::size_t i) {return children()[i];}
+    const child_t& operator[](std::size_t i) const {return children()[i];}
+    void push_back(const child_t& child) {children().push_back(child);}
+    void push_back(child_t&& child) {children().push_back(std::move(child));}
+    void clear() {children().clear();}
 
     bool value_is_empty() const;
 
     bool is_null() const;
 
     template <typename T>     bool has_value() const {return false;}
-    template <typename T>     bool is_a() const {return empty() and has_value<T>();}
+    template <typename T>     bool is_a() const {return children().empty() and has_value<T>();}
 
     template <typename T>       T& get_value()       {return std::get<T>(value);}
     template <typename T> const T& get_value() const {return std::get<T>(value);}
@@ -48,7 +97,7 @@ public:
 
     int count(const std::string& key) const;
 
-    bool operator==(const ptree&) const;
+    bool operator==(const ptree&) const = default;
 
     bool operator==(int i) const
     {
@@ -57,7 +106,7 @@ public:
 
     bool operator==(double d) const
     {
-	return (is_a<double>() and get_value<double>() == d);
+	return (is_a<double>() and std::get<OrderedDouble>(value) == OrderedDouble(d));
     }
 
     bool operator==(bool b) const
@@ -74,6 +123,8 @@ public:
     {
 	return (*this) == std::string(s);
     }
+
+    std::strong_ordering operator<=>(const ptree& b) const;
 
           ptree* get_child_optional(const std::string& key);
     const ptree* get_child_optional(const std::string& key) const;
@@ -112,7 +163,7 @@ public:
     std::set<std::string> keys() const
     {
         std::set<std::string> ks;
-        for(auto& [key,value]: *this)
+        for(auto& [key,value]: children())
             ks.insert(key);
         return ks;
     }
@@ -128,25 +179,41 @@ public:
 
     ptree(const value_t& v):value(v) {};
     ptree(const char* s):value(std::string(s)) {};
+    ptree(double x):value(OrderedDouble(x)) {};
 
-    ptree(const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x) { }
+    ptree(const children_t& x):children_(x) { }
+    ptree(std::initializer_list<child_t> x):children_(x) { }
 
-    ptree(const char* s,const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x),value(std::string(s)) { }
-    ptree(const value_t& v,const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x),value(v) { }
+    ptree(const char* s,const children_t& x):value(std::string(s)),children_(x) { }
+    ptree(const char* s,std::initializer_list<child_t> x):value(std::string(s)),children_(x) { }
+    ptree(double v,const children_t& x):value(OrderedDouble(v)),children_(x) { }
+    ptree(double v,std::initializer_list<child_t> x):value(OrderedDouble(v)),children_(x) { }
+    ptree(const value_t& v,const children_t& x):value(v),children_(x) { }
+    ptree(const value_t& v,std::initializer_list<child_t> x):value(v),children_(x) { }
 };
+
+inline bool operator<(const ptree& a, const ptree& b)
+{
+    return a.operator<=>(b) < 0;
+}
 
 template <>  inline bool ptree::has_value<bool>()   const {return value.index() == 4;}
 template <>  inline bool ptree::has_value<int>()    const {return value.index() == 2;}
 template <>  inline bool ptree::has_value<double>() const {return value.index() == 3;}
 template <>  inline bool ptree::has_value<std::string>() const {return value.index() == 1;}
 
+template <> inline       double& ptree::get_value<double>()       {return std::get<OrderedDouble>(value).value;}
+template <> inline const double& ptree::get_value<double>() const {return std::get<OrderedDouble>(value).value;}
+
+template <> inline void ptree::put_value<double>(const double& t) {value = OrderedDouble(t);}
+
 std::string show(const ptree& pt, std::optional<int> depth = 0);
 
 inline auto index(const ptree& p, int i)
 {
-    if (i > p.size())
-        throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.size();
-    auto it = p.begin();
+    if (i > p.children().size())
+        throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.children().size();
+    auto it = p.children().begin();
     for(int j=0;j<i;j++)
         it++;
     return *it;
