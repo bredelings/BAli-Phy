@@ -160,7 +160,7 @@ optional<string> get_func_name(const ptree& model)
     auto func_name = value.get_value<string>();
 
     if (func_name == "function")
-        return get_func_name(value[1].second);
+        return get_func_name(value.children()[1].second);
 
     if (is_qualified_symbol(func_name))
         func_name = get_unqualified_name(func_name);
@@ -193,19 +193,19 @@ bool CodeGenState::is_random(const ptree& model_) const
     if (name == "sample") return true;
 
     // 2. If this is a random variable, then yes.
-    if (not model.size() and model.is_a<string>())
+    if (not model.children().size() and model.is_a<string>())
         if (identifiers.count(name) and identifiers.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     if (name == "!let")
     {
-	for (auto& [var,exp]: model[0].second)
+	for (auto& [var,exp]: model.children()[0].second.children())
 	    if (is_random(exp))
 		return true;
     }
     else
     {
-	for(const auto& [arg,exp]: model)
+	for(const auto& [arg,exp]: model.children())
 	    if (is_random(exp))
 		return true;
     }
@@ -233,7 +233,7 @@ bool CodeGenState::is_unlogged_random(const ptree& model_) const
     if (is_loggable_function(*R, name)) return false;
 
     // 4. Otherwise check if children are random and unlogged
-    for(const auto& [_,child]: model)
+    for(const auto& [_,child]: model.children())
         if (is_unlogged_random(child))
             return true;
 
@@ -295,7 +295,7 @@ optional<translation_result_t> get_constant_model(const ptree& model)
     auto model_rep = model.get_child("value");
     if (expression_ref C = parse_constant(model_rep))
     {
-        if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
+        if (model_rep.children().size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
         translation_result_t result;
         result.code.E = C;
         return result;
@@ -346,7 +346,7 @@ optional<translation_result_t> CodeGenState::get_variable_model(const ptree& mod
 
     // 2. Handle argument arguments
     int i=0;
-    for(auto& [arg_name, arg]: model_rep)
+    for(auto& [arg_name, arg]: model_rep.children())
     {
 	string var_name = name + "_" + std::to_string(i+1);
 	string log_name = name + ":" + std::to_string(i+1);
@@ -416,8 +416,8 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     // 1. If the phrase is not a let, then we are done.
     if (name != "!let") return {};
 
-    auto [decls_name, decls   ] = model_rep[0];
-    auto [body_name , body_exp] = model_rep[1];
+    auto [decls_name, decls   ] = model_rep.children()[0];
+    auto [body_name , body_exp] = model_rep.children()[1];
 
     var body = scope2.get_var("body");
     var log_body = scope2.get_var("log_body");
@@ -457,7 +457,7 @@ optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) c
     result.code.decls.clear();
 
     // 5. Declared variables are not in scope outside the let.
-    for(auto& [var_name,_]: decls)
+    for(auto& [var_name,_]: decls.children())
     {
 	result.code.free_vars.erase(var_name);
 	result.lambda_vars.erase(var_name);
@@ -477,7 +477,7 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model)
 {
     translation_result_t result;
 
-    for(auto& [var_name, var_exp]: model)
+    for(auto& [var_name, var_exp]: model.children())
     {
 	var x = get_var(var_name);
 	var log_x = get_var("log_" + var_name);
@@ -551,7 +551,7 @@ set<string> find_vars_in_pattern(const ptree& pattern0)
     else if (is_tuple(pattern))
     {
         set<string> vars;
-        for(auto& [_,sub_pattern]: pattern)
+        for(auto& [_,sub_pattern]: pattern.children())
         {
             auto slot_vars = find_vars_in_pattern(sub_pattern);
             for(auto& var_name: slot_vars)
@@ -578,12 +578,12 @@ optional<translation_result_t> CodeGenState::get_model_lambda(const ptree& model
     if (name != "function") return {};
 
     // 2. Get the variable name and the body from the model
-    auto pattern = model_rep[0].second;
+    auto pattern = model_rep.children()[0].second;
     auto var_names = find_vars_in_pattern(pattern);
     auto body = scope2.get_var("lbody");
     auto log_body = scope2.get_var("log_lbody");
 
-    ptree body_model = model_rep[1].second;
+    ptree body_model = model_rep.children()[1].second;
 
     // We don't have to worry about avoiding any haskell variables that correspond
     // to scripting language variables with names that are lambda vars.
@@ -626,7 +626,7 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
 {
     if (call.is_null())
         throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
-    if (not call.empty() and not call.has_value<string>())
+    if (not call.children().empty() and not call.has_value<string>())
         throw myexception()<<"Call should not have arguments:\n"<<call.show()<<"\n";
 
     if (call.is_a<bool>())
@@ -643,8 +643,8 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     // Process expression
     if (name == "function")
     {
-        auto body = make_call(call[1].second, simple_args);
-        auto x = call[0].second.get_value<string>();
+        auto body = make_call(call.children()[1].second, simple_args);
+        auto x = call.children()[0].second.get_value<string>();
 
         Hs::LVar v = {noloc, Hs::Var(x)};
         Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(x)})};
@@ -664,8 +664,8 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
 
     // Process arguments;
     vector<expression_ref> args;
-    for(int i=0;i<call.size();i++)
-	args.push_back(make_call(call[i].second, simple_args));
+    for(int i=0;i<call.children().size();i++)
+	args.push_back(make_call(call.children()[i].second, simple_args));
 
     if (name == "List")
     {
@@ -699,9 +699,9 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
 	else
 	    E = var(name);
 
-	for(int i=0;i<call.size();i++)
+	for(int i=0;i<call.children().size();i++)
 	{
-	    if (i == call.size()-1 and call[i].second == "@submodel")
+	    if (i == call.children().size()-1 and call.children()[i].second == "@submodel")
 		E = {var("+>"), args[i], E};
 	    else
 		E = {E, args[i]};
@@ -767,7 +767,7 @@ optional<translation_result_t> CodeGenState::get_model_list(const ptree& model) 
     // 1. If the phrase is not a lambda, then we are done.
     if (name != "List") return {};
 
-    int N = model_rep.size();
+    int N = model_rep.children().size();
 
     translation_result_t result;
 
@@ -827,7 +827,7 @@ optional<translation_result_t> CodeGenState::get_model_tuple(const ptree& model)
     // 1. If the phrase is not a tuple, then we are done.
     if (name != "Tuple") return {};
 
-    int N = model_rep.size();
+    int N = model_rep.children().size();
 
     translation_result_t result;
 
@@ -1089,7 +1089,7 @@ optional<translation_result_t> CodeGenState::get_model_state(const ptree& model)
     if (name == "get_state")
     {
         // How do we access the child here?
-        auto arg = model_rep[0].second;
+        auto arg = model_rep.children()[0].second;
         state_name = arg.get_child("value");
     }
 
@@ -1120,7 +1120,7 @@ translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
     //  ptree model_rep = parse(model);
 
     // 1. Complain on empty expressions
-    if (model_rep.empty() and model_rep.value_is_empty())
+    if (model_rep.children().empty() and model_rep.value_is_empty())
         throw myexception()<<"Can't construct model from from empty description!";
 
     // 2. Handle constant expressions

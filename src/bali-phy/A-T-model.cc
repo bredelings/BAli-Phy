@@ -911,7 +911,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         auto type = full_smodels[i].type;
 //      FIXME: Actually we need to look at constraints for Nucleotides<a>, Doublets<a,b>, Triplets<a,b>
 //      auto& constraints = full_smodels[i].constraints;
-        auto alphabet_type = type.begin()->second;
+        auto alphabet_type = type.children().begin()->second;
 
         if (alphabet_type == "Codons" and not dynamic_cast<const Codons*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
@@ -1146,4 +1146,3 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
     }
     return constraint;
 }
-

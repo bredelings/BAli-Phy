@@ -53,18 +53,18 @@ void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = ""
 	names2[i] = path;
     }
 
-    if (not p.empty())
-	for(auto& x: p)
+    if (not p.children().empty())
+	for(auto& x: p.children())
 	    copy_to_vec(x.second, names2, model_extend_path(path, x.first));
 }
 
 // here we aren't handling '*' prefixes...
 void simplify(ptree& p)
 {
-    if (p.empty()) return;
+    if (p.children().empty()) return;
 
     // 1. First we simplify all the levels below this level.
-    for(auto& x: p)
+    for(auto& x: p.children())
 	simplify(x.second);
 
     // 2. In order to move child-level names up to the top level, we have to avoid
@@ -73,23 +73,23 @@ void simplify(ptree& p)
     // We therefore count which names at these levels occur twice and avoid them.
     // NOTE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}.
     multiset<string> names;
-    for(auto& x: p)
+    for(auto& x: p.children())
     {
 	names.insert(x.first);
-	for(auto& y: x.second)
+	for(auto& y: x.second.children())
 	    names.insert(y.first);
     }
 
     // 3. If none of the names in an entry occur twice, then we can move all the
     //    names in that entry up to the top level.
-    vector<bool> move_children(p.size(), false);
-    for(int i=0; i<p.size(); i++)
+    vector<bool> move_children(p.children().size(), false);
+    for(int i=0; i<p.children().size(); i++)
     {
-	auto& x = p[i];
-	if (x.second.empty()) continue;
+	auto& x = p.children()[i];
+	if (x.second.children().empty()) continue;
 
 	bool ok = true;
-	for(auto& y: x.second)
+	for(auto& y: x.second.children())
 	{
 	    if (names.count(y.first) > 1)
 	    {
@@ -103,25 +103,25 @@ void simplify(ptree& p)
 
     // 4. Move the children
     ptree p2;
-    for(int i=0; i<p.size(); i++)
+    for(int i=0; i<p.children().size(); i++)
     {
-	auto& x = p[i];
+	auto& x = p.children()[i];
 
 	// 4a. Move the entry w/o changing it.
 	if (not move_children[i])
-	    p2.push_back(std::move(x));
+	    p2.children().push_back(std::move(x));
 
 	// 4b. Move the children
 	else
 	{
-	    for(auto& y: x.second)
-		p2.push_back(std::move(y));
+	    for(auto& y: x.second.children())
+		p2.children().push_back(std::move(y));
 
 	    // 4c. Maybe move the bare entry as well.
 	    if (not x.second.value_is_empty())
 	    {
-		x.second.clear();
-		p2.push_back(std::move(x));
+		x.second.children().clear();
+		p2.children().push_back(std::move(x));
 	    }
 	}
     }
@@ -139,7 +139,7 @@ void add_path(ptree& p, const vector<string>& path, int value, int first=0)
 	auto child = p.get_child_optional(x);
 	if (not child)
 	{
-	    p.push_back({x, ptree("yo")});
+	    p.children().push_back({x, ptree("yo")});
 	    child = p.get_child_optional(x);
 	}
 	assert(child);
@@ -181,4 +181,3 @@ vector<string> short_parameter_names(const vector<string>& names)
 //	std::cerr<<names[i]<<" -> "<<names2[i]<<std::endl;
     return names2;
 }
-

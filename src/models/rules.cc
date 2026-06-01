@@ -114,7 +114,7 @@ namespace fs = std::filesystem;
 vector<RuleConstraint> parse_constraints(const ptree& cc)
 {
     vector<RuleConstraint> constraints;
-    for(auto& c: cc)
+    for(auto& c: cc.children())
     {
 	string s = c.second.get_value<string>();
 	constraints.push_back(parse_type(s));
@@ -140,7 +140,7 @@ vector<string> get_string_array(const ptree& rule, const string& key, const stri
     {
         if (not p->value_is_empty())
             throw myexception()<<"In rule for "<<rule_name<<": \""<<key<<"\" must be an array";
-        for(auto& [_, x]: *p)
+        for(auto& [_, x]: p->children())
         {
             if (not x.is_a<string>())
                 throw myexception()<<"In rule for "<<rule_name<<": entry in \""<<key<<"\" is not a string";
@@ -157,7 +157,7 @@ std::set<string> get_imports(const ptree& rule, const string& rule_name)
     {
         if (not p->value_is_empty())
             throw myexception()<<"In rule for "<<rule_name<<": \"import\" must be an array";
-        for(auto& [_, x]: *p)
+        for(auto& [_, x]: p->children())
         {
             if (not x.is_a<string>())
                 throw myexception()<<"In rule for "<<rule_name<<": entry in \"import\" is not a string";
@@ -202,7 +202,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 	rule.call = parse_value(call);
     }
 
-    for(auto& [_,x]: raw_rule.get_child("args"))
+    for(auto& [_,x]: raw_rule.get_child("args").children())
     {
         string arg_name = x.get_child("name").get_value<string>();
         RuleArg arg;
@@ -242,7 +242,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
     // Handle optional element "computed".
     if (auto computed = raw_rule.get_child_optional("computed"))
     {
-	for(auto& [_,x]: *computed)
+	for(auto& [_,x]: computed->children())
 	{
             ComputedRule c;
             c.name = x.get_child("name").get_value<string>();
@@ -269,7 +269,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
     if (auto citation = raw_rule.get_child_optional("citation"))
         rule.docs.citation = *citation;
     if (auto category = raw_rule.get_child_optional("category"))
-        for(auto& [_, x]: *category)
+        for(auto& [_, x]: category->children())
             rule.docs.category.push_back(x.get_value<string>());
 
     return rule;
@@ -279,7 +279,7 @@ Rule make_rule_stub(const string& name, const ptree& raw_rule)
 {
     Rule rule;
     rule.name = name;
-    for(auto& [_, x]: raw_rule.get_child("args"))
+    for(auto& [_, x]: raw_rule.get_child("args").children())
     {
         RuleArg arg;
         arg.name = x.get_child("name").get_value<string>();
@@ -435,11 +435,11 @@ ptree json_to_ptree(const json::value& j)
 	// j.is_array()
     case json::kind::array:
 	for(auto& x: j.as_array())
-	    p.push_back({"", json_to_ptree(x)});
+	    p.children().push_back({"", json_to_ptree(x)});
 	break;
     case json::kind::object:
 	for(auto& [key,value]: j.as_object())
-	    p.push_back({key, json_to_ptree(value)});
+	    p.children().push_back({key, json_to_ptree(value)});
 	break;
     default:
 	break;
@@ -491,7 +491,7 @@ void Rules::add_rule_json(const fs::path& path, const fs::path& rel_path)
 
     if (auto synonyms = rule.get_child_optional("synonyms"))
     {
-	for(auto& synonym_pair: *synonyms)
+	for(auto& synonym_pair: synonyms->children())
 	{
 	    if (not synonym_pair.second.is_a<string>())
 		throw myexception()<<"Synonym for rule '"<<name<<"' is not a string!";
@@ -503,7 +503,7 @@ void Rules::add_rule_json(const fs::path& path, const fs::path& rel_path)
 
     if (auto synonyms = rule.get_child_optional("deprecated-synonyms"))
     {
-	for(auto& synonym_pair: *synonyms)
+	for(auto& synonym_pair: synonyms->children())
 	{
 	    if (not synonym_pair.second.is_a<string>())
 		throw myexception()<<"Deprecated synonym for rule '"<<name<<"' is not a string!";

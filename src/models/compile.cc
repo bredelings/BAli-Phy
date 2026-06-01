@@ -235,7 +235,7 @@ void substitute_annotated(const equations& equations, ptree& model)
 {
     if (model.has_value<string>() and model.get_value<string>() == "!Decls")
     {
-	for(auto& [name,exp]: model)
+	for(auto& [name,exp]: model.children())
 	    substitute_annotated(equations, exp);
 	return;
     }
@@ -243,7 +243,7 @@ void substitute_annotated(const equations& equations, ptree& model)
     auto& type = model.get_child("type");
     substitute(equations, type);
 
-    for(auto& [key, value]: model.get_child("value"))
+    for(auto& [key, value]: model.get_child("value").children())
         substitute_annotated(equations, value);
 }
 
@@ -367,7 +367,7 @@ model_t compile_decls(const Rules& R,
     // 2. Typecheck.
     auto decls2 = TC.typecheck_and_annotate_decls(decls);
 
-    for(auto& [var,value]: decls2)
+    for(auto& [var,value]: decls2.children())
 	substitute_annotated(TC.eqs, value);
     set<ptree> constraints;
     for(auto constraint: TC.eqs.get_constraints())
@@ -425,7 +425,7 @@ bool annotated_term_is_model(const ptree& term)
 
     if (value.has_value<string>() and value.get_value<string>() == "List")
     {
-        for(auto& [arg_name,arg_value]: term.get_child("value"))
+        for(auto& [arg_name,arg_value]: term.get_child("value").children())
             if (annotated_term_is_model(arg_value)) return true;
     }
 
@@ -444,31 +444,31 @@ bool bound(const ptree& annotated_term, const set<string>& binders)
 
     if (func_name == "!let")
     {
-	auto& decls = value[0].second;
-	auto& body  = value[1].second;
+	auto& decls = value.children()[0].second;
+	auto& body  = value.children()[1].second;
 
         auto binders2 = binders;
-	for(auto& [var_name, _]: decls)
+	for(auto& [var_name, _]: decls.children())
             binders2.erase(var_name);
 
         if (bound(body, binders2)) return true;
 
-	for(auto& [var_name, exp]: decls)
+	for(auto& [var_name, exp]: decls.children())
 	    if (bound(exp, binders2)) return true;
     }
     else if (func_name == "function")
     {
-        string var_name = value[0].second.get_child("value").get_value<string>();
+        string var_name = value.children()[0].second.get_child("value").get_value<string>();
         auto binders2 = binders;
         binders2.erase(var_name);
 
-        return bound(value[1].second, binders2);
+        return bound(value.children()[1].second, binders2);
     }
     else
     {
         if (binders.count(func_name)) return true;
 
-        for(auto& [arg_name,arg_value]: value)
+        for(auto& [arg_name,arg_value]: value.children())
             if (bound(arg_value, binders)) return true;
     }
 
@@ -541,24 +541,24 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
     // 1. Let statements
     if (value.has_value<string>() and value.get_value<string>() == "!let")
     {
-        assert(value.size() == 2);
-	auto decls = value[0].second;
-	auto body  = value[1].second;
+        assert(value.children().size() == 2);
+	auto decls = value.children()[0].second;
+	auto body  = value.children()[1].second;
 
         extracted = extract_terms(body, binders);
         m = body;
 
-	for(auto& [var_name, exp]: decls)
-	    extracted.insert(extracted.begin(),{var_name,exp});
+	for(auto& [var_name, exp]: decls.children())
+	    extracted.insert(extracted.begin(), pair<string,ptree>{var_name,exp});
     }
     // 2. Lambda functions
     else if (value.has_value<string>() and value.get_value<string>() == "function")
     {
-        string var_name = value[0].second.get_child("value").get_value<string>();
+        string var_name = value.children()[0].second.get_child("value").get_value<string>();
         auto binders2 = binders;
         binders2.insert(var_name);
 
-        for(auto& [sub_name, sub_term]: extract_terms(value[1].second, binders2))
+        for(auto& [sub_name, sub_term]: extract_terms(value.children()[1].second, binders2))
             extracted.emplace_back(sub_name, std::move(sub_term));
     }
     // 3. Function calls
@@ -567,7 +567,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
         vector<pair<string,ptree>> extracted_top;
         int i=0;
         // Walk each argument and determine if it should be pulled out
-        for(auto& [arg_name,arg_value]: value)
+        for(auto& [arg_name,arg_value]: value.children())
         {
             auto func = value.get_value<string>();
             string name = func + ":" + arg_name;

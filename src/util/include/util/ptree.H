@@ -63,18 +63,6 @@ public:
     children_t& children() {return children_;}
     const children_t& children() const {return children_;}
 
-    bool empty() const {return children().empty();}
-    auto size() const {return children().size();}
-    auto begin() {return children().begin();}
-    auto begin() const {return children().begin();}
-    auto end() {return children().end();}
-    auto end() const {return children().end();}
-    child_t& operator[](std::size_t i) {return children()[i];}
-    const child_t& operator[](std::size_t i) const {return children()[i];}
-    void push_back(const child_t& child) {children().push_back(child);}
-    void push_back(child_t&& child) {children().push_back(std::move(child));}
-    void clear() {children().clear();}
-
     bool value_is_empty() const;
 
     bool is_null() const;
@@ -179,6 +167,8 @@ public:
 
     ptree(const value_t& v):value(v) {};
     ptree(const char* s):value(std::string(s)) {};
+    ptree(bool x):value(x) {};
+    ptree(int x):value(x) {};
     ptree(double x):value(OrderedDouble(x)) {};
 
     ptree(const children_t& x):children_(x) { }
@@ -186,6 +176,10 @@ public:
 
     ptree(const char* s,const children_t& x):value(std::string(s)),children_(x) { }
     ptree(const char* s,std::initializer_list<child_t> x):value(std::string(s)),children_(x) { }
+    ptree(bool v,const children_t& x):value(v),children_(x) { }
+    ptree(bool v,std::initializer_list<child_t> x):value(v),children_(x) { }
+    ptree(int v,const children_t& x):value(v),children_(x) { }
+    ptree(int v,std::initializer_list<child_t> x):value(v),children_(x) { }
     ptree(double v,const children_t& x):value(OrderedDouble(v)),children_(x) { }
     ptree(double v,std::initializer_list<child_t> x):value(OrderedDouble(v)),children_(x) { }
     ptree(const value_t& v,const children_t& x):value(v),children_(x) { }

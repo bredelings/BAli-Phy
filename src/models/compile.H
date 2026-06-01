@@ -44,7 +44,7 @@ public:
     generated_code_t code;
     std::set<std::string> used_args;
 
-    bool empty() const {return description.empty();}
+    bool empty() const {return description.children().empty();}
     pretty_model_t pretty_model() const {return {description};};
 
     std::string show(bool = true) const;

@@ -145,7 +145,7 @@ def: varid                      "=" exp  { $$ = {$1,$3}; }
 
 defs: %empty       { $$ = ptree("!Decls"); }
 |     def          { $$ = ptree("!Decls", {$1}); }
-|     defs ";" def { $$ = $1; $$.push_back($3); }
+|     defs ";" def { $$ = $1; $$.children().push_back($3); }
 |     defs ";"     { $$ = $1; }
 
 exp: term                          { $$ = $1; }
@@ -283,7 +283,7 @@ std::pair<std::string,ptree> make_function_def(zz_driver& drv, const yy::locatio
 
     // 2. Get the argument names
     vector<string> vars;
-    for(auto& [name,value]: fncall)
+    for(auto& [name,value]: fncall.children())
     {
 	if (not name.empty())
 	    drv.push_error_message(l, "Named arguments not allowed in function definitions");

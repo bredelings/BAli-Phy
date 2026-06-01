@@ -107,7 +107,7 @@ optional<string> get_authors(const Rule& rule)
 
     vector<string> authors;
     if (auto authors_ = citation.get_child_optional("author"))
-	for(auto& author: *authors_)
+	for(auto& author: authors_->children())
 	    if (auto name = author.second.get_optional<string>("name"))
 	    {
 		auto names = split(*name,", ");
@@ -183,7 +183,7 @@ optional<string> get_citation_id(const Rule& rule, const string& idtype)
     // 2. Try to get the DOI
     if (auto identifiers = citation.get_child_optional("identifier"))
     {
-	for(auto& identifier: *identifiers)
+	for(auto& identifier: identifiers->children())
 	{
 	    auto type = identifier.second.get_child_optional("type");
 	    if (not type or type->get_value<string>() != idtype) continue;
@@ -205,7 +205,7 @@ optional<string> get_citation_url(const Rule& rule)
     // 2. Try to get the URL from the "link" field.
     if (auto links = citation.get_child_optional("link"))
     {
-	for(auto& link: *links)
+	for(auto& link: links->children())
 	{
 	    auto url = link.second.get_child_optional("url");
 	    if (not url) continue;
@@ -360,7 +360,7 @@ string pseudo_markdown(const string& text)
 
 const ptree* find(const string& key0, const ptree& p)
 {
-    for(auto& [key,value]: p)
+    for(auto& [key,value]: p.children())
     {
 	if (key == key0) return &value;
 	if (auto found = find(key0, value))
@@ -372,9 +372,9 @@ const ptree* find(const string& key0, const ptree& p)
 vector<string> get_subtopics(const ptree& p)
 {
     vector<string> subtopics;
-    for(auto [name,value]: p)
+    for(auto [name,value]: p.children())
     {
-	if (value.size()) name += "/";
+	if (value.children().size()) name += "/";
 	subtopics.push_back(name);
     }
     return subtopics;

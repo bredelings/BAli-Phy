@@ -830,7 +830,7 @@ namespace zz {
 
   case 10: // defs: defs ";" def
 #line 148 "parser.y"
-                   { yylhs.value.as < ptree > () = yystack_[2].value.as < ptree > (); yylhs.value.as < ptree > ().push_back(yystack_[0].value.as < std::pair<std::string,ptree> > ()); }
+                   { yylhs.value.as < ptree > () = yystack_[2].value.as < ptree > (); yylhs.value.as < ptree > ().children().push_back(yystack_[0].value.as < std::pair<std::string,ptree> > ()); }
 #line 835 "parser.cc"
     break;
 
@@ -1870,7 +1870,7 @@ std::pair<std::string,ptree> make_function_def(zz_driver& drv, const yy::locatio
 
     // 2. Get the argument names
     vector<string> vars;
-    for(auto& [name,value]: fncall)
+    for(auto& [name,value]: fncall.children())
     {
 	if (not name.empty())
 	    drv.push_error_message(l, "Named arguments not allowed in function definitions");

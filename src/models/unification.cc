@@ -363,7 +363,7 @@ set<string> equations::referenced_vars() const
 
 bool is_type_variable(const ptree& p)
 {
-    if (p.size()) return false;
+    if (p.children().size()) return false;
 
     if (not p.has_value<string>()) return false;
 
@@ -378,7 +378,7 @@ set<string> find_variables_in_type(const ptree& p)
     if (is_type_variable(p))
 	vars.insert(p.get_value<string>());
     else
-	for(const auto& x: p)
+	for(const auto& x: p.children())
 	    add(vars,find_variables_in_type(x.second));
     return vars;
 }
@@ -460,7 +460,7 @@ void substitute(const equations& E, term_t& T)
 	}
     }
     else
-	for(auto& child: T)
+	for(auto& child: T.children())
 	    substitute(E, child.second);
 }
 
@@ -473,7 +473,7 @@ void substitute(const map<string,term_t>& R, term_t& T)
 	    T = R.at(name);
     }
     else
-	for(auto& child: T)
+	for(auto& child: T.children())
 	    substitute(R, child.second);
 }
 
@@ -495,14 +495,14 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     else if (is_type_variable(T2))
 	// 4. var2 = T1
 	return add_condition(T2, T1);
-    else if (T1.size() == 0)
+    else if (T1.children().size() == 0)
     {
-	if (T2.size() != 0 or T1.value != T2.value)
+	if (T2.children().size() != 0 or T1.value != T2.value)
             failed.push_back({T1,T2});
     }
-    else if (T1.size() == 2 and T2.size() == 2)
+    else if (T1.children().size() == 2 and T2.children().size() == 2)
     {
-	unify(T1[0].second, T2[0].second) && unify(T1[1].second, T2[1].second);
+	unify(T1.children()[0].second, T2.children()[0].second) && unify(T1.children()[1].second, T2.children()[1].second);
     }
     else
     {
@@ -522,10 +522,10 @@ std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type)
 {
     std::vector<term_t> args;
 
-    while(type.size() > 0)
+    while(type.children().size() > 0)
     {
-	args.push_back(type[1].second);
-	auto next = type[0].second;
+	args.push_back(type.children()[1].second);
+	auto next = type.children()[0].second;
 	type = next;
     }
     std::reverse(args.begin(), args.end());
