@@ -190,8 +190,8 @@ extern "C" closure builtin_function_changeable_apply(OperationArgs& Args)
     int f_reg = Args.reg_for_slot(0);
     int x_reg = Args.reg_for_slot(1);
 
-    expression_ref apply = {index_var(1), index_var(0)};
-    return {apply, {f_reg, x_reg}};
+    return closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                   {f_reg, x_reg});
 }
 
 

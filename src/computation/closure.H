@@ -77,6 +77,8 @@ public:
         return runtime_exp and not runtime_exp.is<Runtime::ObjectValue>();
     }
 
+    void peel_lambdas(int n);
+
     bool is_reg_ref() const
     {
         return exp.is_index_var() or exp.is_reg_var();

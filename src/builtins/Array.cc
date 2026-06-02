@@ -13,13 +13,6 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
     // The function should be represented as a heap variable...
     int f_reg = Args.reg_for_slot(1);
   
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
     closure result;
     result.Env.resize(n);
     std::vector<Runtime::Exp> array_args;
@@ -30,7 +23,8 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	int i_reg = Args.allocate(expression_ref(i));
 
 	// %1 %0 {f,i}
-	int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
+	int apply_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                              {f_reg, i_reg}));
 
 	array_args.push_back(Runtime::IndexVar(n - 1 - i));
 

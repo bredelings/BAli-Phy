@@ -2,6 +2,7 @@
 #include "computation/operation.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/indexify.H"
+#include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
 #include "util/string/join.H" // for join( )
@@ -89,6 +90,42 @@ void closure::check_runtime_expression() const
     if (runtime_exp)
         assert(Runtime::to_expression_ref(runtime_exp) == exp);
 #endif
+}
+
+void closure::peel_lambdas(int n)
+{
+    check_runtime_expression();
+
+    if (has_structured_runtime_expression())
+    {
+        Runtime::Exp E = runtime_exp;
+        bool peeled_runtime = true;
+        for(int i=0; i<n; i++)
+        {
+            auto L = E.to<Runtime::Lambda>();
+            assert(L);
+            if (not L)
+            {
+                peeled_runtime = false;
+                break;
+            }
+            E = L->body;
+        }
+
+        if (peeled_runtime)
+        {
+            set_runtime_expression(std::move(E));
+            return;
+        }
+    }
+
+    expression_ref E2 = exp;
+    for(int i=0; i<n; i++)
+    {
+        assert(E2.head().type() == type_constant::lambda2_type);
+        E2 = E2.sub()[0];
+    }
+    set_legacy_expression(std::move(E2));
 }
 
 int closure::runtime_n_args() const

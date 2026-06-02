@@ -39,8 +39,8 @@ closure modifiable_op(OperationArgs& Args)
         int x_reg = Args.reg_for_slot(1);
 
         // 2. Allocate the expression to evaluate
-        expression_ref apply = {index_var(1), index_var(0)};
-        return {apply, {f_reg, x_reg}};
+        return closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                       {f_reg, x_reg});
     }
     // Complain if there is no value at all.
     else

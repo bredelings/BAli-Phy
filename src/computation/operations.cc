@@ -86,42 +86,6 @@ int get_n_lambdas(const expression_ref& E)
     return n;
 }
 
-expression_ref peel_n_lambdas(const expression_ref& E, int n)
-{
-    expression_ref E2 = E;
-    for(int i=0;i<n;i++)
-    {
-	assert(E2.head().type() == type_constant::lambda2_type);
-	E2 = E2.sub()[0];
-    }
-    return E2;
-}
-
-int get_n_lambdas(const Runtime::Exp& E)
-{
-    Runtime::Exp E2 = E;
-    int n = 0;
-    while(auto L = E2.to<Runtime::Lambda>())
-    {
-	E2 = L->body;
-	n++;
-    }
-    return n;
-}
-
-Runtime::Exp peel_n_lambdas(const Runtime::Exp& E, int n)
-{
-    Runtime::Exp E2 = E;
-    for(int i=0;i<n;i++)
-    {
-	auto L = E2.to<Runtime::Lambda>();
-	assert(L);
-	E2 = L->body;
-    }
-    return E2;
-}
-      
-
 closure apply_op(OperationArgs& Args)
 {
     closure C = Args.evaluate_slot_to_runtime_closure(0);
@@ -134,13 +98,7 @@ closure apply_op(OperationArgs& Args)
     assert(n_args_given >= 1);
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
-    if (C.has_structured_runtime_expression())
-    {
-        assert(get_n_lambdas(C.runtime_exp) == n_args_needed);
-        C.set_runtime_expression(peel_n_lambdas(C.runtime_exp, n_args_applied));
-    }
-    else
-        C.set_legacy_expression(peel_n_lambdas(C.exp, n_args_applied));
+    C.peel_lambdas(n_args_applied);
 
     for(int i=0;i<n_args_applied;i++)
     {

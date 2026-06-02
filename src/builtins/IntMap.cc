@@ -80,18 +80,12 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& m = arg1.as_<IntMap>();
 
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
     IntMap m2;
 
     for(auto& [k,r1]: m)
     {
-        int r2 = Args.allocate({apply_E,{f_reg,r1}});
+        int r2 = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                       {f_reg,r1}));
         m2.insert(k,r2);
     }
 
@@ -105,20 +99,14 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& m = arg1.as_<IntMap>();
 
-    expression_ref apply_E;
-    {
-	expression_ref f = index_var(2);
-	expression_ref argKey = index_var(1);
-	expression_ref argVal = index_var(0);
-	apply_E = {f, argKey, argVal};
-    }
-
     IntMap m2;
 
     for(auto& [k,r_val]: m)
     {
         int r_key = Args.allocate({k});
-        int r_val2 = Args.allocate({apply_E,{f_reg,r_key,r_val}});
+        int r_val2 = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                          {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                           {f_reg,r_key,r_val}));
         m2.insert(k,r_val2);
     }
 
@@ -161,8 +149,9 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     if (m.has_key(key))
     {
         int v1_reg = m[key];
-        expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-        int v3_reg = Args.allocate({E,{f_reg,v1_reg,v2_reg}});
+        int v3_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                          {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                           {f_reg,v1_reg,v2_reg}));
         m.insert(key,v3_reg);
     }
     else 
@@ -231,8 +220,9 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
             if (m3.has_key(key))
             {
                 int v1_reg = m3[key];
-                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                                  {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(key, v3_reg);
             }
             else
@@ -249,8 +239,9 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
             if (m3.has_key(key))
             {
                 int v2_reg = m3[key];
-                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                                  {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(key, v3_reg);
             }
             else
@@ -351,8 +342,6 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
     auto& m1 = arg1.as_<IntMap>();
     auto& m2 = arg2.as_<IntMap>();
 
-    expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-
     // Loop over the smaller map
     IntMap m3;
     if (m1.size() < m2.size())
@@ -362,7 +351,9 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
             if (m2.has_key(k))
             {
                 int v2_reg = m2[k];
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                                  {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(k, v3_reg);
             }
         }
@@ -375,7 +366,9 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
             if (m1.has_key(k))
             {
                 int v1_reg = m1[k];
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(2),
+                                                                  {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(k, v3_reg);
             }
         }
@@ -391,18 +384,12 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& S = arg1.as_<IntSet>();
 
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
     IntMap m;
     for(auto& k: S)
     {
         int r1 = Args.allocate(expression_ref(k));
-        int r2 = Args.allocate({apply_E,{f_reg,r1}});
+        int r2 = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                       {f_reg,r1}));
         m.insert(k,r2);
     }
 
@@ -439,6 +426,16 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 
     return result;
 }
+
+// OK, so the problem is that if we a builtin op like (restrictKeysToVector map keys),
+// then the number of uses will change if the keys change.  Also, the specific regs used
+// would change if the map changes.
+
+// We therefore end up doing the operation in two steps.
+// 1. First, depending on the current map and keys, we create a second operation that does the needed work.
+// 2. The second operation (makeEVector) actually uses the relevant regs to create the final vector.
+// If the map or keys change, the first operation is invalidated.  It always has 2 uses: the keys and the map.
+// If the specific values used change, the second operation is invalidated.  It has |keys| uses.
 
 closure makeEVector(OperationArgs& Args)
 {

@@ -442,9 +442,6 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
     return constructor("()",0);
 }
 
-int get_n_lambdas(const expression_ref& E);
-expression_ref peel_n_lambdas(const expression_ref& E, int n);
-
 extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
 {
     try
@@ -455,9 +452,9 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
     }
     catch (HaskellException& H)
     {
-        closure C = Args.evaluate_slot_to_closure(1);
+        closure C = Args.evaluate_slot_to_runtime_closure(1);
 
-        C.set_legacy_expression(peel_n_lambdas(C.exp, 1));
+        C.peel_lambdas(1);
         C.Env.push_back(H.r);
 
         // If we have only 1 arg, we can always apply it.
@@ -563,11 +560,8 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     int r_func = Args.reg_for_slot(1);
 
     // 3. Allocate new value
-    expression_ref fE = index_var(1);
-    expression_ref argE = index_var(0);
-    expression_ref apply_exp = {fE, argE};
-
-    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+    int r_apply = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                        {r_func, r_value}));
 
     // 4. Write the IORef
     auto& M = Args.memory();
@@ -592,11 +586,8 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     int r_func = Args.reg_for_slot(1);
 
     // 3. Allocate new value
-    expression_ref fE = index_var(1);
-    expression_ref argE = index_var(0);
-    expression_ref apply_exp = {fE, argE};
-
-    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+    int r_apply = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                        {r_func, r_value}));
 
     // 4. Write the IORef
     auto& M = Args.memory();
@@ -630,11 +621,11 @@ extern "C" expression_ref simple_function_isWindows(vector<expression_ref>&)
 */
 extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 {
-    closure m = Args.evaluate_slot_to_closure(0);
+    closure m = Args.evaluate_slot_to_runtime_closure(0);
 
     int s_reg = Args.current_closure().reg_for_slot(2);
 
-    m.set_legacy_expression(peel_n_lambdas(m.exp, 1));
+    m.peel_lambdas(1);
     m.Env.push_back(s_reg);
 
     // ms_result <- perform m as an operation with step S
@@ -643,8 +634,8 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
     int r_reg = -1;
 
     
-    closure k = Args.evaluate_slot_to_closure(1);
-    k.set_legacy_expression(peel_n_lambdas(k.exp, 1));
+    closure k = Args.evaluate_slot_to_runtime_closure(1);
+    k.peel_lambdas(1);
     k.Env.push_back(r_reg);
 
     // kr_result <- perform k as an operation with step S
@@ -653,7 +644,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
     int k2_reg = -1;
 
     closure k2 = Args.evaluate_slot_to_closure(k2_reg);
-    k2.set_legacy_expression(peel_n_lambdas(k2.exp, 1));
+    k2.peel_lambdas(1);
     k2.Env.push_back(new_s_reg);
 
     // k2_new_result <- perform k2 as an operation with step S
