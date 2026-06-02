@@ -451,7 +451,7 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
     {
         Args.evaluate(0);
         int r = Args.reg_for_slot(0);
-        return {index_var(0),{r}};
+        return closure(Runtime::IndexVar(0), {r});
     }
     catch (HaskellException& H)
     {
@@ -471,11 +471,12 @@ extern "C" closure builtin_function_newIORef(OperationArgs& Args)
     // 1. Initial value
     int r = Args.reg_for_slot(0);
 
-    expression_ref E(constructor("Data.IORef.IORef",1),{index_var(0)});
+    auto E = Runtime::App(Runtime::ConstructorApp(constructor("Data.IORef.IORef",1)),
+                          std::vector<Runtime::Exp>{Runtime::IndexVar(0)});
 
-    int r_ioref = Args.allocate(closure{E,{r}});
+    int r_ioref = Args.allocate(closure(std::move(E), {r}));
 
-    return {index_var(0), {r_ioref}};
+    return closure(Runtime::IndexVar(0), {r_ioref});
 }
 
 extern "C" closure builtin_function_readIORef(OperationArgs& Args)
@@ -485,7 +486,7 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
     assert(has_constructor(C.exp,"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
-    return {index_var(0), {C.Env[0]}};
+    return closure(Runtime::IndexVar(0), {C.Env[0]});
 }
 
 int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)

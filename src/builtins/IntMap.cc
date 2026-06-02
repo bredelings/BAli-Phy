@@ -70,7 +70,7 @@ extern "C" closure builtin_function_subscript(OperationArgs& Args)
 
     int result_reg = m[key];
 
-    return {index_var(0), {result_reg}};
+    return closure(Runtime::IndexVar(0), {result_reg});
 }
 
 extern "C" closure builtin_function_map(OperationArgs& Args)

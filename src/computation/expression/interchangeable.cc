@@ -62,7 +62,7 @@ closure interchangeable_op(OperationArgs& Args)
 	M.set_call(s, fx, true);
 
 	// 8. Unchangeable evaluate to i
-	return {index_var(0), {i}};
+	return closure(Runtime::IndexVar(0), {i});
     }
     else
 	throw myexception()<<"Evaluating changeable with no call";
@@ -78,4 +78,3 @@ bool is_interchangeable(const expression_ref& E)
     assert(result == E.head().is_a<interchangeable>());
     return result;
 }
-

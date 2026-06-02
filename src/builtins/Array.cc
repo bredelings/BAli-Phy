@@ -13,9 +13,6 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
     // The function should be represented as a heap variable...
     int f_reg = Args.reg_for_slot(1);
   
-    object_ptr<expression> exp = new expression(constructor("Array",n));
-    exp->sub.resize(n);
-
     expression_ref apply_E;
     {
 	expression_ref fE = index_var(1);
@@ -25,6 +22,8 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 
     closure result;
     result.Env.resize(n);
+    std::vector<Runtime::Exp> array_args;
+    array_args.reserve(n);
     for(int i=0;i<n;i++)
     {
 	// i
@@ -33,13 +32,12 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	// %1 %0 {f,i}
 	int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
 
-	// change to result.exp <<= index_var(i)
-	exp->sub[i] = index_var(n - 1 - i);
+	array_args.push_back(Runtime::IndexVar(n - 1 - i));
 
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.set_legacy_expression(exp);
+    result.set_runtime_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n)), std::move(array_args)));
   
     return result;
 }
@@ -70,7 +68,7 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 	throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
 
     // Return a reference to the heap variable pointed to by the nth entry
-    return {index_var(0), {C.Env[n]} };
+    return closure(Runtime::IndexVar(0), {C.Env[n]});
 }
 
 extern "C" closure builtin_function_removeElement(OperationArgs& Args)
@@ -87,22 +85,20 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
     if (idx < 0 or idx >= n)
         throw myexception()<<"Trying to remove element '"<<idx<<"' from an Array of size "<<n<<"!";
 
-    object_ptr<expression> exp = new expression(constructor("Array",n-1));
-    exp->sub.resize(n-1);
-
     closure result;
     result.Env.resize(n-1);
+    std::vector<Runtime::Exp> array_args;
+    array_args.reserve(n-1);
     for(int i=0,j=0; i<n-1; i++,j++)
     {
         if (i==idx) j++;
 
-	// change to result.exp <<= index_var(i)
-	exp->sub[i] = index_var(n - 2 - i);
+	array_args.push_back(Runtime::IndexVar(n - 2 - i));
 
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.set_legacy_expression(exp);
+    result.set_runtime_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n-1)), std::move(array_args)));
 
     return result;
 }

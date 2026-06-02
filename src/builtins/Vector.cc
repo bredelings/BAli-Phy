@@ -34,7 +34,7 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
     const std::string& s = Args.evaluate(0).as_<String>();
 
     if (offset == 0 and length == s.size())
-	return {index_var(0),{Args.reg_for_slot(0)}};
+	return closure(Runtime::IndexVar(0), {Args.reg_for_slot(0)});
     else
 	return {String(s.substr(offset,length))};
 }

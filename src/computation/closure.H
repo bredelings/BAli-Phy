@@ -132,6 +132,19 @@ public:
 	 Env( std::move(C.Env) )
 	{ }
 
+    // Constructing from a runtime expression
+    closure(Runtime::Exp e)
+	:closure()
+	{ set_runtime_expression(std::move(e)); }
+
+    closure(Runtime::Exp e, const Env_t& E)
+	:closure(std::move(e))
+	{ Env = E; }
+
+    closure(Runtime::Exp e, std::initializer_list<int> E)
+	:closure(std::move(e), Env_t(E))
+	{ }
+
     // Constructing from an expression_ref
     closure(const expression_ref& e)
 	:closure()

@@ -37,7 +37,7 @@ extern "C" closure builtin_function_registerTransitionKernelRaw(OperationArgs& A
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return closure(Runtime::IndexVar(0), {r_effect});
 }
 
 extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
@@ -50,7 +50,7 @@ extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return closure(Runtime::IndexVar(0), {r_effect});
 }
 
 log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
@@ -1220,7 +1220,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return closure(Runtime::IndexVar(0), {r_effect});
 }
 
 Proposal interchange_regs_proposal(int r1, int r2)

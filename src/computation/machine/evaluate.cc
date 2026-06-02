@@ -1185,7 +1185,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
             // If we point to r3 through an intermediate index_var chain, then change us to point to the end.
             if (was_index_var and r3 != r2)
-                set_C(r, closure(index_var(0),{r3}));
+                set_C(r, closure(Runtime::IndexVar(0), {r3}));
 
             return r3;
         }

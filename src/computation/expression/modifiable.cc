@@ -28,7 +28,7 @@ closure modifiable_op(OperationArgs& Args)
         M.set_call(s, x, true);
 
         // 7. Unchangeably evaluate to m.
-        return {index_var(0), {m}};
+        return closure(Runtime::IndexVar(0), {m});
     }
     else if (C.exp.size() == 2)
     {
