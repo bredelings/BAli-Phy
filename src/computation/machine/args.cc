@@ -26,7 +26,7 @@ int OperationArgs::runtime_reg_for_slot(int slot) const
     return current_closure().runtime_reg_for_slot(slot);
 }
 
-int OperationArgs::n_args() const {return current_closure().exp.size();}
+int OperationArgs::n_args() const {return current_closure().runtime_n_slots();}
 
 int OperationArgs::runtime_n_slots() const {return current_closure().runtime_n_slots();}
 
