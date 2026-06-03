@@ -442,14 +442,14 @@ void reg_heap::_register_effect_at_reg(int r, int s)
         if (has_constructor(E, "Effect.TransitionKernel"))
         {
             double rate = expression_at(r).sub()[0].as_double();
-            int r_kernel = closure_at(r).reg_for_slot(1);
+            int r_kernel = closure_at(r).runtime_reg_for_slot(1);
             if (log_verbose >= 5)
                 std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: REGISTER!\n";
             register_transition_kernel(r, s);
         }
         else if (has_constructor(E, "Effect.Logger"))
         {
-            int r_logger = closure_at(r).reg_for_slot(0);
+            int r_logger = closure_at(r).runtime_reg_for_slot(0);
             if (log_verbose >= 5)
                 std::cerr<<"register_logger[logger="<<r_logger<<"]: REGISTER!\n";
             register_logger(r, s);
@@ -510,14 +510,14 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
         if (has_constructor(E, "Effect.TransitionKernel"))
         {
             double rate = expression_at(r).sub()[0].as_double();
-            int r_kernel = closure_at(r).reg_for_slot(1);
+            int r_kernel = closure_at(r).runtime_reg_for_slot(1);
             if (log_verbose >= 5)
                 std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: UNREGISTER!\n";
             unregister_transition_kernel(r, s);
         }
         else if (has_constructor(E, "Effect.Logger"))
         {
-            int r_logger = closure_at(r).reg_for_slot(0);
+            int r_logger = closure_at(r).runtime_reg_for_slot(0);
             if (log_verbose >= 5)
                 std::cerr<<"register_logger[logger="<<r_logger<<"]: UNREGISTER!\n";
             unregister_logger(r, s);
@@ -1013,7 +1013,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     auto register_dist_handler = [&](int r, int)
     {
-        int r_dist = closure_at(r).reg_for_slot(0);
+        int r_dist = closure_at(r).runtime_reg_for_slot(0);
         int observation = expression_at(r).sub()[1].as_int();
         if (not observation)
             random_vars_added.insert(r_dist);
@@ -1021,7 +1021,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     auto unregister_dist_handler = [&](int r, int)
     {
-        int r_dist = closure_at(r).reg_for_slot(0);
+        int r_dist = closure_at(r).runtime_reg_for_slot(0);
         int observation = expression_at(r).sub()[1].as_int();
         if (not observation)
             random_vars_removed.insert(r_dist);
@@ -1174,7 +1174,7 @@ void reg_heap::register_transition_kernel(int r, int s)
     assert(not steps.is_free(s));
 
     double rate = expression_at(r).sub()[0].as_double();
-    int r_kernel = closure_at(r).reg_for_slot(1);
+    int r_kernel = closure_at(r).runtime_reg_for_slot(1);
 
     assert(reg_is_constant(r_kernel));
 
@@ -1193,7 +1193,7 @@ void reg_heap::register_transition_kernel(int r, int s)
 void reg_heap::unregister_transition_kernel(int r, int s)
 {
     double rate = expression_at(r).sub()[0].as_double();
-    int r_kernel = closure_at(r).reg_for_slot(1);
+    int r_kernel = closure_at(r).runtime_reg_for_slot(1);
 
     if (rate > 0)
     {
@@ -1217,7 +1217,7 @@ void reg_heap::register_logger(int r, int s)
 {
     assert(not steps.is_free(s));
 
-    int r_logger = closure_at(r).reg_for_slot(0);
+    int r_logger = closure_at(r).runtime_reg_for_slot(0);
 
     assert(reg_is_constant(r_logger));
 
@@ -1229,7 +1229,7 @@ void reg_heap::register_logger(int r, int s)
 
 void reg_heap::unregister_logger(int r, int s)
 {
-    int r_logger = closure_at(r).reg_for_slot(0);
+    int r_logger = closure_at(r).runtime_reg_for_slot(0);
 
     if (not loggers_.count(s))
         throw myexception()<<"unregister_logger: logger <r="<<r_logger<<",s="<<s<<"> not found!";
@@ -1299,8 +1299,8 @@ void reg_heap::unregister_in_edge(int r, int /* s */)
 
 void reg_heap::register_out_edge(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).reg_for_slot(0);
-    int r_to_var    = closure_at(r).reg_for_slot(1);
+    int r_from_dist = closure_at(r).runtime_reg_for_slot(0);
+    int r_to_var    = closure_at(r).runtime_reg_for_slot(1);
 
     // Check that this edge is not a duplicate.
     assert(not out_edges_from_dist.count(r_from_dist));
@@ -1321,8 +1321,8 @@ void reg_heap::register_out_edge(int r, int /* s */)
 
 void reg_heap::unregister_out_edge(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).reg_for_slot(0);
-    int r_to_var    = closure_at(r).reg_for_slot(1);
+    int r_from_dist = closure_at(r).runtime_reg_for_slot(0);
+    int r_to_var    = closure_at(r).runtime_reg_for_slot(1);
 
     // Check that this edge is registered.
     assert(out_edges_from_dist.count(r_from_dist));
@@ -1346,7 +1346,7 @@ void reg_heap::unregister_out_edge(int r, int /* s */)
 
 void reg_heap::register_dist(int r, int s)
 {
-    int r_dist = closure_at(r).reg_for_slot(0);
+    int r_dist = closure_at(r).runtime_reg_for_slot(0);
 //    int observation = expression_at(r).sub()[1].as_<String>();
     const string& name = expression_at(r).sub()[2].as_<String>();
 
@@ -1360,7 +1360,7 @@ void reg_heap::register_dist(int r, int s)
 
 void reg_heap::unregister_dist(int r, int s)
 {
-    int r_dist = closure_at(r).reg_for_slot(0);
+    int r_dist = closure_at(r).runtime_reg_for_slot(0);
 
     assert(has_constructor(expression_at(r_dist), "Effect.Dist"));
 //    assert(dist_type.count(r_dist));

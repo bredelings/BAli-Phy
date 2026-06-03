@@ -105,13 +105,13 @@ public:
 
     std::string print() const;
 
-    closure& operator=(closure&& C) noexcept
-	{
-	    exp_cache_ = std::move(C.exp_cache_);
-	    runtime_exp = std::move(C.runtime_exp);
-	    Env = std::move(C.Env);
-	    return *this;
-	}
+	    closure& operator=(closure&& C) noexcept
+		{
+		    exp_cache_ = std::move(C.exp_cache_);
+		    runtime_exp = std::move(C.runtime_exp);
+		    Env = C.Env;
+		    return *this;
+		}
 
     closure& operator=(const closure& C)
 	{
@@ -131,12 +131,12 @@ public:
 	 Env(C.Env)
         { }
 
-    closure(closure&& C) noexcept
-	:exp_cache_(std::move(C.exp_cache_)),
-         runtime_exp(std::move(C.runtime_exp)),
-         exp(exp_cache_),
-	 Env( std::move(C.Env) )
-	{ }
+	    closure(closure&& C) noexcept
+		:exp_cache_(std::move(C.exp_cache_)),
+	         runtime_exp(std::move(C.runtime_exp)),
+	         exp(exp_cache_),
+		 Env(C.Env)
+		{ }
 
     // Constructing from a runtime expression
     closure(Runtime::Exp e)
@@ -245,12 +245,6 @@ public:
     static closure object_value(const Object& O, const Env_t& E)
     {
         return object_value(expression_ref(O), E);
-    }
-
-    static closure atomic_value(expression_ref e)
-    {
-        assert(not e.is_expression());
-        return object_value(std::move(e));
     }
 
     // Constructing from an expression_ref

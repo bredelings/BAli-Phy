@@ -301,7 +301,7 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
             if (m1.has_key(k))
                 E = 0;
     }
-    return closure::legacy_expression(E);
+    return closure::object_value(E);
 }
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)

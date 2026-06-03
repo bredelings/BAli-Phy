@@ -1096,7 +1096,7 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
     if (x_value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
 
-    return closure::atomic_value(x_value);
+    return closure::object_value(x_value);
 }
 
 extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
@@ -1120,7 +1120,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
     if (value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<value<<"'";
 
-    C.set_reg_value(*x_mod_reg, closure::atomic_value(value));
+    C.set_reg_value(*x_mod_reg, closure::object_value(value));
 
     return constructor("()",0);
 }

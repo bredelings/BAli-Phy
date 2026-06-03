@@ -19,7 +19,7 @@ Runtime::Exp OperationArgs::runtime_arg_for_slot(int slot) const
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-    return current_closure().reg_for_slot(slot);
+    return current_closure().runtime_reg_for_slot(slot);
 }
 
 int OperationArgs::runtime_reg_for_slot(int slot) const
