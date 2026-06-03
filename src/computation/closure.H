@@ -73,22 +73,14 @@ struct closure
     // Assignment operators
     closure& operator=(const closure&) = default;
 
-    closure& operator=(closure&& C) noexcept
-	{
-	    exp = C.exp;
-	    Env = std::move(C.Env);
-	    return *this;
-	}
+    closure& operator=(closure&& C) noexcept = default;
 
     // Default
     closure() = default;
 
     closure(const closure&) = default;
 
-    closure(closure&& C) noexcept
-	:exp(C.exp),
-	 Env( std::move(C.Env) )
-	{ }
+    closure(closure&& C) noexcept = default;
 
     // Constructing from an expression_ref
     closure(const expression_ref& e)
