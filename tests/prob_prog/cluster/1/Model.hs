@@ -18,7 +18,7 @@ model xs = do
 
   let n_points = length xs
 
-  alpha <- prior $ gamma 0.5 10.0
+  let alpha = 0.5
 
   params <- prior $ dp n_points alpha cluster_dist
 
