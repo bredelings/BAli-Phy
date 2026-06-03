@@ -137,10 +137,10 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts, const Runtime::Case* runtime_case)
+static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts, const Runtime::Case& runtime_case)
 {
     int L = alts.size();
-    assert(not runtime_case or runtime_case->alts.size() == L);
+    assert(runtime_case.alts.size() == L);
 
 #ifndef NDEBUG
     vector<expression_ref> cases(L);
@@ -161,7 +161,6 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
     for(int i=0;i<L and not result;i++)
     {
 	const expression_ref& this_case = alts[i].pattern;
-	const expression_ref& this_body = alts[i].body;
 
 	// If its _, then match it.
 	if (is_var(this_case))
@@ -170,13 +169,8 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 	    assert(is_wildcard(this_case));
 	    assert(i == L-1);
       
-            if (runtime_case)
-            {
-                assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[i].pattern));
-                result.set_expression(runtime_case->alts[i].body);
-            }
-            else
-                result.set_expression(Runtime::ObjectValue(this_body));
+            assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case.alts[i].pattern));
+            result.set_expression(runtime_case.alts[i].body);
 	}
 	else
 	{
@@ -192,19 +186,14 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
 		}
 #endif	
-                if (runtime_case)
-                {
 #ifndef NDEBUG
-                    auto pattern = std::get_if<Runtime::ConstructorPattern>(&runtime_case->alts[i].pattern);
+                    auto pattern = std::get_if<Runtime::ConstructorPattern>(&runtime_case.alts[i].pattern);
                     assert(pattern);
                     const auto& legacy_pattern = this_case.head().as_<constructor>();
                     assert(pattern->head.name() == legacy_pattern.name());
                     assert(pattern->head.n_args() == legacy_pattern.n_args());
 #endif
-                    result.set_expression(runtime_case->alts[i].body);
-                }
-                else
-                    result.set_expression(Runtime::ObjectValue(this_body));
+                    result.set_expression(runtime_case.alts[i].body);
 	
 		for(int j=0;j<object.exp.size();j++)
 		    result.Env.push_back( object.runtime_reg_for_slot(j) );
@@ -231,10 +220,12 @@ bool is_seq(const expression_ref& E)
 }
 
 // Should we do this transformation before runtime?
-closure seq_op(OperationArgs& Args, Runtime::Exp runtime_body = {})
+closure seq_op(OperationArgs& Args, Runtime::Exp runtime_body)
 {
     auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
+    (void)alts;
     assert(is_wildcard(alts[0].pattern));
+    assert(runtime_body);
 
     // Force x
     Args.evaluate_slot_force(0);
@@ -242,10 +233,7 @@ closure seq_op(OperationArgs& Args, Runtime::Exp runtime_body = {})
     // Get the current Env -- AFTER we force x, so GC can't invalidate it.
     closure result;
     result.Env = Args.current_closure().Env;
-    if (runtime_body)
-        result.set_expression(std::move(runtime_body));
-    else
-        result.set_expression(Runtime::ObjectValue(alts[0].body));
+    result.set_expression(std::move(runtime_body));
 
     // Trim the result.
     return get_trimmed( std::move(result) );
@@ -260,26 +248,21 @@ closure case_op(OperationArgs& Args)
     {
         if (is_seq(Args.current_closure().exp))
         {
-            Runtime::Exp runtime_body;
-            if (auto runtime_case = Args.current_closure().runtime_expression().to<Runtime::Case>())
-            {
-                assert(runtime_case->alts.size() == 1);
-                assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[0].pattern));
-                runtime_body = runtime_case->alts[0].body;
-            }
+            auto runtime_case = Args.current_closure().runtime_expression().to<Runtime::Case>();
+            if (not runtime_case)
+                throw myexception()<<"case_op: legacy expression_ref case without Runtime::Case";
+            assert(runtime_case->alts.size() == 1);
+            assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[0].pattern));
 
-            return seq_op(Args, std::move(runtime_body));
+            return seq_op(Args, runtime_case->alts[0].body);
         }
     }
 
     auto& in_object = Args.reference(0);
-    Runtime::Case runtime_case;
-    const Runtime::Case* runtime_case_ptr = nullptr;
-    if (auto runtime_case_in = Args.current_closure().runtime_expression().to<Runtime::Case>())
-    {
-        runtime_case = *runtime_case_in;
-        runtime_case_ptr = &runtime_case;
-    }
+    auto runtime_case_ptr = Args.current_closure().runtime_expression().to<Runtime::Case>();
+    if (not runtime_case_ptr)
+        throw myexception()<<"case_op: legacy expression_ref case without Runtime::Case";
+    Runtime::Case runtime_case = *runtime_case_ptr;
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
@@ -294,7 +277,7 @@ closure case_op(OperationArgs& Args)
     // *invalid* after the call above!
     auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
 
-    return alts_op(C.Env, object, alts, runtime_case_ptr);
+    return alts_op(C.Env, object, alts, runtime_case);
 }
 
 /*
@@ -344,6 +327,8 @@ closure let_op(OperationArgs& Args)
 	auto& L = C.exp.as_<Let>();
         const Runtime::Let* runtime_let = C.runtime_expression().to<Runtime::Let>();
         assert(not C.has_structured_runtime_expression() or runtime_let);
+        if (not runtime_let)
+            throw myexception()<<"let_op: legacy expression_ref let without Runtime::Let";
 
 	int n_binds = L.binds.size();
         assert(not runtime_let or runtime_let->binds.size() == n_binds);
@@ -353,27 +338,17 @@ closure let_op(OperationArgs& Args)
 	    C.Env.push_back( Args.allocate_reg() );
       
 	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-        if (runtime_let)
+        Runtime::Let runtime_L = *runtime_let;
+
+        for(int i=0;i<n_binds;i++)
         {
-            Runtime::Let runtime_L = *runtime_let;
-
-            for(int i=0;i<n_binds;i++)
-            {
-                closure bind;
-                bind.Env = C.Env;
-                bind.set_expression(runtime_L.binds[i]);
-                M.set_C(C.Env[start+i], get_trimmed(std::move(bind)));
-            }
-
-            C.set_expression(runtime_L.body);
+            closure bind;
+            bind.Env = C.Env;
+            bind.set_expression(runtime_L.binds[i]);
+            M.set_C(C.Env[start+i], get_trimmed(std::move(bind)));
         }
-        else
-        {
-            for(int i=0;i<n_binds;i++)
-                M.set_C(C.Env[start+i], get_trimmed(closure::legacy_expression(L.binds[i], C.Env)));
 
-            C.set_expression(Runtime::ObjectValue(L.body));
-        }
+        C.set_expression(runtime_L.body);
 	do_trim(C);
     }
     while (C.exp.head().type() == type_constant::let2_type);

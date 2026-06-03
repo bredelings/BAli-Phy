@@ -6,6 +6,7 @@
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
+#include "util/myexception.H"
 #include "util/string/join.H" // for join( )
 #include <cmath>
 #include <iostream>
@@ -234,7 +235,7 @@ void do_trim(closure& C)
             C.set_expression(runtime_trim->body);
         }
         else
-            C.set_expression(Runtime::ObjectValue(C.exp.sub()[1]));
+            throw myexception()<<"do_trim: legacy expression_ref trim without Runtime::Trim";
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)
