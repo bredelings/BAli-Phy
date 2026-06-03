@@ -428,9 +428,8 @@ namespace Runtime
         template <class Archive>
         void save(Archive& ar) const
         {
-            assert(not lib_name.empty());
-            assert(not func_name.empty());
-            assert(not call_conv.empty());
+            if (lib_name.empty() or func_name.empty() or call_conv.empty())
+                throw std::runtime_error("Runtime-only OperationApp is not serializable");
             ar(lib_name, func_name, call_conv);
         }
 

@@ -439,13 +439,12 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 
 closure makeEVector(OperationArgs& Args)
 {
-    int n = Args.current_closure().Env.size();
+    int n = Args.runtime_n_args();
 
     EVector result;
     for(int i=0;i<n;i++)
     {
-	int r = Args.current_closure().Env[i];
-	auto obj = Args.evaluate_reg_to_object( r );
+	auto obj = Args.evaluate_slot_to_object(i);
 	result.push_back( obj );
     }
     return result;
@@ -464,14 +463,18 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
     closure result;
     result.Env.resize(n);
+    std::vector<Runtime::Exp> args;
+    args.reserve(n);
     int i=0;
     for(int key: keys)
     {
 	result.Env[i] = map0[key];
+	args.push_back(Runtime::IndexVar(n - 1 - i));
 
 	i++;
     }
-    result.set_legacy_expression(Operation(makeEVector,"makeEVector"));
+    result.set_runtime_expression(Runtime::App(Runtime::OperationApp(Operation(makeEVector,"makeEVector")),
+                                               std::move(args)));
 
     return result;
 }
