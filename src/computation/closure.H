@@ -13,6 +13,8 @@ struct closure
 {
 private:
     expression_ref exp_cache_;
+    /// Runtime AST representation for this closure.
+    Runtime::Exp runtime_exp;
 
 public:
     typedef boost::container::small_vector<int,10> Env_t;
@@ -20,11 +22,8 @@ public:
     /// Legacy expression_ref view derived from runtime_exp.
     ///
     /// The expression_ref form is a compatibility cache.  Code outside closure
-    /// may inspect it, but semantic updates should go through runtime_exp via
-    /// set_runtime_expression().
+    /// may inspect it, but semantic updates should go through set_expression().
     const expression_ref& exp;
-    /// Runtime AST representation for this closure.
-    Runtime::Exp runtime_exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
 
@@ -66,9 +65,9 @@ public:
 
     int runtime_reg_for_slot(int i) const;
 
-    void set_runtime_expression(Runtime::Exp E);
+    const Runtime::Exp& runtime_expression() const {return runtime_exp;}
 
-    void set_legacy_expression(expression_ref E);
+    void set_expression(Runtime::Exp E);
 
     void check_runtime_expression() const;
 
@@ -122,22 +121,22 @@ public:
 
     closure(const closure& C)
         :exp_cache_(C.exp_cache_),
-         exp(exp_cache_),
          runtime_exp(C.runtime_exp),
+         exp(exp_cache_),
 	 Env(C.Env)
         { }
 
     closure(closure&& C) noexcept
 	:exp_cache_(std::move(C.exp_cache_)),
-         exp(exp_cache_),
          runtime_exp(std::move(C.runtime_exp)),
+         exp(exp_cache_),
 	 Env( std::move(C.Env) )
 	{ }
 
     // Constructing from a runtime expression
     closure(Runtime::Exp e)
 	:closure()
-	{ set_runtime_expression(std::move(e)); }
+	{ set_expression(std::move(e)); }
 
     closure(Runtime::Exp e, const Env_t& E)
 	:closure(std::move(e))
@@ -150,7 +149,10 @@ public:
     // Constructing from an expression_ref
     closure(const expression_ref& e)
 	:closure()
-	{ set_legacy_expression(e); }
+	{
+            if (e)
+                set_expression(Runtime::ObjectValue(e));
+        }
 
     closure(const expression_ref& e, const Env_t& E)
 	:closure(e)

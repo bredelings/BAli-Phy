@@ -6,6 +6,8 @@
 namespace Runtime
 {
     Exp trim_normalize(const Exp&);
+
+    Exp trim_unnormalize(const Exp&);
 }
 
 #endif

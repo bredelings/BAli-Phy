@@ -473,7 +473,7 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
 	i++;
     }
-    result.set_runtime_expression(Runtime::App(Runtime::OperationApp(Operation(makeEVector,"makeEVector")),
+    result.set_expression(Runtime::App(Runtime::OperationApp(Operation(makeEVector,"makeEVector")),
                                                std::move(args)));
 
     return result;

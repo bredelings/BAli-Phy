@@ -64,8 +64,8 @@ namespace
         auto C = heap.preprocess(local_let);
         require(C.Env.size() == 1, "preprocess should capture one local RegRef");
         require(C.Env[0] == local_reg, "preprocess captured the wrong local RegRef");
-        require(bool(C.runtime_exp), "preprocess should retain a runtime AST sidecar");
-        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
+        require(bool(C.runtime_expression()), "preprocess should retain a runtime AST sidecar");
+        require(Runtime::to_expression_ref(C.runtime_expression()) == C.exp, "runtime AST sidecar should match the expression_ref bridge");
     }
 
     void check_runtime_closure_argument_helpers(const std::shared_ptr<module_loader>& loader)
@@ -108,16 +108,16 @@ namespace
     {
         closure C;
         C.Env = {10, 20, 30};
-        C.set_runtime_expression(Runtime::Trim({0, 2}, Runtime::IndexVar(1)));
+        C.set_expression(Runtime::Trim({0, 2}, Runtime::IndexVar(1)));
 
         do_trim(C);
 
-        require(bool(C.runtime_exp), "do_trim should preserve a runtime Trim body");
-        auto index = C.runtime_exp.to<Runtime::IndexVar>();
+        require(bool(C.runtime_expression()), "do_trim should preserve a runtime Trim body");
+        auto index = C.runtime_expression().to<Runtime::IndexVar>();
         require(bool(index), "trimmed runtime closure should contain the Trim body");
         require(index->index == 1, "trimmed runtime closure body index mismatch");
         require((C.Env == closure::Env_t{10, 30}), "trimmed runtime closure environment mismatch");
-        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "trimmed runtime closure should keep both representations in sync");
+        require(Runtime::to_expression_ref(C.runtime_expression()) == C.exp, "trimmed runtime closure should keep both representations in sync");
     }
 
     void check_shift_free_indices()
@@ -231,9 +231,9 @@ namespace
         expression_ref legacy_lambda = expression_ref(lambda2(), {expression_ref(1)});
         closure C(legacy_lambda);
 
-        require(bool(C.runtime_exp), "legacy closures should keep a runtime bridge value");
+        require(bool(C.runtime_expression()), "legacy closures should keep a runtime bridge value");
         require(not C.has_structured_runtime_expression(), "ObjectValue bridge should not be treated as structured runtime code");
-        require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "legacy runtime bridge should match the expression_ref cache");
+        require(Runtime::to_expression_ref(C.runtime_expression()) == C.exp, "legacy runtime bridge should match the expression_ref cache");
     }
 
     void check_expression_object_value_audit()

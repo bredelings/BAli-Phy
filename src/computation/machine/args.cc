@@ -78,7 +78,7 @@ closure OperationArgs::evaluate_slot_to_runtime_closure(int slot)
     else
     {
         closure C;
-        C.set_runtime_expression(std::move(S));
+        C.set_expression(std::move(S));
         return C;
     }
 }
@@ -91,7 +91,7 @@ closure OperationArgs::evaluate_slot_to_runtime_closure_(int slot)
     else
     {
         closure C;
-        C.set_runtime_expression(std::move(S));
+        C.set_expression(std::move(S));
         return C;
     }
 }
@@ -151,8 +151,8 @@ Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object(int R2)
     if (C.exp.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
 #endif
-    if (C.runtime_exp)
-        return C.runtime_exp;
+    if (C.runtime_expression())
+        return C.runtime_expression();
     else
         return Runtime::ObjectValue(C.exp);
 }
@@ -164,8 +164,8 @@ Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object_(int R2)
     if (C.exp.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
 #endif
-    if (C.runtime_exp)
-        return C.runtime_exp;
+    if (C.runtime_expression())
+        return C.runtime_expression();
     else
         return Runtime::ObjectValue(C.exp);
 }

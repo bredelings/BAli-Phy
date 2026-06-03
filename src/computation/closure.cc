@@ -5,6 +5,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
+#include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
 #include <cmath>
 #include <iostream>
@@ -104,20 +105,12 @@ string closure::print() const
     return result;
 }
 
-void closure::set_runtime_expression(Runtime::Exp E)
+void closure::set_expression(Runtime::Exp E)
 {
     Runtime::check_translated(E);
     runtime_exp = std::move(E);
     exp_cache_ = Runtime::to_expression_ref(runtime_exp);
     check_runtime_expression();
-}
-
-void closure::set_legacy_expression(expression_ref E)
-{
-    if (E)
-        set_runtime_expression(Runtime::ObjectValue(std::move(E)));
-    else
-        clear();
 }
 
 void closure::check_runtime_expression() const
@@ -160,7 +153,7 @@ void closure::peel_lambdas(int n)
 
         if (peeled_runtime)
         {
-            set_runtime_expression(std::move(E));
+            set_expression(std::move(E));
             return;
         }
     }
@@ -171,7 +164,7 @@ void closure::peel_lambdas(int n)
         assert(E2.head().type() == type_constant::lambda2_type);
         E2 = E2.sub()[0];
     }
-    set_legacy_expression(std::move(E2));
+    set_expression(Runtime::ObjectValue(std::move(E2)));
 }
 
 int closure::runtime_n_args() const
@@ -235,13 +228,13 @@ void do_trim(closure& C)
 	expression_ref old = C.exp;
 	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
-        if (auto runtime_trim = C.runtime_exp.to<Runtime::Trim>())
+        if (auto runtime_trim = C.runtime_expression().to<Runtime::Trim>())
         {
             assert(runtime_trim->indices == keep);
-            C.set_runtime_expression(runtime_trim->body);
+            C.set_expression(runtime_trim->body);
         }
         else
-            C.set_legacy_expression(C.exp.sub()[1]);
+            C.set_expression(Runtime::ObjectValue(C.exp.sub()[1]));
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)
@@ -275,6 +268,9 @@ expression_ref deindexify(const closure& C)
 closure trim_unnormalize(const closure& C)
 {
     closure C2 = C;
-    C2.set_legacy_expression(trim_unnormalize(C2.exp));
+    if (C2.runtime_expression() and not C2.runtime_expression().to<Runtime::ObjectValue>())
+        C2.set_expression(Runtime::trim_unnormalize(C2.runtime_expression()));
+    else
+        C2.set_expression(Runtime::ObjectValue(trim_unnormalize(C2.exp)));
     return C2;
 }

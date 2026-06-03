@@ -132,7 +132,7 @@ closure apply_op(OperationArgs& Args)
 
         closure result;
         result.Env = std::move(Env);
-        result.set_runtime_expression(std::move(runtime_E2));
+        result.set_expression(std::move(runtime_E2));
 	return result;
     }
 }
@@ -173,10 +173,10 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
             if (runtime_case)
             {
                 assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[i].pattern));
-                result.set_runtime_expression(runtime_case->alts[i].body);
+                result.set_expression(runtime_case->alts[i].body);
             }
             else
-                result.set_runtime_expression(Runtime::ObjectValue(this_body));
+                result.set_expression(Runtime::ObjectValue(this_body));
 	}
 	else
 	{
@@ -201,10 +201,10 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
                     assert(pattern->head.name() == legacy_pattern.name());
                     assert(pattern->head.n_args() == legacy_pattern.n_args());
 #endif
-                    result.set_runtime_expression(runtime_case->alts[i].body);
+                    result.set_expression(runtime_case->alts[i].body);
                 }
                 else
-                    result.set_runtime_expression(Runtime::ObjectValue(this_body));
+                    result.set_expression(Runtime::ObjectValue(this_body));
 	
 		for(int j=0;j<object.exp.size();j++)
 		    result.Env.push_back( object.runtime_reg_for_slot(j) );
@@ -243,9 +243,9 @@ closure seq_op(OperationArgs& Args, Runtime::Exp runtime_body = {})
     closure result;
     result.Env = Args.current_closure().Env;
     if (runtime_body)
-        result.set_runtime_expression(std::move(runtime_body));
+        result.set_expression(std::move(runtime_body));
     else
-        result.set_runtime_expression(Runtime::ObjectValue(alts[0].body));
+        result.set_expression(Runtime::ObjectValue(alts[0].body));
 
     // Trim the result.
     return get_trimmed( std::move(result) );
@@ -261,7 +261,7 @@ closure case_op(OperationArgs& Args)
         if (is_seq(Args.current_closure().exp))
         {
             Runtime::Exp runtime_body;
-            if (auto runtime_case = Args.current_closure().runtime_exp.to<Runtime::Case>())
+            if (auto runtime_case = Args.current_closure().runtime_expression().to<Runtime::Case>())
             {
                 assert(runtime_case->alts.size() == 1);
                 assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[0].pattern));
@@ -275,7 +275,7 @@ closure case_op(OperationArgs& Args)
     auto& in_object = Args.reference(0);
     Runtime::Case runtime_case;
     const Runtime::Case* runtime_case_ptr = nullptr;
-    if (auto runtime_case_in = Args.current_closure().runtime_exp.to<Runtime::Case>())
+    if (auto runtime_case_in = Args.current_closure().runtime_expression().to<Runtime::Case>())
     {
         runtime_case = *runtime_case_in;
         runtime_case_ptr = &runtime_case;
@@ -340,7 +340,7 @@ closure let_op(OperationArgs& Args)
 	int start = C.Env.size();
 
 	auto& L = C.exp.as_<Let>();
-        const Runtime::Let* runtime_let = C.runtime_exp.to<Runtime::Let>();
+        const Runtime::Let* runtime_let = C.runtime_expression().to<Runtime::Let>();
         assert(not C.has_structured_runtime_expression() or runtime_let);
 
 	int n_binds = L.binds.size();
@@ -359,18 +359,18 @@ closure let_op(OperationArgs& Args)
             {
                 closure bind;
                 bind.Env = C.Env;
-                bind.set_runtime_expression(runtime_L.binds[i]);
+                bind.set_expression(runtime_L.binds[i]);
                 M.set_C(C.Env[start+i], get_trimmed(std::move(bind)));
             }
 
-            C.set_runtime_expression(runtime_L.body);
+            C.set_expression(runtime_L.body);
         }
         else
         {
             for(int i=0;i<n_binds;i++)
                 M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
 
-            C.set_runtime_expression(Runtime::ObjectValue(L.body));
+            C.set_expression(Runtime::ObjectValue(L.body));
         }
 	do_trim(C);
     }

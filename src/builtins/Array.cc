@@ -31,7 +31,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.set_runtime_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n)), std::move(array_args)));
+    result.set_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n)), std::move(array_args)));
   
     return result;
 }
@@ -92,7 +92,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.set_runtime_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n-1)), std::move(array_args)));
+    result.set_expression(Runtime::App(Runtime::ConstructorApp(constructor("Array",n-1)), std::move(array_args)));
 
     return result;
 }
