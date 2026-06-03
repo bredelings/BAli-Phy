@@ -446,6 +446,14 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
 int get_n_lambdas(const expression_ref& E);
 expression_ref peel_n_lambdas(const expression_ref& E, int n);
 
+static void peel_closure_lambdas(closure& C, int n)
+{
+    if (C.has_code())
+        C.set_code(Runtime::peel_lambdas(C.get_code(), n));
+    else
+        C.set_legacy_exp(peel_n_lambdas(C.exp, n));
+}
+
 extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
 {
     try
@@ -458,7 +466,7 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
     {
         closure C = Args.evaluate_slot_to_closure(1);
 
-        C.set_legacy_exp(peel_n_lambdas(C.exp, 1));
+        peel_closure_lambdas(C, 1);
         C.Env.push_back(H.r);
 
         // If we have only 1 arg, we can always apply it.
@@ -629,7 +637,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 
     int s_reg = Args.current_closure().reg_for_slot(2);
 
-    m.set_legacy_exp(peel_n_lambdas(m.exp, 1));
+    peel_closure_lambdas(m, 1);
     m.Env.push_back(s_reg);
 
     // ms_result <- perform m as an operation with step S
@@ -639,7 +647,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 
     
     closure k = Args.evaluate_slot_to_closure(1);
-    k.set_legacy_exp(peel_n_lambdas(k.exp, 1));
+    peel_closure_lambdas(k, 1);
     k.Env.push_back(r_reg);
 
     // kr_result <- perform k as an operation with step S
@@ -648,7 +656,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
     int k2_reg = -1;
 
     closure k2 = Args.evaluate_slot_to_closure(k2_reg);
-    k2.set_legacy_exp(peel_n_lambdas(k2.exp, 1));
+    peel_closure_lambdas(k2, 1);
     k2.Env.push_back(new_s_reg);
 
     // k2_new_result <- perform k2 as an operation with step S
