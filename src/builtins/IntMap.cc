@@ -393,18 +393,12 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& S = arg1.as_<IntSet>();
 
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
     IntMap m;
     for(auto& k: S)
     {
-        int r1 = Args.allocate(expression_ref(k));
-        int r2 = Args.allocate({apply_E,{f_reg,r1}});
+        int r1 = Args.allocate(k);
+        int r2 = Args.allocate(closure(R::apply(R::IndexVar(1), {R::IndexVar(0)}),
+                                       {f_reg, r1}));
         m.insert(k,r2);
     }
 
