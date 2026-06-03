@@ -6,6 +6,7 @@
 #include <memory>
 #include <concepts>
 #include <type_traits>
+#include <cstdlib>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
@@ -262,41 +263,27 @@ public:
 	:closure(e, Env_t(E))
 	{ }
 
-    // Constructing w/ an environment
-    explicit closure(Object* o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
+    // Raw object construction should go through object_value(), which makes
+    // the legacy object payload explicit at the call site.
+    closure(Object*, const Env_t&):closure() { std::abort(); }
 
-    explicit closure(const object_ptr<const Object>& o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
+    closure(const object_ptr<const Object>&, const Env_t&):closure() { std::abort(); }
 
     template <typename T>
-    explicit closure(const object_ptr<T>& o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
+    closure(const object_ptr<T>&, const Env_t&):closure() { std::abort(); }
 
-    explicit closure(const Object& O, const Env_t& E):closure(expression_ref(O),E) { }
+    closure(const Object&, const Env_t&):closure() { std::abort(); }
 
-    explicit closure(const Object& O, std::initializer_list<int> E):closure(O,Env_t(E)) { }
+    closure(const Object&, std::initializer_list<int>):closure() { std::abort(); }
 
-    // Constructing w/o an environment
-    explicit closure(Object* o)
-	:closure(expression_ref(o))
-	{ }
+    closure(Object*):closure() { std::abort(); }
 
-    explicit closure(const object_ptr<const Object>& o)
-	:closure(expression_ref(o))
-	{ }
+    closure(const object_ptr<const Object>&):closure() { std::abort(); }
 
     template <typename T>
-    explicit closure(const object_ptr<T>& o)
-	:closure(expression_ref(o))
-	{ }
+    closure(const object_ptr<T>&):closure() { std::abort(); }
 
-    explicit closure(const Object& O)
-	:closure(expression_ref(O))
-	{ }
+    closure(const Object&):closure() { std::abort(); }
 };
 
 inline int lookup_in_env(const closure::Env_t& Env, int i) {return Env[Env.size() - 1 - i];}
