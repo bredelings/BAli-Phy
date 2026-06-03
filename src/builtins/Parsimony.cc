@@ -48,7 +48,7 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
     else
         *U = unit_cost_matrix(a);
 
-    return U;
+    return closure::object_value(U);
 }
 
 extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
@@ -64,7 +64,7 @@ extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
     else
 	throw myexception()<<"Can't compute an amino-acid cost matrix for non-Codon alphabet '"<<a.name<<"'";
 
-    return U;
+    return closure::object_value(U);
 }
 
 extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
     else
 	throw myexception()<<"Can't compute a position-1 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
-    return U;
+    return closure::object_value(U);
 }
 
 extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
@@ -96,7 +96,7 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
     else
 	throw myexception()<<"Can't compute a position-2 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
-    return U;
+    return closure::object_value(U);
 }
 
 
@@ -172,4 +172,3 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 
     return { muts };
 }
-

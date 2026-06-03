@@ -57,7 +57,7 @@ extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
 	for(int j=0;j<n2;j++)
 	    (*m2)(i,j) = factor * m(i,j);
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 	for(int j=0;j<n2;j++)
 	    (*m3)(i,j) = m1(i,j) * m2(i,j);
 
-    return m3;
+    return closure::object_value(m3);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -110,7 +110,7 @@ extern "C" closure builtin_function_mat_mult(OperationArgs& Args)
             (*m3)(i,j) = sum;
         }
 
-    return m3;
+    return closure::object_value(m3);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -133,7 +133,7 @@ extern "C" closure builtin_function_elementwise_add(OperationArgs& Args)
 	for(int j=0;j<n2;j++)
 	    (*m3)(i,j) = m1(i,j) + m2(i,j);
 
-    return m3;
+    return closure::object_value(m3);
 }
 
 
@@ -157,7 +157,7 @@ extern "C" closure builtin_function_elementwise_sub(OperationArgs& Args)
 	for(int j=0;j<n2;j++)
 	    (*m3)(i,j) = m1(i,j) - m2(i,j);
 
-    return m3;
+    return closure::object_value(m3);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -174,7 +174,7 @@ extern "C" closure builtin_function_mat_negate(OperationArgs& Args)
 	for(int j=0;j<n2;j++)	
             (*m2)(i,j) = -m1(i,j);
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -191,7 +191,7 @@ extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
 	for(int j=0;j<n2;j++)	
             (*m2)(i,j) = std::abs(m1(i,j));
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 
@@ -212,7 +212,7 @@ extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
             (*m2)(i,j) = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
         }
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 
@@ -227,7 +227,7 @@ extern "C" closure builtin_function_zero(OperationArgs& Args)
 	for(int j=0; j<n2; j++)
 	    (*m)(i,j) = 0;
 
-    return m;
+    return closure::object_value(m);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -240,7 +240,7 @@ extern "C" closure builtin_function_identity(OperationArgs& Args)
 	for(int j=0;j<n;j++)
 	    (*m)(i,j) = (i==j)?1:0;
 
-    return m;
+    return closure::object_value(m);
 }
 
 #include <unsupported/Eigen/MatrixFunctions>
@@ -279,7 +279,7 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
             EP(i,j)/= sum;
     }
     
-    return P;
+    return closure::object_value(P);
 }
 
 
@@ -398,7 +398,7 @@ extern "C" closure builtin_function_transpose(OperationArgs& Args)
         for(int j=0;j<M2.size2();j++)
             M2(i,j) = M1(j,i);
 
-    return M2p;
+    return closure::object_value(M2p);
 }
 
 extern "C" expression_ref simple_function_getElem(vector<expression_ref>& args)

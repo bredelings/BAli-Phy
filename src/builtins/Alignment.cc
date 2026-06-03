@@ -742,7 +742,7 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
-    return new String(s.name);
+    return closure::object_value(new String(s.name));
 }
 
 extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
@@ -750,7 +750,7 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
-    return new String(s);
+    return closure::object_value(new String(s));
 }
 
 // This is the no-gaps version...
@@ -768,7 +768,7 @@ extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
         if (a.is_feature(letter))
             letters2.push_back(letter);
 
-    return new EVector(letters2);
+    return closure::object_value(new EVector(letters2));
 }
 
 // This is the with-gaps version...
@@ -785,7 +785,7 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     for(auto letter: letters)
         letters2.push_back(letter);
 
-    return new EVector(letters2);
+    return closure::object_value(new EVector(letters2));
 }
 
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)

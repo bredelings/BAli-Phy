@@ -36,7 +36,7 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
     if (offset == 0 and length == s.size())
 	return closure(Runtime::IndexVar(0), {Args.reg_for_slot(0)});
     else
-	return {String(s.substr(offset,length))};
+	return closure::object_value(String(s.substr(offset,length)));
 }
 
 extern "C" expression_ref simple_function_vector_size(vector<expression_ref>& args)

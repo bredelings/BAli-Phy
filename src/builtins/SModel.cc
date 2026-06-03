@@ -801,7 +801,7 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
         (*R)(r1,r1) = -sum;
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
@@ -1265,7 +1265,7 @@ extern "C" closure builtin_function_fixupDiagonalRates(OperationArgs& Args)
 	(*m2)(i,i) = -sum;
     }
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
@@ -1283,7 +1283,7 @@ extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 	for(int j=0;j<n;j++)
 	    (*R)(i,j) = (C.translate(i) == C.translate(j))?1.0:omega;
 
-    return R;
+    return closure::object_value(R);
 }
 
 extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
@@ -1326,7 +1326,7 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 	}
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
@@ -1355,7 +1355,7 @@ extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
     for(int i=0;i<n;i++)
 	(*R)(i,i) = 0;
 
-    return R;
+    return closure::object_value(R);
 }
 
 double bound(double low, double high, double x)
@@ -1408,7 +1408,7 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 	Q(i,i) = -sum;
     }
 
-    return Q_;
+    return closure::object_value(Q_);
 }
 
 // pi0 w
@@ -1536,7 +1536,7 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 	(*ave_f)[s] = total;
     }
 
-    return ave_f;
+    return closure::object_value(ave_f);
 }
 
 extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
@@ -1561,7 +1561,7 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
 	for(int s=0;s<n_states;s++) 
 	    (*WF)(m,s) = p*f[s].as_double();
     }
-    return WF;
+    return closure::object_value(WF);
 }
 
 extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
@@ -1580,7 +1580,7 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
 	for(int s=0;s<n_states;s++) 
 	    (*FF)(m,s) = f[s].as_double();
     }
-    return FF;
+    return closure::object_value(FF);
 }
 
 extern "C" closure builtin_function_flow(OperationArgs& Args)
@@ -1609,5 +1609,5 @@ extern "C" closure builtin_function_flow(OperationArgs& Args)
                 F(i,j) = pi[i].as_double() * Q(i,j);
         }
 
-    return Fptr;
+    return closure::object_value(Fptr);
 }
