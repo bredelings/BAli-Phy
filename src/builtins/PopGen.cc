@@ -580,7 +580,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
     Pr *= pow(log_double_t(theta), n_theta_pow);
   
-    return expression_ref{Pr};
+    return {Pr};
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
@@ -638,4 +638,3 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
 
     return {log_double_t(sum)};
 }
-

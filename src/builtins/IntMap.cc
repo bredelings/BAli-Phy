@@ -301,7 +301,7 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
             if (m1.has_key(k))
                 E = 0;
     }
-    return E;
+    return closure::legacy_expression(E);
 }
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
@@ -387,7 +387,7 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
     IntMap m;
     for(auto& k: S)
     {
-        int r1 = Args.allocate(expression_ref(k));
+        int r1 = Args.allocate(closure(k));
         int r2 = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
                                        {f_reg,r1}));
         m.insert(k,r2);
@@ -500,7 +500,7 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& m = arg0.as_<EIntMap>();
 
-    return m.at(key);
+    return closure::legacy_expression(m.at(key));
 }
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)

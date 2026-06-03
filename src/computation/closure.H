@@ -8,6 +8,7 @@
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/runtime/ast.H"
+#include "computation/haskell/Integer.H"
 
 struct closure
 {
@@ -146,19 +147,51 @@ public:
 	:closure(std::move(e), Env_t(E))
 	{ }
 
+    closure(int x):closure(Runtime::Int(x)) {}
+
+    closure(double x):closure(Runtime::Double(x)) {}
+
+    closure(log_double_t x):closure(Runtime::LogDouble(x)) {}
+
+    closure(char x):closure(Runtime::Char(x)) {}
+
+    closure(std::string x):closure(Runtime::String(std::move(x))) {}
+
+    closure(const String& x):closure(Runtime::String(x.value())) {}
+
+    closure(String&& x):closure(Runtime::String(x.value())) {}
+
+    closure(integer x):closure(Runtime::Integer(std::move(x))) {}
+
+    closure(const Integer& x):closure(Runtime::Integer(x.value())) {}
+
+    closure(Integer&& x):closure(Runtime::Integer(x.value())) {}
+
+    closure(constructor x):closure(Runtime::Constructor(std::move(x))) {}
+
+    static closure legacy_expression(expression_ref e)
+    {
+        return closure(std::move(e));
+    }
+
+    static closure legacy_expression(expression_ref e, const Env_t& E)
+    {
+        return closure(std::move(e), E);
+    }
+
     // Constructing from an expression_ref
-    closure(const expression_ref& e)
+    explicit closure(const expression_ref& e)
 	:closure()
 	{
             if (e)
                 set_expression(Runtime::ObjectValue(e));
         }
 
-    closure(const expression_ref& e, const Env_t& E)
+    explicit closure(const expression_ref& e, const Env_t& E)
 	:closure(e)
 	{ Env = E; }
 
-    closure(const expression_ref& e, std::initializer_list<int> E)
+    explicit closure(const expression_ref& e, std::initializer_list<int> E)
 	:closure(e, Env_t(E))
 	{ }
 

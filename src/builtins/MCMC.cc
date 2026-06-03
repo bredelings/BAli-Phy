@@ -65,7 +65,7 @@ log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
         int i = C1.get_reg_value(r).as_int();
 
         context C2 = C1;
-        C2.set_reg_value(r, expression_ref(1-i));
+        C2.set_reg_value(r, closure(1-i));
         log_double_t ratio = C2.probability_ratios(C1).total_ratio();
         if (uniform() < ratio/(1.0+ratio))
         {
@@ -124,7 +124,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     }
 
     context C2 = C1;
-    C2.set_reg_value(t_reg, expression_ref(t2));
+    C2.set_reg_value(t_reg, closure(t2));
 
     auto multiplier2 = get_multiplier(C2, I_regs);
 
@@ -185,7 +185,7 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
             C2 = C1;
             c2_value = i;
 
-	    C2.set_reg_value(*x_mod_reg, expression_ref(i));
+            C2.set_reg_value(*x_mod_reg, closure(i));
 
 	    pr_x[i] = C2.probability_ratios(C1).total_ratio();
 	}
@@ -200,7 +200,7 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     else if (c2_value and x2 == *c2_value)
         C1 = C2;
     else
-        C1.set_reg_value(*x_mod_reg, expression_ref(x2));
+        C1.set_reg_value(*x_mod_reg, closure(x2));
 
     return constructor("()",0);
 }
@@ -224,7 +224,7 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
                if (x2 >= x1) x2++;
 
                // 4. Set the new value
-               C.set_reg_value(*x_mod_reg, expression_ref(x2));
+               C.set_reg_value(*x_mod_reg, closure(x2));
 
                // 5. Return the proposal ratio
                return 1.0;
@@ -303,7 +303,7 @@ Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
 
                // 5. Set the new value
                if (x1 != x2)
-                   C.set_reg_value(*x_mod_reg, expression_ref(x2));
+                   C.set_reg_value(*x_mod_reg, closure(x2));
 
                // 6. Return the proposal ratio
                return 1.0;
@@ -1096,7 +1096,7 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
     if (x_value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
 
-    return x_value;
+    return closure::legacy_expression(x_value);
 }
 
 extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
@@ -1120,7 +1120,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
     if (value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<value<<"'";
 
-    C.set_reg_value(*x_mod_reg, value);
+    C.set_reg_value(*x_mod_reg, closure::legacy_expression(value));
 
     return constructor("()",0);
 }

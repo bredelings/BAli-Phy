@@ -110,14 +110,14 @@ extern "C" closure builtin_function_hIsEOF(OperationArgs& Args)
     auto handle = Args.evaluate(0).as_<Handle>();
 
     if (handle->eof())
-        return bool_true;
+        return closure::legacy_expression(bool_true);
 
     std::streambuf* sb = handle->rdbuf();
     int c = sb->sgetc();
     if (c == std::streambuf::traits_type::eof())
-        return bool_true;
+        return closure::legacy_expression(bool_true);
 
-    return bool_false;
+    return closure::legacy_expression(bool_false);
 }
 
 // Handle -> Char -> RealWorld -> ()
@@ -244,12 +244,12 @@ extern "C" closure builtin_function_hIsOpen(OperationArgs& Args)
     if (auto fhandle = std::dynamic_pointer_cast<std::fstream>(handle))
     {
         if (fhandle->is_open())
-            return bool_true;
+            return closure::legacy_expression(bool_true);
         else
-            return bool_false;
+            return closure::legacy_expression(bool_false);
     }
     else
-        return bool_true;
+        return closure::legacy_expression(bool_true);
 }
 
 extern "C" closure builtin_function_hLookAhead(OperationArgs& Args)
@@ -367,4 +367,3 @@ extern "C" closure builtin_function_takeFileNameRaw(OperationArgs& Args)
 
     return String(pathname.filename().string());
 }
-

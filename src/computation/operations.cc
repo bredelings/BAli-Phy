@@ -283,7 +283,9 @@ closure case_op(OperationArgs& Args)
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_runtime_closure(0);
+    const closure object = is_eop_exp(in_object)
+                          ? closure::legacy_expression(evaluate_e_op(Args, in_object))
+                          : Args.evaluate_slot_to_runtime_closure(0);
 
     auto& C = Args.current_closure();
 
@@ -368,7 +370,7 @@ closure let_op(OperationArgs& Args)
         else
         {
             for(int i=0;i<n_binds;i++)
-                M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
+                M.set_C(C.Env[start+i], get_trimmed(closure::legacy_expression(L.binds[i], C.Env)));
 
             C.set_expression(Runtime::ObjectValue(L.body));
         }

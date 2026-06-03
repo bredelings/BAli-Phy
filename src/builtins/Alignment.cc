@@ -687,7 +687,7 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
 
     expression_ref columns2( new EVector(columns) );
 
-    return columns2;
+    return closure::legacy_expression(columns2);
 }
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
@@ -984,7 +984,7 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
     expression_ref nodeAlignment(constructor("NodeAlignment",3),{source_node, pairwise_alignment, branch_alignments});
-    return nodeAlignment;
+    return closure::legacy_expression(nodeAlignment);
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
@@ -994,7 +994,7 @@ extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
     expression_ref branch_alignments = Args.evaluate(2);
 
     expression_ref branchAlignment(constructor("BranchAlignment",3),{target_node, pairwise_alignment, branch_alignments});
-    return branchAlignment;
+    return closure::legacy_expression(branchAlignment);
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)

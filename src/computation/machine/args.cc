@@ -58,7 +58,7 @@ closure OperationArgs::evaluate_slot_to_closure(int slot)
     if (S.is_reg_var())
         return evaluate_reg_to_closure(S.as_reg_var());
     else
-        return S;
+        return closure::legacy_expression(S);
 }
 
 closure OperationArgs::evaluate_slot_to_closure_(int slot)
@@ -67,7 +67,7 @@ closure OperationArgs::evaluate_slot_to_closure_(int slot)
     if (S.is_reg_var())
         return evaluate_reg_to_closure_(S.as_reg_var());
     else
-        return S;
+        return closure::legacy_expression(S);
 }
 
 closure OperationArgs::evaluate_slot_to_runtime_closure(int slot)
@@ -151,10 +151,8 @@ Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object(int R2)
     if (C.exp.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
 #endif
-    if (C.runtime_expression())
-        return C.runtime_expression();
-    else
-        return Runtime::ObjectValue(C.exp);
+    assert(C.runtime_expression());
+    return C.runtime_expression();
 }
 
 Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object_(int R2)
@@ -164,10 +162,8 @@ Runtime::Exp OperationArgs::evaluate_reg_to_runtime_object_(int R2)
     if (C.exp.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<C.exp.print();
 #endif
-    if (C.runtime_expression())
-        return C.runtime_expression();
-    else
-        return Runtime::ObjectValue(C.exp);
+    assert(C.runtime_expression());
+    return C.runtime_expression();
 }
 
 Runtime::Exp OperationArgs::evaluate_slot_to_runtime_object(int slot)

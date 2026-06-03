@@ -462,7 +462,7 @@ void context_ref::set_modifiable_value_(int R, closure&& C)
 void context_ref::set_modifiable_value(int R, const expression_ref& E)
 {
     assert(is_literal_type(E.type()));
-    set_modifiable_value_(R, E);
+    set_modifiable_value_(R, closure::legacy_expression(E));
 }
 
 void context_ref::set_reg_value(int P, closure&& C)
