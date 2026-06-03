@@ -2,9 +2,11 @@
 #define PARAM_H
 
 #include <optional>
+#include <utility>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/reg_var.H"
 #include "computation/context.H"
+#include "computation/runtime/ast.H"
 #include "util/bounds.H"
 
 class context_ptr
@@ -50,7 +52,7 @@ class param
 {
     std::optional<int> reg;
     std::optional<int> head;
-    std::optional<expression_ref> value;
+    std::optional<Runtime::Exp> value;
 
 public:
     expression_ref ref(const context_ref& C) const;
@@ -58,7 +60,7 @@ public:
     expression_ref get_value(const context_ref& C) const;
     void set_value(context_ref& C, const expression_ref& v) const;
 
-    std::optional<expression_ref> constant_value() const {return value;}
+    std::optional<expression_ref> constant_value() const;
     std::optional<int> is_modifiable(const context_ref& C) const;
 
     param& operator=(const param&) = default;
@@ -72,7 +74,8 @@ public:
     param(int h)
         :head(h)
         {}
-    param(const expression_ref& v):value(v) {}
+    param(const expression_ref& v):value(Runtime::Exp(v)) {}
+    param(Runtime::Exp v):value(std::move(v)) {}
 };
 
 #endif

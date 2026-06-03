@@ -20,7 +20,15 @@ expression_ref param::ref(const context_ref& C) const
     else if (head)
         return C.get_expression(*head);
     else
-        return *value;
+        return Runtime::to_expression_ref(*value);
+}
+
+optional<expression_ref> param::constant_value() const
+{
+    if (value)
+        return Runtime::to_expression_ref(*value);
+    else
+        return {};
 }
 
 optional<int> param::is_modifiable(const context_ref& C) const
@@ -50,18 +58,20 @@ expression_ref param::get_value(const context_ref& C) const
 	return C.evaluate_head(*head);
     }
     else
-        return *value;
+        return Runtime::to_expression_ref(*value);
 }
 
 void param::set_value(context_ref& C, const expression_ref& v) const
 {
+    auto code = Runtime::Exp(v);
+
     if (value)
     {
-        if (v != *value)
-            throw myexception()<<"param::set_value: trying to set constant '"<<*value<<"' to '"<<v<<"'";
+        if (code != *value)
+            throw myexception()<<"param::set_value: trying to set constant '"<<Runtime::to_expression_ref(*value)<<"' to '"<<v<<"'";
     }
     else if (auto r = is_modifiable(C))
-        C.set_modifiable_value(*r,v);
+        C.set_modifiable_value(*r,std::move(code));
     else
         throw myexception()<<"param::set_value: can't set non-modifiable head to '"<<v<<"'";
 }
@@ -162,7 +172,7 @@ void context_ptr::set_value(const expression_ref& v)
     if (not m)
         throw myexception()<<"Trying to set the value of non-modifiable reg "<<get_reg();
     int r = m->get_reg();
-    const_cast<context_ref&>(C).set_reg_value(r,v);
+    const_cast<context_ref&>(C).set_reg_value(r,Runtime::Exp(v));
 }
 
 void context_ptr::move_to_result()
