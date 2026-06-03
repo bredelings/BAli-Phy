@@ -5,9 +5,25 @@
 #include "computation/expression/bool.H"
 #include "computation/runtime/ast.H"
 
+namespace
+{
+    const Runtime::App& array_app(const closure& C)
+    {
+        auto app = C.get_code().to<Runtime::App>();
+        if (not app)
+            throw myexception()<<"Expression is not an Array:   "<<C.get_code();
+
+        auto constructor_app = std::get_if<Runtime::ConstructorApp>(&app->head);
+        if (not constructor_app or constructor_app->head.f_name != "Array")
+            throw myexception()<<"Expression is not an Array:   "<<C.get_code();
+
+        return *app;
+    }
+}
+
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
 
     // We can't do negative-sized arrays
     assert(n >= 0);
@@ -40,7 +56,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 
 extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 {
-    int N = Args.evaluate_slot_to_closure(0).legacy_exp().size();
+    int N = array_app(Args.evaluate_slot_to_closure(0)).args.size();
 
     return {N};
 }
@@ -50,15 +66,13 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
     extern long total_index_op;
     total_index_op++;
 
-    int n = Args.evaluate(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_int();
     // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
     const closure& C = Args.evaluate_slot_to_closure(0);
+    const auto& app = array_app(C);
 
-    if (not is_constructor(C.legacy_exp().head()) or C.legacy_exp().head().as_<constructor>().f_name != "Array")
-	throw myexception()<<"Trying to index expression that is not an Array:   "<<C.legacy_exp();
-
-    int N = C.legacy_exp().size();
-    assert(C.Env.size() == C.legacy_exp().size());
+    int N = app.args.size();
+    assert(C.Env.size() == app.args.size());
 
     if (n < 0 or n >= N)
 	throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
@@ -69,15 +83,13 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 
 extern "C" closure builtin_function_removeElement(OperationArgs& Args)
 {
-    int idx = Args.evaluate(0).as_int();
+    int idx = Args.evaluate_slot_to_value(0).as_int();
 
     // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
     const closure& C = Args.evaluate_slot_to_closure(1);
+    const auto& app = array_app(C);
 
-    if (not is_constructor(C.legacy_exp().head()) or C.legacy_exp().head().as_<constructor>().f_name != "Array")
-	throw myexception()<<"Trying to remove element from expression that is not an Array:   "<<C.legacy_exp();
-
-    int n = C.legacy_exp().size();
+    int n = app.args.size();
     if (idx < 0 or idx >= n)
         throw myexception()<<"Trying to remove element '"<<idx<<"' from an Array of size "<<n<<"!";
 
