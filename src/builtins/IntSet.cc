@@ -10,14 +10,14 @@ typedef Box<immer::set<int>> IntSet;
 
 using std::vector;
 
-extern "C" expression_ref simple_function_empty(vector<expression_ref>& /*args*/)
+extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 {
     IntSet S;
 
     return S;
 }
 
-extern "C" expression_ref simple_function_singleton(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 {
     int key = get_arg(args).as_int();
 
@@ -28,7 +28,7 @@ extern "C" expression_ref simple_function_singleton(vector<expression_ref>& args
     return S;
 }
 
-extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     auto& S = arg0.as_<IntSet>();
@@ -36,7 +36,7 @@ extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
     return (int)S.size();
 }
 
-extern "C" expression_ref simple_function_member(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 {
     int e= get_arg(args).as_int();
 

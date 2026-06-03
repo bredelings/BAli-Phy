@@ -20,6 +20,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/Integer.H"
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
 
@@ -70,6 +71,24 @@ namespace Runtime
         value_type value;
 
         Exp() = default;
+        Exp(int);
+        Exp(double);
+        Exp(log_double_t);
+        Exp(bool);
+        Exp(char);
+        Exp(std::string);
+        Exp(const char*);
+        Exp(integer);
+        Exp(constructor);
+        Exp(const expression_ref&);
+        Exp(const ::Integer&);
+        Exp(const Object&);
+        Exp(const Object*);
+        Exp(object_ptr<const Object>);
+        Exp(const ::String&);
+
+        template <DerivedFromObject T>
+        Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}
         Exp(Int);
         Exp(Double);
         Exp(LogDouble);
@@ -95,19 +114,22 @@ namespace Runtime
         explicit operator bool() const { return not empty(); }
 
         template <typename T>
-        const T* to() const
-        {
-            if (std::holds_alternative<std::shared_ptr<const T>>(value))
-                return std::get<std::shared_ptr<const T>>(value).get();
-            else
-                return nullptr;
-        }
+        const T* to() const;
 
         template <typename T>
         bool is_a() const { return to<T>(); }
 
         template <typename T>
         bool is() const { return to<T>(); }
+
+        bool is_int() const { return is<Int>(); }
+        bool is_double() const { return is<Double>(); }
+        bool is_log_double() const { return is<LogDouble>(); }
+        bool is_char() const { return is<Char>(); }
+        bool is_string() const { return is<String>(); }
+        bool is_integer() const { return is<Integer>(); }
+        bool is_constructor() const { return is<Constructor>(); }
+        bool is_object_value() const { return is<ObjectValue>(); }
 
         template <typename T>
         const T& as() const
@@ -118,6 +140,7 @@ namespace Runtime
         }
 
         bool is_atomic_value() const;
+        bool is_value() const;
         int as_int() const;
         double as_double() const;
         log_double_t as_log_double() const;
@@ -125,6 +148,7 @@ namespace Runtime
         const std::string& as_string() const;
         const integer& as_integer() const;
         const constructor& as_constructor() const;
+        std::string print() const;
 
         template <DerivedFromObject T>
         const T& as_() const;
@@ -292,6 +316,25 @@ namespace Runtime
         if (not ptr)
             throw std::runtime_error("Runtime value is not an ObjectValue");
         return *convert<T>(ptr->value);
+    }
+
+    template <typename T>
+    const T* Exp::to() const
+    {
+        if constexpr (DerivedFromObject<T>)
+        {
+            if (auto object_value = to<ObjectValue>())
+                return dynamic_cast<const T*>(object_value->value.get());
+            else
+                return nullptr;
+        }
+        else
+        {
+            if (std::holds_alternative<std::shared_ptr<const T>>(value))
+                return std::get<std::shared_ptr<const T>>(value).get();
+            else
+                return nullptr;
+        }
     }
 
 
@@ -501,6 +544,7 @@ namespace Runtime
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
     Exp atomic_value(const expression_ref&);
+    Exp e_op_value(const expression_ref&);
     int count_lambdas(const Exp&);
     Exp peel_lambdas(const Exp&, int);
     Exp shift_free_indices(const Exp&, int amount, int depth = 0);

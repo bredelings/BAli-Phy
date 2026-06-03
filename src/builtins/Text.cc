@@ -5,7 +5,7 @@
 
 using std::vector;
 
-extern "C" expression_ref simple_function_pack(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
 {
     auto etext = get_arg(args).as_<EVector>();
 
@@ -16,7 +16,7 @@ extern "C" expression_ref simple_function_pack(vector<expression_ref>& args)
     return s;
 }
 
-extern "C" expression_ref simple_function_singleton(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -26,32 +26,32 @@ extern "C" expression_ref simple_function_singleton(vector<expression_ref>& args
     return s;
 }
 
-extern "C" expression_ref simple_function_empty(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_empty(vector<R::Exp>& args)
 {
     String s;
 
     return s;
 }
 
-extern "C" expression_ref simple_function_cons(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cons(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     return String(c + s);
 }
 
-extern "C" expression_ref simple_function_snoc(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_snoc(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     char c = get_arg(args).as_char();
 
     return String(s + c);
 }
 
-extern "C" expression_ref simple_function_append(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
     int offset1 = get_arg(args).as_int();
@@ -66,15 +66,15 @@ extern "C" expression_ref simple_function_append(vector<expression_ref>& args)
 
     s3.reserve(length1+length2);
 
-    s3 = s1.as_<String>().substr(offset1,length1);
-    s3 += s2.as_<String>().substr(offset2,length2);
+    s3 = s1.as_string().substr(offset1,length1);
+    s3 += s2.as_string().substr(offset2,length2);
 
     return result;
 }
 
-extern "C" expression_ref simple_function_head(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.head: empty Text!";
@@ -84,9 +84,9 @@ extern "C" expression_ref simple_function_head(vector<expression_ref>& args)
     return c;
 }
 
-extern "C" expression_ref simple_function_last(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.last: empty Text!";
@@ -96,9 +96,9 @@ extern "C" expression_ref simple_function_last(vector<expression_ref>& args)
     return c;
 }
 
-extern "C" expression_ref simple_function_init(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_init(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.init: empty Text!";
@@ -108,9 +108,9 @@ extern "C" expression_ref simple_function_init(vector<expression_ref>& args)
     return s;
 }
 
-extern "C" expression_ref simple_function_tail(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_tail(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.tail: empty Text!";
@@ -120,16 +120,16 @@ extern "C" expression_ref simple_function_tail(vector<expression_ref>& args)
     return s;
 }
 
-extern "C" expression_ref simple_function_length(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_length(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_<String>();
+    String s  = get_arg(args).as_string();
 
     int length = s.size();
 
     return length;
 }
 
-extern "C" expression_ref simple_function_equals(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
     int offset1 = get_arg(args).as_int();
@@ -139,13 +139,13 @@ extern "C" expression_ref simple_function_equals(vector<expression_ref>& args)
     int offset2 = get_arg(args).as_int();
     int length2 = get_arg(args).as_int();
 
-    std::string_view S1 = s1.as_<String>();
-    std::string_view S2 = s2.as_<String>();
+    std::string_view S1 = s1.as_string();
+    std::string_view S2 = s2.as_string();
 
     return S1.substr(offset1,length1) == S2.substr(offset2,length2);
 }
 
-extern "C" expression_ref simple_function_less_than(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_less_than(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
     int offset1 = get_arg(args).as_int();
@@ -155,13 +155,13 @@ extern "C" expression_ref simple_function_less_than(vector<expression_ref>& args
     int offset2 = get_arg(args).as_int();
     int length2 = get_arg(args).as_int();
 
-    std::string_view S1 = s1.as_<String>();
-    std::string_view S2 = s2.as_<String>();
+    std::string_view S1 = s1.as_string();
+    std::string_view S2 = s2.as_string();
 
     return S1.substr(offset1,length1) < S2.substr(offset2,length2);
 }
 
-extern "C" expression_ref simple_function_concatRaw(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_concatRaw(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     auto& strings = arg0.as_<EVector>();
@@ -176,9 +176,9 @@ extern "C" expression_ref simple_function_concatRaw(vector<expression_ref>& args
 // defined in tree/tree.cc
 std::string escape_for_newick(const std::string& s);
 
-extern "C" expression_ref simple_function_quoteLabelRaw(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_quoteLabelRaw(vector<R::Exp>& args)
 {
-    String label = get_arg(args).as_<String>();
+    String label = get_arg(args).as_string();
     label = escape_for_newick(label);
     return label;
 }

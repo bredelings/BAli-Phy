@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ostream>
 #include "computation/expression/apply.H"
+#include "computation/expression/bool.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/index_var.H"
@@ -32,6 +33,21 @@ namespace Runtime
         }
     }
 
+    Exp::Exp(int x):Exp(Int(x)) {}
+    Exp::Exp(double x):Exp(Double(x)) {}
+    Exp::Exp(log_double_t x):Exp(LogDouble(x)) {}
+    Exp::Exp(bool x):Exp(Constructor(constructor(x ? bool_true_name : bool_false_name, 0))) {}
+    Exp::Exp(char x):Exp(Char(x)) {}
+    Exp::Exp(std::string x):Exp(String(std::move(x))) {}
+    Exp::Exp(const char* x):Exp(String(x)) {}
+    Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
+    Exp::Exp(constructor x):Exp(Constructor(std::move(x))) {}
+    Exp::Exp(const expression_ref& x):Exp(e_op_value(x)) {}
+    Exp::Exp(const ::Integer& x):Exp(Integer(x.value())) {}
+    Exp::Exp(const Object& x):Exp(e_op_value(expression_ref(x))) {}
+    Exp::Exp(const Object* x):Exp(e_op_value(expression_ref(x))) {}
+    Exp::Exp(object_ptr<const Object> x):Exp(e_op_value(expression_ref(std::move(x)))) {}
+    Exp::Exp(const ::String& x):Exp(String(x.value())) {}
     Exp::Exp(Int node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Double node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(LogDouble node):value(make_exp_value(std::move(node))) {}
@@ -62,6 +78,39 @@ namespace Runtime
                    std::is_same_v<T, Integer> or
                    std::is_same_v<T, Constructor> or
                    std::is_same_v<T, ObjectValue>;
+        });
+    }
+
+    bool Exp::is_value() const
+    {
+        return visit([](const auto& e) -> bool
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor> or
+                          std::is_same_v<T, ObjectValue>)
+            {
+                return true;
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                if (not std::holds_alternative<ConstructorApp>(e.head))
+                    return false;
+
+                for(const auto& arg: e.args)
+                    if (not arg.is_value())
+                        return false;
+
+                return true;
+            }
+            else
+                return false;
         });
     }
 
@@ -169,6 +218,24 @@ namespace Runtime
             return ObjectValue(E.ptr());
 
         throw myexception()<<"Cannot convert non-atomic expression '"<<E<<"' to Runtime::Exp";
+    }
+
+    Exp e_op_value(const expression_ref& E)
+    {
+        if (E.is_expression() and E.head().is_a<constructor>())
+        {
+            const auto& head = E.head().as_<constructor>();
+            if (E.size() != head.n_args())
+                throw myexception()<<"Cannot convert partial constructor application '"<<E<<"' to Runtime::Exp";
+
+            vector<Exp> args;
+            for(const auto& arg: E.sub())
+                args.push_back(e_op_value(arg));
+
+            return App(ConstructorApp(head), std::move(args));
+        }
+
+        return atomic_value(E);
     }
 
     Exp shift_free_indices(const Exp& E, int amount, int depth)
@@ -554,6 +621,11 @@ namespace Runtime
     std::ostream& operator<<(std::ostream& o, const Exp& E)
     {
         return o << print(E);
+    }
+
+    std::string Exp::print() const
+    {
+        return Runtime::print(*this);
     }
 
     static void check_pattern_invariants(const Pattern& pattern)

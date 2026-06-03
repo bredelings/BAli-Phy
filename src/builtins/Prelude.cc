@@ -15,21 +15,21 @@ using std::string;
 using std::vector;
 
 //*****************************************************//
-extern "C" expression_ref simple_function_truncate(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_truncate(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return trunc(x);
 }
 
-extern "C" expression_ref simple_function_ceiling(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_ceiling(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return ceil(x);
 }
 
-extern "C" expression_ref simple_function_floor(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_floor(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
     assert(x > 0.0);
@@ -38,7 +38,7 @@ extern "C" expression_ref simple_function_floor(vector<expression_ref>& args)
 }
 
 
-extern "C" expression_ref simple_function_round(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_round(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
     assert(x > 0.0);
@@ -46,14 +46,14 @@ extern "C" expression_ref simple_function_round(vector<expression_ref>& args)
     return round(x);
 }
 
-extern "C" expression_ref simple_function_doubleToInt(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_doubleToInt(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
     int xi = (int)x;
     return xi;
 }
 
-extern "C" expression_ref simple_function_divide_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_divide_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
     auto y = get_arg(args).as_double();
@@ -61,7 +61,7 @@ extern "C" expression_ref simple_function_divide_double(vector<expression_ref>& 
     return x / y;
 }
 
-extern "C" expression_ref simple_function_divide_logdouble(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_divide_logdouble(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
     auto y = get_arg(args);
@@ -69,14 +69,14 @@ extern "C" expression_ref simple_function_divide_logdouble(vector<expression_ref
     return x.as_log_double() / y.as_log_double();
 }
 
-extern "C" expression_ref simple_function_recip_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_recip_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
 
     return 1.0/x;
 }
 
-extern "C" expression_ref simple_function_recip_logdouble(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_recip_logdouble(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_log_double();
     x.log() = -x.log();
@@ -109,7 +109,7 @@ T div(T x, T y)
 // x `quot` y should round towards -infinity
 // Also, supposedly (x `quot` y)*y + (x `mod` y) == x
 // Therefore, (x `quot` y) = (x - (x `mod` y))/y
-extern "C" expression_ref simple_function_div_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_div_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -117,7 +117,7 @@ extern "C" expression_ref simple_function_div_int(vector<expression_ref>& args)
     return div<int>(x,y);
 }
 
-extern "C" expression_ref simple_function_mod_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_mod_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -127,7 +127,7 @@ extern "C" expression_ref simple_function_mod_int(vector<expression_ref>& args)
 
 // x `quot` y should round towards zero.
 // Therefore we use C integer division, which rounds towards 0.
-extern "C" expression_ref simple_function_quot_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_quot_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -135,7 +135,7 @@ extern "C" expression_ref simple_function_quot_int(vector<expression_ref>& args)
     return x / y;
 }
 
-extern "C" expression_ref simple_function_rem_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_rem_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -147,43 +147,43 @@ extern "C" expression_ref simple_function_rem_int(vector<expression_ref>& args)
 // x `quot` y should round towards -infinity
 // Also, supposedly (x `quot` y)*y + (x `mod` y) == x
 // Therefore, (x `quot` y) = (x - (x `mod` y))/y
-extern "C" expression_ref simple_function_div_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_div_integer(vector<R::Exp>& args)
 {
     using boost::dynamic_pointer_cast;
 
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
   
     return Integer(div(x,y));
 }
 
-extern "C" expression_ref simple_function_mod_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_mod_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
   
     return Integer(mod(x,y));
 }
 
 // x `quot` y should round towards zero.
 // Therefore we use C integer division, which rounds towards 0.
-extern "C" expression_ref simple_function_quot_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_quot_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
 
     return Integer(x / y);
 }
 
-extern "C" expression_ref simple_function_rem_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_rem_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
   
     return Integer(x % y);
 }
 
-extern "C" expression_ref simple_function_increment_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_increment_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
 
@@ -191,7 +191,7 @@ extern "C" expression_ref simple_function_increment_int(vector<expression_ref>& 
 }
 
 
-extern "C" expression_ref simple_function_equals_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -199,15 +199,15 @@ extern "C" expression_ref simple_function_equals_int(vector<expression_ref>& arg
     return x == y;
 }
 
-extern "C" expression_ref simple_function_equals_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
 
     return x == y;
 }
 
-extern "C" expression_ref simple_function_equals_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
     auto y = get_arg(args).as_double();
@@ -215,7 +215,7 @@ extern "C" expression_ref simple_function_equals_double(vector<expression_ref>& 
     return x == y;
 }
 
-extern "C" expression_ref simple_function_equals_log_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals_log_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_log_double();
     auto y = get_arg(args).as_log_double();
@@ -223,7 +223,7 @@ extern "C" expression_ref simple_function_equals_log_double(vector<expression_re
     return x == y;
 }
 
-extern "C" expression_ref simple_function_equals_char(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_equals_char(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_char();
     auto y = get_arg(args).as_char();
@@ -241,7 +241,7 @@ Ordering compare(const T& x, const T& y)
     return Ordering::EQ;
 }
 
-extern "C" expression_ref simple_function_compare_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_compare_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -256,7 +256,7 @@ extern "C" expression_ref simple_function_compare_int(vector<expression_ref>& ar
         std::abort();
 }
 
-extern "C" expression_ref simple_function_compare_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_compare_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
     auto y = get_arg(args).as_double();
@@ -271,7 +271,7 @@ extern "C" expression_ref simple_function_compare_double(vector<expression_ref>&
         std::abort();
 }
 
-extern "C" expression_ref simple_function_compare_char(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_compare_char(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_char();
     auto y = get_arg(args).as_char();
@@ -286,7 +286,7 @@ extern "C" expression_ref simple_function_compare_char(vector<expression_ref>& a
         std::abort();
 }
 
-extern "C" expression_ref simple_function_lessthan_char(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_lessthan_char(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_char();
     auto y = get_arg(args).as_char();
@@ -294,7 +294,7 @@ extern "C" expression_ref simple_function_lessthan_char(vector<expression_ref>& 
     return x < y;
 }
 
-extern "C" expression_ref simple_function_lessthan_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_lessthan_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
@@ -302,15 +302,15 @@ extern "C" expression_ref simple_function_lessthan_int(vector<expression_ref>& a
     return x < y;
 }
 
-extern "C" expression_ref simple_function_lessthan_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_lessthan_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
-    integer y = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
 
     return x < y;
 }
 
-extern "C" expression_ref simple_function_lessthan_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_lessthan_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
     auto y = get_arg(args).as_double();
@@ -318,7 +318,7 @@ extern "C" expression_ref simple_function_lessthan_double(vector<expression_ref>
     return x < y;
 }
 
-extern "C" expression_ref simple_function_lessthan_log_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_lessthan_log_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_log_double();
     auto y = get_arg(args).as_log_double();
@@ -326,19 +326,19 @@ extern "C" expression_ref simple_function_lessthan_log_double(vector<expression_
     return x < y;
 }
 
-extern "C" expression_ref simple_function_expToLogDouble(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_expToLogDouble(vector<R::Exp>& args)
 {
     double d = get_arg(args).as_double();
     return exp_to_log_space(d);
 }
 
-extern "C" expression_ref simple_function_doubleToLogDouble(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_doubleToLogDouble(vector<R::Exp>& args)
 {
     double d = get_arg(args).as_double();
     return log_double_t(d);
 }
 
-extern "C" expression_ref simple_function_show_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_show_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
 
@@ -347,9 +347,9 @@ extern "C" expression_ref simple_function_show_int(vector<expression_ref>& args)
     return v;
 }
 
-extern "C" expression_ref simple_function_show_integer(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_show_integer(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
 
     object_ptr<String> v(new String);
     *v = x.str();
@@ -359,7 +359,7 @@ extern "C" expression_ref simple_function_show_integer(vector<expression_ref>& a
 //defined in expression_ref.cc
 string double_to_string(double d);
 
-extern "C" expression_ref simple_function_show_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_show_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
 
@@ -368,7 +368,7 @@ extern "C" expression_ref simple_function_show_double(vector<expression_ref>& ar
     return v;
 }
 
-extern "C" expression_ref simple_function_show(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_show(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
   
@@ -386,9 +386,9 @@ extern "C" closure builtin_function_error(OperationArgs& Args)
     throw error_exception(message);
 }
 
-extern "C" expression_ref simple_function_read_int(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_read_int(vector<R::Exp>& args)
 {
-    string s = get_arg(args).as_<String>();
+    string s = get_arg(args).as_string();
 
     if (auto i = can_be_converted_to<int>(s))
 	return *i;
@@ -396,9 +396,9 @@ extern "C" expression_ref simple_function_read_int(vector<expression_ref>& args)
 	throw myexception()<<"Cannot convert string '"<<s<<"' to int!";
 }
 
-extern "C" expression_ref simple_function_read_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_read_double(vector<R::Exp>& args)
 {
-    string s = get_arg(args).as_<String>();
+    string s = get_arg(args).as_string();
 
     if (auto d = can_be_converted_to<double>(s))
 	return *d;
@@ -406,24 +406,24 @@ extern "C" expression_ref simple_function_read_double(vector<expression_ref>& ar
 	throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
 }
 
-extern "C" expression_ref simple_function_cNothing(OperationArgs&)
+extern "C" R::Exp simple_function_cNothing(vector<R::Exp>&)
 {
     return EMaybe();
 }
 
-extern "C" expression_ref simple_function_cJust(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cJust(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
-    return EMaybe(x);
+    return EMaybe(R::to_expression_ref(x));
 }
 
-extern "C" expression_ref simple_function_cIsJust(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cIsJust(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_<EMaybe>();
     return bool(x);
 }
 
-extern "C" expression_ref simple_function_cFromJust(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cFromJust(vector<R::Exp>& args)
 {
     auto maybe = get_arg(args).as_<EMaybe>();
     return *maybe;
@@ -614,7 +614,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 }
 
 
-extern "C" expression_ref simple_function_isWindows(vector<expression_ref>&)
+extern "C" R::Exp simple_function_isWindows(vector<R::Exp>&)
 {
 #ifdef _WIN32
     return bool_true;

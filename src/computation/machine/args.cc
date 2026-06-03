@@ -202,3 +202,10 @@ expression_ref get_arg(std::vector<expression_ref>& args)
     args.pop_back();
     return arg;
 }
+
+Runtime::Exp get_arg(std::vector<Runtime::Exp>& args)
+{
+    auto arg = std::move(args.back());
+    args.pop_back();
+    return arg;
+}

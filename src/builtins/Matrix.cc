@@ -24,7 +24,7 @@ using std::abs;
 using Alphabet = PtrBox<alphabet>;
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" expression_ref simple_function_nrows(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_nrows(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const Matrix& m = arg0.as_<Box<Matrix>>();
@@ -33,7 +33,7 @@ extern "C" expression_ref simple_function_nrows(vector<expression_ref>& args)
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" expression_ref simple_function_ncols(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_ncols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const Matrix& m = arg0.as_<Box<Matrix>>();
@@ -401,7 +401,7 @@ extern "C" closure builtin_function_transpose(OperationArgs& Args)
     return M2p;
 }
 
-extern "C" expression_ref simple_function_getElem(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_getElem(vector<R::Exp>& args)
 {
     int i = get_arg(args).as_int();
     int j = get_arg(args).as_int();

@@ -21,7 +21,7 @@ typedef Box<immer::set<int>> IntSet;
 
 typedef Box<std::map<int,expression_ref>> EIntMap;
 
-extern "C" expression_ref simple_function_empty(vector<expression_ref>& /*args*/)
+extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 {
     IntMap m;
 
@@ -41,7 +41,7 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
     return {m};
 }
 
-extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     auto& m = arg0.as_<IntMap>();
@@ -50,7 +50,7 @@ extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
     return (int)m.size();
 }
 
-extern "C" expression_ref simple_function_member(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 {
     int key = get_arg(args).as_int();
 

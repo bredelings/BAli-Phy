@@ -8,7 +8,7 @@
 using Alphabet = PtrBox<alphabet>;
 using std::vector;
 
-extern "C" expression_ref simple_function_alphabetSize(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_alphabetSize(vector<R::Exp>& args)
 {
     auto arg = get_arg(args);
 
@@ -34,7 +34,7 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
     return v;
 }
 
-extern "C" expression_ref simple_function_find_letter(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_find_letter(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     if (not arg0.is_a<Alphabet>())
@@ -43,7 +43,7 @@ extern "C" expression_ref simple_function_find_letter(vector<expression_ref>& ar
     const alphabet& a = *arg0.as_<Alphabet>();
 
     auto arg1 = get_arg(args);
-    auto& letter = arg1.as_<String>();
+    auto& letter = arg1.as_string();
 
     return a.find_letter(letter);
 }
@@ -158,7 +158,7 @@ extern "C" closure builtin_function_mkNumeric(OperationArgs& Args)
     return Alphabet(new Numeric(n));
 }
 
-extern "C" expression_ref simple_function_translate(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_translate(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const alphabet& a = *arg0.as_<Alphabet>();

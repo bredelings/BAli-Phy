@@ -13,15 +13,15 @@
 using boost::dynamic_pointer_cast;
 using std::vector;
 
-extern "C" expression_ref simple_function_sizeOfString(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_sizeOfString(vector<R::Exp>& args)
 {
-    return (int)get_arg(args).as_<String>().size();
+    return (int)get_arg(args).as_string().size();
 }
 
-extern "C" expression_ref simple_function_getStringElement(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_getStringElement(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    const std::string& s = arg0.as_<String>();
+    const std::string& s = arg0.as_string();
     int i = get_arg(args).as_int();
 
     return s[i];
@@ -39,7 +39,7 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 	return {String(s.substr(offset,length))};
 }
 
-extern "C" expression_ref simple_function_vector_size(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const EVector& v = arg0.as_<EVector>();
@@ -61,7 +61,7 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" expression_ref simple_function_get_vector_index(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     int i = get_arg(args).as_int();

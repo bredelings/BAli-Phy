@@ -10,7 +10,7 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
-extern "C" expression_ref simple_function_exp(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_exp(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -22,7 +22,7 @@ extern "C" expression_ref simple_function_exp(vector<expression_ref>& args)
     return exp(xx);
 }
 
-extern "C" expression_ref simple_function_expm1(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_expm1(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -33,7 +33,7 @@ extern "C" expression_ref simple_function_expm1(vector<expression_ref>& args)
     return expm1(xx);
 }
 
-extern "C" expression_ref simple_function_log(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_log(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -52,7 +52,7 @@ extern "C" expression_ref simple_function_log(vector<expression_ref>& args)
     throw myexception()<<"log: object '"<<x.print()<<"' is not double or log_double";
 }
 
-extern "C" expression_ref simple_function_log1p(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_log1p(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -66,7 +66,7 @@ extern "C" expression_ref simple_function_log1p(vector<expression_ref>& args)
     return log1p(xx);
 }
 
-extern "C" expression_ref simple_function_log1pexp(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_log1pexp(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -79,7 +79,7 @@ extern "C" expression_ref simple_function_log1pexp(vector<expression_ref>& args)
     return log1pexp(xx);
 }
 
-extern "C" expression_ref simple_function_log1mexp(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_log1mexp(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -92,7 +92,7 @@ extern "C" expression_ref simple_function_log1mexp(vector<expression_ref>& args)
     return log1mexp(xx);
 }
 
-extern "C" expression_ref simple_function_pow(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_pow(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
     auto y = get_arg(args);
@@ -126,7 +126,7 @@ extern "C" expression_ref simple_function_pow(vector<expression_ref>& args)
     throw myexception()<<"pow: object '"<<x.print()<<"' is not double, int, or log_double";
 }
 
-extern "C" expression_ref simple_function_sqrt(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_sqrt(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
@@ -138,7 +138,7 @@ extern "C" expression_ref simple_function_sqrt(vector<expression_ref>& args)
 	std::abort();
 }
 
-extern "C" expression_ref simple_function_logBase(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_logBase(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
     auto base = get_arg(args);
@@ -151,126 +151,126 @@ extern "C" expression_ref simple_function_logBase(vector<expression_ref>& args)
 	std::abort();
 }
 
-extern "C" expression_ref simple_function_sin(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_sin(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return sin(x);
 }
 
-extern "C" expression_ref simple_function_tan(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_tan(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return tan(x);
 }
 
-extern "C" expression_ref simple_function_cos(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cos(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return cos(x);
 }
 
-extern "C" expression_ref simple_function_asin(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_asin(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return asin(x);
 }
 
-extern "C" expression_ref simple_function_atan(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_atan(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return atan(x);
 }
 
-extern "C" expression_ref simple_function_acos(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_acos(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return acos(x);
 }
 
-extern "C" expression_ref simple_function_sinh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_sinh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return sinh(x);
 }
 
-extern "C" expression_ref simple_function_tanh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_tanh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return tanh(x);
 }
 
-extern "C" expression_ref simple_function_cosh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_cosh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return cosh(x);
 }
 
-extern "C" expression_ref simple_function_asinh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_asinh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return asinh(x);
 }
 
-extern "C" expression_ref simple_function_atanh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_atanh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return atanh(x);
 }
 
-extern "C" expression_ref simple_function_acosh(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_acosh(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return acosh(x);
 }
 
-extern "C" expression_ref simple_function_isDoubleNaN(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDoubleNaN(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return std::isnan(x);
 }
 
-extern "C" expression_ref simple_function_isDoubleFinite(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDoubleFinite(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return std::isfinite(x);
 }
 
-extern "C" expression_ref simple_function_isDoubleInfinite(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDoubleInfinite(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return std::isinf(x);
 }
 
-extern "C" expression_ref simple_function_isDoubleDenormalized(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDoubleDenormalized(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return std::fpclassify(x) == FP_SUBNORMAL;
 }
 
-extern "C" expression_ref simple_function_isDoubleNegativeZero(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDoubleNegativeZero(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
     return x == 0 and std::signbit(x);
 }
 
-extern "C" expression_ref simple_function_atan2_double(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_atan2_double(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
     double y = get_arg(args).as_double();
@@ -278,7 +278,7 @@ extern "C" expression_ref simple_function_atan2_double(vector<expression_ref>& a
     return atan2(x,y);
 }
 
-extern "C" expression_ref simple_function_decodeDoubleRaw(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_decodeDoubleRaw(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
     int64_t sig = 0;
@@ -291,17 +291,17 @@ extern "C" expression_ref simple_function_decodeDoubleRaw(vector<expression_ref>
     return EPair(Integer(sig),exp);
 }
 
-extern "C" expression_ref simple_function_encodeDouble(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_encodeDouble(vector<R::Exp>& args)
 {
-    auto sig = (int64_t)get_arg(args).as_<Integer>();
+    auto sig = (int64_t)get_arg(args).as_integer();
     auto exp = get_arg(args).as_int();
 
     return { std::ldexp(sig,exp) };
 }
 
-extern "C" expression_ref simple_function_integerToInvLogOdds(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_integerToInvLogOdds(vector<R::Exp>& args)
 {
-    integer x = get_arg(args).as_<Integer>();
+    integer x = get_arg(args).as_integer();
 
     double result = 0;
 

@@ -109,5 +109,6 @@ public:
 };
 
 expression_ref get_arg(std::vector<expression_ref>& args);
+Runtime::Exp get_arg(std::vector<Runtime::Exp>& args);
 
 #endif

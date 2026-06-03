@@ -80,7 +80,7 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
     return { v2 };
 }
 
-extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
 {
     return (int)get_arg(args).as_<bitvector>().size();
 }
@@ -94,7 +94,7 @@ extern "C" closure builtin_function_popcount(OperationArgs& Args)
     return { s };
 }
 
-extern "C" expression_ref simple_function_test_bit(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_test_bit(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     int n = get_arg(args).as_int();

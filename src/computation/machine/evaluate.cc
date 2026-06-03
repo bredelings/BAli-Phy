@@ -167,9 +167,9 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     return result;
 }
 
-vector<expression_ref> e_value_stack;
+vector<R::Exp> e_value_stack;
 
-expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
+R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 {
     int initial_size = e_value_stack.size();
 
@@ -187,38 +187,41 @@ expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E)
     // Evaluate the arguments in left-to-right order.
     for(int i=0;i<n_args;i++)
     {
-        auto arg = E.sub()[i];
-        if (arg.is_reg_var())
+        const auto& arg_ref = E.sub()[i];
+        R::Exp arg;
+        if (arg_ref.is_reg_var())
         {
-            int r_arg = arg.as_reg_var();
+            int r_arg = arg_ref.as_reg_var();
 
-            arg = Args.evaluate_reg_to_object( r_arg );
+            arg = R::e_op_value(Args.evaluate_reg_to_object( r_arg ));
         }
-        else if (arg.is_index_var())
+        else if (arg_ref.is_index_var())
         {
             // In theory r_arg could change if r_i initially points to an index_var.
-            int r_i = arg.as_index_var();
+            int r_i = arg_ref.as_index_var();
             int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
 
-            arg = Args.evaluate_reg_to_object( r_arg );
+            arg = R::e_op_value(Args.evaluate_reg_to_object( r_arg ));
         }
-        else if (auto O = arg.head().to<Operation>(); O and O->e_op)
+        else if (auto O = arg_ref.head().to<Operation>(); O and O->e_op)
         {
-            arg = evaluate_e_op(Args, arg);
+            arg = evaluate_e_op(Args, arg_ref);
         }
         else
         {
-            assert(arg.is_double() or arg.is_int() or arg.is_char() or arg.is_a<Integer>() or arg.is_a<String>());
+            arg = R::e_op_value(arg_ref);
         }
 
-        e_value_stack[initial_size+n_args-1-i] = arg;
+        assert(arg.is_value());
+        e_value_stack[initial_size+n_args-1-i] = std::move(arg);
     }
 
     // Any new args pushed only the stack by evaluating arguments should be popped before we get here.
     assert(e_value_stack.size() == initial_size + n_args);
 
     // Compute the result.
-    expression_ref result = f(e_value_stack);
+    R::Exp result = f(e_value_stack);
+    assert(result.is_value());
 
     // After evaluating f, the n_args arguments that we added should also be popped.
     assert(e_value_stack.size() == initial_size);
@@ -230,7 +233,7 @@ closure evaluate_e_op_to_c(OperationArgs& Args)
 {
     // Make a copy here because the location of Args.current_closure() can change if the heap grows.
     auto E = Args.current_closure().exp;
-    return evaluate_e_op(Args, E);
+    return closure(evaluate_e_op(Args, E));
 }
 
 pair<int,int> reg_heap::incremental_evaluate1_(int r)

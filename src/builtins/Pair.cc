@@ -5,28 +5,27 @@
 
 using std::vector;
 
-extern "C" expression_ref simple_function_c_fst(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_c_fst(vector<R::Exp>& args)
 {
     return get_arg(args).as_<EPair>().first;
 }
 
-extern "C" expression_ref simple_function_c_snd(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_c_snd(vector<R::Exp>& args)
 {
     return get_arg(args).as_<EPair>().second;
 }
 
-extern "C" expression_ref simple_function_c_pair(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_c_pair(vector<R::Exp>& args)
 {
     auto fst = get_arg(args);
     auto snd = get_arg(args);
 
-    return EPair(fst, snd);
+    return EPair(R::to_expression_ref(fst), R::to_expression_ref(snd));
 }
 
-extern "C" expression_ref simple_function_c_nil(vector<expression_ref>& /*args*/)
+extern "C" R::Exp simple_function_c_nil(vector<R::Exp>& /*args*/)
 {
     expression_ref nil;
     nil = 42;
     return nil;
 }
-

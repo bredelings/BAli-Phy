@@ -215,6 +215,21 @@ namespace
         require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
         require(vector_value.as_<EVector>().size() == 2, "runtime ObjectValue value mismatch");
 
+        auto pair = Runtime::e_op_value(expression_ref(constructor("Pair", 2), {expression_ref(1), expression_ref(::String("field"))}));
+        require(pair.is_value(), "constructor applications should be runtime values");
+        auto app = pair.to<Runtime::App>();
+        require(bool(app), "constructor application should convert to Runtime::App");
+        require(std::holds_alternative<Runtime::ConstructorApp>(app->head), "constructor application should use ConstructorApp");
+        require(app->args.size() == 2, "constructor application arity mismatch");
+        require(app->args[0].as_int() == 1, "constructor application int field mismatch");
+        require(app->args[1].as_string() == "field", "constructor application string field mismatch");
+        auto roundtrip = Runtime::to_expression_ref(pair);
+        require(roundtrip.head().is_a<constructor>(), "constructor application roundtrip head mismatch");
+        require(roundtrip.head().as_<constructor>().name() == "Pair", "constructor application roundtrip constructor name mismatch");
+        require(roundtrip.size() == 2, "constructor application roundtrip arity mismatch");
+        require(roundtrip.sub()[0].as_int() == 1, "constructor application roundtrip int field mismatch");
+        require(roundtrip.sub()[1].as_<::String>().value() == "field", "constructor application roundtrip string field mismatch");
+
         bool rejected = false;
         try
         {

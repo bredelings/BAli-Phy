@@ -297,7 +297,7 @@ closure case_op(OperationArgs& Args)
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = is_eop_exp(in_object) ? evaluate_e_op(Args, in_object) : Args.evaluate_slot_to_closure(0);
+    const closure object = is_eop_exp(in_object) ? closure(evaluate_e_op(Args, in_object)) : Args.evaluate_slot_to_closure(0);
 
     auto& C = Args.current_closure();
 

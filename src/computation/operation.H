@@ -24,10 +24,10 @@ typedef closure (*o_operation_fn)(OperationArgs&);
 // In theory we could handle
 //   # -> * -> #
 // if we knew not to evaluate the 2nd arg.
-typedef expression_ref (*e_operation_fn)(std::vector<expression_ref>&);
+typedef Runtime::Exp (*e_operation_fn)(std::vector<Runtime::Exp>&);
 
 closure evaluate_e_op_to_c(OperationArgs& Args);
-expression_ref evaluate_e_op(OperationArgs& Args, const expression_ref& E);
+Runtime::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E);
 
 struct Operation: public Object
 {

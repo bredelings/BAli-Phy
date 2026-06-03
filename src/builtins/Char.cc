@@ -15,7 +15,7 @@
 
 using std::vector;
 
-extern "C" expression_ref simple_function_isDigit(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isDigit(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -25,7 +25,7 @@ extern "C" expression_ref simple_function_isDigit(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isControl(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isControl(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -35,7 +35,7 @@ extern "C" expression_ref simple_function_isControl(vector<expression_ref>& args
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isSpace(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isSpace(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -45,7 +45,7 @@ extern "C" expression_ref simple_function_isSpace(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isLower(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isLower(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -55,7 +55,7 @@ extern "C" expression_ref simple_function_isLower(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isUpper(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isUpper(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -65,7 +65,7 @@ extern "C" expression_ref simple_function_isUpper(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isAlphaNum(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isAlphaNum(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -75,7 +75,7 @@ extern "C" expression_ref simple_function_isAlphaNum(vector<expression_ref>& arg
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isAlpha(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isAlpha(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -85,7 +85,7 @@ extern "C" expression_ref simple_function_isAlpha(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isPrint(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isPrint(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -95,7 +95,7 @@ extern "C" expression_ref simple_function_isPrint(vector<expression_ref>& args)
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isPunctuation(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isPunctuation(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -105,7 +105,7 @@ extern "C" expression_ref simple_function_isPunctuation(vector<expression_ref>& 
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_isHexDigit(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_isHexDigit(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
@@ -115,28 +115,28 @@ extern "C" expression_ref simple_function_isHexDigit(vector<expression_ref>& arg
         return {expression_ref(0)};
 }
 
-extern "C" expression_ref simple_function_toLower(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_toLower(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
     return {expression_ref(std::tolower(c))};
 }
 
-extern "C" expression_ref simple_function_toUpper(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_toUpper(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
     return {expression_ref(std::toupper(c))};
 }
 
-extern "C" expression_ref simple_function_ord(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_ord(vector<R::Exp>& args)
 {
     auto c = get_arg(args).as_char();
 
     return {expression_ref(int(c))};
 }
 
-extern "C" expression_ref simple_function_chr(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_chr(vector<R::Exp>& args)
 {
     auto i = get_arg(args).as_int();
 
@@ -145,7 +145,7 @@ extern "C" expression_ref simple_function_chr(vector<expression_ref>& args)
     return {expression_ref(char(i))};
 }
 
-extern "C" expression_ref simple_function_intToDigit(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_intToDigit(vector<R::Exp>& args)
 {
     auto i = get_arg(args).as_int();
     char d = i;

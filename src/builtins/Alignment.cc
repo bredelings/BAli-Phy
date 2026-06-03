@@ -111,19 +111,19 @@ extern "C" closure builtin_function_lengthIndels(OperationArgs& Args)
     return {a.count_delete() + a.count_insert()};
 }
 
-extern "C" expression_ref simple_function_pairwise_alignment_length1(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_pairwise_alignment_length1(vector<R::Exp>& args)
 {
     
     return get_arg(args).as_<Box<pairwise_alignment_t>>().length1();
 }
 
-extern "C" expression_ref simple_function_pairwise_alignment_length2(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_pairwise_alignment_length2(vector<R::Exp>& args)
 {
     
     return get_arg(args).as_<Box<pairwise_alignment_t>>().length2();
 }
 
-extern "C" expression_ref simple_function_alignment_length(vector<expression_ref>& args)
+extern "C" R::Exp simple_function_alignment_length(vector<R::Exp>& args)
 {
     return get_arg(args).as_<Box<alignment>>().length();
 }

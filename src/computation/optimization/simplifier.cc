@@ -1500,13 +1500,13 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
         {
             auto f = e_operation_fn(builtin2.op);
             int n = builtin->args.size();
-            vector<expression_ref> op_args(n);
+            vector<R::Exp> op_args(n);
             for(int i=0;i<n;i++)
-                op_args[n-1-i] = to_expression_ref(*builtin2.args[i].to_constant());
+                op_args[n-1-i] = R::atomic_value(to_expression_ref(*builtin2.args[i].to_constant()));
 
             try
             {
-                expression_ref result = f(op_args);
+                auto result = R::to_expression_ref(f(op_args));
                 if (auto C = to_core_constant(result))
                 {
                     BB = *C;
