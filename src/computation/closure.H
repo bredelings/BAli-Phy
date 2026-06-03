@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <concepts>
+#include <type_traits>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
@@ -148,7 +150,9 @@ public:
 	:closure(std::move(e), Env_t(E))
 	{ }
 
-    closure(int x):closure(Runtime::Int(x)) {}
+    template <typename T>
+        requires std::same_as<std::remove_cvref_t<T>, int>
+    closure(T x):closure(Runtime::Int(x)) {}
 
     closure(double x):closure(Runtime::Double(x)) {}
 
@@ -156,7 +160,9 @@ public:
 
     closure(char x):closure(Runtime::Char(x)) {}
 
-    closure(bool x):closure(Runtime::ObjectValue(x ? bool_true : bool_false)) {}
+    template <typename T>
+        requires std::same_as<std::remove_cvref_t<T>, bool>
+    closure(T x):closure(Runtime::ObjectValue(x ? bool_true : bool_false)) {}
 
     closure(std::string x):closure(Runtime::String(std::move(x))) {}
 
