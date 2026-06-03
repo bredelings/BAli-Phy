@@ -433,7 +433,7 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
     for(const auto& a: afs)
 	Pr *= ewens_sampling_probability(theta,a);
 
-    return {Pr};
+    return {log_double_t(Pr)};
 }
 
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
@@ -580,7 +580,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
     Pr *= pow(log_double_t(theta), n_theta_pow);
   
-    return {Pr};
+    return {log_double_t(Pr)};
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
