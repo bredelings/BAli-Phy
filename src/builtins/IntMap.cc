@@ -4,10 +4,12 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "computation/operation.H"
+#include "computation/runtime/ast.H"
 
 #include "computation/machine/gcobject.H"
 #include "immer/set.hpp"
 #include <map>
+#include <memory>
 
 #include "range/v3/all.hpp"
 
@@ -442,12 +444,12 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 
 closure makeEVector(OperationArgs& Args)
 {
-    int n = Args.current_closure().Env.size();
+    int n = Args.runtime_n_slots();
 
     EVector result;
     for(int i=0;i<n;i++)
     {
-	int r = Args.current_closure().Env[i];
+	int r = Args.runtime_reg_for_slot(i);
 	auto obj = Args.evaluate_reg_to_object( r );
 	result.push_back( obj );
     }
@@ -467,14 +469,18 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
     closure result;
     result.Env.resize(n);
+    std::vector<Runtime::Exp> args;
+    args.reserve(n);
     int i=0;
     for(int key: keys)
     {
 	result.Env[i] = map0[key];
+	args.push_back(Runtime::IndexVar(n - 1 - i));
 
 	i++;
     }
-    result.set_legacy_exp(Operation(makeEVector,"makeEVector"));
+    result.set_code(Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(makeEVector, "makeEVector")),
+                                 std::move(args)));
 
     return result;
 }
