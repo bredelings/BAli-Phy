@@ -78,6 +78,20 @@ namespace
         require(Runtime::to_expression_ref(C.get_code()) == C.exp, "trimmed runtime closure cache mismatch");
     }
 
+    void check_runtime_closure_trim_unnormalize()
+    {
+        closure C(Runtime::Trim({0, 2}, Runtime::IndexVar(1)), {10, 20, 30});
+
+        auto C2 = trim_unnormalize(C);
+
+        require(C2.has_code(), "trim_unnormalize should preserve Runtime::Exp code");
+        auto body = C2.get_code().to<Runtime::IndexVar>();
+        require(bool(body), "trim_unnormalize should remove the Runtime::Trim wrapper");
+        require(body->index == 2, "trim_unnormalize should remap body indices through Trim indices");
+        require((C2.Env == closure::Env_t{10, 20, 30}), "trim_unnormalize should preserve the closure environment");
+        require(Runtime::to_expression_ref(C2.get_code()) == C2.exp, "trim_unnormalized runtime closure cache mismatch");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -196,6 +210,7 @@ int main(int argc, char** argv)
     require(before_ref.print() == after_ref.print(), "Runtime AST serialization changed the expression");
 
     check_runtime_closure_trim();
+    check_runtime_closure_trim_unnormalize();
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();

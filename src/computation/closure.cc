@@ -3,6 +3,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/trim.H"
+#include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
 #include <utility>
 
@@ -94,6 +95,9 @@ expression_ref deindexify(const closure& C)
 closure trim_unnormalize(const closure& C)
 {
     closure C2 = C;
-    C2.set_legacy_exp(trim_unnormalize(C2.exp));
+    if (C2.has_code())
+        C2.set_code(Runtime::trim_unnormalize(C2.get_code()));
+    else
+        C2.set_legacy_exp(trim_unnormalize(C2.exp));
     return C2;
 }

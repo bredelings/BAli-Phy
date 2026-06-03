@@ -58,6 +58,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
+                          std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, Constructor>)
             {
                 return {};
@@ -140,6 +141,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
+                          std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, Constructor>)
             {
                 return E;
@@ -232,6 +234,14 @@ namespace Runtime
         return make_trim(remap_free_indices(E, mapping, 0), indices);
     }
 
+    Exp untrim(const Exp& E)
+    {
+        if (auto trim = E.to<Trim>())
+            return remap_free_indices(trim->body, trim->indices, 0);
+        else
+            return E;
+    }
+
     Exp trim_normalize(const Exp& E)
     {
         return E.visit([](const auto& e) -> Exp
@@ -244,6 +254,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
+                          std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, Constructor>)
             {
                 return e;
@@ -287,6 +298,63 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Trim>)
             {
                 return Trim(e.indices, trim_normalize(e.body));
+            }
+            else
+                std::abort();
+        });
+    }
+
+    Exp trim_unnormalize(const Exp& E)
+    {
+        return E.visit([](const auto& e) -> Exp
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, ObjectValue> or
+                          std::is_same_v<T, Constructor> or
+                          std::is_same_v<T, IndexVar> or
+                          std::is_same_v<T, GlobalVar> or
+                          std::is_same_v<T, RegRef>)
+            {
+                return e;
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                return Lambda(trim_unnormalize(untrim(e.body)));
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                vector<Exp> binds;
+                for(const auto& bind: e.binds)
+                    binds.push_back(trim_unnormalize(untrim(bind)));
+
+                return Let(binds, trim_unnormalize(untrim(e.body)));
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                vector<Alt> alts;
+                for(const auto& alt: e.alts)
+                    alts.push_back(Alt(alt.pattern, trim_unnormalize(untrim(alt.body))));
+
+                return Case(e.object, alts);
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                vector<Exp> args;
+                for(const auto& arg: e.args)
+                    args.push_back(trim_unnormalize(untrim(arg)));
+
+                return App(e.head, args);
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                return trim_unnormalize(remap_free_indices(e.body, e.indices, 0));
             }
             else
                 std::abort();
