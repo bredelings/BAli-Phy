@@ -34,6 +34,7 @@ namespace Runtime
     struct String;
     struct Integer;
     struct Constructor;
+    struct ObjectValue;
     struct IndexVar;
     struct GlobalVar;
     struct RegRef;
@@ -53,6 +54,7 @@ namespace Runtime
             std::shared_ptr<const String>,
             std::shared_ptr<const Integer>,
             std::shared_ptr<const Constructor>,
+            std::shared_ptr<const ObjectValue>,
             std::shared_ptr<const IndexVar>,
             std::shared_ptr<const GlobalVar>,
             std::shared_ptr<const RegRef>,
@@ -73,6 +75,7 @@ namespace Runtime
         Exp(String);
         Exp(Integer);
         Exp(Constructor);
+        Exp(ObjectValue);
         Exp(IndexVar);
         Exp(GlobalVar);
         Exp(RegRef);
@@ -240,6 +243,34 @@ namespace Runtime
             value = constructor(name, arity);
         }
     };
+
+
+    struct ObjectValue
+    {
+        object_ptr<const Object> value;
+
+        ObjectValue() = default;
+        ObjectValue(object_ptr<const Object> o):value(std::move(o))
+        {
+            assert(value->type() != type_constant::expression_type);
+            assert(value->type() != type_constant::constructor_type);
+            assert(not dynamic_pointer_cast<const Box<std::string>>(o));
+            assert(not dynamic_pointer_cast<const Box<integer>>(o));
+        }
+
+        template <class Archive>
+        void save(Archive&) const
+        {
+            throw std::runtime_error("Runtime::ObjectValue is not serializable");
+        }
+
+        template <class Archive>
+        void load(Archive&)
+        {
+            throw std::runtime_error("Runtime::ObjectValue is not serializable");
+        }
+    };
+
 
     struct IndexVar
     {

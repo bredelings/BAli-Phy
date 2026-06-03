@@ -22,6 +22,7 @@ using std::vector;
 
 namespace Runtime
 {
+
     namespace
     {
         template <typename T>
@@ -38,6 +39,7 @@ namespace Runtime
     Exp::Exp(String node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Integer node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Constructor node):value(make_exp_value(std::move(node))) {}
+    Exp::Exp(ObjectValue node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(IndexVar node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(GlobalVar node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(RegRef node):value(make_exp_value(std::move(node))) {}
@@ -77,6 +79,7 @@ namespace Runtime
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
                           std::is_same_v<T, Constructor> or
+                          std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, GlobalVar> or
                           std::is_same_v<T, RegRef>)
             {
@@ -238,6 +241,10 @@ namespace Runtime
             {
                 return e.value;
             }
+            else if constexpr (std::is_same_v<T, ObjectValue>)
+            {
+                return e.value;
+            }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 return index_var(e.index);
@@ -310,6 +317,7 @@ namespace Runtime
                    std::is_same_v<T, String> or
                    std::is_same_v<T, Integer> or
                    std::is_same_v<T, Constructor> or
+                   std::is_same_v<T, ObjectValue> or
                    std::is_same_v<T, IndexVar> or
                    std::is_same_v<T, GlobalVar> or
                    std::is_same_v<T, RegRef>;
@@ -380,6 +388,10 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Constructor>)
             {
                 return e.value.print();
+            }
+            else if constexpr (std::is_same_v<T, ObjectValue>)
+            {
+                return e.value->print();
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
@@ -501,6 +513,13 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Constructor>)
             {
                 assert(e.value.n_args() >= 0);
+            }
+            else if constexpr (std::is_same_v<T, ObjectValue>)
+            {
+                assert(e.value->type() != type_constant::expression_type);
+                assert(e.value->type() != type_constant::constructor_type);
+                assert(not dynamic_pointer_cast<const Box<std::string>>(e.value));
+                assert(not dynamic_pointer_cast<const Box<integer>>(e.value));
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
