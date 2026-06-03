@@ -4,9 +4,16 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/trim.H"
 #include "util/string/join.H" // for join( )
+#include <utility>
 
 using std::vector;
 using std::string;
+
+void closure::set_code(Runtime::Exp c)
+{
+    code = std::move(c);
+    exp = Runtime::to_expression_ref(code);
+}
 
 void closure::clear()
 {
@@ -72,4 +79,3 @@ closure trim_unnormalize(const closure& C)
     C2.exp = trim_unnormalize(C2.exp);
     return C2;
 }
-

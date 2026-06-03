@@ -3,12 +3,20 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/bool.H"
+#include "computation/runtime/ast.H"
 
 struct closure
 {
+private:    
+    /// The runtime expression
+    Runtime::Exp code;
+
+public:
     typedef boost::container::small_vector<int,10> Env_t;
   
     /// The expression
@@ -18,6 +26,12 @@ struct closure
 
     /// Is the closure not empty
     operator bool() const {return exp and exp.head();}
+
+    bool has_code() const { return not code.empty(); }
+
+    const Runtime::Exp& get_code() const {return code; }
+
+    void set_code(Runtime::Exp e);
 
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
@@ -85,33 +99,96 @@ struct closure
     // Constructing from an expression_ref
     closure(const expression_ref& e)
 	:exp(e)
-	{ }
+    { }
 
     closure(const expression_ref& e, const Env_t& E)
 	:exp(e), Env(E)
-	{ }
+    {}
 
     closure(const expression_ref& e, std::initializer_list<int> E)
 	:closure(e, Env_t(E))
-	{ }
+    { }
+
+    // Constructing from an expression_ref
+    closure(Runtime::Exp e)
+    {
+        set_code(std::move(e));
+    }
+
+    closure(Runtime::Exp e, const Env_t& E)
+	:Env(E)
+    {
+        set_code(std::move(e));
+    }
+
+    closure(Runtime::Exp e, std::initializer_list<int> E)
+	:closure(std::move(e), Env_t(E))
+    { }
+
+    // Builtin-type arguments
+    template <typename T>
+    requires std::same_as<std::remove_cvref_t<T>, int>
+    closure(T x):closure(Runtime::Int(x)) {}
+
+    template <typename T>
+    requires std::same_as<std::remove_cvref_t<T>, char>
+    closure(T x):closure(Runtime::Char(x)) {}
+
+    template <typename T>
+    requires std::same_as<std::remove_cvref_t<T>, double>
+    closure(T x):closure(Runtime::Double(x)) {}
+
+    template <typename T>
+    requires std::same_as<std::remove_cvref_t<T>, log_double_t>
+    closure(T x):closure(Runtime::LogDouble(x)) {}
+
+    template <typename T>
+    requires std::same_as<std::remove_cvref_t<T>, bool>
+    closure(T x):closure(Runtime::Constructor(constructor(x?bool_true_name:bool_false_name,0))) {}
+
+    closure(std::string x):closure(Runtime::String(std::move(x))) {}
+
+    closure(integer x):closure(Runtime::Integer(std::move(x))) {}
+
+    closure(const Box<std::string>& x):closure(Runtime::String(x.value())) {}
+
+    closure(Box<std::string>&& x):closure(Runtime::String(x.value())) {}
+
+    closure(const Box<integer>& x):closure(Runtime::Integer(x)) {}
+
+    closure(Box<integer>&& x):closure(Runtime::Integer(std::move(x))) {}
+
+    closure(constructor x):closure(Runtime::Constructor(std::move(x))) {}
+
+    closure(const index_var& iv):closure(Runtime::IndexVar(iv.index)) {}
+
+    closure(const index_var& iv, const Env_t& E):closure(Runtime::IndexVar(iv.index), E) {}
+
+    closure(const index_var& iv, std::initializer_list<int> E):closure(Runtime::IndexVar(iv.index), E) {}
+
+    closure(const reg_var& rv):closure(Runtime::RegRef(rv.target)) {}
 
     // Constructing w/o an environment
     closure(Object* o)
-	:closure(expression_ref(o))
-	{ }
+    {
+        set_code(Runtime::ObjectValue(o));
+    }
 
     closure(const object_ptr<const Object>& o)
-	:closure(expression_ref(o))
-	{ }
+    {
+        set_code(Runtime::ObjectValue(o));
+    }
 
     template <typename T>
     closure(const object_ptr<T>& o)
-	:closure(expression_ref(o))
-	{ }
+    {
+        set_code(Runtime::ObjectValue(o));
+    }
 
     closure(const Object& O)
-	:closure(expression_ref(O))
-	{ }
+    {
+        set_code(Runtime::ObjectValue(O.clone()));
+    }
 };
 
 inline int lookup_in_env(const closure::Env_t& Env, int i) {return Env[Env.size() - 1 - i];}
