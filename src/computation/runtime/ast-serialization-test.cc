@@ -3,6 +3,7 @@
 #include "computation/loader.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
+#include "computation/operation.H"
 #include "computation/program.H"
 #include <stdexcept>
 #include <sstream>
@@ -21,6 +22,11 @@ namespace
         Core::Constant c;
         c.value = x;
         return Core::Exp<>(c);
+    }
+
+    closure runtime_only_test_operation(OperationArgs&)
+    {
+        return {};
     }
 
     void check_pinned_global_translation(const std::shared_ptr<module_loader>& loader)
@@ -211,6 +217,24 @@ namespace
                                                          Runtime::Int(1))});
         check_archive_roundtrip(case_);
     }
+
+    void check_runtime_only_operation_app_serialization()
+    {
+        Runtime::Exp app = Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(runtime_only_test_operation, "runtimeOnly")),
+                                        {});
+
+        bool threw = false;
+        try
+        {
+            archive_roundtrip(app);
+        }
+        catch(const std::runtime_error& e)
+        {
+            threw = std::string(e.what()) == "Runtime-only OperationApp is not serializable";
+        }
+
+        require(threw, "runtime-only OperationApp serialization should throw a clear error");
+    }
 }
 
 int main(int argc, char** argv)
@@ -252,4 +276,5 @@ int main(int argc, char** argv)
     check_lambda_peeling();
     check_deindexify_reg_refs();
     check_constructor_serialization();
+    check_runtime_only_operation_app_serialization();
 }
