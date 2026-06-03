@@ -81,7 +81,7 @@ context_ptr context_ptr::operator[](int i) const
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
     auto& c = C.memory()->closure_at(r);
-    if (auto& e = c.exp; e.size() == 0 and is_gcable_type(e.type()))
+    if (auto& e = c.legacy_exp(); e.size() == 0 and is_gcable_type(e.type()))
     {
         if (auto im = e.to<IntMap>())
             r = (*im)[i];

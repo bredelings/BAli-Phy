@@ -863,7 +863,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
-    auto result = lazy_evaluate2(heads[*program_result_head]).exp;
+    auto result = lazy_evaluate2(heads[*program_result_head]).legacy_exp();
 
     // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
     cleanup_count_deltas_and_bits();
@@ -968,5 +968,4 @@ void reg_heap::maybe_unshare_regs(int t)
     else if (not is_root_token(parent_token(t)) or not tokens[t].flags.test(0))
         check_unshare_regs(t);
 }
-
 

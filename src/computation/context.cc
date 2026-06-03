@@ -89,7 +89,7 @@ std::pair<int,int> context_ref::incremental_evaluate(int r) const
 /// Return the value of a particular index, computing it if necessary
 const expression_ref& context_ref::evaluate_head(int index) const
 {
-    return lazy_evaluate_head(index).exp;
+    return lazy_evaluate_head(index).legacy_exp();
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -97,7 +97,7 @@ const expression_ref& context_ref::evaluate_head_unchangeable(int index) const
 {
     int R = heads()[index];
 
-    return memory()->lazy_evaluate_unchangeable(R).exp;
+    return memory()->lazy_evaluate_unchangeable(R).legacy_exp();
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -134,7 +134,7 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
 
 const expression_ref& context_ref::evaluate_expression_(closure&& C,bool ec) const
 {
-    const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).exp;
+    const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).legacy_exp();
 #ifndef NDEBUG
     if (result.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<result.print();
@@ -246,7 +246,7 @@ typedef multi_index_container<
 
 void add_transition_kernel(const closure& e, int s, double t, set_tk_group& tk_groups)
 {
-    double rate = e.exp.sub()[0].as_double();
+    double rate = e.legacy_exp().sub()[0].as_double();
 
     // how many total
     int n_total = get_reps(rate);

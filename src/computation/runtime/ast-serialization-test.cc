@@ -82,7 +82,7 @@ namespace
         require(bool(body), "trimmed runtime closure should use the Runtime::Trim body");
         require(body->index == 1, "trimmed runtime closure body index mismatch");
         require((C.Env == closure::Env_t{10, 30}), "trimmed runtime closure environment mismatch");
-        require(Runtime::to_expression_ref(C.get_code()) == C.exp, "trimmed runtime closure cache mismatch");
+        require(Runtime::to_expression_ref(C.get_code()) == C.legacy_exp(), "trimmed runtime closure cache mismatch");
     }
 
     void check_runtime_closure_trim_unnormalize()
@@ -96,7 +96,7 @@ namespace
         require(bool(body), "trim_unnormalize should remove the Runtime::Trim wrapper");
         require(body->index == 2, "trim_unnormalize should remap body indices through Trim indices");
         require((C2.Env == closure::Env_t{10, 20, 30}), "trim_unnormalize should preserve the closure environment");
-        require(Runtime::to_expression_ref(C2.get_code()) == C2.exp, "trim_unnormalized runtime closure cache mismatch");
+        require(Runtime::to_expression_ref(C2.get_code()) == C2.legacy_exp(), "trim_unnormalized runtime closure cache mismatch");
     }
 
     void check_runtime_closure_slots()
