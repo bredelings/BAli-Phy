@@ -80,9 +80,13 @@ public:
 
     closure evaluate_slot_to_closure_(int);
 
-    expression_ref evaluate_slot_to_object(int);
+    Runtime::Exp evaluate_slot_to_value(int);
 
-    expression_ref evaluate_slot_to_object_(int);
+    Runtime::Exp evaluate_slot_to_value_(int);
+
+    expression_ref evaluate_slot_to_legacy_object(int);
+
+    expression_ref evaluate_slot_to_legacy_object_(int);
 
     expression_ref evaluate(int);
 

@@ -101,7 +101,27 @@ int OperationArgs::evaluate_slot_use(int slot)
     return evaluate_reg_use(reg_for_slot(slot));
 }
 
-expression_ref OperationArgs::evaluate_slot_to_object(int slot)
+Runtime::Exp OperationArgs::evaluate_slot_to_value(int slot)
+{
+    closure result = evaluate_slot_to_closure(slot);
+#ifndef NDEBUG
+    if (result.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+#endif
+    return result.get_code();
+}
+
+Runtime::Exp OperationArgs::evaluate_slot_to_value_(int slot)
+{
+    closure result = evaluate_slot_to_closure_(slot);
+#ifndef NDEBUG
+    if (result.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+#endif
+    return result.get_code();
+}
+
+expression_ref OperationArgs::evaluate_slot_to_legacy_object(int slot)
 {
     closure result = evaluate_slot_to_closure(slot);
 #ifndef NDEBUG
@@ -111,7 +131,7 @@ expression_ref OperationArgs::evaluate_slot_to_object(int slot)
     return result.legacy_exp();
 }
 
-expression_ref OperationArgs::evaluate_slot_to_object_(int slot)
+expression_ref OperationArgs::evaluate_slot_to_legacy_object_(int slot)
 {
     closure result = evaluate_slot_to_closure_(slot);
 #ifndef NDEBUG
@@ -123,12 +143,12 @@ expression_ref OperationArgs::evaluate_slot_to_object_(int slot)
 
 expression_ref OperationArgs::evaluate(int slot)
 {
-    return evaluate_slot_to_object(slot);
+    return evaluate_slot_to_legacy_object(slot);
 }
 
 expression_ref OperationArgs::evaluate_(int slot)
 {
-    return evaluate_slot_to_object_(slot);
+    return evaluate_slot_to_legacy_object_(slot);
 }
 
 int OperationArgs::evaluate_reg_unchangeable(int r)
