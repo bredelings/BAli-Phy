@@ -503,4 +503,6 @@ namespace Runtime
 
 }
 
+namespace R = Runtime;
+
 #endif
