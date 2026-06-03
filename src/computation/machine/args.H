@@ -45,6 +45,8 @@ public:
 
     Runtime::Exp runtime_slot(int slot) const;
 
+    std::optional<int> runtime_reg_for_code(const Runtime::Exp&) const;
+
     int reg_for_slot(int slot) const;
 
     int runtime_reg_for_slot(int slot) const;
@@ -60,15 +62,23 @@ public:
     // in an unchangeable context
     virtual int evaluate_reg_force(int) = 0;
 
+    std::optional<int> evaluate_code_force(const Runtime::Exp&);
+
     int evaluate_slot_force(int);
 
     virtual int evaluate_reg_use(int) = 0;
+
+    std::optional<int> evaluate_code_use(const Runtime::Exp&);
   
     int evaluate_slot_use(int);
 
     const closure& evaluate_reg_to_closure(int r2);
 
     const closure& evaluate_reg_to_closure_(int r2);
+
+    closure evaluate_code_to_closure(const Runtime::Exp&);
+
+    closure evaluate_code_to_closure_(const Runtime::Exp&);
 
     closure evaluate_slot_to_closure(int);
 

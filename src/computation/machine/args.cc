@@ -21,6 +21,16 @@ Runtime::Exp OperationArgs::runtime_slot(int slot) const
     return current_closure().runtime_slot(slot);
 }
 
+optional<int> OperationArgs::runtime_reg_for_code(const Runtime::Exp& E) const
+{
+    if (auto reg_ref = E.to<Runtime::RegRef>())
+        return reg_ref->target;
+    else if (auto index_var = E.to<Runtime::IndexVar>())
+        return lookup_in_env(current_closure().Env, index_var->index);
+    else
+        return {};
+}
+
 int OperationArgs::runtime_reg_for_slot(int slot) const
 {
     return current_closure().runtime_reg_for_slot(slot);
@@ -53,20 +63,44 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
 
 closure OperationArgs::evaluate_slot_to_closure(int slot)
 {
-    auto S = runtime_slot(slot);
-    if (auto reg_ref = S.to<Runtime::RegRef>())
-        return evaluate_reg_to_closure(reg_ref->target);
-    else
-        return closure(std::move(S));
+    return evaluate_code_to_closure(runtime_slot(slot));
 }
 
 closure OperationArgs::evaluate_slot_to_closure_(int slot)
 {
-    auto S = runtime_slot(slot);
-    if (auto reg_ref = S.to<Runtime::RegRef>())
-        return evaluate_reg_to_closure_(reg_ref->target);
+    return evaluate_code_to_closure_(runtime_slot(slot));
+}
+
+closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
+{
+    if (auto r = runtime_reg_for_code(E))
+        return evaluate_reg_to_closure(*r);
     else
-        return closure(std::move(S));
+        return closure(E);
+}
+
+closure OperationArgs::evaluate_code_to_closure_(const Runtime::Exp& E)
+{
+    if (auto r = runtime_reg_for_code(E))
+        return evaluate_reg_to_closure_(*r);
+    else
+        return closure(E);
+}
+
+optional<int> OperationArgs::evaluate_code_force(const Runtime::Exp& E)
+{
+    if (auto r = runtime_reg_for_code(E))
+        return evaluate_reg_force(*r);
+    else
+        return {};
+}
+
+optional<int> OperationArgs::evaluate_code_use(const Runtime::Exp& E)
+{
+    if (auto r = runtime_reg_for_code(E))
+        return evaluate_reg_use(*r);
+    else
+        return {};
 }
 
 int OperationArgs::evaluate_slot_force(int slot)

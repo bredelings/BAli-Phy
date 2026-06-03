@@ -11,6 +11,7 @@
 #include "expression/var.H"
 #include "expression/apply.H"
 #include "util/string/join.H"
+#include <type_traits>
 
 using std::vector;
 using std::string;
@@ -120,23 +121,55 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts, const Runtime::Case& runtime_case)
+static const constructor* constructor_value(const Runtime::Exp& E)
 {
-    int L = alts.size();
-
-    assert(runtime_case.alts.size() == L);
-
-#ifndef NDEBUG
-    vector<expression_ref> cases(L);
-    vector<expression_ref> bodies(L);
-    for(int i=0;i<L;i++)
+    if (auto c = E.to<Runtime::Constructor>())
+        return &c->value;
+    else if (auto app = E.to<Runtime::App>())
     {
-	cases[i]  = alts[i].pattern;
-	bodies[i] = alts[i].body;
+        if (auto constructor_app = std::get_if<Runtime::ConstructorApp>(&app->head))
+            return &constructor_app->head;
     }
 
-    if (object.legacy_exp().head().is_a<lambda2>())
-	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(object.legacy_exp(), cases, bodies)<<"'";
+    return nullptr;
+}
+
+static int constructor_n_args(const Runtime::Exp& E)
+{
+    if (auto c = E.to<Runtime::Constructor>())
+        return c->value.n_args();
+    else if (auto app = E.to<Runtime::App>())
+    {
+        if (std::holds_alternative<Runtime::ConstructorApp>(app->head))
+            return app->args.size();
+    }
+
+    std::abort();
+}
+
+static bool matches_pattern(const closure& object, const Runtime::Pattern& pattern)
+{
+    return std::visit([&](const auto& p) -> bool
+    {
+        using T = std::decay_t<decltype(p)>;
+
+        if constexpr (std::is_same_v<T, Runtime::WildcardPattern>)
+            return true;
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorPattern>)
+        {
+            const constructor* c = constructor_value(object.get_code());
+            return c and c->name() == p.head.name() and c->n_args() == p.head.n_args();
+        }
+    }, pattern);
+}
+
+static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const closure& object, const Runtime::Case& runtime_case)
+{
+    int L = runtime_case.alts.size();
+
+#ifndef NDEBUG
+    if (object.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Case argument is a lambda in '"<<Runtime::print(Runtime::Exp(runtime_case))<<"'";
 #endif
 
     closure result;
@@ -144,44 +177,31 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 
     for(int i=0;i<L and not result;i++)
     {
-	const expression_ref& this_case = alts[i].pattern;
-
-	// If its _, then match it.
-	if (is_var(this_case))
-	{
-	    // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
-	    assert(is_wildcard(this_case));
-	    assert(i == L-1);
-      
-            result.set_code(runtime_case.alts[i].body);
-	}
-	else
-	{
-	    // FIXME! Convert every pattern head to an integer...
-
-	    // If we are a constructor, then match iff the the head matches.
-	    if (object.legacy_exp().head() == this_case.head())
-	    {
+        if (matches_pattern(object, runtime_case.alts[i].pattern))
+        {
 #ifndef NDEBUG
-		if (object.legacy_exp().size())
-		{
-		    // The number of constructor fields is the same the for case pattern and the case object.
-		    assert(object.legacy_exp().size() == object.legacy_exp().head().as_<constructor>().n_args());
-		}
+            if (auto object_constructor = constructor_value(object.get_code()))
+                assert(constructor_n_args(object.get_code()) == object_constructor->n_args());
 #endif	
-                result.set_code(runtime_case.alts[i].body);
-	
-		for(int j=0;j<object.legacy_exp().size();j++)
-		    result.Env.push_back( object.reg_for_slot(j) );
-	    }
-	}
+            result.set_code(runtime_case.alts[i].body);
+
+            int n_args = Runtime::pattern_arity(runtime_case.alts[i].pattern);
+            for(int j=0;j<n_args;j++)
+            {
+                auto field = object.runtime_slot(j);
+                if (auto reg_ref = field.to<Runtime::RegRef>())
+                    result.Env.push_back(reg_ref->target);
+                else
+                    result.Env.push_back(Args.allocate(closure(std::move(field))));
+            }
+        }
     }
 
     if (not result)
 #ifdef NDEBUG
-	throw myexception()<<"Case: object '"<<object.legacy_exp()<<"' doesn't match any alternative";
+	throw myexception()<<"Case: object '"<<object.get_code()<<"' doesn't match any alternative";
 #else
-        throw myexception()<<"Case: object '"<<object.legacy_exp()<<"' doesn't match any alternative in '"<<make_case_expression(object.legacy_exp(), cases, bodies)<<"'";
+        throw myexception()<<"Case: object '"<<object.get_code()<<"' doesn't match any alternative in '"<<Runtime::print(Runtime::Exp(runtime_case))<<"'";
 #endif
 
     // Trim the result.
@@ -200,7 +220,7 @@ closure seq_op(OperationArgs& Args, const Runtime::Case& runtime_case)
     Runtime::Exp runtime_body = runtime_case.alts[0].body;
 
     // Force x
-    Args.evaluate_slot_force(0);
+    Args.evaluate_code_force(runtime_case.object);
 
     // Get the current Env -- AFTER we force x, so GC can't invalidate it.
     closure result;
@@ -227,20 +247,14 @@ closure case_op(OperationArgs& Args)
             return seq_op(Args, runtime_case);
     }
 
-    auto& in_object = runtime_case.object;
+    const auto& in_object = runtime_case.object;
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = is_eop_exp(in_object) ? closure(evaluate_e_op(Args, in_object)) : Args.evaluate_slot_to_closure(0);
+    const closure object = is_eop_exp(in_object) ? closure(evaluate_e_op(Args, in_object)) : Args.evaluate_code_to_closure(in_object);
+    closure::Env_t Env = Args.current_closure().Env;
 
-    auto& C = Args.current_closure();
-
-    // Therefore, we must compute this *after* we do the computation above, since
-    // we're going to hold on to it.  Otherwise the held reference would become
-    // *invalid* after the call above!
-    auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
-
-    return alts_op(C.Env, object, alts, runtime_case);
+    return alts_op(Args, Env, object, runtime_case);
 }
 
 /*

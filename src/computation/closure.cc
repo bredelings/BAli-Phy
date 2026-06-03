@@ -21,11 +21,6 @@ namespace
             assert(i < app->args.size());
             return app->args[i];
         }
-        else if (auto case_exp = E.to<Runtime::Case>())
-        {
-            assert(i == 0);
-            return case_exp->object;
-        }
         else
             std::abort();
     }
@@ -71,8 +66,6 @@ int closure::runtime_n_slots() const
 
     if (auto app = code.to<Runtime::App>())
         return app->args.size();
-    else if (code.to<Runtime::Case>())
-        return 1;
     else
         std::abort();
 }
