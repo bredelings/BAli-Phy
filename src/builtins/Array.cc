@@ -3,6 +3,7 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
+#include "computation/runtime/ast.H"
 
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
@@ -13,15 +14,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
     // The function should be represented as a heap variable...
     int f_reg = Args.reg_for_slot(1);
   
-    object_ptr<expression> exp = new expression(constructor("Array",n));
-    exp->sub.resize(n);
-
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
+    std::vector<Runtime::Exp> elements(n);
 
     closure result;
     result.Env.resize(n);
@@ -31,15 +24,16 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	int i_reg = Args.allocate(expression_ref(i));
 
 	// %1 %0 {f,i}
-	int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
+	int apply_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                              {f_reg, i_reg}));
 
 	// change to result.exp <<= index_var(i)
-	exp->sub[i] = index_var(n - 1 - i);
+	elements[i] = Runtime::IndexVar(n - 1 - i);
 
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.set_legacy_exp(exp);
+    result.set_code(Runtime::App(Runtime::ConstructorApp(constructor("Array", n)), std::move(elements)));
   
     return result;
 }
@@ -70,7 +64,7 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 	throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
 
     // Return a reference to the heap variable pointed to by the nth entry
-    return {index_var(0), {C.Env[n]} };
+    return closure(Runtime::IndexVar(0), {C.Env[n]});
 }
 
 extern "C" closure builtin_function_removeElement(OperationArgs& Args)
@@ -87,8 +81,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
     if (idx < 0 or idx >= n)
         throw myexception()<<"Trying to remove element '"<<idx<<"' from an Array of size "<<n<<"!";
 
-    object_ptr<expression> exp = new expression(constructor("Array",n-1));
-    exp->sub.resize(n-1);
+    std::vector<Runtime::Exp> elements(n-1);
 
     closure result;
     result.Env.resize(n-1);
@@ -97,12 +90,12 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
         if (i==idx) j++;
 
 	// change to result.exp <<= index_var(i)
-	exp->sub[i] = index_var(n - 2 - i);
+	elements[i] = Runtime::IndexVar(n - 2 - i);
 
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.set_legacy_exp(exp);
+    result.set_code(Runtime::App(Runtime::ConstructorApp(constructor("Array", n-1)), std::move(elements)));
 
     return result;
 }
