@@ -83,7 +83,7 @@ closure apply_op(OperationArgs& Args)
     assert(C.has_code());
     int n_args_needed = Runtime::count_lambdas(C.get_code());
     if (n_args_needed == 0)
-	throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
+	throw myexception()<<"Trying to apply non-lambda '"<<C.legacy_exp().head()<<"'";
     assert(n_args_needed >= 1);
     assert(n_args_given >= 1);
 
@@ -135,8 +135,8 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 	bodies[i] = alts[i].body;
     }
 
-    if (object.exp.head().is_a<lambda2>())
-	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(object.exp, cases, bodies)<<"'";
+    if (object.legacy_exp().head().is_a<lambda2>())
+	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(object.legacy_exp(), cases, bodies)<<"'";
 #endif
 
     closure result;
@@ -160,18 +160,18 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 	    // FIXME! Convert every pattern head to an integer...
 
 	    // If we are a constructor, then match iff the the head matches.
-	    if (object.exp.head() == this_case.head())
+	    if (object.legacy_exp().head() == this_case.head())
 	    {
 #ifndef NDEBUG
-		if (object.exp.size())
+		if (object.legacy_exp().size())
 		{
 		    // The number of constructor fields is the same the for case pattern and the case object.
-		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
+		    assert(object.legacy_exp().size() == object.legacy_exp().head().as_<constructor>().n_args());
 		}
 #endif	
                 result.set_code(runtime_case.alts[i].body);
 	
-		for(int j=0;j<object.exp.size();j++)
+		for(int j=0;j<object.legacy_exp().size();j++)
 		    result.Env.push_back( object.reg_for_slot(j) );
 	    }
 	}
@@ -179,9 +179,9 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 
     if (not result)
 #ifdef NDEBUG
-	throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative";
+	throw myexception()<<"Case: object '"<<object.legacy_exp()<<"' doesn't match any alternative";
 #else
-        throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative in '"<<make_case_expression(object.exp, cases, bodies)<<"'";
+        throw myexception()<<"Case: object '"<<object.legacy_exp()<<"' doesn't match any alternative in '"<<make_case_expression(object.legacy_exp(), cases, bodies)<<"'";
 #endif
 
     // Trim the result.

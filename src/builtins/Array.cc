@@ -40,7 +40,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 
 extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 {
-    int N = Args.evaluate_slot_to_closure(0).exp.size();
+    int N = Args.evaluate_slot_to_closure(0).legacy_exp().size();
 
     return {N};
 }
@@ -54,11 +54,11 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
     // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
     const closure& C = Args.evaluate_slot_to_closure(0);
 
-    if (not is_constructor(C.exp.head()) or C.exp.head().as_<constructor>().f_name != "Array")
-	throw myexception()<<"Trying to index expression that is not an Array:   "<<C.exp;
+    if (not is_constructor(C.legacy_exp().head()) or C.legacy_exp().head().as_<constructor>().f_name != "Array")
+	throw myexception()<<"Trying to index expression that is not an Array:   "<<C.legacy_exp();
 
-    int N = C.exp.size();
-    assert(C.Env.size() == C.exp.size());
+    int N = C.legacy_exp().size();
+    assert(C.Env.size() == C.legacy_exp().size());
 
     if (n < 0 or n >= N)
 	throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
@@ -74,10 +74,10 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
     // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
     const closure& C = Args.evaluate_slot_to_closure(1);
 
-    if (not is_constructor(C.exp.head()) or C.exp.head().as_<constructor>().f_name != "Array")
-	throw myexception()<<"Trying to remove element from expression that is not an Array:   "<<C.exp;
+    if (not is_constructor(C.legacy_exp().head()) or C.legacy_exp().head().as_<constructor>().f_name != "Array")
+	throw myexception()<<"Trying to remove element from expression that is not an Array:   "<<C.legacy_exp();
 
-    int n = C.exp.size();
+    int n = C.legacy_exp().size();
     if (idx < 0 or idx >= n)
         throw myexception()<<"Trying to remove element '"<<idx<<"' from an Array of size "<<n<<"!";
 

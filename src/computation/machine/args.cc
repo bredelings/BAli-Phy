@@ -33,8 +33,8 @@ int OperationArgs::runtime_n_slots() const {return current_closure().runtime_n_s
 const expression_ref& OperationArgs::reference(int slot) const
 {
     assert(0 <= slot);
-    assert(slot < current_closure().exp.sub().size());
-    return current_closure().exp.sub()[slot];
+    assert(slot < current_closure().legacy_exp().sub().size());
+    return current_closure().legacy_exp().sub()[slot];
 }
 
 const closure& OperationArgs::evaluate_reg_to_closure(int r2)
@@ -81,7 +81,7 @@ int OperationArgs::evaluate_slot_use(int slot)
 
 const expression_ref& OperationArgs::evaluate_reg_to_object(int R2)
 {
-    const expression_ref& result = evaluate_reg_to_closure(R2).exp;
+    const expression_ref& result = evaluate_reg_to_closure(R2).legacy_exp();
 #ifndef NDEBUG
     if (result.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<result.print();
@@ -91,7 +91,7 @@ const expression_ref& OperationArgs::evaluate_reg_to_object(int R2)
 
 const expression_ref& OperationArgs::evaluate_reg_to_object_(int R2)
 {
-    const expression_ref& result = evaluate_reg_to_closure_(R2).exp;
+    const expression_ref& result = evaluate_reg_to_closure_(R2).legacy_exp();
 #ifndef NDEBUG
     if (result.head().is_a<lambda2>())
 	throw myexception()<<"Evaluating lambda as object: "<<result.print();

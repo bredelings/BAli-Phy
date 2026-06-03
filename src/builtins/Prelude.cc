@@ -487,7 +487,7 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
 {
     // 1. IORef
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     return closure(Runtime::IndexVar(0), {C.Env[0]});
@@ -507,10 +507,10 @@ int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)
     auto C = Args.evaluate_reg_to_closure(r);
 
     // 3. Complain if there the object isn't atomic
-    if (is_gcable_type(C.exp.type()))
+    if (is_gcable_type(C.legacy_exp().type()))
     {
 	vector<int> tmp;
-	auto gco = convert<GCObject>(C.exp.ptr());
+	auto gco = convert<GCObject>(C.legacy_exp().ptr());
 	gco->get_regs(tmp);
 	for(int& r: tmp)
 	    r = copy_out_of_machine(M, Args, r);
@@ -533,7 +533,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     // 2. New value
@@ -559,7 +559,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 
@@ -585,7 +585,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.exp,"Data.IORef.IORef"));
+    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 

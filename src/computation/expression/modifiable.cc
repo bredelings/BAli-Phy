@@ -8,7 +8,7 @@ closure modifiable_op(OperationArgs& Args)
     auto& C = Args.current_closure();
 
     // Use the first argument as an initial value.
-    if (C.exp.size() == 1)
+    if (C.legacy_exp().size() == 1)
     {
         auto& M = Args.memory();
 
@@ -31,7 +31,7 @@ closure modifiable_op(OperationArgs& Args)
         // 7. Unchangeably evaluate to m.
         return closure(R::IndexVar(0), {m});
     }
-    else if (C.exp.size() == 2)
+    else if (C.legacy_exp().size() == 2)
     {
         Args.make_changeable();
 

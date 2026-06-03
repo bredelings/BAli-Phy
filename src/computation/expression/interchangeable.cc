@@ -32,7 +32,7 @@ closure interchangeable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
 
-    if (C.exp.size() == 2)
+    if (C.legacy_exp().size() == 2)
     {
 	auto& M = Args.memory();
 
