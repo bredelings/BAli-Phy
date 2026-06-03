@@ -6,11 +6,6 @@
 
 using std::optional;
 
-expression_ref OperationArgs::arg_for_slot(int slot) const
-{
-    return current_closure().arg_for_slot(slot);
-}
-
 int OperationArgs::reg_for_slot(int slot) const
 {
     return current_closure().reg_for_slot(slot);
@@ -39,13 +34,6 @@ int OperationArgs::runtime_reg_for_slot(int slot) const
 int OperationArgs::n_args() const {return current_closure().runtime_n_slots();}
 
 int OperationArgs::runtime_n_slots() const {return current_closure().runtime_n_slots();}
-
-const expression_ref& OperationArgs::reference(int slot) const
-{
-    assert(0 <= slot);
-    assert(slot < current_closure().legacy_exp().sub().size());
-    return current_closure().legacy_exp().sub()[slot];
-}
 
 const closure& OperationArgs::evaluate_reg_to_closure(int r2)
 {
@@ -113,42 +101,24 @@ int OperationArgs::evaluate_slot_use(int slot)
     return evaluate_reg_use(reg_for_slot(slot));
 }
 
-const expression_ref& OperationArgs::evaluate_reg_to_object(int R2)
-{
-    const expression_ref& result = evaluate_reg_to_closure(R2).legacy_exp();
-#ifndef NDEBUG
-    if (result.head().is_a<lambda2>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.print();
-#endif
-    return result;
-}
-
-const expression_ref& OperationArgs::evaluate_reg_to_object_(int R2)
-{
-    const expression_ref& result = evaluate_reg_to_closure_(R2).legacy_exp();
-#ifndef NDEBUG
-    if (result.head().is_a<lambda2>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.print();
-#endif
-    return result;
-}
-
 expression_ref OperationArgs::evaluate_slot_to_object(int slot)
 {
-    auto S = arg_for_slot(slot);
-    if (S.is_reg_var())
-        return evaluate_reg_to_object(S.as_reg_var());
-    else
-        return S;
+    closure result = evaluate_slot_to_closure(slot);
+#ifndef NDEBUG
+    if (result.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+#endif
+    return result.legacy_exp();
 }
 
 expression_ref OperationArgs::evaluate_slot_to_object_(int slot)
 {
-    auto S = arg_for_slot(slot);
-    if (S.is_reg_var())
-        return evaluate_reg_to_object_(S.as_reg_var());
-    else
-        return S;
+    closure result = evaluate_slot_to_closure_(slot);
+#ifndef NDEBUG
+    if (result.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+#endif
+    return result.legacy_exp();
 }
 
 expression_ref OperationArgs::evaluate(int slot)

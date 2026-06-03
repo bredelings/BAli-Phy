@@ -15,14 +15,11 @@ namespace
 {
     const Runtime::Exp& runtime_slot_ref(const Runtime::Exp& E, int i)
     {
-        if (auto app = E.to<Runtime::App>())
-        {
-            assert(0 <= i);
-            assert(i < app->args.size());
-            return app->args[i];
-        }
-        else
-            std::abort();
+        auto app = E.to<Runtime::App>();
+        assert(app);
+        assert(0 <= i);
+        assert(i < app->args.size());
+        return app->args[i];
     }
 }
 
@@ -66,6 +63,8 @@ int closure::runtime_n_slots() const
 
     if (auto app = code.to<Runtime::App>())
         return app->args.size();
+    else if (code.to<Runtime::Case>())
+        return 1;
     else
         std::abort();
 }

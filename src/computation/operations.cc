@@ -38,9 +38,9 @@ using std::string;
 //
 
 // NOTE: (a) Both seq and $ need to look up the memory location of one of their arguments.
-//       (b) Both seq and $ avoid evaluating the reg at this location. 
-// Thus: Every instead of reference(slot) actually looks up the relevant reg, except for
-//       the case operation, which instead uses reference to determine the branches.
+//       (b) Both seq and $ avoid evaluating the reg at this location.
+// Thus: seq and $ look up the relevant regs, while case examines Runtime::Case
+//       alternatives directly.
 
 string Let::print() const
 {

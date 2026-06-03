@@ -38,12 +38,6 @@ public:
 
     bool operator==(const closure& C2) const {return code == C2.code and Env == C2.Env;}
 
-    // Alternatively I could return std::variant<int,expression_ref>
-    expression_ref arg_for_slot(int i) const
-    {
-        return Runtime::to_expression_ref(runtime_slot(i));
-    }
-
     int reg_for_slot(int i) const
     {
         return runtime_reg_for_slot(i);

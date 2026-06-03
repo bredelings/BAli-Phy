@@ -39,10 +39,6 @@ public:
 
     int runtime_n_slots() const;
 
-    const expression_ref& reference(int slot) const;
-
-    expression_ref arg_for_slot(int slot) const;
-
     Runtime::Exp runtime_slot(int slot) const;
 
     std::optional<int> runtime_reg_for_code(const Runtime::Exp&) const;
@@ -83,10 +79,6 @@ public:
     closure evaluate_slot_to_closure(int);
 
     closure evaluate_slot_to_closure_(int);
-
-    const expression_ref& evaluate_reg_to_object(int);
-
-    const expression_ref& evaluate_reg_to_object_(int);
 
     expression_ref evaluate_slot_to_object(int);
 

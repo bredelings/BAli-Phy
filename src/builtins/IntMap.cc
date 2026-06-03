@@ -431,7 +431,7 @@ closure makeEVector(OperationArgs& Args)
     for(int i=0;i<n;i++)
     {
 	int r = Args.runtime_reg_for_slot(i);
-	auto obj = Args.evaluate_reg_to_object( r );
+	auto obj = Args.evaluate_reg_to_closure(r).legacy_exp();
 	result.push_back( obj );
     }
     return result;
@@ -532,7 +532,7 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
     // Compute the values
     for(auto& [key,reg]: m)
     {
-        auto value = Args.evaluate_reg_to_object(reg);
+        auto value = Args.evaluate_reg_to_closure(reg).legacy_exp();
 	m2->insert({key, value});
     }
 
@@ -563,7 +563,7 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
     // Compute the values
     for(auto& [key,reg]: m)
     {
-        v->push_back( Args.evaluate_reg_to_object(reg) );
+        v->push_back( Args.evaluate_reg_to_closure(reg).legacy_exp() );
     }
 
     // Unreserve the value regs
