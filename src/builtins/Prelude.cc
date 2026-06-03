@@ -8,6 +8,7 @@
 #include "computation/machine/graph_register.H"
 #include "computation/machine/gcobject.H"
 #include "computation/haskell/Integer.H"
+#include "computation/runtime/ast.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;
@@ -451,7 +452,7 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
     {
         Args.evaluate(0);
         int r = Args.reg_for_slot(0);
-        return {index_var(0),{r}};
+        return closure(Runtime::IndexVar(0), {r});
     }
     catch (HaskellException& H)
     {
@@ -471,11 +472,12 @@ extern "C" closure builtin_function_newIORef(OperationArgs& Args)
     // 1. Initial value
     int r = Args.reg_for_slot(0);
 
-    expression_ref E(constructor("Data.IORef.IORef",1),{index_var(0)});
+    Runtime::Exp E = Runtime::App(Runtime::ConstructorApp(constructor("Data.IORef.IORef",1)),
+                                  {Runtime::IndexVar(0)});
 
-    int r_ioref = Args.allocate(closure{E,{r}});
+    int r_ioref = Args.allocate(closure(std::move(E), {r}));
 
-    return {index_var(0), {r_ioref}};
+    return closure(Runtime::IndexVar(0), {r_ioref});
 }
 
 extern "C" closure builtin_function_readIORef(OperationArgs& Args)
@@ -485,7 +487,7 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
     assert(has_constructor(C.exp,"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
-    return {index_var(0), {C.Env[0]}};
+    return closure(Runtime::IndexVar(0), {C.Env[0]});
 }
 
 int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)
@@ -562,11 +564,8 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     int r_func = Args.reg_for_slot(1);
 
     // 3. Allocate new value
-    expression_ref fE = index_var(1);
-    expression_ref argE = index_var(0);
-    expression_ref apply_exp = {fE, argE};
-
-    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+    int r_apply = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                        {r_func, r_value}));
 
     // 4. Write the IORef
     auto& M = Args.memory();
@@ -591,11 +590,8 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     int r_func = Args.reg_for_slot(1);
 
     // 3. Allocate new value
-    expression_ref fE = index_var(1);
-    expression_ref argE = index_var(0);
-    expression_ref apply_exp = {fE, argE};
-
-    int r_apply = Args.allocate({apply_exp,{r_func, r_value}});
+    int r_apply = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                                        {r_func, r_value}));
 
     // 4. Write the IORef
     auto& M = Args.memory();
