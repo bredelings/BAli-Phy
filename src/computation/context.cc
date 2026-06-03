@@ -451,18 +451,12 @@ const expression_ref& context_ref::get_modifiable_value(int R) const
 	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
 }
 
-void context_ref::set_modifiable_value_(int R, closure&& C)
+void context_ref::set_modifiable_value(int R, closure&& C)
 {
     if (auto M = find_modifiable_reg(R))
 	set_reg_value(*M, std::move(C) );
     else
 	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
-}
-
-void context_ref::set_modifiable_value(int R, const expression_ref& E)
-{
-    assert(is_literal_type(E.type()));
-    set_modifiable_value_(R, E);
 }
 
 void context_ref::set_reg_value(int P, closure&& C)

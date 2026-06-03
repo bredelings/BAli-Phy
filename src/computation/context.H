@@ -130,10 +130,7 @@ public:
     void set_reg_value(int R, closure&&);
 
     /// Set the value of a modifiable
-    void set_modifiable_value_(int r, closure&&);
-
-    /// Set the value of a modifiable
-    void set_modifiable_value(int r, const expression_ref&);
+    void set_modifiable_value(int r, closure&&);
 
     /// Swap the steps for two modifiables.
     void interchange_regs(int r1, int r2);
