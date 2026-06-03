@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <optional>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
@@ -13,7 +14,7 @@
 struct closure
 {
 private:
-    expression_ref exp_cache;
+    mutable std::optional<expression_ref> exp_cache = expression_ref{};
 
     /// The runtime expression
     Runtime::Exp code;
@@ -31,7 +32,7 @@ public:
     const Runtime::Exp& get_code() const {return code; }
 
     /// Legacy expression_ref view derived from code.
-    const expression_ref& legacy_exp() const {return exp_cache;}
+    const expression_ref& legacy_exp() const;
 
     void set_code(Runtime::Exp e);
 

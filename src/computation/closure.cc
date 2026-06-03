@@ -34,12 +34,25 @@ namespace
 void closure::set_code(Runtime::Exp c)
 {
     code = std::move(c);
-    exp_cache = Runtime::to_expression_ref(code);
+    if (code.empty())
+        exp_cache = expression_ref{};
+    else
+        exp_cache = std::nullopt;
+}
+
+const expression_ref& closure::legacy_exp() const
+{
+    if (not exp_cache)
+    {
+        assert(has_code());
+        exp_cache = Runtime::to_expression_ref(code);
+    }
+    return *exp_cache;
 }
 
 void closure::clear()
 {
-    exp_cache = {};
+    exp_cache = expression_ref{};
     code = {};
     Env.clear();
 }
