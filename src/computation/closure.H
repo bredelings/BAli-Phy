@@ -27,7 +27,7 @@ public:
     Env_t Env;
 
     /// Is the closure not empty
-    operator bool() const {return exp and exp.head();}
+    operator bool() const {return bool(code);}
 
     bool has_code() const { return not code.empty(); }
 
@@ -35,33 +35,17 @@ public:
 
     void set_code(Runtime::Exp e);
 
-    bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
+    bool operator==(const closure& C2) const {return code == C2.code and Env == C2.Env;}
 
     // Alternatively I could return std::variant<int,expression_ref>
     expression_ref arg_for_slot(int i) const
     {
-        assert(i < exp.sub().size());
-        auto& E = exp.sub()[i];
-        if (E.is_index_var())
-        {
-            int index = E.as_index_var();
-            int r = lookup_in_env(index);
-            return expression_ref(reg_var(r));
-        }
-        else
-            return E;
+        return Runtime::to_expression_ref(runtime_slot(i));
     }
 
     int reg_for_slot(int i) const
     {
-        assert(i < exp.sub().size());
-        auto& E = exp.sub()[i];
-        if (E.is_index_var())
-            return lookup_in_env(E.as_index_var());
-        else if (E.is_reg_var())
-            return E.as_reg_var();
-        else
-            std::abort();
+        return runtime_reg_for_slot(i);
     }
 
     int runtime_n_slots() const;
@@ -72,15 +56,15 @@ public:
 
     bool is_reg_ref() const
     {
-        return exp.is_index_var() or exp.is_reg_var();
+        return code.to<Runtime::IndexVar>() or code.to<Runtime::RegRef>();
     }
 
     int reg_for_ref() const
     {
-        if (exp.is_index_var())
-            return lookup_in_env(exp.as_index_var());
-        else if (exp.is_reg_var())
-            return exp.as_reg_var();
+        if (auto index_var = code.to<Runtime::IndexVar>())
+            return lookup_in_env(index_var->index);
+        else if (auto reg_ref = code.to<Runtime::RegRef>())
+            return reg_ref->target;
         else
             std::abort();
     }
