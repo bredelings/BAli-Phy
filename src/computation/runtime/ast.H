@@ -23,6 +23,7 @@
 #include "computation/haskell/Integer.H"
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
+#include "util/OrderedDouble.H"
 
 struct Operation;
 
@@ -167,6 +168,8 @@ namespace Runtime
         void serialize(Archive& ar) { ar(value); }
     };
 
+    bool operator==(const Exp&, const Exp&);
+
     struct Int
     {
         int value;
@@ -174,16 +177,20 @@ namespace Runtime
         Int() = default;
         Int(int x):value(x) {}
 
+        bool operator==(const Int&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
 
     struct Double
     {
-        double value;
+        OrderedDouble value;
 
         Double() = default;
         Double(double x):value(x) {}
+
+        bool operator==(const Double&) const = default;
 
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
@@ -195,6 +202,11 @@ namespace Runtime
 
         LogDouble() = default;
         LogDouble(log_double_t x):value(x) {}
+
+        bool operator==(const LogDouble& x) const
+        {
+            return OrderedDouble(value.log()) == OrderedDouble(x.value.log());
+        }
 
         template <class Archive>
         void save(Archive& ar) const
@@ -219,6 +231,8 @@ namespace Runtime
         Char() = default;
         Char(char x):value(x) {}
 
+        bool operator==(const Char&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
@@ -230,6 +244,8 @@ namespace Runtime
         String() = default;
         String(std::string x):value(std::move(x)) {}
 
+        bool operator==(const String&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
     };
@@ -240,6 +256,8 @@ namespace Runtime
 
         Integer() = default;
         Integer(integer x):value(std::move(x)) {}
+
+        bool operator==(const Integer&) const = default;
 
         template <class Archive>
         void save(Archive& ar) const
@@ -263,6 +281,11 @@ namespace Runtime
 
         Constructor():value("()", 0) {}
         Constructor(constructor c):value(std::move(c)) {}
+
+        bool operator==(const Constructor& c) const
+        {
+            return value.name() == c.value.name() and value.n_args() == c.value.n_args();
+        }
 
         template <class Archive>
         void save(Archive& ar) const
@@ -295,6 +318,8 @@ namespace Runtime
             assert(not dynamic_pointer_cast<const Box<std::string>>(o));
             assert(not dynamic_pointer_cast<const Box<integer>>(o));
         }
+
+        bool operator==(const ObjectValue&) const;
 
         template <class Archive>
         void save(Archive&) const
@@ -345,6 +370,8 @@ namespace Runtime
         IndexVar() = default;
         IndexVar(int i):index(i) {}
 
+        bool operator==(const IndexVar&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(index); }
     };
@@ -355,6 +382,8 @@ namespace Runtime
 
         GlobalVar() = default;
         GlobalVar(var x):name(std::move(x)) {}
+
+        bool operator==(const GlobalVar&) const = default;
 
         template <class Archive>
         void serialize(Archive& ar) { ar(name); }
@@ -367,6 +396,8 @@ namespace Runtime
         RegRef() = default;
         RegRef(int r):target(r) {}
 
+        bool operator==(const RegRef&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(target); }
     };
@@ -377,6 +408,8 @@ namespace Runtime
 
         Lambda() = default;
         Lambda(Exp b):body(std::move(b)) {}
+
+        bool operator==(const Lambda&) const = default;
 
         template <class Archive>
         void serialize(Archive& ar) { ar(body); }
@@ -390,12 +423,16 @@ namespace Runtime
         Let() = default;
         Let(std::vector<Exp> bs, Exp b):binds(std::move(bs)), body(std::move(b)) {}
 
+        bool operator==(const Let&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(binds, body); }
     };
 
     struct WildcardPattern
     {
+        bool operator==(const WildcardPattern&) const = default;
+
         template <class Archive>
         void serialize(Archive&) {}
     };
@@ -406,6 +443,11 @@ namespace Runtime
 
         ConstructorPattern():head("()", 0) {}
         ConstructorPattern(constructor c):head(std::move(c)) {}
+
+        bool operator==(const ConstructorPattern& p) const
+        {
+            return head.name() == p.head.name() and head.n_args() == p.head.n_args();
+        }
 
         template <class Archive>
         void save(Archive& ar) const
@@ -436,6 +478,8 @@ namespace Runtime
         Alt() = default;
         Alt(Pattern p, Exp b):pattern(std::move(p)), body(std::move(b)) {}
 
+        bool operator==(const Alt&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(pattern, body); }
     };
@@ -448,12 +492,16 @@ namespace Runtime
         Case() = default;
         Case(Exp e, std::vector<Alt> as):object(std::move(e)), alts(std::move(as)) {}
 
+        bool operator==(const Case&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(object, alts); }
     };
 
     struct FunctionApply
     {
+        bool operator==(const FunctionApply&) const = default;
+
         template <class Archive>
         void serialize(Archive&) {}
     };
@@ -466,6 +514,11 @@ namespace Runtime
 
         ConstructorApp():head("()", 0) {}
         ConstructorApp(constructor c):head(std::move(c)) {}
+
+        bool operator==(const ConstructorApp& app) const
+        {
+            return head.name() == app.head.name() and head.n_args() == app.head.n_args();
+        }
 
         template <class Archive>
         void save(Archive& ar) const
@@ -496,6 +549,8 @@ namespace Runtime
         OperationApp(std::shared_ptr<const Operation>, std::string, std::string, std::string);
         OperationApp();
 
+        bool operator==(const OperationApp&) const;
+
         template <class Archive>
         void save(Archive& ar) const
         {
@@ -525,6 +580,8 @@ namespace Runtime
         App() = default;
         App(AppHead h, std::vector<Exp> as):head(std::move(h)), args(std::move(as)) {}
 
+        bool operator==(const App&) const = default;
+
         template <class Archive>
         void serialize(Archive& ar) { ar(head, args); }
     };
@@ -536,6 +593,8 @@ namespace Runtime
 
         Trim() = default;
         Trim(std::vector<int> is, Exp b):indices(std::move(is)), body(std::move(b)) {}
+
+        bool operator==(const Trim&) const = default;
 
         template <class Archive>
         void serialize(Archive& ar) { ar(indices, body); }

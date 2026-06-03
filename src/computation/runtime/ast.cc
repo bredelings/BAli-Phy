@@ -65,6 +65,51 @@ namespace Runtime
     Exp::Exp(App node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Trim node):value(make_exp_value(std::move(node))) {}
 
+    bool ObjectValue::operator==(const ObjectValue& object_value) const
+    {
+        if (value == object_value.value)
+            return true;
+
+        if (not value or not object_value.value)
+            return false;
+
+        return *value == *object_value.value;
+    }
+
+    bool OperationApp::operator==(const OperationApp& app) const
+    {
+        if (lib_name != app.lib_name or func_name != app.func_name or call_conv != app.call_conv)
+            return false;
+
+        if (head == app.head)
+            return true;
+
+        if (not head or not app.head)
+            return false;
+
+        return *head == static_cast<const Object&>(*app.head);
+    }
+
+    bool operator==(const Exp& x, const Exp& y)
+    {
+        if (x.empty() or y.empty())
+            return x.empty() == y.empty();
+
+        if (x.value.index() != y.value.index())
+            return false;
+
+        return std::visit([](const auto& a, const auto& b) -> bool
+        {
+            using A = typename std::decay_t<decltype(a)>::element_type;
+            using B = typename std::decay_t<decltype(b)>::element_type;
+
+            if constexpr (std::is_same_v<A, B>)
+                return *a == *b;
+            else
+                return false;
+        }, x.value, y.value);
+    }
+
     bool Exp::is_atomic_value() const
     {
         return visit([](const auto& e) -> bool
@@ -390,7 +435,7 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Double>)
             {
-                return e.value;
+                return double(e.value);
             }
             else if constexpr (std::is_same_v<T, LogDouble>)
             {
