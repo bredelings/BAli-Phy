@@ -1,6 +1,7 @@
 #include "operations.H"
 #include "computation/machine/args.H"
 #include "computation/machine/graph_register.H"
+#include "computation/runtime/ast.H"
 #include "math/exponential.H"
 #include "util/myexception.H"
 #include "expression/index_var.H"
@@ -103,14 +104,17 @@ closure apply_op(OperationArgs& Args)
     closure C = Args.evaluate_slot_to_closure(0);
     int n_args_given = Args.n_args()-1;
 
-    if (not C.exp.head().is_a<lambda2>())
+    int n_args_needed = C.has_code() ? Runtime::count_lambdas(C.get_code()) : get_n_lambdas(C.exp);
+    if (n_args_needed == 0)
 	throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
-    int n_args_needed = get_n_lambdas(C.exp);
     assert(n_args_needed >= 1);
     assert(n_args_given >= 1);
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
-    C.set_legacy_exp(peel_n_lambdas(C.exp, n_args_applied));
+    if (C.has_code())
+        C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
+    else
+        C.set_legacy_exp(peel_n_lambdas(C.exp, n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
 	int arg = Args.current_closure().reg_for_slot(i+1);
@@ -134,8 +138,21 @@ closure apply_op(OperationArgs& Args)
 
 	    args.push_back(index_var(n_args_given - i -1));
 	}
-	expression_ref E2 = apply_expression( index_var(n_args_given - n_args_needed), args );
-	return {E2,Env};
+        if (C.has_code())
+        {
+            vector<Runtime::Exp> runtime_args;
+            for(int i=n_args_needed;i<n_args_given;i++)
+                runtime_args.push_back(Runtime::IndexVar(n_args_given - i - 1));
+
+            return closure(Runtime::apply(Runtime::IndexVar(n_args_given - n_args_needed),
+                                          std::move(runtime_args)),
+                           Env);
+        }
+        else
+        {
+            expression_ref E2 = apply_expression(index_var(n_args_given - n_args_needed), args);
+            return {E2,Env};
+        }
     }
 }
 
