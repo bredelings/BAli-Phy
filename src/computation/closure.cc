@@ -44,24 +44,35 @@ closure get_trimmed(const closure& C)
 
 void do_trim(closure& C)
 {
-    if (C.exp.head().type() == type_constant::trim_type)
+    vector<int> keep;
+    if (const auto* trim = C.get_code().to<Runtime::Trim>())
     {
-	expression_ref old = C.exp;
-	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
+        keep = trim->indices;
+        C.set_code(trim->body);
 
-	C.set_legacy_exp(C.exp.sub()[1]);
-
-	// Since environments are indexed backwards
-	for(int i=0;i<keep.size();i++)
-	{
-	    int k = keep[keep.size()-1-i];
-	    C.Env[i] = C.lookup_in_env(k);
-	}
-	C.Env.resize(keep.size());
-
-	// Should this ever happen?
-	assert(not C.exp.head().is_a<Trim>());
+        assert(not C.get_code().to<Runtime::Trim>());
     }
+    else if (C.exp.head().type() == type_constant::trim_type)
+    {
+        expression_ref old = C.exp;
+        keep = old.sub()[0].as_<Vector<int>>();
+
+        C.set_legacy_exp(old.sub()[1]);
+
+        assert(not C.exp.head().is_a<Trim>());
+    }
+    else
+        return;
+
+    // Since environments are indexed backwards
+    for(int i=0;i<keep.size();i++)
+    {
+        int k = keep[keep.size()-1-i];
+        C.Env[i] = C.lookup_in_env(k);
+    }
+    C.Env.resize(keep.size());
+
+
 }
 
 closure get_trimmed(closure&& C)

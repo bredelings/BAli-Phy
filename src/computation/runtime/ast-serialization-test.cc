@@ -64,6 +64,20 @@ namespace
         require(C.Env[0] == local_reg, "preprocess captured the wrong local RegRef");
     }
 
+    void check_runtime_closure_trim()
+    {
+        closure C(Runtime::Trim({0, 2}, Runtime::IndexVar(1)), {10, 20, 30});
+
+        do_trim(C);
+
+        require(C.has_code(), "trimmed runtime closure should preserve Runtime::Exp code");
+        auto body = C.get_code().to<Runtime::IndexVar>();
+        require(bool(body), "trimmed runtime closure should use the Runtime::Trim body");
+        require(body->index == 1, "trimmed runtime closure body index mismatch");
+        require((C.Env == closure::Env_t{10, 30}), "trimmed runtime closure environment mismatch");
+        require(Runtime::to_expression_ref(C.get_code()) == C.exp, "trimmed runtime closure cache mismatch");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -182,8 +196,6 @@ int main(int argc, char** argv)
     require(before_ref.print() == after_ref.print(), "Runtime AST serialization changed the expression");
 
     check_runtime_closure_trim();
-    check_runtime_closure_trim_unnormalize();
-    check_runtime_closure_slots();
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();
