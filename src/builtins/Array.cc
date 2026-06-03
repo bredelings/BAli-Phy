@@ -39,7 +39,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.exp = exp;
+    result.set_legacy_exp(exp);
   
     return result;
 }
@@ -102,8 +102,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.exp = exp;
+    result.set_legacy_exp(exp);
 
     return result;
 }
-

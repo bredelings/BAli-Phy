@@ -33,6 +33,8 @@ public:
 
     void set_code(Runtime::Exp e);
 
+    void set_legacy_exp(expression_ref e);
+
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
     // Alternatively I could return std::variant<int,expression_ref>

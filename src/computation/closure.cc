@@ -15,9 +15,16 @@ void closure::set_code(Runtime::Exp c)
     exp = Runtime::to_expression_ref(code);
 }
 
+void closure::set_legacy_exp(expression_ref e)
+{
+    code = {};
+    exp = std::move(e);
+}
+
 void closure::clear()
 {
-    exp.clear();
+    exp_cache = {};
+    code = {};
     Env.clear();
 }
 
@@ -42,7 +49,7 @@ void do_trim(closure& C)
 	expression_ref old = C.exp;
 	const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
-	C.exp = C.exp.sub()[1];
+	C.set_legacy_exp(C.exp.sub()[1]);
 
 	// Since environments are indexed backwards
 	for(int i=0;i<keep.size();i++)
@@ -76,6 +83,6 @@ expression_ref deindexify(const closure& C)
 closure trim_unnormalize(const closure& C)
 {
     closure C2 = C;
-    C2.exp = trim_unnormalize(C2.exp);
+    C2.set_legacy_exp(trim_unnormalize(C2.exp));
     return C2;
 }
