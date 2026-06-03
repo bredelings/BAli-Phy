@@ -15,7 +15,7 @@ closure modifiable_op(OperationArgs& Args)
         int x = Args.reg_for_slot(0);
 
         // 2. Allocate a new reg m with closure (modifiable).
-        int m = Args.allocate( {modifiable(),{}} );
+        int m = Args.allocate( {expression_ref(modifiable()),{}} );
 
         // 3. Mark m changeable.
         M.mark_reg_changeable(m);

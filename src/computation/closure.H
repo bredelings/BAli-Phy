@@ -103,24 +103,6 @@ struct closure
 	:closure(e, Env_t(E))
 	{ }
 
-    // Constructing w/ an environment
-    closure(Object* o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
-
-    closure(const object_ptr<const Object>& o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
-
-    template <typename T>
-    closure(const object_ptr<T>& o, const Env_t& E)
-	:closure(expression_ref(o),E)
-	{ }
-
-    closure(const Object& O, const Env_t& E):closure(expression_ref(O),E) { }
-
-    closure(const Object& O, std::initializer_list<int> E):closure(O,Env_t(E)) { }
-
     // Constructing w/o an environment
     closure(Object* o)
 	:closure(expression_ref(o))

@@ -40,7 +40,7 @@ closure interchangeable_op(OperationArgs& Args)
 	int x = Args.reg_for_slot(1);
 
 	// 2. Allocate a new reg i with closure (interchangeable)
-	int i = Args.allocate( {interchangeable(), {}} );
+	int i = Args.allocate( {expression_ref(interchangeable()), {}} );
 
 	// 3. Mark i changeable
 	M.mark_reg_changeable(i);
