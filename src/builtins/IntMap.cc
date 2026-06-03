@@ -36,7 +36,7 @@ extern "C" closure builtin_function_singleton(OperationArgs& Args)
 
     m.insert(key,v_reg);
 
-    return {m};
+    return closure::object_value(m);
 }
 
 extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
@@ -89,7 +89,7 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
         m2.insert(k,r2);
     }
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
@@ -110,7 +110,7 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
         m2.insert(k,r_val2);
     }
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
@@ -121,7 +121,7 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
     m.erase(key);
 
-    return m;
+    return closure::object_value(m);
 }
 
 
@@ -135,7 +135,7 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 
     m.insert(key,v_reg);
 
-    return m;
+    return closure::object_value(m);
 }
 
 extern "C" closure builtin_function_insertWith(OperationArgs& Args)
@@ -157,7 +157,7 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     else 
         m.insert(key, v2_reg);
 
-    return m;
+    return closure::object_value(m);
 }
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
@@ -170,7 +170,7 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     for(auto& [k,v]: m)
         V.push_back(k);
 
-    return V;
+    return closure::object_value(V);
 }
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
@@ -191,7 +191,7 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
             if (not m3.has_key(k))
                 m3.insert(k,v);
         }
-        return m3;
+        return closure::object_value(m3);
     }
     else
     {
@@ -199,7 +199,7 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
         auto m3 = m2;
         for(auto& [k,v]: m1)
             m3.insert(k,v);
-        return m3;
+        return closure::object_value(m3);
     }
 }
 
@@ -229,7 +229,7 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
                 m3.insert(key, v2_reg);
         }
 
-        return m3;
+        return closure::object_value(m3);
     }
     else
     {
@@ -248,7 +248,7 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
                 m3.insert(key, v1_reg);
         }
 
-        return m3;
+        return closure::object_value(m3);
     }
 }
 
@@ -268,7 +268,7 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
             if (not m2.has_key(k))
                 m3.insert(k,v);
         }
-        return m3;
+        return closure::object_value(m3);
     }
     else
     {
@@ -276,7 +276,7 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
         auto m3 = m1;
         for(auto& [k,v]: m2)
             m3.erase(k);
-        return m3;
+        return closure::object_value(m3);
     }
 }
 
@@ -330,7 +330,7 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
                 m3.insert(k,v1);
             }
     }
-    return m3;
+    return closure::object_value(m3);
 }
 
 extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
@@ -374,7 +374,7 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
         }
 
     }
-    return m3;
+    return closure::object_value(m3);
 }
 
 extern "C" closure builtin_function_fromSet(OperationArgs& Args)
@@ -393,7 +393,7 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
         m.insert(k,r2);
     }
 
-    return m;
+    return closure::object_value(m);
 }
 
 extern "C" closure builtin_function_keysSet(OperationArgs& Args)
@@ -406,7 +406,7 @@ extern "C" closure builtin_function_keysSet(OperationArgs& Args)
     for(auto& [k,v]: m)
         keys = keys.insert(k);
 
-    return keys;
+    return closure::object_value(keys);
 }
 
 
@@ -424,7 +424,7 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 	if (map0.has_key(k))
 	    result.insert(k, map0[k]);
 
-    return result;
+    return closure::object_value(result);
 }
 
 // OK, so the problem is that if we a builtin op like (restrictKeysToVector map keys),
@@ -447,7 +447,7 @@ closure makeEVector(OperationArgs& Args)
 	auto obj = Args.evaluate_slot_to_object(i);
 	result.push_back( obj );
     }
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
@@ -490,7 +490,7 @@ extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
     for(auto& k: keys)
 	result.erase(k);
 
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_esubscript(OperationArgs& Args)
@@ -500,7 +500,7 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& m = arg0.as_<EIntMap>();
 
-    return closure::legacy_expression(m.at(key));
+    return closure::object_value(m.at(key));
 }
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
@@ -513,7 +513,7 @@ extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
     for(auto& [k,v]: m)
         keys = keys.insert(k);
 
-    return keys;
+    return closure::object_value(keys);
 }
 
 extern "C" closure builtin_function_forceAll(OperationArgs& Args)
@@ -555,7 +555,7 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
         Args.stack_pop(reg);
     }
 
-    return m2;
+    return closure::object_value(m2);
 }
 
 extern "C" closure builtin_function_toVector(OperationArgs& Args)
@@ -585,5 +585,5 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
         Args.stack_pop(reg);
     }
 
-    return v;
+    return closure::object_value(v);
 }

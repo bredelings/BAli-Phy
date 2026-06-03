@@ -82,7 +82,7 @@ extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
         v->push_back(E2.as_<EPair>().first);
     }
 
-    return v;
+    return closure::object_value(v);
 }
 
 extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
@@ -97,14 +97,14 @@ extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
         (*s) += E2.as_<EPair>().first.as_char();
     }
 
-    return s;
+    return closure::object_value(s);
 }
 
 extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
 {
     object_ptr<String> s (new String);
 
-    return s;
+    return closure::object_value(s);
 }
 
 extern "C" closure builtin_function_showObject(OperationArgs& Args)
@@ -125,18 +125,18 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
     auto& V = arg.as_<EVector>();
     int I = V.size();
     if (I <= 0)
-        return Box<Matrix>();
+        return closure::object_value(Box<Matrix>());
 
     int J = V[0].as_<EVector>().size();
     if (J <= 0)
-        return Box<Matrix>();
+        return closure::object_value(Box<Matrix>());
 
     auto M = new Box<Matrix>(I,J);
     for(int i=0;i<I;i++)
         for(int j=0;j<J;j++)
             (*M)(i,j) = V[i].as_<EVector>()[j].as_double();
 
-    return M;
+    return closure::object_value(M);
 }
 
 extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
@@ -151,7 +151,7 @@ extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
         for(int j=0;j<M.size2();j++)
             V.push_back(M(i,j));
 
-    return V;
+    return closure::object_value(V);
 }
 
 extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
@@ -172,5 +172,5 @@ extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
         for(int j=0;j<s2;j++)
             M(i,j) = V[k++].as_double();
 
-    return Mptr;
+    return closure::object_value(Mptr);
 }

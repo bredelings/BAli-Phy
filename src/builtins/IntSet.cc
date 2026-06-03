@@ -55,7 +55,7 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
     S = S.erase(e);
 
-    return S;
+    return closure::object_value(S);
 }
 
 
@@ -67,7 +67,7 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 
     S = S.insert(e);
 
-    return S;
+    return closure::object_value(S);
 }
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     for(auto& k: S)
         V.push_back(k);
 
-    return V;
+    return closure::object_value(V);
 }
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
@@ -96,14 +96,14 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
         auto S3 = S1;
         for(auto& k: S2)
             S3 = S3.insert(k);
-        return S3;
+        return closure::object_value(S3);
     }
     else
     {
         auto S3 = S2;
         for(auto& k: S1)
             S3 = S3.insert(k);
-        return S3;
+        return closure::object_value(S3);
     }
 }
 
@@ -121,14 +121,14 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
         for(auto& k: S1)
             if (not S2.find(k))
                 S3 = S3.insert(k);
-        return S3;
+        return closure::object_value(S3);
     }
     else
     {
         auto S3 = S1;
         for(auto& k: S2)
             S3 = S3.erase(k);
-        return S3;
+        return closure::object_value(S3);
     }
 }
 
@@ -141,9 +141,9 @@ extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
 
     for(auto k: S1)
         if (not S2.find(k))
-            return closure::legacy_expression(bool_false);
+            return false;
 
-    return closure::legacy_expression(bool_true);
+    return true;
 }
 
 
@@ -170,9 +170,9 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
     }
 
     if (disjoint)
-        return closure::legacy_expression(bool_true);
+        return true;
     else
-        return closure::legacy_expression(bool_false);
+        return false;
 }
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
@@ -196,7 +196,7 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
             if (S1.find(k))
                 S3 = S3.insert(k);
     }
-    return S3;
+    return closure::object_value(S3);
 }
 
 extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
@@ -208,5 +208,5 @@ extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
     for(int b: S1)
 	S2 = S2.insert(-b);
 
-    return S2;
+    return closure::object_value(S2);
 }

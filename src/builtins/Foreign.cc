@@ -83,49 +83,49 @@ extern "C" closure builtin_function_c_json(OperationArgs& Args)
 
     Box<json::value> J = c_json(j);
 
-    return (const Object&)J;
+    return closure::object_value((const Object&)J);
 }
 
 extern "C" closure builtin_function_ejson_array(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_<EVector>();
-    return { EPair(0, j) };
+    return closure::object_value(EPair(0, j));
 }
 
 extern "C" closure builtin_function_ejson_object(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_<EVector>();
-    return { EPair(1, j) };
+    return closure::object_value(EPair(1, j));
 }
 
 extern "C" closure builtin_function_ejson_inumber(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_int();
-    return { EPair(2, j) };
+    return closure::object_value(EPair(2, j));
 }
 
 extern "C" closure builtin_function_ejson_fnumber(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_double();
-    return { EPair(3, j) };
+    return closure::object_value(EPair(3, j));
 }
 
 extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
 {
     auto j = Args.evaluate(0);
-    return { EPair(4, j) };
+    return closure::object_value(EPair(4, j));
 }
 
 extern "C" closure builtin_function_ejson_string(OperationArgs& Args)
 {
     auto j = Args.evaluate(0).as_<String>();
-    return { EPair(5, j) };
+    return closure::object_value(EPair(5, j));
 }
 
 extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 {
     auto j = Args.evaluate(0);
-    return { EPair(6, 0) };
+    return closure::object_value(EPair(6, 0));
 }
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
@@ -158,7 +158,7 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 
     expression_ref m2 = mapping;
 
-    return { EPair(tsv_header, m2) };
+    return closure::object_value(EPair(tsv_header, m2));
 }
 
 extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
@@ -172,7 +172,7 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     auto sample2 = MCON::atomize(MCON::unnest(sample), true);
 
     object_ptr<String> result = new String(MCON::tsv_line(MCON::get_row(mapping, sample2)));
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Args)
@@ -197,5 +197,5 @@ extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Arg
     o<<"]";
 
     object_ptr<String> result = new String(o.str());
-    return result;
+    return closure::object_value(result);
 }

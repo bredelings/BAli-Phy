@@ -16,7 +16,7 @@ extern "C" closure builtin_function_getArgs(OperationArgs& Args)
     for(const auto& arg: M.args)
         V.push_back(String(arg));
 
-    return V;
+    return closure::object_value(V);
 }
 
 extern "C" closure builtin_function_getEnvRaw(OperationArgs& Args)

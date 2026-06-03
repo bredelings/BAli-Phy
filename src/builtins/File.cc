@@ -39,7 +39,7 @@ extern "C" closure builtin_function_openFileRaw(OperationArgs& Args)
     if (not *handle)
         throw myexception()<<"readFile: can't open file "<<filename;
 
-    return handle;
+    return closure::object_value(handle);
 }
 
 // FilePath -> Int -> RealWorld -> Handle
@@ -65,14 +65,14 @@ extern "C" closure builtin_function_openBinaryFileRaw(OperationArgs& Args)
     if (not *handle)
         throw myexception()<<"readFile: can't open file "<<filename;
 
-    return handle;
+    return closure::object_value(handle);
 }
 
 extern "C" closure builtin_function_stdin(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cin.rdbuf() );
 
-    return handle;
+    return closure::object_value(handle);
 }
 
 
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_stdout(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cout.rdbuf() );
 
-    return handle;
+    return closure::object_value(handle);
 }
 
 
@@ -88,7 +88,7 @@ extern "C" closure builtin_function_stderr(OperationArgs& /*Args*/)
 {
     Handle handle = std::make_shared<std::iostream>( std::cerr.rdbuf() );
 
-    return handle;
+    return closure::object_value(handle);
 }
 
 
@@ -110,14 +110,14 @@ extern "C" closure builtin_function_hIsEOF(OperationArgs& Args)
     auto handle = Args.evaluate(0).as_<Handle>();
 
     if (handle->eof())
-        return closure::legacy_expression(bool_true);
+        return true;
 
     std::streambuf* sb = handle->rdbuf();
     int c = sb->sgetc();
     if (c == std::streambuf::traits_type::eof())
-        return closure::legacy_expression(bool_true);
+        return true;
 
-    return closure::legacy_expression(bool_false);
+    return false;
 }
 
 // Handle -> Char -> RealWorld -> ()
@@ -163,7 +163,7 @@ extern "C" closure builtin_function_hGetLineRaw(OperationArgs& Args)
 
     portable_getline(*handle, *result);
 
-    return result;
+    return closure::object_value(result);
 }
 
 // Handle -> RealWorld -> CPPString
@@ -173,7 +173,7 @@ extern "C" closure builtin_function_hGetContentsRaw(OperationArgs& Args)
 
     object_ptr<String> contents = new String(std::istreambuf_iterator<char>(*handle), std::istreambuf_iterator<char>());
 
-    return contents;
+    return closure::object_value(contents);
 }
 
 // Handle -> RealWorld -> Integer
@@ -244,12 +244,12 @@ extern "C" closure builtin_function_hIsOpen(OperationArgs& Args)
     if (auto fhandle = std::dynamic_pointer_cast<std::fstream>(handle))
     {
         if (fhandle->is_open())
-            return closure::legacy_expression(bool_true);
+            return true;
         else
-            return closure::legacy_expression(bool_false);
+            return false;
     }
     else
-        return closure::legacy_expression(bool_true);
+        return true;
 }
 
 extern "C" closure builtin_function_hLookAhead(OperationArgs& Args)

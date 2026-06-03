@@ -16,7 +16,7 @@ extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();
 
-    return { bitvector(n) };
+    return closure::object_value(bitvector(n));
 }
 
 extern "C" closure builtin_function_complement(OperationArgs& Args)
@@ -25,7 +25,7 @@ extern "C" closure builtin_function_complement(OperationArgs& Args)
 
     bitvector v2 = ~arg0.as_<bitvector>();
 
-    return { v2 };
+    return closure::object_value(v2);
 }
 
 
@@ -36,7 +36,7 @@ extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
 
     bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
 
-    return { v2 };
+    return closure::object_value(v2);
 }
 
 
@@ -47,7 +47,7 @@ extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
 
     bitvector v2 = arg0.as_<bitvector>() & arg1.as_<bitvector>();
 
-    return { v2 };
+    return closure::object_value(v2);
 }
 
 extern "C" closure builtin_function_eq(OperationArgs& Args)
@@ -77,7 +77,7 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 
     bitvector v2 = arg0.as_<bitvector>() ^ arg1.as_<bitvector>();
 
-    return { v2 };
+    return closure::object_value(v2);
 }
 
 extern "C" expression_ref simple_function_size(vector<expression_ref>& args)
@@ -110,7 +110,7 @@ extern "C" closure builtin_function_set_bit(OperationArgs& Args)
     int n = Args.evaluate(1).as_int();
     x.set(n);
 
-    return { x };
+    return closure::object_value(x);
 }
 
 extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
@@ -121,7 +121,7 @@ extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
     int n = Args.evaluate(1).as_int();
     x.set(n, false);
 
-    return { x };
+    return closure::object_value(x);
 }
 
 extern "C" closure builtin_function_alignment_row_to_presence_bitvector(OperationArgs& Args)
@@ -136,7 +136,7 @@ extern "C" closure builtin_function_alignment_row_to_presence_bitvector(Operatio
     for(int col=0; col<A.length(); col++)
 	v.set(col, a.is_feature(A(col,row)));
 
-    return { v };
+    return closure::object_value(v);
 }
 
 extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& Args)
@@ -153,5 +153,5 @@ extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& 
     for(int i=0;i<v1.size();i++)
 	a->push_back(v1.test(i), v2.test(i));
 
-    return a;
+    return closure::object_value(a);
 }
