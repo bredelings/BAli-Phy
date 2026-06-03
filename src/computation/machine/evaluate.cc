@@ -169,8 +169,43 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
 
 vector<R::Exp> e_value_stack;
 
-R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
+namespace
 {
+    R::Exp canonical_e_op_value(const R::Exp& E)
+    {
+        if (auto app = E.to<R::App>())
+        {
+            if (not std::holds_alternative<R::ConstructorApp>(app->head))
+                return E;
+
+            vector<R::Exp> args;
+            for(const auto& arg: app->args)
+                args.push_back(canonical_e_op_value(arg));
+
+            return R::App(app->head, std::move(args));
+        }
+        else if (auto object_value = E.to<R::ObjectValue>())
+        {
+            if (auto s = dynamic_cast<const ::String*>(object_value->value.get()))
+                return R::String(s->value());
+            else if (auto i = dynamic_cast<const ::Integer*>(object_value->value.get()))
+                return R::Integer(i->value());
+        }
+
+        return E;
+    }
+}
+
+R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
+{
+    auto app = E.to<R::App>();
+    assert(app);
+
+    auto op_app = std::get_if<R::OperationApp>(&app->head);
+    assert(op_app);
+    assert(op_app->head);
+    assert(op_app->head->e_op);
+
     int initial_size = e_value_stack.size();
 
     // Can we stop referencing the current closure?
@@ -178,8 +213,8 @@ R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
     //   to point to a non-reference.
     // If we could assume that closures that are currently being executed will not
     //   be modified, that would be helpful for writing simpler code I expect.
-    int n_args = E.size();
-    auto f = E.head().as_ptr_to<Operation>()->e_op;
+    int n_args = app->args.size();
+    auto f = op_app->head->e_op;
 
     // Reserve space for the n_args arguments.
     e_value_stack.resize(initial_size + n_args);
@@ -187,29 +222,27 @@ R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
     // Evaluate the arguments in left-to-right order.
     for(int i=0;i<n_args;i++)
     {
-        const auto& arg_ref = E.sub()[i];
+        const auto& arg_ref = app->args[i];
         R::Exp arg;
-        if (arg_ref.is_reg_var())
+        if (auto reg_ref = arg_ref.to<R::RegRef>())
         {
-            int r_arg = arg_ref.as_reg_var();
-
-            arg = R::e_op_value(Args.evaluate_reg_to_object( r_arg ));
+            arg = canonical_e_op_value(Args.evaluate_reg_to_closure(reg_ref->target).get_code());
         }
-        else if (arg_ref.is_index_var())
+        else if (auto index_var = arg_ref.to<R::IndexVar>())
         {
             // In theory r_arg could change if r_i initially points to an index_var.
-            int r_i = arg_ref.as_index_var();
+            int r_i = index_var->index;
             int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
 
-            arg = R::e_op_value(Args.evaluate_reg_to_object( r_arg ));
+            arg = canonical_e_op_value(Args.evaluate_reg_to_closure(r_arg).get_code());
         }
-        else if (auto O = arg_ref.head().to<Operation>(); O and O->e_op)
+        else if (is_eop_exp(arg_ref))
         {
             arg = evaluate_e_op(Args, arg_ref);
         }
         else
         {
-            arg = R::e_op_value(arg_ref);
+            arg = canonical_e_op_value(arg_ref);
         }
 
         assert(arg.is_value());
@@ -232,7 +265,7 @@ R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 closure evaluate_e_op_to_c(OperationArgs& Args)
 {
     // Make a copy here because the location of Args.current_closure() can change if the heap grows.
-    auto E = Args.current_closure().legacy_exp();
+    auto E = Args.current_closure().get_code();
     return closure(evaluate_e_op(Args, E));
 }
 

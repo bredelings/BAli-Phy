@@ -227,7 +227,7 @@ closure case_op(OperationArgs& Args)
             return seq_op(Args, runtime_case);
     }
 
-    auto& in_object = Args.reference(0);
+    auto& in_object = runtime_case.object;
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
