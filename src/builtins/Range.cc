@@ -14,7 +14,7 @@ extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
     if (U)
         b.upper_bound = U->as_double();
   
-    return b;
+    return closure::object_value(b);
 }
 
 extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
@@ -29,5 +29,5 @@ extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
     if (U)
         b.upper_bound = U->as_int();
   
-    return b;
+    return closure::object_value(b);
 }

@@ -935,7 +935,7 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
     for(auto& [h,l]: compressed_states)
         ecs.push_back(EPair(h,l));
 
-    return { ecs };
+    return closure::object_value(ecs);
 }
 
 extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
@@ -1563,7 +1563,7 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
         else
             haplotype[site] = 0;
     }
-    return H;
+    return closure::object_value(H);
 }
 
 extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs& Args)
@@ -1612,7 +1612,7 @@ extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs&
         // Record the value for the haplotype
         haplotype[i] = emitted_letter;
     }
-    return {haplotype};
+    return closure::object_value(haplotype);
 }
 
 
@@ -1786,7 +1786,7 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
         reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
     }
 
-    return reads;
+    return closure::object_value(reads);
 }
 
 int get_allele_from_state(int state, int i)
@@ -1881,7 +1881,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
 
     object_ptr<Box<matrix<log_double_t>>> result = new Box<matrix<log_double_t>>;
     *result = emission_pr(K, reads, haplotypes, weights, error_rate, concentration, outlier_frac);
-    return result;
+    return closure::object_value(result);
 }
 
 log_double_t shift_gaussian(context_ref& C, int r, double scale)
@@ -2058,7 +2058,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     }
 
     for(int i=0;i<N;i++)
-        C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+        C.set_reg_value(haplotype_regs[i], closure::object_value(new_haplotypes[i]));
 
     log_double_t ratio = pr_sample_0 / pr_sample_1;
 
@@ -2215,7 +2215,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     }
 
     for(int i=0;i<N;i++)
-        C1.set_reg_value(haplotype_regs[i], new_haplotypes1[i]);
+        C1.set_reg_value(haplotype_regs[i], closure::object_value(new_haplotypes1[i]));
     auto Pr1_over_Pr0 = (log_double_t)C1.heated_probability_ratio(C0);
 
     // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
@@ -2223,7 +2223,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     assert( std::abs( log(Pr1_over_Pr0) - log(pr_sample_1/pr_sample_0) ) < 1.0e-9 );
 
     for(int i=0;i<N;i++)
-        C2.set_reg_value(haplotype_regs[i], new_haplotypes2[i]);
+        C2.set_reg_value(haplotype_regs[i], closure::object_value(new_haplotypes2[i]));
     auto Pr2_over_Pr0 = (log_double_t)C2.heated_probability_ratio(C0);
 
     if (log_verbose >= 4)
@@ -2362,7 +2362,7 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
     }
 
     for(int i=0;i<n_resample_haps;i++)
-        C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+        C.set_reg_value(haplotype_regs[i], closure::object_value(new_haplotypes[i]));
 
     //---------- 6. Compute total probability-----------//
     log_double_t total = 0;
@@ -2518,7 +2518,7 @@ log_double_t resample_haps_from_panel(context_ref& C,
     }
 
     for(int i=0;i<n_resample_haps;i++)
-        C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+        C.set_reg_value(haplotype_regs[i], closure::object_value(new_haplotypes[i]));
 
     //---------- 6. Compute total probability-----------//
     log_double_t total = 0;

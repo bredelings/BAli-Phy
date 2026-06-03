@@ -41,7 +41,7 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 	    mask.flip(i);
     }
 
-    return mask_;
+    return closure::object_value(mask_);
 }
 
 
@@ -64,7 +64,7 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
             seq2.push_back(c);
     }
 
-    return Seq2;
+    return closure::object_value(Seq2);
 }
 
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
@@ -74,10 +74,10 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::simple_sequence_likelihoods2(arg3.as_<EVector>(),   // sequence
-                                                      *arg0.as_<Alphabet>(), // alphabet
-                                                      arg1.as_<EVector>(),   // smap
-                                                      arg2.as_int());        // n_models
+    return closure::object_value(substitution::simple_sequence_likelihoods2(arg3.as_<EVector>(),   // sequence
+                                                                            *arg0.as_<Alphabet>(), // alphabet
+                                                                            arg1.as_<EVector>(),   // smap
+                                                                            arg2.as_int()));       // n_models
 }
 
 
@@ -89,11 +89,11 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
-						 arg1.as_<EVector>(),        // LCB
-						 arg2.as_<EVector>(),        // A
-						 arg3.as_<EVector>(),        // transition_P
-						 arg4.as_<Box<Matrix>>()  ); // F
+    return closure::object_value(substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
+                                                                       arg1.as_<EVector>(),        // LCB
+                                                                       arg2.as_<EVector>(),        // A
+                                                                       arg3.as_<EVector>(),        // transition_P
+                                                                       arg4.as_<Box<Matrix>>()));  // F
 }
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
@@ -118,11 +118,11 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_branch_away_from_root(arg0.as_<EVector>(),        // LCN
-						    arg1.as_<EVector>(),        // LCB
-						    arg2.as_<EVector>(),        // A
-						    arg3.as_<EVector>(),        // transition_P
-						    arg4.as_<Box<Matrix>>());   // F
+    return closure::object_value(substitution::peel_branch_away_from_root(arg0.as_<EVector>(),        // LCN
+                                                                          arg1.as_<EVector>(),        // LCB
+                                                                          arg2.as_<EVector>(),        // A
+                                                                          arg3.as_<EVector>(),        // transition_P
+                                                                          arg4.as_<Box<Matrix>>()));  // F
 }
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
@@ -146,10 +146,10 @@ extern "C" closure builtin_function_peelBranchTowardRootNonEq(OperationArgs& Arg
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_branch_toward_root_non_eq(arg0,        // LCN
-							arg1,        // LCB
-							arg2,        // A
-							arg3);       // transition_P
+    return closure::object_value(substitution::peel_branch_toward_root_non_eq(arg0,        // LCN
+                                                                              arg1,        // LCB
+                                                                              arg2,        // A
+                                                                              arg3));      // transition_P
 }
 
 extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& Args)
@@ -160,11 +160,11 @@ extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& A
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_branch_away_from_root_non_eq(arg0.as_<EVector>(),        // LCN
-							   arg1.as_<EVector>(),        // LCB
-							   arg2.as_<EVector>(),        // A
-							   arg3.as_<EVector>(),        // transition_P
-							   arg4.as_<Box<Matrix>>());   // F
+    return closure::object_value(substitution::peel_branch_away_from_root_non_eq(arg0.as_<EVector>(),        // LCN
+                                                                                 arg1.as_<EVector>(),        // LCB
+                                                                                 arg2.as_<EVector>(),        // A
+                                                                                 arg3.as_<EVector>(),        // transition_P
+                                                                                 arg4.as_<Box<Matrix>>()));  // F
 }
 
 extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
@@ -188,7 +188,7 @@ extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
 
     object_ptr<Box<Matrix>> F2 = new Box<Matrix>(propagate_frequencies(arg0.as_<Box<Matrix>>(), // F
 								       arg1.as_<EVector>()));   // transition_P
-    return F2;
+    return closure::object_value(F2);
 }
 
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
@@ -198,10 +198,10 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::sample_root_sequence(arg0.as_<EVector>(),      // LCN
-                                              arg1.as_<EVector>(),      // LCB
-                                              arg2.as_<EVector>(),      // As
-                                              arg3.as_<Box<Matrix>>()); // F
+    return closure::object_value(substitution::sample_root_sequence(arg0.as_<EVector>(),      // LCN
+                                                                    arg1.as_<EVector>(),      // LCB
+                                                                    arg2.as_<EVector>(),      // As
+                                                                    arg3.as_<Box<Matrix>>())); // F
 }
 
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
@@ -214,13 +214,13 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     auto arg5 = Args.evaluate(5);
     auto arg6 = Args.evaluate(6);
 
-    return substitution::sample_branch_sequence(arg0.as_<Vector<pair<int,int>>>(),     // parent_seq
-						arg1.as_<Box<pairwise_alignment_t>>(), // parent_A
-						arg2.as_<EVector>(),                   // LCN
-						arg3.as_<EVector>(),                   // LCB
-						arg4.as_<EVector>(),                   // A
-						arg5.as_<EVector>(),                   // transition_P
-						arg6.as_<Box<Matrix>>());              // F
+    return closure::object_value(substitution::sample_branch_sequence(arg0.as_<Vector<pair<int,int>>>(),     // parent_seq
+                                                                      arg1.as_<Box<pairwise_alignment_t>>(), // parent_A
+                                                                      arg2.as_<EVector>(),                   // LCN
+                                                                      arg3.as_<EVector>(),                   // LCB
+                                                                      arg4.as_<EVector>(),                   // A
+                                                                      arg5.as_<EVector>(),                   // transition_P
+                                                                      arg6.as_<Box<Matrix>>()));             // F
 }
 
 // maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
@@ -247,7 +247,7 @@ extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
             C = alphabet::gap;
     }
 
-    return sequence;
+    return closure::object_value(sequence);
 }
 
 extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
@@ -259,7 +259,7 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
     Vector<pair<int,int>> sequence(L);
     for(int i=0;i<L;i++)
         sequence[i] = sample(F);
-    return sequence;
+    return closure::object_value(sequence);
 }
 
 extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
@@ -293,7 +293,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
         sequence.push_back(sample(S));
     }
 
-    return sequence;
+    return closure::object_value(sequence);
 }
 
 extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Args)
@@ -320,6 +320,5 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
         sequence.push_back(sample(S));
     }
 
-    return sequence;
+    return closure::object_value(sequence);
 }
-

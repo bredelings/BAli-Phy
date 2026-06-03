@@ -30,7 +30,7 @@ vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& c
 
 extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
 {
-    return Box<pairwise_alignment_t>(Args.evaluate(0).as_<Box<pairwise_alignment_t>>().flipped());
+    return closure::object_value(Box<pairwise_alignment_t>(Args.evaluate(0).as_<Box<pairwise_alignment_t>>().flipped()));
 }
 
 extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& Args)
@@ -38,7 +38,7 @@ extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& 
     int l1 = Args.evaluate(0).as_int();
     int l2 = Args.evaluate(1).as_int();
 
-    return Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2));
+    return closure::object_value(Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2)));
 }
 
 extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArgs& Args)
@@ -46,7 +46,7 @@ extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArg
     int l1 = Args.evaluate(0).as_int();
     int l2 = Args.evaluate(1).as_int();
 
-    return Box<pairwise_alignment_t>(make_left_aligned_pairwise_alignment(l1,l2));
+    return closure::object_value(Box<pairwise_alignment_t>(make_left_aligned_pairwise_alignment(l1,l2)));
 }
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
@@ -144,7 +144,7 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
     }
     counts(prev, states::E)++;
 
-    return counts;
+    return closure::object_value(counts);
 }
 
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
@@ -180,7 +180,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     // Return a model with all probabilities zero if e==1.
     // Scaling time by 1/(1.0-e) doesn't work if e==1.
     if (e >= 1)
-	return indel::PairHMM();
+        return closure::object_value(indel::PairHMM());
 
     // (1-e) * delta / (1-delta) = P(indel)
     // But move the (1-e) into the RATE to make things work
@@ -241,7 +241,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     Q.start_pi(G2) = 0;
     Q.start_pi(E)  = 0;
 
-    return Q;
+    return closure::object_value(Q);
 }
 
 extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
@@ -264,7 +264,7 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     // Return a model with all probabilities zero if e==1.
     // Scaling time by 1/(1.0-e) doesn't work if e==1.
     if (e >= 1)
-	return indel::PairHMM();
+        return closure::object_value(indel::PairHMM());
 
     // (1-e) * delta / (1-delta) = P(indel)
     // But move the (1-e) into the RATE to make things work
@@ -320,7 +320,7 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     Q.start_pi(G2) = 0;
     Q.start_pi(E)  = 0;
 
-    return Q;
+    return closure::object_value(Q);
 }
 
 extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
@@ -338,7 +338,7 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
 
   // Return a model with all probabilities zero if e==1.
     if (e >= 1)
-	return indel::PairHMM();
+        return closure::object_value(indel::PairHMM());
 
     double f = 0.1; //unaligned fraction
     delta = pow(delta, heat) * pow(f/(1+f),1-heat);
@@ -384,7 +384,7 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
     Q.start_pi(G2) = 0;
     Q.start_pi(E)  = 0;
 
-    return Q;
+    return closure::object_value(Q);
 }
 
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
@@ -615,7 +615,7 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     tmp123->first = A;
     tmp123->second = tmp23;
 
-    return tmp123;
+    return closure::object_value(tmp123);
 }
 
 extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
@@ -632,7 +632,7 @@ extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs&
     tmp12->first = A;
     tmp12->second = EVector(counts);
 
-    return tmp12;
+    return closure::object_value(tmp12);
 }
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
@@ -649,7 +649,7 @@ extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
     for(int i=0; i < n; i++)
         all_counts.push_back(EVector(alignment_row_counts(A,i,counts)));
 
-    return all_counts;
+    return closure::object_value(all_counts);
 }
 
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
@@ -661,7 +661,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 
     object_ptr<Box<alignment>> A(new Box<alignment>(a,filename));
 
-    return A;
+    return closure::object_value(A);
 }
 
 extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
@@ -674,7 +674,7 @@ extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
     for(int i=0;i<sequences.size();i++)
         sequences[i] = new Box<sequence>(sequences_[i]);
 
-    return sequences;
+    return closure::object_value(sequences);
 }
 
 extern "C" closure builtin_function_getRange(OperationArgs& Args)
@@ -687,7 +687,7 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
 
     expression_ref columns2( new EVector(columns) );
 
-    return closure::legacy_expression(columns2);
+    return closure::object_value(columns2);
 }
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
@@ -709,7 +709,7 @@ extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
             (*sequence2) += sequence[col];
     }
 
-    return sequence2;
+    return closure::object_value(sequence2);
 }
 
 extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
@@ -734,7 +734,7 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
 
     A->load(sequences);
 
-    return A;
+    return closure::object_value(A);
 }
 
 extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
@@ -808,7 +808,7 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
             letter_sequence[i] = s;
     }
 
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
@@ -826,7 +826,7 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
 	sequences.push_back(std::move(seq));
     }
 
-    return sequences;
+    return closure::object_value(sequences);
 }
 
 extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
@@ -838,7 +838,7 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
     for(int i=0;i<A.n_sequences();i++)
 	sequence_names.push_back(String(A.seq(i).name));
 
-    return sequence_names;
+    return closure::object_value(sequence_names);
 }
 
 extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
@@ -855,7 +855,7 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 
     object_ptr<Box<alignment>> A2(new Box<alignment>(reorder_sequences(A1, sequence_names)));
 
-    return A2;
+    return closure::object_value(A2);
 }
 
 extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args)
@@ -880,7 +880,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
         }
     }
 
-    return A1;
+    return closure::object_value(A1);
 }
 
 extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
@@ -913,7 +913,7 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
         }
     }
 
-    return A1;
+    return closure::object_value(A1);
 }
 
 extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& Args)
@@ -960,7 +960,7 @@ extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& 
     // FIXME - minimally-connect leaf characters in the machine!
     // It might be a bit slower if we did that, though.
 
-    return A_;
+    return closure::object_value(A_);
 }
 
 extern "C" closure builtin_function_extractStates(OperationArgs& Args)
@@ -972,7 +972,7 @@ extern "C" closure builtin_function_extractStates(OperationArgs& Args)
     for(int i=0; i<sequence.size(); i++)
         sequence[i] = states[i].second;
 
-    return sequence;
+    return closure::object_value(sequence);
 }
 
 extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
@@ -984,7 +984,7 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
     expression_ref nodeAlignment(constructor("NodeAlignment",3),{source_node, pairwise_alignment, branch_alignments});
-    return closure::legacy_expression(nodeAlignment);
+    return closure::object_value(nodeAlignment);
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
@@ -994,14 +994,14 @@ extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
     expression_ref branch_alignments = Args.evaluate(2);
 
     expression_ref branchAlignment(constructor("BranchAlignment",3),{target_node, pairwise_alignment, branch_alignments});
-    return closure::legacy_expression(branchAlignment);
+    return closure::object_value(branchAlignment);
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)
 {
     auto nodeAlignment = Args.evaluate(0);
 
-    return construct2(nodeAlignment);
+    return closure::object_value(construct2(nodeAlignment));
 }
 
 extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
@@ -1027,7 +1027,7 @@ extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
 
     assert(j == letters.size());
 
-    return result;
+    return closure::object_value(result);
 }
 
 vector<int> insertion(const vector<int>& sequence, int pos, int length)
@@ -1252,7 +1252,7 @@ extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& A
 
     assert(result->length1() == L0);
 
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args)
@@ -1333,5 +1333,5 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
     for(int i=0;i<n;i++)
 	result[i] = times[i];
 
-    return result;
+    return closure::object_value(result);
 }

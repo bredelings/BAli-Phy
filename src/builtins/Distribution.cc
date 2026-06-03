@@ -443,7 +443,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 	S->push_back(categories[index]);
     }
 
-    return S;
+    return closure::object_value(S);
 }
 
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)

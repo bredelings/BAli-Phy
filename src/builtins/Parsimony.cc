@@ -111,11 +111,11 @@ extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
     auto arg3 = Args.evaluate(3); // n_
     auto arg4 = Args.evaluate(4); // MutCosts
 
-    return peel_muts(arg0.as_<EVector>(),    // sequences
-		     *arg1.as_<Alphabet>(),  // alphabet
-		     arg2.as_<EVector>(),    // A
-		     arg3.as_<EVector>(),    // n_muts
-		     arg4.as_<Box<matrix<int>>>());
+    return closure::object_value(peel_muts(arg0.as_<EVector>(),    // sequences
+                                           *arg1.as_<Alphabet>(),  // alphabet
+                                           arg2.as_<EVector>(),    // A
+                                           arg3.as_<EVector>(),    // n_muts
+                                           arg4.as_<Box<matrix<int>>>()));
 }
 
 int muts_root(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);
@@ -147,10 +147,10 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return peel_muts_fixed_A(arg0.as_<EVector>(),            // sequences
-			     *arg1.as_<Alphabet>(),          // a
-			     arg2.as_<EVector>(),            // n_muts_
-			     arg3.as_<Box<matrix<int>>>());  // cost
+    return closure::object_value(peel_muts_fixed_A(arg0.as_<EVector>(),            // sequences
+                                                   *arg1.as_<Alphabet>(),          // a
+                                                   arg2.as_<EVector>(),            // n_muts_
+                                                   arg3.as_<Box<matrix<int>>>())); // cost
 }
 
 
@@ -172,5 +172,4 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 
     return { muts };
 }
-
 

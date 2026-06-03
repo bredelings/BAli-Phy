@@ -38,7 +38,7 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
     for(int i=0;i<n;i++)
         pi[i] = vpi[i];
 
-    return pi;
+    return closure::object_value(pi);
 }
 
 extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
@@ -50,7 +50,7 @@ extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
     auto& Q = arg1.as_<Box<Matrix>>();
 
     // In exponential.cc
-    return (EVector)equilibriumLimit(pi0, Q);
+    return closure::object_value((EVector)equilibriumLimit(pi0, Q));
 }
 
 extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)
@@ -134,7 +134,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     {
         std::cerr<<"err1 = "<<err<<"   err2 = "<<err2<<"   err3 = "<<err3<<"\n";
     }
-    return pi;
+    return closure::object_value(pi);
 }
 
 extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
@@ -283,7 +283,7 @@ extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 	}
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args)
@@ -342,7 +342,7 @@ extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args
 	(*R)(i,i) = -sum;
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 
@@ -408,7 +408,7 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
 	(*R)(i,i) = -sum;
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 // multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
@@ -534,7 +534,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
 	(*R)(i,i) = -sum;
     }
 
-    return R;
+    return closure::object_value(R);
 }
 
 
@@ -620,7 +620,7 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
 	(*Q)(i,i) = -sum;
     }
 
-    return Q;
+    return closure::object_value(Q);
 }
 
 
@@ -653,7 +653,7 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
     }
 
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return EVector(pi);
+    return closure::object_value(EVector(pi));
 }
 
 
@@ -687,7 +687,7 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();
     
-    return EQU_Exchange_Function(n);
+    return closure::object_value(EQU_Exchange_Function(n));
 }
 
 
@@ -828,7 +828,7 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
         pi[r] = level_probs[l].as_double() * pis[l].as_<EVector>()[s].as_double();
 
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return EVector(pi);
+    return closure::object_value(EVector(pi));
 }
 
 extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
@@ -841,7 +841,7 @@ extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
         for(auto& x: smap.as_<EVector>())
             new_smap.push_back(x);
 
-    return new_smap;
+    return closure::object_value(new_smap);
 }
 
 template <typename T>
@@ -928,7 +928,7 @@ extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     auto S = Args.evaluate(1);
-    return Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>());
+    return closure::object_value(Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>()));
 }
 
 extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationArgs& Args)
@@ -963,7 +963,7 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
 
 
     // 5. Return the matrix
-    return object_ptr<const Object>(M);
+    return closure::object_value(object_ptr<const Object>(M));
 }
 
 object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
@@ -995,7 +995,7 @@ object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 extern "C" closure builtin_function_pam(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return PAM_Exchange_Function(*a.as_<Alphabet>());
+    return closure::object_value(PAM_Exchange_Function(*a.as_<Alphabet>()));
 }
 
 object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
@@ -1027,7 +1027,7 @@ object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 extern "C" closure builtin_function_jtt(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return JTT_Exchange_Function(*a.as_<Alphabet>());
+    return closure::object_value(JTT_Exchange_Function(*a.as_<Alphabet>()));
 }
 
 const char* wag_string =
@@ -1059,14 +1059,14 @@ extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(wag_string);
-    return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
+    return closure::object_value(Empirical_Exchange_Function(*a.as_<Alphabet>(), file));
 }
 
 extern "C" closure builtin_function_wag_frequencies(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(wag_string);
-    return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
+    return closure::object_value(Empirical_Frequencies_Function(*a.as_<Alphabet>(), file));
 }
 
 
@@ -1095,14 +1095,14 @@ extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(lg_string);
-    return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
+    return closure::object_value(Empirical_Exchange_Function(*a.as_<Alphabet>(), file));
 }
 
 extern "C" closure builtin_function_lg_frequencies(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(lg_string);
-    return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
+    return closure::object_value(Empirical_Frequencies_Function(*a.as_<Alphabet>(), file));
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
@@ -1149,7 +1149,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 //    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
-    return pi;
+    return closure::object_value(pi);
 }
 
 extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
@@ -1190,7 +1190,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 
 //    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
-    return pi;
+    return closure::object_value(pi);
 }
 
 extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
@@ -1214,7 +1214,7 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 	}
     }
 
-    return {R};
+    return closure::object_value(R);
 }
 
 extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
@@ -1240,7 +1240,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 	}
     }
 
-    return {R};
+    return closure::object_value(R);
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
@@ -1431,7 +1431,7 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 	pi[i] *= exp(F[i]-Fmax);
 
     normalize(pi);
-    return EVector(pi);
+    return closure::object_value(EVector(pi));
 }
 
 /*

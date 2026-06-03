@@ -116,7 +116,7 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 	result.push_back(locus);
     }
 
-    return result;
+    return closure::object_value(result);
 }
 
 optional<string> read_S(const string& line, int& pos)
@@ -348,7 +348,7 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 	result.push_back(locus);
     }
 
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
@@ -361,7 +361,7 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
     for(int i=0;i<alleles.size();i+=2)
 	alleles2.push_back(alleles[i]);
 
-    return alleles2;
+    return closure::object_value(alleles2);
 }
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
@@ -390,7 +390,7 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
     for(int count: spectrum)
 	afs.push_back(count);
 
-    return afs;
+    return closure::object_value(afs);
 }
 
 log_double_t factorial(int n)

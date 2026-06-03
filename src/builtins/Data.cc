@@ -32,5 +32,5 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
       vec_all_lines.push_back(vec_line);
   }
 
-  return vec_all_lines;
+  return closure::object_value(vec_all_lines);
 }
