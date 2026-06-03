@@ -398,11 +398,6 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         tcRho(T, exp_type);
         E = T;
     }
-    else if (is_non_apply_op_exp(E))
-    {
-        std::abort();
-        // this includes builtins like Prelude::add
-    }
     // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
     {

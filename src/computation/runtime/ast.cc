@@ -136,27 +136,26 @@ namespace Runtime
         });
     }
 
-    Operation operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    std::shared_ptr<const Operation> operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         if (call_conv == "bpcall" or call_conv == "trcall")
-            return Operation((o_operation_fn)op, lib_name+":"+func_name);
+            return std::make_shared<Operation>((o_operation_fn)op, lib_name+":"+func_name);
         else if (call_conv == "ecall")
-            return Operation((e_operation_fn)op, lib_name+":"+func_name);
+            return std::make_shared<Operation>((e_operation_fn)op, lib_name+":"+func_name);
         else
             throw myexception()<<"Unrecognized calling convention '"<<call_conv<<"'";
     }
 
-    OperationApp::OperationApp(Operation op)
+    OperationApp::OperationApp(std::shared_ptr<const Operation> op)
         :head(std::move(op))
     {
     }
 
     OperationApp::OperationApp()
-        :head((o_operation_fn)nullptr, "")
     {
     }
 
-    OperationApp::OperationApp(Operation op, std::string lib, std::string func, std::string conv)
+    OperationApp::OperationApp(std::shared_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
         :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
     {
     }
@@ -177,7 +176,7 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorApp>)
                 return h.head;
             else if constexpr (std::is_same_v<T, OperationApp>)
-                return h.head;
+                return *h.head;
         }, head);
     }
 
@@ -348,7 +347,7 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorApp>)
                 return h.head.print();
             else if constexpr (std::is_same_v<T, OperationApp>)
-                return h.head.print();
+                return h.head->print();
         }, head);
     }
 
