@@ -81,7 +81,6 @@ namespace Runtime
         Exp(const char*);
         Exp(integer);
         Exp(constructor);
-        Exp(const expression_ref&);
         Exp(const ::Integer&);
         Exp(const Object&);
         Exp(const Object*);

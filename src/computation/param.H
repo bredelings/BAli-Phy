@@ -74,7 +74,7 @@ public:
     param(int h)
         :head(h)
         {}
-    param(const expression_ref& v):value(Runtime::Exp(v)) {}
+    param(const expression_ref& v):value(Runtime::e_op_value(v)) {}
     param(Runtime::Exp v):value(std::move(v)) {}
 };
 

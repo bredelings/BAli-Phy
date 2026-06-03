@@ -42,7 +42,6 @@ namespace Runtime
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
     Exp::Exp(constructor x):Exp(Constructor(std::move(x))) {}
-    Exp::Exp(const expression_ref& x):Exp(e_op_value(x)) {}
     Exp::Exp(const ::Integer& x):Exp(Integer(x.value())) {}
     Exp::Exp(const Object& x):Exp(e_op_value(expression_ref(x))) {}
     Exp::Exp(const Object* x):Exp(e_op_value(expression_ref(x))) {}

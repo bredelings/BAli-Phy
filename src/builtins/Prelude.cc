@@ -247,7 +247,7 @@ extern "C" R::Exp simple_function_compare_int(vector<R::Exp>& args)
     auto y = get_arg(args).as_int();
 
     if (x < y)
-        return expression_ref(0); // avoid constructing from (Object*)0
+        return 0;
     else if (x == y)
         return 1;
     else if (x > y)
@@ -262,7 +262,7 @@ extern "C" R::Exp simple_function_compare_double(vector<R::Exp>& args)
     auto y = get_arg(args).as_double();
 
     if (x < y)
-        return expression_ref(0); // avoid constructing from (Object*)0
+        return 0;
     else if (x == y)
         return 1;
     else if (x > y)
@@ -277,7 +277,7 @@ extern "C" R::Exp simple_function_compare_char(vector<R::Exp>& args)
     auto y = get_arg(args).as_char();
 
     if (x < y)
-        return expression_ref(0); // avoid constructing from (Object*)0
+        return 0;
     else if (x == y)
         return 1;
     else if (x > y)
@@ -426,7 +426,7 @@ extern "C" R::Exp simple_function_cIsJust(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_cFromJust(vector<R::Exp>& args)
 {
     auto maybe = get_arg(args).as_<EMaybe>();
-    return *maybe;
+    return R::e_op_value(*maybe);
 }
 
 struct HaskellException
@@ -617,9 +617,9 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 extern "C" R::Exp simple_function_isWindows(vector<R::Exp>&)
 {
 #ifdef _WIN32
-    return bool_true;
+    return true;
 #else
-    return bool_false;
+    return false;
 #endif
 }
 

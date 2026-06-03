@@ -7,12 +7,12 @@ using std::vector;
 
 extern "C" R::Exp simple_function_c_fst(vector<R::Exp>& args)
 {
-    return get_arg(args).as_<EPair>().first;
+    return R::e_op_value(get_arg(args).as_<EPair>().first);
 }
 
 extern "C" R::Exp simple_function_c_snd(vector<R::Exp>& args)
 {
-    return get_arg(args).as_<EPair>().second;
+    return R::e_op_value(get_arg(args).as_<EPair>().second);
 }
 
 extern "C" R::Exp simple_function_c_pair(vector<R::Exp>& args)
@@ -25,7 +25,5 @@ extern "C" R::Exp simple_function_c_pair(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_c_nil(vector<R::Exp>& /*args*/)
 {
-    expression_ref nil;
-    nil = 42;
-    return nil;
+    return 42;
 }

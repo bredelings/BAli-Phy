@@ -67,7 +67,7 @@ extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
     int i = get_arg(args).as_int();
     const EVector& v = arg0.as_<EVector>();
 
-    return v[i];
+    return R::e_op_value(v[i]);
 }
 
 extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)

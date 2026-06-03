@@ -113,7 +113,7 @@ extern "C" R::Exp simple_function_integerToInt(vector<R::Exp>& args)
 
     int result = x.convert_to<int>();
 
-    return expression_ref( result );
+    return result;
 }
 
 
@@ -181,7 +181,7 @@ extern "C" R::Exp simple_function_integerToChar(vector<R::Exp>& args)
 
     char result = x.convert_to<char>();
 
-    return expression_ref( result );
+    return result;
 }
 
 // UNUSED - 2026
@@ -325,7 +325,6 @@ extern "C" R::Exp simple_function_integerToLogDouble(vector<R::Exp>& args)
 
     return {result};
 }
-
 
 
 
