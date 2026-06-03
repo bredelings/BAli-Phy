@@ -18,9 +18,6 @@ private:
     /// The runtime expression
     Runtime::Exp code;
 
-    /// Legacy expression_ref view derived from code.
-    const expression_ref& exp;
-
 public:
     typedef boost::container::small_vector<int,10> Env_t;
     /// The environment (regs bound to free variables of E).
@@ -34,7 +31,7 @@ public:
     const Runtime::Exp& get_code() const {return code; }
 
     /// Legacy expression_ref view derived from code.
-    const expression_ref& legacy_exp() const {return exp;}
+    const expression_ref& legacy_exp() const {return exp_cache;}
 
     void set_code(Runtime::Exp e);
 
@@ -96,19 +93,17 @@ public:
     }
 
     // Default
-    closure():exp(exp_cache) {}
+    closure() = default;
 
     closure(const closure& C)
         :exp_cache(C.exp_cache),
          code(C.code),
-         exp(exp_cache),
          Env(C.Env)
     { }
 
     closure(closure&& C) noexcept
         :exp_cache(std::move(C.exp_cache)),
          code(std::move(C.code)),
-         exp(exp_cache),
          Env(std::move(C.Env))
     { }
 
