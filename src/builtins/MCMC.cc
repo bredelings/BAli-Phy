@@ -31,9 +31,10 @@ extern "C" closure builtin_function_registerTransitionKernelRaw(OperationArgs& A
 
     int r_transition_kernel = Args.evaluate_reg_use(Args.reg_for_slot(1));
 
-    expression_ref E(constructor("Effect.TransitionKernel",2),{rate, index_var(0)});
+    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.TransitionKernel",2)),
+                      {rate, R::IndexVar(0)});
 
-    int r_effect = Args.allocate(closure{E,{r_transition_kernel}});
+    int r_effect = Args.allocate(closure{std::move(E), {r_transition_kernel}});
 
     Args.set_effect(r_effect);
 
@@ -44,9 +45,10 @@ extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
 {
     int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(0));
 
-    expression_ref E(constructor("Effect.Logger",2),{index_var(0)});
+    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.Logger",2)),
+                      {R::IndexVar(0)});
 
-    int r_effect = Args.allocate(closure{E,{r_logger}});
+    int r_effect = Args.allocate(closure{std::move(E), {r_logger}});
 
     Args.set_effect(r_effect);
 
@@ -1094,7 +1096,7 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
     if (x_value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
 
-    return x_value;
+    return R::e_op_value(x_value);
 }
 
 extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
@@ -1118,7 +1120,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
     if (value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<value<<"'";
 
-    C.set_reg_value(*x_mod_reg, value);
+    C.set_reg_value(*x_mod_reg, R::e_op_value(value));
 
     return constructor("()",0);
 }

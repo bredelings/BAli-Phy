@@ -127,22 +127,9 @@ public:
          Env(std::move(C.Env))
     { }
 
-    // Constructing from an expression_ref
-    closure(const expression_ref& e)
-	:closure()
-    {
-        set_legacy_exp(e);
-    }
-
-    closure(const expression_ref& e, const Env_t& E)
-	:closure(e)
-    {
-        Env = E;
-    }
-
-    closure(const expression_ref& e, std::initializer_list<int> E)
-	:closure(e, Env_t(E))
-    { }
+    closure(const expression_ref& e) = delete;
+    closure(const expression_ref& e, const Env_t& E) = delete;
+    closure(const expression_ref& e, std::initializer_list<int> E) = delete;
 
     // Constructing from an expression_ref
     closure(Runtime::Exp e)

@@ -102,22 +102,20 @@ expression_ref peel_n_lambdas(const expression_ref& E, int n)
 closure apply_op(OperationArgs& Args)
 {
     closure C = Args.evaluate_slot_to_closure(0);
-    int n_args_given = Args.n_args()-1;
+    int n_args_given = Args.runtime_n_slots()-1;
 
-    int n_args_needed = C.has_code() ? Runtime::count_lambdas(C.get_code()) : get_n_lambdas(C.exp);
+    assert(C.has_code());
+    int n_args_needed = Runtime::count_lambdas(C.get_code());
     if (n_args_needed == 0)
 	throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
     assert(n_args_needed >= 1);
     assert(n_args_given >= 1);
 
     int n_args_applied = std::min(n_args_given, n_args_needed);
-    if (C.has_code())
-        C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
-    else
-        C.set_legacy_exp(peel_n_lambdas(C.exp, n_args_applied));
+    C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
-	int arg = Args.current_closure().reg_for_slot(i+1);
+	int arg = Args.current_closure().runtime_reg_for_slot(i+1);
 	C.Env.push_back(arg);
     }
 
@@ -130,29 +128,19 @@ closure apply_op(OperationArgs& Args)
     {
 	int new_head_ref = Args.allocate(std::move(C));
 	closure::Env_t Env = {new_head_ref};
-	vector<expression_ref> args;
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
-	    int arg = Args.current_closure().reg_for_slot(i+1);
+	    int arg = Args.current_closure().runtime_reg_for_slot(i+1);
 	    Env.push_back(arg);
-
-	    args.push_back(index_var(n_args_given - i -1));
 	}
-        if (C.has_code())
-        {
-            vector<Runtime::Exp> runtime_args;
-            for(int i=n_args_needed;i<n_args_given;i++)
-                runtime_args.push_back(Runtime::IndexVar(n_args_given - i - 1));
 
-            return closure(Runtime::apply(Runtime::IndexVar(n_args_given - n_args_needed),
-                                          std::move(runtime_args)),
-                           Env);
-        }
-        else
-        {
-            expression_ref E2 = apply_expression(index_var(n_args_given - n_args_needed), args);
-            return {E2,Env};
-        }
+        vector<Runtime::Exp> runtime_args;
+        for(int i=n_args_needed;i<n_args_given;i++)
+            runtime_args.push_back(Runtime::IndexVar(n_args_given - i - 1));
+
+        return closure(Runtime::apply(Runtime::IndexVar(n_args_given - n_args_needed),
+                                      std::move(runtime_args)),
+                       Env);
     }
 }
 
@@ -370,23 +358,8 @@ closure let_op(OperationArgs& Args)
             continue;
         }
 
-        if (C.exp.head().type() != type_constant::let2_type)
-            break;
-
-        auto& L = C.exp.as_<Let>();
-
-        int n_binds = L.binds.size();
-
-        // 1. Allocate the new vars on the heap
-        for(int i=0;i<n_binds;i++)
-            C.Env.push_back( Args.allocate_reg() );
-
-        // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-        for(int i=0;i<n_binds;i++)
-            M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
-
-        C.set_legacy_exp(L.body);
-        do_trim(C);
+        assert(C.has_code());
+        break;
     }
 
     return C;

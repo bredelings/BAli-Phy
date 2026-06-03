@@ -13,15 +13,21 @@ using std::string;
 
 namespace
 {
-    const Runtime::Exp& runtime_app_slot(const Runtime::Exp& E, int i)
+    const Runtime::Exp& runtime_slot_ref(const Runtime::Exp& E, int i)
     {
-        auto app = E.to<Runtime::App>();
-        if (not app)
+        if (auto app = E.to<Runtime::App>())
+        {
+            assert(0 <= i);
+            assert(i < app->args.size());
+            return app->args[i];
+        }
+        else if (auto case_exp = E.to<Runtime::Case>())
+        {
+            assert(i == 0);
+            return case_exp->object;
+        }
+        else
             std::abort();
-
-        assert(0 <= i);
-        assert(i < app->args.size());
-        return app->args[i];
     }
 }
 
@@ -56,16 +62,17 @@ int closure::runtime_n_slots() const
 {
     assert(has_code());
 
-    auto app = code.to<Runtime::App>();
-    if (not app)
+    if (auto app = code.to<Runtime::App>())
+        return app->args.size();
+    else if (code.to<Runtime::Case>())
+        return 1;
+    else
         std::abort();
-
-    return app->args.size();
 }
 
 Runtime::Exp closure::runtime_slot(int i) const
 {
-    const auto& E = runtime_app_slot(code, i);
+    const auto& E = runtime_slot_ref(code, i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return Runtime::RegRef(lookup_in_env(index_var->index));
@@ -75,7 +82,7 @@ Runtime::Exp closure::runtime_slot(int i) const
 
 int closure::runtime_reg_for_slot(int i) const
 {
-    const auto& E = runtime_app_slot(code, i);
+    const auto& E = runtime_slot_ref(code, i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return lookup_in_env(index_var->index);

@@ -53,20 +53,20 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
 
 closure OperationArgs::evaluate_slot_to_closure(int slot)
 {
-    auto S = arg_for_slot(slot);
-    if (S.is_reg_var())
-        return evaluate_reg_to_closure(S.as_reg_var());
+    auto S = runtime_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_closure(reg_ref->target);
     else
-        return S;
+        return closure(std::move(S));
 }
 
 closure OperationArgs::evaluate_slot_to_closure_(int slot)
 {
-    auto S = arg_for_slot(slot);
-    if (S.is_reg_var())
-        return evaluate_reg_to_closure_(S.as_reg_var());
+    auto S = runtime_slot(slot);
+    if (auto reg_ref = S.to<Runtime::RegRef>())
+        return evaluate_reg_to_closure_(reg_ref->target);
     else
-        return S;
+        return closure(std::move(S));
 }
 
 int OperationArgs::evaluate_slot_force(int slot)

@@ -82,18 +82,12 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& m = arg1.as_<IntMap>();
 
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
     IntMap m2;
 
     for(auto& [k,r1]: m)
     {
-        int r2 = Args.allocate({apply_E,{f_reg,r1}});
+        int r2 = Args.allocate(closure(R::apply(R::IndexVar(1), {R::IndexVar(0)}),
+                                       {f_reg, r1}));
         m2.insert(k,r2);
     }
 
@@ -107,20 +101,13 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& m = arg1.as_<IntMap>();
 
-    expression_ref apply_E;
-    {
-	expression_ref f = index_var(2);
-	expression_ref argKey = index_var(1);
-	expression_ref argVal = index_var(0);
-	apply_E = {f, argKey, argVal};
-    }
-
     IntMap m2;
 
     for(auto& [k,r_val]: m)
     {
         int r_key = Args.allocate({k});
-        int r_val2 = Args.allocate({apply_E,{f_reg,r_key,r_val}});
+        int r_val2 = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                           {f_reg, r_key, r_val}));
         m2.insert(k,r_val2);
     }
 
@@ -163,8 +150,8 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     if (m.has_key(key))
     {
         int v1_reg = m[key];
-        expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-        int v3_reg = Args.allocate({E,{f_reg,v1_reg,v2_reg}});
+        int v3_reg = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                           {f_reg, v1_reg, v2_reg}));
         m.insert(key,v3_reg);
     }
     else 
@@ -233,8 +220,8 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
             if (m3.has_key(key))
             {
                 int v1_reg = m3[key];
-                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(key, v3_reg);
             }
             else
@@ -251,8 +238,8 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
             if (m3.has_key(key))
             {
                 int v2_reg = m3[key];
-                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(key, v3_reg);
             }
             else
@@ -299,7 +286,7 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
     auto& m2 = arg1.as_<IntMap>();
 
     // Loop over the smaller map
-    expression_ref E = 1;
+    int E = 1;
     if (m1.size() < m2.size())
     {
         for(auto& [k,v]: m1)
@@ -353,8 +340,6 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
     auto& m1 = arg1.as_<IntMap>();
     auto& m2 = arg2.as_<IntMap>();
 
-    expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-
     // Loop over the smaller map
     IntMap m3;
     if (m1.size() < m2.size())
@@ -364,7 +349,8 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
             if (m2.has_key(k))
             {
                 int v2_reg = m2[k];
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(k, v3_reg);
             }
         }
@@ -377,7 +363,8 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
             if (m1.has_key(k))
             {
                 int v1_reg = m1[k];
-                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                int v3_reg = Args.allocate(closure(R::apply(R::IndexVar(2), {R::IndexVar(1), R::IndexVar(0)}),
+                                                   {f_reg, v1_reg, v2_reg}));
                 m3.insert(k, v3_reg);
             }
         }
@@ -500,7 +487,7 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& m = arg0.as_<EIntMap>();
 
-    return m.at(key);
+    return R::e_op_value(m.at(key));
 }
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
