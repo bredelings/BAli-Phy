@@ -21,7 +21,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
     for(int i=0;i<n;i++)
     {
 	// i
-	int i_reg = Args.allocate(expression_ref(i));
+	int i_reg = Args.allocate(i);
 
 	// %1 %0 {f,i}
 	int apply_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),

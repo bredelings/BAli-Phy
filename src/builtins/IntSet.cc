@@ -141,9 +141,9 @@ extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
 
     for(auto k: S1)
         if (not S2.find(k))
-            return bool_false;
+            return false;
 
-    return bool_true;
+    return true;
 }
 
 
@@ -170,9 +170,9 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
     }
 
     if (disjoint)
-        return bool_true;
+        return true;
     else
-        return bool_false;
+        return false;
 }
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)

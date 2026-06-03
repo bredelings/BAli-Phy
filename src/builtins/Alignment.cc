@@ -685,9 +685,7 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
 
-    expression_ref columns2( new EVector(columns) );
-
-    return columns2;
+    return EVector(columns);
 }
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
