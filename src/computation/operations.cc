@@ -315,26 +315,45 @@ closure let_op(OperationArgs& Args)
 
     auto C  = Args.current_closure();
 
-    do
+    while (true)
     {
 	int start = C.Env.size();
 
-	auto& L = C.exp.as_<Let>();
+        if (auto runtime_let = C.has_code() ? C.get_code().to<Runtime::Let>() : nullptr)
+        {
+            int n_binds = runtime_let->binds.size();
 
-	int n_binds = L.binds.size();
+            // 1. Allocate the new vars on the heap
+            for(int i=0;i<n_binds;i++)
+                C.Env.push_back( Args.allocate_reg() );
 
-	// 1. Allocate the new vars on the heap
-	for(int i=0;i<n_binds;i++)
-	    C.Env.push_back( Args.allocate_reg() );
-      
-	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-	for(int i=0;i<n_binds;i++)
-	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
+            // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
+            for(int i=0;i<n_binds;i++)
+                M.set_C(C.Env[start+i], get_trimmed(closure(runtime_let->binds[i], C.Env)));
 
-	C.set_legacy_exp(L.body);
-	do_trim(C);
+            C.set_code(runtime_let->body);
+            do_trim(C);
+            continue;
+        }
+
+        if (C.exp.head().type() != type_constant::let2_type)
+            break;
+
+        auto& L = C.exp.as_<Let>();
+
+        int n_binds = L.binds.size();
+
+        // 1. Allocate the new vars on the heap
+        for(int i=0;i<n_binds;i++)
+            C.Env.push_back( Args.allocate_reg() );
+
+        // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
+        for(int i=0;i<n_binds;i++)
+            M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
+
+        C.set_legacy_exp(L.body);
+        do_trim(C);
     }
-    while (C.exp.head().type() == type_constant::let2_type);
 
     return C;
 }
