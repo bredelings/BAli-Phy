@@ -12,15 +12,17 @@
 
 struct closure
 {
-private:    
+private:
+    expression_ref exp_cache;
+
     /// The runtime expression
     Runtime::Exp code;
 
 public:
     typedef boost::container::small_vector<int,10> Env_t;
   
-    /// The expression
-    expression_ref exp;
+    /// Legacy expression_ref view derived from code, or set through set_legacy_exp().
+    const expression_ref& exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
 
@@ -86,26 +88,51 @@ public:
 
     std::string print() const;
 
-    // Assignment operators
-    closure& operator=(const closure&) = default;
+    closure& operator=(const closure& C)
+    {
+        exp_cache = C.exp_cache;
+        code = C.code;
+        Env = C.Env;
+        return *this;
+    }
 
-    closure& operator=(closure&& C) noexcept = default;
+    closure& operator=(closure&& C) noexcept
+    {
+        exp_cache = std::move(C.exp_cache);
+        code = std::move(C.code);
+        Env = std::move(C.Env);
+        return *this;
+    }
 
     // Default
-    closure() = default;
+    closure():exp(exp_cache) {}
 
-    closure(const closure&) = default;
+    closure(const closure& C)
+        :exp_cache(C.exp_cache),
+         code(C.code),
+         exp(exp_cache),
+         Env(C.Env)
+    { }
 
-    closure(closure&& C) noexcept = default;
+    closure(closure&& C) noexcept
+        :exp_cache(std::move(C.exp_cache)),
+         code(std::move(C.code)),
+         exp(exp_cache),
+         Env(std::move(C.Env))
+    { }
 
     // Constructing from an expression_ref
     closure(const expression_ref& e)
-	:exp(e)
-    { }
+	:closure()
+    {
+        set_legacy_exp(e);
+    }
 
     closure(const expression_ref& e, const Env_t& E)
-	:exp(e), Env(E)
-    {}
+	:closure(e)
+    {
+        Env = E;
+    }
 
     closure(const expression_ref& e, std::initializer_list<int> E)
 	:closure(e, Env_t(E))
@@ -113,14 +140,15 @@ public:
 
     // Constructing from an expression_ref
     closure(Runtime::Exp e)
+        :closure()
     {
         set_code(std::move(e));
     }
 
     closure(Runtime::Exp e, const Env_t& E)
-	:Env(E)
+	:closure(std::move(e))
     {
-        set_code(std::move(e));
+        Env = E;
     }
 
     closure(Runtime::Exp e, std::initializer_list<int> E)
@@ -172,22 +200,26 @@ public:
 
     // Constructing w/o an environment
     closure(Object* o)
+        :closure()
     {
         set_code(Runtime::ObjectValue(o));
     }
 
     closure(const object_ptr<const Object>& o)
+        :closure()
     {
         set_code(Runtime::ObjectValue(o));
     }
 
     template <typename T>
     closure(const object_ptr<T>& o)
+        :closure()
     {
         set_code(Runtime::ObjectValue(o));
     }
 
     closure(const Object& O)
+        :closure()
     {
         set_code(Runtime::ObjectValue(O.clone()));
     }

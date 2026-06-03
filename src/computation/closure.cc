@@ -12,13 +12,13 @@ using std::string;
 void closure::set_code(Runtime::Exp c)
 {
     code = std::move(c);
-    exp = Runtime::to_expression_ref(code);
+    exp_cache = Runtime::to_expression_ref(code);
 }
 
 void closure::set_legacy_exp(expression_ref e)
 {
     code = {};
-    exp = std::move(e);
+    exp_cache = std::move(e);
 }
 
 void closure::clear()
