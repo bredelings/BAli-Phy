@@ -507,10 +507,10 @@ int copy_out_of_machine(reg_heap& M, OperationArgs& Args, int r)
     auto C = Args.evaluate_reg_to_closure(r);
 
     // 3. Complain if there the object isn't atomic
-    if (is_gcable_type(C.legacy_exp().type()))
+    if (auto object_value = C.get_code().to<Runtime::ObjectValue>(); C.get_code().is_gcable_object_value())
     {
 	vector<int> tmp;
-	auto gco = convert<GCObject>(C.legacy_exp().ptr());
+	auto gco = convert<GCObject>(object_value->value);
 	gco->get_regs(tmp);
 	for(int& r: tmp)
 	    r = copy_out_of_machine(M, Args, r);
