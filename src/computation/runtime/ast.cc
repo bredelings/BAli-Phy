@@ -49,6 +49,57 @@ namespace Runtime
     Exp::Exp(App node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Trim node):value(make_exp_value(std::move(node))) {}
 
+    bool Exp::is_atomic_value() const
+    {
+        return visit([](const auto& e) -> bool
+        {
+            using T = std::decay_t<decltype(e)>;
+            return std::is_same_v<T, Int> or
+                   std::is_same_v<T, Double> or
+                   std::is_same_v<T, LogDouble> or
+                   std::is_same_v<T, Char> or
+                   std::is_same_v<T, String> or
+                   std::is_same_v<T, Integer> or
+                   std::is_same_v<T, Constructor> or
+                   std::is_same_v<T, ObjectValue>;
+        });
+    }
+
+    int Exp::as_int() const
+    {
+        return as<Int>().value;
+    }
+
+    double Exp::as_double() const
+    {
+        return as<Double>().value;
+    }
+
+    log_double_t Exp::as_log_double() const
+    {
+        return as<LogDouble>().value;
+    }
+
+    char Exp::as_char() const
+    {
+        return as<Char>().value;
+    }
+
+    const std::string& Exp::as_string() const
+    {
+        return as<String>().value;
+    }
+
+    const integer& Exp::as_integer() const
+    {
+        return as<Integer>().value;
+    }
+
+    const constructor& Exp::as_constructor() const
+    {
+        return as<Constructor>().value;
+    }
+
     Exp apply(Exp function, vector<Exp> args)
     {
         args.insert(args.begin(), std::move(function));
@@ -88,6 +139,36 @@ namespace Runtime
             E2 = &lambda->body;
         }
         return *E2;
+    }
+
+    Exp atomic_value(const expression_ref& E)
+    {
+        switch(E.type())
+        {
+        case type_constant::int_type:
+            return Int(E.as_int());
+        case type_constant::double_type:
+            return Double(E.as_double());
+        case type_constant::log_double_type:
+            return LogDouble(E.as_log_double());
+        case type_constant::char_type:
+            return Char(E.as_char());
+        case type_constant::constructor_type:
+            return Constructor(E.as_<constructor>());
+        default:
+            break;
+        }
+
+        if (const auto* s = E.to<::String>())
+            return String(s->value());
+
+        if (const auto* i = E.to<::Integer>())
+            return Integer(i->value());
+
+        if (E.is_object_type() and not E.is_expression())
+            return ObjectValue(E.ptr());
+
+        throw myexception()<<"Cannot convert non-atomic expression '"<<E<<"' to Runtime::Exp";
     }
 
     Exp shift_free_indices(const Exp& E, int amount, int depth)

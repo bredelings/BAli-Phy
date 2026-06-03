@@ -117,6 +117,18 @@ namespace Runtime
             return *ptr;
         }
 
+        bool is_atomic_value() const;
+        int as_int() const;
+        double as_double() const;
+        log_double_t as_log_double() const;
+        char as_char() const;
+        const std::string& as_string() const;
+        const integer& as_integer() const;
+        const constructor& as_constructor() const;
+
+        template <DerivedFromObject T>
+        const T& as_() const;
+
         template <typename F>
         decltype(auto) visit(F&& f) const
         {
@@ -272,6 +284,15 @@ namespace Runtime
             throw std::runtime_error("Runtime::ObjectValue is not serializable");
         }
     };
+
+    template <DerivedFromObject T>
+    const T& Exp::as_() const
+    {
+        auto ptr = to<ObjectValue>();
+        if (not ptr)
+            throw std::runtime_error("Runtime value is not an ObjectValue");
+        return *convert<T>(ptr->value);
+    }
 
 
     struct IndexVar
@@ -479,6 +500,7 @@ namespace Runtime
 
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
+    Exp atomic_value(const expression_ref&);
     int count_lambdas(const Exp&);
     Exp peel_lambdas(const Exp&, int);
     Exp shift_free_indices(const Exp&, int amount, int depth = 0);

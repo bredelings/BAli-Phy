@@ -178,6 +178,55 @@ namespace
         require(reg_ref.as_reg_var() == 7, "deindexified reg_var target mismatch");
     }
 
+    void check_runtime_atomic_values()
+    {
+        auto i = Runtime::atomic_value(expression_ref(7));
+        require(i.is_atomic_value(), "runtime Int should be atomic");
+        require(i.as_int() == 7, "runtime Int value mismatch");
+
+        auto d = Runtime::atomic_value(expression_ref(2.5));
+        require(d.is_atomic_value(), "runtime Double should be atomic");
+        require(d.as_double() == 2.5, "runtime Double value mismatch");
+
+        auto ld_value = log_double_t(0.25);
+        auto ld = Runtime::atomic_value(expression_ref(ld_value));
+        require(ld.is_atomic_value(), "runtime LogDouble should be atomic");
+        require(ld.as_log_double() == ld_value, "runtime LogDouble value mismatch");
+
+        auto c = Runtime::atomic_value(expression_ref('x'));
+        require(c.is_atomic_value(), "runtime Char should be atomic");
+        require(c.as_char() == 'x', "runtime Char value mismatch");
+
+        auto s = Runtime::atomic_value(expression_ref(::String("runtime")));
+        require(s.is_atomic_value(), "runtime String should be atomic");
+        require(s.as_string() == "runtime", "runtime String value mismatch");
+
+        auto n = Runtime::atomic_value(expression_ref(::Integer(integer("12345678901234567890"))));
+        require(n.is_atomic_value(), "runtime Integer should be atomic");
+        require(n.as_integer() == integer("12345678901234567890"), "runtime Integer value mismatch");
+
+        constructor true_con("Data.Bool.True", 0);
+        auto b = Runtime::atomic_value(expression_ref(true_con));
+        require(b.is_atomic_value(), "runtime Constructor should be atomic");
+        require(b.as_constructor().name() == true_con.name(), "runtime Constructor name mismatch");
+        require(b.as_constructor().n_args() == true_con.n_args(), "runtime Constructor arity mismatch");
+
+        auto vector_value = Runtime::atomic_value(expression_ref(EVector(std::vector<int>{1, 2})));
+        require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
+        require(vector_value.as_<EVector>().size() == 2, "runtime ObjectValue value mismatch");
+
+        bool rejected = false;
+        try
+        {
+            Runtime::atomic_value(expression_ref(var("f"), {expression_ref(1)}));
+        }
+        catch(const myexception&)
+        {
+            rejected = true;
+        }
+        require(rejected, "structured expressions should not convert to Runtime atomic values");
+    }
+
     Runtime::Exp archive_roundtrip(const Runtime::Exp& before)
     {
         std::stringstream buffer;
@@ -275,6 +324,7 @@ int main(int argc, char** argv)
     check_shift_free_indices();
     check_lambda_peeling();
     check_deindexify_reg_refs();
+    check_runtime_atomic_values();
     check_constructor_serialization();
     check_runtime_only_operation_app_serialization();
 }
