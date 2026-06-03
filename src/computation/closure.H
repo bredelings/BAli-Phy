@@ -18,11 +18,11 @@ private:
     /// The runtime expression
     Runtime::Exp code;
 
-public:
-    typedef boost::container::small_vector<int,10> Env_t;
-  
     /// Legacy expression_ref view derived from code.
     const expression_ref& exp;
+
+public:
+    typedef boost::container::small_vector<int,10> Env_t;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
 
