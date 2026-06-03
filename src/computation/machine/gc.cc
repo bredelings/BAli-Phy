@@ -15,6 +15,19 @@ void shrink(V& v)
 long total_gc = 0;
 long total_regs = 0;
 long total_steps = 0;
+
+namespace
+{
+    object_ptr<const GCObject> gc_object_value(const closure& C)
+    {
+        if (auto object_value = C.get_code().to<Runtime::ObjectValue>())
+            if (C.get_code().is_gcable_object_value())
+                return convert<GCObject>(object_value->value);
+
+        return {};
+    }
+}
+
 void reg_heap::collect_garbage()
 {
     total_gc++;
@@ -197,9 +210,8 @@ void reg_heap::trace(vector<int>& remap)
 	for(int r : R.C.Env)
 	    mark_reg(r);
 
-        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
+        if (auto gco = gc_object_value(R.C))
         {
-            auto gco = convert<GCObject>(obj.ptr());
             gco->get_regs(tmp);
             for(int r: tmp)
                 mark_reg(r);
@@ -277,9 +289,8 @@ void reg_heap::trace_and_reclaim_unreachable()
 	    assert(regs.is_used(r2));
 	}
 
-        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
+        if (auto gco = gc_object_value(R.C))
         {
-            auto gco = convert<GCObject>(obj.ptr());
             gco->update_regs(remap);
         }
     }
@@ -321,9 +332,8 @@ void reg_heap::trace_root()
 	for(int r : R.C.Env)
 	    mark_reg(r);
 
-        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
+        if (auto gco = gc_object_value(R.C))
         {
-            auto gco = convert<GCObject>(obj.ptr());
             gco->get_regs(tmp);
             for(int r: tmp)
                 mark_reg(r);
