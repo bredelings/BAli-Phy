@@ -4,6 +4,7 @@
 #include "imodel/imodel.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
+#include "computation/runtime/ast.H"
 #include <boost/dynamic_bitset.hpp>
 #include "sequence/doublets.H"
 #include "alignment/alignment.H"
@@ -981,8 +982,9 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
-    expression_ref nodeAlignment(constructor("NodeAlignment",3),{source_node, pairwise_alignment, branch_alignments});
-    return nodeAlignment;
+    return closure(R::Exp{R::App(R::ConstructorApp(constructor("NodeAlignment",3)),
+                                 {R::Int(source_node), R::ObjectValue(pairwise_alignment),
+                                  R::ObjectValue(branch_alignments.ptr())})});
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
@@ -991,8 +993,9 @@ extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
     expression_ref pairwise_alignment = Args.evaluate(1);
     expression_ref branch_alignments = Args.evaluate(2);
 
-    expression_ref branchAlignment(constructor("BranchAlignment",3),{target_node, pairwise_alignment, branch_alignments});
-    return branchAlignment;
+    return closure(R::Exp{R::App(R::ConstructorApp(constructor("BranchAlignment",3)),
+                                 {R::Int(target_node), R::ObjectValue(pairwise_alignment.ptr()),
+                                  R::ObjectValue(branch_alignments.ptr())})});
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)
