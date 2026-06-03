@@ -113,7 +113,7 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
     auto& M = *memory();
     try {
 	int t = M.switch_to_child_token(context_index, token_type::execute2);
-	int r1 = M.push_temp_head( {expression_ref(modifiable()),{}} );
+	int r1 = M.push_temp_head( {R::App{R::OperationApp(std::make_shared<modifiable>()),{}}} );
 	M.mark_reg_changeable(r1);
 	int r2 = M.set_reg_value(r1, std::move(C), t, true);
 

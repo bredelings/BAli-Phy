@@ -16,7 +16,7 @@ closure modifiable_op(OperationArgs& Args)
         int x = Args.reg_for_slot(0);
 
         // 2. Allocate a new reg m with closure (modifiable).
-        int m = Args.allocate( {expression_ref(modifiable()),{}} );
+        int m = Args.allocate( {R::App{R::OperationApp(std::make_shared<modifiable>()),{}}} );
 
         // 3. Mark m changeable.
         M.mark_reg_changeable(m);
@@ -29,7 +29,7 @@ closure modifiable_op(OperationArgs& Args)
         M.set_call(s, x, true);
 
         // 7. Unchangeably evaluate to m.
-        return closure(Runtime::IndexVar(0), {m});
+        return closure(R::IndexVar(0), {m});
     }
     else if (C.exp.size() == 2)
     {
@@ -40,7 +40,7 @@ closure modifiable_op(OperationArgs& Args)
         int x_reg = Args.reg_for_slot(1);
 
         // 2. Allocate the expression to evaluate
-        return closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+        return closure(R::apply(R::IndexVar(1), {R::IndexVar(0)}),
                        {f_reg, x_reg});
     }
     // Complain if there is no value at all.

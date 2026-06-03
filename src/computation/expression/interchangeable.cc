@@ -41,7 +41,7 @@ closure interchangeable_op(OperationArgs& Args)
 	int x = Args.reg_for_slot(1);
 
 	// 2. Allocate a new reg i with closure (interchangeable)
-	int i = Args.allocate( {expression_ref(interchangeable()), {}} );
+        int i = Args.allocate( {R::App{R::OperationApp(std::make_shared<interchangeable>()),{}}} );
 
 	// 3. Mark i changeable
 	M.mark_reg_changeable(i);
@@ -53,14 +53,14 @@ closure interchangeable_op(OperationArgs& Args)
 	int s = M.add_shared_step(i);
 
 	// 6. Create a reg with closure (f x)
-	closure fx_C(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}), {f,x});
+	closure fx_C(R::apply(R::IndexVar(1), {R::IndexVar(0)}), {f,x});
 	int fx = M.allocate_reg_from_step(s, std::move(fx_C));
 
 	// 7. Give i a step that calls fx
 	M.set_call(s, fx, true);
 
 	// 8. Unchangeable evaluate to i
-	return closure(Runtime::IndexVar(0), {i});
+	return closure(R::IndexVar(0), {i});
     }
     else
 	throw myexception()<<"Evaluating changeable with no call";
