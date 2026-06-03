@@ -6,6 +6,8 @@
 #include "computation/expression/trim.H"
 #include "computation/runtime/ast.H"
 #include "util/string/join.H" // for join( )
+#include <cmath>
+#include <iostream>
 #include <optional>
 #include <utility>
 
@@ -14,6 +16,41 @@ using std::string;
 
 namespace
 {
+    bool runtime_cache_equal(const expression_ref& E1, const expression_ref& E2)
+    {
+        if (E1 == E2)
+            return true;
+
+        if (E1.type() != E2.type())
+            return false;
+
+        if (E1.is_double())
+            return std::isnan(E1.as_double()) and std::isnan(E2.as_double());
+
+        if (E1.is_log_double())
+            return std::isnan(E1.as_log_double().log()) and std::isnan(E2.as_log_double().log());
+
+        if (E1.is_expression())
+        {
+            if (not E2.is_expression())
+                return false;
+
+            if (not runtime_cache_equal(E1.head(), E2.head()))
+                return false;
+
+            if (E1.size() != E2.size())
+                return false;
+
+            for(int i=0; i<E1.size(); i++)
+                if (not runtime_cache_equal(E1.sub()[i], E2.sub()[i]))
+                    return false;
+
+            return true;
+        }
+
+        return false;
+    }
+
     Runtime::Exp resolve_runtime_slot(Runtime::Exp E, const closure::Env_t& Env)
     {
         if (auto index_var = E.to<Runtime::IndexVar>())
@@ -52,7 +89,6 @@ namespace
         return {};
     }
 }
-
 void closure::clear()
 {
     exp_cache_.clear();
@@ -88,7 +124,17 @@ void closure::check_runtime_expression() const
 {
 #ifndef NDEBUG
     if (runtime_exp)
-        assert(Runtime::to_expression_ref(runtime_exp) == exp);
+    {
+        auto runtime_ref = Runtime::to_expression_ref(runtime_exp);
+        if (not runtime_cache_equal(runtime_ref, exp))
+        {
+            std::cerr<<"closure runtime expression mismatch\n";
+            std::cerr<<"  exp         = "<<exp.print()<<"\n";
+            std::cerr<<"  runtime ref = "<<runtime_ref.print()<<"\n";
+            std::cerr<<"  runtime ast = "<<Runtime::print(runtime_exp)<<"\n";
+        }
+        assert(runtime_cache_equal(runtime_ref, exp));
+    }
 #endif
 }
 
