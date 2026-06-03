@@ -163,8 +163,8 @@ else
   test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
 endif
 
-test('bali-phy version', baliphy, args:['--version'])
-test('bali-phy help', baliphy, args:['--help'])
+test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
+test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
 # When running on very slow autobuilders these tests could take a long time.
 test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath], timeout: 300)
 test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', '-V', packagepath], timeout: 300)
