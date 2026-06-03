@@ -33,6 +33,9 @@ public:
 
     const Runtime::Exp& get_code() const {return code; }
 
+    /// Legacy expression_ref view derived from code.
+    const expression_ref& legacy_exp() const {return exp;}
+
     void set_code(Runtime::Exp e);
 
     bool operator==(const closure& C2) const {return code == C2.code and Env == C2.Env;}

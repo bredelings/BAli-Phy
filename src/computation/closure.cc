@@ -46,7 +46,7 @@ void closure::clear()
 
 string closure::print() const
 {
-    string result = exp.print();
+    string result = legacy_exp().print();
     if (Env.size())
 	result += " {" + join(Env,", ") + "}";
     return result;
@@ -131,7 +131,7 @@ expression_ref deindexify(const closure& C)
     for(int R: C.Env)
 	variables.push_back(reg_var(R));
   
-    return deindexify(C.exp, variables);
+    return deindexify(C.legacy_exp(), variables);
 }
 
 closure trim_unnormalize(const closure& C)
