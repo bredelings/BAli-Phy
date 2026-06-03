@@ -129,6 +129,23 @@ namespace
         require(trim_body->index == 1, "shifted Trim body index mismatch");
     }
 
+    void check_lambda_peeling()
+    {
+        Runtime::Exp body{Runtime::IndexVar(2)};
+        Runtime::Exp one_lambda{Runtime::Lambda(body)};
+        Runtime::Exp e{Runtime::Lambda(one_lambda)};
+
+        require(Runtime::count_lambdas(e) == 2, "runtime lambda count mismatch");
+
+        auto once = Runtime::peel_lambdas(e, 1);
+        require(bool(once.to<Runtime::Lambda>()), "peeling one lambda should leave one lambda");
+
+        auto twice = Runtime::peel_lambdas(e, 2);
+        auto peeled_body = twice.to<Runtime::IndexVar>();
+        require(bool(peeled_body), "peeling two lambdas should expose the body");
+        require(peeled_body->index == 2, "peeled lambda body index mismatch");
+    }
+
     void check_deindexify_reg_refs()
     {
         auto reg_ref = deindexify(Runtime::to_expression_ref(Runtime::RegRef(7)));
@@ -212,6 +229,7 @@ int main(int argc, char** argv)
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
     check_shift_free_indices();
+    check_lambda_peeling();
     check_deindexify_reg_refs();
     check_constructor_serialization();
 }

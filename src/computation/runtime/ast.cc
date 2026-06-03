@@ -66,6 +66,30 @@ namespace Runtime
         return Let(std::move(args), App(FunctionApply{}, std::move(app_args)));
     }
 
+    int count_lambdas(const Exp& E)
+    {
+        const Exp* E2 = &E;
+        int n = 0;
+        while(const auto* lambda = E2->to<Lambda>())
+        {
+            E2 = &lambda->body;
+            n++;
+        }
+        return n;
+    }
+
+    Exp peel_lambdas(const Exp& E, int n)
+    {
+        const Exp* E2 = &E;
+        for(int i=0;i<n;i++)
+        {
+            const auto* lambda = E2->to<Lambda>();
+            assert(lambda);
+            E2 = &lambda->body;
+        }
+        return *E2;
+    }
+
     Exp shift_free_indices(const Exp& E, int amount, int depth)
     {
         return E.visit([&](const auto& e) -> Exp
