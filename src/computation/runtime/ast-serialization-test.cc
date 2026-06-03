@@ -92,6 +92,25 @@ namespace
         require(Runtime::to_expression_ref(C2.get_code()) == C2.exp, "trim_unnormalized runtime closure cache mismatch");
     }
 
+    void check_runtime_closure_slots()
+    {
+        closure C(Runtime::App(Runtime::FunctionApply{},
+                               {Runtime::IndexVar(1),
+                                Runtime::IndexVar(0),
+                                Runtime::RegRef(30)}),
+                  {10, 20});
+
+        require(C.runtime_n_slots() == 3, "runtime closure App slot count mismatch");
+        require(C.runtime_reg_for_slot(0) == 10, "runtime slot 0 should resolve through the closure environment");
+        require(C.runtime_reg_for_slot(1) == 20, "runtime slot 1 should resolve through the closure environment");
+        require(C.runtime_reg_for_slot(2) == 30, "runtime RegRef slot should preserve its target");
+
+        auto slot = C.runtime_slot(1);
+        auto slot_ref = slot.to<Runtime::RegRef>();
+        require(bool(slot_ref), "runtime IndexVar slot should become a RegRef");
+        require(slot_ref->target == 20, "runtime slot RegRef target mismatch");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -228,6 +247,7 @@ int main(int argc, char** argv)
 
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
+    check_runtime_closure_slots();
     check_shift_free_indices();
     check_lambda_peeling();
     check_deindexify_reg_refs();

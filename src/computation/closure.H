@@ -66,6 +66,12 @@ public:
             std::abort();
     }
 
+    int runtime_n_slots() const;
+
+    Runtime::Exp runtime_slot(int i) const;
+
+    int runtime_reg_for_slot(int i) const;
+
     bool is_reg_ref() const
     {
         return exp.is_index_var() or exp.is_reg_var();

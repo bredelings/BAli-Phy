@@ -16,7 +16,19 @@ int OperationArgs::reg_for_slot(int slot) const
     return current_closure().reg_for_slot(slot);
 }
 
+Runtime::Exp OperationArgs::runtime_slot(int slot) const
+{
+    return current_closure().runtime_slot(slot);
+}
+
+int OperationArgs::runtime_reg_for_slot(int slot) const
+{
+    return current_closure().runtime_reg_for_slot(slot);
+}
+
 int OperationArgs::n_args() const {return current_closure().exp.size();}
+
+int OperationArgs::runtime_n_slots() const {return current_closure().runtime_n_slots();}
 
 const expression_ref& OperationArgs::reference(int slot) const
 {

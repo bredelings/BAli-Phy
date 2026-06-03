@@ -37,11 +37,17 @@ public:
 
     int n_args() const;
 
+    int runtime_n_slots() const;
+
     const expression_ref& reference(int slot) const;
 
     expression_ref arg_for_slot(int slot) const;
 
+    Runtime::Exp runtime_slot(int slot) const;
+
     int reg_for_slot(int slot) const;
+
+    int runtime_reg_for_slot(int slot) const;
 
     // evaluating a changeable-or-forcing reg unchangeably will return the
     // reg instead of throwing a no_context() exception.

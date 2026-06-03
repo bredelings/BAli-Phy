@@ -5,10 +5,25 @@
 #include "computation/expression/trim.H"
 #include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
+#include <cstdlib>
 #include <utility>
 
 using std::vector;
 using std::string;
+
+namespace
+{
+    const Runtime::Exp& runtime_app_slot(const Runtime::Exp& E, int i)
+    {
+        auto app = E.to<Runtime::App>();
+        if (not app)
+            std::abort();
+
+        assert(0 <= i);
+        assert(i < app->args.size());
+        return app->args[i];
+    }
+}
 
 void closure::set_code(Runtime::Exp c)
 {
@@ -35,6 +50,39 @@ string closure::print() const
     if (Env.size())
 	result += " {" + join(Env,", ") + "}";
     return result;
+}
+
+int closure::runtime_n_slots() const
+{
+    assert(has_code());
+
+    auto app = code.to<Runtime::App>();
+    if (not app)
+        std::abort();
+
+    return app->args.size();
+}
+
+Runtime::Exp closure::runtime_slot(int i) const
+{
+    const auto& E = runtime_app_slot(code, i);
+
+    if (auto index_var = E.to<Runtime::IndexVar>())
+        return Runtime::RegRef(lookup_in_env(index_var->index));
+    else
+        return E;
+}
+
+int closure::runtime_reg_for_slot(int i) const
+{
+    const auto& E = runtime_app_slot(code, i);
+
+    if (auto index_var = E.to<Runtime::IndexVar>())
+        return lookup_in_env(index_var->index);
+    else if (auto reg_ref = E.to<Runtime::RegRef>())
+        return reg_ref->target;
+    else
+        std::abort();
 }
 
 closure get_trimmed(const closure& C)
