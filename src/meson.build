@@ -145,7 +145,23 @@ runtime_ast_serialization_test = executable('runtime-ast-serialization-test',
                                             link_with: [libcomputation, libcommon, libmcon, libutil],
                                             export_dynamic: true)
 
-test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
+if host_machine.system() == 'windows'
+  runtime_ast_serialization_runner = meson.project_source_root()/'tests/run-runtime-ast-serialization-test.py'
+  runtime_ast_serialization_args = [
+             runtime_ast_serialization_test.full_path(),
+             builtins_path,
+             meson.project_source_root()]
+  if meson.is_cross_build()
+    runtime_ast_serialization_args = ['--wrapper', 'wine'] + runtime_ast_serialization_args
+  endif
+  test('runtime AST serialization',
+       python,
+       args: [runtime_ast_serialization_runner] + runtime_ast_serialization_args,
+       depends: runtime_ast_serialization_test,
+       timeout: 120)
+else
+  test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
+endif
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])

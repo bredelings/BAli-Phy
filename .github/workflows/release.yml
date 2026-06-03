@@ -306,6 +306,7 @@ jobs:
           fi
           if [ "${{ matrix.name }}" = "windows" ] ; then
             export WINEPATH=$(winepath -w $HOME/local/bin)
+            export MESON_TESTTHREADS=2
           fi
           ninja -C build test -j2
         fi

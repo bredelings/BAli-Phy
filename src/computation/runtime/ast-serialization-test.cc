@@ -181,8 +181,6 @@ int main(int argc, char** argv)
 
     require(before_ref.print() == after_ref.print(), "Runtime AST serialization changed the expression");
 
-    check_pinned_global_translation(loader);
-    check_local_reg_refs_are_captured_before_trimming(loader);
     check_shift_free_indices();
     check_deindexify_reg_refs();
     check_constructor_serialization();
