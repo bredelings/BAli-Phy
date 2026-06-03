@@ -113,7 +113,7 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
     auto& M = *memory();
     try {
 	int t = M.switch_to_child_token(context_index, token_type::execute2);
-	int r1 = M.push_temp_head( {modifiable(),{}} );
+	int r1 = M.push_temp_head(closure::object_value(modifiable(), {}));
 	M.mark_reg_changeable(r1);
 	int r2 = M.set_reg_value(r1, std::move(C), t, true);
 
@@ -462,7 +462,7 @@ void context_ref::set_modifiable_value_(int R, closure&& C)
 void context_ref::set_modifiable_value(int R, const expression_ref& E)
 {
     assert(is_literal_type(E.type()));
-    set_modifiable_value_(R, closure::legacy_expression(E));
+    set_modifiable_value_(R, closure::atomic_value(E));
 }
 
 void context_ref::set_reg_value(int P, closure&& C)

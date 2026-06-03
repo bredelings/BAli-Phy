@@ -53,7 +53,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     object_ptr<effect> e(new register_prior(r_from_dist, r_prob, prob));
 
-    int r_effect = Args.allocate(closure(e));
+    int r_effect = Args.allocate(closure::object_value(e));
 
     Args.set_effect(r_effect);
 
@@ -73,7 +73,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     object_ptr<effect> e(new register_likelihood(r_from_dist, r_prob, prob));
 
-    int r_effect = Args.allocate(closure(e));
+    int r_effect = Args.allocate(closure::object_value(e));
 
     Args.set_effect(r_effect);
 

@@ -7,6 +7,7 @@
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/bool.H"
 #include "computation/runtime/ast.H"
 #include "computation/haskell/Integer.H"
 
@@ -155,6 +156,8 @@ public:
 
     closure(char x):closure(Runtime::Char(x)) {}
 
+    closure(bool x):closure(Runtime::ObjectValue(x ? bool_true : bool_false)) {}
+
     closure(std::string x):closure(Runtime::String(std::move(x))) {}
 
     closure(const String& x):closure(Runtime::String(x.value())) {}
@@ -177,6 +180,64 @@ public:
     static closure legacy_expression(expression_ref e, const Env_t& E)
     {
         return closure(std::move(e), E);
+    }
+
+    static closure object_value(expression_ref e)
+    {
+        return legacy_expression(std::move(e));
+    }
+
+    static closure object_value(expression_ref e, const Env_t& E)
+    {
+        return legacy_expression(std::move(e), E);
+    }
+
+    static closure object_value(Object* o)
+    {
+        return object_value(expression_ref(o));
+    }
+
+    static closure object_value(Object* o, const Env_t& E)
+    {
+        return object_value(expression_ref(o), E);
+    }
+
+    static closure object_value(const object_ptr<const Object>& o)
+    {
+        return object_value(expression_ref(o));
+    }
+
+    static closure object_value(const object_ptr<const Object>& o, const Env_t& E)
+    {
+        return object_value(expression_ref(o), E);
+    }
+
+    template <typename T>
+    static closure object_value(const object_ptr<T>& o)
+    {
+        return object_value(expression_ref(o));
+    }
+
+    template <typename T>
+    static closure object_value(const object_ptr<T>& o, const Env_t& E)
+    {
+        return object_value(expression_ref(o), E);
+    }
+
+    static closure object_value(const Object& O)
+    {
+        return object_value(expression_ref(O));
+    }
+
+    static closure object_value(const Object& O, const Env_t& E)
+    {
+        return object_value(expression_ref(O), E);
+    }
+
+    static closure atomic_value(expression_ref e)
+    {
+        assert(not e.is_expression());
+        return object_value(std::move(e));
     }
 
     // Constructing from an expression_ref

@@ -823,7 +823,7 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     for(int branch: branches)
         v->push_back(branch);
 
-    return v;
+    return closure::object_value(v);
 }
 
 extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)
@@ -1096,7 +1096,7 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
     if (x_value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
 
-    return closure::legacy_expression(x_value);
+    return closure::atomic_value(x_value);
 }
 
 extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
@@ -1120,7 +1120,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
     if (value.is_expression())
 	throw myexception()<<"getValueInContext got non-atomic value '"<<value<<"'";
 
-    C.set_reg_value(*x_mod_reg, closure::legacy_expression(value));
+    C.set_reg_value(*x_mod_reg, closure::atomic_value(value));
 
     return constructor("()",0);
 }
@@ -1218,7 +1218,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
     // 3. Create the effect
     object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix});
 
-    int r_effect = Args.allocate(closure(e));
+    int r_effect = Args.allocate(closure::object_value(e));
 
     Args.set_effect(r_effect);
 
@@ -1378,7 +1378,7 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
 
     object_ptr<Box<json::value>> result(new Box<json::value>(j));
 
-    return result;
+    return closure::object_value(result);
 }
 
 extern "C" closure builtin_function_jsonToTableLineRaw(OperationArgs& Args)

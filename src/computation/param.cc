@@ -162,7 +162,7 @@ void context_ptr::set_value(const expression_ref& v)
     if (not m)
         throw myexception()<<"Trying to set the value of non-modifiable reg "<<get_reg();
     int r = m->get_reg();
-    const_cast<context_ref&>(C).set_reg_value(r, closure::legacy_expression(v));
+    const_cast<context_ref&>(C).set_reg_value(r, closure::atomic_value(v));
 }
 
 void context_ptr::move_to_result()
