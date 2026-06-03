@@ -1,5 +1,6 @@
 #include "interchangeable.H"
 #include "index_var.H"
+#include "computation/runtime/ast.H"
 #include "util/assert.hh"
 
 /*
@@ -52,17 +53,14 @@ closure interchangeable_op(OperationArgs& Args)
 	int s = M.add_shared_step(i);
 
 	// 6. Create a reg with closure (f x)
-	expression_ref f_E = index_var(1);
-	expression_ref x_E = index_var(0);
-	expression_ref fx_E = {f_E, x_E};
-	closure fx_C(fx_E, {f,x});
+	closure fx_C(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}), {f,x});
 	int fx = M.allocate_reg_from_step(s, std::move(fx_C));
 
 	// 7. Give i a step that calls fx
 	M.set_call(s, fx, true);
 
 	// 8. Unchangeable evaluate to i
-	return {index_var(0), {i}};
+	return closure(Runtime::IndexVar(0), {i});
     }
     else
 	throw myexception()<<"Evaluating changeable with no call";
@@ -78,4 +76,3 @@ bool is_interchangeable(const expression_ref& E)
     assert(result == E.head().is_a<interchangeable>());
     return result;
 }
-
