@@ -768,7 +768,7 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
                     assert(s > 0);
                     int call = steps[s].call;
                     auto value = closure_at(call);
-                    assert(value.legacy_exp().is_atomic());
+                    assert(value.get_code().is_atomic_value());
                     reg_values.push_back(set_op{r, value});
                 }
             }
@@ -2036,7 +2036,6 @@ void reg_heap::check_reg_vars_are_pinned(const expression_ref& E) const
 void reg_heap::set_C(int R, closure&& C)
 {
     assert(C);
-    assert(not C.legacy_exp().head().is_a<expression>());
 #ifndef NDEBUG
     check_reg_vars_are_pinned(C.legacy_exp());
 #endif
@@ -2214,8 +2213,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     {
 	if (not unsafe)
 	{
-	    assert(value.legacy_exp().size() == 0);
-	    assert(is_WHNF(value.legacy_exp()));
+	    assert(value.get_code().is_atomic_value());
 	}
 
         int R2 = allocate_reg_from_step(s, std::move(value) );

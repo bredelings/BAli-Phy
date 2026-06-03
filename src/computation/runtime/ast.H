@@ -141,6 +141,8 @@ namespace Runtime
 
         bool is_atomic_value() const;
         bool is_value() const;
+        bool is_whnf() const;
+        bool is_gcable_object_value() const;
         int as_int() const;
         double as_double() const;
         log_double_t as_log_double() const;

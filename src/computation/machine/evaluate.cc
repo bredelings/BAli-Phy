@@ -277,9 +277,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).legacy_exp();
-        assert(is_WHNF(E));
-        assert(not E.head().is_a<expression>());
+        assert(access_value_for_reg(r).get_code().is_whnf());
         assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }
@@ -724,9 +722,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).legacy_exp();
-        assert(is_WHNF(E));
-        assert(not E.head().is_a<expression>());
+        assert(access_value_for_reg(r).get_code().is_whnf());
         assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }
@@ -761,9 +757,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).legacy_exp();
-        assert(is_WHNF(E));
-        assert(not E.head().is_a<expression>());
+        assert(access_value_for_reg(r).get_code().is_whnf());
         assert(not reg_is_ref_no_force(r));
         assert(not reg_is_unevaluated(r));
     }

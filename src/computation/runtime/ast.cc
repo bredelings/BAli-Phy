@@ -158,6 +158,41 @@ namespace Runtime
         });
     }
 
+    bool Exp::is_whnf() const
+    {
+        return visit([](const auto& e) -> bool
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Int> or
+                          std::is_same_v<T, Double> or
+                          std::is_same_v<T, LogDouble> or
+                          std::is_same_v<T, Char> or
+                          std::is_same_v<T, String> or
+                          std::is_same_v<T, Integer> or
+                          std::is_same_v<T, Constructor> or
+                          std::is_same_v<T, ObjectValue> or
+                          std::is_same_v<T, Lambda>)
+            {
+                return true;
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                return std::holds_alternative<ConstructorApp>(e.head);
+            }
+            else
+                return false;
+        });
+    }
+
+    bool Exp::is_gcable_object_value() const
+    {
+        if (auto object_value = to<ObjectValue>())
+            return is_gcable_type(object_value->value->type());
+        else
+            return false;
+    }
+
     int Exp::as_int() const
     {
         return as<Int>().value;
