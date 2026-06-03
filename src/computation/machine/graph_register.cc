@@ -416,8 +416,8 @@ void reg_heap::unregister_effect_at_step(int s)
 
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).exp.head().is_a<effect>() or closure_at(r).exp.head().is_a<constructor>());
-    auto& E = closure_at(r).exp.head();
+    assert(closure_at(r).legacy_exp().head().is_a<effect>() or closure_at(r).legacy_exp().head().is_a<constructor>());
+    auto& E = closure_at(r).legacy_exp().head();
 
     if (E.is_a<::register_prior>())
     {
@@ -483,8 +483,8 @@ void reg_heap::_register_effect_at_reg(int r, int s)
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).exp.head().is_a<effect>() or closure_at(r).exp.head().is_a<constructor>());
-    auto& E = closure_at(r).exp.head();
+    assert(closure_at(r).legacy_exp().head().is_a<effect>() or closure_at(r).legacy_exp().head().is_a<constructor>());
+    auto& E = closure_at(r).legacy_exp().head();
 
     if (E.is_a<::register_prior>())
     {
@@ -768,7 +768,7 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
                     assert(s > 0);
                     int call = steps[s].call;
                     auto value = closure_at(call);
-                    assert(value.exp.is_atomic());
+                    assert(value.legacy_exp().is_atomic());
                     reg_values.push_back(set_op{r, value});
                 }
             }
@@ -951,7 +951,7 @@ expression_ref reg_heap::evaluate_program(int c)
         int r = heads[*program_result_head];
         assert(reg_has_value(r));
 
-        result = value_for_precomputed_reg(r).exp;
+        result = value_for_precomputed_reg(r).legacy_exp();
     }
     else
     {
@@ -1410,7 +1410,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
 
     auto& C = (*this)[R];
 
-    if (is_modifiable(C.exp))
+    if (is_modifiable(C.legacy_exp()))
         return R;
     else
         return {};
@@ -1445,7 +1445,7 @@ optional<int> reg_heap::find_precomputed_const_or_modifiable_reg(int r)
             return r;
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_modifiable(C.exp))
+            if (is_modifiable(C.legacy_exp()))
                 return r;
             else if (not reg_has_call(r))
                 return {};
@@ -1478,7 +1478,7 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
             return {};
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_modifiable(C.exp))
+            if (is_modifiable(C.legacy_exp()))
             {
                 // We might want to set the call for an unforced modifiable in the tree.
                 return r;
@@ -1521,7 +1521,7 @@ optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
             return {};
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_interchangeable(C.exp))
+            if (is_interchangeable(C.legacy_exp()))
             {
                 assert(reg_has_call(r));
                 assert(reg_is_forced(r));
@@ -2036,9 +2036,9 @@ void reg_heap::check_reg_vars_are_pinned(const expression_ref& E) const
 void reg_heap::set_C(int R, closure&& C)
 {
     assert(C);
-    assert(not C.exp.head().is_a<expression>());
+    assert(not C.legacy_exp().head().is_a<expression>());
 #ifndef NDEBUG
-    check_reg_vars_are_pinned(C.exp);
+    check_reg_vars_are_pinned(C.legacy_exp());
 #endif
     clear_C(R);
 
@@ -2214,8 +2214,8 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
     {
 	if (not unsafe)
 	{
-	    assert(value.exp.size() == 0);
-	    assert(is_WHNF(value.exp));
+	    assert(value.legacy_exp().size() == 0);
+	    assert(is_WHNF(value.legacy_exp()));
 	}
 
         int R2 = allocate_reg_from_step(s, std::move(value) );
@@ -3188,7 +3188,7 @@ void reg_heap::allocate_identifiers_for_program()
 
 #ifdef DEBUG_OPTIMIZE
             std::cerr<<"     "<<x<<" := "<<body<<"\n\n";
-            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).exp<<"\n\n\n\n";
+            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).legacy_exp()<<"\n\n\n\n";
 #endif
 
             // load the body into the machine

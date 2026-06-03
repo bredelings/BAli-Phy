@@ -145,7 +145,7 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	assert(regs.is_marked(r));
 
 	const reg& R = regs.access(r);
-        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
         {
             auto gco = convert<GCObject>(obj.ptr());
             gco->get_regs(tmp);
@@ -260,7 +260,7 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
     // If there are no references, then we are done.
     if (C.Env.empty()) 
     {
-	names[R] = C.exp;
+	names[R] = C.legacy_exp();
 	return;
     }
 
@@ -268,7 +268,7 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
     if (names.count(R))
     {
 	if (not names[R])
-	    names[R] = C.exp;
+	    names[R] = C.legacy_exp();
 	return;
     }
 
@@ -282,7 +282,7 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
     for(int r: H.forced_regs_for_reg(R))
 	discover_graph_vars(H, r, names, id);
 
-    names[R] = subst_referenced_vars(C.exp, C.Env, names);
+    names[R] = subst_referenced_vars(C.legacy_exp(), C.Env, names);
 }
 
 string escape(const string& s)
@@ -389,7 +389,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
 {
-    return C[R].exp;
+    return C[R].legacy_exp();
 
     map< int, expression_ref> names;
     for(const auto& [name, R]: ids)
@@ -445,12 +445,12 @@ map<int,string> get_constants(const reg_heap& C, int t)
 
 	if (C[R].is_reg_ref()) continue;
 
-	if (is_modifiable(C[R].exp)) continue;
+	if (is_modifiable(C[R].legacy_exp())) continue;
 
-	if (C[R].exp.size() == 0)
+	if (C[R].legacy_exp().size() == 0)
 	{
-	    string name = C[R].exp.print();
-	    if (C[R].exp.is_double())
+	    string name = C[R].legacy_exp().print();
+	    if (C[R].legacy_exp().is_double())
 	    {
 		if (name.find('.') != string::npos)
 		{
@@ -505,7 +505,7 @@ bool print_as_record(const expression_ref& E)
 
 bool print_as_record(const closure& c)
 {
-    return print_as_record(c.exp);
+    return print_as_record(c.legacy_exp());
 }
 
 bool contains(const string& s1, const string& s2)
@@ -545,7 +545,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     if (skip_ref)
 	CR = follow_reg_ref(C, CR);
 
-    expression_ref F = CR.exp;
+    expression_ref F = CR.legacy_exp();
     // node label = R/name: expression
     string label = convertToString(R);
     if (replace.count(R))
@@ -634,7 +634,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     for(int& r: CR.Env)
         r = C.follow_reg_ref(r);
 
-    expression_ref F = CR.exp;
+    expression_ref F = CR.legacy_exp();
     // node label = R/name: expression
     string label;
     if (reg_names.count(R))
@@ -776,7 +776,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	o<<name<<" ";
 	o<<"[";
 
-	expression_ref F = C[R].exp;
+	expression_ref F = C[R].legacy_exp();
 
 	bool print_record = print_as_record(F);
         if (print_as_record(F))
@@ -1024,7 +1024,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
     for(int i=0;i<regs2.size();i++)
     {
         int r = regs2[i];
-        if (is_modifiable(M[r].exp)) continue;
+        if (is_modifiable(M[r].legacy_exp())) continue;
         for(auto r2: M[r].Env)
         {
             r2 = M.follow_reg_ref(r2);
@@ -1044,7 +1044,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
             if (reg_names.count(r) or constants.count(r)) continue;
         }
 
-        expression_ref F = M[r].exp;
+        expression_ref F = M[r].legacy_exp();
         // node label = R/name: expression
 	string name = "r" + convertToString(r);
 
@@ -1086,7 +1086,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
 	}
 	else
 	{
-            if (is_modifiable(M[r].exp)) continue;
+            if (is_modifiable(M[r].legacy_exp())) continue;
 
 	    for(int r2: M[r].Env)
 	    {

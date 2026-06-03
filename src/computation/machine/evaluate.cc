@@ -232,7 +232,7 @@ R::Exp evaluate_e_op(OperationArgs& Args, const expression_ref& E)
 closure evaluate_e_op_to_c(OperationArgs& Args)
 {
     // Make a copy here because the location of Args.current_closure() can change if the heap grows.
-    auto E = Args.current_closure().exp;
+    auto E = Args.current_closure().legacy_exp();
     return closure(evaluate_e_op(Args, E));
 }
 
@@ -244,7 +244,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).exp;
+        expression_ref E = access_value_for_reg(r).legacy_exp();
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
         assert(not reg_is_ref_no_force(r));
@@ -691,7 +691,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).exp;
+        expression_ref E = access_value_for_reg(r).legacy_exp();
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
         assert(not reg_is_ref_no_force(r));
@@ -728,7 +728,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 #ifndef NDEBUG
     if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(r).exp;
+        expression_ref E = access_value_for_reg(r).legacy_exp();
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
         assert(not reg_is_ref_no_force(r));

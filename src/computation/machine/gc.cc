@@ -197,7 +197,7 @@ void reg_heap::trace(vector<int>& remap)
 	for(int r : R.C.Env)
 	    mark_reg(r);
 
-        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
         {
             auto gco = convert<GCObject>(obj.ptr());
             gco->get_regs(tmp);
@@ -277,7 +277,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 	    assert(regs.is_used(r2));
 	}
 
-        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
         {
             auto gco = convert<GCObject>(obj.ptr());
             gco->update_regs(remap);
@@ -321,7 +321,7 @@ void reg_heap::trace_root()
 	for(int r : R.C.Env)
 	    mark_reg(r);
 
-        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
         {
             auto gco = convert<GCObject>(obj.ptr());
             gco->get_regs(tmp);
