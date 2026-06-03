@@ -37,12 +37,6 @@ void closure::set_code(Runtime::Exp c)
     exp_cache = Runtime::to_expression_ref(code);
 }
 
-void closure::set_legacy_exp(expression_ref e)
-{
-    code = {};
-    exp_cache = std::move(e);
-}
-
 void closure::clear()
 {
     exp_cache = {};
@@ -100,6 +94,8 @@ closure get_trimmed(const closure& C)
 
 void do_trim(closure& C)
 {
+    assert(C.has_code());
+
     vector<int> keep;
     if (const auto* trim = C.get_code().to<Runtime::Trim>())
     {
@@ -107,15 +103,6 @@ void do_trim(closure& C)
         C.set_code(trim->body);
 
         assert(not C.get_code().to<Runtime::Trim>());
-    }
-    else if (C.exp.head().type() == type_constant::trim_type)
-    {
-        expression_ref old = C.exp;
-        keep = old.sub()[0].as_<Vector<int>>();
-
-        C.set_legacy_exp(old.sub()[1]);
-
-        assert(not C.exp.head().is_a<Trim>());
     }
     else
         return;
@@ -149,10 +136,9 @@ expression_ref deindexify(const closure& C)
 
 closure trim_unnormalize(const closure& C)
 {
+    assert(C.has_code());
+
     closure C2 = C;
-    if (C2.has_code())
-        C2.set_code(Runtime::trim_unnormalize(C2.get_code()));
-    else
-        C2.set_legacy_exp(trim_unnormalize(C2.exp));
+    C2.set_code(Runtime::trim_unnormalize(C2.get_code()));
     return C2;
 }

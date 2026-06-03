@@ -21,7 +21,7 @@ private:
 public:
     typedef boost::container::small_vector<int,10> Env_t;
   
-    /// Legacy expression_ref view derived from code, or set through set_legacy_exp().
+    /// Legacy expression_ref view derived from code.
     const expression_ref& exp;
     /// The environment (regs bound to free variables of E).
     Env_t Env;
@@ -34,8 +34,6 @@ public:
     const Runtime::Exp& get_code() const {return code; }
 
     void set_code(Runtime::Exp e);
-
-    void set_legacy_exp(expression_ref e);
 
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 

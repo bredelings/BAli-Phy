@@ -443,15 +443,10 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
     return constructor("()",0);
 }
 
-int get_n_lambdas(const expression_ref& E);
-expression_ref peel_n_lambdas(const expression_ref& E, int n);
-
 static void peel_closure_lambdas(closure& C, int n)
 {
-    if (C.has_code())
-        C.set_code(Runtime::peel_lambdas(C.get_code(), n));
-    else
-        C.set_legacy_exp(peel_n_lambdas(C.exp, n));
+    assert(C.has_code());
+    C.set_code(Runtime::peel_lambdas(C.get_code(), n));
 }
 
 extern "C" closure builtin_function_catchRaw(OperationArgs& Args)

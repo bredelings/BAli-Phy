@@ -75,30 +75,6 @@ using boost::dynamic_pointer_cast;
    @ x y1 y2 y3 ... yn
 */
 
-int get_n_lambdas(const expression_ref& E)
-{
-    expression_ref E2 = E;
-    int n = 0;
-    while(E2.head().type() == type_constant::lambda2_type)
-    {
-	E2 = E2.sub()[0];
-	n++;
-    }
-    return n;
-}
-
-expression_ref peel_n_lambdas(const expression_ref& E, int n)
-{
-    expression_ref E2 = E;
-    for(int i=0;i<n;i++)
-    {
-	assert(E2.head().type() == type_constant::lambda2_type);
-	E2 = E2.sub()[0];
-    }
-    return E2;
-}
-      
-
 closure apply_op(OperationArgs& Args)
 {
     closure C = Args.evaluate_slot_to_closure(0);
@@ -144,11 +120,11 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts, const Runtime::Case* runtime_case = nullptr)
+static closure alts_op(const closure::Env_t& Env, const closure& object, const Expression::CaseAlts& alts, const Runtime::Case& runtime_case)
 {
     int L = alts.size();
 
-    assert(not runtime_case or runtime_case->alts.size() == L);
+    assert(runtime_case.alts.size() == L);
 
 #ifndef NDEBUG
     vector<expression_ref> cases(L);
@@ -169,7 +145,6 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
     for(int i=0;i<L and not result;i++)
     {
 	const expression_ref& this_case = alts[i].pattern;
-	const expression_ref& this_body = alts[i].body;
 
 	// If its _, then match it.
 	if (is_var(this_case))
@@ -178,10 +153,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 	    assert(is_wildcard(this_case));
 	    assert(i == L-1);
       
-            if (runtime_case)
-                result.set_code(runtime_case->alts[i].body);
-            else
-                result.set_legacy_exp(this_body);
+            result.set_code(runtime_case.alts[i].body);
 	}
 	else
 	{
@@ -197,10 +169,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
 		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
 		}
 #endif	
-                if (runtime_case)
-                    result.set_code(runtime_case->alts[i].body);
-                else
-                    result.set_legacy_exp(this_body);
+                result.set_code(runtime_case.alts[i].body);
 	
 		for(int j=0;j<object.exp.size();j++)
 		    result.Env.push_back( object.reg_for_slot(j) );
@@ -219,31 +188,16 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
     return get_trimmed(result);
 }
 
-bool is_seq(const expression_ref& E)
+bool is_seq(const Runtime::Case& C)
 {
-    assert(is_case(E));
-    auto& alts = E.sub()[1].as_<Expression::CaseAlts>();
-    return alts.size() == 1 and is_var(alts[0].pattern);
+    return C.alts.size() == 1 and std::holds_alternative<Runtime::WildcardPattern>(C.alts[0].pattern);
 }
 
 // Should we do this transformation before runtime?
-closure seq_op(OperationArgs& Args, const Runtime::Case* runtime_case = nullptr)
+closure seq_op(OperationArgs& Args, const Runtime::Case& runtime_case)
 {
-    Runtime::Exp runtime_body;
-    expression_ref legacy_body;
-
-    if (runtime_case)
-    {
-        assert(runtime_case->alts.size() == 1);
-        assert(std::holds_alternative<Runtime::WildcardPattern>(runtime_case->alts[0].pattern));
-        runtime_body = runtime_case->alts[0].body;
-    }
-    else
-    {
-        auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
-        assert(is_wildcard(alts[0].pattern));
-        legacy_body = alts[0].body;
-    }
+    assert(is_seq(runtime_case));
+    Runtime::Exp runtime_body = runtime_case.alts[0].body;
 
     // Force x
     Args.evaluate_slot_force(0);
@@ -251,10 +205,7 @@ closure seq_op(OperationArgs& Args, const Runtime::Case* runtime_case = nullptr)
     // Get the current Env -- AFTER we force x, so GC can't invalidate it.
     closure result;
     result.Env = Args.current_closure().Env;
-    if (runtime_case)
-        result.set_code(std::move(runtime_body));
-    else
-        result.set_legacy_exp(std::move(legacy_body));
+    result.set_code(std::move(runtime_body));
 
     // Trim the result.
     return get_trimmed( std::move(result) );
@@ -265,20 +216,15 @@ closure case_op(OperationArgs& Args)
     extern long total_case_op;
     total_case_op++;
 
-    Runtime::Case runtime_case;
-    bool has_runtime_case = false;
-    if (auto runtime_case_ptr = Args.current_closure().has_code() ? Args.current_closure().get_code().to<Runtime::Case>() : nullptr)
-    {
-        runtime_case = *runtime_case_ptr;
-        has_runtime_case = true;
-    }
+    assert(Args.current_closure().has_code());
+    auto runtime_case_ptr = Args.current_closure().get_code().to<Runtime::Case>();
+    assert(runtime_case_ptr);
+    Runtime::Case runtime_case = *runtime_case_ptr;
 
     // Handle case x of _ -> E = x `seq` E
     {
-        if (is_seq(Args.current_closure().exp))
-        {
-            return seq_op(Args, has_runtime_case ? &runtime_case : nullptr);
-        }
+        if (is_seq(runtime_case))
+            return seq_op(Args, runtime_case);
     }
 
     auto& in_object = Args.reference(0);
@@ -294,7 +240,7 @@ closure case_op(OperationArgs& Args)
     // *invalid* after the call above!
     auto& alts = Args.reference(1).as_<Expression::CaseAlts>();
 
-    return alts_op(C.Env, object, alts, has_runtime_case ? &runtime_case : nullptr);
+    return alts_op(C.Env, object, alts, runtime_case);
 }
 
 /*
@@ -341,7 +287,8 @@ closure let_op(OperationArgs& Args)
     {
 	int start = C.Env.size();
 
-        if (auto runtime_let = C.has_code() ? C.get_code().to<Runtime::Let>() : nullptr)
+        assert(C.has_code());
+        if (auto runtime_let = C.get_code().to<Runtime::Let>())
         {
             int n_binds = runtime_let->binds.size();
 
@@ -358,7 +305,6 @@ closure let_op(OperationArgs& Args)
             continue;
         }
 
-        assert(C.has_code());
         break;
     }
 
