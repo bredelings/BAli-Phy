@@ -10,11 +10,25 @@
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/expression/list.H"
+#include <memory>
 
 using boost::dynamic_pointer_cast;
 
 using std::optional;
 using std::vector;
+
+namespace
+{
+    Runtime::Exp runtime_modifiable_app(std::vector<Runtime::Exp> args)
+    {
+        return Runtime::App(Runtime::OperationApp(std::make_shared<modifiable>()), std::move(args));
+    }
+
+    Runtime::Exp runtime_interchangeable_app(std::vector<Runtime::Exp> args)
+    {
+        return Runtime::App(Runtime::OperationApp(std::make_shared<interchangeable>()), std::move(args));
+    }
+}
 
 int force_slot_to_safe_reg(OperationArgs& Args, int slot)
 {
@@ -75,9 +89,10 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     int r_to_dist  = Args.evaluate_slot_use(1);
     String role = Args.evaluate(2).as_<String>();
 
-    expression_ref E(constructor("Effect.InEdge",3),{index_var(0), r_to_dist, role});
+    auto E = Runtime::App(Runtime::ConstructorApp(constructor("Effect.InEdge",3)),
+                          {Runtime::IndexVar(0), Runtime::Int(r_to_dist), Runtime::String(role.value())});
 
-    int r_effect = Args.allocate(closure{E,{r_from_var}});
+    int r_effect = Args.allocate(closure(std::move(E), {r_from_var}));
 
     Args.set_effect(r_effect);
 
@@ -89,9 +104,10 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
 
-    expression_ref E(constructor("Effect.OutEdge",2), {index_var(1), index_var(0)});
+    auto E = Runtime::App(Runtime::ConstructorApp(constructor("Effect.OutEdge",2)),
+                          {Runtime::IndexVar(1), Runtime::IndexVar(0)});
 
-    int r_effect = Args.allocate(closure{E,{r_from_dist, r_to_var}});
+    int r_effect = Args.allocate(closure(std::move(E), {r_from_dist, r_to_var}));
 
     Args.set_effect(r_effect);
 
@@ -109,10 +125,11 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     int r_effect = Args.allocate_reg();
 
-    expression_ref E(constructor("Effect.Dist",3), {index_var(0), observation, name});
+    auto E = Runtime::App(Runtime::ConstructorApp(constructor("Effect.Dist",3)),
+                          {Runtime::IndexVar(0), Runtime::Int(observation), Runtime::String(name.value())});
 
     auto& M = Args.memory();
-    M.set_C(r_effect, closure{E,{r_effect}});
+    M.set_C(r_effect, closure(std::move(E), {r_effect}));
 
     Args.set_effect(r_effect);
 
@@ -125,9 +142,10 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_to_prop = Args.reg_for_slot(1);
     String property = Args.evaluate(2).as_<String>();
 
-    expression_ref E(constructor("Effect.DistProperty",3), {r_from_dist, property, index_var(0)});
+    auto E = Runtime::App(Runtime::ConstructorApp(constructor("Effect.DistProperty",3)),
+                          {Runtime::Int(r_from_dist), Runtime::String(property.value()), Runtime::IndexVar(0)});
 
-    int r_effect = Args.allocate(closure{E,{r_to_prop}});
+    int r_effect = Args.allocate(closure(std::move(E), {r_to_prop}));
 
     Args.set_effect(r_effect);
 
@@ -176,10 +194,7 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     int r_value = Args.reg_for_slot(0);
 
-    // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref mod_exp( modifiable(),{index_var(0)} );
-
-    return {mod_exp, {r_value}};
+    return closure(runtime_modifiable_app({Runtime::IndexVar(0)}), {r_value});
 }
 
 
@@ -200,10 +215,7 @@ extern "C" closure builtin_function_modifiable_apply(OperationArgs& Args)
     int f_reg = Args.reg_for_slot(0);
     int x_reg = Args.reg_for_slot(1);
 
-    // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref mod_exp( modifiable(),{index_var(1),index_var(0)} );
-
-    return {mod_exp, {f_reg, x_reg}};
+    return closure(runtime_modifiable_app({Runtime::IndexVar(1), Runtime::IndexVar(0)}), {f_reg, x_reg});
 
 }
 
@@ -213,10 +225,7 @@ extern "C" closure builtin_function_interchangeable(OperationArgs& Args)
     int f_reg = Args.reg_for_slot(0);
     int x_reg = Args.reg_for_slot(1);
 
-    // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref mod_exp( interchangeable(),{index_var(1), index_var(0)} );
-
-    return {mod_exp, {f_reg, x_reg}};
+    return closure(runtime_interchangeable_app({Runtime::IndexVar(1), Runtime::IndexVar(0)}), {f_reg, x_reg});
 }
 
 

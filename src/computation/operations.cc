@@ -176,7 +176,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
                 result.set_runtime_expression(runtime_case->alts[i].body);
             }
             else
-                result.set_legacy_expression(this_body);
+                result.set_runtime_expression(Runtime::ObjectValue(this_body));
 	}
 	else
 	{
@@ -204,7 +204,7 @@ static closure alts_op(const closure::Env_t& Env, const closure& object, const E
                     result.set_runtime_expression(runtime_case->alts[i].body);
                 }
                 else
-                    result.set_legacy_expression(this_body);
+                    result.set_runtime_expression(Runtime::ObjectValue(this_body));
 	
 		for(int j=0;j<object.exp.size();j++)
 		    result.Env.push_back( object.runtime_reg_for_slot(j) );
@@ -245,7 +245,7 @@ closure seq_op(OperationArgs& Args, Runtime::Exp runtime_body = {})
     if (runtime_body)
         result.set_runtime_expression(std::move(runtime_body));
     else
-        result.set_legacy_expression(alts[0].body);
+        result.set_runtime_expression(Runtime::ObjectValue(alts[0].body));
 
     // Trim the result.
     return get_trimmed( std::move(result) );
@@ -370,7 +370,7 @@ closure let_op(OperationArgs& Args)
             for(int i=0;i<n_binds;i++)
                 M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
 
-            C.set_legacy_expression(L.body);
+            C.set_runtime_expression(Runtime::ObjectValue(L.body));
         }
 	do_trim(C);
     }

@@ -4,6 +4,7 @@
 #include "computation/loader.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
+#include "computation/operation.H"
 #include "computation/program.H"
 #include <stdexcept>
 #include <sstream>
@@ -210,6 +211,8 @@ namespace
 
         require(Runtime::print(value) == legacy.print(), "ObjectValue print should delegate to its expression_ref value");
         require(Runtime::to_expression_ref(value) == legacy, "ObjectValue should convert back to its expression_ref value");
+        require(not Runtime::has_expression_object_values(value), "ObjectValue containing a plain object should not be flagged");
+        Runtime::check_no_expression_object_values(value);
 
         bool threw = false;
         try
@@ -223,7 +226,6 @@ namespace
 
         require(threw, "ObjectValue should not serialize into compiled runtime archives");
     }
-
     void check_legacy_closure_runtime_value_bridge()
     {
         expression_ref legacy_lambda = expression_ref(lambda2(), {expression_ref(1)});
@@ -232,6 +234,48 @@ namespace
         require(bool(C.runtime_exp), "legacy closures should keep a runtime bridge value");
         require(not C.has_structured_runtime_expression(), "ObjectValue bridge should not be treated as structured runtime code");
         require(Runtime::to_expression_ref(C.runtime_exp) == C.exp, "legacy runtime bridge should match the expression_ref cache");
+    }
+
+    void check_expression_object_value_audit()
+    {
+        expression_ref legacy_expression(constructor("Data.Test", 0), {});
+        Runtime::Exp value = Runtime::ObjectValue(legacy_expression);
+
+        require(Runtime::has_expression_object_values(value), "ObjectValue containing an expression should be flagged");
+
+        bool threw = false;
+        try
+        {
+            Runtime::check_no_expression_object_values(value);
+        }
+        catch (const std::runtime_error&)
+        {
+            threw = true;
+        }
+
+        require(threw, "ObjectValue expression audit should throw for expression objects");
+    }
+
+    closure runtime_ast_test_op(OperationArgs&)
+    {
+        return {};
+    }
+
+    void check_runtime_only_operation_app_serialization()
+    {
+        Runtime::Exp app = Runtime::App(Runtime::OperationApp(Operation(runtime_ast_test_op, "runtime_ast_test_op")), {});
+
+        bool threw = false;
+        try
+        {
+            archive_roundtrip(app);
+        }
+        catch (const std::runtime_error&)
+        {
+            threw = true;
+        }
+
+        require(threw, "runtime-only OperationApp should not serialize into compiled runtime archives");
     }
 }
 
@@ -276,4 +320,6 @@ int main(int argc, char** argv)
     check_constructor_serialization();
     check_object_value_bridge();
     check_legacy_closure_runtime_value_bridge();
+    check_expression_object_value_audit();
+    check_runtime_only_operation_app_serialization();
 }

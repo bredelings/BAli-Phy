@@ -155,6 +155,11 @@ namespace Runtime
     {
     }
 
+    OperationApp::OperationApp(std::shared_ptr<const Operation> op)
+        :head(std::move(op))
+    {
+    }
+
     OperationApp::OperationApp()
     {
     }
@@ -650,5 +655,57 @@ namespace Runtime
             }
         });
 #endif
+    }
+
+    bool has_expression_object_values(const Exp& E)
+    {
+        return E.visit([](const auto& e) -> bool
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, ObjectValue>)
+            {
+                return e.value.is_expression();
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                return has_expression_object_values(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                for(const auto& bind: e.binds)
+                    if (has_expression_object_values(bind))
+                        return true;
+                return has_expression_object_values(e.body);
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                if (has_expression_object_values(e.object))
+                    return true;
+                for(const auto& alt: e.alts)
+                    if (has_expression_object_values(alt.body))
+                        return true;
+                return false;
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                for(const auto& arg: e.args)
+                    if (has_expression_object_values(arg))
+                        return true;
+                return false;
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                return has_expression_object_values(e.body);
+            }
+            else
+                return false;
+        });
+    }
+
+    void check_no_expression_object_values(const Exp& E)
+    {
+        if (has_expression_object_values(E))
+            throw std::runtime_error("Runtime::ObjectValue contains an expression object");
     }
 }

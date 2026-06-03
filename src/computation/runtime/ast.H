@@ -421,6 +421,7 @@ namespace Runtime
         std::string func_name;
         std::string call_conv;
 
+        OperationApp(std::shared_ptr<const Operation>);
         OperationApp(Operation);
         OperationApp(Operation, std::string, std::string, std::string);
         OperationApp();
@@ -491,6 +492,8 @@ namespace Runtime
     void check_invariants(const Exp&);
     void check_no_reg_refs(const Exp&);
     void check_translated(const Exp&);
+    bool has_expression_object_values(const Exp&);
+    void check_no_expression_object_values(const Exp&);
 
 }
 
