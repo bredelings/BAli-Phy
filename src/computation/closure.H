@@ -284,6 +284,9 @@ public:
 
     closure(Object*):closure() { std::abort(); }
 
+    template <typename T>
+    closure(T*) = delete;
+
     closure(const object_ptr<const Object>&):closure() { std::abort(); }
 
     template <typename T>
