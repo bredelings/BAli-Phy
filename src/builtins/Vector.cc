@@ -13,6 +13,34 @@
 using boost::dynamic_pointer_cast;
 using std::vector;
 
+namespace
+{
+    bool is_clist_nil(const R::Exp& xs)
+    {
+        // c_nil is represented by an integer sentinel, and the legacy walker
+        // stopped on any integer.
+        return xs.is_int();
+    }
+
+    R::Exp clist_first(const R::Exp& xs)
+    {
+        if (auto pair = xs.to<R::RPair>())
+            return pair->first;
+
+        assert(xs.is_a<EPair>());
+        return R::e_op_value(xs.as_<EPair>().first);
+    }
+
+    R::Exp clist_second(const R::Exp& xs)
+    {
+        if (auto pair = xs.to<R::RPair>())
+            return pair->second;
+
+        assert(xs.is_a<EPair>());
+        return R::e_op_value(xs.as_<EPair>().second);
+    }
+}
+
 int vector_value_size(const R::Exp& value)
 {
     if (auto v = value.to<R::RVector>())
@@ -92,30 +120,24 @@ extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
 {
-    expression_ref xs = R::to_expression_ref(Args.evaluate_slot_to_value(0));
+    R::Exp xs = Args.evaluate_slot_to_value(0);
 
     object_ptr<EVector> v (new EVector);
 
-    for(auto E2 = xs; not E2.is_int(); E2 = E2.as_<EPair>().second)
-    {
-        assert(E2.is_a<EPair>());
-        v->push_back(E2.as_<EPair>().first);
-    }
+    for(; not is_clist_nil(xs); xs = clist_second(xs))
+        v->push_back(R::to_expression_ref(clist_first(xs)));
 
     return v;
 }
 
 extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
 {
-    expression_ref xs = R::to_expression_ref(Args.evaluate_slot_to_value(0));
+    R::Exp xs = Args.evaluate_slot_to_value(0);
 
     object_ptr<String> s (new String);
 
-    for(auto E2 = xs; not E2.is_int(); E2 = E2.as_<EPair>().second)
-    {
-        assert(E2.is_a<EPair>());
-        (*s) += E2.as_<EPair>().first.as_char();
-    }
+    for(; not is_clist_nil(xs); xs = clist_second(xs))
+        (*s) += clist_first(xs).as_char();
 
     return s;
 }

@@ -17,28 +17,62 @@ using std::set;
 using std::map;
 using std::pair;
 
-
-json::value c_json(const expression_ref& E)
+namespace
 {
-    int type = E.as_<EPair>().first.as_int();
+    R::Exp json_pair_first(const R::Exp& pair)
+    {
+        if (auto runtime_pair = pair.to<R::RPair>())
+            return runtime_pair->first;
+        else
+            return R::e_op_value(pair.as_<EPair>().first);
+    }
 
-    auto& J = E.as_<EPair>().second;
+    R::Exp json_pair_second(const R::Exp& pair)
+    {
+        if (auto runtime_pair = pair.to<R::RPair>())
+            return runtime_pair->second;
+        else
+            return R::e_op_value(pair.as_<EPair>().second);
+    }
+
+    template <typename F>
+    void for_each_json_element(const R::Exp& value, F f)
+    {
+        if (auto runtime_vector = value.to<R::RVector>())
+        {
+            for(const auto& element: *runtime_vector)
+                f(element);
+        }
+        else
+        {
+            for(const auto& element: value.as_<EVector>())
+                f(R::e_op_value(element));
+        }
+    }
+}
+
+json::value c_json(const R::Exp& E)
+{
+    int type = json_pair_first(E).as_int();
+
+    auto J = json_pair_second(E);
     
     // Null
     if (type == 6)
         return {};
     // String
     else if (type == 5)
-        return json::string((string)J.as_<String>());
+        return json::string(J.as_string());
     // Bool
     else if (type == 4)
     {
-        if (is_bool_true(J))
+        auto c = J.to<R::Constructor>();
+        if (c and is_bool_true(c->value))
             return true;
-        else if (is_bool_false(J))
+        else if (c and is_bool_false(c->value))
             return false;
         else
-            throw myexception()<<"Foreign:cjson: I don't understand bool '"<<J<<"'";
+            throw myexception()<<"Foreign:cjson: I don't understand bool '"<<J.print()<<"'";
     }
     // Integer
     else if (type == 2)
@@ -56,30 +90,32 @@ json::value c_json(const expression_ref& E)
     else if (type == 1)
     {
 	json::object object;
-	for(auto& j: J.as_<EVector>())
+	for_each_json_element(J, [&](const R::Exp& j)
 	{
-            auto& K = j.as_<EPair>().first;
-            auto& V = j.as_<EPair>().second;
-	    const string& key  = K.as_<String>();
+            auto K = json_pair_first(j);
+            auto V = json_pair_second(j);
+	    const string& key = K.as_string();
 	    object[key] = c_json(V);
-	}
+	});
 	return object;
     }
     else if (type == 0)
     {
 	json::array array;
-	for(auto& j: J.as_<EVector>())
+	for_each_json_element(J, [&](const R::Exp& j)
+	{
 	    array.push_back(c_json(j));
+	});
 	return array;
     }
     else
-        throw myexception()<<"Foreign:c_json: Can't translate "<<E<<" into JSON!";
+        throw myexception()<<"Foreign:c_json: Can't translate "<<E.print()<<" into JSON!";
 }
 
 
 extern "C" closure builtin_function_c_json(OperationArgs& Args)
 {
-    auto j = R::to_expression_ref(Args.evaluate_slot_to_value(0));
+    auto j = Args.evaluate_slot_to_value(0);
 
     Box<json::value> J = c_json(j);
 

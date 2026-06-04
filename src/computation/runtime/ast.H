@@ -180,6 +180,7 @@ namespace Runtime
 
     using RVector = Box<std::vector<Exp>>;
     using RIntMap = Box<std::map<int, Exp>>;
+    using RPair = Box<std::pair<Exp, Exp>>;
 
     struct Int
     {
