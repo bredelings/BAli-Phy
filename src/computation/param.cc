@@ -6,12 +6,37 @@
 #include "computation/expression/list.H"
 #include "computation/context.H"
 #include "computation/machine/graph_register.H"
+#include "computation/operations.H"
 
 #include "util/log-level.H"
 #include "computation/machine/gcobject.H"
 
+#include <type_traits>
+
 using std::optional;
 using std::vector;
+
+namespace
+{
+Runtime::Exp runtime_head_code(const Runtime::Exp& E)
+{
+    auto app = E.to<Runtime::App>();
+    if (not app)
+        return E;
+
+    return std::visit([](const auto& head) -> Runtime::Exp
+    {
+        using T = std::decay_t<decltype(head)>;
+
+        if constexpr (std::is_same_v<T, Runtime::FunctionApply>)
+            return Apply();
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
+            return head.head;
+        else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
+            return *head.head;
+    }, app->head);
+}
+}
 
 expression_ref param::ref(const context_ref& C) const
 {
@@ -107,6 +132,11 @@ expression_ref context_ptr::value() const
     return result().head();
 }
 
+Runtime::Exp context_ptr::value_code() const
+{
+    return result().head_code();
+}
+
 EVector context_ptr::list_to_vector() const
 {
     object_ptr<EVector> vec(new EVector);
@@ -122,6 +152,23 @@ EVector context_ptr::list_to_vector() const
     }
 
     return std::move(*vec);
+}
+
+Runtime::RVector context_ptr::list_to_vector_code() const
+{
+    Runtime::RVector vec;
+
+    context_ptr L = result();
+    while(L.size() > 0)
+    {
+        assert(L.size() == 2);
+
+        vec.push_back(L[0].value_code());
+
+        L = L[1];
+    }
+
+    return vec;
 }
 
 vector<context_ptr> context_ptr::list_elements() const
@@ -166,6 +213,15 @@ void context_ptr::set_value(const expression_ref& v)
     const_cast<context_ref&>(C).set_reg_value(r,Runtime::e_op_value(v));
 }
 
+void context_ptr::set_code(Runtime::Exp v)
+{
+    auto m = modifiable();
+    if (not m)
+        throw myexception()<<"Trying to set the value of non-modifiable reg "<<get_reg();
+    int r = m->get_reg();
+    const_cast<context_ref&>(C).set_reg_value(r,std::move(v));
+}
+
 void context_ptr::move_to_result()
 {
     auto [_,result] = C.incremental_evaluate(reg);
@@ -196,6 +252,13 @@ expression_ref context_ptr::head() const
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
     return C.memory()->expression_at(r).head();
+}
+
+Runtime::Exp context_ptr::head_code() const
+{
+    auto [_, r] = C.incremental_evaluate(reg);
+    assert(r>0);
+    return runtime_head_code(C.memory()->closure_at(r).get_code());
 }
 
 context_ptr::context_ptr(const context_ref& c, int r1)
