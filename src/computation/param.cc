@@ -36,6 +36,14 @@ Runtime::Exp runtime_head_code(const Runtime::Exp& E)
             return *head.head;
     }, app->head);
 }
+
+int runtime_size(const Runtime::Exp& E)
+{
+    if (auto app = E.to<Runtime::App>())
+        return app->args.size();
+    else
+        return 0;
+}
 }
 
 expression_ref param::ref(const context_ref& C) const
@@ -97,9 +105,9 @@ context_ptr context_ptr::operator[](int i) const
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
     auto& c = C.memory()->closure_at(r);
-    if (auto& e = c.legacy_exp(); e.size() == 0 and is_gcable_type(e.type()))
+    if (runtime_size(c.get_code()) == 0)
     {
-        if (auto im = e.to<IntMap>())
+        if (auto im = c.get_code().to<IntMap>())
             r = (*im)[i];
         else
             std::abort();
@@ -244,14 +252,12 @@ int context_ptr::size() const
 {
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
-    return C.memory()->expression_at(r).size();
+    return runtime_size(C.memory()->closure_at(r).get_code());
 }
 
 expression_ref context_ptr::head() const
 {
-    auto [_, r] = C.incremental_evaluate(reg);
-    assert(r>0);
-    return C.memory()->expression_at(r).head();
+    return Runtime::to_expression_ref(head_code());
 }
 
 Runtime::Exp context_ptr::head_code() const
