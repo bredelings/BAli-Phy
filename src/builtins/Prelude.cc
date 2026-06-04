@@ -14,6 +14,17 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
+namespace
+{
+    string prelude_string(const R::Exp& E)
+    {
+        if (E.to<R::String>())
+            return E.as_string();
+        else
+            return E.as_<String>().value();
+    }
+}
+
 //*****************************************************//
 extern "C" R::Exp simple_function_truncate(vector<R::Exp>& args)
 {
@@ -381,7 +392,7 @@ extern "C" R::Exp simple_function_show(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_error(OperationArgs& Args)
 {
-    string message = Args.evaluate(0).as_<String>();
+    string message = prelude_string(Args.evaluate_slot_to_value(0));
   
     throw error_exception(message);
 }
@@ -453,7 +464,7 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
 {
     try
     {
-        Args.evaluate(0);
+        Args.evaluate_slot_to_closure(0);
         int r = Args.reg_for_slot(0);
         return closure(Runtime::IndexVar(0), {r});
     }
