@@ -283,12 +283,12 @@ int TreeInterface::n_branches() const {
 }
 
 int TreeInterface::degree(int n) const {
-    return get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>().size();
+    return get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>().size();
 }
 
 int TreeInterface::branch_out(int n, int i) const
 {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
     auto iter = out_edges.begin();
     for(int j=0;j<i;j++)
         iter++;
@@ -312,7 +312,7 @@ vector<int> TreeInterface::neighbors(int n) const {
 }
 
 vector<int> TreeInterface::branches_out(int n) const {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
     vector<int> branches;
     for(int b: out_edges)
 	branches.push_back(b);
@@ -329,7 +329,7 @@ vector<int> TreeInterface::branches_in(int n) const {
 void TreeInterface::append_branches_before(int b, vector<int>& branches) const
 {
     int n = source(b);
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
     for(int b2: out_edges)
     {
 	if (b2 != b)
@@ -343,7 +343,7 @@ void TreeInterface::append_branches_after(int b, vector<int>& branches) const
     b = reverse(b);
   
     int n = source(b);
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_value(get_const_context()).as_<IntSet>();
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
     for(int b2: out_edges)
     {
 	if (b2 != b)
@@ -481,11 +481,11 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
+    return std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_value(get_const_context()).as_int();
+    return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_int();
 }
 
 int TreeInterface::reverse(int b) const
@@ -520,7 +520,7 @@ bool TreeInterface::is_internal_branch(int b) const {
 
 optional<int> TreeInterface::search_branch(int n1, int n2) const
 {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n1).get_value(get_const_context()).as_<IntSet>();
+    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n1).get_code(get_const_context()).as_<IntSet>();
     for(int b: out_edges)
 	if (target(b) == n2) return b;
 
@@ -993,10 +993,10 @@ bool TreeInterface::reconnect_branch(int s1, int t1, int t2)
     auto out_t1 = get_tree_constants().parameters_for_tree_node.at(t1);
     auto out_t2 = get_tree_constants().parameters_for_tree_node.at(t2);
 
-    auto out_t1_set = out_t1.get_value(get_const_context()).as_<IntSet>();
+    auto out_t1_set = out_t1.get_code(get_const_context()).as_<IntSet>();
     out_t1_set = out_t1_set.erase(b2);
 
-    auto out_t2_set = out_t2.get_value(get_const_context()).as_<IntSet>();
+    auto out_t2_set = out_t2.get_code(get_const_context()).as_<IntSet>();
     out_t2_set = out_t2_set.insert(b2);
 
     // Update branch source and target nodes
@@ -1006,10 +1006,10 @@ bool TreeInterface::reconnect_branch(int s1, int t1, int t2)
     
     if (out_t1.is_modifiable(C) and out_t2.is_modifiable(C) and target_b1.is_modifiable(C) and source_b2.is_modifiable(C))
     {
-	out_t1.set_value(C, out_t1_set);
-	out_t2.set_value(C, out_t2_set);
-	target_b1.set_value(C, t2);
-	source_b2.set_value(C, t2);
+	out_t1.set_code(C, out_t1_set);
+	out_t2.set_code(C, out_t2_set);
+	target_b1.set_code(C, t2);
+	source_b2.set_code(C, t2);
 	return true;
     }
     else
@@ -1052,4 +1052,3 @@ bool is_degree3_edge(const TreeInterface& t, int b)
 {
     return is_degree3_edge(t, t.edge(b));
 }
-

@@ -57,8 +57,8 @@ class param
 public:
     expression_ref ref(const context_ref& C) const;
 
-    expression_ref get_value(const context_ref& C) const;
-    void set_value(context_ref& C, const expression_ref& v) const;
+    Runtime::Exp get_code(const context_ref& C) const;
+    void set_code(context_ref& C, Runtime::Exp v) const;
 
     std::optional<int> is_modifiable(const context_ref& C) const;
 

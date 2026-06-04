@@ -700,8 +700,8 @@ void Parameters::show_h_tree() const
     using std::get;
     for(int b=0; b < 2*t().n_branches(); b++)
     {
-        auto source = get<0>(TC->parameters_for_tree_branch[b]).get_value(*this);
-        auto target = get<1>(TC->parameters_for_tree_branch[b]).get_value(*this);
+        auto source = get<0>(TC->parameters_for_tree_branch[b]).get_code(*this);
+        auto target = get<1>(TC->parameters_for_tree_branch[b]).get_code(*this);
         std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
     }
 }

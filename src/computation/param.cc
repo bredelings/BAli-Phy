@@ -39,33 +39,32 @@ optional<int> param::is_modifiable(const context_ref& C) const
         return {};
 }
 
-expression_ref param::get_value(const context_ref& C) const
+Runtime::Exp param::get_code(const context_ref& C) const
 {
     if (reg)
     {
-	return C.evaluate_reg(*reg);
+        int r = *reg;
+	return C.lazy_evaluate_reg(r).get_code();
     }
     else if (head)
     {
-	return C.evaluate_head(*head);
+	return C.lazy_evaluate_head(*head).get_code();
     }
     else
-        return Runtime::to_expression_ref(*value);
+        return *value;
 }
 
-void param::set_value(context_ref& C, const expression_ref& v) const
+void param::set_code(context_ref& C, Runtime::Exp code) const
 {
-    auto code = Runtime::e_op_value(v);
-
     if (value)
     {
         if (code != *value)
-            throw myexception()<<"param::set_value: trying to set constant '"<<Runtime::to_expression_ref(*value)<<"' to '"<<v<<"'";
+            throw myexception()<<"param::set_code: trying to set constant '"<<*value<<"' to '"<<code<<"'";
     }
     else if (auto r = is_modifiable(C))
         C.set_modifiable_value(*r,std::move(code));
     else
-        throw myexception()<<"param::set_value: can't set non-modifiable head to '"<<v<<"'";
+        throw myexception()<<"param::set_code: can't set non-modifiable head to '"<<code<<"'";
 }
 
 context_ptr context_ptr::operator[](int i) const
