@@ -2856,24 +2856,7 @@ void reg_heap::clear_result(int r)
 
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
-    total_get_reg_value++;
-    if (reg_is_constant(R)) return expression_at(R);
-
-    total_get_reg_value_non_const++;
-    reroot_at_context(c);
-
-    if (reg_has_value(R))
-    {
-        total_get_reg_value_non_const_with_result++;
-        int R2 = value_for_reg(R);
-        if (R2) return expression_at(R2);
-    }
-
-    // If the value needs to be computed (e.g. its a call expression) then compute it.
-    auto [R2, value] = incremental_evaluate_in_context(R,c);
-    R = R2;
-
-    return expression_at(value);
+    return get_reg_value_closure_in_context(R, c).legacy_exp();
 }
 
 const closure& reg_heap::get_reg_value_closure_in_context(int& R, int c)
