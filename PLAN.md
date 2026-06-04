@@ -28,6 +28,8 @@ Completed so far:
   `value_code()` / `set_code()`.
 - Added `Runtime::RVector` conversions analogous to `EVector`, and migrated SMC
   haplotype-index lists to `list_to_vector_code()`.
+- Made `reg_heap::get_reg_value_in_context()` a legacy wrapper around
+  `get_reg_value_closure_in_context()`.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -77,8 +79,8 @@ compatibility layers.
 
 ## Next Steps
 
-1. Make legacy `reg_heap` APIs delegate to closure/runtime-returning APIs where
-   possible. This reduces duplicated evaluation code and confines
+1. Continue making legacy `reg_heap` APIs delegate to closure/runtime-returning
+   APIs where possible. This reduces duplicated evaluation code and confines
    `legacy_exp()` conversion to the wrapper edge.
 
 2. Add missing closure/runtime-returning variants for program unsharing paths
