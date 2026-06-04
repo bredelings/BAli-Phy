@@ -21,7 +21,7 @@ extern "C" R::Exp simple_function_alphabetSize(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 {
-    auto arg = Args.evaluate(0);
+    auto arg = Args.evaluate_slot_to_value(0);
     if (not arg.is_a<Alphabet>())
 	throw myexception()<<"alphabetSize: object "<<arg.print()<<" is not an alphabet.";
 
@@ -50,7 +50,7 @@ extern "C" R::Exp simple_function_find_letter(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     if (auto t = arg0.poly_cast<alphabet,Triplets>())
 	return Alphabet(t->getNucleotides().clone());
@@ -64,7 +64,7 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
 
 extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     if (auto c = arg0.poly_cast<alphabet,Codons>())
 	return Alphabet(c->getAminoAcids().clone());
@@ -74,7 +74,7 @@ extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkDoublets(OperationArgs& Args)
 {
-    auto arg0  = Args.evaluate(0);
+    auto arg0  = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
 	return Alphabet(new Doublets(*n));
@@ -84,7 +84,7 @@ extern "C" closure builtin_function_mkDoublets(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkRNAEdits(OperationArgs& Args)
 {
-    auto arg0  = Args.evaluate(0);
+    auto arg0  = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
 	return Alphabet(new RNAEdits(*n));
@@ -94,7 +94,7 @@ extern "C" closure builtin_function_mkRNAEdits(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkTriplets(OperationArgs& Args)
 {
-    auto arg0  = Args.evaluate(0);
+    auto arg0  = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
     if (auto n = arg0.poly_cast<alphabet,Nucleotides>())
@@ -105,13 +105,13 @@ extern "C" closure builtin_function_mkTriplets(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkCodons(OperationArgs& Args)
 {
-    auto arg0  = Args.evaluate(0);
+    auto arg0  = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
     auto nuc = dynamic_cast<const Nucleotides*>(&a);
     if (not nuc)
 	throw myexception()<<"mkCodons: object "<<a.print()<<"is not a Nucleotides alphabet.";
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     if (not arg1.is_a<Box<Genetic_Code>>())
 	throw myexception()<<"mkCodons: object "<<arg1.print()<<"is not a Genetic_Code object.";
     auto code = arg1.as_<Box<Genetic_Code>>();
@@ -121,13 +121,13 @@ extern "C" closure builtin_function_mkCodons(OperationArgs& Args)
 
 extern "C" closure builtin_function_geneticCodeByNumber(OperationArgs& Args)
 {
-    int number = Args.evaluate(0).as_int();
+    int number = Args.evaluate_slot_to_value(0).as_int();
     return Box<Genetic_Code>(get_genetic_code(number));
 }
 
 extern "C" closure builtin_function_geneticCodeRaw(OperationArgs& Args)
 {
-    auto name = Args.evaluate(0).as_<String>();
+    auto name = Args.evaluate_slot_to_value(0).as_string();
     return Box<Genetic_Code>(get_genetic_code(name));
 }
 
@@ -153,7 +153,7 @@ extern "C" closure builtin_function_aaWithStop(OperationArgs&)
 
 extern "C" closure builtin_function_mkNumeric(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
 
     return Alphabet(new Numeric(n));
 }
@@ -173,10 +173,10 @@ extern "C" R::Exp simple_function_translate(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& letter_sequence = arg1.as_<EVector>();
 
     auto result = object_ptr<String>(new String);
@@ -190,4 +190,3 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
 
     return result;
 }
-
