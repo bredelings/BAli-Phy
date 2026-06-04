@@ -158,6 +158,9 @@ namespace Runtime
         template <DerivedFromObject T>
         const T& as_checked() const;
 
+        template <typename T1, typename T2>
+        std::shared_ptr<const T2> poly_cast() const;
+
         template <typename F>
         decltype(auto) visit(F&& f) const
         {
@@ -354,6 +357,20 @@ namespace Runtime
         if (not ptr)
             throw std::runtime_error("Runtime value is not an ObjectValue");
         return *convert_and_check<const T>(ptr->value.get());
+    }
+
+    template <typename T1, typename T2>
+    std::shared_ptr<const T2> Exp::poly_cast() const
+    {
+        auto object_value = to<ObjectValue>();
+        if (not object_value)
+            return nullptr;
+
+        auto converted1 = dynamic_cast<const PtrBox<T1>*>(object_value->value.get());
+        if (not converted1)
+            return nullptr;
+
+        return std::dynamic_pointer_cast<const T2>(*converted1);
     }
 
     template <typename T>
