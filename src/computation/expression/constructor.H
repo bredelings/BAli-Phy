@@ -5,6 +5,11 @@
 #include "computation/object.H"
 #include "expression_ref.H"
 
+namespace Runtime
+{
+    struct Exp;
+}
+
 struct constructor: public Object
 {
     constructor* clone() const {return new constructor(*this);}
@@ -30,6 +35,7 @@ struct constructor: public Object
 };
 
 bool has_constructor(const expression_ref&, const std::string&);
+bool has_constructor(const Runtime::Exp&, const std::string&);
 
 inline bool is_constructor(const expression_ref& E)
 {

@@ -1,4 +1,5 @@
 #include "constructor.H"
+#include "computation/runtime/ast.H"
 #include "haskell/ids.H"
 
 using std::string;
@@ -25,3 +26,15 @@ bool has_constructor(const expression_ref& E, const string& s)
     return E.head() == constructor(s,-1);
 }
 
+bool has_constructor(const Runtime::Exp& E, const string& s)
+{
+    if (const auto* C = E.to<Runtime::Constructor>())
+        return C->value.name() == s;
+
+    const auto* app = E.to<Runtime::App>();
+    if (not app)
+        return false;
+
+    const auto* C = std::get_if<Runtime::ConstructorApp>(&app->head);
+    return C and C->head.name() == s;
+}

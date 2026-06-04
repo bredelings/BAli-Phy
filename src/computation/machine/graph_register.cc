@@ -1265,7 +1265,7 @@ void reg_heap::register_in_edge(int r, int /* s */)
     assert(not in_edges_to_this_dist.count(arg_name));
 
     // 2. Check that there is in fact a distribution at r_to_dist;
-    assert(has_constructor(expression_at(r_to_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_to_dist));
 
     // 3. Insert the edge.
@@ -1285,7 +1285,7 @@ void reg_heap::unregister_in_edge(int r, int /* s */)
     assert(in_edges_to_this_dist.count(arg_name));
 
     // 2. Check that there is in fact a distribution at to_reg?
-    assert(has_constructor(expression_at(r_to_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_to_dist));
 
     // 3. Erase the edge
@@ -1307,7 +1307,7 @@ void reg_heap::register_out_edge(int r, int /* s */)
     assert(not out_edges_to_var.count(r_to_var) or not out_edges_to_var.at(r_to_var).count(r_from_dist));
     
     // Check that there is in fact a distribution at I.to_reg.
-    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(O.r_from_dist));
     assert(reg_is_constant(r_to_var) or (reg_is_changeable(r_to_var) and is_modifiable(closure_at(r_to_var).get_code())));
 
@@ -1329,7 +1329,7 @@ void reg_heap::unregister_out_edge(int r, int /* s */)
     assert(out_edges_to_var.count(r_to_var) and out_edges_to_var.at(r_to_var).count(r_from_dist));
 
     // Check that there is in fact a distribution at r_from_dist.
-    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     // Erase the edge
@@ -1362,7 +1362,7 @@ void reg_heap::unregister_dist(int r, int s)
 {
     int r_dist = closure_at(r).runtime_reg_for_slot(0);
 
-    assert(has_constructor(expression_at(r_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_dist).get_code(), "Effect.Dist"));
 //    assert(dist_type.count(r_dist));
 
     dist_type.erase(r_dist);
@@ -1379,7 +1379,7 @@ void reg_heap::register_dist_property(int r, int /* s */)
     // int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
-    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     dist_properties[r_from_dist].insert({property, r});
@@ -1391,7 +1391,7 @@ void reg_heap::unregister_dist_property(int r, int /* s */)
     string property =  closure_at(r).runtime_slot(1).as_string();
 
     // Check that there is in fact a distribution at P.r_from_dist.
-    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     auto& this_dist_properties = dist_properties.at(r_from_dist);
