@@ -84,14 +84,6 @@ public:
 
     Runtime::Exp evaluate_slot_to_value_(int);
 
-    expression_ref evaluate_slot_to_legacy_object(int);
-
-    expression_ref evaluate_slot_to_legacy_object_(int);
-
-    expression_ref evaluate(int);
-
-    expression_ref evaluate_(int);
-
     void stack_push(int);
 
     void stack_pop(int);
