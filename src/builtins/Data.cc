@@ -10,11 +10,22 @@ using boost::dynamic_pointer_cast;
 using std::vector;
 using std::string;
 
+namespace
+{
+    string data_string(const Runtime::Exp& E)
+    {
+        if (E.to<Runtime::String>())
+            return E.as_string();
+        else
+            return E.as_<String>().value();
+    }
+}
+
 extern "C" closure builtin_function_read_csv(OperationArgs& Args)
 {
-  const string filename = Args.evaluate(0).as_<String>();
+  const string filename = data_string(Args.evaluate_slot_to_value(0));
 
-  const char sep = Args.evaluate(1).as_char();
+  const char sep = Args.evaluate_slot_to_value(1).as_char();
 
   checked_ifstream text_file(filename,"csv file");
 
