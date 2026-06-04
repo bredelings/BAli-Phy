@@ -288,7 +288,8 @@ extern "C" R::Exp simple_function_decodeDoubleRaw(vector<R::Exp>& args)
 	sig = (int64_t)std::scalbn(std::frexp(x,&exp), DBL_MANT_DIG);
 	exp -= DBL_MANT_DIG;
     }
-    return EPair(Integer(sig),exp);
+
+    return R::RPair(R::Integer(integer(sig)), exp);
 }
 
 extern "C" R::Exp simple_function_encodeDouble(vector<R::Exp>& args)
