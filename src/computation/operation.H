@@ -67,17 +67,6 @@ std::string print_operator_expression(const std::vector<std::string>& arguments)
 
 std::string print_infix_expression(const std::vector<std::string>& arguments);
 
-inline bool is_non_apply_op(const expression_ref& E)
-{
-    return E.type() == type_constant::operation_type;
-}
-
-inline bool is_non_apply_op_exp(const expression_ref& E)
-{
-    return is_non_apply_op(E.head());
-}
-
-
 inline bool is_eop_exp(const Runtime::Exp& E)
 {
     auto app = E.to<Runtime::App>();
