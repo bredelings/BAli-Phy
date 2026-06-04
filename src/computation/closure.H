@@ -170,26 +170,26 @@ public:
     closure(Object* o)
         :closure()
     {
-        set_code(Runtime::ObjectValue(o));
+        set_code(Runtime::Exp(o));
     }
 
     closure(const object_ptr<const Object>& o)
         :closure()
     {
-        set_code(Runtime::ObjectValue(o));
+        set_code(Runtime::Exp(o));
     }
 
     template <typename T>
     closure(const object_ptr<T>& o)
         :closure()
     {
-        set_code(Runtime::ObjectValue(o));
+        set_code(Runtime::Exp(o));
     }
 
     closure(const Object& O)
         :closure()
     {
-        set_code(Runtime::ObjectValue(O.clone()));
+        set_code(Runtime::Exp(O));
     }
 };
 
