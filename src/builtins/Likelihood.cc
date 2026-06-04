@@ -26,7 +26,7 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& seq = arg0. as_<EVector>();
 
     int L = seq.size();
@@ -49,7 +49,7 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& seq1 = arg0. as_<EVector>();
 
     int L = seq1.size();
@@ -69,10 +69,10 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
 
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::simple_sequence_likelihoods2(arg3.as_<EVector>(),   // sequence
                                                       *arg0.as_<Alphabet>(), // alphabet
@@ -83,11 +83,11 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
 
     return substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
 						 arg1.as_<EVector>(),        // LCB
@@ -98,10 +98,10 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<EVector>(),       // LCN
 						      arg1.as_<EVector>(),       // LCB
@@ -112,11 +112,11 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
 
     return substitution::peel_branch_away_from_root(arg0.as_<EVector>(),        // LCN
 						    arg1.as_<EVector>(),        // LCB
@@ -127,10 +127,10 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob(arg0.as_<EVector>(),       // LCN
 					      arg1.as_<EVector>(),       // LCB
@@ -141,10 +141,10 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 
 extern "C" closure builtin_function_peelBranchTowardRootNonEq(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::peel_branch_toward_root_non_eq(arg0,        // LCN
 							arg1,        // LCB
@@ -154,11 +154,11 @@ extern "C" closure builtin_function_peelBranchTowardRootNonEq(OperationArgs& Arg
 
 extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
 
     return substitution::peel_branch_away_from_root_non_eq(arg0.as_<EVector>(),        // LCN
 							   arg1.as_<EVector>(),        // LCB
@@ -169,10 +169,10 @@ extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& A
 
 extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<EVector>(),       // LCN
 						     arg1.as_<EVector>(),       // LCB
@@ -183,8 +183,8 @@ extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
 
 extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
 
     object_ptr<Box<Matrix>> F2 = new Box<Matrix>(propagate_frequencies(arg0.as_<Box<Matrix>>(), // F
 								       arg1.as_<EVector>()));   // transition_P
@@ -193,10 +193,10 @@ extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::sample_root_sequence(arg0.as_<EVector>(),      // LCN
                                               arg1.as_<EVector>(),      // LCB
@@ -206,13 +206,13 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
+    auto arg5 = Args.evaluate_slot_to_value(5);
+    auto arg6 = Args.evaluate_slot_to_value(6);
 
     return substitution::sample_branch_sequence(arg0.as_<Vector<pair<int,int>>>(),     // parent_seq
 						arg1.as_<Box<pairwise_alignment_t>>(), // parent_A
@@ -226,10 +226,10 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 // maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
 extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto sequence = arg1.as_<EVector>();
 
     assert(mask.size() == sequence.size());
@@ -252,8 +252,8 @@ extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 {
-    int L = Args.evaluate(0).as_int();
-    auto arg1 = Args.evaluate(1);
+    int L = Args.evaluate_slot_to_value(0).as_int();
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& F = arg1.as_<Box<Matrix>>();
 
     Vector<pair<int,int>> sequence(L);
@@ -264,16 +264,16 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& alignment = arg1.as_<Box<pairwise_alignment_t>>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& transition_ps = arg2.as_<EVector>();
 
-    auto arg3 = Args.evaluate(3);
+    auto arg3 = Args.evaluate_slot_to_value(3);
     auto& F = arg3.as_<Box<Matrix>>();
 
     Vector<pair<int,int>> sequence;
@@ -298,13 +298,13 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& transition_ps = arg1.as_<EVector>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& F = arg2.as_<Box<Matrix>>();
 
     int L = parentSequence.size();

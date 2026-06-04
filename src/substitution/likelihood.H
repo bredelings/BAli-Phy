@@ -30,7 +30,7 @@
 #include "util/matrix.H"
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
-#include "computation/expression/expression_ref.H"
+#include "computation/runtime/ast.H"
 
 #include "dp/2way.H" // for pairwise_alignment_t
 
@@ -106,12 +106,12 @@ namespace substitution {
 			   const Matrix& F);
     //-- NonEq
 
-    // This version takes expression_ref because lambda-capturing them copies them.
+    // This version takes Runtime::Exp because lambda-capturing them copies them.
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_toward_root_non_eq(const expression_ref& LCN_,
-				   const expression_ref& LCB_,
-				   const expression_ref& A__,
-				   const expression_ref& transition_P_);
+    peel_branch_toward_root_non_eq(const Runtime::Exp& LCN_,
+				   const Runtime::Exp& LCB_,
+				   const Runtime::Exp& A__,
+				   const Runtime::Exp& transition_P_);
 
 
     object_ptr<const Likelihood_Cache_Branch>
