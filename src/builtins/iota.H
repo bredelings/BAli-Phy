@@ -6,7 +6,7 @@
 template <typename T>
 closure iota_function(OperationArgs& Args)
 {
-  unsigned n = Args.evaluate(0).as_int();
+  unsigned n = Args.evaluate_slot_to_value(0).as_int();
   
   object_ptr<Box<std::vector<T> > > V(new Box<std::vector<T> >() );
   
