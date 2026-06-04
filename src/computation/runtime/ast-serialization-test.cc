@@ -243,6 +243,18 @@ namespace
         require(rejected, "structured expressions should not convert to Runtime atomic values");
     }
 
+    void check_runtime_vector_conversions()
+    {
+        Runtime::RVector ints(std::vector<int>{1, 2, 3});
+        require(((std::vector<int>)ints == std::vector<int>{1, 2, 3}), "Runtime::RVector int conversion mismatch");
+
+        Runtime::RVector doubles(std::vector<double>{1.5, 2.5});
+        require(((std::vector<double>)doubles == std::vector<double>{1.5, 2.5}), "Runtime::RVector double conversion mismatch");
+
+        Runtime::RVector chars(std::vector<char>{'a', 'b'});
+        require(((std::vector<char>)chars == std::vector<char>{'a', 'b'}), "Runtime::RVector char conversion mismatch");
+    }
+
     Runtime::Exp archive_roundtrip(const Runtime::Exp& before)
     {
         std::stringstream buffer;
@@ -365,6 +377,7 @@ int main(int argc, char** argv)
     check_lambda_peeling();
     check_deindexify_reg_refs();
     check_runtime_atomic_values();
+    check_runtime_vector_conversions();
     check_constructor_serialization();
     check_runtime_only_operation_app_serialization();
     check_runtime_exp_equality();

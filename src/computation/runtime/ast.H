@@ -181,9 +181,25 @@ namespace Runtime
 
     bool operator==(const Exp&, const Exp&);
 
-    using RVector = Box<std::vector<Exp>>;
     using RIntMap = Box<std::map<int, Exp>>;
     using RPair = Box<std::pair<Exp, Exp>>;
+
+    struct RVector: public Box<std::vector<Exp>>
+    {
+        RVector() = default;
+
+        using Box<std::vector<Exp>>::Box;
+
+        RVector* clone() const override { return new RVector(*this); }
+
+        explicit RVector(const std::vector<double>&);
+        explicit RVector(const std::vector<int>&);
+        explicit RVector(const std::vector<char>&);
+
+        explicit operator std::vector<double>() const;
+        explicit operator std::vector<int>() const;
+        explicit operator std::vector<char>() const;
+    };
 
     struct Int
     {

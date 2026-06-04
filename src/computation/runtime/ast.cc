@@ -89,6 +89,54 @@ namespace Runtime
         return *head == static_cast<const Object&>(*app.head);
     }
 
+    RVector::RVector(const vector<double>& values)
+    {
+        reserve(values.size());
+        for(auto value: values)
+            push_back(value);
+    }
+
+    RVector::RVector(const vector<int>& values)
+    {
+        reserve(values.size());
+        for(auto value: values)
+            push_back(value);
+    }
+
+    RVector::RVector(const vector<char>& values)
+    {
+        reserve(values.size());
+        for(auto value: values)
+            push_back(value);
+    }
+
+    RVector::operator vector<double>() const
+    {
+        vector<double> values;
+        values.reserve(size());
+        for(const auto& value: *this)
+            values.push_back(value.as_double());
+        return values;
+    }
+
+    RVector::operator vector<int>() const
+    {
+        vector<int> values;
+        values.reserve(size());
+        for(const auto& value: *this)
+            values.push_back(value.as_int());
+        return values;
+    }
+
+    RVector::operator vector<char>() const
+    {
+        vector<char> values;
+        values.reserve(size());
+        for(const auto& value: *this)
+            values.push_back(value.as_char());
+        return values;
+    }
+
     bool operator==(const Exp& x, const Exp& y)
     {
         if (x.empty() or y.empty())
