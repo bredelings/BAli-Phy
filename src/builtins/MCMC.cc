@@ -62,7 +62,7 @@ log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 
     for(int r : I_regs)
     {
-        int i = C1.get_reg_value(r).as_int();
+        int i = C1.get_reg_value_code(r).as_int();
 
         context C2 = C1;
         C2.set_reg_value(r, 1-i);
@@ -109,7 +109,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     }
 
     //------------- 2. For t1, sample Is and sum over the Is ------------//
-    int t1 = C1.evaluate_reg(t_reg).as_int();
+    int t1 = C1.evaluate_reg_code(t_reg).as_int();
 
     // The sum is this multiplier times the probability of the current Is.
     auto multiplier1 = get_multiplier(C1, I_regs);
@@ -168,9 +168,9 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     //      (ii) ensures that all computations will be shared forwards.
     C1.evaluate_program();
 
-    int x1 = C1.get_reg_value(*x_mod_reg).as_int();
+    int x1 = C1.get_reg_value_code(*x_mod_reg).as_int();
 
-    int n_values = C1.get_reg_value(n_values_reg).as_int();
+    int n_values = C1.get_reg_value_code(n_values_reg).as_int();
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   [0, "<<n_values-1<<"]\n";
 
     //------------- 4. Figure out probability of each value ----------//
@@ -215,7 +215,7 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
                    throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
                // 2. Get the current value
-               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               int x1 = C.get_reg_value_code(*x_mod_reg).as_int();
                if (x1 < a or x1 > b)
                    throw myexception()<<"discreteUniformAvoidMH: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
 
@@ -286,7 +286,7 @@ Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
                    throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
                // 2. Get the current value
-               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               int x1 = C.get_reg_value_code(*x_mod_reg).as_int();
 
                // 3. Propose a new value
                int x2 = x1;
@@ -354,7 +354,7 @@ extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
     int context_index = Args.evaluate_slot_to_value(2).as_int();
     context_ref C(M,context_index);
 
-    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     // 0. x = reg to sample
     int x_reg = Args.reg_for_slot(0);
@@ -398,7 +398,7 @@ extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
     int context_index = Args.evaluate_slot_to_value(2).as_int();
     context_ref C(M,context_index);
 
-    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     // 0. x = reg to sample
     int x_reg = Args.reg_for_slot(0);
@@ -1092,11 +1092,11 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
     if (not x_mod_reg)
 	throw myexception()<<"getValueInContext: reg "<<x_reg<<" not modifiable!";
 
-    expression_ref x_value = C.get_reg_value(*x_mod_reg);
-    if (x_value.is_expression())
-	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value<<"'";
+    const auto& x_value = C.get_reg_value_code(*x_mod_reg);
+    if (not x_value.is_atomic_value())
+	throw myexception()<<"getValueInContext got non-atomic value '"<<x_value.print()<<"'";
 
-    return R::e_op_value(x_value);
+    return x_value;
 }
 
 extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationArgs& Args)
@@ -1267,7 +1267,7 @@ extern "C" closure builtin_function_interchangeEntriesRaw(OperationArgs& Args)
     context_ref C1(M, c1);
 
     // int id = Args.evaluate_slot_to_value(0).as_int();
-    int id = C1.get_reg_value(Args.reg_for_slot(0)).as_int();
+    int id = C1.get_reg_value_code(Args.reg_for_slot(0)).as_int();
 
     //------------ 2. Find interchangeable regs ----------//
     if (M.interchangeables.count(id))

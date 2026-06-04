@@ -1847,7 +1847,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](context_ref& C, int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     reg_heap& M = Args.memory();
 
@@ -1886,7 +1886,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
 
 log_double_t shift_gaussian(context_ref& C, int r, double scale)
 {
-    double x = C.evaluate_reg(r).as_double();
+    double x = C.evaluate_reg_code(r).as_double();
 
     x += gaussian(0, scale);
 
@@ -1902,7 +1902,7 @@ Proposal shift_gaussian(int r, double scale)
 
 log_double_t shift_laplace(context_ref& C, int r, double scale)
 {
-    double x = C.evaluate_reg(r).as_double();
+    double x = C.evaluate_reg_code(r).as_double();
 
     x += laplace(0, scale);
 
@@ -1918,8 +1918,8 @@ Proposal shift_laplace(int r, double scale)
 
 log_double_t propose_two_titres_constant_sum(context_ref& C, int r1, int r2)
 {
-    double x1 = C.evaluate_reg(r1).as_double();
-    double x2 = C.evaluate_reg(r2).as_double();
+    double x1 = C.evaluate_reg_code(r1).as_double();
+    double x2 = C.evaluate_reg_code(r2).as_double();
 
     log_double_t w1 = exp_to_log_space(x1);
     log_double_t w2 = exp_to_log_space(x2);
@@ -1972,7 +1972,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
 {
     assert(not Args.evaluate_changeables());
 
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](context_ref& C, int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     reg_heap& M = Args.memory();
 
@@ -2075,7 +2075,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 {
     assert(not Args.evaluate_changeables());
 
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](context_ref& C, int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     reg_heap& M = Args.memory();
 
@@ -2537,7 +2537,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
 {
     assert(not Args.evaluate_changeables());
 
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](context_ref& C, int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     reg_heap& M = Args.memory();
 
@@ -2607,7 +2607,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
 {
     assert(not Args.evaluate_changeables());
 
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](context_ref& C, int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
 
     reg_heap& M = Args.memory();
 
