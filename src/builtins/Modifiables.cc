@@ -16,6 +16,17 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
+namespace
+{
+    String modifiable_string(const R::Exp& E)
+    {
+        if (E.to<R::String>())
+            return String(E.as_string());
+        else
+            return E.as_<String>();
+    }
+}
+
 int force_slot_to_safe_reg(OperationArgs& Args, int slot)
 {
     // Force the slot so that we get a unique location for it.
@@ -31,7 +42,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
     // We are supposed to evaluate the random_variable before we register
     int r_from_dist = Args.evaluate_slot_use(0);
 
-    auto prob = Args.evaluate(1).as_log_double();
+    auto prob = Args.evaluate_slot_to_value(1).as_log_double();
 
     int r_prob = Args.reg_for_slot(1);
 
@@ -51,7 +62,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
 
     // We are supposed to evaluate the likelihood before we register
-    auto prob = Args.evaluate(1).as_log_double();
+    auto prob = Args.evaluate_slot_to_value(1).as_log_double();
 
     int r_prob = Args.reg_for_slot(1);
 
@@ -73,7 +84,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
     int r_from_var = Args.reg_for_slot(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
-    String role = Args.evaluate(2).as_<String>();
+    String role = modifiable_string(Args.evaluate_slot_to_value(2));
 
     R::Exp E = R::App(R::ConstructorApp(constructor("Effect.InEdge",3)),
                       {R::IndexVar(0), r_to_dist, role});
@@ -102,9 +113,9 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 {
-    String name = Args.evaluate(0).as_<String>();
+    String name = modifiable_string(Args.evaluate_slot_to_value(0));
 
-    int observation = Args.evaluate(1).as_int();
+    int observation = Args.evaluate_slot_to_value(1).as_int();
 
     // The effect to register the sampling event is self-referential,
     // so we need to allocate the location BEFORE we construct the object.
@@ -126,7 +137,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop = Args.reg_for_slot(1);
-    String property = Args.evaluate(2).as_<String>();
+    String property = modifiable_string(Args.evaluate_slot_to_value(2));
 
     R::Exp E = R::App(R::ConstructorApp(constructor("Effect.DistProperty",3)),
                       {r_from_dist, property, R::IndexVar(0)});
