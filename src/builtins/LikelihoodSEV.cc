@@ -24,10 +24,10 @@ using boost::dynamic_bitset;
 
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::simple_sequence_likelihoods2_SEV(arg3.as_<EPair>(),     // sequence/bits
 							  *arg0.as_<Alphabet>(), // alphabet
@@ -37,9 +37,9 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
 
     return substitution::peel_branch_toward_root_SEV(arg0.as_<EVector>(),        // LCN
 						     arg1.as_<EVector>(),        // LCB
@@ -48,10 +48,10 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::peel_branch_away_from_root_SEV(arg0.as_<EVector>(),        // LCN
 							arg1.as_<EVector>(),        // LCB
@@ -61,11 +61,11 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
 
     return substitution::sample_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(), // parent_seq,
 					     arg1.as_<EVector>(),               // LCN
@@ -76,10 +76,10 @@ extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob_SEV(arg0.as_<EVector>(),       // sequences
 						  arg1.as_<EVector>(),       // LCB
@@ -90,10 +90,10 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob_at_root_SEV(arg0.as_<EVector>(),       // sequences
 							  arg1.as_<EVector>(),       // LCB
@@ -104,10 +104,10 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<EVector>(),       // sequences
 								   arg1.as_<EVector>(),       // LCB
@@ -118,10 +118,10 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return substitution::sample_root_sequence_SEV(arg0.as_<EVector>(),      // LCN
                                                   arg1.as_<EVector>(),      // LCB
