@@ -48,9 +48,9 @@ extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
-    int e = Args.evaluate(0).as_int();
+    int e = Args.evaluate_slot_to_value(0).as_int();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto S = arg1.as_<IntSet>();
 
     S = S.erase(e);
@@ -61,9 +61,9 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
 extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
-    int e = Args.evaluate(0).as_int();
+    int e = Args.evaluate_slot_to_value(0).as_int();
 
-    auto S = Args.evaluate(1).as_<IntSet>();
+    auto S = Args.evaluate_slot_to_value(1).as_<IntSet>();
 
     S = S.insert(e);
 
@@ -72,7 +72,7 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S = arg0.as_<IntSet>();
 
     EVector V;
@@ -85,9 +85,9 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
@@ -109,9 +109,9 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
 
 extern "C" closure builtin_function_difference(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
@@ -134,9 +134,9 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
 
 extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S2 = arg1.as_<IntSet>();
 
     for(auto k: S1)
@@ -149,9 +149,9 @@ extern "C" closure builtin_function_isSubsetOf(OperationArgs& Args)
 
 extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S2 = arg1.as_<IntSet>();
 
     // Loop over the smaller map
@@ -177,9 +177,9 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S2 = arg1.as_<IntSet>();
 
     // Optimized for the case when one set is very small.
@@ -201,7 +201,7 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
 
 extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S1 = arg0.as_<IntSet>();
 
     IntSet S2;
