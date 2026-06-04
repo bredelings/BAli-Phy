@@ -548,7 +548,7 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
-    object_ptr<EVector>  v(new EVector);
+    object_ptr<R::RVector>  v(new R::RVector);
 
     // Ensure the value regs don't vanish on us!
     std::vector<int> tmp;
@@ -561,7 +561,7 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
     // Compute the values
     for(auto& [key,reg]: m)
     {
-        v->push_back( Args.evaluate_reg_to_closure(reg).legacy_exp() );
+        v->push_back( Args.evaluate_reg_to_closure(reg).get_code() );
     }
 
     // Unreserve the value regs

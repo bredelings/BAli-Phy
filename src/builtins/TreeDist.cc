@@ -4,12 +4,37 @@
 #include "computation/machine/args.H"
 //#include "util/myexception.H"
 #include "computation/expression/expression_ref.H"
+#include "computation/runtime/ast.H"
 
 //using boost::dynamic_pointer_cast;
 using std::vector;
 using std::string;
 
 //typedef Box<std::map<int,expression_ref>> EIntMap;
+
+namespace
+{
+    object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)
+    {
+        object_ptr<R::RVector> result(new R::RVector);
+
+        if (const auto* runtime_vector = value.to<R::RVector>())
+        {
+            result->assign(runtime_vector->begin(), runtime_vector->end());
+            return result;
+        }
+
+        if (const auto* legacy_vector = value.to<EVector>())
+        {
+            result->reserve(legacy_vector->size());
+            for(const auto& element: *legacy_vector)
+                result->push_back(R::e_op_value(element));
+            return result;
+        }
+
+        throw myexception()<<"Expected coalescent tree vector to be an RVector or EVector, but got "<<value.print();
+    }
+}
 
 enum class EventType {RateChange, NewLeaf, Coalescent};
 
@@ -25,20 +50,20 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
 {
     using enum EventType;
     
-    // population sizes: EVector (EPair Double Double)
+    // population sizes: RVector (EPair Double Double)
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& popSizes = arg0.as_<EVector>();
+    auto popSizes = runtime_vector_from_value(arg0);
 
-    // nodeTimes :: EVector (EPair Double (EVector Double))
+    // nodeTimes :: RVector (EPair Double (EVector Double))
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& nodeTimes = arg1.as_<EVector>();
+    auto nodeTimes = runtime_vector_from_value(arg1);
 
     // Define sorting function.
     auto event_time = [&](const Event& e) {
         if (e.type == EventType::RateChange)
-            return popSizes[e.index].as_<EPair>().first.as_double();
+            return (*popSizes)[e.index].as_<EPair>().first.as_double();
         else
-            return nodeTimes[e.index].as_<EPair>().first.as_double();
+            return (*nodeTimes)[e.index].as_<EPair>().first.as_double();
     };
 
     auto event_compare = [&](const Event& e1, const Event& e2)
@@ -49,15 +74,15 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     std::vector<Event> events;
 
     // 1. Add popSize changes
-    for(int i=0;i<popSizes.size();i++)
+    for(int i=0;i<popSizes->size();i++)
         events.push_back({EventType::RateChange, i});
 
     // 2. Add tree nodes
-    for(int i=0;i<nodeTimes.size();i++)
+    for(int i=0;i<nodeTimes->size();i++)
     {
         // Check that parent is not younger than children.
-        auto nodeTime = nodeTimes[i].as_<EPair>().first.as_double();
-        auto& childTimes = nodeTimes[i].as_<EPair>().second.as_<EVector>();
+        auto nodeTime = (*nodeTimes)[i].as_<EPair>().first.as_double();
+        auto& childTimes = (*nodeTimes)[i].as_<EPair>().second.as_<EVector>();
         for(auto& childTime: childTimes)
             if (not (nodeTime >= childTime.as_double()))
             {
@@ -86,7 +111,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     {
         if (events[i].type == EventType::RateChange)
         {
-            N = popSizes[events[i].index].as_<EPair>().second.as_double();
+            N = (*popSizes)[events[i].index].as_<EPair>().second.as_double();
             i++;
             break;
         }
@@ -118,7 +143,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
         auto type = events[i].type;
         if (type == RateChange)
         {
-            N = popSizes[events[i].index].as_<EPair>().second.as_double();
+            N = (*popSizes)[events[i].index].as_<EPair>().second.as_double();
         }
         else if (type == NewLeaf)
         {
