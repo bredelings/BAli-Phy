@@ -44,9 +44,9 @@ extern "C" R::Exp simple_function_ncols(vector<R::Exp>& args)
 // scaleMatrix :: a -> Matrix a -> Matrix a
 extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
 {
-    double factor = Args.evaluate(0).as_double();;
+    double factor = Args.evaluate_slot_to_value(0).as_double();;
 
-    auto arg2 = Args.evaluate(1);
+    auto arg2 = Args.evaluate_slot_to_value(1);
     const Matrix& m = arg2.as_<Box<Matrix>>();
 
     int n1 = m.size1();
@@ -63,10 +63,10 @@ extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(1);
+    auto arg2 = Args.evaluate_slot_to_value(1);
     const Matrix& m2 = arg2.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -86,10 +86,10 @@ extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_mult(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(1);
+    auto arg2 = Args.evaluate_slot_to_value(1);
     const Matrix& m2 = arg2.as_<Box<Matrix>>();
 
     if (m1.size2() != m2.size1())
@@ -116,10 +116,10 @@ extern "C" closure builtin_function_mat_mult(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_add(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(1);
+    auto arg2 = Args.evaluate_slot_to_value(1);
     const Matrix& m2 = arg2.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -140,10 +140,10 @@ extern "C" closure builtin_function_elementwise_add(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_sub(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(1);
+    auto arg2 = Args.evaluate_slot_to_value(1);
     const Matrix& m2 = arg2.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -163,7 +163,7 @@ extern "C" closure builtin_function_elementwise_sub(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_negate(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -180,7 +180,7 @@ extern "C" closure builtin_function_mat_negate(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -198,7 +198,7 @@ extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
     int n1 = m1.size1();
@@ -219,8 +219,8 @@ extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_zero(OperationArgs& Args)
 {
-    int n1 = Args.evaluate(0).as_int();
-    int n2 = Args.evaluate(1).as_int();
+    int n1 = Args.evaluate_slot_to_value(0).as_int();
+    int n2 = Args.evaluate_slot_to_value(1).as_int();
 
     auto m = new Box<Matrix>(n1, n2);
     for(int i=0; i<n1; i++)
@@ -233,7 +233,7 @@ extern "C" closure builtin_function_zero(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_identity(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
 
     auto m = new Box<Matrix>(n, n);
     for(int i=0;i<n;i++)
@@ -251,12 +251,12 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
     using Eigen::Dynamic;
     using Eigen::RowMajor;
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
     int n = Q.size1();
     assert(Q.size2() == n);
 
-    double t = Args.evaluate(1).as_double();
+    double t = Args.evaluate_slot_to_value(1).as_double();
 
     auto P = new Box<Matrix>(n,n);
 
@@ -296,10 +296,10 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 {
     using namespace Eigen;
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const ::Matrix& Q = arg0.as_< Box<::Matrix> >();
 
-    auto pi = vector<double>(Args.evaluate(1).as_<EVector>() );
+    auto pi = vector<double>(Args.evaluate_slot_to_value(1).as_<EVector>() );
 
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -370,9 +370,9 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 {
-    auto L = Args.evaluate(0);
-    auto pi = (vector<double>) Args.evaluate(1).as_<EVector>();
-    double t = Args.evaluate(2).as_double();
+    auto L = Args.evaluate_slot_to_value(0);
+    auto pi = (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
+    double t = Args.evaluate_slot_to_value(2).as_double();
 
     object_ptr<Box<Matrix>> Mptr = new Box<Matrix>;
     auto& M = *Mptr;
@@ -389,7 +389,7 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_transpose(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& M1 = arg0.as_<Box<Matrix>>();
 
     auto M2p = new Box<Matrix>(M1.size2(), M1.size1());
