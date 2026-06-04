@@ -31,8 +31,9 @@
 closure interchangeable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
+    int n_args = C.runtime_n_slots();
 
-    if (C.legacy_exp().size() == 2)
+    if (n_args == 2)
     {
 	auto& M = Args.memory();
 

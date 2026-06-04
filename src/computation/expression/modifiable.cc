@@ -6,9 +6,10 @@
 closure modifiable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
+    int n_args = C.runtime_n_slots();
 
     // Use the first argument as an initial value.
-    if (C.legacy_exp().size() == 1)
+    if (n_args == 1)
     {
         auto& M = Args.memory();
 
@@ -31,7 +32,7 @@ closure modifiable_op(OperationArgs& Args)
         // 7. Unchangeably evaluate to m.
         return closure(R::IndexVar(0), {m});
     }
-    else if (C.legacy_exp().size() == 2)
+    else if (n_args == 2)
     {
         Args.make_changeable();
 
