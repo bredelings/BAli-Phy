@@ -155,6 +155,9 @@ namespace Runtime
         template <DerivedFromObject T>
         const T& as_() const;
 
+        template <DerivedFromObject T>
+        const T& as_checked() const;
+
         template <typename F>
         decltype(auto) visit(F&& f) const
         {
@@ -342,6 +345,15 @@ namespace Runtime
         if (not ptr)
             throw std::runtime_error("Runtime value is not an ObjectValue");
         return *convert<T>(ptr->value);
+    }
+
+    template <DerivedFromObject T>
+    const T& Exp::as_checked() const
+    {
+        auto ptr = to<ObjectValue>();
+        if (not ptr)
+            throw std::runtime_error("Runtime value is not an ObjectValue");
+        return *convert_and_check<const T>(ptr->value.get());
     }
 
     template <typename T>
