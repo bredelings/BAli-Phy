@@ -30,7 +30,7 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 
 extern "C" closure builtin_function_singleton(OperationArgs& Args)
 {
-    int key = Args.evaluate(0).as_int();
+    int key = Args.evaluate_slot_to_value(0).as_int();
 
     int v_reg = Args.reg_for_slot(1);
 
@@ -62,9 +62,9 @@ extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_subscript(OperationArgs& Args)
 {
-    int key = Args.evaluate(1).as_int();
+    int key = Args.evaluate_slot_to_value(1).as_int();
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     if (not m.has_key(key))
@@ -79,7 +79,7 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& m = arg1.as_<IntMap>();
 
     IntMap m2;
@@ -98,7 +98,7 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& m = arg1.as_<IntMap>();
 
     IntMap m2;
@@ -116,9 +116,9 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
-    int key = Args.evaluate(0).as_int();
+    int key = Args.evaluate_slot_to_value(0).as_int();
 
-    auto m = Args.evaluate(1).as_<IntMap>();
+    auto m = Args.evaluate_slot_to_value(1).as_<IntMap>();
 
     m.erase(key);
 
@@ -128,11 +128,11 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
 extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
-    int key = Args.evaluate(0).as_int();
+    int key = Args.evaluate_slot_to_value(0).as_int();
 
     int v_reg = Args.reg_for_slot(1);
 
-    auto m = Args.evaluate(2).as_<IntMap>();
+    auto m = Args.evaluate_slot_to_value(2).as_<IntMap>();
 
     m.insert(key,v_reg);
 
@@ -142,10 +142,10 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 extern "C" closure builtin_function_insertWith(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
-    int key   = Args.evaluate(1).as_int();
+    int key   = Args.evaluate_slot_to_value(1).as_int();
     int v2_reg = Args.reg_for_slot(2);
 
-    auto m = Args.evaluate(3).as_<IntMap>();
+    auto m = Args.evaluate_slot_to_value(3).as_<IntMap>();
 
     if (m.has_key(key))
     {
@@ -162,7 +162,7 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
 
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     EVector V;
@@ -175,8 +175,8 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
 
     auto& m1 = arg0.as_<IntMap>();
     auto& m2 = arg1.as_<IntMap>();
@@ -206,8 +206,8 @@ extern "C" closure builtin_function_union(OperationArgs& Args)
 extern "C" closure builtin_function_unionWith(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& m1 = arg1.as_<IntMap>();
     auto& m2 = arg2.as_<IntMap>();
 
@@ -252,8 +252,8 @@ extern "C" closure builtin_function_unionWith(OperationArgs& Args)
 
 extern "C" closure builtin_function_difference(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& m1 = arg0.as_<IntMap>();
     auto& m2 = arg1.as_<IntMap>();
 
@@ -280,8 +280,8 @@ extern "C" closure builtin_function_difference(OperationArgs& Args)
 
 extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& m1 = arg0.as_<IntMap>();
     auto& m2 = arg1.as_<IntMap>();
 
@@ -304,8 +304,8 @@ extern "C" closure builtin_function_disjoint(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersection(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& m1 = arg0.as_<IntMap>();
     auto& m2 = arg1.as_<IntMap>();
 
@@ -333,8 +333,8 @@ extern "C" closure builtin_function_intersection(OperationArgs& Args)
 
 extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
 
     int f_reg = Args.reg_for_slot(0);
     auto& m1 = arg1.as_<IntMap>();
@@ -377,7 +377,7 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& S = arg1.as_<IntSet>();
 
     IntMap m;
@@ -394,7 +394,7 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_keysSet(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     IntSet keys;
@@ -408,10 +408,10 @@ extern "C" closure builtin_function_keysSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& map0 = arg0.as_<IntMap>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& keys = arg1.as_<IntSet>();
 
     IntMap result;
@@ -439,11 +439,11 @@ closure makeEVector(OperationArgs& Args)
 
 extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto map0 = arg0.as_<IntMap>();
 
     // The order for a specific keys object should remain unchanged.
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& keys = arg1.as_<IntSet>();
 
     int n = keys.size();
@@ -468,10 +468,10 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
 extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto result = arg0.as_<IntMap>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& keys = arg1.as_<IntSet>();
 
     for(auto& k: keys)
@@ -482,9 +482,9 @@ extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
 
 extern "C" closure builtin_function_esubscript(OperationArgs& Args)
 {
-    int key = Args.evaluate(1).as_int();
+    int key = Args.evaluate_slot_to_value(1).as_int();
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<EIntMap>();
 
     return R::e_op_value(m.at(key));
@@ -492,7 +492,7 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<EIntMap>();
 
     IntSet keys;
@@ -505,7 +505,7 @@ extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_forceAll(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     for(auto& [_,r]: m)
@@ -516,7 +516,7 @@ extern "C" closure builtin_function_forceAll(OperationArgs& Args)
 
 extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     object_ptr<EIntMap>  m2(new EIntMap);
@@ -547,7 +547,7 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 
 extern "C" closure builtin_function_toVector(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
     object_ptr<EVector>  v(new EVector);
