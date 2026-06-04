@@ -19,20 +19,26 @@ using std::pair;
 
 namespace
 {
+    R::Exp runtime_pair(R::Exp first, R::Exp second)
+    {
+        object_ptr<R::RPair> result(new R::RPair);
+        result->first = std::move(first);
+        result->second = std::move(second);
+        return R::ObjectValue(result);
+    }
+
     R::Exp json_pair_first(const R::Exp& pair)
     {
-        if (auto runtime_pair = pair.to<R::RPair>())
-            return runtime_pair->first;
-        else
-            return R::e_op_value(pair.as_<EPair>().first);
+        auto runtime_pair = pair.to<R::RPair>();
+        assert(runtime_pair);
+        return runtime_pair->first;
     }
 
     R::Exp json_pair_second(const R::Exp& pair)
     {
-        if (auto runtime_pair = pair.to<R::RPair>())
-            return runtime_pair->second;
-        else
-            return R::e_op_value(pair.as_<EPair>().second);
+        auto runtime_pair = pair.to<R::RPair>();
+        assert(runtime_pair);
+        return runtime_pair->second;
     }
 
     template <typename F>
@@ -48,6 +54,11 @@ namespace
             for(const auto& element: value.as_<EVector>())
                 f(R::e_op_value(element));
         }
+    }
+
+    R::Exp json_node(int type, R::Exp value)
+    {
+        return runtime_pair(R::Int(type), std::move(value));
     }
 }
 
@@ -124,44 +135,44 @@ extern "C" closure builtin_function_c_json(OperationArgs& Args)
 
 extern "C" closure builtin_function_ejson_array(OperationArgs& Args)
 {
-    auto j = Args.evaluate_slot_to_value(0).as_<EVector>();
-    return { EPair(0, j) };
+    auto j = Args.evaluate_slot_to_value(0);
+    return json_node(0, std::move(j));
 }
 
 extern "C" closure builtin_function_ejson_object(OperationArgs& Args)
 {
-    auto j = Args.evaluate_slot_to_value(0).as_<EVector>();
-    return { EPair(1, j) };
+    auto j = Args.evaluate_slot_to_value(0);
+    return json_node(1, std::move(j));
 }
 
 extern "C" closure builtin_function_ejson_inumber(OperationArgs& Args)
 {
     auto j = Args.evaluate_slot_to_value(0).as_int();
-    return { EPair(2, j) };
+    return json_node(2, R::Int(j));
 }
 
 extern "C" closure builtin_function_ejson_fnumber(OperationArgs& Args)
 {
     auto j = Args.evaluate_slot_to_value(0).as_double();
-    return { EPair(3, j) };
+    return json_node(3, R::Double(j));
 }
 
 extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
 {
-    auto j = R::to_expression_ref(Args.evaluate_slot_to_value(0));
-    return { EPair(4, j) };
+    auto j = Args.evaluate_slot_to_value(0);
+    return json_node(4, std::move(j));
 }
 
 extern "C" closure builtin_function_ejson_string(OperationArgs& Args)
 {
-    auto j = String(Args.evaluate_slot_to_value(0).as_string());
-    return { EPair(5, j) };
+    auto j = Args.evaluate_slot_to_value(0).as_string();
+    return json_node(5, R::String(j));
 }
 
 extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 {
     Args.evaluate_slot_to_value(0);
-    return { EPair(6, 0) };
+    return json_node(6, R::Int(0));
 }
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
@@ -186,15 +197,12 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 
     auto printed_fields = MCON::short_fields(out_fields);
 
-    expression_ref tsv_header = new String(MCON::tsv_line(printed_fields));;
-
     object_ptr<Box<map<string,int>>> mapping = new Box<map<string,int>>();
     for(int i=0;i<out_fields.size();i++)
 	mapping->insert({out_fields[i],i});
 
-    expression_ref m2 = mapping;
-
-    return { EPair(tsv_header, m2) };
+    return runtime_pair(R::String(MCON::tsv_line(printed_fields)),
+                        R::ObjectValue(mapping));
 }
 
 extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
