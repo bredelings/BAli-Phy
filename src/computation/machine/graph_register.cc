@@ -764,7 +764,7 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
                 for(int i=0;i<tokens[t].n_modifiables_set;i++)
                 {
                     auto& [r,s] = tokens[t].vm_step.delta()[i];
-                    assert(is_modifiable(expression_at(r)));
+                    assert(is_modifiable(closure_at(r).get_code()));
                     assert(s > 0);
                     int call = steps[s].call;
                     auto value = closure_at(call);
@@ -780,9 +780,9 @@ vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) cons
                 assert(directed_token_type(t) != token_type::set_unshare or tokens[t].vm_step.delta().size() >= 2);
 
                 auto [r1, s1] = tokens[t].vm_step.delta()[0];
-                assert(is_interchangeable(expression_at(r1)));
+                assert(is_interchangeable(closure_at(r1).get_code()));
                 auto [r2,_] = tokens[t].vm_step.delta()[1];
-                assert(is_interchangeable(expression_at(r2)));
+                assert(is_interchangeable(closure_at(r2).get_code()));
                 reg_values.push_back(interchange_op{r1,r2});
             }
         }
@@ -1309,7 +1309,7 @@ void reg_heap::register_out_edge(int r, int /* s */)
     // Check that there is in fact a distribution at I.to_reg.
     assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
     // assert(dist_type.count(O.r_from_dist));
-    assert(reg_is_constant(r_to_var) or (reg_is_changeable(r_to_var) and is_modifiable(expression_at(r_to_var))));
+    assert(reg_is_constant(r_to_var) or (reg_is_changeable(r_to_var) and is_modifiable(closure_at(r_to_var).get_code())));
 
     out_edges_from_dist.insert({r_from_dist, r_to_var});
     out_edges_to_var[r_to_var].insert(r_from_dist);
@@ -1410,7 +1410,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
 
     auto& C = (*this)[R];
 
-    if (is_modifiable(C.legacy_exp()))
+    if (is_modifiable(C.get_code()))
         return R;
     else
         return {};
@@ -1445,7 +1445,7 @@ optional<int> reg_heap::find_precomputed_const_or_modifiable_reg(int r)
             return r;
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_modifiable(C.legacy_exp()))
+            if (is_modifiable(C.get_code()))
                 return r;
             else if (not reg_has_call(r))
                 return {};
@@ -1478,7 +1478,7 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
             return {};
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_modifiable(C.legacy_exp()))
+            if (is_modifiable(C.get_code()))
             {
                 // We might want to set the call for an unforced modifiable in the tree.
                 return r;
@@ -1521,7 +1521,7 @@ optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
             return {};
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_interchangeable(C.legacy_exp()))
+            if (is_interchangeable(C.get_code()))
             {
                 assert(reg_has_call(r));
                 assert(reg_is_forced(r));
@@ -1550,7 +1550,7 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 
     if (reg_is_constant(R)) return {};
 
-    if (reg_is_changeable(R) and is_modifiable(expression_at(R))) return R;
+    if (reg_is_changeable(R) and is_modifiable(closure_at(R).get_code())) return R;
 
     // 2. Evaluate R in context c2, and get the first changeable reg on the path.
     auto [r, _] = incremental_evaluate_in_context(R, c1);
@@ -1561,7 +1561,7 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
     // 5. Check that mod_reg is executed in c1, where R may not be evaluated.
     if (mod_reg)
     {
-        assert(is_modifiable(expression_at(*mod_reg)));
+        assert(is_modifiable(closure_at(*mod_reg).get_code()));
         if (not call_for_reg(*mod_reg))
             mod_reg = {};
     }
@@ -1581,7 +1581,7 @@ int reg_heap::find_const_or_modifiable_reg_in_context(int R, int c1)
 
     if (reg_is_constant(R)) return R;
 
-    if (reg_is_changeable(R) and is_modifiable(expression_at(R))) return R;
+    if (reg_is_changeable(R) and is_modifiable(closure_at(R).get_code())) return R;
 
     // 1. Evaluate R in context c2, and get the first changeable reg on the path.
     auto [r, _] = incremental_evaluate_in_context(R, c1);
@@ -2106,11 +2106,11 @@ void reg_heap::interchange_regs(int r1, int r2, int t)
         assert(directed_token_type(t) == token_type::set);
 
     // Check that this r1 indeed interchangeable
-    if (not is_interchangeable(expression_at(r1)))
+    if (not is_interchangeable(closure_at(r1).get_code()))
         throw myexception()<<"interchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<" is not interchangeable!";
 
     // Check that this r2 is indeed interchangeable
-    if (not is_interchangeable(expression_at(r2)))
+    if (not is_interchangeable(closure_at(r2).get_code()))
         throw myexception()<<"interchange_regs: reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" is not interchangeable!";
 
     // Check that we are only interchanging steps for the same computation.
@@ -2149,7 +2149,7 @@ int reg_heap::set_reg_value(int R, closure&& value, int t, bool unsafe)
         assert(unsafe or directed_token_type(t) == token_type::set);
 
     // 1. Check that this reg is indeed settable
-    if (not is_modifiable(expression_at(R)))
+    if (not is_modifiable(closure_at(R).get_code()))
         throw myexception()<<"set_reg_value: reg "<<R<<" is not modifiable!";
 
     assert(not is_root_token(t));
@@ -2965,7 +2965,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     // Write-Read coalescening.
     // If the context is a set-token that is a child of the root, then look up the value there...
     if (reg_is_changeable(R) and
-	is_modifiable(expression_at(R)) and
+	is_modifiable(closure_at(R).get_code()) and
         undirected_token_type(t) == token_type::set)
     {
 	// 0. Reroot to our older neighbor.
@@ -2978,15 +2978,14 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 	int r_constant = 0;
 	for(auto& [r,s]: tokens[t].vm_step.delta())
 	{
-	    auto& E = expression_at(r);
-	    if (is_interchangeable(E))
+	    if (is_interchangeable(closure_at(r).get_code()))
 	    {
 		r_constant = -1; // Do NOT look in root program.
 		break;
 	    }
 	    else
 	    {
-		assert(is_modifiable(E));
+		assert(is_modifiable(closure_at(r).get_code()));
 		if (r == R)
 		{
 		    int call = steps[s].call;
@@ -3124,7 +3123,7 @@ const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-    assert( is_modifiable(expression_at(R)) );
+    assert( is_modifiable(closure_at(R).get_code()) );
     assert( reg_is_changeable(R) );
 
     reroot_at_context(c);

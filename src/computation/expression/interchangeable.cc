@@ -77,3 +77,13 @@ bool is_interchangeable(const expression_ref& E)
     assert(result == E.head().is_a<interchangeable>());
     return result;
 }
+
+bool is_interchangeable(const Runtime::Exp& E)
+{
+    const auto* app = E.to<Runtime::App>();
+    if (not app)
+        return false;
+
+    const auto* op = std::get_if<Runtime::OperationApp>(&app->head);
+    return op and dynamic_cast<const interchangeable*>(op->head.get());
+}

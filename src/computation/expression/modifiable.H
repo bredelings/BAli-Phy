@@ -18,5 +18,6 @@ struct modifiable: public Operation
 };
 
 bool is_modifiable(const expression_ref&);
+bool is_modifiable(const Runtime::Exp&);
 
 #endif

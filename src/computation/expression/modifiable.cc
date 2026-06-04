@@ -59,3 +59,13 @@ bool is_modifiable(const expression_ref& E)
     assert(result == E.head().is_a<modifiable>());
     return result;
 }
+
+bool is_modifiable(const Runtime::Exp& E)
+{
+    const auto* app = E.to<Runtime::App>();
+    if (not app)
+        return false;
+
+    const auto* op = std::get_if<Runtime::OperationApp>(&app->head);
+    return op and dynamic_cast<const modifiable*>(op->head.get());
+}

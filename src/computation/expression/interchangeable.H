@@ -18,5 +18,6 @@ struct interchangeable: public Operation
 };
 
 bool is_interchangeable(const expression_ref&);
+bool is_interchangeable(const Runtime::Exp&);
 
 #endif
