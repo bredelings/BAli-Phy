@@ -27,7 +27,7 @@ using Alphabet = PtrBox<alphabet>;
 
 extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
 
     auto vpi = compute_stationary_freqs(Q);
@@ -43,10 +43,10 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
 
 extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto pi0 = (vector<double>)arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& Q = arg1.as_<Box<Matrix>>();
 
     // In exponential.cc
@@ -57,7 +57,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
 {
     constexpr double tol = 1.0e-7;
 
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
 
     assert(Q.size1() == Q.size2() );
@@ -119,7 +119,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
 
     // Compare with known pi
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& pi0 = arg1.as_<EVector>();
 
     // 2. b = 0*n + 1
@@ -139,10 +139,10 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
 
 extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi = (vector<double>)arg1.as_<EVector>();
 
     return { checkStationary(Q,pi) };
@@ -150,10 +150,10 @@ extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
 
 extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi = (vector<double>)arg1.as_<EVector>();
 
     return { checkReversible(Q,pi) };
@@ -161,16 +161,16 @@ extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
 
 extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& smap = arg1.as_< EVector >();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-    auto pi = vector<double> (Args.evaluate(3).as_<EVector>() );
+    auto pi = vector<double> (Args.evaluate_slot_to_value(3).as_<EVector>() );
 
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
@@ -205,21 +205,21 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 
 extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& D = *arg0.poly_cast<alphabet,Doublets>();
 
     // 2 changes: between matches/wobbles (both transitions)
-    double alpha_D = Args.evaluate(2).as_double();
+    double alpha_D = Args.evaluate_slot_to_value(2).as_double();
     // 2 changes: between matches/wobbles (both transversions)
-    double beta = Args.evaluate(3).as_double();
+    double beta = Args.evaluate_slot_to_value(3).as_double();
     // 2 changes: mismatch and anything: ZERO
 
     // 1 change: between matches (must be transition between match and wobble)
-    double alpha_S = Args.evaluate(1).as_double();
+    double alpha_S = Args.evaluate_slot_to_value(1).as_double();
     // 1 change: between match and mismatch
-    double gamma = Args.evaluate(4).as_double();
+    double gamma = Args.evaluate_slot_to_value(4).as_double();
     // 1 change: between mismatch and mismatch
-    double epsilon = Args.evaluate(5).as_double();
+    double epsilon = Args.evaluate_slot_to_value(5).as_double();
 
     const int n = D.size();
 
@@ -288,13 +288,13 @@ extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 
 extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& D = *arg0.poly_cast<alphabet,Doublets>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const Matrix& R1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const Matrix& R2 = arg2.as_<Box<Matrix>>();
 
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
@@ -348,16 +348,16 @@ extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args
 
 extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& T = *arg0.poly_as_<alphabet,Triplets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& T = *arg0.poly_cast<alphabet,Triplets>();
   
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const Matrix& R1 = arg1.as_<Box<Matrix>>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const Matrix& R2 = arg2.as_<Box<Matrix>>();
 
-    auto arg3 = Args.evaluate(3);
+    auto arg3 = Args.evaluate_slot_to_value(3);
     const Matrix& R3 = arg3.as_<Box<Matrix>>();
 
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
@@ -414,16 +414,16 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
 // multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
 extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& T = *arg0.poly_as_<alphabet,Triplets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& T = *arg0.poly_cast<alphabet,Triplets>();
 
-    double v2 = Args.evaluate(1).as_double();
-    double v3 = Args.evaluate(2).as_double();
+    double v2 = Args.evaluate_slot_to_value(1).as_double();
+    double v3 = Args.evaluate_slot_to_value(2).as_double();
 
-    auto arg3 = Args.evaluate(3);
+    auto arg3 = Args.evaluate_slot_to_value(3);
     const Matrix& R1 = arg3.as_<Box<Matrix>>();
 
-    auto arg4 = Args.evaluate(4);
+    auto arg4 = Args.evaluate_slot_to_value(4);
     auto pi1 = arg4.as_<EVector>();
 
     // Compute the average rate at equilibrium for R1.
@@ -570,22 +570,22 @@ vector<int> make_edit_map(const EVector& edit_pairs, int n)
 
 extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,RNAEdits>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& D = *arg0.poly_cast<alphabet,RNAEdits>();
     const int n = D.size();
     assert(D.getNucleotides().size() == 4);
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const Matrix& Q_nuc = arg1.as_<Box<Matrix>>();
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
     assert(Q_nuc.size1() == 4);
     assert(Q_nuc.size2() == 4);
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const EVector& edit_pairs = arg2.as_<EVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
-    double rnaRate = Args.evaluate(3).as_double();
+    double rnaRate = Args.evaluate_slot_to_value(3).as_double();
     assert(rnaRate >= 0);
 
     object_ptr<Box<Matrix>> Q( new Box<Matrix>(n,n) );
@@ -626,16 +626,16 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
 
 extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,RNAEdits>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& D = *arg0.poly_cast<alphabet,RNAEdits>();
     const int n = D.size();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& nuc_pi = arg1.as_<EVector>();
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
     assert(nuc_pi.size() == 4);
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const EVector& edit_pairs = arg2.as_<EVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
@@ -685,7 +685,7 @@ object_ptr<const Object> EQU_Exchange_Function(int n)
 
 extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
     
     return EQU_Exchange_Function(n);
 }
@@ -755,11 +755,11 @@ void inc_modulated_states_vec(int& r, int& level, int& state, const EVector& pis
 // The equilibrium frequencies for each level in `R` are given by `level_frequencies`.
 extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Qs = arg0.as_<EVector>();
     int n_levels = Qs.size();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& rates_between = arg1.as_<Box<Matrix>>();
     assert(rates_between.size1() == n_levels);
     assert(rates_between.size2() == n_levels);
@@ -806,11 +806,11 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 
 extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& pis = arg0.as_<EVector>();
     int n_levels = pis.size();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& level_probs = arg1.as_<EVector>();
     assert(level_probs.size() == n_levels);
 
@@ -833,7 +833,7 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
 
 extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& smaps = arg0.as_<EVector>();
 
     EVector new_smap;
@@ -926,18 +926,18 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const St
 
 extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
-    auto S = Args.evaluate(1);
+    auto a = Args.evaluate_slot_to_value(0);
+    auto S = Args.evaluate_slot_to_value(1);
     return Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>());
 }
 
 extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationArgs& Args)
 {
     // 1. Get the arguments
-    auto n = Args.evaluate(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_int();
     assert(n >= 0);
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& xs = arg1.as_<EVector>();
     
 
@@ -994,7 +994,7 @@ object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_pam(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     return PAM_Exchange_Function(*a.as_<Alphabet>());
 }
 
@@ -1026,7 +1026,7 @@ object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_jtt(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     return JTT_Exchange_Function(*a.as_<Alphabet>());
 }
 
@@ -1057,14 +1057,14 @@ const char* wag_string =
 
 extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     istringstream file(wag_string);
     return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_wag_frequencies(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     istringstream file(wag_string);
     return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
 }
@@ -1093,25 +1093,25 @@ const char* lg_string =	"0.425093 \
 
 extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     istringstream file(lg_string);
     return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_lg_frequencies(OperationArgs& Args)
 {
-    auto a = Args.evaluate(0);
+    auto a = Args.evaluate_slot_to_value(0);
     istringstream file(lg_string);
     return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& T = *arg0.poly_as_<alphabet,Triplets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& T = *arg0.poly_cast<alphabet,Triplets>();
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi1 = arg1.as_<EVector>();
 
     int nuc_size = T.getNucleotides().size();
@@ -1119,13 +1119,13 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     if (pi1.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto pi2 = arg2.as_<EVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
-    auto arg3 = Args.evaluate(3);
+    auto arg3 = Args.evaluate_slot_to_value(3);
     auto pi3 = arg3.as_<EVector>();
 
     if (pi3.size() != nuc_size)
@@ -1154,11 +1154,11 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& D = *arg0.poly_cast<alphabet,Doublets>();
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi1 = arg1.as_<EVector>();
 
     int nuc_size = D.getNucleotides().size();
@@ -1166,7 +1166,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
     if (pi1.size() != nuc_size)
 	throw myexception()<<"f2x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto pi2 = arg2.as_<EVector>();
 
     if (pi2.size() != nuc_size)
@@ -1195,9 +1195,9 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S = arg0.as_<EVector>();
-    int n = Args.evaluate(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_int();
 
     auto R = new Box<Matrix>(n,n);
     if (S.size() != n*(n-1)/2)
@@ -1219,9 +1219,9 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 
 extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
 
-    auto arg0 = Args.evaluate(1);
+    auto arg0 = Args.evaluate_slot_to_value(1);
     auto& S = arg0.as_<EVector>();
 
     auto R = new Box<Matrix>(n,n);
@@ -1246,7 +1246,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_fixupDiagonalRates(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate(0);
+    auto arg1 = Args.evaluate_slot_to_value(0);
     const Matrix& m1 = arg1.as_<Box<Matrix>>();
 
     auto m2 = new Box<Matrix>(m1);
@@ -1270,10 +1270,10 @@ extern "C" closure builtin_function_fixupDiagonalRates(OperationArgs& Args)
 
 extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    const Codons& C = *arg0.poly_as_<alphabet,Codons>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    const Codons& C = *arg0.poly_cast<alphabet,Codons>();
 
-    double omega = Args.evaluate(1).as_double();
+    double omega = Args.evaluate_slot_to_value(1).as_double();
 
     int n = C.size();
 
@@ -1288,10 +1288,10 @@ extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto& C = *arg0.poly_as_<alphabet,Triplets>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& C = *arg0.poly_cast<alphabet,Triplets>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const Matrix& S = arg1.as_<Box<Matrix>>();
 
     int n = C.size();
@@ -1331,9 +1331,9 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 
 extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
 {
-    auto pi = vector<double>( Args.evaluate(0).as_<EVector>() );
+    auto pi = vector<double>( Args.evaluate_slot_to_value(0).as_<EVector>() );
 
-    double f = Args.evaluate(1).as_double();
+    double f = Args.evaluate_slot_to_value(1).as_double();
 
     int n = pi.size();
 
@@ -1369,12 +1369,12 @@ double bound(double low, double high, double x)
 // Here S[I,J] = F[J] - F[I] = 2Nf[j] - 2NF[i] = 2N*s[i,j]
 extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const Matrix& Q0 = arg0.as_< Box<Matrix> >();
     assert(Q0.size1() == Q0.size2());
     int n = Q0.size1();
 
-    auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< EVector >() );
     for(auto& f: F)
 	f = bound(-20,20,f);
 
@@ -1414,9 +1414,9 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 // pi0 w
 extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
-    auto pi0 = vector<double>( Args.evaluate(0).as_< EVector >() );
+    auto pi0 = vector<double>( Args.evaluate_slot_to_value(0).as_< EVector >() );
 
-    auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< EVector >() );
     for(auto& f: F)
 	f = bound(-20,20,f);
 
@@ -1521,7 +1521,7 @@ return Q_;
 
 extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& WF = arg0.as_<Box<Matrix>>();
 
     const int n_models = WF.size1();
@@ -1541,10 +1541,10 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 
 extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& D = arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& F = arg1.as_<EVector>();
     // cache matrix of frequencies
 
@@ -1566,7 +1566,7 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
 
 extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& F = arg0.as_<EVector>();
     // cache matrix of frequencies
 
@@ -1586,11 +1586,11 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
 extern "C" closure builtin_function_flow(OperationArgs& Args)
 {
     // Equilibrium frequencies
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& pi = arg0.as_<EVector>();
 
     // Rate matrix
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& Q = arg1.as_<Box<Matrix>>();
     assert(Q.size1() == Q.size2());
 
