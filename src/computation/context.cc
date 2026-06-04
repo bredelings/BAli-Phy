@@ -246,7 +246,7 @@ typedef multi_index_container<
 
 void add_transition_kernel(const closure& e, int s, double t, set_tk_group& tk_groups)
 {
-    double rate = e.legacy_exp().sub()[0].as_double();
+    double rate = e.runtime_slot(0).as_double();
 
     // how many total
     int n_total = get_reps(rate);
