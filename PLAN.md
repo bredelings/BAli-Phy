@@ -13,6 +13,13 @@ Completed so far:
 - Migrated obvious MCMC/SMC scalar evaluation callers to runtime values.
 - Removed `reg_heap::expression_at()` from the live evaluator loops in
   `src/computation/machine/evaluate.cc`.
+- Reworked `context_ptr` internals so `operator[]`, `size()`, and legacy
+  `head()` inspect `Runtime::Exp` rather than `expression_at()` /
+  `legacy_exp()`.
+- Migrated a focused group of model/tree `context_ptr` scalar/object callers to
+  `value_code()` / `set_code()`.
+- Migrated SMC haplotype-index lists from `list_to_vector()` to
+  `list_to_vector_code()`.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Remaining Hotspots
@@ -21,11 +28,12 @@ Completed so far:
    `expression_ref`: `evaluate_*`, `get_reg_value*`, and `evaluate_program`.
    These should remain only as compatibility wrappers while callers migrate.
 
-2. `context_ptr` still has legacy internals and callers. The runtime-facing
-   methods exist, but `operator[]`, `size()`, and legacy `head()` still need to
-   avoid `expression_at()` / `legacy_exp()`. Tree, parameter, MCMC, and SMC
-   call sites should move to `value_code()`, `set_code()`, and
-   `list_to_vector_code()`.
+2. `context_ptr` still has legacy callers. The runtime-facing methods exist and
+   the internals are runtime-based, but tree, parameter, MCMC, and SMC call
+   sites still need to keep moving to `value_code()`, `set_code()`, and
+   `list_to_vector_code()`. The largest remaining SMC list consumers are
+   haplotypes, panel, and sites arrays whose helper functions still take
+   `EVector` / `expression_ref`.
 
 3. Non-evaluator `reg_heap::expression_at()` uses remain in graph-register
    helpers, interchangeables, assertions, comparison/debug code, and legacy API
@@ -36,15 +44,16 @@ Completed so far:
 
 ## Proposed Next Steps
 
-1. Replace `context_ptr` internals that inspect evaluated values through
-   `expression_at()` or `legacy_exp()` with direct `Runtime::Exp` inspection.
+1. Add runtime-oriented helpers in SMC for haplotype/panel/site vectors, then
+   migrate `haplotypes_ptr`, `panel_ptr`, and `sites_ptr` away from
+   `list_to_vector()`.
 
-2. Convert a focused group of model/tree call sites from `context_ptr::value()`
-   and `set_value()` to `value_code()` and `set_code()`.
+2. Continue migrating direct model/tree call sites that still use
+   `context_ptr::value()` only because a legacy-returning helper has not yet
+   been split.
 
-3. Convert SMC list consumers that call `context_ptr::list_to_vector()` to
-   `list_to_vector_code()` where the values are immediately used as runtime
-   scalars or runtime object values.
+3. Replace non-evaluator `reg_heap::expression_at()` call sites where they are
+   assertions or comparisons rather than explicit legacy display/API paths.
 
 4. Add runtime equivalents for any missing small helpers encountered during
    migration, but avoid broad renaming until the legacy APIs are unused.

@@ -10,8 +10,9 @@
   `evaluate_program` overloads that return `expression_ref`.
 - Finish converting remaining `context_ptr` callers in tree, parameter, MCMC,
   and SMC code to `value_code()`, `head_code()`, `set_code()`, and
-  `list_to_vector_code()`. The SMC list consumers are the largest remaining
-  caller cluster.
+  `list_to_vector_code()`. The SMC haplotype/panel/site list consumers are the
+  largest remaining caller cluster; haplotype-index lists are already runtime
+  lists.
 - Remove non-evaluator `reg_heap::expression_at()` call sites such as
   interchangeables and graph-register comparison/debug helpers.
 - Keep `Runtime::to_expression_ref()` and `closure::legacy_exp()` only at
