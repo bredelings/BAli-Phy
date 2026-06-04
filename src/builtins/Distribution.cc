@@ -19,35 +19,35 @@ using std::valarray;
 
 extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
 {
-    double a1    = Args.evaluate(0).as_double();
-    double a2    = Args.evaluate(1).as_double();
-    double x     = Args.evaluate(2).as_double();
+    double a1    = Args.evaluate_slot_to_value(0).as_double();
+    double a2    = Args.evaluate_slot_to_value(1).as_double();
+    double x     = Args.evaluate_slot_to_value(2).as_double();
   
     return { gamma_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
 {
-    double a1    = Args.evaluate_(0).as_double();
-    double a2    = Args.evaluate_(1).as_double();
+    double a1    = Args.evaluate_slot_to_value_(0).as_double();
+    double a2    = Args.evaluate_slot_to_value_(1).as_double();
   
     return { gamma(a1, a2) };
 }
 
 extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
 {
-    double a1     = Args.evaluate(0).as_double();
-    double a2     = Args.evaluate(1).as_double();
-    double p      = Args.evaluate(2).as_double();
+    double a1     = Args.evaluate_slot_to_value(0).as_double();
+    double a2     = Args.evaluate_slot_to_value(1).as_double();
+    double p      = Args.evaluate_slot_to_value(2).as_double();
 
     return { gamma_quantile(p, a1, a2) };
 }
 
 extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
 {
-    double a      = Args.evaluate(0).as_double();
-    double b      = Args.evaluate(1).as_double();
-    double x      = Args.evaluate(2).as_double();
+    double a      = Args.evaluate_slot_to_value(0).as_double();
+    double b      = Args.evaluate_slot_to_value(1).as_double();
+    double x      = Args.evaluate_slot_to_value(2).as_double();
     assert(a >= 0);
     assert(b >= 0);
 
@@ -65,26 +65,26 @@ extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
 
 extern "C" closure builtin_function_beta_density(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
   
     return { beta_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
 {
-    double a1 = Args.evaluate_(0).as_double();
-    double a2 = Args.evaluate_(1).as_double();
+    double a1 = Args.evaluate_slot_to_value_(0).as_double();
+    double a2 = Args.evaluate_slot_to_value_(1).as_double();
   
     return { beta(a1, a2) };
 }
 
 extern "C" closure builtin_function_beta_cdf(OperationArgs& Args)
 {
-    double a = Args.evaluate(0).as_double();
-    double b = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a = Args.evaluate_slot_to_value(0).as_double();
+    double b = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
     assert(a >= 0);
     assert(b >= 0);
 
@@ -103,27 +103,27 @@ extern "C" closure builtin_function_beta_cdf(OperationArgs& Args)
 
 extern "C" closure builtin_function_beta_quantile(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double p  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double p  = Args.evaluate_slot_to_value(2).as_double();
   
     return { beta_quantile(p, a1, a2) };
 }
 
 extern "C" closure builtin_function_normal_density(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
   
     return { normal_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_normal_cdf(OperationArgs& Args)
 {
-    double mu = Args.evaluate(0).as_double();
-    double sigma = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double mu = Args.evaluate_slot_to_value(0).as_double();
+    double sigma = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
     assert(sigma >= 0);
 
     using boost::math::normal_distribution;
@@ -141,43 +141,43 @@ extern "C" closure builtin_function_normal_cdf(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 {
-    double a1 = Args.evaluate_(0).as_double();
-    double a2 = Args.evaluate_(1).as_double();
+    double a1 = Args.evaluate_slot_to_value_(0).as_double();
+    double a2 = Args.evaluate_slot_to_value_(1).as_double();
   
     return { gaussian(a1, a2) };
 }
  
 extern "C" closure builtin_function_normal_quantile(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double p  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double p  = Args.evaluate_slot_to_value(2).as_double();
 
     return { normal_quantile(p, a1 ,a2) };
 }
 
 extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
 
     return { cauchy_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 {
-    double a1 = Args.evaluate_(0).as_double();
-    double a2 = Args.evaluate_(1).as_double();
+    double a1 = Args.evaluate_slot_to_value_(0).as_double();
+    double a2 = Args.evaluate_slot_to_value_(1).as_double();
 
     return { cauchy(a1, a2) };
 }
 
 extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
 {
-    double m = Args.evaluate(0).as_double();
-    double s = Args.evaluate(1).as_double();
-    double p = Args.evaluate(2).as_double();
+    double m = Args.evaluate_slot_to_value(0).as_double();
+    double s = Args.evaluate_slot_to_value(1).as_double();
+    double p = Args.evaluate_slot_to_value(2).as_double();
 
     return { cauchy_quantile(p, m ,s) };
 }
@@ -187,42 +187,42 @@ extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-    auto n = (vector<double>) Args.evaluate(0).as_<EVector>();
-    auto x = (vector<double>) Args.evaluate(1).as_<EVector>();
+    auto n = (vector<double>) Args.evaluate_slot_to_value(0).as_<EVector>();
+    auto x = (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
   
     return { ::dirichlet_pdf(x, n) };
 }
 
 extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
   
     return { ::laplace_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
 {
-    double m = Args.evaluate_(0).as_double();
-    double s = Args.evaluate_(1).as_double();
+    double m = Args.evaluate_slot_to_value_(0).as_double();
+    double s = Args.evaluate_slot_to_value_(1).as_double();
   
     return { laplace(m,s) };
 }
 
 extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x  = Args.evaluate(2).as_double();
+    double a1 = Args.evaluate_slot_to_value(0).as_double();
+    double a2 = Args.evaluate_slot_to_value(1).as_double();
+    double x  = Args.evaluate_slot_to_value(2).as_double();
   
     return { ::uniform_pdf(x,a1,a2) };
 }
 
 extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 {
-    double a1 = Args.evaluate_(0).as_double();
-    double a2 = Args.evaluate_(1).as_double();
+    double a1 = Args.evaluate_slot_to_value_(0).as_double();
+    double a2 = Args.evaluate_slot_to_value_(1).as_double();
 
     assert(a1 < a2);
 
@@ -231,17 +231,17 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 
 extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)
 {
-    int a1 = Args.evaluate(0).as_int();
-    int a2 = Args.evaluate(1).as_int();
-    double x  = Args.evaluate(2).as_int();
+    int a1 = Args.evaluate_slot_to_value(0).as_int();
+    int a2 = Args.evaluate_slot_to_value(1).as_int();
+    double x  = Args.evaluate_slot_to_value(2).as_int();
 
     return { ::uniform_int_pdf(x,a1,a2) };
 }
 
 extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 {
-    int a1 = Args.evaluate_(0).as_int();
-    int a2 = Args.evaluate_(1).as_int();
+    int a1 = Args.evaluate_slot_to_value_(0).as_int();
+    int a2 = Args.evaluate_slot_to_value_(1).as_int();
 
     assert(a1 <= a2);
 
@@ -252,35 +252,35 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 
 extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Args)
 {
-    int r = Args.evaluate(0).as_int();
-    double p = Args.evaluate(1).as_double();
-    int k = Args.evaluate(2).as_int();
+    int r = Args.evaluate_slot_to_value(0).as_int();
+    double p = Args.evaluate_slot_to_value(1).as_double();
+    int k = Args.evaluate_slot_to_value(2).as_int();
 
     return { ::binomial_pdf(r,p,k) };
 }
 
 extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)
 {
-    int r = Args.evaluate_(0).as_int();
-    double p = Args.evaluate_(1).as_double();
+    int r = Args.evaluate_slot_to_value_(0).as_int();
+    double p = Args.evaluate_slot_to_value_(1).as_double();
 
     return { negative_binomial(r,p) };
 }
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
-    double p = Args.evaluate(1).as_double();
-    int k = Args.evaluate(2).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_int();
+    double p = Args.evaluate_slot_to_value(1).as_double();
+    int k = Args.evaluate_slot_to_value(2).as_int();
   
     return { ::binomial_pdf(n,p,k) };
 }
 
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
-    auto ps = Args.evaluate(1).as_<EVector>();
-    auto ks = Args.evaluate(2).as_<EVector>();
+    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto ps = Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto ks = Args.evaluate_slot_to_value(2).as_<EVector>();
 
     if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
 
@@ -297,46 +297,46 @@ extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
-    int n = Args.evaluate_(0).as_int();
-    double p = Args.evaluate_(1).as_double();
+    int n = Args.evaluate_slot_to_value_(0).as_int();
+    double p = Args.evaluate_slot_to_value_(1).as_double();
 
     return { (int)binomial(n,p) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
-    double p = Args.evaluate_(0).as_double();
+    double p = Args.evaluate_slot_to_value_(0).as_double();
 
     return { (int)bernoulli(p) };
 }
 
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
-    double p_fail = Args.evaluate(0).as_double();
-    double p_success = Args.evaluate(1).as_double();
-    int n = Args.evaluate(2).as_int();
+    double p_fail = Args.evaluate_slot_to_value(0).as_double();
+    double p_success = Args.evaluate_slot_to_value(1).as_double();
+    int n = Args.evaluate_slot_to_value(2).as_int();
   
     return { ::geometric_pdf(p_fail, p_success, n) };
 }
 
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
-    double p = Args.evaluate_(0).as_double();
+    double p = Args.evaluate_slot_to_value_(0).as_double();
 
     return { (int)geometric(p) };
 }
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
-    double mu = Args.evaluate(0).as_double();
-    int n = Args.evaluate(1).as_int();
+    double mu = Args.evaluate_slot_to_value(0).as_double();
+    int n = Args.evaluate_slot_to_value(1).as_int();
   
     return { poisson_pdf(mu,n) };
 }
 
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
-    double mu = Args.evaluate_(0).as_double();
+    double mu = Args.evaluate_slot_to_value_(0).as_double();
 
     return { (int)poisson(mu) };
 }
@@ -382,12 +382,12 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     // ?? assert(not Args.evaluate_changeables());
 
     //------------- 1. Get arguments alpha, N, D -----------------
-    double alpha = Args.evaluate(0).as_double();
-    int N = Args.evaluate(1).as_int();
-    int D = Args.evaluate(2).as_int();
+    double alpha = Args.evaluate_slot_to_value(0).as_double();
+    int N = Args.evaluate_slot_to_value(1).as_int();
+    int D = Args.evaluate_slot_to_value(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    auto z = (vector<int>) Args.evaluate(3).as_<EVector>();
+    auto z = (vector<int>) Args.evaluate_slot_to_value(3).as_<EVector>();
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }
@@ -399,9 +399,9 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     // ?? assert(not Args.evaluate_changeables());
 
     //------------- 1. Get arguments alpha, N, D -----------------
-    double alpha = Args.evaluate_(0).as_double();
-    int N = Args.evaluate_(1).as_int();
-    int D = Args.evaluate_(2).as_int();
+    double alpha = Args.evaluate_slot_to_value_(0).as_double();
+    int N = Args.evaluate_slot_to_value_(1).as_int();
+    int D = Args.evaluate_slot_to_value_(2).as_int();
 
     // The entries in [0,n_seen) are the categories we've seen
     vector<int> categories = iota(N+D);
@@ -450,7 +450,7 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
 
-    auto z = (vector<double>) Args.evaluate_(0).as_<EVector>();
+    auto z = (vector<double>) Args.evaluate_slot_to_value_(0).as_<EVector>();
 
     return { choose_scratch(z) };
 }
