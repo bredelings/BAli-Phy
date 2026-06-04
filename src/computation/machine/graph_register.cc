@@ -416,137 +416,127 @@ void reg_heap::unregister_effect_at_step(int s)
 
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).legacy_exp().head().is_a<effect>() or closure_at(r).legacy_exp().head().is_a<constructor>());
-    auto& E = closure_at(r).legacy_exp().head();
+    const auto& E = closure_at(r).get_code();
+    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::App>());
 
-    if (E.is_a<::register_prior>())
+    if (const auto* P = E.to<::register_prior>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<":   REGISTER! ("<<prior_terms.size()<<" -> "<<prior_terms.size()+1<<")\n";
-        register_prior(E.as_<::register_prior>(), s);
+            std::cerr<<P->print()<<":   REGISTER! ("<<prior_terms.size()<<" -> "<<prior_terms.size()+1<<")\n";
+        register_prior(*P, s);
     }
-    else if (E.is_a<register_likelihood>())
+    else if (const auto* L = E.to<register_likelihood>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
-        register_likelihood_(E.as_<register_likelihood>(), s);
+            std::cerr<<L->print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
+        register_likelihood_(*L, s);
     }
-    else if (auto I = E.to<RegisterInterchangeable>())
+    else if (const auto* I = E.to<RegisterInterchangeable>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<":   REGISTER!\n";
+            std::cerr<<I->print()<<":   REGISTER!\n";
         register_interchangeable(*I, s);
     }
-    else if (E.is_a<constructor>())
+    else if (has_constructor(E, "Effect.TransitionKernel"))
     {
-        if (has_constructor(E, "Effect.TransitionKernel"))
-        {
-            double rate = closure_at(r).runtime_slot(0).as_double();
-            int r_kernel = closure_at(r).runtime_reg_for_slot(1);
-            if (log_verbose >= 5)
-                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: REGISTER!\n";
-            register_transition_kernel(r, s);
-        }
-        else if (has_constructor(E, "Effect.Logger"))
-        {
-            int r_logger = closure_at(r).runtime_reg_for_slot(0);
-            if (log_verbose >= 5)
-                std::cerr<<"register_logger[logger="<<r_logger<<"]: REGISTER!\n";
-            register_logger(r, s);
-        }
-        else if (has_constructor(E, "Effect.InEdge"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
-            register_in_edge(r, s);
-        }
-        else if (has_constructor(E, "Effect.OutEdge"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<":  REGISTER!\n";
-            register_out_edge(r, s);
-        }
-        else if (has_constructor(E, "Effect.Dist"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<":  REGISTER!\n";
-            register_dist(r, s);
-        }
-        else if (has_constructor(E, "Effect.DistProperty"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
-            register_dist_property(r, s);
-        }
-        else
-            throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
+        double rate = closure_at(r).runtime_slot(0).as_double();
+        int r_kernel = closure_at(r).runtime_reg_for_slot(1);
+        if (log_verbose >= 5)
+            std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: REGISTER!\n";
+        register_transition_kernel(r, s);
+    }
+    else if (has_constructor(E, "Effect.Logger"))
+    {
+        int r_logger = closure_at(r).runtime_reg_for_slot(0);
+        if (log_verbose >= 5)
+            std::cerr<<"register_logger[logger="<<r_logger<<"]: REGISTER!\n";
+        register_logger(r, s);
+    }
+    else if (has_constructor(E, "Effect.InEdge"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<": REGISTER!\n";
+        register_in_edge(r, s);
+    }
+    else if (has_constructor(E, "Effect.OutEdge"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<":  REGISTER!\n";
+        register_out_edge(r, s);
+    }
+    else if (has_constructor(E, "Effect.Dist"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<":  REGISTER!\n";
+        register_dist(r, s);
+    }
+    else if (has_constructor(E, "Effect.DistProperty"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<": REGISTER!\n";
+        register_dist_property(r, s);
     }
     else
-        throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
+        throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E.print();
 }
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).legacy_exp().head().is_a<effect>() or closure_at(r).legacy_exp().head().is_a<constructor>());
-    auto& E = closure_at(r).legacy_exp().head();
+    const auto& E = closure_at(r).get_code();
+    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::App>());
 
-    if (E.is_a<::register_prior>())
+    if (const auto* P = E.to<::register_prior>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<": UNregister! ("<<prior_terms.size()<<" -> "<<prior_terms.size()-1<<")\n";
+            std::cerr<<P->print()<<": UNregister! ("<<prior_terms.size()<<" -> "<<prior_terms.size()-1<<")\n";
 
-        unregister_prior(E.as_<::register_prior>(), s);
+        unregister_prior(*P, s);
     }
-    else if (E.is_a<register_likelihood>())
+    else if (const auto* L = E.to<register_likelihood>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
-        unregister_likelihood_(E.as_<register_likelihood>(), s);
+            std::cerr<<L->print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
+        unregister_likelihood_(*L, s);
     }
-    else if (auto I = E.to<RegisterInterchangeable>())
+    else if (const auto* I = E.to<RegisterInterchangeable>())
     {
         if (log_verbose >= 5)
-            std::cerr<<E.print()<<":   UNREGISTER!\n";
+            std::cerr<<I->print()<<":   UNREGISTER!\n";
         unregister_interchangeable(*I, s);
     }
-    else if (E.is_a<constructor>())
+    else if (has_constructor(E, "Effect.TransitionKernel"))
     {
-        if (has_constructor(E, "Effect.TransitionKernel"))
-        {
-            double rate = closure_at(r).runtime_slot(0).as_double();
-            int r_kernel = closure_at(r).runtime_reg_for_slot(1);
-            if (log_verbose >= 5)
-                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: UNREGISTER!\n";
-            unregister_transition_kernel(r, s);
-        }
-        else if (has_constructor(E, "Effect.Logger"))
-        {
-            int r_logger = closure_at(r).runtime_reg_for_slot(0);
-            if (log_verbose >= 5)
-                std::cerr<<"register_logger[logger="<<r_logger<<"]: UNREGISTER!\n";
-            unregister_logger(r, s);
-        }
-        else if (has_constructor(E, "Effect.InEdge"))
-        {
-            if (log_verbose >= 5)std::cerr<<E<<": UNREGISTER!\n";
-            unregister_in_edge(r, s);
-        }
-        else if (has_constructor(E, "Effect.OutEdge"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
-            unregister_out_edge(r, s);
-        }
-        else if (has_constructor(E, "Effect.Dist"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
-            unregister_dist(r, s);
-        }
-        else if (has_constructor(E, "Effect.DistProperty"))
-        {
-            if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
-            unregister_dist_property(r, s);
-        }
-        else
-            throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
+        double rate = closure_at(r).runtime_slot(0).as_double();
+        int r_kernel = closure_at(r).runtime_reg_for_slot(1);
+        if (log_verbose >= 5)
+            std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: UNREGISTER!\n";
+        unregister_transition_kernel(r, s);
+    }
+    else if (has_constructor(E, "Effect.Logger"))
+    {
+        int r_logger = closure_at(r).runtime_reg_for_slot(0);
+        if (log_verbose >= 5)
+            std::cerr<<"register_logger[logger="<<r_logger<<"]: UNREGISTER!\n";
+        unregister_logger(r, s);
+    }
+    else if (has_constructor(E, "Effect.InEdge"))
+    {
+        if (log_verbose >= 5)std::cerr<<E.print()<<": UNREGISTER!\n";
+        unregister_in_edge(r, s);
+    }
+    else if (has_constructor(E, "Effect.OutEdge"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
+        unregister_out_edge(r, s);
+    }
+    else if (has_constructor(E, "Effect.Dist"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
+        unregister_dist(r, s);
+    }
+    else if (has_constructor(E, "Effect.DistProperty"))
+    {
+        if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
+        unregister_dist_property(r, s);
     }
     else
-        throw myexception()<<"unregister_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
+        throw myexception()<<"unregister_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E.print();
 }
 
 bool reg_heap::step_has_effect(int s) const
