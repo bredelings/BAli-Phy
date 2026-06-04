@@ -4,8 +4,8 @@
 
 extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate(0).as_<EMaybe>();
-    auto U = Args.evaluate(1).as_<EMaybe>();
+    auto L = Args.evaluate_slot_to_value(0).as_<EMaybe>();
+    auto U = Args.evaluate_slot_to_value(1).as_<EMaybe>();
 
     Box<bounds<double>> b;
 
@@ -19,8 +19,8 @@ extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate(0).as_<EMaybe>();
-    auto U = Args.evaluate(1).as_<EMaybe>();
+    auto L = Args.evaluate_slot_to_value(0).as_<EMaybe>();
+    auto U = Args.evaluate_slot_to_value(1).as_<EMaybe>();
 
     Box<bounds<int>> b;
 
