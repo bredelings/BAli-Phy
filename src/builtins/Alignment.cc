@@ -36,6 +36,27 @@ bool is_runtime_bool_true(const R::Exp& value)
     return false;
 }
 
+object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)
+{
+    object_ptr<R::RVector> result(new R::RVector);
+
+    if (const auto* runtime_vector = value.to<R::RVector>())
+    {
+        result->assign(runtime_vector->begin(), runtime_vector->end());
+        return result;
+    }
+
+    if (const auto* legacy_vector = value.to<EVector>())
+    {
+        result->reserve(legacy_vector->size());
+        for(const auto& child: *legacy_vector)
+            result->push_back(R::e_op_value(child));
+        return result;
+    }
+
+    throw myexception()<<"Expected alignment child list to be an RVector or EVector, but got "<<value.print();
+}
+
 
 extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
 {
@@ -983,24 +1004,24 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 {
     int source_node = Args.evaluate_slot_to_value(0).as_int();
     int root_length = Args.evaluate_slot_to_value(1).as_int();
-    auto branch_alignments = Args.evaluate_slot_to_value(2);
+    auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
     return closure(R::Exp{R::App(R::ConstructorApp(constructor("NodeAlignment",3)),
                                  {R::Int(source_node), R::ObjectValue(pairwise_alignment),
-                                  std::move(branch_alignments)})});
+                                  R::ObjectValue(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
 {
     int target_node = Args.evaluate_slot_to_value(0).as_int();
     auto pairwise_alignment = Args.evaluate_slot_to_value(1);
-    auto branch_alignments = Args.evaluate_slot_to_value(2);
+    auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
     return closure(R::Exp{R::App(R::ConstructorApp(constructor("BranchAlignment",3)),
                                  {R::Int(target_node), std::move(pairwise_alignment),
-                                  std::move(branch_alignments)})});
+                                  R::ObjectValue(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)

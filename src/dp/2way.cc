@@ -467,9 +467,9 @@ const vector<R::Exp>& constructor_args(const R::Exp& a)
     return app->args;
 }
 
-const EVector& childAlignments(const R::Exp& a)
+const R::RVector& childAlignments(const R::Exp& a)
 {
-    return constructor_args(a)[2].as_<EVector>();
+    return constructor_args(a)[2].as_<R::RVector>();
 }
 
 void getNodes(const R::Exp& a, set<int>& nodes)
@@ -477,7 +477,7 @@ void getNodes(const R::Exp& a, set<int>& nodes)
     nodes.insert(constructor_args(a)[0].as_int());
 
     for(auto& childAlignment: childAlignments(a))
-        getNodes(R::e_op_value(childAlignment), nodes);
+        getNodes(childAlignment, nodes);
 }
 
 set<int> getNodes(const R::Exp& a)
@@ -493,7 +493,7 @@ int getLength(const R::Exp& a)
 {
     int L = constructor_args(a)[1].as_<Box<pairwise_alignment_t>>().count_insert();
     for(auto& childAlignment: childAlignments(a))
-        L += getLength(R::e_op_value(childAlignment));
+        L += getLength(childAlignment);
     return L;
 }
 
@@ -503,7 +503,7 @@ void getBranches(int source, const R::Exp& a, set<std::tuple<int,int>>& branches
     branches.insert({source, node});
 
     for(auto& childAlignment: childAlignments(a))
-        getBranches(node, R::e_op_value(childAlignment), branches);
+        getBranches(node, childAlignment, branches);
 }
 
 set<std::tuple<int,int>> getBranches(const R::Exp& a)
@@ -512,7 +512,7 @@ set<std::tuple<int,int>> getBranches(const R::Exp& a)
 
     int node = constructor_args(a)[0].as_int();
     for(auto& childAlignment: childAlignments(a))
-        getBranches(node, R::e_op_value(childAlignment), branches);
+        getBranches(node, childAlignment, branches);
 
     return branches;
 }
@@ -535,8 +535,8 @@ struct BranchAlignment
          pairwise_alignment(constructor_args(source)[1].as_<Box<pairwise_alignment_t>>()),
          A(*AA.at(node))
     {
-        for(auto& c: constructor_args(source)[2].as_<EVector>())
-            children.push_back(std::make_shared<BranchAlignment>(R::e_op_value(c), AA));
+        for(auto& c: constructor_args(source)[2].as_<R::RVector>())
+            children.push_back(std::make_shared<BranchAlignment>(c, AA));
     }
 };
 

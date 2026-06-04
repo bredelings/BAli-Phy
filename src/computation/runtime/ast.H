@@ -177,6 +177,8 @@ namespace Runtime
 
     bool operator==(const Exp&, const Exp&);
 
+    using RVector = Box<std::vector<Exp>>;
+
     struct Int
     {
         int value;
