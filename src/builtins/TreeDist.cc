@@ -26,11 +26,11 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     using enum EventType;
     
     // population sizes: EVector (EPair Double Double)
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& popSizes = arg0.as_<EVector>();
 
     // nodeTimes :: EVector (EPair Double (EVector Double))
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& nodeTimes = arg1.as_<EVector>();
 
     // Define sorting function.
