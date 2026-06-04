@@ -37,6 +37,18 @@ using std::vector;
 using std::pair;
 typedef Eigen::MatrixXd EMatrix;
 
+namespace
+{
+vector<int> int_vector_from_runtime_list(const Runtime::RVector& values)
+{
+    vector<int> result;
+    result.reserve(values.size());
+    for(const auto& value: values)
+        result.push_back(value.as_int());
+    return result;
+}
+}
+
 double cdf(double eta, double t)
 {
     assert(eta > 0);
@@ -1857,7 +1869,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
 
     // 1. Get haplotype indices
     context_ptr hap_indices(C0, Args.reg_for_slot(1));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    vector<int> K = int_vector_from_runtime_list(hap_indices.list_to_vector_code());
 
     // 2. reads = EVector (RPair Int Int)
     auto arg2 = evaluate_slot(C0, 2);
@@ -1982,7 +1994,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
 
     // 1. Get haplotype indices
     context_ptr hap_indices(C, Args.reg_for_slot(1));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    vector<int> K = int_vector_from_runtime_list(hap_indices.list_to_vector_code());
 
     int N = K.size();
 
@@ -2085,7 +2097,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 
     // 1. Get haplotype indices
     context_ptr hap_indices(C0, Args.reg_for_slot(1));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    vector<int> K = int_vector_from_runtime_list(hap_indices.list_to_vector_code());
 
     int N = K.size();
 
@@ -2547,7 +2559,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
 
     // 1. Get haplotype indices ([])
     context_ptr hap_indices(C, Args.reg_for_slot(1));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    vector<int> K = int_vector_from_runtime_list(hap_indices.list_to_vector_code());
 
     // 2. Get haplotypes ([])
     vector<int> haplotype_regs(K.size());
@@ -2617,7 +2629,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
 
     // 1. Get haplotype indices
     context_ptr hap_indices(C0, Args.reg_for_slot(1));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    vector<int> K = int_vector_from_runtime_list(hap_indices.list_to_vector_code());
 
     int N = K.size();
 
