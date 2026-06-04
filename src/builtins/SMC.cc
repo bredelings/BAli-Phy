@@ -892,20 +892,20 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
 
 extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 {
-    double rho_over_theta = Args.evaluate(0).as_double();
+    double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate(1).as_<EVector>();
+    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<EVector>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<EVector>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
-    double error_rate = Args.evaluate(3).as_double();
+    double error_rate = Args.evaluate_slot_to_value(3).as_double();
 
     vector<double> coalescent_rates;
     for(auto theta: thetas)
 	coalescent_rates.push_back(2.0/theta);
 
-    auto a = Args.evaluate(4);
+    auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();
 
     return { smc(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A) };
@@ -913,20 +913,20 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 {
-    double rho_over_theta = Args.evaluate(0).as_double();
+    double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate(1).as_<EVector>();
+    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<EVector>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<EVector>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
-    double error_rate = Args.evaluate(3).as_double();
+    double error_rate = Args.evaluate_slot_to_value(3).as_double();
 
     vector<double> coalescent_rates;
     for(auto theta: thetas)
 	coalescent_rates.push_back(2.0/theta);
 
-    auto a = Args.evaluate(4);
+    auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();
 
     auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A);
@@ -940,7 +940,7 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
 extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 {
-    auto trace = Args.evaluate(0).as_<EVector>();
+    auto trace = Args.evaluate_slot_to_value(0).as_<EVector>();
 
     std::ostringstream s;
 
@@ -1135,9 +1135,9 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vec
 
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
-    auto locs = (vector<int>)Args.evaluate(0).as_<EVector>();
+    auto locs = (vector<int>)Args.evaluate_slot_to_value(0).as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& rho_func = arg1.as_<EVector>();
     vector<Chunk> rhos;
     for(auto& chunk: rho_func)
@@ -1146,7 +1146,7 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
 	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
     }
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& A = arg2.as_<Box<alignment>>().value();
 
     log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rhos);
@@ -1285,10 +1285,10 @@ log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const M
 
 extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(OperationArgs& Args)
 {
-    auto arg0  = Args.evaluate(0);
+    auto arg0  = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<Matrix>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
 
     auto& rho_func = arg1.as_<EVector>();
     vector<Chunk> rhos;
@@ -1298,9 +1298,9 @@ extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(
 	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
     }
 
-    double theta = Args.evaluate(2).as_double();
+    double theta = Args.evaluate_slot_to_value(2).as_double();
 
-    auto arg3 = Args.evaluate(3);
+    auto arg3 = Args.evaluate_slot_to_value(3);
     auto& A = arg3.as_<Box<alignment>>().value();
 
     auto pi = compute_stationary_freqs(Q);
@@ -1504,11 +1504,11 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
 extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
 {
     // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& plaf = arg0.as_<EVector>();
 
     // 2. Haplotypes - an EVector of EVector of Int
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& haplotype = arg1.as_<EVector>();
 
     auto Pr = deploid_01_plaf_only_CSD(plaf, haplotype);
@@ -1519,21 +1519,21 @@ extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationA
 extern "C" closure builtin_function_haplotype01_from_panel_probability(OperationArgs& Args)
 {
     // 0. Panel haplotypes
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& panel = arg0.as_<EVector>();
 
     // 1. Panel sites
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sites = arg1.as_<EVector>();
 
     // 2. Switching rate
-    double switching_rate = Args.evaluate(2).as_double();
+    double switching_rate = Args.evaluate_slot_to_value(2).as_double();
 
     // 3. State-flipping probability
-    double diff_state = Args.evaluate(3).as_double();
+    double diff_state = Args.evaluate_slot_to_value(3).as_double();
 
     // 4. Haplotypes - an EVector of EVector of Int
-    auto arg4 = Args.evaluate(4);
+    auto arg4 = Args.evaluate_slot_to_value(4);
     auto& haplotype = arg4.as_<EVector>();
 
     auto Pr = panel_01_CSD(panel, sites, switching_rate, diff_state, haplotype);
@@ -1548,7 +1548,7 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
 // In that case redrawing individual element would come automatically.
 extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_(0);
+    auto arg0 = Args.evaluate_slot_to_value_(0);
     auto& alt_allele_frequency = arg0.as_<EVector>();
 
     int num_sites = alt_allele_frequency.size();
@@ -1569,18 +1569,18 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
 extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs& Args)
 {
     // 0. Panel - EVector of Evector of Int
-    auto arg0 = Args.evaluate_(0);
+    auto arg0 = Args.evaluate_slot_to_value_(0);
     auto& panel = arg0.as_<EVector>();
 
     // 1. Sites - EVector of Int
-    auto arg1 = Args.evaluate_(1);
+    auto arg1 = Args.evaluate_slot_to_value_(1);
     auto& sites = arg1.as_<EVector>();
 
     // 2. Switching rate
-    double switching_rate = Args.evaluate_(2).as_double();
+    double switching_rate = Args.evaluate_slot_to_value_(2).as_double();
 
     // 3. State-flipping probability
-    double diff_state = Args.evaluate_(3).as_double();
+    double diff_state = Args.evaluate_slot_to_value_(3).as_double();
 
     int k = panel.size();
     assert(k > 0);
@@ -1679,31 +1679,31 @@ log_double_t site_likelihood_for_reads01(int counts, const expression_ref& reads
 extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
 {
     // 1. Read counts at each locus
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& counts = arg0.as_<EVector>();
 
     // 2. Mixture weights - an EVector of double.
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& weights = arg1.as_<EVector>();
 
     // 3. Haplotypes - an EVector of EVector of Int
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& haplotypes = arg2.as_<EVector>();
 
     // 4. Error rate
-    double error_rate = Args.evaluate(3).as_double();
+    double error_rate = Args.evaluate_slot_to_value(3).as_double();
     assert(0 <= error_rate and error_rate <= 1.0);
 
     // 5. Beta concentration parameter
-    double c = Args.evaluate(4).as_double();
+    double c = Args.evaluate_slot_to_value(4).as_double();
     assert(c > 0);
 
     // 6. Outlier fraction
-    double outlier_frac = Args.evaluate(5).as_double();
+    double outlier_frac = Args.evaluate_slot_to_value(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
 
     // 7. Reads = EVector of EPair of Int
-    auto arg6 = Args.evaluate(6);
+    auto arg6 = Args.evaluate_slot_to_value(6);
     auto& reads = arg6.as_<EVector>();
 
     int num_sites = counts.size();
@@ -1744,27 +1744,27 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
 extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
 {
     // 1. Read counts at each locus
-    auto arg0 = Args.evaluate_(0);
+    auto arg0 = Args.evaluate_slot_to_value_(0);
     auto& counts = arg0.as_<EVector>();
 
     // 2. Mixture weights - an EVector of double.
-    auto arg1 = Args.evaluate_(1);
+    auto arg1 = Args.evaluate_slot_to_value_(1);
     auto& weights = arg1.as_<EVector>();
 
     // 3. Haplotypes - an EVector of EVector of Int
-    auto arg2 = Args.evaluate_(2);
+    auto arg2 = Args.evaluate_slot_to_value_(2);
     auto& haplotypes = arg2.as_<EVector>();
 
     // 4. Error rate
-    double error_rate = Args.evaluate_(3).as_double();
+    double error_rate = Args.evaluate_slot_to_value_(3).as_double();
     assert(0 <= error_rate and error_rate <= 1.0);
 
     // 5. Beta concentration parameter
-    double c = Args.evaluate_(4).as_double();
+    double c = Args.evaluate_slot_to_value_(4).as_double();
     assert(c > 0);
 
     // 6. Outlier fraction
-    double outlier_frac = Args.evaluate_(5).as_double();
+    double outlier_frac = Args.evaluate_slot_to_value_(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
 
     int num_sites = counts.size();
@@ -1852,7 +1852,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices
@@ -1977,7 +1977,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_int();
     context_ref C(M,context_index);
 
     // 1. Get haplotype indices
@@ -2080,7 +2080,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices
@@ -2542,7 +2542,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_int();
     context_ref C(M,context_index);
 
     // 1. Get haplotype indices ([])
@@ -2612,7 +2612,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices
