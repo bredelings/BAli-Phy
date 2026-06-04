@@ -29,9 +29,9 @@ extern "C" R::Exp simple_function_getStringElement(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 {
-    int offset = Args.evaluate(1).as_int();
-    int length = Args.evaluate(2).as_int();
-    const std::string& s = Args.evaluate(0).as_<String>();
+    int offset = Args.evaluate_slot_to_value(1).as_int();
+    int length = Args.evaluate_slot_to_value(2).as_int();
+    std::string s = Args.evaluate_slot_to_value(0).as_string();
 
     if (offset == 0 and length == s.size())
 	return {index_var(0),{Args.reg_for_slot(0)}};
@@ -49,10 +49,10 @@ extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const EVector& v = arg0.as_<EVector>();
-    int i = Args.evaluate(1).as_int();
-    auto x = Args.evaluate(2);
+    int i = Args.evaluate_slot_to_value(1).as_int();
+    auto x = R::to_expression_ref(Args.evaluate_slot_to_value(2));
 
     const EVector* vv = &v;
     EVector* vvv = const_cast<EVector*>(vv);
@@ -72,7 +72,7 @@ extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
 {
-    expression_ref xs = Args.evaluate(0);
+    expression_ref xs = R::to_expression_ref(Args.evaluate_slot_to_value(0));
 
     object_ptr<EVector> v (new EVector);
 
@@ -87,7 +87,7 @@ extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
 
 extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
 {
-    expression_ref xs = Args.evaluate(0);
+    expression_ref xs = R::to_expression_ref(Args.evaluate_slot_to_value(0));
 
     object_ptr<String> s (new String);
 
@@ -109,7 +109,7 @@ extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
 
 extern "C" closure builtin_function_showObject(OperationArgs& Args)
 {
-    auto arg = Args.evaluate(0);
+    auto arg = Args.evaluate_slot_to_value(0);
     String result = arg.print();
     return result;
 }
@@ -121,7 +121,7 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
     // If I really want something like the Haskell matrix, I could use an EVector of EVectors.
     // Then I could get a matrix of anything -- integers, doubles, log_doubles, etc.
 
-    auto arg = Args.evaluate(0);
+    auto arg = Args.evaluate_slot_to_value(0);
     auto& V = arg.as_<EVector>();
     int I = V.size();
     if (I <= 0)
@@ -141,7 +141,7 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 
 extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& M = arg0.as_<Box<Matrix>>();
 
     object_ptr<EVector> Vptr = new EVector;
@@ -156,9 +156,9 @@ extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
 
 extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
 {
-    int s1 = Args.evaluate(0).as_int();
-    int s2 = Args.evaluate(1).as_int();
-    auto arg2 = Args.evaluate(2);
+    int s1 = Args.evaluate_slot_to_value(0).as_int();
+    int s2 = Args.evaluate_slot_to_value(1).as_int();
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& V = arg2.as_<EVector>();
 
     if (V.size() != s1*s2)
