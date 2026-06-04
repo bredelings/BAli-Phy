@@ -79,7 +79,7 @@ json::value c_json(const expression_ref& E)
 
 extern "C" closure builtin_function_c_json(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0);
+    auto j = R::to_expression_ref(Args.evaluate_slot_to_value(0));
 
     Box<json::value> J = c_json(j);
 
@@ -88,62 +88,62 @@ extern "C" closure builtin_function_c_json(OperationArgs& Args)
 
 extern "C" closure builtin_function_ejson_array(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_<EVector>();
+    auto j = Args.evaluate_slot_to_value(0).as_<EVector>();
     return { EPair(0, j) };
 }
 
 extern "C" closure builtin_function_ejson_object(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_<EVector>();
+    auto j = Args.evaluate_slot_to_value(0).as_<EVector>();
     return { EPair(1, j) };
 }
 
 extern "C" closure builtin_function_ejson_inumber(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_int();
+    auto j = Args.evaluate_slot_to_value(0).as_int();
     return { EPair(2, j) };
 }
 
 extern "C" closure builtin_function_ejson_fnumber(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_double();
+    auto j = Args.evaluate_slot_to_value(0).as_double();
     return { EPair(3, j) };
 }
 
 extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0);
+    auto j = R::to_expression_ref(Args.evaluate_slot_to_value(0));
     return { EPair(4, j) };
 }
 
 extern "C" closure builtin_function_ejson_string(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0).as_<String>();
+    auto j = String(Args.evaluate_slot_to_value(0).as_string());
     return { EPair(5, j) };
 }
 
 extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
 {
-    auto j = Args.evaluate(0);
+    Args.evaluate_slot_to_value(0);
     return { EPair(6, 0) };
 }
 
 extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
 {
     // Serialize no long works with classes DERIVED from json::value.
-    json::value j = Args.evaluate(0).as_<Box<json::value>>();
+    json::value j = Args.evaluate_slot_to_value(0).as_<Box<json::value>>();
     String s = json::serialize(j,{.allow_infinity_and_nan=true});
     return s;
 }
 
 extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 {
-    auto arg0 =  Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     vector<string> firstFields;
     for(auto& e: arg0.as_<EVector>())
 	firstFields.push_back(e.as_<String>());
 
-    auto arg1 =  Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sample = arg1.as_<Box<json::value>>().as_object();
 
     vector<string> out_fields = MCON::tsv_fields(firstFields, sample, true);
@@ -163,10 +163,10 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 
 extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mapping = arg0.as_<Box<std::map<string,int>>>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sample = arg1.as_<Box<json::value>>().as_object();
 
     auto sample2 = MCON::atomize(MCON::unnest(sample), true);
@@ -177,7 +177,7 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
 
 extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& x = arg0.as_<Vector<pair<int,int>>>();
 
     std::ostringstream o;
