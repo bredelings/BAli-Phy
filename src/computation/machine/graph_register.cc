@@ -16,7 +16,6 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
-#include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/operations.H"
 #include "effect.H"
 #include "effects.H"
@@ -2979,7 +2978,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 		if (r == R)
 		{
 		    int call = steps[s].call;
-		    if (is_WHNF(expression_at(call)))
+		    if (closure_at(call).get_code().is_whnf())
 			r_constant = call;
 		    else
 			r_constant = -1; // Do NOT look in root program.
@@ -3005,7 +3004,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
             if (s2 > 0)
             {
                 int call = steps[s2].call;
-                if (is_WHNF(expression_at(call)))
+                if (closure_at(call).get_code().is_whnf())
                     return {R,call};
             }
         }
@@ -3047,7 +3046,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
         if (s2 > 0)
         {
             int call = steps[s2].call;
-            if (is_WHNF(expression_at(call)))
+            if (closure_at(call).get_code().is_whnf())
                 return {R, call};
         }
     }
