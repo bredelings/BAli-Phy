@@ -27,7 +27,8 @@ jobs:
                macos-xcode16-arm-sanitize,
                macos-xcode26-arm-debugoptimized,
                macos-homebrew-llvm-libcxx,
-               windows
+               windows,
+               windows-native-mingw
                ]
 
         include:
@@ -103,6 +104,13 @@ jobs:
 
           - name: windows
             os: ubuntu-24.04
+            compiler: mingw
+            version: "N/A"
+            buildtype: "release"
+            arch: "win64"
+
+          - name: windows-native-mingw
+            os: windows-latest
             compiler: mingw
             version: "N/A"
             buildtype: "release"
@@ -195,6 +203,26 @@ jobs:
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
 
+    - name: Install (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        path-type: inherit
+        install: >-
+          git
+          mingw-w64-x86_64-boost
+          mingw-w64-x86_64-ccache
+          mingw-w64-x86_64-cereal
+          mingw-w64-x86_64-eigen3
+          mingw-w64-x86_64-fmt
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-meson
+          mingw-w64-x86_64-ninja
+          mingw-w64-x86_64-pkgconf
+          mingw-w64-x86_64-range-v3
+
     - name: Select XCode version (macOS)
       if: runner.os == 'macOS' && matrix.compiler == 'xcode'
       uses: maxim-lobanov/setup-xcode@v1
@@ -238,6 +266,7 @@ jobs:
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
     - name: ccache
+      if: matrix.name != 'windows-native-mingw'
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
          key: ${{ matrix.name }}-${{ github.ref }}
@@ -247,10 +276,12 @@ jobs:
          append-timestamp: false
 
     - name: Install meson
+      if: matrix.name != 'windows-native-mingw'
       run: |
         python3 -mpip install meson ninja
 
     - name: Download testiphy test suite
+      if: matrix.name != 'windows-native-mingw'
       uses: nick-fields/retry@v4
       with:
         timeout_minutes: 5
@@ -269,12 +300,13 @@ jobs:
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
 
     - name: Configure
+      if: matrix.name != 'windows-native-mingw'
       run: |
         CPPARGS="-g"
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
         fi
-        if [ "${{ matrix.arch }}" = "win64" ]; then
+        if [ "${{ matrix.name }}" = "windows" ] && [ "${{ matrix.arch }}" = "win64" ]; then
            ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
@@ -293,7 +325,7 @@ jobs:
         path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
     - name: Copy shared libs (Windows)
-      if: matrix.arch == 'win64'
+      if: matrix.name == 'windows'
       run: |
         OUTPUT=$HOME/local
         mkdir -p "${OUTPUT}/bin"
@@ -305,6 +337,7 @@ jobs:
         cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
     - name: Build
+      if: matrix.name != 'windows-native-mingw'
       run: |
         ccache -p
         ccache -s
@@ -331,6 +364,35 @@ jobs:
           fi
           ninja -C build test -j2
         fi
+
+    - name: Configure (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: |
+        export CC="ccache gcc"
+        export CXX="ccache g++"
+        export BOOST_ROOT=/mingw64
+        meson setup build --prefix="$PWD/local" --buildtype=${{ matrix.buildtype }} -Dcpp_args="-g"
+
+    - name: Build (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: |
+        ccache -p
+        ccache -s
+        ninja -C build install -j2
+        ccache -s
+
+    - name: Test (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: |
+        export PATH="$PWD/local/bin:$PATH"
+        meson test -C build --print-errorlogs \
+          'bali-phy:bali-phy version' \
+          'bali-phy:runtime AST serialization' \
+          'bali-phy:bali-phy 5d +A 50' \
+          'bali-phy:bali-phy testsuite prob_prog/examples.3/mixture_model'
 
     - name: Get version
       id: get_version
@@ -378,6 +440,7 @@ jobs:
         codesign -d --verbose=4 ${OUTPUT}/bin/bali-phy
 
     - name: Test
+      if: matrix.name != 'windows-native-mingw'
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
         export seed=$RANDOM
