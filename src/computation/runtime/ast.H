@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <iosfwd>
 #include <stdexcept>
@@ -178,6 +179,7 @@ namespace Runtime
     bool operator==(const Exp&, const Exp&);
 
     using RVector = Box<std::vector<Exp>>;
+    using RIntMap = Box<std::map<int, Exp>>;
 
     struct Int
     {

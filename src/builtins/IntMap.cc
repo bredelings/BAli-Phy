@@ -19,8 +19,6 @@ using std::vector;
 
 typedef Box<immer::set<int>> IntSet;
 
-typedef Box<std::map<int,expression_ref>> EIntMap;
-
 extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 {
     IntMap m;
@@ -485,15 +483,15 @@ extern "C" closure builtin_function_esubscript(OperationArgs& Args)
     int key = Args.evaluate_slot_to_value(1).as_int();
 
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& m = arg0.as_<EIntMap>();
+    auto& m = arg0.as_<R::RIntMap>();
 
-    return R::e_op_value(m.at(key));
+    return m.at(key);
 }
 
 extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& m = arg0.as_<EIntMap>();
+    auto& m = arg0.as_<R::RIntMap>();
 
     IntSet keys;
 
@@ -519,7 +517,7 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
-    object_ptr<EIntMap>  m2(new EIntMap);
+    object_ptr<R::RIntMap>  m2(new R::RIntMap);
 
     // Ensure the value regs don't vanish on us!
     std::vector<int> tmp;
@@ -532,7 +530,7 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
     // Compute the values
     for(auto& [key,reg]: m)
     {
-        auto value = Args.evaluate_reg_to_closure(reg).legacy_exp();
+        auto value = Args.evaluate_reg_to_closure(reg).get_code();
 	m2->insert({key, value});
     }
 

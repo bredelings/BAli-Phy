@@ -96,7 +96,7 @@ bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
 bitmask_8 convert_to_bits(int, int, int);
 std::vector<bitmask_8> convert_to_bits(const pairwise_alignment_t&, int, int );
 
-object_ptr<Box<std::map<int,expression_ref>>> construct2(const Runtime::Exp& a);
+object_ptr<Runtime::RIntMap> construct2(const Runtime::Exp& a);
 
 matrix<int> construct(const TreeInterface& t, const std::vector<pairwise_alignment_t>& A);
 

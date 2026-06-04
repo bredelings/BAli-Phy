@@ -606,9 +606,7 @@ int write_insertions(int& c, BranchAlignment& a)
     };
 }
 
-typedef Box<std::map<int,expression_ref>> EIntMap;
-
-object_ptr<EIntMap> construct2(const R::Exp& a)
+object_ptr<R::RIntMap> construct2(const R::Exp& a)
 {
     // 1. Extract the node names
     auto nodes = getNodes(a);
@@ -643,10 +641,10 @@ object_ptr<EIntMap> construct2(const R::Exp& a)
     */
 #endif
 
-    // 7. Construct the immutable EIntMap from the mutable AEVectors.
-    object_ptr<EIntMap> A2(new EIntMap);
+    // 7. Construct the immutable RIntMap from the mutable AEVectors.
+    object_ptr<R::RIntMap> A2(new R::RIntMap);
     for(auto& [node, row]: A)
-        A2->insert({node,row});
+        A2->insert({node, R::ObjectValue(row)});
 
     return A2;
 }
