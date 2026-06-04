@@ -1,9 +1,17 @@
 # Runtime Evaluation Cleanup Plan
 
-## Current State
+## Goal
 
-`expression_ref` is still expected at the parser/model-generation boundary, but
-evaluation should continue moving toward `Runtime::Exp` and `closure`.
+Keep `expression_ref` available where it is still the natural representation:
+parsing, model/code generation, legacy display/debug output, and temporary
+compatibility wrappers. Move evaluation itself, and the evaluation-facing API,
+toward `Runtime::Exp` and `closure`.
+
+The important distinction is not "delete every `expression_ref`", but "avoid
+requiring evaluated values to pass through `expression_ref` unless crossing a
+legacy boundary".
+
+## Current State
 
 Completed so far:
 
@@ -18,45 +26,77 @@ Completed so far:
   `legacy_exp()`.
 - Migrated a focused group of model/tree `context_ptr` scalar/object callers to
   `value_code()` / `set_code()`.
-- Migrated SMC haplotype-index lists from `list_to_vector()` to
-  `list_to_vector_code()`.
+- Added `Runtime::RVector` conversions analogous to `EVector`, and migrated SMC
+  haplotype-index lists to `list_to_vector_code()`.
 - Added `TODO.md` to capture delayed cleanup work.
 
-## Remaining Hotspots
+## Evaluation Core
 
-1. `context_ref` and `reg_heap` still expose legacy evaluation APIs returning
-   `expression_ref`: `evaluate_*`, `get_reg_value*`, and `evaluate_program`.
-   These should remain only as compatibility wrappers while callers migrate.
+The core reduction paths in `evaluate.cc` now inspect `Runtime::Exp` directly.
+Remaining `expression_ref` mentions in that file are declarations for legacy or
+debug/display helpers.
 
-2. `context_ptr` still has legacy callers. The runtime-facing methods exist and
-   the internals are runtime-based, but tree, parameter, MCMC, and SMC call
-   sites still need to keep moving to `value_code()`, `set_code()`, and
-   `list_to_vector_code()`. The largest remaining SMC list consumers are
-   haplotypes, panel, and sites arrays whose helper functions still take
-   `EVector` / `expression_ref`.
+This means the evaluator-core scope has shrunk. The remaining work is less
+about reduction mechanics and more about public evaluation APIs and legacy
+compatibility layers.
 
-3. Non-evaluator `reg_heap::expression_at()` uses remain in graph-register
-   helpers, interchangeables, assertions, comparison/debug code, and legacy API
-   wrappers.
+## Evaluation-Facing API Hotspots
 
-4. `Runtime::to_expression_ref()` and `closure::legacy_exp()` should eventually
-   be limited to parser/model-generation/debug-display boundaries.
+1. `context_ref` still exposes legacy evaluation APIs returning
+   `expression_ref`: `evaluate_*`, `get_reg_value*`, `get_modifiable_value`,
+   `get_expression`, and `evaluate_program`. Runtime-returning `_code` methods
+   exist beside many of these.
 
-## Proposed Next Steps
+2. `reg_heap` still exposes legacy evaluation APIs returning `expression_ref`:
+   `evaluate_program`, `unshare_and_evaluate_program`, `unshare_regs2`, and
+   `get_reg_value_in_context`. Closure-returning alternatives exist for some
+   of these, and should become the implementation path.
 
-1. Add runtime-oriented helpers in SMC for haplotype/panel/site vectors, then
-   migrate `haplotypes_ptr`, `panel_ptr`, and `sites_ptr` away from
-   `list_to_vector()`.
+3. `reg_heap::expression_at()` remains as a compatibility accessor over
+   `closure::legacy_exp()`. It is no longer in evaluator loops, but it remains
+   in legacy wrappers, graph-register comparison/debug code, and some
+   assertions.
 
-2. Continue migrating direct model/tree call sites that still use
-   `context_ptr::value()` only because a legacy-returning helper has not yet
-   been split.
+4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
+   adapters. Long term they should be used at parser/model-generation/display
+   boundaries and by explicitly legacy APIs, not by runtime-native evaluation.
 
-3. Replace non-evaluator `reg_heap::expression_at()` call sites where they are
-   assertions or comparisons rather than explicit legacy display/API paths.
+## Caller Migration Hotspots
 
-4. Add runtime equivalents for any missing small helpers encountered during
-   migration, but avoid broad renaming until the legacy APIs are unused.
+1. `context_ptr` still has legacy callers. The internals are runtime-based, but
+   tree, parameter, MCMC, and SMC call sites should keep moving to
+   `value_code()`, `set_code()`, and `list_to_vector_code()`.
 
-5. After each batch, build `src/bali-phy/bali-phy` from
-   `../build/gcc-16-debug-O` and commit logically separate changes with `jj`.
+2. SMC haplotype/panel/site arrays still flow through `EVector` /
+   `expression_ref` helper functions. They are good candidates for
+   runtime-oriented helper splits after the evaluation API wrappers are clearer.
+
+3. Some model/tree helpers still intentionally return `expression_ref`. These
+   should be split only where a runtime-native consumer exists; model generation
+   and display paths can stay legacy for now.
+
+## Next Steps
+
+1. Make legacy `reg_heap` APIs delegate to closure/runtime-returning APIs where
+   possible. This reduces duplicated evaluation code and confines
+   `legacy_exp()` conversion to the wrapper edge.
+
+2. Add missing closure/runtime-returning variants for program unsharing paths
+   (`unshare_regs2`, `unshare_and_evaluate_program`) so `evaluate_program` can
+   become a legacy wrapper around a runtime-native implementation.
+
+3. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
+   closure-returning APIs. Rename to `_legacy` only if the churn is modest;
+   otherwise keep temporary suffix comments current.
+
+4. Replace non-evaluator `expression_at()` uses when they are assertions,
+   comparisons, or internal checks rather than explicit legacy display/API
+   boundaries.
+
+5. Continue caller migration in focused batches: remaining `context_ptr`
+   callers, then SMC helper functions that still require `EVector` /
+   `expression_ref`.
+
+6. After each code batch, build `src/bali-phy/bali-phy` from
+   `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
+   logically separate changes with `jj`.
