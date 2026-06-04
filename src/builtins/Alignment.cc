@@ -28,33 +28,41 @@ using Alphabet = PtrBox<alphabet>;
 // #include "alignment/alignment-util.H"
 vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts);
 
+bool is_runtime_bool_true(const R::Exp& value)
+{
+    if (auto c = value.to<R::Constructor>())
+        return is_bool_true(c->value);
+
+    return false;
+}
+
 
 extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
 {
-    return Box<pairwise_alignment_t>(Args.evaluate(0).as_<Box<pairwise_alignment_t>>().flipped());
+    return Box<pairwise_alignment_t>(Args.evaluate_slot_to_value(0).as_<Box<pairwise_alignment_t>>().flipped());
 }
 
 extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& Args)
 {
-    int l1 = Args.evaluate(0).as_int();
-    int l2 = Args.evaluate(1).as_int();
+    int l1 = Args.evaluate_slot_to_value(0).as_int();
+    int l2 = Args.evaluate_slot_to_value(1).as_int();
 
     return Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2));
 }
 
 extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArgs& Args)
 {
-    int l1 = Args.evaluate(0).as_int();
-    int l2 = Args.evaluate(1).as_int();
+    int l1 = Args.evaluate_slot_to_value(0).as_int();
+    int l2 = Args.evaluate_slot_to_value(1).as_int();
 
     return Box<pairwise_alignment_t>(make_left_aligned_pairwise_alignment(l1,l2));
 }
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const matrix<int>& counts = arg0.as_<Box<matrix<int>>>();
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const indel::PairHMM& Q = arg1.as_<indel::PairHMM>();
 
     using namespace A2;
@@ -86,27 +94,27 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
 
 extern "C" closure builtin_function_numInsert(OperationArgs& Args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_insert()};
+    return {Args.evaluate_slot_to_value(0).as_<Box<pairwise_alignment_t>>().count_insert()};
 }
 
 extern "C" closure builtin_function_numMatch(OperationArgs& Args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_match()};
+    return {Args.evaluate_slot_to_value(0).as_<Box<pairwise_alignment_t>>().count_match()};
 }
 
 extern "C" closure builtin_function_numDelete(OperationArgs& Args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_delete()};
+    return {Args.evaluate_slot_to_value(0).as_<Box<pairwise_alignment_t>>().count_delete()};
 }
 
 extern "C" closure builtin_function_numIndels(OperationArgs& Args)
 {
-    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_indels()};
+    return {Args.evaluate_slot_to_value(0).as_<Box<pairwise_alignment_t>>().count_indels()};
 }
 
 extern "C" closure builtin_function_lengthIndels(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = arg0.as_<Box<pairwise_alignment_t>>();
     return {a.count_delete() + a.count_insert()};
 }
@@ -130,7 +138,7 @@ extern "C" R::Exp simple_function_alignment_length(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& A = arg0.as_<Box<pairwise_alignment_t>>().value();
 
     Box<matrix<int>> counts(5,5,0);
@@ -150,11 +158,11 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 {
-    double e = Args.evaluate(0).as_double();
+    double e = Args.evaluate_slot_to_value(0).as_double();
     if (e < 0.0)
 	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
 
-    int l = Args.evaluate(1).as_int();
+    int l = Args.evaluate_slot_to_value(1).as_int();
 
     if (l < 0)
 	return {0.0};
@@ -166,13 +174,13 @@ extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 
 extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
 {
-    double e = Args.evaluate(0).as_double();
+    double e = Args.evaluate_slot_to_value(0).as_double();
     if (e < 0.0)
 	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
 
-    double D = Args.evaluate(1).as_double();
-    double heat = Args.evaluate(2).as_double();
-    bool in_training = is_bool_true(Args.evaluate(3));
+    double D = Args.evaluate_slot_to_value(1).as_double();
+    double heat = Args.evaluate_slot_to_value(2).as_double();
+    bool in_training = is_runtime_bool_true(Args.evaluate_slot_to_value(3));
 
     using namespace A2::states;
 
@@ -247,16 +255,16 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
 
 extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
 {
-    double e = Args.evaluate(0).as_double();
+    double e = Args.evaluate_slot_to_value(0).as_double();
     if (e < 0.0)
 	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
 
-    double fraction1 = Args.evaluate(1).as_double();
-    double rate1 = Args.evaluate(2).as_double();
-    double rate2 = Args.evaluate(3).as_double();
-    double distance = Args.evaluate(4).as_double();
-    double heat = Args.evaluate(5).as_double();
-    bool in_training = is_bool_true(Args.evaluate(6));
+    double fraction1 = Args.evaluate_slot_to_value(1).as_double();
+    double rate1 = Args.evaluate_slot_to_value(2).as_double();
+    double rate2 = Args.evaluate_slot_to_value(3).as_double();
+    double distance = Args.evaluate_slot_to_value(4).as_double();
+    double heat = Args.evaluate_slot_to_value(5).as_double();
+    bool in_training = is_runtime_bool_true(Args.evaluate_slot_to_value(6));
 
     using namespace A2::states;
 
@@ -326,14 +334,11 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
 
 extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
 {
-    double e = Args.evaluate(0).as_double();
-    double delta = Args.evaluate(1).as_double();
-    double t = Args.evaluate(2).as_double();
-    double heat = Args.evaluate(3).as_double();
-    constructor in_training_c = Args.evaluate(4).head().as_<constructor>();
-    bool in_training = true;
-    if (in_training_c.f_name == "Prelude.False")
-	in_training = false;
+    double e = Args.evaluate_slot_to_value(0).as_double();
+    double delta = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    double heat = Args.evaluate_slot_to_value(3).as_double();
+    bool in_training = is_runtime_bool_true(Args.evaluate_slot_to_value(4));
 
     if (in_training) delta = std::min(delta,0.005);
 
@@ -392,8 +397,8 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
 
 extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
 {
-    indel::PairHMM QE = Args.evaluate(0).as_<indel::PairHMM>();
-    int l = Args.evaluate(1).as_int();
+    indel::PairHMM QE = Args.evaluate_slot_to_value(0).as_<indel::PairHMM>();
+    int l = Args.evaluate_slot_to_value(1).as_int();
 
     using namespace A2::states;
 
@@ -603,7 +608,7 @@ std::tuple<EVector, vector<int>> compress_alignment_var_nonvar(const EVector& A,
 
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A1 = arg0.as_checked<EVector>();
 
     auto [A,counts,mapping] = compress_alignment(A1);
@@ -621,10 +626,10 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A0 = arg0.as_checked<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& a = *arg1.as_checked<Alphabet>();
 
     auto [A,counts] = compress_alignment_var_nonvar(A0, a);
@@ -638,12 +643,12 @@ extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs&
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_checked<Box<alignment>>();
 
-    int n = Args.evaluate(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_int();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto counts = (vector<int>)arg2.as_checked<EVector>();
 
     EVector all_counts;
@@ -655,10 +660,10 @@ extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    string filename = Args.evaluate(1).as_checked<String>();
+    string filename = Args.evaluate_slot_to_value(1).as_string();
 
     object_ptr<Box<alignment>> A(new Box<alignment>(a,filename));
 
@@ -667,21 +672,21 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
 {
-    string filename = Args.evaluate(0).as_checked<String>();
+    string filename = Args.evaluate_slot_to_value(0).as_string();
 
     auto sequences_ = sequence_format::load_from_file(filename);
 
-    EVector sequences(sequences_.size());
-    for(int i=0;i<sequences.size();i++)
-        sequences[i] = new Box<sequence>(sequences_[i]);
+    object_ptr<EVector> sequences(new EVector(sequences_.size()));
+    for(int i=0;i<sequences->size();i++)
+        (*sequences)[i] = new Box<sequence>(sequences_[i]);
 
     return sequences;
 }
 
 extern "C" closure builtin_function_getRange(OperationArgs& Args)
 {
-    string range = Args.evaluate(0).as_checked<String>();
-    int L = Args.evaluate(1).as_int();
+    string range = Args.evaluate_slot_to_value(0).as_string();
+    int L = Args.evaluate_slot_to_value(1).as_int();
 
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
@@ -691,11 +696,11 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& columns = arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
-    auto& sequence = arg1.as_<String>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& sequence = arg1.as_string();
 
     // unshare
     object_ptr<String> sequence2 = new String;
@@ -713,10 +718,10 @@ extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 
 extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sequences_ = arg1.as_<EVector>();
 
     vector<sequence> sequences;
@@ -738,7 +743,7 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
 
 extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
     return new String(s.name);
@@ -746,7 +751,7 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
 
 extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
     return new String(s);
@@ -755,11 +760,11 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
 // This is the no-gaps version...
 extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
-    auto& s = arg1.as_checked<String>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& s = arg1.as_string();
 
     auto letters = a(s);
     vector<int> letters2;
@@ -773,11 +778,11 @@ extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
 // This is the with-gaps version...
 extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    auto arg1 = Args.evaluate(1);
-    auto& s = arg1.as_checked<String>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& s = arg1.as_string();
 
     auto letters = a(s);
     vector<int> letters2;
@@ -789,10 +794,10 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
 
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& smap = arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& state_sequence = arg1.as_<EVector>();
 
     auto result = object_ptr<EVector>(new EVector(state_sequence.size()));
@@ -812,7 +817,7 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<alignment>>().value();
 
     EVector sequences;
@@ -830,7 +835,7 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
 
 extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<alignment>>().value();
 
     EVector sequence_names;
@@ -842,10 +847,10 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
 
 extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& names = arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& A1 = arg1.as_<Box<alignment>>().value();
 
     vector<string> sequence_names;
@@ -859,10 +864,10 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sites = arg1.as_<EVector>();
 
     int N = A0.n_sequences();
@@ -884,13 +889,13 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
 
 extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sites = arg1.as_<EVector>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto d = arg2.poly_cast<alphabet,Doublets>();
     if (not d)
         throw myexception()<<"select_alignment_pairs: not a doublet alphabet!";
@@ -917,13 +922,13 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 
 extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto& states = arg1.as_<EVector>();
 
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     auto& smap = arg2.as_<EVector>();
 
     int n = states.size();
@@ -964,7 +969,7 @@ extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& 
 
 extern "C" closure builtin_function_extractStates(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& states = arg0.as_<Vector<pair<int,int>>>();
 
     EVector sequence(states.size());
@@ -976,41 +981,41 @@ extern "C" closure builtin_function_extractStates(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 {
-    int source_node = Args.evaluate(0).as_int();
-    int root_length = Args.evaluate(1).as_int();
-    expression_ref branch_alignments = Args.evaluate(2);
+    int source_node = Args.evaluate_slot_to_value(0).as_int();
+    int root_length = Args.evaluate_slot_to_value(1).as_int();
+    auto branch_alignments = Args.evaluate_slot_to_value(2);
 
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
     return closure(R::Exp{R::App(R::ConstructorApp(constructor("NodeAlignment",3)),
                                  {R::Int(source_node), R::ObjectValue(pairwise_alignment),
-                                  R::ObjectValue(branch_alignments.ptr())})});
+                                  std::move(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
 {
-    int target_node = Args.evaluate(0).as_int();
-    expression_ref pairwise_alignment = Args.evaluate(1);
-    expression_ref branch_alignments = Args.evaluate(2);
+    int target_node = Args.evaluate_slot_to_value(0).as_int();
+    auto pairwise_alignment = Args.evaluate_slot_to_value(1);
+    auto branch_alignments = Args.evaluate_slot_to_value(2);
 
     return closure(R::Exp{R::App(R::ConstructorApp(constructor("BranchAlignment",3)),
-                                 {R::Int(target_node), R::ObjectValue(pairwise_alignment.ptr()),
-                                  R::ObjectValue(branch_alignments.ptr())})});
+                                 {R::Int(target_node), std::move(pairwise_alignment),
+                                  std::move(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)
 {
-    auto nodeAlignment = Args.evaluate(0);
+    auto nodeAlignment = Args.evaluate_slot_to_value(0);
 
     return construct2(nodeAlignment);
 }
 
 extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& letters = arg0.as_<EVector>();
 
-    auto arg1 = Args.evaluate(1);
+    auto arg1 = Args.evaluate_slot_to_value(1);
 
     object_ptr<EVector> result(new EVector(arg1.as_<EVector>()));
     auto& row = *result;
@@ -1192,11 +1197,11 @@ pairwise_alignment_t pairwise_alignment_from_characters(const vector<int>& seque
 
 extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& Args)
 {
-    double del_rate = Args.evaluate(0).as_double();
-    double ins_rate = Args.evaluate(1).as_double();
-    double mean_length = Args.evaluate(2).as_double();
-    double total_time = Args.evaluate(3).as_double();
-    int L0 = Args.evaluate(4).as_int();
+    double del_rate = Args.evaluate_slot_to_value(0).as_double();
+    double ins_rate = Args.evaluate_slot_to_value(1).as_double();
+    double mean_length = Args.evaluate_slot_to_value(2).as_double();
+    double total_time = Args.evaluate_slot_to_value(3).as_double();
+    int L0 = Args.evaluate_slot_to_value(4).as_int();
 
     if (mean_length < 1)
         throw myexception()<<"simulateLongIndelsGeometric: mean_length = "<<mean_length<<", but should be at least 1";
@@ -1258,7 +1263,7 @@ extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& A
 
 extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<pairwise_alignment_t>>();
 
     String s;
@@ -1286,15 +1291,15 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
 // taxonAgesRaw :: EVector CPPString -> CPPString -> Int (0/1) -> EVector Double
 extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 {
-    auto labels = Args.evaluate(0).as_<EVector>();
+    auto labels = Args.evaluate_slot_to_value(0).as_<EVector>();
     int n = labels.size();
 
-    string pattern = Args.evaluate(1).as_<String>();
+    string pattern = Args.evaluate_slot_to_value(1).as_string();
     std::regex rpattern(pattern);
 
     // 0 = forward
     // 1 = backward
-    int direction = Args.evaluate(2).as_int();
+    int direction = Args.evaluate_slot_to_value(2).as_int();
 
     std::vector<double> times(n,0);
 

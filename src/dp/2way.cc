@@ -459,20 +459,28 @@ matrix<int> construct(const TreeInterface& t, const vector<pairwise_alignment_t>
     return C.M;
 }
 
-const EVector& childAlignments(const expression_ref& a)
+const vector<R::Exp>& constructor_args(const R::Exp& a)
 {
-    return a.sub()[2].as_<EVector>();
+    auto app = a.to<R::App>();
+    assert(app);
+    assert(std::holds_alternative<R::ConstructorApp>(app->head));
+    return app->args;
 }
 
-void getNodes(const expression_ref& a, set<int>& nodes)
+const EVector& childAlignments(const R::Exp& a)
 {
-    nodes.insert(a.sub()[0].as_int());
+    return constructor_args(a)[2].as_<EVector>();
+}
+
+void getNodes(const R::Exp& a, set<int>& nodes)
+{
+    nodes.insert(constructor_args(a)[0].as_int());
 
     for(auto& childAlignment: childAlignments(a))
-        getNodes(childAlignment, nodes);
+        getNodes(R::e_op_value(childAlignment), nodes);
 }
 
-set<int> getNodes(const expression_ref& a)
+set<int> getNodes(const R::Exp& a)
 {
     set<int> nodes;
 
@@ -481,30 +489,30 @@ set<int> getNodes(const expression_ref& a)
     return nodes;
 }
 
-int getLength(const expression_ref& a)
+int getLength(const R::Exp& a)
 {
-    int L = a.sub()[1].as_<Box<pairwise_alignment_t>>().count_insert();
+    int L = constructor_args(a)[1].as_<Box<pairwise_alignment_t>>().count_insert();
     for(auto& childAlignment: childAlignments(a))
-        L += getLength(childAlignment);
+        L += getLength(R::e_op_value(childAlignment));
     return L;
 }
 
-void getBranches(int source, const expression_ref& a, set<std::tuple<int,int>>& branches)
+void getBranches(int source, const R::Exp& a, set<std::tuple<int,int>>& branches)
 {
-    int node = a.sub()[0].as_int();
+    int node = constructor_args(a)[0].as_int();
     branches.insert({source, node});
 
     for(auto& childAlignment: childAlignments(a))
-        getBranches(node, childAlignment, branches);
+        getBranches(node, R::e_op_value(childAlignment), branches);
 }
 
-set<std::tuple<int,int>> getBranches(const expression_ref& a)
+set<std::tuple<int,int>> getBranches(const R::Exp& a)
 {
     set<std::tuple<int,int>> branches;
 
-    int node = a.sub()[0].as_int();
+    int node = constructor_args(a)[0].as_int();
     for(auto& childAlignment: childAlignments(a))
-        getBranches(node, childAlignment, branches);
+        getBranches(node, R::e_op_value(childAlignment), branches);
 
     return branches;
 }
@@ -513,6 +521,7 @@ typedef std::map<int,object_ptr<EVector>> AEVectors;
 
 struct BranchAlignment
 {
+    R::Exp source;
     int node;
     const pairwise_alignment_t& pairwise_alignment;
     std::vector<std::shared_ptr<BranchAlignment>> children;
@@ -520,13 +529,14 @@ struct BranchAlignment
     int pos = 0; // Not used at top level -- goes with pairwise alignment.
     int L = 0;
     EVector& A;
-    BranchAlignment(const expression_ref& a, AEVectors& AA)
-        :node(a.sub()[0].as_int()),
-         pairwise_alignment(a.sub()[1].as_<Box<pairwise_alignment_t>>()),
+    BranchAlignment(R::Exp a, AEVectors& AA)
+        :source(std::move(a)),
+         node(constructor_args(source)[0].as_int()),
+         pairwise_alignment(constructor_args(source)[1].as_<Box<pairwise_alignment_t>>()),
          A(*AA.at(node))
     {
-        for(auto& c: a.sub()[2].as_<EVector>())
-            children.push_back(std::make_shared<BranchAlignment>(c, AA));
+        for(auto& c: constructor_args(source)[2].as_<EVector>())
+            children.push_back(std::make_shared<BranchAlignment>(R::e_op_value(c), AA));
     }
 };
 
@@ -598,7 +608,7 @@ int write_insertions(int& c, BranchAlignment& a)
 
 typedef Box<std::map<int,expression_ref>> EIntMap;
 
-object_ptr<EIntMap> construct2(const expression_ref& a)
+object_ptr<EIntMap> construct2(const R::Exp& a)
 {
     // 1. Extract the node names
     auto nodes = getNodes(a);
