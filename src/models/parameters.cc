@@ -111,7 +111,7 @@ const data_partition_constants& data_partition::DPC() const
 
 std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return property(4).value().as_<PtrBox<alphabet>>();
+    return property(4).value_code().as_<PtrBox<alphabet>>();
 }
 
 
@@ -127,7 +127,7 @@ double data_partition::get_beta() const
 }
 
 int data_partition::subst_root() const {
-    return property(0).value().as_int();
+    return property(0).value_code().as_int();
 }
 
 bool data_partition::alignment_is_random() const
@@ -146,7 +146,7 @@ expression_ref data_partition::get_node_CLV(int node) const
 
 object_ptr<const EVector> data_partition::transition_P(int b) const
 {
-    return property(1)[b].value().as_ptr_to<EVector>();
+    return property(1)[b].value_code().as_ptr_to<EVector>();
 }
 
 context_ptr data_partition::properties() const
@@ -172,17 +172,17 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(6).value().as_int();
+    return property(6).value_code().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(5).value().as_int();
+    return property(5).value_code().as_int();
 }
 
 object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix(int n) const
 {
-    return property(7)[n].value().as_ptr_to<Box<Matrix>>();
+    return property(7)[n].value_code().as_ptr_to<Box<Matrix>>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -191,7 +191,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
     b = t().undirected(b);
 
-    return alignment_property(1)[b].value().as_<indel::PairHMM>();
+    return alignment_property(1)[b].value_code().as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -206,14 +206,14 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
 
 log_double_t data_partition::sequence_length_pr(int n) const
 {
-    return alignment_property(5)[n].value().as_log_double();
+    return alignment_property(5)[n].value_code().as_log_double();
 }
 
 int data_partition::seqlength(int n) const
 {
     assert(has_pairwise_alignments());
 
-    return alignment_property(4)[n].value().as_int();
+    return alignment_property(4)[n].value_code().as_int();
 }
 
 bool data_partition::pairwise_alignment_is_unset(int b) const
@@ -228,8 +228,8 @@ void mutable_data_partition::unset_pairwise_alignment(int b)
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
-    alignment_property(3)[b].set_value( 0 );
-    alignment_property(3)[B].set_value( 0 );
+    alignment_property(3)[b].set_code( 0 );
+    alignment_property(3)[B].set_code( 0 );
     assert(pairwise_alignment_is_unset(b));
 }
 
@@ -239,8 +239,8 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     assert(likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
-    alignment_property(3)[b].set_value( new Box<pairwise_alignment_t>(pi) );
-    alignment_property(3)[B].set_value( new Box<pairwise_alignment_t>(pi.flipped()));
+    alignment_property(3)[b].set_code( new Box<pairwise_alignment_t>(pi) );
+    alignment_property(3)[B].set_code( new Box<pairwise_alignment_t>(pi.flipped()));
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
@@ -265,18 +265,18 @@ log_double_t data_partition::prior_alignment() const
 {
     if (not variable_alignment()) return 1;
 
-    return alignment_property(0).value().as_log_double();
+    return alignment_property(0).value_code().as_log_double();
 }
 
 object_ptr<const Likelihood_Cache_Branch> data_partition::cache(int b) const
 {
-    return property(2)[b].value().as_ptr_to<Likelihood_Cache_Branch>();
+    return property(2)[b].value_code().as_ptr_to<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 
 {
     substitution::total_likelihood++;
-    return property(3).value().as_log_double();
+    return property(3).value_code().as_log_double();
 }
 
 log_double_t data_partition::heated_likelihood() const 
@@ -852,13 +852,13 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
             for(auto& alignments_reg: alignments_regs)
             {
                 context_ptr alignments(C, alignments_reg);
-                expression_ref tmp = alignments.value();
+                auto tmp = alignments.value_code();
                 for(auto& [b,_]: tmp.as_<IntMap>())
                 {
 		    // This should unset both forward and reverse alignments.
                     auto a_for_b = alignments[b];
                     if (auto m = a_for_b.modifiable())
-                        m->set_value(0);
+                        m->set_code(0);
                 }
             }
         };
