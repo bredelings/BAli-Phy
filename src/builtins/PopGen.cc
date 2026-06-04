@@ -55,7 +55,7 @@ T get_line_of(std::istream& i)
 // I think this is the format for PHASE version 1.
 extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
-    const string& filename = Args.evaluate(0).as_<String>();
+    string filename = Args.evaluate_slot_to_value(0).as_string();
 
     checked_ifstream phase_file(filename,"PHASE v1 Input file");
 
@@ -264,7 +264,7 @@ MSSSM
 // For Phase v2, I'm only going to implement SNP sites for now.
 extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 {
-    const string& filename = Args.evaluate(0).as_<String>();
+    string filename = Args.evaluate_slot_to_value(0).as_string();
 
     checked_ifstream phase_file(filename,"PHASE v2 Input file");
 
@@ -353,7 +353,7 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const EVector& alleles = arg0.as_<EVector>();
 
     EVector alleles2;
@@ -366,7 +366,7 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const EVector& alleles = arg0.as_<EVector>();
 
     int n_individuals = alleles.size();
@@ -426,8 +426,9 @@ log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
 
 extern "C" closure builtin_function_ewens_sampling_group_probability(OperationArgs& Args)
 {
-    const double theta = Args.evaluate(0).as_double();
-    const vector<Vector<int>>& afs = Args.evaluate(1).as_<Vector<Vector<int>>>();
+    const double theta = Args.evaluate_slot_to_value(0).as_double();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const vector<Vector<int>>& afs = arg1.as_<Vector<Vector<int>>>();
 
     log_double_t Pr = 1;
     for(const auto& a: afs)
@@ -438,8 +439,8 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
-    const double theta = Args.evaluate(0).as_double();
-    auto arg1 = Args.evaluate(1);
+    const double theta = Args.evaluate_slot_to_value(0).as_double();
+    auto arg1 = Args.evaluate_slot_to_value(1);
     const EVector& afs_ = arg1.as_<EVector>();
 
     vector<int> afs;
@@ -453,9 +454,10 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
 {
-    auto thetas = (vector<double>) Args.evaluate(0).as_<EVector>();
-    auto ps =     (vector<double>) Args.evaluate(1).as_<EVector>();
-    const vector<Vector<int>>& afs = Args.evaluate(2).as_<Vector<Vector<int>>>();
+    auto thetas = (vector<double>) Args.evaluate_slot_to_value(0).as_<EVector>();
+    auto ps =     (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    const vector<Vector<int>>& afs = arg2.as_<Vector<Vector<int>>>();
 
 #ifndef NDEBUG
     for(int i=0;i<thetas.size();i++)
@@ -517,17 +519,19 @@ double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Args)
 {
     // 0. This is the theta = 2*N*mu
-    const double theta = Args.evaluate(0).as_double();
+    const double theta = Args.evaluate_slot_to_value(0).as_double();
 
     const int missing = 0;
 
     assert(theta > 0);
 
     // 1. These are indicators of coalescence
-    const vector<expression_ref>& I = Args.evaluate(1).as_<EVector>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const vector<expression_ref>& I = arg1.as_<EVector>();
 
     // 2. These are the alleles
-    const vector<expression_ref>& alleles = Args.evaluate(2).as_<EVector>();
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    const vector<expression_ref>& alleles = arg2.as_<EVector>();
 
     // How many times has each allele been seen?
     std::unordered_map<int,int> counts;
@@ -587,15 +591,15 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 extern "C" closure builtin_function_selfing_coalescence_probability(OperationArgs& Args)
 {
     // The number of loci
-    int L = Args.evaluate(0).as_int();
+    int L = Args.evaluate_slot_to_value(0).as_int();
 
     // The selfing rate
-    const double s = Args.evaluate(1).as_double();
+    const double s = Args.evaluate_slot_to_value(1).as_double();
 
     assert(s >= 0 and s <= 1);
 
     // These are indicators of coalescence
-    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate_slot_to_value(2);
     const vector<expression_ref>& I = arg2.as_<EVector>();
 
     // Determine number of coalescences;
@@ -638,4 +642,3 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
 
     return {log_double_t(sum)};
 }
-
