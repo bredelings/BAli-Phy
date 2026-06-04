@@ -176,6 +176,22 @@ install_subdir('bindings', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
+if host_machine.system() == 'windows'
+  windows_runtime_dll_args = [
+    files('scripts/install-windows-runtime-dlls.py'),
+    '--bindir', get_option('bindir'),
+  ]
+
+  if meson.is_cross_build()
+    boost_root = meson.get_external_property('boost_root', '')
+    if boost_root != ''
+      windows_runtime_dll_args += ['--boost-root', boost_root]
+    endif
+  endif
+
+  meson.add_install_script(python, windows_runtime_dll_args + ['--cxx'] + cpp.cmd_array())
+endif
+
 # Print a summary of the configuration
 
 summary({'arch': host_machine.cpu_family(),

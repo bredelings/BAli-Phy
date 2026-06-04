@@ -271,18 +271,6 @@ jobs:
         name: meson-log-${{ matrix.name }}
         path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
-    - name: Copy shared libs (Windows)
-      if: matrix.arch == 'win64'
-      run: |
-        OUTPUT=$HOME/local
-        mkdir -p "${OUTPUT}/bin"
-        CXX=x86_64-w64-mingw32-g++-posix
-        # Copy compiler DLLS
-        for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
-            cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
-        done
-        cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
-
     - name: Build
       run: |
         ccache -p
