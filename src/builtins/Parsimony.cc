@@ -33,7 +33,7 @@ using Alphabet = PtrBox<alphabet>;
 
 extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
@@ -53,7 +53,7 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
@@ -69,7 +69,7 @@ extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
@@ -85,7 +85,7 @@ extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
@@ -105,11 +105,11 @@ peel_muts(const EVector& sequences, const alphabet& a, const EVector& A, const E
 
 extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0); // EVector Int
-    auto arg1 = Args.evaluate(1); // Alphabet
-    auto arg2 = Args.evaluate(2); // MutCosts
-    auto arg3 = Args.evaluate(3); // n_
-    auto arg4 = Args.evaluate(4); // MutCosts
+    auto arg0 = Args.evaluate_slot_to_value(0); // EVector Int
+    auto arg1 = Args.evaluate_slot_to_value(1); // Alphabet
+    auto arg2 = Args.evaluate_slot_to_value(2); // MutCosts
+    auto arg3 = Args.evaluate_slot_to_value(3); // n_
+    auto arg4 = Args.evaluate_slot_to_value(4); // MutCosts
 
     return peel_muts(arg0.as_<EVector>(),    // sequences
 		     *arg1.as_<Alphabet>(),  // alphabet
@@ -122,11 +122,11 @@ int muts_root(const EVector& sequences, const alphabet& a, const EVector& A, con
 
 extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0); // sequences
-    auto arg1 = Args.evaluate(1); // alphabet
-    auto arg2 = Args.evaluate(2); // A
-    auto arg3 = Args.evaluate(3); // n_muts
-    auto arg4 = Args.evaluate(4); // cost
+    auto arg0 = Args.evaluate_slot_to_value(0); // sequences
+    auto arg1 = Args.evaluate_slot_to_value(1); // alphabet
+    auto arg2 = Args.evaluate_slot_to_value(2); // A
+    auto arg3 = Args.evaluate_slot_to_value(3); // n_muts
+    auto arg4 = Args.evaluate_slot_to_value(4); // cost
 
     int muts = muts_root(arg0.as_<EVector>(),
 			 *arg1.as_<Alphabet>(),
@@ -142,10 +142,10 @@ peel_muts_fixed_A(const EVector& sequences, const alphabet& a, const EVector& n_
 
 extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
 
     return peel_muts_fixed_A(arg0.as_<EVector>(),            // sequences
 			     *arg1.as_<Alphabet>(),          // a
@@ -158,11 +158,11 @@ int muts_root_fixed_A(const EVector& sequences, const alphabet& a, const EVector
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto arg4 = Args.evaluate_slot_to_value(4);
 
     int muts = muts_root_fixed_A(arg0.as_<EVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
