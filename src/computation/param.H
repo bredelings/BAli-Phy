@@ -60,7 +60,6 @@ public:
     expression_ref get_value(const context_ref& C) const;
     void set_value(context_ref& C, const expression_ref& v) const;
 
-    std::optional<expression_ref> constant_value() const;
     std::optional<int> is_modifiable(const context_ref& C) const;
 
     param& operator=(const param&) = default;

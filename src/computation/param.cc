@@ -23,14 +23,6 @@ expression_ref param::ref(const context_ref& C) const
         return Runtime::to_expression_ref(*value);
 }
 
-optional<expression_ref> param::constant_value() const
-{
-    if (value)
-        return Runtime::to_expression_ref(*value);
-    else
-        return {};
-}
-
 optional<int> param::is_modifiable(const context_ref& C) const
 {
     if (reg)
