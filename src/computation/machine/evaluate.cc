@@ -6,7 +6,7 @@
 #include "graph_register.H"
 #include "effect.H"
 #include "error_exception.H"
-#include "computation/expression/expression.H" // is_WHNF( )
+#include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/index_var.H"
@@ -171,6 +171,49 @@ vector<R::Exp> e_value_stack;
 
 namespace
 {
+    bool is_index_var_code(const closure& C)
+    {
+        return C.get_code().to<R::IndexVar>();
+    }
+
+    bool is_trim_code(const closure& C)
+    {
+        return C.get_code().to<R::Trim>();
+    }
+
+    o_operation_fn operation_for_reduction(const closure& C)
+    {
+        if (C.get_code().to<R::Let>())
+            return let_op;
+
+        if (C.get_code().to<R::Case>())
+            return case_op;
+
+        auto app = C.get_code().to<R::App>();
+        assert(app);
+
+        return std::visit([](const auto& head) -> o_operation_fn
+        {
+            using T = std::decay_t<decltype(head)>;
+
+            if constexpr (std::is_same_v<T, R::FunctionApply>)
+            {
+                static const Apply apply;
+                return apply.op;
+            }
+            else if constexpr (std::is_same_v<T, R::OperationApp>)
+            {
+                assert(head.head);
+                assert(head.head->op);
+                return head.head->op;
+            }
+            else
+            {
+                std::abort();
+            }
+        }, app->head);
+    }
+
     R::Exp canonical_e_op_value(const R::Exp& E)
     {
         if (auto app = E.to<R::App>())
@@ -348,7 +391,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
     while (1)
     {
-        assert(expression_at(r));
+        assert(closure_at(r).has_code());
 
 #ifndef NDEBUG
         //    std::cerr<<"   statement: "<<r<<":   "<<regs[r].E.print()<<std::endl;
@@ -363,7 +406,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             assert( not has_step1(r) );
 
-            bool was_index_var = expression_at(r).is_index_var();
+            bool was_index_var = is_index_var_code(closure_at(r));
             int r2 = closure_at(r).reg_for_ref();
 
             auto [r3, result] = incremental_evaluate1(r2);
@@ -393,9 +436,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         }
 
         // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(r)))
+        else if (closure_at(r).get_code().is_whnf())
         {
-            assert(not expression_at(r).is_a<Operation>());
+            assert(not closure_at(r).get_code().to<Operation>());
             if (regs[r].forced_regs.empty())
 	    {
                 mark_reg_constant(r);
@@ -426,7 +469,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         }
 
 #ifndef NDEBUG
-        else if (expression_at(r).head().is_a<Trim>())
+        else if (is_trim_code(closure_at(r)))
             std::abort();
 #endif
 
@@ -441,7 +484,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             try
             {
                 RegOperationArgs1 Args(r, s, *this);
-                auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
+                auto O = operation_for_reduction(closure_at(r));
                 closure value = (*O)(Args);
                 total_reductions++;
 
@@ -767,7 +810,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
     while (1)
     {
-        assert(expression_at(r));
+        assert(closure_at(r).has_code());
 
         /*---------- Below here, there is no call, and no value. ------------*/
         if (closure_at(r).is_reg_ref())
@@ -778,7 +821,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            bool was_index_var = expression_at(r).is_index_var();
+            bool was_index_var = is_index_var_code(closure_at(r));
             int r2 = closure_at(r).reg_for_ref();
             auto [r3, result] = incremental_evaluate2(r2, false);
 
@@ -818,7 +861,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         }
 
         // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(r)))
+        else if (closure_at(r).get_code().is_whnf())
         {
             if (regs[r].forced_regs.empty())
 	    {
@@ -849,7 +892,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         }
 
 #ifndef NDEBUG
-        else if (expression_at(r).head().is_a<Trim>())
+        else if (is_trim_code(closure_at(r)))
             std::abort();
 #endif
 
@@ -864,7 +907,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             try
             {
                 RegOperationArgs2Unevaluated Args(r, s, *this);
-                auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
+                auto O = operation_for_reduction(closure_at(r));
                 closure value = (*O)(Args);
                 total_reductions2++;
 
@@ -1061,7 +1104,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
     {
         int s = get_shared_step(r);
         RegOperationArgs2Changeable Args(r, s, *this);
-        auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
+        auto O = operation_for_reduction(closure_at(r));
         closure value = (*O)(Args);
         total_reductions2++;
         total_changeable_reductions2++;
@@ -1185,12 +1228,12 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
     assert(regs.is_used(r));
 
 #ifndef NDEBUG
-    assert(not expression_at(r).head().is_a<expression>());
+    assert(closure_at(r).has_code());
 #endif
 
     while (1)
     {
-        assert(expression_at(r));
+        assert(closure_at(r).has_code());
 
         if (reg_is_constant(r) or reg_is_changeable_or_forcing(r))
             break;
@@ -1208,7 +1251,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         {
             mark_reg_ref_no_force(r);
 
-            bool was_index_var = expression_at(r).is_index_var();
+            bool was_index_var = is_index_var_code(closure_at(r));
             int r2 = closure_at(r).reg_for_ref();
 
             int r3 = incremental_evaluate_unchangeable( r2 );
@@ -1221,18 +1264,18 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         }
 
         // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(r)))
+        else if (closure_at(r).get_code().is_whnf())
             mark_reg_constant(r);
 
 #ifndef NDEBUG
-        else if (expression_at(r).head().is_a<Trim>())
+        else if (is_trim_code(closure_at(r)))
             std::abort();
 #endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
+            auto O = operation_for_reduction(closure_at(r));
 
             // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
             // Therefore, we cannot do "assert(not result_for_reg(t,r).changeable);" here.
