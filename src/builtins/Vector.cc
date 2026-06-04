@@ -24,20 +24,16 @@ namespace
 
     R::Exp clist_first(const R::Exp& xs)
     {
-        if (auto pair = xs.to<R::RPair>())
-            return pair->first;
-
-        assert(xs.is_a<EPair>());
-        return R::e_op_value(xs.as_<EPair>().first);
+        auto pair = xs.to<R::RPair>();
+        assert(pair);
+        return pair->first;
     }
 
     R::Exp clist_second(const R::Exp& xs)
     {
-        if (auto pair = xs.to<R::RPair>())
-            return pair->second;
-
-        assert(xs.is_a<EPair>());
-        return R::e_op_value(xs.as_<EPair>().second);
+        auto pair = xs.to<R::RPair>();
+        assert(pair);
+        return pair->second;
     }
 }
 
