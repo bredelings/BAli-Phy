@@ -13,6 +13,22 @@
 using boost::dynamic_pointer_cast;
 using std::vector;
 
+int vector_value_size(const R::Exp& value)
+{
+    if (auto v = value.to<R::RVector>())
+        return v->size();
+    else
+        return value.as_<EVector>().size();
+}
+
+R::Exp vector_value_at(const R::Exp& value, int index)
+{
+    if (auto v = value.to<R::RVector>())
+        return (*v)[index];
+    else
+        return R::e_op_value(value.as_<EVector>()[index]);
+}
+
 extern "C" R::Exp simple_function_sizeOfString(vector<R::Exp>& args)
 {
     return (int)get_arg(args).as_string().size();
@@ -42,21 +58,27 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    const EVector& v = arg0.as_<EVector>();
-
-    return (int)v.size();
+    return vector_value_size(arg0);
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const EVector& v = arg0.as_<EVector>();
     int i = Args.evaluate_slot_to_value(1).as_int();
-    auto x = R::to_expression_ref(Args.evaluate_slot_to_value(2));
+    auto x = Args.evaluate_slot_to_value(2);
 
-    const EVector* vv = &v;
-    EVector* vvv = const_cast<EVector*>(vv);
-    (*vvv)[i] = x;
+    if (auto v = arg0.to<R::RVector>())
+    {
+        R::RVector* vv = const_cast<R::RVector*>(v);
+        (*vv)[i] = std::move(x);
+    }
+    else
+    {
+        const EVector& legacy_vector = arg0.as_<EVector>();
+        const EVector* vv = &legacy_vector;
+        EVector* vvv = const_cast<EVector*>(vv);
+        (*vvv)[i] = R::to_expression_ref(std::move(x));
+    }
 
     return constructor("()",0);
 }
@@ -65,9 +87,7 @@ extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     int i = get_arg(args).as_int();
-    const EVector& v = arg0.as_<EVector>();
-
-    return R::e_op_value(v[i]);
+    return vector_value_at(arg0, i);
 }
 
 extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
