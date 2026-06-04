@@ -960,6 +960,15 @@ expression_ref reg_heap::evaluate_program(int c)
     return result;
 }
 
+const closure& reg_heap::evaluate_program_closure(int c)
+{
+    evaluate_program(c);
+
+    int r = heads[*program_result_head];
+    assert(reg_has_value(r));
+    return value_for_precomputed_reg(r);
+}
+
 prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 {
 #if DEBUG_MACHINE >= 2
@@ -2865,6 +2874,27 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     R = R2;
 
     return expression_at(value);
+}
+
+const closure& reg_heap::get_reg_value_closure_in_context(int& R, int c)
+{
+    total_get_reg_value++;
+    if (reg_is_constant(R)) return closure_at(R);
+
+    total_get_reg_value_non_const++;
+    reroot_at_context(c);
+
+    if (reg_has_value(R))
+    {
+        total_get_reg_value_non_const_with_result++;
+        int R2 = value_for_reg(R);
+        if (R2) return closure_at(R2);
+    }
+
+    auto [R2, value] = incremental_evaluate_in_context(R,c);
+    R = R2;
+
+    return closure_at(value);
 }
 
 int reg_heap::set_reg_value_in_context(int P, closure&& C, int c)

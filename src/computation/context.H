@@ -81,6 +81,10 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_head(int index) const;
 
+    // Temporary _code suffix: once the legacy expression_ref API is removed,
+    // these runtime-returning APIs should take the undecorated names.
+    const Runtime::Exp& evaluate_head_code(int index) const;
+
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_reg(int& r) const;
 
@@ -92,6 +96,9 @@ public:
 
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate_head_unchangeable(int index) const;
+
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& evaluate_head_unchangeable_code(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform_head(int index, bool ec = false) const;
@@ -108,11 +115,20 @@ public:
     /// Return the value of a runtime expression, computing it if necessary
     const expression_ref& evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& evaluate_expression_code(Runtime::Exp, closure::Env_t = {}, bool=true) const;
+
     /// Perform a runtime IO expression with an explicit closure environment.
     const expression_ref& perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
 
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& perform_expression_code(Runtime::Exp, closure::Env_t = {}, bool=false) const;
+
     /// Evaluate a particular reg and return the value.
     const expression_ref& evaluate_reg(int r) const;
+
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& evaluate_reg_code(int r) const;
 
     /// Return a structure where all fields are evaluated and substituted.
     expression_ref recursive_evaluate_reg(int r) const;
@@ -123,8 +139,14 @@ public:
     /// Get the value of a modifiable - by its location in memory
     const expression_ref& get_reg_value(int R) const;
 
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& get_reg_value_code(int R) const;
+
     /// Get the value of a modifiable
     const expression_ref& get_modifiable_value(int index) const;
+
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& get_modifiable_value_code(int index) const;
 
     /// Update the value of a modifiable - by its location in memory
     void set_reg_value(int R, closure&&);
@@ -152,6 +174,9 @@ public:
     int n_expressions() const;
 
     expression_ref get_expression(int i) const;
+
+    // Temporary _code suffix: see evaluate_head_code().
+    Runtime::Exp get_expression_code(int i) const;
 
     ProbDensity prior() const;
     ProbDensity likelihood() const;
@@ -188,6 +213,9 @@ public:
     int n_loggers() const;
 
     expression_ref evaluate_program() const;
+
+    // Temporary _code suffix: see evaluate_head_code().
+    const Runtime::Exp& evaluate_program_code() const;
 
     virtual json::object get_logged_parameters() const;
 

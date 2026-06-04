@@ -92,12 +92,24 @@ const expression_ref& context_ref::evaluate_head(int index) const
     return lazy_evaluate_head(index).legacy_exp();
 }
 
+const Runtime::Exp& context_ref::evaluate_head_code(int index) const
+{
+    return lazy_evaluate_head(index).get_code();
+}
+
 /// Return the value of a particular index, computing it if necessary
 const expression_ref& context_ref::evaluate_head_unchangeable(int index) const
 {
     int R = heads()[index];
 
     return memory()->lazy_evaluate_unchangeable(R).legacy_exp();
+}
+
+const Runtime::Exp& context_ref::evaluate_head_unchangeable_code(int index) const
+{
+    int R = heads()[index];
+
+    return memory()->lazy_evaluate_unchangeable(R).get_code();
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -152,6 +164,16 @@ const expression_ref& context_ref::evaluate_expression(Runtime::Exp E, closure::
     return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
+const Runtime::Exp& context_ref::evaluate_expression_code(Runtime::Exp E, closure::Env_t Env, bool ec) const
+{
+    const closure& result = lazy_evaluate_expression(std::move(E), std::move(Env), ec);
+#ifndef NDEBUG
+    if (result.get_code().to<Runtime::Lambda>())
+	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+#endif
+    return result.get_code();
+}
+
 const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     int perform_io_reg = memory()->perform_io_reg();
@@ -168,11 +190,29 @@ const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::E
     return evaluate_expression(std::move(app), std::move(Env), ec);
 }
 
+const Runtime::Exp& context_ref::perform_expression_code(Runtime::Exp E, closure::Env_t Env, bool ec) const
+{
+    int perform_io_reg = memory()->perform_io_reg();
+
+    auto argument = Runtime::shift_free_indices(E, 1);
+    auto app = Runtime::Let({argument},
+                            Runtime::apply(Runtime::RegRef(perform_io_reg),
+                                           {Runtime::IndexVar(0)}));
+    return evaluate_expression_code(std::move(app), std::move(Env), ec);
+}
+
 const expression_ref& context_ref::evaluate_reg(int r) const
 {
     auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
 
     return memory()->expression_at(result);
+}
+
+const Runtime::Exp& context_ref::evaluate_reg_code(int r) const
+{
+    auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
+
+    return memory()->closure_at(result).get_code();
 }
 
 expression_ref context_ref::recursive_evaluate_reg(int r) const
@@ -442,11 +482,24 @@ const expression_ref& context_ref::get_reg_value(int R) const
     return memory()->get_reg_value_in_context(R, context_index);
 }
 
+const Runtime::Exp& context_ref::get_reg_value_code(int R) const
+{
+    return memory()->get_reg_value_closure_in_context(R, context_index).get_code();
+}
+
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_modifiable_value(int R) const
 {
     if (auto M = find_modifiable_reg(R))
 	return get_reg_value(*M);
+    else
+	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
+}
+
+const Runtime::Exp& context_ref::get_modifiable_value_code(int R) const
+{
+    if (auto M = find_modifiable_reg(R))
+	return get_reg_value_code(*M);
     else
 	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
 }
@@ -500,6 +553,12 @@ expression_ref context_ref::get_expression(int i) const
 {
     int H = heads()[i];
     return reg_var(H);
+}
+
+Runtime::Exp context_ref::get_expression_code(int i) const
+{
+    int H = heads()[i];
+    return Runtime::RegRef(H);
 }
 
 std::optional<int> context_ref::out_edges_from_dist(int r) const
@@ -646,6 +705,11 @@ void context_ref::show_graph_for_root_token() const
 expression_ref context_ref::evaluate_program() const
 {
     return memory()->evaluate_program(context_index);
+}
+
+const Runtime::Exp& context_ref::evaluate_program_code() const
+{
+    return memory()->evaluate_program_closure(context_index).get_code();
 }
 
 
