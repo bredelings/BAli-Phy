@@ -18,30 +18,19 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-               ubuntu-gcc-13-NDEBUG_DP,
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
-               ubuntu-gcc-14-24.04,
-               ubuntu-gcc-15,
+               ubuntu-gcc-15-release,
                ubuntu-gcc-15-debugoptimized,
-               ubuntu-gcc-14-arm,
-               ubuntu-clang-18,
-               macos-intel,
-               macos-xcode16-arm,
-               macos-xcode26-arm,
+               ubuntu-clang-18-arm-release,
+               macos-intel-NDEBUG_DP,
+               macos-xcode16-arm-sanitize,
+               macos-xcode26-arm-debugoptimized,
                macos-homebrew-llvm-libcxx,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-13-NDEBUG_DP
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "13"
-            buildtype: "debugoptimized"  # test WITH assertions
-            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
-            arch: "linux64"
-
           - name: ubuntu-gcc-13-DEBUG_MACHINE
             os: ubuntu-24.04
             compiler: gcc
@@ -58,14 +47,7 @@ jobs:
             sanitize: "address,undefined"
             arch: "linux64"
 
-          - name: ubuntu-gcc-14-24.04
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "14"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-15
+          - name: ubuntu-gcc-15-release
             os: ubuntu-latest
             compiler: gcc
             version: "15"
@@ -74,7 +56,7 @@ jobs:
             image: ubuntu:25.04
             arch: "linux64"
 
-          - name: ubuntu-gcc-15-debugoptimized
+          - name: ubuntu-gcc-15-debugoptimized  # gcc-15 has new debug checks
             os: ubuntu-latest
             compiler: gcc
             version: "15"
@@ -82,28 +64,22 @@ jobs:
             image: ubuntu:25.04
             arch: "linux64"
 
-          - name: ubuntu-gcc-14-arm
+          - name: ubuntu-clang-18-arm-release
             os: ubuntu-24.04-arm
-            compiler: gcc
-            version: "14"
-            buildtype: "release"
-            arch: "linux64"
-
-          - name: ubuntu-clang-18
-            os: ubuntu-24.04
             compiler: clang
             version: "18"
             buildtype: "release"
             arch: "linux64"
 
-          - name: macos-intel
+          - name: macos-intel-NDEBUG_DP
             os: macos-15-intel
             compiler: xcode
             version: "16"
-            buildtype: "release"
+            buildtype: "debugoptimized"  # test WITH assertions
+            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
             arch: "mac-intel64"
 
-          - name: macos-xcode16-arm
+          - name: macos-xcode16-arm-sanitize
             os: macos-latest
             compiler: xcode
             version: "16"
@@ -111,7 +87,7 @@ jobs:
             sanitize: "undefined,local-bounds"
             arch: "mac-arm64"
 
-          - name: macos-xcode26-arm
+          - name: macos-xcode26-arm-debugoptimized
             os: macos-latest
             compiler: xcode
             version: "26"
