@@ -933,7 +933,7 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
     EVector ecs;
     for(auto& [h,l]: compressed_states)
-        ecs.push_back(EPair(h,l));
+        ecs.push_back(R::RPair(h, l));
 
     return { ecs };
 }
@@ -946,8 +946,8 @@ extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 
     for(auto& epair: trace)
     {
-        auto height =  epair.as_<EPair>().first.as_double();
-        auto length =  epair.as_<EPair>().second.as_int();
+        auto height = R::rpair_first(epair).as_double();
+        auto length = R::rpair_second(epair).as_int();
         s<<"["<<length<<"](1:"<<height<<",2:"<<height<<");";
     }
 
@@ -1633,7 +1633,7 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     return std::min(q,1.0);
 }
 
-EPair sample_site_reads01(int N, double wsaf, double error_rate, double c, double outlier_frac)
+R::Exp sample_site_reads01(int N, double wsaf, double error_rate, double c, double outlier_frac)
 {
     assert(0 <= N);
     assert(0 <= wsaf and wsaf <= 1.0);
@@ -1645,7 +1645,7 @@ EPair sample_site_reads01(int N, double wsaf, double error_rate, double c, doubl
     int alt = (bernoulli(outlier_frac)) ? beta_binomial(N, 1.0, 1.0) : beta_binomial(N, c*pi, c*(1-pi));
     int ref = N - alt;
 
-    return EPair(ref,alt);
+    return R::RPair(ref, alt);
 }
 
 log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
@@ -1667,8 +1667,8 @@ log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double ws
 
 log_double_t site_likelihood_for_reads01(int counts, const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    int ref = reads.as_<EPair>().first.as_int();
-    int alt = reads.as_<EPair>().second.as_int();
+    int ref = R::rpair_first(reads).as_int();
+    int alt = R::rpair_second(reads).as_int();
 
     return site_likelihood_for_reads01(counts, ref, alt, wsaf, error_rate, c, outlier_frac);
 }
@@ -1702,7 +1702,7 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     double outlier_frac = Args.evaluate_slot_to_value(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
 
-    // 7. Reads = EVector of EPair of Int
+    // 7. Reads = EVector of RPair of Int
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto& reads = arg6.as_<EVector>();
 
@@ -1783,7 +1783,7 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
+        reads[site] = R::to_expression_ref(sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac));
     }
 
     return reads;
@@ -1831,8 +1831,8 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, con
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            int ref = reads[site].as_<EPair>().first.as_int();
-            int alt = reads[site].as_<EPair>().second.as_int();
+            int ref = R::rpair_first(reads[site]).as_int();
+            int alt = R::rpair_second(reads[site]).as_int();
             E(site, state) = site_likelihood_for_reads01(ref+alt, reads[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
@@ -1859,7 +1859,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
     context_ptr hap_indices(C0, Args.reg_for_slot(1));
     vector<int> K = (vector<int>) hap_indices.list_to_vector();
 
-    // 2. reads = EVector (EPair Int Int)
+    // 2. reads = EVector (RPair Int Int)
     auto arg2 = evaluate_slot(C0, 2);
     auto& reads = arg2.as_<EVector>();
 
@@ -2009,7 +2009,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     // 4. Mixture weights = EVector of double.
     auto weights1 = evaluate_slot(C, 4).as_<EVector>();
 
-    // 5. reads = EVector of EPair of Int
+    // 5. reads = EVector of RPair of Int
     auto arg6 = evaluate_slot(C, 5);
     auto& reads = arg6.as_<EVector>();
 
@@ -2126,7 +2126,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     constexpr int weight_slot = 5;
     auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
 
-    // 6. reads = EVector of EPair of Int
+    // 6. reads = EVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 6);
     auto& reads = arg6.as_<EVector>();
 
@@ -2579,7 +2579,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     // 7. Mixture weights = EVector of double.
     auto weights = evaluate_slot(C, 7).as_<EVector>();
 
-    // 8. reads = EVector of EPair of Int
+    // 8. reads = EVector of RPair of Int
     auto arg6 = evaluate_slot(C, 8);
     auto& reads = arg6.as_<EVector>();
 
@@ -2666,7 +2666,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
     constexpr int weight_slot = 8;
     auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
 
-    // 9. reads = EVector of EPair of Int
+    // 9. reads = EVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 9);
     auto& reads = arg6.as_<EVector>();
 

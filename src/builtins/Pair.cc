@@ -7,18 +7,12 @@ using std::vector;
 
 R::Exp pair_first(const R::Exp& pair)
 {
-    if (auto runtime_pair = pair.to<R::RPair>())
-        return runtime_pair->first;
-    else
-        return R::e_op_value(pair.as_<EPair>().first);
+    return R::rpair_first(pair);
 }
 
 R::Exp pair_second(const R::Exp& pair)
 {
-    if (auto runtime_pair = pair.to<R::RPair>())
-        return runtime_pair->second;
-    else
-        return R::e_op_value(pair.as_<EPair>().second);
+    return R::rpair_second(pair);
 }
 
 extern "C" R::Exp simple_function_c_fst(vector<R::Exp>& args)
@@ -36,10 +30,7 @@ extern "C" R::Exp simple_function_c_pair(vector<R::Exp>& args)
     auto fst = get_arg(args);
     auto snd = get_arg(args);
 
-    object_ptr<R::RPair> result(new R::RPair);
-    result->first = std::move(fst);
-    result->second = std::move(snd);
-    return R::ObjectValue(result);
+    return R::RPair(std::move(fst), std::move(snd));
 }
 
 extern "C" R::Exp simple_function_c_nil(vector<R::Exp>& /*args*/)

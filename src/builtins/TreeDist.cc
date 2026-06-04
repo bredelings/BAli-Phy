@@ -50,20 +50,20 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
 {
     using enum EventType;
     
-    // population sizes: RVector (EPair Double Double)
+    // population sizes: RVector (RPair Double Double)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto popSizes = runtime_vector_from_value(arg0);
 
-    // nodeTimes :: RVector (EPair Double (EVector Double))
+    // nodeTimes :: RVector (RPair Double (RVector Double))
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto nodeTimes = runtime_vector_from_value(arg1);
 
     // Define sorting function.
     auto event_time = [&](const Event& e) {
         if (e.type == EventType::RateChange)
-            return (*popSizes)[e.index].as_<EPair>().first.as_double();
+            return R::rpair_first((*popSizes)[e.index]).as_double();
         else
-            return (*nodeTimes)[e.index].as_<EPair>().first.as_double();
+            return R::rpair_first((*nodeTimes)[e.index]).as_double();
     };
 
     auto event_compare = [&](const Event& e1, const Event& e2)
@@ -81,9 +81,9 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     for(int i=0;i<nodeTimes->size();i++)
     {
         // Check that parent is not younger than children.
-        auto nodeTime = (*nodeTimes)[i].as_<EPair>().first.as_double();
-        auto& childTimes = (*nodeTimes)[i].as_<EPair>().second.as_<EVector>();
-        for(auto& childTime: childTimes)
+        auto nodeTime = R::rpair_first((*nodeTimes)[i]).as_double();
+        auto childTimes = runtime_vector_from_value(R::rpair_second((*nodeTimes)[i]));
+        for(auto& childTime: *childTimes)
             if (not (nodeTime >= childTime.as_double()))
             {
                 log_double_t Pr;
@@ -91,7 +91,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
             }
 
         // Classify events based on number of children.
-        int n = childTimes.size();
+        int n = childTimes->size();
         if (n == 0)
             events.push_back({EventType::NewLeaf, i});
         else if (n == 2)
@@ -111,7 +111,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     {
         if (events[i].type == EventType::RateChange)
         {
-            N = (*popSizes)[events[i].index].as_<EPair>().second.as_double();
+            N = R::rpair_second((*popSizes)[events[i].index]).as_double();
             i++;
             break;
         }
@@ -143,7 +143,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
         auto type = events[i].type;
         if (type == RateChange)
         {
-            N = (*popSizes)[events[i].index].as_<EPair>().second.as_double();
+            N = R::rpair_second((*popSizes)[events[i].index]).as_double();
         }
         else if (type == NewLeaf)
         {

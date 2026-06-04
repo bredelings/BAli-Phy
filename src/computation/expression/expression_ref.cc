@@ -400,17 +400,6 @@ EVector::EVector(const vector<char>& v1)
 	(*this)[i] = v1[i];
 }
 
-EPair::EPair(const pair<int,int>& p)
-{
-    first = p.first;
-    second = p.second;
-}
-
-EPair::operator std::pair<int,int>() const
-{
-    return std::pair<int,int>(first.as_int(), second.as_int());
-}
-
 int EPtree::count(const std::string& key) const
 {
     int c = 0;

@@ -4,6 +4,7 @@
 #include "dp/hmm.H"
 #include "dp/2way.H"
 #include "util/range.H"
+#include "computation/runtime/ast.H"
 
 using std::vector;
 using boost::dynamic_bitset;
@@ -282,8 +283,8 @@ peel_muts_fixed_A(const EVector& sequences,
 {
     int n_letters = cost.size1();
 
-    auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
-    auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+    auto sequence = [&](int i) -> auto& { return R::rpair_first(sequences[i]).as_<EVector>(); };
+    auto mask = [&](int i) -> auto& { return R::rpair_second(sequences[i]).as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     int n_branches_in = n_muts_.size();
@@ -367,8 +368,8 @@ int muts_root_fixed_A(const EVector& sequences,
 {
     int n_letters = costs.size1();
 
-    auto sequence = [&](int i) -> auto& { return sequences[i].as_<EPair>().first.as_<EVector>(); };
-    auto mask = [&](int i) -> auto& { return sequences[i].as_<EPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
+    auto sequence = [&](int i) -> auto& { return R::rpair_first(sequences[i]).as_<EVector>(); };
+    auto mask = [&](int i) -> auto& { return R::rpair_second(sequences[i]).as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     int n_branches_in = n_muts_.size();
@@ -500,4 +501,3 @@ int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheB
 
     return total;
 }
-

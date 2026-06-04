@@ -317,6 +317,30 @@ namespace Runtime
         return atomic_value(E);
     }
 
+    const Exp& rpair_first(const Exp& E)
+    {
+        auto pair = E.to<RPair>();
+        assert(pair);
+        return pair->first;
+    }
+
+    const Exp& rpair_first(const expression_ref& E)
+    {
+        return E.as_<RPair>().first;
+    }
+
+    const Exp& rpair_second(const Exp& E)
+    {
+        auto pair = E.to<RPair>();
+        assert(pair);
+        return pair->second;
+    }
+
+    const Exp& rpair_second(const expression_ref& E)
+    {
+        return E.as_<RPair>().second;
+    }
+
     Exp shift_free_indices(const Exp& E, int amount, int depth)
     {
         return E.visit([&](const auto& e) -> Exp

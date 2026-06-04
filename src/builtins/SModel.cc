@@ -544,9 +544,8 @@ vector<int> make_edit_map(const EVector& edit_pairs, int n)
     vector<int> edit(n, -1);
     for(auto& edit_pair: edit_pairs)
     {
-        auto P = edit_pair.as_<EPair>();
-        int i = P.first.as_int();
-        int j = P.second.as_int();
+        int i = R::rpair_first(edit_pair).as_int();
+        int j = R::rpair_second(edit_pair).as_int();
 
         if (i < 0 or i >= n)
             throw myexception()<<"rna_editting_rates: nucleotide "<<i<<" not in range [0,"<<n<<")!";

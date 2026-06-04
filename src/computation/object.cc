@@ -4,6 +4,7 @@
 #include <iomanip> // for std::quoted
 #include <sstream>
 #include "computation/expression/expression_ref.H"
+#include "computation/runtime/ast.H"
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);
@@ -33,6 +34,6 @@ template<> std::string Box<std::vector<std::pair<int,int>>>::print() const
 {
     EVector V;
     for(auto& [x,y]: *this)
-        V.push_back(EPair(x,y));
+        V.push_back(R::to_expression_ref(R::RPair(x, y)));
     return V.print();
 }

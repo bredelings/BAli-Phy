@@ -5,6 +5,7 @@
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
 #include "computation/expression/expression_ref.H"
+#include "computation/runtime/ast.H"
 
 class data_partition;
 
@@ -60,14 +61,14 @@ namespace substitution {
 				   const Matrix& ff);
 
     object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
+    simple_sequence_likelihoods_SEV(const Runtime::Exp& sequence_mask,
 				    const alphabet& a,
 				    const EVector& smap,
 				    int n_models);
 
     // This one is sparse
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
+    simple_sequence_likelihoods2_SEV(const Runtime::Exp& sequence_mask,
 				     const alphabet& a,
 				     const EVector& smap,
 				     int n_models);

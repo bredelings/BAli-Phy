@@ -1132,13 +1132,13 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods_SEV(const EPair& sequence_mask,
+    simple_sequence_likelihoods_SEV(const R::Exp& sequence_mask,
 				    const alphabet& a,
 				    const EVector& smap,
 				    int n_models)
     {
-	auto& sequence = sequence_mask.first.as_<EVector>();
-	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
+	auto& sequence = R::rpair_first(sequence_mask).as_<EVector>();
+	auto& mask = R::rpair_second(sequence_mask).as_<Box<boost::dynamic_bitset<>>>();
 
 	int n_states = smap.size();
 	int matrix_size = n_models * n_states;
@@ -1187,13 +1187,13 @@ namespace substitution
     }
 
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2_SEV(const EPair& sequence_mask,
+    simple_sequence_likelihoods2_SEV(const R::Exp& sequence_mask,
 				     const alphabet& a,
 				     const EVector& smap,
 				     int n_models)
     {
-	auto& sequence = sequence_mask.first.as_<EVector>();
-	auto& mask = sequence_mask.second.as_<Box<boost::dynamic_bitset<>>>();
+	auto& sequence = R::rpair_first(sequence_mask).as_<EVector>();
+	auto& mask = R::rpair_second(sequence_mask).as_<Box<boost::dynamic_bitset<>>>();
 
 	int n_states = smap.size();
 

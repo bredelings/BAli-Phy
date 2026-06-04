@@ -639,6 +639,10 @@ namespace Runtime
     Exp apply_env_function(int, std::vector<Exp>);
     Exp atomic_value(const expression_ref&);
     Exp e_op_value(const expression_ref&);
+    const Exp& rpair_first(const Exp&);
+    const Exp& rpair_first(const expression_ref&);
+    const Exp& rpair_second(const Exp&);
+    const Exp& rpair_second(const expression_ref&);
     int count_lambdas(const Exp&);
     Exp peel_lambdas(const Exp&, int);
     Exp shift_free_indices(const Exp&, int amount, int depth = 0);
