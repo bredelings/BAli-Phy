@@ -555,14 +555,10 @@ vector<int> record_targets(const closure& C)
     {
         for(const auto& arg: app->args)
         {
-            if (auto index_var = arg.to<Runtime::IndexVar>())
-            {
-                int index = index_var->index;
-                if (index < C.Env.size())
-                    targets.push_back(C.lookup_in_env(index));
-                else
-                    std::clog<<"closure has bad index in "<<C.get_code()<<std::endl;
-            }
+            if (auto R2 = closure(arg, C.Env).reg_for_ref_maybe())
+                targets.push_back(*R2);
+            else if (arg.to<Runtime::IndexVar>())
+                std::clog<<"closure has bad index in "<<C.get_code()<<std::endl;
         }
     }
     else if (auto im = C.get_code().to<IntMap>())
@@ -596,6 +592,82 @@ string reg_name(int R, const map<int,Core::Exp<>>& replace)
 	    name = E.print() + " " + name;;
     }
     return name;
+}
+
+string direct_ref_name(int R)
+{
+    return "<" + convertToString(R) + ">";
+}
+
+string env_ref_name(int R)
+{
+    return "[" + convertToString(R) + "]";
+}
+
+enum class GraphRefKind { direct, env };
+
+struct GraphRef
+{
+    int reg;
+    GraphRefKind kind;
+};
+
+std::optional<GraphRef> graph_ref_for_arg(const Runtime::Exp& E, const closure& CR)
+{
+    if (auto index_var = E.to<Runtime::IndexVar>())
+    {
+        if (index_var->index >= CR.Env.size())
+            return {};
+
+        return GraphRef{CR.lookup_in_env(index_var->index), GraphRefKind::env};
+    }
+    else if (auto reg_ref = E.to<Runtime::RegRef>())
+        return GraphRef{reg_ref->target, GraphRefKind::direct};
+    else
+        return {};
+}
+
+string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR, const map<int,Core::Exp<>>& replace)
+{
+    closure arg(E, CR.Env);
+    if (auto ref = graph_ref_for_arg(E, CR))
+    {
+        auto name = ref->kind == GraphRefKind::direct ? direct_ref_name(ref->reg) : env_ref_name(ref->reg);
+        return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
+    }
+
+    auto E2 = subst_diagnostic_vars(runtime_deindexify(arg), diagnostic_reg_replacements(replace));
+    return "<td>" + escape(E2.print()) + "</td>";
+}
+
+map<int,Core::Exp<>> make_factor_graph_replacements(const map<int,string>& reg_names, const map<int,string>& constants)
+{
+    map<int,Core::Exp<>> replace;
+    for(const auto& [r, name]: reg_names)
+        replace[r] = Core::Var<>(name);
+    for(const auto& [r, name]: constants)
+        replace[r] = Core::Var<>(name);
+
+    return replace;
+}
+
+string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR,
+                                          const map<int,string>& reg_names,
+                                          const map<int,string>& constants,
+                                          const map<string,string>& simplify)
+{
+    closure arg(E, CR.Env);
+    if (auto ref = graph_ref_for_arg(E, CR))
+    {
+        auto name = ref->kind == GraphRefKind::direct ? direct_ref_name(ref->reg) : env_ref_name(ref->reg);
+        return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
+    }
+
+    auto E2 = runtime_deindexify(arg);
+    E2 = subst_diagnostic_vars(E2, diagnostic_reg_replacements(make_factor_graph_replacements(reg_names, constants)));
+    E2 = map_symbol_names(E2, simplify);
+
+    return "<td>" + escape(E2.print()) + "</td>";
 }
 
 closure follow_reg_ref(const reg_heap& M, closure C)
@@ -634,28 +706,12 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
         if (auto app = CR.get_code().to<Runtime::App>())
 	{
             for(const auto& E: app->args)
-            {
-                if (auto index_var = E.to<Runtime::IndexVar>())
-                {
-                    int index = index_var->index;
-                    int R2 = -1;
-                    if (index < CR.Env.size())
-                        R2 = CR.lookup_in_env( index );
-                    else
-                        std::clog<<"reg "<<R<<" has bad index in "<<CR.get_code()<<std::endl;
-	  
-                    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name(R2,replace)) + "</td>";
-                }
-                else
-                {
-                    label += "<td>" + E.print() + "</td>";
-                }
-            }
+                label += render_register_graph_table_arg_cell(E, CR, replace);
 	}
         else if (auto im = CR.get_code().to<IntMap>())
         {
             for(auto& [key, R2]: *im)
-                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(reg_name(R2,replace)) + "</td>";
+                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(direct_ref_name(R2)) + "</td>";
         }
         label += "</tr></table>";
     }
@@ -723,30 +779,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         if (auto app = CR.get_code().to<Runtime::App>())
 	{
             for(const auto& E: app->args)
-            {
-                if (auto index_var = E.to<Runtime::IndexVar>())
-                {
-                    int index = index_var->index;
-                    int R2 = CR.lookup_in_env( index );
-
-                    string reg_name = " ";
-                    if (constants.count(R2))
-                        reg_name = constants.at(R2);
-                    else if (reg_names.count(R2))
-                    {
-                        reg_name = reg_names.at(R2);
-                        auto loc = simplify.find(reg_name);
-                        if (loc != simplify.end())
-                            reg_name = loc->second;
-                    }
-
-                    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
-                }
-                else
-                {
-                    label += "<td>" + E.print() + "</td>";
-                }
-            }
+                label += render_factor_graph_table_arg_cell(E, CR, reg_names, constants, simplify);
 	}
         label += "</tr></table>";
     }
@@ -772,12 +805,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         label="mod";
     else
     {
-        map<int,Core::Exp<>> replace;
-        for(const auto& [r, name]: reg_names)
-            replace[r] = Core::Var<>(name);
-        for(const auto& [r, name]: constants)
-            replace[r] = Core::Var<>(name);
-
+        auto replace = make_factor_graph_replacements(reg_names, constants);
         auto E = unlet(subst_diagnostic_vars(runtime_deindexify(CR), diagnostic_reg_replacements(replace)));
         E = map_symbol_names(E, simplify);
 
