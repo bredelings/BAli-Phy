@@ -19,7 +19,6 @@
 #include <cereal/types/vector.hpp>
 #define CEREAL_FUTURE_EXPERIMENTAL 1
 #include <cereal/archives/adapters.hpp>
-#include "computation/expression/var.H"
 #include "computation/haskell/Integer.H"
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
@@ -82,11 +81,11 @@ namespace Runtime
         Exp(std::string);
         Exp(const char*);
         Exp(integer);
-        Exp(const ::Integer&) = delete;
+        Exp(const Box<integer>&) = delete;
+        Exp(const Box<std::string>&) = delete;
         Exp(const Object&);
         Exp(const Object*);
         Exp(object_ptr<const Object>);
-        Exp(const ::String&) = delete;
 
         template <DerivedFromObject T>
         Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}
@@ -457,15 +456,16 @@ namespace Runtime
 
     struct GlobalVar
     {
-        var name;
+        std::string name;
+        int index = 0;
 
         GlobalVar() = default;
-        GlobalVar(var x):name(std::move(x)) {}
+        GlobalVar(std::string x, int i=0):name(std::move(x)),index(i) {}
 
         bool operator==(const GlobalVar&) const = default;
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(name); }
+        void serialize(Archive& ar) { ar(name, index); }
     };
 
     struct RegRef

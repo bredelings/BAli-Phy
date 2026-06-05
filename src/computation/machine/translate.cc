@@ -90,7 +90,7 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env
 
         if constexpr (std::is_same_v<T, Runtime::GlobalVar>)
         {
-            int r = reg_for_id(e.name);
+            int r = reg_for_id(e);
             if (not reg_is_pinned(r))
                 throw myexception()<<"Global variable '"<<e.name<<"' resolved to unpinned register "<<r;
 

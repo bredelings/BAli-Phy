@@ -7,6 +7,7 @@
 #include "computation/operation.H"
 #include "util/myexception.H"
 #include "util/string/join.H"
+#include "util/string/convert.H"
 
 using std::vector;
 
@@ -551,7 +552,10 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, GlobalVar>)
             {
-                return e.name.print();
+                std::string s = e.name;
+                if (e.index != 0)
+                    s += "#" + convertToString(e.index);
+                return s;
             }
             else if constexpr (std::is_same_v<T, RegRef>)
             {
@@ -684,7 +688,7 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, GlobalVar>)
             {
-                assert(not e.name.name.empty());
+                assert(not e.name.empty());
             }
             else if constexpr (std::is_same_v<T, RegRef>)
             {

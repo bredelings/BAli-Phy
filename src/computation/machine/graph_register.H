@@ -440,7 +440,7 @@ public:
 
     // FIXME: maybe this should really take a FastString = (String, Int)
     /// Get the memory location (reg) for a given identifier (string)
-    int reg_for_id(const var&);
+    int reg_for_id(const Runtime::GlobalVar&);
     /// Capture non-pinned register references before trimming so trims can see them.
     Runtime::Exp capture_local_reg_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
 

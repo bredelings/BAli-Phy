@@ -8,24 +8,18 @@ using std::vector;
 using std::string;
 
 template <typename T>
-int find_index_backward(const vector<T>& v,const T& t)
+std::optional<int> find_index_backward(const vector<T>& v,const T& t)
 {
     int L = v.size();
     for(int i=0;i<L;i++)
 	if (v[L-i-1] == t)
 	    return i;
-    return -1;
+    return {};
 }
 
-bool is_global_var(const var& x)
+bool is_global_var(const Core::Var<>& x)
 {
     return is_qualified_symbol(x.name) or is_haskell_builtin_con_name(x.name);
-}
-
-template <typename NoteV>
-var to_runtime_var(const Core::Var<NoteV>& x)
-{
-    return var(x.name, x.index, x.is_exported);
 }
 
 Runtime::Exp runtime_atom_from_constant(const Core::Constant& C)
@@ -49,17 +43,16 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     // Variable
     if (auto V = E.to_var())
     {
-        int index = find_index_backward(variables, *V);
-        if (index == -1)
+        auto index = find_index_backward(variables, *V);
+        if (not index)
         {
-            auto x = to_runtime_var(*V);
-            if (is_global_var(x))
-                return Runtime::GlobalVar(x);
+            if (is_global_var(*V))
+                return Runtime::GlobalVar(V->name);
             else
                 throw myexception()<<"Variable '"<<E<<"' is apparently not a bound variable in '"<<E<<"'?";
         }
         else
-            return Runtime::IndexVar(index);
+            return Runtime::IndexVar(*index);
     }
     // Lambda expression - /\x.e
     else if (auto L = E.to_lambda())

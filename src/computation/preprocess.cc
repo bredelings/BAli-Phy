@@ -84,7 +84,7 @@ namespace Runtime
             {
                 auto loc = ids.find(e.target);
                 if (loc != ids.end())
-                    return GlobalVar(var(loc->second));
+                    return GlobalVar(loc->second);
                 else
                     return E;
             }
@@ -195,7 +195,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
     }
     else if (auto e = E.to<Runtime::GlobalVar>())
     {
-        return Core::Var<>(e->name.name, e->name.index, {}, e->name.is_exported);
+        return Core::Var<>(e->name, e->index);
     }
     else if (auto e = E.to<Runtime::RegRef>())
         return direct_reg_core_var(e->target);
@@ -539,7 +539,7 @@ closure reg_heap::preprocess(const Core::Exp<>& E)
     return preprocess_prepared(runtime_prepare_for_translation(fresh_var_state, E));
 }
 
-int reg_heap::reg_for_id(const var& x)
+int reg_heap::reg_for_id(const Runtime::GlobalVar& x)
 {
     auto& name = x.name;
     assert(is_qualified_symbol(name) or is_haskell_builtin_con_name(name));

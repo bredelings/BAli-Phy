@@ -3216,7 +3216,7 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
      prog_unshare(1)
 {
     allocate_identifiers_for_program();
-    perform_io_reg_ = reg_for_id(var("Compiler.IO.unsafePerformIO"));
+    perform_io_reg_ = reg_for_id(R::GlobalVar("Compiler.IO.unsafePerformIO"));
     assert(reg_is_pinned(*perform_io_reg_));
 
     if (program->get_main_name())

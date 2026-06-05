@@ -62,7 +62,7 @@ namespace
         int global_reg = heap.add_identifier("Test.global");
 
         closure::Env_t global_env;
-        auto global = heap.translate_refs(Runtime::GlobalVar(var("Test.global")), global_env);
+        auto global = heap.translate_refs(Runtime::GlobalVar("Test.global"), global_env);
         auto global_ref = global.to<Runtime::RegRef>();
         require(bool(global_ref), "global variable should translate to a RegRef");
         require(global_ref->target == global_reg, "global variable RegRef target mismatch");
