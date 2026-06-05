@@ -9,8 +9,6 @@
 #include "computation/haskell/ids.H"
 #include "computation/runtime/ast.H"
 
-class expression_ref;
-
 struct closure
 {
 private:
@@ -100,10 +98,6 @@ public:
         :code(std::move(C.code)),
          Env(std::move(C.Env))
     { }
-
-    closure(const expression_ref& e) = delete;
-    closure(const expression_ref& e, const Env_t& E) = delete;
-    closure(const expression_ref& e, std::initializer_list<int> E) = delete;
 
     // Constructing from runtime code.
     closure(Runtime::Exp e)
