@@ -218,6 +218,4 @@ void do_trim(closure& C);
 
 closure trim_unnormalize(const closure& C);
 
-expression_ref deindexify(const closure& C);
-
 #endif

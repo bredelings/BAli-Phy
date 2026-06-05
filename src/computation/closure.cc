@@ -3,6 +3,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/trim.H"
+#include "computation/preprocess.H"
 #include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
 #include <cstdlib>
@@ -51,7 +52,7 @@ void closure::clear()
 
 string closure::print() const
 {
-    string result = legacy_exp().print();
+    string result = runtime_deindexify(*this).print();
     if (Env.size())
 	result += " {" + join(Env,", ") + "}";
     return result;
@@ -128,15 +129,6 @@ closure get_trimmed(closure&& C)
     do_trim(C);
 
     return std::move(C);
-}
-
-expression_ref deindexify(const closure& C)
-{
-    vector<expression_ref> variables;
-    for(int R: C.Env)
-        variables.push_back(reg_var(R));
-
-    return deindexify(C.legacy_exp(), variables);
 }
 
 closure trim_unnormalize(const closure& C)
