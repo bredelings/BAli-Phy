@@ -37,15 +37,11 @@ public:
 
     int n_args() const;
 
-    int runtime_n_slots() const;
+    Runtime::Exp slot(int slot_index) const;
 
-    Runtime::Exp runtime_slot(int slot) const;
-
-    std::optional<int> runtime_reg_for_code(const Runtime::Exp&) const;
+    std::optional<int> reg_for_code(const Runtime::Exp&) const;
 
     int reg_for_slot(int slot) const;
-
-    int runtime_reg_for_slot(int slot) const;
 
     // evaluating a changeable-or-forcing reg unchangeably will return the
     // reg instead of throwing a no_context() exception.

@@ -128,10 +128,10 @@ namespace
                                 Runtime::RegRef(30)}),
                   {10, 20});
 
-        require(C.runtime_n_slots() == 3, "runtime closure App slot count mismatch");
-        require(C.runtime_reg_for_slot(0) == 10, "runtime slot 0 should resolve through the closure environment");
-        require(C.runtime_reg_for_slot(1) == 20, "runtime slot 1 should resolve through the closure environment");
-        require(C.runtime_reg_for_slot(2) == 30, "runtime RegRef slot should preserve its target");
+        require(C.n_slots() == 3, "runtime closure App slot count mismatch");
+        require(C.reg_for_slot(0) == 10, "runtime slot 0 should resolve through the closure environment");
+        require(C.reg_for_slot(1) == 20, "runtime slot 1 should resolve through the closure environment");
+        require(C.reg_for_slot(2) == 30, "runtime RegRef slot should preserve its target");
 
         require(closure(Runtime::IndexVar(1), {10, 20}).reg_for_ref_maybe() == 10,
                 "runtime closure IndexVar ref should resolve through the closure environment");
@@ -140,7 +140,7 @@ namespace
         require(not closure(Runtime::Int(1)).reg_for_ref_maybe(),
                 "non-reference runtime closure should not have a referenced reg");
 
-        auto slot = C.runtime_slot(1);
+        auto slot = C.slot(1);
         auto slot_ref = slot.to<Runtime::RegRef>();
         require(bool(slot_ref), "runtime IndexVar slot should become a RegRef");
         require(slot_ref->target == 20, "runtime slot RegRef target mismatch");
@@ -206,10 +206,10 @@ namespace
                                                  {Runtime::Trim({0}, Runtime::RegRef(4))});
         auto un = Runtime::untranslate_vars(translated, std::map<int,std::string>{{3, "Test.f"}, {4, "Test.x"}});
         auto untrimmed = Runtime::trim_unnormalize(un);
-        auto core = runtime_deindexify(untrimmed);
-        auto reindexed = runtime_indexify(core);
+        auto core = deindexify(untrimmed);
+        auto reindexed = indexify(core);
 
-        require(reindexed == untrimmed, "runtime untranslate/deindexify should round-trip through runtime_indexify");
+        require(reindexed == untrimmed, "runtime untranslate/deindexify should round-trip through indexify");
     }
 
     void check_runtime_inverse_preprocess_round_trip()
@@ -217,41 +217,41 @@ namespace
         auto original = inverse_preprocess_test_core();
 
         FreshVarState fresh1;
-        auto prepared = runtime_prepare_for_translation(fresh1, original);
+        auto prepared = prepare_for_translation(fresh1, original);
 
         auto untrimmed = Runtime::trim_unnormalize(prepared);
-        auto deindexed = runtime_deindexify(untrimmed);
-        auto reindexed = runtime_indexify(deindexed);
-        require(reindexed == untrimmed, "runtime_deindexify should round-trip with runtime_indexify after trim_unnormalize");
+        auto deindexed = deindexify(untrimmed);
+        auto reindexed = indexify(deindexed);
+        require(reindexed == untrimmed, "deindexify should round-trip with indexify after trim_unnormalize");
 
-        auto recovered = runtime_unprepare_for_translation(prepared);
+        auto recovered = unprepare_for_translation(prepared);
 
         FreshVarState fresh2;
-        auto prepared_again = runtime_prepare_for_translation(fresh2, recovered);
+        auto prepared_again = prepare_for_translation(fresh2, recovered);
         require(prepared_again == prepared, "inverse preprocess final Core should prepare back to the same Runtime expression");
     }
 
-    void check_runtime_deindexify_diagnostic_terms()
+    void check_deindexify_diagnostic_terms()
     {
-        auto direct_reg = runtime_deindexify(Runtime::RegRef(7));
+        auto direct_reg = deindexify(Runtime::RegRef(7));
         require(direct_reg.to_var() and direct_reg.to_var()->name == "<7>",
                 "direct Runtime::RegRef should become a diagnostic Core variable");
 
         closure C(Runtime::IndexVar(0), {152});
-        auto env_reg = runtime_deindexify(C);
+        auto env_reg = deindexify(C);
         require(env_reg.to_var() and env_reg.to_var()->name == "[152]",
                 "closure Runtime::IndexVar should resolve through Env to a diagnostic Core variable");
 
-        auto free_index = runtime_deindexify(Runtime::IndexVar(0));
+        auto free_index = deindexify(Runtime::IndexVar(0));
         require(free_index.to_var() and free_index.to_var()->name == "[?0]",
                 "free Runtime::IndexVar should become a diagnostic fallback Core variable");
 
         object_ptr<R::RVector> vec(new R::RVector(std::vector<int>{1, 2}));
-        auto object_value = runtime_deindexify(Runtime::Exp(vec));
+        auto object_value = deindexify(Runtime::Exp(vec));
         require(object_value.to_runtimeOnly() and object_value.print() == vec->print(),
                 "Runtime::ObjectValue should become a RuntimeOnly Core diagnostic");
 
-        auto log_double = runtime_deindexify(Runtime::LogDouble(log_double_t(0.25)));
+        auto log_double = deindexify(Runtime::LogDouble(log_double_t(0.25)));
         require(log_double.to_runtimeOnly() and log_double.print().ends_with("L#"),
                 "Runtime::LogDouble should become a RuntimeOnly Core diagnostic");
     }
@@ -407,7 +407,7 @@ int main(int argc, char** argv)
     std::vector<Core::Exp<>> args = {int_constant(1), int_constant(2)};
     Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
 
-    auto before = runtime_indexify(Core::Exp<>(builtin));
+    auto before = indexify(Core::Exp<>(builtin));
     Runtime::check_invariants(before);
 
     std::stringstream buffer;
@@ -426,9 +426,9 @@ int main(int argc, char** argv)
 
     require(before == after, "Runtime AST serialization changed the expression");
 
-    auto recovered_builtin = runtime_unprepare_for_translation(before);
-    auto reindexed_builtin = runtime_indexify(recovered_builtin);
-    require(reindexed_builtin == before, "runtime builtin deindexify should round-trip through runtime_indexify");
+    auto recovered_builtin = unprepare_for_translation(before);
+    auto reindexed_builtin = indexify(recovered_builtin);
+    require(reindexed_builtin == before, "runtime builtin deindexify should round-trip through indexify");
 
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
@@ -437,7 +437,7 @@ int main(int argc, char** argv)
     check_lambda_peeling();
     check_runtime_untranslate_vars();
     check_runtime_inverse_preprocess_round_trip();
-    check_runtime_deindexify_diagnostic_terms();
+    check_deindexify_diagnostic_terms();
     check_runtime_atomic_values();
     check_runtime_vector_conversions();
     check_constructor_serialization();

@@ -9,12 +9,12 @@ int OperationArgs::reg_for_slot(int slot) const
     return current_closure().reg_for_slot(slot);
 }
 
-Runtime::Exp OperationArgs::runtime_slot(int slot) const
+Runtime::Exp OperationArgs::slot(int slot_index) const
 {
-    return current_closure().runtime_slot(slot);
+    return current_closure().slot(slot_index);
 }
 
-optional<int> OperationArgs::runtime_reg_for_code(const Runtime::Exp& E) const
+optional<int> OperationArgs::reg_for_code(const Runtime::Exp& E) const
 {
     if (auto reg_ref = E.to<Runtime::RegRef>())
         return reg_ref->target;
@@ -24,14 +24,7 @@ optional<int> OperationArgs::runtime_reg_for_code(const Runtime::Exp& E) const
         return {};
 }
 
-int OperationArgs::runtime_reg_for_slot(int slot) const
-{
-    return current_closure().runtime_reg_for_slot(slot);
-}
-
-int OperationArgs::n_args() const {return current_closure().runtime_n_slots();}
-
-int OperationArgs::runtime_n_slots() const {return current_closure().runtime_n_slots();}
+int OperationArgs::n_args() const {return current_closure().n_slots();}
 
 const closure& OperationArgs::evaluate_reg_to_closure(int r2)
 {
@@ -47,19 +40,19 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
     return M[r3];
 }
 
-closure OperationArgs::evaluate_slot_to_closure(int slot)
+closure OperationArgs::evaluate_slot_to_closure(int slot_index)
 {
-    return evaluate_code_to_closure(runtime_slot(slot));
+    return evaluate_code_to_closure(slot(slot_index));
 }
 
-closure OperationArgs::evaluate_slot_to_closure_(int slot)
+closure OperationArgs::evaluate_slot_to_closure_(int slot_index)
 {
-    return evaluate_code_to_closure_(runtime_slot(slot));
+    return evaluate_code_to_closure_(slot(slot_index));
 }
 
 closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
 {
-    if (auto r = runtime_reg_for_code(E))
+    if (auto r = reg_for_code(E))
         return evaluate_reg_to_closure(*r);
     else
         return closure(E);
@@ -67,7 +60,7 @@ closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
 
 closure OperationArgs::evaluate_code_to_closure_(const Runtime::Exp& E)
 {
-    if (auto r = runtime_reg_for_code(E))
+    if (auto r = reg_for_code(E))
         return evaluate_reg_to_closure_(*r);
     else
         return closure(E);
@@ -75,7 +68,7 @@ closure OperationArgs::evaluate_code_to_closure_(const Runtime::Exp& E)
 
 optional<int> OperationArgs::evaluate_code_force(const Runtime::Exp& E)
 {
-    if (auto r = runtime_reg_for_code(E))
+    if (auto r = reg_for_code(E))
         return evaluate_reg_force(*r);
     else
         return {};
@@ -83,7 +76,7 @@ optional<int> OperationArgs::evaluate_code_force(const Runtime::Exp& E)
 
 optional<int> OperationArgs::evaluate_code_use(const Runtime::Exp& E)
 {
-    if (auto r = runtime_reg_for_code(E))
+    if (auto r = reg_for_code(E))
         return evaluate_reg_use(*r);
     else
         return {};

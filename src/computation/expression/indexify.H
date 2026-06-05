@@ -9,6 +9,6 @@ namespace Runtime
     struct Exp;
 }
 
-Runtime::Exp runtime_indexify(const Core::Exp<>&);
+Runtime::Exp indexify(const Core::Exp<>&);
 
 #endif

@@ -2403,7 +2403,7 @@ void CompiledModule::finish_value_decls( const Core::Decls<>& decls )
     FreshVarSource source(*fresh_var_state_);
     for(const auto& [x,rhs]: decls)
     {
-        prepared_value_decls[x] = runtime_prepare_for_translation(source, rhs);
+        prepared_value_decls[x] = prepare_for_translation(source, rhs);
         Runtime::check_no_reg_refs(prepared_value_decls[x]);
     }
 }

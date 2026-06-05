@@ -64,7 +64,7 @@ using boost::dynamic_pointer_cast;
 closure apply_op(OperationArgs& Args)
 {
     closure C = Args.evaluate_slot_to_closure(0);
-    int n_args_given = Args.runtime_n_slots()-1;
+    int n_args_given = Args.n_args()-1;
 
     assert(C.has_code());
     int n_args_needed = Runtime::count_lambdas(C.get_code());
@@ -77,7 +77,7 @@ closure apply_op(OperationArgs& Args)
     C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
-	int arg = Args.current_closure().runtime_reg_for_slot(i+1);
+	int arg = Args.current_closure().reg_for_slot(i+1);
 	C.Env.push_back(arg);
     }
 
@@ -92,7 +92,7 @@ closure apply_op(OperationArgs& Args)
 	closure::Env_t Env = {new_head_ref};
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
-	    int arg = Args.current_closure().runtime_reg_for_slot(i+1);
+	    int arg = Args.current_closure().reg_for_slot(i+1);
 	    Env.push_back(arg);
 	}
 
@@ -173,7 +173,7 @@ static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const clo
             int n_args = Runtime::pattern_arity(runtime_case.alts[i].pattern);
             for(int j=0;j<n_args;j++)
             {
-                auto field = object.runtime_slot(j);
+                auto field = object.slot(j);
                 if (auto reg_ref = field.to<Runtime::RegRef>())
                     result.Env.push_back(reg_ref->target);
                 else

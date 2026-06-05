@@ -516,7 +516,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
 
 Core::Exp<> compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
 {
-    return unlet(untranslate_vars(runtime_deindexify(C[R]), ids));
+    return unlet(untranslate_vars(deindexify(C[R]), ids));
 }
 
 void write_dot_graph(const reg_heap& C)
@@ -664,7 +664,7 @@ string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure
         return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
     }
 
-    auto E2 = subst_diagnostic_vars(runtime_deindexify(arg), diagnostic_reg_replacements(replace));
+    auto E2 = subst_diagnostic_vars(deindexify(arg), diagnostic_reg_replacements(replace));
     return "<td>" + escape(E2.print()) + "</td>";
 }
 
@@ -720,7 +720,7 @@ string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& 
         return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
     }
 
-    auto E2 = runtime_deindexify(arg);
+    auto E2 = deindexify(arg);
     E2 = subst_diagnostic_vars(E2, diagnostic_reg_replacements(make_factor_graph_replacements(reg_names, constants)));
     E2 = map_symbol_names(E2, simplify);
 
@@ -800,7 +800,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
     }
     else
     {
-        auto E = unlet(subst_diagnostic_vars(runtime_deindexify(C[R]), diagnostic_reg_replacements(replace)));
+        auto E = unlet(subst_diagnostic_vars(deindexify(C[R]), diagnostic_reg_replacements(replace)));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -855,7 +855,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     else
     {
         auto replace = make_factor_graph_replacements(reg_names, constants);
-        auto E = unlet(subst_diagnostic_vars(runtime_deindexify(CR), diagnostic_reg_replacements(replace)));
+        auto E = unlet(subst_diagnostic_vars(deindexify(CR), diagnostic_reg_replacements(replace)));
         E = map_symbol_names(E, simplify);
 
         label += E.print();
@@ -889,7 +889,7 @@ map<int,Core::Exp<>> get_names_for_regs(const reg_heap& M)
     {
 	if (auto E = M.closure_at(r).get_code(); E.is_atomic_value() and not E.to<GCObject>() and E.print().size() < 25)
 	{
-	    reg_to_expression.insert({r,runtime_deindexify(E)});
+	    reg_to_expression.insert({r,deindexify(E)});
 	}
 	else if (reg_to_var.contains(r))
 	{

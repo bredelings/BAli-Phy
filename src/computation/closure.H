@@ -33,16 +33,11 @@ public:
 
     bool operator==(const closure& C2) const {return code == C2.code and Env == C2.Env;}
 
-    int reg_for_slot(int i) const
-    {
-        return runtime_reg_for_slot(i);
-    }
+    int n_slots() const;
 
-    int runtime_n_slots() const;
+    Runtime::Exp slot(int i) const;
 
-    Runtime::Exp runtime_slot(int i) const;
-
-    int runtime_reg_for_slot(int i) const;
+    int reg_for_slot(int i) const;
 
     bool is_reg_ref() const
     {

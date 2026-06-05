@@ -11,7 +11,7 @@ using std::string;
 
 namespace
 {
-    const Runtime::Exp& runtime_slot_ref(const Runtime::Exp& E, int i)
+    const Runtime::Exp& slot_ref(const Runtime::Exp& E, int i)
     {
         auto app = E.to<Runtime::App>();
         assert(app);
@@ -34,13 +34,13 @@ void closure::clear()
 
 string closure::print() const
 {
-    string result = runtime_deindexify(*this).print();
+    string result = deindexify(*this).print();
     if (Env.size())
 	result += " {" + join(Env,", ") + "}";
     return result;
 }
 
-int closure::runtime_n_slots() const
+int closure::n_slots() const
 {
     assert(has_code());
 
@@ -52,9 +52,9 @@ int closure::runtime_n_slots() const
         std::abort();
 }
 
-Runtime::Exp closure::runtime_slot(int i) const
+Runtime::Exp closure::slot(int i) const
 {
-    const auto& E = runtime_slot_ref(code, i);
+    const auto& E = slot_ref(code, i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return Runtime::RegRef(lookup_in_env(index_var->index));
@@ -62,9 +62,9 @@ Runtime::Exp closure::runtime_slot(int i) const
         return E;
 }
 
-int closure::runtime_reg_for_slot(int i) const
+int closure::reg_for_slot(int i) const
 {
-    const auto& E = runtime_slot_ref(code, i);
+    const auto& E = slot_ref(code, i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return lookup_in_env(index_var->index);

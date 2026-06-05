@@ -42,7 +42,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 {
     string SSS = unlet(untranslate_vars(
-                           untranslate_vars(runtime_deindexify(C), M.get_identifiers()),
+                           untranslate_vars(deindexify(C), M.get_identifiers()),
                            get_constants(M,t)
                            )
         ).print();
@@ -55,7 +55,7 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
 {
     string SSS = unlet(untranslate_vars(
-                           untranslate_vars(runtime_deindexify(M[R]), M.get_identifiers()),
+                           untranslate_vars(deindexify(M[R]), M.get_identifiers()),
                            get_constants(M,t)
                            )
         ).print();
@@ -1281,7 +1281,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
             string SS = "";
             SS = compact_graph_expression(*this, r, get_identifiers()).print();
-            string SSS = untranslate_vars(runtime_deindexify(closure_at(r)),
+            string SSS = untranslate_vars(deindexify(closure_at(r)),
                                           get_identifiers()).print();
             if (log_verbose >= 3)
                 write_dot_graph(*this);

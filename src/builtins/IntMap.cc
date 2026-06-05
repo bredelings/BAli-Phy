@@ -420,12 +420,12 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
 
 closure makeRVector(OperationArgs& Args)
 {
-    int n = Args.runtime_n_slots();
+    int n = Args.n_args();
 
     R::RVector result;
     for(int i=0;i<n;i++)
     {
-	int r = Args.runtime_reg_for_slot(i);
+	int r = Args.reg_for_slot(i);
 	result.push_back(Args.evaluate_reg_to_closure(r).get_code());
     }
     return result;

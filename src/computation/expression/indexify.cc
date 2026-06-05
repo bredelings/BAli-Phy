@@ -38,7 +38,7 @@ Runtime::Exp runtime_atom_from_constant(const Core::Constant& C)
         std::abort();
 }
 
-Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
+Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
 {
     // Variable
     if (auto V = E.to_var())
@@ -59,7 +59,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     {
         variables.push_back(L->x);
 
-        auto E2 = Runtime::Lambda(runtime_indexify(L->body, variables));
+        auto E2 = Runtime::Lambda(indexify(L->body, variables));
 
         variables.pop_back();
 
@@ -68,8 +68,8 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     // Apply expression
     else if (auto A = E.to_apply())
     {
-        auto head = runtime_indexify(A->head, variables);
-        auto arg = runtime_indexify(A->arg, variables);
+        auto head = indexify(A->head, variables);
+        auto arg = indexify(A->arg, variables);
 
         return Runtime::App(Runtime::FunctionApply{}, {head, arg});
     }
@@ -81,9 +81,9 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
 
         vector<Runtime::Exp> binds;
         for(auto& [_,e]: L->decls)
-            binds.push_back(runtime_indexify(e, variables));
+            binds.push_back(indexify(e, variables));
 
-        auto body = runtime_indexify(L->body, variables);
+        auto body = indexify(L->body, variables);
 
         for(int i=0;i<L->decls.size();i++)
             variables.pop_back();
@@ -94,7 +94,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     // case expression
     else if (auto C = E.to_case())
     {
-        auto object2 = runtime_indexify(C->object, variables);
+        auto object2 = indexify(C->object, variables);
 
         vector<Runtime::Alt> alts2;
         for(auto& [pattern, body]: C->alts)
@@ -105,7 +105,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
             if (pattern.is_wildcard_pat())
             {
                 pattern2 = Runtime::WildcardPattern{};
-                body2 = runtime_indexify(body, variables);
+                body2 = indexify(body, variables);
             }
             else
             {
@@ -114,7 +114,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
                 for(auto& arg: pattern.args)
                     variables.push_back(arg);
 
-                body2 = runtime_indexify(body, variables);
+                body2 = indexify(body, variables);
 
                 for(auto& _: pattern.args)
                     variables.pop_back();
@@ -129,7 +129,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     {
         vector<Runtime::Exp> args;
         for(auto& arg: C->args)
-            args.push_back(runtime_indexify(arg, variables));
+            args.push_back(indexify(arg, variables));
 
         return Runtime::App(Runtime::ConstructorApp(C->head, C->args.size()), args);
     }
@@ -137,20 +137,20 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     {
         vector<Runtime::Exp> args;
         for(auto& arg: B->args)
-            args.push_back(runtime_indexify(arg, variables));
+            args.push_back(indexify(arg, variables));
 
         return Runtime::App(Runtime::builtin_operation_app(B->op, B->lib_name, B->func_name, B->call_conv), args);
     }
     else if (auto C = E.to_constant())
         return runtime_atom_from_constant(*C);
     else if (E.to_runtimeOnly())
-        throw myexception()<<"runtime_indexify: expression '"<<E<<"' is not representable as Runtime code.";
+        throw myexception()<<"indexify: expression '"<<E<<"' is not representable as Runtime code.";
 
     std::abort();
 }
 
-Runtime::Exp runtime_indexify(const Core::Exp<>& E)
+Runtime::Exp indexify(const Core::Exp<>& E)
 {
     vector<Core::Var<>> variables;
-    return runtime_indexify(E, variables);
+    return indexify(E, variables);
 }

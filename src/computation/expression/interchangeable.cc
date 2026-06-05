@@ -31,7 +31,7 @@
 closure interchangeable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
-    int n_args = C.runtime_n_slots();
+    int n_args = C.n_slots();
 
     if (n_args == 2)
     {

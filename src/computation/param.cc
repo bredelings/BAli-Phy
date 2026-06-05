@@ -13,7 +13,7 @@ using std::vector;
 
 namespace
 {
-Runtime::Exp runtime_head_code(const Runtime::Exp& E)
+Runtime::Exp head_code(const Runtime::Exp& E)
 {
     auto app = E.to<Runtime::App>();
     if (not app)
@@ -32,7 +32,7 @@ Runtime::Exp runtime_head_code(const Runtime::Exp& E)
     }, app->head);
 }
 
-int runtime_size(const Runtime::Exp& E)
+int n_slots(const Runtime::Exp& E)
 {
     if (auto app = E.to<Runtime::App>())
         return app->args.size();
@@ -90,7 +90,7 @@ context_ptr context_ptr::operator[](int i) const
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
     auto& c = C.memory()->closure_at(r);
-    if (runtime_size(c.get_code()) == 0)
+    if (n_slots(c.get_code()) == 0)
     {
         if (auto im = c.get_code().to<IntMap>())
             r = (*im)[i];
@@ -206,14 +206,14 @@ int context_ptr::size() const
 {
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
-    return runtime_size(C.memory()->closure_at(r).get_code());
+    return n_slots(C.memory()->closure_at(r).get_code());
 }
 
 Runtime::Exp context_ptr::head() const
 {
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
-    return runtime_head_code(C.memory()->closure_at(r).get_code());
+    return head_code(C.memory()->closure_at(r).get_code());
 }
 
 context_ptr::context_ptr(const context_ref& c, int r1)

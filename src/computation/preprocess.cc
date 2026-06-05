@@ -141,7 +141,7 @@ namespace Runtime
 namespace
 {
 
-Core::Pattern<> runtime_deindexify_pattern(const Runtime::Pattern& pattern, vector<Core::Var<>>& variables)
+Core::Pattern<> deindexify_pattern(const Runtime::Pattern& pattern, vector<Core::Var<>>& variables)
 {
     return std::visit([&](const auto& p) -> Core::Pattern<>
     {
@@ -168,7 +168,7 @@ Core::Pattern<> runtime_deindexify_pattern(const Runtime::Pattern& pattern, vect
     }, pattern);
 }
 
-Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
+Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
 {
     if (E.to<Runtime::Int>() or E.to<Runtime::Double>() or E.to<Runtime::Char>() or
         E.to<Runtime::String>() or E.to<Runtime::Integer>())
@@ -203,7 +203,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
     {
         auto x = get_named_core_var(variables.size());
         variables.push_back(x);
-        auto body = runtime_deindexify(e->body, variables);
+        auto body = deindexify(e->body, variables);
         variables.pop_back();
 
         return Core::Lambda<>{x, body};
@@ -221,9 +221,9 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         }
 
         for(int i = 0; i < e->binds.size(); i++)
-            decls[i].body = runtime_deindexify(e->binds[i], variables);
+            decls[i].body = deindexify(e->binds[i], variables);
 
-        auto body = runtime_deindexify(e->body, variables);
+        auto body = deindexify(e->body, variables);
 
         for(int i = 0; i < e->binds.size(); i++)
             variables.pop_back();
@@ -232,15 +232,15 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
     }
     else if (auto e = E.to<Runtime::Case>())
     {
-        auto object = runtime_deindexify(e->object, variables);
+        auto object = deindexify(e->object, variables);
         vector<Core::Alt<>> alts;
         alts.reserve(e->alts.size());
 
         for(const auto& alt: e->alts)
         {
             auto old_size = variables.size();
-            auto pattern = runtime_deindexify_pattern(alt.pattern, variables);
-            auto body = runtime_deindexify(alt.body, variables);
+            auto pattern = deindexify_pattern(alt.pattern, variables);
+            auto body = deindexify(alt.body, variables);
             variables.resize(old_size);
             alts.push_back({pattern, body});
         }
@@ -252,7 +252,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         vector<Core::Exp<>> args;
         args.reserve(e->args.size());
         for(const auto& arg: e->args)
-            args.push_back(runtime_deindexify(arg, variables));
+            args.push_back(deindexify(arg, variables));
 
         if (std::holds_alternative<Runtime::FunctionApply>(e->head))
         {
@@ -303,7 +303,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
     }
     else if (E.to<Runtime::Trim>())
     {
-        return runtime_deindexify(Runtime::trim_unnormalize(E), variables);
+        return deindexify(Runtime::trim_unnormalize(E), variables);
     }
     else
         std::abort();
@@ -311,41 +311,41 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
 
 }
 
-Core::Exp<> runtime_deindexify(const Runtime::Exp& E, const vector<Core::Var<>>& variables)
+Core::Exp<> deindexify(const Runtime::Exp& E, const vector<Core::Var<>>& variables)
 {
     auto variables2 = variables;
-    return runtime_deindexify(E, variables2);
+    return deindexify(E, variables2);
 }
 
-Core::Exp<> runtime_deindexify(const Runtime::Exp& E)
+Core::Exp<> deindexify(const Runtime::Exp& E)
 {
-    return runtime_deindexify(E, vector<Core::Var<>>{});
+    return deindexify(E, vector<Core::Var<>>{});
 }
 
-Core::Exp<> runtime_deindexify(const closure& C)
+Core::Exp<> deindexify(const closure& C)
 {
     vector<Core::Var<>> variables;
     variables.reserve(C.Env.size());
     for(int r: C.Env)
         variables.push_back(env_reg_core_var(r));
 
-    return runtime_deindexify(trim_unnormalize(C).get_code(), variables);
+    return deindexify(trim_unnormalize(C).get_code(), variables);
 }
 
-Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)
+Core::Exp<> unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)
 {
     auto E2 = Runtime::untranslate_vars(E, ids);
     E2 = Runtime::trim_unnormalize(E2);
-    return runtime_deindexify(E2);
+    return deindexify(E2);
 }
 
-Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp& E, const map<string, int>& ids)
+Core::Exp<> unprepare_for_translation(const Runtime::Exp& E, const map<string, int>& ids)
 {
     map<int, string> reg_to_name;
     for(const auto& [name, reg]: ids)
         reg_to_name[reg] = name;
 
-    return runtime_unprepare_for_translation(E, reg_to_name);
+    return unprepare_for_translation(E, reg_to_name);
 }
 
 
@@ -486,20 +486,20 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
-Runtime::Exp runtime_prepare_for_translation(FreshVarSource& source, const Core::Exp<>& E)
+Runtime::Exp prepare_for_translation(FreshVarSource& source, const Core::Exp<>& E)
 {
     auto E2 = graph_normalize(source, E);
-    auto R = runtime_indexify(E2);
+    auto R = indexify(E2);
     Runtime::check_invariants(R);
     R = Runtime::trim_normalize(R);
     Runtime::check_invariants(R);
     return R;
 }
 
-Runtime::Exp runtime_prepare_for_translation(FreshVarState& state, const Core::Exp<>& E)
+Runtime::Exp prepare_for_translation(FreshVarState& state, const Core::Exp<>& E)
 {
     FreshVarSource source(state);
-    return runtime_prepare_for_translation(source, E);
+    return prepare_for_translation(source, E);
 }
 
 closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
@@ -536,7 +536,7 @@ closure reg_heap::preprocess_prepared(Runtime::Exp E, closure::Env_t Env)
 
 closure reg_heap::preprocess(const Core::Exp<>& E)
 {
-    return preprocess_prepared(runtime_prepare_for_translation(fresh_var_state, E));
+    return preprocess_prepared(prepare_for_translation(fresh_var_state, E));
 }
 
 int reg_heap::reg_for_id(const Runtime::GlobalVar& x)
