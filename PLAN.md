@@ -263,6 +263,12 @@ Recent scan results:
 - `let2_type` and the old `Let : Operation` object are gone.
 - Expression-ref trim/indexed-let/deindexify helpers that depended on `let2`
   are gone. Runtime trim/indexify/deindexify is the active path.
+- Runtime constructors are split from expression constructors:
+  `Runtime::Constructor`, `Runtime::ConstructorPattern`, and
+  `Runtime::ConstructorApp` store `Runtime::ConstructorTag` name/arity data
+  instead of the expression-side `constructor : Object`. Runtime constructor
+  producers now pass names and arities directly, and runtime boolean checks use
+  `ConstructorTag` overloads.
 - Large `EVector` surfaces remain in likelihood/substitution and several
   builtins. These are evaluated-value containers, but they are broader than the
   evaluator API itself and should be migrated incrementally.
@@ -279,10 +285,12 @@ Recent scan results:
    caller need for a synthetic head value. Then replace `evaluate.cc`'s static
    `Apply` object with direct use of `apply_op`.
 
-3. Split runtime constructors from expression constructors: change
-   `Runtime::Constructor`, `Runtime::ConstructorPattern`, and
-   `Runtime::ConstructorApp` to store a name and arity directly instead of the
-   expression-side `constructor` object.
+3. Evaluate whether expression-side `constructor` can stop deriving from
+   `Object`. This would block accidental constructor-as-object runtime
+   conversions, but it is broader than the runtime split because
+   `expression_ref` still represents parsed/legacy constructors as object heads.
+   A viable change probably needs either a dedicated expression constructor node
+   or a clearly named legacy wrapper.
 
 4. Continue SMC vector migration in narrow groups: convert helper signatures
    from `EVector` to `Runtime::RVector` where the helper only needs scalar
