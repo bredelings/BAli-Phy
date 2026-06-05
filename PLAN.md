@@ -19,8 +19,8 @@ Completed so far:
   `context_ptr`, using `_code` suffixes where legacy expression APIs still
   occupy the original names.
 - Migrated obvious MCMC/SMC scalar evaluation callers to runtime values.
-- Removed `reg_heap::expression_at()` from the live evaluator loops in
-  `src/computation/machine/evaluate.cc`.
+- Removed `reg_heap::expression_at()` entirely. Legacy display code now calls
+  `closure_at(...).legacy_exp()` directly at the display boundary.
 - Reworked `context_ptr` internals so `operator[]`, `size()`, and legacy
   `head()` inspect `Runtime::Exp` rather than `expression_at()` /
   `legacy_exp()`.
@@ -42,6 +42,9 @@ Completed so far:
 - Changed the program unsharing helpers (`unshare_regs2` and
   `unshare_and_evaluate_program`) to return `void`; `evaluate_program()` is now
   the closure-returning API for program results.
+- Removed the `Runtime::rpair_first/second(expression_ref)` overloads; legacy
+  EVector callers now unpack `RPair` explicitly, while runtime callers use the
+  `Runtime::Exp` overloads.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -66,15 +69,16 @@ compatibility layers.
    except graph display/debug helpers. Program unsharing is side-effect only,
    and `evaluate_program()` returns the resulting closure.
 
-3. `reg_heap::expression_at()` remains as a compatibility accessor over
-   `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
-   `context_ref`, assertion/check, and graph-register comparison call sites
-   have been removed. The remaining live use is graph display naming; other
-   mentions are comments and the compatibility accessor itself.
+3. Graph display remains a legacy-expression boundary, but it now calls
+   `closure::legacy_exp()` directly. There is no `reg_heap::expression_at()`
+   compatibility accessor anymore.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
    adapters. Long term they should be used at parser/model-generation/display
    boundaries and by explicitly legacy APIs, not by runtime-native evaluation.
+   `Runtime::atomic_value()` and `Runtime::e_op_value()` still take
+   `expression_ref` because they bridge legacy literal/constructor values into
+   runtime values.
 
 ## Caller Migration Hotspots
 
@@ -106,6 +110,10 @@ compatibility layers.
    callers, then SMC helper functions that still require `EVector` /
    `expression_ref`.
 
-4. After each code batch, build `src/bali-phy/bali-phy` from
+4. Decide whether `Runtime::atomic_value()` / `Runtime::e_op_value()` should
+   move out of `runtime/ast` into an explicit legacy conversion module, or
+   whether callers should first migrate away from expression_ref values.
+
+5. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.
