@@ -19,6 +19,7 @@ using std::set;
 using std::ofstream;
 
 map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars);
+vector<int> record_targets(const closure& C);
 
 Core::Exp<> map_symbol_names(const Core::Exp<>& E, const std::map<string,string>& simplify)
 {
@@ -315,6 +316,9 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
         }
 
 	for(int j:R.C.Env)
+            visit_reg(j);
+
+	for(int j: record_targets(R.C))
             visit_reg(j);
 
 	// We can get dependencies on used regs that are not in the environment if we
@@ -1101,6 +1105,17 @@ void context_ref::write_factor_graph(std::ostream& o) const
     {
         int r = regs2[i];
         if (is_modifiable(M[r].get_code())) continue;
+        if (print_as_record(M[r].get_code()))
+            for(auto r2: record_targets(M[r]))
+            {
+                r2 = M.follow_reg_ref(r2);
+                if (not regs2_set.count(r2))
+                {
+                    regs2_set.insert(r2);
+                    regs2.push_back(r2);
+                }
+            }
+
         for(auto r2: M[r].Env)
         {
             r2 = M.follow_reg_ref(r2);
