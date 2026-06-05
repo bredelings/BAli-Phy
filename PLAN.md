@@ -30,6 +30,9 @@ Completed so far:
   haplotype-index lists to `list_to_vector_code()`.
 - Made `reg_heap::get_reg_value_in_context()` a legacy wrapper around
   `get_reg_value_closure_in_context()`.
+- Removed simple `context_ref` uses of `reg_heap::expression_at()` from
+  `evaluate_reg()` and `reg_is_modifiable()`; these now use evaluated closures
+  or runtime-code predicates directly.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -47,7 +50,8 @@ compatibility layers.
 1. `context_ref` still exposes legacy evaluation APIs returning
    `expression_ref`: `evaluate_*`, `get_reg_value*`, `get_modifiable_value`,
    `get_expression`, and `evaluate_program`. Runtime-returning `_code` methods
-   exist beside many of these.
+   exist beside many of these, and several legacy wrappers now delegate through
+   closures/runtime code.
 
 2. `reg_heap` still exposes legacy evaluation APIs returning `expression_ref`:
    `evaluate_program`, `unshare_and_evaluate_program`, `unshare_regs2`, and
@@ -55,9 +59,10 @@ compatibility layers.
    of these, and should become the implementation path.
 
 3. `reg_heap::expression_at()` remains as a compatibility accessor over
-   `closure::legacy_exp()`. It is no longer in evaluator loops, but it remains
-   in legacy wrappers, graph-register comparison/debug code, and some
-   assertions.
+   `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
+   `context_ref` call sites have been removed. Remaining uses are mostly
+   graph-register comparison/debug code, interchangeability assertions, graph
+   display naming, and the accessor itself.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
    adapters. Long term they should be used at parser/model-generation/display
@@ -85,15 +90,19 @@ compatibility layers.
 
 2. Add missing closure/runtime-returning variants for program unsharing paths
    (`unshare_regs2`, `unshare_and_evaluate_program`) so `evaluate_program` can
-   become a legacy wrapper around a runtime-native implementation.
+   become a legacy wrapper around a runtime-native implementation. Treat this
+   as the next larger evaluator-facing API batch.
 
 3. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
-   closure-returning APIs. Rename to `_legacy` only if the churn is modest;
-   otherwise keep temporary suffix comments current.
+   closure-returning APIs. The easy `evaluate_reg()` / `reg_is_modifiable()`
+   cases are done; remaining cases should be handled where lifetime and
+   reference-return behavior are clear. Rename to `_legacy` only if the churn is
+   modest; otherwise keep temporary suffix comments current.
 
 4. Replace non-evaluator `expression_at()` uses when they are assertions,
    comparisons, or internal checks rather than explicit legacy display/API
-   boundaries.
+   boundaries. Good small candidates are the interchangeability assertions in
+   MCMC/reroot code; graph display can stay legacy longer.
 
 5. Continue caller migration in focused batches: remaining `context_ptr`
    callers, then SMC helper functions that still require `EVector` /
