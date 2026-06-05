@@ -275,11 +275,11 @@ namespace
         require(c.is_atomic_value(), "runtime Char should be atomic");
         require(c.as_char() == 'x', "runtime Char value mismatch");
 
-        Runtime::Exp s = ::String("runtime");
+        Runtime::Exp s = std::string("runtime");
         require(s.is_atomic_value(), "runtime String should be atomic");
         require(s.as_string() == "runtime", "runtime String value mismatch");
 
-        Runtime::Exp n = ::Integer(integer("12345678901234567890"));
+        Runtime::Exp n = integer("12345678901234567890");
         require(n.is_atomic_value(), "runtime Integer should be atomic");
         require(n.as_integer() == integer("12345678901234567890"), "runtime Integer value mismatch");
 
@@ -293,7 +293,7 @@ namespace
         require(vector_value.as_<R::RVector>().size() == 2, "runtime ObjectValue value mismatch");
 
         Runtime::Exp pair = Runtime::App(Runtime::ConstructorApp("Pair", 2),
-                                         {Runtime::Exp(1), Runtime::Exp(::String("field"))});
+                                         {Runtime::Exp(1), Runtime::Exp("field")});
         require(pair.is_value(), "constructor applications should be runtime values");
         auto app = pair.to<Runtime::App>();
         require(bool(app), "constructor application should convert to Runtime::App");

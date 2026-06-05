@@ -9,7 +9,7 @@ extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
 {
     auto etext = get_arg(args).as_<R::RVector>();
 
-    String s;
+    std::string s;
     s.resize(etext.size());
     for(int i=0;i<etext.size();i++)
         s[i] = etext[i].as_char();
@@ -20,7 +20,7 @@ extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
-    String s;
+    std::string s;
     s.push_back(c);
 
     return s;
@@ -28,7 +28,7 @@ extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_empty(vector<R::Exp>& args)
 {
-    String s;
+    std::string s;
 
     return s;
 }
@@ -37,18 +37,18 @@ extern "C" R::Exp simple_function_cons(vector<R::Exp>& args)
 {
     char c = get_arg(args).as_char();
 
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
-    return String(c + s);
+    return (c + s);
 }
 
 extern "C" R::Exp simple_function_snoc(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     char c = get_arg(args).as_char();
 
-    return String(s + c);
+    return (s + c);
 }
 
 extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
@@ -61,20 +61,19 @@ extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
     int offset2 = get_arg(args).as_int();
     int length2 = get_arg(args).as_int();
 
-    auto result = new String;
-    String& s3 = *result;
+    std::string s3;
 
     s3.reserve(length1+length2);
 
     s3 = s1.as_string().substr(offset1,length1);
     s3 += s2.as_string().substr(offset2,length2);
 
-    return result;
+    return s3;
 }
 
 extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.head: empty Text!";
@@ -86,7 +85,7 @@ extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.last: empty Text!";
@@ -98,7 +97,7 @@ extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_init(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.init: empty Text!";
@@ -110,7 +109,7 @@ extern "C" R::Exp simple_function_init(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_tail(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     if (s.empty())
         throw myexception()<<"Text.tail: empty Text!";
@@ -122,7 +121,7 @@ extern "C" R::Exp simple_function_tail(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_length(vector<R::Exp>& args)
 {
-    String s  = get_arg(args).as_string();
+    std::string s  = get_arg(args).as_string();
 
     int length = s.size();
 
@@ -166,7 +165,7 @@ extern "C" R::Exp simple_function_concatRaw(vector<R::Exp>& args)
     auto arg0 = get_arg(args);
     auto& strings = arg0.as_<R::RVector>();
 
-    String result;
+    std::string result;
     for(auto& string: strings)
         result += string.as_string();
 
@@ -178,7 +177,7 @@ std::string escape_for_newick(const std::string& s);
 
 extern "C" R::Exp simple_function_quoteLabelRaw(vector<R::Exp>& args)
 {
-    String label = get_arg(args).as_string();
+    std::string label = get_arg(args).as_string();
     label = escape_for_newick(label);
     return label;
 }

@@ -82,11 +82,11 @@ namespace Runtime
         Exp(std::string);
         Exp(const char*);
         Exp(integer);
-        Exp(const ::Integer&);
+        Exp(const ::Integer&) = delete;
         Exp(const Object&);
         Exp(const Object*);
         Exp(object_ptr<const Object>);
-        Exp(const ::String&);
+        Exp(const ::String&) = delete;
 
         template <DerivedFromObject T>
         Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}

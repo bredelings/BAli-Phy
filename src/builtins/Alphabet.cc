@@ -29,7 +29,7 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 
     auto v = new R::RVector;
     for(int i=0;i<a.n_letters();i++)
-	v->push_back(String(a.letter(i)));
+	v->push_back(a.letter(i));
   
     return v;
 }

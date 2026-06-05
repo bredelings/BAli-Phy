@@ -162,7 +162,7 @@ extern "C" R::Exp simple_function_div_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
   
-    return Integer(div(x,y));
+    return div(x,y);
 }
 
 extern "C" R::Exp simple_function_mod_integer(vector<R::Exp>& args)
@@ -170,7 +170,7 @@ extern "C" R::Exp simple_function_mod_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
   
-    return Integer(mod(x,y));
+    return mod(x,y);
 }
 
 // x `quot` y should round towards zero.
@@ -180,7 +180,7 @@ extern "C" R::Exp simple_function_quot_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
 
-    return Integer(x / y);
+    return integer(x / y);
 }
 
 extern "C" R::Exp simple_function_rem_integer(vector<R::Exp>& args)
@@ -188,7 +188,7 @@ extern "C" R::Exp simple_function_rem_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
   
-    return Integer(x % y);
+    return integer(x % y);
 }
 
 extern "C" R::Exp simple_function_increment_int(vector<R::Exp>& args)

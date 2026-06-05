@@ -40,11 +40,9 @@ namespace Runtime
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
-    Exp::Exp(const ::Integer& x):Exp(Integer(x.value())) {}
     Exp::Exp(const Object& x):Exp(object_exp(const_ptr(x))) {}
     Exp::Exp(const Object* x):Exp(object_exp(object_ptr<const Object>(x))) {}
     Exp::Exp(object_ptr<const Object> x):Exp(object_exp(std::move(x))) {}
-    Exp::Exp(const ::String& x):Exp(String(x.value())) {}
     Exp::Exp(Int node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Double node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(LogDouble node):value(make_exp_value(std::move(node))) {}

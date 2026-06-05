@@ -39,7 +39,7 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
       // Probably I should write an actual parser.
       R::RVector vec_line;
       for(auto field: split(line, sep))
-          vec_line.push_back(String(field));
+          vec_line.push_back(field);
       vec_all_lines.push_back(vec_line);
   }
 

@@ -14,10 +14,10 @@ using std::vector;
 
 namespace
 {
-    String modifiable_string(const R::Exp& E)
+    std::string modifiable_string(const R::Exp& E)
     {
         if (E.to<R::String>())
-            return String(E.as_string());
+            return E.as_string();
         else
             return E.as_<String>();
     }
@@ -80,7 +80,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
     int r_from_var = Args.reg_for_slot(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
-    String role = modifiable_string(Args.evaluate_slot_to_value(2));
+    std::string role = modifiable_string(Args.evaluate_slot_to_value(2));
 
     R::Exp E = R::App(R::ConstructorApp("Effect.InEdge", 3),
                       {R::IndexVar(0), r_to_dist, role});
@@ -109,7 +109,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 {
-    String name = modifiable_string(Args.evaluate_slot_to_value(0));
+    std::string name = modifiable_string(Args.evaluate_slot_to_value(0));
 
     int observation = Args.evaluate_slot_to_value(1).as_int();
 
@@ -133,7 +133,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop = Args.reg_for_slot(1);
-    String property = modifiable_string(Args.evaluate_slot_to_value(2));
+    std::string property = modifiable_string(Args.evaluate_slot_to_value(2));
 
     R::Exp E = R::App(R::ConstructorApp("Effect.DistProperty", 3),
                       {r_from_dist, property, R::IndexVar(0)});

@@ -837,7 +837,7 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
 
     R::RVector sequence_names;
     for(int i=0;i<A.n_sequences();i++)
-	sequence_names.push_back(String(A.seq(i).name));
+	sequence_names.push_back(A.seq(i).name);
 
     return sequence_names;
 }

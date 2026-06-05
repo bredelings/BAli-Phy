@@ -13,7 +13,7 @@ extern "C" R::Exp simple_function_add_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
 
-    return Integer( x + y );
+    return integer(x + y);
 }
 
 extern "C" R::Exp simple_function_subtract_integer(vector<R::Exp>& args)
@@ -21,7 +21,7 @@ extern "C" R::Exp simple_function_subtract_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
 
-    return Integer( x - y );
+    return integer(x - y);
 }
 
 extern "C" R::Exp simple_function_multiply_integer(vector<R::Exp>& args)
@@ -29,14 +29,14 @@ extern "C" R::Exp simple_function_multiply_integer(vector<R::Exp>& args)
     integer x = get_arg(args).as_integer();
     integer y = get_arg(args).as_integer();
 
-    return Integer( x * y );
+    return integer(x * y);
 }
 
 extern "C" R::Exp simple_function_abs_integer(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
-    return Integer( (x < 0) ? -x : x );
+    return integer((x < 0) ? -x : x);
 }
 
 
@@ -44,7 +44,7 @@ extern "C" R::Exp simple_function_negate_integer(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
-    return Integer( -x );
+    return integer(-x);
 }
 
 extern "C" R::Exp simple_function_signum_integer(vector<R::Exp>& args)
@@ -53,7 +53,7 @@ extern "C" R::Exp simple_function_signum_integer(vector<R::Exp>& args)
 
     integer result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
 
-    return Integer( result );
+    return result;
 }
 
 //********** Builtins for Num Int ****************//
@@ -121,7 +121,7 @@ extern "C" R::Exp simple_function_intToInteger(vector<R::Exp>& args)
 {
     int x = get_arg(args).as_int();
 
-    return Integer(x);
+    return integer(x);
 }
 
 
@@ -189,7 +189,7 @@ extern "C" R::Exp simple_function_charToInteger(vector<R::Exp>& args)
 {
     char x = get_arg(args).as_char();
 
-    return Integer(x);
+    return integer(x);
 }
 
 
@@ -205,7 +205,7 @@ extern "C" R::Exp simple_function_charToInt(vector<R::Exp>& args)
 {
     char x = get_arg(args).as_char();
 
-    return {int(x)};
+    return { int(x) };
 }
 
 

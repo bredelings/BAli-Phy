@@ -25,7 +25,7 @@ extern "C" closure builtin_function_getArgs(OperationArgs& Args)
 
     R::RVector V;
     for(const auto& arg: M.args)
-        V.push_back(String(arg));
+        V.push_back(arg);
 
     return V;
 }
