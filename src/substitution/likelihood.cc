@@ -147,7 +147,7 @@ namespace substitution {
     }
 
 
-    inline double sum(const Matrix& Q, const EVector& smap, int s1, int l)
+    inline double sum(const Matrix& Q, const R::RVector& smap, int s1, int l)
     {
         double total = 0;
         int n_states = smap.size();
@@ -160,7 +160,7 @@ namespace substitution {
         return total;
     }
 
-    inline double sum(const Matrix& Q,const EVector& smap,
+    inline double sum(const Matrix& Q,const R::RVector& smap,
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
@@ -346,9 +346,9 @@ namespace substitution {
         return Pr;
     }
 
-    EVector sparse_to_dense(const EVector& LCN)
+    R::RVector sparse_to_dense(const R::RVector& LCN)
     {
-        EVector LCN2;
+        R::RVector LCN2;
         for(auto& lc: LCN)
         {
             if (auto SL = lc.to<SparseLikelihoods>())
@@ -359,9 +359,9 @@ namespace substitution {
         return LCN2;
     }
 
-    log_double_t calc_prob_at_root(const EVector& sparse_LCN,
-				   const EVector& LCB,
-				   const EVector& A_,
+    log_double_t calc_prob_at_root(const R::RVector& sparse_LCN,
+				   const R::RVector& LCB,
+				   const R::RVector& A_,
 				   const Matrix& F)
     {
         total_calc_root_prob++;
@@ -482,9 +482,9 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root(const EVector& sparse_LCN,
-				       const EVector& LCB,
-				       const EVector& A_,
+    log_double_t calc_prob_not_at_root(const R::RVector& sparse_LCN,
+				       const R::RVector& LCB,
+				       const R::RVector& A_,
 				       const Matrix& F)
     {
         total_calc_root_prob++;
@@ -607,9 +607,9 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob(const EVector& LCN,
-			   const EVector& LCB,
-			   const EVector& A_,
+    log_double_t calc_prob(const R::RVector& LCN,
+			   const R::RVector& LCB,
+			   const R::RVector& A_,
 			   const Matrix& F)
     {
 	optional<int> away_from_root_index;
@@ -636,9 +636,9 @@ namespace substitution {
 	}
     }
 
-    log_double_t calc_prob_at_root_non_eq(const EVector& sparse_LCN,
-					  const EVector& LCB,
-					  const EVector& A_,
+    log_double_t calc_prob_at_root_non_eq(const R::RVector& sparse_LCN,
+					  const R::RVector& LCB,
+					  const R::RVector& A_,
 					  const Matrix& F)
     {
         total_calc_root_prob++;
@@ -759,9 +759,9 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root_non_eq(const EVector& sparse_LCN,
-					      const EVector& LCB,
-					      const EVector& A_)
+    log_double_t calc_prob_not_at_root_non_eq(const R::RVector& sparse_LCN,
+					      const R::RVector& LCB,
+					      const R::RVector& A_)
     {
         total_calc_root_prob++;
 
@@ -888,9 +888,9 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_prob_non_eq(const EVector& LCN,
-				  const EVector& LCB,
-				  const EVector& A_,
+    log_double_t calc_prob_non_eq(const R::RVector& LCN,
+				  const R::RVector& LCB,
+				  const R::RVector& A_,
 				  const Matrix& F)
     {
 	optional<int> away_from_root_index;
@@ -918,7 +918,7 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P)
+    peel_leaf_branch_simple(const R::RVector& sequence, const alphabet& a, const R::RVector& transition_P)
     {
         total_peel_leaf_branches++;
 
@@ -970,7 +970,7 @@ namespace substitution {
         return LCB;
     }
 
-    bool is_iota(const EVector& v)
+    bool is_iota(const R::RVector& v)
     {
         for(int i=0;i<v.size();i++)
             if (i != v[i].as_int())
@@ -982,7 +982,7 @@ namespace substitution {
     // This version differs from the 'simple' version because it has to use sum(Q,smap,s1,l2)
     // instead of just Q(s1,l2).
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap)
+    peel_leaf_branch(const R::RVector& sequence, const alphabet& a, const R::RVector& transition_P, const R::RVector& smap)
     {
         // Do this before accessing matrices or other_subst
         int L0 = sequence.size();
@@ -1032,7 +1032,7 @@ namespace substitution {
                          const Likelihood_Cache_Branch& LCB2,
                          const pairwise_alignment_t& A0,
                          const pairwise_alignment_t& A1,
-                         const EVector& transition_P,
+                         const R::RVector& transition_P,
                          const Matrix& F)
     {
         total_peel_internal_branches++;
@@ -1136,7 +1136,7 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const Likelihood_Cache_Branch& nodeCLV,
-                                 const EVector& transition_P, bool equilibrium = true)
+                                 const R::RVector& transition_P, bool equilibrium = true)
     {
         total_peel_leaf_branches++;
 
@@ -1170,7 +1170,7 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const SparseLikelihoods& nodeCLV,
-                                 const EVector& transition_P,
+                                 const R::RVector& transition_P,
                                  bool equilibrium)
     {
         total_peel_leaf_branches++;
@@ -1244,7 +1244,20 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const expression_ref& nodeCLV,
-                                 const EVector& transition_P,
+                                 const R::RVector& transition_P,
+                                 bool equilibrium = true)
+    {
+	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
+	    return peel_leaf_branch_toward_root(*LCB, transition_P, equilibrium );
+	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
+	    return peel_leaf_branch_toward_root(*SL, transition_P, equilibrium );
+	else
+	    throw myexception()<<"peel_leaf_branch_toward_root: leaf object not recognized!";
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_toward_root(const R::Exp& nodeCLV,
+                                 const R::RVector& transition_P,
                                  bool equilibrium = true)
     {
 	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
@@ -1257,10 +1270,10 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_toward_root(const EVector& sparse_LCN,
-			    const EVector& LCB,
-			    const EVector& A_,
-			    const EVector& transition_P,
+    peel_branch_toward_root(const R::RVector& sparse_LCN,
+			    const R::RVector& LCB,
+			    const R::RVector& A_,
+			    const R::RVector& transition_P,
 			    const Matrix& F)
     {
         // The SEV version also special-cases:
@@ -1379,10 +1392,10 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_at_root(const EVector& sparse_LCN,
-			const EVector& LCB,
-			const EVector& A_,
-			const EVector& transition_P,
+    peel_branch_at_root(const R::RVector& sparse_LCN,
+			const R::RVector& LCB,
+			const R::RVector& A_,
+			const R::RVector& transition_P,
 			const Matrix& F)
     {
         total_peel_internal_branches++;
@@ -1496,10 +1509,10 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_at_root_non_eq(const EVector& sparse_LCN,
-			       const EVector& LCB,
-			       const EVector& A_,
-			       const EVector& transition_P,
+    peel_branch_at_root_non_eq(const R::RVector& sparse_LCN,
+			       const R::RVector& LCB,
+			       const R::RVector& A_,
+			       const R::RVector& transition_P,
 			       const Matrix& F)
     {
         total_peel_internal_branches++;
@@ -1617,10 +1630,10 @@ namespace substitution {
 				   const Runtime::Exp& A__,
 				   const Runtime::Exp& transition_P_)
     {
-	auto& sparse_LCN = LCN_.as_<EVector>();
-	auto& LCB = LCB_.as_<EVector>();
-	auto& A_ = A__.as_<EVector>();
-	auto& transition_P = transition_P_.as_<EVector>();
+	auto& sparse_LCN = LCN_.as_<R::RVector>();
+	auto& LCB = LCB_.as_<R::RVector>();
+	auto& A_ = A__.as_<R::RVector>();
+	auto& transition_P = transition_P_.as_<R::RVector>();
 
         // The SEV version also special-cases:
         // * LCN.empty() and LCB.size() == 2
@@ -1725,10 +1738,10 @@ namespace substitution {
 
 	LCB_OUT->other_subst_f = [LCN_, LCB_, A__, transition_P_](const Matrix& F_in)
 	{
-	    auto& LCN = LCN_.as_<EVector>();
-	    auto& LCB = LCB_.as_<EVector>();
-	    auto& A_ = A__.as_<EVector>();
-	    auto& transition_P = transition_P_.as_<EVector>();
+	    auto& LCN = LCN_.as_<R::RVector>();
+	    auto& LCB = LCB_.as_<R::RVector>();
+	    auto& A_ = A__.as_<R::RVector>();
+	    auto& transition_P = transition_P_.as_<R::RVector>();
 	    auto F = propagate_frequencies(F_in, transition_P);
 
 	    auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
@@ -1780,10 +1793,10 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root(const EVector& sparse_LCN,
-			       const EVector& LCB,
-			       const EVector& A_,
-			       const EVector& transition_P,
+    peel_branch_away_from_root(const R::RVector& sparse_LCN,
+			       const R::RVector& LCB,
+			       const R::RVector& A_,
+			       const R::RVector& transition_P,
 			       const Matrix& F)
     {
 	optional<int> away_from_root_index;
@@ -1911,10 +1924,10 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root_non_eq(const EVector& sparse_LCN,
-				      const EVector& LCB,
-				      const EVector& A_,
-				      const EVector& transition_P,
+    peel_branch_away_from_root_non_eq(const R::RVector& sparse_LCN,
+				      const R::RVector& LCB,
+				      const R::RVector& A_,
+				      const R::RVector& transition_P,
 				      const Matrix& rootF)
     {
 	optional<int> away_from_root_index;
@@ -2054,9 +2067,9 @@ namespace substitution {
     // If the node is the root, dp-matrix handles root frequencies external to this function.
 
     object_ptr<const Likelihood_Cache_Branch>
-    merge_branches(const EVector& sparse_LCN,
-		   const EVector& LCB,
-		   const EVector& A_)
+    merge_branches(const R::RVector& sparse_LCN,
+		   const R::RVector& LCB,
+		   const R::RVector& A_)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -2172,9 +2185,9 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods(const EVector& sequence,
+    simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet& a,
-				const EVector& smap,
+				const R::RVector& smap,
 				int n_models)
     {
 	int n_states = smap.size();
@@ -2219,9 +2232,9 @@ namespace substitution {
     }
 
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(const EVector& sequence,
+    simple_sequence_likelihoods2(const R::RVector& sequence,
                                  const alphabet& a,
-                                 const EVector& smap,
+                                 const R::RVector& smap,
                                  int n_models)
     {
 	int n_states = smap.size();
@@ -2427,9 +2440,9 @@ namespace substitution {
         return Pr3;
     }
 
-    Vector<pair<int,int>> sample_root_sequence(const EVector& sparse_LCN,
-					       const EVector& LCB,
-					       const EVector& A_,
+    Vector<pair<int,int>> sample_root_sequence(const R::RVector& sparse_LCN,
+					       const R::RVector& LCB,
+					       const R::RVector& A_,
                                                const Matrix& F)
     {
 
@@ -2523,10 +2536,10 @@ namespace substitution {
 
     Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
-						 const EVector& sparse_LCN,
-						 const EVector& LCB,
-						 const EVector& A_,
-						 const EVector& transition_P,
+						 const R::RVector& sparse_LCN,
+						 const R::RVector& LCB,
+						 const R::RVector& A_,
+						 const R::RVector& transition_P,
 						 const Matrix& F)
     {
         total_peel_internal_branches++;

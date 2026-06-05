@@ -46,15 +46,7 @@ object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)
         return result;
     }
 
-    if (const auto* legacy_vector = value.to<EVector>())
-    {
-        result->reserve(legacy_vector->size());
-        for(const auto& child: *legacy_vector)
-            result->push_back(R::e_op_value(child));
-        return result;
-    }
-
-    throw myexception()<<"Expected alignment child list to be an RVector or EVector, but got "<<value.print();
+    throw myexception()<<"Expected alignment child list to be an RVector or R::RVector, but got "<<value.print();
 }
 
 
@@ -475,24 +467,24 @@ struct column_map
     }
 };
 
-vector<int> site_pattern(const EVector& A, int c)
+vector<int> site_pattern(const R::RVector& A, int c)
 {
     int n = A.size();
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        pattern[j] = A[j].as_<R::RPair>().second.as_<EVector>()[c].as_int();
+        pattern[j] = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_int();
     }
     return pattern;
 }
 
-vector<int> site_pattern_var_nonvar(const EVector& A, int c)
+vector<int> site_pattern_var_nonvar(const R::RVector& A, int c)
 {
     int n = A.size();
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        int x = A[j].as_<R::RPair>().second.as_<EVector>()[c].as_int();
+        int x = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_int();
         if (x < 0)
             x = alphabet::gap;
         else
@@ -524,13 +516,13 @@ int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& co
     return c;
 }
 
-tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const EVector& A)
+tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const R::RVector& A)
 {
-    int L = A[0].as_<R::RPair>().second.as_<EVector>().size();
+    int L = A[0].as_<R::RPair>().second.as_<R::RVector>().size();
 
     // Check that all the sequences have the same length
     for(int i=1;i<A.size();i++)
-	assert(L == A[i].as_<R::RPair>().second.as_<EVector>().size());
+	assert(L == A[i].as_<R::RPair>().second.as_<R::RVector>().size());
 
     column_map M;
     vector<vector<int>> columns;
@@ -543,13 +535,13 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
     return {columns, counts, mapping};
 }
 
-tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const EVector& A, const alphabet& /*a*/)
+tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const R::RVector& A, const alphabet& /*a*/)
 {
-    int L = A[0].as_<R::RPair>().second.as_<EVector>().size();
+    int L = A[0].as_<R::RPair>().second.as_<R::RVector>().size();
 
     // Check that all the sequences have the same length
     for(int i=1;i<A.size();i++)
-	assert(L == A[i].as_<R::RPair>().second.as_<EVector>().size());
+	assert(L == A[i].as_<R::RPair>().second.as_<R::RVector>().size());
 
     column_map M;
     vector<vector<int>> columns;
@@ -562,7 +554,7 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_no
     return {columns, counts, mapping};
 }
 
-EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& patterns)
+R::RVector alignment_from_patterns(const R::RVector& old, const vector<vector<int>>& patterns)
 {
     int n_leaves = old.size();
 
@@ -570,11 +562,11 @@ EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& p
 
     int L = patterns.size();
 
-    EVector A(n_leaves);
+    R::RVector A(n_leaves);
 
     for(int i=0;i<n_leaves;i++)
     {
-	EVector row(L);
+	R::RVector row(L);
         for(int c=0;c<L;c++)
             row[c] = patterns[c][i];
 	const auto& name = old[i].as_<R::RPair>().first.as_string();
@@ -585,7 +577,7 @@ EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& p
 }
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
-std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const EVector& A)
+std::tuple<R::RVector, vector<int>, vector<int>> compress_alignment(const R::RVector& A)
 {
     if (A.size() == 0)
         return {{},{},{}};
@@ -596,7 +588,7 @@ std::tuple<EVector, vector<int>, vector<int>> compress_alignment(const EVector& 
 
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
-std::tuple<EVector, vector<int>> compress_alignment_var_nonvar(const EVector& A, const alphabet& a)
+std::tuple<R::RVector, vector<int>> compress_alignment_var_nonvar(const R::RVector& A, const alphabet& a)
 {
     if (A.size() == 0)
         return {{},{}};
@@ -630,24 +622,24 @@ std::tuple<EVector, vector<int>> compress_alignment_var_nonvar(const EVector& A,
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& A1 = arg0.as_checked<EVector>();
+    auto& A1 = arg0.as_checked<R::RVector>();
 
     auto [A,counts,mapping] = compress_alignment(A1);
 
-    return R::RPair(A, R::RPair(EVector(counts), EVector(mapping)));
+    return R::RPair(A, R::RPair(R::RVector(counts), R::RVector(mapping)));
 }
 
 extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& A0 = arg0.as_checked<EVector>();
+    auto& A0 = arg0.as_checked<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& a = *arg1.as_checked<Alphabet>();
 
     auto [A,counts] = compress_alignment_var_nonvar(A0, a);
 
-    return R::RPair(A, EVector(counts));
+    return R::RPair(A, R::RVector(counts));
 }
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
@@ -658,11 +650,11 @@ extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
     int n = Args.evaluate_slot_to_value(1).as_int();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto counts = (vector<int>)arg2.as_checked<EVector>();
+    auto counts = (vector<int>)arg2.as_checked<R::RVector>();
 
-    EVector all_counts;
+    R::RVector all_counts;
     for(int i=0; i < n; i++)
-        all_counts.push_back(EVector(alignment_row_counts(A,i,counts)));
+        all_counts.push_back(R::RVector(alignment_row_counts(A,i,counts)));
 
     return all_counts;
 }
@@ -685,7 +677,7 @@ extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
 
     auto sequences_ = sequence_format::load_from_file(filename);
 
-    object_ptr<EVector> sequences(new EVector(sequences_.size()));
+    object_ptr<R::RVector> sequences(new R::RVector(sequences_.size()));
     for(int i=0;i<sequences->size();i++)
         (*sequences)[i] = new Box<sequence>(sequences_[i]);
 
@@ -700,13 +692,13 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
 
-    return EVector(columns);
+    return R::RVector(columns);
 }
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& columns = arg0.as_<EVector>();
+    auto& columns = arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& sequence = arg1.as_string();
@@ -731,7 +723,7 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& sequences_ = arg1.as_<EVector>();
+    auto& sequences_ = arg1.as_<R::RVector>();
 
     vector<sequence> sequences;
     for(auto& s: sequences_)
@@ -781,7 +773,7 @@ extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
         if (a.is_feature(letter))
             letters2.push_back(letter);
 
-    return new EVector(letters2);
+    return new R::RVector(letters2);
 }
 
 // This is the with-gaps version...
@@ -798,18 +790,18 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     for(auto letter: letters)
         letters2.push_back(letter);
 
-    return new EVector(letters2);
+    return new R::RVector(letters2);
 }
 
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& smap = arg0.as_<EVector>();
+    auto& smap = arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& state_sequence = arg1.as_<EVector>();
+    auto& state_sequence = arg1.as_<R::RVector>();
 
-    auto result = object_ptr<EVector>(new EVector(state_sequence.size()));
+    auto result = object_ptr<R::RVector>(new R::RVector(state_sequence.size()));
     auto& letter_sequence = *result;
 
     for(int i=0; i < state_sequence.size(); i++)
@@ -829,10 +821,10 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<alignment>>().value();
 
-    EVector sequences;
+    R::RVector sequences;
     for(int i=0;i<A.n_sequences();i++)
     {
-	EVector seq;
+	R::RVector seq;
 	for(int col=0;col<A.length();col++)
 	    seq.push_back( A(col,i) );
 
@@ -847,7 +839,7 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<alignment>>().value();
 
-    EVector sequence_names;
+    R::RVector sequence_names;
     for(int i=0;i<A.n_sequences();i++)
 	sequence_names.push_back(String(A.seq(i).name));
 
@@ -857,14 +849,14 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
 extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& names = arg0.as_<EVector>();
+    auto& names = arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& A1 = arg1.as_<Box<alignment>>().value();
 
     vector<string> sequence_names;
     for(auto& name: names)
-        sequence_names.push_back(name.as_<String>());
+        sequence_names.push_back(name.as_string());
 
     object_ptr<Box<alignment>> A2(new Box<alignment>(reorder_sequences(A1, sequence_names)));
 
@@ -877,7 +869,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& sites = arg1.as_<EVector>();
+    auto& sites = arg1.as_<R::RVector>();
 
     int N = A0.n_sequences();
     int L = sites.size();
@@ -902,7 +894,7 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& sites = arg1.as_<EVector>();
+    auto& sites = arg1.as_<R::RVector>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto d = arg2.poly_cast<alphabet,Doublets>();
@@ -936,10 +928,10 @@ extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& 
     auto& A0 = arg0.as_<Box<alignment>>().value();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& states = arg1.as_<EVector>();
+    auto& states = arg1.as_<R::RVector>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& smap = arg2.as_<EVector>();
+    auto& smap = arg2.as_<R::RVector>();
 
     int n = states.size();
     int L = states[0].as_<Vector<pair<int,int>>>().size();
@@ -982,7 +974,7 @@ extern "C" closure builtin_function_extractStates(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& states = arg0.as_<Vector<pair<int,int>>>();
 
-    EVector sequence(states.size());
+    R::RVector sequence(states.size());
     for(int i=0; i<sequence.size(); i++)
         sequence[i] = states[i].second;
 
@@ -1023,11 +1015,11 @@ extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs&
 extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& letters = arg0.as_<EVector>();
+    auto& letters = arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    object_ptr<EVector> result(new EVector(arg1.as_<EVector>()));
+    object_ptr<R::RVector> result(new R::RVector(arg1.as_<R::RVector>()));
     auto& row = *result;
 
     int j=0;
@@ -1298,10 +1290,10 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
     return s;
 }
 
-// taxonAgesRaw :: EVector CPPString -> CPPString -> Int (0/1) -> EVector Double
+// taxonAgesRaw :: R::RVector CPPString -> CPPString -> Int (0/1) -> R::RVector Double
 extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 {
-    auto labels = Args.evaluate_slot_to_value(0).as_<EVector>();
+    auto labels = Args.evaluate_slot_to_value(0).as_<R::RVector>();
     int n = labels.size();
 
     string pattern = Args.evaluate_slot_to_value(1).as_string();
@@ -1317,7 +1309,7 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
     {
 	std::smatch m;
 
-	const string& label = labels[i].as_<String>();
+	const string& label = labels[i].as_string();
 	if (std::regex_search(label, m, rpattern))
 	{
 	    string mvalue = m[1];
@@ -1345,7 +1337,7 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 	    time = time - youngest_time;
     }
 
-    EVector result(n);
+    R::RVector result(n);
     for(int i=0;i<n;i++)
 	result[i] = times[i];
 

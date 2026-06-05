@@ -101,24 +101,24 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
 
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);
+peel_muts(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const matrix<int>& cost);
 
 extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0); // EVector Int
+    auto arg0 = Args.evaluate_slot_to_value(0); // R::RVector Int
     auto arg1 = Args.evaluate_slot_to_value(1); // Alphabet
     auto arg2 = Args.evaluate_slot_to_value(2); // MutCosts
     auto arg3 = Args.evaluate_slot_to_value(3); // n_
     auto arg4 = Args.evaluate_slot_to_value(4); // MutCosts
 
-    return peel_muts(arg0.as_<EVector>(),    // sequences
+    return peel_muts(arg0.as_<R::RVector>(),    // sequences
 		     *arg1.as_<Alphabet>(),  // alphabet
-		     arg2.as_<EVector>(),    // A
-		     arg3.as_<EVector>(),    // n_muts
+		     arg2.as_<R::RVector>(),    // A
+		     arg3.as_<R::RVector>(),    // n_muts
 		     arg4.as_<Box<matrix<int>>>());
 }
 
-int muts_root(const EVector& sequences, const alphabet& a, const EVector& A, const EVector& n_muts, const matrix<int>& cost);
+int muts_root(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const matrix<int>& cost);
 
 extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 {
@@ -128,17 +128,17 @@ extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
     auto arg3 = Args.evaluate_slot_to_value(3); // n_muts
     auto arg4 = Args.evaluate_slot_to_value(4); // cost
 
-    int muts = muts_root(arg0.as_<EVector>(),
+    int muts = muts_root(arg0.as_<R::RVector>(),
 			 *arg1.as_<Alphabet>(),
-			 arg2.as_<EVector>(),
-			 arg3.as_<EVector>(),
+			 arg2.as_<R::RVector>(),
+			 arg3.as_<R::RVector>(),
 			 arg4.as_<Box<matrix<int>>>());
 
     return {muts};
 }
 
 object_ptr<const ParsimonyCacheBranch>
-peel_muts_fixed_A(const EVector& sequences, const alphabet& a, const EVector& n_muts_, const matrix<int>& cost);
+peel_muts_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts_, const matrix<int>& cost);
 
 extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 {
@@ -147,14 +147,14 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    return peel_muts_fixed_A(arg0.as_<EVector>(),            // sequences
+    return peel_muts_fixed_A(arg0.as_<R::RVector>(),            // sequences
 			     *arg1.as_<Alphabet>(),          // a
-			     arg2.as_<EVector>(),            // n_muts_
+			     arg2.as_<R::RVector>(),            // n_muts_
 			     arg3.as_<Box<matrix<int>>>());  // cost
 }
 
 
-int muts_root_fixed_A(const EVector& sequences, const alphabet& a, const EVector& n_muts, const matrix<int>& costs, const EVector& counts);
+int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const matrix<int>& costs, const R::RVector& counts);
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
@@ -164,11 +164,11 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto arg4 = Args.evaluate_slot_to_value(4);
 
-    int muts = muts_root_fixed_A(arg0.as_<EVector>(),            // sequences
+    int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
-				 arg2.as_<EVector>(),            // n_muts_
+				 arg2.as_<R::RVector>(),            // n_muts_
 				 arg3.as_<Box<matrix<int>>>(),   // cost
-				 arg4.as_<EVector>());           // counts
+				 arg4.as_<R::RVector>());           // counts
 
     return { muts };
 }

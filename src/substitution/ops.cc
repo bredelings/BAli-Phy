@@ -2,7 +2,7 @@
 
 using std::pair;
 
-void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps)
+void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const R::RVector& Ps)
 {
     auto [mp,lp] = state_model_parent;
 
@@ -18,7 +18,7 @@ void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_mode
 	S(mp,l) = Pr(lp,l);
 }
 
-void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF)
+void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const R::RVector& Ps, const Matrix& WF)
 {
     auto [mp,lp] = state_model_parent;
 
@@ -29,7 +29,7 @@ void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_mode
 	calc_transition_prob_from_parent(S, state_model_parent, Ps);
 }
 
-Matrix propagate_frequencies(const Matrix& F, const EVector& transition_P)
+Matrix propagate_frequencies(const Matrix& F, const R::RVector& transition_P)
 {
     int n_models = F.size1();
     int n_states = F.size2();

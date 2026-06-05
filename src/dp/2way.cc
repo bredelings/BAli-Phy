@@ -517,7 +517,7 @@ set<std::tuple<int,int>> getBranches(const R::Exp& a)
     return branches;
 }
 
-typedef std::map<int,object_ptr<EVector>> AEVectors;
+typedef std::map<int,object_ptr<R::RVector>> AEVectors;
 
 struct BranchAlignment
 {
@@ -528,7 +528,7 @@ struct BranchAlignment
 
     int pos = 0; // Not used at top level -- goes with pairwise alignment.
     int L = 0;
-    EVector& A;
+    R::RVector& A;
     BranchAlignment(R::Exp a, AEVectors& AA)
         :source(std::move(a)),
          node(constructor_args(source)[0].as_int()),
@@ -618,7 +618,7 @@ object_ptr<R::RIntMap> construct2(const R::Exp& a)
     // 3. Create the EVectors for the alignment rows
     AEVectors A;
     for(auto& node: nodes)
-        A.insert({node, object_ptr<EVector>(new EVector(AL, -1))});
+        A.insert({node, object_ptr<R::RVector>(new R::RVector(AL, -1))});
 
     // 4. Create a tree-alignment structure with modifiable state.
     BranchAlignment na(a, A);

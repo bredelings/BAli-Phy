@@ -33,8 +33,8 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
     auto vpi = compute_stationary_freqs(Q);
     int n = vpi.size();
 
-    // 4. Copy back to an EVector double;
-    EVector pi(n);
+    // 4. Copy back to an R::RVector double;
+    R::RVector pi(n);
     for(int i=0;i<n;i++)
         pi[i] = vpi[i];
 
@@ -44,13 +44,13 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
 extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto pi0 = (vector<double>)arg0.as_<EVector>();
+    auto pi0 = (vector<double>)arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& Q = arg1.as_<Box<Matrix>>();
 
     // In exponential.cc
-    return (EVector)equilibriumLimit(pi0, Q);
+    return (R::RVector)equilibriumLimit(pi0, Q);
 }
 
 extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)
@@ -110,8 +110,8 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     // Eigen::VectorXd epi = QQ.ColPivHouseholderQr.solve(b);  Maybe faster?
     Eigen::VectorXd epi = QQ.fullPivLu().solve(b);
 
-    // 4. Copy back to an EVector double;
-    EVector pi(n);
+    // 4. Copy back to an R::RVector double;
+    R::RVector pi(n);
     for(int i=0;i<n;i++)
         pi[i] = epi[i];
 
@@ -120,7 +120,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     // Compare with known pi
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& pi0 = arg1.as_<EVector>();
+    auto& pi0 = arg1.as_<R::RVector>();
 
     // 2. b = 0*n + 1
     Eigen::VectorXd epi0(n);
@@ -143,7 +143,7 @@ extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
     auto& Q = arg0.as_<Box<Matrix>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi = (vector<double>)arg1.as_<EVector>();
+    auto pi = (vector<double>)arg1.as_<R::RVector>();
 
     return { checkStationary(Q,pi) };
 }
@@ -154,7 +154,7 @@ extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
     auto& Q = arg0.as_<Box<Matrix>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi = (vector<double>)arg1.as_<EVector>();
+    auto pi = (vector<double>)arg1.as_<R::RVector>();
 
     return { checkReversible(Q,pi) };
 }
@@ -165,12 +165,12 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& smap = arg1.as_< EVector >();
+    auto& smap = arg1.as_< R::RVector >();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
     const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-    auto pi = vector<double> (Args.evaluate_slot_to_value(3).as_<EVector>() );
+    auto pi = vector<double> (Args.evaluate_slot_to_value(3).as_<R::RVector>() );
 
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
@@ -411,7 +411,7 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
     return R;
 }
 
-// multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
+// multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> R::RVector Double -> Matrix Double
 extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -424,7 +424,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     const Matrix& R1 = arg3.as_<Box<Matrix>>();
 
     auto arg4 = Args.evaluate_slot_to_value(4);
-    auto pi1 = arg4.as_<EVector>();
+    auto pi1 = arg4.as_<R::RVector>();
 
     // Compute the average rate at equilibrium for R1.
 //    double rate = 0;
@@ -538,7 +538,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
 }
 
 
-vector<int> make_edit_map(const EVector& edit_pairs, int n)
+vector<int> make_edit_map(const R::RVector& edit_pairs, int n)
 {
     // 1. For each (i,j) in edits, we edit i -> j
     vector<int> edit(n, -1);
@@ -581,7 +581,7 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
     assert(Q_nuc.size2() == 4);
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const EVector& edit_pairs = arg2.as_<EVector>();
+    const R::RVector& edit_pairs = arg2.as_<R::RVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
     double rnaRate = Args.evaluate_slot_to_value(3).as_double();
@@ -630,12 +630,12 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
     const int n = D.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& nuc_pi = arg1.as_<EVector>();
+    const auto& nuc_pi = arg1.as_<R::RVector>();
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
     assert(nuc_pi.size() == 4);
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const EVector& edit_pairs = arg2.as_<EVector>();
+    const R::RVector& edit_pairs = arg2.as_<R::RVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
     vector<double> pi( n );
@@ -652,7 +652,7 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
     }
 
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return EVector(pi);
+    return R::RVector(pi);
 }
 
 
@@ -724,7 +724,7 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 //    * state maps smaps[level]
 // for k=1..K.
 
-void inc_modulated_states_matrix(int& r, int& level, int& state, const EVector& Qs)
+void inc_modulated_states_matrix(int& r, int& level, int& state, const R::RVector& Qs)
 {
     r++;
     state++;
@@ -737,11 +737,11 @@ void inc_modulated_states_matrix(int& r, int& level, int& state, const EVector& 
     }
 }
 
-void inc_modulated_states_vec(int& r, int& level, int& state, const EVector& pis)
+void inc_modulated_states_vec(int& r, int& level, int& state, const R::RVector& pis)
 {
     r++;
     state++;
-    if (state < pis[level].as_<EVector>().size())
+    if (state < pis[level].as_<R::RVector>().size())
         ;
     else
     {
@@ -755,7 +755,7 @@ void inc_modulated_states_vec(int& r, int& level, int& state, const EVector& pis
 extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Qs = arg0.as_<EVector>();
+    auto& Qs = arg0.as_<R::RVector>();
     int n_levels = Qs.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
@@ -806,17 +806,17 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& pis = arg0.as_<EVector>();
+    auto& pis = arg0.as_<R::RVector>();
     int n_levels = pis.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& level_probs = arg1.as_<EVector>();
+    auto& level_probs = arg1.as_<R::RVector>();
     assert(level_probs.size() == n_levels);
 
     int total_states = 0;
     for(int l = 0; l < n_levels; l++)
     {
-        auto& pi = pis[l].as_<EVector>();
+        auto& pi = pis[l].as_<R::RVector>();
         int n_states_for_level = pi.size();
 
         total_states += n_states_for_level;
@@ -824,29 +824,29 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
 
     vector<double> pi(total_states);
     for(int r=0, l=0, s=0; r < total_states; inc_modulated_states_vec(r,l,s,pis))
-        pi[r] = level_probs[l].as_double() * pis[l].as_<EVector>()[s].as_double();
+        pi[r] = level_probs[l].as_double() * pis[l].as_<R::RVector>()[s].as_double();
 
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return EVector(pi);
+    return R::RVector(pi);
 }
 
 extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& smaps = arg0.as_<EVector>();
+    auto& smaps = arg0.as_<R::RVector>();
 
-    EVector new_smap;
+    R::RVector new_smap;
     for(auto& smap: smaps)
-        for(auto& x: smap.as_<EVector>())
+        for(auto& x: smap.as_<R::RVector>())
             new_smap.push_back(x);
 
     return new_smap;
 }
 
 template <typename T>
-T sum(const EVector& v);
+T sum(const R::RVector& v);
 
-template<> double sum<>(const EVector& v)
+template<> double sum<>(const R::RVector& v)
 {
     double d=0;
     for(auto& vv: v)
@@ -854,7 +854,7 @@ template<> double sum<>(const EVector& v)
     return d;
 }
 
-void normalize(EVector& v)
+void normalize(R::RVector& v)
 {
     double scale = 1.0/sum<double>(v);
 
@@ -901,7 +901,7 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
 	}
 
     // Get the frequencies
-    object_ptr<EVector> F(new EVector(a.size()));
+    object_ptr<R::RVector> F(new R::RVector(a.size()));
 
     for(int i=0;i<a.size();i++)
     {
@@ -937,7 +937,7 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
     assert(n >= 0);
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& xs = arg1.as_<EVector>();
+    auto& xs = arg1.as_<R::RVector>();
     
 
     // 2. Check that we have the right number of entries
@@ -1111,7 +1111,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi1 = arg1.as_<EVector>();
+    auto pi1 = arg1.as_<R::RVector>();
 
     int nuc_size = T.getNucleotides().size();
 
@@ -1119,18 +1119,18 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto pi2 = arg2.as_<EVector>();
+    auto pi2 = arg2.as_<R::RVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    auto pi3 = arg3.as_<EVector>();
+    auto pi3 = arg3.as_<R::RVector>();
 
     if (pi3.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 3:expected "<<nuc_size<<" frequencies, but got "<<pi3.size()<<"!";
 
-    EVector pi;
+    R::RVector pi;
     pi.resize(T.size());
     double sum = 0;
     for(int i=0;i<T.size();i++)
@@ -1158,7 +1158,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi1 = arg1.as_<EVector>();
+    auto pi1 = arg1.as_<R::RVector>();
 
     int nuc_size = D.getNucleotides().size();
 
@@ -1166,12 +1166,12 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f2x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto pi2 = arg2.as_<EVector>();
+    auto pi2 = arg2.as_<R::RVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f2x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
-    EVector pi;
+    R::RVector pi;
     pi.resize(D.size());
     double sum = 0;
     for(int i=0;i<D.size();i++)
@@ -1195,7 +1195,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& S = arg0.as_<EVector>();
+    auto& S = arg0.as_<R::RVector>();
     int n = Args.evaluate_slot_to_value(1).as_int();
 
     auto R = new Box<Matrix>(n,n);
@@ -1221,7 +1221,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
     int n = Args.evaluate_slot_to_value(0).as_int();
 
     auto arg0 = Args.evaluate_slot_to_value(1);
-    auto& S = arg0.as_<EVector>();
+    auto& S = arg0.as_<R::RVector>();
 
     auto R = new Box<Matrix>(n,n);
     if (S.size() != n*(n-1))
@@ -1330,7 +1330,7 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 
 extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
 {
-    auto pi = vector<double>( Args.evaluate_slot_to_value(0).as_<EVector>() );
+    auto pi = vector<double>( Args.evaluate_slot_to_value(0).as_<R::RVector>() );
 
     double f = Args.evaluate_slot_to_value(1).as_double();
 
@@ -1373,7 +1373,7 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     assert(Q0.size1() == Q0.size2());
     int n = Q0.size1();
 
-    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< EVector >() );
+    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
     for(auto& f: F)
 	f = bound(-20,20,f);
 
@@ -1413,9 +1413,9 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 // pi0 w
 extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
-    auto pi0 = vector<double>( Args.evaluate_slot_to_value(0).as_< EVector >() );
+    auto pi0 = vector<double>( Args.evaluate_slot_to_value(0).as_< R::RVector >() );
 
-    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< EVector >() );
+    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
     for(auto& f: F)
 	f = bound(-20,20,f);
 
@@ -1430,7 +1430,7 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 	pi[i] *= exp(F[i]-Fmax);
 
     normalize(pi);
-    return EVector(pi);
+    return R::RVector(pi);
 }
 
 extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
@@ -1441,7 +1441,7 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
     const int n_models = WF.size1();
     const int n_states = WF.size2();
 
-    auto* ave_f = new EVector(n_states);
+    auto* ave_f = new R::RVector(n_states);
     for(int s=0;s<n_states;s++)
     {
 	double total = 0;
@@ -1456,22 +1456,22 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& D = arg0.as_<EVector>();
+    const auto& D = arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& F = arg1.as_<EVector>();
+    const auto& F = arg1.as_<R::RVector>();
     // cache matrix of frequencies
 
     assert(D.size() == F.size());
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<EVector>().size();
+    const int n_states = F[0].as_<R::RVector>().size();
 
     auto *WF = new Box<Matrix>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
 	double p = D[m].as_double();
-	const auto& f = F[m].as_<EVector>();
+	const auto& f = F[m].as_<R::RVector>();
 	for(int s=0;s<n_states;s++) 
 	    (*WF)(m,s) = p*f[s].as_double();
     }
@@ -1481,16 +1481,16 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
 extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& F = arg0.as_<EVector>();
+    const auto& F = arg0.as_<R::RVector>();
     // cache matrix of frequencies
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<EVector>().size();
+    const int n_states = F[0].as_<R::RVector>().size();
 
     auto *FF = new Box<Matrix>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
-	const auto& f = F[m].as_<EVector>();
+	const auto& f = F[m].as_<R::RVector>();
 	for(int s=0;s<n_states;s++) 
 	    (*FF)(m,s) = f[s].as_double();
     }
@@ -1501,7 +1501,7 @@ extern "C" closure builtin_function_flow(OperationArgs& Args)
 {
     // Equilibrium frequencies
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& pi = arg0.as_<EVector>();
+    const auto& pi = arg0.as_<R::RVector>();
 
     // Rate matrix
     auto arg1 = Args.evaluate_slot_to_value(1);

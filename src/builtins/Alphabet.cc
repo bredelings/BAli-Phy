@@ -27,7 +27,7 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 
     const alphabet& a = *arg.as_<Alphabet>();
 
-    auto v = new EVector;
+    auto v = new R::RVector;
     for(int i=0;i<a.n_letters();i++)
 	v->push_back(String(a.letter(i)));
   
@@ -177,7 +177,7 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& letter_sequence = arg1.as_<EVector>();
+    auto& letter_sequence = arg1.as_<R::RVector>();
 
     auto result = object_ptr<String>(new String);
     auto& text = *result;

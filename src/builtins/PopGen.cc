@@ -105,10 +105,10 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 
     assert(matrix[0].size() == 2*n_loci);
 
-    EVector result;
+    R::RVector result;
     for(int l=0;l<n_loci;l++)
     {
-	EVector locus;
+	R::RVector locus;
 	for(int i=0;i<n_individuals;i++) {
 	    locus.push_back(matrix[i][2*l]);
 	    locus.push_back(matrix[i][2*l+1]);
@@ -337,10 +337,10 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
     assert(matrix.size() == 2*n_individuals);
     assert(matrix[0].size() == n_loci);
 
-    EVector result;
+    R::RVector result;
     for(int l=0;l<n_loci;l++)
     {
-	EVector locus;
+	R::RVector locus;
 	for(int i=0;i<n_individuals;i++) {
 	    locus.push_back(matrix[2*i][l]);
 	    locus.push_back(matrix[2*i+1][l]);
@@ -354,9 +354,9 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const EVector& alleles = arg0.as_<EVector>();
+    const R::RVector& alleles = arg0.as_<R::RVector>();
 
-    EVector alleles2;
+    R::RVector alleles2;
 
     for(int i=0;i<alleles.size();i+=2)
 	alleles2.push_back(alleles[i]);
@@ -367,7 +367,7 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const EVector& alleles = arg0.as_<EVector>();
+    const R::RVector& alleles = arg0.as_<R::RVector>();
 
     int n_individuals = alleles.size();
     assert(n_individuals > 0);
@@ -385,8 +385,8 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
     for(const auto& allele_and_count: allele_counts)
 	spectrum[allele_and_count.second-1]++;
   
-    // 3. Convert vector<int> to EVector
-    EVector afs;
+    // 3. Convert vector<int> to R::RVector
+    R::RVector afs;
     for(int count: spectrum)
 	afs.push_back(count);
 
@@ -441,7 +441,7 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 {
     const double theta = Args.evaluate_slot_to_value(0).as_double();
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const EVector& afs_ = arg1.as_<EVector>();
+    const R::RVector& afs_ = arg1.as_<R::RVector>();
 
     vector<int> afs;
     for(const auto& count: afs_)
@@ -454,8 +454,8 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
 {
-    auto thetas = (vector<double>) Args.evaluate_slot_to_value(0).as_<EVector>();
-    auto ps =     (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto thetas = (vector<double>) Args.evaluate_slot_to_value(0).as_<R::RVector>();
+    auto ps =     (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
     auto arg2 = Args.evaluate_slot_to_value(2);
     const vector<Vector<int>>& afs = arg2.as_<Vector<Vector<int>>>();
 
@@ -527,11 +527,11 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
     // 1. These are indicators of coalescence
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const vector<expression_ref>& I = arg1.as_<EVector>();
+    const R::RVector& I = arg1.as_<R::RVector>();
 
     // 2. These are the alleles
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const vector<expression_ref>& alleles = arg2.as_<EVector>();
+    const R::RVector& alleles = arg2.as_<R::RVector>();
 
     // How many times has each allele been seen?
     std::unordered_map<int,int> counts;
@@ -600,7 +600,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
 
     // These are indicators of coalescence
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const vector<expression_ref>& I = arg2.as_<EVector>();
+    const R::RVector& I = arg2.as_<R::RVector>();
 
     // Determine number of coalescences;
     int n = 0;

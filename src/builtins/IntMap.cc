@@ -163,7 +163,7 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
-    EVector V;
+    R::RVector V;
 
     for(auto& [k,v]: m)
         V.push_back(k);
@@ -425,12 +425,11 @@ closure makeEVector(OperationArgs& Args)
 {
     int n = Args.runtime_n_slots();
 
-    EVector result;
+    R::RVector result;
     for(int i=0;i<n;i++)
     {
 	int r = Args.runtime_reg_for_slot(i);
-	auto obj = Args.evaluate_reg_to_closure(r).legacy_exp();
-	result.push_back( obj );
+	result.push_back(Args.evaluate_reg_to_closure(r).get_code());
     }
     return result;
 }

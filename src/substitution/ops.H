@@ -5,6 +5,7 @@
 #include "util/matrix.H"
 #include "computation/expression/expression_ref.H"
 #include "substitution/cache.H"
+#include "computation/runtime/ast.H"
 #include <Eigen/Dense>
 
 inline void element_assign(Matrix& M1,double d)
@@ -225,7 +226,7 @@ inline double element_prod_sum(const double* __restrict__ M1,
     return sum;
 }
 template <int N>
-inline void propagate_toward_root_fixed(double* R, int n_models, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_toward_root_fixed(double* R, int n_models, int& scale, const R::RVector& transition_P, const double* S)
 {
     using Eigen::Map;
     using Eigen::ArrayXd;
@@ -271,7 +272,7 @@ inline void propagate_toward_root_fixed(double* R, int n_models, int& scale, con
     }
 }
 
-inline void propagate_toward_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_toward_root(double* R, int n_models, int n_states, int& scale, const R::RVector& transition_P, const double* S)
 {
     if (n_states==4)
         return propagate_toward_root_fixed<4 >(R, n_models, scale, transition_P, S);
@@ -319,7 +320,7 @@ inline void propagate_toward_root(double* R, int n_models, int n_states, int& sc
 }
 
 template <int N>
-inline void propagate_away_from_root_fixed(double* R, int n_models, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_away_from_root_fixed(double* R, int n_models, int& scale, const R::RVector& transition_P, const double* S)
 {
     using Eigen::Map;
     using Eigen::ArrayXd;
@@ -363,7 +364,7 @@ inline void propagate_away_from_root_fixed(double* R, int n_models, int& scale, 
     }
 }
 
-inline void propagate_away_from_root(double* R, int n_models, int n_states, int& scale, const EVector& transition_P, const double* S)
+inline void propagate_away_from_root(double* R, int n_models, int n_states, int& scale, const R::RVector& transition_P, const double* S)
 {
     if (n_states==4)
         return propagate_away_from_root_fixed<4 >(R, n_models, scale, transition_P, S);
@@ -410,10 +411,10 @@ inline void propagate_away_from_root(double* R, int n_models, int n_states, int&
     }
 }
 
-Matrix propagate_frequencies(const Matrix& F, const EVector& transition_P);
+Matrix propagate_frequencies(const Matrix& F, const R::RVector& transition_P);
 
-void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps);
-void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF);
+void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps);
+void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps, const Matrix& WF);
 
 std::pair<int,int> sample(const Matrix& M);
 

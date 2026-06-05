@@ -39,7 +39,7 @@ namespace substitution
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
 					     const Matrix& F,
-					     const EVector& counts)
+					     const R::RVector& counts)
     {
         total_calc_root_prob++;
 
@@ -159,7 +159,7 @@ namespace substitution
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const Matrix& F,
-					      const EVector& counts)
+					      const R::RVector& counts)
     {
         total_calc_root_prob++;
 
@@ -262,10 +262,10 @@ namespace substitution
     }
 
 
-    log_double_t calc_prob_at_root_SEV(const EVector& LCN,
-				       const EVector& LCB,
+    log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
+				       const R::RVector& LCB,
 				       const Matrix& F,
-				       const EVector& counts)
+				       const R::RVector& counts)
     {
 	total_calc_root_prob++;
 
@@ -275,7 +275,7 @@ namespace substitution
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
 	// But then we'd be using a pointer, which is indirect.
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCN.size() + LCB.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -401,10 +401,10 @@ namespace substitution
     }
 
 
-    log_double_t calc_prob_at_root_variable_SEV(const EVector& LCN,
-						const EVector& LCB,
+    log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
+						const R::RVector& LCB,
 						const Matrix& F,
-						const EVector& counts)
+						const R::RVector& counts)
     {
 	total_calc_root_prob++;
 
@@ -414,7 +414,7 @@ namespace substitution
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
 	// But then we'd be using a pointer, which is indirect.
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCN.size() + LCB.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -552,10 +552,10 @@ namespace substitution
     }
 
 
-    log_double_t calc_prob_SEV(const EVector& LCN,
-			       const EVector& LCB,
+    log_double_t calc_prob_SEV(const R::RVector& LCN,
+			       const R::RVector& LCB,
 			       const Matrix& FF,
-			       const EVector& counts)
+			       const R::RVector& counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -574,7 +574,7 @@ namespace substitution
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
 	// But then we'd be using a pointer, which is indirect.
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCN.size() + LCB.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -710,7 +710,7 @@ namespace substitution
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const EVector& transition_P)
+    peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const R::RVector& transition_P)
     {
         total_peel_leaf_branches++;
 
@@ -738,7 +738,7 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const SparseLikelihoods& nodeCLV, const EVector& transition_P)
+    peel_leaf_branch_SEV(const SparseLikelihoods& nodeCLV, const R::RVector& transition_P)
     {
         int L0 = nodeCLV.n_columns();
 
@@ -804,7 +804,18 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_SEV(const expression_ref& nodeCLV, const EVector& transition_P)
+    peel_leaf_branch_SEV(const expression_ref& nodeCLV, const R::RVector& transition_P)
+    {
+	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
+	    return peel_leaf_branch_SEV(*LCB, transition_P);
+	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
+	    return peel_leaf_branch_SEV(*SL, transition_P);
+	else
+	    throw myexception()<<"peel_leaf_branch_SEV: leaf object not recognized!";
+    }
+
+    object_ptr<const Likelihood_Cache_Branch>
+    peel_leaf_branch_SEV(const R::Exp& nodeCLV, const R::RVector& transition_P)
     {
 	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
 	    return peel_leaf_branch_SEV(*LCB, transition_P);
@@ -817,7 +828,7 @@ namespace substitution
     object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
                              const Likelihood_Cache_Branch& LCB2,
-                             const EVector& transition_P)
+                             const R::RVector& transition_P)
     {
         total_peel_internal_branches++;
 
@@ -885,7 +896,7 @@ namespace substitution
     // Generalize to degree n>=1?
     object_ptr<const Likelihood_Cache_Branch>
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
-                         const EVector& transition_P)
+                         const R::RVector& transition_P)
     {
         total_peel_internal_branches++;
 
@@ -921,9 +932,9 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_toward_root_SEV(const EVector& LCN,
-				const EVector& LCB,
-				const EVector& transition_P)
+    peel_branch_toward_root_SEV(const R::RVector& LCN,
+				const R::RVector& LCB,
+				const R::RVector& transition_P)
     {
         total_peel_internal_branches++;
 
@@ -941,7 +952,7 @@ namespace substitution
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCB.size() + LCN.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -1021,9 +1032,9 @@ namespace substitution
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root_SEV(const EVector& LCN,
-				   const EVector& LCB,
-				   const EVector& transition_P,
+    peel_branch_away_from_root_SEV(const R::RVector& LCN,
+				   const R::RVector& LCB,
+				   const R::RVector& transition_P,
 				   const Matrix& ff)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
@@ -1044,7 +1055,7 @@ namespace substitution
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCB.size() + LCN.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -1134,10 +1145,10 @@ namespace substitution
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const R::Exp& sequence_mask,
 				    const alphabet& a,
-				    const EVector& smap,
+				    const R::RVector& smap,
 				    int n_models)
     {
-	auto& sequence = R::rpair_first(sequence_mask).as_<EVector>();
+	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
 	auto& mask = R::rpair_second(sequence_mask).as_<Box<boost::dynamic_bitset<>>>();
 
 	int n_states = smap.size();
@@ -1189,10 +1200,10 @@ namespace substitution
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const R::Exp& sequence_mask,
 				     const alphabet& a,
-				     const EVector& smap,
+				     const R::RVector& smap,
 				     int n_models)
     {
-	auto& sequence = R::rpair_first(sequence_mask).as_<EVector>();
+	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
 	auto& mask = R::rpair_second(sequence_mask).as_<Box<boost::dynamic_bitset<>>>();
 
 	int n_states = smap.size();
@@ -1256,10 +1267,10 @@ namespace substitution
 
     // Currently we are not treating N as a gap during compression.
     // So, we can assume that anything that's not in the mask will not have an ancestral letter.
-    Vector<pair<int,int>> sample_root_sequence_SEV(const EVector& LCN,
-						   const EVector& LCB,
+    Vector<pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
+						   const R::RVector& LCB,
                                                    const Matrix& F,
-                                                   const EVector& compressed_col_for_col)
+                                                   const R::RVector& compressed_col_for_col)
     {
         // 1. Construct a scratch CL matrix, and check that dimensions match inputs
         const int n_models = F.size1();
@@ -1268,7 +1279,7 @@ namespace substitution
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
 	// But then we'd be using a pointer, which is indirect.
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCN.size() + LCB.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);
@@ -1335,10 +1346,10 @@ namespace substitution
     }
 
     Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
-					      const EVector& LCN,
-					      const EVector& transition_Ps,
-					      const EVector& LCB,
-					      const EVector& compressed_col_for_col)
+					      const R::RVector& LCN,
+					      const R::RVector& transition_Ps,
+					      const R::RVector& LCB,
+					      const R::RVector& compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
         const int n_models  = transition_Ps.size();
@@ -1347,7 +1358,7 @@ namespace substitution
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
 	// But then we'd be using a pointer, which is indirect.
-	EVector LC;
+	R::RVector LC;
 	LC.reserve(LCN.size() + LCB.size());
 	for(auto& lc: LCB)
 	    LC.push_back(lc);

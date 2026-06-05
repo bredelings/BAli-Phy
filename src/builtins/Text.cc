@@ -7,7 +7,7 @@ using std::vector;
 
 extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
 {
-    auto etext = get_arg(args).as_<EVector>();
+    auto etext = get_arg(args).as_<R::RVector>();
 
     String s;
     s.resize(etext.size());
@@ -164,11 +164,11 @@ extern "C" R::Exp simple_function_less_than(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_concatRaw(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    auto& strings = arg0.as_<EVector>();
+    auto& strings = arg0.as_<R::RVector>();
 
     String result;
     for(auto& string: strings)
-        result += string.as_<String>();
+        result += string.as_string();
 
     return result;
 }

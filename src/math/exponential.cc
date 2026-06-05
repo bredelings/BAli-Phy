@@ -359,7 +359,7 @@ std::vector<double> compute_stationary_freqs(const Matrix& Q)
         std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
 
-    // 5. Copy back to an EVector double;
+    // 5. Copy back to an R::RVector double;
     std::vector<double> pi(n);
     for(int i=0;i<n;i++)
         pi[i] = epi[i];
@@ -655,7 +655,7 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matri
         std::cerr<<"compute_stationary_freqs: maxcoeff = "<<eQ.cwiseAbs().maxCoeff()<<"   err1 = "<<err1<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
 
-    // 5. Copy back to an EVector double;
+    // 5. Copy back to an R::RVector double;
     std::vector<double> pi(n);
     for(int i=0;i<n;i++)
         pi[i] = epi[i];

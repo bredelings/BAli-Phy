@@ -230,7 +230,7 @@ expression_ref unlet(const expression_ref& E)
             return L;
     }
     // 1. Var
-    else if (E.is_a<var>() or E.is_reg_var())
+    else if (E.is_a<var>() or E.is_reg_var() or E.is_index_var())
         return E;
 
     // Constant or 0-arg constructor

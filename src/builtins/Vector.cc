@@ -42,7 +42,7 @@ int vector_value_size(const R::Exp& value)
     if (auto v = value.to<R::RVector>())
         return v->size();
     else
-        return value.as_<EVector>().size();
+        return value.as_<R::RVector>().size();
 }
 
 R::Exp vector_value_at(const R::Exp& value, int index)
@@ -50,7 +50,7 @@ R::Exp vector_value_at(const R::Exp& value, int index)
     if (auto v = value.to<R::RVector>())
         return (*v)[index];
     else
-        return R::e_op_value(value.as_<EVector>()[index]);
+        return value.as_<R::RVector>()[index];
 }
 
 extern "C" R::Exp simple_function_sizeOfString(vector<R::Exp>& args)
@@ -98,10 +98,10 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
     }
     else
     {
-        const EVector& legacy_vector = arg0.as_<EVector>();
-        const EVector* vv = &legacy_vector;
-        EVector* vvv = const_cast<EVector*>(vv);
-        (*vvv)[i] = R::to_expression_ref(std::move(x));
+        const R::RVector& legacy_vector = arg0.as_<R::RVector>();
+        const R::RVector* vv = &legacy_vector;
+        R::RVector* vvv = const_cast<R::RVector*>(vv);
+        (*vvv)[i] = std::move(x);
     }
 
     return constructor("()",0);
@@ -118,10 +118,10 @@ extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
 {
     R::Exp xs = Args.evaluate_slot_to_value(0);
 
-    object_ptr<EVector> v (new EVector);
+    object_ptr<R::RVector> v (new R::RVector);
 
     for(; not is_clist_nil(xs); xs = clist_second(xs))
-        v->push_back(R::to_expression_ref(clist_first(xs)));
+        v->push_back(clist_first(xs));
 
     return v;
 }
@@ -156,23 +156,23 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 {
     // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
 
-    // If I really want something like the Haskell matrix, I could use an EVector of EVectors.
+    // If I really want something like the Haskell matrix, I could use an R::RVector of EVectors.
     // Then I could get a matrix of anything -- integers, doubles, log_doubles, etc.
 
     auto arg = Args.evaluate_slot_to_value(0);
-    auto& V = arg.as_<EVector>();
+    auto& V = arg.as_<R::RVector>();
     int I = V.size();
     if (I <= 0)
         return Box<Matrix>();
 
-    int J = V[0].as_<EVector>().size();
+    int J = V[0].as_<R::RVector>().size();
     if (J <= 0)
         return Box<Matrix>();
 
     auto M = new Box<Matrix>(I,J);
     for(int i=0;i<I;i++)
         for(int j=0;j<J;j++)
-            (*M)(i,j) = V[i].as_<EVector>()[j].as_double();
+            (*M)(i,j) = V[i].as_<R::RVector>()[j].as_double();
 
     return M;
 }
@@ -182,7 +182,7 @@ extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& M = arg0.as_<Box<Matrix>>();
 
-    object_ptr<EVector> Vptr = new EVector;
+    object_ptr<R::RVector> Vptr = new R::RVector;
     auto& V = *Vptr;
 
     for(int i=0;i<M.size1();i++)
@@ -197,7 +197,7 @@ extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
     int s1 = Args.evaluate_slot_to_value(0).as_int();
     int s2 = Args.evaluate_slot_to_value(1).as_int();
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& V = arg2.as_<EVector>();
+    auto& V = arg2.as_<R::RVector>();
 
     if (V.size() != s1*s2)
         throw myexception()<<"vectorToMatrix: size = ("<<s1<<", "<<s2<<") so expected "<<s1*s2<<" elements, but got "<<V.size()<<"!";

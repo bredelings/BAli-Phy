@@ -144,9 +144,9 @@ expression_ref data_partition::get_node_CLV(int node) const
 	return {};
 }
 
-object_ptr<const EVector> data_partition::transition_P(int b) const
+object_ptr<const R::RVector> data_partition::transition_P(int b) const
 {
-    return property(1)[b].value().as_ptr_to<EVector>();
+    return property(1)[b].value().as_ptr_to<R::RVector>();
 }
 
 context_ptr data_partition::properties() const

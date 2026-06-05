@@ -51,8 +51,8 @@ namespace
         }
         else
         {
-            for(const auto& element: value.as_<EVector>())
-                f(R::e_op_value(element));
+            for(const auto& element: value.as_<R::RVector>())
+                f(element);
         }
     }
 
@@ -187,8 +187,8 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     vector<string> firstFields;
-    for(auto& e: arg0.as_<EVector>())
-	firstFields.push_back(e.as_<String>());
+    for(auto& e: arg0.as_<R::RVector>())
+	firstFields.push_back(e.as_string());
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& sample = arg1.as_<Box<json::value>>().as_object();

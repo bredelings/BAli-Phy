@@ -75,7 +75,7 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S = arg0.as_<IntSet>();
 
-    EVector V;
+    R::RVector V;
 
     for(auto& k: S)
         V.push_back(k);

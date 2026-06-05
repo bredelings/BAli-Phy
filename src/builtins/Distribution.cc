@@ -187,8 +187,8 @@ extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-    auto n = (vector<double>) Args.evaluate_slot_to_value(0).as_<EVector>();
-    auto x = (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto n = (vector<double>) Args.evaluate_slot_to_value(0).as_<R::RVector>();
+    auto x = (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
   
     return { ::dirichlet_pdf(x, n) };
 }
@@ -279,8 +279,8 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    auto ps = Args.evaluate_slot_to_value(1).as_<EVector>();
-    auto ks = Args.evaluate_slot_to_value(2).as_<EVector>();
+    auto ps = Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto ks = Args.evaluate_slot_to_value(2).as_<R::RVector>();
 
     if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
 
@@ -387,7 +387,7 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate_slot_to_value(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    auto z = (vector<int>) Args.evaluate_slot_to_value(3).as_<EVector>();
+    auto z = (vector<int>) Args.evaluate_slot_to_value(3).as_<R::RVector>();
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }
@@ -413,7 +413,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     int n_seen=0;
 
     // The series of sampled categories
-    object_ptr<EVector> S (new EVector);
+    object_ptr<R::RVector> S (new R::RVector);
 
     for(int i=0;i<N;i++)
     {
@@ -450,7 +450,7 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
 
-    auto z = (vector<double>) Args.evaluate_slot_to_value_(0).as_<EVector>();
+    auto z = (vector<double>) Args.evaluate_slot_to_value_(0).as_<R::RVector>();
 
     return { choose_scratch(z) };
 }

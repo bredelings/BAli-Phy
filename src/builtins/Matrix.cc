@@ -299,7 +299,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     const ::Matrix& Q = arg0.as_< Box<::Matrix> >();
 
-    auto pi = vector<double>(Args.evaluate_slot_to_value(1).as_<EVector>() );
+    auto pi = vector<double>(Args.evaluate_slot_to_value(1).as_<R::RVector>() );
 
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -371,7 +371,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 {
     auto L = Args.evaluate_slot_to_value(0);
-    auto pi = (vector<double>) Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto pi = (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
     double t = Args.evaluate_slot_to_value(2).as_double();
 
     object_ptr<Box<Matrix>> Mptr = new Box<Matrix>;

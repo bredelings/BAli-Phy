@@ -32,8 +32,8 @@ template<>  std::string Box<std::string>::print() const
 
 template<> std::string Box<std::vector<std::pair<int,int>>>::print() const
 {
-    EVector V;
+    R::RVector V;
     for(auto& [x,y]: *this)
-        V.push_back(R::to_expression_ref(R::RPair(x, y)));
+        V.push_back(R::RPair(x, y));
     return V.print();
 }

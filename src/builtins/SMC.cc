@@ -894,9 +894,9 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 {
     double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<R::RVector>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<R::RVector>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
     double error_rate = Args.evaluate_slot_to_value(3).as_double();
@@ -915,9 +915,9 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 {
     double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<EVector>();
+    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<R::RVector>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<R::RVector>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
     double error_rate = Args.evaluate_slot_to_value(3).as_double();
@@ -931,7 +931,7 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
     auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A);
 
-    EVector ecs;
+    R::RVector ecs;
     for(auto& [h,l]: compressed_states)
         ecs.push_back(R::RPair(h, l));
 
@@ -940,7 +940,7 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
 extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 {
-    auto trace = Args.evaluate_slot_to_value(0).as_<EVector>();
+    auto trace = Args.evaluate_slot_to_value(0).as_<R::RVector>();
 
     std::ostringstream s;
 
@@ -1135,14 +1135,14 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vec
 
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
-    auto locs = (vector<int>)Args.evaluate_slot_to_value(0).as_<EVector>();
+    auto locs = (vector<int>)Args.evaluate_slot_to_value(0).as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& rho_func = arg1.as_<EVector>();
+    auto& rho_func = arg1.as_<R::RVector>();
     vector<Chunk> rhos;
     for(auto& chunk: rho_func)
     {
-	auto& c = chunk.as_<EVector>();
+	auto& c = chunk.as_<R::RVector>();
 	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
     }
 
@@ -1290,11 +1290,11 @@ extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(
 
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    auto& rho_func = arg1.as_<EVector>();
+    auto& rho_func = arg1.as_<R::RVector>();
     vector<Chunk> rhos;
     for(auto& chunk: rho_func)
     {
-	auto& c = chunk.as_<EVector>();
+	auto& c = chunk.as_<R::RVector>();
 	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
     }
 
@@ -1310,14 +1310,24 @@ extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(
     return { Pr };
 }
 
-int get_allele(const expression_ref& haplotype, int site)
+int get_allele(const R::RVector& haplotype, int site)
 {
-    return haplotype.as_<EVector>()[site].as_int();
+    return haplotype[site].as_int();
 }
 
-int get_allele(const expression_ref& haplotypes, int individual, int site)
+int get_allele(const R::Exp& haplotype, int site)
 {
-    return get_allele(haplotypes.as_<EVector>()[individual], site);
+    return get_allele(haplotype.as_<R::RVector>(), site);
+}
+
+int get_allele(const R::RVector& haplotypes, int individual, int site)
+{
+    return get_allele(haplotypes[individual], site);
+}
+
+int get_allele(const R::Exp& haplotypes, int individual, int site)
+{
+    return get_allele(haplotypes.as_<R::RVector>(), individual, site);
 }
 
 // OK, for DEploid, we could take
@@ -1335,7 +1345,7 @@ int get_allele(const expression_ref& haplotypes, int individual, int site)
 
 // CSD = conditional sampling distribution
 
-log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const EVector& haplotype)
+log_double_t deploid_01_plaf_only_CSD(const R::RVector& alt_allele_frequency, const R::RVector& haplotype)
 {
     assert(alt_allele_frequency.size() == haplotype.size());
 
@@ -1351,7 +1361,7 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
     return {Pr};
 }
 
-vector<double> get_switching_probs(double switching_rate, const EVector& sites)
+vector<double> get_switching_probs(double switching_rate, const R::RVector& sites)
 {
     const int L = sites.size();
     vector<double> pr_switch(L);
@@ -1369,7 +1379,7 @@ vector<double> get_switching_probs(double switching_rate, const EVector& sites)
     return pr_switch;
 }
 
-vector<pair<double,double>> get_transition_probs_deploid(double switching_rate, int k, const EVector& sites)
+vector<pair<double,double>> get_transition_probs_deploid(double switching_rate, int k, const R::RVector& sites)
 {
     const int L = sites.size();
     auto pr_switch = get_switching_probs(switching_rate, sites);
@@ -1388,7 +1398,7 @@ vector<pair<double,double>> get_transition_probs_deploid(double switching_rate, 
     return transition_pr;
 }
 
-log_double_t panel_01_CSD_single(const EVector& source_hap, double emission_diff_state, const EVector& haplotype)
+log_double_t panel_01_CSD_single(const R::RVector& source_hap, double emission_diff_state, const R::RVector& haplotype)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
     double emission_same_state = 1.0 - emission_diff_state;
@@ -1411,16 +1421,16 @@ log_double_t panel_01_CSD_single(const EVector& source_hap, double emission_diff
     return Pr;
 }
 
-log_double_t panel_01_CSD_no_recomb(const EVector& panel, double emission_diff_state, const EVector& haplotype)
+log_double_t panel_01_CSD_no_recomb(const R::RVector& panel, double emission_diff_state, const R::RVector& haplotype)
 {
     log_double_t Pr = 0;
     for(auto& source_hap: panel)
-        Pr += panel_01_CSD_single(source_hap.as_<EVector>(), emission_diff_state, haplotype);
+        Pr += panel_01_CSD_single(source_hap.as_<R::RVector>(), emission_diff_state, haplotype);
     Pr /= panel.size();
     return Pr;
 }
 
-log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
+log_double_t panel_01_CSD(const R::RVector& panel, const R::RVector& sites, double switching_rate, double emission_diff_state, const R::RVector& haplotype)
 {
     if (switching_rate == 0)
         return panel_01_CSD_no_recomb(panel, emission_diff_state, haplotype);
@@ -1432,9 +1442,9 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
     double emission_same_state = 1.0 - emission_diff_state;
 
     // 2. Check haplotype lengths and number of sites
-    double L = panel[0].as_<EVector>().size();
+    double L = panel[0].as_<R::RVector>().size();
     for(int i=0;i<panel.size();i++)
-        assert(panel[i].as_<EVector>().size() == L);
+        assert(panel[i].as_<R::RVector>().size() == L);
     assert(sites.size() == L);
     assert(haplotype.size() == L);
 
@@ -1503,13 +1513,13 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
 
 extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
 {
-    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    // 1. Population-Level Allele Frequencies (PLAF) - an R::RVector of double.
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& plaf = arg0.as_<EVector>();
+    auto& plaf = arg0.as_<R::RVector>();
 
-    // 2. Haplotypes - an EVector of EVector of Int
+    // 2. Haplotypes - an R::RVector of R::RVector of Int
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& haplotype = arg1.as_<EVector>();
+    auto& haplotype = arg1.as_<R::RVector>();
 
     auto Pr = deploid_01_plaf_only_CSD(plaf, haplotype);
 
@@ -1520,11 +1530,11 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
 {
     // 0. Panel haplotypes
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& panel = arg0.as_<EVector>();
+    auto& panel = arg0.as_<R::RVector>();
 
     // 1. Panel sites
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& sites = arg1.as_<EVector>();
+    auto& sites = arg1.as_<R::RVector>();
 
     // 2. Switching rate
     double switching_rate = Args.evaluate_slot_to_value(2).as_double();
@@ -1532,9 +1542,9 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
     // 3. State-flipping probability
     double diff_state = Args.evaluate_slot_to_value(3).as_double();
 
-    // 4. Haplotypes - an EVector of EVector of Int
+    // 4. Haplotypes - an R::RVector of R::RVector of Int
     auto arg4 = Args.evaluate_slot_to_value(4);
-    auto& haplotype = arg4.as_<EVector>();
+    auto& haplotype = arg4.as_<R::RVector>();
 
     auto Pr = panel_01_CSD(panel, sites, switching_rate, diff_state, haplotype);
 
@@ -1549,11 +1559,11 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
 extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value_(0);
-    auto& alt_allele_frequency = arg0.as_<EVector>();
+    auto& alt_allele_frequency = arg0.as_<R::RVector>();
 
     int num_sites = alt_allele_frequency.size();
 
-    object_ptr<EVector> H (new EVector(num_sites));
+    object_ptr<R::RVector> H (new R::RVector(num_sites));
     auto& haplotype = *H;
     for(int site=0; site < num_sites; site++)
     {
@@ -1568,13 +1578,13 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
 
 extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs& Args)
 {
-    // 0. Panel - EVector of Evector of Int
+    // 0. Panel - R::RVector of Evector of Int
     auto arg0 = Args.evaluate_slot_to_value_(0);
-    auto& panel = arg0.as_<EVector>();
+    auto& panel = arg0.as_<R::RVector>();
 
-    // 1. Sites - EVector of Int
+    // 1. Sites - R::RVector of Int
     auto arg1 = Args.evaluate_slot_to_value_(1);
-    auto& sites = arg1.as_<EVector>();
+    auto& sites = arg1.as_<R::RVector>();
 
     // 2. Switching rate
     double switching_rate = Args.evaluate_slot_to_value_(2).as_double();
@@ -1584,12 +1594,12 @@ extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs&
 
     int k = panel.size();
     assert(k > 0);
-    int L = panel[0].as_<EVector>().size();
+    int L = panel[0].as_<R::RVector>().size();
     for(int i=0;i<k;i++)
-        assert(panel[i].as_<EVector>().size() == L);
+        assert(panel[i].as_<R::RVector>().size() == L);
     assert(sites.size() == L);
 
-    EVector haplotype(L);
+    R::RVector haplotype(L);
     int source_haplotype = uniform_int(0,k-1);
 
     auto pr_switch = get_switching_probs(switching_rate, sites);
@@ -1617,7 +1627,7 @@ extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs&
 
 
 
-double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
+double wsaf_at_site(int site, const R::RVector& weights, const R::RVector& haplotypes)
 {
     int num_strains = weights.size();
 
@@ -1665,7 +1675,7 @@ log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double ws
            +outlier_frac      * beta_binomial_pdf(ref+alt, 1.0, 1.0, alt);
 }
 
-log_double_t site_likelihood_for_reads01(int counts, const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(int counts, const R::Exp& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
     int ref = reads.as_<R::RPair>().first.as_int();
     int alt = reads.as_<R::RPair>().second.as_int();
@@ -1680,15 +1690,15 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
 {
     // 1. Read counts at each locus
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& counts = arg0.as_<EVector>();
+    auto& counts = arg0.as_<R::RVector>();
 
-    // 2. Mixture weights - an EVector of double.
+    // 2. Mixture weights - an R::RVector of double.
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& weights = arg1.as_<EVector>();
+    auto& weights = arg1.as_<R::RVector>();
 
-    // 3. Haplotypes - an EVector of EVector of Int
+    // 3. Haplotypes - an R::RVector of R::RVector of Int
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& haplotypes = arg2.as_<EVector>();
+    auto& haplotypes = arg2.as_<R::RVector>();
 
     // 4. Error rate
     double error_rate = Args.evaluate_slot_to_value(3).as_double();
@@ -1702,9 +1712,9 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     double outlier_frac = Args.evaluate_slot_to_value(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
 
-    // 7. Reads = EVector of RPair of Int
+    // 7. Reads = R::RVector of RPair of Int
     auto arg6 = Args.evaluate_slot_to_value(6);
-    auto& reads = arg6.as_<EVector>();
+    auto& reads = arg6.as_<R::RVector>();
 
     int num_sites = counts.size();
     if (reads.size() != num_sites)
@@ -1715,7 +1725,7 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     assert(haplotypes.size() == weights.size());
 
     for(int i=0;i<num_strains;i++)
-        assert(haplotypes[i].as_<EVector>().size() == num_sites);
+        assert(haplotypes[i].as_<R::RVector>().size() == num_sites);
 #endif
 
     // 2. Accumulate observation probabilities!
@@ -1745,15 +1755,15 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
 {
     // 1. Read counts at each locus
     auto arg0 = Args.evaluate_slot_to_value_(0);
-    auto& counts = arg0.as_<EVector>();
+    auto& counts = arg0.as_<R::RVector>();
 
-    // 2. Mixture weights - an EVector of double.
+    // 2. Mixture weights - an R::RVector of double.
     auto arg1 = Args.evaluate_slot_to_value_(1);
-    auto& weights = arg1.as_<EVector>();
+    auto& weights = arg1.as_<R::RVector>();
 
-    // 3. Haplotypes - an EVector of EVector of Int
+    // 3. Haplotypes - an R::RVector of R::RVector of Int
     auto arg2 = Args.evaluate_slot_to_value_(2);
-    auto& haplotypes = arg2.as_<EVector>();
+    auto& haplotypes = arg2.as_<R::RVector>();
 
     // 4. Error rate
     double error_rate = Args.evaluate_slot_to_value_(3).as_double();
@@ -1773,17 +1783,17 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     assert(haplotypes.size() == weights.size());
 
     for(int i=0;i<num_strains;i++)
-        assert(haplotypes[i].as_<EVector>().size() == num_sites);
+        assert(haplotypes[i].as_<R::RVector>().size() == num_sites);
 #endif
 
     // 2. Accumulate observation probabilities!
-    EVector reads(num_sites);
+    R::RVector reads(num_sites);
 
     for(int site=0; site<num_sites; site++)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        reads[site] = R::to_expression_ref(sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac));
+        reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
     }
 
     return reads;
@@ -1807,9 +1817,9 @@ double get_prior(int A, double f, int n)
     return prior;
 }
 
-matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
+matrix<log_double_t> emission_pr(const vector<int>& K, const R::RVector& reads, const R::RVector& haplotypes, const R::RVector& weights, double error_rate, double concentration, double outlier_frac)
 {
-    int L = haplotypes[0].as_<EVector>().size();
+    int L = haplotypes[0].as_<R::RVector>().size();
     int N = K.size();
     int n_states = (1<<N); // 2^N
 
@@ -1859,16 +1869,16 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
     context_ptr hap_indices(C0, Args.reg_for_slot(1));
     vector<int> K = (vector<int>) hap_indices.list_to_vector_code();
 
-    // 2. reads = EVector (RPair Int Int)
+    // 2. reads = R::RVector (RPair Int Int)
     auto arg2 = evaluate_slot(C0, 2);
-    auto& reads = arg2.as_<EVector>();
+    auto& reads = arg2.as_<R::RVector>();
 
-    // 3. haplotypes = EVector (EVector Int)
+    // 3. haplotypes = R::RVector (R::RVector Int)
     context_ptr haplotypes_ptr(C0, Args.reg_for_slot(3));
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
+    R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
-    // 4. weights = EVector Double
-    auto weights = evaluate_slot(C0, 4).as_<EVector>();
+    // 4. weights = R::RVector Double
+    auto weights = evaluate_slot(C0, 4).as_<R::RVector>();
 
     // 5. error_rate = double
     double error_rate = evaluate_slot(C0, 5).as_double();
@@ -1949,7 +1959,7 @@ bool all_different(vector<int> v)
     return true;
 }
 
-int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, int site)
+int get_state_from_haplotypes(const R::RVector& haplotypes, const vector<int>& K, int site)
 {
     int N = K.size();
     int state = 0;
@@ -2000,18 +2010,18 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
             throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
     }
 
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
+    R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
     // 3. Get frequencies
     auto arg4 = evaluate_slot(C, 3);
-    auto& frequencies = arg4.as_<EVector>();
+    auto& frequencies = arg4.as_<R::RVector>();
 
-    // 4. Mixture weights = EVector of double.
-    auto weights1 = evaluate_slot(C, 4).as_<EVector>();
+    // 4. Mixture weights = R::RVector of double.
+    auto weights1 = evaluate_slot(C, 4).as_<R::RVector>();
 
-    // 5. reads = EVector of RPair of Int
+    // 5. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C, 5);
-    auto& reads = arg6.as_<EVector>();
+    auto& reads = arg6.as_<R::RVector>();
 
     // 6. error_rate = double
     double error_rate = evaluate_slot(C, 6).as_double();
@@ -2026,16 +2036,16 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     if (not all_different(K))
         return {log_double_t(1)};
 
-    int L = haplotypes[0].as_<EVector>().size();
+    int L = haplotypes[0].as_<R::RVector>().size();
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
     auto E = emission_pr(K, reads, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes -----------//
-    vector<object_ptr<EVector>> new_haplotypes( N );
+    vector<object_ptr<R::RVector>> new_haplotypes( N );
     for(auto& h: new_haplotypes)
-        h = object_ptr<EVector>(new EVector(L));
+        h = object_ptr<R::RVector>(new R::RVector(L));
 
     log_double_t pr_sample_0 = 1;
     log_double_t pr_sample_1 = 1;
@@ -2116,19 +2126,19 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
             throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
     }
 
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
+    R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
     // 4. Get frequencies
     auto arg4 = evaluate_slot(C0, 4);
-    auto& frequencies = arg4.as_<EVector>();
+    auto& frequencies = arg4.as_<R::RVector>();
 
-    // 5. Mixture weights = EVector of double.
+    // 5. Mixture weights = R::RVector of double.
     constexpr int weight_slot = 5;
-    auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
+    auto weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
 
-    // 6. reads = EVector of RPair of Int
+    // 6. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 6);
-    auto& reads = arg6.as_<EVector>();
+    auto& reads = arg6.as_<R::RVector>();
 
     // 7. error_rate = double
     double error_rate = evaluate_slot(C0, 7).as_double();
@@ -2143,7 +2153,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     if (not all_different(K))
         return {log_double_t(1)};
 
-    int L = haplotypes[0].as_<EVector>().size();
+    int L = haplotypes[0].as_<R::RVector>().size();
 
     //------------- Copy the context indices ------------------//
 
@@ -2160,7 +2170,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     if (N >= 2)
         w_ratio *= shift_laplace(C2, titre_regs[1], 0.125);
 
-    auto weights2 = evaluate_slot(C2, weight_slot).as_<EVector>();
+    auto weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
@@ -2169,9 +2179,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     auto E2 = emission_pr(K, reads, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
-    vector<object_ptr<EVector>> new_haplotypes1( N );
+    vector<object_ptr<R::RVector>> new_haplotypes1( N );
     for(auto& h: new_haplotypes1)
-        h = object_ptr<EVector>(new EVector(L));
+        h = object_ptr<R::RVector>(new R::RVector(L));
 
     log_double_t pr_sample_0 = 1;
     log_double_t pr_sample_1 = 1;
@@ -2194,9 +2204,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     }
 
     //---------- Sample new haplotypes for C2 -----------//
-    vector<object_ptr<EVector>> new_haplotypes2( N );
+    vector<object_ptr<R::RVector>> new_haplotypes2( N );
     for(auto& h: new_haplotypes2)
-        h = object_ptr<EVector>(new EVector(L));
+        h = object_ptr<R::RVector>(new R::RVector(L));
 
     log_double_t pr_sample_2 = 1;
 
@@ -2258,11 +2268,11 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
                                                 const vector<int>& K,
                                                 const vector<int>& haplotype_regs,
-                                                const EVector& haplotypes,
-                                                const EVector& panel,
+                                                const R::RVector& haplotypes,
+                                                const R::RVector& panel,
                                                 double miscopy_prob,
-                                                const EVector& weights,
-                                                const EVector& reads,
+                                                const R::RVector& weights,
+                                                const R::RVector& reads,
                                                 double error_rate,
                                                 double concentration,
                                                 double outlier_frac)
@@ -2273,7 +2283,7 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
     int n_panel_haps = panel.size();
     double emission_diff_state = miscopy_prob;
     double emission_same_state = 1.0 - emission_diff_state;
-    int L = haplotypes[0].as_<EVector>().size();
+    int L = haplotypes[0].as_<R::RVector>().size();
 
     //---------- 1. Compute transition probabilities -----------//
     int n_path_states = ipow(n_panel_haps, n_resample_haps);
@@ -2345,9 +2355,9 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
     int chosen_path_state = choose(pr_path);
 
     //---------- 5. Sample new haplotypes given path states-----------//
-    vector<object_ptr<EVector>> new_haplotypes( n_resample_haps );
+    vector<object_ptr<R::RVector>> new_haplotypes( n_resample_haps );
     for(auto& h: new_haplotypes)
-        h = object_ptr<EVector>(new EVector(L));
+        h = object_ptr<R::RVector>(new R::RVector(L));
 
     for(int site=0; site < L; site++)
     {
@@ -2375,13 +2385,13 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
 log_double_t resample_haps_from_panel(context_ref& C,
                                       const vector<int>& K,
                                       const vector<int>& haplotype_regs,
-                                      const EVector& haplotypes,
-                                      const EVector& panel,
-                                      const EVector& sites,
+                                      const R::RVector& haplotypes,
+                                      const R::RVector& panel,
+                                      const R::RVector& sites,
                                       double switching_rate,
                                       double miscopy_prob,
-                                      const EVector& weights,
-                                      const EVector& reads,
+                                      const R::RVector& weights,
+                                      const R::RVector& reads,
                                       double error_rate,
                                       double concentration,
                                       double outlier_frac)
@@ -2395,7 +2405,7 @@ log_double_t resample_haps_from_panel(context_ref& C,
     int n_panel_haps = panel.size();
     double emission_diff_state = miscopy_prob;
     double emission_same_state = 1.0 - emission_diff_state;
-    int L = haplotypes[0].as_<EVector>().size();
+    int L = haplotypes[0].as_<R::RVector>().size();
 
     //---------- 1. Compute transition probabilities -----------//
     int n_path_states = ipow(n_panel_haps, n_resample_haps);
@@ -2501,9 +2511,9 @@ log_double_t resample_haps_from_panel(context_ref& C,
     std::reverse(path_states.begin(), path_states.end());
 
     //---------- 5. Sample new haplotypes given path states-----------//
-    vector<object_ptr<EVector>> new_haplotypes( n_resample_haps );
+    vector<object_ptr<R::RVector>> new_haplotypes( n_resample_haps );
     for(auto& h: new_haplotypes)
-        h = object_ptr<EVector>(new EVector(L));
+        h = object_ptr<R::RVector>(new R::RVector(L));
 
     for(int site=0; site < L; site++)
     {
@@ -2561,14 +2571,14 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
             throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
     }
 
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
+    R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
     // 3. Get panel ([])
     context_ptr panel_ptr(C, Args.reg_for_slot(3));
-    EVector panel = panel_ptr.list_to_vector();
+    R::RVector panel = panel_ptr.list_to_vector();
 
-    // 4. Get sites (EVector)
-    EVector sites = evaluate_slot(C,4).as_<EVector>();
+    // 4. Get sites (R::RVector)
+    R::RVector sites = evaluate_slot(C,4).as_<R::RVector>();
 
     // 5. Get switching rate
     double switching_rate = evaluate_slot(C,5).as_double();
@@ -2576,12 +2586,12 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     // 6. Get emission_diff_state
     double miscopy_prob = evaluate_slot(C,6).as_double();
 
-    // 7. Mixture weights = EVector of double.
-    auto weights = evaluate_slot(C, 7).as_<EVector>();
+    // 7. Mixture weights = R::RVector of double.
+    auto weights = evaluate_slot(C, 7).as_<R::RVector>();
 
-    // 8. reads = EVector of RPair of Int
+    // 8. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C, 8);
-    auto& reads = arg6.as_<EVector>();
+    auto& reads = arg6.as_<R::RVector>();
 
     // 9. error_rate = double
     double error_rate = evaluate_slot(C, 9).as_double();
@@ -2646,15 +2656,15 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
             throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
     }
 
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
+    R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
     // 4. Get panel ([])
     context_ptr panel_ptr(C0, Args.reg_for_slot(4));
-    EVector panel = panel_ptr.list_to_vector();
+    R::RVector panel = panel_ptr.list_to_vector();
 
-    // 5. Get sites (EVector)
+    // 5. Get sites (R::RVector)
     context_ptr sites_ptr(C0, Args.reg_for_slot(5));
-    EVector sites = sites_ptr.list_to_vector();
+    R::RVector sites = sites_ptr.list_to_vector();
 
     // 6. Get switching rate
     double switching_rate = evaluate_slot(C0,6).as_double();
@@ -2662,13 +2672,13 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
     // 7. Get emission_diff_state
     double miscopy_prob = evaluate_slot(C0,7).as_double();
 
-    // 8. Mixture weights = EVector of double.
+    // 8. Mixture weights = R::RVector of double.
     constexpr int weight_slot = 8;
-    auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
+    auto weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
 
-    // 9. reads = EVector of RPair of Int
+    // 9. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 9);
-    auto& reads = arg6.as_<EVector>();
+    auto& reads = arg6.as_<R::RVector>();
 
     // 10. error_rate = double
     double error_rate = evaluate_slot(C0, 10).as_double();
@@ -2706,7 +2716,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
             w_ratio = propose_two_titres_constant_sum(C2, titre_regs[0], titre_regs[1]);
     }
 
-    auto weights2 = evaluate_slot(C2, weight_slot).as_<EVector>();
+    auto weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
 
     //---------- 4. Sum out haplotypes and resample -----------//
 

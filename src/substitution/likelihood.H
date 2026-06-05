@@ -45,9 +45,9 @@ namespace substitution {
     Likelihood_Cache_Branch get_column_likelihoods(const std::vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& index, const Matrix& F, int delta);
 
     object_ptr<const Likelihood_Cache_Branch>
-    merge_branches(const EVector& LCN,
-		   const EVector& LCB,
-		   const EVector& A_);
+    merge_branches(const R::RVector& LCN,
+		   const R::RVector& LCB,
+		   const R::RVector& A_);
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
@@ -59,16 +59,16 @@ namespace substitution {
     extern long total_root_clv_length;
 
     object_ptr<const Likelihood_Cache_Branch>
-    simple_sequence_likelihoods(const EVector& sequence,
+    simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet& a,
-				const EVector& smap,
+				const R::RVector& smap,
 				int n_models);
 
     // This one is sparse.
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(const EVector& sequence,
+    simple_sequence_likelihoods2(const R::RVector& sequence,
                                  const alphabet& a,
-                                 const EVector& smap,
+                                 const R::RVector& smap,
                                  int n_models);
 
     object_ptr<const Likelihood_Cache_Branch>
@@ -76,33 +76,33 @@ namespace substitution {
                          const Likelihood_Cache_Branch& LCB2,
                          const pairwise_alignment_t& A0,
                          const pairwise_alignment_t& A1,
-                         const EVector& transition_P,
+                         const R::RVector& transition_P,
                          const Matrix& F);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_toward_root(const EVector& LCN,
-			    const EVector& LCB,
-			    const EVector& A_,
-			    const EVector& transition_P,
+    peel_branch_toward_root(const R::RVector& LCN,
+			    const R::RVector& LCB,
+			    const R::RVector& A_,
+			    const R::RVector& transition_P,
 			    const Matrix& F);
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root(const EVector& LCN,
-			       const EVector& LCB,
-			       const EVector& A_,
-			       const EVector& transition_P,
+    peel_branch_away_from_root(const R::RVector& LCN,
+			       const R::RVector& LCB,
+			       const R::RVector& A_,
+			       const R::RVector& transition_P,
 			       const Matrix& F);
 
-    log_double_t calc_prob_at_root(const EVector& LCN,
-				   const EVector& LCB,
-				   const EVector& A_,
+    log_double_t calc_prob_at_root(const R::RVector& LCN,
+				   const R::RVector& LCB,
+				   const R::RVector& A_,
 				   const Matrix& F);
 
 
-    log_double_t calc_prob(const EVector& LCN,
-			   const EVector& LCB,
-			   const EVector& A_,
+    log_double_t calc_prob(const R::RVector& LCN,
+			   const R::RVector& LCB,
+			   const R::RVector& A_,
 			   const Matrix& F);
     //-- NonEq
 
@@ -115,30 +115,30 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_branch_away_from_root_non_eq(const EVector& LCN,
-				      const EVector& LCB,
-				      const EVector& A_,
-				      const EVector& transition_P,
+    peel_branch_away_from_root_non_eq(const R::RVector& LCN,
+				      const R::RVector& LCB,
+				      const R::RVector& A_,
+				      const R::RVector& transition_P,
 				      const Matrix& F);
 
-    log_double_t calc_prob_non_eq(const EVector& LCN,
-				  const EVector& LCB,
-				  const EVector& A_,
+    log_double_t calc_prob_non_eq(const R::RVector& LCN,
+				  const R::RVector& LCB,
+				  const R::RVector& A_,
 				  const Matrix& F);
 
     // -- Generic
 
-    Vector<std::pair<int,int>> sample_root_sequence(const EVector& LCN,
-					       const EVector& LCB,
-					       const EVector& A_,
+    Vector<std::pair<int,int>> sample_root_sequence(const R::RVector& LCN,
+					       const R::RVector& LCB,
+					       const R::RVector& A_,
                                                const Matrix& F);
 
     Vector<std::pair<int,int>> sample_branch_sequence(const Vector<std::pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
-						 const EVector& LCN,
-						 const EVector& LCB,
-						 const EVector& A_,
-						 const EVector& transition_P,
+						 const R::RVector& LCN,
+						 const R::RVector& LCB,
+						 const R::RVector& A_,
+						 const R::RVector& transition_P,
 						 const Matrix& F);
 
 }

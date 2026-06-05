@@ -66,10 +66,10 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 }
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts(const EVector& sequences,
+peel_muts(const R::RVector& sequences,
 	  const alphabet& a,
-	  const EVector& A_,
-	  const EVector& n_muts_,
+	  const R::RVector& A_,
+	  const R::RVector& n_muts_,
 	  const matrix<int>& cost)
 {
     int n_branches_in = n_muts_.size();
@@ -77,7 +77,7 @@ peel_muts(const EVector& sequences,
     assert(A_.size() == n_branches_in);
 
     auto A = [&](int i) -> auto& {return A_[i].as_<Box<pairwise_alignment_t>>();};
-    auto sequence = [&](int i) -> auto& {return sequences[i].as_<EVector>();};
+    auto sequence = [&](int i) -> auto& {return sequences[i].as_<R::RVector>();};
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     assert(not sequences.empty() or not A_.empty());
@@ -154,7 +154,7 @@ peel_muts(const EVector& sequences,
 
 	for(auto& esequence: sequences)
 	{
-	    auto& sequence = esequence.as_<EVector>();
+	    auto& sequence = esequence.as_<R::RVector>();
 	    int letter = sequence[s_node].as_int();
 	    if (letter >= 0)
 	    {
@@ -170,10 +170,10 @@ peel_muts(const EVector& sequences,
     return result;
 }
 
-int muts_root(const EVector& sequences,
+int muts_root(const R::RVector& sequences,
 	      const alphabet& a,
-	      const EVector& A_,
-	      const EVector& n_muts_,
+	      const R::RVector& A_,
+	      const R::RVector& n_muts_,
               const matrix<int>& cost)
 {
     int n_branches_in = n_muts_.size();
@@ -181,7 +181,7 @@ int muts_root(const EVector& sequences,
     assert(A_.size() == n_branches_in);
 
     auto A = [&](int i) -> auto& {return A_[i].as_<Box<pairwise_alignment_t>>();};
-    auto sequence = [&](int i) -> auto& {return sequences[i].as_<EVector>();};
+    auto sequence = [&](int i) -> auto& {return sequences[i].as_<R::RVector>();};
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     assert(not sequences.empty() or not A_.empty());
@@ -258,7 +258,7 @@ int muts_root(const EVector& sequences,
 
 	for(auto& esequence: sequences)
 	{
-	    auto& sequence = esequence.as_<EVector>();
+	    auto& sequence = esequence.as_<R::RVector>();
 	    int letter = sequence[s_node].as_int();
 	    if (letter >= 0)
 	    {
@@ -276,14 +276,14 @@ int muts_root(const EVector& sequences,
 }
 
 object_ptr<const ParsimonyCacheBranch>
-peel_muts_fixed_A(const EVector& sequences,
+peel_muts_fixed_A(const R::RVector& sequences,
 		  const alphabet& a,
-		  const EVector& n_muts_,
+		  const R::RVector& n_muts_,
 		  const matrix<int>& cost)
 {
     int n_letters = cost.size1();
 
-    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<EVector>(); };
+    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<R::RVector>(); };
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
@@ -360,15 +360,15 @@ peel_muts_fixed_A(const EVector& sequences,
     return result;
 }
 
-int muts_root_fixed_A(const EVector& sequences,
+int muts_root_fixed_A(const R::RVector& sequences,
 		      const alphabet& a,
-		      const EVector& n_muts_,
+		      const R::RVector& n_muts_,
 		      const matrix<int>& costs,
-		      const EVector& counts)
+		      const R::RVector& counts)
 {
     int n_letters = costs.size1();
 
-    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<EVector>(); };
+    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<R::RVector>(); };
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
@@ -450,7 +450,7 @@ int muts_root_fixed_A(const EVector& sequences,
 
 
 int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const ParsimonyCacheBranch& n_muts2,
-                      const matrix<int>& costs, const EVector& counts)
+                      const matrix<int>& costs, const R::RVector& counts)
 {
 
     int n_letters = n_muts0.n_letters;

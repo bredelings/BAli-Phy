@@ -140,16 +140,16 @@ Runtime::Exp context_ptr::value() const
     return result().head();
 }
 
-EVector context_ptr::list_to_vector() const
+R::RVector context_ptr::list_to_vector() const
 {
-    object_ptr<EVector> vec(new EVector);
+    object_ptr<R::RVector> vec(new R::RVector);
 
     context_ptr L = result();
     while(L.size() > 0)
     {
         assert(L.size() == 2);
 
-        vec->push_back(Runtime::to_expression_ref(L[0].value()));
+        vec->push_back(L[0].value());
 
         L = L[1];
     }

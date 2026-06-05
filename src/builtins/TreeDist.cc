@@ -24,15 +24,7 @@ namespace
             return result;
         }
 
-        if (const auto* legacy_vector = value.to<EVector>())
-        {
-            result->reserve(legacy_vector->size());
-            for(const auto& element: *legacy_vector)
-                result->push_back(R::e_op_value(element));
-            return result;
-        }
-
-        throw myexception()<<"Expected coalescent tree vector to be an RVector or EVector, but got "<<value.print();
+        throw myexception()<<"Expected coalescent tree vector to be an RVector or R::RVector, but got "<<value.print();
     }
 }
 

@@ -819,7 +819,7 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     //------------ 4. Walk the tree and realign --------//
     auto branches = walk_tree_path(T, subst_root);
 
-    object_ptr<EVector> v (new EVector);
+    object_ptr<R::RVector> v (new R::RVector);
     for(int branch: branches)
         v->push_back(branch);
 

@@ -29,7 +29,7 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
 
   checked_ifstream text_file(filename,"csv file");
 
-  EVector vec_all_lines;
+  R::RVector vec_all_lines;
 
   string line;
   while(portable_getline(text_file, line))
@@ -37,7 +37,7 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
       // This is probably not very smart -- ignores quoting, etc.
       // See https://tools.ietf.org/html/rfc4180
       // Probably I should write an actual parser.
-      EVector vec_line;
+      R::RVector vec_line;
       for(auto field: split(line, sep))
           vec_line.push_back(String(field));
       vec_all_lines.push_back(vec_line);

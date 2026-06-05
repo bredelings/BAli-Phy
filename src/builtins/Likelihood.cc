@@ -27,7 +27,7 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
     using boost::dynamic_bitset;
 
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& seq = arg0. as_<EVector>();
+    const auto& seq = arg0. as_<R::RVector>();
 
     int L = seq.size();
 
@@ -50,11 +50,11 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
     using boost::dynamic_bitset;
 
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& seq1 = arg0. as_<EVector>();
+    const auto& seq1 = arg0. as_<R::RVector>();
 
     int L = seq1.size();
 
-    object_ptr<EVector> Seq2(new EVector);
+    object_ptr<R::RVector> Seq2(new R::RVector);
     auto& seq2 = *Seq2;
 
     for(int i=0;i<L;i++)
@@ -74,9 +74,9 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    return substitution::simple_sequence_likelihoods2(arg3.as_<EVector>(),   // sequence
+    return substitution::simple_sequence_likelihoods2(arg3.as_<R::RVector>(),   // sequence
                                                       *arg0.as_<Alphabet>(), // alphabet
-                                                      arg1.as_<EVector>(),   // smap
+                                                      arg1.as_<R::RVector>(),   // smap
                                                       arg2.as_int());        // n_models
 }
 
@@ -89,10 +89,10 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto arg4 = Args.evaluate_slot_to_value(4);
 
-    return substitution::peel_branch_toward_root(arg0.as_<EVector>(),        // LCN
-						 arg1.as_<EVector>(),        // LCB
-						 arg2.as_<EVector>(),        // A
-						 arg3.as_<EVector>(),        // transition_P
+    return substitution::peel_branch_toward_root(arg0.as_<R::RVector>(),        // LCN
+						 arg1.as_<R::RVector>(),        // LCB
+						 arg2.as_<R::RVector>(),        // A
+						 arg3.as_<R::RVector>(),        // transition_P
 						 arg4.as_<Box<Matrix>>()  ); // F
 }
 
@@ -103,9 +103,9 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<EVector>(),       // LCN
-						      arg1.as_<EVector>(),       // LCB
-						      arg2.as_<EVector>(),       // A
+    log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<R::RVector>(),       // LCN
+						      arg1.as_<R::RVector>(),       // LCB
+						      arg2.as_<R::RVector>(),       // A
 						      arg3.as_<Box<Matrix>>());  // F
     return {Pr};
 }
@@ -118,10 +118,10 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto arg4 = Args.evaluate_slot_to_value(4);
 
-    return substitution::peel_branch_away_from_root(arg0.as_<EVector>(),        // LCN
-						    arg1.as_<EVector>(),        // LCB
-						    arg2.as_<EVector>(),        // A
-						    arg3.as_<EVector>(),        // transition_P
+    return substitution::peel_branch_away_from_root(arg0.as_<R::RVector>(),        // LCN
+						    arg1.as_<R::RVector>(),        // LCB
+						    arg2.as_<R::RVector>(),        // A
+						    arg3.as_<R::RVector>(),        // transition_P
 						    arg4.as_<Box<Matrix>>());   // F
 }
 
@@ -132,9 +132,9 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob(arg0.as_<EVector>(),       // LCN
-					      arg1.as_<EVector>(),       // LCB
-					      arg2.as_<EVector>(),       // A
+    log_double_t Pr = substitution::calc_prob(arg0.as_<R::RVector>(),       // LCN
+					      arg1.as_<R::RVector>(),       // LCB
+					      arg2.as_<R::RVector>(),       // A
 					      arg3.as_<Box<Matrix>>());  // F
     return {Pr};
 }
@@ -160,10 +160,10 @@ extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& A
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto arg4 = Args.evaluate_slot_to_value(4);
 
-    return substitution::peel_branch_away_from_root_non_eq(arg0.as_<EVector>(),        // LCN
-							   arg1.as_<EVector>(),        // LCB
-							   arg2.as_<EVector>(),        // A
-							   arg3.as_<EVector>(),        // transition_P
+    return substitution::peel_branch_away_from_root_non_eq(arg0.as_<R::RVector>(),        // LCN
+							   arg1.as_<R::RVector>(),        // LCB
+							   arg2.as_<R::RVector>(),        // A
+							   arg3.as_<R::RVector>(),        // transition_P
 							   arg4.as_<Box<Matrix>>());   // F
 }
 
@@ -174,9 +174,9 @@ extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<EVector>(),       // LCN
-						     arg1.as_<EVector>(),       // LCB
-						     arg2.as_<EVector>(),       // A
+    log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<R::RVector>(),       // LCN
+						     arg1.as_<R::RVector>(),       // LCB
+						     arg2.as_<R::RVector>(),       // A
 						     arg3.as_<Box<Matrix>>());  // F
     return {Pr};
 }
@@ -187,7 +187,7 @@ extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
 
     object_ptr<Box<Matrix>> F2 = new Box<Matrix>(propagate_frequencies(arg0.as_<Box<Matrix>>(), // F
-								       arg1.as_<EVector>()));   // transition_P
+								       arg1.as_<R::RVector>()));   // transition_P
     return F2;
 }
 
@@ -198,9 +198,9 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    return substitution::sample_root_sequence(arg0.as_<EVector>(),      // LCN
-                                              arg1.as_<EVector>(),      // LCB
-                                              arg2.as_<EVector>(),      // As
+    return substitution::sample_root_sequence(arg0.as_<R::RVector>(),      // LCN
+                                              arg1.as_<R::RVector>(),      // LCB
+                                              arg2.as_<R::RVector>(),      // As
                                               arg3.as_<Box<Matrix>>()); // F
 }
 
@@ -216,21 +216,21 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 
     return substitution::sample_branch_sequence(arg0.as_<Vector<pair<int,int>>>(),     // parent_seq
 						arg1.as_<Box<pairwise_alignment_t>>(), // parent_A
-						arg2.as_<EVector>(),                   // LCN
-						arg3.as_<EVector>(),                   // LCB
-						arg4.as_<EVector>(),                   // A
-						arg5.as_<EVector>(),                   // transition_P
+						arg2.as_<R::RVector>(),                   // LCN
+						arg3.as_<R::RVector>(),                   // LCB
+						arg4.as_<R::RVector>(),                   // A
+						arg5.as_<R::RVector>(),                   // transition_P
 						arg6.as_<Box<Matrix>>());              // F
 }
 
-// maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
+// maskSequenceRaw :: CBitVector -> R::RVector Int -> R::RVector Int
 extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto sequence = arg1.as_<EVector>();
+    auto sequence = arg1.as_<R::RVector>();
 
     assert(mask.size() == sequence.size());
     for(int i=0;i<sequence.size();i++)
@@ -271,7 +271,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     auto& alignment = arg1.as_<Box<pairwise_alignment_t>>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& transition_ps = arg2.as_<EVector>();
+    auto& transition_ps = arg2.as_<R::RVector>();
 
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto& F = arg3.as_<Box<Matrix>>();
@@ -302,7 +302,7 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
     auto& parentSequence = arg0.as_<Vector<pair<int,int>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& transition_ps = arg1.as_<EVector>();
+    auto& transition_ps = arg1.as_<R::RVector>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto& F = arg2.as_<Box<Matrix>>();
