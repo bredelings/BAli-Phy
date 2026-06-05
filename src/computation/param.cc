@@ -24,7 +24,7 @@ Runtime::Exp head_code(const Runtime::Exp& E)
         using T = std::decay_t<decltype(head)>;
 
         if constexpr (std::is_same_v<T, Runtime::FunctionApply>)
-            return Apply();
+            std::abort();
         else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
             return Runtime::Constructor(head.head);
         else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
