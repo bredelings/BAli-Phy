@@ -409,11 +409,11 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& keys = arg1.as_<IntSet>();
 
-    IntMap result;
+    object_ptr<IntMap> result = new IntMap;;
 
     for(auto& k: keys)
 	if (map0.has_key(k))
-	    result.insert(k, map0[k]);
+	    result->insert(k, map0[k]);
 
     return result;
 }
@@ -422,11 +422,12 @@ closure makeRVector(OperationArgs& Args)
 {
     int n = Args.n_args();
 
-    R::RVector result;
+    object_ptr<R::RVector> result = new R::RVector;
+    result->reserve(n);
     for(int i=0;i<n;i++)
     {
 	int r = Args.reg_for_slot(i);
-	result.push_back(Args.evaluate_reg_to_closure(r).get_code());
+	result->push_back(Args.evaluate_reg_to_closure(r).get_code());
     }
     return result;
 }
