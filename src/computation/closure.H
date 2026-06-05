@@ -1,12 +1,11 @@
 #ifndef CLOSURE_H
 #define CLOSURE_H
 
-#include <vector>
 #include <string>
 #include <utility>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
-#include "computation/haskell/ids.H"
+#include "computation/haskell/ids.H"  // for bool_true_name, bool_false_name
 #include "computation/runtime/ast.H"
 
 struct closure
@@ -46,8 +45,7 @@ public:
     {
         if (auto index_var = E.to<Runtime::IndexVar>())
         {
-            if (index_var->index >= Env.size())
-                return {};
+            assert(index_var->index < Env.size());
 
             return lookup_in_env(index_var->index);
         }
@@ -60,6 +58,11 @@ public:
     std::optional<int> reg_for_ref_maybe() const
     {
         return reg_for_code(code);
+    }
+
+    std::optional<int> reg_for_slot_maybe(int i) const
+    {
+        return reg_for_code(code.slot_ref(i));
     }
 
     int reg_for_ref() const
@@ -146,13 +149,9 @@ public:
 
     closure(integer x):closure(Runtime::Integer(std::move(x))) {}
 
-    closure(const Box<std::string>& x):closure(Runtime::String(x.value())) {}
+    closure(const Box<std::string>& x) = delete;
 
-    closure(Box<std::string>&& x):closure(Runtime::String(x.value())) {}
-
-    closure(const Box<integer>& x):closure(Runtime::Integer(x)) {}
-
-    closure(Box<integer>&& x):closure(Runtime::Integer(std::move(x))) {}
+    closure(const Box<integer>& x) = delete;
 
     // Constructing w/o an environment
     closure(Object* o)

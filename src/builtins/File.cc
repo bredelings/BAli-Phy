@@ -181,7 +181,7 @@ extern "C" closure builtin_function_hFileSize(OperationArgs& Args)
     unsigned long length = handle->tellg();
     handle->seekg(old_pos, std::ios::beg);
 
-    return Integer(length);
+    return integer(length);
 }
 
 // Handle -> RealWorld -> Integer
@@ -228,7 +228,7 @@ extern "C" closure builtin_function_hTellRaw(OperationArgs& Args)
     unsigned long pos_read = handle->tellg();
     unsigned long pos_write = handle->tellp();
 
-    return Integer( std::max(pos_read, pos_write) );
+    return integer( std::max(pos_read, pos_write) );
 }
 
 // Handle -> RealWorld -> Bool
