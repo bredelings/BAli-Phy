@@ -40,7 +40,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	int apply_reg = Args.allocate(closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
                                               {f_reg, i_reg}));
 
-	// change to result.exp <<= index_var(i)
+	// change to result.exp <<= Runtime::IndexVar(i)
 	elements[i] = Runtime::IndexVar(n - 1 - i);
 
 	// Add the var to the environment
@@ -98,7 +98,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
     {
         if (i==idx) j++;
 
-	// change to result.exp <<= index_var(i)
+	// change to result.exp <<= Runtime::IndexVar(i)
 	elements[i] = Runtime::IndexVar(n - 2 - i);
 
 	// Add the var to the environment

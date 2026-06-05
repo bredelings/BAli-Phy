@@ -13,15 +13,6 @@ struct lambda: public Object
     std::string print() const;
 };
 
-struct lambda2: public Object
-{
-    lambda2* clone() const {return new lambda2(*this);}
-    bool operator==(const Object& o) const;
-
-    type_constant type() const {return type_constant::lambda2_type;}
-    std::string print() const;
-};
-
 expression_ref lambda_n(const Object& O, int n);
 expression_ref lambda_quantify(int var_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);

@@ -26,11 +26,11 @@ computation_sources = [
 
   'core/wrap.cc', 'core/func.cc',
   
-  'expression/expression.cc','expression/constructor.cc',
+  'expression/constructor.cc',
   'expression/expression_ref.cc',
-  'expression/apply.cc','expression/substitute.cc',
-  'expression/indexify.cc','expression/let.cc',
-  'expression/case.cc','expression/trim.cc',
+  'expression/apply.cc',
+  'runtime/indexify.cc','expression/let.cc',
+  'expression/case.cc',
   'expression/tuple.cc','expression/list.cc',
   'expression/var.cc','expression/lambda.cc',
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',

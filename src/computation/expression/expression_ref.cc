@@ -8,13 +8,10 @@
 #include "let.H"
 #include "var.H"
 #include "case.H"
-#include "trim.H"
 #include "tuple.H"
 #include "list.H" // for char_list
 #include "bool.H"
 #include "do_block.H"
-#include "index_var.H"
-#include "reg_var.H"
 #include "computation/operations.H"
 #include "computation/module.H"
 #include <set>
@@ -64,12 +61,6 @@ std::string expression_ref::print() const
         break;
     case type_constant::char_type:
         return std::string("'")+c+"'";
-        break;
-    case type_constant::index_var_type:
-        return std::string("%")+convertToString(i);
-        break;
-    case type_constant::reg_var_type:
-        return std::string("@")+convertToString(i);
         break;
     default:
         return ptr()->print();
@@ -142,16 +133,6 @@ string expression::print() const
 
     //  if (false)
     {
-	if (head.is_a<lambda2>())
-	{
-	    result = sub[0].print();
-	    if (sub[0].head().is_a<lambda2>())
-		result = "/\\" + result;
-	    else
-		result = "/\\." + result;
-	    return result;
-	}
-
 	if (head.is_a<lambda>())
 	{
 	    expression_ref body = new expression(*this);
@@ -176,14 +157,6 @@ string expression::print() const
 		parts.push_back(x.print() + " = " + e.print());
 	    result += join(parts,"; ");
 	    result += "} in " + L.body.print();
-	    return result;
-	}
-
-	else if (head.is_a<Trim>())
-	{
-	    auto& V = sub[0].as_<Vector<int>>();
-
-	    result = "Trim {"+join(V,",")+"} " + sub[1].print();
 	    return result;
 	}
 

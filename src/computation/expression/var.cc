@@ -2,10 +2,8 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "haskell/ids.H"
-#include "haskell/coretype.H"
 
 using std::set;
-using std::vector;
 using std::multiset;
 using std::string;
 
@@ -51,38 +49,8 @@ bool var::operator<(const var& D) const
     return (cmp < 0);
 }
 
-std::set<var> get_free_indices(const expression_ref& E);
-
-/// Return the min of v
-template<typename T>
-T max(const std::set<T>& v)
-{
-    T t = *v.begin();
-    for(const auto& i: v)
-	t = std::max(t,i);
-
-    return t;
-}
-
-int max_index(const std::set<var>& s)
-{
-    if (s.empty()) return -1;
-    return max(s).index;
-}
-
-/// Return the min of v
-template<typename T>
-T min(const std::set<T>& v)
-{
-    T t = *v.begin();
-    for(const auto& i: v)
-	t = std::min(t,*i);
-
-    return t;
-}
-
 // Return the list of variable indices that are bound at the top level of the expression
-std::set<var> get_bound_indices(const expression_ref& E)
+static std::set<var> get_bound_indices(const expression_ref& E)
 {
     std::set<var> bound;
 
@@ -104,13 +72,13 @@ std::set<var> get_bound_indices(const expression_ref& E)
     return bound;
 }
 
-void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& free)
+static void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& free)
 {
     // fv x = { x }
     if (is_var(E))
     {
 	var d = E.as_<var>();
-	if (not is_wildcard(E) and (bound.find(d) == bound.end()))
+	if (not d.is_wildcard() and (bound.find(d) == bound.end()))
 	    free.insert(d);
 	return;
     }
@@ -175,43 +143,3 @@ bool is_var(const expression_ref& E)
 {
     return (E.head().type() == type_constant::var_type);
 }
-
-var qualified_var(const string& name)
-{
-    assert(name.size());
-    assert(is_qualified_symbol(name));
-    return var(name);
-}
-
-bool is_qualified_var(const expression_ref& E)
-{
-    if (not is_var(E)) return false;
-    auto& x = E.as_<var>();
-    if (x.is_wildcard()) return false;
-    if (x.name.empty()) return false;
-    return is_qualified_symbol(x.name);
-}
-
-bool is_wildcard(const var& d)
-{
-    return d.is_wildcard();
-}
-
-// Remove in favor of is_var?
-bool is_wildcard(const expression_ref& E)
-{
-    if (is_var(E))
-    {
-	assert(not E.size());
-	var d = E.as_<var>();
-	return is_wildcard(d);
-    }
-    else
-	return false;
-}
-
-expression_ref wildcard()
-{
-    return var(-1);
-}
-

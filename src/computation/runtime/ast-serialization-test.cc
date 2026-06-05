@@ -1,6 +1,6 @@
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
-#include "computation/expression/indexify.H"
+#include "computation/runtime/indexify.H"
 #include "computation/preprocess.H"
 #include "computation/loader.H"
 #include "computation/machine/graph_register.H"

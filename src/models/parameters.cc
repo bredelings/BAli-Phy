@@ -50,7 +50,6 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/var.H"
-#include "computation/expression/reg_var.H"
 #include "computation/expression/let.H"
 #include "computation/expression/do_block.H"
 #include "computation/module.H"
@@ -327,7 +326,6 @@ data_partition_constants::data_partition_constants(context_ref& C, int r_data)
         // Extract pairwise alignments from data partition
         auto in_edges = C.in_edges_to_dist(s_sequences);
         int r_alignment = *in_edges->get("alignment");
-        auto alignment_on_tree = reg_var( r_alignment );
 
         // Add method indices for calculating branch HMMs and alignment prior
         if (auto out_edges = C.out_edges_to_var( r_alignment ))

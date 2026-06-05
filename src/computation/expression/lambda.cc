@@ -16,15 +16,6 @@ bool lambda::operator==(const Object& o) const
     return dynamic_cast<const lambda*>(&o);
 }
 
-string lambda2::print() const {
-    return "/\\";
-}
-
-bool lambda2::operator==(const Object& o) const 
-{
-    return dynamic_cast<const lambda2*>(&o);
-}
-
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& R)
 {
     return new expression(lambda(),{var, R});
@@ -69,8 +60,3 @@ expression_ref lambda_n(const Object& O, int n)
   
     return R;
 }
-
-
-expression_ref lambda_quantify(int var_index, const expression_ref& E);
-expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
-

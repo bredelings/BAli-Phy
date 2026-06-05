@@ -1,9 +1,9 @@
 #ifndef EXPRESSION_LET_H
 #define EXPRESSION_LET_H
 
+#include <string>
 #include <vector>
 #include <utility>
-#include <optional>
 #include "computation/object.H"
 #include "expression_ref.H"
 #include "var.H"
@@ -47,16 +47,6 @@ expression_ref let_expression(const CDecls& decls, const expression_ref& T);
 
 expression_ref let_expression(const std::vector<CDecls>& decl_groups, const expression_ref& T);
 
-expression_ref unlet(const expression_ref& E);
-
 bool is_let_expression(const expression_ref& E);
-
-expression_ref multi_let_body(expression_ref E);
-
-std::vector<CDecls> strip_multi_let(expression_ref& E);
-
-std::optional<var> find_first_duplicate_var(const CDecls& decls);
-void check_duplicate_var(const CDecls& decls);
-void check_duplicate_var(const expression_ref& decls);
 
 #endif

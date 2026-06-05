@@ -77,7 +77,6 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "system.H"
 #include "cmd_line.H"
-#include "computation/expression/expression.H" // for parse_object( )
 #include "computation/loader.H"
 
 namespace fs = std::filesystem;
@@ -785,4 +784,3 @@ int main(int argc,char* argv[])
     cerr.flush();
     return retval;
 }
-

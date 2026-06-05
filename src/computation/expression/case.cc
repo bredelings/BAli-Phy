@@ -3,7 +3,6 @@
 #include "var.H"
 #include "case.H"
 #include "let.H"
-#include "substitute.H"
 #include "computation/operations.H"
 #include "util/string/join.H"
 

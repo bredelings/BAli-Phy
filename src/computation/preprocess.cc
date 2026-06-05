@@ -1,16 +1,13 @@
 #include <iostream>
-#include <stdexcept>
 #include <type_traits>
-#include <unordered_map>
 #include "computation/preprocess.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
 #include "computation/fresh_vars.H"
-#include "computation/expression/indexify.H"
+#include "computation/runtime/indexify.H"
 #include "computation/core/convert.H"
-#include "computation/operation.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
 
@@ -23,54 +20,6 @@ using std::map;
 
 using std::cerr;
 using std::endl;
-
-namespace
-{
-
-Core::Var<> get_named_core_var(int n)
-{
-    if (n < 26)
-        return Core::Var<>(string{char('a' + n)});
-    else
-        return Core::Var<>("v" + std::to_string(n - 26));
-}
-
-Core::Var<> direct_reg_core_var(int r)
-{
-    return Core::Var<>("<" + std::to_string(r) + ">");
-}
-
-Core::Var<> env_reg_core_var(int r)
-{
-    return Core::Var<>("[" + std::to_string(r) + "]");
-}
-
-Core::Exp<> runtime_only_core_exp(const string& text)
-{
-    return Core::RuntimeOnly{text};
-}
-
-Core::Constant runtime_constant_to_core(const Runtime::Exp& E)
-{
-    Core::Constant C;
-
-    if (auto x = E.to<Runtime::Int>())
-        C.value = x->value;
-    else if (auto x = E.to<Runtime::Double>())
-        C.value = double(x->value);
-    else if (auto x = E.to<Runtime::Char>())
-        C.value = x->value;
-    else if (auto x = E.to<Runtime::String>())
-        C.value = x->value;
-    else if (auto x = E.to<Runtime::Integer>())
-        C.value = integer_container(x->value);
-    else
-        throw std::runtime_error("Runtime expression is not a Core constant");
-
-    return C;
-}
-
-}
 
 namespace Runtime
 {
@@ -136,200 +85,6 @@ namespace Runtime
 
         return untranslate_vars(E, reg_to_name);
     }
-}
-
-namespace
-{
-
-Core::Pattern<> deindexify_pattern(const Runtime::Pattern& pattern, vector<Core::Var<>>& variables)
-{
-    return std::visit([&](const auto& p) -> Core::Pattern<>
-    {
-        using T = std::decay_t<decltype(p)>;
-
-        if constexpr (std::is_same_v<T, Runtime::WildcardPattern>)
-            return {};
-        else if constexpr (std::is_same_v<T, Runtime::ConstructorPattern>)
-        {
-            Core::Pattern<> pattern2;
-            pattern2.head = p.head.name();
-
-            for(int i = 0; i < p.head.n_args(); i++)
-            {
-                auto x = get_named_core_var(variables.size());
-                pattern2.args.push_back(x);
-                variables.push_back(x);
-            }
-
-            return pattern2;
-        }
-        else
-            std::abort();
-    }, pattern);
-}
-
-Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
-{
-    if (E.to<Runtime::Int>() or E.to<Runtime::Double>() or E.to<Runtime::Char>() or
-        E.to<Runtime::String>() or E.to<Runtime::Integer>())
-    {
-        return runtime_constant_to_core(E);
-    }
-    else if (E.to<Runtime::LogDouble>())
-        return runtime_only_core_exp(E.print());
-    else if (auto e = E.to<Runtime::Constructor>())
-    {
-        if (e->value.n_args() != 0)
-            return runtime_only_core_exp(E.print());
-
-        return Core::ConApp<>{e->value.name(), {}};
-    }
-    else if (auto e = E.to<Runtime::ObjectValue>())
-        return runtime_only_core_exp(e->value ? e->value->print() : string{"null"});
-    else if (auto e = E.to<Runtime::IndexVar>())
-    {
-        if (e->index >= variables.size())
-            return Core::Var<>("[?" + std::to_string(e->index) + "]");
-
-        return Core::Exp<>(variables[variables.size() - 1 - e->index]);
-    }
-    else if (auto e = E.to<Runtime::GlobalVar>())
-    {
-        return Core::Var<>(e->name, e->index);
-    }
-    else if (auto e = E.to<Runtime::RegRef>())
-        return direct_reg_core_var(e->target);
-    else if (auto e = E.to<Runtime::Lambda>())
-    {
-        auto x = get_named_core_var(variables.size());
-        variables.push_back(x);
-        auto body = deindexify(e->body, variables);
-        variables.pop_back();
-
-        return Core::Lambda<>{x, body};
-    }
-    else if (auto e = E.to<Runtime::Let>())
-    {
-        Core::Decls<> decls;
-        decls.reserve(e->binds.size());
-
-        for(int i = 0; i < e->binds.size(); i++)
-        {
-            auto x = get_named_core_var(variables.size());
-            variables.push_back(x);
-            decls.push_back({x, {}});
-        }
-
-        for(int i = 0; i < e->binds.size(); i++)
-            decls[i].body = deindexify(e->binds[i], variables);
-
-        auto body = deindexify(e->body, variables);
-
-        for(int i = 0; i < e->binds.size(); i++)
-            variables.pop_back();
-
-        return Core::Let<>{decls, body};
-    }
-    else if (auto e = E.to<Runtime::Case>())
-    {
-        auto object = deindexify(e->object, variables);
-        vector<Core::Alt<>> alts;
-        alts.reserve(e->alts.size());
-
-        for(const auto& alt: e->alts)
-        {
-            auto old_size = variables.size();
-            auto pattern = deindexify_pattern(alt.pattern, variables);
-            auto body = deindexify(alt.body, variables);
-            variables.resize(old_size);
-            alts.push_back({pattern, body});
-        }
-
-        return Core::Case<>{object, std::move(alts)};
-    }
-    else if (auto e = E.to<Runtime::App>())
-    {
-        vector<Core::Exp<>> args;
-        args.reserve(e->args.size());
-        for(const auto& arg: e->args)
-            args.push_back(deindexify(arg, variables));
-
-        if (std::holds_alternative<Runtime::FunctionApply>(e->head))
-        {
-            if (args.size() < 2)
-            {
-                Core::Exp<> result = runtime_only_core_exp("apply");
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            Core::Exp<> result = args[0];
-            for(int i = 1; i < args.size(); i++)
-                result = Core::Apply<>{result, args[i]};
-            return result;
-        }
-        else if (auto head = std::get_if<Runtime::ConstructorApp>(&e->head))
-        {
-            return Core::ConApp<>{head->head.name(), args};
-        }
-        else
-        {
-            auto op_head = std::get_if<Runtime::OperationApp>(&e->head);
-            if (not op_head or not op_head->head or op_head->lib_name.empty() or op_head->func_name.empty() or op_head->call_conv.empty())
-            {
-                Core::Exp<> result = runtime_only_core_exp(op_head and op_head->head ? op_head->head->print() : string{"op"});
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            void* op = nullptr;
-            if (op_head->call_conv == "ecall")
-                op = reinterpret_cast<void*>(op_head->head->e_op);
-            else
-                op = reinterpret_cast<void*>(op_head->head->op);
-
-            if (not op)
-            {
-                Core::Exp<> result = runtime_only_core_exp(op_head->head->print());
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            return Core::BuiltinOp<>{op_head->lib_name, op_head->func_name, op_head->call_conv, args, op};
-        }
-    }
-    else if (E.to<Runtime::Trim>())
-    {
-        return deindexify(Runtime::trim_unnormalize(E), variables);
-    }
-    else
-        std::abort();
-}
-
-}
-
-Core::Exp<> deindexify(const Runtime::Exp& E, const vector<Core::Var<>>& variables)
-{
-    auto variables2 = variables;
-    return deindexify(E, variables2);
-}
-
-Core::Exp<> deindexify(const Runtime::Exp& E)
-{
-    return deindexify(E, vector<Core::Var<>>{});
-}
-
-Core::Exp<> deindexify(const closure& C)
-{
-    vector<Core::Var<>> variables;
-    variables.reserve(C.Env.size());
-    for(int r: C.Env)
-        variables.push_back(env_reg_core_var(r));
-
-    return deindexify(trim_unnormalize(C).get_code(), variables);
 }
 
 Core::Exp<> unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)

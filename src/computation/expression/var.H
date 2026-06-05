@@ -4,12 +4,9 @@
 #include <set>
 #include <string>
 #include <optional>
-#include <functional>
 #include "computation/object.H"
 #include "computation/optimization/occurrence_info.H"
 #include "expression_ref.H"
-
-struct Type;
 
 // a variable expression
 struct var: public Object, public occurrence_info
@@ -47,35 +44,8 @@ struct var: public Object, public occurrence_info
     var():index(0) {}
 };
 
-expression_ref wildcard();
-
-var qualified_var(const std::string&);
-
 bool is_var(const expression_ref&);
 
-bool is_qualified_var(const expression_ref&);
-
-bool is_wildcard(const expression_ref&);
-
-bool is_wildcard(const var& d);
-
-int max_index(const std::set<var>& s);
-
 std::set<var> get_free_indices(const expression_ref& E);
-
-std::set<var> get_bound_indices(const expression_ref& E);
-
-namespace std
-{
-    template <>
-    class hash < var >{
-    public :
-        size_t operator()(const var &x) const
-        {
-            size_t h =   std::hash<int>()(x.index) ^ std::hash<std::string>()(x.name);
-            return  h ;
-        }
-    };
-}
 
 #endif
