@@ -212,10 +212,7 @@ public:
     void perform_logger(int s, long iteration);
     int n_loggers() const;
 
-    expression_ref evaluate_program() const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& evaluate_program_code() const;
+    const Runtime::Exp& evaluate_program() const;
 
     virtual json::object get_logged_parameters() const;
 

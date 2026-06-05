@@ -702,12 +702,7 @@ void context_ref::show_graph_for_root_token() const
     write_dot_graph(*memory());
 }
 
-expression_ref context_ref::evaluate_program() const
-{
-    return memory()->evaluate_program(context_index).legacy_exp();
-}
-
-const Runtime::Exp& context_ref::evaluate_program_code() const
+const Runtime::Exp& context_ref::evaluate_program() const
 {
     return memory()->evaluate_program(context_index).get_code();
 }
