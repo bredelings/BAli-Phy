@@ -1,5 +1,4 @@
-#include "interchangeable.H"
-#include "index_var.H"
+#include "computation/runtime/interchangeable.H"
 #include "computation/runtime/ast.H"
 #include "util/assert.hh"
 

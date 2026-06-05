@@ -4,7 +4,7 @@
 #include "computation/operations.H"
 #include "computation/preprocess.H"
 #include "computation/core/subst.H"
-#include "computation/expression/modifiable.H"
+#include "computation/runtime/modifiable.H"
 #include "computation/context.H"
 #include "haskell/ids.H"
 #include "computation/machine/gcobject.H"

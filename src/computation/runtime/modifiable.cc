@@ -1,5 +1,4 @@
-#include "modifiable.H"
-#include "index_var.H"
+#include "computation/runtime/modifiable.H"
 #include "computation/machine/graph_register.H"
 #include "computation/runtime/ast.H"
 

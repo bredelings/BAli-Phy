@@ -16,7 +16,7 @@
 #include "var.H"
 #include "lambda.H"
 #include "bool.H"
-#include "modifiable.H"
+#include "computation/runtime/modifiable.H"
 #include "reg_var.H"
 
 using std::vector;

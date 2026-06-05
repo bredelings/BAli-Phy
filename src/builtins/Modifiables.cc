@@ -4,8 +4,8 @@
 #include "computation/operations.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
-#include "computation/expression/modifiable.H"
-#include "computation/expression/interchangeable.H"
+#include "computation/runtime/modifiable.H"
+#include "computation/runtime/interchangeable.H"
 
 using boost::dynamic_pointer_cast;
 

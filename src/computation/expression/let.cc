@@ -5,7 +5,7 @@
 #include "case.H"
 #include "apply.H"
 #include "substitute.H"
-#include "modifiable.H"
+#include "computation/runtime/modifiable.H"
 #include "constructor.H"
 #include "util/range.H" // for reverse( )
 #include "util/string/join.H" // for join( )

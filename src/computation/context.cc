@@ -8,7 +8,7 @@
 #include "loader.H"
 #include "module.H"
 #include "computation/preprocess.H"
-#include "expression/modifiable.H"
+#include "computation/runtime/modifiable.H"
 #include "util/rng.H"
 #include "util/log-level.H"
 #include "util/permute.H"
