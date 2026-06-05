@@ -6,6 +6,7 @@
 #include "graph_register.H"
 #include "effect.H"
 #include "error_exception.H"
+#include "computation/preprocess.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
@@ -36,15 +37,16 @@ long total_case_op = 0;
 long total_let_op = 0;
 long total_index_op = 0;
 
-expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
-expression_ref untranslate_vars(const expression_ref& E, const map<std::string, int>& ids);
-expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
+Core::Exp<> compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
+Core::Exp<> unlet(const Core::Exp<>& E);
+Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<std::string, int>& ids);
+Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 
 void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 {
     string SSS = unlet(untranslate_vars(
-                           untranslate_vars(deindexify(trim_unnormalize(C)), M.get_identifiers()),
+                           untranslate_vars(runtime_deindexify(C), M.get_identifiers()),
                            get_constants(M,t)
                            )
         ).print();
@@ -57,7 +59,7 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
 {
     string SSS = unlet(untranslate_vars(
-                           untranslate_vars(deindexify(trim_unnormalize(M[R])), M.get_identifiers()),
+                           untranslate_vars(runtime_deindexify(M[R]), M.get_identifiers()),
                            get_constants(M,t)
                            )
         ).print();
@@ -1283,7 +1285,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
             string SS = "";
             SS = compact_graph_expression(*this, r, get_identifiers()).print();
-            string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(r))),
+            string SSS = untranslate_vars(runtime_deindexify(closure_at(r)),
                                           get_identifiers()).print();
             if (log_verbose >= 3)
                 write_dot_graph(*this);

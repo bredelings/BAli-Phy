@@ -2,13 +2,9 @@
 #include <unordered_set>
 #include "graph_register.H"
 #include "computation/operations.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
-#include "computation/expression/case.H"
+#include "computation/preprocess.H"
+#include "computation/core/subst.H"
 #include "computation/expression/modifiable.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/expression.H" // for launchbury_unnormalize( )
-#include "util/set.H"
 #include "computation/context.H"
 #include "haskell/ids.H"
 #include "computation/machine/gcobject.H"
@@ -22,63 +18,229 @@ using std::map;
 using std::set;
 using std::ofstream;
 
-expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
+map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars);
+
+Core::Exp<> map_symbol_names(const Core::Exp<>& E, const std::map<string,string>& simplify)
 {
-    if (not E.size())
+    if (auto V = E.to_var())
     {
-	if (is_qualified_var(E))
-	{
-	    auto x = E.as_<var>();
-	    auto loc = simplify.find(x.name);
-	    if (loc != simplify.end())
-		return var(loc->second);
-	}
-	return E;
+        auto loc = simplify.find(V->name);
+        if (loc != simplify.end())
+        {
+            auto V2 = *V;
+            V2.name = loc->second;
+            return V2;
+        }
+
+        return E;
+    }
+    else if (auto L = E.to_lambda())
+        return Core::Lambda<>{L->x, map_symbol_names(L->body, simplify)};
+    else if (auto A = E.to_apply())
+        return Core::Apply<>{map_symbol_names(A->head, simplify), map_symbol_names(A->arg, simplify)};
+    else if (auto L = E.to_let())
+    {
+        auto decls = L->decls;
+        for(auto& [_, body]: decls)
+            body = map_symbol_names(body, simplify);
+
+        return Core::Let<>{decls, map_symbol_names(L->body, simplify)};
+    }
+    else if (auto C = E.to_case())
+    {
+        auto alts = C->alts;
+        for(auto& alt: alts)
+            alt.body = map_symbol_names(alt.body, simplify);
+
+        return Core::Case<>{map_symbol_names(C->object, simplify), alts};
+    }
+    else if (auto C = E.to_conApp())
+    {
+        auto C2 = *C;
+        for(auto& arg: C2.args)
+            arg = map_symbol_names(arg, simplify);
+        return C2;
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        auto B2 = *B;
+        for(auto& arg: B2.args)
+            arg = map_symbol_names(arg, simplify);
+        return B2;
     }
 
-    object_ptr<expression> V = E.as_expression().clone();
-    for(int i=0;i<E.size();i++)
-	V->sub[i] = map_symbol_names(V->sub[i], simplify);
-    return V;
+    return E;
 }
 
-expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_ref>& replace)
+bool pattern_binds(const Core::Pattern<>& pattern, const Core::Var<>& x)
 {
-    if (E.is_reg_var())
+    for(const auto& arg: pattern.args)
+        if (arg == x)
+            return true;
+
+    return false;
+}
+
+int n_free_occurrences(const Core::Exp<>& E, const Core::Var<>& x)
+{
+    if (auto V = E.to_var())
+        return (*V == x);
+    else if (auto L = E.to_lambda())
+        return (L->x == x) ? 0 : n_free_occurrences(L->body, x);
+    else if (auto A = E.to_apply())
+        return n_free_occurrences(A->head, x) + n_free_occurrences(A->arg, x);
+    else if (auto L = E.to_let())
     {
-        int r = E.as_reg_var();
-	if (replace.contains(r))
-	    return replace.at(r);
-	else
-	    return E;
+        for(const auto& [y, _]: L->decls)
+            if (y == x)
+                return 0;
+
+        int count = n_free_occurrences(L->body, x);
+        for(const auto& [_, body]: L->decls)
+            count += n_free_occurrences(body, x);
+
+        return count;
     }
-    else if (auto alts = E.to<Expression::CaseAlts>())
+    else if (auto C = E.to_case())
     {
-	auto alts2 = new Expression::CaseAlts(*alts);
-	for(auto& [pattern,body]: *alts2)
-	{
-	    pattern = subst_reg_vars(pattern, replace);
-	    body = subst_reg_vars(body, replace);
-	}
-	return expression_ref(alts2);
+        int count = n_free_occurrences(C->object, x);
+        for(const auto& alt: C->alts)
+            if (not pattern_binds(alt.pat, x))
+                count += n_free_occurrences(alt.body, x);
+
+        return count;
     }
-    else if (auto let = E.to<let_exp>())
+    else if (auto C = E.to_conApp())
     {
-	auto let2 = new let_exp(*let);
-	let2->body = subst_reg_vars(let2->body, replace);
-	for(auto& [x,E2]: let2->binds)
-	    E2 = subst_reg_vars(E2, replace);
-	return expression_ref(let2);
+        int count = 0;
+        for(const auto& arg: C->args)
+            count += n_free_occurrences(arg, x);
+
+        return count;
     }
-    else if (E.size() == 0)
-	return E;
-    else
+    else if (auto B = E.to_builtinOp())
     {
-	auto sub = E.sub();
-	for(auto& e: sub)
-	    e = subst_reg_vars(e, replace);
-	return expression_ref{E.head(), sub};
+        int count = 0;
+        for(const auto& arg: B->args)
+            count += n_free_occurrences(arg, x);
+
+        return count;
     }
+
+    return 0;
+}
+
+Core::Exp<> subst_var(const Core::Exp<>& E, const Core::Var<>& x, const Core::Exp<>& replacement)
+{
+    Core::subst_t<> subst;
+    subst = subst.insert({x, replacement});
+    return Core::subst(subst, E);
+}
+
+Core::Exp<> unlet(const Core::Exp<>& E)
+{
+    if (auto L = E.to_lambda())
+        return Core::Lambda<>{L->x, unlet(L->body)};
+    else if (auto C = E.to_case())
+    {
+        auto alts = C->alts;
+        for(auto& alt: alts)
+            alt.body = unlet(alt.body);
+
+        return Core::Case<>{unlet(C->object), alts};
+    }
+    else if (auto L = E.to_let())
+    {
+        auto L2 = *L;
+        L2.body = unlet(L2.body);
+        for(auto& [_, body]: L2.decls)
+            body = unlet(body);
+
+        bool changed = true;
+        while(changed)
+        {
+            changed = false;
+            for(int i = L2.decls.size() - 1; i >= 0; i--)
+            {
+                const auto x = L2.decls[i].x;
+                const auto rhs = L2.decls[i].body;
+
+                if (rhs.to_case()) continue;
+                if (n_free_occurrences(rhs, x)) continue;
+
+                int count = n_free_occurrences(L2.body, x);
+                for(const auto& [_, body]: L2.decls)
+                    count += n_free_occurrences(body, x);
+
+                if (count != 1) continue;
+
+                changed = true;
+                L2.decls.erase(L2.decls.begin() + i);
+
+                for(auto& [_, body]: L2.decls)
+                    body = subst_var(body, x, rhs);
+                L2.body = subst_var(L2.body, x, rhs);
+            }
+        }
+
+        if (L2.decls.empty())
+            return L2.body;
+        else
+            return L2;
+    }
+    else if (auto A = E.to_apply())
+        return Core::Apply<>{unlet(A->head), unlet(A->arg)};
+    else if (auto C = E.to_conApp())
+    {
+        auto C2 = *C;
+        for(auto& arg: C2.args)
+            arg = unlet(arg);
+        return C2;
+    }
+    else if (auto B = E.to_builtinOp())
+    {
+        auto B2 = *B;
+        for(auto& arg: B2.args)
+            arg = unlet(arg);
+        return B2;
+    }
+
+    return E;
+}
+
+std::map<string,Core::Exp<>> diagnostic_reg_replacements(const map<int,Core::Exp<>>& replace)
+{
+    std::map<string,Core::Exp<>> replacements;
+    for(const auto& [r, E]: replace)
+    {
+        replacements["<" + convertToString(r) + ">"] = E;
+        replacements["[" + convertToString(r) + "]"] = E;
+    }
+
+    return replacements;
+}
+
+Core::Exp<> subst_diagnostic_vars(const Core::Exp<>& E, const std::map<string,Core::Exp<>>& replacements)
+{
+    Core::subst_t<> subst;
+    for(const auto& [name, replacement]: replacements)
+        subst = subst.insert({Core::Var<>(name), replacement});
+
+    return Core::subst(subst, E);
+}
+
+Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<int,string>& ids)
+{
+    map<int,Core::Exp<>> replace;
+    for(const auto& [r, name]: ids)
+        replace[r] = Core::Var<>(name);
+
+    return subst_diagnostic_vars(E, diagnostic_reg_replacements(replace));
+}
+
+Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<string, int>& ids)
+{
+    return untranslate_vars(E, get_register_names(ids, true));
 }
 
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t, bool keep_identifiers) const
@@ -198,92 +360,6 @@ void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int
 #endif
 }
 
-// Fixme!
-// Here we have handled neither depths, nor trim.
-expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env_t& Env, const map<int, expression_ref>& names)
-{
-    if (E.size())
-    {
-	bool different = false;
-	object_ptr<expression> E2 ( new expression(E.head()) );
-	E2->sub.resize(E.size());
-	for(int i=0;i<E.size();i++)
-	{
-	    E2->sub[i] = subst_referenced_vars(E.sub()[i], Env, names);
-	    if (E2->sub[i].ptr() != E.sub()[i].ptr())
-		different = true;
-	}
-	if (different)
-	    return object_ptr<const expression>(E2);
-	else
-	    return E;
-    }
-    else if (auto alts = E.to<Expression::CaseAlts>())
-    {
-	auto alts2 = new Expression::CaseAlts(*alts);
-	for(auto& [pattern,body]: *alts2)
-	{
-	    pattern = subst_referenced_vars(pattern, Env, names);
-	    body = subst_referenced_vars(body, Env, names);
-	}
-	return expression_ref(alts2);
-    }
-    else if (auto let = E.to<let_exp>())
-    {
-	auto let2 = new let_exp(*let);
-	let2->body = subst_referenced_vars(let2->body, Env, names);
-	for(auto& [x,E2]: let2->binds)
-	    E2 = subst_referenced_vars(E2, Env, names);
-	return expression_ref(let2);
-    }
-    else if ( E.is_index_var() )
-    {
-	const auto loc = names.find( lookup_in_env(Env, E.as_index_var()) );
-	if (loc == names.end())
-	    return E;
-	else
-	{
-	    //      assert(get_free_indices(loc->second).empty());
-	    return loc->second;
-	}
-    }
-    // This case handles NULL in addition to atomic objects.
-    else
-	return E;
-}
-
-void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, int>& id)
-{
-    const closure& C = H[R];
-
-    // If there are no references, then we are done.
-    if (C.Env.empty()) 
-    {
-	names[R] = C.legacy_exp();
-	return;
-    }
-
-    // If R references R, then terminate the recursion.
-    if (names.count(R))
-    {
-	if (not names[R])
-	    names[R] = C.legacy_exp();
-	return;
-    }
-
-    // Add R to the hash in order to avoid infinite loops because of re-entering R
-    names[R] = expression_ref();
-
-    // find the names for each referenced var.
-    for(int i: C.Env)
-	discover_graph_vars(H, i, names, id);
-
-    for(int r: H.forced_regs_for_reg(R))
-	discover_graph_vars(H, r, names, id);
-
-    names[R] = subst_referenced_vars(C.legacy_exp(), C.Env, names);
-}
-
 string escape(const string& s)
 {
     string s2;
@@ -364,42 +440,6 @@ string wrap(const string& s, int w)
     return result;
 }
 
-expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids)
-{
-    if (not E.size())
-    {
-	if (E.is_reg_var())
-	{
-	    auto loc = ids.find(E.as_reg_var());
-	    if (loc != ids.end())
-		return var(loc->second);  // Using var( ) here used to cause a problem if the name is not a legal Haskell identifier.
-	    else
-		return E;
-	}
-	else
-	    return E;
-    }
-
-    object_ptr<expression> V = E.as_expression().clone();
-    for(int i=0;i<E.size();i++)
-	V->sub[i] = untranslate_vars(V->sub[i], ids);
-    return V;
-}
-
-expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
-{
-    return C[R].legacy_exp();
-
-    map< int, expression_ref> names;
-    for(const auto& [name, R]: ids)
-    {
-	names[R] = expression_ref(new var(name) );
-    }
-    discover_graph_vars(C, R, names, ids);
-
-    return launchbury_unnormalize(names[R]);
-}
-
 map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars=true)
 {
     map<int,string> ids2;
@@ -466,9 +506,9 @@ map<int,string> get_constants(const reg_heap& C, int t)
     return constants;
 }
 
-expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids)
+Core::Exp<> compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
 {
-    return untranslate_vars(E, get_register_names(ids));
+    return unlet(untranslate_vars(runtime_deindexify(C[R]), ids));
 }
 
 void write_dot_graph(const reg_heap& C)
@@ -489,18 +529,6 @@ void write_dot_graph(const reg_heap& C)
    2. Allow reduction value (call value) on the same level as redex.
 
 */
-
-bool print_as_record(const expression_ref& E)
-{
-    if (E.head().is_a<IntMap>())
-        return true;
-    else if (E.head().type() == type_constant::operation_type or E.head().type() == type_constant::constructor_type)
-    {
-        if (not is_case(E) and not E.head().is_a<Apply>())
-            return true;
-    }
-    return false;
-}
 
 bool print_as_record(const Runtime::Exp& E)
 {
@@ -555,15 +583,15 @@ bool contains(const string& s1, const string& s2)
     return false;
 }
 
-string reg_name(int R, const map<int,expression_ref>& replace)
+string reg_name(int R, const map<int,Core::Exp<>>& replace)
 {
     string name = "<" + convertToString(R) + ">";
     // We could add <R2> after the name for non-var objects.
     if (replace.count(R))
     {
 	auto E = replace.at(R);
-	if (E.is_a<var>())
-	    name = E.as_<var>().name;
+	if (auto V = E.to_var())
+	    name = V->name;
 	else
 	    name = E.print() + " " + name;;
     }
@@ -577,20 +605,19 @@ closure follow_reg_ref(const reg_heap& M, closure C)
     return C;
 }
 
-string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& replace, bool skip_ref = false)
+string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& replace, bool skip_ref = false)
 {
     auto CR = C[R];
     if (skip_ref)
 	CR = follow_reg_ref(C, CR);
 
-    expression_ref F = CR.legacy_exp();
     // node label = R/name: expression
     string label = convertToString(R);
     if (replace.count(R))
     {
 	auto E = replace.at(R);
-	if (E.is_a<var>())
-	    label += "/" + E.as_<var>().name;
+	if (auto V = E.to_var())
+	    label += "/" + V->name;
     }
     label += ":";
 
@@ -600,8 +627,10 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
 
         if (CR.get_code().to<IntMap>())
             label += "<td>IntMap</td>";
+        else if (auto app = CR.get_code().to<Runtime::App>())
+            label += "<td>"+escape(Runtime::print(app->head))+"</td>";
         else
-            label += "<td>"+escape(F.head().print())+"</td>";
+            label += "<td>"+escape(CR.get_code().print())+"</td>";
         if (auto app = CR.get_code().to<Runtime::App>())
 	{
             for(const auto& E: app->args)
@@ -638,7 +667,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
 
         label = escape(wrap(label,40));
     }
-    else if (auto is = F.head().to<IntSet>())
+    else if (auto is = CR.get_code().to<IntSet>())
     {
 	std::ostringstream o;
 	o<<"IntSet{";
@@ -657,7 +686,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     }
     else
     {
-        expression_ref E = unlet(subst_reg_vars(deindexify(trim_unnormalize(C[R])), replace));
+        auto E = unlet(subst_diagnostic_vars(runtime_deindexify(C[R]), diagnostic_reg_replacements(replace)));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -672,7 +701,6 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     for(int& r: CR.Env)
         r = C.follow_reg_ref(r);
 
-    expression_ref F = CR.legacy_exp();
     // node label = R/name: expression
     string label;
     if (reg_names.count(R))
@@ -682,7 +710,9 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     {
         label = "<table border='0' cellborder='1' cellspacing='0'><tr>";
 
-        string head_name = F.head().print();
+        string head_name = CR.get_code().print();
+        if (auto app = CR.get_code().to<Runtime::App>())
+            head_name = Runtime::print(app->head);
 
         // Chop for module prefix in module:builtin
         int where = head_name.find(':');
@@ -735,18 +765,20 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         else if (constants.count(R2))
             reg_name = constants.at(R2);
         label += reg_name;
-	
-        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
-        //      E = map_symbol_names(E, simplify);
-        //      label += E.print();
+
         label = escape(wrap(label,40));
     }
     else if (is_modifiable(CR.get_code()))
         label="mod";
     else
     {
-        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
+        map<int,Core::Exp<>> replace;
+        for(const auto& [r, name]: reg_names)
+            replace[r] = Core::Var<>(name);
+        for(const auto& [r, name]: constants)
+            replace[r] = Core::Var<>(name);
 
+        auto E = unlet(subst_diagnostic_vars(runtime_deindexify(CR), diagnostic_reg_replacements(replace)));
         E = map_symbol_names(E, simplify);
 
         label += E.print();
@@ -755,22 +787,22 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     return label;
 }
 
-map<int,expression_ref> get_names_for_regs(const reg_heap& M)
+map<int,Core::Exp<>> get_names_for_regs(const reg_heap& M)
 {
     // Get mapping from long names to simplified names
     map<string,string> simplify = get_simplified_names(get_names(M.get_identifiers()));
 
     // Get mapping from regs to vars with simplified names.
-    map<int,var> reg_to_var;
+    map<int,Core::Var<>> reg_to_var;
     for(auto& [name, reg]: M.get_identifiers())
     {
         auto sname = name;
 	if (simplify.contains(name))
 	    sname = simplify.at(name);
-	reg_to_var.insert({reg, var(sname)});
+	reg_to_var.insert({reg, Core::Var<>(sname)});
     }
 
-    map<int,expression_ref> reg_to_expression;
+    map<int,Core::Exp<>> reg_to_expression;
 
     int t = M.get_root_token();
 
@@ -780,7 +812,7 @@ map<int,expression_ref> get_names_for_regs(const reg_heap& M)
     {
 	if (auto E = M.closure_at(r).get_code(); E.is_atomic_value() and not E.to<GCObject>() and E.print().size() < 25)
 	{
-	    reg_to_expression.insert({r,Runtime::to_expression_ref(E)});
+	    reg_to_expression.insert({r,runtime_deindexify(E)});
 	}
 	else if (reg_to_var.contains(r))
 	{
@@ -794,7 +826,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
     int t = C.get_root_token();
 
-    map<int,expression_ref> replace = get_names_for_regs(C);
+    map<int,Core::Exp<>> replace = get_names_for_regs(C);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
     std::unordered_set<int> regs_set;
